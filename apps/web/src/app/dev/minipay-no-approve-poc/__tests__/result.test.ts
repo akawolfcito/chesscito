@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { classifyPocResult, isAllowanceFailure } from "../result";
+import {
+  classifyPocResult,
+  classifyTreasuryTransferResult,
+  isAllowanceFailure,
+} from "../result";
 
 describe("classifyPocResult", () => {
   it("is inconclusive when success used an existing sufficient allowance", () => {
@@ -66,5 +70,47 @@ describe("classifyPocResult", () => {
         error: "allowance RPC request failed",
       }).conclusion,
     ).toBe("inconclusive");
+  });
+});
+
+describe("classifyTreasuryTransferResult", () => {
+  it("classifies a successful verified transfer as viable", () => {
+    expect(
+      classifyTreasuryTransferResult({
+        transferFailed: false,
+        receiptStatus: "success",
+        transferEventVerified: true,
+      }),
+    ).toBe("single-user-tx treasury payment viable");
+  });
+
+  it("classifies a rejected or reverted transfer as failed", () => {
+    expect(
+      classifyTreasuryTransferResult({
+        transferFailed: true,
+        receiptStatus: null,
+        transferEventVerified: false,
+      }),
+    ).toBe("failed");
+  });
+
+  it("classifies a successful unverified receipt as inconclusive", () => {
+    expect(
+      classifyTreasuryTransferResult({
+        transferFailed: false,
+        receiptStatus: "success",
+        transferEventVerified: false,
+      }),
+    ).toBe("inconclusive");
+  });
+
+  it("classifies a reverted receipt as failed", () => {
+    expect(
+      classifyTreasuryTransferResult({
+        transferFailed: false,
+        receiptStatus: "reverted",
+        transferEventVerified: false,
+      }),
+    ).toBe("failed");
   });
 });

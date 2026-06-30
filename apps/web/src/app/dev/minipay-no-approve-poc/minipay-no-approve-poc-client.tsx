@@ -24,6 +24,7 @@ import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
 import { isUserCancellation } from "@/lib/errors";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 import { classifyPocResult, type PocTxStatus } from "./result";
+import { TreasuryTransferSection } from "./treasury-transfer-section";
 
 type Phase = "idle" | "reading" | "submitting" | "confirming";
 type PaymentToken = (typeof ACCEPTED_TOKENS)[number];
@@ -361,6 +362,8 @@ export function MiniPayNoApprovePocClient() {
           ]}
         />
       </section>
+
+      <TreasuryTransferSection />
     </main>
   );
 }

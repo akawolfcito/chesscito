@@ -1,5 +1,9 @@
 export type PocTxStatus = "not-run" | "success" | "failed";
 export type PocConclusion = "yes" | "no" | "inconclusive";
+export type TreasuryPocConclusion =
+  | "single-user-tx treasury payment viable"
+  | "failed"
+  | "inconclusive";
 
 export type PocClassification = {
   conclusion: PocConclusion;
@@ -67,4 +71,16 @@ export function classifyPocResult(input: {
     conclusion: "inconclusive",
     reason: "The contract transaction has not been run.",
   };
+}
+
+export function classifyTreasuryTransferResult(input: {
+  transferFailed: boolean;
+  receiptStatus: "success" | "reverted" | null;
+  transferEventVerified: boolean;
+}): TreasuryPocConclusion {
+  if (input.transferFailed || input.receiptStatus === "reverted") return "failed";
+  if (input.receiptStatus === "success" && input.transferEventVerified) {
+    return "single-user-tx treasury payment viable";
+  }
+  return "inconclusive";
 }
