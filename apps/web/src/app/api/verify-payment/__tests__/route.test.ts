@@ -74,37 +74,23 @@ function baseBody(over: Record<string, unknown> = {}) {
 /** Supabase mock — pre-check select (existingRow) then race re-resolve
  *  (raceRow); insert path; rpc for the optional newBalance. */
 function buildSupabaseMock(opts: {
-  existingRow?: { id: number; amount: number; attestation_hash?: string } | null;
-  existingRowError?: { code?: string; message?: string };
-  insertResult?: { data: { id: number } | null; error: { code?: string; message?: string } | null };
-  raceRow?: { id: number; amount: number } | null;
+  outcome?: "credited" | "duplicate";
+  settlementError?: { code?: string; message?: string } | null;
   capRow?: { balance: number } | null;
 } = {}) {
-  const insertSpy = vi.fn();
-  let selectIdx = 0;
-  const rpc = vi.fn().mockResolvedValue({
-    data: opts.capRow !== undefined ? [opts.capRow] : [{ balance: 50 }],
-    error: null,
+  const rpc = vi.fn().mockImplementation((name: string) => {
+    if (name === "consume_legacy_get_peones_payment") {
+      return Promise.resolve({
+        data: opts.settlementError ? null : [{ outcome: opts.outcome ?? "credited", ledger_id: 1, peones_credited: 50 }],
+        error: opts.settlementError ?? null,
+      });
+    }
+    return Promise.resolve({
+      data: opts.capRow !== undefined ? [opts.capRow] : [{ balance: 50 }],
+      error: null,
+    });
   });
-  const from = vi.fn(() => ({
-    select: vi.fn(() => ({
-      eq: vi.fn(() => ({
-        maybeSingle: vi.fn().mockImplementation(() => {
-          const idx = selectIdx++;
-          if (idx === 0) {
-            return Promise.resolve({ data: opts.existingRow ?? null, error: opts.existingRowError ?? null });
-          }
-          return Promise.resolve({ data: opts.raceRow ?? null, error: null });
-        }),
-      })),
-    })),
-    insert: insertSpy.mockReturnValue({
-      select: vi.fn(() => ({
-        maybeSingle: vi.fn().mockResolvedValue(opts.insertResult ?? { data: { id: 1 }, error: null }),
-      })),
-    }),
-  }));
-  return { supabase: { from, rpc } as never, from, rpc, insertSpy };
+  return { supabase: { from: vi.fn(), rpc } as never, rpc };
 }
 
 beforeEach(() => {
@@ -187,7 +173,7 @@ describe("transfer verification", () => {
 
 describe("crediting", () => {
   it("exact USDC payment → credits 50 Peones", async () => {
-    const mock = buildSupabaseMock({ insertResult: { data: { id: 7 }, error: null } });
+    const mock = buildSupabaseMock();
     mockedSupabase.mockReturnValue(mock.supabase);
     const res = await POST(makeRequest(baseBody()));
     const json = await res.json();
@@ -198,7 +184,10 @@ describe("crediting", () => {
     expect(json.overpaid).toBe(false);
     expect(json.logIndex).toBe(3);
     expect(json.idempotencyKey).toBe(`pack_purchase:42220:${TX}:3`);
-    expect(mock.insertSpy).toHaveBeenCalledTimes(1);
+    expect(mock.rpc).toHaveBeenCalledWith(
+      "consume_legacy_get_peones_payment",
+      expect.objectContaining({ p_chain_id: 42220, p_log_index: 3 }),
+    );
   });
 
   it("overpay → credits nominal 50, overpaid true", async () => {
@@ -211,14 +200,14 @@ describe("crediting", () => {
   });
 
   it("duplicate idempotency → success duplicate, no insert", async () => {
-    const mock = buildSupabaseMock({ existingRow: { id: 99, amount: 50 } });
+    const mock = buildSupabaseMock({ outcome: "duplicate" });
     mockedSupabase.mockReturnValue(mock.supabase);
     const res = await POST(makeRequest(baseBody()));
     const json = await res.json();
     expect(json.ok).toBe(true);
     expect(json.duplicate).toBe(true);
     expect(json.peonesCredited).toBe(50);
-    expect(mock.insertSpy).not.toHaveBeenCalled();
+    expect(mock.rpc).toHaveBeenCalledTimes(2);
   });
 
   it("normalizes wallet/token to lowercase in the response", async () => {
@@ -244,36 +233,27 @@ function spBody(over: Record<string, unknown> = {}) {
 /** Supabase mock for the lite_season_passes table. */
 function buildSeasonPassSupabaseMock(opts: {
   existingPass?: Record<string, unknown> | null;
-  insertError?: { code?: string; message?: string } | null;
-  raceRow?: Record<string, unknown> | null;
+  settlementError?: { code?: string; message?: string } | null;
 } = {}) {
-  const insertSpy = vi.fn();
   const updateSpy = vi.fn();
-  let selectIdx = 0;
   const from = vi.fn(() => ({
-    select: vi.fn(() => ({
-      eq: vi.fn(() => ({
-        maybeSingle: vi.fn().mockImplementation(() => {
-          const idx = selectIdx++;
-          if (idx === 0) return Promise.resolve({ data: opts.existingPass ?? null, error: null });
-          return Promise.resolve({ data: opts.raceRow ?? null, error: null });
-        }),
-      })),
-    })),
-    insert: insertSpy.mockReturnValue({
-      select: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: { id: 1 }, error: null }) })),
-      then: (cb: (v: { error: null | { code?: string; message?: string } }) => unknown) =>
-        Promise.resolve({ error: opts.insertError ?? null }).then(cb),
-    }),
-    // Reconcile / pending-persist path: .update(...).eq(...) → resolves.
     update: updateSpy.mockReturnValue({
       eq: vi.fn().mockResolvedValue({ error: null }),
     }),
   }));
-  // The season pass branch calls .insert() directly (no .select chain).
-  // Patch insertSpy to resolve with the configured error.
-  insertSpy.mockResolvedValue({ error: opts.insertError ?? null });
-  return { supabase: { from, rpc: vi.fn() } as never, insertSpy, updateSpy };
+  const existing = opts.existingPass;
+  const rpc = vi.fn().mockResolvedValue({
+    data: opts.settlementError ? null : [{
+      outcome: existing ? "duplicate" : "credited",
+      pass_id: existing?.id ?? "00000000-0000-4000-8000-000000000001",
+      expires_at: existing?.expires_at ?? "2026-07-16T00:00:00.000Z",
+      shields_credited: existing?.shields_credited ?? 3,
+      supporter_status: existing?.supporter_status ?? "challenger",
+      metadata: existing?.metadata ?? { rail: "stablecoin_single_tx" },
+    }],
+    error: opts.settlementError ?? null,
+  });
+  return { supabase: { from, rpc } as never, rpc, updateSpy };
 }
 
 describe("season pass", () => {
@@ -297,7 +277,7 @@ describe("season pass", () => {
   });
 
   it("Lite mode → peones pack still works (gate is Season-Pass-only)", async () => {
-    const mock = buildSupabaseMock({ insertResult: { data: { id: 7 }, error: null } });
+    const mock = buildSupabaseMock();
     mockedSupabase.mockReturnValue(mock.supabase);
     const res = await POST(makeRequest(baseBody()));
     const json = await res.json();
@@ -339,7 +319,7 @@ describe("season pass", () => {
     expect(json.ok).toBe(true);
     expect(json.duplicate).toBe(true);
     expect(json.shieldsCredited).toBe(3);
-    expect(mock.insertSpy).not.toHaveBeenCalled();
+    expect(mock.rpc).toHaveBeenCalledTimes(1);
     expect(mockRedisIncrby).not.toHaveBeenCalled();
   });
 
@@ -371,7 +351,7 @@ describe("season pass", () => {
     expect(json.shieldsPending).toBeUndefined();
     expect(mockRedisIncrby).toHaveBeenCalledTimes(1);
     expect(mockRedisIncrby).toHaveBeenCalledWith(expect.stringContaining("shields:credited"), 3);
-    expect(mock.insertSpy).not.toHaveBeenCalled();
+    expect(mock.rpc).toHaveBeenCalledTimes(1);
     expect(mock.updateSpy).toHaveBeenCalled();
   });
 
@@ -419,7 +399,7 @@ describe("ledger errors", () => {
 
   it("insert error, row absent on re-check → ledger_write_failed", async () => {
     mockedSupabase.mockReturnValue(
-      buildSupabaseMock({ insertResult: { data: null, error: { code: "XXXXX", message: "boom" } } }).supabase,
+      buildSupabaseMock({ settlementError: { code: "XXXXX", message: "boom" } }).supabase,
     );
     const res = await POST(makeRequest(baseBody()));
     expect(res.status).toBe(500);
@@ -430,10 +410,7 @@ describe("ledger errors", () => {
     // The on-chain transfer already settled; a non-23505 insert error (timeout,
     // 503) whose write actually committed must NOT surface as a failed payment.
     // The idempotency re-check finds the row → idempotent success.
-    const mock = buildSupabaseMock({
-      insertResult: { data: null, error: { code: "08006", message: "timeout" } },
-      raceRow: { id: 42, amount: 50 },
-    });
+    const mock = buildSupabaseMock({ outcome: "duplicate" });
     mockedSupabase.mockReturnValue(mock.supabase);
     const res = await POST(makeRequest(baseBody()));
     const json = await res.json();
@@ -441,5 +418,53 @@ describe("ledger errors", () => {
     expect(json.ok).toBe(true);
     expect(json.duplicate).toBe(true);
     expect(json.peonesCredited).toBe(50);
+  });
+});
+
+describe("global ERC-20 payment identity", () => {
+  it("rejects Get Peones when the payment was consumed by Season Pass", async () => {
+    mockedSupabase.mockReturnValue(buildSupabaseMock({
+      settlementError: { code: "P0001", message: "payment_replay" },
+    }).supabase);
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toBe("payment_replay");
+  });
+
+  it("rejects Season Pass when the payment was consumed by Get Peones", async () => {
+    process.env.NEXT_PUBLIC_CHESSCITO_LITE_MODE = "true";
+    mockGetReceipt.mockResolvedValue(receiptWith([
+      transferLog(USDC, WALLET, TREASURY, SP_PRICE, 0),
+    ]));
+    mockedSupabase.mockReturnValue(buildSeasonPassSupabaseMock({
+      settlementError: { code: "P0001", message: "payment_replay" },
+    }).supabase);
+    const res = await POST(makeRequest(spBody()));
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toBe("payment_replay");
+    delete process.env.NEXT_PUBLIC_CHESSCITO_LITE_MODE;
+  });
+
+  it("concurrent same-product verification resolves as one credit and one duplicate", async () => {
+    let consumeCalls = 0;
+    const rpc = vi.fn().mockImplementation((name: string) => {
+      if (name === "consume_legacy_get_peones_payment") {
+        consumeCalls += 1;
+        return Promise.resolve({
+          data: [{ outcome: consumeCalls === 1 ? "credited" : "duplicate", ledger_id: 1 }],
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: [{ balance: 50 }], error: null });
+    });
+    mockedSupabase.mockReturnValue({ from: vi.fn(), rpc } as never);
+
+    const [first, second] = await Promise.all([
+      POST(makeRequest(baseBody())),
+      POST(makeRequest(baseBody())),
+    ]);
+    const results = await Promise.all([first.json(), second.json()]);
+    expect(results.map((result) => result.duplicate).sort()).toEqual([false, true]);
+    expect(consumeCalls).toBe(2);
   });
 });

@@ -212,122 +212,66 @@ export async function POST(req: Request) {
       return err("ledger_unavailable", 503);
     }
 
-    // Idempotency pre-check — same tx never double-credits.
-    const { data: existingPass } = await supabase
-      .from("lite_season_passes")
-      .select("id, expires_at, season_id, supporter_status, shields_credited, metadata")
-      .eq("idempotency_key", idempotencyKey)
-      .maybeSingle();
-
-    if (existingPass) {
-      // Reconcile: a prior verification inserted the pass but Redis failed,
-      // so shields were never credited (shields_credited = 0 / metadata
-      // shieldsPending). Retry the credit now, exactly once. If shields were
-      // already credited we return as-is and NEVER touch Redis (no double).
-      const creditedSoFar = Number(existingPass.shields_credited ?? 0);
-      const meta = isPlainObject(existingPass.metadata) ? existingPass.metadata : {};
-      const needsReconcile = creditedSoFar < pass.shieldsOnPurchase || meta.shieldsPending === true;
-
-      let shieldsCredited = creditedSoFar;
-      let shieldsPending = needsReconcile;
-      if (needsReconcile) {
-        try {
-          await redis.incrby(REDIS_KEYS.shieldsCredited(walletNorm), pass.shieldsOnPurchase);
-          const ttlMs = pass.durationDays * 86_400_000;
-          await redis.set(REDIS_KEYS.seasonPass(walletNorm), existingPass.expires_at, { px: ttlMs });
-          await supabase
-            .from("lite_season_passes")
-            .update({
-              shields_credited: pass.shieldsOnPurchase,
-              metadata: { ...meta, shieldsPending: false },
-            })
-            .eq("idempotency_key", idempotencyKey);
-          shieldsCredited = pass.shieldsOnPurchase;
-          shieldsPending = false;
-        } catch (redisErr) {
-          log.error("season_pass_redis_reconcile_failed", { wallet: walletNorm, err: String(redisErr) });
-          shieldsCredited = 0;
-          shieldsPending = true;
-        }
-      }
-
-      return NextResponse.json({
-        ok: true,
-        sku,
-        wallet: walletNorm,
-        seasonId: existingPass.season_id,
-        expiresAt: existingPass.expires_at,
-        shieldsCredited,
-        shieldsPending: shieldsPending || undefined,
-        supporterStatus: existingPass.supporter_status ?? pass.supporterStatus,
-        amountPaid,
-        token,
-        txHash,
-        duplicate: true,
-        overpaid: verdict.overpaid,
-      });
-    }
-
     const expiresAt = new Date(Date.now() + pass.durationDays * 86_400_000).toISOString();
-    const { error: insertError } = await supabase.from("lite_season_passes").insert({
-      wallet: walletNorm,
-      season_id: pass.seasonId,
-      sku: pass.sku,
-      tx_hash: txHash,
-      log_index: verdict.logIndex,
-      chain_id: chainId,
-      token_address: token,
-      amount_paid: amountPaid,
-      idempotency_key: idempotencyKey,
-      shields_credited: pass.shieldsOnPurchase,
-      supporter_status: pass.supporterStatus,
-      expires_at: expiresAt,
-      metadata: { rail: "stablecoin_single_tx", overpaid: verdict.overpaid },
-    });
-
-    if (insertError) {
-      // Race-condition check: concurrent request may have won the UNIQUE constraint.
-      const { data: raceRow } = await supabase
-        .from("lite_season_passes")
-        .select("id, expires_at, shields_credited")
-        .eq("idempotency_key", idempotencyKey)
-        .maybeSingle();
-      if (raceRow) {
-        return NextResponse.json({
-          ok: true, sku, wallet: walletNorm, seasonId: pass.seasonId,
-          expiresAt: raceRow.expires_at,
-          shieldsCredited: Number(raceRow.shields_credited ?? pass.shieldsOnPurchase),
-          supporterStatus: pass.supporterStatus, amountPaid, token, txHash, duplicate: true,
-          overpaid: verdict.overpaid,
-        });
-      }
-      log.error("season_pass_insert_failed", { code: insertError.code });
-      return err("ledger_write_failed", 500);
+    const paymentMetadata = { rail: "stablecoin_single_tx", overpaid: verdict.overpaid };
+    const { data: settlement, error: settlementError } = await supabase.rpc(
+      "consume_lite_season_pass_payment",
+      {
+        p_chain_id: chainId,
+        p_tx_hash: txHash.toLowerCase(),
+        p_log_index: verdict.logIndex,
+        p_wallet: walletNorm,
+        p_sku: pass.sku,
+        p_season_id: pass.seasonId,
+        p_token_address: token,
+        p_treasury_address: treasury,
+        p_amount_paid: amountPaid,
+        p_idempotency_key: idempotencyKey,
+        p_shields: pass.shieldsOnPurchase,
+        p_supporter_status: pass.supporterStatus,
+        p_expires_at: expiresAt,
+        p_metadata: paymentMetadata,
+      },
+    );
+    if (settlementError) {
+      const replay = String(settlementError.message).includes("payment_replay");
+      log.warn(replay ? "payment_replay" : "season_pass_insert_failed", { code: settlementError.code });
+      return err(replay ? "payment_replay" : "ledger_write_failed", replay ? 409 : 500);
     }
 
-    // Credit shields + set Redis TTL key — fail-safe (pass already recorded).
-    let shieldsCredited = pass.shieldsOnPurchase;
-    let shieldsPending = false;
-    try {
-      await redis.incrby(REDIS_KEYS.shieldsCredited(walletNorm), pass.shieldsOnPurchase);
-      const ttlMs = pass.durationDays * 86_400_000;
-      await redis.set(REDIS_KEYS.seasonPass(walletNorm), expiresAt, { px: ttlMs });
-    } catch (redisErr) {
-      log.error("season_pass_redis_failed_after_insert", { wallet: walletNorm, err: String(redisErr) });
-      shieldsCredited = 0;
-      shieldsPending = true;
-      // Persist the pending state so a later verification of the SAME tx can
-      // detect it (reconcile branch above) and retry the shield credit.
-      await supabase
-        .from("lite_season_passes")
-        .update({
+    const settlementRow = Array.isArray(settlement) ? settlement[0] : settlement;
+    const duplicate = settlementRow?.outcome === "duplicate";
+    const persistedExpiry = String(settlementRow?.expires_at ?? expiresAt);
+    const persistedMeta = isPlainObject(settlementRow?.metadata) ? settlementRow.metadata : paymentMetadata;
+    let shieldsCredited = Number(settlementRow?.shields_credited ?? pass.shieldsOnPurchase);
+    let shieldsPending = duplicate &&
+      (shieldsCredited < pass.shieldsOnPurchase || persistedMeta.shieldsPending === true);
+
+    // New settlements and explicitly pending duplicates receive/recover the
+    // Redis companion grant. A completed duplicate never increments again.
+    if (!duplicate || shieldsPending) {
+      try {
+        await redis.incrby(REDIS_KEYS.shieldsCredited(walletNorm), pass.shieldsOnPurchase);
+        const ttlMs = pass.durationDays * 86_400_000;
+        await redis.set(REDIS_KEYS.seasonPass(walletNorm), persistedExpiry, { px: ttlMs });
+        if (shieldsPending) {
+          await supabase.from("lite_season_passes").update({
+            shields_credited: pass.shieldsOnPurchase,
+            metadata: { ...persistedMeta, shieldsPending: false },
+          }).eq("idempotency_key", idempotencyKey);
+        }
+        shieldsCredited = pass.shieldsOnPurchase;
+        shieldsPending = false;
+      } catch (redisErr) {
+        log.error("season_pass_redis_failed_after_insert", { wallet: walletNorm, err: String(redisErr) });
+        shieldsCredited = 0;
+        shieldsPending = true;
+        await supabase.from("lite_season_passes").update({
           shields_credited: 0,
-          metadata: { rail: "stablecoin_single_tx", overpaid: verdict.overpaid, shieldsPending: true },
-        })
-        .eq("idempotency_key", idempotencyKey)
-        .then(undefined, (e: unknown) =>
-          log.error("season_pass_pending_persist_failed", { err: String(e) }),
-        );
+          metadata: { ...persistedMeta, shieldsPending: true },
+        }).eq("idempotency_key", idempotencyKey).then(undefined, (e: unknown) =>
+          log.error("season_pass_pending_persist_failed", { err: String(e) }));
+      }
     }
 
     return NextResponse.json({
@@ -335,14 +279,14 @@ export async function POST(req: Request) {
       sku,
       wallet: walletNorm,
       seasonId: pass.seasonId,
-      expiresAt,
+      expiresAt: persistedExpiry,
       shieldsCredited,
       shieldsPending: shieldsPending || undefined,
       supporterStatus: pass.supporterStatus,
       amountPaid,
       token,
       txHash,
-      duplicate: false,
+      duplicate,
       overpaid: verdict.overpaid,
     });
   }
@@ -365,33 +309,6 @@ export async function POST(req: Request) {
     return err("ledger_unavailable", 503);
   }
 
-  // Idempotency pre-check.
-  const { data: existingRow, error: existingErr } = await supabase
-    .from("peones_ledger")
-    .select("id, amount, attestation_hash")
-    .eq("idempotency_key", idempotencyKey)
-    .maybeSingle();
-  if (existingErr) {
-    log.error("idempotency_lookup_failed", { idempotencyKey, code: existingErr.code });
-    return err("ledger_unavailable", 503);
-  }
-
-  if (existingRow) {
-    return NextResponse.json({
-      ok: true,
-      sku,
-      wallet: walletNorm,
-      peonesCredited: Number(existingRow.amount ?? peonesCredited),
-      amountPaid,
-      token,
-      txHash,
-      logIndex: verdict.logIndex,
-      idempotencyKey,
-      duplicate: true,
-      overpaid: verdict.overpaid,
-    });
-  }
-
   const today = todayUtcDate();
   const attestationHash = buildAttestationHash({
     wallet: walletNorm,
@@ -403,62 +320,42 @@ export async function POST(req: Request) {
     idempotency_key: idempotencyKey,
   });
 
-  const { data: insertedRow, error: insertError } = await supabase
-    .from("peones_ledger")
-    .insert({
-      wallet: walletNorm,
-      event_type: "earn",
-      amount: peonesCredited,
-      source: pack.source,
-      source_id: sku,
-      idempotency_key: idempotencyKey,
-      attestation_hash: attestationHash,
-      metadata: {
-        sku,
-        chainId,
-        txHash,
-        logIndex: verdict.logIndex,
-        token,
-        amountPaid,
-        expectedAmount: expectedAmount.toString(),
-        overpaid: verdict.overpaid,
-        rail: "stablecoin_single_tx",
-      },
-      day_utc: today,
-    })
-    .select("id")
-    .maybeSingle();
-
-  if (insertError) {
-    // The on-chain transfer has already settled. Before surfacing a 500 —
-    // which the client reads as "payment failed" — re-check the ledger by
-    // idempotency_key. The row may exist because a concurrent request won the
-    // unique constraint (23505), OR because THIS insert committed server-side
-    // but its ACK was lost to a transient error (timeout/503). If the credit
-    // is on the ledger, the payment succeeded; return idempotent success.
-    const { data: raceRow } = await supabase
-      .from("peones_ledger")
-      .select("id, amount")
-      .eq("idempotency_key", idempotencyKey)
-      .maybeSingle();
-    if (raceRow) {
-      return NextResponse.json({
-        ok: true,
-        sku,
-        wallet: walletNorm,
-        peonesCredited: Number(raceRow.amount ?? peonesCredited),
-        amountPaid,
-        token,
-        txHash,
-        logIndex: verdict.logIndex,
-        idempotencyKey,
-        duplicate: true,
-        overpaid: verdict.overpaid,
-      });
-    }
-    log.error("insert_failed", { code: insertError.code, message: insertError.message });
-    return err("ledger_write_failed", 500);
+  const paymentMetadata = {
+    sku,
+    chainId,
+    txHash,
+    logIndex: verdict.logIndex,
+    token,
+    amountPaid,
+    expectedAmount: expectedAmount.toString(),
+    overpaid: verdict.overpaid,
+    rail: "stablecoin_single_tx",
+  };
+  const { data: settlement, error: settlementError } = await supabase.rpc(
+    "consume_legacy_get_peones_payment",
+    {
+      p_chain_id: chainId,
+      p_tx_hash: txHash.toLowerCase(),
+      p_log_index: verdict.logIndex,
+      p_wallet: walletNorm,
+      p_sku: sku,
+      p_token_address: token,
+      p_treasury_address: treasury,
+      p_amount_paid: amountPaid,
+      p_peones: peonesCredited,
+      p_idempotency_key: idempotencyKey,
+      p_attestation_hash: attestationHash,
+      p_day_utc: today,
+      p_metadata: paymentMetadata,
+    },
+  );
+  if (settlementError) {
+    const replay = String(settlementError.message).includes("payment_replay");
+    log.warn(replay ? "payment_replay" : "ledger_write_failed", { code: settlementError.code });
+    return err(replay ? "payment_replay" : "ledger_write_failed", replay ? 409 : 500);
   }
+  const settlementRow = Array.isArray(settlement) ? settlement[0] : settlement;
+  const duplicate = settlementRow?.outcome === "duplicate";
 
   // Best-effort post-balance (non-fatal — newBalance is optional).
   let newBalance: number | undefined;
@@ -483,9 +380,9 @@ export async function POST(req: Request) {
     txHash,
     logIndex: verdict.logIndex,
     idempotencyKey,
-    duplicate: false,
+    duplicate,
     overpaid: verdict.overpaid,
-    ledgerId: insertedRow?.id ?? null,
+    ledgerId: settlementRow?.ledger_id ?? null,
     ...(newBalance !== undefined ? { newBalance } : {}),
   });
 }

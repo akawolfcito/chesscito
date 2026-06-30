@@ -38,6 +38,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   delete process.env.NEXT_PUBLIC_CHESSCITO_TREASURY_ADDRESS;
+  delete process.env.NEXT_PUBLIC_GET_PEONES_TREASURY_CANARY_ENABLED;
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -87,6 +88,7 @@ describe("usePaymentRail — happy path", () => {
     expect(result.current.result?.peonesCredited).toBe(50);
     expect(result.current.result?.duplicate).toBe(false);
     expect(result.current.txHash).toBe(HASH);
+    expect(fetch).toHaveBeenCalledWith("/api/verify-payment", expect.any(Object));
   });
 
   it("duplicate:true → idempotent success (not an error)", async () => {
@@ -95,6 +97,73 @@ describe("usePaymentRail — happy path", () => {
     await act(async () => { await result.current.pay(); });
     expect(result.current.phase).toBe("success");
     expect(result.current.result?.duplicate).toBe(true);
+  });
+});
+
+describe("usePaymentRail — disabled Treasury canary foundation", () => {
+  const INTENT_ID = "123e4567-e89b-42d3-a456-426614174000";
+  const TREASURY = "0x1234567890abcdef1234567890abcdef12345678";
+  const intent = {
+    id: INTENT_ID,
+    wallet: WALLET,
+    sku: "peones_pack_50",
+    token: USDC,
+    tokenSymbol: "USDC",
+    tokenDecimals: 6,
+    expectedAmount: "500000",
+    chainId: 42220,
+    treasury: TREASURY,
+    configVersion: "canary-v1",
+    priceVersion: "peones-50-v1",
+    requiredConfirmations: 2,
+    expiresAt: "2099-01-01T00:00:00.000Z",
+    authBinding: "client_asserted_wallet",
+  };
+
+  it("requests an intent first and submits exactly one token transfer", async () => {
+    process.env.NEXT_PUBLIC_GET_PEONES_TREASURY_CANARY_ENABLED = "true";
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ ok: true, intent }) })
+      .mockResolvedValueOnce({
+        json: () => Promise.resolve({
+          ok: true,
+          duplicate: false,
+          peonesCredited: 50,
+          token: USDC,
+          amountPaid: "500000",
+          overpaid: false,
+        }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() => usePaymentRail(args));
+    await act(async () => { await result.current.pay(); });
+
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/payment-intents/get-peones");
+    expect(writeMock).toHaveBeenCalledTimes(1);
+    expect(writeMock.mock.calls[0][0]).toMatchObject({
+      address: USDC,
+      functionName: "transfer",
+      args: [TREASURY, 500_000n],
+    });
+    expect(fetchMock.mock.calls[1][0]).toBe("/api/verify-payment/get-peones-canary");
+    expect(result.current.result?.peonesCredited).toBe(50);
+  });
+
+  it("unknown provider submission state does not auto-resend", async () => {
+    process.env.NEXT_PUBLIC_GET_PEONES_TREASURY_CANARY_ENABLED = "true";
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({ ok: true, intent }),
+    }));
+    writeMock.mockRejectedValueOnce(new Error("provider timeout"));
+
+    const { result } = renderHook(() => usePaymentRail(args));
+    await act(async () => { await result.current.pay(); });
+
+    expect(writeMock).toHaveBeenCalledTimes(1);
+    expect(result.current.errorReason).toBe("unknown_submission_state");
+    expect(result.current.paymentRetryBlocked).toBe(true);
   });
 });
 
