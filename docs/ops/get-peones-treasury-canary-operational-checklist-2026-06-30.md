@@ -219,33 +219,71 @@ must be USDT-only. Enabling USDC or cUSD/USDm later requires an owner
 - Any owner write requires explicit operational approval.
 - **No withdrawal or owner write is authorized by this PR.**
 
-## Hosted Supabase migration (next step, not applied)
+### Custodian sign-off
+
+- Custodian reviewed and accepted the canary v1 runbook.
+- No owner write is authorized by this PR.
+- Any withdrawal, payout change, or token allowlist change (`setAcceptedToken`)
+  requires separate explicit approval.
+- Signed-off by: Wolfcito / owner operator.
+- Date: 2026-07-01.
+
+## Rollback exercise
+
+Evidence source: existing tests and code paths. No production exercise was
+performed.
+
+- New intent creation is blocked when `GET_PEONES_TREASURY_CANARY_ENABLED=false`:
+  the intent route returns `canary_disabled` (404) before any wallet is invoked.
+- Canary verification/recovery remains available for already-mined payments: the
+  verify route has no enable gate, so a captured tx hash can still be verified and
+  credited after new intent creation is stopped.
+- Legacy Get Peones and Season Pass remain unaffected: they use their own routes
+  and RPCs and are not gated by the canary flag.
+- Re-enabling requires an explicit env/config review.
+
+## Hosted Supabase migration — applied 2026-07-01
 
 - Project ref: `brsbdzpuvotxsadmcxyj`.
-- Migration: `apps/web/supabase/migrations/20260630120000_get_peones_treasury_canary_foundation.sql`.
-- Note: the hosted migration must be applied through the approved deploy/CI flow
-  or an explicit manual approval, with canary envs still OFF. Not applied by this
-  PR. Local validation does not substitute the hosted apply.
+- Migration: `20260630120000_get_peones_treasury_canary_foundation.sql`.
+- Applied with: `supabase db push --linked --yes` (after a `--dry-run` confirming
+  it was the only pending migration).
+- Confirmed by: `supabase migration list --linked` (now shows on Local and Remote).
+- Verification method: `supabase db dump --schema public` plus remote schema inspection.
+- Objects verified on remote:
+  - `treasury_payment_intents`;
+  - `treasury_payment_consumptions`;
+  - unique `(chain_id, tx_hash, log_index)` on `treasury_payment_consumptions`;
+  - immutability trigger `treasury_payment_intents_immutable` (BEFORE DELETE OR UPDATE);
+  - RLS enabled on both tables;
+  - deny-all policies for `anon` and `authenticated`;
+  - the 3 RPCs (`consume_get_peones_treasury_payment`,
+    `consume_legacy_get_peones_payment`, `consume_lite_season_pass_payment`);
+  - grants restricted to `service_role` (revoked from `public`/`anon`/`authenticated`).
+- No records inserted; tables are empty by construction.
+- Canary envs remain OFF; applying the migration changes no runtime behavior.
 
 ## Remaining blockers before enablement
 
-Closed in this pass:
+Closed:
 
 - Control 2 on-chain reads (custody, source verification, bytecode match): evidenced.
 - Token matrix v1: decided (USDT-only).
 - Finality: decided (`CONFIRMATIONS=3`, decision record only).
 - Auth risk: decided (constrained internal/founder acceptance, decision record only).
+- Custodian/runbook sign-off: recorded (see Custodian sign-off above).
+- Hosted Supabase migration: applied and verified on `brsbdzpuvotxsadmcxyj`
+  (see Hosted Supabase migration — applied 2026-07-01 above).
 
 Still open:
 
-1. Custodian/runbook sign-off recorded by the Safe owner.
-2. Hosted Supabase migration applied through the approved deploy/CI flow.
-3. Rollback exercise: documented kill-switch run that stops new intents while
-   preserving recovery of mined payments.
-4. Canary env/config review before any enablement (envs remain OFF until then).
+1. Rollback exercise documented (from existing tests/code paths; see Rollback exercise above).
+2. Final env/config review before enablement (envs remain OFF until then).
 
 ## Non-authorization statement
 
-No production config changed. No cloud/production database touched. No deploy.
-No destructive Docker cleanup. No commit. The canary is not enabled; all canary
-env vars remain unset and default OFF.
+The only hosted database change is the additive migration
+`20260630120000` applied on 2026-07-01 (new tables, RLS, trigger, and RPCs; no
+data inserted, no existing object altered or dropped). No other production config
+changed. No deploy. No manual env/config change. No destructive SQL. The canary
+is not enabled; all canary env vars remain unset and default OFF.
