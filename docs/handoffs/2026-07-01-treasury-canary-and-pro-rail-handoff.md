@@ -26,44 +26,60 @@
    can now be bought via the no-approve treasury rail (same mechanism as
    Season Pass / Get Peones), in parallel with the existing Shop.buyItem
    path. Backend only at the time this doc was first written.
-6. **Task 4 (UI wiring) — done in a follow-up pass, same day.** `/hub`'s
-   `<ProSheet>` now uses the rail. Uncommitted — see the Task 4 section
-   below for full detail, including a scope correction (a third,
-   still-untouched PRO purchase path was found) and a real batching bug
-   caught by TDD.
+6. **Task 4 (UI wiring) — `/hub`'s `<ProSheet>` → rail, PR #160
+   (`69e51bfe`).** See the Task 4 section below for full detail, including
+   a scope correction (a third PRO purchase path was found) and a real
+   React batching bug caught by TDD.
+7. **Follow-up same day: third PRO path unified too, PR #161
+   (`ca042fb7`).** `<ExercisesScreen>` had its own separate, fully
+   duplicated `<ProSheet>` implementation (still on approve+`buyItem`) —
+   unified onto the same `useProSheetState()` hook. `executeProPurchase`
+   deleted (zero remaining callers). All three PRO surfaces now share one
+   code path, on the rail.
+8. **PRO treasury migration applied to hosted Supabase**, confirmed via
+   `supabase migration list --linked` (`20260701140000` shows in both
+   Local and Remote columns).
 
-## Current state — NOT all committed
+## Current state — everything committed, pushed, merged
 
-- The canary + treasury repointing work (items 1–4 above) is committed and
-  pushed to `main` (`652d2965`). Nothing half-broken there. The old
-  approve+`buyItem` PRO path (Shop itemId 6) still works unchanged — the new
-  rail is additive, not a replacement yet.
-- **Task 4 (PRO UI → rail) is done but sitting uncommitted in the working
-  tree** as of this update — see below for the file list.
-- Full test suite: 4617/4617 passing, tsc clean (includes Task 4's new
-  tests; was 4597/4597 at the `652d2965` commit).
-- The new `pro_subscriptions` + `consume_pro_treasury_payment` migration
+- Canary + treasury repointing (items 1–4): `main` (`652d2965`).
+- Task 4, `/hub` PRO → rail (item 6): `main` (`69e51bfe`, PR #160).
+- Third-path unification (item 7): `main` (`ca042fb7`, PR #161).
+- The old approve+`buyItem` PRO path (Shop itemId 6, `useShopSheetState`)
+  still works unchanged, by design — the rail is additive there, not a
+  replacement (per the original Phase 1 scope: keep it working in
+  parallel).
+- Full test suite: 4609/4609 passing, tsc + eslint clean (was 4597/4597
+  before this session's PRO work; net -8 after the third-path unification
+  deleted `purchase.test.ts` along with the dead code it tested).
+- The `pro_subscriptions` + `consume_pro_treasury_payment` migration
   (`apps/web/supabase/migrations/20260701140000_pro_treasury_payment.sql`)
-  is committed but **not yet applied to hosted Supabase** — it applies via
-  the normal deploy/CI flow per [[feedback_supabase_workflow]], not manually.
-- Local Supabase is stopped. Docker is running (was started this session to
-  validate the migration; leave running or stop it, either is fine).
+  is now **live on hosted Supabase** — pushed manually via
+  `supabase db push --linked` (there is no CI automation for this, see
+  the corrected [[feedback_supabase_workflow]] memory).
+- Local Supabase is stopped. Docker is running (was started this session
+  to validate the migration; leave running or stop it, either is fine).
+- **Not verified:** the actual on-chain leg of the rail (direct transfer
+  vs. approve+buyItem, `/api/verify-payment` on the wire) — no funded
+  wallet reachable in the coding sandbox this session. Needs a real
+  MiniPay/wallet pass before this is "proven" the way the canary/Season
+  Pass were.
 
-## Phase 1, Task 4: wire the PRO purchase UI — DONE (uncommitted)
+## Phase 1, Task 4: wire the PRO purchase UI — DONE + merged (PR #160, `69e51bfe`)
 
 Implemented via SDD → TDD → EDD in the same session this doc was written.
-Not yet committed/pushed — sitting as working-tree changes.
 
-**Scope correction found during implementation:** there are actually
+**Scope correction found during implementation:** there were actually
 *three* PRO purchase paths, not two. `<ProSheet>` at `/hub`
-(`useProSheetState`) is now on the new rail. `useShopSheetState`'s
+(`useProSheetState`) went on the new rail here. `useShopSheetState`'s
 `PRO_ITEM_ID` branch (the `/exercises` Shop sheet, itemId 6, approve +
-`buyItem`) is untouched, as planned. But `<ExercisesScreen>` **also**
-renders its own separate `<ProSheet>` instance with a local
-`handleProPurchase()` still calling `executeProPurchase` (same old
-approve + `buyItem` + `/api/verify-pro` flow, `lib/pro/purchase.ts`) —
-this was NOT in scope for today and was left untouched. So
-`lib/pro/purchase.ts`/`executeProPurchase` is still live, not dead code.
+`buyItem`) stayed untouched, as planned. `<ExercisesScreen>` **also**
+had its own separate `<ProSheet>` instance with a local
+`handleProPurchase()` calling `executeProPurchase` — out of scope for
+this slice, but unified in a same-day follow-up (PR #161, `ca042fb7`):
+`<ExercisesScreen>` now uses `useProSheetState()` too, and
+`lib/pro/purchase.ts`/`executeProPurchase` is deleted (zero remaining
+callers). All three PRO surfaces are on the no-approve rail now.
 
 **New files:**
 - `lib/payments/transfer-builder.ts` — added `buildProPackTransfer`
@@ -99,10 +115,21 @@ the actual on-chain leg (direct transfer vs. approve+buyItem,
 wallet reachable in the coding sandbox. Needs a real MiniPay/wallet
 pass before this is "proven" the way the canary/Season Pass were.
 
-**Not done yet (next task):** commit + push + PR. Then, per the
-original plan: retire the Shop-TX Coach-pack path (itemId 3/4, no new
-backend needed), and build the Shield Peones-spend backend (doesn't
-exist yet) before retiring Shield's Shop-TX path. Founder stays parked.
+**Session closed here 2026-07-01.** `supabase db push --linked` for the
+PRO migration is done (confirmed live, see above). Still open for next
+session:
+1. **Real on-chain verification** of the rail (no funded wallet in this
+   session's sandbox) — a real MiniPay/wallet purchase pass, mirroring
+   how the canary/Season Pass were proven.
+2. **Refresh 4 stale VR baselines** (`hub-clean`, `hub-daily-tactic-open`,
+   `hub-shop-sheet-open`, `about-page` — confirmed pre-existing on
+   `main`, unrelated to this session's work, found while running the
+   required VR pass before pushing).
+3. **Phase 1 continuation** (this is "Phase 1" the user means by
+   "continuemos"): retire the Shop-TX Coach-pack path (itemId 3/4, no new
+   backend needed, Peones already covers it), build the Shield
+   Peones-spend backend (doesn't exist yet), then retire Shield's Shop-TX
+   path. Founder stays parked (deprioritized per the audit).
 
 ## Open decisions, not yet made (not blocking Task 4)
 
