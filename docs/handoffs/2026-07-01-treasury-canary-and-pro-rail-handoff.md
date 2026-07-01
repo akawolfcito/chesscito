@@ -22,18 +22,26 @@
    plan already decided "TX only for on-chain persistence, everything
    consumable via Peones" — it was only half-shipped (Coach analysis got the
    Peones-spend path, the old Shop-TX credit-pack path was never retired).
-5. **Phase 1 of the consolidation, PRO piece — done.** Chesscito PRO can now
-   be bought via the no-approve treasury rail (same mechanism as Season
-   Pass / Get Peones), in parallel with the existing Shop.buyItem path.
-   Backend only — UI still wired to the old path. See below.
+5. **Phase 1 of the consolidation, PRO piece — backend done.** Chesscito PRO
+   can now be bought via the no-approve treasury rail (same mechanism as
+   Season Pass / Get Peones), in parallel with the existing Shop.buyItem
+   path. Backend only at the time this doc was first written.
+6. **Task 4 (UI wiring) — done in a follow-up pass, same day.** `/hub`'s
+   `<ProSheet>` now uses the rail. Uncommitted — see the Task 4 section
+   below for full detail, including a scope correction (a third,
+   still-untouched PRO purchase path was found) and a real batching bug
+   caught by TDD.
 
-## Current state — safe to leave as-is
+## Current state — NOT all committed
 
-- Everything is committed and pushed to `main`. Nothing half-broken. The old
+- The canary + treasury repointing work (items 1–4 above) is committed and
+  pushed to `main` (`652d2965`). Nothing half-broken there. The old
   approve+`buyItem` PRO path (Shop itemId 6) still works unchanged — the new
   rail is additive, not a replacement yet.
-- Full test suite: 4597/4597 passing, tsc clean, as of the last commit
-  (`652d2965`).
+- **Task 4 (PRO UI → rail) is done but sitting uncommitted in the working
+  tree** as of this update — see below for the file list.
+- Full test suite: 4617/4617 passing, tsc clean (includes Task 4's new
+  tests; was 4597/4597 at the `652d2965` commit).
 - The new `pro_subscriptions` + `consume_pro_treasury_payment` migration
   (`apps/web/supabase/migrations/20260701140000_pro_treasury_payment.sql`)
   is committed but **not yet applied to hosted Supabase** — it applies via
@@ -41,36 +49,60 @@
 - Local Supabase is stopped. Docker is running (was started this session to
   validate the migration; leave running or stop it, either is fine).
 
-## Next task — Phase 1, Task 4: wire the PRO purchase UI
+## Phase 1, Task 4: wire the PRO purchase UI — DONE (uncommitted)
 
-**Not started.** This is the next concrete piece of Phase 1
-(`docs/product/chesscito-monetization-consolidation-audit-2026-07-01.md`,
-"Decision: two phases" section).
+Implemented via SDD → TDD → EDD in the same session this doc was written.
+Not yet committed/pushed — sitting as working-tree changes.
 
-What needs to happen:
+**Scope correction found during implementation:** there are actually
+*three* PRO purchase paths, not two. `<ProSheet>` at `/hub`
+(`useProSheetState`) is now on the new rail. `useShopSheetState`'s
+`PRO_ITEM_ID` branch (the `/exercises` Shop sheet, itemId 6, approve +
+`buyItem`) is untouched, as planned. But `<ExercisesScreen>` **also**
+renders its own separate `<ProSheet>` instance with a local
+`handleProPurchase()` still calling `executeProPurchase` (same old
+approve + `buyItem` + `/api/verify-pro` flow, `lib/pro/purchase.ts`) —
+this was NOT in scope for today and was left untouched. So
+`lib/pro/purchase.ts`/`executeProPurchase` is still live, not dead code.
 
-1. Find the `<ProSheet>` component (per `shop-catalog.ts`'s comment, it's
-   "the hero discoverability surface" at `/hub`) and the `PRO_ITEM_ID`
-   branch inside `useShopSheetState` (parallel to the `SHIELD_ITEM_ID`
-   branch — grep both for context).
-2. Switch that flow from approve + `Shop.buyItem` + `POST /api/verify-pro`
-   to the same `usePaymentRail`-style single-tx flow already used by
-   `GetPeonesSheet` / `SeasonPassSheet`, with `sku: "chesscito_pro_30"`.
-   The backend piece for this (`/api/verify-payment` PRO branch) is done
-   and tested — this task is UI-only.
-3. Keep the Shop `buyItem` PRO path (itemId 6) working in parallel — do not
-   remove it in this task. Both paths already compose correctly (shared
-   Redis extend logic, see `lib/coach/pro-extend.ts`).
-4. Per project convention for UI changes: start the dev server and
-   exercise the real purchase flow in a browser (or MiniPay) before calling
-   this done — don't just rely on the test suite for a user-facing flow
-   change.
-5. Once this ships and is proven (mirroring today's real-purchase
-   verification pattern for the canary/Season Pass), the natural follow-ups
-   are: retire the Shop-TX Coach-pack path (itemId 3/4, no new backend
-   needed, Peones already covers it), and build the Shield Peones-spend
-   backend (doesn't exist yet — see the audit doc's grant-mechanism risk
-   map) before retiring Shield's Shop-TX path. Founder stays parked.
+**New files:**
+- `lib/payments/transfer-builder.ts` — added `buildProPackTransfer`
+  (mirrors `buildSeasonPassTransfer`).
+- `lib/pro/use-pro-rail.ts` — `useProRail`, mirrors `useSeasonPassRail`
+  exactly (same phase machine/retry backoff), posts to
+  `/api/verify-payment` (already shipped, unchanged).
+- `lib/pro/pro-rail-error.ts` — pure `classifyProRailError` mapping rail
+  errors to `<ProSheet>`'s *existing* `PRO_COPY.errors.*` strings (no new
+  i18n keys).
+
+**Changed:** `lib/pro/use-pro-sheet-state.ts` rewritten to use
+`useStablecoinTokenSelection` + `useProRail` instead of the Shop
+approve+`buyItem` flow. `ProSheetProps`/`<ProSheet>` itself: **zero
+changes** — external contract identical, so `/arena` and
+`/profile`'s `useProSheetState()` consumers are unaffected.
+
+**Non-obvious bug found + fixed during TDD:** a manual "retry
+verification" that fails with the *same* error reason/txHash as the
+original failure can get silently swallowed by React 18's batching —
+the effect meant to fire on error-transition never re-runs because its
+dependency array looks unchanged between commits. Fixed with an
+explicit `attemptToken` counter bumped on every `pay()`/`verifyAgain()`
+call, included in the effect's deps. Caught by the "retry still
+failing" test, not by inspection.
+
+**Verified:** 4617/4617 tests green, `tsc --noEmit` clean. Browser pass
+(Playwright, dev server, Full mode) confirmed `<ProSheet>` renders
+correctly at `/hub` and `/exercises`, wallet-connect gate unregressed,
+close/reopen has no state leak, zero console errors. **Not verified:**
+the actual on-chain leg (direct transfer vs. approve+buyItem,
+`/api/verify-payment` vs `/api/verify-pro` on the wire) — no funded
+wallet reachable in the coding sandbox. Needs a real MiniPay/wallet
+pass before this is "proven" the way the canary/Season Pass were.
+
+**Not done yet (next task):** commit + push + PR. Then, per the
+original plan: retire the Shop-TX Coach-pack path (itemId 3/4, no new
+backend needed), and build the Shield Peones-spend backend (doesn't
+exist yet) before retiring Shield's Shop-TX path. Founder stays parked.
 
 ## Open decisions, not yet made (not blocking Task 4)
 

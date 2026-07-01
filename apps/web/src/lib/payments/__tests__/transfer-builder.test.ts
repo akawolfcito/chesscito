@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { decodeFunctionData } from "viem";
 import { erc20Abi } from "@/lib/contracts/tokens";
-import { PEONES_PACKS, type PeonesPackSku } from "@/lib/payments/rail-config";
-import { buildPeonesPackTransfer } from "@/lib/payments/transfer-builder";
+import { PEONES_PACKS, PRO_PACKS, type PeonesPackSku, type ProPackSku } from "@/lib/payments/rail-config";
+import { buildPeonesPackTransfer, buildProPackTransfer } from "@/lib/payments/transfer-builder";
 
 const TREASURY = "0x1234567890abcdef1234567890abcdef12345678";
 const USDC = "0xcebA9300f2b948710d2653dD7B07f33A8B32118C";
@@ -104,6 +104,88 @@ describe("buildPeonesPackTransfer — purity", () => {
     buildPeonesPackTransfer({ sku: "peones_pack_50", treasury: TREASURY });
     const after = JSON.stringify(
       PEONES_PACKS.peones_pack_50,
+      (_k, v) => (typeof v === "bigint" ? v.toString() : v),
+    );
+    expect(after).toBe(before);
+  });
+});
+
+describe("buildProPackTransfer — happy path (USDC default)", () => {
+  const tx = buildProPackTransfer({ sku: "chesscito_pro_30", treasury: TREASURY });
+
+  it("targets the USDC token contract with value 0n", () => {
+    expect(tx.to).toBe(USDC);
+    expect(tx.value).toBe(0n);
+    expect(tx.token.symbol).toBe("USDC");
+    expect(tx.token.decimals).toBe(6);
+  });
+
+  it("normalizes $1.99 to 1_990_000 (USDC 6 decimals)", () => {
+    expect(tx.priceUsd6).toBe(1_990_000n);
+    expect(tx.expectedAmount).toBe(1_990_000n);
+    expect(tx.sku).toBe("chesscito_pro_30");
+    expect(tx.source).toBe("pro_purchase");
+    expect(tx.treasury).toBe(TREASURY);
+  });
+
+  it("encodes transfer(treasury, 1_990_000) calldata", () => {
+    expect(tx.data.startsWith("0xa9059cbb")).toBe(true); // transfer selector
+    const decoded = decodeFunctionData({ abi: erc20Abi, data: tx.data });
+    expect(decoded.functionName).toBe("transfer");
+    expect(String(decoded.args?.[0]).toLowerCase()).toBe(TREASURY);
+    expect(decoded.args?.[1]).toBe(1_990_000n);
+  });
+});
+
+describe("buildProPackTransfer — other accepted stablecoins", () => {
+  it("cUSD (18 decimals) → 1_990_000 * 10^12", () => {
+    const tx = buildProPackTransfer({
+      sku: "chesscito_pro_30",
+      treasury: TREASURY,
+      tokenSymbol: "cUSD",
+    });
+    expect(tx.to).toBe(CUSD);
+    expect(tx.token.decimals).toBe(18);
+    expect(tx.expectedAmount).toBe(1_990_000n * 10n ** 12n);
+  });
+});
+
+describe("buildProPackTransfer — validation", () => {
+  it("rejects an invalid treasury address", () => {
+    expect(() =>
+      buildProPackTransfer({ sku: "chesscito_pro_30", treasury: "not-an-address" }),
+    ).toThrow(/Invalid treasury/);
+  });
+
+  it("rejects an unknown pack SKU", () => {
+    expect(() =>
+      buildProPackTransfer({
+        sku: "chesscito_pro_999" as ProPackSku,
+        treasury: TREASURY,
+      }),
+    ).toThrow(/Unknown PRO pack SKU/);
+  });
+
+  it("rejects a non-allowlisted token", () => {
+    expect(() =>
+      buildProPackTransfer({
+        sku: "chesscito_pro_30",
+        treasury: TREASURY,
+        tokenSymbol: "DAI",
+      }),
+    ).toThrow(/not-allowlisted/);
+  });
+});
+
+describe("buildProPackTransfer — purity", () => {
+  it("does not mutate the pack config", () => {
+    const before = JSON.stringify(
+      PRO_PACKS.chesscito_pro_30,
+      (_k, v) => (typeof v === "bigint" ? v.toString() : v),
+    );
+    buildProPackTransfer({ sku: "chesscito_pro_30", treasury: TREASURY });
+    const after = JSON.stringify(
+      PRO_PACKS.chesscito_pro_30,
       (_k, v) => (typeof v === "bigint" ? v.toString() : v),
     );
     expect(after).toBe(before);

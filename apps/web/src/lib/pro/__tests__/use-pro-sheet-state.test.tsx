@@ -5,18 +5,24 @@ import type { ReactNode } from "react";
 import enMessages from "@/lib/content/messages/en";
 
 const TEST_WALLET = "0x000000000000000000000000000000000000abcd";
-const SHOP_ADDRESS = "0x0000000000000000000000000000000000005a4e";
+const TREASURY = "0x1234567890abcdef1234567890abcdef12345678";
+const USDC = "0xcebA9300f2b948710d2653dD7B07f33A8B32118C";
+const HASH = `0x${"a".repeat(64)}` as const;
 
 const useAccountMock = vi.hoisted(() =>
   vi.fn(() => ({ address: TEST_WALLET, isConnected: true })),
 );
 const useChainIdMock = vi.hoisted(() => vi.fn(() => 42220));
-const usePublicClientMock = vi.hoisted(() => vi.fn(() => ({}) as object));
+const waitReceiptMock = vi.hoisted(() => vi.fn());
+const usePublicClientMock = vi.hoisted(() =>
+  vi.fn(() => ({ waitForTransactionReceipt: waitReceiptMock })),
+);
 const useReadContractsMock = vi.hoisted(() =>
   vi.fn(() => ({
     data: undefined as
       | undefined
       | { result?: bigint; status?: string }[],
+    isLoading: false,
   })),
 );
 const writeContractAsyncMock = vi.hoisted(() => vi.fn());
@@ -38,7 +44,6 @@ const useProStatusMock = vi.hoisted(() =>
 );
 const trackMock = vi.hoisted(() => vi.fn());
 const hapticSuccessMock = vi.hoisted(() => vi.fn());
-const executeProPurchaseMock = vi.hoisted(() => vi.fn());
 
 vi.mock("wagmi", () => ({
   useAccount: () => useAccountMock(),
@@ -57,13 +62,10 @@ vi.mock("@/lib/pro/use-pro-status", () => ({
   useProStatus: () => useProStatusMock(),
 }));
 
-vi.mock("@/lib/pro/purchase", () => ({
-  executeProPurchase: (...args: unknown[]) => executeProPurchaseMock(...args),
-}));
-
 vi.mock("@/lib/contracts/chains", () => ({
   getConfiguredChainId: () => 42220,
-  getShopAddress: () => SHOP_ADDRESS,
+  getShopAddress: () => "0x0000000000000000000000000000000000005a4e",
+  getMiniPayFeeCurrency: () => undefined,
 }));
 
 vi.mock("@/lib/telemetry", () => ({
@@ -76,9 +78,6 @@ vi.mock("@/lib/haptics", () => ({
 
 import { useProSheetState } from "../use-pro-sheet-state";
 
-/** Wraps `renderHook` with the next-intl provider so the hook's
- *  internal `useTranslations("PRO_COPY")` call resolves successfully.
- *  EN bundle is sufficient — these tests assert behavior, not copy. */
 const IntlWrapper = ({ children }: { children: ReactNode }) => (
   <NextIntlClientProvider
     locale="en"
@@ -93,27 +92,27 @@ const IntlWrapper = ({ children }: { children: ReactNode }) => (
 );
 IntlWrapper.displayName = "IntlWrapper";
 
-function renderProSheetHook() {
-  return renderHook(() => useProSheetState(), { wrapper: IntlWrapper });
+function renderProSheetHook(options?: Parameters<typeof useProSheetState>[0]) {
+  return renderHook(() => useProSheetState(options), { wrapper: IntlWrapper });
 }
 
-/** Token balances large enough to clear the cheapest stablecoin tier so
- *  `selectPaymentToken(PRO_PRICE_USD6)` resolves to a non-null token in
- *  the success / verify-failed tests. */
 function withSufficientBalances() {
   useReadContractsMock.mockReturnValue({
     data: [
-      // ACCEPTED_TOKENS entries — assume 6 decimals, balance 1_000 USD6
       { result: 1_000_000_000n, status: "success" },
       { result: 1_000_000_000n, status: "success" },
       { result: 1_000_000_000n, status: "success" },
-      // CELO sibling — never used by PRO but read in the same batch
-      { result: 0n, status: "success" },
     ],
+    isLoading: false,
   });
 }
 
+function mockFetchOk(body: Record<string, unknown>) {
+  return vi.fn().mockResolvedValue({ json: () => Promise.resolve(body) });
+}
+
 beforeEach(() => {
+  process.env.NEXT_PUBLIC_CHESSCITO_TREASURY_ADDRESS = TREASURY;
   useAccountMock.mockReset();
   useChainIdMock.mockReset();
   usePublicClientMock.mockReset();
@@ -127,26 +126,27 @@ beforeEach(() => {
   useProStatusMock.mockReset();
   trackMock.mockReset();
   hapticSuccessMock.mockReset();
-  executeProPurchaseMock.mockReset();
+  waitReceiptMock.mockReset();
 
   useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
   useChainIdMock.mockReturnValue(42220);
-  usePublicClientMock.mockReturnValue({} as object);
-  useReadContractsMock.mockReturnValue({ data: undefined });
-  useWriteContractMock.mockReturnValue({
-    writeContractAsync: writeContractAsyncMock,
-  });
+  usePublicClientMock.mockReturnValue({ waitForTransactionReceipt: waitReceiptMock });
+  useReadContractsMock.mockReturnValue({ data: undefined, isLoading: false });
+  useWriteContractMock.mockReturnValue({ writeContractAsync: writeContractAsyncMock });
   useSwitchChainMock.mockReturnValue({ switchChain: switchChainMock });
   useProStatusMock.mockReturnValue({
     status: null,
     isLoading: false,
     refetch: refetchProStatusMock,
   });
+  writeContractAsyncMock.mockResolvedValue(HASH);
+  waitReceiptMock.mockResolvedValue({ status: "success" });
 
-  vi.stubGlobal("fetch", vi.fn());
+  vi.stubGlobal("fetch", mockFetchOk({ ok: true, expiresAt: Date.now() + 30 * 86_400_000, token: USDC, amountPaid: "1990000", duplicate: false, overpaid: false }));
 });
 
 afterEach(() => {
+  delete process.env.NEXT_PUBLIC_CHESSCITO_TREASURY_ADDRESS;
   vi.unstubAllGlobals();
 });
 
@@ -166,10 +166,7 @@ describe("useProSheetState — open/close lifecycle", () => {
 
   it("closeSheet while idle clears the sheet + resets error/verify state", async () => {
     withSufficientBalances();
-    executeProPurchaseMock.mockResolvedValueOnce({
-      kind: "verify-failed",
-      txHash: "0xfeedface",
-    });
+    vi.stubGlobal("fetch", mockFetchOk({ ok: false, error: "amount_too_low" }));
 
     const { result } = renderProSheetHook();
 
@@ -180,7 +177,7 @@ describe("useProSheetState — open/close lifecycle", () => {
       await result.current.sheetProps.onPurchase();
     });
 
-    expect(result.current.sheetProps.verifyFailedTxHash).toBe("0xfeedface");
+    expect(result.current.sheetProps.verifyFailedTxHash).toBe(HASH);
     expect(result.current.sheetProps.errorMessage).not.toBeNull();
 
     act(() => {
@@ -194,73 +191,25 @@ describe("useProSheetState — open/close lifecycle", () => {
 });
 
 describe("useProSheetState — handlePurchase", () => {
-  it("returns early without firing pro_purchase_started when balances are insufficient (no-token)", async () => {
-    // tokenBalances=undefined → selectPaymentToken returns null → no-token.
+  it("returns early without calling the rail when balances are insufficient (no-token)", async () => {
     const { result } = renderProSheetHook();
 
     await act(async () => {
       await result.current.sheetProps.onPurchase();
     });
 
-    expect(trackMock).toHaveBeenCalledWith("pro_purchase_failed", {
-      kind: "no-token",
-    });
-    // pro_purchase_started must NOT fire for the no-token preview branch —
-    // the lookahead exists precisely to keep the funnel clean.
+    expect(trackMock).toHaveBeenCalledWith("pro_purchase_failed", { kind: "no-token" });
     expect(
       trackMock.mock.calls.find((c) => c[0] === "pro_purchase_started"),
     ).toBeUndefined();
     expect(result.current.sheetProps.errorMessage).toBe(
       "Insufficient stablecoin balance.",
     );
-    expect(executeProPurchaseMock).not.toHaveBeenCalled();
+    expect(writeContractAsyncMock).not.toHaveBeenCalled();
   });
 
-  it("P1-6 invariant: never settles in CELO even when CELO is the only token with balance", async () => {
-    // CELO at the tail of the read; ACCEPTED_TOKENS (USDC/USDT/USDM) all
-    // empty. If `selectPaymentToken` accidentally widened to include
-    // CELO (e.g. by dropping the `slice(0, ACCEPTED_TOKENS.length)`
-    // or by swapping `ACCEPTED_TOKENS` → `BALANCE_READ_TOKENS` in the
-    // call), this test would surface a successful selection of CELO
-    // and fail. Today the slice keeps CELO out → no-token fires.
-    //
-    // Closes P1-6 (CELO oculto en runtime MiniPay). MiniPay never
-    // surfaces CELO; we make PRO equally strict regardless of runtime
-    // so a user with only CELO outside MiniPay also can't accidentally
-    // settle PRO in CELO at distorted USD value.
-    useReadContractsMock.mockReturnValue({
-      data: [
-        // USDC / USDT / USDM all empty
-        { result: 0n, status: "success" },
-        { result: 0n, status: "success" },
-        { result: 0n, status: "success" },
-        // CELO at the tail — huge balance (1000 CELO at 18 decimals)
-        { result: 1_000_000_000_000_000_000_000n, status: "success" },
-      ],
-    });
-    const { result } = renderProSheetHook();
-
-    await act(async () => {
-      await result.current.sheetProps.onPurchase();
-    });
-
-    expect(trackMock).toHaveBeenCalledWith("pro_purchase_failed", {
-      kind: "no-token",
-    });
-    expect(
-      trackMock.mock.calls.find((c) => c[0] === "pro_purchase_started"),
-    ).toBeUndefined();
-    expect(executeProPurchaseMock).not.toHaveBeenCalled();
-  });
-
-  it("on success: closes sheet, refetches PRO status, fires haptic + confirmed event", async () => {
+  it("on success: sends a direct transfer (no approve), closes sheet, refetches PRO status, fires haptic + confirmed event", async () => {
     withSufficientBalances();
-    executeProPurchaseMock.mockResolvedValueOnce({
-      kind: "success",
-      txHash: "0xabcdef0123456789",
-      expiresAt: Date.now() + 30 * 86_400_000,
-    });
-
     const { result } = renderProSheetHook();
 
     act(() => {
@@ -270,21 +219,22 @@ describe("useProSheetState — handlePurchase", () => {
       await result.current.sheetProps.onPurchase();
     });
 
+    for (const c of writeContractAsyncMock.mock.calls) {
+      expect(c[0].functionName).not.toBe("approve");
+    }
+    expect(writeContractAsyncMock).toHaveBeenCalledTimes(1);
     expect(result.current.open).toBe(false);
     expect(refetchProStatusMock).toHaveBeenCalledTimes(1);
     expect(hapticSuccessMock).toHaveBeenCalledTimes(1);
     expect(trackMock).toHaveBeenCalledWith(
       "pro_purchase_confirmed",
-      expect.objectContaining({ tx_hash_prefix: "0xabcdef01" }),
+      expect.objectContaining({ days_granted: 30, tx_hash_prefix: HASH.slice(0, 10) }),
     );
   });
 
   it("on verify-failed: keeps sheet open, sets verifyFailedTxHash + errorMessage, surfaces retry CTA", async () => {
     withSufficientBalances();
-    executeProPurchaseMock.mockResolvedValueOnce({
-      kind: "verify-failed",
-      txHash: "0xverifyhash",
-    });
+    vi.stubGlobal("fetch", mockFetchOk({ ok: false, error: "amount_too_low" }));
 
     const { result } = renderProSheetHook();
 
@@ -296,27 +246,17 @@ describe("useProSheetState — handlePurchase", () => {
     });
 
     expect(result.current.open).toBe(true);
-    expect(result.current.sheetProps.verifyFailedTxHash).toBe("0xverifyhash");
+    expect(result.current.sheetProps.verifyFailedTxHash).toBe(HASH);
     expect(result.current.sheetProps.errorMessage).not.toBeNull();
     expect(trackMock).toHaveBeenCalledWith(
       "pro_purchase_failed",
       expect.objectContaining({ kind: "verify-failed" }),
     );
   });
-});
 
-describe("useProSheetState — handleRetryVerify", () => {
-  it("on /api/verify-pro 200 + active=true: closes sheet, clears state, refetches", async () => {
+  it("on user cancellation: stays silent — no errorMessage, no pro_purchase_failed", async () => {
     withSufficientBalances();
-    executeProPurchaseMock.mockResolvedValueOnce({
-      kind: "verify-failed",
-      txHash: "0xretryhash",
-    });
-    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => ({ active: true }),
-    });
+    writeContractAsyncMock.mockRejectedValueOnce(new Error("User rejected the request"));
 
     const { result } = renderProSheetHook();
 
@@ -326,7 +266,31 @@ describe("useProSheetState — handleRetryVerify", () => {
     await act(async () => {
       await result.current.sheetProps.onPurchase();
     });
-    expect(result.current.sheetProps.verifyFailedTxHash).toBe("0xretryhash");
+
+    expect(result.current.open).toBe(true);
+    expect(result.current.sheetProps.errorMessage).toBeNull();
+    expect(
+      trackMock.mock.calls.find((c) => c[0] === "pro_purchase_failed"),
+    ).toBeUndefined();
+  });
+});
+
+describe("useProSheetState — handleRetryVerify", () => {
+  it("on retry success: closes sheet, clears state, refetches", async () => {
+    withSufficientBalances();
+    vi.stubGlobal("fetch", mockFetchOk({ ok: false, error: "amount_too_low" }));
+
+    const { result } = renderProSheetHook();
+
+    act(() => {
+      result.current.openSheet();
+    });
+    await act(async () => {
+      await result.current.sheetProps.onPurchase();
+    });
+    expect(result.current.sheetProps.verifyFailedTxHash).toBe(HASH);
+
+    vi.stubGlobal("fetch", mockFetchOk({ ok: true, duplicate: true, expiresAt: Date.now() + 30 * 86_400_000, token: USDC, amountPaid: "1990000" }));
 
     await act(async () => {
       result.current.sheetProps.onRetryVerify?.();
@@ -340,17 +304,9 @@ describe("useProSheetState — handleRetryVerify", () => {
     expect(refetchProStatusMock).toHaveBeenCalled();
   });
 
-  it("on /api/verify-pro non-active response: keeps state intact + fires retry-failed telemetry", async () => {
+  it("on retry still failing: keeps state intact + fires retry-failed telemetry", async () => {
     withSufficientBalances();
-    executeProPurchaseMock.mockResolvedValueOnce({
-      kind: "verify-failed",
-      txHash: "0xretryhash2",
-    });
-    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => ({ active: false }),
-    });
+    vi.stubGlobal("fetch", mockFetchOk({ ok: false, error: "amount_too_low" }));
 
     const { result } = renderProSheetHook();
 
@@ -368,14 +324,11 @@ describe("useProSheetState — handleRetryVerify", () => {
     await waitFor(() => {
       expect(result.current.sheetProps.isRetryingVerify).toBe(false);
     });
-    expect(result.current.sheetProps.verifyFailedTxHash).toBe("0xretryhash2");
+    expect(result.current.sheetProps.verifyFailedTxHash).toBe(HASH);
     expect(result.current.sheetProps.errorMessage).not.toBeNull();
     expect(trackMock).toHaveBeenCalledWith(
       "pro_verify_retry_failed",
-      expect.objectContaining({
-        tx_hash_prefix: "0xretryhas",
-        status: 200,
-      }),
+      expect.objectContaining({ tx_hash_prefix: HASH.slice(0, 10) }),
     );
   });
 });
