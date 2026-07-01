@@ -154,39 +154,95 @@ Token reads:
 
 USDT is the only token currently accepted by the Treasury, so the first canary
 must be USDT-only. Enabling USDC or cUSD/USDm later requires an owner
-`setAcceptedToken` write plus separate validation. Pending for full Control 2
-PASS: Celoscan source-verification confirmation, reproducible bytecode-to-build
-match, and a signed custody/withdrawal runbook.
+`setAcceptedToken` write plus separate validation.
+
+## Source verification and bytecode match — 2026-07-01
+
+- Celoscan source verification: **PASS** (completed manually).
+- Verification URL:
+  `https://celoscan.io/address/0xcD3837DD017dFA5E31A2e3Cf390721E16Ac8Fbf0#code`
+- Bytecode-vs-artifact match: **PASS** (byte-for-byte).
+  - Artifact: `apps/contracts/artifacts/contracts/ChesscitoTreasury.sol/ChesscitoTreasury.json`
+  - Deployed runtime equals local artifact runtime bytecode (1751 bytes, metadata trailer included).
+  - Build: solc `0.8.28`, evmVersion `cancun`, optimizer enabled, runs `200`.
+- **Control 2 status: `on-chain-source-and-bytecode-evidence-ready`.**
+  Custody reads (owner, pendingOwner, payout), source verification, and bytecode
+  match are all evidenced. The one remaining Control 2 item is a signed
+  custodian/withdrawal runbook sign-off (see Custodian runbook below).
+
+## Candidate token matrix v1 decision
+
+- Canary v1 is **USDT-only**.
+  - Token: USDT `0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e`
+  - Chain: Celo Mainnet `42220`, decimals `6`, Treasury `acceptedToken=true`.
+- USDC and cUSD/USDm are **excluded from v1** because on-chain `acceptedToken=false`.
+  They require an owner `setAcceptedToken` write plus separate validation before
+  any later cycle (cUSD/USDm additionally needs 18-decimal validation).
 
 ## Finality decision note
 
-- Recommended: `CHESSCITO_TREASURY_CANARY_CONFIRMATIONS=3` (about 15s on Celo IBF).
+- Decision for canary v1: `CHESSCITO_TREASURY_CANARY_CONFIRMATIONS=3` (about 15s on Celo IBF).
 - Scope: Get Peones Treasury canary only. SKU `peones_pack_50`. Amount `$0.50`.
-- Reason: conservative enough for a small Celo canary while still usable.
-- Status: **not approved yet. Do not set env vars.** Without an approved value the
-  config fails closed with `canary_finality_unconfigured`.
+  Entitlement: `50 Peones`.
+- Reason: measure real MiniPay UX impact of 3 confirmations during the internal
+  canary. This value may be reduced later based on observed `time_to_credit`.
+- Measurement note: during the canary, record and observe `time_to_receipt`,
+  `time_to_3_confirmations`, and `time_to_credit` to inform any later reduction.
+- Status: value **approved for canary v1** as a decision record only. Env vars are
+  **not set** by this PR; until the env is deliberately configured, the server
+  fails closed with `canary_finality_unconfigured`.
 
 ## Auth risk sign-off note
 
 - `ALLOW_CLIENT_ASSERTED_WALLET_FOR_GET_PEONES_CANARY=true` is required before any
-  enablement.
-- Default must remain OFF. Without it the config fails closed with
+  enablement. Default must remain OFF. Without it the config fails closed with
   `canary_client_asserted_wallet_not_allowed`.
-- Accepts limited risk because no SIWE/SIWC or authenticated wallet session
-  exists. Credit remains constrained to the canonical transaction sender and
-  `Transfer.from`.
-- Status: **not approved yet. Do not enable the risk gate.**
+- Strong wallet-session auth (for example SIWE/SIWC at app entry) is desired
+  later and is not part of this canary.
+- Decision for canary v1: client-asserted wallet risk is **accepted only for the
+  internal/founder canary**, and only under all of these constraints:
+  - USDT-only;
+  - SKU `peones_pack_50`;
+  - amount `$0.50`;
+  - entitlement `50 Peones`;
+  - internal/founder canary only (no public rollout);
+  - credit constrained to the canonical transaction sender and `Transfer.from`.
+- Status: accepted as a **documented decision record only**. The risk gate env is
+  **not set** by this PR and remains OFF.
+
+## Custodian runbook
+
+- Owner/custodian Safe: `0x917497b64eeB85859edcf2e4ca64059eDfeC1923`.
+- `withdrawTokenToPayout(token, amount)` sends to the configured `payoutAddress`.
+- `withdrawToken(token, to, amount)` sends to an arbitrary recipient, owner only.
+- `renounceOwnership()` is disabled by design (`OwnershipRenunciationDisabled`).
+- Any owner write requires explicit operational approval.
+- **No withdrawal or owner write is authorized by this PR.**
+
+## Hosted Supabase migration (next step, not applied)
+
+- Project ref: `brsbdzpuvotxsadmcxyj`.
+- Migration: `apps/web/supabase/migrations/20260630120000_get_peones_treasury_canary_foundation.sql`.
+- Note: the hosted migration must be applied through the approved deploy/CI flow
+  or an explicit manual approval, with canary envs still OFF. Not applied by this
+  PR. Local validation does not substitute the hosted apply.
 
 ## Remaining blockers before enablement
 
-1. Control 2 on-chain reads executed, dated, and signed by the custodian.
-2. Token matrix reads: `acceptedToken` true plus on-chain decimals per enabled token.
-3. Finality approval: explicitly approve `CONFIRMATIONS=3`.
-4. Auth risk sign-off: documented acceptance of the client-asserted wallet model.
-5. DB cloud migration applied to the hosted chesscito project via deploy/CI
-   (local validation does not substitute the hosted apply).
-6. Rollback exercise: documented kill-switch run that stops new intents while
+Closed in this pass:
+
+- Control 2 on-chain reads (custody, source verification, bytecode match): evidenced.
+- Token matrix v1: decided (USDT-only).
+- Finality: decided (`CONFIRMATIONS=3`, decision record only).
+- Auth risk: decided (constrained internal/founder acceptance, decision record only).
+
+Still open:
+
+1. Custodian/runbook sign-off recorded by the Safe owner.
+2. Hosted Supabase migration applied through the approved deploy/CI flow.
+3. Rollback exercise: documented kill-switch run that stops new intents while
    preserving recovery of mined payments.
+4. Canary env/config review before any enablement (envs remain OFF until then).
 
 ## Non-authorization statement
 
