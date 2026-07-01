@@ -126,6 +126,36 @@ principle, unfinished.** Concretely raised:
   model, but is a bigger product decision than this doc should make
   unilaterally — flagged for explicit operator decision below.
 
+## Decision: two phases, Phase 1 scoped now (2026-07-01)
+
+Operator confirmed a two-phase split rather than solving the full economic
+model in one pass:
+
+- **Phase 1 (now, deliberately light)**: eliminate `approve` from every
+  active purchase flow's UI — one tap, one tx, everywhere. Does not require
+  resolving the Peones-as-central-currency question yet.
+- **Phase 2 (later, blocked on Phase 1)**: deepen Peones as the central
+  currency — e.g. a real-money PRO purchase could also mint an off-chain
+  "Peones twin" — but this needs PRO and everything else already solid on
+  the no-approve rail first.
+
+**Phase 1 scope, concretely:**
+
+1. **PRO (itemId 6)** → migrate to the no-approve rail (new SKU, reuses the
+   existing Redis `PRO_EXTEND_LUA` grant logic, same shape as Season Pass).
+   This is the only genuinely new payment-intent flow needed.
+2. **Shield (itemId 2) + Coach packs (itemId 3/4)** → do **not** port to the
+   no-approve rail. **Retire** the Shop-approve-TX purchase path instead,
+   since Peones-spend already exists for Coach and should be finished for
+   Shield/hint/retry (per the Sprint 4 spec above) if not already shipped.
+   Less work than porting, and it directly resolves the "3 ways to pay for
+   one thing" problem found above rather than adding a 4th way.
+3. **Founder (itemId 1 + 5)** → untouched, stays parked.
+
+This is the next concrete build task, separate from and smaller than the
+still-open Shop migration question from earlier in this doc (which is now
+effectively answered: don't migrate Shield/Coach, retire them).
+
 ## Configurable pricing — feasibility (operator asked directly)
 
 Today, every price is a hardcoded TypeScript constant (`priceUsd6` in
