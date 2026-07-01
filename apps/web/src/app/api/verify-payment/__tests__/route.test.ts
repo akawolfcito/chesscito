@@ -16,8 +16,17 @@ vi.mock("viem", async (importOriginal) => {
 
 const mockRedisIncrby = vi.hoisted(() => vi.fn().mockResolvedValue(3));
 const mockRedisSet = vi.hoisted(() => vi.fn().mockResolvedValue("OK"));
+const mockRedisEval = vi.hoisted(() => vi.fn().mockResolvedValue("1234567890000"));
+const mockRedisGet = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 vi.mock("@upstash/redis", () => ({
-  Redis: { fromEnv: vi.fn(() => ({ incrby: mockRedisIncrby, set: mockRedisSet })) },
+  Redis: {
+    fromEnv: vi.fn(() => ({
+      incrby: mockRedisIncrby,
+      set: mockRedisSet,
+      eval: mockRedisEval,
+      get: mockRedisGet,
+    })),
+  },
 }));
 
 vi.mock("@/lib/server/demo-signing", () => ({
@@ -386,6 +395,117 @@ describe("season pass", () => {
     mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, SP_PRICE - 1n, 0)]));
     const res = await POST(makeRequest(spBody()));
     expect((await res.json()).error).toBe("amount_too_low");
+  });
+});
+
+// ── Chesscito PRO tests (no-approve rail) ───────────────────────────────────
+// Same mechanism as Season Pass, but the grant is the shared Redis
+// extend-or-set (lib/coach/pro-extend.ts) — the SAME value the Shop.buyItem
+// path already writes to, so both grant paths compose instead of racing.
+
+const PRO_PRICE = 1_990_000n; // $1.99, matches PRO_PRICE_USD6 in shop-catalog.ts
+const PRO_SKU = "chesscito_pro_30";
+
+function proBody(over: Record<string, unknown> = {}) {
+  return { chainId: 42220, txHash: TX, wallet: WALLET, token: USDC, sku: PRO_SKU, ...over };
+}
+
+function buildProSupabaseMock(opts: {
+  outcome?: "credited" | "duplicate";
+  settlementError?: { code?: string; message?: string } | null;
+  expiresAtMs?: number;
+} = {}) {
+  // Defaults to the same value mockRedisEval resolves to by default, so a
+  // "credited" mock realistically echoes back what the route just sent it
+  // (RPC records p_expires_at as-is — see 20260701140000_pro_treasury_payment.sql).
+  const expiresAtIso = new Date(opts.expiresAtMs ?? 1234567890000).toISOString();
+  const rpc = vi.fn().mockResolvedValue({
+    data: opts.settlementError ? null : [{
+      outcome: opts.outcome ?? "credited",
+      subscription_id: "00000000-0000-4000-8000-000000000002",
+      expires_at: expiresAtIso,
+      metadata: { rail: "stablecoin_single_tx" },
+    }],
+    error: opts.settlementError ?? null,
+  });
+  return { supabase: { from: vi.fn(), rpc } as never, rpc };
+}
+
+describe("chesscito pro", () => {
+  beforeEach(() => {
+    mockRedisEval.mockReset().mockResolvedValue("1234567890000");
+    mockRedisGet.mockReset().mockResolvedValue(null); // not yet processed by default
+  });
+
+  it("valid $1.99 payment → credits PRO via the shared Redis extend, not duplicate", async () => {
+    mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, PRO_PRICE, 0)]));
+    const mock = buildProSupabaseMock();
+    mockedSupabase.mockReturnValue(mock.supabase);
+    const res = await POST(makeRequest(proBody()));
+    const json = await res.json();
+    expect(res.status).toBe(200);
+    expect(json.ok).toBe(true);
+    expect(json.sku).toBe(PRO_SKU);
+    expect(json.duplicate).toBe(false);
+    expect(json.expiresAt).toBe(1234567890000);
+    // Redis extend runs BEFORE the RPC call so the RPC records the
+    // already-extended value, same ordering as the shop verify-pro route.
+    expect(mockRedisEval).toHaveBeenCalledWith(
+      expect.stringContaining("redis.call('GET', KEYS[1])"),
+      [expect.stringContaining("coach:pro:")],
+      expect.arrayContaining([expect.any(Number)]),
+    );
+    expect(mock.rpc).toHaveBeenCalledWith(
+      "consume_pro_treasury_payment",
+      expect.objectContaining({ p_sku: PRO_SKU, p_expires_at: expect.any(String) }),
+    );
+  });
+
+  it("duplicate PRO tx → ok, duplicate true, no second Redis extend", async () => {
+    mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, PRO_PRICE, 0)]));
+    mockRedisGet.mockResolvedValue("1"); // this tx hash was already processed once
+    const mock = buildProSupabaseMock({ outcome: "duplicate" });
+    mockedSupabase.mockReturnValue(mock.supabase);
+    const res = await POST(makeRequest(proBody()));
+    const json = await res.json();
+    expect(json.ok).toBe(true);
+    expect(json.duplicate).toBe(true);
+    // A duplicate must never re-extend the Redis expiry — that would let a
+    // retried/replayed verify call grant extra PRO time for one payment.
+    expect(mockRedisEval).not.toHaveBeenCalled();
+  });
+
+  it("amount too low for PRO → amount_too_low, no Redis call, no RPC", async () => {
+    mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, PRO_PRICE - 1n, 0)]));
+    const res = await POST(makeRequest(proBody()));
+    expect((await res.json()).error).toBe("amount_too_low");
+    expect(mockRedisEval).not.toHaveBeenCalled();
+  });
+
+  it("supabase unavailable for PRO → 503 ledger_unavailable", async () => {
+    mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, PRO_PRICE, 0)]));
+    mockedSupabase.mockReturnValue(null as never);
+    const res = await POST(makeRequest(proBody()));
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toBe("ledger_unavailable");
+  });
+
+  it("settlement error (not replay) → 500 ledger_write_failed", async () => {
+    mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, PRO_PRICE, 0)]));
+    const mock = buildProSupabaseMock({ settlementError: { message: "boom" } });
+    mockedSupabase.mockReturnValue(mock.supabase);
+    const res = await POST(makeRequest(proBody()));
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toBe("ledger_write_failed");
+  });
+
+  it("settlement error containing payment_replay → 409 payment_replay", async () => {
+    mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, PRO_PRICE, 0)]));
+    const mock = buildProSupabaseMock({ settlementError: { message: "payment_replay" } });
+    mockedSupabase.mockReturnValue(mock.supabase);
+    const res = await POST(makeRequest(proBody()));
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toBe("payment_replay");
   });
 });
 

@@ -27,14 +27,17 @@ import { ACCEPTED_TOKENS, normalizePrice } from "@/lib/contracts/tokens";
 import {
   buildPaymentIdempotencyKey,
   getPeonesPack,
+  getProPack,
   getSeasonPass,
   getTreasuryAddressServer,
   PEONES_PACKS,
+  PRO_PACKS,
   RAIL_ACCEPTED_STABLECOIN_ADDRESSES_LOWER,
   RAIL_OVERPAY_ACCEPTED,
   SEASON_PASSES,
   SEASON_PASS_SOURCE,
   type PeonesPackSku,
+  type ProPackSku,
   type SeasonPassSku,
 } from "@/lib/payments/rail-config";
 import { verifyStablecoinTransfer } from "@/lib/payments/verify-transfer";
@@ -49,6 +52,7 @@ import {
 import { createLogger } from "@/lib/server/logger";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
+import { extendProExpiry } from "@/lib/coach/pro-extend";
 
 const redis = Redis.fromEnv();
 
@@ -139,10 +143,12 @@ export async function POST(req: Request) {
 
   const isSeasonPass = sku in SEASON_PASSES;
   const isPeonesPack = sku in PEONES_PACKS;
-  if (!isSeasonPass && !isPeonesPack) return err("unknown_sku", 400);
+  const isProPack = sku in PRO_PACKS;
+  if (!isSeasonPass && !isPeonesPack && !isProPack) return err("unknown_sku", 400);
 
   // Lite-only entitlement: the Season Pass SKU is rejected in Full builds so
-  // it can never be credited outside Chesscito Lite. Peones packs unaffected.
+  // it can never be credited outside Chesscito Lite. Peones packs + PRO
+  // unaffected — PRO is available in both Lite and Full.
   if (isSeasonPass && !isLiteModeServer()) {
     log.warn("season_pass_unavailable_full_mode", { sku, chainId });
     return err("season_pass_unavailable", 404);
@@ -153,7 +159,9 @@ export async function POST(req: Request) {
   }
   const priceUsd6 = isSeasonPass
     ? getSeasonPass(sku as SeasonPassSku).priceUsd6
-    : getPeonesPack(sku as PeonesPackSku).priceUsd6;
+    : isProPack
+      ? getProPack(sku as ProPackSku).priceUsd6
+      : getPeonesPack(sku as PeonesPackSku).priceUsd6;
   const tokenEntry = ACCEPTED_TOKENS.find((t) => t.address.toLowerCase() === token);
   if (!tokenEntry) return err("unsupported_token", 400); // defensive
   const expectedAmount = normalizePrice(priceUsd6, tokenEntry.decimals);
@@ -283,6 +291,75 @@ export async function POST(req: Request) {
       shieldsCredited,
       shieldsPending: shieldsPending || undefined,
       supporterStatus: pass.supporterStatus,
+      amountPaid,
+      token,
+      txHash,
+      duplicate,
+      overpaid: verdict.overpaid,
+    });
+  }
+
+  // ── Chesscito PRO branch (no-approve rail; Shop.buyItem stays live) ────
+  if (isProPack) {
+    const pack = getProPack(sku as ProPackSku);
+    const idempotencyKey = `${pack.source}:${chainId}:${txHash.toLowerCase()}:${verdict.logIndex}`;
+    const walletNorm = normalizeWallet(wallet);
+    const amountPaid = verdict.amount.toString();
+
+    const supabase = getSupabaseServer();
+    if (!supabase) {
+      log.error("supabase_unavailable_pro", { wallet: walletNorm, sku });
+      return err("ledger_unavailable", 503);
+    }
+
+    // Same per-tx dedupe as the Shop.buyItem PRO grant path
+    // (/api/verify-pro) — a real on-chain tx hash is globally unique, so
+    // this prevents a retried/replayed verify call from extending Redis
+    // twice for one payment, regardless of which route processes it.
+    const txProcessedKey = REDIS_KEYS.proProcessedTx(txHash.toLowerCase());
+    const alreadyProcessed = await redis.get(txProcessedKey);
+    let expiresAtMs: number;
+    if (alreadyProcessed) {
+      expiresAtMs = Number((await redis.get<string>(REDIS_KEYS.pro(walletNorm))) ?? 0);
+    } else {
+      expiresAtMs = await extendProExpiry(redis, REDIS_KEYS.pro(walletNorm));
+      await redis.set(txProcessedKey, "1", { ex: 90 * 24 * 60 * 60 });
+    }
+
+    const paymentMetadata = { rail: "stablecoin_single_tx", overpaid: verdict.overpaid };
+    const { data: settlement, error: settlementError } = await supabase.rpc(
+      "consume_pro_treasury_payment",
+      {
+        p_chain_id: chainId,
+        p_tx_hash: txHash.toLowerCase(),
+        p_log_index: verdict.logIndex,
+        p_wallet: walletNorm,
+        p_sku: pack.sku,
+        p_token_address: token,
+        p_treasury_address: treasury,
+        p_amount_paid: amountPaid,
+        p_idempotency_key: idempotencyKey,
+        p_expires_at: new Date(expiresAtMs).toISOString(),
+        p_metadata: paymentMetadata,
+      },
+    );
+    if (settlementError) {
+      const replay = String(settlementError.message).includes("payment_replay");
+      log.warn(replay ? "payment_replay" : "pro_insert_failed", { code: settlementError.code });
+      return err(replay ? "payment_replay" : "ledger_write_failed", replay ? 409 : 500);
+    }
+
+    const settlementRow = Array.isArray(settlement) ? settlement[0] : settlement;
+    const duplicate = settlementRow?.outcome === "duplicate";
+    const persistedExpiry = settlementRow?.expires_at
+      ? new Date(settlementRow.expires_at as string).getTime()
+      : expiresAtMs;
+
+    return NextResponse.json({
+      ok: true,
+      sku,
+      wallet: walletNorm,
+      expiresAt: persistedExpiry,
       amountPaid,
       token,
       txHash,

@@ -158,6 +158,37 @@ export function getSeasonPass(sku: SeasonPassSku): SeasonPass {
   return SEASON_PASSES[sku];
 }
 
+/* ── Chesscito PRO ──────────────────────────────────────────────────
+ * Same direct-transfer rail as Season Pass / Peones. Price and duration
+ * match the existing Shop.buyItem PRO item (itemId 6, shop-catalog.ts)
+ * exactly — this is a second way to pay for the identical entitlement,
+ * not a different product. The Shop path stays live in parallel during
+ * rollout (see docs/product/chesscito-monetization-consolidation-audit-2026-07-01.md). */
+
+export type ProPackSku = "chesscito_pro_30";
+
+export const PRO_PURCHASE_SOURCE = "pro_purchase" as const;
+
+export type ProPack = {
+  sku: ProPackSku;
+  priceUsd6: bigint;
+  durationDays: number;
+  source: typeof PRO_PURCHASE_SOURCE;
+};
+
+export const PRO_PACKS: Record<ProPackSku, ProPack> = {
+  chesscito_pro_30: {
+    sku: "chesscito_pro_30",
+    priceUsd6: 1_990_000n, // $1.99, matches PRO_PRICE_USD6 in shop-catalog.ts
+    durationDays: 30,
+    source: PRO_PURCHASE_SOURCE,
+  },
+};
+
+export function getProPack(sku: ProPackSku): ProPack {
+  return PRO_PACKS[sku];
+}
+
 /* ── Idempotency ────────────────────────────────────────────────────
  * One stable key per on-chain transfer log so a re-submitted txHash
  * never double-credits. Slots into the ledger's UNIQUE idempotency_key.

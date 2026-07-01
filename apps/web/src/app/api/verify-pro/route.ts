@@ -3,9 +3,10 @@ import { createPublicClient, decodeEventLog, http, isAddress, keccak256, toBytes
 import { celo } from "viem/chains";
 import { Redis } from "@upstash/redis";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
+import { extendProExpiry } from "@/lib/coach/pro-extend";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import { STABLECOIN_ADDRESSES_LOWER } from "@/lib/contracts/tokens";
-import { PRO_DURATION_DAYS, PRO_ITEM_ID } from "@/lib/contracts/shop-catalog";
+import { PRO_ITEM_ID } from "@/lib/contracts/shop-catalog";
 import { ITEM_PURCHASED_ABI } from "@/lib/contracts/generated/shop-events";
 import { createLogger } from "@/lib/server/logger";
 
@@ -17,30 +18,6 @@ const ITEM_PURCHASED_TOPIC = keccak256(
 );
 
 const PROCESSED_TX_TTL_SECONDS = 90 * 24 * 60 * 60;
-const PRO_DURATION_MS = PRO_DURATION_DAYS * 24 * 60 * 60 * 1000;
-
-/** Atomic extend-or-set for the PRO pass.
- *  - If no PRO active: expiresAt = now + PRO_DURATION_MS
- *  - If PRO active   : expiresAt = currentExpiresAt + PRO_DURATION_MS
- *  - If PRO expired  : expiresAt = now + PRO_DURATION_MS
- *  TTL is sized to the new expiresAt so the key auto-purges at lapse.
- *  Returns the new expiresAt as a string (Lua returns numbers as bulk
- *  strings via tostring; we coerce on the JS side). */
-const PRO_EXTEND_LUA = `
-  local cur = redis.call('GET', KEYS[1])
-  local now = tonumber(ARGV[1])
-  local addMs = tonumber(ARGV[2])
-  local base
-  if cur and tonumber(cur) and tonumber(cur) > now then
-    base = tonumber(cur)
-  else
-    base = now
-  end
-  local newExpiresAt = base + addMs
-  local ttlSec = math.ceil((newExpiresAt - now) / 1000)
-  redis.call('SET', KEYS[1], tostring(newExpiresAt), 'EX', ttlSec)
-  return tostring(newExpiresAt)
-`;
 
 const redis = Redis.fromEnv();
 const SHOP_ADDRESS = process.env.NEXT_PUBLIC_SHOP_ADDRESS as `0x${string}` | undefined;
@@ -142,13 +119,10 @@ export async function POST(req: Request) {
 
     // Atomic extend: handles fresh / active / expired in one round trip
     // and avoids the lost-extension race when two distinct purchase txs
-    // land on verify-pro within milliseconds of each other.
-    const result = await redis.eval(
-      PRO_EXTEND_LUA,
-      [REDIS_KEYS.pro(wallet)],
-      [Date.now(), PRO_DURATION_MS],
-    );
-    const expiresAt = Number(result);
+    // land on verify-pro within milliseconds of each other. Shared with
+    // the no-approve rail's PRO branch in /api/verify-payment so both
+    // grant paths compose against the same value.
+    const expiresAt = await extendProExpiry(redis, REDIS_KEYS.pro(wallet));
 
     await redis.set(REDIS_KEYS.proProcessedTx(txHash), "1", { ex: PROCESSED_TX_TTL_SECONDS });
 

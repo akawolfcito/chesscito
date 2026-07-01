@@ -3,6 +3,7 @@ import { STABLECOIN_ADDRESSES_LOWER } from "@/lib/contracts/tokens";
 import {
   buildPaymentIdempotencyKey,
   getPeonesPack,
+  getProPack,
   getRailDefaultStablecoin,
   getTreasuryAddressClient,
   getTreasuryAddressServer,
@@ -11,6 +12,8 @@ import {
   isValidAddress,
   PACK_PURCHASE_SOURCE,
   PEONES_PACKS,
+  PRO_PACKS,
+  PRO_PURCHASE_SOURCE,
   RAIL_ACCEPTED_STABLECOIN_ADDRESSES_LOWER,
   RAIL_DEFAULT_STABLECOIN_SYMBOL,
   RAIL_OVERPAY_ACCEPTED,
@@ -113,6 +116,21 @@ describe("rail-config — peones_pack_50 SKU", () => {
 
   it("ledger source is pack_purchase", () => {
     expect(PACK_PURCHASE_SOURCE).toBe("pack_purchase");
+  });
+});
+
+describe("rail-config — chesscito_pro_30 SKU", () => {
+  it("exists with $1.99 price and 30-day duration, matching the on-chain Shop PRO item", () => {
+    const pack = getProPack("chesscito_pro_30");
+    expect(pack.sku).toBe("chesscito_pro_30");
+    expect(pack.priceUsd6).toBe(1_990_000n); // $1.99, matches PRO_PRICE_USD6 in shop-catalog.ts
+    expect(pack.durationDays).toBe(30);
+    expect(pack.source).toBe("pro_purchase");
+    expect(PRO_PACKS.chesscito_pro_30).toBe(pack);
+  });
+
+  it("ledger/consumption source is pro_purchase", () => {
+    expect(PRO_PURCHASE_SOURCE).toBe("pro_purchase");
   });
 });
 
