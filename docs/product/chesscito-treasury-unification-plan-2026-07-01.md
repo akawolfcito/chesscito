@@ -237,13 +237,38 @@ accordingly.
 - Any change to `acceptedToken` on `ChesscitoTreasury` beyond USDT (still
   v1, USDT-only, per the canary's token matrix decision).
 
+## Backlog idea (not part of this plan — noted for later)
+
+**Gift-able Season Pass.** Operator's refined idea, 2026-07-01: buying a
+pass always stays same-wallet-pays / same-wallet-signs (no change to the
+existing anti-spoof binding, `Transfer.from` must equal the claimed wallet —
+confirmed this session that repurchase with the same wallet already works
+fine today, resets expiry to a fresh 21 days and stacks +3 more Shields, no
+"already active" block). The gift mechanic would instead be a **status on
+the purchased entitlement itself** — "unassigned/giftable" — redeemable later
+by a *different* wallet through a separate claim step. Cleaner than crediting
+a wallet that never signed anything: the payer's wallet is always the real
+`Transfer.from`, only the *final beneficiary* changes, and only through an
+explicit claim action. Not scoped, not designed, purely a note so it isn't
+lost.
+
 ## Approval checklist
 
 Nothing below is executed until checked off with explicit operator
 confirmation, one surface at a time:
 
 - [x] MiniPay `eth_signTypedData_v4` probe (step 0) — CONFIRMED live 2026-07-01
-- [ ] Legacy Get Peones + Season Pass — Preview test (step 1)
+- [x] Legacy Get Peones + Season Pass — Preview test (step 1) — CONFIRMED live
+  2026-07-01: server-side treasury gate passes on both `play-preview.chesscito.com`
+  and `lite-preview.chesscito.com` for both SKUs (reaches real on-chain
+  lookup, not `rail_not_configured`/`season_pass_unavailable`); one real
+  Season Pass purchase on `lite-preview.chesscito.com` with a fresh wallet
+  (no prior pass) confirmed end-to-end — real transfer landed in
+  `ChesscitoTreasury` (balance moved from `500,000` to `2,490,000` base
+  units, i.e. `+$1.99`), in-app entitlement credited correctly. Legacy Get
+  Peones validated via the same server-side check; not separately purchased
+  live (redundant with the canary's earlier real-purchase evidence on the
+  identical code path).
 - [ ] Legacy Get Peones + Season Pass — Production cutover, chosen window (step 1)
 - [ ] Shop → no-approve rail migration (step 2)
 - [ ] Victory NFT `mintSignedWithPermit` — spec + red-team review (step 3)
