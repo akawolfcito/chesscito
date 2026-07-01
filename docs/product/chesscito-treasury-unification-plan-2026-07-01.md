@@ -269,6 +269,21 @@ confirmation, one surface at a time:
   Peones validated via the same server-side check; not separately purchased
   live (redundant with the canary's earlier real-purchase evidence on the
   identical code path).
-- [ ] Legacy Get Peones + Season Pass — Production cutover, chosen window (step 1)
+- [x] Legacy Get Peones + Season Pass — Production cutover (step 1) — env vars
+  set correctly in both Vercel projects (confirmed via dashboard screenshot,
+  `CHESSCITO_TREASURY_ADDRESS` / `NEXT_PUBLIC_CHESSCITO_TREASURY_ADDRESS` =
+  `0xcD3837DD017dFA5E31A2e3Cf390721E16Ac8Fbf0`, "Production and Preview"
+  scope). **Discovered along the way**: this project's Vercel Git
+  integration maps `main` → Preview and `production` → Production (a
+  separate branch, not a promote-from-main model) — a dashboard "Redeploy"
+  on a `main`-branch deployment silently redeploys to *Preview*, not
+  Production, which is why the first attempt didn't take effect. `production`
+  had drifted 24 commits behind `main` (untouched for a while). Fixed by
+  fast-forwarding `production` to `main` and pushing — this is the real fix
+  for both Vercel projects (play + lite) at once, superseding an earlier
+  ad-hoc `vercel deploy --prod` done directly against the play project
+  before this was understood. Operator is doing final on-device confirmation
+  independently; not re-verified by this session per operator's explicit
+  request.
 - [ ] Shop → no-approve rail migration (step 2)
 - [ ] Victory NFT `mintSignedWithPermit` — spec + red-team review (step 3)
