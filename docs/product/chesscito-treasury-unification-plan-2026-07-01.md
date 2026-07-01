@@ -146,17 +146,49 @@ upgradeability (proxy already in place) are all now verified, not assumed.
   funds (its `acceptedToken` mapping is app-layer metadata only, not enforced
   on-chain — confirmed from the contract's own docstring).
 
-## Proposed order (lowest risk / highest information value first)
+## Proposed order (reordered 2026-07-01: least effort first, not just lowest risk)
 
-### 0. MiniPay `eth_signTypedData_v4` probe (do this first — cheap, gates step 3)
+Operator called this out correctly: Legacy Get Peones + Season Pass is a
+config-only change (no new code at all), strictly smaller than Shop's
+migration (new routes) or Victory NFT's (contract upgrade). Reordered
+accordingly.
 
-- A `/dev`-only page, same pattern as the existing `/dev/sign-probe`: ask
-  MiniPay to sign a throwaway EIP-712 typed-data message, recover the signer,
-  confirm it matches the connected address. No contracts touched, no funds
-  moved. Answers whether the Victory NFT permit path (step 3) is viable at
-  all before investing in a contract upgrade for it.
+### 0. MiniPay `eth_signTypedData_v4` probe — DONE 2026-07-01
 
-### 1. Shop → migrate to the no-approve single-tx rail (revised from `setTreasury`)
+- See "RESOLVED" note above. MiniPay confirmed to support typed-data signing
+  on a real device. Unblocks step 3 below.
+
+### 1. Legacy Get Peones + Season Pass → repoint `CHESSCITO_TREASURY_ADDRESS`
+   / `NEXT_PUBLIC_CHESSCITO_TREASURY_ADDRESS` (smallest effort — config only)
+
+- Zero app code changes. `getTreasuryAddressServer()` / `getTreasuryAddressClient()`
+  already read these exact vars; the transfer mechanism (`ERC20.transfer`)
+  doesn't care whether the recipient is an EOA or a contract.
+- Preview first: change both vars in Preview scope to
+  `0xcD3837DD017dFA5E31A2e3Cf390721E16Ac8Fbf0`, redeploy Preview, run one real
+  `peones_pack_50` purchase through the **legacy** (non-canary) path on
+  `play-preview.chesscito.com`. Season Pass is Lite-only
+  (`season_pass_unavailable` outside Lite mode, confirmed live 2026-07-01) —
+  test that half on the Lite preview domain specifically, not the main play
+  preview.
+- Production: same change, flagged as **higher cutover risk** than a pure
+  Safe transaction, because it is two build-time-baked values
+  (`NEXT_PUBLIC_CHESSCITO_TREASURY_ADDRESS` requires a redeploy to change the
+  client bundle) plus one server value. A client bundle cached in a user's
+  browser/MiniPay WebView mid-session at cutover time could sign a transfer
+  to the OLD address while the server now verifies against the NEW one,
+  producing `transfer_not_found` for that one payment. Funds are not lost
+  (old address is the same Safe) but the entitlement would need manual
+  reconciliation. Mitigation: do this during a deliberate low-traffic window,
+  since [[production-as-personal-staging]] means traffic is effectively only
+  the founder today — real risk window is small, but should be a conscious
+  choice, not a surprise.
+- Optional follow-up (separate, not blocking): add an on-chain
+  `acceptedToken` check to `/api/verify-payment` matching the canary's rigor,
+  since the legacy route currently only checks its own app-level token
+  allowlist, not the destination contract's on-chain mapping.
+
+### 2. Shop → migrate to the no-approve single-tx rail (medium effort — new routes)
 
 - Since Shop's "execution" is only an event (no on-chain state, confirmed
   above), reuse the Season Pass/Peones architecture directly: new intent
@@ -168,40 +200,13 @@ upgradeability (proxy already in place) are all now verified, not assumed.
   new path is proven — same staged pattern as the canary itself.
 - This is a real, if small, app-code change (new intent+verify routes mirroring
   the existing rail, reusing `rail-config.ts` conventions) — not a pure config
-  flip like the original `setTreasury`-only proposal. Test the same way as
-  every other flow this session: real small purchase, on-chain balance
-  before/after, in-app entitlement confirmed.
+  flip. Test the same way as every other flow this session: real small
+  purchase, on-chain balance before/after, in-app entitlement confirmed.
 - `ShopUpgradeable.setTreasury` remains available as a cheap fallback if the
   full migration is deprioritized — it still gets Shop's proceeds into
   `ChesscitoTreasury` (better custody) even without removing the approve step.
 
-### 2. Legacy Get Peones + Season Pass → repoint `CHESSCITO_TREASURY_ADDRESS`
-   / `NEXT_PUBLIC_CHESSCITO_TREASURY_ADDRESS`
-
-- Preview first: change both vars in Preview scope to
-  `0xcD3837DD017dFA5E31A2e3Cf390721E16Ac8Fbf0`, redeploy Preview, run one real
-  `peones_pack_50` purchase through the **legacy** (non-canary) path and, if
-  Preview can run in Lite mode, one real Season Pass purchase. Confirm
-  balances the same way as every other test this session.
-- Production: same change, but flagged as **higher cutover risk** than Shop,
-  because it is two build-time-baked values
-  (`NEXT_PUBLIC_CHESSCITO_TREASURY_ADDRESS` requires a redeploy to change the
-  client bundle) plus one server value. A client bundle cached in a user's
-  browser/MiniPay WebView mid-session at cutover time could sign a transfer
-  to the OLD address while the server now verifies against the NEW one,
-  producing `transfer_not_found` for that one payment. Funds are not lost
-  (old address is the same Safe) but the entitlement would need manual
-  reconciliation. Mitigation: do this during a deliberate low-traffic window,
-  since [[production-as-personal-staging]] means traffic is effectively only
-  the founder today — real risk window is small, but should be a conscious
-  choice, not a surprise.
-- No app code changes required for money to move correctly. Optional
-  follow-up (separate, not blocking): add an on-chain `acceptedToken` check
-  to `/api/verify-payment` matching the canary's rigor, since the legacy
-  route currently only checks its own app-level token allowlist, not the
-  destination contract's on-chain mapping.
-
-### 3. Victory NFT → `mintSignedWithPermit` (only if step 0 confirms MiniPay support)
+### 3. Victory NFT → `mintSignedWithPermit` (largest effort — contract upgrade)
 
 - Contract upgrade (proxy stays, new implementation) adding a permit-based
   mint function. Backend voucher-signing logic (`_verifySignature`) is
@@ -209,7 +214,9 @@ upgradeability (proxy already in place) are all now verified, not assumed.
   "consume a permit signature inline."
 - Full spec + red-team review + staged TDD before touching the deployed
   proxy, per the standing contract-change process
-  ([[feedback_security_review_gate]]). Not started until step 0 lands.
+  ([[feedback_security_review_gate]]). Step 0 is done; this can start
+  whenever steps 1–2 are far enough along, or in parallel if bandwidth
+  allows — it does not block or get blocked by them.
 - `mintSigned` (the current approve-based function) stays available in
   parallel — never remove a working path before the replacement is proven.
 
@@ -236,7 +243,7 @@ Nothing below is executed until checked off with explicit operator
 confirmation, one surface at a time:
 
 - [x] MiniPay `eth_signTypedData_v4` probe (step 0) — CONFIRMED live 2026-07-01
-- [ ] Shop → no-approve rail migration (step 1)
-- [ ] Legacy Get Peones + Season Pass — Preview test (step 2)
-- [ ] Legacy Get Peones + Season Pass — Production cutover, chosen window (step 2)
-- [ ] Victory NFT `mintSignedWithPermit` — spec + red-team review, only if step 0 passes (step 3)
+- [ ] Legacy Get Peones + Season Pass — Preview test (step 1)
+- [ ] Legacy Get Peones + Season Pass — Production cutover, chosen window (step 1)
+- [ ] Shop → no-approve rail migration (step 2)
+- [ ] Victory NFT `mintSignedWithPermit` — spec + red-team review (step 3)
