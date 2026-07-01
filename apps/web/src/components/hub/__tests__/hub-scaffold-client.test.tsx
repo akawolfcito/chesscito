@@ -144,13 +144,6 @@ vi.mock("@/lib/pro/use-pro-status", () => ({
   useProStatus: () => useProStatusMock(),
 }));
 
-// `executeProPurchase` would otherwise pull viem + the shop ABI through
-// the live module graph. The hook orchestrates around it; tap-handler
-// tests never trigger a purchase, so a no-op stub is sufficient.
-vi.mock("@/lib/pro/purchase", () => ({
-  executeProPurchase: vi.fn(),
-}));
-
 vi.mock("@/lib/contracts/chains", () => ({
   // Stable, non-null address keeps `useReadContracts` "enabled" branch
   // exercised when a wallet is provided. PRO + Badge sheet hooks pull
@@ -716,9 +709,6 @@ describe("HubScaffoldClient — Lite Mode", () => {
     }));
     vi.doMock("@/lib/pro/use-pro-status", () => ({
       useProStatus: () => useProStatusMock(),
-    }));
-    vi.doMock("@/lib/pro/purchase", () => ({
-      executeProPurchase: vi.fn(),
     }));
     vi.doMock("@/lib/contracts/chains", () => ({
       getBadgesAddress: () => "0xBadgesContractAddress00000000000000000000",

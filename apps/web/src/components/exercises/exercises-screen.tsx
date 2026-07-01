@@ -98,7 +98,6 @@ import {
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
   PRO_ITEM_ID,
-  PRO_PRICE_USD6,
   SHIELD_ITEM_ID,
   SHOP_ITEMS,
   SHOP_TILE_ASSETS,
@@ -111,10 +110,9 @@ import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { LocaleSwitcher } from "@/components/i18n/locale-switcher";
 import { ProSheet } from "@/components/pro/pro-sheet";
-import { useProStatus } from "@/lib/pro/use-pro-status";
+import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { daysRemaining } from "@/lib/pro/days-remaining";
 import { formatWalletShort } from "@/lib/wallet/format";
-import { executeProPurchase } from "@/lib/pro/purchase";
 import { ACCEPTED_TOKENS, CELO_TOKEN, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
 import { PIECE_IMAGES } from "@/lib/content/editorial";
@@ -622,7 +620,6 @@ export function ExercisesScreen({
   const tPath = useTranslations("TRAINING_PATH_COPY");
   const tMission = useTranslations("MISSION_BRIEFING_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
-  const tPro = useTranslations("PRO_COPY");
   const tSplash = useTranslations("SPLASH_COPY");
   const tTutorial = useTranslations("TUTORIAL_COPY");
   const tUnlock = useTranslations("UNLOCK_COPY");
@@ -684,12 +681,12 @@ export function ExercisesScreen({
   const [submitTxHash, setSubmitTxHash] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [purchasePhase, setPurchasePhase] = useState<"idle" | "approving" | "buying">("idle");
-  const {
-    status: proStatus,
-    isLoading: proLoading,
-    refetch: refetchProStatus,
-  } = useProStatus(address);
-  const [proSheetOpen, setProSheetOpen] = useState(initialAction === "pro");
+  // PRO sheet orchestration — owns its own status fetch internally so this
+  // surface doesn't double-fetch /api/pro/status (same pattern as
+  // HubScaffoldClient). Was a local, duplicated approve+buyItem flow;
+  // unified onto the shared hook (rail-backed) 2026-07-01.
+  const proSheet = useProSheetState();
+  const proStatus = proSheet.proStatus;
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
   const { credits: coachCredits } = useCoachCredits();
 
@@ -708,14 +705,28 @@ export function ExercisesScreen({
           ? activeDockTab === "badge"
           : initialAction === "trophies"
             ? activeDockTab === "trophies"
-            : initialAction === "pro"
-              ? proSheetOpen
-              : false;
+            : // `initialAction === "pro"` always ends up opening the sheet (see
+              // the effect below) — checked as a synchronous fact rather than
+              // reading back `proSheet.open`, which only updates a render later.
+              initialAction === "pro";
     if (!deepLinkSheetOpen) {
       deepLinkBounceConsumed.current = true;
       router.push("/");
     }
-  }, [initialAction, activeDockTab, proSheetOpen, router]);
+  }, [initialAction, activeDockTab, router]);
+
+  // Opens the PRO sheet for the `?legacy=1&action=pro` deep link. Was a
+  // synchronous `useState(initialAction === "pro")` seed before the
+  // unification onto `useProSheetState` (which always starts closed) —
+  // moved to a one-shot effect, same pattern as HubScaffoldClient's
+  // `initialSheet` handling.
+  const proDeepLinkOpenedRef = useRef(false);
+  useEffect(() => {
+    if (proDeepLinkOpenedRef.current) return;
+    proDeepLinkOpenedRef.current = true;
+    if (initialAction === "pro") proSheet.openSheet();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialAction]);
 
   // Dock-driven in-place sheet open. Runs once on mount based on the
   // `?sheet=<key>` searchParam forwarded from the persistent dock.
@@ -747,21 +758,15 @@ export function ExercisesScreen({
     else if (slug === "badges") setActiveDockTab("badge");
     else if (slug === "trophies") setActiveDockTab("trophies");
     else if (slug === "leaderboard") setActiveDockTab("leaderboard");
-    else if (slug === "pro" && !CHESSCITO_LITE_MODE) setProSheetOpen(true);
+    else if (slug === "pro" && !CHESSCITO_LITE_MODE) proSheet.openSheet();
     if (slug) {
       sp.delete("sheet");
       const qs = sp.toString();
       const path = window.location.pathname;
       window.history.replaceState(window.history.state, "", qs ? `${path}?${qs}` : path);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const [proPurchaseState, setProPurchaseState] = useState<"idle" | "purchasing" | "verifying">("idle");
-  const [proPurchaseError, setProPurchaseError] = useState<string | null>(null);
-  /** Set iff the last failure was verify-failed. Carries the on-chain
-   *  txHash so the user can retry verification idempotently — no double
-   *  charge — instead of treating the receipt as "money lost". */
-  const [verifyFailedTxHash, setVerifyFailedTxHash] = useState<string | null>(null);
-  const [isRetryingVerify, setIsRetryingVerify] = useState(false);
   const [resultOverlay, setResultOverlay] = useState<{
     variant: "badge" | "score" | "shop" | "error";
     txHash?: string;
@@ -822,7 +827,7 @@ export function ExercisesScreen({
   // exercise drawer). The sentinel `"overlay"` covers the non-dock
   // case so the center button still flips to close mode without
   // lighting any side-item glow.
-  const hasNonDockOverlay = proSheetOpen || accountSheetOpen;
+  const hasNonDockOverlay = proSheet.open || accountSheetOpen;
   useEffect(() => {
     if (activeDockTab) {
       setDockSheet(activeDockTab);
@@ -852,14 +857,14 @@ export function ExercisesScreen({
       // overlays. Order matters when both are somehow open: closing
       // the dock sheet shouldn't leave a non-dock overlay floating.
       setActiveDockTab(null);
-      if (proSheetOpen) setProSheetOpen(false);
+      if (proSheet.open) proSheet.closeSheet();
       if (accountSheetOpen) setAccountSheetOpen(false);
     });
     return () => {
       unregisterOpener();
       unregisterCloser();
     };
-  }, [proSheetOpen, accountSheetOpen]);
+  }, [proSheet, accountSheetOpen]);
   const [shieldCount, setShieldCount] = useState(0);
   const [claimingPiece, setClaimingPiece] = useState<PieceKey | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -2039,111 +2044,6 @@ export function ExercisesScreen({
     }
   }
 
-  async function handleProPurchase() {
-    if (!address || !shopAddress || !publicClient || !isCorrectChain) return;
-    setProPurchaseError(null);
-    setVerifyFailedTxHash(null);
-
-    // Lookahead so pro_purchase_started fires only when the buy has a
-    // real chance of completing. selectPaymentToken reads from already-
-    // loaded balances; the helper re-checks on its own as the source
-    // of truth for the actual decision.
-    const previewToken = selectPaymentToken(PRO_PRICE_USD6);
-    if (!previewToken) {
-      track("pro_purchase_failed", { kind: "no-token" });
-      setProPurchaseError("Insufficient stablecoin balance.");
-      return;
-    }
-
-    track("pro_purchase_started", {
-      item_id: 6,
-      price_usd6: 1_990_000,
-    });
-
-    const result = await executeProPurchase({
-      address,
-      shopAddress,
-      publicClient,
-      chainId,
-      writeContractAsync: writeShopAsync,
-      selectPaymentToken: (price) => selectPaymentToken(price),
-      onPhaseChange: (phase) => setProPurchaseState(phase),
-    });
-    setProPurchaseState("idle");
-
-    if (result.kind === "success") {
-      track("pro_purchase_confirmed", {
-        item_id: 6,
-        price_usd6: 1_990_000,
-        days_granted: 30,
-        tx_hash_prefix: result.txHash.slice(0, 10),
-      });
-      refetchProStatus();
-      hapticSuccess();
-      setProSheetOpen(false);
-      return;
-    }
-    if (result.kind === "cancelled") return;
-    if (result.kind === "verify-failed") {
-      track("pro_purchase_failed", {
-        kind: "verify-failed",
-        tx_hash_prefix: result.txHash ? result.txHash.slice(0, 10) : null,
-      });
-      setVerifyFailedTxHash(result.txHash ?? null);
-    } else {
-      track("pro_purchase_failed", { kind: result.kind });
-    }
-    setProPurchaseError(
-      result.kind === "no-token"
-        ? "Insufficient stablecoin balance."
-        : result.kind === "timeout"
-          ? "Transaction timed out. Please try again."
-          : result.kind === "verify-failed"
-            ? tPro("errors.verifyFailedTitle")
-            : tPro("errors.purchaseFailed"),
-    );
-  }
-
-  async function handleRetryVerify() {
-    if (!verifyFailedTxHash || !address || isRetryingVerify) return;
-    setIsRetryingVerify(true);
-    try {
-      const res = await fetch("/api/verify-pro", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ txHash: verifyFailedTxHash, walletAddress: address }),
-      });
-      const json = (await res.json().catch(() => null)) as { active?: boolean } | null;
-      if (res.ok && json?.active) {
-        track("pro_purchase_confirmed", {
-          item_id: 6,
-          price_usd6: 1_990_000,
-          days_granted: 30,
-          tx_hash_prefix: verifyFailedTxHash.slice(0, 10),
-        });
-        setProPurchaseError(null);
-        setVerifyFailedTxHash(null);
-        refetchProStatus();
-        hapticSuccess();
-        setProSheetOpen(false);
-        return;
-      }
-      // Same idempotent retry surface — keep the error visible and the
-      // hash intact so the user can try again later.
-      track("pro_verify_retry_failed", {
-        tx_hash_prefix: verifyFailedTxHash.slice(0, 10),
-        status: res.status,
-      });
-    } catch {
-      track("pro_verify_retry_failed", {
-        tx_hash_prefix: verifyFailedTxHash.slice(0, 10),
-        status: 0,
-      });
-    } finally {
-      setIsRetryingVerify(false);
-    }
-  }
-
   async function handleConfirmPurchase() {
     if (!selectedItem || !address || !shopAddress || !isCorrectChain) {
       return;
@@ -2867,34 +2767,7 @@ export function ExercisesScreen({
           onConfirm={() => void handleConfirmPurchase()}
         />}
 
-        {!CHESSCITO_LITE_MODE && <ProSheet
-          open={proSheetOpen}
-          onOpenChange={(open) => {
-            // Block close while a tx is in-flight to prevent the user
-            // from losing the in-progress state mid-purchase. Also block
-            // close mid-retry so the spinner state stays coherent.
-            if (!open && (proPurchaseState !== "idle" || isRetryingVerify)) return;
-            setProSheetOpen(open);
-            if (!open) {
-              setProPurchaseError(null);
-              setVerifyFailedTxHash(null);
-            }
-          }}
-          status={proStatus}
-          isConnected={isConnected}
-          isCorrectChain={isCorrectChain}
-          isPurchasing={proPurchaseState === "purchasing"}
-          isVerifying={proPurchaseState === "verifying"}
-          errorMessage={proPurchaseError}
-          verifyFailedTxHash={verifyFailedTxHash}
-          isRetryingVerify={isRetryingVerify}
-          onRetryVerify={() => void handleRetryVerify()}
-          onConnectWallet={() => connectWallet()}
-          onSwitchNetwork={() =>
-            configuredChainId != null && switchChain({ chainId: configuredChainId })
-          }
-          onPurchase={() => void handleProPurchase()}
-        />}
+        {!CHESSCITO_LITE_MODE && <ProSheet {...proSheet.sheetProps} />}
         {address ? (
           <AccountSheet
             open={accountSheetOpen}
@@ -2907,7 +2780,7 @@ export function ExercisesScreen({
             coachCredits={coachCredits}
             onManagePro={() => {
               setAccountSheetOpen(false);
-              setProSheetOpen(true);
+              proSheet.openSheet();
             }}
             onOpenCoach={() => {
               setAccountSheetOpen(false);
@@ -2939,7 +2812,7 @@ export function ExercisesScreen({
         {shouldShowMissionBriefing({
           showBriefing,
           dockSheetOpen: activeDockTab !== null,
-          proSheetOpen,
+          proSheetOpen: proSheet.open,
           accountSheetOpen,
           // Micro-fix 2026-06-11: never mount the exercise briefing
           // over a labyrinth — its objective copy would interpolate
