@@ -1,33 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  useAccount,
-  useChainId,
-  usePublicClient,
-  useReadContracts,
-  useSwitchChain,
-  useWriteContract,
-} from "wagmi";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 import { useTranslations } from "next-intl";
-import {
-  getConfiguredChainId,
-  getShopAddress,
-} from "@/lib/contracts/chains";
-import { PRO_PRICE_USD6 } from "@/lib/contracts/shop-catalog";
-import {
-  ACCEPTED_TOKENS,
-  CELO_TOKEN,
-  erc20Abi,
-} from "@/lib/contracts/tokens";
-import { selectMaxBalanceToken } from "@/lib/contracts/select-payment-token";
+import { getConfiguredChainId } from "@/lib/contracts/chains";
+import { getProPack } from "@/lib/payments/rail-config";
+import { useStablecoinTokenSelection } from "@/lib/payments/use-get-peones-token-selection";
 import { hapticSuccess } from "@/lib/haptics";
-import { executeProPurchase } from "@/lib/pro/purchase";
+import { classifyProRailError } from "@/lib/pro/pro-rail-error";
+import { useProRail, type ProRailResult } from "@/lib/pro/use-pro-rail";
 import { useProStatus, type ProStatus } from "@/lib/pro/use-pro-status";
 import { track } from "@/lib/telemetry";
 
 import type { ProSheetProps } from "@/components/pro/pro-sheet";
+
+const PRO_RAIL_SKU = "chesscito_pro_30" as const;
+const FALLBACK_TOKEN_SYMBOL = "USDC";
 
 type SheetProps = Omit<ProSheetProps, "open" | "onOpenChange"> & {
   open: boolean;
@@ -48,10 +37,11 @@ export type ProPurchaseReceipt = {
 };
 
 export type UseProSheetStateOptions = {
-  /** Fires AFTER the wagmi receipt confirms — NOT on user-initiated close.
-   *  Deferred via `requestAnimationFrame` so the dispatch lands after the
-   *  sheet's exit transition starts (design-lock §6.4 race 1). The host
-   *  can synchronously trigger atmosphere shift / shields refresh / etc. */
+  /** Fires AFTER the on-chain payment verifies — NOT on user-initiated
+   *  close. Deferred via `requestAnimationFrame` so the dispatch lands
+   *  after the sheet's exit transition starts (design-lock §6.4 race 1).
+   *  The host can synchronously trigger atmosphere shift / shields
+   *  refresh / etc. */
   onPurchaseSuccess?: (receipt: ProPurchaseReceipt) => void;
 };
 
@@ -78,6 +68,11 @@ export type UseProSheetStateReturn = {
  *  the B2 "Play in Arena" race (audit 2026-05-07) and what hid the bottom
  *  CTA behind the legacy persistent dock.
  *
+ *  Buys via the no-approve stablecoin direct-transfer rail (`useProRail`,
+ *  same rail as Season Pass / Get Peones) — single tx, no approve. The
+ *  Shop's approve + `buyItem` PRO path (itemId 6) is a separate, untouched
+ *  way to buy the identical entitlement (see `use-shop-sheet-state.ts`).
+ *
  *  Self-contained — pulls every wagmi/RainbowKit dependency it needs.
  *  Returns `sheetProps` already shaped for `<ProSheet>` so the host
  *  component is just `<ProSheet {...proSheet.sheetProps} />`. */
@@ -87,79 +82,141 @@ export function useProSheetState(
   const t = useTranslations("PRO_COPY");
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
-  const publicClient = usePublicClient({ chainId });
   const { switchChain } = useSwitchChain();
   const { connectWallet } = useConnectWallet();
 
   const configuredChainId = useMemo(() => getConfiguredChainId(), []);
   const isCorrectChain =
     configuredChainId != null && chainId === configuredChainId;
-  const shopAddress = useMemo(() => getShopAddress(chainId), [chainId]);
 
-  const { writeContractAsync: writeShopAsync } = useWriteContract();
   const { status: proStatus, refetch: refetchProStatus } = useProStatus(address);
+  const pack = useMemo(() => getProPack(PRO_RAIL_SKU), []);
 
-  // Capture the success callback in a ref so handlePurchase's deps array
-  // stays stable across host renders (the host doesn't have to memoize
-  // the callback). The ref is refreshed on every render synchronously
-  // via the layout-style effect below.
+  // Capture the success callback in a ref so onVerified's identity stays
+  // stable across host renders (the host doesn't have to memoize it). The
+  // ref is refreshed on every render synchronously via a layout-style effect.
   const onPurchaseSuccessRef = useRef(options?.onPurchaseSuccess);
   useEffect(() => {
     onPurchaseSuccessRef.current = options?.onPurchaseSuccess;
   });
 
-  const fireOnPurchaseSuccess = useCallback((txHash: string) => {
-    const cb = onPurchaseSuccessRef.current;
-    if (!cb) return;
-    const buyer = address;
-    if (!buyer) return;
-    // rAF defer — landing the dispatch after the sheet's exit transition
-    // starts so atmosphere shift / shields refresh feels sequenced rather
-    // than racing with the close animation (design-lock §6.4 race 1).
-    requestAnimationFrame(() => {
-      cb({
-        txHash: txHash as `0x${string}`,
-        daysGranted: 30,
-        buyer: buyer as `0x${string}`,
+  const fireOnPurchaseSuccess = useCallback(
+    (txHash: string) => {
+      const cb = onPurchaseSuccessRef.current;
+      if (!cb) return;
+      const buyer = address;
+      if (!buyer) return;
+      // rAF defer — landing the dispatch after the sheet's exit transition
+      // starts so atmosphere shift / shields refresh feels sequenced rather
+      // than racing with the close animation (design-lock §6.4 race 1).
+      requestAnimationFrame(() => {
+        cb({
+          txHash: txHash as `0x${string}`,
+          daysGranted: pack.durationDays,
+          buyer: buyer as `0x${string}`,
+        });
       });
-    });
-  }, [address]);
+    },
+    [address, pack],
+  );
 
   const [open, setOpen] = useState(false);
-  const [purchaseState, setPurchaseState] = useState<
-    "idle" | "purchasing" | "verifying"
-  >("idle");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [verifyFailedTxHash, setVerifyFailedTxHash] = useState<string | null>(
-    null,
-  );
+  const [previewErrorMessage, setPreviewErrorMessage] = useState<string | null>(null);
   const [isRetryingVerify, setIsRetryingVerify] = useState(false);
+  // Read synchronously inside the rail's error effect so a manual retry's
+  // failure is attributed correctly regardless of render timing (same
+  // pattern as onPurchaseSuccessRef above).
+  const retryInFlightRef = useRef(false);
+  // Bumped at the START of every pay()/verifyAgain() call. A retry that
+  // fails with the exact same errorReason/txHash as the attempt before it
+  // would otherwise leave the error-effect's dependency array unchanged
+  // between commits (mocked I/O resolves fully within one microtask
+  // flush, so React batches the whole retry into one render) — the effect
+  // would then never re-fire and `isRetryingVerify` would stick forever.
+  // Including this token in the deps guarantees a fresh value every
+  // attempt regardless of what the outcome looks like.
+  const [attemptToken, setAttemptToken] = useState(0);
 
-  // Token balances drive `selectPaymentToken` — same shape ExercisesScreen
-  // uses. CELO sits at the tail purely to share the read; PRO never
-  // settles in CELO, only stablecoins.
-  const BALANCE_READ_TOKENS = useMemo(() => [...ACCEPTED_TOKENS, CELO_TOKEN], []);
-  const { data: tokenBalances } = useReadContracts({
-    contracts: BALANCE_READ_TOKENS.map((t) => ({
-      address: t.address,
-      abi: erc20Abi,
-      functionName: "balanceOf" as const,
-      args: address ? ([address] as const) : undefined,
-      chainId,
-    })),
-    allowFailure: true,
-    query: { enabled: Boolean(address), staleTime: 15_000 },
-  });
+  const selection = useStablecoinTokenSelection(pack.priceUsd6);
+  const tokenSymbol = selection.selectedSymbol ?? FALLBACK_TOKEN_SYMBOL;
 
-  const selectPaymentToken = useCallback(
-    (priceUsd6: bigint) =>
-      selectMaxBalanceToken(
-        ACCEPTED_TOKENS,
-        tokenBalances?.slice(0, ACCEPTED_TOKENS.length),
-        priceUsd6,
-      ),
-    [tokenBalances],
+  const handleVerified = useCallback(
+    (result: ProRailResult) => {
+      track("pro_purchase_confirmed", {
+        item_id: 6,
+        price_usd6: Number(pack.priceUsd6),
+        days_granted: pack.durationDays,
+        tx_hash_prefix: result.txHash.slice(0, 10),
+      });
+      refetchProStatus();
+      hapticSuccess();
+      retryInFlightRef.current = false;
+      setIsRetryingVerify(false);
+      setOpen(false);
+      fireOnPurchaseSuccess(result.txHash);
+    },
+    [pack, refetchProStatus, fireOnPurchaseSuccess],
   );
+
+  const rail = useProRail({ sku: PRO_RAIL_SKU, tokenSymbol, onVerified: handleVerified });
+
+  const errorKind = useMemo(
+    () =>
+      rail.phase === "error"
+        ? classifyProRailError(rail.errorReason, Boolean(rail.txHash))
+        : null,
+    [rail.phase, rail.errorReason, rail.txHash],
+  );
+
+  // Fires telemetry exactly once per attempt that ends in "error" —
+  // `attemptToken` in the deps guarantees this runs even when a retry's
+  // outcome is byte-identical to the attempt before it.
+  useEffect(() => {
+    if (rail.phase !== "error" || errorKind === null) return;
+    if (errorKind === "silent") {
+      retryInFlightRef.current = false;
+      setIsRetryingVerify(false);
+      return;
+    }
+    if (retryInFlightRef.current) {
+      track("pro_verify_retry_failed", {
+        tx_hash_prefix: rail.txHash ? rail.txHash.slice(0, 10) : null,
+        reason: rail.errorReason,
+      });
+    } else {
+      track("pro_purchase_failed", {
+        kind:
+          errorKind === "verifyFailed"
+            ? "verify-failed"
+            : errorKind === "notConfigured"
+              ? "unavailable"
+              : "error",
+      });
+    }
+    retryInFlightRef.current = false;
+    setIsRetryingVerify(false);
+  }, [rail.phase, rail.errorReason, rail.txHash, errorKind, attemptToken]);
+
+  const purchaseState: "idle" | "purchasing" | "verifying" =
+    rail.phase === "preparing" ||
+    rail.phase === "awaiting_signature" ||
+    rail.phase === "pending_tx"
+      ? "purchasing"
+      : rail.phase === "verifying" && !isRetryingVerify
+        ? "verifying"
+        : "idle";
+
+  const railErrorMessage =
+    errorKind === null || errorKind === "silent"
+      ? null
+      : errorKind === "notConfigured"
+        ? t("errors.notConfigured")
+        : errorKind === "verifyFailed"
+          ? t("errors.verifyFailedTitle")
+          : t("errors.purchaseFailed");
+
+  const errorMessage = previewErrorMessage ?? railErrorMessage;
+  const verifyFailedTxHash = errorKind === "verifyFailed" ? rail.txHash : null;
 
   const openSheet = useCallback(() => {
     setOpen(true);
@@ -168,132 +225,37 @@ export function useProSheetState(
   const closeSheet = useCallback(() => {
     if (purchaseState !== "idle" || isRetryingVerify) return;
     setOpen(false);
-    setErrorMessage(null);
-    setVerifyFailedTxHash(null);
-  }, [purchaseState, isRetryingVerify]);
+    setPreviewErrorMessage(null);
+    rail.reset();
+  }, [purchaseState, isRetryingVerify, rail]);
 
+  // Async (not `void`-wrapped) so a caller holding a direct reference —
+  // notably this file's own tests — can `await` full settlement. Still
+  // assignable to `ProSheetProps.onPurchase: () => void` (TS treats a
+  // `Promise<void>`-returning function as compatible with a `void`-typed
+  // callback).
   const handlePurchase = useCallback(async () => {
-    if (!address || !shopAddress || !publicClient || !isCorrectChain) return;
-    setErrorMessage(null);
-    setVerifyFailedTxHash(null);
-
-    const previewToken = selectPaymentToken(PRO_PRICE_USD6);
-    if (!previewToken) {
+    setPreviewErrorMessage(null);
+    if (!selection.selected) {
       track("pro_purchase_failed", { kind: "no-token" });
-      setErrorMessage(t("insufficientBalance"));
+      setPreviewErrorMessage(t("insufficientBalance"));
       return;
     }
-
     track("pro_purchase_started", {
       item_id: 6,
-      price_usd6: 1_990_000,
+      price_usd6: Number(pack.priceUsd6),
     });
+    setAttemptToken((n) => n + 1);
+    await rail.pay();
+  }, [selection, pack, rail, t]);
 
-    const result = await executeProPurchase({
-      address,
-      shopAddress,
-      publicClient,
-      chainId,
-      writeContractAsync: writeShopAsync,
-      selectPaymentToken: (price) => selectPaymentToken(price),
-      onPhaseChange: (phase) => setPurchaseState(phase),
-    });
-    setPurchaseState("idle");
-
-    if (result.kind === "success") {
-      track("pro_purchase_confirmed", {
-        item_id: 6,
-        price_usd6: 1_990_000,
-        days_granted: 30,
-        tx_hash_prefix: result.txHash.slice(0, 10),
-      });
-      refetchProStatus();
-      hapticSuccess();
-      setOpen(false);
-      fireOnPurchaseSuccess(result.txHash);
-      return;
-    }
-    if (result.kind === "cancelled") return;
-    if (result.kind === "verify-failed") {
-      track("pro_purchase_failed", {
-        kind: "verify-failed",
-        tx_hash_prefix: result.txHash ? result.txHash.slice(0, 10) : null,
-      });
-      setVerifyFailedTxHash(result.txHash ?? null);
-    } else {
-      track("pro_purchase_failed", { kind: result.kind });
-    }
-    setErrorMessage(
-      result.kind === "no-token"
-        ? t("insufficientBalance")
-        : result.kind === "timeout"
-          ? t("txTimeout")
-          : result.kind === "verify-failed"
-            ? t("errors.verifyFailedTitle")
-            : t("errors.purchaseFailed"),
-    );
-  }, [
-    address,
-    shopAddress,
-    publicClient,
-    isCorrectChain,
-    chainId,
-    writeShopAsync,
-    selectPaymentToken,
-    refetchProStatus,
-    fireOnPurchaseSuccess,
-    t,
-  ]);
-
-  const handleRetryVerify = useCallback(async () => {
-    if (!verifyFailedTxHash || !address || isRetryingVerify) return;
+  const handleRetryVerify = useCallback(() => {
+    if (!rail.txHash || isRetryingVerify) return;
+    retryInFlightRef.current = true;
     setIsRetryingVerify(true);
-    try {
-      const res = await fetch("/api/verify-pro", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          txHash: verifyFailedTxHash,
-          walletAddress: address,
-        }),
-      });
-      const json = (await res.json().catch(() => null)) as
-        | { active?: boolean }
-        | null;
-      if (res.ok && json?.active) {
-        track("pro_purchase_confirmed", {
-          item_id: 6,
-          price_usd6: 1_990_000,
-          days_granted: 30,
-          tx_hash_prefix: verifyFailedTxHash.slice(0, 10),
-        });
-        setErrorMessage(null);
-        setVerifyFailedTxHash(null);
-        refetchProStatus();
-        hapticSuccess();
-        setOpen(false);
-        fireOnPurchaseSuccess(verifyFailedTxHash);
-        return;
-      }
-      track("pro_verify_retry_failed", {
-        tx_hash_prefix: verifyFailedTxHash.slice(0, 10),
-        status: res.status,
-      });
-    } catch {
-      track("pro_verify_retry_failed", {
-        tx_hash_prefix: verifyFailedTxHash.slice(0, 10),
-        status: 0,
-      });
-    } finally {
-      setIsRetryingVerify(false);
-    }
-  }, [
-    verifyFailedTxHash,
-    address,
-    isRetryingVerify,
-    refetchProStatus,
-    fireOnPurchaseSuccess,
-  ]);
+    setAttemptToken((n) => n + 1);
+    void rail.verifyAgain();
+  }, [rail, isRetryingVerify]);
 
   const sheetProps: SheetProps = {
     open,
@@ -309,11 +271,11 @@ export function useProSheetState(
     errorMessage,
     verifyFailedTxHash,
     isRetryingVerify,
-    onRetryVerify: () => void handleRetryVerify(),
+    onRetryVerify: handleRetryVerify,
     onConnectWallet: () => connectWallet(),
     onSwitchNetwork: () =>
       configuredChainId != null && switchChain({ chainId: configuredChainId }),
-    onPurchase: () => void handlePurchase(),
+    onPurchase: handlePurchase,
   };
 
   return { open, openSheet, closeSheet, sheetProps, proStatus };

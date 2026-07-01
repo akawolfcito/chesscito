@@ -19,10 +19,13 @@ import {
   isValidAddress,
   PACK_PURCHASE_SOURCE,
   PEONES_PACKS,
+  PRO_PACKS,
+  PRO_PURCHASE_SOURCE,
   RAIL_ACCEPTED_STABLECOINS,
   SEASON_PASSES,
   SEASON_PASS_SOURCE,
   type PeonesPackSku,
+  type ProPackSku,
   type SeasonPassSku,
 } from "@/lib/payments/rail-config";
 
@@ -142,5 +145,57 @@ export function buildSeasonPassTransfer(args: {
     priceUsd6: pass.priceUsd6,
     sku: pass.sku,
     source: pass.source,
+  };
+}
+
+export type ProPackTransferTx = {
+  to: `0x${string}`;
+  data: `0x${string}`;
+  value: bigint;
+  token: { symbol: string; address: `0x${string}`; decimals: number };
+  treasury: `0x${string}`;
+  expectedAmount: bigint;
+  priceUsd6: bigint;
+  sku: ProPackSku;
+  source: typeof PRO_PURCHASE_SOURCE;
+};
+
+/**
+ * Build the direct-transfer payload for a Chesscito PRO purchase via the
+ * no-approve rail. Same shape as `buildSeasonPassTransfer` — the Shop's
+ * approve+`buyItem` PRO path (itemId 6) is untouched and stays a separate
+ * way to buy the identical entitlement.
+ *
+ * @throws on an invalid treasury, an unknown SKU, or a non-allowlisted token.
+ */
+export function buildProPackTransfer(args: {
+  sku: ProPackSku;
+  treasury: string;
+  tokenSymbol?: string;
+}): ProPackTransferTx {
+  if (!isValidAddress(args.treasury)) {
+    throw new Error(`Invalid treasury address: ${String(args.treasury)}`);
+  }
+  const pack = PRO_PACKS[args.sku];
+  if (!pack) {
+    throw new Error(`Unknown PRO pack SKU: ${String(args.sku)}`);
+  }
+  const token = resolveToken(args.tokenSymbol);
+  const expectedAmount = normalizePrice(pack.priceUsd6, token.decimals);
+  const data = encodeFunctionData({
+    abi: erc20Abi,
+    functionName: "transfer",
+    args: [args.treasury, expectedAmount],
+  });
+  return {
+    to: token.address,
+    data,
+    value: 0n,
+    token: { symbol: token.symbol, address: token.address, decimals: token.decimals },
+    treasury: args.treasury,
+    expectedAmount,
+    priceUsd6: pack.priceUsd6,
+    sku: pack.sku,
+    source: pack.source,
   };
 }
