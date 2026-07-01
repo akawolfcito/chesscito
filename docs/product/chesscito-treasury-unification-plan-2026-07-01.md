@@ -115,17 +115,24 @@ can add this without losing the existing address, state, or minted tokens).
 The mint becomes one on-chain transaction; the "approve" becomes a signature
 the user's wallet produces (no separate broadcast tx, no separate gas).
 
-**Open unknown, must be validated before committing to this path**: whether
-MiniPay's wallet can produce a valid `eth_signTypedData_v4` signature for the
-permit message. [[minipay-supports-personal-sign]] only confirms
-`personal_sign` (verified 2026-06-12); typed-data signing (`eth_signTypedData_v4`,
-what permit requires) is a different RPC method and has not been tested.
-This is a cheap, low-risk spike — a `/dev/permit-probe`-style page asking
-MiniPay to sign an EIP-2612 typed-data message and checking the recovered
-signer matches — and it should happen **before** any contract-upgrade work,
-since it gates whether the whole permit approach is viable for MiniPay users
-specifically (desktop/MetaMask wallets support typed-data signing already,
-this is purely a MiniPay WebView question).
+**RESOLVED 2026-07-01 — MiniPay supports `eth_signTypedData_v4`.** Built
+`/dev/permit-probe` (permit-shaped EIP-712 message, throwaway zero-address
+domain, no real token/contract/funds) and tested live on a real MiniPay
+device against `play-preview.chesscito.com`. MiniPay rendered a native
+"Digital signature" confirmation screen showing the domain, owner, spender,
+value, nonce, and deadline fields in cleartext, the operator signed it, and
+the app recovered the signer from the returned signature and confirmed it
+matched the connected wallet address: **SIGNED + VERIFIED**. One bug found
+and fixed along the way (not a MiniPay limitation): the probe's first version
+used a cosmetically "dead"-looking dummy address without a correct EIP-55
+checksum, which viem rejected client-side before the request ever reached
+the wallet; switched to the all-zero address (no letters, no checksum
+ambiguity) and it worked immediately.
+
+This closes step 0. The permit-based Victory NFT mint (step 3) is confirmed
+technically viable end-to-end: token support (USDT/USDC/cUSD all implement
+EIP-2612) + wallet support (MiniPay signs typed data) + contract
+upgradeability (proxy already in place) are all now verified, not assumed.
 
 ## What does NOT need to change
 
@@ -228,7 +235,7 @@ this is purely a MiniPay WebView question).
 Nothing below is executed until checked off with explicit operator
 confirmation, one surface at a time:
 
-- [ ] MiniPay `eth_signTypedData_v4` probe (step 0)
+- [x] MiniPay `eth_signTypedData_v4` probe (step 0) — CONFIRMED live 2026-07-01
 - [ ] Shop → no-approve rail migration (step 1)
 - [ ] Legacy Get Peones + Season Pass — Preview test (step 2)
 - [ ] Legacy Get Peones + Season Pass — Production cutover, chosen window (step 2)
