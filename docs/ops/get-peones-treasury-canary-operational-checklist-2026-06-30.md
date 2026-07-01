@@ -228,19 +228,59 @@ must be USDT-only. Enabling USDC or cUSD/USDm later requires an owner
 - Signed-off by: Wolfcito / owner operator.
 - Date: 2026-07-01.
 
-## Rollback exercise
+## Rollback exercise — live evidence 2026-07-01
 
-Evidence source: existing tests and code paths. No production exercise was
-performed.
+Evidence source: real HTTP requests against a real Vercel Preview deployment
+(`poc/minipay-treasury-contract` branch), sharing the hosted production
+Supabase project `brsbdzpuvotxsadmcxyj`. No Production deployment was touched.
 
-- New intent creation is blocked when `GET_PEONES_TREASURY_CANARY_ENABLED=false`:
-  the intent route returns `canary_disabled` (404) before any wallet is invoked.
-- Canary verification/recovery remains available for already-mined payments: the
-  verify route has no enable gate, so a captured tx hash can still be verified and
-  credited after new intent creation is stopped.
+Setup: canary env vars (`GET_PEONES_TREASURY_CANARY_ENABLED`,
+`CHESSCITO_TREASURY_CANARY_ADDRESS`, `_CONFIG_VERSION=rollback-exercise-2026-07-01`,
+`_PRICE_VERSION=rollback-exercise-2026-07-01`, `_CONFIRMATIONS=3`,
+`_TOKEN_ADDRESSES=<USDT>`, `ALLOW_CLIENT_ASSERTED_WALLET_FOR_GET_PEONES_CANARY`)
+set on Vercel scoped to Preview + this branch only. `CELO_RPC_URL` (public Forno
+endpoint, no secret) added to the same scope; it did not previously exist outside
+Production, which caused an initial `canary_config_unverifiable` failure until added.
+
+**ON** — `POST /api/payment-intents/get-peones` against
+`chesscito-iyhovegt4-goodwolf.vercel.app` and `chesscito-mf8pdw6v7-goodwolf.vercel.app`,
+wallet `0x000000000000000000000000000000000000dEaD` (test/burn address, never funded,
+no real payment ever sent), token USDT, sku `peones_pack_50`: `200 ok:true`, intent
+created (ids `92b95d41-6c3f-490f-bcb0-e2d6a7ef5a9b`, `471fa9a4-e64d-4bb5-8503-7cfd1f5a62c6`),
+one row written to hosted `treasury_payment_intents` per call.
+
+**OFF** — removed only `GET_PEONES_TREASURY_CANARY_ENABLED` from the Preview/branch
+scope (other 6 canary vars left in place), redeployed
+(`chesscito-ospmnqoj5-goodwolf.vercel.app`), same POST: `404 canary_disabled`,
+confirmed no wallet/chain interaction occurs before the gate.
+
+**Verification/recovery not gated** — with the flag OFF, `POST
+/api/verify-payment/get-peones-canary` against the same OFF deployment with a
+well-formed but non-existent tx hash returned `400 receipt_not_found` (real
+receipt lookup attempted), not `canary_disabled`. Confirms already-submitted
+payments can still be recovered after intent creation is cut off.
+
 - Legacy Get Peones and Season Pass remain unaffected: they use their own routes
-  and RPCs and are not gated by the canary flag.
-- Re-enabling requires an explicit env/config review.
+  and RPCs and are not gated by the canary flag (unchanged from prior analysis,
+  not re-exercised live since they are out of scope for this canary).
+- Re-enabling requires an explicit env/config review (open item below).
+
+**Known side effect**: `treasury_payment_intents` has an active immutability
+trigger (`BEFORE DELETE OR UPDATE`) by design (anti-tamper on payment audit
+records). The 2 test intent rows above cannot be deleted through normal means
+and were left in place rather than bypassing the trigger. They carry no
+consumption (no matching row was ever written to
+`treasury_payment_consumptions`, since no real transfer occurred) and use an
+address that never received or sent canary funds.
+
+**Incident during setup (self-corrected)**: the 7 canary env vars were
+initially added scoped to both Preview and Production simultaneously. Caught
+before any Production deployment picked them up. Removing the Production scope
+via `vercel env rm NAME production` deleted the variable record entirely
+(Preview scope was a single combined record, not two independent ones), so all
+7 were re-added from scratch, this time scoped to Preview + this branch only.
+Verified via `vercel env ls` that Production ended the exercise with only its
+pre-existing `CELO_RPC_URL` and none of the 7 canary vars.
 
 ## Hosted Supabase migration — applied 2026-07-01
 
@@ -263,6 +303,78 @@ performed.
 - No records inserted; tables are empty by construction.
 - Canary envs remain OFF; applying the migration changes no runtime behavior.
 
+## Final env/config review — 2026-07-01
+
+Reviewed every env var the server config path touches
+(`resolveGetPeonesCanaryServerConfig` + `isGetPeonesCanaryServerEnabled`), plus
+the client-side gate, against the decisions already recorded above.
+
+**Server-side (7 vars) — recommended Production values on enablement:**
+
+| Var | Recommended value | Basis |
+| --- | --- | --- |
+| `GET_PEONES_TREASURY_CANARY_ENABLED` | `true` | the kill switch itself |
+| `CHESSCITO_TREASURY_CANARY_ADDRESS` | `0xcD3837DD017dFA5E31A2e3Cf390721E16Ac8Fbf0` | Control 2 evidence above |
+| `CHESSCITO_TREASURY_CANARY_CONFIG_VERSION` | `canary-v1` | new label, not `rollback-exercise-*` (that label is now burned by the 2 test intents; reusing it would be confusing in future audits) |
+| `CHESSCITO_TREASURY_CANARY_PRICE_VERSION` | `canary-v1` | same reasoning; `peones_pack_50` price is hardcoded in `rail-config.ts` ($0.50 / `priceUsd6: 500_000n`), this label is descriptive only, not a live price switch |
+| `CHESSCITO_TREASURY_CANARY_CONFIRMATIONS` | `3` | Finality decision above |
+| `CHESSCITO_TREASURY_CANARY_TOKEN_ADDRESSES` | `0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e` (USDT) | Token matrix v1 decision above |
+| `ALLOW_CLIENT_ASSERTED_WALLET_FOR_GET_PEONES_CANARY` | `true` | Auth risk sign-off above |
+
+**`CELO_RPC_URL`**: already present in Production (pre-existing, used
+successfully by the legacy `/api/verify-payment` route). No action needed
+there. (Preview needed it added during the rollback exercise because it never
+existed outside Production — see Rollback exercise section.)
+
+**Finding — client-side flag is not founder-gated.** The buy UI
+(`components/payments/get-peones-sheet.tsx` → `usePaymentRail` →
+`isGetPeonesCanaryClientRequested()`) reads
+`NEXT_PUBLIC_GET_PEONES_TREASURY_CANARY_ENABLED`, a build-time public var with
+no wallet/allowlist check anywhere in that path. The internal dev smoke page
+(`/dev/rail-smoke`) 404s in Production by design, so it **cannot** be used to
+test the canary there — the only way to exercise the canary through the actual
+UI in Production is flipping this public flag, which makes the buy flow
+visible to **any** visitor, not just the founder. This does not create a fund-
+drainage risk (crediting still requires a real on-chain payment bound to the
+payer's own wallet), but it does mean "internal/founder canary only" is
+currently a **traffic fact** (no other real users in Production today, per
+[[production-as-personal-staging]]), not a technical control. Two paths:
+
+1. **Leave `NEXT_PUBLIC_GET_PEONES_TREASURY_CANARY_ENABLED` unset** and test
+   the canary in Production the same way this review did in Preview: direct
+   `POST` calls to `/api/payment-intents/get-peones` /
+   `/api/verify-payment/get-peones-canary`, no UI exposure at all.
+2. **Set it**, accepting that any visitor could technically see and use the
+   $0.50 buy flow, relying on the current no-other-real-users state of
+   Production as the only mitigation. Must be revisited (add real founder
+   gating, e.g. wallet allowlist) before any public MiniPay listing traffic
+   arrives.
+
+No default is applied here — this is a decision for the operator, not
+something inferable from existing docs.
+
+**Decision (2026-07-01): option 1.** `NEXT_PUBLIC_GET_PEONES_TREASURY_CANARY_ENABLED`
+stays **unset** in Production. The canary, once enabled, will be exercised via
+direct `POST` calls to `/api/payment-intents/get-peones` and
+`/api/verify-payment/get-peones-canary` only — same method already proven live
+in the rollback exercise above. The buy UI stays on the legacy path
+(`no_treasury`, unavailable) for every visitor, founder included. Revisit if
+the operator later wants a real in-app canary UX; requires adding actual
+founder-wallet gating to `get-peones-sheet.tsx` first.
+
+**Other checks, no action needed:**
+
+- Rate limiting / origin enforcement: reuses existing shared infra
+  (`enforceReadRateLimit`, `enforceOrigin`), not canary-specific, already
+  proven in Production by other routes.
+- RLS, grants, immutability trigger, replay-identity uniqueness: verified on
+  the hosted migration (see Hosted Supabase migration section above).
+- Intent TTL (`10 minutes`, `GET_PEONES_CANARY_INTENT_TTL_SECONDS`) and reward
+  (`50 Peones`, `GET_PEONES_CANARY_REWARD`): hardcoded constants, not env
+  vars, no config drift possible.
+- Token/decimals cross-check: enforced live per-request (`token_decimals_mismatch`
+  fails closed), already evidenced against real on-chain reads above.
+
 ## Remaining blockers before enablement
 
 Closed:
@@ -274,16 +386,30 @@ Closed:
 - Custodian/runbook sign-off: recorded (see Custodian sign-off above).
 - Hosted Supabase migration: applied and verified on `brsbdzpuvotxsadmcxyj`
   (see Hosted Supabase migration — applied 2026-07-01 above).
+- Rollback exercise: performed live against a real Preview deployment (see
+  Rollback exercise — live evidence 2026-07-01 above). ON→OFF confirmed;
+  verify/recovery confirmed independent of the flag.
+- Final env/config review: recommended Production values recorded, including
+  the `NEXT_PUBLIC_GET_PEONES_TREASURY_CANARY_ENABLED` decision (kept unset;
+  API-only testing) (see Final env/config review above).
 
 Still open:
 
-1. Rollback exercise documented (from existing tests/code paths; see Rollback exercise above).
-2. Final env/config review before enablement (envs remain OFF until then).
+1. Nothing blocking. Enablement itself — setting the 7 recommended
+   server-side vars in Production — is a separate, deliberate operator action,
+   not authorized or performed by this PR.
 
 ## Non-authorization statement
 
-The only hosted database change is the additive migration
-`20260630120000` applied on 2026-07-01 (new tables, RLS, trigger, and RPCs; no
-data inserted, no existing object altered or dropped). No other production config
-changed. No deploy. No manual env/config change. No destructive SQL. The canary
-is not enabled; all canary env vars remain unset and default OFF.
+The only hosted database change from this PR's code is the additive migration
+`20260630120000` applied on 2026-06-30/07-01 (new tables, RLS, trigger, and
+RPCs). The rollback exercise on 2026-07-01 additionally wrote 2 test intent
+rows to hosted `treasury_payment_intents` via the real Preview deployment (see
+Rollback exercise above); no existing object was altered or dropped, no
+consumption/entitlement was created, and no real funds moved. Preview
+environment variables were added and later corrected on Vercel (documented
+above); Production environment variables were not changed net of this
+exercise (a transient Production-scoped copy was added in error and removed
+before any Production deployment used it). No production deploy occurred. No
+destructive SQL. The canary is not enabled in Production; all canary env vars
+remain unset there and default OFF.
