@@ -167,6 +167,18 @@ describe("GetPeonesSheet", () => {
     expect(screen.queryByTestId("get-peones-verify-again")).not.toBeInTheDocument();
   });
 
+  it("unknown canary submission state does not invite another payment", () => {
+    mockedRail.mockReturnValue(railState({
+      phase: "error",
+      errorReason: "unknown_submission_state",
+      paymentRetryBlocked: true,
+    }));
+    mockedSel.mockReturnValue(selState());
+    renderSheet();
+    expect(screen.getByTestId("get-peones-pay")).toBeDisabled();
+    expect(screen.queryByTestId("get-peones-verify-again")).not.toBeInTheDocument();
+  });
+
   it("passes onSuccess to usePaymentRail as onVerified", () => {
     const onSuccess = vi.fn();
     mockedRail.mockReturnValue(railState());

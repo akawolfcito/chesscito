@@ -6,6 +6,7 @@ This package contains the on-chain proof layer for Chesscito on Celo.
 
 - `ScoreboardUpgradeable.sol`: EIP-712 signed score submission with anti-spam controls
 - `BadgesUpgradeable.sol`: EIP-712 signed ERC-1155 badge claims (one mint per wallet and level)
+- `ChesscitoTreasury.sol`: non-upgradeable ERC-20 custody contract for direct-transfer payment POCs
 
 ## Local workflow
 
@@ -25,6 +26,25 @@ pnpm --filter hardhat verify:alfajores
 pnpm --filter hardhat verify:celo-sepolia
 pnpm --filter hardhat verify:celo
 ```
+
+### ChesscitoTreasury POC (manual only)
+
+These commands are never called by tests, the web app, or the dev server.
+
+```bash
+# Deploy after setting SAFE_OWNER and optionally TREASURY_PAYOUT_ADDRESS.
+pnpm --filter hardhat deploy:treasury:celo-sepolia
+
+# Configure metadata after setting CHESSCITO_TREASURY_ADDRESS and
+# TREASURY_ACCEPTED_TOKENS (comma-separated token addresses).
+pnpm --filter hardhat configure:treasury:celo-sepolia
+```
+
+Mainnet variants exist but must only be run manually after reviewing the active
+network, owner, payout address, accepted tokens, and deployer account. They also
+require `CONFIRM_MAINNET_TREASURY_DEPLOY=YES` or
+`CONFIRM_MAINNET_TREASURY_CONFIG=YES`. Replacing an address already present in a
+deployment record additionally requires `CONFIRM_TREASURY_REDEPLOY=YES`.
 
 Default deploy parameters:
 - `submitCooldown=60`

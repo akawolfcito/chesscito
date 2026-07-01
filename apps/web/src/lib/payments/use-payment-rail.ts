@@ -22,6 +22,12 @@ import { erc20Abi } from "@/lib/contracts/tokens";
 import { getMiniPayFeeCurrency } from "@/lib/contracts/chains";
 import { isUserCancellation } from "@/lib/errors";
 import {
+  GET_PEONES_CANARY_CHAIN_ID,
+  GET_PEONES_CANARY_SKU,
+  isGetPeonesCanaryClientRequested,
+  type GetPeonesCanaryIntent,
+} from "@/lib/payments/get-peones-canary";
+import {
   getTreasuryAddressClient,
   RAIL_ACCEPTED_STABLECOINS,
   type PeonesPackSku,
@@ -96,12 +102,14 @@ export function usePaymentRail({
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [result, setResult] = useState<PaymentRailResult | null>(null);
   const [errorReason, setErrorReason] = useState<string | null>(null);
+  const [canaryIntentId, setCanaryIntentId] = useState<string | null>(null);
 
+  const canaryRequested = isGetPeonesCanaryClientRequested() && sku === GET_PEONES_CANARY_SKU;
   const treasury = getTreasuryAddressClient();
   const tokenEntry =
     RAIL_ACCEPTED_STABLECOINS.find((t) => t.symbol === tokenSymbol) ?? null;
 
-  const unavailableReason: PaymentRailUnavailableReason | null = !treasury
+  const unavailableReason: PaymentRailUnavailableReason | null = !canaryRequested && !treasury
     ? "no_treasury"
     : chainId !== CELO_MAINNET_CHAIN_ID
       ? "wrong_chain"
@@ -115,10 +123,11 @@ export function usePaymentRail({
     setTxHash(null);
     setResult(null);
     setErrorReason(null);
+    setCanaryIntentId(null);
   }, []);
 
   const verify = useCallback(
-    async (hash: `0x${string}`) => {
+    async (hash: `0x${string}`, intentId?: string) => {
       if (!tokenEntry) return;
       setPhase("verifying");
       // The tx has settled on-chain by the time we get here. A transient
@@ -126,17 +135,26 @@ export function usePaymentRail({
       // strand the user's payment — auto-retry with backoff before giving up.
       for (let attempt = 0; ; attempt++) {
         try {
-          const res = await fetch("/api/verify-payment", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              chainId: CELO_MAINNET_CHAIN_ID,
-              txHash: hash,
-              wallet: address,
-              token: tokenEntry.address,
-              sku,
-            }),
-          });
+          const res = await fetch(
+            intentId
+              ? "/api/verify-payment/get-peones-canary"
+              : "/api/verify-payment",
+            {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(
+                intentId
+                  ? { intentId, txHash: hash }
+                  : {
+                      chainId: CELO_MAINNET_CHAIN_ID,
+                      txHash: hash,
+                      wallet: address,
+                      token: tokenEntry.address,
+                      sku,
+                    },
+              ),
+            },
+          );
           const json = (await res.json()) as {
             ok?: boolean;
             error?: string;
@@ -164,7 +182,11 @@ export function usePaymentRail({
             return;
           }
           // A retriable error with budget left → wait and re-POST.
-          if (RETRIABLE_VERIFY_ERRORS.has(json.error ?? "") && attempt < retryDelaysMs.length) {
+          const retriable = RETRIABLE_VERIFY_ERRORS.has(json.error ?? "") ||
+            (intentId !== undefined &&
+              (json.error === "finality_pending" ||
+                json.error === "entitlement_failed_recoverable"));
+          if (retriable && attempt < retryDelaysMs.length) {
             await sleep(retryDelaysMs[attempt]);
             continue;
           }
@@ -189,7 +211,7 @@ export function usePaymentRail({
   );
 
   const pay = useCallback(async () => {
-    if (!available || !treasury || !tokenEntry) {
+    if (!available || (!canaryRequested && !treasury) || !tokenEntry) {
       setErrorReason(unavailableReason ?? "unavailable");
       setPhase("error");
       return;
@@ -202,50 +224,121 @@ export function usePaymentRail({
     setErrorReason(null);
     setResult(null);
     setTxHash(null);
+    setCanaryIntentId(null);
     setPhase("preparing");
 
-    const tx = buildPeonesPackTransfer({ sku, treasury, tokenSymbol });
+    let intent: GetPeonesCanaryIntent | null = null;
+    if (canaryRequested) {
+      try {
+        const response = await fetch("/api/payment-intents/get-peones", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            wallet: address,
+            token: tokenEntry.address,
+            sku,
+            chainId: GET_PEONES_CANARY_CHAIN_ID,
+          }),
+        });
+        const payload = (await response.json()) as {
+          ok?: boolean;
+          error?: string;
+          intent?: GetPeonesCanaryIntent;
+        };
+        if (!payload.ok || !payload.intent) {
+          setErrorReason(payload.error ?? "intent_creation_failed");
+          setPhase("error");
+          return;
+        }
+        intent = payload.intent;
+        if (
+          intent.wallet.toLowerCase() !== address.toLowerCase() ||
+          intent.token.toLowerCase() !== tokenEntry.address.toLowerCase() ||
+          intent.sku !== GET_PEONES_CANARY_SKU ||
+          intent.chainId !== GET_PEONES_CANARY_CHAIN_ID ||
+          BigInt(intent.expectedAmount) <= 0n
+        ) {
+          setErrorReason("intent_mismatch");
+          setPhase("error");
+          return;
+        }
+        setCanaryIntentId(intent.id);
+      } catch {
+        setErrorReason("intent_creation_failed");
+        setPhase("error");
+        return;
+      }
+    }
+
+    const tx = intent
+      ? {
+          token: tokenEntry,
+          expectedAmount: BigInt(intent.expectedAmount),
+          treasury: intent.treasury,
+        }
+      : buildPeonesPackTransfer({ sku, treasury: treasury!, tokenSymbol });
     const feeCurrency = getMiniPayFeeCurrency(chainId);
     const base = {
       address: tx.token.address,
       abi: erc20Abi,
       functionName: "transfer" as const,
-      args: [treasury, tx.expectedAmount] as const,
+      args: [tx.treasury, tx.expectedAmount] as const,
       chainId: CELO_MAINNET_CHAIN_ID,
       account: address,
     };
 
+    let submittedHash: `0x${string}` | null = null;
     try {
       setPhase("awaiting_signature");
       let hash: `0x${string}`;
-      try {
+      if (intent) {
         hash = await writeContractAsync(
           (feeCurrency ? { ...base, feeCurrency } : base) as Parameters<
             typeof writeContractAsync
           >[0],
         );
-      } catch (e) {
-        // User rejected → real error, do NOT re-prompt. Otherwise the
-        // feeCurrency field may be unsupported (MetaMask) → retry without.
-        if (isUserCancellation(e) || !feeCurrency) throw e;
-        hash = await writeContractAsync(base as Parameters<typeof writeContractAsync>[0]);
+      } else {
+        try {
+          hash = await writeContractAsync(
+            (feeCurrency ? { ...base, feeCurrency } : base) as Parameters<
+              typeof writeContractAsync
+            >[0],
+          );
+        } catch (e) {
+          // User rejected → real error, do NOT re-prompt. Otherwise the
+          // feeCurrency field may be unsupported (MetaMask) → retry without.
+          if (isUserCancellation(e) || !feeCurrency) throw e;
+          hash = await writeContractAsync(base as Parameters<typeof writeContractAsync>[0]);
+        }
       }
+      submittedHash = hash;
       setTxHash(hash);
       setPhase("pending_tx");
       await publicClient?.waitForTransactionReceipt({ hash });
-      await verify(hash);
+      await verify(hash, intent?.id);
     } catch (e) {
-      setErrorReason(
-        isUserCancellation(e)
-          ? "user_rejected"
-          : e instanceof Error
-            ? e.message
-            : "tx_failed",
-      );
+      const reason = isUserCancellation(e)
+        ? "user_rejected"
+        : intent && !submittedHash
+          ? "unknown_submission_state"
+          : submittedHash
+            ? "verification_pending"
+            : e instanceof Error
+              ? e.message
+              : "tx_failed";
+      setErrorReason(reason);
+      if (reason === "unknown_submission_state" && intent) {
+        void fetch("/api/payment-intents/get-peones", {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ intentId: intent.id, event: reason }),
+        }).catch(() => undefined);
+      }
       setPhase("error");
     }
   }, [
     available,
+    canaryRequested,
     treasury,
     tokenEntry,
     unavailableReason,
@@ -259,8 +352,8 @@ export function usePaymentRail({
   ]);
 
   const verifyAgain = useCallback(async () => {
-    if (txHash) await verify(txHash);
-  }, [txHash, verify]);
+    if (txHash) await verify(txHash, canaryIntentId ?? undefined);
+  }, [txHash, canaryIntentId, verify]);
 
   return {
     available,
@@ -269,6 +362,8 @@ export function usePaymentRail({
     txHash,
     result,
     errorReason,
+    canaryRequested,
+    paymentRetryBlocked: canaryRequested && errorReason === "unknown_submission_state",
     pay,
     verifyAgain,
     reset,

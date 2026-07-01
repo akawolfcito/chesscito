@@ -317,7 +317,7 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
 
                   <PrincipalButton
                     onClick={() => void rail.pay()}
-                    disabled={busy || !payable}
+                    disabled={busy || !payable || rail.paymentRetryBlocked}
                     loading={busy}
                     data-testid="get-peones-pay"
                   >

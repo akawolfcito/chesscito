@@ -37,6 +37,15 @@ export function getVictoryNFTAddress(chainId: number | undefined): `0x${string}`
   return normalizeAddress(process.env.NEXT_PUBLIC_VICTORY_NFT_ADDRESS);
 }
 
+export function getChesscitoTreasuryAddress(
+  chainId: number | undefined,
+): `0x${string}` | null {
+  if (!chainId || chainId !== getConfiguredChainId()) return null;
+  return normalizeAddress(
+    process.env.NEXT_PUBLIC_CHESSCITO_TREASURY_CONTRACT_ADDRESS,
+  );
+}
+
 export function getMiniPayFeeCurrency(chainId: number | undefined): `0x${string}` | undefined {
   if (!chainId || chainId !== getConfiguredChainId()) {
     return undefined;
