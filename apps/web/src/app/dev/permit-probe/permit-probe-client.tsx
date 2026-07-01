@@ -16,7 +16,10 @@ const DOMAIN = {
   name: "Chesscito Permit Probe",
   version: "1",
   chainId: 42220,
-  verifyingContract: "0x0000000000000000000000000000000000dEaD" as const,
+  // The all-zero address needs no EIP-55 checksum (no letters), so it can
+  // never trigger viem's strict checksum validation the way a cosmetic
+  // "dead" address can.
+  verifyingContract: "0x0000000000000000000000000000000000000000" as const,
 };
 
 const TYPES = {
@@ -63,7 +66,7 @@ export function PermitProbeClient() {
     setOutcome({ kind: "signing" });
     const message = {
       owner: address,
-      spender: "0x0000000000000000000000000000000000dEaD" as const,
+      spender: "0x0000000000000000000000000000000000000000" as const,
       value: 1n,
       nonce: 0n,
       deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
