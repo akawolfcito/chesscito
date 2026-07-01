@@ -375,6 +375,49 @@ founder-wallet gating to `get-peones-sheet.tsx` first.
 - Token/decimals cross-check: enforced live per-request (`token_decimals_mismatch`
   fails closed), already evidenced against real on-chain reads above.
 
+## Post-merge Preview validation — 2026-07-01
+
+After PR #159 merged to `main` (`ff2b81fb`), the 8 Preview env vars (the 7
+canary vars plus `CELO_RPC_URL`) were re-added by the operator scoped to
+Preview (all branches, broader than the `main`-only scoping this doc originally
+recommended — accepted, since Preview traffic is not player-facing either
+way), plus `NEXT_PUBLIC_GET_PEONES_TREASURY_CANARY_ENABLED=true` **in Preview
+only** (the Production decision above is unaffected: still unset there). A
+fresh deploy of `main` to Preview (`chesscito-de4lir56p-goodwolf.vercel.app`,
+live at `https://play-preview.chesscito.com`, confirmed via alias lookup) was
+verified via the same direct-`POST` method as the rollback exercise:
+`configVersion`/`priceVersion` correctly read `canary-v1` (not the burned
+`rollback-exercise-*` test labels).
+
+**Custody/recoverability test — real withdrawal, 2026-07-01.** The Treasury
+already held 0.01 USDT (10,000 base units) left over from an earlier
+mainnet dev POC (`/dev/minipay-no-approve-poc`). Before risking any new real
+canary payment, the operator's Safe (owner, `0x917497b64eeB85859edcf2e4ca64059eDfeC1923`)
+called `withdrawTokenToPayout(USDT, 10000)` via Safe Transaction Builder.
+Verified read-only before/after: Treasury USDT balance `10,000` → `0`. Full
+custody recoverability proven **before** any new funds were put at risk.
+
+**First real end-to-end canary transaction — MiniPay, 2026-07-01.** Operator
+completed a real `peones_pack_50` purchase ($0.50 → 50 Peones) through the
+actual product UI in MiniPay against `play-preview.chesscito.com` (not a
+curl/API test — the real buy flow: HUD Peones chip → `GetPeonesSheet` →
+`usePaymentRail` canary path → intent → real signed USDT transfer → verify →
+credit). Confirmed:
+
+- On-chain: Treasury USDT balance went from `0` (post-withdrawal) to exactly
+  `500,000` base units (`$0.50`), matching `peones_pack_50` price exactly —
+  no discrepancy, no double-charge.
+- Product-side: operator confirmed their in-app Peones balance increased by
+  exactly 50.
+- Decision: the $0.50 stays in the Treasury as real product revenue, not
+  withdrawn — the recoverability mechanism was already proven separately
+  above with the dust balance, no need to re-drain real revenue immediately.
+
+This closes the loop: the canary has now been proven correct end-to-end
+through the real MiniPay client, with a real wallet, real funds, and a
+verified recovery path, in addition to all the API-level evidence collected
+earlier in this document.
+
 ## Remaining blockers before enablement
 
 Closed:

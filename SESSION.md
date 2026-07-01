@@ -7,13 +7,18 @@ default** (all 7 server env vars unset in Production). Branch
 CI: 7/7 green pre-merge. Local suite re-run before the final docs commit:
 4587/4587 passing, tsc clean.
 
-**Preview follow-up (operator-owned, not done by this session):** the 8
-Preview env vars (7 canary + `CELO_RPC_URL`) were scoped to the now-deleted
-branch `poc/minipay-treasury-contract`; they do NOT carry over to `main`
-automatically. User is re-adding them scoped to branch `main` (plus
-`NEXT_PUBLIC_GET_PEONES_TREASURY_CANARY_ENABLED=true`, Preview-only, decided
-2026-07-01 since `preview.chesscito.com` isn't player-facing) using the table
-given in this session. Production remains untouched — no canary vars there.
+**Preview validation — DONE 2026-07-01.** Operator re-added the 8 canary env
+vars in Preview (all branches, incl. `NEXT_PUBLIC_GET_PEONES_TREASURY_CANARY_ENABLED=true`,
+Preview-only, Production still unset). Fresh `main` deploy confirmed live at
+`https://play-preview.chesscito.com` with `canary-v1` config labels.
+**Custody test**: withdrew the 0.01 USDT dust already sitting in the Treasury
+(leftover from `/dev/minipay-no-approve-poc`) via the owner Safe's
+`withdrawTokenToPayout` — verified Treasury balance `10,000`→`0`.
+**First real canary transaction**: operator bought `peones_pack_50` for real
+through the actual MiniPay UI — Treasury balance confirmed `0`→`500,000`
+(exactly `$0.50`), in-app Peones balance confirmed `+50`. Full evidence in
+ops checklist below. The $0.50 stays in the Treasury as real revenue (not
+withdrawn again).
 
 ## Completed
 - [ PR #159 (Draft) ] Get Peones → ChesscitoTreasury canary foundation, disabled-by-default.
@@ -31,10 +36,11 @@ given in this session. Production remains untouched — no canary vars there.
 - **Build**: passing (4587/4587 full suite, tsc clean, CI 7/7 green on PR #159 pre-merge).
 - **Uncommitted work**: only untracked local Supabase tooling `apps/web/supabase/config.toml` + `apps/web/supabase/.gitignore` — MUST stay untracked, never commit.
 - 2 permanent test intent rows in hosted `treasury_payment_intents` (immutability trigger blocks delete by design) — burn-address wallet `0x000...dEaD`, no consumption, no real funds moved.
-- Production env: no canary vars set (unchanged, verified clean). Preview env: stale, scoped to the deleted branch — see "Preview follow-up" above for what's being re-added scoped to `main`.
+- Production env: no canary vars set (unchanged, verified clean). Preview env: live and proven (see above), `NEXT_PUBLIC_...` ON there only.
+- Treasury balance right now: `500,000` USDT base units (`$0.50`, real revenue from the first live canary transaction). USDC/cUSD still `0`.
 
 ## Next Tasks
-1. Operator finishes re-adding the 8 Preview env vars scoped to `main` (in progress, see "Preview follow-up" above), then smoke-tests the real buy UI on `preview.chesscito.com`.
+1. Awaiting operator direction: proceed to Production enablement (everything is now proven end-to-end in Preview with real MiniPay + real recoverability), or run more Preview cycles first (e.g. duplicate/replay attempts, other error paths).
 2. On Production enablement (separate deliberate operator action, API-only per the decision above, whenever ready — no deadline): set `GET_PEONES_TREASURY_CANARY_ENABLED=true`, `CHESSCITO_TREASURY_CANARY_ADDRESS=0xcD3837DD017dFA5E31A2e3Cf390721E16Ac8Fbf0`, `_CONFIG_VERSION=canary-v1`, `_PRICE_VERSION=canary-v1`, `_CONFIRMATIONS=3`, `_TOKEN_ADDRESSES=0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e`, `ALLOW_CLIENT_ASSERTED_WALLET_FOR_GET_PEONES_CANARY=true`. Do NOT set `NEXT_PUBLIC_GET_PEONES_TREASURY_CANARY_ENABLED` in Production (API-only, no UI exposure there).
 
 ## Blockers
