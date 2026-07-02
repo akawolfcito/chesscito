@@ -2183,10 +2183,10 @@ export function ExercisesScreen({
 
     const unitPrice = selectedItem.onChainPrice;
     const normalizedTotal = normalizePrice(unitPrice, paymentToken.decimals);
-    const txSource =
-      selectedItem.itemId === PRO_ITEM_ID
-        ? "shop_pro"
-        : "shop_founder_badge";
+    // PRO no longer reaches this handler (redirected to the rail
+    // ProSheet in onSelectItem above) — Founder Badge is the only
+    // remaining approve+buyItem consumer, so the source is constant.
+    const txSource = "shop_founder_badge";
     const itemIdNum = Number(selectedItem.itemId);
 
     setLastError(null);
@@ -2244,30 +2244,6 @@ export function ExercisesScreen({
 
       setShopTxHash(buyHash);
       track("shop_buy_tx", { stage: "success", source: txSource, item_id: itemIdNum });
-      if (selectedItem.itemId === PRO_ITEM_ID && address && publicClient) {
-        // verify-pro activates the PRO pass server-side. Without this
-        // POST the user paid on-chain but coach:pro:<wallet> never
-        // lands in Redis. Idempotent (proProcessedTx guard) so retries
-        // are safe.
-        const buyerAddress = address;
-        void (async () => {
-          try {
-            await waitForReceiptWithTimeout(publicClient, buyHash as `0x${string}`);
-            await fetch("/api/verify-pro", {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({
-                txHash: buyHash,
-                walletAddress: buyerAddress,
-              }),
-            });
-          } catch {
-            // Verification will retry on next /api/pro/status read or
-            // when the user opens the PRO sheet (which re-posts on
-            // active=false).
-          }
-        })();
-      }
       setConfirmOpen(false);
       setStoreOpen(false);
       setSelectedItemId(null);
@@ -3155,6 +3131,15 @@ export function ExercisesScreen({
           onOpenChange={setStoreOpen}
           items={displayShopCatalog}
           onSelectItem={(itemId) => {
+            // PRO no longer buys through approve+buyItem — redirect to
+            // the already-mounted rail-based <ProSheet> (same one the
+            // floating PRO chip opens) and skip the confirm sheet.
+            // Founder Badge falls through to the normal path below.
+            if (itemId === PRO_ITEM_ID) {
+              setStoreOpen(false);
+              proSheet.openSheet();
+              return;
+            }
             setSelectedItemId(itemId);
             const item = shopCatalog.find((i) => i.itemId === itemId);
             if (item) setPaymentToken(selectPaymentToken(item.onChainPrice, itemId));

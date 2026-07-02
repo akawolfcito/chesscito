@@ -130,6 +130,13 @@ export type UseShopSheetStateOptions = {
    *  sheet's exit transition starts (design-lock §6.4 race 1). The host
    *  can synchronously trigger shields-count refresh / atmosphere shift. */
   onPurchaseSuccess?: (receipt: ShopPurchaseReceipt) => void;
+  /** Called instead of opening the internal approve+buyItem confirm
+   *  sheet when the tapped item is PRO (itemId 6n). PRO moved off this
+   *  rail entirely (2026-07-02) — the caller is expected to open its
+   *  own already-mounted rail-based `<ProSheet>` instance (no approve,
+   *  same one the floating PRO chip opens). Founder Badge is
+   *  unaffected and still opens the confirm sheet normally. */
+  onSelectProItem?: () => void;
 };
 
 /** Shop sheet orchestration extracted from `<ExercisesScreen>` so the
@@ -191,6 +198,11 @@ export function useShopSheetState(
   const onPurchaseSuccessRef = useRef(options?.onPurchaseSuccess);
   useEffect(() => {
     onPurchaseSuccessRef.current = options?.onPurchaseSuccess;
+  });
+
+  const onSelectProItemRef = useRef(options?.onSelectProItem);
+  useEffect(() => {
+    onSelectProItemRef.current = options?.onSelectProItem;
   });
 
   const fireOnPurchaseSuccess = useCallback(
@@ -361,6 +373,15 @@ export function useShopSheetState(
 
   const handleSelectItem = useCallback(
     (itemId: bigint) => {
+      // PRO no longer buys through approve+buyItem — redirect to the
+      // caller's rail-based <ProSheet> and skip the confirm sheet
+      // entirely. Founder Badge (and any future approve+buyItem item)
+      // falls through to the normal path below, unaffected.
+      if (itemId === PRO_ITEM_ID && onSelectProItemRef.current) {
+        setOpen(false);
+        onSelectProItemRef.current();
+        return;
+      }
       setSelectedItemId(itemId);
       const item = shopCatalog.find((i) => i.itemId === itemId);
       if (item) {
@@ -404,10 +425,10 @@ export function useShopSheetState(
 
     const unitPrice = selectedItem.onChainPrice;
     const normalizedTotal = normalizePrice(unitPrice, paymentToken.decimals);
-    const txSource =
-      selectedItem.itemId === PRO_ITEM_ID
-        ? "shop_pro"
-        : "shop_founder_badge";
+    // PRO no longer reaches this handler (redirected to the rail
+    // ProSheet in handleSelectItem above) — Founder Badge is the only
+    // remaining approve+buyItem consumer, so the source is constant.
+    const txSource = "shop_founder_badge";
     const itemIdNum = Number(selectedItem.itemId);
 
     setErrorMessage(null);
@@ -453,33 +474,6 @@ export function useShopSheetState(
 
       if (!isMountedRef.current) return;
       track("shop_buy_tx", { stage: "success", source: txSource, item_id: itemIdNum });
-      if (selectedItem.itemId === PRO_ITEM_ID) {
-        // verify-pro is the activation contract — without it the user
-        // paid on-chain but coach:pro:<wallet> never lands in Redis.
-        // Await the receipt + POST inline so an HTTP failure surfaces
-        // in `errorMessage` and the user knows to retry from the PRO
-        // sheet. The route is idempotent (proProcessedTx guard), so a
-        // retry with the same txHash returns the same expiresAt.
-        if (publicClient) {
-          try {
-            await waitForReceiptWithTimeout(publicClient, buyHash as `0x${string}`);
-            const res = await fetch("/api/verify-pro", {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({ txHash: buyHash, walletAddress: address }),
-            });
-            if (!res.ok) {
-              setErrorMessage(
-                "PRO purchased on-chain — activation pending. Open the PRO menu to retry verification.",
-              );
-            }
-          } catch {
-            setErrorMessage(
-              "PRO purchased on-chain — activation pending. Open the PRO menu to retry verification.",
-            );
-          }
-        }
-      }
       setConfirmOpen(false);
       setSelectedItemId(null);
       setSuccessBanner({

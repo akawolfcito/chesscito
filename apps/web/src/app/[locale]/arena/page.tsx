@@ -105,7 +105,6 @@ function ArenaPageInner() {
     "badge" | "shop" | "trophies" | "leaderboard" | null
   >(null);
   const badgeSheet = useBadgeSheetState();
-  const shopSheet = useShopSheetState();
   const handleOpenBadgeSheet = useCallback(() => {
     setActiveDockTab("badge");
     badgeSheet.openSheet();
@@ -121,18 +120,6 @@ function ArenaPageInner() {
       else setActiveDockTab((prev) => (prev === "badge" ? null : prev));
     },
     [badgeSheet],
-  );
-  const handleOpenShopSheet = useCallback(() => {
-    setActiveDockTab("shop");
-    shopSheet.openSheet();
-  }, [shopSheet]);
-  const handleShopSheetOpenChange = useCallback(
-    (open: boolean) => {
-      shopSheet.sheetProps.onOpenChange(open);
-      if (open) setActiveDockTab("shop");
-      else setActiveDockTab((prev) => (prev === "shop" ? null : prev));
-    },
-    [shopSheet],
   );
   // Arena scaffold is the new default (2026-05-07): the hub-anchored
   // selector matches what users see when they navigate from /hub → Play.
@@ -152,6 +139,23 @@ function ArenaPageInner() {
   const { status: proStatusFromHook } = useProStatus(address?.toLowerCase());
   const proActiveCached = proStatusFromHook?.active === true;
   const proSheet = useProSheetState();
+  // Declared after proSheet (not next to badgeSheet above) so PRO
+  // taps inside the Shop can redirect to it — see onSelectProItem.
+  const shopSheet = useShopSheetState({
+    onSelectProItem: () => proSheet.openSheet(),
+  });
+  const handleOpenShopSheet = useCallback(() => {
+    setActiveDockTab("shop");
+    shopSheet.openSheet();
+  }, [shopSheet]);
+  const handleShopSheetOpenChange = useCallback(
+    (open: boolean) => {
+      shopSheet.sheetProps.onOpenChange(open);
+      if (open) setActiveDockTab("shop");
+      else setActiveDockTab((prev) => (prev === "shop" ? null : prev));
+    },
+    [shopSheet],
+  );
   const arenaCoachSignalViewedRef = useRef(false);
   const coachPreviewViewedRef = useRef<string | null>(null);
 

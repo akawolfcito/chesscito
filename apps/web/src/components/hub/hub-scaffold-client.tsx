@@ -139,7 +139,9 @@ export function HubScaffoldClient({
   // the last `?legacy=1&action=shop` round-trip. Hook owns catalog +
   // balances + approve/buy + post-submit server credit; scaffold just
   // mounts the two sheets it returns.
-  const shopSheet = useShopSheetState();
+  const shopSheet = useShopSheetState({
+    onSelectProItem: () => proSheet.openSheet(),
+  });
   const openBadgeSheet = badgeSheet.openSheet;
   const openProSheet = proSheet.openSheet;
   const openShopSheet = shopSheet.openSheet;

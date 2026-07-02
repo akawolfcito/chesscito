@@ -402,53 +402,43 @@ describe("useShopSheetState — PRO purchase", () => {
     expect(pro?.onChainPrice).toBe(1_990_000n);
   });
 
-  it("POSTs /api/verify-pro with the txHash + wallet after a successful PRO buy", async () => {
-    // PRO = $1.99 (1_990_000 USD6). Default balance helper provisions $1
-    // per stable — need to top up so `selectPaymentToken` finds enough
-    // funds to clear the price gate.
-    setReadContractsState({
-      catalog: makeOnChainItems(),
-      balances: makeBalances({ stableBalance: 5_000_000n }),
-    });
-    usePublicClientMock.mockReturnValue({
-      readContract: vi.fn().mockResolvedValue(10n ** 30n),
-    });
-    writeContractAsyncMock.mockResolvedValueOnce("0xprobuy");
+});
 
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({ active: true, expiresAt: Date.now() + 86_400_000 }),
-          { status: 200 },
-        ),
-      );
+describe("useShopSheetState — PRO redirects to the rail ProSheet, no approve+buyItem", () => {
+  it("calls onSelectProItem and never opens the confirm sheet when PRO (itemId 6n) is tapped", () => {
+    setReadContractsState({ catalog: makeOnChainItems(), balances: makeBalances() });
+    const onSelectProItem = vi.fn();
+    const { result } = renderHook(() => useShopSheetState({ onSelectProItem }));
 
-    const { result } = renderHook(() => useShopSheetState());
     act(() => result.current.sheetProps.onSelectItem(6n));
-    act(() => result.current.confirmProps.onConfirm());
 
-    await waitFor(() => {
-      expect(result.current.sheetProps.successBanner).not.toBeNull();
-    });
+    expect(onSelectProItem).toHaveBeenCalledTimes(1);
+    expect(result.current.confirmProps.open).toBe(false);
+    expect(result.current.confirmProps.selectedItem).toBeNull();
+  });
 
-    expect(trackMock).toHaveBeenCalledWith(
-      "shop_buy_tx",
-      expect.objectContaining({ stage: "success", source: "shop_pro" }),
-    );
+  it("also closes the shop sheet itself so the caller's ProSheet can take over cleanly", () => {
+    setReadContractsState({ catalog: makeOnChainItems(), balances: makeBalances() });
+    const onSelectProItem = vi.fn();
+    const { result } = renderHook(() => useShopSheetState({ onSelectProItem }));
 
-    const verifyCall = fetchSpy.mock.calls.find(([input]) => {
-      const url = typeof input === "string" ? input : (input as Request).url;
-      return url.includes("/api/verify-pro");
-    });
-    expect(verifyCall).toBeDefined();
-    const init = verifyCall?.[1] as RequestInit | undefined;
-    expect(init?.method).toBe("POST");
-    expect(JSON.parse(init?.body as string)).toEqual({
-      txHash: "0xprobuy",
-      walletAddress: TEST_WALLET,
-    });
+    act(() => result.current.openSheet());
+    expect(result.current.sheetProps.open).toBe(true);
 
-    fetchSpy.mockRestore();
+    act(() => result.current.sheetProps.onSelectItem(6n));
+
+    expect(result.current.sheetProps.open).toBe(false);
+  });
+
+  it("Founder Badge (itemId 1n) is unaffected — still opens the confirm sheet normally", () => {
+    setReadContractsState({ catalog: makeOnChainItems(), balances: makeBalances() });
+    const onSelectProItem = vi.fn();
+    const { result } = renderHook(() => useShopSheetState({ onSelectProItem }));
+
+    act(() => result.current.sheetProps.onSelectItem(1n));
+
+    expect(onSelectProItem).not.toHaveBeenCalled();
+    expect(result.current.confirmProps.open).toBe(true);
+    expect(result.current.confirmProps.selectedItem?.itemId).toBe(1n);
   });
 });

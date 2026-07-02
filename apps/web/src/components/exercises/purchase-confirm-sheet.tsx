@@ -36,6 +36,13 @@ const FADE_MS = 300;
 /**
  * Confirm Purchase modal (panel-mision shell — Register A).
  *
+ * GENERIC TEMPLATE — reuse this for any future Shop item still on the
+ * approve+buyItem rail (PRO and Coach/Shield moved off it onto the
+ * no-approve Peones/treasury rail as of 2026-07). `selectedItem` is a
+ * plain {label, subtitle, icon, price} shape, not hardcoded per-SKU —
+ * a new item just needs a catalog entry + SHOP_TILE_ASSETS icon, no
+ * changes here. Founder Badge is the one remaining live consumer.
+ *
  * Replaces the earlier Radix bottom-Sheet that mixed cream
  * ContextualHeader with a brown `game-solid` confirm CTA. Now
  * adopts the same WARM UP vocabulary (`panel-mision-icon` frame,
