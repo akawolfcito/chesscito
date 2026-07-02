@@ -1084,6 +1084,20 @@ export function ExercisesScreen({
    *  double-tap on the ContextualActionSlot shield action from firing
    *  two parallel /api/shields/spend requests. */
   const shieldSpendingRef = useRef(false);
+  /** Monotonic, per-session counter dedicated to Shield-rescue Peones
+   *  idempotency. Deliberately separate from useExerciseProgress's
+   *  attemptSeq (which resets to 1 on every exercise change and is
+   *  shared with other systems like PeonesHintButton) — a fresh
+   *  failure on ANY exercise must get a fresh idempotency identity,
+   *  never colliding with a key already consumed on a prior exercise.
+   *  Started at Date.now() for cross-session entropy (a page reload
+   *  starting back at 1 would otherwise reintroduce the exact
+   *  collision this counter exists to prevent). Advances once per
+   *  NEW failure occurrence (see the setPhase("failure") call site),
+   *  not per render and not per retry-of-the-same-failure — a
+   *  double-tap on the SAME failure's rescue button must still
+   *  collapse onto the same key. */
+  const shieldRescueAttemptIdRef = useRef(Date.now());
   // Single source of truth for the board's auto-reset timer. The hook
   // handles the pending-timer-replacement, generation-based stale
   // callback protection, and unmount cleanup that used to be spread
@@ -1507,7 +1521,7 @@ export function ExercisesScreen({
   // below — resetBoard is defined below this block so we reference
   // it via the function declaration's hoisted binding.
   const failRescue = useFailRescue({
-    attemptSeq,
+    attemptSeq: shieldRescueAttemptIdRef.current,
     onRescued: () => {
       // Shield used — streak preserved (do NOT call resetStreak).
       // Post-hoc fix (final whole-branch review, C1): a successful
@@ -1693,6 +1707,7 @@ export function ExercisesScreen({
     if (currentExercise.optimalMoves === 1) {
       hapticReject();
       setPhase("failure");
+      shieldRescueAttemptIdRef.current += 1;
       track("exercise_fail", {
         piece: selectedPiece,
         exercise_id: currentExercise.id,
@@ -1764,7 +1779,7 @@ export function ExercisesScreen({
       if (!res.ok && res.status === 409 && shieldCount === 0 && address) {
         const attempt = await attemptShieldSpendWithPeones({
           wallet: address,
-          attemptSeq,
+          attemptSeq: shieldRescueAttemptIdRef.current,
         });
         if (attempt.kind === "paid") {
           const peonesRes = await fetch("/api/shields/spend", {
@@ -1773,7 +1788,7 @@ export function ExercisesScreen({
             body: JSON.stringify({
               walletAddress: address,
               peonesIdempotencyKey: attempt.peonesIdempotencyKey,
-              attemptSeq,
+              attemptSeq: shieldRescueAttemptIdRef.current,
             }),
           });
           if (peonesRes.ok) {
