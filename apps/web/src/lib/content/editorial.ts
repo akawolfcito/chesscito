@@ -3285,17 +3285,20 @@ export const RESCUE_MODAL_COPY = {
      *  for the Welcome Pack deep link. */
     withoutShieldsPreClaim:
       "You ran out of Shields. Claim your first free gift and rescue this streak.",
-    /** State D — without-shields, post-claim or 3+ ignores. Paid SKU
-     *  upsell. */
+    /** State D — without-shields, post-claim or 3+ ignores. Peones
+     *  fallback (2 Peones per rescue, retired the paid Shop-TX SKU
+     *  in Task B8 2026-07-02). */
     withoutShieldsPostClaim:
-      "You ran out of Shields. Restock now to keep your streak alive.",
+      "You ran out of Shields. Use Peones to keep your streak alive.",
   },
   /** Small footer line under the secondary CTA — clarifies what
-   *  the primary CTA actually does (deep-link to Shop, or use a
-   *  shield in place). */
+   *  the primary CTA actually does (deep-link to Shop for C, spend
+   *  Peones in place for D). */
   footer: {
     withShields: "Keep your streak alive.",
     deepLink: "We’ll take you to the Shop.",
+    /** Variant D only. */
+    peonesFallback: "Costs {n} Peones.",
   },
   /** Stats pills row — shown between the body and the primary CTA.
    *  Mirrors the candy-pill HUD vocabulary so the count format
@@ -3307,8 +3310,8 @@ export const RESCUE_MODAL_COPY = {
     starProtected: "Star protected",
     /** Without-shields, variant C. */
     giftCount: "Gift · {n} free",
-    /** Without-shields, variant D — price label. */
-    shieldPrice: "Get for {price}",
+    /** Without-shields, variant D — Peones cost companion pill. */
+    peonesCost: "{n} Peones",
   },
   cta: {
     /** State A/B primary — appended with the live shieldsLeft chip
@@ -3316,8 +3319,9 @@ export const RESCUE_MODAL_COPY = {
     useShield: "Use Shield",
     /** State C primary. */
     claimShields: "Claim {n} Shields",
-    /** State D primary. */
-    getShields: "Get Shields",
+    /** State D primary — spends Peones via the same server-verified
+     *  path as A/B's Use Shield, not a Shop deep link. */
+    usePeones: "Use Peones",
     /** Secondary CTA (all states). Explicit "anyway" keeps the cost
      *  intuition: "yes, despite losing a star". */
     retryAnyway: "Retry anyway",

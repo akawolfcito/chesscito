@@ -27,6 +27,11 @@ import {
   emitPeonesSpent,
 } from "@/lib/peones/telemetry";
 
+/** Peones cost of a shield rescue. Single source of truth — reused by
+ *  the spend call below and by the FailRescueModal variant D copy so
+ *  the displayed price can never drift from what's actually charged. */
+export const SHIELD_RESCUE_PEONES_COST = 2;
+
 export type ShieldPeonesAttemptArgs = {
   wallet: string;
   /** Stable per-rescue-attempt identifier. Must be the SAME value for
@@ -80,7 +85,7 @@ export async function attemptShieldSpendWithPeones(
 
   const result = await submit({
     wallet,
-    amount: 2,
+    amount: SHIELD_RESCUE_PEONES_COST,
     target: "shield",
     targetId,
     idempotencyKey,
@@ -95,7 +100,7 @@ export async function attemptShieldSpendWithPeones(
       emitPeonesSpendBypassed({
         target: "shield",
         targetId,
-        requested: 2,
+        requested: SHIELD_RESCUE_PEONES_COST,
         debited: 0,
         newBalance: result.newBalance,
         attestationHash: result.attestationHash,
@@ -106,7 +111,7 @@ export async function attemptShieldSpendWithPeones(
       emitPeonesSpent({
         target: "shield",
         targetId,
-        requested: 2,
+        requested: SHIELD_RESCUE_PEONES_COST,
         debited: result.debited,
         newBalance: result.newBalance,
         attestationHash: result.attestationHash,

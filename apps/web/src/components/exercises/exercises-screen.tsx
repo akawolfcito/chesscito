@@ -2614,7 +2614,6 @@ export function ExercisesScreen({
                 onUseShield={failRescue.onUseShield}
                 onRetryAnyway={failRescue.onRetryAnyway}
                 onClaimFree={failRescue.onClaimFree}
-                onGetShields={failRescue.onGetShields}
                 onPrimerShown={failRescue.markPrimerShown}
               />
             ) : null

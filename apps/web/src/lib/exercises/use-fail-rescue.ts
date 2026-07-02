@@ -102,10 +102,11 @@ export type UseFailRescueOptions = {
    *  for our infra glitch. Caller resets the board but PRESERVES the
    *  streak. Distinct from onSkipped per red-team E11. */
   onServerError: () => void;
-  /** Opens the Shop sheet focused on a specific surface. v1 just opens
-   *  the sheet; polish pass can wire actual scroll-to-focus via a
-   *  query param. */
-  onOpenShop: (focus: "welcome-pack" | "shield-sku") => void;
+  /** Opens the Shop sheet focused on the welcome-pack tile. Shield's
+   *  own Shop-TX SKU was retired (PR #164) — variant D now spends
+   *  Peones via onUseShield instead of deep-linking to the Shop, so
+   *  this only ever fires for the welcome-pack claim (variant C). */
+  onOpenShop: (focus: "welcome-pack") => void;
   /** Stable per-rescue-attempt counter — same value across retries of
    *  one rescue tap, advances on a genuinely new attempt. Threaded
    *  through to the Peones fallback's idempotency key. Owned by the
@@ -124,7 +125,6 @@ export type UseFailRescueReturn = {
   onUseShield: () => void;
   onRetryAnyway: () => void;
   onClaimFree: () => void;
-  onGetShields: () => void;
   /** Called by FailRescueModal when it actually renders variant A (the
    *  primer). Sets a localStorage flag so subsequent rescues with
    *  shields show variant B (compact, no primer). Idempotent. Critical
@@ -243,10 +243,6 @@ export function useFailRescue(
     optionsRef.current.onOpenShop("welcome-pack");
   }, []);
 
-  const onGetShields = useCallback(() => {
-    optionsRef.current.onOpenShop("shield-sku");
-  }, []);
-
   return {
     variant: variantState.variant,
     shieldsCount,
@@ -254,7 +250,6 @@ export function useFailRescue(
     onUseShield,
     onRetryAnyway,
     onClaimFree,
-    onGetShields,
     markPrimerShown: markPrimerShownCb,
   };
 }

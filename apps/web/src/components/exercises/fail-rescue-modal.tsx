@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import type { RescueModalVariant } from "@/lib/exercises/use-rescue-modal-state";
+import { SHIELD_RESCUE_PEONES_COST } from "@/lib/peones/shield-spend-fallback";
 
 /**
  * FailRescueModal — decision panel shown when the player fails an
@@ -57,8 +58,6 @@ export type FailRescueModalProps = {
   onRetryAnyway: () => void;
   /** Tap "Claim free" deep link — only consumed by variant C. */
   onClaimFree: () => void;
-  /** Tap "Get Shields" deep link — only consumed by variant D. */
-  onGetShields: () => void;
   /** Fired the first time this component renders with variant A, so
    *  the hook can persist a "primer shown" flag. Subsequent rescues
    *  with shields then render variant B (compact). E18 fix from the
@@ -88,7 +87,6 @@ export function FailRescueModal({
   onUseShield,
   onRetryAnyway,
   onClaimFree,
-  onGetShields,
   onPrimerShown,
 }: FailRescueModalProps) {
   const tRescue = useTranslations("RESCUE_MODAL_COPY");
@@ -108,14 +106,25 @@ export function FailRescueModal({
   const kicker = hasShields
     ? tRescue("kicker.withShields")
     : tRescue("kicker.withoutShields");
-  const footer = hasShields
-    ? tRescue("footer.withShields")
-    : tRescue("footer.deepLink");
+  // Footer differs across all three non-primer states: C still deep-
+  // links to the Shop (welcome pack claim); D spends Peones in place,
+  // same as A/B, so it gets its own cost-callout line instead.
+  let footer: string;
+  if (hasShields) {
+    footer = tRescue("footer.withShields");
+  } else if (variant === "C") {
+    footer = tRescue("footer.deepLink");
+  } else {
+    footer = tRescue("footer.peonesFallback", { n: SHIELD_RESCUE_PEONES_COST });
+  }
 
   // Primary CTA — different label + handler per variant. Reuses the
   // FOOTER_CTA_COPY.useShield + shieldsLeft(n) keys for the with-
   // shields path so the label matches every other "Use Shield"
-  // surface in the app.
+  // surface in the app. Variant D routes through the SAME onUseShield
+  // handler as A/B — at 0 shields the server 409s and onUseShield's
+  // Peones-fallback branch takes over (see use-fail-rescue.ts). It is
+  // NOT a Shop deep link; Shield's Shop-TX SKU was retired in PR #164.
   let primaryLabel: string;
   let primaryChip: string | null = null;
   let primaryAction: () => void;
@@ -127,8 +136,8 @@ export function FailRescueModal({
     primaryLabel = tRescue("cta.claimShields", { n: WELCOME_PACK_GIFT_COUNT });
     primaryAction = onClaimFree;
   } else {
-    primaryLabel = tRescue("cta.getShields");
-    primaryAction = onGetShields;
+    primaryLabel = tRescue("cta.usePeones");
+    primaryAction = onUseShield;
   }
 
   // Stats pills — left to right. Shield count is always shown
@@ -136,7 +145,7 @@ export function FailRescueModal({
   // concrete). The companion pill differs by variant:
   //   - with shields → "Star protected"
   //   - variant C → "Gift · 3 free"
-  //   - variant D → omitted (no welcome pack pitch left)
+  //   - variant D → "2 Peones" cost callout
   const shieldPillText = tRescue("pills.shieldCount", { n: shieldsCount });
   let companionPillText: string | null = null;
   if (hasShields) {
@@ -144,6 +153,10 @@ export function FailRescueModal({
   } else if (variant === "C") {
     companionPillText = tRescue("pills.giftCount", {
       n: WELCOME_PACK_GIFT_COUNT,
+    });
+  } else {
+    companionPillText = tRescue("pills.peonesCost", {
+      n: SHIELD_RESCUE_PEONES_COST,
     });
   }
 
@@ -246,14 +259,14 @@ export function FailRescueModal({
                       draggable={false}
                     />
                   </picture>
-                ) : (
+                ) : variant === "C" ? (
                   <span
                     className="fail-rescue-modal-stat-icon-glyph"
                     aria-hidden="true"
                   >
                     🎁
                   </span>
-                )}
+                ) : null}
                 <span>{companionPillText}</span>
               </span>
             ) : null}

@@ -2227,22 +2227,23 @@ const messages = {
       withoutShieldsPreClaim:
         "Te quedaste sin Escudos. Reclama tu primer regalo y rescata esta racha.",
       withoutShieldsPostClaim:
-        "Te quedaste sin Escudos. Repón para mantener tu racha viva.",
+        "Te quedaste sin Escudos. Usa Peones para mantener tu racha viva.",
     },
     footer: {
       withShields: "Mantén tu racha viva.",
       deepLink: "Te llevamos a la Tienda.",
+      peonesFallback: "Cuesta {n} Peones.",
     },
     pills: {
       shieldCount: "Escudo · {n} restantes",
       starProtected: "Estrella protegida",
       giftCount: "Regalo · {n} gratis",
-      shieldPrice: "Compra por {price}",
+      peonesCost: "{n} Peones",
     },
     cta: {
       useShield: "Usar Escudo",
       claimShields: "Reclamar {n} Escudos",
-      getShields: "Comprar Escudos",
+      usePeones: "Usar Peones",
       retryAnyway: "Reintentar igual",
     },
     closeLabel: "Cerrar rescate",

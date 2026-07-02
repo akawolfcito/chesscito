@@ -34,7 +34,6 @@ export function RescueModalFixture({
         onUseShield={() => {}}
         onRetryAnyway={() => {}}
         onClaimFree={() => {}}
-        onGetShields={() => {}}
       />
     </main>
   );
