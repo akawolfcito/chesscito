@@ -67,6 +67,8 @@ describe("PRO_BYPASS_DAILY_QUOTA", () => {
     expect(PRO_BYPASS_DAILY_QUOTA.coach).toBe(5);
     expect(PRO_BYPASS_DAILY_QUOTA.hint).toBe(20);
     expect(PRO_BYPASS_DAILY_QUOTA.retry).toBe(10);
+    // Shield: conservative default (no PRO entitlement decided yet)
+    expect(PRO_BYPASS_DAILY_QUOTA.shield).toBe(0);
     expect(PRO_BYPASS_DAILY_QUOTA.save_game).toBe(
       Number.POSITIVE_INFINITY,
     );
