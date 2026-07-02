@@ -16,11 +16,6 @@ import { track } from "@/lib/telemetry";
 import { ProActiveBadge } from "./pro-active-badge";
 import { ProActiveCTA } from "./pro-active-cta";
 
-/** M1 funnel (Commit 6, 2026-06-02) — threshold widened from 3 to 7 so
- *  the expiring-sub-line (renew nudge) surfaces a full week before the
- *  pass expires, matching the canonical M1 retention loop. */
-const EXPIRING_THRESHOLD_DAYS = 7;
-
 export type ProSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -377,7 +372,7 @@ export function ProSheet(props: ProSheetProps) {
                *  per-day equivalent (M1 funnel adds priceSubLabel under
                *  priceLabel so the price stays readable while the
                *  per-day cost lowers the perceived barrier).
-               *  Active: ProActiveBadge + optional expiring sub-line. */}
+               *  Active: ProActiveBadge + the extend/renew sub-line. */}
               {showActiveBanner && days !== null && status?.expiresAt ? (
                 <div
                   data-testid="pro-active-banner"
@@ -390,31 +385,40 @@ export function ProSheet(props: ProSheetProps) {
                   <div className="flex justify-center">
                     <ProActiveBadge expiresAtMs={status.expiresAt} />
                   </div>
-                  {days <= EXPIRING_THRESHOLD_DAYS && (
-                    <div
-                      data-testid="pro-expiring-subline"
-                      className="mt-2 flex items-baseline justify-between gap-2"
+                  {/* Always available while active — not gated by days
+                   *  remaining. Regression fix 2026-07-02: the Shop's
+                   *  old approve+buyItem PRO tile let a user top up at
+                   *  ANY remaining balance; redirecting that tile to
+                   *  this sheet (instead of retiring it outright) lost
+                   *  that flexibility while this link was still gated
+                   *  to daysLeft ≤ 7. PRO_COPY.expiringMicroCopy itself
+                   *  was always calm/non-urgent copy ("Renew anytime to
+                   *  keep training", Canon §11: no FOMO framing), so
+                   *  showing it regardless of days left matches the
+                   *  copy's own intent rather than fighting it. */}
+                  <div
+                    data-testid="pro-expiring-subline"
+                    className="mt-2 flex items-baseline justify-between gap-2"
+                  >
+                    <span
+                      className="text-xs leading-snug"
+                      style={{ color: "rgba(110, 65, 15, 0.80)" }}
                     >
-                      <span
-                        className="text-xs leading-snug"
-                        style={{ color: "rgba(110, 65, 15, 0.80)" }}
-                      >
-                        {t("expiringMicroCopy")}
-                      </span>
-                      <button
-                        type="button"
-                        data-testid="pro-extend-link"
-                        onClick={() => {
-                          track("pro_extend_tap", { source });
-                          props.onPurchase();
-                        }}
-                        className="text-xs font-semibold underline underline-offset-2"
-                        style={{ color: "rgba(110, 65, 15, 0.95)" }}
-                      >
-                        {t("ctaRenew")}
-                      </button>
-                    </div>
-                  )}
+                      {t("expiringMicroCopy")}
+                    </span>
+                    <button
+                      type="button"
+                      data-testid="pro-extend-link"
+                      onClick={() => {
+                        track("pro_extend_tap", { source });
+                        props.onPurchase();
+                      }}
+                      className="text-xs font-semibold underline underline-offset-2"
+                      style={{ color: "rgba(110, 65, 15, 0.95)" }}
+                    >
+                      {t("ctaRenew")}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div

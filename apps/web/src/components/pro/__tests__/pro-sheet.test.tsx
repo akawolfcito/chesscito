@@ -292,10 +292,10 @@ describe("ProSheet", () => {
     // resolveCta() at pro-sheet.tsx). Renew flow now goes through
     // pro-extend-link, covered by the expiring-sub-line block.
 
-    describe("expiring sub-line (daysLeft ≤ 3)", () => {
+    describe("extend/renew sub-line (always available while active)", () => {
       const EXPIRING_STATUS = { active: true, expiresAt: TWO_DAYS };
 
-      it("flips the badge to EXPIRING and renders the extend link", () => {
+      it("flips the badge to EXPIRING and renders the extend link when close to expiry", () => {
         renderSheet({ status: EXPIRING_STATUS });
         expect(screen.getByTestId("pro-active-badge-pill")).toHaveTextContent(
           PRO_COPY.statusBadgeExpiring,
@@ -308,11 +308,27 @@ describe("ProSheet", () => {
         );
       });
 
-      it("does NOT render the sub-line when daysLeft > 3", () => {
+      // Regression guard 2026-07-02: the Shop's old approve+buyItem PRO
+      // tile let a user re-buy/extend at ANY remaining balance, no gate.
+      // Retiring that tile in favor of redirecting to this sheet
+      // (docs/product/chesscito-treasury-unification-plan-2026-07-01.md
+      // step 2) silently lost that flexibility, since this link used to
+      // be gated to daysLeft ≤ 7 — a real user with ~30 fresh days had no
+      // way to top up. The copy itself (PRO_COPY.expiringMicroCopy:
+      // "Renew anytime to keep training") was always written calm/non-
+      // urgent (Canon §11 Journey 3: no FOMO framing), so removing the
+      // days gate matches the copy's own intent, not just a workaround.
+      it("still renders the extend link with plenty of days left (daysLeft > 7)", () => {
         renderSheet({ status: ACTIVE_STATUS });
-        expect(
-          screen.queryByTestId("pro-expiring-subline"),
-        ).not.toBeInTheDocument();
+        expect(screen.getByTestId("pro-active-badge-pill")).toHaveTextContent(
+          PRO_COPY.statusBadgeActive,
+        );
+        expect(screen.getByTestId("pro-expiring-subline")).toHaveTextContent(
+          PRO_COPY.expiringMicroCopy,
+        );
+        expect(screen.getByTestId("pro-extend-link")).toHaveTextContent(
+          PRO_COPY.ctaRenew,
+        );
       });
 
       it("the extend link reuses the same purchase flow as the bottom Renew CTA", () => {
