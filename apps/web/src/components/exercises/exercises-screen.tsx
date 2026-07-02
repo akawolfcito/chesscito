@@ -1505,6 +1505,7 @@ export function ExercisesScreen({
   // below — resetBoard is defined below this block so we reference
   // it via the function declaration's hoisted binding.
   const failRescue = useFailRescue({
+    attemptSeq,
     onRescued: () => {
       // Shield used — streak preserved (do NOT call resetStreak).
       autoReset.clear();
