@@ -29,15 +29,12 @@ import {
  *  union so the type covers every catalog SKU even though the Shop
  *  display hides it in M1 (the value is consumable from Account /
  *  status surfaces). */
-type ShopTier = "pro" | "coach" | "shield" | "founder";
+type ShopTier = "pro" | "shield" | "founder";
 
 function tierForCopyKey(copyKey: ShopCopyKey): ShopTier {
   switch (copyKey) {
     case "pro":
       return "pro";
-    case "coachPack5":
-    case "coachPack20":
-      return "coach";
     case "retryShield":
       return "shield";
     case "founderBadge":
@@ -98,8 +95,6 @@ function copyKeyForItem(itemId: bigint): ShopCopyKey {
   if (itemId === PRO_ITEM_ID) return "pro";
   if (itemId === FOUNDER_BADGE_ITEM_ID) return "founderBadge";
   if (itemId === SHIELD_ITEM_ID) return "retryShield";
-  if (itemId === 3n) return "coachPack5";
-  if (itemId === 4n) return "coachPack20";
   return "retryShield";
 }
 
@@ -118,13 +113,7 @@ function toneForCopyKey(copyKey: ShopCopyKey): ShopTileTone {
     case "founderBadge":
       return "orange";
     case "retryShield":
-    case "coachPack5":
       return "blue";
-    case "coachPack20":
-      // User correction 2026-06-01: the green accent belongs on the
-      // 20 Coach Credits "best value" tier rather than the Founder
-      // badge. Green reads as the upgrade/value lane.
-      return "green";
   }
 }
 
@@ -385,31 +374,22 @@ export function ShopSheet({
             </p>
           )}
 
-          {/* Hero lane — full-width cards for the two flagship M1 SKUs:
-              Coach 20 (best-value Luz access) + Chesscito PRO. Founder
-              Badge is hidden from display in M1 (D-M1.2 Opción A) —
-              catalog, hook, status, and contract entries all stay
-              intact so Account inventory can keep deriving Founder
-              ownership for users who already bought it. Featured ribbon
-              moves from Founder to Coach 20 since that's the new
-              best-value tier. */}
+          {/* Hero lane — full-width card for the sole flagship SKU:
+              Chesscito PRO (Coach packs retired the shop-approve-TX
+              rail). Founder Badge is hidden from display in M1
+              (D-M1.2 Opción A) — catalog, hook, status, and contract
+              entries all stay intact so Account inventory can keep
+              deriving Founder ownership for users who already bought
+              it. PRO keeps the featured ribbon as the sole hero SKU. */}
           {(() => {
-            const COACH_PACK_20_ITEM_ID: bigint = 4n;
-            const heroOrder: bigint[] = [COACH_PACK_20_ITEM_ID, PRO_ITEM_ID];
-            const heroItems = heroOrder
-              .map((id) => items.find((it) => it.itemId === id))
-              .filter((it): it is CatalogItem => it != null);
+            const heroItems = items.filter((it) => it.itemId === PRO_ITEM_ID);
             return heroItems.map((item, index) => {
               const copyKey = copyKeyForItem(item.itemId);
               return (
                 <ShopItemCard
                   key={item.itemId.toString()}
                   item={item}
-                  isFeatured={
-                    item.itemId === COACH_PACK_20_ITEM_ID &&
-                    item.configured &&
-                    item.enabled
-                  }
+                  isFeatured={item.configured && item.enabled}
                   onSelectItem={onSelectItem}
                   position={index}
                   tier={tierForCopyKey(copyKey)}
@@ -421,10 +401,10 @@ export function ShopSheet({
           {/* Mini-cards lane — half-width 2-column grid for the
               consumables + welcome pack. Order is intentional:
               Welcome gift first (free-claim CTA visible above the
-              fold), then Streak Shield, then 5/20 Coach Credits.
-              gap-4 (16px) leaves breathing room for the icon's
-              -10px top overhang so the sprite never collides with
-              the card above. */}
+              fold), then Streak Shield (Coach packs retired). gap-4
+              (16px) leaves breathing room for the icon's -10px top
+              overhang so the sprite never collides with the card
+              above. */}
           <div className="grid grid-cols-2 gap-x-2.5 gap-y-4">
             {welcomePack ? (
               <WelcomePackTile
@@ -436,11 +416,16 @@ export function ShopSheet({
               />
             ) : null}
             {(() => {
-              // M1 funnel (Commit 7) — Coach 20 promoted to hero lane,
-              // so the mini lane keeps Coach 5 + Shield. Position
-              // numbering continues after the hero lane (2 hero tiles =
-              // 2 slots, so mini lane starts at index 2).
-              const miniOrder: bigint[] = [3n, SHIELD_ITEM_ID];
+              // M1 funnel (Commit 7) — Coach packs retired; the mini
+              // lane now keeps Shield only. Position numbering restarts
+              // after this retirement: hero lane = position 0 (PRO),
+              // mini lane starts at position 1 (Shield). Raw `position`
+              // values were reassigned to different SKUs by this change
+              // (0 was CoachPack20, now PRO; 2 was CoachPack5, now
+              // unused), so monetization.shop_item_view queries must
+              // NOT join/filter by raw position across the retirement
+              // date without also filtering by tier/itemId.
+              const miniOrder: bigint[] = [SHIELD_ITEM_ID];
               const miniItems = miniOrder
                 .map((id) => items.find((it) => it.itemId === id))
                 .filter((it): it is CatalogItem => it != null);
@@ -453,7 +438,7 @@ export function ShopSheet({
                     isFeatured={false}
                     onSelectItem={onSelectItem}
                     compact
-                    position={2 + index}
+                    position={1 + index}
                     tier={tierForCopyKey(copyKey)}
                   />
                 );

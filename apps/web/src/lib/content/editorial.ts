@@ -2060,19 +2060,6 @@ export const SHOP_ITEM_COPY = {
      *  paywall canonical voice from Commit 3. */
     subtitle: "Review your game with Luz from $0.05.",
   },
-  /** Coach packs surfaced as full shop tiles (A2 cluster). Each pack
-   *  size gets a distinct label/subtitle so the shop list shows two
-   *  separate SKUs. Pricing comes from on-chain (itemId 3 / 4 in
-   *  ShopUpgradeable). Subtitle reuses the "Luz" persona to keep the
-   *  Coach voice consistent across paywall + shop surfaces. */
-  coachPack5: {
-    label: "5 Coach Credits",
-    subtitle: "5 game analyses with Luz.",
-  },
-  coachPack20: {
-    label: "20 Coach Credits",
-    subtitle: "20 game analyses with Luz. Best value.",
-  },
   pro: {
     label: "Chesscito PRO",
     subtitle: "Unlimited Coach analyses · 30-day pass.",

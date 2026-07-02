@@ -54,9 +54,7 @@ export const PRO_DURATION_DAYS = 30;
 export type ShopCopyKey =
   | "founderBadge"
   | "retryShield"
-  | "pro"
-  | "coachPack5"
-  | "coachPack20";
+  | "pro";
 
 export type ShopCatalogEntry = {
   itemId: bigint;
@@ -73,15 +71,6 @@ export const SHOP_ITEMS: readonly ShopCatalogEntry[] = [
   { itemId: PRO_ITEM_ID, copyKey: "pro" },
   { itemId: FOUNDER_BADGE_ITEM_ID, copyKey: "founderBadge" },
   { itemId: SHIELD_ITEM_ID, copyKey: "retryShield" },
-  // Coach packs (A2 cluster). itemIds 3n + 4n already configured
-  // on-chain. As of UX audit #94 the SHOP is the ONLY buy surface for
-  // coach packs — the standalone CoachPaywall was retired and its
-  // "out of credits" path now funnels here. Verified by /api/coach/verify-purchase
-  // post-receipt (mirrors the PRO_ITEM_ID branch in
-  // `useShopSheetState`). Hardcoded ids — `COACH_PACK_ITEMS` declared
-  // after SHOP_ITEMS, so referencing it here would TDZ.
-  { itemId: 3n, copyKey: "coachPack5" },
-  { itemId: 4n, copyKey: "coachPack20" },
   // Helper entry for the CELO route. Hidden from the shop card list —
   // only its on-chain configured/enabled flags drive the visibility of
   // the "Buy with CELO" button rendered next to founder.
@@ -103,25 +92,9 @@ export const SHOP_TILE_ASSETS: Record<ShopCopyKey, { icon: string }> = {
   pro: { icon: "/art/shop/pro" },
   founderBadge: { icon: "/art/shop/founder" },
   retryShield: { icon: "/art/shop/shield" },
-  // Dedicated triplets shipped 2026-06-01 (replaces the legacy
-  // shared Luz placeholder from the A2 cluster).
-  coachPack5: { icon: "/art/shop/coach-pack-5" },
-  coachPack20: { icon: "/art/shop/coach-pack-20" },
 };
 
 /** Number of shield uses credited to localStorage per successful
  *  on-chain purchase of itemId=2. Mirrored in the receipt effect at
  *  exercises-screen.tsx and the SHIELD_COPY.buyLabel ("Buy (3 uses)"). */
 export const SHIELDS_PER_PURCHASE = 3;
-
-/** Coach credit packs sold via Shop.buyItem. Each entry maps the
- *  user-facing pack size (5 or 20 credits) to the on-chain itemId and
- *  USD6-denominated price. /api/coach/verify-purchase reads the
- *  ItemPurchased event topic and credits the wallet's
- *  coach:credits:<addr> Redis key with the matching pack size. */
-export type CoachPackSize = 5 | 20;
-
-export const COACH_PACK_ITEMS: Record<CoachPackSize, { itemId: bigint; priceUsd6: bigint }> = {
-  5: { itemId: 3n, priceUsd6: 50_000n },   // $0.05
-  20: { itemId: 4n, priceUsd6: 100_000n }, // $0.10
-} as const;

@@ -1594,14 +1594,6 @@ const messages = {
       label: "Créditos de Coach",
       subtitle: "Revisa tu partida con Luz desde $0.05.",
     },
-    coachPack5: {
-      label: "5 Créditos de Coach",
-      subtitle: "5 análisis de partidas con Luz.",
-    },
-    coachPack20: {
-      label: "20 Créditos de Coach",
-      subtitle: "20 análisis de partidas con Luz. Mejor valor.",
-    },
     pro: {
       label: "Chesscito PRO",
       subtitle: "Análisis de Coach ilimitados · pase de 30 días.",
