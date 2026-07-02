@@ -196,6 +196,10 @@ describe("useFailRescue — onUseShield Peones fallback", () => {
     await waitFor(() => expect(options.onSkipped).toHaveBeenCalledTimes(1));
     expect(options.onServerError).not.toHaveBeenCalled();
     expect(options.onRescued).not.toHaveBeenCalled();
+    expect(attemptShieldSpendWithPeonesMock).toHaveBeenCalledWith({
+      wallet: WALLET,
+      attemptSeq: 1,
+    });
 
     const spendCalls = fetchMock.mock.calls.filter(
       ([url]) => url === "/api/shields/spend",
