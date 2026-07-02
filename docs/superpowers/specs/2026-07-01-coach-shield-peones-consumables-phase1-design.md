@@ -1,6 +1,9 @@
 # Coach + Shield Peones consolidation — Phase 1 close (2026-07-01)
 
-Status: **approved, ready for implementation plan**.
+Status: **approved, patched post-red-team, ready for implementation plan**.
+Red-team review: `2026-07-01-coach-shield-peones-consumables-phase1-redteam.md`
+(3 P0s found, all folded into Scope 2b below; verified against `main` @
+`101988ee`).
 
 ## Context
 
@@ -98,6 +101,11 @@ thing" problem the audit identified.
   `analyze/route.ts`, `lib/peones/coach-spend-fallback.ts`) — this is the
   reference pattern Shield's new fallback mirrors below.
 
+**Must verify, not just leave alone:** `shop-catalog.ts` documents the
+CoachPaywall's "out of credits" CTA as routing to the Shop's coach-pack
+tiles. Confirm where that CTA points post-deletion and repoint it to
+PRO/Peones if it currently dead-ends on the removed tiles.
+
 **Result:** Coach analysis has exactly 2 payment paths — PRO (bypass) or 1
 Peón/use — plus the untouched free-credit onboarding grant.
 
@@ -107,44 +115,93 @@ Peón/use — plus the untouched free-credit onboarding grant.
 
 `apps/web/src/components/exercises/exercises-screen.tsx`'s
 `consumeOneShield()` / `handleUseShield()` (around line 1721, gated on
-legacy `shieldCount` state) currently decrements only
-`apps/web/src/lib/shop/shield-storage.ts`'s local cache and never calls the
-server. Reroute it to call `POST /api/shields/spend` the same way
-`apps/web/src/lib/exercises/use-fail-rescue.ts`'s `onUseShield` already
-does, so there is exactly one real spend path regardless of which UI
-surface triggers it. This must land before/with the Peones fallback below,
-otherwise the fallback only works in the rescue-modal surface and silently
-does nothing in the other.
+legacy `shieldCount` state, currently synchronous and unguarded) currently
+decrements only `apps/web/src/lib/shop/shield-storage.ts`'s local cache and
+never calls the server. Reroute it to call `POST /api/shields/spend` the
+same way `apps/web/src/lib/exercises/use-fail-rescue.ts`'s `onUseShield`
+already does — but this is not a one-line call-target swap: `onUseShield`
+is async, carries an `isSpending` re-entrancy guard, and splits into a
+3-way outcome (`onRescued`/`onSkipped`/`onServerError`). The fix must carry
+the same guard and outcome handling, or the surface regresses on
+double-tap. `handleUseShield` also currently early-returns before any
+network call when local `shieldCount <= 0` — that early return must instead
+fall through to the Peones fallback path (2b) at 0 balance, the same way
+the rescue modal does, or this surface never reaches the new fallback at
+all. This must land before/with the Peones fallback below, otherwise the
+fallback only works in the rescue-modal surface and silently does nothing
+in the other. Once rerouted, `consumeOneShield()` likely has no remaining
+caller — remove it or justify keeping it.
+
+Also in scope here (not previously enumerated): `exercises-screen.tsx`
+carries its own **second** Shop-purchase handler
+(`handleConfirmPurchase`, `txSource "shop_retry_shield"`) that separately
+enqueues a pending tx and POSTs `/api/credit-shield` — a duplicate of the
+path in `use-shop-sheet-state.ts`. Scope 2c's retirement (and Scope 1's
+Coach retirement) must delete both call sites, plus the hardcoded
+`SHIELD_ITEM_ID`/coach-itemId entries in `shop-sheet.tsx`'s mini-lane
+(`miniOrder`), or the deleted `/api/credit-shield` /
+`/api/coach/verify-purchase` endpoints get hit post-deploy from this
+second path and 404 into an un-drained queue entry.
 
 ### 2b. Peones-spend fallback for Shield
 
 Mirrors the existing Coach pattern (`lib/peones/coach-spend-fallback.ts` +
-`verifyPeonesCoachPayment` in `analyze/route.ts`) as closely as possible —
-no new abstraction invented, since `lib/peones/spend-service.ts` is already
-the shared generalization point (`PEONES_SPEND_TARGETS`,
-`SPEND_COST_BY_TARGET`, `SPEND_IDEMPOTENCY_PREFIX_BY_TARGET`).
+`verifyPeonesCoachPayment` in `analyze/route.ts`) where it's safe to, but
+**does not** mirror it blindly — red-team review found Coach's
+verify-only-existence check relies on the analysis being a naturally
+idempotent, cached artifact. A shield rescue is not: it's a fresh gameplay
+grant every time, so "row exists in the ledger" alone is replayable (pay
+once, capture the key, replay the request N times, get N free rescues).
+Shield needs an explicit consumption guard Coach doesn't.
+
+**Commit 0 of this scope (must land first, blocks everything else below):**
+- Forward-only migration adding `"shield"` to
+  `peones_ledger_source_check`, following the pattern in
+  `20260611010000_peones_labyrinth_completion_source.sql`.
+- Add `"shield"` to `PeonesLedgerSource` in
+  `apps/web/src/lib/peones/types.ts`.
+- Extend `apps/web/src/lib/peones/__tests__/schema-sync.test.ts`'s
+  merged-migration list to match.
+- Without this triplet the feature is DOA in prod (RPC insert throws
+  `check_violation`) while every mocked unit test still passes — this is
+  not optional cleanup, it's the thing that makes the feature exist at all.
+
+**`sourceId` identity (pinned, not deferred):** use the existing
+`attemptSeq` counter already threaded through
+`apps/web/src/components/exercises/exercises-screen.tsx` (e.g. passed to
+`PeonesHintButton`) for exactly this same-attempt-vs-fresh-attempt
+distinction. Key shape: `spend:shield:{wallet}:{attemptSeq}`. A retried tap
+within the same attempt reuses the same key (→ `duplicate=true`, no
+double charge); a genuinely new rescue attempt advances `attemptSeq` (→
+fresh key, real debit). Do not invent a timestamp- or exercise-id-based
+scheme — both leak value in opposite directions (double-charge vs.
+free-rescue), and `attemptSeq` already solves this exact shape elsewhere
+in the same file.
 
 - Add `"shield"` to `PEONES_SPEND_TARGETS` in
   `apps/web/src/lib/peones/spend-service.ts`, cost **2 Peones**
   (provisional — see "explicitly out of scope" above), idempotency prefix
-  `spend:shield:` (key shape `spend:shield:{wallet}:{sourceId}`, matching
-  Coach's `spend:coach:{wallet}:{gameId}`). Coach's `gameId` is a real
-  per-analysis identifier; Shield has no equivalent today (a rescue can
-  happen on any exercise/puzzle attempt). The implementation plan must pick
-  a concrete `sourceId` — e.g. the active exercise/puzzle id plus a
-  timestamp or attempt counter — that is unique enough per rescue to keep
-  the idempotency guarantee meaningful without being so unique that a
-  genuine retry (network blip, double-tap) double-charges.
+  `spend:shield:` (key shape `spend:shield:{wallet}:{attemptSeq}` per above).
 - New `apps/web/src/lib/peones/shield-spend-fallback.ts` — client
   orchestrator `attemptShieldSpendWithPeones()`, same shape as
   `attemptCoachSpendWithPeones()`.
 - New `peonesIdempotencyKey` verification branch in
-  `apps/web/src/app/api/shields/spend/route.ts`, mirroring
-  `verifyPeonesCoachPayment()` — fail-closed, verifies against
-  `peones_ledger` (wallet/event_type=spend/source=shield/source_id=gameId)
-  before allowing the rescue when the server-side shield counter is 0.
+  `apps/web/src/app/api/shields/spend/route.ts`. Branch order: if
+  `peonesIdempotencyKey` is present, take the verify-only path (do not
+  attempt the Lua counter decrement first — at 0 balance it would 409
+  before the key is ever checked); else, the existing counter path.
+  Verification against `peones_ledger` (wallet/event_type=spend/
+  source=shield/source_id=attemptSeq) must fail closed — any error or
+  timeout denies the rescue, never grants one. **Additionally**, on a
+  valid, not-yet-consumed key, set an atomic
+  `SET shield:peones-consumed:{idempotencyKey} 1 NX EX <ttl>` guard
+  (mirrors the `shieldProcessedTx` SETNX pattern in `credit-shield`)
+  before granting the rescue; if the guard's `NX` fails (key already
+  marked consumed), reject — this is what closes the replay hole above.
 - Wire into `use-fail-rescue.ts`: when `shieldsCount === 0`, offer "pay 2
-  Peones to save your combo" instead of only "retry and lose it."
+  Peones to save your combo" instead of only "retry and lose it." The
+  reroute in 2a below must reach this fallback too, not just
+  `use-fail-rescue.ts` — see 2a note on `handleUseShield`'s early return.
 
 ### 2c. Retire the Shop-approve-TX purchase path (itemId 2)
 
@@ -186,15 +243,24 @@ per rescue.
   `shop-sheet.test.tsx`, `account-coach-row.test.tsx` (remove
   retired-path assertions).
 - New, written first (red → green):
+  - `schema-sync.test.ts` — update to include `"shield"` in the merged
+    migration source list (must fail red until the migration lands).
   - `spend-service.test.ts` — "shield" target cost/idempotency-prefix.
   - `shield-spend-fallback.test.ts` — mirrors
     `coach-spend-fallback` test shape.
-  - `shields/spend/route.test.ts` — new `peonesIdempotencyKey` branch
-    (valid ledger match allows spend at 0 balance; mismatched/missing
-    key fails closed).
+  - `shields/spend/route.test.ts` — new `peonesIdempotencyKey` branch:
+    valid unconsumed key at 0 balance allows spend; **same key replayed
+    a second time is rejected** (closes the P0-2 replay hole); missing/
+    mismatched key at 0 balance fails closed (409); ledger lookup
+    error/timeout fails closed (never grants).
   - `exercises-screen.test.tsx` (or wherever `handleUseShield` is
-    covered) — asserts it now calls `/api/shields/spend`, not a local-only
-    decrement.
+    covered) — asserts it now calls `/api/shields/spend` with the same
+    guard/outcome-split as `onUseShield`, not a local-only decrement; and
+    that at 0 balance it falls through to the Peones fallback rather than
+    early-returning.
+  - Visual regression: refresh the `hub-shop-sheet-open` baseline in this
+    PR (tile grid changes once coach-pack + shield tiles are removed) —
+    per `[[feedback_vr_baseline_discipline]]`, not a follow-up.
 
 ## Sequencing
 
