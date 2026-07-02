@@ -55,9 +55,9 @@ import { TrophiesSheet } from "@/components/exercises/trophies-sheet";
 import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
 import { ShopSheet } from "@/components/exercises/shop-sheet";
 import {
-  consumeOneShield,
   dequeuePendingTx,
   enqueuePendingTx,
+  readConsumedCount,
   readDisplayedShields,
   writeCreditedCache,
 } from "@/lib/shop/shield-storage";
@@ -143,6 +143,7 @@ import {
   resolvePostLabContinue,
 } from "@/lib/training/path";
 import { submitLabyrinthCompletionEarn } from "@/lib/peones/labyrinth-earn";
+import { attemptShieldSpendWithPeones } from "@/lib/peones/shield-spend-fallback";
 import { ActionPin } from "@/components/redesign/action-pin";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { computeStars } from "@/lib/game/scoring";
@@ -1082,6 +1083,11 @@ export function ExercisesScreen({
    *  React could flip the disabled state. Cleared in the finally
    *  branch so retries after failure/timeout still work. */
   const submittingScoreRef = useRef(false);
+  /** Same concurrency guard as `submittingScoreRef`, for
+   *  `handleUseShield`'s async server call — prevents a rapid
+   *  double-tap on the ContextualActionSlot shield action from firing
+   *  two parallel /api/shields/spend requests. */
+  const shieldSpendingRef = useRef(false);
   // Single source of truth for the board's auto-reset timer. The hook
   // handles the pending-timer-replacement, generation-based stale
   // callback protection, and unmount cleanup that used to be spread
@@ -1716,11 +1722,57 @@ export function ExercisesScreen({
     }
   }
 
-  function handleUseShield() {
-    if (phase !== "failure" || shieldCount <= 0) return;
+  async function handleUseShield() {
+    if (phase !== "failure" || shieldSpendingRef.current) return;
+    shieldSpendingRef.current = true;
     autoReset.invalidate();
-    consumeOneShield();
-    resetBoard();
+
+    try {
+      const res = await fetch("/api/shields/spend", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ walletAddress: address }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        spent?: number;
+        balance?: number;
+      };
+
+      if (res.ok && data.spent === 1 && typeof data.balance === "number") {
+        writeCreditedCache(data.balance + readConsumedCount());
+        dispatchShieldChange();
+        resetBoard();
+        return;
+      }
+
+      if (!res.ok && res.status === 409 && shieldCount === 0 && address) {
+        const attempt = await attemptShieldSpendWithPeones({
+          wallet: address,
+          attemptSeq,
+        });
+        if (attempt.kind === "paid") {
+          const peonesRes = await fetch("/api/shields/spend", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              walletAddress: address,
+              peonesIdempotencyKey: attempt.peonesIdempotencyKey,
+              attemptSeq,
+            }),
+          });
+          if (peonesRes.ok) {
+            resetBoard();
+            return;
+          }
+        }
+      }
+      // insufficient / error / 5xx — no shield spent, board still
+      // resets so the player isn't stuck on the failure state.
+      resetBoard();
+    } finally {
+      shieldSpendingRef.current = false;
+    }
   }
 
   function handleExerciseNavigate(index: number) {
