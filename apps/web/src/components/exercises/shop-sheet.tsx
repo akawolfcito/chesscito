@@ -417,9 +417,14 @@ export function ShopSheet({
             ) : null}
             {(() => {
               // M1 funnel (Commit 7) — Coach packs retired; the mini
-              // lane now keeps Shield only. Position numbering
-              // continues after the hero lane (kept at 2 for telemetry
-              // continuity with pre-retirement event history).
+              // lane now keeps Shield only. Position numbering restarts
+              // after this retirement: hero lane = position 0 (PRO),
+              // mini lane starts at position 1 (Shield). Raw `position`
+              // values were reassigned to different SKUs by this change
+              // (0 was CoachPack20, now PRO; 2 was CoachPack5, now
+              // unused), so monetization.shop_item_view queries must
+              // NOT join/filter by raw position across the retirement
+              // date without also filtering by tier/itemId.
               const miniOrder: bigint[] = [SHIELD_ITEM_ID];
               const miniItems = miniOrder
                 .map((id) => items.find((it) => it.itemId === id))
@@ -433,7 +438,7 @@ export function ShopSheet({
                     isFeatured={false}
                     onSelectItem={onSelectItem}
                     compact
-                    position={2 + index}
+                    position={1 + index}
                     tier={tierForCopyKey(copyKey)}
                   />
                 );
