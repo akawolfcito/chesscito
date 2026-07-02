@@ -24,6 +24,19 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
+    hardhat: {
+      // Celo (chain 42220) isn't one of Hardhat's built-in known chains, so
+      // the EDR-based network needs an explicit hardfork activation history
+      // to execute calls/views at a forked block. See
+      // http://hardhat.org/custom-hardfork-history
+      chains: {
+        42220: {
+          hardforkHistory: {
+            cancun: 0,
+          },
+        },
+      },
+    },
     alfajores: {
       url: process.env.ALFAJORES_RPC_URL || "https://alfajores-forno.celo-testnet.org",
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
