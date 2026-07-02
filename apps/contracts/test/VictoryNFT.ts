@@ -690,4 +690,101 @@ describe("VictoryNFTUpgradeable", function () {
     expect(await victory.name()).to.equal("Chesscito Victory");
     expect(await victory.symbol()).to.equal("VICTORY");
   });
+
+  // ---------- mintSignedWithPermit ----------
+
+  describe("mintSignedWithPermit", function () {
+    async function deployVictoryPermitFixture() {
+      const base = await deployVictoryFixture();
+      const [, , , , , permitOwner] = await ethers.getSigners();
+
+      const MockERC20Permit = await ethers.getContractFactory("MockERC20Permit");
+      const permitToken = await MockERC20Permit.deploy("Mock Permit cUSD", "mpcUSD", 18);
+      await permitToken.waitForDeployment();
+      const permitTokenAddress = await permitToken.getAddress();
+
+      await base.victory.setAcceptedToken(permitTokenAddress, 18);
+
+      const mintAmount = ethers.parseEther("1000");
+      await permitToken.mint(permitOwner.address, mintAmount);
+
+      return { ...base, permitToken, permitTokenAddress, permitOwner };
+    }
+
+    async function signPermit({
+      owner,
+      spender,
+      value,
+      deadline,
+      token,
+      tokenAddress,
+      chainId,
+    }: {
+      owner: ethers.HDNodeWallet | ethers.Wallet;
+      spender: string;
+      value: bigint;
+      deadline: bigint;
+      token: any;
+      tokenAddress: string;
+      chainId: bigint;
+    }) {
+      const nonce: bigint = await token.nonces(owner.address);
+      const name: string = await token.name();
+      const signature = await owner.signTypedData(
+        { name, version: "1", chainId, verifyingContract: tokenAddress },
+        {
+          Permit: [
+            { name: "owner", type: "address" },
+            { name: "spender", type: "address" },
+            { name: "value", type: "uint256" },
+            { name: "nonce", type: "uint256" },
+            { name: "deadline", type: "uint256" },
+          ],
+        },
+        { owner: owner.address, spender, value, nonce, deadline },
+      );
+      return ethers.Signature.from(signature);
+    }
+
+    it("mints with a valid voucher + valid permit, no prior approve", async function () {
+      const { signingWallet, victory, victoryAddress, permitToken, permitTokenAddress, permitOwner, chainId } =
+        await loadFixture(deployVictoryPermitFixture);
+
+      const voucherDeadline = BigInt((await time.latest()) + 600);
+      const voucherSig = await signVictory({
+        player: permitOwner.address,
+        difficulty: 2,
+        totalMoves: 30,
+        timeMs: 60000,
+        nonce: 1n,
+        deadline: voucherDeadline,
+        signer: signingWallet,
+        chainId,
+        verifyingContract: victoryAddress,
+      });
+
+      const totalAmount = 10_000n * 10n ** 12n; // difficulty 2 price, normalized to 18 decimals
+      const permitDeadline = BigInt((await time.latest()) + 600);
+      const sig = await signPermit({
+        owner: permitOwner,
+        spender: victoryAddress,
+        value: totalAmount,
+        deadline: permitDeadline,
+        token: permitToken,
+        tokenAddress: permitTokenAddress,
+        chainId,
+      });
+
+      // No approve() call anywhere above — this is the whole point.
+      await victory.connect(permitOwner).mintSignedWithPermit(
+        2, 30, 60000, permitTokenAddress, 1n, voucherDeadline, voucherSig,
+        permitDeadline, sig.v, sig.r, sig.s,
+      );
+
+      expect(await victory.ownerOf(1n)).to.equal(permitOwner.address);
+      const data = await victory.getVictory(1n);
+      expect(data.difficulty).to.equal(2n);
+      expect(data.totalMoves).to.equal(30n);
+    });
+  });
 });

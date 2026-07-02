@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -153,6 +154,61 @@ contract VictoryNFTUpgradeable is
         _splitPayment(token, totalAmount);
 
         // Mint
+        uint256 tokenId = _nextTokenId++;
+        victories[tokenId] = VictoryData({
+            difficulty: difficulty,
+            totalMoves: totalMoves,
+            timeMs: timeMs,
+            mintedAt: uint64(block.timestamp)
+        });
+        _mint(msg.sender, tokenId);
+
+        emit VictoryMinted(msg.sender, tokenId, difficulty, totalMoves, timeMs, token, totalAmount);
+    }
+
+    function mintSignedWithPermit(
+        uint8 difficulty,
+        uint16 totalMoves,
+        uint32 timeMs,
+        address token,
+        uint256 nonce,
+        uint256 deadline,
+        bytes calldata signature,
+        uint256 permitDeadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external whenNotPaused nonReentrant {
+        if (difficulty < 1 || difficulty > 3) revert InvalidDifficulty(difficulty);
+        if (totalMoves == 0) revert InvalidMoves();
+        if (timeMs == 0) revert InvalidTime();
+        if (block.timestamp > deadline) revert SignatureExpired(deadline);
+        if (usedNonces[msg.sender][nonce]) revert NonceUsed(msg.sender, nonce);
+        if (block.timestamp < lastMintAt[msg.sender] + mintCooldown) {
+            revert MintCooldown(lastMintAt[msg.sender] + mintCooldown);
+        }
+
+        uint8 tokenDecimals = acceptedTokens[token];
+        if (tokenDecimals == 0) revert TokenNotAccepted(token);
+
+        uint256 price = priceUsd6[difficulty];
+        if (price == 0) revert PriceNotSet(difficulty);
+
+        _verifySignature(msg.sender, difficulty, totalMoves, timeMs, nonce, deadline, signature);
+
+        usedNonces[msg.sender][nonce] = true;
+        lastMintAt[msg.sender] = block.timestamp;
+
+        uint256 totalAmount = _normalizePrice(price, tokenDecimals);
+        // try/catch: permit() is front-runnable (anyone holding the
+        // signature can submit it). If a front-run already granted the
+        // exact allowance, swallow the now-reverting internal call and let
+        // _splitPayment's transferFrom enforce whatever allowance actually
+        // exists. Standard router pattern — see IERC20Permit.sol's own
+        // docstring, which documents this exact try/catch shape.
+        try IERC20Permit(token).permit(msg.sender, address(this), totalAmount, permitDeadline, v, r, s) {} catch {}
+        _splitPayment(token, totalAmount);
+
         uint256 tokenId = _nextTokenId++;
         victories[tokenId] = VictoryData({
             difficulty: difficulty,
