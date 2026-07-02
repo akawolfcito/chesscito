@@ -27,7 +27,7 @@ const TEST_CHAIN_ID = 42220;
 
 // Mints the canonical SHOP_ITEMS shape consumed by useReadContracts.
 // Order MUST match SHOP_ITEMS exactly:
-//   PRO 6 ($1.99) → Founder 1 ($0.10) → Shield 2 ($0.025) → CELO sibling 5.
+//   PRO 6 ($1.99) → Founder 1 ($0.10) → CELO sibling 5.
 function makeOnChainItems({
   celoConfigured = true,
   proConfigured = true,
@@ -38,7 +38,6 @@ function makeOnChainItems({
       result: proConfigured ? [1_990_000n, true] : null,
     }, // PRO $1.99
     { status: "success", result: [100_000n, true] }, // Founder $0.10
-    { status: "success", result: [25_000n, true] }, // Shield $0.025
     {
       status: celoConfigured ? "success" : "failure",
       result: celoConfigured ? [1_000_000_000_000_000_000n, true] : null,
@@ -238,9 +237,9 @@ describe("useShopSheetState — open/close", () => {
 
     const { result } = renderHook(() => useShopSheetState());
 
-    // Pick the Shield item so we hit the approve path.
+    // Pick the Founder Badge item so we hit the approve path.
     act(() => {
-      result.current.sheetProps.onSelectItem(2n);
+      result.current.sheetProps.onSelectItem(1n);
     });
 
     act(() => {
@@ -287,7 +286,7 @@ describe("useShopSheetState — handleConfirmPurchase guards", () => {
     setReadContractsState({ catalog: makeOnChainItems(), balances: makeBalances() });
 
     const { result } = renderHook(() => useShopSheetState());
-    act(() => result.current.sheetProps.onSelectItem(2n));
+    act(() => result.current.sheetProps.onSelectItem(1n));
     act(() => result.current.confirmProps.onConfirm());
 
     await waitFor(() => {
@@ -303,147 +302,13 @@ describe("useShopSheetState — handleConfirmPurchase guards", () => {
     setReadContractsState({ catalog: makeOnChainItems(), balances: undefined });
 
     const { result } = renderHook(() => useShopSheetState());
-    act(() => result.current.sheetProps.onSelectItem(2n));
+    act(() => result.current.sheetProps.onSelectItem(1n));
     act(() => result.current.confirmProps.onConfirm());
 
     await waitFor(() => {
       expect(writeContractAsyncMock).not.toHaveBeenCalled();
     });
     expect(result.current.confirmProps.paymentTokenSymbol).toBeNull();
-  });
-});
-
-describe("useShopSheetState — successful Shield purchase", () => {
-  it("skips approve when allowance is sufficient + posts to /api/credit-shield", async () => {
-    setReadContractsState({ catalog: makeOnChainItems(), balances: makeBalances() });
-
-    // Allowance large enough → approve path skipped.
-    usePublicClientMock.mockReturnValue({
-      readContract: vi.fn().mockResolvedValue(10n ** 30n),
-    });
-    writeContractAsyncMock.mockResolvedValueOnce("0xbuyhash");
-
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            ok: true,
-            credited: 3,
-            delta: 3,
-            txHash: "0xbuyhash",
-          }),
-          { status: 200 },
-        ),
-      );
-
-    const { result } = renderHook(() => useShopSheetState());
-    act(() => result.current.sheetProps.onSelectItem(2n));
-    act(() => result.current.confirmProps.onConfirm());
-
-    await waitFor(() => {
-      expect(writeContractAsyncMock).toHaveBeenCalledTimes(1);
-    });
-    const firstCall = writeContractAsyncMock.mock.calls[0]?.[0] as
-      | { functionName?: string }
-      | undefined;
-    expect(firstCall?.functionName).toBe("buyItem");
-
-    await waitFor(() => {
-      expect(result.current.sheetProps.successBanner).not.toBeNull();
-    });
-    expect(hapticSuccessMock).toHaveBeenCalled();
-    expect(trackMock).toHaveBeenCalledWith(
-      "shop_buy_tx",
-      expect.objectContaining({ stage: "success", source: "shop_retry_shield" }),
-    );
-
-    // AC15: server-side credit fired with correct body shape.
-    await waitFor(() => {
-      expect(fetchSpy).toHaveBeenCalled();
-    });
-    const fetchCall = fetchSpy.mock.calls.find(([input]) => {
-      const url = typeof input === "string" ? input : (input as Request).url;
-      return url.includes("/api/credit-shield");
-    });
-    expect(fetchCall).toBeDefined();
-    const init = fetchCall?.[1] as RequestInit | undefined;
-    expect(init?.method).toBe("POST");
-    expect(JSON.parse(init?.body as string)).toEqual({
-      txHash: "0xbuyhash",
-      walletAddress: TEST_WALLET,
-    });
-
-    fetchSpy.mockRestore();
-  });
-
-  it("dispatches shield-changed after a successful 2xx server credit", async () => {
-    setReadContractsState({ catalog: makeOnChainItems(), balances: makeBalances() });
-    usePublicClientMock.mockReturnValue({
-      readContract: vi.fn().mockResolvedValue(10n ** 30n),
-    });
-    writeContractAsyncMock.mockResolvedValueOnce("0xbuyhash");
-
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            ok: true,
-            credited: 3,
-            delta: 3,
-            txHash: "0xbuyhash",
-          }),
-          { status: 200 },
-        ),
-      );
-
-    const { result } = renderHook(() => useShopSheetState());
-    act(() => result.current.sheetProps.onSelectItem(2n));
-    act(() => result.current.confirmProps.onConfirm());
-
-    await waitFor(() => {
-      expect(result.current.sheetProps.successBanner).not.toBeNull();
-    });
-
-    await waitFor(() => {
-      expect(dispatchShieldChangeMock).toHaveBeenCalled();
-    });
-
-    fetchSpy.mockRestore();
-  });
-
-  it("4xx response from /api/credit-shield does NOT dispatch shield-changed (entry stays queued)", async () => {
-    setReadContractsState({ catalog: makeOnChainItems(), balances: makeBalances() });
-    usePublicClientMock.mockReturnValue({
-      readContract: vi.fn().mockResolvedValue(10n ** 30n),
-    });
-    writeContractAsyncMock.mockResolvedValueOnce("0xbuyhash");
-
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({ ok: false, error: "unprocessable" }),
-          { status: 400 },
-        ),
-      );
-
-    const { result } = renderHook(() => useShopSheetState());
-    act(() => result.current.sheetProps.onSelectItem(2n));
-    act(() => result.current.confirmProps.onConfirm());
-
-    await waitFor(() => {
-      expect(fetchSpy).toHaveBeenCalled();
-    });
-    // Banner still fires (banner truthfulness = "tx submitted").
-    await waitFor(() => {
-      expect(result.current.sheetProps.successBanner).not.toBeNull();
-    });
-    // Local credit-cache write was skipped → no dispatch from this path.
-    expect(dispatchShieldChangeMock).not.toHaveBeenCalled();
-
-    fetchSpy.mockRestore();
   });
 });
 
@@ -458,7 +323,7 @@ describe("useShopSheetState — error paths", () => {
     );
 
     const { result } = renderHook(() => useShopSheetState());
-    act(() => result.current.sheetProps.onSelectItem(2n));
+    act(() => result.current.sheetProps.onSelectItem(1n));
     act(() => result.current.confirmProps.onConfirm());
 
     await waitFor(() => {
@@ -480,7 +345,7 @@ describe("useShopSheetState — error paths", () => {
     );
 
     const { result } = renderHook(() => useShopSheetState());
-    act(() => result.current.sheetProps.onSelectItem(2n));
+    act(() => result.current.sheetProps.onSelectItem(1n));
     act(() => result.current.confirmProps.onConfirm());
 
     await waitFor(() => {

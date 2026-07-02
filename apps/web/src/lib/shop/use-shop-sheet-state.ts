@@ -24,7 +24,6 @@ import {
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
   PRO_ITEM_ID,
-  SHIELD_ITEM_ID,
   SHOP_ITEMS,
   SHOP_TILE_ASSETS,
 } from "@/lib/contracts/shop-catalog";
@@ -37,12 +36,6 @@ import {
 import { selectMaxBalanceToken } from "@/lib/contracts/select-payment-token";
 import { classifyTxErrorKind, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
 import { hapticSuccess } from "@/lib/haptics";
-import { dispatchShieldChange } from "@/lib/shop/shield-events";
-import {
-  dequeuePendingTx,
-  enqueuePendingTx,
-  writeCreditedCache,
-} from "@/lib/shop/shield-storage";
 import {
   useWelcomePackClaim,
   type UseWelcomePackClaimReturn,
@@ -349,39 +342,6 @@ export function useShopSheetState(
     [tokenBalances, CELO_BALANCE_INDEX],
   );
 
-  // Server-side credit fire-and-forget. Banner truthfulness is "tx
-  // submitted", not "credit written" — the fetch resolves async and
-  // the chip refreshes when (a) writeCreditedCache lands here, or (b)
-  // useShieldSync runs on next boot. See spec §"Behavior 1".
-  const creditShieldServerSide = useCallback(
-    (txHash: `0x${string}`, walletAddress: `0x${string}`) => {
-      enqueuePendingTx(txHash);
-      void (async () => {
-        try {
-          const res = await fetch("/api/credit-shield", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ txHash, walletAddress }),
-          });
-          if (!res.ok) return; // 4xx/5xx → leave queued, useShieldSync retries
-          const data = (await res.json()) as {
-            ok: true;
-            credited: number;
-            delta: number;
-            txHash: string;
-          };
-          if (!isMountedRef.current) return;
-          dequeuePendingTx(txHash);
-          writeCreditedCache(data.credited);
-          dispatchShieldChange();
-        } catch {
-          // Network failure → leave queued.
-        }
-      })();
-    },
-    [],
-  );
-
   const openSheet = useCallback(() => {
     setOpen(true);
   }, []);
@@ -445,11 +405,9 @@ export function useShopSheetState(
     const unitPrice = selectedItem.onChainPrice;
     const normalizedTotal = normalizePrice(unitPrice, paymentToken.decimals);
     const txSource =
-      selectedItem.itemId === SHIELD_ITEM_ID
-        ? "shop_retry_shield"
-        : selectedItem.itemId === PRO_ITEM_ID
-          ? "shop_pro"
-          : "shop_founder_badge";
+      selectedItem.itemId === PRO_ITEM_ID
+        ? "shop_pro"
+        : "shop_founder_badge";
     const itemIdNum = Number(selectedItem.itemId);
 
     setErrorMessage(null);
@@ -495,9 +453,7 @@ export function useShopSheetState(
 
       if (!isMountedRef.current) return;
       track("shop_buy_tx", { stage: "success", source: txSource, item_id: itemIdNum });
-      if (selectedItem.itemId === SHIELD_ITEM_ID) {
-        creditShieldServerSide(buyHash as `0x${string}`, address);
-      } else if (selectedItem.itemId === PRO_ITEM_ID) {
+      if (selectedItem.itemId === PRO_ITEM_ID) {
         // verify-pro is the activation contract — without it the user
         // paid on-chain but coach:pro:<wallet> never lands in Redis.
         // Await the receipt + POST inline so an HTTP failure surfaces
@@ -584,7 +540,6 @@ export function useShopSheetState(
     publicClient,
     chainId,
     writeWithOptionalFeeCurrency,
-    creditShieldServerSide,
     fireOnPurchaseSuccess,
   ]);
 

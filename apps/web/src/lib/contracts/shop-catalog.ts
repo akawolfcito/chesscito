@@ -1,11 +1,3 @@
-/** Shop item id reserved on-chain for the Retry Shield. Each purchase
- *  credits 3 uses to localStorage via the pendingShieldCredit effect.
- *  Admin must call ShopUpgradeable.setItem(2, 25000, true) before the
- *  catalog row becomes purchasable; until then `configured=false` and
- *  the buy button stays disabled with the standard "Not configured"
- *  status — no crash, no silent failure. */
-export const SHIELD_ITEM_ID = 2n;
-
 /** Founder Badge id — kept here so anything that needs to special-case
  *  the badge by id can do so without re-deriving it. */
 export const FOUNDER_BADGE_ITEM_ID = 1n;
@@ -53,7 +45,6 @@ export const PRO_DURATION_DAYS = 30;
  *  `${copyKey}.label` / `${copyKey}.subtitle` locally. */
 export type ShopCopyKey =
   | "founderBadge"
-  | "retryShield"
   | "pro";
 
 export type ShopCatalogEntry = {
@@ -64,13 +55,11 @@ export type ShopCatalogEntry = {
 export const SHOP_ITEMS: readonly ShopCatalogEntry[] = [
   // Chesscito PRO leads the catalog as the premium subscription tile.
   // `useShopSheetState` branches on this itemId to await the on-chain
-  // receipt and POST `/api/verify-pro` (parallel to the SHIELD_ITEM_ID
-  // /api/credit-shield branch). The standalone `<ProSheet>` card in
-  // /hub is the hero discoverability surface; both routes hit the
-  // same on-chain item.
+  // receipt and POST `/api/verify-pro`. The standalone `<ProSheet>`
+  // card in /hub is the hero discoverability surface; both routes hit
+  // the same on-chain item.
   { itemId: PRO_ITEM_ID, copyKey: "pro" },
   { itemId: FOUNDER_BADGE_ITEM_ID, copyKey: "founderBadge" },
-  { itemId: SHIELD_ITEM_ID, copyKey: "retryShield" },
   // Helper entry for the CELO route. Hidden from the shop card list —
   // only its on-chain configured/enabled flags drive the visibility of
   // the "Buy with CELO" button rendered next to founder.
@@ -91,10 +80,4 @@ export const SHOP_ITEMS: readonly ShopCatalogEntry[] = [
 export const SHOP_TILE_ASSETS: Record<ShopCopyKey, { icon: string }> = {
   pro: { icon: "/art/shop/pro" },
   founderBadge: { icon: "/art/shop/founder" },
-  retryShield: { icon: "/art/shop/shield" },
 };
-
-/** Number of shield uses credited to localStorage per successful
- *  on-chain purchase of itemId=2. Mirrored in the receipt effect at
- *  exercises-screen.tsx and the SHIELD_COPY.buyLabel ("Buy (3 uses)"). */
-export const SHIELDS_PER_PURCHASE = 3;

@@ -1586,10 +1586,6 @@ const messages = {
       label: "Insignia Fundador",
       subtitle: "Apoyo desde el día uno. Tuya para siempre.",
     },
-    retryShield: {
-      label: "Escudo de Racha",
-      subtitle: "Reintenta sin perder tu racha.",
-    },
     coachPack: {
       label: "Créditos de Coach",
       subtitle: "Revisa tu partida con Luz desde $0.05.",

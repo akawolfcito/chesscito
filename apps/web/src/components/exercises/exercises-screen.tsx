@@ -55,8 +55,6 @@ import { TrophiesSheet } from "@/components/exercises/trophies-sheet";
 import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
 import { ShopSheet } from "@/components/exercises/shop-sheet";
 import {
-  dequeuePendingTx,
-  enqueuePendingTx,
   readConsumedCount,
   readDisplayedShields,
   writeCreditedCache,
@@ -98,7 +96,6 @@ import {
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
   PRO_ITEM_ID,
-  SHIELD_ITEM_ID,
   SHOP_ITEMS,
   SHOP_TILE_ASSETS,
 } from "@/lib/contracts/shop-catalog";
@@ -165,9 +162,8 @@ import {
 import { subscribeToDailySessionChanges } from "@/lib/daily/session-events";
 import { DailyLimitBanner } from "@/components/daily/daily-limit-banner";
 
-// SHOP_ITEMS, SHIELD_ITEM_ID, SHIELDS_PER_PURCHASE now live in
-// lib/contracts/shop-catalog.ts so they're testable in isolation. The
-// import is below with the other contract helpers.
+// SHOP_ITEMS lives in lib/contracts/shop-catalog.ts so it's testable
+// in isolation. The import is below with the other contract helpers.
 
 
 type SignatureResponse =
@@ -2124,11 +2120,9 @@ export function ExercisesScreen({
     const unitPrice = selectedItem.onChainPrice;
     const normalizedTotal = normalizePrice(unitPrice, paymentToken.decimals);
     const txSource =
-      selectedItem.itemId === SHIELD_ITEM_ID
-        ? "shop_retry_shield"
-        : selectedItem.itemId === PRO_ITEM_ID
-          ? "shop_pro"
-          : "shop_founder_badge";
+      selectedItem.itemId === PRO_ITEM_ID
+        ? "shop_pro"
+        : "shop_founder_badge";
     const itemIdNum = Number(selectedItem.itemId);
 
     setLastError(null);
@@ -2186,36 +2180,7 @@ export function ExercisesScreen({
 
       setShopTxHash(buyHash);
       track("shop_buy_tx", { stage: "success", source: txSource, item_id: itemIdNum });
-      // Server-side shield credit (fire-and-forget). Spec §"Behavior 1":
-      // banner truthfulness = "tx submitted", credit resolves async.
-      if (selectedItem.itemId === SHIELD_ITEM_ID && address) {
-        const buyerAddress = address;
-        enqueuePendingTx(buyHash as `0x${string}`);
-        void (async () => {
-          try {
-            const res = await fetch("/api/credit-shield", {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({
-                txHash: buyHash,
-                walletAddress: buyerAddress,
-              }),
-            });
-            if (!res.ok) return;
-            const data = (await res.json()) as {
-              ok: true;
-              credited: number;
-              delta: number;
-              txHash: string;
-            };
-            dequeuePendingTx(buyHash as `0x${string}`);
-            writeCreditedCache(data.credited);
-            dispatchShieldChange();
-          } catch {
-            // network failure → leave queued, useShieldSync retries
-          }
-        })();
-      } else if (selectedItem.itemId === PRO_ITEM_ID && address && publicClient) {
+      if (selectedItem.itemId === PRO_ITEM_ID && address && publicClient) {
         // verify-pro activates the PRO pass server-side. Without this
         // POST the user paid on-chain but coach:pro:<wallet> never
         // lands in Redis. Idempotent (proProcessedTx guard) so retries
