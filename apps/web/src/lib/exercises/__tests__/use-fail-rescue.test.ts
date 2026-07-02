@@ -42,18 +42,12 @@ function baseOptions(
     onServerError: vi.fn(),
     onOpenShop: vi.fn(),
     attemptSeq: 1,
+    welcomePackClaimed: false,
     ...overrides,
   };
 }
 
 type FetchArgs = [string, RequestInit | undefined];
-
-function welcomePackStatusResponse() {
-  return {
-    ok: true,
-    json: async () => ({ ok: true, claimed: false, claimed_at: null }),
-  };
-}
 
 describe("useFailRescue — onUseShield Peones fallback", () => {
   beforeEach(() => {
@@ -73,9 +67,6 @@ describe("useFailRescue — onUseShield Peones fallback", () => {
 
     const fetchMock = vi.fn(async (...args: FetchArgs) => {
       const [url, init] = args;
-      if (url.includes("/api/welcome-pack/status")) {
-        return welcomePackStatusResponse();
-      }
       if (url === "/api/shields/spend") {
         const body = init?.body ? JSON.parse(init.body as string) : {};
         if (body.peonesIdempotencyKey) {
@@ -135,9 +126,6 @@ describe("useFailRescue — onUseShield Peones fallback", () => {
 
     const fetchMock = vi.fn(async (...args: FetchArgs) => {
       const [url] = args;
-      if (url.includes("/api/welcome-pack/status")) {
-        return welcomePackStatusResponse();
-      }
       if (url === "/api/shields/spend") {
         return {
           ok: true,
@@ -171,9 +159,6 @@ describe("useFailRescue — onUseShield Peones fallback", () => {
 
     const fetchMock = vi.fn(async (...args: FetchArgs) => {
       const [url] = args;
-      if (url.includes("/api/welcome-pack/status")) {
-        return welcomePackStatusResponse();
-      }
       if (url === "/api/shields/spend") {
         return {
           ok: false,
@@ -205,5 +190,30 @@ describe("useFailRescue — onUseShield Peones fallback", () => {
       ([url]) => url === "/api/shields/spend",
     );
     expect(spendCalls).toHaveLength(1);
+  });
+});
+
+describe("useFailRescue — welcomePackClaimed as a prop (single source of truth)", () => {
+  it("selects variant D immediately from the passed-in flag, without an internal welcome-pack fetch or a stale desync", async () => {
+    setShieldsCount(0);
+    const options = baseOptions({ welcomePackClaimed: true });
+
+    const fetchMock = vi.fn(async (...args: FetchArgs) => {
+      const [url] = args;
+      // If useFailRescue still owned its own useWelcomePackClaim()
+      // instance, it would hit this endpoint and this test would see
+      // the request. It must not — the flag comes from the caller now.
+      if (url.includes("/api/welcome-pack/status")) {
+        throw new Error(
+          "useFailRescue must not fetch welcome-pack status itself",
+        );
+      }
+      return { ok: false, status: 404, json: async () => ({}) };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() => useFailRescue(options));
+
+    await waitFor(() => expect(result.current.variant).toBe("D"));
   });
 });

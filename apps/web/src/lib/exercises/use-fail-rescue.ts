@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 
 import { useShieldsCount } from "@/lib/shop/use-shields-count";
-import { useWelcomePackClaim } from "@/lib/shop/use-welcome-pack-claim";
 import { dispatchShieldChange } from "@/lib/shop/shield-events";
 import {
   readConsumedCount,
@@ -113,6 +112,17 @@ export type UseFailRescueOptions = {
    *  caller (exercises-screen.tsx already tracks this for
    *  PeonesHintButton). */
   attemptSeq: number;
+  /** Live claimed flag. MUST come from the SAME `useWelcomePackClaim()`
+   *  instance that owns the Shop's claim action (single source of
+   *  truth) — this hook previously called `useWelcomePackClaim()`
+   *  again internally, creating a second independent instance whose
+   *  `claimed` state never learned about a claim made through the
+   *  Shop's instance until a full remount. That desync trapped the
+   *  player in a "Claim 3 Shields" loop (tap it -> Shop shows already
+   *  claimed, nothing happens -> back to the same stale modal) with
+   *  no exit except abandoning the rescue and losing the streak.
+   *  Fixed 2026-07-02. */
+  welcomePackClaimed: boolean;
 };
 
 export type UseFailRescueReturn = {
@@ -138,7 +148,6 @@ export function useFailRescue(
 ): UseFailRescueReturn {
   const { address } = useAccount();
   const shieldsCount = useShieldsCount();
-  const welcomePack = useWelcomePackClaim();
   const [isSpending, setIsSpending] = useState(false);
 
   // Refs around handlers prevent the useCallback memos below from
@@ -154,10 +163,10 @@ export function useFailRescue(
   const variantState = useMemo(() => {
     return selectRescueModalState({
       shieldsCount,
-      welcomePackClaimed: welcomePack.state === "claimed",
+      welcomePackClaimed: options.welcomePackClaimed,
       rescuePrimerShown: safeReadBool(PRIMER_SHOWN_KEY),
     });
-  }, [shieldsCount, welcomePack.state]);
+  }, [shieldsCount, options.welcomePackClaimed]);
 
   const markPrimerShownCb = useCallback(() => {
     markPrimerShown();

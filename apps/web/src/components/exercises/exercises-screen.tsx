@@ -1522,6 +1522,12 @@ export function ExercisesScreen({
   // it via the function declaration's hoisted binding.
   const failRescue = useFailRescue({
     attemptSeq: shieldRescueAttemptIdRef.current,
+    // Same welcomePack instance the Shop's claim tile uses (declared
+    // above) — passing its live state in fixes a desync where a claim
+    // made through the Shop never reached a second, independent
+    // useWelcomePackClaim() instance previously created inside
+    // useFailRescue itself (fixed 2026-07-02).
+    welcomePackClaimed: welcomePack.state === "claimed",
     onRescued: () => {
       // Shield used — streak preserved (do NOT call resetStreak).
       // Post-hoc fix (final whole-branch review, C1): a successful
