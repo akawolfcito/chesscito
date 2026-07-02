@@ -86,11 +86,10 @@ especially from a fresh/cheap-tier subagent.
   make it directly unit-testable via `renderHook` the same way
   `use-fail-rescue.test.ts` already covers the sibling surface. Not done —
   scoped as a refactor beyond this cluster's mandate.
-- **Migration not yet applied to hosted Supabase.** `apps/web/supabase/migrations/
-  20260701150000_peones_shield_source.sql` is committed but needs a human to
-  run `supabase db push --linked` from `apps/web/` per
-  `[[feedback_supabase_workflow]]` — never run automatically. **The Shield
-  Peones fallback will 500 in prod until this is applied.**
+- ~~Migration not yet applied to hosted Supabase~~ — **done 2026-07-02.**
+  Operator ran `supabase db push --linked` themselves; confirmed via
+  `supabase migration list --linked` showing `20260701150000` in both
+  Local and Remote.
 - **2-Peones cost is provisional.** Carried over from the 2026-06-05 Sprint 4
   decision purely to unblock this cluster. Operator has flagged Coach's 1
   Peón/analysis is already suspect next to Shield's 2 (an LLM analysis costs
