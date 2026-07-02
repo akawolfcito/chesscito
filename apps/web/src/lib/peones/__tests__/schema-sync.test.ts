@@ -65,6 +65,16 @@ const LABYRINTH_MIGRATION_PATH = join(
   "20260611010000_peones_labyrinth_completion_source.sql",
 );
 
+/** Shield Peones-fallback (2026-07-01, Part B commit 0 / red-team P0-1)
+ *  adds `shield` to the source CHECK. This test reads it so the
+ *  assertion reflects the effective DB state, not just Slice 4's. */
+const SHIELD_MIGRATION_PATH = join(
+  process.cwd(),
+  "supabase",
+  "migrations",
+  "20260701150000_peones_shield_source.sql",
+);
+
 const migration = readFileSync(MIGRATION_PATH, "utf-8");
 const welcomePackMigration = readFileSync(
   WELCOME_PACK_MIGRATION_PATH,
@@ -75,6 +85,7 @@ const capRecalibrationMigration = readFileSync(
   "utf-8",
 );
 const labyrinthMigration = readFileSync(LABYRINTH_MIGRATION_PATH, "utf-8");
+const shieldMigration = readFileSync(SHIELD_MIGRATION_PATH, "utf-8");
 void capRecalibrationMigration; // superseded by labyrinthMigration's CREATE OR REPLACE
 
 /**
@@ -122,6 +133,7 @@ const TS_SOURCES: PeonesLedgerSource[] = [
   "save_game",
   "labyrinth_key",
   "admin_grant",
+  "shield",
 ];
 
 describe("peones_ledger — schema ↔ types sync", () => {
@@ -155,7 +167,17 @@ describe("peones_ledger — schema ↔ types sync", () => {
       .split(",")
       .map((t) => t.trim().replace(/^'(.*)'$/, "$1"))
       .filter(Boolean);
-    const effective = new Set([...sqlOriginal, ...wpSources, ...labSources]);
+    // Part B commit 0 follow-up: the shield migration swaps the
+    // constraint again — its CHECK list is the latest full snapshot.
+    const shieldMatch = shieldMigration.match(
+      /check\s*\(\s*source\s+in\s*\(([\s\S]*?)\)\s*\)/i,
+    );
+    expect(shieldMatch, "shield migration must declare a CHECK list").not.toBeNull();
+    const shieldSources = shieldMatch![1]!
+      .split(",")
+      .map((t) => t.trim().replace(/^'(.*)'$/, "$1"))
+      .filter(Boolean);
+    const effective = new Set([...sqlOriginal, ...wpSources, ...labSources, ...shieldSources]);
     const ts = new Set(TS_SOURCES);
     expect(effective).toEqual(ts);
   });

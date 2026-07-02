@@ -55,9 +55,7 @@ import { TrophiesSheet } from "@/components/exercises/trophies-sheet";
 import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
 import { ShopSheet } from "@/components/exercises/shop-sheet";
 import {
-  consumeOneShield,
-  dequeuePendingTx,
-  enqueuePendingTx,
+  readConsumedCount,
   readDisplayedShields,
   writeCreditedCache,
 } from "@/lib/shop/shield-storage";
@@ -98,7 +96,6 @@ import {
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
   PRO_ITEM_ID,
-  SHIELD_ITEM_ID,
   SHOP_ITEMS,
   SHOP_TILE_ASSETS,
 } from "@/lib/contracts/shop-catalog";
@@ -143,6 +140,7 @@ import {
   resolvePostLabContinue,
 } from "@/lib/training/path";
 import { submitLabyrinthCompletionEarn } from "@/lib/peones/labyrinth-earn";
+import { attemptShieldSpendWithPeones } from "@/lib/peones/shield-spend-fallback";
 import { ActionPin } from "@/components/redesign/action-pin";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { computeStars } from "@/lib/game/scoring";
@@ -164,9 +162,8 @@ import {
 import { subscribeToDailySessionChanges } from "@/lib/daily/session-events";
 import { DailyLimitBanner } from "@/components/daily/daily-limit-banner";
 
-// SHOP_ITEMS, SHIELD_ITEM_ID, SHIELDS_PER_PURCHASE now live in
-// lib/contracts/shop-catalog.ts so they're testable in isolation. The
-// import is below with the other contract helpers.
+// SHOP_ITEMS lives in lib/contracts/shop-catalog.ts so it's testable
+// in isolation. The import is below with the other contract helpers.
 
 
 type SignatureResponse =
@@ -1082,6 +1079,25 @@ export function ExercisesScreen({
    *  React could flip the disabled state. Cleared in the finally
    *  branch so retries after failure/timeout still work. */
   const submittingScoreRef = useRef(false);
+  /** Same concurrency guard as `submittingScoreRef`, for
+   *  `handleUseShield`'s async server call — prevents a rapid
+   *  double-tap on the ContextualActionSlot shield action from firing
+   *  two parallel /api/shields/spend requests. */
+  const shieldSpendingRef = useRef(false);
+  /** Monotonic, per-session counter dedicated to Shield-rescue Peones
+   *  idempotency. Deliberately separate from useExerciseProgress's
+   *  attemptSeq (which resets to 1 on every exercise change and is
+   *  shared with other systems like PeonesHintButton) — a fresh
+   *  failure on ANY exercise must get a fresh idempotency identity,
+   *  never colliding with a key already consumed on a prior exercise.
+   *  Started at Date.now() for cross-session entropy (a page reload
+   *  starting back at 1 would otherwise reintroduce the exact
+   *  collision this counter exists to prevent). Advances once per
+   *  NEW failure occurrence (see the setPhase("failure") call site),
+   *  not per render and not per retry-of-the-same-failure — a
+   *  double-tap on the SAME failure's rescue button must still
+   *  collapse onto the same key. */
+  const shieldRescueAttemptIdRef = useRef(Date.now());
   // Single source of truth for the board's auto-reset timer. The hook
   // handles the pending-timer-replacement, generation-based stale
   // callback protection, and unmount cleanup that used to be spread
@@ -1505,10 +1521,19 @@ export function ExercisesScreen({
   // below — resetBoard is defined below this block so we reference
   // it via the function declaration's hoisted binding.
   const failRescue = useFailRescue({
+    attemptSeq: shieldRescueAttemptIdRef.current,
     onRescued: () => {
       // Shield used — streak preserved (do NOT call resetStreak).
+      // Post-hoc fix (final whole-branch review, C1): a successful
+      // rescue is functionally a new attempt, same as a manual
+      // Retry — advance attemptSeq so the NEXT Peones-fallback
+      // idempotency key (spend:shield:{wallet}:{attemptSeq}) can't
+      // collide with this one. Order mirrors useRetryGuard: reset
+      // first, then increment, so any consumer reading the new
+      // attemptSeq sees a board that's already fresh.
       autoReset.clear();
       resetBoard();
+      incrementAttemptSeq();
     },
     onSkipped: () => {
       // Retry without shield (or close) — racha rota. This is the
@@ -1682,6 +1707,7 @@ export function ExercisesScreen({
     if (currentExercise.optimalMoves === 1) {
       hapticReject();
       setPhase("failure");
+      shieldRescueAttemptIdRef.current += 1;
       track("exercise_fail", {
         piece: selectedPiece,
         exercise_id: currentExercise.id,
@@ -1715,11 +1741,99 @@ export function ExercisesScreen({
     }
   }
 
-  function handleUseShield() {
-    if (phase !== "failure" || shieldCount <= 0) return;
+  async function handleUseShield() {
+    if (phase !== "failure" || shieldSpendingRef.current) return;
+    shieldSpendingRef.current = true;
     autoReset.invalidate();
-    consumeOneShield();
-    resetBoard();
+
+    try {
+      const res = await fetch("/api/shields/spend", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ walletAddress: address }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        spent?: number;
+        balance?: number;
+      };
+
+      if (res.ok && data.spent === 1 && typeof data.balance === "number") {
+        writeCreditedCache(data.balance + readConsumedCount());
+        dispatchShieldChange();
+        // Post-hoc fix (final whole-branch review, C1): a successful
+        // rescue is functionally a new attempt — advance attemptSeq
+        // the same way a manual Retry does, so the next Peones-
+        // fallback idempotency key can't collide with this attempt.
+        resetBoard();
+        incrementAttemptSeq();
+        return;
+      }
+
+      // NOTE: unreachable in normal play today — context-action.ts
+      // only offers the "useShield" action when shieldsAvailable > 0,
+      // so this internal shieldCount === 0 Peones-fallback branch
+      // can't fire under current gating. Kept correct (streak +
+      // attemptSeq semantics mirrored from useFailRescue.onUseShield)
+      // in case that gating ever changes (whole-branch review M1).
+      if (!res.ok && res.status === 409 && shieldCount === 0 && address) {
+        const attempt = await attemptShieldSpendWithPeones({
+          wallet: address,
+          attemptSeq: shieldRescueAttemptIdRef.current,
+        });
+        if (attempt.kind === "paid") {
+          const peonesRes = await fetch("/api/shields/spend", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              walletAddress: address,
+              peonesIdempotencyKey: attempt.peonesIdempotencyKey,
+              attemptSeq: shieldRescueAttemptIdRef.current,
+            }),
+          });
+          if (peonesRes.ok) {
+            resetBoard();
+            incrementAttemptSeq();
+            return;
+          }
+          // Peones charge succeeded but the shields/spend call itself
+          // failed — infra glitch, not the player's fault (mirrors
+          // useFailRescue.onUseShield's onServerError). Streak
+          // preserved, attemptSeq NOT advanced (no rescue actually
+          // landed).
+          resetBoard();
+          return;
+        }
+        // insufficient | error — same outcome as a deliberate skip
+        // (mirrors useFailRescue.onUseShield's onSkipped).
+        resetStreak();
+        resetBoard();
+        return;
+      }
+
+      // I1 fix (final whole-branch review): mirror
+      // useFailRescue.onUseShield's status-code split instead of
+      // collapsing every remaining outcome into a streak-preserving
+      // reset. A genuine 5xx / malformed-server-response is an infra
+      // glitch (streak preserved); any other non-success outcome —
+      // including a stale-cache 409 where shieldCount > 0 locally but
+      // the server says 0 — is treated the same as a deliberate skip.
+      if (!res.ok && res.status >= 500) {
+        resetBoard();
+      } else {
+        resetStreak();
+        resetBoard();
+      }
+    } catch {
+      // Network failure (offline, DNS, dropped connection — realistic
+      // on MiniPay mobile). Mirrors useFailRescue.onUseShield's catch:
+      // the player INTENDED to use the shield, so fall through to the
+      // same terminal path as the insufficient/error/5xx branch above
+      // rather than leaving them stuck on the failure screen.
+      resetBoard();
+    } finally {
+      shieldSpendingRef.current = false;
+    }
   }
 
   function handleExerciseNavigate(index: number) {
@@ -2064,11 +2178,9 @@ export function ExercisesScreen({
     const unitPrice = selectedItem.onChainPrice;
     const normalizedTotal = normalizePrice(unitPrice, paymentToken.decimals);
     const txSource =
-      selectedItem.itemId === SHIELD_ITEM_ID
-        ? "shop_retry_shield"
-        : selectedItem.itemId === PRO_ITEM_ID
-          ? "shop_pro"
-          : "shop_founder_badge";
+      selectedItem.itemId === PRO_ITEM_ID
+        ? "shop_pro"
+        : "shop_founder_badge";
     const itemIdNum = Number(selectedItem.itemId);
 
     setLastError(null);
@@ -2126,36 +2238,7 @@ export function ExercisesScreen({
 
       setShopTxHash(buyHash);
       track("shop_buy_tx", { stage: "success", source: txSource, item_id: itemIdNum });
-      // Server-side shield credit (fire-and-forget). Spec §"Behavior 1":
-      // banner truthfulness = "tx submitted", credit resolves async.
-      if (selectedItem.itemId === SHIELD_ITEM_ID && address) {
-        const buyerAddress = address;
-        enqueuePendingTx(buyHash as `0x${string}`);
-        void (async () => {
-          try {
-            const res = await fetch("/api/credit-shield", {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({
-                txHash: buyHash,
-                walletAddress: buyerAddress,
-              }),
-            });
-            if (!res.ok) return;
-            const data = (await res.json()) as {
-              ok: true;
-              credited: number;
-              delta: number;
-              txHash: string;
-            };
-            dequeuePendingTx(buyHash as `0x${string}`);
-            writeCreditedCache(data.credited);
-            dispatchShieldChange();
-          } catch {
-            // network failure → leave queued, useShieldSync retries
-          }
-        })();
-      } else if (selectedItem.itemId === PRO_ITEM_ID && address && publicClient) {
+      if (selectedItem.itemId === PRO_ITEM_ID && address && publicClient) {
         // verify-pro activates the PRO pass server-side. Without this
         // POST the user paid on-chain but coach:pro:<wallet> never
         // lands in Redis. Idempotent (proProcessedTx guard) so retries

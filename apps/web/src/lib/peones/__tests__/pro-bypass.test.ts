@@ -67,6 +67,8 @@ describe("PRO_BYPASS_DAILY_QUOTA", () => {
     expect(PRO_BYPASS_DAILY_QUOTA.coach).toBe(5);
     expect(PRO_BYPASS_DAILY_QUOTA.hint).toBe(20);
     expect(PRO_BYPASS_DAILY_QUOTA.retry).toBe(10);
+    // Shield: conservative default (no PRO entitlement decided yet)
+    expect(PRO_BYPASS_DAILY_QUOTA.shield).toBe(0);
     expect(PRO_BYPASS_DAILY_QUOTA.save_game).toBe(
       Number.POSITIVE_INFINITY,
     );
@@ -144,6 +146,19 @@ describe("resolveProBypass — PRO user at quota", () => {
     mockedSupabase.mockReturnValue(supabaseWith(5));
     const result = await resolveProBypass(W, "coach", DAY);
     expect(result.apply).toBe(false);
+  });
+
+  it("shield=0 quota is exhausted on first attempt (no PRO bypass)", async () => {
+    mockedIsProActive.mockResolvedValue({ active: true, expiresAt: 1e15 });
+    mockedSupabase.mockReturnValue(supabaseWith(0));
+    const result = await resolveProBypass(W, "shield", DAY);
+    expect(result).toEqual({
+      apply: false,
+      proActive: true,
+      reason: "quota_exhausted",
+      quotaLimit: 0,
+      quotaUsedBefore: 0,
+    });
   });
 });
 

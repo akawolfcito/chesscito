@@ -13,7 +13,6 @@ import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import {
   FOUNDER_BADGE_ITEM_ID,
   PRO_ITEM_ID,
-  SHIELD_ITEM_ID,
   SHOP_TILE_ASSETS,
   type ShopCopyKey,
 } from "@/lib/contracts/shop-catalog";
@@ -29,14 +28,12 @@ import {
  *  union so the type covers every catalog SKU even though the Shop
  *  display hides it in M1 (the value is consumable from Account /
  *  status surfaces). */
-type ShopTier = "pro" | "shield" | "founder";
+type ShopTier = "pro" | "founder";
 
 function tierForCopyKey(copyKey: ShopCopyKey): ShopTier {
   switch (copyKey) {
     case "pro":
       return "pro";
-    case "retryShield":
-      return "shield";
     case "founderBadge":
       return "founder";
   }
@@ -89,13 +86,12 @@ type ShopSheetProps = {
 /** Map an on-chain itemId to its copy key. Drives both the kicker
  *  copy lookup and the tile art lookup in `SHOP_TILE_ASSETS`. New
  *  tiles MUST be added here + in `SHOP_TILE_ASSETS` for art to
- *  resolve. Defaults to "retryShield" so unknown ids fall back to a
+ *  resolve. Defaults to "founderBadge" so unknown ids fall back to a
  *  safe visual rather than crashing. */
 function copyKeyForItem(itemId: bigint): ShopCopyKey {
   if (itemId === PRO_ITEM_ID) return "pro";
   if (itemId === FOUNDER_BADGE_ITEM_ID) return "founderBadge";
-  if (itemId === SHIELD_ITEM_ID) return "retryShield";
-  return "retryShield";
+  return "founderBadge";
 }
 
 /** Map a shop card's `copyKey` to a tone slug that drives the
@@ -112,8 +108,6 @@ function toneForCopyKey(copyKey: ShopCopyKey): ShopTileTone {
       return "purple";
     case "founderBadge":
       return "orange";
-    case "retryShield":
-      return "blue";
   }
 }
 
@@ -398,13 +392,13 @@ export function ShopSheet({
             });
           })()}
 
-          {/* Mini-cards lane — half-width 2-column grid for the
-              consumables + welcome pack. Order is intentional:
-              Welcome gift first (free-claim CTA visible above the
-              fold), then Streak Shield (Coach packs retired). gap-4
-              (16px) leaves breathing room for the icon's -10px top
-              overhang so the sprite never collides with the card
-              above. */}
+          {/* Mini-cards lane — half-width 2-column grid, now holding
+              only the welcome-pack tile (Coach packs retired in
+              Task A4, Shield's Shop-TX purchase retired in Task B8).
+              Shields now come from Season Pass, the welcome-pack
+              freebie, or the Peones-spend fallback. The grid itself
+              is kept (not deleted) since the Welcome Pack tile still
+              renders in this lane. */}
           <div className="grid grid-cols-2 gap-x-2.5 gap-y-4">
             {welcomePack ? (
               <WelcomePackTile
@@ -416,16 +410,10 @@ export function ShopSheet({
               />
             ) : null}
             {(() => {
-              // M1 funnel (Commit 7) — Coach packs retired; the mini
-              // lane now keeps Shield only. Position numbering restarts
-              // after this retirement: hero lane = position 0 (PRO),
-              // mini lane starts at position 1 (Shield). Raw `position`
-              // values were reassigned to different SKUs by this change
-              // (0 was CoachPack20, now PRO; 2 was CoachPack5, now
-              // unused), so monetization.shop_item_view queries must
-              // NOT join/filter by raw position across the retirement
-              // date without also filtering by tier/itemId.
-              const miniOrder: bigint[] = [SHIELD_ITEM_ID];
+              // Mini lane now has no live SKUs of its own — retained
+              // as an empty mapping (not deleted) so a future SKU can
+              // slot back in without re-deriving this scaffold.
+              const miniOrder: bigint[] = [];
               const miniItems = miniOrder
                 .map((id) => items.find((it) => it.itemId === id))
                 .filter((it): it is CatalogItem => it != null);

@@ -51,7 +51,7 @@ export type PeonesLedgerEventType =
  *   admin_grant         — ops console (post-Sprint 4).
  *
  * Spend sources (Sprint 4 implementation; Sprint 3 declares types):
- *   coach, hint, retry, save_game, labyrinth_key
+ *   coach, hint, retry, save_game, labyrinth_key, shield
  */
 export type PeonesLedgerSource =
   // Earn — daily-family (the cap applies)
@@ -72,6 +72,7 @@ export type PeonesLedgerSource =
   | "retry"
   | "save_game"
   | "labyrinth_key"
+  | "shield"
   // Ops
   | "admin_grant";
 

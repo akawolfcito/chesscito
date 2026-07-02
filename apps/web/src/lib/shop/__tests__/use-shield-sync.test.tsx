@@ -9,8 +9,6 @@ vi.mock("wagmi", () => ({
 }));
 
 import {
-  enqueuePendingTx,
-  readPendingTxs,
   readCreditedCache,
   SHIELDS_LEGACY_KEY,
   SHIELDS_CONSUMED_KEY,
@@ -28,44 +26,6 @@ describe("useShieldSync", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-  });
-
-  // ─── D1: drain pending queue first, then read ────────────────────
-
-  it("AC14: drains queued txHashes before reading /api/shields/me", async () => {
-    enqueuePendingTx("0xaa");
-    const calls: string[] = [];
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockImplementation(async (input) => {
-        const url = typeof input === "string" ? input : (input as Request).url;
-        calls.push(url);
-        if (url.includes("/api/credit-shield")) {
-          return new Response(
-            JSON.stringify({ ok: true, credited: 3, delta: 3, txHash: "0xaa" }),
-            { status: 200 },
-          );
-        }
-        return new Response(
-          JSON.stringify({ ok: true, credited: 3 }),
-          { status: 200 },
-        );
-      });
-
-    const { result } = renderHook(() => useShieldSync());
-    await waitFor(() => {
-      expect(result.current.serverCredited).toBe(3);
-    });
-
-    // Order: credit-shield drain BEFORE shields/me read
-    expect(calls[0]).toContain("/api/credit-shield");
-    expect(calls[1]).toContain("/api/shields/me");
-    // Drained → empty queue
-    expect(readPendingTxs()).toEqual([]);
-    // Cache populated
-    expect(readCreditedCache()).toBe(3);
-
-    fetchSpy.mockRestore();
   });
 
   it("does nothing when wallet is not connected", async () => {
@@ -103,113 +63,6 @@ describe("useShieldSync", () => {
     });
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-    fetchSpy.mockRestore();
-  });
-
-  // ─── D3: 4xx / 5xx leave entry queued ───────────────────────────
-
-  it("AC19: 4xx response from credit-shield leaves the entry queued", async () => {
-    enqueuePendingTx("0xaa");
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockImplementation(async (input) => {
-        const url = typeof input === "string" ? input : (input as Request).url;
-        if (url.includes("/api/credit-shield")) {
-          return new Response(
-            JSON.stringify({ ok: false, error: "unprocessable" }),
-            { status: 400 },
-          );
-        }
-        return new Response(JSON.stringify({ ok: true, credited: 0 }), {
-          status: 200,
-        });
-      });
-
-    renderHook(() => useShieldSync());
-    await waitFor(() => {
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
-    });
-
-    // Entry must remain queued — collapsed `unprocessable` mixes
-    // terminal + transient cases; cannot dequeue. TTL/ring-buffer
-    // evicts permanently-bad txs organically.
-    const queued = readPendingTxs().map((t) => t.txHash);
-    expect(queued).toEqual(["0xaa"]);
-    fetchSpy.mockRestore();
-  });
-
-  it("AC20: 500 response from credit-shield leaves the entry queued", async () => {
-    enqueuePendingTx("0xaa");
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockImplementation(async (input) => {
-        const url = typeof input === "string" ? input : (input as Request).url;
-        if (url.includes("/api/credit-shield")) {
-          return new Response(
-            JSON.stringify({ ok: false, error: "internal" }),
-            { status: 500 },
-          );
-        }
-        return new Response(JSON.stringify({ ok: true, credited: 0 }), {
-          status: 200,
-        });
-      });
-
-    renderHook(() => useShieldSync());
-    await waitFor(() => {
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
-    });
-
-    expect(readPendingTxs().map((t) => t.txHash)).toEqual(["0xaa"]);
-    fetchSpy.mockRestore();
-  });
-
-  it("network error on credit-shield leaves the entry queued", async () => {
-    enqueuePendingTx("0xaa");
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockImplementation(async (input) => {
-        const url = typeof input === "string" ? input : (input as Request).url;
-        if (url.includes("/api/credit-shield")) {
-          throw new Error("network down");
-        }
-        return new Response(JSON.stringify({ ok: true, credited: 0 }), {
-          status: 200,
-        });
-      });
-
-    renderHook(() => useShieldSync());
-    await waitFor(() => {
-      // shields/me should still be reached — drain failure must not
-      // block the read.
-      expect(fetchSpy).toHaveBeenCalled();
-    });
-
-    expect(readPendingTxs().map((t) => t.txHash)).toEqual(["0xaa"]);
-    fetchSpy.mockRestore();
-  });
-
-  it("dequeues on 2xx with delta=0 (idempotent retry resolves to terminal)", async () => {
-    enqueuePendingTx("0xaa");
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockImplementation(async (input) => {
-        const url = typeof input === "string" ? input : (input as Request).url;
-        if (url.includes("/api/credit-shield")) {
-          return new Response(
-            JSON.stringify({ ok: true, credited: 3, delta: 0, txHash: "0xaa" }),
-            { status: 200 },
-          );
-        }
-        return new Response(JSON.stringify({ ok: true, credited: 3 }), {
-          status: 200,
-        });
-      });
-
-    renderHook(() => useShieldSync());
-    await waitFor(() => {
-      expect(readPendingTxs()).toEqual([]);
-    });
     fetchSpy.mockRestore();
   });
 

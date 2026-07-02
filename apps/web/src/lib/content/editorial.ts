@@ -2039,13 +2039,6 @@ export const SHOP_ITEM_COPY = {
     label: "Founder Badge",
     subtitle: "Support from day one. Yours to keep.",
   },
-  retryShield: {
-    /** User-facing label updated to "Streak Shield" — clearer value prop.
-     *  Internal constants (SHIELD_ITEM_ID, storage keys, contract calls)
-     *  are NOT changed. Only this display string changes. */
-    label: "Streak Shield",
-    subtitle: "Retry without losing your streak.",
-  },
   /** Coach Credits — value-prop copy for an eventual Coach Pack tile
    *  in the shop sheet (parallel to Founder Badge / Streak Shield).
    *  Pack size labels are intentionally NOT here — those live in

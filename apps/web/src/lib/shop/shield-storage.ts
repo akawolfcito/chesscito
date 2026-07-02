@@ -9,21 +9,11 @@
  *  Spec: 2026-05-08-credit-shield-server-side-design.md §"Counter model".
  */
 
-import { dispatchShieldChange } from "@/lib/shop/shield-events";
-
 export const SHIELDS_LEGACY_KEY = "chesscito:shields";
 export const SHIELDS_CONSUMED_KEY = "chesscito:shields:consumed";
 export const SHIELDS_CREDITED_CACHE_KEY = "chesscito:shields:credited-cache";
-export const SHIELDS_PENDING_TX_KEY = "chesscito:shields:pending-tx";
 
 export const MAX_SHIELDS = 30;
-export const PENDING_TX_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-export const PENDING_TX_QUEUE_MAX = 32;
-
-export type PendingShieldTx = {
-  txHash: `0x${string}`;
-  queuedAt: number;
-};
 
 export type LegacyMigrationPayload = {
   legacy: number;
@@ -69,72 +59,6 @@ export function writeCreditedCache(n: number): void {
 
 export function readConsumedCount(): number {
   return safeReadInt(SHIELDS_CONSUMED_KEY);
-}
-
-export function consumeOneShield(): void {
-  const next = readConsumedCount() + 1;
-  safeWriteInt(SHIELDS_CONSUMED_KEY, next);
-  dispatchShieldChange();
-}
-
-function readQueueRaw(): PendingShieldTx[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(SHIELDS_PENDING_TX_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (entry): entry is PendingShieldTx =>
-        entry != null &&
-        typeof entry === "object" &&
-        typeof entry.txHash === "string" &&
-        entry.txHash.startsWith("0x") &&
-        typeof entry.queuedAt === "number" &&
-        Number.isFinite(entry.queuedAt),
-    );
-  } catch {
-    return [];
-  }
-}
-
-function writeQueue(queue: PendingShieldTx[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(
-      SHIELDS_PENDING_TX_KEY,
-      JSON.stringify(queue),
-    );
-  } catch {
-    // ignore — queue rebuilt on next enqueue
-  }
-}
-
-export function enqueuePendingTx(txHash: `0x${string}`): void {
-  const queue = readQueueRaw();
-  if (queue.some((entry) => entry.txHash === txHash)) return;
-  queue.push({ txHash, queuedAt: Date.now() });
-  while (queue.length > PENDING_TX_QUEUE_MAX) queue.shift();
-  writeQueue(queue);
-}
-
-export function dequeuePendingTx(txHash: `0x${string}`): void {
-  const queue = readQueueRaw();
-  const next = queue.filter((entry) => entry.txHash !== txHash);
-  if (next.length === queue.length) return;
-  writeQueue(next);
-}
-
-export function readPendingTxs(): PendingShieldTx[] {
-  const now = Date.now();
-  const queue = readQueueRaw();
-  const fresh = queue.filter(
-    (entry) => now - entry.queuedAt < PENDING_TX_TTL_MS,
-  );
-  // Persist the pruned queue so subsequent reads are fast and the TTL
-  // truly evicts (not just hides) stale entries.
-  if (fresh.length !== queue.length) writeQueue(fresh);
-  return fresh;
 }
 
 export function consumeLegacyShieldsForMigration(): LegacyMigrationPayload | null {

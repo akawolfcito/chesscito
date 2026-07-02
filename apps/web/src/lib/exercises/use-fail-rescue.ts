@@ -14,6 +14,7 @@ import {
   selectRescueModalState,
   type RescueModalVariant,
 } from "@/lib/exercises/use-rescue-modal-state";
+import { attemptShieldSpendWithPeones } from "@/lib/peones/shield-spend-fallback";
 
 /**
  * useFailRescue — orchestrates the fail-rescue modal lifecycle.
@@ -105,6 +106,12 @@ export type UseFailRescueOptions = {
    *  the sheet; polish pass can wire actual scroll-to-focus via a
    *  query param. */
   onOpenShop: (focus: "welcome-pack" | "shield-sku") => void;
+  /** Stable per-rescue-attempt counter — same value across retries of
+   *  one rescue tap, advances on a genuinely new attempt. Threaded
+   *  through to the Peones fallback's idempotency key. Owned by the
+   *  caller (exercises-screen.tsx already tracks this for
+   *  PeonesHintButton). */
+  attemptSeq: number;
 };
 
 export type UseFailRescueReturn = {
@@ -182,27 +189,50 @@ export function useFailRescue(
           writeCreditedCache(data.balance + readConsumedCount());
           dispatchShieldChange();
           optionsRef.current.onRescued();
-        } else if (!res.ok && res.status >= 500) {
-          // 5xx — server error during a real rescue attempt. The
-          // player TRIED to rescue; don't penalize the streak for
-          // our infra glitch (red-team E11).
+          return;
+        }
+
+        // 409 insufficient with a 0 local balance — try the Peones
+        // fallback before treating this as a deliberate skip.
+        if (!res.ok && res.status === 409 && shieldsCount === 0) {
+          const attempt = await attemptShieldSpendWithPeones({
+            wallet: address,
+            attemptSeq: optionsRef.current.attemptSeq,
+          });
+          if (attempt.kind === "paid") {
+            const peonesRes = await fetch("/api/shields/spend", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                walletAddress: address,
+                peonesIdempotencyKey: attempt.peonesIdempotencyKey,
+                attemptSeq: optionsRef.current.attemptSeq,
+              }),
+            });
+            if (peonesRes.ok) {
+              optionsRef.current.onRescued();
+              return;
+            }
+            optionsRef.current.onServerError();
+            return;
+          }
+          // insufficient | error — same outcome as a deliberate skip.
+          optionsRef.current.onSkipped();
+          return;
+        }
+
+        if (!res.ok && res.status >= 500) {
           optionsRef.current.onServerError();
         } else {
-          // 409 insufficient or any other 4xx — the player's local
-          // state was out of sync with the server, but functionally
-          // this is the same outcome as a deliberate skip: no shield
-          // was spent, the streak resets.
           optionsRef.current.onSkipped();
         }
       } catch {
-        // Network failure — same psychology as 5xx, treat as server
-        // error rather than punishing the player (red-team E11).
         optionsRef.current.onServerError();
       } finally {
         setIsSpending(false);
       }
     })();
-  }, [address, isSpending]);
+  }, [address, isSpending, shieldsCount]);
 
   const onRetryAnyway = useCallback(() => {
     bumpIgnoreCount();

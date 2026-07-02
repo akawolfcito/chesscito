@@ -7,8 +7,6 @@ import {
   PRO_DURATION_DAYS,
   PRO_ITEM_ID,
   PRO_PRICE_USD6,
-  SHIELDS_PER_PURCHASE,
-  SHIELD_ITEM_ID,
   SHOP_ITEMS,
   SHOP_TILE_ASSETS,
 } from "../shop-catalog";
@@ -27,15 +25,14 @@ function findWebRoot(): string {
 }
 
 describe("shop-catalog", () => {
-  it("publishes the founder badge as itemId 1n, the retry shield as 2n, and the CELO sibling as 5n", () => {
+  it("publishes the founder badge as itemId 1n and the CELO sibling as 5n", () => {
     expect(FOUNDER_BADGE_ITEM_ID).toBe(1n);
-    expect(SHIELD_ITEM_ID).toBe(2n);
     expect(FOUNDER_BADGE_CELO_ITEM_ID).toBe(5n);
   });
 
-  it("exposes founder + PRO + shield + CELO sibling in the catalog with copy keys for locale-aware resolution", () => {
-    // PRO + Founder + Shield + CELO sibling.
-    expect(SHOP_ITEMS).toHaveLength(4);
+  it("exposes founder + PRO + CELO sibling in the catalog with copy keys for locale-aware resolution", () => {
+    // PRO + Founder + CELO sibling.
+    expect(SHOP_ITEMS).toHaveLength(3);
     for (const item of SHOP_ITEMS) {
       expect(item.copyKey.length).toBeGreaterThan(0);
     }
@@ -47,23 +44,13 @@ describe("shop-catalog", () => {
     expect(founder?.copyKey).toBe(celoFounder?.copyKey);
   });
 
-  it("ships the shield row with the documented item id so the admin tx setItem(2,...) wires it up", () => {
-    const shield = SHOP_ITEMS.find((item) => item.itemId === SHIELD_ITEM_ID);
-    expect(shield).toBeDefined();
-    expect(shield?.copyKey).toBe("retryShield");
-  });
-
-  it("credits 3 shield uses per purchase to match the SHIELD_COPY.buyLabel '(3 uses)' promise", () => {
-    expect(SHIELDS_PER_PURCHASE).toBe(3);
-  });
-
   it("publishes Chesscito PRO as itemId 6n at $1.99 (1_990_000 USD6) for a 30-day pass", () => {
     expect(PRO_ITEM_ID).toBe(6n);
     expect(PRO_PRICE_USD6).toBe(1_990_000n);
     expect(PRO_DURATION_DAYS).toBe(30);
   });
 
-  it("includes PRO in SHOP_ITEMS with the 'pro' copy key so the shop sheet can render it next to founder/shield", () => {
+  it("includes PRO in SHOP_ITEMS with the 'pro' copy key so the shop sheet can render it next to founder", () => {
     const pro = SHOP_ITEMS.find((i) => i.itemId === PRO_ITEM_ID);
     expect(pro).toBeDefined();
     expect(pro?.copyKey).toBe("pro");
@@ -76,7 +63,7 @@ describe("SHOP_TILE_ASSETS path resolution", () => {
   const entries = Object.entries(SHOP_TILE_ASSETS);
 
   it("declares an icon basename for every ShopCopyKey", () => {
-    const expectedKeys = ["pro", "founderBadge", "retryShield"];
+    const expectedKeys = ["pro", "founderBadge"];
     expect(entries.map(([key]) => key).sort()).toEqual(expectedKeys.sort());
   });
 

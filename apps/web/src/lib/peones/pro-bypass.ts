@@ -36,6 +36,9 @@ export const PRO_BYPASS_DAILY_QUOTA: Readonly<
   coach: 5,
   hint: 20,
   retry: 10,
+  // Shield: no PRO entitlement decided yet. 0 = PRO pays same 2 Peones as anyone else
+  // via fallback. Easy to raise later (change one number) if operator decides otherwise.
+  shield: 0,
   // Save game has no PRO cost in the first place; PRO sees ilimitado.
   save_game: Number.POSITIVE_INFINITY,
 };
