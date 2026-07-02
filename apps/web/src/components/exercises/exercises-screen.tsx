@@ -1770,6 +1770,13 @@ export function ExercisesScreen({
       // insufficient / error / 5xx — no shield spent, board still
       // resets so the player isn't stuck on the failure state.
       resetBoard();
+    } catch {
+      // Network failure (offline, DNS, dropped connection — realistic
+      // on MiniPay mobile). Mirrors useFailRescue.onUseShield's catch:
+      // the player INTENDED to use the shield, so fall through to the
+      // same terminal path as the insufficient/error/5xx branch above
+      // rather than leaving them stuck on the failure screen.
+      resetBoard();
     } finally {
       shieldSpendingRef.current = false;
     }
