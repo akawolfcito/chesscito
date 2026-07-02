@@ -13,8 +13,11 @@ import { useEffect, useState } from "react";
  * tu racha → uso del shield gana significado emocional.
  *
  * Rules:
- *   - Success on an exercise (any star count, replay or fresh)
- *     → bumpStreak() — N becomes N+1
+ *   - Success on a FRESH exercise (never completed before) → bumpStreak()
+ *     — N becomes N+1. Replays of an already-completed exercise do NOT
+ *     bump the streak (user feedback 2026-05-31 — counting replays
+ *     opened an infinite grind loophole: open the drawer, tap a
+ *     completed exercise, finish it, +1 streak, repeat).
  *   - Failure + Use Shield (rescued) → streak preserved
  *   - Failure + Retry anyway / X / backdrop (skipped) → resetStreak()
  *
