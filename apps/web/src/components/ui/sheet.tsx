@@ -88,14 +88,23 @@ interface SheetContentProps
    *  is set on the dialog content per Radix escape hatch so the missing
    *  Description warning is suppressed without polluting the DOM. */
   description?: string;
+  /** Override for the underlying SheetOverlay's className. Default
+   *  scrim sits at z-50, BELOW the persistent dock (z-60 in
+   *  globals.css `.chesscito-dock`) — correct for "destination panel"
+   *  sheets (badge/shop/trophies/leaderboard) that want the dock to
+   *  stay reachable on top of them. Transactional/decision sheets
+   *  (e.g. ProSheet) need the opposite — pass `"z-[70]"` here (and in
+   *  `className`) to render above the dock, matching the precedent
+   *  FailRescueModal's own custom scrim already set. */
+  overlayClassName?: string;
 }
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, hideClose = false, title, description, onOpenAutoFocus, ...props }, ref) => (
+>(({ side = "right", className, children, hideClose = false, title, description, overlayClassName, onOpenAutoFocus, ...props }, ref) => (
   <SheetPortal>
-    <SheetOverlay />
+    <SheetOverlay className={overlayClassName} />
     <SheetPrimitive.Content
       ref={ref}
       className={cn(sheetVariants({ side }), className)}

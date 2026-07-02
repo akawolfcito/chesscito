@@ -207,8 +207,14 @@ export function ProSheet(props: ProSheetProps) {
         /* border-t-0 suppresses the border-t the side="bottom" variant adds —
            it tints a stray blue-grey --border line over the transparent PRO
            panel; tailwind-merge keeps border-0 and border-t in separate groups
-           so border-0 alone does not cancel it. */
-        className="flex max-h-[95dvh] flex-col overflow-visible rounded-none border-0 border-t-0 bg-transparent p-0 pb-0 shadow-none"
+           so border-0 alone does not cancel it.
+           z-[70] on both this panel and the overlay below: a purchase
+           decision sheet must render ABOVE the persistent dock (z-60),
+           unlike destination panels (badge/shop/trophies/leaderboard)
+           that intentionally stay under it. Matches the z-[70]
+           FailRescueModal already uses for the same reason. */
+        className="z-[70] flex max-h-[95dvh] flex-col overflow-visible rounded-none border-0 border-t-0 bg-transparent p-0 pb-0 shadow-none"
+        overlayClassName="z-[70]"
       >
         {/* Candy hero panel — bottom-sheet container becomes a
          *  transparent shell so the panel-suscription-pro.png asset
