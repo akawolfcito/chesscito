@@ -1510,8 +1510,16 @@ export function ExercisesScreen({
     attemptSeq,
     onRescued: () => {
       // Shield used — streak preserved (do NOT call resetStreak).
+      // Post-hoc fix (final whole-branch review, C1): a successful
+      // rescue is functionally a new attempt, same as a manual
+      // Retry — advance attemptSeq so the NEXT Peones-fallback
+      // idempotency key (spend:shield:{wallet}:{attemptSeq}) can't
+      // collide with this one. Order mirrors useRetryGuard: reset
+      // first, then increment, so any consumer reading the new
+      // attemptSeq sees a board that's already fresh.
       autoReset.clear();
       resetBoard();
+      incrementAttemptSeq();
     },
     onSkipped: () => {
       // Retry without shield (or close) — racha rota. This is the
@@ -1738,10 +1746,21 @@ export function ExercisesScreen({
       if (res.ok && data.spent === 1 && typeof data.balance === "number") {
         writeCreditedCache(data.balance + readConsumedCount());
         dispatchShieldChange();
+        // Post-hoc fix (final whole-branch review, C1): a successful
+        // rescue is functionally a new attempt — advance attemptSeq
+        // the same way a manual Retry does, so the next Peones-
+        // fallback idempotency key can't collide with this attempt.
         resetBoard();
+        incrementAttemptSeq();
         return;
       }
 
+      // NOTE: unreachable in normal play today — context-action.ts
+      // only offers the "useShield" action when shieldsAvailable > 0,
+      // so this internal shieldCount === 0 Peones-fallback branch
+      // can't fire under current gating. Kept correct (streak +
+      // attemptSeq semantics mirrored from useFailRescue.onUseShield)
+      // in case that gating ever changes (whole-branch review M1).
       if (!res.ok && res.status === 409 && shieldCount === 0 && address) {
         const attempt = await attemptShieldSpendWithPeones({
           wallet: address,
@@ -1759,13 +1778,37 @@ export function ExercisesScreen({
           });
           if (peonesRes.ok) {
             resetBoard();
+            incrementAttemptSeq();
             return;
           }
+          // Peones charge succeeded but the shields/spend call itself
+          // failed — infra glitch, not the player's fault (mirrors
+          // useFailRescue.onUseShield's onServerError). Streak
+          // preserved, attemptSeq NOT advanced (no rescue actually
+          // landed).
+          resetBoard();
+          return;
         }
+        // insufficient | error — same outcome as a deliberate skip
+        // (mirrors useFailRescue.onUseShield's onSkipped).
+        resetStreak();
+        resetBoard();
+        return;
       }
-      // insufficient / error / 5xx — no shield spent, board still
-      // resets so the player isn't stuck on the failure state.
-      resetBoard();
+
+      // I1 fix (final whole-branch review): mirror
+      // useFailRescue.onUseShield's status-code split instead of
+      // collapsing every remaining outcome into a streak-preserving
+      // reset. A genuine 5xx / malformed-server-response is an infra
+      // glitch (streak preserved); any other non-success outcome —
+      // including a stale-cache 409 where shieldCount > 0 locally but
+      // the server says 0 — is treated the same as a deliberate skip.
+      if (!res.ok && res.status >= 500) {
+        resetBoard();
+      } else {
+        resetStreak();
+        resetBoard();
+      }
     } catch {
       // Network failure (offline, DNS, dropped connection — realistic
       // on MiniPay mobile). Mirrors useFailRescue.onUseShield's catch:
