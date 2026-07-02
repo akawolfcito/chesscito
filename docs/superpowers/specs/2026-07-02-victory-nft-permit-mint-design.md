@@ -1,10 +1,13 @@
 # Victory NFT permit mint (`mintSignedWithPermit`) — design
 
-Status: **proposed, not implemented**. This is Shop consolidation step 3 from
+Status: **proposed, not implemented — red-team reviewed 2026-07-02, findings
+folded in**. This is Shop consolidation step 3 from
 `docs/product/chesscito-treasury-unification-plan-2026-07-01.md`. Nothing in
 this document is executed — no contract change, no deploy, no client code.
 Scope for the session that produced this doc was spec + design only, per
-explicit operator decision (see "Scope" below).
+explicit operator decision (see "Scope" below). See
+`2026-07-02-victory-nft-permit-mint-redteam.md` for the full review — no P0s,
+3 P1s (all folded into this doc below), 5 P2s.
 
 ## Context
 
@@ -106,12 +109,34 @@ function mintSignedWithPermit(
     lastMintAt[msg.sender] = block.timestamp;
 
     uint256 totalAmount = _normalizePrice(price, tokenDecimals);
-    IERC20Permit(token).permit(msg.sender, address(this), totalAmount, permitDeadline, v, r, s);
-    _splitPayment(token, totalAmount); // reused unchanged — permit() just granted the allowance it needs
+    // try/catch, not a bare call — see "Permit front-running" below.
+    try IERC20Permit(token).permit(msg.sender, address(this), totalAmount, permitDeadline, v, r, s) {} catch {}
+    _splitPayment(token, totalAmount); // enforces whatever allowance actually exists, either way
 
     // Mint block identical to mintSigned
 }
 ```
+
+**Permit front-running (red-team P1-1, fixed here):** EIP-2612 `permit()` is
+submittable by anyone holding the signature, not only the signer. A watcher
+can extract `v/r/s` from a pending `mintSignedWithPermit` transaction and
+submit `token.permit(...)` directly ahead of it. Since the signed `spender`
+is this contract's own address, this cannot redirect funds — but a bare
+(non-try/catch) `permit()` call would then revert on the player's own
+transaction (nonce already consumed), unwinding the whole mint and wasting
+the player's gas, purely as griefing. The `try { } catch { }` form avoids
+this: if the front-run replayed the exact signed values, the necessary
+allowance already exists and `_splitPayment`'s `transferFrom` succeeds
+normally; if the permit genuinely never lands (wrong signature, expired,
+unrelated failure), `transferFrom` reverts with an honest
+insufficient-allowance reason instead of an opaque bubbled `permit()`
+revert. This is the standard pattern used by permit-consuming routers
+(e.g. Uniswap-style, Permit2). Residual gap: if the permit truly never
+succeeds (not just griefed-but-still-granted), the transaction still
+reverts — the client-side fallback (see Client changes) cannot rescue an
+already-broadcast, already-reverted transaction; that case surfaces as a
+normal transaction failure and requires a manual retry, same as any other
+on-chain revert today.
 
 Key decisions:
 
@@ -129,9 +154,11 @@ Key decisions:
   approval left on the token afterward.
 - **No new storage.** Only a new import (`IERC20Permit` from OpenZeppelin)
   and the function itself.
-- **Reverts bubble unwrapped.** If the token's `permit()` reverts (expired
-  signature, wrong nonce, already used), the revert propagates as-is — same
-  style as `transferFrom` failures today, no wrapper error.
+- **`permit()` itself is wrapped in `try/catch` (not bare)** — see "Permit
+  front-running" note above; this is the one deliberate exception to
+  "reverts bubble unwrapped." All other reverts in this function (voucher
+  validation, `_verifySignature`, `transferFrom` inside `_splitPayment`)
+  propagate as-is, same style as `mintSigned` today, no wrapper error.
 - **Same guards**: `whenNotPaused`, `nonReentrant`, identical to `mintSigned`.
 
 ## Token domain data (client-side)
@@ -151,6 +178,18 @@ To sign a permit, the client needs the token's EIP-712 domain (`name`,
   `nonces()`/`DOMAIN_SEPARATOR()`) to confirm each token's actual domain
   version, then hardcode `version` per token in `lib/contracts/tokens.ts`
   alongside existing `address`/`decimals` metadata.
+- **Red-team correction (P1-2): getter presence is necessary but not
+  sufficient.** `nonces()`/`DOMAIN_SEPARATOR()` returning real values (as
+  confirmed 2026-07-01) does not prove `permit()` itself works — some
+  real-world token deployments expose 2612-shaped getters without a working
+  `permit()`, and domain `version` commonly diverges per token in a way no
+  getter reveals (do not assume all three share one version string). The
+  pre-implementation verification pass must go further than read-only
+  getter checks: it must execute a **real `permit()` call** per token
+  (fork or Sepolia-equivalent) and confirm it succeeds, in addition to
+  pinning the confirmed `name`+`version` per token. Treat each of USDC,
+  USDT, and cUSD as independently unproven until each has its own passing
+  `permit()` dry run.
 
 ## Client changes
 
@@ -183,6 +222,29 @@ To sign a permit, the client needs the token's EIP-712 domain (`name`,
   `onClaimTelemetry` events, to monitor canary adoption the same way Get
   Peones was monitored.
 - **ABI**: new `mintSignedWithPermit` entry in `lib/contracts/victory.ts`.
+  Additionally (red-team P2-2): viem's base `erc20Abi`, already imported in
+  `tokens.ts` for `name()`/`balanceOf()`, does **not** include
+  `nonces()`/`DOMAIN_SEPARATOR()`/`permit()` — an extended permit ABI
+  fragment is a required new addition, not already covered by existing
+  imports.
+- **Pre-flag-enable gate (red-team P1-3):** `isUserCancellation`
+  (`lib/errors.ts`) currently matches only literal
+  `"user rejected"`/`"user denied"`/`"cancelled"` substrings, and has never
+  been exercised against a `signTypedData` rejection in this codebase (only
+  against `sendTransaction` rejections). Before the feature flag is ever
+  turned on, capture MiniPay's actual permit-rejection error string via the
+  existing `/dev/permit-probe` and confirm it's still correctly classified
+  — otherwise a deliberate user cancellation could be misread as a
+  technical failure, triggering an unwanted forced fallback to the
+  approve+mint prompt right after the user just declined.
+- **Drive-by cleanup (red-team P2-3):** `use-mint-victory.ts`'s docstring
+  claims the hook sits behind `NEXT_PUBLIC_USE_EXTRACTED_MINT_HOOK`
+  (default OFF) with "production reads the inline path in arena/page.tsx
+  until T13." Confirmed false today — `useMintVictory` is called
+  unconditionally in `apps/web/src/app/[locale]/arena/page.tsx:327`, no
+  flag gate exists. Pre-existing doc rot, unrelated to this feature, but
+  since this file is being touched anyway: fix the docstring in the same
+  PR.
 
 ## Error handling
 
@@ -215,7 +277,17 @@ To sign a permit, the client needs the token's EIP-712 domain (`name`,
   reused voucher nonce, cooldown, unaccepted token) against the new
   function.
 - Reject expired permit deadline / invalid permit signature / reused permit
-  nonce — token-level revert bubbles correctly.
+  nonce **when no prior allowance exists** — confirm `_splitPayment`'s
+  `transferFrom` reverts with an honest insufficient-allowance reason (not
+  an opaque bubbled `permit()` revert, since that call is now
+  `try/catch`-wrapped).
+- **Front-run simulation (closes red-team P1-1):** submit the exact signed
+  permit values directly to the mock token from a third account *before*
+  calling `mintSignedWithPermit`, then call `mintSignedWithPermit` with the
+  same (now-stale) `v/r/s` — confirm the mint still succeeds (the
+  try/catch swallows the now-reverting internal `permit()` call, and
+  `_splitPayment` proceeds against the allowance the front-run already
+  granted).
 - **Mandatory regression**: full existing `mintSigned` suite passes
   unchanged — zero behavior diff on the already-audited path.
 - Storage-layout validation via `@openzeppelin/hardhat-upgrades`, same
@@ -239,8 +311,18 @@ Mainnet) happens during implementation, not as part of this spec.
 
 ## Rollout (out of scope for this session — documented for the implementation session)
 
+0. **Prerequisite, before writing contract code:** execute a real
+   `permit()` call against USDC, USDT, and cUSD **on a Celo Mainnet fork**
+   (Sepolia's token contracts are different deployments and do not validate
+   mainnet token behavior) to confirm `permit()` actually succeeds and to
+   pin each token's real `name`+`version` — closes red-team P1-2. A Sepolia
+   testnet mint (step 2 below) exercises the new contract function but
+   cannot substitute for this mainnet-token verification.
 1. Red-team review of the contract diff (separate session, standing 4-step
-   contract-change process, [[feedback_security_review_gate]]).
+   contract-change process, [[feedback_security_review_gate]]) — spec-level
+   review already done 2026-07-02
+   (`2026-07-02-victory-nft-permit-mint-redteam.md`); this is the
+   code-level review once the contract is written.
 2. Deploy new implementation to the existing Sepolia proxy, run full suite +
    one real testnet mint via permit.
 3. Deploy to the Celo Mainnet proxy (same address, new implementation) —
