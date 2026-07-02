@@ -1433,7 +1433,7 @@ Now replace the existing Step 3 ("Check allowance and approve if needed", lines 
       let permitResult: { v: number; r: `0x${string}`; s: `0x${string}` } | null = null;
       let permitDeadlineUsed = 0n;
 
-      if (isVictoryPermitMintEnabled() && !inp.injected?.sendMint) {
+      if (isVictoryPermitMintEnabled()) {
         try {
           const permitDeadlineCandidate = BigInt(Math.floor(Date.now() / 1000) + 600);
           const tokenMeta = ACCEPTED_TOKENS.find(
