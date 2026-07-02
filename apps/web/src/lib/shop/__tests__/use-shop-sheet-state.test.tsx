@@ -27,8 +27,7 @@ const TEST_CHAIN_ID = 42220;
 
 // Mints the canonical SHOP_ITEMS shape consumed by useReadContracts.
 // Order MUST match SHOP_ITEMS exactly:
-//   PRO 6 ($1.99) → Founder 1 ($0.10) → Shield 2 ($0.025) →
-//   CoachPack5 3 ($0.05) → CoachPack20 4 ($0.10) → CELO sibling 5.
+//   PRO 6 ($1.99) → Founder 1 ($0.10) → Shield 2 ($0.025) → CELO sibling 5.
 function makeOnChainItems({
   celoConfigured = true,
   proConfigured = true,
@@ -40,8 +39,6 @@ function makeOnChainItems({
     }, // PRO $1.99
     { status: "success", result: [100_000n, true] }, // Founder $0.10
     { status: "success", result: [25_000n, true] }, // Shield $0.025
-    { status: "success", result: [50_000n, true] }, // CoachPack5 $0.05
-    { status: "success", result: [100_000n, true] }, // CoachPack20 $0.10
     {
       status: celoConfigured ? "success" : "failure",
       result: celoConfigured ? [1_000_000_000_000_000_000n, true] : null,
