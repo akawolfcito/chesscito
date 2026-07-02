@@ -32,6 +32,7 @@ export const PEONES_SPEND_TARGETS = [
   "hint",
   "retry",
   "save_game",
+  "shield",
 ] as const;
 
 export type PeonesSpendTarget = Extract<
@@ -55,6 +56,12 @@ export const SPEND_COST_BY_TARGET: Readonly<Record<PeonesSpendTarget, number>> =
   hint: 1,
   retry: 2, // DEPRECATED sink — never charged (see note above)
   save_game: 1,
+  /** Shield rescue — 2 Peones. PROVISIONAL: carried over from the
+   *  2026-06-05 Sprint 4 decision to unblock this cluster; operator
+   *  has flagged this needs a real economic-model pass across all
+   *  consumables (Coach's 1 Peón for a full LLM analysis is already
+   *  suspect next to this). Do not treat as final. */
+  shield: 2,
 };
 
 /** Returns true for any of the four Sprint 4 targets. Used by the
@@ -79,6 +86,7 @@ export const SPEND_IDEMPOTENCY_PREFIX_BY_TARGET: Readonly<
   hint: "spend:hint:",
   retry: "spend:retry:",
   save_game: "spend:save_game:",
+  shield: "spend:shield:",
 };
 
 export function hasSpendIdempotencyPrefix(

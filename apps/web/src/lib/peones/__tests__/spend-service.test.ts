@@ -21,6 +21,10 @@ describe("isPeonesSpendTarget", () => {
     expect(isPeonesSpendTarget("save_game")).toBe(true);
   });
 
+  it("accepts shield", () => {
+    expect(isPeonesSpendTarget("shield")).toBe(true);
+  });
+
   it("rejects labyrinth_key (Sprint 5)", () => {
     expect(isPeonesSpendTarget("labyrinth_key")).toBe(false);
   });
@@ -39,6 +43,7 @@ describe("SPEND_COST_BY_TARGET", () => {
       hint: 1,
       retry: 2,
       save_game: 1,
+      shield: 2,
     });
   });
 });
@@ -57,6 +62,9 @@ describe("hasSpendIdempotencyPrefix", () => {
     expect(
       hasSpendIdempotencyPrefix("save_game", "spend:save_game:0xabc:g-99"),
     ).toBe(true);
+    expect(
+      hasSpendIdempotencyPrefix("shield", "spend:shield:0xabc:5"),
+    ).toBe(true);
   });
 
   it("rejects cross-target prefix collisions", () => {
@@ -65,6 +73,9 @@ describe("hasSpendIdempotencyPrefix", () => {
     ).toBe(false);
     expect(
       hasSpendIdempotencyPrefix("coach", "spend:hint:0xabc:rook:r-1:3"),
+    ).toBe(false);
+    expect(
+      hasSpendIdempotencyPrefix("shield", "spend:coach:0xabc:5"),
     ).toBe(false);
   });
 
@@ -79,6 +90,7 @@ describe("hasSpendIdempotencyPrefix", () => {
       hint: "spend:hint:",
       retry: "spend:retry:",
       save_game: "spend:save_game:",
+      shield: "spend:shield:",
     });
   });
 });
