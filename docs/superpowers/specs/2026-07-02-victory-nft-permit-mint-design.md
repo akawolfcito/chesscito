@@ -237,6 +237,11 @@ To sign a permit, the client needs the token's EIP-712 domain (`name`,
   — otherwise a deliberate user cancellation could be misread as a
   technical failure, triggering an unwanted forced fallback to the
   approve+mint prompt right after the user just declined.
+  **Verified on-device 2026-07-02**: real MiniPay rejection captured via
+  `/dev/permit-probe` — `"An internal error was received. Details: User
+  rejected signing request Version: viem@2.46.3"`. Contains `"user
+  rejected"` (lowercased) — matches `isUserCancellation` as-is. No code
+  change required; gate closed.
 - **Drive-by cleanup (red-team P2-3):** `use-mint-victory.ts`'s docstring
   claims the hook sits behind `NEXT_PUBLIC_USE_EXTRACTED_MINT_HOOK`
   (default OFF) with "production reads the inline path in arena/page.tsx
