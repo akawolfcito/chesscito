@@ -9,3 +9,7 @@ export const CHESSCITO_LITE_MODE =
 export function isLiteModeServer(): boolean {
   return process.env.NEXT_PUBLIC_CHESSCITO_LITE_MODE === "true";
 }
+
+export function isVictoryPermitMintEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_VICTORY_PERMIT_MINT_ENABLED === "true";
+}
