@@ -37,7 +37,17 @@
     "verify:proxies": "hardhat run scripts/verify-implementations.ts",
     "verify:proxies:alfajores": "hardhat run scripts/verify-implementations.ts --network alfajores",
     "verify:proxies:celo-sepolia": "hardhat run scripts/verify-implementations.ts --network celo-sepolia",
-    "verify:proxies:celo": "hardhat run scripts/verify-implementations.ts --network celo"
+    "verify:proxies:celo": "hardhat run scripts/verify-implementations.ts --network celo",
+    "upgrade:victory-nft:celo-sepolia": "hardhat run scripts/upgrade-victory-nft.ts --network celo-sepolia",
+    "upgrade:victory-nft:celo": "hardhat run scripts/upgrade-victory-nft.ts --network celo",
+    "verify:victory-nft:celo-sepolia": "hardhat run scripts/verify-victory-nft-impl.ts --network celo-sepolia",
+    "verify:victory-nft:celo": "hardhat run scripts/verify-victory-nft-impl.ts --network celo",
+    "deploy:victory-permit-token:celo-sepolia": "hardhat run scripts/deploy-mock-permit-token.ts --network celo-sepolia",
+    "smoke:victory-permit-mint:celo-sepolia": "hardhat run scripts/smoke-victory-permit-mint.ts --network celo-sepolia",
+    "deploy:prizepool:celo-sepolia": "hardhat run scripts/deploy-chesscito-prizepool.ts --network celo-sepolia",
+    "deploy:prizepool:celo": "hardhat run scripts/deploy-chesscito-prizepool.ts --network celo",
+    "configure:victory-treasury:celo-sepolia": "hardhat run scripts/configure-victory-nft-treasury.ts --network celo-sepolia",
+    "configure:victory-treasury:celo": "hardhat run scripts/configure-victory-nft-treasury.ts --network celo"
   },
   "keywords": [
     "hardhat",
