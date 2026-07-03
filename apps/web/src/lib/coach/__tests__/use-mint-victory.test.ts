@@ -694,6 +694,11 @@ describe("useMintVictory", () => {
 
       await waitFor(() => expect(result.current.phase).toBe("success"));
 
+      expect(sendPermit).toHaveBeenCalledTimes(1);
+      expect(sendMintWithPermit).toHaveBeenCalledTimes(1);
+      expect(sendApprove).not.toHaveBeenCalled();
+      expect(sendMint).not.toHaveBeenCalled();
+
       const saved = JSON.parse(sessionStorage.getItem("chesscito:claim")!);
       expect(saved.gameId).toBe("current-game-id");
     });
