@@ -960,5 +960,97 @@ describe("VictoryNFTUpgradeable", function () {
         ),
       ).to.be.rejectedWith("EnforcedPause()");
     });
+
+    it("reverts with an honest insufficient-allowance reason when the permit deadline has expired (no prior allowance)", async function () {
+      const { signingWallet, victory, victoryAddress, permitToken, permitTokenAddress, permitOwner, chainId } =
+        await loadFixture(deployVictoryPermitFixture);
+
+      const voucherDeadline = BigInt((await time.latest()) + 600);
+      const voucherSig = await signVictory({
+        player: permitOwner.address, difficulty: 1, totalMoves: 10, timeMs: 5000,
+        nonce: 1n, deadline: voucherDeadline, signer: signingWallet, chainId, verifyingContract: victoryAddress,
+      });
+
+      // Permit deadline already in the past — permit() will revert
+      // internally, but the try/catch swallows it and _splitPayment then
+      // fails on its own terms (no allowance exists).
+      const expiredPermitDeadline = BigInt((await time.latest()) - 1);
+      const sig = await signPermit({
+        owner: permitOwner, spender: victoryAddress, value: 1_000_000_000_000n, deadline: expiredPermitDeadline,
+        token: permitToken, tokenAddress: permitTokenAddress, chainId,
+      });
+
+      await expect(
+        victory.connect(permitOwner).mintSignedWithPermit(
+          1, 10, 5000, permitTokenAddress, 1n, voucherDeadline, voucherSig,
+          expiredPermitDeadline, sig.v, sig.r, sig.s,
+        ),
+      ).to.be.rejected; // ERC20InsufficientAllowance from SafeERC20, not a permit error
+    });
+
+    it("reverts with an honest insufficient-allowance reason for a permit signed by the wrong owner", async function () {
+      const { signingWallet, victory, victoryAddress, permitToken, permitTokenAddress, permitOwner, chainId } =
+        await loadFixture(deployVictoryPermitFixture);
+
+      const voucherDeadline = BigInt((await time.latest()) + 600);
+      const voucherSig = await signVictory({
+        player: permitOwner.address, difficulty: 1, totalMoves: 10, timeMs: 5000,
+        nonce: 1n, deadline: voucherDeadline, signer: signingWallet, chainId, verifyingContract: victoryAddress,
+      });
+
+      const impostor = ethers.Wallet.createRandom();
+      const permitDeadline = BigInt((await time.latest()) + 600);
+      // Signed by `impostor`, but the mint call is made by `permitOwner` —
+      // the contract's internal permit(msg.sender=permitOwner, ...) will
+      // recover `impostor` as signer, which != owner param → OZ reverts
+      // ERC2612InvalidSigner internally, swallowed by try/catch.
+      const sig = await signPermit({
+        owner: impostor, spender: victoryAddress, value: 1_000_000_000_000n, deadline: permitDeadline,
+        token: permitToken, tokenAddress: permitTokenAddress, chainId,
+      });
+
+      await expect(
+        victory.connect(permitOwner).mintSignedWithPermit(
+          1, 10, 5000, permitTokenAddress, 1n, voucherDeadline, voucherSig, permitDeadline, sig.v, sig.r, sig.s,
+        ),
+      ).to.be.rejected; // ERC20InsufficientAllowance — the impostor's permit never granted permitOwner's allowance
+    });
+
+    it("front-run simulation: mint still succeeds if a third party already submitted the exact signed permit (closes red-team P1-1)", async function () {
+      const { signingWallet, victory, victoryAddress, permitToken, permitTokenAddress, permitOwner, chainId } =
+        await loadFixture(deployVictoryPermitFixture);
+
+      const totalAmount = 5_000n * 10n ** 12n;
+      const voucherDeadline = BigInt((await time.latest()) + 600);
+      const voucherSig = await signVictory({
+        player: permitOwner.address, difficulty: 1, totalMoves: 10, timeMs: 5000,
+        nonce: 1n, deadline: voucherDeadline, signer: signingWallet, chainId, verifyingContract: victoryAddress,
+      });
+      const permitDeadline = BigInt((await time.latest()) + 600);
+      const sig = await signPermit({
+        owner: permitOwner, spender: victoryAddress, value: totalAmount, deadline: permitDeadline,
+        token: permitToken, tokenAddress: permitTokenAddress, chainId,
+      });
+
+      // A third account (not permitOwner, not the contract) submits the
+      // exact signed permit directly to the token BEFORE the player's own
+      // mintSignedWithPermit call reaches the chain.
+      const [, , frontRunner] = await ethers.getSigners();
+      await permitToken.connect(frontRunner).permit(
+        permitOwner.address, victoryAddress, totalAmount, permitDeadline, sig.v, sig.r, sig.s,
+      );
+      expect(await permitToken.allowance(permitOwner.address, victoryAddress)).to.equal(totalAmount);
+
+      // The player's own transaction now carries a stale nonce for its
+      // internal permit() call — that call will revert internally, but
+      // the try/catch swallows it and _splitPayment proceeds against the
+      // allowance the front-run already granted. Mint must still succeed.
+      await victory.connect(permitOwner).mintSignedWithPermit(
+        1, 10, 5000, permitTokenAddress, 1n, voucherDeadline, voucherSig, permitDeadline, sig.v, sig.r, sig.s,
+      );
+
+      expect(await victory.ownerOf(1n)).to.equal(permitOwner.address);
+      expect(await permitToken.allowance(permitOwner.address, victoryAddress)).to.equal(0n);
+    });
   });
 });
