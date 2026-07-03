@@ -786,5 +786,179 @@ describe("VictoryNFTUpgradeable", function () {
       expect(data.difficulty).to.equal(2n);
       expect(data.totalMoves).to.equal(30n);
     });
+
+    it("reverts with InvalidDifficulty for difficulty 0", async function () {
+      const { signingWallet, victory, victoryAddress, permitToken, permitTokenAddress, permitOwner, chainId } =
+        await loadFixture(deployVictoryPermitFixture);
+
+      const voucherDeadline = BigInt((await time.latest()) + 600);
+      const voucherSig = await signVictory({
+        player: permitOwner.address, difficulty: 0, totalMoves: 10, timeMs: 5000,
+        nonce: 1n, deadline: voucherDeadline, signer: signingWallet, chainId, verifyingContract: victoryAddress,
+      });
+      const permitDeadline = BigInt((await time.latest()) + 600);
+      const sig = await signPermit({
+        owner: permitOwner, spender: victoryAddress, value: 1_000_000_000_000n, deadline: permitDeadline,
+        token: permitToken, tokenAddress: permitTokenAddress, chainId,
+      });
+
+      await expect(
+        victory.connect(permitOwner).mintSignedWithPermit(
+          0, 10, 5000, permitTokenAddress, 1n, voucherDeadline, voucherSig, permitDeadline, sig.v, sig.r, sig.s,
+        ),
+      ).to.be.rejectedWith("InvalidDifficulty");
+    });
+
+    it("reverts with NonceUsed for reused voucher nonce", async function () {
+      const { signingWallet, victory, victoryAddress, permitToken, permitTokenAddress, permitOwner, chainId } =
+        await loadFixture(deployVictoryPermitFixture);
+
+      const voucherDeadline = BigInt((await time.latest()) + 600);
+      const nonce = 7n;
+      const totalAmount = 5_000n * 10n ** 12n; // difficulty 1 price
+
+      const voucherSig1 = await signVictory({
+        player: permitOwner.address, difficulty: 1, totalMoves: 10, timeMs: 5000,
+        nonce, deadline: voucherDeadline, signer: signingWallet, chainId, verifyingContract: victoryAddress,
+      });
+      const permitDeadline1 = BigInt((await time.latest()) + 600);
+      const sig1 = await signPermit({
+        owner: permitOwner, spender: victoryAddress, value: totalAmount, deadline: permitDeadline1,
+        token: permitToken, tokenAddress: permitTokenAddress, chainId,
+      });
+      await victory.connect(permitOwner).mintSignedWithPermit(
+        1, 10, 5000, permitTokenAddress, nonce, voucherDeadline, voucherSig1, permitDeadline1, sig1.v, sig1.r, sig1.s,
+      );
+
+      await time.increase(31); // clear cooldown
+
+      const voucherDeadline2 = BigInt((await time.latest()) + 600);
+      const voucherSig2 = await signVictory({
+        player: permitOwner.address, difficulty: 1, totalMoves: 20, timeMs: 6000,
+        nonce, deadline: voucherDeadline2, signer: signingWallet, chainId, verifyingContract: victoryAddress,
+      });
+      const permitDeadline2 = BigInt((await time.latest()) + 600);
+      const sig2 = await signPermit({
+        owner: permitOwner, spender: victoryAddress, value: totalAmount, deadline: permitDeadline2,
+        token: permitToken, tokenAddress: permitTokenAddress, chainId,
+      });
+
+      await expect(
+        victory.connect(permitOwner).mintSignedWithPermit(
+          1, 20, 6000, permitTokenAddress, nonce, voucherDeadline2, voucherSig2, permitDeadline2, sig2.v, sig2.r, sig2.s,
+        ),
+      ).to.be.rejectedWith("NonceUsed");
+    });
+
+    it("reverts with MintCooldown when minting too quickly", async function () {
+      const { signingWallet, victory, victoryAddress, permitToken, permitTokenAddress, permitOwner, chainId } =
+        await loadFixture(deployVictoryPermitFixture);
+
+      const totalAmount = 5_000n * 10n ** 12n;
+      const voucherDeadline1 = BigInt((await time.latest()) + 600);
+      const voucherSig1 = await signVictory({
+        player: permitOwner.address, difficulty: 1, totalMoves: 10, timeMs: 5000,
+        nonce: 1n, deadline: voucherDeadline1, signer: signingWallet, chainId, verifyingContract: victoryAddress,
+      });
+      const permitDeadline1 = BigInt((await time.latest()) + 600);
+      const sig1 = await signPermit({
+        owner: permitOwner, spender: victoryAddress, value: totalAmount, deadline: permitDeadline1,
+        token: permitToken, tokenAddress: permitTokenAddress, chainId,
+      });
+      await victory.connect(permitOwner).mintSignedWithPermit(
+        1, 10, 5000, permitTokenAddress, 1n, voucherDeadline1, voucherSig1, permitDeadline1, sig1.v, sig1.r, sig1.s,
+      );
+
+      const voucherDeadline2 = BigInt((await time.latest()) + 600);
+      const voucherSig2 = await signVictory({
+        player: permitOwner.address, difficulty: 1, totalMoves: 20, timeMs: 6000,
+        nonce: 2n, deadline: voucherDeadline2, signer: signingWallet, chainId, verifyingContract: victoryAddress,
+      });
+      const permitDeadline2 = BigInt((await time.latest()) + 600);
+      const sig2 = await signPermit({
+        owner: permitOwner, spender: victoryAddress, value: totalAmount, deadline: permitDeadline2,
+        token: permitToken, tokenAddress: permitTokenAddress, chainId,
+      });
+
+      await expect(
+        victory.connect(permitOwner).mintSignedWithPermit(
+          1, 20, 6000, permitTokenAddress, 2n, voucherDeadline2, voucherSig2, permitDeadline2, sig2.v, sig2.r, sig2.s,
+        ),
+      ).to.be.rejectedWith("MintCooldown");
+    });
+
+    it("reverts with TokenNotAccepted for unaccepted token", async function () {
+      const { signingWallet, victory, victoryAddress, permitOwner, chainId } =
+        await loadFixture(deployVictoryPermitFixture);
+
+      const MockERC20Permit = await ethers.getContractFactory("MockERC20Permit");
+      const badToken = await MockERC20Permit.deploy("Bad Permit Token", "BADP", 18);
+      await badToken.waitForDeployment();
+      const badTokenAddress = await badToken.getAddress();
+
+      const voucherDeadline = BigInt((await time.latest()) + 600);
+      const voucherSig = await signVictory({
+        player: permitOwner.address, difficulty: 1, totalMoves: 10, timeMs: 5000,
+        nonce: 1n, deadline: voucherDeadline, signer: signingWallet, chainId, verifyingContract: victoryAddress,
+      });
+      const permitDeadline = BigInt((await time.latest()) + 600);
+      const sig = await signPermit({
+        owner: permitOwner, spender: victoryAddress, value: 1_000_000_000_000n, deadline: permitDeadline,
+        token: badToken, tokenAddress: badTokenAddress, chainId,
+      });
+
+      await expect(
+        victory.connect(permitOwner).mintSignedWithPermit(
+          1, 10, 5000, badTokenAddress, 1n, voucherDeadline, voucherSig, permitDeadline, sig.v, sig.r, sig.s,
+        ),
+      ).to.be.rejectedWith("TokenNotAccepted");
+    });
+
+    it("reverts with InvalidSignature for wrong voucher signer", async function () {
+      const { victory, victoryAddress, permitToken, permitTokenAddress, permitOwner, chainId } =
+        await loadFixture(deployVictoryPermitFixture);
+
+      const fakeSigner = ethers.Wallet.createRandom();
+      const voucherDeadline = BigInt((await time.latest()) + 600);
+      const voucherSig = await signVictory({
+        player: permitOwner.address, difficulty: 1, totalMoves: 10, timeMs: 5000,
+        nonce: 1n, deadline: voucherDeadline, signer: fakeSigner, chainId, verifyingContract: victoryAddress,
+      });
+      const permitDeadline = BigInt((await time.latest()) + 600);
+      const sig = await signPermit({
+        owner: permitOwner, spender: victoryAddress, value: 1_000_000_000_000n, deadline: permitDeadline,
+        token: permitToken, tokenAddress: permitTokenAddress, chainId,
+      });
+
+      await expect(
+        victory.connect(permitOwner).mintSignedWithPermit(
+          1, 10, 5000, permitTokenAddress, 1n, voucherDeadline, voucherSig, permitDeadline, sig.v, sig.r, sig.s,
+        ),
+      ).to.be.rejectedWith("InvalidSignature");
+    });
+
+    it("mint reverts when paused", async function () {
+      const { owner, signingWallet, victory, victoryAddress, permitToken, permitTokenAddress, permitOwner, chainId } =
+        await loadFixture(deployVictoryPermitFixture);
+
+      await victory.connect(owner).pause();
+
+      const voucherDeadline = BigInt((await time.latest()) + 600);
+      const voucherSig = await signVictory({
+        player: permitOwner.address, difficulty: 1, totalMoves: 10, timeMs: 5000,
+        nonce: 1n, deadline: voucherDeadline, signer: signingWallet, chainId, verifyingContract: victoryAddress,
+      });
+      const permitDeadline = BigInt((await time.latest()) + 600);
+      const sig = await signPermit({
+        owner: permitOwner, spender: victoryAddress, value: 1_000_000_000_000n, deadline: permitDeadline,
+        token: permitToken, tokenAddress: permitTokenAddress, chainId,
+      });
+
+      await expect(
+        victory.connect(permitOwner).mintSignedWithPermit(
+          1, 10, 5000, permitTokenAddress, 1n, voucherDeadline, voucherSig, permitDeadline, sig.v, sig.r, sig.s,
+        ),
+      ).to.be.rejectedWith("EnforcedPause()");
+    });
   });
 });
