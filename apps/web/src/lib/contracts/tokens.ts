@@ -58,8 +58,8 @@ export const DIFFICULTY_TO_CHAIN: Record<ArenaDifficulty, number> = {
 };
 
 export const VICTORY_PRICES: Record<number, bigint> = {
-  1: 5_000n,   // Easy  — $0.005
-  2: 10_000n,  // Medium — $0.01
-  3: 20_000n,  // Hard  — $0.02
+  1: 10_000n,  // Easy  — $0.01
+  2: 20_000n,  // Medium — $0.02
+  3: 30_000n,  // Hard  — $0.03
 };
 
