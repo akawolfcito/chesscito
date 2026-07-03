@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useMintVictory } from "../use-mint-victory";
 
@@ -15,6 +15,7 @@ vi.mock("wagmi", () => ({
   usePublicClient: () => null,
   useReadContracts: () => ({ data: undefined }),
   useWriteContract: () => ({ writeContractAsync: vi.fn() }),
+  useSignTypedData: () => ({ signTypedDataAsync: vi.fn() }),
 }));
 
 // ── viem mock ─────────────────────────────────────────────────────────────────
@@ -406,5 +407,226 @@ describe("useMintVictory", () => {
     );
     // Two complete cycles → two sign calls
     expect(signCalls).toHaveLength(2);
+  });
+
+  // ── permit-mint path (feature-flagged) ─────────────────────────────────────
+
+  describe("permit-mint path", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("flag ON + permit succeeds: calls sendPermit + sendMintWithPermit, never sendApprove/sendMint", async () => {
+      vi.stubEnv("NEXT_PUBLIC_VICTORY_PERMIT_MINT_ENABLED", "true");
+
+      const txHash = ("0x" + "ee".repeat(32)) as `0x${string}`;
+      const sendPermit = vi.fn().mockResolvedValue({
+        v: 27,
+        r: ("0x" + "11".repeat(32)) as `0x${string}`,
+        s: ("0x" + "22".repeat(32)) as `0x${string}`,
+      });
+      const sendMintWithPermit = vi.fn().mockResolvedValue(txHash);
+      const sendApprove = vi.fn();
+      const sendMint = vi.fn();
+      const waitReceipt = vi.fn().mockResolvedValue({ logs: [] });
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            nonce: "1",
+            deadline: String(Math.floor(Date.now() / 1000) + 300),
+            signature: ("0x" + "ab".repeat(65)) as `0x${string}`,
+          }),
+        })
+        .mockResolvedValue({ ok: true, json: async () => ({}) });
+
+      const { result } = renderHook(() =>
+        useMintVictory({
+          gameId: "permit-success-test",
+          walletAddress: "0x4444444444444444444444444444444444444444",
+          difficulty: "easy",
+          result: "win",
+          totalMoves: 10,
+          elapsedMs: 40_000,
+          injected: {
+            address: "0x4444444444444444444444444444444444444444",
+            chainId: 42220,
+            sendPermit,
+            sendMintWithPermit,
+            sendApprove,
+            sendMint,
+            waitReceipt,
+          },
+        }),
+      );
+
+      await act(async () => {
+        await result.current.start();
+      });
+
+      await waitFor(() =>
+        expect(["success", "claiming"]).toContain(result.current.phase),
+      );
+
+      expect(sendPermit).toHaveBeenCalledTimes(1);
+      expect(sendMintWithPermit).toHaveBeenCalledTimes(1);
+      expect(sendApprove).not.toHaveBeenCalled();
+      expect(sendMint).not.toHaveBeenCalled();
+    });
+
+    it("flag ON + technical permit failure: falls back to sendApprove+sendMint in the same start() call", async () => {
+      vi.stubEnv("NEXT_PUBLIC_VICTORY_PERMIT_MINT_ENABLED", "true");
+
+      const txHash = ("0x" + "ff".repeat(32)) as `0x${string}`;
+      const sendPermit = vi.fn().mockRejectedValue(new Error("method not supported"));
+      const sendMintWithPermit = vi.fn();
+      const sendApprove = vi.fn().mockResolvedValue(("0x" + "01".repeat(32)) as `0x${string}`);
+      const sendMint = vi.fn().mockResolvedValue(txHash);
+      const waitReceipt = vi.fn().mockResolvedValue({ logs: [] });
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            nonce: "2",
+            deadline: String(Math.floor(Date.now() / 1000) + 300),
+            signature: ("0x" + "ab".repeat(65)) as `0x${string}`,
+          }),
+        })
+        .mockResolvedValue({ ok: true, json: async () => ({}) });
+
+      const { result } = renderHook(() =>
+        useMintVictory({
+          gameId: "permit-fallback-test",
+          walletAddress: "0x5555555555555555555555555555555555555555",
+          difficulty: "easy",
+          result: "win",
+          totalMoves: 10,
+          elapsedMs: 40_000,
+          injected: {
+            address: "0x5555555555555555555555555555555555555555",
+            chainId: 42220,
+            sendPermit,
+            sendMintWithPermit,
+            sendApprove,
+            sendMint,
+            waitReceipt,
+          },
+        }),
+      );
+
+      await act(async () => {
+        await result.current.start();
+      });
+
+      await waitFor(() =>
+        expect(["success", "claiming"]).toContain(result.current.phase),
+      );
+
+      expect(sendPermit).toHaveBeenCalledTimes(1);
+      expect(sendMintWithPermit).not.toHaveBeenCalled();
+      expect(sendApprove).toHaveBeenCalledTimes(1);
+      expect(sendMint).toHaveBeenCalledTimes(1);
+    });
+
+    it("flag ON + user rejects permit signature: cancelled phase, no forced fallback", async () => {
+      vi.stubEnv("NEXT_PUBLIC_VICTORY_PERMIT_MINT_ENABLED", "true");
+
+      const sendPermit = vi.fn().mockRejectedValue(new Error("User rejected the request"));
+      const sendApprove = vi.fn();
+      const sendMint = vi.fn();
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          nonce: "3",
+          deadline: String(Math.floor(Date.now() / 1000) + 300),
+          signature: ("0x" + "ab".repeat(65)) as `0x${string}`,
+        }),
+      });
+
+      const { result } = renderHook(() =>
+        useMintVictory({
+          gameId: "permit-cancel-test",
+          walletAddress: "0x6666666666666666666666666666666666666666",
+          difficulty: "easy",
+          result: "win",
+          totalMoves: 10,
+          elapsedMs: 40_000,
+          injected: {
+            address: "0x6666666666666666666666666666666666666666",
+            chainId: 42220,
+            sendPermit,
+            sendApprove,
+            sendMint,
+          },
+        }),
+      );
+
+      await act(async () => {
+        await result.current.start();
+      });
+
+      await waitFor(() => expect(result.current.phase).toBe("cancelled"));
+
+      expect(sendApprove).not.toHaveBeenCalled();
+      expect(sendMint).not.toHaveBeenCalled();
+    });
+
+    it("flag OFF: always legacy path even with sendPermit/sendMintWithPermit injected", async () => {
+      vi.stubEnv("NEXT_PUBLIC_VICTORY_PERMIT_MINT_ENABLED", "false");
+
+      const txHash = ("0x" + "aa".repeat(32)) as `0x${string}`;
+      const sendPermit = vi.fn();
+      const sendMintWithPermit = vi.fn();
+      const sendApprove = vi.fn().mockResolvedValue(("0x" + "01".repeat(32)) as `0x${string}`);
+      const sendMint = vi.fn().mockResolvedValue(txHash);
+      const waitReceipt = vi.fn().mockResolvedValue({ logs: [] });
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            nonce: "4",
+            deadline: String(Math.floor(Date.now() / 1000) + 300),
+            signature: ("0x" + "ab".repeat(65)) as `0x${string}`,
+          }),
+        })
+        .mockResolvedValue({ ok: true, json: async () => ({}) });
+
+      const { result } = renderHook(() =>
+        useMintVictory({
+          gameId: "permit-flag-off-test",
+          walletAddress: "0x7777777777777777777777777777777777777777",
+          difficulty: "easy",
+          result: "win",
+          totalMoves: 10,
+          elapsedMs: 40_000,
+          injected: {
+            address: "0x7777777777777777777777777777777777777777",
+            chainId: 42220,
+            sendPermit,
+            sendMintWithPermit,
+            sendApprove,
+            sendMint,
+            waitReceipt,
+          },
+        }),
+      );
+
+      await act(async () => {
+        await result.current.start();
+      });
+
+      await waitFor(() =>
+        expect(["success", "claiming"]).toContain(result.current.phase),
+      );
+
+      expect(sendPermit).not.toHaveBeenCalled();
+      expect(sendMintWithPermit).not.toHaveBeenCalled();
+      expect(sendApprove).toHaveBeenCalledTimes(1);
+      expect(sendMint).toHaveBeenCalledTimes(1);
+    });
   });
 });

@@ -12,9 +12,10 @@ import {
   useChainId,
   usePublicClient,
   useReadContracts,
+  useSignTypedData,
   useWriteContract,
 } from "wagmi";
-import { decodeEventLog } from "viem";
+import { decodeEventLog, parseSignature } from "viem";
 import { useTranslations } from "next-intl";
 import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
 import { VICTORY_CLAIM_COPY } from "@/lib/content/editorial";
@@ -28,6 +29,8 @@ import {
 } from "@/lib/contracts/tokens";
 import { selectMaxBalanceToken } from "@/lib/contracts/select-payment-token";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
+import { isVictoryPermitMintEnabled } from "@/lib/feature-flags";
+import { permitTokenAbi } from "@/lib/contracts/permit-abi";
 import { hapticSuccess } from "@/lib/haptics";
 import {
   classifyTxErrorKind,
@@ -61,6 +64,32 @@ export type MintVictoryInjected = {
   sendMint?: (signed: unknown) => Promise<`0x${string}`>;
   /** Override for waitForReceipt — for VR fixtures + tests. */
   waitReceipt?: (hash: `0x${string}`) => Promise<unknown>;
+  /** Override for the EIP-2612 permit signTypedData step — for VR fixtures + tests. */
+  sendPermit?: (params: {
+    token: `0x${string}`;
+    owner: `0x${string}`;
+    spender: `0x${string}`;
+    value: bigint;
+    nonce: bigint;
+    deadline: bigint;
+    name: string;
+    version: string;
+  }) => Promise<{ v: number; r: `0x${string}`; s: `0x${string}` }>;
+  /** Override for mintSignedWithPermit writeContract — for VR fixtures + tests. */
+  sendMintWithPermit?: (params: {
+    address: `0x${string}`;
+    difficulty: number;
+    verifiedMoves: number;
+    elapsedMs: number;
+    token: `0x${string}`;
+    nonce: bigint;
+    deadline: bigint;
+    signature: `0x${string}`;
+    permitDeadline: bigint;
+    v: number;
+    r: `0x${string}`;
+    s: `0x${string}`;
+  }) => Promise<`0x${string}`>;
 };
 
 export type MintVictoryInput = {
@@ -90,6 +119,7 @@ export type MintVictoryInput = {
     error?: string;
     error_kind?: string;
     has_token_id?: boolean;
+    payment_path?: "permit" | "approve";
   }) => void;
 };
 
@@ -140,6 +170,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
   const wagmiChainId = useChainId();
   const wagmiPublicClient = usePublicClient({ chainId: wagmiChainId });
   const { writeContractAsync } = useWriteContract();
+  const { signTypedDataAsync } = useSignTypedData();
 
   // ── i18n (#118): translate user-facing error strings via the active
   //    locale's RESULT_OVERLAY_COPY bundle. Closure pattern mirrors
@@ -190,6 +221,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
     tokenBalances,
     wagmiPublicClient,
     writeContractAsync,
+    signTypedDataAsync,
   });
   // Sync every render — no extra renders triggered (ref mutation is sync)
   liveRef.current = {
@@ -204,6 +236,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
     tokenBalances,
     wagmiPublicClient,
     writeContractAsync,
+    signTypedDataAsync,
   };
 
   // ── Claim state ───────────────────────────────────────────────────────────
@@ -310,6 +343,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
       tokenBalances: balances,
       wagmiPublicClient: publicClient,
       writeContractAsync: writeAsync,
+      signTypedDataAsync: signPermitAsync,
     } = liveRef.current;
 
     // Guard: injected tests bypass normal canClaim; real path requires a
@@ -380,26 +414,105 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
 
       const normalizedAmount = normalizePrice(effectivePriceUsd6, token.decimals);
 
-      // 3. Check allowance and approve if needed
-      if (inp.injected?.sendApprove) {
-        await inp.injected.sendApprove(token.address, normalizedAmount);
-      } else {
-        const allowance = await publicClient!.readContract({
-          address: token.address,
-          abi: erc20Abi,
-          functionName: "allowance",
-          args: [effectiveAddr, effectiveNFT!],
-        });
-        if ((allowance as bigint) < normalizedAmount) {
-          const approveHash = await writeAsync({
+      // 3. Permit (if enabled) or approve — mutually exclusive per attempt.
+      let usedPermit = false;
+      let permitResult: { v: number; r: `0x${string}`; s: `0x${string}` } | null = null;
+      let permitDeadlineUsed = 0n;
+
+      if (isVictoryPermitMintEnabled()) {
+        try {
+          const permitDeadlineCandidate = BigInt(Math.floor(Date.now() / 1000) + 600);
+          const tokenMeta = ACCEPTED_TOKENS.find(
+            (t) => t.address.toLowerCase() === token.address.toLowerCase(),
+          );
+          if (!tokenMeta) throw new Error("Token missing permitVersion metadata");
+
+          if (inp.injected?.sendPermit) {
+            permitResult = await inp.injected.sendPermit({
+              token: token.address,
+              owner: effectiveAddr,
+              spender: effectiveNFT!,
+              value: normalizedAmount,
+              nonce: 0n, // injected fixtures own their own nonce simulation
+              deadline: permitDeadlineCandidate,
+              name: tokenMeta.symbol,
+              version: tokenMeta.permitVersion,
+            });
+          } else {
+            const [tokenName, tokenNonce] = await Promise.all([
+              publicClient!.readContract({
+                address: token.address,
+                abi: permitTokenAbi,
+                functionName: "name",
+              }) as Promise<string>,
+              publicClient!.readContract({
+                address: token.address,
+                abi: permitTokenAbi,
+                functionName: "nonces",
+                args: [effectiveAddr],
+              }) as Promise<bigint>,
+            ]);
+
+            const signature = await signPermitAsync({
+              domain: {
+                name: tokenName,
+                version: tokenMeta.permitVersion,
+                chainId: cid,
+                verifyingContract: token.address,
+              },
+              types: {
+                Permit: [
+                  { name: "owner", type: "address" },
+                  { name: "spender", type: "address" },
+                  { name: "value", type: "uint256" },
+                  { name: "nonce", type: "uint256" },
+                  { name: "deadline", type: "uint256" },
+                ],
+              },
+              primaryType: "Permit",
+              message: {
+                owner: effectiveAddr,
+                spender: effectiveNFT!,
+                value: normalizedAmount,
+                nonce: tokenNonce,
+                deadline: permitDeadlineCandidate,
+              },
+            });
+            const parsed = parseSignature(signature);
+            permitResult = { v: Number(parsed.v ?? 0n), r: parsed.r, s: parsed.s };
+          }
+          permitDeadlineUsed = permitDeadlineCandidate;
+          usedPermit = true;
+        } catch (permitErr) {
+          if (isUserCancellation(permitErr)) {
+            throw permitErr; // explicit rejection — do NOT fall back, propagate to the outer catch as cancelled
+          }
+          // Technical failure — fall through to the legacy approve path below.
+          usedPermit = false;
+        }
+      }
+
+      if (!usedPermit) {
+        if (inp.injected?.sendApprove) {
+          await inp.injected.sendApprove(token.address, normalizedAmount);
+        } else {
+          const allowance = await publicClient!.readContract({
             address: token.address,
             abi: erc20Abi,
-            functionName: "approve",
-            args: [effectiveNFT!, normalizedAmount],
-            chainId: cid,
-            account: effectiveAddr,
+            functionName: "allowance",
+            args: [effectiveAddr, effectiveNFT!],
           });
-          await waitForReceiptWithTimeout(publicClient!, approveHash);
+          if ((allowance as bigint) < normalizedAmount) {
+            const approveHash = await writeAsync({
+              address: token.address,
+              abi: erc20Abi,
+              functionName: "approve",
+              args: [effectiveNFT!, normalizedAmount],
+              chainId: cid,
+              account: effectiveAddr,
+            });
+            await waitForReceiptWithTimeout(publicClient!, approveHash);
+          }
         }
       }
 
@@ -414,7 +527,45 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
 
       // 5. Claim (mint) and wait for confirmation
       let claimHash: `0x${string}`;
-      if (inp.injected?.sendMint) {
+      if (usedPermit && permitResult) {
+        if (inp.injected?.sendMintWithPermit) {
+          claimHash = await inp.injected.sendMintWithPermit({
+            address: effectiveNFT!,
+            difficulty: effectiveChainDiff,
+            verifiedMoves,
+            elapsedMs: inp.elapsedMs ?? 0,
+            token: token.address,
+            nonce: BigInt(payload.nonce),
+            deadline: BigInt(payload.deadline),
+            signature: payload.signature,
+            permitDeadline: permitDeadlineUsed,
+            v: permitResult.v,
+            r: permitResult.r,
+            s: permitResult.s,
+          });
+        } else {
+          claimHash = await writeAsync({
+            address: effectiveNFT!,
+            abi: victoryAbi,
+            functionName: "mintSignedWithPermit",
+            args: [
+              effectiveChainDiff,
+              verifiedMoves,
+              inp.elapsedMs ?? 0,
+              token.address,
+              BigInt(payload.nonce),
+              BigInt(payload.deadline),
+              payload.signature,
+              permitDeadlineUsed,
+              permitResult.v,
+              permitResult.r,
+              permitResult.s,
+            ],
+            chainId: cid,
+            account: effectiveAddr,
+          });
+        }
+      } else if (inp.injected?.sendMint) {
         claimHash = await inp.injected.sendMint({
           address: effectiveNFT,
           difficulty: effectiveChainDiff,
@@ -496,6 +647,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
         gameId: inp.gameId,
         txHash: claimHash,
         has_token_id: Boolean(extractedTokenId),
+        payment_path: usedPermit ? "permit" : "approve",
       });
 
       // Write-through to Supabase (fire-and-forget)
