@@ -628,5 +628,74 @@ describe("useMintVictory", () => {
       expect(sendApprove).toHaveBeenCalledTimes(1);
       expect(sendMint).toHaveBeenCalledTimes(1);
     });
+
+    it("gameId-scoping still applies to a permit-path success (mint-hook-gameid-scoping)", async () => {
+      vi.stubEnv("NEXT_PUBLIC_VICTORY_PERMIT_MINT_ENABLED", "true");
+
+      sessionStorage.setItem(
+        "chesscito:claim",
+        JSON.stringify({
+          phase: "success",
+          gameId: "previous-game-id",
+          tokenId: "1",
+          claimTxHash: "0xabc",
+        }),
+      );
+
+      const sendPermit = vi.fn().mockResolvedValue({
+        v: 27,
+        r: ("0x" + "11".repeat(32)) as `0x${string}`,
+        s: ("0x" + "22".repeat(32)) as `0x${string}`,
+      });
+      const sendMintWithPermit = vi.fn().mockResolvedValue(("0x" + "cc".repeat(32)) as `0x${string}`);
+      const sendApprove = vi.fn();
+      const sendMint = vi.fn();
+      const waitReceipt = vi.fn().mockResolvedValue({ logs: [] });
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            nonce: "9",
+            deadline: String(Math.floor(Date.now() / 1000) + 300),
+            signature: ("0x" + "ab".repeat(65)) as `0x${string}`,
+          }),
+        })
+        .mockResolvedValue({ ok: true, json: async () => ({}) });
+
+      const { result } = renderHook(() =>
+        useMintVictory({
+          gameId: "current-game-id",
+          walletAddress: "0x8888888888888888888888888888888888888888",
+          difficulty: "easy",
+          result: "win",
+          totalMoves: 10,
+          elapsedMs: 40_000,
+          injected: {
+            address: "0x8888888888888888888888888888888888888888",
+            chainId: 42220,
+            sendPermit,
+            sendMintWithPermit,
+            sendApprove,
+            sendMint,
+            waitReceipt,
+          },
+        }),
+      );
+
+      // The stale previous-game entry must not leak into this mount's
+      // initial phase (the existing restore effect already handles this —
+      // this assertion just confirms the permit path didn't bypass it).
+      expect(result.current.phase).toBe("ready");
+
+      await act(async () => {
+        await result.current.start();
+      });
+
+      await waitFor(() => expect(result.current.phase).toBe("success"));
+
+      const saved = JSON.parse(sessionStorage.getItem("chesscito:claim")!);
+      expect(saved.gameId).toBe("current-game-id");
+    });
   });
 });
