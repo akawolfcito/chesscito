@@ -1055,4 +1055,41 @@ describe("VictoryNFTUpgradeable", function () {
       expect(await permitToken.allowance(permitOwner.address, victoryAddress)).to.equal(0n);
     });
   });
+
+  // ---------- Proxy upgrade safety ----------
+
+  describe("proxy upgrade", function () {
+    it("preserves state and storage layout after upgrading to the mintSignedWithPermit implementation", async function () {
+      const { victory, victoryAddress, player, signingWallet, tokenAddress, chainId } =
+        await loadFixture(deployVictoryFixture);
+
+      // Mint once on the pre-upgrade implementation so there's real state to check.
+      const deadline = BigInt((await time.latest()) + 600);
+      const signature = await signVictory({
+        player: player.address, difficulty: 1, totalMoves: 10, timeMs: 5000,
+        nonce: 1n, deadline, signer: signingWallet, chainId, verifyingContract: victoryAddress,
+      });
+      await victory.connect(player).mintSigned(1, 10, 5000, tokenAddress, 1n, deadline, signature);
+
+      const totalMintedBefore = await victory.totalMinted();
+      const ownerBefore = await victory.ownerOf(1n);
+      const treasuryBefore = await victory.treasury();
+
+      // Upgrade to the SAME implementation source (which now includes
+      // mintSignedWithPermit) — hardhat-upgrades throws here if the new
+      // implementation's storage layout is incompatible with the old one.
+      const factoryV2 = await ethers.getContractFactory("VictoryNFTUpgradeable");
+      const upgraded = await upgrades.upgradeProxy(victoryAddress, factoryV2, {
+        unsafeAllow: ["constructor"],
+      });
+
+      expect(await upgraded.totalMinted()).to.equal(totalMintedBefore);
+      expect(await upgraded.ownerOf(1n)).to.equal(ownerBefore);
+      expect(await upgraded.treasury()).to.equal(treasuryBefore);
+      // The old function still works post-upgrade.
+      expect(typeof upgraded.mintSigned).to.equal("function");
+      // The new function is now present.
+      expect(typeof upgraded.mintSignedWithPermit).to.equal("function");
+    });
+  });
 });
