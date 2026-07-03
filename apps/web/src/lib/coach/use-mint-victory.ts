@@ -15,7 +15,7 @@ import {
   useSignTypedData,
   useWriteContract,
 } from "wagmi";
-import { decodeEventLog, parseSignature } from "viem";
+import { decodeEventLog } from "viem";
 import { useTranslations } from "next-intl";
 import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
 import { VICTORY_CLAIM_COPY } from "@/lib/content/editorial";
@@ -31,6 +31,7 @@ import { selectMaxBalanceToken } from "@/lib/contracts/select-payment-token";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
 import { isVictoryPermitMintEnabled } from "@/lib/feature-flags";
 import { permitTokenAbi } from "@/lib/contracts/permit-abi";
+import { permitSignatureToVRS } from "@/lib/contracts/permit-signature";
 import { hapticSuccess } from "@/lib/haptics";
 import {
   classifyTxErrorKind,
@@ -481,8 +482,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
                 deadline: permitDeadlineCandidate,
               },
             });
-            const parsed = parseSignature(signature);
-            permitResult = { v: Number(parsed.v ?? 0n), r: parsed.r, s: parsed.s };
+            permitResult = permitSignatureToVRS(signature);
           }
           permitDeadlineUsed = permitDeadlineCandidate;
           usedPermit = true;
