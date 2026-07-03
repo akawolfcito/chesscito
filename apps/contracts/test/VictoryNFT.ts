@@ -971,12 +971,13 @@ describe("VictoryNFTUpgradeable", function () {
         nonce: 1n, deadline: voucherDeadline, signer: signingWallet, chainId, verifyingContract: victoryAddress,
       });
 
+      const totalAmount = 5_000n * 10n ** 12n; // difficulty 1 price, normalized to 18 decimals
       // Permit deadline already in the past — permit() will revert
       // internally, but the try/catch swallows it and _splitPayment then
       // fails on its own terms (no allowance exists).
       const expiredPermitDeadline = BigInt((await time.latest()) - 1);
       const sig = await signPermit({
-        owner: permitOwner, spender: victoryAddress, value: 1_000_000_000_000n, deadline: expiredPermitDeadline,
+        owner: permitOwner, spender: victoryAddress, value: totalAmount, deadline: expiredPermitDeadline,
         token: permitToken, tokenAddress: permitTokenAddress, chainId,
       });
 
@@ -985,7 +986,7 @@ describe("VictoryNFTUpgradeable", function () {
           1, 10, 5000, permitTokenAddress, 1n, voucherDeadline, voucherSig,
           expiredPermitDeadline, sig.v, sig.r, sig.s,
         ),
-      ).to.be.rejected; // ERC20InsufficientAllowance from SafeERC20, not a permit error
+      ).to.be.rejectedWith("ERC20InsufficientAllowance");
     });
 
     it("reverts with an honest insufficient-allowance reason for a permit signed by the wrong owner", async function () {
@@ -999,13 +1000,14 @@ describe("VictoryNFTUpgradeable", function () {
       });
 
       const impostor = ethers.Wallet.createRandom();
+      const totalAmount = 5_000n * 10n ** 12n; // difficulty 1 price, normalized to 18 decimals
       const permitDeadline = BigInt((await time.latest()) + 600);
       // Signed by `impostor`, but the mint call is made by `permitOwner` —
       // the contract's internal permit(msg.sender=permitOwner, ...) will
       // recover `impostor` as signer, which != owner param → OZ reverts
       // ERC2612InvalidSigner internally, swallowed by try/catch.
       const sig = await signPermit({
-        owner: impostor, spender: victoryAddress, value: 1_000_000_000_000n, deadline: permitDeadline,
+        owner: impostor, spender: victoryAddress, value: totalAmount, deadline: permitDeadline,
         token: permitToken, tokenAddress: permitTokenAddress, chainId,
       });
 
@@ -1013,7 +1015,7 @@ describe("VictoryNFTUpgradeable", function () {
         victory.connect(permitOwner).mintSignedWithPermit(
           1, 10, 5000, permitTokenAddress, 1n, voucherDeadline, voucherSig, permitDeadline, sig.v, sig.r, sig.s,
         ),
-      ).to.be.rejected; // ERC20InsufficientAllowance — the impostor's permit never granted permitOwner's allowance
+      ).to.be.rejectedWith("ERC20InsufficientAllowance");
     });
 
     it("front-run simulation: mint still succeeds if a third party already submitted the exact signed permit (closes red-team P1-1)", async function () {
