@@ -156,8 +156,11 @@ type SignatureResponse =
  * Owns all claim-related state (phase, step, data, shareStatus, error) and
  * the sessionStorage keys `chesscito:claim` + `chesscito:optimistic-victory`.
  *
- * Behind feature flag `NEXT_PUBLIC_USE_EXTRACTED_MINT_HOOK` — default OFF.
- * Production reads from the inline path in arena/page.tsx until T13.
+ * This is the live production path — called unconditionally from
+ * `apps/web/src/app/[locale]/arena/page.tsx` and the coach game viewer.
+ * (The `NEXT_PUBLIC_USE_EXTRACTED_MINT_HOOK` flag this docstring used to
+ * reference no longer gates anything — confirmed stale 2026-07-02, see
+ * red-team review docs/superpowers/specs/2026-07-02-victory-nft-permit-mint-redteam.md P2-3.)
  *
  * @remarks
  * Single-game mount expectation: state initializes on mount and does not
