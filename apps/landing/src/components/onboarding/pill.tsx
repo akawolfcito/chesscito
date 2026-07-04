@@ -32,7 +32,7 @@ export function Pill({
         {icon}
       </span>
       <span className="flex flex-col items-start leading-tight">
-        <span>{label}</span>
+        <span className="text-[0.6rem]">{label}</span>
         {sublabel ? <span className="text-[0.7rem] opacity-80">{sublabel}</span> : null}
       </span>
     </div>

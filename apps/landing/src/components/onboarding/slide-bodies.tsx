@@ -66,13 +66,14 @@ export function Slide2Body() {
   const assets = SLIDE_ASSETS[1]
   return (
     <>
-      <AvatarWithFade src={assets.avatarSrc} alt="" />
+      <AvatarWithFade src={assets.avatarSrc} alt="" className="w-52 mt-9" />
       <ArtImage
         src={assets.titleSrc}
         alt="21-Day Mind Challenge"
-        className="h-16 w-full"
+        className="h-16 w-full -mt-14 z-10"
       />
       <Heading headline={t('headline')} support={t('support')} />
+      <div className="h-2 flex gap-2.5">
       <Pill
         icon={<ArtImage src={ICONS.focusPassport} alt="" />}
         label={t('passportLabel')}
@@ -83,7 +84,8 @@ export function Slide2Body() {
         label={t('seasonPassLabel')}
         sublabel={t('seasonPassPrice')}
       />
-      <p className="text-xs text-[#5a4520]">{t('footnote')}</p>
+      </div>
+      <p className="text-xs text-[#5a4520] mt-6">{t('footnote')}</p>
     </>
   )
 }
