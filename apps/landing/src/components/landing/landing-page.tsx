@@ -3,27 +3,7 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PhoneFrame } from "@/components/landing/phone-frame";
 import { PhoneStack } from "@/components/landing/phone-stack";
 import { LANDING_COPY, WHY_PAGE_COPY } from "@/lib/content/editorial";
-
-/**
- * Deployment URLs are origins, not route prefixes. Normalizing through URL
- * also removes stale `/hub` values left in an older environment configuration.
- * apps/landing has no test runner; keep this pure and covered by its build/typecheck.
- */
-function normalizeAppOrigin(value: string): string {
-  try {
-    return new URL(value).origin;
-  } catch {
-    return value.trim().replace(/\/hub\/?$/, "").replace(/\/+$/, "");
-  }
-}
-
-const PLAY_URL = normalizeAppOrigin(
-  process.env.NEXT_PUBLIC_PLAY_URL ?? "https://lite.chesscito.com",
-);
-const FULL_URL = normalizeAppOrigin(
-  process.env.NEXT_PUBLIC_FULL_URL ?? "https://play.chesscito.com",
-);
-const LEGAL_URL = process.env.NEXT_PUBLIC_LEGAL_URL ?? PLAY_URL;
+import { PLAY_URL, FULL_URL, LEGAL_URL } from "@/lib/app-urls";
 
 const GHOST_CTA_CLASS =
   "inline-flex items-center justify-center whitespace-nowrap text-sm font-bold transition-all rounded-2xl border border-[rgba(255,255,255,0.45)] bg-white/15 text-[rgba(110,65,15,0.90)] [text-shadow:0_1px_0_rgba(255,245,215,0.55)] backdrop-blur-[6px] hover:bg-white/25 active:scale-[0.97] w-full py-3 md:!w-auto md:px-8";
