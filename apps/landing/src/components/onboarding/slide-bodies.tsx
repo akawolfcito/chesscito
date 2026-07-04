@@ -95,11 +95,11 @@ export function Slide3Body() {
   const assets = SLIDE_ASSETS[2]
   return (
     <>
-      <AvatarWithFade src={assets.avatarSrc} alt="" />
+      <AvatarWithFade src={assets.avatarSrc} alt="" className="w-52 mt-9" />
       <ArtImage
         src={assets.titleSrc}
         alt="Play Chess Arena"
-        className="h-16 w-full"
+        className="h-16 w-full -mt-16 z-10"
       />
       <Heading headline={t('headline')} support={t('support')} />
       <div className="flex w-full gap-3">
@@ -113,7 +113,7 @@ export function Slide3Body() {
         />
       </div>
       <Pill
-        icon={<ArtImage src={ICONS.pro} alt="" />}
+        icon={<ArtImage src={ICONS.pro} alt="" className="w-8" />}
         label={t('proPill')}
         tone="gold"
       />
@@ -126,8 +126,8 @@ export function Slide4Body() {
   const assets = SLIDE_ASSETS[3]
   return (
     <>
-      <AvatarWithFade src={assets.avatarSrc} alt="" />
-      <h1 className="text-2xl font-extrabold text-[#3a2600]">
+      <AvatarWithFade src={assets.avatarSrc} alt="" className="mt-9" />
+      <h1 className="text-2xl font-extrabold text-[#3a2600] -mt-16 z-10">
         {t('headline')}
       </h1>
       <Divider />
