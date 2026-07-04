@@ -5,10 +5,10 @@ import { MOBILE_SCENE_SRC, DESKTOP_SCENE_SRC, FRAME_SRC } from "@/lib/onboarding
 /**
  * Shared visual chrome for every onboarding state (4 slides + the
  * returning-visitor welcome): full-bleed scene behind a fixed-aspect-ratio
- * gold frame, matching the frame PNG's native 1070:1264 proportions (v2
- * asset, founder-updated 2026-07-04 — was 1018:1768, notably taller) so
- * its ornate border never distorts. Content scrolls inside the frame if
- * a slide's copy runs long, rather than the frame stretching to fit it.
+ * gold frame, matching the frame PNG's native 980:1398 proportions (v3
+ * asset, founder-updated 2026-07-04 — v1 was 1018:1768, v2 was 1070:1264)
+ * so its ornate border never distorts. Content scrolls inside the frame
+ * if a slide's copy runs long, rather than the frame stretching to fit it.
  */
 export function SlideShell({
   topSlot,
@@ -62,8 +62,8 @@ export function SlideShell({
         <div
           className="relative"
           style={{
-            aspectRatio: "1070 / 1264",
-            width: "min(100%, calc(54dvh * 0.8465))",
+            aspectRatio: "980 / 1398",
+            width: "min(100%, calc(54dvh * 0.7010))",
             height: "auto",
           }}
         >
@@ -76,7 +76,7 @@ export function SlideShell({
         {ctaSlot ? (
           <div
             className="w-full"
-            style={{ maxWidth: "min(100%, calc(54dvh * 0.8465))" }}
+            style={{ maxWidth: "min(100%, calc(54dvh * 0.7010))" }}
           >
             {ctaSlot}
           </div>
