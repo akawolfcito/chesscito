@@ -55,7 +55,7 @@ export function SlideShell({
           the true bottom edge, and only the frame+CTA group centers in
           the leftover middle space (founder's on-screen markup request). */}
       <div className="relative flex h-full w-full max-w-[420px] flex-col items-center">
-        <div className="w-full pt-1 text-center">{topSlot}</div>
+        <div className="pt-1 text-center">{topSlot}</div>
 
         <div className="flex w-full flex-1 flex-col items-center justify-center gap-2 min-h-0">
           {/* The frame PNG has a fixed aspect ratio. The original 1018:1768
