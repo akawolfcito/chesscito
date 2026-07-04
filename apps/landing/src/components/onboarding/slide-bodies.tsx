@@ -40,7 +40,11 @@ export function Slide1Body() {
         <span className="text-xl font-extrabold text-[#3a2600]">
           {t('welcomeTo')}
         </span>
-        <ArtImage src={assets.titleSrc} alt="Chesscito" className="h-12 w-auto -mt-3" />
+        <ArtImage
+          src={assets.titleSrc}
+          alt="Chesscito"
+          className="h-12 w-auto -mt-3"
+        />
       </div>
       <div className="-mt-1 flex flex-col items-center gap-2">
         <Heading headline={t('headline')} support={t('support')} />
@@ -74,16 +78,16 @@ export function Slide2Body() {
       />
       <Heading headline={t('headline')} support={t('support')} />
       <div className="h-2 flex gap-2.5">
-      <Pill
-        icon={<ArtImage src={ICONS.focusPassport} alt="" />}
-        label={t('passportLabel')}
-        sublabel={t('passportSub')}
-      />
-      <Pill
-        icon={<ArtImage src={ICONS.seasonPass} alt="" />}
-        label={t('seasonPassLabel')}
-        sublabel={t('seasonPassPrice')}
-      />
+        <Pill
+          icon={<ArtImage src={ICONS.focusPassport} alt="" />}
+          label={t('passportLabel')}
+          sublabel={t('passportSub')}
+        />
+        <Pill
+          icon={<ArtImage src={ICONS.seasonPass} alt="" />}
+          label={t('seasonPassLabel')}
+          sublabel={t('seasonPassPrice')}
+        />
       </div>
       <p className="text-xs text-[#5a4520] mt-6">{t('footnote')}</p>
     </>
