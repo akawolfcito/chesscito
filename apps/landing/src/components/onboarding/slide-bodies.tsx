@@ -161,20 +161,32 @@ export function Slide4Body() {
   )
 }
 
+/**
+ * Side by side, same layout as the Hub's Train Pieces > Enter Arena row
+ * (hub-scaffold.tsx). `relative` on the row is intentional — it's the same
+ * "offset without disturbing layout" hook AvatarWithFade uses, here so the
+ * row can be nudged on the Y axis later with a top-N utility.
+ */
 export function Slide4Ctas() {
   const t = useTranslations('onboarding.slide4')
   return (
-    <div className="flex w-full flex-col gap-3">
+    <div className="hub-scaffold-cta-row relative">
       <a
         href="/api/enter?mode=learn"
         className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta"
       >
+        <span className="primary-play-cta-piece-icon">
+          <ArtImage src={ICONS.learn} alt="" />
+        </span>
         <span className="primary-play-cta-label">{t('startLearning')}</span>
       </a>
       <a
         href="/api/enter?mode=play"
         className="primary-play-cta primary-play-cta--playhub hub-scaffold-arena-cta"
       >
+        <span className="primary-play-cta-piece-icon">
+          <ArtImage src={ICONS.enterArenaPiece} alt="" />
+        </span>
         <span className="primary-play-cta-label">{t('enterArena')}</span>
       </a>
     </div>
