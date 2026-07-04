@@ -135,3 +135,27 @@
     font-size: 1.1rem;
   }
 }
+
+/* Ported from apps/web globals.css — same gold gradient divider used on
+   the Peones card, reused here for the onboarding slide cards. */
+.chesito-card-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0;
+}
+
+.chesito-card-divider::before,
+.chesito-card-divider::after {
+  content: "";
+  height: 2px;
+  flex: 1 1 auto;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(216, 178, 74, 0.7), transparent);
+}
+
+.chesito-card-spark {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: 0 0 auto;
+}
