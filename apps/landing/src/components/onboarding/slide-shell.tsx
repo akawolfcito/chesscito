@@ -89,14 +89,13 @@ export function SlideShell({
             </div>
           </div>
 
-          {ctaSlot ? (
-            <div
-              className="w-full"
-              style={{ maxWidth: 'min(100%, calc(54dvh * 0.7010))' }}
-            >
-              {ctaSlot}
-            </div>
-          ) : null}
+          {/* Full column width (was capped narrower via a dvh-derived
+              max-width matching the frame's own budget) — founder wants
+              Slide 4's 2-button row spread edge to edge like the Hub's
+              Train Pieces / Enter Arena row, not squeezed to the frame's
+              width. Applies to the single START/NEXT button too; a
+              wider full-width button reads fine there as well. */}
+          {ctaSlot ? <div className="w-full">{ctaSlot}</div> : null}
         </div>
 
         <div className="w-full pb-1">{footer}</div>
