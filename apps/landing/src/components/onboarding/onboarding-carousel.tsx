@@ -10,7 +10,6 @@ import {
   Slide2Body,
   Slide3Body,
   Slide4Body,
-  Slide4Ctas,
 } from "@/components/onboarding/slide-bodies";
 
 const TOTAL_SLIDES = 4;
@@ -44,9 +43,7 @@ export function OnboardingCarousel() {
           >
             <span className="primary-play-cta-label">{advanceLabel}</span>
           </button>
-        ) : (
-          <Slide4Ctas />
-        )
+        ) : null
       }
       footer={
         <LegalFooter

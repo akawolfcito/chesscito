@@ -32,11 +32,11 @@ describe("OnboardingCarousel", () => {
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
 
-    expect(screen.getByRole("link", { name: /start learning/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /learn pieces/i })).toHaveAttribute(
       "href",
       "/api/enter?mode=learn",
     );
-    expect(screen.getByRole("link", { name: /enter arena/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Play" })).toHaveAttribute(
       "href",
       "/api/enter?mode=play",
     );

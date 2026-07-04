@@ -134,13 +134,13 @@ export function Slide4Body() {
       <h1 className="text-2xl font-extrabold text-[#3a2600] -mt-16 z-10">
         {t('headline')}
       </h1>
-      <Divider />
       <p className="text-sm text-[#5a4520]">{t('support')}</p>
 
-      {/* Sally's fix (slide 4 UX review): price info is a flat, de-emphasized
-          footnote strip — no button bevel/shadow — so it reads as context,
-          not a 3rd/4th competing action. The 2 real CTAs live outside the
-          frame, in the same prominent slot the other slides give "NEXT". */}
+      {/* Sally's fix (slide 4 UX review): price info stays a flat,
+          de-emphasized strip — no button bevel/shadow — so it reads as
+          context. Each row now pairs its price info with the matching
+          entry-mode CTA inline (moved in from the row-below-the-frame
+          layout at the founder's request). */}
       <div className="flex w-full items-center justify-between gap-2 rounded-xl bg-[#fbf1d6] px-4 py-2 text-xs text-[#5a4520]">
         <span>
           <ArtImage
@@ -150,6 +150,15 @@ export function Slide4Body() {
           />
           {t('seasonPassLabel')} {t('seasonPassPrice')}
         </span>
+        <a
+          href="/api/enter?mode=learn"
+          className="shrink-0 rounded-full bg-[#e0a021] px-3 py-1 text-[0.7rem] font-extrabold uppercase text-white"
+        >
+          {t('startLearning')}
+        </a>
+      </div>
+      <Divider />
+      <div className="flex w-full items-center justify-between gap-2 rounded-xl bg-[#fbf1d6] px-4 py-2 text-xs text-[#5a4520]">
         <span>
           <ArtImage
             src={ICONS.pro}
@@ -158,6 +167,12 @@ export function Slide4Body() {
           />
           {t('proLabel')} {t('proPrice')}
         </span>
+        <a
+          href="/api/enter?mode=play"
+          className="shrink-0 rounded-full bg-[#2f6fe0] px-3 py-1 text-[0.7rem] font-extrabold uppercase text-white"
+        >
+          {t('enterArena')}
+        </a>
       </div>
 
       <p className="text-xs text-[#5a4520]">{t('footnote')}</p>
@@ -165,34 +180,3 @@ export function Slide4Body() {
   )
 }
 
-/**
- * Side by side, same layout as the Hub's Train Pieces > Enter Arena row
- * (hub-scaffold.tsx). `relative` on the row is intentional — it's the same
- * "offset without disturbing layout" hook AvatarWithFade uses, here so the
- * row can be nudged on the Y axis later with a top-N utility.
- */
-export function Slide4Ctas() {
-  const t = useTranslations('onboarding.slide4')
-  return (
-    <div className="hub-scaffold-cta-row relative">
-      <a
-        href="/api/enter?mode=learn"
-        className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta"
-      >
-        <span className="primary-play-cta-piece-icon">
-          <ArtImage src={ICONS.learn} alt="" />
-        </span>
-        <span className="primary-play-cta-label">{t('startLearning')}</span>
-      </a>
-      <a
-        href="/api/enter?mode=play"
-        className="primary-play-cta primary-play-cta--playhub hub-scaffold-arena-cta"
-      >
-        <span className="primary-play-cta-piece-icon">
-          <ArtImage src={ICONS.enterArenaPiece} alt="" />
-        </span>
-        <span className="primary-play-cta-label">{t('enterArena')}</span>
-      </a>
-    </div>
-  )
-}

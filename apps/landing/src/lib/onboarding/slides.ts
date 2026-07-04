@@ -45,6 +45,4 @@ export const ICONS = {
   savedGames: "/art/new-icons-chesscito/save",
   coachPro: "/art/new-assets-chesscito/btns/ask-coach-icon",
   pro: "/art/landing-slides/pro-suscription-icon",
-  /** Same Hub asset used by hub-scaffold.tsx's Enter Arena CTA piece icon. */
-  enterArenaPiece: "/art/hub/enter-arena",
 } as const;
