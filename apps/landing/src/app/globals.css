@@ -230,7 +230,7 @@
 }
 
 .hub-scaffold-practice-cta {
-  min-height: 70px;
+  min-height: 50px;
   font-size: 1.05rem;
   background:
     radial-gradient(circle at 30% 20%, rgba(255, 239, 100, 0.9), transparent 28%),
