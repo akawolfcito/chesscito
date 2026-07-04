@@ -134,18 +134,41 @@ export interface OnboardingMessages {
 6. Given any visitor, when on any slide (1-4) or the returning-visitor
    welcome, then Privacy / Terms / Support links are always visible in the
    footer, separated by a CSS-drawn dot (no image asset).
-7. Given a visitor on desktop/wide viewport (≥768px, matching the project's
-   existing `md:` breakpoint convention in `landing-page.tsx`), when any of
-   the above states render, then the layout uses the wide composition from
-   the 4 web reference images (`design/landing-slides/chesscito-slide-web-{1..4}.png`)
-   instead of the mobile single-column card — same copy/content contracts,
-   different visual composition per breakpoint. Background for all 4 web
-   slides is `design/landing-slides/bg-slides-web.png` (replaces
-   `art/bg-wallpaper-lite.png`, which stays mobile-only). Note: the
-   project-wide "desktop is not a priority" rule ([[chesscito-visual-first]]
-   context, CLAUDE.md) applies to `apps/web` (the MiniPay in-app product)
-   only — `apps/landing` serves the public `www.chesscito.com` site, viewed
-   on real desktop browsers, so desktop QA here is required, not optional.
+7. **Asset architecture (confirmed by inspecting the real files, not the
+   reference mockups)**: each slide/state is TWO layered images plus
+   content, not one flat picture.
+   - **Scene** (full-bleed, behind everything): mobile reuses the existing
+     `art/bg-wallpaper-lite.png` (portrait, opaque, confirmed matching art
+     style); desktop uses `art/landing-slides/bg-slides-web.png`
+     (landscape 1672×941, opaque, no frame baked in).
+   - **Card frame** (the ornate gold scroll-with-crown chrome): a SINGLE
+     asset, `art/landing-slides/bg-slides.png` (portrait 1018×1768,
+     **RGBA — genuinely transparent**, confirmed via `sips -g hasAlpha` →
+     `yes`), reused for BOTH breakpoints. Mobile insets it near-full-width
+     within the scene (matches the mobile reference proportions); desktop
+     centers/scales the same frame within the wider scene, with more scene
+     visible around it (matches the reference mockups' overall feel, even
+     though the mockups render the frame slightly wider than this asset's
+     native proportions — that's expected AI-mockup vs. exported-asset
+     drift, not a discrepancy to chase pixel-for-pixel).
+   - **`art/landing-slides/chesscito-slide-web-{1..4}.png` are
+     reference mockups only** — same role as the mobile reference images
+     pasted earlier in planning. They inform desktop copy placement and
+     overall composition; they are NOT sliced or used as literal `<img>`
+     sources.
+   - Given a visitor on desktop/wide viewport (≥768px, matching
+     `landing-page.tsx`'s existing `md:` convention), the layout composes
+     scene + frame + content per the above, not a single swapped
+     background image.
+   - **Not used**: `art/landing-slides/calendar-21.png` — confirmed
+     (by viewing both files) already baked into `avatar-21-day-challenge.png`
+     (calendar + brain + chest + coins, all one composited image).
+     Redundant; not copied into the final asset set.
+   - Note: the project-wide "desktop is not a priority" rule
+     ([[chesscito-visual-first]] context, CLAUDE.md) applies to `apps/web`
+     (the MiniPay in-app product) only — `apps/landing` serves the public
+     `www.chesscito.com` site, viewed on real desktop browsers, so desktop
+     QA here is required, not optional.
 8. Given the existing `/` content (`landing-page.tsx`), when this ships,
    then it becomes reachable only at `/classic`, unchanged in content/copy/
    language (Spanish, no next-intl).
@@ -231,7 +254,7 @@ export interface OnboardingMessages {
       breakpoints.
 - [ ] Privacy/Terms/Support links present and correctly linked on every
       onboarding state (all 4 slides + returning-visitor welcome).
-- [ ] Every new `design/landing-slides/*` asset (avatars, titles, icons,
+- [ ] Every new `art/landing-slides/*` asset (avatars, titles, icons,
       the web background) ships in `.png` + `.webp` + `.avif`.
 - [ ] `pnpm -C apps/landing type-check` and `pnpm -C apps/landing build`
       pass clean.
@@ -253,15 +276,14 @@ export interface OnboardingMessages {
   nearly did.
 
 ## Open questions
-- **Desktop composition**: I have file paths for
-  `design/landing-slides/chesscito-slide-web-{1..4}.png` but haven't seen
-  their contents in this conversation. Implementation will use a
-  straightforward centered/scaled adaptation of the mobile card (consistent
-  with `landing-page.tsx`'s existing `md:` patterns) as a placeholder until
-  the actual images are shared or reviewed — flag for a follow-up visual QA
-  pass once real assets land.
-- **`21-day-challente-title.png`**: confirm this is the real filename
-  (vs. a typo for "challenge") before implementation.
+- ~~**Desktop composition**~~ — **RESOLVED**: assets copied from
+  `art/landing-slides/` and inspected directly (`sips`, image view).
+  Real architecture is scene + reusable transparent frame + content, per
+  Behavior #7 above. The 4 `chesscito-slide-web-*.png` files are reference
+  mockups, not sliceable assets.
+- ~~**`21-day-challente-title.png`**~~ — **RESOLVED**: confirmed as the
+  real filename (file exists exactly as named in `art/landing-slides/`,
+  not a typo).
 - **i18n scope**: does `es` need its own copy for these 4 slides written
   now, or ship `en`-only content behind the `en`/`es` routing scaffold
   (with `es` messages temporarily mirroring `en` as a placeholder)? Spec
