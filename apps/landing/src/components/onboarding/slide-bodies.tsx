@@ -45,14 +45,16 @@ export function Slide1Body() {
       <div className="-mt-1 flex flex-col items-center gap-2">
         <Heading headline={t('headline')} support={t('support')} />
       </div>
-      <div className="flex w-full gap-3">
+      <div className="flex w-full justify-center gap-3">
         <Pill
           icon={<ArtImage src={ICONS.learn} alt="" />}
           label={t('learnPill')}
+          iconRem={2.3}
         />
         <Pill
           icon={<ArtImage src={ICONS.play} alt="" />}
           label={t('playPill')}
+          iconRem={2.3}
         />
       </div>
     </>
