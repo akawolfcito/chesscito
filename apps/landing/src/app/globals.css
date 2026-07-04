@@ -219,15 +219,14 @@
 }
 
 .primary-play-cta--playhub {
-  min-height: 64px;
-  padding: 12px 28px 18px;
+  min-height: 0;
+  /* Symmetric padding (was 12px/28px/18px, borrowed from a Hub context
+     with a PNG bottom lip that doesn't apply here) so the button hugs
+     its label evenly instead of leaving extra space below the text. */
+  padding: 14px 28px;
   border-radius: 24px;
   font-size: 0.95rem;
   letter-spacing: 0;
-}
-
-.primary-play-cta--playhub .primary-play-cta-label {
-  transform: translateY(-5px);
 }
 
 .hub-scaffold-practice-cta {

@@ -89,7 +89,7 @@ export function SlideShell({
             {ctaSlot}
           </div>
         ) : null}
-        <div className="w-full">{footer}</div>
+        <div className="w-full pt-1">{footer}</div>
       </div>
     </div>
   )
