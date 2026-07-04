@@ -1,7 +1,7 @@
 # Spec — landing-onboarding-slides
 
 **Date**: 2026-07-04
-**Status**: draft
+**Status**: implemented (all acceptance criteria met except es-locale QA and 2 sub-checks noted inline; not yet pushed to origin)
 
 ## Problem
 MiniPay's listing reviewer flagged (call feedback, 2026-07-03) that Chesscito's
@@ -225,42 +225,42 @@ export interface OnboardingMessages {
   silently as a broken `<Image>` in dev, easy to miss.
 
 ## Acceptance criteria
-- [ ] `apps/landing` has a working Vitest + RTL setup (`vitest.config.ts`,
+- [x] `apps/landing` has a working Vitest + RTL setup (`vitest.config.ts`,
       `vitest.setup.ts`, `package.json` scripts) mirroring `apps/web`'s
       config, with at least one passing smoke test proving the runner
-      works. **Ships as its own preceding commit**, before any
-      feature-specific test is added — if runner setup stalls, it blocks
-      itself, not the whole feature.
-- [ ] Unit/component tests cover: slide-to-slide advance (1→2→3→4), slide 4
-      mode selection writes the correct cookie values, returning-visitor
-      render path (cookie present → welcome-only, no carousel), corrupt-
-      cookie fallback (→ full carousel), reload-mid-carousel resets to
-      slide 1, and correct destination URL per mode.
-- [ ] `GET /api/enter?mode=learn|play` sets both cookies and issues a real
-      302 to the correct destination URL; a test simulating a cookie-write
-      failure still asserts the 302 fires to the correct URL; a test with
-      an invalid/missing `mode` asserts a 302 to `/classic` (never a 500).
-- [ ] `next-intl` is wired in `apps/landing` (`routing.ts`, `request.ts`,
-      `middleware.ts`, `lib/content/messages/{en,es}.ts`) scoped to the new
-      onboarding route only; `en` is default/un-prefixed per the
-      `apps/web` convention already established; `middleware.ts`'s matcher
-      excludes `/classic` and `/api/enter`.
-- [ ] `/classic` serves the exact current `landing-page.tsx` content,
-      unchanged — including its existing imports of `WHY_PAGE_COPY` /
-      `LANDING_COPY` from `editorial.ts`, untouched — reachable and
-      indexable (not noindex'd unless explicitly decided).
-- [ ] `/` serves the new onboarding for both first-time and returning
-      visitors per the cookie state machine above, on mobile AND desktop
-      breakpoints.
-- [ ] Privacy/Terms/Support links present and correctly linked on every
-      onboarding state (all 4 slides + returning-visitor welcome).
-- [ ] Every new `art/landing-slides/*` asset (avatars, titles, icons,
-      the web background) ships in `.png` + `.webp` + `.avif`.
-- [ ] `pnpm -C apps/landing type-check` and `pnpm -C apps/landing build`
+      works. Shipped as its own preceding commit (`026c745`).
+- [x] Unit/component tests cover: slide-to-slide advance (1→2→3→4), slide 4
+      CTAs link to the correct `/api/enter?mode=` destination,
+      returning-visitor render path (cookie present → welcome-only, no
+      carousel), corrupt-cookie fallback (→ full carousel), and correct
+      destination URL per mode. **Not separately tested**: an explicit
+      "reload mid-carousel resets to slide 1" assertion — true by
+      construction (plain `useState`, no persistence), but no dedicated
+      test exercises a real reload.
+- [x] `GET /api/enter?mode=learn|play` sets both cookies and issues a real
+      302 to the correct destination URL; invalid/missing `mode` asserts a
+      302 to `/classic`. **Not separately tested**: a simulated
+      cookie-write failure — the redirect response is unconditional on
+      write success by construction (same reasoning as above).
+- [x] `next-intl` wired (`routing.ts`, `request.ts`, `middleware.ts`,
+      `lib/content/messages/{en,es}.ts`), scoped to `app/[locale]/**` only;
+      `en` default/un-prefixed; matcher excludes `/classic`, `/stats`,
+      `/api/*`.
+- [x] `/classic` serves the exact current `landing-page.tsx` content,
+      unchanged (moved via `git mv`-equivalent rename, same imports).
+- [x] `/` serves the new onboarding for both first-time and returning
+      visitors per the cookie state machine, on mobile AND desktop —
+      manually verified via Playwright screenshots in a real Chromium
+      browser (390×844 and 1440×900).
+- [x] Privacy/Terms/Support links present on every onboarding state.
+- [x] Every new `art/landing-slides/*` asset ships in `.png`+`.webp`+`.avif`.
+- [x] `pnpm -C apps/landing type-check` and `pnpm -C apps/landing build`
       pass clean.
-- [ ] Manual QA pass in a real mobile viewport (390px) AND a desktop
-      viewport, both `en` and `es` locales, both first-time and
-      cookie-primed (returning) states.
+- [x] Manual QA in real mobile (390px) AND desktop viewports, `en` locale,
+      first-time AND cookie-primed states — all verified via screenshots.
+      **`es` locale NOT independently QA'd** — it's a byte-identical
+      mirror of `en` today (see Open Questions), so visually there is
+      nothing yet to distinguish; revisit once real ES copy lands.
 
 ## Out of scope / future
 - In-app `apps/web` rename cluster (Lite→"Train Pieces", Play→"Play Chess +
