@@ -22,11 +22,11 @@ describe("OnboardingCarousel", () => {
     expect(screen.getByRole("heading", { name: /upgrade for coach pro/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-    expect(screen.queryByText("4 / 4")).not.toBeInTheDocument();
+    expect(screen.getByText("4 / 4")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /choose your path/i })).toBeInTheDocument();
   });
 
-  it("slide 4 renders both CTAs linking to /api/enter with the correct mode, no progress counter", () => {
+  it("slide 4 renders both CTAs linking to /api/enter with the correct mode", () => {
     renderWithIntl(<OnboardingCarousel />);
     fireEvent.click(screen.getByRole("button", { name: "START" }));
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
@@ -36,7 +36,7 @@ describe("OnboardingCarousel", () => {
       "href",
       "/api/enter?mode=learn",
     );
-    expect(screen.getByRole("link", { name: "Play" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Play Chess" })).toHaveAttribute(
       "href",
       "/api/enter?mode=play",
     );
@@ -47,5 +47,49 @@ describe("OnboardingCarousel", () => {
     expect(screen.getByText("Privacy")).toBeInTheDocument();
     expect(screen.getByText("Terms")).toBeInTheDocument();
     expect(screen.getByText("Support")).toBeInTheDocument();
+  });
+
+  it("back arrow is disabled on slide 1, enabled after advancing, and navigates back", () => {
+    renderWithIntl(<OnboardingCarousel />);
+    const back = screen.getByRole("button", { name: /previous slide/i });
+    expect(back).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "START" }));
+    expect(screen.getByText("2 / 4")).toBeInTheDocument();
+    expect(back).not.toBeDisabled();
+
+    fireEvent.click(back);
+    expect(screen.getByText("1 / 4")).toBeInTheDocument();
+  });
+
+  it("top forward arrow advances a slide same as the CTA button", () => {
+    renderWithIntl(<OnboardingCarousel />);
+    fireEvent.click(screen.getByRole("button", { name: /next slide/i }));
+    expect(screen.getByText("2 / 4")).toBeInTheDocument();
+  });
+
+  it("forward arrow is disabled on slide 4 (no slide 5); back arrow returns to slide 3", () => {
+    renderWithIntl(<OnboardingCarousel />);
+    fireEvent.click(screen.getByRole("button", { name: "START" }));
+    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
+    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
+    expect(screen.getByRole("heading", { name: /choose your path/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /next slide/i })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: /previous slide/i }));
+    expect(screen.getByRole("heading", { name: /upgrade for coach pro/i })).toBeInTheDocument();
+  });
+
+  it("swipes left to advance and right to go back", () => {
+    renderWithIntl(<OnboardingCarousel />);
+    const area = screen.getByTestId("slide-swipe-area");
+
+    fireEvent.touchStart(area, { touches: [{ clientX: 300, clientY: 100 }] });
+    fireEvent.touchEnd(area, { changedTouches: [{ clientX: 50, clientY: 100 }] });
+    expect(screen.getByText("2 / 4")).toBeInTheDocument();
+
+    fireEvent.touchStart(area, { touches: [{ clientX: 50, clientY: 100 }] });
+    fireEvent.touchEnd(area, { changedTouches: [{ clientX: 300, clientY: 100 }] });
+    expect(screen.getByText("1 / 4")).toBeInTheDocument();
   });
 });

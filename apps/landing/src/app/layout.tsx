@@ -51,8 +51,13 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#f6e6b8",
+  // Ported from apps/web — disables double-tap-to-zoom and pinch-zoom so
+  // an errant double-tap while advancing onboarding slides doesn't zoom
+  // the page. Low-vision users retain OS-level zoom above the browser.
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

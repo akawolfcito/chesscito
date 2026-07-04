@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { SlideShell } from "@/components/onboarding/slide-shell";
-import { ProgressPill } from "@/components/onboarding/progress-pill";
+import { SlideNav } from "@/components/onboarding/slide-nav";
 import { LegalFooter } from "@/components/onboarding/legal-footer";
 import {
   Slide1Body,
@@ -29,21 +29,38 @@ export function OnboardingCarousel() {
   const advanceLabel =
     step === 1 ? slide1("cta") : step === 2 ? slide2("cta") : slide3("cta");
 
+  const goBack = () => setStep((current) => (Math.max(1, current - 1) as 1 | 2 | 3 | 4));
+  const goForward = () =>
+    setStep((current) => (Math.min(TOTAL_SLIDES, current + 1) as 1 | 2 | 3 | 4));
+
   return (
     <SlideShell
-      topSlot={
-        step < 4 ? <ProgressPill current={step} total={TOTAL_SLIDES} /> : null
-      }
+      topSlot={<SlideNav step={step} total={TOTAL_SLIDES} onBack={goBack} onForward={goForward} />}
+      onSwipeLeft={goForward}
+      onSwipeRight={goBack}
       ctaSlot={
         step < 4 ? (
           <button
             type="button"
-            onClick={() => setStep((current) => (current + 1) as 1 | 2 | 3 | 4)}
+            onClick={goForward}
             className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta"
           >
             <span className="primary-play-cta-label">{advanceLabel}</span>
           </button>
-        ) : null
+        ) : (
+          // Invisible same-size placeholder — slide 4 has no CTA button of
+          // its own (its 2 real CTAs live inline in the frame), but without
+          // this the frame+CTA block is shorter than on slides 1-3, so
+          // SlideShell's vertical centering gives it a bigger top gap than
+          // every other slide. Matching the block height keeps that gap
+          // identical across all 4 slides.
+          <div
+            aria-hidden="true"
+            className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta invisible"
+          >
+            <span className="primary-play-cta-label">{advanceLabel}</span>
+          </div>
+        )
       }
       footer={
         <LegalFooter

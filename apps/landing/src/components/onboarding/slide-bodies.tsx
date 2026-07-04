@@ -106,7 +106,7 @@ export function Slide3Body() {
         className="h-16 w-full -mt-16 z-10"
       />
       <Heading headline={t('headline')} support={t('support')} />
-      <div className="flex w-full gap-3">
+      <div className="flex w-full gap-3 justify-center">
         <Pill
           icon={<ArtImage src={ICONS.savedGames} alt="" />}
           label={t('savedGamesPill')}
@@ -130,53 +130,83 @@ export function Slide4Body() {
   const assets = SLIDE_ASSETS[3]
   return (
     <>
-      <AvatarWithFade src={assets.avatarSrc} alt="" className="mt-9" />
-      <h1 className="text-2xl font-extrabold text-[#3a2600] -mt-16 z-10">
+      <AvatarWithFade src={assets.avatarSrc} alt="" className="mt-9 w-24" />
+      <h1 className="text-2xl font-extrabold text-[#3a2600] -mt-24 z-10">
         {t('headline')}
       </h1>
-      <p className="text-sm text-[#5a4520]">{t('support')}</p>
+      <p className="text-xs text-[#5a4520]">{t('footnote')}</p>
+      {/* <p className="text-sm text-[#5a4520]">{t('support')}</p> */}
 
       {/* Sally's fix (slide 4 UX review): price info stays a flat,
           de-emphasized strip — no button bevel/shadow — so it reads as
           context. Each row now pairs its price info with the matching
           entry-mode CTA inline (moved in from the row-below-the-frame
           layout at the founder's request). */}
-      <div className="flex w-full items-center justify-between gap-2 rounded-xl bg-[#fbf1d6] px-4 py-2 text-xs text-[#5a4520]">
-        <span>
+      <div className="slide4-price-row flex w-full flex-col gap-2 px-4 py-3 text-xs text-[#5a4520]">
+        <div className="flex items-start gap-2">
           <ArtImage
             src={ICONS.seasonPass}
             alt=""
-            className="mr-1 inline-block h-4 w-4"
+            className="mt-0.5 h-16 w-16 shrink-0"
           />
-          {t('seasonPassLabel')} {t('seasonPassPrice')}
-        </span>
-        <a
-          href="/api/enter?mode=learn"
-          className="shrink-0 rounded-full bg-[#e0a021] px-3 py-1 text-[0.7rem] font-extrabold uppercase text-white"
-        >
-          {t('startLearning')}
-        </a>
+          <div className="flex flex-1 flex-col">
+            <p>{t('seasonPassDescription')}</p>
+            <p className="font-extrabold">
+              {t('seasonPassLabel')}:{' '}
+              <span className="font-bold text-[#3b9404]">
+                {t('seasonPassPrice')}
+              </span>
+            </p>
+            <div className="flex w-full justify-center mt-2">
+              <a
+                href="/api/enter?mode=learn"
+                className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta shrink-0"
+              >
+                <span className="primary-play-cta-label">
+                  {t('startLearning')}
+                </span>
+                <span className="primary-play-cta-piece-icon w-full ml-1">
+                  <ArtImage
+                    src={ICONS.learn}
+                    alt=""
+                    className="w-10 -mt-2 -mx-2"
+                  />
+                </span>
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
       <Divider />
-      <div className="flex w-full items-center justify-between gap-2 rounded-xl bg-[#fbf1d6] px-4 py-2 text-xs text-[#5a4520]">
-        <span>
+      <div className="slide4-price-row flex w-full flex-col gap-2 px-4 py-3 text-xs text-[#5a4520]">
+        <div className="flex items-start gap-2">
+          <div className="flex flex-1 flex-col">
+            <p>{t('proDescription')}</p>
+            <p className="font-extrabold">
+              {t('proLabel')}:{' '}
+              <span className="font-bold text-[#3b9404]">{t('proPrice')}</span>
+            </p>
+            <div className="flex w-full justify-center mt-2">
+              <a
+                href="/api/enter?mode=play"
+                className="primary-play-cta primary-play-cta--playhub hub-scaffold-arena-cta shrink-0"
+              >
+                {/* <span className="primary-play-cta-piece-icon">
+                  <ArtImage src={ICONS.enterArenaPiece} alt="" />
+                </span> */}
+                <span className="primary-play-cta-label">
+                  {t('enterArena')}
+                </span>
+              </a>
+            </div>
+          </div>
           <ArtImage
             src={ICONS.pro}
             alt=""
-            className="mr-1 inline-block h-4 w-4"
+            className="mt-0.5 h-16 w-16 shrink-0"
           />
-          {t('proLabel')} {t('proPrice')}
-        </span>
-        <a
-          href="/api/enter?mode=play"
-          className="shrink-0 rounded-full bg-[#2f6fe0] px-3 py-1 text-[0.7rem] font-extrabold uppercase text-white"
-        >
-          {t('enterArena')}
-        </a>
+        </div>
       </div>
-
-      <p className="text-xs text-[#5a4520]">{t('footnote')}</p>
     </>
   )
 }
-

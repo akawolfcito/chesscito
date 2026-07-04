@@ -1,10 +1,14 @@
-import type { ReactNode } from 'react'
+'use client'
+
+import { useRef, type ReactNode, type TouchEvent } from 'react'
 import { ArtImage } from '@/components/onboarding/art-image'
 import {
   MOBILE_SCENE_SRC,
   DESKTOP_SCENE_SRC,
   FRAME_SRC,
 } from '@/lib/onboarding/slides'
+
+const SWIPE_THRESHOLD_PX = 40
 
 /**
  * Shared visual chrome for every onboarding state (4 slides + the
@@ -19,12 +23,35 @@ export function SlideShell({
   children,
   ctaSlot,
   footer,
+  onSwipeLeft,
+  onSwipeRight,
 }: {
   topSlot?: ReactNode
   children: ReactNode
   ctaSlot?: ReactNode
   footer: ReactNode
+  onSwipeLeft?: () => void
+  onSwipeRight?: () => void
 }) {
+  const touchStart = useRef<{ x: number; y: number } | null>(null)
+
+  function handleTouchStart(event: TouchEvent) {
+    const touch = event.touches[0]
+    touchStart.current = { x: touch.clientX, y: touch.clientY }
+  }
+
+  function handleTouchEnd(event: TouchEvent) {
+    const start = touchStart.current
+    touchStart.current = null
+    if (!start) return
+    const touch = event.changedTouches[0]
+    const dx = touch.clientX - start.x
+    const dy = touch.clientY - start.y
+    if (Math.abs(dx) < SWIPE_THRESHOLD_PX || Math.abs(dx) < Math.abs(dy)) return
+    if (dx < 0) onSwipeLeft?.()
+    else onSwipeRight?.()
+  }
+
   return (
     <div className="relative flex h-dvh w-full items-center justify-center overflow-hidden bg-[#1a3fae] px-4 py-4">
       <ArtImage
@@ -55,7 +82,7 @@ export function SlideShell({
           the true bottom edge, and only the frame+CTA group centers in
           the leftover middle space (founder's on-screen markup request). */}
       <div className="relative flex h-full w-full max-w-[420px] flex-col items-center">
-        <div className="pt-1 text-center">{topSlot}</div>
+        <div className="w-full pt-1 text-center">{topSlot}</div>
 
         <div className="flex w-full flex-1 flex-col items-center justify-center gap-2 min-h-0">
           {/* The frame PNG has a fixed aspect ratio. The original 1018:1768
@@ -84,7 +111,12 @@ export function SlideShell({
               alt=""
               className="absolute inset-0 h-full w-full"
             />
-            <div className="relative z-10 flex h-full flex-col items-center gap-2 overflow-y-auto px-[9%] py-[6%] text-center">
+            <div
+              data-testid="slide-swipe-area"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              className="relative z-10 flex h-full flex-col items-center gap-2 overflow-y-auto px-[9%] py-[6%] text-center"
+            >
               {children}
             </div>
           </div>

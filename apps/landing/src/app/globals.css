@@ -80,6 +80,33 @@
     color: var(--paper-text);
     min-height: 100dvh;
     overflow-x: hidden;
+    /* Ported from apps/web globals.css — disable text selection, iOS
+       long-press callout (Save Image / Copy), and the tap highlight, plus
+       `manipulation` to kill double-tap-to-zoom. Without this, an errant
+       double-tap on the onboarding frame zooms the page, and long-pressing
+       any image/text shows the native selection box or share/save menu.
+       Inputs + `[data-allow-select]` opt back in below. */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  img {
+    -webkit-user-drag: none;
+    user-drag: none;
+    -webkit-touch-callout: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable="true"],
+  [data-allow-select="true"],
+  [data-allow-select="true"] * {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
   }
 }
 
@@ -227,6 +254,30 @@
   border-radius: 24px;
   font-size: 0.95rem;
   letter-spacing: 0;
+}
+
+/* Compact context: same gold/blue button chrome (hub-scaffold-practice-cta
+   / hub-scaffold-arena-cta below) sized to sit inline next to its price
+   row on Slide 4, instead of full-width below the frame. */
+.slide4-price-row .primary-play-cta {
+  width: auto;
+  min-height: 0;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+}
+
+.primary-play-cta-piece-icon {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 22px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
 }
 
 .hub-scaffold-practice-cta {
