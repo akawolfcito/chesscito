@@ -8,7 +8,9 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "comments": {
     "versions": "Team convention — exact pins (no ^ or ~) for every dependency to harden against malicious version-range hijacks. See feedback_exact_version_pins memory."
@@ -20,14 +22,19 @@
     "sharp": "0.34.5"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
     "@types/node": "20.19.35",
     "@types/react": "18.3.28",
     "@types/react-dom": "18.3.7",
+    "@vitejs/plugin-react": "6.0.1",
     "autoprefixer": "10.4.27",
     "eslint": "8.57.1",
     "eslint-config-next": "14.2.35",
+    "jsdom": "29.0.2",
     "postcss": "8.5.8",
     "tailwindcss": "3.4.19",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "4.1.4"
   }
 }
