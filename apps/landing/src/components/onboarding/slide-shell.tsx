@@ -21,7 +21,7 @@ export function SlideShell({
   footer: ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-[#1a3fae] px-4 py-6">
+    <div className="relative flex h-dvh w-full items-center justify-center overflow-hidden bg-[#1a3fae] px-4 py-4">
       <ArtImage
         src={MOBILE_SCENE_SRC}
         alt=""
@@ -42,20 +42,42 @@ export function SlideShell({
           per CSS stacking order paints BEFORE (behind) z:auto positioned
           siblings — the exact opposite of what we want. Confirmed via
           elementFromPoint() during development; do not remove. */}
-      <div className="relative flex w-full max-w-[420px] flex-col items-center gap-4">
+      <div className="relative flex h-full w-full max-w-[420px] flex-col items-center justify-center gap-2">
         {topSlot}
 
+        {/* The frame PNG is a fixed 1018:1768 shape (tall/narrow). Sizing
+            it by width alone (`w-full` up to max-w-420) made it ~730px
+            tall, which together with topSlot/ctaSlot/footer overflowed
+            real mobile viewports (browser chrome eats into `dvh`) and
+            forced a page scroll.
+            Fix: `width` is an explicit `min(100%, <height-budget-derived
+            width>)` — deterministic, unlike relying on browser
+            aspect-ratio+max-height auto-sizing (tried first, unreliable:
+            content overflowed the frame's own bottom edge instead of
+            scrolling). `height: auto` + `aspectRatio` then derives height
+            from that resolved width, guaranteed to fit the budget. */}
         <div
-          className="relative w-full"
-          style={{ aspectRatio: "1018 / 1768" }}
+          className="relative"
+          style={{
+            aspectRatio: "1018 / 1768",
+            width: "min(100%, calc(54dvh * 0.5758))",
+            height: "auto",
+          }}
         >
           <ArtImage src={FRAME_SRC} alt="" className="absolute inset-0 h-full w-full" />
-          <div className="relative z-10 flex h-full flex-col items-center gap-3 overflow-y-auto px-[9%] py-[8%] text-center">
+          <div className="relative z-10 flex h-full flex-col items-center gap-2 overflow-y-auto px-[9%] py-[6%] text-center">
             {children}
           </div>
         </div>
 
-        {ctaSlot ? <div className="w-full">{ctaSlot}</div> : null}
+        {ctaSlot ? (
+          <div
+            className="w-full"
+            style={{ maxWidth: "min(100%, calc(54dvh * 0.5758))" }}
+          >
+            {ctaSlot}
+          </div>
+        ) : null}
         <div className="w-full">{footer}</div>
       </div>
     </div>
