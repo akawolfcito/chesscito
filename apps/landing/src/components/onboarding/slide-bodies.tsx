@@ -18,7 +18,7 @@ function Heading({ headline, support }: { headline: string; support: string }) {
     <>
       <h1 className="text-sm font-extrabold text-[#3a2600]">{headline}</h1>
       <Divider />
-      <p className="text-sm text-[#5a4520]">{support}</p>
+      <p className="text-xs text-[#5a4520]">{support}</p>
     </>
   )
 }
@@ -34,15 +34,15 @@ export function Slide1Body() {
       <AvatarWithFade
         src={assets.avatarSrc}
         alt=""
-        className="relative top-3"
+        className="relative top-9"
       />
-      <div className="-mt-3 flex flex-col items-center gap-0.5">
-        <span className="text-sm font-extrabold text-[#3a2600]">
+      <div className="-mt-4 flex flex-col items-center z-10">
+        <span className="text-xl font-extrabold text-[#3a2600]">
           {t('welcomeTo')}
         </span>
-        <ArtImage src={assets.titleSrc} alt="Chesscito" className="h-14 w-6/12" />
+        <ArtImage src={assets.titleSrc} alt="Chesscito" className="h-12 w-auto -mt-3" />
       </div>
-      <div className="-mt-2 flex flex-col items-center gap-2">
+      <div className="-mt-1 flex flex-col items-center gap-2">
         <Heading headline={t('headline')} support={t('support')} />
       </div>
       <div className="flex w-full gap-3">
@@ -163,15 +163,15 @@ export function Slide4Ctas() {
     <div className="flex w-full flex-col gap-3">
       <a
         href="/api/enter?mode=learn"
-        className="flex items-center justify-center gap-2 rounded-2xl bg-[#e0a021] px-6 py-4 text-lg font-extrabold text-white"
+        className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta"
       >
-        {t('startLearning')}
+        <span className="primary-play-cta-label">{t('startLearning')}</span>
       </a>
       <a
         href="/api/enter?mode=play"
-        className="flex items-center justify-center gap-2 rounded-2xl bg-[#2f6fe0] px-6 py-4 text-lg font-extrabold text-white"
+        className="primary-play-cta primary-play-cta--playhub hub-scaffold-arena-cta"
       >
-        {t('enterArena')}
+        <span className="primary-play-cta-label">{t('enterArena')}</span>
       </a>
     </div>
   )

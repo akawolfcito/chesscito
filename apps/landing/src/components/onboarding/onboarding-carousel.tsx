@@ -40,9 +40,9 @@ export function OnboardingCarousel() {
           <button
             type="button"
             onClick={() => setStep((current) => (current + 1) as 1 | 2 | 3 | 4)}
-            className="w-full rounded-2xl bg-[#e0a021] px-6 py-4 text-lg font-extrabold text-white"
+            className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta"
           >
-            {advanceLabel}
+            <span className="primary-play-cta-label">{advanceLabel}</span>
           </button>
         ) : (
           <Slide4Ctas />

@@ -14,7 +14,10 @@ export function LegalFooter({
   supportLabel: string;
 }) {
   return (
-    <div className="flex items-center justify-center gap-2 text-sm font-bold text-[#3a2600]">
+    <div
+      className="flex items-center justify-center gap-2 text-sm font-bold text-white"
+      style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.65)" }}
+    >
       <a href={`${LEGAL_URL}/privacy`}>{privacyLabel}</a>
       <Dot />
       <a href={`${LEGAL_URL}/terms`}>{termsLabel}</a>

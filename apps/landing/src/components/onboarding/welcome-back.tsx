@@ -21,9 +21,9 @@ export async function WelcomeBack({ preferredMode }: { preferredMode: PreferredM
         <div className="flex w-full flex-col items-center gap-2">
           <a
             href={`/api/enter?mode=${preferredMode}`}
-            className="w-full rounded-2xl bg-[#e0a021] px-6 py-4 text-center text-lg font-extrabold text-white"
+            className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta"
           >
-            {t("welcomeBack.cta")}
+            <span className="primary-play-cta-label">{t("welcomeBack.cta")}</span>
           </a>
           <a href="/classic" className="text-sm font-bold text-[#3a2600] underline">
             {t("welcomeBack.notSureLink")}

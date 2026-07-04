@@ -1,5 +1,10 @@
 import type { ReactNode } from "react";
 
+/**
+ * `.candy-tray-pill` + `.hub-hud-pill` are ported verbatim from apps/web
+ * globals.css — the same HUD chip family used across the Hub — so these
+ * pills match the in-app look exactly.
+ */
 export function Pill({
   icon,
   label,
@@ -11,20 +16,17 @@ export function Pill({
   sublabel?: string;
   tone?: "cream" | "gold";
 }) {
-  const toneClass =
-    tone === "gold"
-      ? "bg-[#d8a63a] text-[#3a2600]"
-      : "bg-[#fbf1d6] text-[#3a2600]";
-
   return (
     <div
-      className={`flex items-center gap-3 rounded-2xl px-4 py-3 ${toneClass}`}
+      className={`candy-tray-pill hub-hud-pill w-full ${
+        tone === "gold" ? "onboarding-pill--gold" : ""
+      }`}
     >
-      <div className="h-8 w-8 shrink-0">{icon}</div>
-      <div className="flex flex-col leading-tight">
-        <span className="font-bold">{label}</span>
-        {sublabel ? <span className="text-sm opacity-80">{sublabel}</span> : null}
-      </div>
+      <span className="candy-tray-pill-icon--floating">{icon}</span>
+      <span className="flex flex-col items-start leading-tight">
+        <span>{label}</span>
+        {sublabel ? <span className="text-[0.7rem] opacity-80">{sublabel}</span> : null}
+      </span>
     </div>
   );
 }

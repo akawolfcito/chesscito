@@ -1,11 +1,11 @@
 import { ArtImage } from '@/components/onboarding/art-image'
 
-const FADE_MASK = 'linear-gradient(to bottom, black 70%, transparent 100%)'
+const FADE_MASK = 'linear-gradient(to bottom, black 60%, transparent 100%)'
 
 export function AvatarWithFade({
   src,
   alt,
-  className = "",
+  className = '',
 }: {
   src: string
   alt: string
