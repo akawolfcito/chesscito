@@ -1,6 +1,10 @@
-import type { ReactNode } from "react";
-import { ArtImage } from "@/components/onboarding/art-image";
-import { MOBILE_SCENE_SRC, DESKTOP_SCENE_SRC, FRAME_SRC } from "@/lib/onboarding/slides";
+import type { ReactNode } from 'react'
+import { ArtImage } from '@/components/onboarding/art-image'
+import {
+  MOBILE_SCENE_SRC,
+  DESKTOP_SCENE_SRC,
+  FRAME_SRC,
+} from '@/lib/onboarding/slides'
 
 /**
  * Shared visual chrome for every onboarding state (4 slides + the
@@ -16,10 +20,10 @@ export function SlideShell({
   ctaSlot,
   footer,
 }: {
-  topSlot?: ReactNode;
-  children: ReactNode;
-  ctaSlot?: ReactNode;
-  footer: ReactNode;
+  topSlot?: ReactNode
+  children: ReactNode
+  ctaSlot?: ReactNode
+  footer: ReactNode
 }) {
   return (
     <div className="relative flex h-dvh w-full items-center justify-center overflow-hidden bg-[#1a3fae] px-4 py-4">
@@ -62,12 +66,16 @@ export function SlideShell({
         <div
           className="relative"
           style={{
-            aspectRatio: "980 / 1398",
-            width: "min(100%, calc(54dvh * 0.7010))",
-            height: "auto",
+            aspectRatio: '980 / 1398',
+            width: 'min(100%, calc(54dvh * 0.9))',
+            height: 'auto',
           }}
         >
-          <ArtImage src={FRAME_SRC} alt="" className="absolute inset-0 h-full w-full" />
+          <ArtImage
+            src={FRAME_SRC}
+            alt=""
+            className="absolute inset-0 h-full w-full"
+          />
           <div className="relative z-10 flex h-full flex-col items-center gap-2 overflow-y-auto px-[9%] py-[6%] text-center">
             {children}
           </div>
@@ -76,7 +84,7 @@ export function SlideShell({
         {ctaSlot ? (
           <div
             className="w-full"
-            style={{ maxWidth: "min(100%, calc(54dvh * 0.7010))" }}
+            style={{ maxWidth: 'min(100%, calc(54dvh * 0.7010))' }}
           >
             {ctaSlot}
           </div>
@@ -84,5 +92,5 @@ export function SlideShell({
         <div className="w-full">{footer}</div>
       </div>
     </div>
-  );
+  )
 }

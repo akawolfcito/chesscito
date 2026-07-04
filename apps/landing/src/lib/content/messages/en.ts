@@ -2,6 +2,7 @@ const messages = {
   onboarding: {
     progress: "{current} / {total}",
     slide1: {
+      welcomeTo: "Welcome to",
       headline: "Turn chess into your daily focus ritual.",
       support: "Train your mind, build consistency, and grow one move at a time.",
       learnPill: "Learn",
