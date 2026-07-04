@@ -5,9 +5,10 @@ import { MOBILE_SCENE_SRC, DESKTOP_SCENE_SRC, FRAME_SRC } from "@/lib/onboarding
 /**
  * Shared visual chrome for every onboarding state (4 slides + the
  * returning-visitor welcome): full-bleed scene behind a fixed-aspect-ratio
- * gold frame, matching the frame PNG's native 1018:1768 proportions so its
- * ornate border never distorts. Content scrolls inside the frame if a
- * slide's copy runs long, rather than the frame stretching to fit it.
+ * gold frame, matching the frame PNG's native 1070:1264 proportions (v2
+ * asset, founder-updated 2026-07-04 — was 1018:1768, notably taller) so
+ * its ornate border never distorts. Content scrolls inside the frame if
+ * a slide's copy runs long, rather than the frame stretching to fit it.
  */
 export function SlideShell({
   topSlot,
@@ -45,22 +46,24 @@ export function SlideShell({
       <div className="relative flex h-full w-full max-w-[420px] flex-col items-center justify-center gap-2">
         {topSlot}
 
-        {/* The frame PNG is a fixed 1018:1768 shape (tall/narrow). Sizing
-            it by width alone (`w-full` up to max-w-420) made it ~730px
-            tall, which together with topSlot/ctaSlot/footer overflowed
-            real mobile viewports (browser chrome eats into `dvh`) and
-            forced a page scroll.
+        {/* The frame PNG has a fixed aspect ratio. The original 1018:1768
+            asset was tall enough that sizing it by width alone (`w-full`
+            up to max-w-420) produced a ~730px-tall frame that, with
+            topSlot/ctaSlot/footer, overflowed real mobile viewports
+            (browser chrome eats into `dvh`) and forced a page scroll.
             Fix: `width` is an explicit `min(100%, <height-budget-derived
             width>)` — deterministic, unlike relying on browser
             aspect-ratio+max-height auto-sizing (tried first, unreliable:
             content overflowed the frame's own bottom edge instead of
             scrolling). `height: auto` + `aspectRatio` then derives height
-            from that resolved width, guaranteed to fit the budget. */}
+            from that resolved width, guaranteed to fit the budget. Kept
+            after the v2 (shorter) asset landed — still correct, just
+            binds less often now that the frame itself is shorter. */}
         <div
           className="relative"
           style={{
-            aspectRatio: "1018 / 1768",
-            width: "min(100%, calc(54dvh * 0.5758))",
+            aspectRatio: "1070 / 1264",
+            width: "min(100%, calc(54dvh * 0.8465))",
             height: "auto",
           }}
         >
@@ -73,7 +76,7 @@ export function SlideShell({
         {ctaSlot ? (
           <div
             className="w-full"
-            style={{ maxWidth: "min(100%, calc(54dvh * 0.5758))" }}
+            style={{ maxWidth: "min(100%, calc(54dvh * 0.8465))" }}
           >
             {ctaSlot}
           </div>
