@@ -18,7 +18,7 @@
   `app-branding.ts`, manifest/layout copy). Those are NOT part of PR5 and were carefully
   left untouched (see "Incidents" below) — do not touch/discard them.
 
-## Status: 9 of 11 plan tasks done and reviewed. 2 remaining.
+## Status: 10 of 11 plan tasks done and reviewed (all Approved). Only Task 11 remains.
 
 | # | Task | Status |
 |---|------|--------|
@@ -27,17 +27,22 @@
 | 3 | Create `PlayBadgesSheet` | ✅ done + reviewed (Approved — one reviewer finding was a verified false positive, see below) |
 | 4 | Create `PlayLeadersSheet` | ✅ done + reviewed (Approved, one Important finding fixed: tokenId-match instead of player-match for optimistic merge) |
 | 5 | Create `LearnShopSheet` | ✅ done + reviewed (Approved clean) |
-| 6 | Mode-aware `persistent-dock.tsx` | ✅ implemented, committed, **review dispatched but result not yet received when this doc was written** — check for a task-notification from agent, or re-check ledger |
-| 7 | Extend `persistent-dock.test.tsx` | ✅ implemented, committed, **same pending combined review as Task 6** (dispatched together, base `ac6c627a`→head `49a75c7a`) |
+| 6 | Mode-aware `persistent-dock.tsx` | ✅ done + reviewed (Approved clean — all 6 plan steps verified byte-identical to the diff, pre-existing Full-mode tests confirmed untouched via pure-addition diff check) |
+| 7 | Extend `persistent-dock.test.tsx` | ✅ done + reviewed (same combined review as Task 6 — Approved clean) |
 | 8 | Wire Learn's Shop in `exercises-screen.tsx` | ✅ done + reviewed (Approved clean) |
 | 9 | Wire Play effects in `arena/page.tsx` | ✅ done + reviewed (Approved, one Important finding fixed: added legacy-variant test coverage) |
 | 10 | Wire Play JSX in `arena/page.tsx` | ✅ done + reviewed (same combined review as Task 9) |
 | 11 | Full-branch verification pass | ❌ **NOT STARTED** — full `pnpm --filter web test`, typecheck, build, `git diff --check`, acceptance-criteria trace |
 
-**Immediate next action for whoever picks this up:**
-1. Check whether the Task 6+7 combined reviewer (dispatched, agent doing `Review Task 6+7`, diff `ac6c627a..49a75c7a`) has returned a verdict. If not received yet, it may still be running or may need re-dispatching — check for a stray notification first, don't blindly re-dispatch.
-2. Once Task 6+7's review is in (fix anything Important/Critical it finds, same pattern as every other task below), move to **Task 11**: run `pnpm --filter web test` (full suite), `pnpm --filter web exec tsc --noEmit`, `pnpm --filter web build` (verify `.next/BUILD_ID` is written — do NOT pipe through `tail`), `git diff --check main` from this worktree, then trace every acceptance criterion in the plan's Task 11 section against the actual diff.
-3. After Task 11 is clean, this branch is ready for the user to decide push/PR — do not push or open a PR without asking (per this session's operating rules).
+**Note on Task 6+7's review:** it was initially logged in the ledger as "dispatched, pending" when it had actually NOT been dispatched (a real gap caught only because the user asked to double-check subagent status — the diff package was generated but the Agent call itself was skipped mid-interruption). Dispatched properly afterward and came back Approved clean, 2 minor non-blocking nits only. Lesson for next session: don't trust a ledger line that says "dispatched" without also being able to point at the actual Agent call/agentId that produced it.
+
+**Immediate next action for whoever picks this up — only Task 11 remains:**
+1. Run `pnpm --filter web test` (full suite — confirm the pre-change baseline of 382 files / 4628 tests still holds, plus this branch's new test files).
+2. Run `pnpm --filter web exec tsc --noEmit` (should already be clean — verified after every single commit this session, but re-confirm on the full accumulated diff).
+3. Run `pnpm --filter web build` (verify `.next/BUILD_ID` is written — do NOT pipe through `tail`, per this project's own known gotcha where a piped build can silently skip writing it).
+4. Run `git diff --check main` from this worktree (whitespace/conflict-marker check).
+5. Trace every acceptance criterion listed in the plan's Task 11 Step 5 against the actual final diff (the plan lists exactly which commit/task covers which criterion — mechanical cross-check, not new judgment).
+6. After Task 11 is clean, this branch is ready for the user to decide push/PR — do not push or open a PR without asking (per this session's operating rules).
 
 ## Full commit history on this branch (in order)
 
