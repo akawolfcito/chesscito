@@ -43,14 +43,6 @@ function clearOptimisticScore() {
   try { sessionStorage.removeItem("chesscito:optimistic-score"); } catch { /* ignore */ }
 }
 
-let prefetchedRows: LeaderboardRow[] | null = null;
-if (typeof window !== "undefined") {
-  fetch("/api/leaderboard")
-    .then((r) => r.ok ? r.json() : null)
-    .then((data) => { if (Array.isArray(data)) prefetchedRows = data; })
-    .catch(() => {});
-}
-
 type LeaderboardSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -76,13 +68,13 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
   const { address } = useAccount();
   const nicknameTokens = useNicknameTokens();
   const { customName } = useDisplayName(address);
-  const [rows, setRows] = useState<LeaderboardRow[]>(prefetchedRows ?? []);
+  const [rows, setRows] = useState<LeaderboardRow[]>([]);
   /** The caller's own row with its REAL rank over the full ranking —
    *  visible even outside the top-10 cut (QA G4 2026-06-11). */
   const [ownRow, setOwnRow] = useState<LeaderboardRow | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const hasFetched = useRef(prefetchedRows !== null);
+  const hasFetched = useRef(false);
 
   const applyRows = useCallback((data: unknown) => {
     // Two response shapes: legacy array (no player param) or
@@ -137,13 +129,9 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
   }, [applyRows, t, address]);
 
   useEffect(() => {
-    fetchLeaderboard();
+    if (!open) return;
+    fetchLeaderboard(!hasFetched.current);
     hasFetched.current = true;
-  }, [fetchLeaderboard]);
-
-  useEffect(() => {
-    if (!open || !hasFetched.current) return;
-    fetchLeaderboard(false);
   }, [open, fetchLeaderboard, refreshTrigger]);
 
   const champion = rows.find(r => r.rank === 1);

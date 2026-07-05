@@ -1,0 +1,478 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
+import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
+
+import { HubScaffold } from "@/components/hub/hub-scaffold";
+const BadgeSheet = dynamic(
+  () => import("@/components/exercises/badge-sheet").then((m) => m.BadgeSheet),
+  { ssr: false },
+);
+const PurchaseConfirmSheet = dynamic(
+  () =>
+    import("@/components/exercises/purchase-confirm-sheet").then(
+      (m) => m.PurchaseConfirmSheet,
+    ),
+  { ssr: false },
+);
+const ShopSheet = dynamic(
+  () => import("@/components/exercises/shop-sheet").then((m) => m.ShopSheet),
+  { ssr: false },
+);
+const ProSheet = dynamic(
+  () => import("@/components/pro/pro-sheet").then((m) => m.ProSheet),
+  { ssr: false },
+);
+import { ProfileSheet } from "@/components/profile/profile-sheet";
+import { SettingsSheetStub } from "@/components/hub/settings-sheet-stub";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { ContextualHeader } from "@/components/ui/contextual-header";
+import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
+import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
+import { useClaimQueue } from "@/hooks/use-claim-queue";
+import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
+import { daysRemaining } from "@/lib/pro/days-remaining";
+import { applyDevUnlock } from "@/lib/daily/session-quota";
+import { useShieldSync } from "@/lib/shop/use-shield-sync";
+import { track } from "@/lib/telemetry";
+import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import { useHubData } from "@/components/hub/use-hub-data";
+import { HubLiteScaffold } from "@/components/hub/hub-lite-scaffold";
+const SeasonPassSheet = CHESSCITO_LITE_MODE
+  ? dynamic(
+      () => import("@/components/payments/season-pass-sheet").then((m) => m.SeasonPassSheet),
+      { ssr: false },
+    )
+  : () => null;
+
+export type HubInitialSheet =
+  | "shop"
+  | "pro"
+  | "badges"
+  | "trophies"
+  | "profile"
+  | "settings";
+
+export type HubScaffoldClientProps = {
+  initialSheet?: HubInitialSheet;
+};
+
+function premiumAriaLabel(
+  pro: { active: true; daysRemaining: number } | { active: false },
+  used: number,
+  total: number,
+  t: ReturnType<typeof useTranslations<"HUB_SCAFFOLD_COPY">>,
+) {
+  if (!pro.active) {
+    return t("premiumInactiveAriaLabel");
+  }
+  return t("premiumActiveAriaFormat", {
+    used,
+    total,
+    days: pro.daysRemaining,
+  });
+}
+
+type ProShape =
+  | { active: true; daysRemaining: number }
+  | { active: false };
+
+function deriveProShape(
+  status: { active: boolean; expiresAt: number | null } | null,
+  now: number,
+): ProShape {
+  if (!status?.active) return { active: false };
+  const days = daysRemaining(status.expiresAt, now);
+  if (days == null) return { active: false };
+  return { active: true, daysRemaining: days };
+}
+
+/** Client-side container that hydrates `<HubScaffold>` with real data:
+ *  - Trophies: count of claimed badges (Badges contract, batched read).
+ *  - PRO chip: `useProStatus(address)` shape + days-remaining math.
+ *  - Reward tiles: `deriveRewardTiles({ badgesClaimed, starsPerPiece })`.
+ *  - Tap handlers: routed to existing destinations (`/trophies` for the
+ *    trophy chip, `/hub` legacy for the rest) until the flag flip in
+ *    Story 1.12 final replaces them with in-scaffold sheets.
+ *
+ *  Pure presentational composition — no on-chain mutations belong here.
+ *  Those stay on `<ExercisesScreen>` until the scaffold becomes the default. */
+export function LegacyHubClient({
+  initialSheet,
+}: HubScaffoldClientProps) {
+  const tHud = useTranslations("HUD_COPY");
+  const tScaffold = useTranslations("HUB_SCAFFOLD_COPY");
+  const tSettings = useTranslations("SETTINGS_STUB_COPY");
+  const router = useRouter();
+  // Read-only hub data (wallet, trophies, stars/shields, Lite
+  // passport/content-loop/quota/season) is hydrated by useHubData and
+  // destructured into the original local names so the handlers + JSX below
+  // are unchanged. `shared.hero` / `lite.challenge` are produced for the Lite
+  // presenter (PR B) and intentionally not consumed by the Full render here.
+  const { shared, lite } = useHubData();
+  const { address, isConnected, trophies, badgesClaimed, starsPerPiece, shieldCount } = shared;
+  const { focusPassport, contentLoop, sessionQuota } = lite;
+  const seasonPassStatus = lite.seasonPass;
+  const contentLoopAction = contentLoop.action;
+  const isContentLoopHydrated = contentLoop.isHydrated;
+  const sessionQuotaState = sessionQuota;
+  // Direct injected connect (RainbowKit removed, P2 2026-06-12). In
+  // MiniPay the auto-connect in <WalletProvider> wins before this CTA
+  // ever renders; on desktop it triggers the extension prompt.
+  const { connectWallet } = useConnectWallet();
+
+  // PRO sheet orchestration. Owns its own status fetch internally so
+  // we don't double-fetch /api/pro/status from this surface.
+  const proSheet = useProSheetState();
+  const proStatus = proSheet.proStatus;
+
+  // BadgeSheet orchestration — claim flow + on-chain reads. Reward tile
+  // taps open this sheet in-place (port 2026-05-07) instead of bouncing
+  // through `?legacy=1&action=badges`. Solves audit B7 by giving every
+  // piece tap a real destination (the sheet itself) rather than the
+  // collapsed legacy view that dropped the piece query for queen/king.
+  const badgeSheet = useBadgeSheetState();
+
+  // Shop orchestration — same in-place pattern as PRO/Badges. Removes
+  // the last `?legacy=1&action=shop` round-trip. Hook owns catalog +
+  // balances + approve/buy + post-submit server credit; scaffold just
+  // mounts the two sheets it returns.
+  const shopSheet = useShopSheetState({
+    onSelectProItem: () => proSheet.openSheet(),
+  });
+  const openBadgeSheet = badgeSheet.openSheet;
+  const openProSheet = proSheet.openSheet;
+  const openShopSheet = shopSheet.openSheet;
+  const initialSheetOpenedRef = useRef(false);
+  const proTrainingCardViewedRef = useRef(false);
+
+  // SPEC 1 D9/D10 wiring — Profile sheet, Settings stub.
+  // Lite Mode: deep-link ?sheet=profile must not open ProfileSheet (it mounts ProSheet).
+  const [profileOpen, setProfileOpen] = useState(!CHESSCITO_LITE_MODE && initialSheet === "profile");
+  const [settingsOpen, setSettingsOpen] = useState(initialSheet === "settings");
+  const [seasonPassSheetOpen, setSeasonPassSheetOpen] = useState(false);
+  // `useClaimQueue` reads pending claims out of localStorage on mount;
+  // the unread count drives the avatar notif-dot once the HUD slot
+  // exists (deferred — see project note).
+  useClaimQueue(address);
+
+  useEffect(() => {
+    if (!initialSheet || initialSheetOpenedRef.current) return;
+    initialSheetOpenedRef.current = true;
+    if (!CHESSCITO_LITE_MODE) {
+      if (initialSheet === "shop") {
+        openShopSheet();
+      } else if (initialSheet === "pro") {
+        openProSheet();
+      } else if (initialSheet === "badges") {
+        openBadgeSheet();
+      }
+    }
+    if (initialSheet === "trophies") {
+      // External deep-link → the standalone /trophies page (SPEC 1 D8).
+      router.push("/trophies");
+    }
+    // profile + settings open synchronously via the useState init above.
+  }, [initialSheet, openBadgeSheet, openProSheet, openShopSheet, router]);
+
+  // Boot-time + post-purchase shield reconciliation. Drains the
+  // pending-tx queue, runs one-shot legacy migration, refreshes
+  // credited-cache via /api/shields/me. Mounted at the scaffold root
+  // so the chip sees server-confirmed state on every connect.
+  useShieldSync();
+
+  const pro = useMemo(() => deriveProShape(proStatus, Date.now()), [proStatus]);
+
+  // Lite B1.2 — one-per-tab session start event for grant dashboard.
+  // sessionStorage dedupe ensures refresh doesn't double-count.
+  useEffect(() => {
+    if (!CHESSCITO_LITE_MODE) return;
+    const SESSION_KEY = "chesscito:lite-session-started";
+    try {
+      if (!sessionStorage.getItem(SESSION_KEY)) {
+        sessionStorage.setItem(SESSION_KEY, "1");
+        track("lite_session_started", { isLite: true });
+      }
+    } catch {
+      // sessionStorage unavailable (private mode / WebView) — skip dedupe, emit once.
+      track("lite_session_started", { isLite: true });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleArenaPress = useCallback(() => {
+    if (CHESSCITO_LITE_MODE) return;
+    track("secondary_arena_clicked");
+    // `?fresh=1` forces the arena page to show the difficulty + color
+    // selector. Without it the route auto-resumes the previous match
+    // (or falls onto the default difficulty), which surprised users
+    // tapping the Hub's ENTER ARENA CTA expecting to configure a new
+    // run. Same param used by every other arena entry point (Hub
+    // dock, Coach history Play Again, Trophies, victory accept).
+    router.push("/arena?fresh=1");
+  }, [router]);
+
+  // Single page-view event per mount — anchors the funnel for every
+  // tap event below. Empty deps so we never double-fire on re-render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional once-per-mount
+  useEffect(() => {
+    track("hub_view");
+  }, []);
+
+  useEffect(() => {
+    if (CHESSCITO_LITE_MODE) return;
+    if (proTrainingCardViewedRef.current) return;
+    if (isConnected && proStatus === null) return;
+    proTrainingCardViewedRef.current = true;
+    track("pro_training_card_viewed", {
+      surface: "hub",
+      pro_active: pro.active,
+      wallet_connected: isConnected,
+      cta: pro.active ? "training_journal" : "open_pro_sheet",
+    });
+    // M1 funnel (Commit 6, 2026-06-02) — monetization-namespaced view
+    // event for the Hub chip surface. Mirrors the legacy training_card
+    // gate (once per mount, once status resolves) so the funnel rolls
+    // up cleanly without duplicate counting on re-renders.
+    track("monetization.pro_chip_view", {
+      active: pro.active,
+      daysRemaining: pro.active ? pro.daysRemaining : null,
+    });
+    // Anti-spam expiring nudge — fires at most once per session per
+    // (wallet, expiresAt) pair so a renewal mid-session can re-arm the
+    // event for the NEW expiresAt without overwriting the same key.
+    if (pro.active && pro.daysRemaining <= 7 && address && proStatus?.expiresAt) {
+      const storageKey = "chesscito:pro-expiring-chip-shown";
+      const sessionValue = `${address.toLowerCase()}:${proStatus.expiresAt}`;
+      try {
+        const previous = window.sessionStorage.getItem(storageKey);
+        if (previous !== sessionValue) {
+          window.sessionStorage.setItem(storageKey, sessionValue);
+          track("monetization.pro_expiring_view", {
+            daysRemaining: pro.daysRemaining,
+          });
+        }
+      } catch {
+        // sessionStorage can throw in private-mode iframes; fail open
+        // and ship the event anyway so we don't lose the signal.
+        track("monetization.pro_expiring_view", {
+          daysRemaining: pro.daysRemaining,
+        });
+      }
+    }
+  }, [
+    address,
+    isConnected,
+    pro,
+    proStatus,
+  ]);
+
+  const rewardTiles = useMemo(() => {
+    const tiles = deriveRewardTiles({ badgesClaimed, starsPerPiece });
+    return tiles.map((tile) => ({
+      ...tile,
+      onTap: () => {
+        track("hub_reward_tile_tap", { piece: tile.id, state: tile.state });
+        if (tile.state === "locked") {
+          return;
+        }
+        router.push(`/exercises?piece=${tile.id}`);
+      },
+    }));
+  }, [badgesClaimed, starsPerPiece, router]);
+
+  // The shields chip is the home for shop conversion (the user's primary
+  // monetization surface). Always visible whether the count is 0 or N —
+  // a depleted "Shield ×0" is the strongest replenishment cue.
+  const shieldsValue = shieldCount;
+
+  // <ChallengeCard> requires a non-null passport; Lite always hydrates one
+  // (useHubData), but fall back to the loading shell defensively so the card
+  // never receives undefined.
+  const liteFocusPassport = focusPassport ?? {
+    streak: 0,
+    totalCompleted: 0,
+    todayDone: false,
+    isLoading: true,
+  };
+
+  return (
+    <>
+      {CHESSCITO_LITE_MODE ? (
+        <HubLiteScaffold
+          trophies={trophies}
+          isWalletConnected={isConnected}
+          onConnectTap={
+            isConnected
+              ? null
+              : () => {
+                  track("hub_connect_chip_tap");
+                  connectWallet();
+                }
+          }
+          onTrophyTap={() => {
+            track("hub_trophy_tap", { count: trophies });
+            router.push("/trophies");
+          }}
+          focusPassport={liteFocusPassport}
+          challenge={lite.challenge}
+          seasonPass={lite.challengeSeasonPass}
+          onJoinChallenge={
+            // Same gate as the legacy season-pass CTA: never offer the buy
+            // flow while status resolves or to an existing pass holder.
+            !seasonPassStatus.loading && !seasonPassStatus.active
+              ? () => setSeasonPassSheetOpen(true)
+              : null
+          }
+          primaryFocus={{
+            // Start Focus always routes to /exercises; the screen gates
+            // fresh-vs-replay by quota (spec destination matrix, option A).
+            onPress: () => {
+              track("hub_start_focus_tap");
+              router.push("/exercises");
+            },
+            contentLoop: contentLoopAction,
+            isHydrated: isContentLoopHydrated,
+          }}
+          rewardTiles={rewardTiles}
+        />
+      ) : (
+      <HubScaffold
+        trophies={trophies}
+        pro={pro}
+        shields={null}
+        isWalletConnected={isConnected}
+        onConnectTap={() => {
+          track("hub_connect_chip_tap");
+          connectWallet();
+        }}
+        rewardTiles={rewardTiles}
+        premiumKicker={tScaffold("premiumKicker")}
+        premiumInactiveLabel={tScaffold("premiumInactiveLabel")}
+        premiumProgressFormat={(current: number, total: number) =>
+          tHud("starsFormat", { current, total })
+        }
+        premiumAriaLabel={premiumAriaLabel(pro, 0, 0, tScaffold)}
+        premiumUsed={0}
+        premiumTotal={0}
+        playLabel={tScaffold("playLabel")}
+        playAriaLabel={tScaffold("playAriaLabel")}
+        onTrophyTap={() => {
+          track("hub_trophy_tap", { count: trophies });
+          // Direct route to /trophies instead of legacy round-trip.
+          // Same TrophiesBody renders, no bounce loop, deep-linkable.
+          router.push("/trophies");
+        }}
+        onProTap={CHESSCITO_LITE_MODE ? undefined : () => {
+          track("hub_pro_chip_tap", { pro_active: pro.active });
+          // M1 funnel (Commit 6) — monetization-namespaced tap with
+          // daysRemaining payload, parallel to the legacy event.
+          track("monetization.pro_chip_tap", {
+            active: pro.active,
+            daysRemaining: pro.active ? pro.daysRemaining : null,
+          });
+          // In-place ProSheet (port 2026-05-07). Kills the legacy
+          // ?legacy=1&action=pro round-trip + the B2 nav race that
+          // bounce caused; sheet renders directly above the scaffold.
+          proSheet.openSheet();
+        }}
+        onCoachTap={CHESSCITO_LITE_MODE ? undefined : () => {
+          track("hub_coach_chip_tap", { pro_active: pro.active });
+          if (pro.active) {
+            router.push("/coach/history");
+          } else {
+            proSheet.openSheet();
+          }
+        }}
+        onProTilePress={CHESSCITO_LITE_MODE ? undefined : () => {
+          track("hub_pro_tile_tap", { pro_active: pro.active });
+          proSheet.openSheet();
+        }}
+        onPremiumTap={CHESSCITO_LITE_MODE ? undefined : () => {
+          track("hub_premium_slot_tap", { pro_active: pro.active });
+          proSheet.openSheet();
+        }}
+        onShieldsTap={CHESSCITO_LITE_MODE ? undefined : () => {
+          // KEY conversion event: validates the monetization-as-default
+          // hypothesis behind the scaffold redesign. Shield count carried
+          // as a dim so we can correlate tap rate with depletion state.
+          track("hub_shields_chip_tap", { shield_count: shieldCount });
+          // In-place ShopSheet (port 2026-05-08). Closes the last
+          // `?legacy=1&action=shop` round-trip. PurchaseConfirmSheet
+          // and the success banner are owned by `useShopSheetState`.
+          shopSheet.openSheet();
+        }}
+        secondaryAction={{
+          label: tHud("practiceLinkLabel"),
+          ariaLabel: tHud("practiceLinkAriaLabel"),
+          onPress: () => {
+            track("hub_practice_link_tap");
+            router.push("/exercises");
+          },
+        }}
+        onArenaPress={handleArenaPress}
+        miniArenaUnlocked={(starsPerPiece.rook ?? 0) >= 12}
+      />
+      )}
+      {process.env.NODE_ENV === "development" &&
+        CHESSCITO_LITE_MODE &&
+        sessionQuotaState?.isAtFreeLimit &&
+        !sessionQuotaState.isAtHardMax ? (
+          <button
+            type="button"
+            onClick={() => { applyDevUnlock(); }}
+            style={{
+              position: "fixed",
+              bottom: "calc(env(safe-area-inset-bottom, 0px) + 72px)",
+              right: 16,
+              background: "rgba(180,0,180,0.9)",
+              color: "#fff",
+              padding: "8px 14px",
+              borderRadius: 20,
+              fontSize: 12,
+              fontWeight: 700,
+              zIndex: 9999,
+            }}
+          >
+            Dev: +5 mock unlock
+          </button>
+        ) : null}
+      {!CHESSCITO_LITE_MODE && <ProSheet {...proSheet.sheetProps} />}
+      {!CHESSCITO_LITE_MODE && <BadgeSheet {...badgeSheet.sheetProps} />}
+      {!CHESSCITO_LITE_MODE && <ShopSheet {...shopSheet.sheetProps} />}
+      {!CHESSCITO_LITE_MODE && <PurchaseConfirmSheet {...shopSheet.confirmProps} />}
+      {CHESSCITO_LITE_MODE && (
+        <SeasonPassSheet
+          open={seasonPassSheetOpen}
+          onOpenChange={setSeasonPassSheetOpen}
+          onSuccess={() => {
+            setSeasonPassSheetOpen(false);
+            void seasonPassStatus.refresh();
+          }}
+        />
+      )}
+      <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
+      <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <SheetContent
+          side="bottom"
+          hideClose
+          title={tSettings("title")}
+          className="settings-sheet"
+        >
+          <div className="-mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
+            <ContextualHeader
+              variant="close-control"
+              title={tSettings("title")}
+              close={{ onClick: () => setSettingsOpen(false), label: tSettings("closeAriaLabel") }}
+            />
+          </div>
+          <SettingsSheetStub buildSha={process.env.NEXT_PUBLIC_BUILD_SHA ?? "dev"} />
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+}

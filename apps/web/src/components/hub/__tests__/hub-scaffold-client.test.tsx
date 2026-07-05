@@ -636,7 +636,10 @@ describe("HubScaffoldClient — Lite Mode", () => {
 
   beforeEach(async () => {
     vi.resetModules();
-    vi.doMock("@/lib/feature-flags", () => ({ CHESSCITO_LITE_MODE: true }));
+    vi.doMock("@/lib/feature-flags", () => ({
+      CHESSCITO_MODE: "learn",
+      CHESSCITO_LITE_MODE: true,
+    }));
     // Re-apply all stubs after resetModules so the freshly-loaded component
     // finds them. vi.mock calls at the top of the file are hoisted into the
     // original module graph; after resetModules we need vi.doMock for each.

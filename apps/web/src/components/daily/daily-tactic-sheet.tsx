@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Sheet,
   SheetContent,
@@ -37,6 +38,12 @@ type Props = {
    *  signature extended from `() => void` so the consumer can attach
    *  it to telemetry without re-deriving the count from board state. */
   onSolve: (movesUsed: number) => void;
+  /** Optional wrong-move signal. Play uses it for isolated failure telemetry;
+   * Daily Focus callers can omit it and retain existing behavior. */
+  onFail?: (movesUsed: number) => void;
+  /** Presentation/effects boundary. `play` reuses the puzzle board without
+   * Daily Focus streak, Peones or Lite celebration UI. */
+  experience?: "daily" | "play";
   /** Gates the reward block branch (connected vs guest). Sprint 3
    *  commit E — when true, the sheet renders state from `reward`
    *  below; when false, only the guest CTA appears. Default `false`
@@ -65,12 +72,15 @@ type Props = {
 const SOLVE_AUTO_CLOSE_MS = 3200;
 const RESET_AFTER_MS = 360;
 
-export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, streakAfterSolve, streakType, shareUrl, shareSolvedUrl, shareLinkUrl, shareSolvedLinkUrl, isConnected = false, reward }: Props) {
+export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, onFail, experience = "daily", streakAfterSolve, streakType, shareUrl, shareSolvedUrl, shareLinkUrl, shareSolvedLinkUrl, isConnected = false, reward }: Props) {
+  const tPlay = useTranslations("PLAY_TACTICS_COPY");
   const [status, setStatus] = useState<Status>("solving");
   const [showHint, setShowHint] = useState(false);
   const [boardKey, setBoardKey] = useState(0);
   const [shareOpen, setShareOpen] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isPlayExperience = experience === "play";
+  const sheetTitle = isPlayExperience ? tPlay("sheetTitle") : "Daily Tactic";
 
   useEffect(() => {
     if (!open) return;
@@ -107,8 +117,9 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
       position.file === puzzleData.exercise.targetPos.file &&
       position.rank === puzzleData.exercise.targetPos.rank;
     if (!reached) {
-      if (puzzleData.exercise.optimalMoves === 1) {
+      if (movesCount >= puzzleData.exercise.optimalMoves) {
         hapticReject();
+        onFail?.(movesCount);
         setStatus("resetting");
         if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
         closeTimerRef.current = setTimeout(() => {
@@ -133,16 +144,20 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
       <SheetContent
         side="bottom"
         hideClose
-        title="Daily Tactic"
+        title={sheetTitle}
         description={puzzleData.name}
         data-testid="daily-tactic-sheet"
         className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         <MissionHeaderCandy
-          title="Daily Tactic"
+          title={sheetTitle}
           subtitle={puzzleData.name}
           iconSlot={<TileIconSlot src="/art/new-icons-chesscito/ejercicio-diario-chess" />}
-          objective={`Move the ${puzzleData.piece} to the target square.`}
+          objective={
+            isPlayExperience
+              ? tPlay("objective", { piece: puzzleData.piece })
+              : `Move the ${puzzleData.piece} to the target square.`
+          }
           onClose={() => onOpenChange(false)}
         />
 
@@ -175,12 +190,12 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
               <div className="flex items-center gap-2">
                 <CandyIcon name="star" className="h-5 w-5" />
                 <span className="text-base font-extrabold uppercase tracking-tight" data-testid="daily-status-solved">
-                  {DAILY_SOLVE_COPY.solved}
+                  {isPlayExperience ? tPlay("solved") : DAILY_SOLVE_COPY.solved}
                 </span>
               </div>
               <span className="text-xs font-bold opacity-60">{puzzleData.name}</span>
               {/* Lite: streak/focus info lives in the overlay pills — bottom stays minimal. */}
-              {!CHESSCITO_LITE_MODE && (
+              {!isPlayExperience && !CHESSCITO_LITE_MODE && (
                 <>
                   {streakAfterSolve != null && streakAfterSolve > 0 && (
                     <span className="text-sm font-extrabold">{DAILY_SOLVE_COPY.streakLabel(streakAfterSolve)}</span>
@@ -197,7 +212,7 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
                 </>
               )}
               {/* Lite: no Peones block. Full: connected/guest reward. */}
-              {!CHESSCITO_LITE_MODE && (
+              {!isPlayExperience && !CHESSCITO_LITE_MODE && (
                 <>
                   {/* Sprint 3 commit E — REAL reward block (Full mode only).
                    *  /api/peones/earn passes state via `reward`. Four states:
@@ -271,7 +286,7 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
           ) : (
             <div className="flex flex-col items-center gap-1">
               <p className="text-xs font-bold opacity-60 uppercase tracking-widest">
-                Find the move
+                {isPlayExperience ? tPlay("prompt") : "Find the move"}
               </p>
               {isShareUrlValid(shareUrl) && (
                 <button
@@ -291,7 +306,7 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
          *  welldone-sms + avatar-fun assets from mission-panel-candy's
          *  PhaseFlash(success). Sheet auto-closes at SOLVE_AUTO_CLOSE_MS
          *  so no separate dismiss timer is needed here. */}
-        {CHESSCITO_LITE_MODE && status === "solved" && (
+        {!isPlayExperience && CHESSCITO_LITE_MODE && status === "solved" && (
           <div
             className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center candy-modal-scrim"
             aria-hidden="true"

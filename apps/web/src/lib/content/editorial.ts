@@ -1018,6 +1018,21 @@ export const ACHIEVEMENTS_COPY = {
   },
 } as const;
 
+export const PLAY_BADGES_COPY = {
+  pageTitle: "Arena Badges",
+  pageDescription: "Achievements earned from your ranked victories.",
+  closeSheetLabel: "Close badges",
+} as const;
+
+export const PLAY_LEADERS_COPY = {
+  pageTitle: "Hall of Fame",
+  pageDescription: "Top players by minted victories.",
+  closeSheetLabel: "Close leaders",
+  emptyMessage: "No victories minted yet. Be the first champion.",
+  loadError: "Couldn't load the Hall of Fame. Try again.",
+  retry: "Retry",
+} as const;
+
 /** Roadmap surface (feature #23). Non-speculative — explicitly "soon". */
 export const ROADMAP_COPY = {
   sectionTitle: "Coming later",
@@ -3241,6 +3256,29 @@ export const HUB_SCAFFOLD_COPY = {
   premiumInactiveAriaLabel: "Training Pass: tap to unlock",
   premiumActiveAriaFormat:
     "Training Pass: {used} of {total} sessions used, {days} days remaining",
+} as const;
+
+export const PLAY_HUB_COPY = {
+  rootAriaLabel: "Chesscito Play Hub",
+  victoriesLabel: "Victories",
+  victoriesAriaLabel: "Minted Arena victories: {count}",
+  actionsAriaLabel: "Play services",
+  coachLabel: "Coach",
+  shopLabel: "Shop",
+  shopAriaLabel: "Open Play Shop",
+  arenaLabel: "ENTER ARENA",
+  arenaAriaLabel: "Enter Arena: full chess vs AI",
+} as const;
+
+export const PLAY_TACTICS_COPY = {
+  tileLabel: "Tactics",
+  tileAriaLabel: "Open Arena warm-up",
+  completedAriaLabel: "Arena warm-up complete for today",
+  doneBadge: "Done",
+  sheetTitle: "Arena Warm-up",
+  objective: "Find the best {piece} move before entering Arena.",
+  prompt: "Find the winning move",
+  solved: "Warm-up complete!",
 } as const;
 
 export const HUB_RAIL_COPY = {

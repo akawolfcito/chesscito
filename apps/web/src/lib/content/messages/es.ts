@@ -1765,6 +1765,27 @@ const messages = {
     premiumActiveAriaFormat:
       "Pase de entrenamiento: {used} de {total} sesiones usadas, {days} días restantes",
   },
+  PLAY_HUB_COPY: {
+    rootAriaLabel: "Hub Play de Chesscito",
+    victoriesLabel: "Victorias",
+    victoriesAriaLabel: "Victorias de Arena minteadas: {count}",
+    actionsAriaLabel: "Servicios de Play",
+    coachLabel: "Coach",
+    shopLabel: "Tienda",
+    shopAriaLabel: "Abrir tienda de Play",
+    arenaLabel: "ENTRAR A ARENA",
+    arenaAriaLabel: "Entrar a Arena: ajedrez completo vs IA",
+  },
+  PLAY_TACTICS_COPY: {
+    tileLabel: "Tácticas",
+    tileAriaLabel: "Abrir calentamiento de Arena",
+    completedAriaLabel: "Calentamiento de Arena completado por hoy",
+    doneBadge: "Listo",
+    sheetTitle: "Calentamiento de Arena",
+    objective: "Encuentra la mejor jugada de {piece} antes de entrar a Arena.",
+    prompt: "Encuentra la jugada ganadora",
+    solved: "¡Calentamiento completado!",
+  },
   HUB_RAIL_COPY: {
     ...en.HUB_RAIL_COPY,
     learnLabel: "RUTA DE ENTRENAMIENTO",
@@ -2312,6 +2333,19 @@ const messages = {
     successCta: "Continuar",
     errorBody: "Algo salió mal. Toca para intentar de nuevo.",
     retryCta: "Intentar de nuevo",
+  },
+  PLAY_BADGES_COPY: {
+    pageTitle: "Insignias de Arena",
+    pageDescription: "Logros ganados con tus victorias clasificatorias.",
+    closeSheetLabel: "Cerrar insignias",
+  },
+  PLAY_LEADERS_COPY: {
+    pageTitle: "Salón de la Fama",
+    pageDescription: "Mejores jugadores por victorias acuñadas.",
+    closeSheetLabel: "Cerrar líderes",
+    emptyMessage: "Aún no hay victorias acuñadas. Sé el primer campeón.",
+    loadError: "No se pudo cargar el Salón de la Fama. Intenta de nuevo.",
+    retry: "Reintentar",
   },
 };
 

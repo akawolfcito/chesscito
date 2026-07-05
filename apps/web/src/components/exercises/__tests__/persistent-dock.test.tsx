@@ -209,3 +209,96 @@ describe("PersistentDock — store-based open action (no URL)", () => {
     expect(pushMock).toHaveBeenLastCalledWith("/?sheet=badges");
   });
 });
+
+describe("PersistentDock — Learn mode (Shop added, points at Season Pass)", () => {
+  afterEach(() => {
+    vi.doUnmock("@/lib/feature-flags");
+    vi.resetModules();
+  });
+
+  it("shows Shop alongside Badges on the left side", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/feature-flags", () => ({
+      CHESSCITO_LITE_MODE: true,
+      isPlayMode: () => false,
+    }));
+    pathnameMock.mockReturnValue("/exercises");
+    const { PersistentDock: LearnDock } = await import("../persistent-dock");
+
+    render(<LearnDock />);
+
+    expect(screen.getByRole("button", { name: /badges/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /shop/i })).toBeInTheDocument();
+  });
+});
+
+describe("PersistentDock — Play mode (Arena pinned, no Pieces, no /exercises)", () => {
+  afterEach(() => {
+    vi.doUnmock("@/lib/feature-flags");
+    vi.resetModules();
+  });
+
+  it("center is Arena on /arena and never swaps to Pieces", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/feature-flags", () => ({
+      CHESSCITO_LITE_MODE: false,
+      isPlayMode: () => true,
+    }));
+    pathnameMock.mockReturnValue("/arena");
+    const { PersistentDock: PlayDock } = await import("../persistent-dock");
+
+    render(<PlayDock />);
+
+    expect(screen.getByRole("button", { name: /^arena$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /pieces/i })).not.toBeInTheDocument();
+  });
+
+  it("center is still Arena from the root route (never swaps to Pieces)", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/feature-flags", () => ({
+      CHESSCITO_LITE_MODE: false,
+      isPlayMode: () => true,
+    }));
+    pathnameMock.mockReturnValue("/");
+    const { PersistentDock: PlayDock } = await import("../persistent-dock");
+
+    render(<PlayDock />);
+
+    expect(screen.getByRole("button", { name: /^arena$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /pieces/i })).not.toBeInTheDocument();
+  });
+
+  it("tapping the pinned Arena center while already on /arena does not navigate", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/feature-flags", () => ({
+      CHESSCITO_LITE_MODE: false,
+      isPlayMode: () => true,
+    }));
+    pathnameMock.mockReturnValue("/arena");
+    pushMock.mockReset();
+    const user = userEvent.setup();
+    const { PersistentDock: PlayDock } = await import("../persistent-dock");
+
+    render(<PlayDock />);
+    await user.click(screen.getByRole("button", { name: /^arena$/i }));
+
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("leaderboard fallback never points at /exercises", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/feature-flags", () => ({
+      CHESSCITO_LITE_MODE: false,
+      isPlayMode: () => true,
+    }));
+    pathnameMock.mockReturnValue("/hub");
+    pushMock.mockReset();
+    const user = userEvent.setup();
+    const { PersistentDock: PlayDock } = await import("../persistent-dock");
+
+    render(<PlayDock />);
+    await user.click(screen.getByRole("button", { name: /leaders/i }));
+
+    expect(pushMock).toHaveBeenLastCalledWith("/arena?sheet=leaderboard");
+  });
+});

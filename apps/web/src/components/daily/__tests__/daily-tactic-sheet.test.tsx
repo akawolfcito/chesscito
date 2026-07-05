@@ -38,6 +38,8 @@ function renderSheet(
   overrides: {
     open?: boolean;
     onSolve?: (movesUsed: number) => void;
+    onFail?: (movesUsed: number) => void;
+    experience?: "daily" | "play";
     onOpenChange?: (open: boolean) => void;
     puzzleData?: DailyTacticData;
     streakAfterSolve?: number;
@@ -73,6 +75,8 @@ function renderSheet(
       onOpenChange={onOpenChange}
       puzzleData={overrides.puzzleData ?? PUZZLE}
       onSolve={onSolve}
+      onFail={overrides.onFail}
+      experience={overrides.experience}
       streakAfterSolve={overrides.streakAfterSolve}
       streakType={overrides.streakType}
       isConnected={overrides.isConnected}
@@ -159,6 +163,34 @@ describe("DailyTacticSheet — wrong move flow", () => {
     expect(onSolve).not.toHaveBeenCalled();
     expect(screen.queryByTestId("daily-status-solved")).not.toBeInTheDocument();
   });
+
+  it("fires the optional failure callback for a wrong one-move attempt", () => {
+    const onFail = vi.fn();
+    renderSheet({ onFail });
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square b1" }));
+    expect(onFail).toHaveBeenCalledWith(1);
+  });
+});
+
+describe("DailyTacticSheet — Play presentation isolation", () => {
+  it("reuses the board without Daily Focus streak or Peones UI", () => {
+    const { onSolve } = renderSheet({
+      experience: "play",
+      isConnected: true,
+      streakAfterSolve: 8,
+      streakType: "extended",
+      reward: { kind: "pending" },
+    });
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square h1" }));
+
+    expect(onSolve).toHaveBeenCalledOnce();
+    expect(screen.getByText("Warm-up complete!")).toBeInTheDocument();
+    expect(screen.queryByText(/Streak:/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Peones/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Daily Tactic/i)).not.toBeInTheDocument();
+  });
 });
 
 describe("DailyTacticSheet — auto-close after solve", () => {
@@ -212,6 +244,16 @@ describe("DailyTacticSheet — 2-move puzzle", () => {
     fireEvent.click(screen.getByRole("gridcell", { name: "Square h8" }));
     expect(onSolve).toHaveBeenCalledOnce();
     expect(screen.getByTestId("daily-status-solved")).toBeInTheDocument();
+  });
+
+  it("fires onFail after exhausting the optimal move count off-target", () => {
+    const onFail = vi.fn();
+    renderSheet({ puzzleData: PUZZLE_TWO_MOVE, onFail });
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square h1" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square h1" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square g1" }));
+    expect(onFail).toHaveBeenCalledWith(2);
   });
 });
 

@@ -194,6 +194,12 @@ describe("KingdomAnchor", () => {
     expect(tagline).toHaveTextContent(HOME_ANCHOR_COPY.taglineHighlight);
   });
 
+  it("can hide the Training tagline while preserving the playhub portal", () => {
+    const { container } = render(<KingdomAnchor showTagline={false} />);
+    expect(container.querySelector(".kingdom-anchor-picture")).not.toBeNull();
+    expect(container.querySelector(".kingdom-anchor-tagline")).toBeNull();
+  });
+
   it("does NOT render the tagline on the arena-preview variant", () => {
     const { container } = render(<KingdomAnchor variant="arena-preview" />);
     expect(container.querySelector(".kingdom-anchor-tagline")).toBeNull();
