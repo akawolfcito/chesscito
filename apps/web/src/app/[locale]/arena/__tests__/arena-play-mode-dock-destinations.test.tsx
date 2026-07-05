@@ -79,8 +79,12 @@ vi.mock("next-intl", () => ({
   useLocale: () => "en",
 }));
 
+// Controllable per-test so both the scaffold variant (default) and the
+// legacy variant (?arena=legacy) branches of the dock+sheets JSX can be
+// exercised — the page duplicates that block once per variant.
+const searchParamsMock = vi.fn(() => new URLSearchParams());
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => searchParamsMock(),
   usePathname: () => "/arena",
   useRouter: () => ({
     push: pushMock,
@@ -198,13 +202,29 @@ import ArenaPage from "../page";
 describe("arena/page — Play mode dock destinations", () => {
   beforeEach(() => {
     pushMock.mockReset();
+    searchParamsMock.mockReturnValue(new URLSearchParams());
     window.localStorage.clear();
   });
 
-  it("mounts PlayBadgesSheet and PlayLeadersSheet, not BadgeSheet/LeaderboardSheet", async () => {
+  it("scaffold variant: mounts PlayBadgesSheet and PlayLeadersSheet, not BadgeSheet/LeaderboardSheet", async () => {
     render(<ArenaPage />);
 
     await screen.findByTestId("arena-select-scaffold");
+
+    expect(screen.getByTestId("mock-play-badges-sheet")).toBeInTheDocument();
+    expect(screen.getByTestId("mock-play-leaders-sheet")).toBeInTheDocument();
+    expect(screen.queryByTestId("mock-badge-sheet")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("mock-leaderboard-sheet")).not.toBeInTheDocument();
+  });
+
+  it("legacy variant (?arena=legacy): mounts PlayBadgesSheet and PlayLeadersSheet, not BadgeSheet/LeaderboardSheet", async () => {
+    searchParamsMock.mockReturnValue(new URLSearchParams("arena=legacy"));
+    render(<ArenaPage />);
+
+    // The legacy variant renders ArenaEntryPanel (mocked to null) instead of
+    // the scaffold — wait on one of the dock markers instead of a scaffold
+    // test-id.
+    await screen.findByTestId("mock-play-badges-sheet");
 
     expect(screen.getByTestId("mock-play-badges-sheet")).toBeInTheDocument();
     expect(screen.getByTestId("mock-play-leaders-sheet")).toBeInTheDocument();
