@@ -42,9 +42,11 @@ function PlayLeadersBody() {
       const entries = rows.map(toVictoryEntry);
       const optimistic = getOptimisticVictory();
       if (optimistic) {
-        const found = entries.some(
-          (e) => e.player.toLowerCase() === optimistic.player.toLowerCase(),
-        );
+        // Match by tokenId (the specific victory just recorded), not by
+        // player — a repeat winner's OTHER prior victories being present
+        // in the fetched list must not clear this optimistic entry before
+        // /api/hall-of-fame has actually indexed it.
+        const found = entries.some((e) => String(e.tokenId) === optimistic.tokenId);
         if (found) clearOptimisticVictory();
         else entries.unshift(toVictoryEntry(optimistic));
       }
