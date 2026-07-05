@@ -23,6 +23,9 @@ import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
 import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
 import { ShopSheet } from "@/components/exercises/shop-sheet";
 import { TrophiesSheet } from "@/components/exercises/trophies-sheet";
+import { PlayBadgesSheet } from "@/components/play/play-badges-sheet";
+import { PlayLeadersSheet } from "@/components/play/play-leaders-sheet";
+import { isPlayMode } from "@/lib/feature-flags";
 import { ArenaHud } from "@/components/arena/arena-hud";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
@@ -199,7 +202,7 @@ function ArenaPageInner() {
         shopSheet.openSheet();
       } else if (slug === "badge") {
         setActiveDockTab("badge");
-        badgeSheet.openSheet();
+        if (!isPlayMode()) badgeSheet.openSheet();
       } else if (slug === "trophies" || slug === "leaderboard") {
         setActiveDockTab(slug);
       }
@@ -210,7 +213,10 @@ function ArenaPageInner() {
       // close is a no-op if the matching sheet isn't open, so order
       // is safe even if state desyncs across renders.
       if (activeDockTab === "shop") handleShopSheetOpenChange(false);
-      else if (activeDockTab === "badge") handleBadgeSheetOpenChange(false);
+      else if (activeDockTab === "badge") {
+        if (isPlayMode()) setActiveDockTab(null);
+        else handleBadgeSheetOpenChange(false);
+      }
       else setActiveDockTab(null);
       if (proSheet.open) proSheet.closeSheet();
     });
@@ -238,7 +244,7 @@ function ArenaPageInner() {
       proSheet.openSheet();
     } else if (sheet === "badges") {
       setActiveDockTab("badge");
-      badgeSheet.openSheet();
+      if (!isPlayMode()) badgeSheet.openSheet();
     } else if (sheet === "trophies") {
       setActiveDockTab("trophies");
     } else if (sheet === "leaderboard") {
@@ -1085,11 +1091,18 @@ function ArenaPageInner() {
             style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
           >
             <PersistentDock />
-            <BadgeSheet
-              {...badgeSheet.sheetProps}
-              onOpenChange={handleBadgeSheetOpenChange}
-              showTrigger={false}
-            />
+            {isPlayMode() ? (
+              <PlayBadgesSheet
+                open={activeDockTab === "badge"}
+                onOpenChange={(v) => setActiveDockTab(v ? "badge" : null)}
+              />
+            ) : (
+              <BadgeSheet
+                {...badgeSheet.sheetProps}
+                onOpenChange={handleBadgeSheetOpenChange}
+                showTrigger={false}
+              />
+            )}
             <ShopSheet
               {...shopSheet.sheetProps}
               onOpenChange={handleShopSheetOpenChange}
@@ -1100,11 +1113,18 @@ function ArenaPageInner() {
               onOpenChange={setTrophiesOpen}
               showTrigger={false}
             />
-            <LeaderboardSheet
-              open={activeDockTab === "leaderboard"}
-              onOpenChange={setLeaderboardOpen}
-              showTrigger={false}
-            />
+            {isPlayMode() ? (
+              <PlayLeadersSheet
+                open={activeDockTab === "leaderboard"}
+                onOpenChange={setLeaderboardOpen}
+              />
+            ) : (
+              <LeaderboardSheet
+                open={activeDockTab === "leaderboard"}
+                onOpenChange={setLeaderboardOpen}
+                showTrigger={false}
+              />
+            )}
             <PurchaseConfirmSheet {...shopSheet.confirmProps} />
             <ProSheet {...proSheet.sheetProps} />
           </div>
@@ -1161,11 +1181,18 @@ function ArenaPageInner() {
           style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         >
           <PersistentDock />
-          <BadgeSheet
-            {...badgeSheet.sheetProps}
-            onOpenChange={handleBadgeSheetOpenChange}
-            showTrigger={false}
-          />
+          {isPlayMode() ? (
+            <PlayBadgesSheet
+              open={activeDockTab === "badge"}
+              onOpenChange={(v) => setActiveDockTab(v ? "badge" : null)}
+            />
+          ) : (
+            <BadgeSheet
+              {...badgeSheet.sheetProps}
+              onOpenChange={handleBadgeSheetOpenChange}
+              showTrigger={false}
+            />
+          )}
           <ShopSheet
             {...shopSheet.sheetProps}
             onOpenChange={handleShopSheetOpenChange}
@@ -1176,11 +1203,18 @@ function ArenaPageInner() {
             onOpenChange={(v) => setActiveDockTab(v ? "trophies" : null)}
             showTrigger={false}
           />
-          <LeaderboardSheet
-            open={activeDockTab === "leaderboard"}
-            onOpenChange={(v) => setActiveDockTab(v ? "leaderboard" : null)}
-            showTrigger={false}
-          />
+          {isPlayMode() ? (
+            <PlayLeadersSheet
+              open={activeDockTab === "leaderboard"}
+              onOpenChange={(v) => setActiveDockTab(v ? "leaderboard" : null)}
+            />
+          ) : (
+            <LeaderboardSheet
+              open={activeDockTab === "leaderboard"}
+              onOpenChange={(v) => setActiveDockTab(v ? "leaderboard" : null)}
+              showTrigger={false}
+            />
+          )}
           <PurchaseConfirmSheet {...shopSheet.confirmProps} />
           <ProSheet {...proSheet.sheetProps} />
         </div>
