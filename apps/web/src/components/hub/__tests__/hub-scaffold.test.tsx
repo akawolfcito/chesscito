@@ -89,6 +89,17 @@ describe("HubScaffold", () => {
     expect(anchor).not.toBeNull();
   });
 
+  it("renders the Training/Play switch below the anchor with Play selected", () => {
+    const { container } = render(<HubScaffold {...baseProps} />);
+    const toggle = screen.getByRole("group", { name: "Choose app mode" });
+
+    expect(container.querySelector(".hub-scaffold-anchor + .hub-app-mode-switch")).toBe(toggle);
+    expect(screen.getByRole("button", { name: "Switch to Play" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
   it("mounts the RewardColumn on the body left side", () => {
     const { container } = render(<HubScaffold {...baseProps} />);
     expect(

@@ -7822,6 +7822,71 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 8px;
 }
 
+/* Full/Lite app selector. The cream-gold segmented track follows the Arena
+   color switch, while the active amber half matches the Training/Play art. */
+.hub-app-mode-switch {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: min(100%, 210px);
+  min-height: 42px;
+  padding: 3px;
+  border: 2px solid rgba(171, 104, 15, 0.82);
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fff8df 0%, #f5e2b6 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 3px 7px rgba(48, 29, 8, 0.3);
+}
+
+.hub-app-mode-switch-pill {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  color: #5d3515;
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: transform 120ms ease, background 140ms ease;
+}
+
+.hub-app-mode-switch-pill[aria-pressed="true"] {
+  background: linear-gradient(180deg, #ffc334 0%, #e58a00 100%);
+  color: #fff8e6;
+  text-shadow: 0 1px 1px rgba(102, 52, 0, 0.85);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 245, 180, 0.8),
+    inset 0 -2px 0 rgba(148, 75, 0, 0.35),
+    0 1px 2px rgba(90, 45, 0, 0.25);
+}
+
+.hub-app-mode-switch-pill:not([aria-pressed="true"]):active {
+  transform: scale(0.97);
+}
+
+.hub-app-mode-switch-icon {
+  display: block;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 2px 1px rgba(61, 37, 7, 0.3));
+}
+
+.hub-app-mode-switch-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 /* Inner stack inside `.hub-scaffold-center`. Holds MissionRibbon,
    guide sequence, and (optional) heroCta. Previously named
    `.hub-scaffold-footer` — renamed to free that class for the new
@@ -7918,6 +7983,11 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 0;
   /* Air between the avatar and the 21-Day panel below. */
   margin-bottom: 8px;
+}
+
+.hub-lite-mascot .hub-app-mode-switch {
+  width: min(calc(100vw - 48px), 260px);
+  margin-top: 2px;
 }
 .hub-lite-title {
   display: block;

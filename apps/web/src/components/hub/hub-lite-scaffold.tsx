@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LanguageChip } from "@/components/hub/language-chip";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
+import { AppModeSwitch } from "@/components/hub/app-mode-switch";
 import { RewardColumn, type RewardTile } from "@/components/kingdom/reward-column";
 import {
   ChallengeCard,
@@ -145,6 +146,7 @@ export function HubLiteScaffold({
             draggable={false}
           />
         </picture>
+        <AppModeSwitch activeMode="training" />
       </div>
 
       <ChallengeCard

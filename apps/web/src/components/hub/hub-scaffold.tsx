@@ -15,6 +15,7 @@ import { LanguageChip } from "@/components/hub/language-chip";
 import { HubArenaTile } from "@/components/hub/hub-arena-tile";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
+import { AppModeSwitch } from "@/components/hub/app-mode-switch";
 import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
 
@@ -256,6 +257,7 @@ export function HubScaffold({
           <div className="hub-scaffold-anchor">
             {wrap("KingdomAnchor", <KingdomAnchor variant="playhub" />)}
           </div>
+          <AppModeSwitch activeMode="play" />
           <div className="hub-scaffold-center-stack">
             {wrap("MissionRibbon", <MissionRibbon surface="hub" />)}
             {/* Full hub: decorative pawn + guide + king strip. (The Lite hub

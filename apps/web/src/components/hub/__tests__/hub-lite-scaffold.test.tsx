@@ -187,6 +187,20 @@ describe("<HubLiteScaffold>", () => {
     expect(avatar?.querySelector("img")).toHaveAttribute("height", "560");
   });
 
+  it("renders the Training/Play switch below the avatar with Training selected", () => {
+    const { container } = render(<HubLiteScaffold {...baseProps()} />);
+    const mascot = container.querySelector(".hub-lite-mascot");
+    const toggle = screen.getByRole("group", { name: "Choose app mode" });
+
+    expect(mascot?.querySelector(".hub-lite-avatar + .hub-app-mode-switch")).toBe(toggle);
+    expect(screen.getByRole("button", { name: "Switch to Training" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(toggle.querySelectorAll('source[type="image/avif"]')).toHaveLength(2);
+    expect(toggle.querySelectorAll('source[type="image/webp"]')).toHaveLength(2);
+  });
+
   it("Training Path: renders all 6 piece tiles", () => {
     render(<HubLiteScaffold {...baseProps()} />);
     const path = screen.getByRole("region", { name: /training path/i });
