@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockRedisGet = vi.hoisted(() => vi.fn());
+const mockIsProActive = vi.hoisted(() => vi.fn());
 vi.mock("@upstash/redis", () => ({
   Redis: { fromEnv: vi.fn(() => ({ get: mockRedisGet })) },
 }));
 
 vi.mock("@/lib/supabase/server", () => ({ getSupabaseServer: vi.fn() }));
+vi.mock("@/lib/pro/is-active", () => ({ isProActive: mockIsProActive }));
 vi.mock("@/lib/server/logger", () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));
@@ -38,6 +40,7 @@ function buildDbMock(row: Record<string, unknown> | null, error: unknown = null)
 
 beforeEach(() => {
   mockRedisGet.mockReset().mockResolvedValue(null);
+  mockIsProActive.mockReset().mockResolvedValue({ active: false, expiresAt: null });
   mockedSupabase.mockReset();
   mockedSupabase.mockReturnValue(buildDbMock(null).supabase);
 });
@@ -64,7 +67,8 @@ describe("redis fast path", () => {
     expect(res.status).toBe(200);
     expect(json.active).toBe(true);
     expect(json.expiresAt).toBe(EXPIRES_FUTURE);
-    expect(json.source).toBe("redis");
+    expect(json.source).toBe("season_pass");
+    expect(json.storageSource).toBe("redis");
     expect(mockedSupabase).not.toHaveBeenCalled();
   });
 
@@ -93,7 +97,8 @@ describe("supabase fallback", () => {
     expect(json.seasonId).toBe("21day-mind-challenge-2026-q3");
     expect(json.supporterStatus).toBe("challenger");
     expect(json.shieldsCredited).toBe(3);
-    expect(json.source).toBe("db");
+    expect(json.source).toBe("season_pass");
+    expect(json.storageSource).toBe("db");
   });
 
   it("no pass in db → active:false", async () => {
@@ -106,5 +111,50 @@ describe("supabase fallback", () => {
     mockedSupabase.mockReturnValue(null as never);
     const res = await GET(makeRequest(WALLET));
     expect(res.status).toBe(503);
+  });
+});
+
+describe("effective Training Pass", () => {
+  it("returns active source=pro without requiring a Season Pass ledger", async () => {
+    const proExpiresAt = Date.now() + 7 * 86_400_000;
+    mockIsProActive.mockResolvedValue({ active: true, expiresAt: proExpiresAt });
+    mockedSupabase.mockReturnValue(null as never);
+
+    const res = await GET(makeRequest(WALLET));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      active: true,
+      source: "pro",
+      seasonPassExpiresAt: null,
+      proExpiresAt,
+    });
+  });
+
+  it("prefers source=pro when PRO and a cached Season Pass are both active", async () => {
+    const proExpiresAt = Date.now() + 7 * 86_400_000;
+    mockIsProActive.mockResolvedValue({ active: true, expiresAt: proExpiresAt });
+    mockRedisGet.mockResolvedValue(EXPIRES_FUTURE);
+
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json).toMatchObject({
+      active: true,
+      source: "pro",
+      seasonPassExpiresAt: EXPIRES_FUTURE,
+      proExpiresAt,
+      shieldsCredited: 3,
+    });
+  });
+
+  it("fails closed when PRO status cannot be checked", async () => {
+    mockIsProActive.mockRejectedValue(new Error("redis unavailable"));
+
+    const res = await GET(makeRequest(WALLET));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toMatchObject({
+      active: false,
+      source: null,
+      error: "entitlement_unavailable",
+    });
+    expect(mockedSupabase).not.toHaveBeenCalled();
   });
 });

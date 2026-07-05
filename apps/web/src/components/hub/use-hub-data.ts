@@ -143,7 +143,12 @@ export type HubLiteData = {
   focusPassport: HubFocusPassport | null;
   contentLoop: { action: ContentLoopAction | null; isHydrated: boolean };
   sessionQuota: HubSessionQuota;
-  seasonPass: { active: boolean; loading: boolean; refresh: () => void | Promise<void> };
+  seasonPass: {
+    active: boolean;
+    source: "pro" | "season_pass" | null;
+    loading: boolean;
+    refresh: () => void | Promise<void>;
+  };
   /** Discriminated slice for <ChallengeCard> (active → day + shields). */
   challengeSeasonPass: ChallengeCardSeasonPass;
   challenge: SeasonChallengeMeta;
@@ -334,10 +339,17 @@ export function useHubData(): HubData {
   // shields. Offer → just the loading flag (gates the buy CTA against FOUC).
   const challengeSeasonPass = useMemo<ChallengeCardSeasonPass>(() => {
     if (seasonPassStatus.active) {
+      if (seasonPassStatus.source === "pro") {
+        return { active: true, source: "pro" };
+      }
+      if (!seasonPassStatus.seasonPassExpiresAt) {
+        return { active: false, isLoading: false };
+      }
       return {
         active: true,
+        source: "season_pass",
         dayOfChallenge: challengeDayFromExpiry(
-          seasonPassStatus.expiresAt,
+          seasonPassStatus.seasonPassExpiresAt,
           challenge.durationDays,
         ),
         shieldsCredited: seasonPassStatus.shieldsCredited ?? challenge.shieldBonus,
@@ -362,6 +374,7 @@ export function useHubData(): HubData {
       sessionQuota: sessionQuotaState,
       seasonPass: {
         active: seasonPassStatus.active,
+        source: seasonPassStatus.source,
         loading: seasonPassStatus.loading,
         refresh: seasonPassStatus.refresh,
       },
