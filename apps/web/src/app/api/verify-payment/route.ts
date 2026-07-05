@@ -53,6 +53,7 @@ import { createLogger } from "@/lib/server/logger";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { extendProExpiry } from "@/lib/coach/pro-extend";
+import { isProActive } from "@/lib/pro/is-active";
 
 const redis = Redis.fromEnv();
 
@@ -152,6 +153,22 @@ export async function POST(req: Request) {
   if (isSeasonPass && !isLiteModeServer()) {
     log.warn("season_pass_unavailable_full_mode", { sku, chainId });
     return err("season_pass_unavailable", 404);
+  }
+
+  // PRO already includes effective Training Pass access. Reject before any
+  // receipt fetch or settlement work so the server never converts a direct
+  // transfer into a duplicate Season Pass purchase or a +3 Shields grant.
+  if (isSeasonPass) {
+    try {
+      const pro = await isProActive(wallet);
+      if (pro.active) return err("included_with_pro", 409);
+    } catch (e) {
+      log.error("pro_status_check_failed_before_season_pass", {
+        wallet,
+        err: String(e),
+      });
+      return err("entitlement_unavailable", 503);
+    }
   }
 
   if (!RAIL_ACCEPTED_STABLECOIN_ADDRESSES_LOWER.includes(token)) {

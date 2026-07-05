@@ -14,10 +14,10 @@ import {
   type PayableToken,
 } from "@/lib/payments/use-get-peones-token-selection";
 import {
-  mapSeasonPassError,
   useSeasonPassRail,
   type SeasonPassRailResult,
 } from "@/lib/season-pass/use-season-pass-rail";
+import { mapSeasonPassError } from "@/lib/season-pass/map-season-pass-error";
 
 const SKU = "lite_season_pass_21" as const;
 const FALLBACK_TOKEN = "USDC";

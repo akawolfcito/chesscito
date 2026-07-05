@@ -6,6 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockGetReceipt = vi.hoisted(() => vi.fn());
+const mockIsProActive = vi.hoisted(() => vi.fn());
 vi.mock("viem", async (importOriginal) => {
   const actual = await importOriginal<typeof import("viem")>();
   return {
@@ -38,6 +39,7 @@ vi.mock("@/lib/supabase/server", () => ({ getSupabaseServer: vi.fn() }));
 vi.mock("@/lib/server/logger", () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));
+vi.mock("@/lib/pro/is-active", () => ({ isProActive: mockIsProActive }));
 
 import { encodeAbiParameters, encodeEventTopics } from "viem";
 import { POST } from "../route";
@@ -108,6 +110,7 @@ beforeEach(() => {
   mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, EXPECTED, 3)]));
   mockedSupabase.mockReset();
   mockedSupabase.mockReturnValue(buildSupabaseMock().supabase);
+  mockIsProActive.mockReset().mockResolvedValue({ active: false, expiresAt: null });
 });
 afterEach(() => {
   delete process.env.CHESSCITO_TREASURY_ADDRESS;
@@ -313,6 +316,29 @@ describe("season pass", () => {
       expect.any(String),
       expect.objectContaining({ px: expect.any(Number) }),
     );
+  });
+
+  it("active PRO → 409 included_with_pro before receipt or shield credit", async () => {
+    mockIsProActive.mockResolvedValue({
+      active: true,
+      expiresAt: Date.now() + 7 * 86_400_000,
+    });
+
+    const res = await POST(makeRequest(spBody()));
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ ok: false, error: "included_with_pro" });
+    expect(mockGetReceipt).not.toHaveBeenCalled();
+    expect(mockedSupabase).not.toHaveBeenCalled();
+    expect(mockRedisIncrby).not.toHaveBeenCalled();
+  });
+
+  it("Season Pass entitlement check failure → 503 before receipt", async () => {
+    mockIsProActive.mockRejectedValue(new Error("redis unavailable"));
+
+    const res = await POST(makeRequest(spBody()));
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toBe("entitlement_unavailable");
+    expect(mockGetReceipt).not.toHaveBeenCalled();
   });
 
   it("duplicate season pass tx → ok, duplicate true, no insert, no redis", async () => {

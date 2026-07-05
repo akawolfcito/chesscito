@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { mapSeasonPassError } from "../use-season-pass-rail";
+import { mapSeasonPassError } from "../map-season-pass-error";
 
 describe("mapSeasonPassError", () => {
   it("not-configured / no-treasury → configuration message", () => {
@@ -50,5 +50,9 @@ describe("mapSeasonPassError", () => {
     expect(mapSeasonPassError("something_weird")).toBe(fallback);
     expect(mapSeasonPassError(null)).toBe(fallback);
     expect(mapSeasonPassError(undefined)).toBe(fallback);
+  });
+
+  it("maps active PRO coverage to stable included copy", () => {
+    expect(mapSeasonPassError("included_with_pro")).toBe("Included with PRO.");
   });
 });
