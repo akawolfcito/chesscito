@@ -2334,6 +2334,19 @@ const messages = {
     errorBody: "Algo salió mal. Toca para intentar de nuevo.",
     retryCta: "Intentar de nuevo",
   },
+  PLAY_BADGES_COPY: {
+    pageTitle: "Insignias de Arena",
+    pageDescription: "Logros ganados con tus victorias clasificatorias.",
+    closeSheetLabel: "Cerrar insignias",
+  },
+  PLAY_LEADERS_COPY: {
+    pageTitle: "Salón de la Fama",
+    pageDescription: "Mejores jugadores por victorias acuñadas.",
+    closeSheetLabel: "Cerrar líderes",
+    emptyMessage: "Aún no hay victorias acuñadas. Sé el primer campeón.",
+    loadError: "No se pudo cargar el Salón de la Fama. Intenta de nuevo.",
+    retry: "Reintentar",
+  },
 };
 
 export default messages;

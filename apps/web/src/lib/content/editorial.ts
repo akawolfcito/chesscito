@@ -1018,6 +1018,21 @@ export const ACHIEVEMENTS_COPY = {
   },
 } as const;
 
+export const PLAY_BADGES_COPY = {
+  pageTitle: "Arena Badges",
+  pageDescription: "Achievements earned from your ranked victories.",
+  closeSheetLabel: "Close badges",
+} as const;
+
+export const PLAY_LEADERS_COPY = {
+  pageTitle: "Hall of Fame",
+  pageDescription: "Top players by minted victories.",
+  closeSheetLabel: "Close leaders",
+  emptyMessage: "No victories minted yet. Be the first champion.",
+  loadError: "Couldn't load the Hall of Fame. Try again.",
+  retry: "Retry",
+} as const;
+
 /** Roadmap surface (feature #23). Non-speculative — explicitly "soon". */
 export const ROADMAP_COPY = {
   sectionTitle: "Coming later",
