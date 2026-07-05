@@ -3255,6 +3255,17 @@ export const PLAY_HUB_COPY = {
   arenaAriaLabel: "Enter Arena: full chess vs AI",
 } as const;
 
+export const PLAY_TACTICS_COPY = {
+  tileLabel: "Tactics",
+  tileAriaLabel: "Open Arena warm-up",
+  completedAriaLabel: "Arena warm-up complete for today",
+  doneBadge: "Done",
+  sheetTitle: "Arena Warm-up",
+  objective: "Find the best {piece} move before entering Arena.",
+  prompt: "Find the winning move",
+  solved: "Warm-up complete!",
+} as const;
+
 export const HUB_RAIL_COPY = {
   learnLabel: "TRAINING PATH",
   unlockLabel: "UNLOCK",

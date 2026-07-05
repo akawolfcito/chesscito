@@ -1776,6 +1776,16 @@ const messages = {
     arenaLabel: "ENTRAR A ARENA",
     arenaAriaLabel: "Entrar a Arena: ajedrez completo vs IA",
   },
+  PLAY_TACTICS_COPY: {
+    tileLabel: "Tácticas",
+    tileAriaLabel: "Abrir calentamiento de Arena",
+    completedAriaLabel: "Calentamiento de Arena completado por hoy",
+    doneBadge: "Listo",
+    sheetTitle: "Calentamiento de Arena",
+    objective: "Encuentra la mejor jugada de {piece} antes de entrar a Arena.",
+    prompt: "Encuentra la jugada ganadora",
+    solved: "¡Calentamiento completado!",
+  },
   HUB_RAIL_COPY: {
     ...en.HUB_RAIL_COPY,
     learnLabel: "RUTA DE ENTRENAMIENTO",

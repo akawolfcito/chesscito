@@ -56,7 +56,7 @@ describe("PlayHubScaffold", () => {
     expect(portal.compareDocumentPosition(modeSwitch) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("has one primary Arena CTA and no Training or Tactics content", () => {
+  it("has one primary Arena CTA, Play Tactics, and no Training content", () => {
     render(<PlayHubScaffold {...props} />);
 
     expect(screen.getAllByRole("button", { name: "Enter Arena: full chess vs AI" })).toHaveLength(1);
@@ -64,6 +64,6 @@ describe("PlayHubScaffold", () => {
     expect(screen.queryByText(/Train Pieces/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Daily Focus/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Special Training/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Tactic/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Tactics")).toBeInTheDocument();
   });
 });

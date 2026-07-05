@@ -8378,7 +8378,7 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .play-hub-secondary-actions {
   display: grid;
-  grid-template-columns: repeat(2, 72px);
+  grid-template-columns: repeat(3, 72px);
   gap: 14px;
   justify-content: center;
 }

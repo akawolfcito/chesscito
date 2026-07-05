@@ -8,6 +8,7 @@ import { LanguageChip } from "@/components/hub/language-chip";
 import { KingdomAnchor } from "@/components/kingdom/kingdom-anchor";
 import { PrimaryPlayCta } from "@/components/kingdom/primary-play-cta";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { PlayTacticsTile } from "@/components/tactics/play-tactics-tile";
 
 type PlayHubScaffoldProps = {
   mintedVictoryCount: number;
@@ -21,8 +22,8 @@ type PlayHubScaffoldProps = {
   onArenaPress: () => void;
 };
 
-/** Competitive Play home. Deliberately contains no Training/Daily/Tactics
- * primitives; Enter Arena is its only dominant CTA. */
+/** Competitive Play home. Tactics is a Play-owned warm-up; Enter Arena remains
+ * the only dominant CTA and no Learn/Daily primitives are mounted. */
 export function PlayHubScaffold({
   mintedVictoryCount,
   isWalletConnected,
@@ -94,6 +95,7 @@ export function PlayHubScaffold({
           <AppModeSwitch activeMode="play" />
         </div>
         <div className="play-hub-secondary-actions" aria-label={tPlay("actionsAriaLabel")}>
+          <PlayTacticsTile />
           <HubActionTile
             iconSrc="/art/redesign/icons/coach.png"
             label={tPlay("coachLabel")}
