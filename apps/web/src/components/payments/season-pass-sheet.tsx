@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { useAccount } from "wagmi";
 
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { AddCashCta } from "@/components/minipay/add-cash-cta";
@@ -18,6 +20,7 @@ import {
   type SeasonPassRailResult,
 } from "@/lib/season-pass/use-season-pass-rail";
 import { mapSeasonPassError } from "@/lib/season-pass/map-season-pass-error";
+import { useSeasonPassStatus } from "@/lib/season-pass/use-season-pass-status";
 
 const SKU = "lite_season_pass_21" as const;
 const FALLBACK_TOKEN = "USDC";
@@ -55,6 +58,9 @@ function SeasonPassSheetInner({
   onOpenChange,
   onSuccess,
 }: Omit<SeasonPassSheetProps, "open">) {
+  const t = useTranslations("CHALLENGE_CARD_COPY");
+  const { address } = useAccount();
+  const trainingPass = useSeasonPassStatus(address);
   const pass = getSeasonPass(SKU);
   const priceLabel = formatUsd(pass.priceUsd6);
 
@@ -99,7 +105,32 @@ function SeasonPassSheetInner({
         className="flex flex-col items-center gap-4 text-center"
         data-testid="season-pass-sheet"
       >
-        {isSuccess && rail.result ? (
+        {trainingPass.loading ? (
+          <div data-testid="season-pass-status-loading" className="flex flex-col items-center gap-3">
+            <p className="arena-result-title">Checking access...</p>
+          </div>
+        ) : trainingPass.active && trainingPass.source === "pro" ? (
+          <div data-testid="season-pass-included-pro" className="flex flex-col items-center gap-3">
+            <p className="arena-result-title">{t("includedWithPro")}</p>
+            <p className="max-w-[220px] text-sm opacity-80">
+              {t("trainingPassStat")} · {t("accessActive")}
+            </p>
+            <PrincipalButton onClick={() => onOpenChange(false)} className="mt-1">
+              Done
+            </PrincipalButton>
+          </div>
+        ) : trainingPass.active && trainingPass.source === "season_pass" ? (
+          <div data-testid="season-pass-already-active" className="flex flex-col items-center gap-3">
+            <ShieldIcon />
+            <p className="arena-result-title">Pass Active</p>
+            <p className="text-sm opacity-80">
+              +{trainingPass.shieldsCredited} shields included with your direct pass
+            </p>
+            <PrincipalButton onClick={() => onOpenChange(false)} className="mt-1">
+              Done
+            </PrincipalButton>
+          </div>
+        ) : isSuccess && rail.result ? (
           <div
             data-testid="season-pass-success"
             className="flex flex-col items-center gap-3"

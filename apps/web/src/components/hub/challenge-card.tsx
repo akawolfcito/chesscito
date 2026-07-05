@@ -9,7 +9,8 @@ import type { HubFocusPassport, SeasonChallengeMeta } from "@/components/hub/use
  *  branch carries only its loading flag. */
 export type ChallengeCardSeasonPass =
   | { active: false; isLoading: boolean }
-  | { active: true; dayOfChallenge: number; shieldsCredited: number };
+  | { active: true; source: "pro" }
+  | { active: true; source: "season_pass"; dayOfChallenge: number; shieldsCredited: number };
 
 export type ChallengeCardProps = {
   focusPassport: HubFocusPassport;
@@ -94,7 +95,7 @@ export function ChallengeCard({
                 className="challenge-card-active-chip"
                 data-testid="challenge-active-badge"
               >
-                {t("activeBadge")}
+                {seasonPass.source === "pro" ? t("includedWithPro") : t("activeBadge")}
               </span>
             ) : null}
           </header>
@@ -133,14 +134,24 @@ export function ChallengeCard({
             {durationDays} {t("daysStat")}
           </span>
           <span className="challenge-card-stat">
-            <ShieldIcon />
-            {t("shieldsBonus", { count: challenge.shieldBonus })} {t("shieldsStat").toLowerCase()}
+            {isActive && seasonPass.source === "pro" ? (
+              t("trainingPassStat")
+            ) : (
+              <>
+                <ShieldIcon />
+                {t("shieldsBonus", { count: challenge.shieldBonus })} {t("shieldsStat").toLowerCase()}
+              </>
+            )}
           </span>
           <span className="challenge-card-stat">
             {isActive ? (
-              <span data-testid="challenge-day">
-                {`${seasonPass.dayOfChallenge}/${durationDays} ${t("dayStat")}`}
-              </span>
+              seasonPass.source === "pro" ? (
+                <span data-testid="challenge-pro-coverage">{t("accessActive")}</span>
+              ) : (
+                <span data-testid="challenge-day">
+                  {`${seasonPass.dayOfChallenge}/${durationDays} ${t("dayStat")}`}
+                </span>
+              )
             ) : (
               <>
                 <TagIcon />

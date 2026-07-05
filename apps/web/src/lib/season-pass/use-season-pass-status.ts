@@ -2,12 +2,25 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import type { EffectiveTrainingPass } from "@/lib/entitlements/effective-training-pass";
 
-export type SeasonPassStatus =
-  | { active: false; loading: boolean }
-  | { active: true; loading: boolean; expiresAt: string; seasonId: string; supporterStatus: string; shieldsCredited: number };
+export type SeasonPassStatus = EffectiveTrainingPass & {
+  loading: boolean;
+  seasonId: string | null;
+  supporterStatus: string | null;
+  shieldsCredited: number;
+};
 
-const INITIAL: SeasonPassStatus = { active: false, loading: true };
+const INITIAL: SeasonPassStatus = {
+  active: false,
+  source: null,
+  seasonPassExpiresAt: null,
+  proExpiresAt: null,
+  loading: true,
+  seasonId: null,
+  supporterStatus: null,
+  shieldsCredited: 0,
+};
 
 export function useSeasonPassStatus(wallet: string | undefined) {
   const [status, setStatus] = useState<SeasonPassStatus>(INITIAL);
@@ -15,7 +28,7 @@ export function useSeasonPassStatus(wallet: string | undefined) {
 
   const refresh = useCallback(async () => {
     if (!CHESSCITO_LITE_MODE || !wallet) {
-      setStatus({ active: false, loading: false });
+      setStatus({ ...INITIAL, loading: false });
       return;
     }
     abortRef.current?.abort();
@@ -28,21 +41,19 @@ export function useSeasonPassStatus(wallet: string | undefined) {
       });
       if (!res.ok) throw new Error(`status ${res.status}`);
       const json = await res.json();
-      if (json.active) {
-        setStatus({
-          active: true,
-          loading: false,
-          expiresAt: json.expiresAt,
-          seasonId: json.seasonId,
-          supporterStatus: json.supporterStatus ?? "challenger",
-          shieldsCredited: json.shieldsCredited ?? 3,
-        });
-      } else {
-        setStatus({ active: false, loading: false });
-      }
+      setStatus({
+        active: Boolean(json.active),
+        source: json.source === "pro" || json.source === "season_pass" ? json.source : null,
+        seasonPassExpiresAt: json.seasonPassExpiresAt ?? null,
+        proExpiresAt: typeof json.proExpiresAt === "number" ? json.proExpiresAt : null,
+        loading: false,
+        seasonId: json.seasonId ?? null,
+        supporterStatus: json.supporterStatus ?? null,
+        shieldsCredited: Number(json.shieldsCredited ?? 0),
+      });
     } catch (e) {
       if ((e as Error)?.name === "AbortError") return;
-      setStatus({ active: false, loading: false });
+      setStatus({ ...INITIAL, loading: false });
     }
   }, [wallet]);
 

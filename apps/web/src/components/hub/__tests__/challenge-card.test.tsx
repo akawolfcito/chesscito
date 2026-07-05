@@ -88,7 +88,7 @@ describe("<ChallengeCard>", () => {
       <ChallengeCard
         focusPassport={passport({ streak: 1, todayDone: true })}
         challenge={CHALLENGE}
-        seasonPass={{ active: true, dayOfChallenge: 1, shieldsCredited: 3 }}
+        seasonPass={{ active: true, source: "season_pass", dayOfChallenge: 1, shieldsCredited: 3 }}
         onJoinChallenge={null}
       />,
     );
@@ -98,6 +98,26 @@ describe("<ChallengeCard>", () => {
     expect(screen.getByTestId("challenge-day").textContent).toMatch(/1\/21/);
     expect(card.textContent).toMatch(/\+3/);
     expect(card.textContent).toMatch(/Mind Challenge/i);
+    expect(screen.queryByTestId("challenge-join-cta")).toBeNull();
+  });
+
+  it("active PRO: shows included coverage without advertising the +3 Shields bonus", () => {
+    render(
+      <ChallengeCard
+        focusPassport={passport({ streak: 2, todayDone: true })}
+        challenge={CHALLENGE}
+        seasonPass={{ active: true, source: "pro" }}
+        onJoinChallenge={null}
+      />,
+    );
+
+    expect(screen.getByTestId("challenge-active-badge")).toHaveTextContent(
+      "Included with PRO",
+    );
+    expect(screen.getByTestId("challenge-pro-coverage")).toHaveTextContent(
+      "Access active",
+    );
+    expect(screen.getByTestId("challenge-card")).not.toHaveTextContent("+3");
     expect(screen.queryByTestId("challenge-join-cta")).toBeNull();
   });
 
