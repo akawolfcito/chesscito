@@ -485,6 +485,9 @@ describe("chesscito pro", () => {
       "consume_pro_treasury_payment",
       expect.objectContaining({ p_sku: PRO_SKU, p_expires_at: expect.any(String) }),
     );
+    // The Season Pass entitlement gate is deliberately one-way: buying PRO
+    // never checks or consumes an existing direct Season Pass.
+    expect(mockIsProActive).not.toHaveBeenCalled();
   });
 
   it("duplicate PRO tx → ok, duplicate true, no second Redis extend", async () => {
