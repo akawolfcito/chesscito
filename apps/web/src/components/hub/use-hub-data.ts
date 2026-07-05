@@ -156,8 +156,8 @@ export type HubData = {
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
-/** Hydrates all `/hub` data from wagmi + localStorage. Pure data only — no
- *  sheet orchestration, handlers, or JSX (those stay in the presenters). */
+/** Hydrates the legacy Learn/Full Hub from wagmi + localStorage. Play must use
+ *  `usePlayHubData` so Training progress hooks and storage never execute. */
 export function useHubData(): HubData {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();

@@ -20,6 +20,9 @@ type Props = {
   atmosphere?: Atmosphere;
   className?: string;
   style?: CSSProperties;
+  /** Optional portal tagline. Play owns no Training CTA/copy, while legacy
+   * Learn/Full callers retain the current tagline by default. */
+  showTagline?: boolean;
 };
 
 const ASPECT_RATIO: Record<KingdomAnchorVariant, string> = {
@@ -67,6 +70,7 @@ export function KingdomAnchor({
   atmosphere = "adventure",
   className = "",
   style,
+  showTagline = true,
 }: Props) {
   const t = useTranslations("HOME_ANCHOR_COPY");
   const isProActive = useIsProActive();
@@ -169,7 +173,7 @@ export function KingdomAnchor({
           {/* Tagline rendered inside the portal frame, below the wizard.
            *  The highlight line is bolded as the focal closer. Same copy
            *  across both inactive + PRO portal variants for now. */}
-          {variant === "playhub" && (
+          {variant === "playhub" && showTagline && (
             <div className="kingdom-anchor-tagline" aria-hidden="true">
               <span className="kingdom-anchor-tagline-lead">
                 {t("taglineLead")}

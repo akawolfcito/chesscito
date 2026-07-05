@@ -1765,6 +1765,17 @@ const messages = {
     premiumActiveAriaFormat:
       "Pase de entrenamiento: {used} de {total} sesiones usadas, {days} días restantes",
   },
+  PLAY_HUB_COPY: {
+    rootAriaLabel: "Hub Play de Chesscito",
+    victoriesLabel: "Victorias",
+    victoriesAriaLabel: "Victorias de Arena minteadas: {count}",
+    actionsAriaLabel: "Servicios de Play",
+    coachLabel: "Coach",
+    shopLabel: "Tienda",
+    shopAriaLabel: "Abrir tienda de Play",
+    arenaLabel: "ENTRAR A ARENA",
+    arenaAriaLabel: "Entrar a Arena: ajedrez completo vs IA",
+  },
   HUB_RAIL_COPY: {
     ...en.HUB_RAIL_COPY,
     learnLabel: "RUTA DE ENTRENAMIENTO",

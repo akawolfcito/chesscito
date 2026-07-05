@@ -3243,6 +3243,18 @@ export const HUB_SCAFFOLD_COPY = {
     "Training Pass: {used} of {total} sessions used, {days} days remaining",
 } as const;
 
+export const PLAY_HUB_COPY = {
+  rootAriaLabel: "Chesscito Play Hub",
+  victoriesLabel: "Victories",
+  victoriesAriaLabel: "Minted Arena victories: {count}",
+  actionsAriaLabel: "Play services",
+  coachLabel: "Coach",
+  shopLabel: "Shop",
+  shopAriaLabel: "Open Play Shop",
+  arenaLabel: "ENTER ARENA",
+  arenaAriaLabel: "Enter Arena: full chess vs AI",
+} as const;
+
 export const HUB_RAIL_COPY = {
   learnLabel: "TRAINING PATH",
   unlockLabel: "UNLOCK",

@@ -1,0 +1,103 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithIntl as render } from "@/test-utils/render-with-intl";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+
+const pushMock = vi.hoisted(() => vi.fn());
+const openProMock = vi.hoisted(() => vi.fn());
+const openShopMock = vi.hoisted(() => vi.fn());
+const connectMock = vi.hoisted(() => vi.fn());
+const trackMock = vi.hoisted(() => vi.fn());
+const playDataMock = vi.hoisted(() => vi.fn());
+const proStateMock = vi.hoisted(() => vi.fn());
+
+vi.mock("next/dynamic", () => ({ default: () => () => null }));
+vi.mock("@/i18n/navigation", () => ({ useRouter: () => ({ push: pushMock }) }));
+vi.mock("@/components/hub/use-play-hub-data", () => ({
+  usePlayHubData: () => playDataMock(),
+}));
+vi.mock("@/lib/wallet/use-connect-wallet", () => ({
+  useConnectWallet: () => ({ connectWallet: connectMock }),
+}));
+vi.mock("@/lib/pro/use-pro-sheet-state", () => ({
+  useProSheetState: () => proStateMock(),
+}));
+vi.mock("@/lib/shop/use-shop-sheet-state", () => ({
+  useShopSheetState: () => ({
+    openSheet: openShopMock,
+    sheetProps: {},
+    confirmProps: {},
+  }),
+}));
+vi.mock("@/lib/telemetry", () => ({ track: (...args: unknown[]) => trackMock(...args) }));
+vi.mock("@/components/hub/play-hub-scaffold", () => ({
+  PlayHubScaffold: (props: {
+    mintedVictoryCount: number;
+    onArenaPress: () => void;
+    onCoachTap: () => void;
+    onShopTap: () => void;
+  }) => (
+    <div>
+      <span>victories:{props.mintedVictoryCount}</span>
+      <button onClick={props.onArenaPress}>arena</button>
+      <button onClick={props.onCoachTap}>coach</button>
+      <button onClick={props.onShopTap}>shop</button>
+    </div>
+  ),
+}));
+
+import { PlayHubClient } from "../play-hub-client";
+
+describe("PlayHubClient", () => {
+  beforeEach(() => {
+    pushMock.mockReset();
+    openProMock.mockReset();
+    openShopMock.mockReset();
+    connectMock.mockReset();
+    trackMock.mockReset();
+    playDataMock.mockReturnValue({
+      address: "0xcc4179a22b473ea2eb2b9b9b210458d0f60fc2dd",
+      isConnected: true,
+      mintedVictoryCount: 3,
+    });
+    proStateMock.mockReturnValue({
+      proStatus: null,
+      openSheet: openProMock,
+      sheetProps: {},
+    });
+  });
+
+  it("passes the minted Victory NFT count to the Play scaffold", () => {
+    render(<PlayHubClient />);
+    expect(screen.getByText("victories:3")).toBeInTheDocument();
+  });
+
+  it("uses Arena as its navigation CTA and never routes to exercises", async () => {
+    render(<PlayHubClient />);
+    await userEvent.click(screen.getByText("arena"));
+    expect(pushMock).toHaveBeenCalledWith("/arena?fresh=1");
+    expect(pushMock).not.toHaveBeenCalledWith(expect.stringContaining("/exercises"));
+  });
+
+  it("opens PRO for a free player and routes active PRO to Coach", async () => {
+    const { unmount } = render(<PlayHubClient />);
+    await userEvent.click(screen.getByText("coach"));
+    expect(openProMock).toHaveBeenCalledTimes(1);
+    unmount();
+
+    proStateMock.mockReturnValue({
+      proStatus: { active: true, expiresAt: Date.now() + 7 * 86_400_000 },
+      openSheet: openProMock,
+      sheetProps: {},
+    });
+    render(<PlayHubClient />);
+    await userEvent.click(screen.getByText("coach"));
+    expect(pushMock).toHaveBeenCalledWith("/coach/history");
+  });
+
+  it("opens the Play shop in place", async () => {
+    render(<PlayHubClient />);
+    await userEvent.click(screen.getByText("shop"));
+    expect(openShopMock).toHaveBeenCalledTimes(1);
+  });
+});
