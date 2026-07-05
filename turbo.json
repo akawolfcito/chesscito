@@ -8,7 +8,8 @@
         "VERCEL_GIT_COMMIT_SHA",
         "VERCEL_GIT_COMMIT_REF",
         "VERCEL_ENV",
-        "NEXT_PUBLIC_BUILD_SHA"
+        "NEXT_PUBLIC_BUILD_SHA",
+        "NEXT_PUBLIC_CHESSCITO_MODE"
       ],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },

@@ -1,43 +1,102 @@
-import { describe, expect, it, vi, afterEach } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { isVictoryPermitMintEnabled } from "../feature-flags";
+type EnvValue = string | undefined;
 
-describe("CHESSCITO_LITE_MODE", () => {
+async function importFlags(mode: EnvValue, legacy: EnvValue) {
+  vi.resetModules();
+
+  if (mode === undefined) {
+    vi.stubEnv("NEXT_PUBLIC_CHESSCITO_MODE", undefined);
+  } else {
+    vi.stubEnv("NEXT_PUBLIC_CHESSCITO_MODE", mode);
+  }
+
+  if (legacy === undefined) {
+    vi.stubEnv("NEXT_PUBLIC_CHESSCITO_LITE_MODE", undefined);
+  } else {
+    vi.stubEnv("NEXT_PUBLIC_CHESSCITO_LITE_MODE", legacy);
+  }
+
+  return import("@/lib/feature-flags");
+}
+
+describe("Chesscito deployment mode", () => {
   afterEach(() => {
+    vi.unstubAllEnvs();
     vi.resetModules();
   });
 
-  it("is false when env var is absent", async () => {
-    vi.stubEnv("NEXT_PUBLIC_CHESSCITO_LITE_MODE", "");
-    const { CHESSCITO_LITE_MODE } = await import("@/lib/feature-flags");
-    expect(CHESSCITO_LITE_MODE).toBe(false);
-  });
+  it.each([
+    [undefined, undefined, "full"],
+    [undefined, "false", "full"],
+    [undefined, "true", "learn"],
+    ["", "", "full"],
+    ["full", undefined, "full"],
+    ["full", "false", "full"],
+    ["learn", undefined, "learn"],
+    ["learn", "true", "learn"],
+    ["play", undefined, "play"],
+    ["play", "false", "play"],
+  ] as const)(
+    "resolves new=%s legacy=%s as %s",
+    async (mode, legacy, expected) => {
+      const flags = await importFlags(mode, legacy);
 
-  it("is false when env var is 'false'", async () => {
-    vi.stubEnv("NEXT_PUBLIC_CHESSCITO_LITE_MODE", "false");
-    const { CHESSCITO_LITE_MODE } = await import("@/lib/feature-flags");
-    expect(CHESSCITO_LITE_MODE).toBe(false);
-  });
+      expect(flags.CHESSCITO_MODE).toBe(expected);
+      expect(flags.isFullMode()).toBe(expected === "full");
+      expect(flags.isLearnMode()).toBe(expected === "learn");
+      expect(flags.isPlayMode()).toBe(expected === "play");
+      expect(flags.CHESSCITO_LITE_MODE).toBe(expected === "learn");
+      expect(flags.isLiteModeServer()).toBe(expected === "learn");
+    },
+  );
 
-  it("is true when env var is 'true'", async () => {
+  it.each(["lite", "training", "FULL", "true"])(
+    "rejects invalid new mode %s",
+    async (mode) => {
+      await expect(importFlags(mode, undefined)).rejects.toThrow(
+        "Invalid NEXT_PUBLIC_CHESSCITO_MODE",
+      );
+    },
+  );
+
+  it.each([
+    ["learn", "false"],
+    ["full", "true"],
+    ["play", "true"],
+  ] as const)(
+    "rejects contradictory new=%s legacy=%s",
+    async (mode, legacy) => {
+      await expect(importFlags(mode, legacy)).rejects.toThrow(
+        "Contradictory Chesscito mode flags",
+      );
+    },
+  );
+
+  it("keeps the server alias call-time compatible", async () => {
+    const flags = await importFlags(undefined, "false");
+    expect(flags.isLiteModeServer()).toBe(false);
+
     vi.stubEnv("NEXT_PUBLIC_CHESSCITO_LITE_MODE", "true");
-    const { CHESSCITO_LITE_MODE } = await import("@/lib/feature-flags");
-    expect(CHESSCITO_LITE_MODE).toBe(true);
+    expect(flags.isLiteModeServer()).toBe(true);
   });
 });
 
 describe("isVictoryPermitMintEnabled", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.resetModules();
   });
 
-  it("is false when the env var is unset", () => {
+  it("is false when the env var is unset", async () => {
     vi.stubEnv("NEXT_PUBLIC_VICTORY_PERMIT_MINT_ENABLED", "");
+    const { isVictoryPermitMintEnabled } = await import("../feature-flags");
     expect(isVictoryPermitMintEnabled()).toBe(false);
   });
 
-  it("is true only when the env var is exactly \"true\"", () => {
+  it("is true only when the env var is exactly true", async () => {
     vi.stubEnv("NEXT_PUBLIC_VICTORY_PERMIT_MINT_ENABLED", "true");
+    const { isVictoryPermitMintEnabled } = await import("../feature-flags");
     expect(isVictoryPermitMintEnabled()).toBe(true);
   });
 });
