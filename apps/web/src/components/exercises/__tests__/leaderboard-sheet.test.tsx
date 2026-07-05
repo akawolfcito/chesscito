@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
 import { act } from "@testing-library/react";
 import { waitFor } from "@testing-library/react";
 import { LeaderboardSheet } from "../leaderboard-sheet";
@@ -20,6 +20,39 @@ beforeEach(() => {
     ok: true,
     json: async () => [],
   }) as unknown as typeof fetch;
+});
+
+const originalFetch = global.fetch;
+
+describe("LeaderboardSheet — no fetch while closed", () => {
+  afterEach(() => {
+    global.fetch = originalFetch;
+    vi.clearAllMocks();
+  });
+
+  it("does not call fetch when mounted closed", async () => {
+    const fetchSpy = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve([]) } as Response),
+    );
+    global.fetch = fetchSpy as unknown as typeof fetch;
+
+    render(<LeaderboardSheet open={false} onOpenChange={() => {}} showTrigger={false} />);
+
+    // Give any stray microtask a chance to fire, then assert it didn't.
+    await new Promise((r) => setTimeout(r, 0));
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("fetches exactly once when opened", async () => {
+    const fetchSpy = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve([]) } as Response),
+    );
+    global.fetch = fetchSpy as unknown as typeof fetch;
+
+    render(<LeaderboardSheet open={true} onOpenChange={() => {}} showTrigger={false} />);
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+  });
 });
 
 describe("LeaderboardSheet — showTrigger gate", () => {
