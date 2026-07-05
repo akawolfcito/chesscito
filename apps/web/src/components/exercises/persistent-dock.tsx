@@ -9,7 +9,7 @@ import {
   requestOpenDockSheet,
   useDockSheet,
 } from "@/lib/ui/dock-sheet-store";
-import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import { CHESSCITO_LITE_MODE, isPlayMode } from "@/lib/feature-flags";
 
 /**
  * Locale-aware navigation primitives. Critical for the i18n migration:
@@ -113,6 +113,7 @@ const MODE_DESCRIPTORS: Record<"exercises" | "arena", ModeDescriptor> = {
  *  dock's center contextual swap.
  *  In Lite Mode Arena is hidden — always show PIECES. */
 function resolveCenter(pathname: string): ModeDescriptor {
+  if (isPlayMode()) return MODE_DESCRIPTORS.arena;
   if (CHESSCITO_LITE_MODE) return MODE_DESCRIPTORS.exercises;
   const isArena = pathname.startsWith("/arena");
   return isArena ? MODE_DESCRIPTORS.exercises : MODE_DESCRIPTORS.arena;
@@ -123,20 +124,28 @@ function resolveCenter(pathname: string): ModeDescriptor {
  *  "return to the mode beneath this overlay" with the artwork of the
  *  current route, not the OTHER route's artwork. */
 function resolveBase(pathname: string): ModeDescriptor {
+  if (isPlayMode()) return MODE_DESCRIPTORS.arena;
   const isArena = pathname.startsWith("/arena");
   return isArena ? MODE_DESCRIPTORS.arena : MODE_DESCRIPTORS.exercises;
 }
 
-const SIDE_LEFT: ReadonlyArray<Item> = CHESSCITO_LITE_MODE
-  ? [{ id: "badge", labelKey: "badge", icon: "shield", iconSrc: "/art/badge-menu", sheet: "badges", fallback: "/?sheet=badges" }]
-  : [
-      { id: "badge", labelKey: "badge", icon: "shield", iconSrc: "/art/badge-menu", sheet: "badges", fallback: "/?sheet=badges" },
-      { id: "shop", labelKey: "shop", icon: "shop", iconSrc: "/art/shop-menu", sheet: "shop", fallback: "/?sheet=shop" },
-    ];
+const SIDE_LEFT: ReadonlyArray<Item> = [
+  { id: "badge", labelKey: "badge", icon: "shield", iconSrc: "/art/badge-menu", sheet: "badges", fallback: "/?sheet=badges" },
+  { id: "shop", labelKey: "shop", icon: "shop", iconSrc: "/art/shop-menu", sheet: "shop", fallback: "/?sheet=shop" },
+];
 
 const SIDE_RIGHT: ReadonlyArray<Item> = [
   { id: "trophies", labelKey: "trophies", icon: "trophy", iconSrc: "/art/action-row/trofeo-epico", sheet: "trophies", fallback: "/trophies", activeWhen: "/trophies" },
-  { id: "leaderboard", labelKey: "leaderboard", icon: "star", iconSrc: "/art/leaderboard-menu", sheet: "leaderboard", fallback: "/exercises?sheet=leaderboard" },
+  {
+    id: "leaderboard",
+    labelKey: "leaderboard",
+    icon: "star",
+    iconSrc: "/art/leaderboard-menu",
+    sheet: "leaderboard",
+    // Play never has a reachable /exercises (PR2 redirects it to Learn) —
+    // its cross-route fallback must land on /arena instead.
+    fallback: isPlayMode() ? "/arena?sheet=leaderboard" : "/exercises?sheet=leaderboard",
+  },
 ];
 
 function SideItem({
@@ -216,7 +225,9 @@ export function PersistentDock() {
   // warmer than the sides. Lift only on hover/press (CSS handles it).
   // Exception: Lite Mode pins center to PIECES, so it IS the current
   // route on /exercises and should glow as active.
-  const isCenterActive = CHESSCITO_LITE_MODE && pathname.startsWith("/exercises");
+  const isCenterActive =
+    (CHESSCITO_LITE_MODE && pathname.startsWith("/exercises")) ||
+    (isPlayMode() && pathname.startsWith("/arena"));
   const displayLabel = t(display.labelKey);
 
   return (
@@ -239,6 +250,10 @@ export function PersistentDock() {
               requestCloseDockSheet();
               return;
             }
+            // Play's center is permanently pinned to Arena — tapping it while
+            // already on /arena has no "other side" to swap to and must not
+            // fire a fresh-entry reset that would interrupt an active match.
+            if (isPlayMode() && pathname.startsWith("/arena")) return;
             track("dock_tap", { item: center.trackItem });
             router.push(center.href);
           }}
