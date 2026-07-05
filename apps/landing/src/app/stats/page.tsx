@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LEARN_URL, PLAY_URL } from "@/lib/app-urls";
 
-const PLAY_URL = process.env.NEXT_PUBLIC_PLAY_URL ?? "https://lite.chesscito.com";
-const FULL_URL = process.env.NEXT_PUBLIC_FULL_URL ?? "https://play.chesscito.com";
 
 export const metadata: Metadata = {
   title: "Stats — Chesscito",
@@ -64,7 +63,7 @@ export default function StatsPage() {
               Daily habits, streak data, and exercises completed.
             </p>
             <a
-              href={`${PLAY_URL}/stats`}
+              href={`${LEARN_URL}/stats`}
               className="mt-auto inline-flex min-h-[40px] items-center justify-center rounded-2xl border px-5 text-sm font-extrabold uppercase tracking-[0.10em] transition-opacity hover:opacity-80"
               style={{
                 background: "var(--landing-accent-bg)",
@@ -106,7 +105,7 @@ export default function StatsPage() {
               Arena matches, leaderboard rankings, and achievements.
             </p>
             <a
-              href={`${FULL_URL}/stats`}
+              href={`${PLAY_URL}/stats`}
               className="mt-auto inline-flex min-h-[40px] items-center justify-center rounded-2xl border px-5 text-sm font-extrabold uppercase tracking-[0.10em] transition-opacity hover:opacity-80"
               style={{
                 background: "var(--landing-accent-bg-strong)",

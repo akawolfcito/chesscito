@@ -3,7 +3,7 @@
  *
  * Lightweight endpoint: calls revalidateTag("content") on this deployment and
  * returns. Called by the dev promote proxy to fan-out cache invalidation across
- * all deployments (www, lite, preview, lite-preview) after a stage move.
+ * all deployments (www, learn, play, and legacy Lite) after a stage move.
  *
  * Gated on ADMIN_TOKEN (same auth as /api/admin/content). No DB writes.
  */

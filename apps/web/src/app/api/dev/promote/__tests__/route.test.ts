@@ -84,14 +84,18 @@ describe("POST /api/dev/promote", () => {
     expect(url).toBe("http://localhost/api/admin/content/stage");
     expect(opts.headers["x-admin-token"]).toBe("tkn");
     expect(JSON.parse(opts.body)).toMatchObject(VALID);
-    // Remaining calls = revalidation fan-out to 4 remote envs
+    // Remaining calls = revalidation fan-out to public and legacy envs
     const revalidateCalls = fetchMock.mock.calls.slice(1).map((c: unknown[]) => c[0]);
     expect(revalidateCalls).toEqual(expect.arrayContaining([
       "https://www.chesscito.com/api/admin/content/revalidate",
+      "https://learn.chesscito.com/api/admin/content/revalidate",
+      "https://learn-preview.chesscito.com/api/admin/content/revalidate",
+      "https://play.chesscito.com/api/admin/content/revalidate",
       "https://lite.chesscito.com/api/admin/content/revalidate",
       "https://preview.chesscito.com/api/admin/content/revalidate",
       "https://lite-preview.chesscito.com/api/admin/content/revalidate",
     ]));
+    expect(revalidateCalls).toHaveLength(7);
   });
 
   it("sanitizes an upstream 404 (absent from-version) without echoing the raw body", async () => {

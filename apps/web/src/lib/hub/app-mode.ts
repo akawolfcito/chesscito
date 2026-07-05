@@ -1,9 +1,9 @@
-export type ChesscitoAppMode = "training" | "play";
+export type ChesscitoAppMode = "learn" | "play";
 
 const MODE_HOSTS: Record<ChesscitoAppMode, Record<"preview" | "production", string>> = {
-  training: {
-    preview: "lite-preview.chesscito.com",
-    production: "lite.chesscito.com",
+  learn: {
+    preview: "learn-preview.chesscito.com",
+    production: "learn.chesscito.com",
   },
   play: {
     preview: "preview.chesscito.com",
@@ -12,7 +12,9 @@ const MODE_HOSTS: Record<ChesscitoAppMode, Record<"preview" | "production", stri
 };
 
 function deploymentFor(hostname: string): "preview" | "production" {
-  return hostname === MODE_HOSTS.training.preview || hostname === MODE_HOSTS.play.preview
+  return hostname === MODE_HOSTS.learn.preview ||
+    hostname === MODE_HOSTS.play.preview ||
+    hostname === "lite-preview.chesscito.com"
     ? "preview"
     : "production";
 }

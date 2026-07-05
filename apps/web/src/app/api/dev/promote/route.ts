@@ -6,7 +6,7 @@
  * the token ever reaching the browser). Mirrors /api/dev/publish.
  *
  * After a successful move, fans out revalidateTag("content") to all remote envs
- * (www, lite, preview, lite-preview) via /api/admin/content/revalidate so players
+ * (www, learn, play, and legacy Lite) via /api/admin/content/revalidate so players
  * see the change without waiting for the 60s TTL.
  *
  * Fail-closed: 404 in production (NODE_ENV guard); 400 on a malformed move;
@@ -51,6 +51,9 @@ function stageErrorForStatus(status: number): string {
 /** All remote deployments that need cache invalidation after a stage move. */
 const REMOTE_REVALIDATE_URLS = [
   "https://www.chesscito.com",
+  "https://learn.chesscito.com",
+  "https://learn-preview.chesscito.com",
+  "https://play.chesscito.com",
   "https://lite.chesscito.com",
   "https://preview.chesscito.com",
   "https://lite-preview.chesscito.com",
@@ -105,7 +108,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, errors: [stageErrorForStatus(res.status)] });
     }
 
-    // Fan-out cache invalidation to all remote deployments.
+    // Fan-out cache invalidation to public and legacy deployments.
     await Promise.allSettled(
       REMOTE_REVALIDATE_URLS.map((url) =>
         fetch(`${url}/api/admin/content/revalidate`, {

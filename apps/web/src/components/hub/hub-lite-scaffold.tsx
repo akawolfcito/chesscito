@@ -146,7 +146,7 @@ export function HubLiteScaffold({
             draggable={false}
           />
         </picture>
-        <AppModeSwitch activeMode="training" />
+        <AppModeSwitch activeMode="learn" />
       </div>
 
       <ChallengeCard

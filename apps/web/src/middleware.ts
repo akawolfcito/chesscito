@@ -2,8 +2,8 @@ import createMiddleware from "next-intl/middleware";
 import { defineRouting } from "next-intl/routing";
 import { NextRequest, NextResponse } from "next/server";
 import { routing } from "@/i18n/routing";
-import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
-import { isFullOnlyPath, getLiteRootTarget } from "@/lib/lite-mode-routing";
+import { CHESSCITO_MODE } from "@/lib/feature-flags";
+import { modeRedirectUrl } from "@/lib/mode-routing";
 
 /**
  * `/es` is gated behind a server-side env flag during the migration:
@@ -54,17 +54,13 @@ export default function middleware(request: NextRequest) {
     }
   }
 
-  if (CHESSCITO_LITE_MODE) {
-    if (isFullOnlyPath(pathname, routing.locales, routing.defaultLocale)) {
-      const targetPath = getLiteRootTarget(
-        pathname,
-        routing.locales,
-        routing.defaultLocale,
-      );
-      const redirectUrl = new URL(targetPath, request.url);
-      redirectUrl.search = request.nextUrl.search;
-      return NextResponse.redirect(redirectUrl, 307);
-    }
+  const modeTarget = modeRedirectUrl(
+    CHESSCITO_MODE,
+    request.nextUrl,
+    routing.locales,
+  );
+  if (modeTarget) {
+    return NextResponse.redirect(modeTarget, 307);
   }
 
   return intlMiddleware(request);

@@ -14,7 +14,7 @@ const MODES: Array<{
   height: number;
 }> = [
   {
-    mode: "training",
+    mode: "learn",
     label: "Training",
     asset: "/art/hub/train-pieces",
     width: 200,

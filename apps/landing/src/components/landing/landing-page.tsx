@@ -3,7 +3,7 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PhoneFrame } from "@/components/landing/phone-frame";
 import { PhoneStack } from "@/components/landing/phone-stack";
 import { LANDING_COPY, WHY_PAGE_COPY } from "@/lib/content/editorial";
-import { PLAY_URL, FULL_URL, LEGAL_URL } from "@/lib/app-urls";
+import { LEARN_URL, PLAY_URL, LEGAL_URL } from "@/lib/app-urls";
 
 const GHOST_CTA_CLASS =
   "inline-flex items-center justify-center whitespace-nowrap text-sm font-bold transition-all rounded-2xl border border-[rgba(255,255,255,0.45)] bg-white/15 text-[rgba(110,65,15,0.90)] [text-shadow:0_1px_0_rgba(255,245,215,0.55)] backdrop-blur-[6px] hover:bg-white/25 active:scale-[0.97] w-full py-3 md:!w-auto md:px-8";
@@ -57,7 +57,7 @@ export function LandingPage() {
         </span>
         <LandingGreenCtaLink
           size="medium"
-          href={`${PLAY_URL}/`}
+          href={`${LEARN_URL}/`}
           aria-label={LANDING_COPY.nav.primaryCta}
         >
           {LANDING_COPY.nav.primaryCta}
@@ -97,12 +97,12 @@ export function LandingPage() {
             <LandingGreenCtaLink
               size="medium"
               className="w-full max-w-[300px]"
-              href={`${PLAY_URL}/`}
+              href={`${LEARN_URL}/`}
               aria-label={LANDING_COPY.hero.primaryCta}
             >
               {LANDING_COPY.hero.primaryCta}
             </LandingGreenCtaLink>
-            <a href={`${FULL_URL}/`} className={GHOST_CTA_CLASS}>
+            <a href={`${PLAY_URL}/`} className={GHOST_CTA_CLASS}>
               {LANDING_COPY.hero.secondaryCta}
             </a>
           </div>
@@ -439,7 +439,7 @@ export function LandingPage() {
             const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
             let ctaHref: string;
             if (tier.ctaKind === "internal") {
-              ctaHref = `${PLAY_URL}/`;
+              ctaHref = `${LEARN_URL}/`;
             } else if (supportEmail) {
               const subject = encodeURIComponent(`Chesscito · ${"ctaSubject" in tier ? tier.ctaSubject : ""}`);
               ctaHref = `mailto:${supportEmail}?subject=${subject}`;
@@ -770,12 +770,12 @@ export function LandingPage() {
           <LandingGreenCtaLink
             size="medium"
             className="w-full max-w-[300px]"
-            href={`${PLAY_URL}/`}
+            href={`${LEARN_URL}/`}
             aria-label={LANDING_COPY.finalCta.primaryCta}
           >
             {LANDING_COPY.finalCta.primaryCta}
           </LandingGreenCtaLink>
-          <a href={`${FULL_URL}/`} className={GHOST_CTA_CLASS}>
+          <a href={`${PLAY_URL}/`} className={GHOST_CTA_CLASS}>
             {LANDING_COPY.finalCta.secondaryCta}
           </a>
         </div>

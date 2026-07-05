@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
 import { GET } from "@/app/api/enter/route";
-import { PLAY_URL, FULL_URL } from "@/lib/app-urls";
+import { LEARN_URL, PLAY_URL } from "@/lib/app-urls";
 import { ONBOARDING_COOKIE } from "@/lib/onboarding/types";
 
 function makeRequest(query: string): NextRequest {
@@ -9,14 +9,14 @@ function makeRequest(query: string): NextRequest {
 }
 
 describe("GET /api/enter", () => {
-  it("redirects to PLAY_URL for mode=learn", async () => {
+  it("redirects to LEARN_URL for mode=learn", async () => {
     const res = await GET(makeRequest("?mode=learn"));
-    expect(res.headers.get("location")).toBe(`${PLAY_URL}/`);
+    expect(res.headers.get("location")).toBe(`${LEARN_URL}/`);
   });
 
-  it("redirects to FULL_URL for mode=play", async () => {
+  it("redirects to PLAY_URL for mode=play", async () => {
     const res = await GET(makeRequest("?mode=play"));
-    expect(res.headers.get("location")).toBe(`${FULL_URL}/`);
+    expect(res.headers.get("location")).toBe(`${PLAY_URL}/`);
   });
 
   it("sets both onboarding cookies for a valid mode", async () => {
