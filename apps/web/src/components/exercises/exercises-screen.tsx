@@ -118,7 +118,7 @@ import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
 import { BadgeEarnedPrompt, PieceCompletePrompt, ResultOverlay } from "@/components/exercises/result-overlay";
 import { GetPeonesSheet } from "@/components/payments/get-peones-sheet";
-import { SeasonPassSheet } from "@/components/payments/season-pass-sheet";
+import { LearnShopSheet } from "@/components/learn/learn-shop-sheet";
 import { BadgeSheet } from "@/components/exercises/badge-sheet";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { CandyIcon } from "@/components/redesign/candy-icon";
@@ -751,7 +751,7 @@ export function ExercisesScreen({
     if (typeof window === "undefined") return;
     const sp = new URLSearchParams(window.location.search);
     const slug = sp.get("sheet");
-    if (slug === "shop" && !CHESSCITO_LITE_MODE) setActiveDockTab("shop");
+    if (slug === "shop") setActiveDockTab("shop");
     else if (slug === "badges") setActiveDockTab("badge");
     else if (slug === "trophies") setActiveDockTab("trophies");
     else if (slug === "leaderboard") setActiveDockTab("leaderboard");
@@ -793,8 +793,6 @@ export function ExercisesScreen({
   const [isSavingScore, setIsSavingScore] = useState(false);
   // Get Peones recovery sheet — opened from the insufficient-save overlay.
   const [getPeonesOpen, setGetPeonesOpen] = useState(false);
-  // Season Pass sheet — opened from insufficient-save overlay in Lite mode.
-  const [seasonPassSheetOpen, setSeasonPassSheetOpen] = useState(false);
 
   // Pointer-events lock release: as soon as a result overlay appears,
   // any open dock sheet must be closed or its Radix modal portal
@@ -2020,7 +2018,7 @@ export function ExercisesScreen({
               onPress: () => {
                 setResultOverlay(null);
                 if (CHESSCITO_LITE_MODE) {
-                  setSeasonPassSheetOpen(true);
+                  setActiveDockTab("shop");
                 } else {
                   setGetPeonesOpen(true);
                 }
@@ -3019,13 +3017,6 @@ export function ExercisesScreen({
           />
         ) : null}
 
-        {seasonPassSheetOpen ? (
-          <SeasonPassSheet
-            open={seasonPassSheetOpen}
-            onOpenChange={setSeasonPassSheetOpen}
-          />
-        ) : null}
-
         {unlockedPiece && !resultOverlay && (
           <div
             className="fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim animate-in fade-in duration-250"
@@ -3126,29 +3117,33 @@ export function ExercisesScreen({
             resetBoard();
           }}
         />
-        {!CHESSCITO_LITE_MODE && <ShopSheet
-          open={storeOpen}
-          onOpenChange={setStoreOpen}
-          items={displayShopCatalog}
-          onSelectItem={(itemId) => {
-            // PRO no longer buys through approve+buyItem — redirect to
-            // the already-mounted rail-based <ProSheet> (same one the
-            // floating PRO chip opens) and skip the confirm sheet.
-            // Founder Badge falls through to the normal path below.
-            if (itemId === PRO_ITEM_ID) {
+        {CHESSCITO_LITE_MODE ? (
+          <LearnShopSheet open={storeOpen} onOpenChange={setStoreOpen} />
+        ) : (
+          <ShopSheet
+            open={storeOpen}
+            onOpenChange={setStoreOpen}
+            items={displayShopCatalog}
+            onSelectItem={(itemId) => {
+              // PRO no longer buys through approve+buyItem — redirect to
+              // the already-mounted rail-based <ProSheet> (same one the
+              // floating PRO chip opens) and skip the confirm sheet.
+              // Founder Badge falls through to the normal path below.
+              if (itemId === PRO_ITEM_ID) {
+                setStoreOpen(false);
+                proSheet.openSheet();
+                return;
+              }
+              setSelectedItemId(itemId);
+              const item = shopCatalog.find((i) => i.itemId === itemId);
+              if (item) setPaymentToken(selectPaymentToken(item.onChainPrice, itemId));
               setStoreOpen(false);
-              proSheet.openSheet();
-              return;
-            }
-            setSelectedItemId(itemId);
-            const item = shopCatalog.find((i) => i.itemId === itemId);
-            if (item) setPaymentToken(selectPaymentToken(item.onChainPrice, itemId));
-            setStoreOpen(false);
-            setConfirmOpen(true);
-          }}
-          showTrigger={false}
-          welcomePack={welcomePack}
-        />}
+              setConfirmOpen(true);
+            }}
+            showTrigger={false}
+            welcomePack={welcomePack}
+          />
+        )}
         <TrophiesSheet
           open={trophiesSheetOpen}
           onOpenChange={setTrophiesSheetOpen}
