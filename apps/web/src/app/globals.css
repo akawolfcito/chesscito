@@ -8369,11 +8369,23 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .play-hub-portal {
+  position: relative;
   display: flex;
   width: min(100%, 230px);
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  margin-bottom: 24px;
+}
+
+/* FULL + PLAY only: seat the mode selector on the carved lower base of
+   the kingdom portal. The extra portal margin reserves its overhang so
+   the service pills below remain separate tap targets. */
+.play-hub-portal > .hub-app-mode-switch {
+  position: absolute;
+  left: 50%;
+  bottom: 1.5%;
+  width: min(92%, 210px);
+  transform: translate(-50%, 46%);
 }
 
 .play-hub-secondary-actions {
@@ -8386,6 +8398,47 @@ button.hud-resource-chip:active:not(:disabled) {
 .play-hub-secondary-actions .reward-tile {
   width: 72px;
   min-height: 72px;
+}
+
+/* The PLAY service row uses the same cream candy pill surface as the
+   top HUD while retaining its square mobile footprint and icon stack. */
+.play-hub-secondary-actions .reward-tile.candy-tray-pill.hub-hud-pill {
+  display: flex;
+  width: 72px;
+  min-width: 72px;
+  min-height: 72px;
+  margin: 0;
+  padding: 7px 5px 5px;
+  flex-direction: column-reverse;
+  gap: 2px;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
+  background: linear-gradient(180deg,
+      rgba(255, 248, 222, 0.95) 0%,
+      rgba(247, 226, 175, 0.95) 100%);
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  border-radius: 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1px 0 rgba(150, 90, 20, 0.18),
+    0 1px 2px rgba(110, 65, 15, 0.18);
+  filter: none;
+  overflow: visible;
+}
+
+.play-hub-secondary-actions .reward-tile.candy-tray-pill .reward-tile-piece {
+  position: static;
+  width: 43px;
+  height: 43px;
+  transform: none;
+  filter: drop-shadow(0 3px 3px rgba(110, 65, 15, 0.28));
+}
+
+.play-hub-secondary-actions .reward-tile.candy-tray-pill .reward-tile-label {
+  position: static;
+  width: auto;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
 }
 
 .play-hub-action-badge {
@@ -8416,6 +8469,30 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .play-hub-arena-cta {
   width: min(100%, 260px);
+  padding: 0;
+  justify-content: center;
+}
+
+.play-hub-arena-cta.primary-play-cta--with-piece {
+  padding: 0;
+}
+
+.play-hub-arena-cta .primary-play-cta-piece-icon {
+  left: -2px;
+  top: 50%;
+  width: 76px;
+  height: 82px;
+}
+
+.play-hub-arena-cta .primary-play-cta-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: none;
+  padding: 0 24px;
+  text-align: center;
 }
 
 .hub-scaffold-guide {

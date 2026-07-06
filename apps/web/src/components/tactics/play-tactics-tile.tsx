@@ -35,6 +35,7 @@ export function PlayTacticsTile() {
   return (
     <>
       <HubActionTile
+        className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
         iconSrc="/art/new-icons-chesscito/ejercicio-diario-chess.png"
         label={t("tileLabel")}
         ariaLabel={

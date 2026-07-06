@@ -55,7 +55,7 @@ function formatTimeMs(ms: number): string {
  * Consumers should pair this with `<TrophiesBody hideHero />` so the
  * hero is not duplicated.
  */
-export function TrophiesHeroBand() {
+export function TrophiesHeroBand({ showAchievements = true }: { showAchievements?: boolean } = {}) {
   const t = useTranslations("TROPHY_VITRINE_COPY");
   const { victories } = useTrophiesData();
   const [dailyProgress, setDailyProgress] = useState<DailyProgress>({
@@ -104,10 +104,14 @@ export function TrophiesHeroBand() {
           <span className="trophy-vitrine-hero-stats-victory">
             {victoryCount} {t(CHESSCITO_LITE_MODE ? "heroVictoriesLabelLite" : "heroVictoriesLabel")}
           </span>
-          <span className="trophy-vitrine-hero-stats-sep" aria-hidden="true">·</span>
-          <span className="trophy-vitrine-hero-stats-ach">
-            {summary.earnedCount}/{summary.total} {t("heroAchievementsLabel")}
-          </span>
+          {showAchievements ? (
+            <>
+              <span className="trophy-vitrine-hero-stats-sep" aria-hidden="true">·</span>
+              <span className="trophy-vitrine-hero-stats-ach">
+                {summary.earnedCount}/{summary.total} {t("heroAchievementsLabel")}
+              </span>
+            </>
+          ) : null}
         </p>
         <p className="trophy-vitrine-hero-sub">
           {bestVictory
@@ -117,18 +121,28 @@ export function TrophiesHeroBand() {
               })
             : t(CHESSCITO_LITE_MODE ? "heroEmptyHintLite" : "heroEmptyHint")}
         </p>
-        <div className="trophy-vitrine-hero-progress">
-          <div
-            className="trophy-vitrine-hero-progress-fill"
-            style={{ width: `${achievementsPct}%` }}
-          />
-        </div>
+        {showAchievements ? (
+          <div className="trophy-vitrine-hero-progress">
+            <div
+              className="trophy-vitrine-hero-progress-fill"
+              style={{ width: `${achievementsPct}%` }}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
 }
 
-export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
+export function TrophiesBody({
+  hideHero,
+  showAchievements = true,
+  showHallOfFame = true,
+}: {
+  hideHero?: boolean;
+  showAchievements?: boolean;
+  showHallOfFame?: boolean;
+} = {}) {
   const t = useTranslations("TROPHY_VITRINE_COPY");
   const tAch = useTranslations("ACHIEVEMENTS_COPY");
   const tRoad = useTranslations("ROADMAP_COPY");
@@ -163,7 +177,7 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
   const configured = getVictoryAddress() !== null;
 
   const loadHallOfFame = useCallback(async () => {
-    if (CHESSCITO_LITE_MODE || !configured) {
+    if (!showHallOfFame || CHESSCITO_LITE_MODE || !configured) {
       setHofLoading(false);
       return;
     }
@@ -189,7 +203,7 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
     } finally {
       setHofLoading(false);
     }
-  }, [configured, t]);
+  }, [configured, showHallOfFame, t]);
 
   useEffect(() => {
     void loadHallOfFame();
@@ -389,11 +403,13 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
 
   // In Lite: My Victories requires Arena NFTs (unavailable) and Community
   // duplicates the existing Leaders surface — show only achievements.
-  const ordered = CHESSCITO_LITE_MODE
-    ? [achievementsSection]
-    : isChampion
-      ? [myVictoriesSection, achievementsSection, hallOfFameSection]
-      : [hallOfFameSection, myVictoriesSection, achievementsSection];
+  const fullSections = isChampion
+    ? [myVictoriesSection, showAchievements ? achievementsSection : null, showHallOfFame ? hallOfFameSection : null]
+    : [showHallOfFame ? hallOfFameSection : null, myVictoriesSection, showAchievements ? achievementsSection : null];
+  const ordered = (CHESSCITO_LITE_MODE
+    ? [showAchievements ? achievementsSection : null]
+    : fullSections
+  ).filter((section): section is NonNullable<typeof section> => section !== null);
 
   return (
     <div className="flex flex-col gap-10 pb-10">

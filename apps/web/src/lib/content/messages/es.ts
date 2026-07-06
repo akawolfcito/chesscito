@@ -1776,7 +1776,7 @@ const messages = {
     coachLabel: "Coach",
     shopLabel: "Tienda",
     shopAriaLabel: "Abrir tienda de Play",
-    arenaLabel: "ENTRAR A ARENA",
+    arenaLabel: "JUGAR AJEDREZ",
     arenaAriaLabel: "Entrar a Arena: ajedrez completo vs IA",
   },
   PLAY_TACTICS_COPY: {

@@ -93,4 +93,17 @@ describe("<TrophiesBody> Save Later empty-state CTA", () => {
     expect(link).toBeInTheDocument();
     expect(link.closest("a")).toHaveAttribute("href", "/coach/history");
   });
+
+  it("renders only personal victories when auxiliary-sheet sections are disabled", () => {
+    useCoachHistoryCountMock.mockReturnValue({
+      rowCount: 0,
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+    render(<TrophiesBody hideHero showAchievements={false} showHallOfFame={false} />);
+    expect(screen.getByText("My Victories")).toBeInTheDocument();
+    expect(screen.queryByText("Achievements")).not.toBeInTheDocument();
+    expect(screen.queryByText("Hall of Fame")).not.toBeInTheDocument();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
 });

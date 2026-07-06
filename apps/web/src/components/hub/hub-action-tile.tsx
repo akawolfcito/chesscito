@@ -21,6 +21,7 @@ type Props = {
   iconWidth?: number;
   /** Intrinsic height of the icon asset in pixels. See `iconWidth`. */
   iconHeight?: number;
+  className?: string;
 };
 
 /** Hub right-rail tile. Mirrors `.reward-tile.is-locked` exactly so the
@@ -39,6 +40,7 @@ export function HubActionTile({
   priority = false,
   iconWidth,
   iconHeight,
+  className = "",
 }: Props) {
   const dimAttrs =
     iconWidth !== undefined && iconHeight !== undefined
@@ -52,7 +54,7 @@ export function HubActionTile({
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      className="reward-tile is-locked"
+      className={["reward-tile", "is-locked", className].filter(Boolean).join(" ")}
     >
       <span className="reward-tile-label">{label}</span>
       <picture className="reward-tile-piece">

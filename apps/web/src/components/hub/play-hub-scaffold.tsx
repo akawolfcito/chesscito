@@ -97,6 +97,7 @@ export function PlayHubScaffold({
         <div className="play-hub-secondary-actions" aria-label={tPlay("actionsAriaLabel")}>
           <PlayTacticsTile />
           <HubActionTile
+            className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
             iconSrc="/art/redesign/icons/coach.png"
             label={tPlay("coachLabel")}
             ariaLabel={tHud("coachAriaLabel")}
@@ -104,6 +105,7 @@ export function PlayHubScaffold({
             badge={<span className="play-hub-action-badge">PRO</span>}
           />
           <HubActionTile
+            className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
             iconSrc="/art/redesign/icons/shop.png"
             label={tPlay("shopLabel")}
             ariaLabel={tPlay("shopAriaLabel")}
@@ -113,14 +115,16 @@ export function PlayHubScaffold({
       </section>
 
       <footer className="hub-scaffold-footer play-hub-footer">
-        <PrimaryPlayCta
-          surface="playhub"
-          label={tPlay("arenaLabel")}
-          ariaLabel={tPlay("arenaAriaLabel")}
-          onPress={onArenaPress}
-          className="hub-scaffold-arena-cta play-hub-arena-cta"
-          pieceIconSrc="/art/hub/enter-arena.png"
-        />
+        <div className="hub-scaffold-cta-row">
+          <PrimaryPlayCta
+            surface="playhub"
+            label={tPlay("arenaLabel")}
+            ariaLabel={tPlay("arenaAriaLabel")}
+            onPress={onArenaPress}
+            className="hub-scaffold-arena-cta play-hub-arena-cta"
+            pieceIconSrc="/art/hub/enter-arena.png"
+          />
+        </div>
       </footer>
     </main>
   );

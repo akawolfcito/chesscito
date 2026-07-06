@@ -3,8 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import { TrophiesSheet } from "../trophies-sheet";
 
 vi.mock("@/components/trophies/trophies-body", () => ({
-  TrophiesBody: () => <div data-testid="trophies-body" />,
-  TrophiesHeroBand: () => <div data-testid="trophies-hero-band" />,
+  TrophiesBody: (props: Record<string, boolean>) => (
+    <div data-testid="trophies-body" data-props={JSON.stringify(props)} />
+  ),
+  TrophiesHeroBand: (props: Record<string, boolean>) => (
+    <div data-testid="trophies-hero-band" data-props={JSON.stringify(props)} />
+  ),
 }));
 
 vi.mock("@/components/trophies/trophies-data-provider", () => ({
@@ -40,5 +44,17 @@ describe("TrophiesSheet — ContextualHeader canary", () => {
     const closeButtons = screen.getAllByRole("button", { name: /close trophies/i });
     expect(closeButtons).toHaveLength(1);
     expect(closeButtons[0].getAttribute("data-slot")).toBe("close-control");
+  });
+
+  it("removes Hall of Fame and Achievements from the auxiliary sheet", () => {
+    render(<TrophiesSheet open onOpenChange={() => {}} showTrigger={false} />);
+    expect(screen.getByTestId("trophies-hero-band")).toHaveAttribute(
+      "data-props",
+      JSON.stringify({ showAchievements: false }),
+    );
+    expect(screen.getByTestId("trophies-body")).toHaveAttribute(
+      "data-props",
+      JSON.stringify({ hideHero: true, showAchievements: false, showHallOfFame: false }),
+    );
   });
 });

@@ -8,7 +8,6 @@ import { ARENA_COPY } from "@/lib/content/editorial";
 // Anchor against the editorial single-source so the tests track future
 // renames (PLAY CHESS → PLAY, Learn a piece → PIECES, etc.).
 const START = ARENA_COPY.startMatch;
-const SOFT_LEARN = ARENA_COPY.softGateLearn;
 const SOFT_ENTER = ARENA_COPY.softGateEnter;
 
 vi.mock("@/lib/haptics", () => ({
@@ -86,18 +85,31 @@ describe("ArenaSelectScaffold", () => {
   });
 
   it("renders the soft-gate modal when softGate prop is provided", () => {
+    const onDismiss = vi.fn();
     render(
       <ArenaSelectScaffold
         {...baseProps}
-        softGate={{ onLearn: vi.fn(), onDismiss: vi.fn() }}
+        softGate={{ onLearn: vi.fn(), onDismiss }}
       />,
     );
     // Sheet renders the title twice — once sr-only (Radix Dialog
     // a11y) and once as the visible <h2>. Both reflect the same
     // editorial copy, so assert at least one match.
     expect(screen.getAllByText(/Want a warm-up first/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole("button", { name: SOFT_LEARN })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: ARENA_COPY.softGateLearn })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: SOFT_ENTER })).toBeInTheDocument();
+  });
+
+  it("continues into Arena from the sole Warm Up CTA", async () => {
+    const onDismiss = vi.fn();
+    render(
+      <ArenaSelectScaffold
+        {...baseProps}
+        softGate={{ onLearn: vi.fn(), onDismiss }}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: SOFT_ENTER }));
+    expect(onDismiss).toHaveBeenCalledOnce();
   });
 
   it("collapses the soft-gate banner when softGate prop is omitted", () => {

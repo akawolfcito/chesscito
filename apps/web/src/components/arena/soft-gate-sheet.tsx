@@ -192,16 +192,8 @@ export function SoftGateSheet({ softGate }: Props) {
             >
               <button
                 type="button"
-                onClick={() => softGate?.onLearn()}
-                aria-label={t("softGateLearn")}
-                className="arena-scaffold-soft-gate-primary"
-              >
-                {t("softGateLearn")}
-              </button>
-              <button
-                type="button"
                 onClick={() => softGate?.onDismiss()}
-                className="arena-scaffold-soft-gate-secondary"
+                className="arena-scaffold-soft-gate-primary"
               >
                 {t("softGateEnter")}
               </button>

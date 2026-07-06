@@ -16,13 +16,13 @@ vi.mock("@/components/hub/hub-pro-badge", () => ({
   HubProBadge: ({ ariaLabel }: { ariaLabel: string }) => <button aria-label={ariaLabel}>PRO</button>,
 }));
 vi.mock("@/components/hub/hub-action-tile", () => ({
-  HubActionTile: ({ label, ariaLabel }: { label: string; ariaLabel: string }) => (
-    <button aria-label={ariaLabel}>{label}</button>
+  HubActionTile: ({ label, ariaLabel, className }: { label: string; ariaLabel: string; className?: string }) => (
+    <button aria-label={ariaLabel} className={className}>{label}</button>
   ),
 }));
 vi.mock("@/components/kingdom/primary-play-cta", () => ({
-  PrimaryPlayCta: ({ label, ariaLabel }: { label: string; ariaLabel: string }) => (
-    <button aria-label={ariaLabel}>{label}</button>
+  PrimaryPlayCta: ({ label, ariaLabel, className }: { label: string; ariaLabel: string; className?: string }) => (
+    <button aria-label={ariaLabel} className={className}>{label}</button>
   ),
 }));
 
@@ -46,7 +46,7 @@ describe("PlayHubScaffold", () => {
     expect(screen.getByTestId("pro-portal")).toBeInTheDocument();
     expect(screen.getByText("Coach")).toBeInTheDocument();
     expect(screen.getByText("Shop")).toBeInTheDocument();
-    expect(screen.getByText("ENTER ARENA")).toBeInTheDocument();
+    expect(screen.getByText("PLAY CHESS")).toBeInTheDocument();
   });
 
   it("places the Training | Play switch below the portal", () => {
@@ -57,13 +57,23 @@ describe("PlayHubScaffold", () => {
   });
 
   it("has one primary Arena CTA, Play Tactics, and no Training content", () => {
-    render(<PlayHubScaffold {...props} />);
+    const { container } = render(<PlayHubScaffold {...props} />);
 
     expect(screen.getAllByRole("button", { name: "Enter Arena: full chess vs AI" })).toHaveLength(1);
+    expect(
+      container.querySelector(".hub-scaffold-cta-row > .hub-scaffold-arena-cta"),
+    ).not.toBeNull();
     expect(screen.queryByText(/Training Path/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Train Pieces/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Daily Focus/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Special Training/i)).not.toBeInTheDocument();
     expect(screen.getByText("Tactics")).toBeInTheDocument();
+    for (const label of ["Tactics", "Coach", "Shop"]) {
+      expect(screen.getByText(label)).toHaveClass(
+        "candy-tray-pill",
+        "hub-hud-pill",
+        "hub-hud-pill--anchored-left",
+      );
+    }
   });
 });

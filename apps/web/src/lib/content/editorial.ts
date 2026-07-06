@@ -3269,7 +3269,7 @@ export const PLAY_HUB_COPY = {
   coachLabel: "Coach",
   shopLabel: "Shop",
   shopAriaLabel: "Open Play Shop",
-  arenaLabel: "ENTER ARENA",
+  arenaLabel: "PLAY CHESS",
   arenaAriaLabel: "Enter Arena: full chess vs AI",
 } as const;
 

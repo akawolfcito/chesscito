@@ -76,10 +76,10 @@ export function TrophiesSheet({ open, onOpenChange, showTrigger = true }: Trophi
          *  share a single `/api/my-victories` fetch. */}
         <TrophiesDataProvider>
           <div className="shrink-0 mt-4">
-            <TrophiesHeroBand />
+            <TrophiesHeroBand showAchievements={false} />
           </div>
           <div className="flex-1 overflow-y-auto overscroll-contain mt-6 space-y-6">
-            <TrophiesBody hideHero />
+            <TrophiesBody hideHero showAchievements={false} showHallOfFame={false} />
           </div>
         </TrophiesDataProvider>
       </SheetContent>
