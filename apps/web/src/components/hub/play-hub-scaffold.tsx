@@ -114,7 +114,7 @@ export function PlayHubScaffold({
         </div>
       </section>
 
-      <footer className="hub-scaffold-footer play-hub-footer">
+      <footer className="hub-scaffold-footer play-hub-footer mt-3">
         <div className="hub-scaffold-cta-row">
           <PrimaryPlayCta
             surface="playhub"

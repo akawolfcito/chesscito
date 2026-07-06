@@ -8374,7 +8374,7 @@ button.hud-resource-chip:active:not(:disabled) {
   width: min(100%, 230px);
   flex-direction: column;
   align-items: center;
-  margin-bottom: 24px;
+  /* margin-bottom: 24px; */
 }
 
 /* FULL + PLAY only: seat the mode selector on the carved lower base of
@@ -8383,7 +8383,7 @@ button.hud-resource-chip:active:not(:disabled) {
 .play-hub-portal > .hub-app-mode-switch {
   position: absolute;
   left: 50%;
-  bottom: 1.5%;
+  bottom: 11.5%;
   width: min(92%, 210px);
   transform: translate(-50%, 46%);
 }
@@ -8463,36 +8463,19 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .play-hub-footer {
   align-items: center;
-  padding-right: 20px;
-  padding-left: 20px;
+  /* padding-right: 20px;
+  padding-left: 20px; */
 }
 
 .play-hub-arena-cta {
-  width: min(100%, 260px);
-  padding: 0;
-  justify-content: center;
+  /* width: min(100%, 260px); */
 }
 
-.play-hub-arena-cta.primary-play-cta--with-piece {
-  padding: 0;
-}
-
-.play-hub-arena-cta .primary-play-cta-piece-icon {
-  left: -2px;
-  top: 50%;
-  width: 76px;
-  height: 82px;
-}
-
-.play-hub-arena-cta .primary-play-cta-label {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform: none;
-  padding: 0 24px;
-  text-align: center;
+.hub-scaffold-cta-row .play-hub-arena-cta .primary-play-cta-piece-icon {
+  flex-basis: 76px;
+  width: 52px;
+  height: 52px;
+  /* transform: scale(1.08); */
 }
 
 .hub-scaffold-guide {
