@@ -57,7 +57,7 @@ export function PlayHubScaffold({
             >
               <CandyIcon name="trophy" className="candy-tray-pill-icon candy-tray-pill-icon--floating" />
               <span>{mintedVictoryCount}</span>
-              <span className="play-hub-victories-label">{tPlay("victoriesLabel")}</span>
+              {/* <span className="play-hub-victories-label">{tPlay("victoriesLabel")}</span> */}
             </button>
             <LanguageChip />
           </div>
