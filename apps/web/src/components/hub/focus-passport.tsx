@@ -28,7 +28,7 @@ const FLAME_ASSET: Record<PassportSlotKind, string> = {
   gray: "flame-gray",
 };
 
-/** Focus Passport card (Chesscito Lite, P1.1 visual iteration).
+/** Focus Passport card (Chesscito Learn, P1.1 visual iteration).
  *  Compact, icon-first: 7 flames read as a streak (frozen-blue = earlier
  *  day done, orange-gold = today/active done, gray = pending). Slots are
  *  derived purely from the streak count (NOT calendar dates). No

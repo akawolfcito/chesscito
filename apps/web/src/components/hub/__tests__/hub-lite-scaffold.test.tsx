@@ -60,6 +60,14 @@ afterEach(() => {
 });
 
 describe("<HubLiteScaffold>", () => {
+  it("exposes Learn branding without changing the training composition", () => {
+    render(<HubLiteScaffold {...baseProps()} />);
+
+    expect(screen.getByRole("main", { name: "Chesscito Learn home" })).toBeInTheDocument();
+    expect(screen.getByText("21-Day Mind Challenge")).toBeInTheDocument();
+    expect(screen.getByTestId("start-focus-cta")).toHaveTextContent("Start Focus");
+  });
+
   it("responsive Lite image derivatives exist in public art", () => {
     const paths = [
       "art/avatar-lite-hub-224w.avif",

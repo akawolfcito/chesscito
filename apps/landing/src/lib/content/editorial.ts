@@ -92,7 +92,7 @@ export const LANDING_COPY = {
   meta: {
     title: "Chesscito: Small plays. Big mental habits.",
     description:
-      "Chesscito turns chess into short visual challenges to build attention, memory, planning, and decision-making. Lite is your free daily habit. Full is the complete chess experience.",
+      "Chesscito turns chess into short visual challenges to build attention, memory, planning, and decision-making. Learn is your free daily habit. Play is the complete chess experience.",
   },
 
   disclaimer:
@@ -107,9 +107,9 @@ export const LANDING_COPY = {
     eyebrow: "PLAYFUL COGNITIVE WELLNESS",
     headline: "Small plays. Big mental habits.",
     subcopy:
-      "Chesscito turns chess into short visual challenges to build attention, memory, planning, and decision-making. Lite is your free daily habit. Full is the complete chess experience.",
+      "Chesscito turns chess into short visual challenges to build attention, memory, planning, and decision-making. Learn is your free daily habit. Play is the complete chess experience.",
     primaryCta: "Start free",
-    secondaryCta: "Play Full",
+    secondaryCta: "Play",
   },
 
   problem: {
@@ -147,7 +147,7 @@ export const LANDING_COPY = {
       { label: "EXPLORE", body: "Labyrinths with obstacles. Fewest moves, most stars." },
       { label: "MASTER", body: "One signature challenge per piece that draws out its identity." },
       { label: "COMBINE", body: "Rooks and bishops. Then the queen. Then the knight. The board grows with you." },
-      { label: "PLAY", body: "Full chess unlocks itself. You did it, step by step." },
+      { label: "PLAY", body: "Complete chess unlocks itself. You did it, step by step." },
     ],
   },
 
@@ -302,7 +302,7 @@ export const LANDING_COPY = {
     subcopy:
       "No downloads. No long signup. Just the board, you, and your next move.",
     primaryCta: "Start free",
-    secondaryCta: "Play Full",
+    secondaryCta: "Play",
   },
 
   footer: {

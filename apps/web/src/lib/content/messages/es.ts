@@ -1742,7 +1742,7 @@ const messages = {
   },
   HUB_LITE_COPY: {
     ...en.HUB_LITE_COPY,
-    rootAriaLabel: "Inicio de Chesscito Lite",
+    rootAriaLabel: "Inicio de Chesscito Learn",
     startFocus: "Comenzar foco",
     continue: "Continuar",
     practice: "Practicar",

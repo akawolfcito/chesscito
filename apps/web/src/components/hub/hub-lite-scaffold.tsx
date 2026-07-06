@@ -41,7 +41,7 @@ export type HubLiteScaffoldProps = {
   rewardTiles: RewardTile[];
 };
 
-/** Chesscito Lite hub presenter — habit-first vertical stack (spec
+/** Chesscito Learn hub presenter — habit-first vertical stack (spec
  *  lite-hub-redesign.md). Single-screen-first at 390px: the Start Focus CTA and
  *  the challenge-card primary CTA stay above the fold (P1-A); the Training Path
  *  is secondary and may sit at/just below it. Composes existing leaves
