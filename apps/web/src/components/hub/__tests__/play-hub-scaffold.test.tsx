@@ -30,12 +30,6 @@ vi.mock("@/components/hub/hub-action-tile", () => ({
     <button aria-label={ariaLabel} className={className}>{label}</button>
   ),
 }));
-vi.mock("@/components/kingdom/primary-play-cta", () => ({
-  PrimaryPlayCta: ({ label, ariaLabel, className }: { label: string; ariaLabel: string; className?: string }) => (
-    <button aria-label={ariaLabel} className={className}>{label}</button>
-  ),
-}));
-
 const props = {
   mintedVictoryCount: 0,
   isWalletConnected: true,
@@ -95,7 +89,7 @@ describe("PlayHubScaffold", () => {
       screen.getAllByRole("button", { name: "Play Chess: full chess vs AI" }),
     ).toHaveLength(1);
     expect(
-      container.querySelector(".hub-scaffold-cta-row > .hub-scaffold-arena-cta"),
+      container.querySelector(".hub-scaffold-cta-row > .play-chess-cta"),
     ).not.toBeNull();
     expect(screen.queryByText(/Training Path/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Daily Focus/i)).not.toBeInTheDocument();
