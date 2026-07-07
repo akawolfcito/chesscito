@@ -5,7 +5,6 @@ import { AppModeSwitch } from "@/components/hub/app-mode-switch";
 import { HubActionTile } from "@/components/hub/hub-action-tile";
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { LanguageChip } from "@/components/hub/language-chip";
-import { KingdomAnchor } from "@/components/kingdom/kingdom-anchor";
 import { KingdomCard } from "@/components/kingdom/kingdom-card";
 import { PrimaryPlayCta } from "@/components/kingdom/primary-play-cta";
 import { CandyIcon } from "@/components/redesign/candy-icon";
@@ -92,8 +91,59 @@ export function PlayHubScaffold({
       </header>
 
       <section className="play-hub-body">
-        <div className="play-hub-portal">
-          <KingdomAnchor variant="playhub" showTagline={false} />
+        {/* Title + avatar reuse the EXACT LEARN/LITE mascot (wordmark banner +
+            circular gold-ring wizard) so the two hubs share one identity.
+            Avatar flips to the PRO variant in lockstep with `pro.active`. */}
+        <div className="hub-lite-mascot play-hub-mascot">
+          {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+          <picture className="hub-lite-title">
+            <source
+              srcSet="/art/title-chesscito-288w.avif 288w, /art/title-chesscito-384w.avif 384w, /art/title-chesscito.avif 512w"
+              sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px"
+              type="image/avif"
+            />
+            <source
+              srcSet="/art/title-chesscito-288w.webp 288w, /art/title-chesscito-384w.webp 384w, /art/title-chesscito.webp 512w"
+              sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px"
+              type="image/webp"
+            />
+            <img
+              src="/art/title-chesscito.png"
+              alt="Chesscito"
+              width={512}
+              height={249}
+              draggable={false}
+            />
+          </picture>
+          {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+          <picture className="hub-lite-avatar">
+            <source
+              srcSet={
+                pro.active
+                  ? "/art/avatar-pro-224w.avif 224w, /art/avatar-pro-340w.avif 340w, /art/avatar-pro.avif 499w"
+                  : "/art/avatar-lite-hub-224w.avif 224w, /art/avatar-lite-hub-340w.avif 340w, /art/avatar-lite-hub.avif 499w"
+              }
+              sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
+              type="image/avif"
+            />
+            <source
+              srcSet={
+                pro.active
+                  ? "/art/avatar-pro-224w.webp 224w, /art/avatar-pro-340w.webp 340w, /art/avatar-pro.webp 499w"
+                  : "/art/avatar-lite-hub-224w.webp 224w, /art/avatar-lite-hub-340w.webp 340w, /art/avatar-lite-hub.webp 499w"
+              }
+              sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
+              type="image/webp"
+            />
+            <img
+              src={pro.active ? "/art/avatar-pro.png" : "/art/avatar-lite-hub.png"}
+              alt=""
+              aria-hidden="true"
+              width={499}
+              height={560}
+              draggable={false}
+            />
+          </picture>
           <AppModeSwitch activeMode="play" />
         </div>
 
