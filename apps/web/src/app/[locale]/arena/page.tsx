@@ -6,7 +6,11 @@ import { useRouter } from "@/i18n/navigation";
 import {
   useAccount,
   useChainId,
+  useDisconnect,
 } from "wagmi";
+import { AccountSheet } from "@/components/account/account-sheet";
+import { useCoachCredits } from "@/lib/coach/use-coach-credits";
+import { formatWalletShort } from "@/lib/wallet/format";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
 import { useConnectPrompt } from "@/lib/connect-prompt/use-connect-prompt";
@@ -34,7 +38,6 @@ import { useTranslations } from "next-intl";
 import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { GemButton } from "@/components/scene-rooted/gem";
-import { hasAnyPieceProgress } from "@/lib/game/has-progress";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/game/arena-utils";
 import { mapArenaResult } from "@/lib/coach/game-result";
@@ -142,6 +145,13 @@ function ArenaPageInner() {
   const { status: proStatusFromHook } = useProStatus(address?.toLowerCase());
   const proActiveCached = proStatusFromHook?.active === true;
   const proSheet = useProSheetState();
+  // Account sheet (extracted 2026-07-07) — arena mounts the SAME sheet as
+  // learn/exercises so the account entry opens in-mode (play `/exercises` is
+  // cross-mode-redirected, so a route-based open would leave the surface).
+  // `chainId` already declared below (shared useChainId()).
+  const { disconnect } = useDisconnect();
+  const { credits: coachCredits } = useCoachCredits();
+  const [accountSheetOpen, setAccountSheetOpen] = useState(false);
   // Declared after proSheet (not next to badgeSheet above) so PRO
   // taps inside the Shop can redirect to it — see onSelectProItem.
   const shopSheet = useShopSheetState({
@@ -267,7 +277,11 @@ function ArenaPageInner() {
    *  after reading localStorage. */
   const [softGateOpen, setSoftGateOpen] = useState(false);
   useEffect(() => {
-    setSoftGateOpen(!hasAnyPieceProgress());
+    // WarmUp modal hidden (founder 2026-07-07): once it collapsed to a single
+    // "ARENA" CTA it added no decision value. The SoftGateSheet component +
+    // wiring stay intact (not deleted) so it can be re-enabled by restoring
+    // `setSoftGateOpen(!hasAnyPieceProgress())` here.
+    setSoftGateOpen(false);
   }, []);
 
   // Preparing state (loading between difficulty selection and game start)
@@ -1091,7 +1105,7 @@ function ArenaPageInner() {
                       track("arena_account_tap", {
                         pro_active: proActiveCached,
                       });
-                      router.push("/exercises?sheet=account");
+                      setAccountSheetOpen(true);
                     },
                   }
                   : undefined
@@ -1140,6 +1154,35 @@ function ArenaPageInner() {
             )}
             <PurchaseConfirmSheet {...shopSheet.confirmProps} />
             <ProSheet {...proSheet.sheetProps} />
+            {address ? (
+              <AccountSheet
+                open={accountSheetOpen}
+                onOpenChange={setAccountSheetOpen}
+                walletAddress={address}
+                walletShort={formatWalletShort(address)}
+                chainId={chainId}
+                proActive={proActiveCached}
+                proExpiresAt={proStatusFromHook?.expiresAt ?? null}
+                coachCredits={coachCredits}
+                onManagePro={() => {
+                  setAccountSheetOpen(false);
+                  proSheet.openSheet();
+                }}
+                onOpenCoach={() => {
+                  setAccountSheetOpen(false);
+                  router.push("/coach/history");
+                }}
+                onOpenShieldsHelp={() => setAccountSheetOpen(false)}
+                onOpenShop={() => {
+                  setAccountSheetOpen(false);
+                  shopSheet.openSheet();
+                }}
+                onDisconnect={() => {
+                  setAccountSheetOpen(false);
+                  disconnect();
+                }}
+              />
+            ) : null}
           </div>
         </main>
       );

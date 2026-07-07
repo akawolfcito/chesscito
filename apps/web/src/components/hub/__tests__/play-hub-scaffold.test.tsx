@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderWithIntl as render } from "@/test-utils/render-with-intl";
 import { screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { PlayHubScaffold } from "../play-hub-scaffold";
 
 vi.mock("@/components/kingdom/kingdom-card", () => ({
@@ -47,7 +46,6 @@ const props = {
   onCoachTap: vi.fn(),
   onShopTap: vi.fn(),
   onArenaPress: vi.fn(),
-  onAccountTap: vi.fn(),
 };
 
 describe("PlayHubScaffold", () => {
@@ -72,25 +70,15 @@ describe("PlayHubScaffold", () => {
     expect(panel.compareDocumentPosition(tools) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("renders the LEARN header grammar: Peones chip + Account entry when connected", async () => {
-    const onAccountTap = vi.fn();
-    render(<PlayHubScaffold {...props} onAccountTap={onAccountTap} />);
+  it("renders the Peones chip when connected but NO account chip (hidden in PLAY)", () => {
+    render(<PlayHubScaffold {...props} />);
     expect(screen.getByTestId("peones-chip")).toBeInTheDocument();
-    await userEvent.click(screen.getByTestId("play-hub-account-chip"));
-    expect(onAccountTap).toHaveBeenCalledOnce();
-  });
-
-  it("hides the Peones chip and Account entry for guests", () => {
-    render(<PlayHubScaffold {...props} isWalletConnected={false} />);
-    expect(screen.queryByTestId("peones-chip")).toBeNull();
     expect(screen.queryByTestId("play-hub-account-chip")).toBeNull();
   });
 
-  it("adds the PRO ring to the account chip when pro is active", () => {
-    render(<PlayHubScaffold {...props} pro={{ active: true, daysRemaining: 200 }} />);
-    expect(screen.getByTestId("play-hub-account-chip").className).toContain(
-      "hub-account-circle--pro",
-    );
+  it("hides the Peones chip for guests", () => {
+    render(<PlayHubScaffold {...props} isWalletConnected={false} />);
+    expect(screen.queryByTestId("peones-chip")).toBeNull();
   });
 
   it("swaps to the PRO avatar when pro is active", () => {
