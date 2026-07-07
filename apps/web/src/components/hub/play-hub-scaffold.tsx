@@ -7,6 +7,7 @@ import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { LanguageChip } from "@/components/hub/language-chip";
 import { KingdomCard } from "@/components/kingdom/kingdom-card";
 import { PrimaryPlayCta } from "@/components/kingdom/primary-play-cta";
+import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PlayTacticsTile } from "@/components/tactics/play-tactics-tile";
 
@@ -20,6 +21,9 @@ type PlayHubScaffoldProps = {
   onCoachTap: () => void;
   onShopTap: () => void;
   onArenaPress: () => void;
+  /** Opens the account surface (same universal sheet as LEARN + arena —
+   *  `/exercises?sheet=account`). Only wired/rendered when connected. */
+  onAccountTap: () => void;
 };
 
 /** Play Kingdom home. Mirrors the LEARN/LITE hub's visual system (unified
@@ -36,10 +40,12 @@ export function PlayHubScaffold({
   onCoachTap,
   onShopTap,
   onArenaPress,
+  onAccountTap,
 }: PlayHubScaffoldProps) {
   const tHud = useTranslations("HUD_COPY");
   const tRail = useTranslations("HUB_ACTION_RAIL_COPY");
   const tPlay = useTranslations("PLAY_HUB_COPY");
+  const tStatus = useTranslations("GLOBAL_STATUS_BAR_COPY");
   const proAriaLabel = pro.active
     ? tHud("proAriaLabel", { days: pro.daysRemaining })
     : tHud("proInactiveAriaLabel");
@@ -60,9 +66,44 @@ export function PlayHubScaffold({
               <CandyIcon name="trophy" className="candy-tray-pill-icon candy-tray-pill-icon--floating" />
               <span>{mintedVictoryCount}</span>
             </button>
+            {/* Peones balance + recharge — same universal economy chip as the
+                LEARN header. Self-gates on useAccount (null for guests). */}
+            {isWalletConnected ? (
+              <PeonesBalanceChip surface="hub" showRecharge />
+            ) : null}
             <LanguageChip />
           </div>
           <div className="hub-scaffold-hud-right">
+            {/* Account entry — same circular avatar chip + universal account
+                sheet as the LEARN header (Daily gift is Lite-only, so PLAY's
+                top-right anchor stays the PRO badge below instead). */}
+            {isWalletConnected ? (
+              <button
+                type="button"
+                onClick={onAccountTap}
+                aria-label={
+                  pro.active
+                    ? tStatus("proManageLabel")
+                    : tStatus("accountLabel")
+                }
+                data-testid="play-hub-account-chip"
+                className={`hub-account-circle${
+                  pro.active ? " hub-account-circle--pro" : ""
+                }`}
+              >
+                {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+                <picture className="hub-account-circle-avatar">
+                  <source srcSet="/art/avatar-small-account.avif" type="image/avif" />
+                  <source srcSet="/art/avatar-small-account.webp" type="image/webp" />
+                  <img
+                    src="/art/avatar-small-account.png"
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                  />
+                </picture>
+              </button>
+            ) : null}
             {!isWalletConnected ? (
               <button
                 type="button"

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderWithIntl as render } from "@/test-utils/render-with-intl";
 import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { PlayHubScaffold } from "../play-hub-scaffold";
 
 vi.mock("@/components/kingdom/kingdom-card", () => ({
@@ -14,6 +15,9 @@ vi.mock("@/components/hub/app-mode-switch", () => ({
   ),
 }));
 vi.mock("@/components/hub/language-chip", () => ({ LanguageChip: () => null }));
+vi.mock("@/components/peones/peones-balance-chip", () => ({
+  PeonesBalanceChip: () => <div data-testid="peones-chip" />,
+}));
 vi.mock("@/components/hub/hub-pro-badge", () => ({
   HubProBadge: ({ ariaLabel }: { ariaLabel: string }) => <button aria-label={ariaLabel}>PRO</button>,
 }));
@@ -43,6 +47,7 @@ const props = {
   onCoachTap: vi.fn(),
   onShopTap: vi.fn(),
   onArenaPress: vi.fn(),
+  onAccountTap: vi.fn(),
 };
 
 describe("PlayHubScaffold", () => {
@@ -65,6 +70,27 @@ describe("PlayHubScaffold", () => {
     expect(mascot.compareDocumentPosition(modeSwitch) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(modeSwitch.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(panel.compareDocumentPosition(tools) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("renders the LEARN header grammar: Peones chip + Account entry when connected", async () => {
+    const onAccountTap = vi.fn();
+    render(<PlayHubScaffold {...props} onAccountTap={onAccountTap} />);
+    expect(screen.getByTestId("peones-chip")).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId("play-hub-account-chip"));
+    expect(onAccountTap).toHaveBeenCalledOnce();
+  });
+
+  it("hides the Peones chip and Account entry for guests", () => {
+    render(<PlayHubScaffold {...props} isWalletConnected={false} />);
+    expect(screen.queryByTestId("peones-chip")).toBeNull();
+    expect(screen.queryByTestId("play-hub-account-chip")).toBeNull();
+  });
+
+  it("adds the PRO ring to the account chip when pro is active", () => {
+    render(<PlayHubScaffold {...props} pro={{ active: true, daysRemaining: 200 }} />);
+    expect(screen.getByTestId("play-hub-account-chip").className).toContain(
+      "hub-account-circle--pro",
+    );
   });
 
   it("swaps to the PRO avatar when pro is active", () => {
