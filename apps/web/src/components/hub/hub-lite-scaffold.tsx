@@ -209,6 +209,9 @@ export function HubLiteScaffold({
         challenge={challenge}
         seasonPass={seasonPass}
         onJoinChallenge={onJoinChallenge}
+        // Tapping the flame/streak block routes into today's focus, same as
+        // Start Focus (ritual entry point — UX spec §5 clickability).
+        onFocusTap={primaryFocus.onPress}
       />
 
       <div className="hub-lite-start-focus-wrap">

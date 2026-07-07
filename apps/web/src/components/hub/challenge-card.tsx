@@ -27,6 +27,9 @@ export type ChallengeCardProps = {
   seasonPass: ChallengeCardSeasonPass;
   /** null when the pass is active (no purchase CTA, no glow). */
   onJoinChallenge: (() => void) | null;
+  /** Optional: makes the flame/streak block a tap target into today's focus
+   *  (same destination as Start Focus). Omitted → the block is static. */
+  onFocusTap?: () => void;
 };
 
 function CalendarIcon() {
@@ -117,6 +120,7 @@ export function ChallengeCard({
   challenge,
   seasonPass,
   onJoinChallenge,
+  onFocusTap,
 }: ChallengeCardProps) {
   const t = useTranslations("CHALLENGE_CARD_COPY");
 
@@ -175,49 +179,55 @@ export function ChallengeCard({
             ) : null}
           </header>
           <p className="challenge-card-passport-label">{t("passportLabel")}</p>
-          <div
-            className="challenge-card-passport"
-            data-testid="challenge-progress"
-            data-done={done}
-          >
-            <div
-              className="challenge-card-flames"
-              role="list"
-              aria-label={t("passportLabel")}
-            >
-              {slots.map((slot, i) => {
-                const filled = slot.kind !== "gray";
-                const asset = FLAME_ASSET[slot.kind];
-                return (
-                  // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
-                  <picture
-                    key={i}
-                    role="listitem"
-                    data-testid="focus-passport-slot"
-                    data-kind={slot.kind}
-                    data-filled={filled || undefined}
-                    data-glow={slot.glow || undefined}
-                    className={`challenge-card-flame${slot.glow ? " is-glow" : ""}`}
-                  >
-                    <source srcSet={`/art/focus-passport/${asset}.avif`} type="image/avif" />
-                    <source srcSet={`/art/focus-passport/${asset}.webp`} type="image/webp" />
-                    <img
-                      src={`/art/focus-passport/${asset}.png`}
-                      alt={
-                        filled
-                          ? t("dotFilledAria", { index: i + 1 })
-                          : t("dotEmptyAria", { index: i + 1 })
-                      }
-                      draggable={false}
-                    />
-                  </picture>
-                );
-              })}
-            </div>
-            <span className="challenge-card-day-count">
-              {t("focusDaysFormat", { done, total: durationDays })}
-            </span>
-          </div>
+          {(() => {
+            const inner = (
+              <>
+                <span className="challenge-card-flames" aria-hidden="true">
+                  {slots.map((slot, i) => {
+                    const asset = FLAME_ASSET[slot.kind];
+                    return (
+                      // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
+                      <picture
+                        key={i}
+                        data-testid="focus-passport-slot"
+                        data-kind={slot.kind}
+                        data-filled={slot.kind !== "gray" || undefined}
+                        data-glow={slot.glow || undefined}
+                        className={`challenge-card-flame${slot.glow ? " is-glow" : ""}`}
+                      >
+                        <source srcSet={`/art/focus-passport/${asset}.avif`} type="image/avif" />
+                        <source srcSet={`/art/focus-passport/${asset}.webp`} type="image/webp" />
+                        <img src={`/art/focus-passport/${asset}.png`} alt="" draggable={false} />
+                      </picture>
+                    );
+                  })}
+                </span>
+                <span className="challenge-card-day-count">
+                  {t("focusDaysFormat", { done, total: durationDays })}
+                </span>
+              </>
+            );
+            return onFocusTap ? (
+              <button
+                type="button"
+                className="challenge-card-passport challenge-card-passport--tap"
+                data-testid="challenge-progress"
+                data-done={done}
+                onClick={onFocusTap}
+                aria-label={t("focusTapAria")}
+              >
+                {inner}
+              </button>
+            ) : (
+              <div
+                className="challenge-card-passport"
+                data-testid="challenge-progress"
+                data-done={done}
+              >
+                {inner}
+              </div>
+            );
+          })()}
         </div>
       </div>
 

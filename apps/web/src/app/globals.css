@@ -3819,11 +3819,11 @@
     box-shadow: none;
   }
 
-  .chesscito-dock--lite {
-    background-image: image-set(url("/art/redesign/bg/dock-4slots.avif") type("image/avif"),
-        url("/art/redesign/bg/dock-4slots.webp") type("image/webp"),
-        url("/art/redesign/bg/dock-4slots.png") type("image/png"));
-  }
+  /* Lite dock now carries 5 slots (badge · shop · pieces · trophies ·
+     leaders), so it inherits the base `.chesscito-dock` menu-wall bg used by
+     the PLAY/Full dock instead of the old 4-slot panel art (which baked
+     dividers for exactly 4 slots and misaligned under 5). No `--lite` bg
+     override needed. */
 
   .chesscito-dock-item {
     position: relative;
@@ -8197,6 +8197,26 @@ button.hud-resource-chip:active:not(:disabled) {
   font-weight: 800;
   color: #6e4415;
   white-space: nowrap;
+}
+/* Tappable variant — the flame/streak block routes into today's focus. Button
+   reset so it looks identical to the static div, with a subtle press state. */
+.challenge-card-passport--tap {
+  width: 100%;
+  padding: 3px 4px;
+  margin-left: -4px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 10px;
+  transition:
+    background 0.12s ease,
+    transform 0.12s ease;
+}
+.challenge-card-passport--tap:active {
+  transform: scale(0.98);
+  background: rgba(120, 80, 30, 0.08);
 }
 
 /* Bottom row: inline stat chips + Join (offer). */

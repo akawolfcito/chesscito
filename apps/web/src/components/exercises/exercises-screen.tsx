@@ -34,7 +34,6 @@ import { useWelcomePackClaim } from "@/lib/shop/use-welcome-pack-claim";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { PeonesHintButton } from "@/components/peones/peones-hint-button";
 import { ChesitoCard } from "@/components/peones/chesito-card";
-import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 // PeonesRetryButton intentionally NOT imported — Sprint 5 commit G
 // unmounted the paid Retry chip pending differential-value
 // calibration. The component + tests + spend endpoint support stay
@@ -292,9 +291,11 @@ function AccountSheet({
 
         <div className="overflow-y-auto overscroll-contain flex-1 pb-[calc(env(safe-area-inset-bottom,0px)+6rem)]">
         <div className="mt-3 flex flex-col gap-3">
-          {/* Chesito Card — the rechargeable Peones "wallet" hero. Visual-first
-           *  spend-economy anchor; its Top up CTA opens the Get Peones rail. */}
-          {!CHESSCITO_LITE_MODE && <ChesitoCard />}
+          {/* Chesito Card — the rechargeable Peones "wallet" hero (balance +
+           *  "+" recharge). Shown in every mode now: in Lite the header dropped
+           *  its standalone Peones chip, so the Account sheet is the one wallet
+           *  home (UX spec §6, 2026-07-06). Top up CTA opens the Get Peones rail. */}
+          <ChesitoCard />
 
           <div className="account-tiles-grid">
             {/* Wallet — tile click copies the full address */}
@@ -2513,10 +2514,10 @@ export function ExercisesScreen({
               label: tStatus("backLabel"),
             }}
             trailingControl={
-              <div className="flex items-center gap-1.5">
-                {/* Peones balance + recharge rail (hides itself for guests). */}
-                <PeonesBalanceChip surface="exercises" />
-                {!address ? (
+              // Header = Account only. Peones lives inside the Account sheet
+              // now (Chesscito Card hero) — one wallet home, uncluttered header
+              // (UX spec §6, 2026-07-06).
+              !address ? (
                 <button
                   type="button"
                   onClick={() => connectWallet()}
@@ -2566,8 +2567,7 @@ export function ExercisesScreen({
                     })()
                   ) : null}
                 </button>
-              )}
-              </div>
+              )
             }
           />
         </div>

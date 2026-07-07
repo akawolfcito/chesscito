@@ -80,6 +80,35 @@ describe('<ChallengeCard>', () => {
     expect(screen.queryByTestId('challenge-active-badge')).toBeNull()
   })
 
+  it('flame block routes into today focus when onFocusTap is provided', () => {
+    const onFocusTap = vi.fn()
+    render(
+      <ChallengeCard
+        focusPassport={passport({ streak: 3, todayDone: true })}
+        challenge={CHALLENGE}
+        seasonPass={{ active: false, isLoading: false }}
+        onJoinChallenge={() => {}}
+        onFocusTap={onFocusTap}
+      />,
+    )
+    const block = screen.getByTestId('challenge-progress')
+    expect(block.tagName).toBe('BUTTON')
+    fireEvent.click(block)
+    expect(onFocusTap).toHaveBeenCalledTimes(1)
+  })
+
+  it('flame block is a static div (not a button) without onFocusTap', () => {
+    render(
+      <ChallengeCard
+        focusPassport={passport({ streak: 1 })}
+        challenge={CHALLENGE}
+        seasonPass={{ active: false, isLoading: false }}
+        onJoinChallenge={() => {}}
+      />,
+    )
+    expect(screen.getByTestId('challenge-progress').tagName).toBe('DIV')
+  })
+
   it('offer with a long streak caps progress at durationDays (21)', () => {
     render(
       <ChallengeCard

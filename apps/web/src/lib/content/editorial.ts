@@ -3207,6 +3207,7 @@ export const CHALLENGE_CARD_COPY = {
   joinAriaLabel: "Join the 21-Day Mind Challenge for {price}",
   dotFilledAria: "Day {index} done",
   dotEmptyAria: "Day {index}",
+  focusTapAria: "Continue today's focus",
 } as const;
 
 export const HUB_LITE_COPY = {
