@@ -53,6 +53,6 @@ describe("mapSeasonPassError", () => {
   });
 
   it("maps active PRO coverage to stable included copy", () => {
-    expect(mapSeasonPassError("included_with_pro")).toBe("Included with PRO.");
+    expect(mapSeasonPassError("included_with_pro")).toBe("PRO Benefit included.");
   });
 });

@@ -8,28 +8,28 @@
 
 ## 1. Environment (executed)
 
-| Field | Value |
-|---|---|
-| HEAD at start | `4316548 docs(reviews): PRO smoke test plan + automatable pre-check results` |
-| HEAD after fix | `4c8748f fix(verify-pro): mark ItemPurchased.token as indexed (matches contract)` |
-| Branch | `main` |
-| Network | Celo Mainnet (chainId 42220) |
-| Wallet (last 6) | `…fc2dD` (`0xCc4179A22b473Ea2eB2B9b9b210458d0F60Fc2dD`) |
-| Payment token | USDm (cUSD-renamed; address `0x765de816...`) |
-| `NEXT_PUBLIC_ENABLE_COACH` | unset → defaults to `true` |
-| Browser | MiniPay WebView (mobile) + Chrome desktop for diagnostic console |
-| Date / Time | 2026-05-02 22:00 → 23:30 UTC |
-| Tester | Wolfcito |
+| Field                      | Value                                                                             |
+| -------------------------- | --------------------------------------------------------------------------------- |
+| HEAD at start              | `4316548 docs(reviews): PRO smoke test plan + automatable pre-check results`      |
+| HEAD after fix             | `4c8748f fix(verify-pro): mark ItemPurchased.token as indexed (matches contract)` |
+| Branch                     | `main`                                                                            |
+| Network                    | Celo Mainnet (chainId 42220)                                                      |
+| Wallet (last 6)            | `…fc2dD` (`0xCc4179A22b473Ea2eB2B9b9b210458d0F60Fc2dD`)                           |
+| Payment token              | USDm (cUSD-renamed; address `0x765de816...`)                                      |
+| `NEXT_PUBLIC_ENABLE_COACH` | unset → defaults to `true`                                                        |
+| Browser                    | MiniPay WebView (mobile) + Chrome desktop for diagnostic console                  |
+| Date / Time                | 2026-05-02 22:00 → 23:30 UTC                                                      |
+| Tester                     | Wolfcito                                                                          |
 
 ---
 
 ## 2. Automatable pre-checks (agent — already run)
 
-| # | Check | Result | Owner |
-|---|---|---|---|
-| 0.1 | Unit suite (`pnpm vitest run` from `apps/web`) | **595/595 ✅** | agent |
-| 0.2 | TS check (`pnpm tsc --noEmit`) | **0 errors ✅** | agent |
-| 0.3 | Visual regression (`pnpm test:e2e:visual` — 3 baselines on minipay project) | **3/3 ✅** | agent |
+| #   | Check                                                                       | Result          | Owner |
+| --- | --------------------------------------------------------------------------- | --------------- | ----- |
+| 0.1 | Unit suite (`pnpm vitest run` from `apps/web`)                              | **595/595 ✅**  | agent |
+| 0.2 | TS check (`pnpm tsc --noEmit`)                                              | **0 errors ✅** | agent |
+| 0.3 | Visual regression (`pnpm test:e2e:visual` — 3 baselines on minipay project) | **3/3 ✅**      | agent |
 
 All three ran at HEAD `dd7821e`. If any of these flips red between now and a re-run, halt the smoke and investigate.
 
@@ -46,6 +46,7 @@ For each step: pick a result (`pass` / `fail` / `blocked` / `n/a`), drop a one-l
 **Action**: navigate to `http://localhost:3000/hub`.
 
 **Expected**:
+
 - Z1 (`<GlobalStatusBar />`) at top showing **"Guest"** label, no PRO indicator.
 - Z2 (`<ContextualHeader />`) shows piece title + objective + picker chevron.
 - Z3 board renders 8×8 with a rook on a1 (default first-visit exercise).
@@ -54,8 +55,8 @@ For each step: pick a result (`pass` / `fail` / `blocked` / `n/a`), drop a one-l
 - Combined Z1 + Z2 content height ≤ 104px (visual judgement OK, exact measurement in e2e).
 
 **Result**: `___`
-**Notes**: ___
-**Artifact**: ___
+**Notes**: **_
+**Artifact**: _**
 
 ---
 
@@ -66,6 +67,7 @@ For each step: pick a result (`pass` / `fail` / `blocked` / `n/a`), drop a one-l
 **Action**: open the wallet connect surface (RainbowKit modal — likely from a dock entry that requires wallet OR via the wallet's own injection in MiniPay). Connect.
 
 **Expected**:
+
 - Z1 flips from `data-variant="anonymous"` to `data-variant="connected"`.
 - Identity pill shows **truncated wallet address** (canonical `0xABCD…1234` shape via `formatWalletShort`).
 - PRO indicator appears in Z1 right cluster — variant depends on PRO status:
@@ -74,8 +76,8 @@ For each step: pick a result (`pass` / `fail` / `blocked` / `n/a`), drop a one-l
 - No double-PRO render (no legacy `<ProChip>` lingering).
 
 **Result**: `___`
-**Notes**: ___
-**Artifact**: ___
+**Notes**: **_
+**Artifact**: _**
 
 ---
 
@@ -86,6 +88,7 @@ For each step: pick a result (`pass` / `fail` / `blocked` / `n/a`), drop a one-l
 **Action**: tap the PRO indicator in Z1 (either active or inactive variant — both fire `onProTap`).
 
 **Expected**:
+
 - `<ProSheet>` mounts as a Type-C bottom sheet.
 - Header: "Chesscito PRO" + tagline.
 - Price label `$1.99 / month`.
@@ -93,21 +96,23 @@ For each step: pick a result (`pass` / `fail` / `blocked` / `n/a`), drop a one-l
 - **"Coming later"** roadmap list visible (60% opacity).
 
 **If PRO is currently active** (post-purchase state):
+
 - Green banner `pro-active-banner` with "PRO Active — N days left".
 - New `pro-active-cta` block (commit #1 of stabilization sprint):
   - Button labeled **"Play Arena"**.
   - Helper copy below:
     - If `ENABLE_COACH !== "false"`: "After your match, PRO unlocks Coach analysis so you can review your decisions."
-    - If `ENABLE_COACH === "false"`: "Coach analysis is included with PRO and will appear after your Arena match."
+    - If `ENABLE_COACH === "false"`: "Coach analysis is PRO Benefit included and will appear after your Arena match."
 - Renew CTA at bottom: "Extend training".
 
 **If PRO is currently inactive** (first purchase about to happen):
+
 - No active banner, no `pro-active-cta` block.
 - Single CTA at bottom: "Start training" (`PRO_COPY.ctaBuy`).
 
 **Result**: `___`
-**Notes**: ___
-**Artifact**: ___ (capture both inactive and active states if testing the full purchase loop)
+**Notes**: **_
+**Artifact**: _** (capture both inactive and active states if testing the full purchase loop)
 
 ---
 
@@ -118,20 +123,22 @@ For each step: pick a result (`pass` / `fail` / `blocked` / `n/a`), drop a one-l
 > **Money warning**: this step costs **real money** on mainnet ($1.99 + gas). If on Sepolia testnet, only testnet funds. If unsure of network, halt and verify env first.
 
 **Action**:
+
 1. Tap "Start training" CTA.
 2. Approve token allowance (if first time).
 3. Sign + submit the purchase transaction.
 4. Wait for verification (`/api/verify-pro`).
 
 **Expected**:
+
 - Transaction broadcasts; explorer link works (testnet: `sepolia.celoscan.io`, mainnet: `celoscan.io`).
 - After confirmation, `useProStatus(address)` flips `active: true` with a future `expiresAt` (~30 days from now).
 - ProSheet re-renders with the active-state UI (active banner + Play Arena CTA).
 - Telemetry: `pro_cta_clicked` with `source: "sheet_buy"` fired (visible in network tab if telemetry endpoint is hit, or in `track()` mock if instrumented).
 
 **Result**: `___`
-**Notes**: ___ (transaction hash; explorer link)
-**Artifact**: ___
+**Notes**: **_ (transaction hash; explorer link)
+**Artifact**: _**
 
 ---
 
@@ -142,14 +149,15 @@ For each step: pick a result (`pass` / `fail` / `blocked` / `n/a`), drop a one-l
 **Action**: tap the "Play Arena" button inside the `pro-active-cta` block.
 
 **Expected**:
+
 - Browser navigates to `/arena`.
 - ProSheet closes (or unmounts with the route change).
 - Arena page renders (entry panel / soft-gate or active match — depends on prior state).
 - No errors in console; no double-render.
 
 **Result**: `___`
-**Notes**: ___
-**Artifact**: ___ (URL bar screenshot + arena page screenshot)
+**Notes**: **_
+**Artifact**: _** (URL bar screenshot + arena page screenshot)
 
 ---
 
@@ -158,19 +166,21 @@ For each step: pick a result (`pass` / `fail` / `blocked` / `n/a`), drop a one-l
 **Pre-conditions**: Step 5 passed; user is on `/arena`. `ENABLE_COACH !== "false"` (otherwise this step is `n/a`).
 
 **Action**:
+
 1. Pick a difficulty (Easy is the recommended pre-selection per project memory).
 2. Play a full match against the AI to a terminal state (mate / stalemate / resign).
 3. Look for the Coach surface post-game.
 
 **Expected**:
+
 - After the match ends, the Arena page's `coachPhase` flips from `idle` to either `welcome` (first time) or `loading` (subsequent Coach analysis with credits).
 - Coach surface (`<CoachWelcome />` / `<CoachLoading />` / `<CoachPanel />` / `<CoachPaywall />`) renders.
 - The user has a clear path: "Analyze game" or "Get more credits" or similar.
 - If `coachPhase === "paywall"` and user has PRO active, paywall should NOT block (PRO bypasses Coach credit consumption per `PRO_COPY.perksActive[0]`).
 
 **Result**: `___`
-**Notes**: ___ (which coach phase mounted; whether PRO bypassed paywall)
-**Artifact**: ___
+**Notes**: **_ (which coach phase mounted; whether PRO bypassed paywall)
+**Artifact**: _**
 
 ---
 
@@ -179,18 +189,20 @@ For each step: pick a result (`pass` / `fail` / `blocked` / `n/a`), drop a one-l
 **Pre-conditions**: any. Independent of PRO state.
 
 **Action**:
+
 1. Navigate to `/hub` (close any open sheets).
 2. Tap the Daily Tactic slot (left of board area).
 3. Inspect the starting position.
 
 **Expected**:
+
 - DailyTacticSheet mounts. Header shows puzzle name (one of mt-001..mt-007) + "White to move, mate in one."
 - Starting position is **legal**: opponent's king NOT pre-checked. Visually verify the black king is NOT under attack from any white piece on the board at start. (Specifically: mt-002 should have black king on g8 not h8; mt-005 should have white queen on a2 not a1; mt-007 should have white queen on g3 not f3; mt-004 should be the new K+Q vs K position with Qc8→Qc1.)
 - Tapping the white piece → solution → checkmate. Tapping a wrong move → reset + hint.
 
 **Result**: `___`
-**Notes**: ___ (which puzzle showed; was the start position legal?)
-**Artifact**: ___ (screenshot of starting position)
+**Notes**: **_ (which puzzle showed; was the start position legal?)
+**Artifact**: _** (screenshot of starting position)
 
 ---
 
@@ -199,12 +211,14 @@ For each step: pick a result (`pass` / `fail` / `blocked` / `n/a`), drop a one-l
 **Pre-conditions**: a wallet with **12+ stars on rook** (per project memory, gates the Mini Arena bridge unlock). If no fixture wallet exists, this step may be `n/a` for fresh wallets — note it.
 
 **Action**:
+
 1. From `/hub` with the gated wallet, tap the Mini Arena bridge button (right side of board area).
 2. MiniArenaSheet opens with K+R vs K setup.
 3. Make first legal move with the white rook (e.g. `a1 → a4`).
 4. Wait up to 1 second for the AI to respond.
 
 **Expected**:
+
 - Status flashes "thinking…" briefly.
 - AI responds with a legal black king move within ~250ms.
 - Move counter increments to 1/16.
@@ -213,8 +227,8 @@ For each step: pick a result (`pass` / `fail` / `blocked` / `n/a`), drop a one-l
 - **Critically**: the board never freezes with the player unable to move (the P0-2 regression).
 
 **Result**: `___`
-**Notes**: ___ (AI response time; how many moves played before resolution)
-**Artifact**: ___ (video if possible — freezes are easier to spot in video)
+**Notes**: **_ (AI response time; how many moves played before resolution)
+**Artifact**: _** (video if possible — freezes are easier to spot in video)
 
 ---
 
@@ -229,7 +243,7 @@ cd apps/web && pnpm test:e2e:visual
 **Expected**: 3/3 pass. If a baseline now diffs because of a session leftover (e.g., localStorage stuck after wallet connect), debug separately — do NOT re-baseline without rationale.
 
 **Result**: `___`
-**Notes**: ___
+**Notes**: \_\_\_
 
 ---
 
@@ -237,12 +251,12 @@ cd apps/web && pnpm test:e2e:visual
 
 When marking a step `fail`, classify:
 
-| Severity | Definition | Smoke verdict |
-|---|---|---|
-| **Critical** | PRO purchase doesn't complete; on-chain state corrupt; payment fails silently; user loses money without product. | **NO push.** Fix sprint required. |
-| **Major** | PRO purchase completes but post-purchase UX is dead (no CTA route works, ProSheet mounts wrong state, Coach unreachable). | **NO push.** Fix locally + repeat smoke. |
-| **Minor** | Visual blemish, copy typo, race condition that resolves on retry. | **Push allowed**, file a follow-up. |
-| **Blocked** | Cannot test (wallet env missing, contract not deployed on chosen network). | **NO push** until tested. Don't ship untested. |
+| Severity     | Definition                                                                                                                | Smoke verdict                                  |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| **Critical** | PRO purchase doesn't complete; on-chain state corrupt; payment fails silently; user loses money without product.          | **NO push.** Fix sprint required.              |
+| **Major**    | PRO purchase completes but post-purchase UX is dead (no CTA route works, ProSheet mounts wrong state, Coach unreachable). | **NO push.** Fix locally + repeat smoke.       |
+| **Minor**    | Visual blemish, copy typo, race condition that resolves on retry.                                                         | **Push allowed**, file a follow-up.            |
+| **Blocked**  | Cannot test (wallet env missing, contract not deployed on chosen network).                                                | **NO push** until tested. Don't ship untested. |
 
 ---
 
@@ -250,17 +264,17 @@ When marking a step `fail`, classify:
 
 ### Step-by-step results
 
-| # | Step | Result | Notes |
-|---|---|---|---|
-| 1 | `/hub` clean | **pass** | Z1 anonymous "Guest", dock 5 items, no disclaimer (commit #3 visible). |
-| 2 | Connect wallet → Z1 connected | **pass** | Wallet truncated `0xCc41…c2dD` in Z1 left cluster. PRO indicator initially MUTED (incorrect — see Step 3 root cause). |
-| 3 | Open ProSheet, see active CTA | **fail → fixed** | Sheet opened in INACTIVE state despite a confirmed on-chain PRO purchase tx earlier the same day. Diagnosed mid-smoke as **CRITICAL**: verify-pro server-side ABI mismatch (see §6). |
-| 4 | Buy PRO + verify on-chain | **n/a (already purchased)** + **re-purchased post-fix** | Original tx `0x60150fcffb86...` confirmed on celoscan: $1.99 USDm to Shop contract `0x24846C77...`, ItemPurchased event with itemId 6. Server-side verify-pro silently rejected. After fix, manual verify-pro fetch succeeded → Redis written → PRO active. Then a SECOND fresh purchase from MiniPay (post-deploy) flowed automatically to PRO active without manual intervention. |
-| 5 | Tap "Play Arena" CTA | **pass** | After fix + Redis active, ProSheet rendered the new active-state block with the "Play Arena" button. Tap navigated to `/arena`. |
-| 6 | Coach discoverability post-match | **pass with note** | Coach surface mounts on `/arena` post-game per spec. **Open follow-up**: signposting during the match for "Coach will appear after this game" is missing — user discovers it accidentally (covered in §7 follow-ups). |
-| 7 | Daily Tactic legality | **pass** | Today's puzzle (mt-006 "Smothered mate") starts with a legal position. The 4 repaired puzzles (mt-002, mt-005, mt-007, mt-004) hash-mod into the rotation correctly. |
-| 8 | Mini Arena no-freeze | **pass** | K+R vs K completed in 9 moves, "Dentro del objetivo (16)". AI responded after each player move; no freeze. Confirms commit #4 fix is live in real runtime. |
-| 9 | Visual regression re-run | **pass** | 3/3 baselines green pre and post the verify-pro fix (UI surface unchanged by API-only fix). |
+| #   | Step                             | Result                                                  | Notes                                                                                                                                                                                                                                                                                                                                                                               |
+| --- | -------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `/hub` clean                     | **pass**                                                | Z1 anonymous "Guest", dock 5 items, no disclaimer (commit #3 visible).                                                                                                                                                                                                                                                                                                              |
+| 2   | Connect wallet → Z1 connected    | **pass**                                                | Wallet truncated `0xCc41…c2dD` in Z1 left cluster. PRO indicator initially MUTED (incorrect — see Step 3 root cause).                                                                                                                                                                                                                                                               |
+| 3   | Open ProSheet, see active CTA    | **fail → fixed**                                        | Sheet opened in INACTIVE state despite a confirmed on-chain PRO purchase tx earlier the same day. Diagnosed mid-smoke as **CRITICAL**: verify-pro server-side ABI mismatch (see §6).                                                                                                                                                                                                |
+| 4   | Buy PRO + verify on-chain        | **n/a (already purchased)** + **re-purchased post-fix** | Original tx `0x60150fcffb86...` confirmed on celoscan: $1.99 USDm to Shop contract `0x24846C77...`, ItemPurchased event with itemId 6. Server-side verify-pro silently rejected. After fix, manual verify-pro fetch succeeded → Redis written → PRO active. Then a SECOND fresh purchase from MiniPay (post-deploy) flowed automatically to PRO active without manual intervention. |
+| 5   | Tap "Play Arena" CTA             | **pass**                                                | After fix + Redis active, ProSheet rendered the new active-state block with the "Play Arena" button. Tap navigated to `/arena`.                                                                                                                                                                                                                                                     |
+| 6   | Coach discoverability post-match | **pass with note**                                      | Coach surface mounts on `/arena` post-game per spec. **Open follow-up**: signposting during the match for "Coach will appear after this game" is missing — user discovers it accidentally (covered in §7 follow-ups).                                                                                                                                                               |
+| 7   | Daily Tactic legality            | **pass**                                                | Today's puzzle (mt-006 "Smothered mate") starts with a legal position. The 4 repaired puzzles (mt-002, mt-005, mt-007, mt-004) hash-mod into the rotation correctly.                                                                                                                                                                                                                |
+| 8   | Mini Arena no-freeze             | **pass**                                                | K+R vs K completed in 9 moves, "Dentro del objetivo (16)". AI responded after each player move; no freeze. Confirms commit #4 fix is live in real runtime.                                                                                                                                                                                                                          |
+| 9   | Visual regression re-run         | **pass**                                                | 3/3 baselines green pre and post the verify-pro fix (UI surface unchanged by API-only fix).                                                                                                                                                                                                                                                                                         |
 
 ### Critical bug discovered + fixed mid-smoke
 

@@ -1725,7 +1725,7 @@ const messages = {
     joinedTitle: "Reto Mental",
     passportLabel: "Pasaporte de foco",
     activeBadge: "ACTIVO",
-    includedWithPro: "Incluido con PRO",
+    includedWithPro: "Beneficio PRO incluido",
     trainingPassStat: "Pase de entrenamiento",
     accessActive: "Acceso activo",
     dayProgress: "Día {day} / {total}",

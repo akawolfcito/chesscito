@@ -1,7 +1,7 @@
 export function mapSeasonPassError(reason: string | null | undefined): string {
   switch (reason) {
     case "included_with_pro":
-      return "Included with PRO.";
+      return "PRO Benefit included.";
     case "rail_not_configured":
     case "no_treasury":
     case "unavailable":

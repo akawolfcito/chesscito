@@ -28,14 +28,14 @@ Chesscito is an educational MiniApp on **Celo**, designed to be used with MiniPa
 
 All six pieces. 78 exercises plus labyrinth challenges. Stars awarded by precision.
 
-| Piece | Training |
-|-------|----------|
-| Rook (Torre) | Exercises + labyrinths |
-| Bishop (Alfil) | Exercises + labyrinths |
+| Piece            | Training               |
+| ---------------- | ---------------------- |
+| Rook (Torre)     | Exercises + labyrinths |
+| Bishop (Alfil)   | Exercises + labyrinths |
 | Knight (Caballo) | Exercises + labyrinths |
-| Pawn (Peón) | Exercises + labyrinths |
-| Queen (Dama) | Exercises + labyrinths |
-| King (Rey) | Exercises + labyrinths |
+| Pawn (Peón)      | Exercises + labyrinths |
+| Queen (Dama)     | Exercises + labyrinths |
+| King (Rey)       | Exercises + labyrinths |
 
 Stars are awarded based on move efficiency:
 
@@ -55,7 +55,7 @@ Play a complete chess game vs AI and save the result as an on-chain NFT — any 
 
 ### Chesscito Coach
 
-Post-game analysis powered by an LLM that identifies tactical and positional patterns in your play so you know what to train next. User-triggered per game; included with PRO.
+Post-game analysis powered by an LLM that identifies tactical and positional patterns in your play so you know what to train next. User-triggered per game; PRO Benefit included.
 
 ### Leaderboard
 
@@ -63,29 +63,29 @@ DB-backed global leaderboard (Supabase read layer) with an optional on-chain sco
 
 ## On-chain Contracts (Celo Mainnet)
 
-| Contract | Address |
-|----------|---------|
-| Badges (ERC-1155) | [`0xf92759E5...`](https://celoscan.io/address/0xf92759E5525763554515DD25E7650f72204a6739) |
-| Scoreboard | [`0x1681aAA1...`](https://celoscan.io/address/0x1681aAA176d5f46e45789A8b18C8E990f663959a) |
-| Shop (proxy) | [`0x24846C77...`](https://celoscan.io/address/0x24846C772af7233ADfD98b9A96273120f3a1f74b) |
+| Contract            | Address                                                                                   |
+| ------------------- | ----------------------------------------------------------------------------------------- |
+| Badges (ERC-1155)   | [`0xf92759E5...`](https://celoscan.io/address/0xf92759E5525763554515DD25E7650f72204a6739) |
+| Scoreboard          | [`0x1681aAA1...`](https://celoscan.io/address/0x1681aAA176d5f46e45789A8b18C8E990f663959a) |
+| Shop (proxy)        | [`0x24846C77...`](https://celoscan.io/address/0x24846C772af7233ADfD98b9A96273120f3a1f74b) |
 | Victory NFT (proxy) | [`0x0eE22F83...`](https://celoscan.io/address/0x0eE22F830a99e7a67079018670711C0F94Abeeb0) |
 
 > LabyrinthBadges (ERC-1155 soulbound) is live on Celo Sepolia; mainnet deploy is queued.
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 14 App Router + TypeScript |
-| Styling | Tailwind CSS |
-| Blockchain | Celo Mainnet (chain ID 42220) |
-| Wallet | MiniPay-compatible + MetaMask via wagmi + viem |
-| Payments | Stablecoin direct transfer rail (cUSD / USDT / USDC, no approvals) |
-| Monorepo | Turborepo + pnpm |
-| Contracts | Solidity + Hardhat + OpenZeppelin v5 |
-| AI Engine | `js-chess-engine` (pure JS, no WASM) |
-| Cache layer | Supabase (read layer + cron sync) |
-| AI Coach | OpenAI-compatible LLM provider |
+| Layer       | Technology                                                         |
+| ----------- | ------------------------------------------------------------------ |
+| Frontend    | Next.js 14 App Router + TypeScript                                 |
+| Styling     | Tailwind CSS                                                       |
+| Blockchain  | Celo Mainnet (chain ID 42220)                                      |
+| Wallet      | MiniPay-compatible + MetaMask via wagmi + viem                     |
+| Payments    | Stablecoin direct transfer rail (cUSD / USDT / USDC, no approvals) |
+| Monorepo    | Turborepo + pnpm                                                   |
+| Contracts   | Solidity + Hardhat + OpenZeppelin v5                               |
+| AI Engine   | `js-chess-engine` (pure JS, no WASM)                               |
+| Cache layer | Supabase (read layer + cron sync)                                  |
+| AI Coach    | OpenAI-compatible LLM provider                                     |
 
 ## Project Structure
 
@@ -131,13 +131,13 @@ pnpm contracts:deploy:celo        # deploy to Celo Mainnet
 
 ## Submission Links
 
-| | |
-|-|-----|
-| Live demo | [chesscito.com](https://chesscito.com/) |
-| Demo video | [youtube.com/watch?v=h-DGIxbEoms](https://www.youtube.com/watch?v=h-DGIxbEoms) |
+|                   |                                                                                                                                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Live demo         | [chesscito.com](https://chesscito.com/)                                                                                                                                                  |
+| Demo video        | [youtube.com/watch?v=h-DGIxbEoms](https://www.youtube.com/watch?v=h-DGIxbEoms)                                                                                                           |
 | Presentation deck | [Google Slides](https://docs.google.com/presentation/d/e/2PACX-1vQpOSWoGHS1hKB5H9uHAHmWVVKfuOUADdVL0NV2jHzr3ZeQxelNS8tNjNKlxHRdm0ae5VYBWSpI3gLF/pub?start=false&loop=false&delayms=3000) |
-| Karma GAP project | [karmahq.xyz/project/chesscito](https://www.karmahq.xyz/project/chesscito) |
-| Public repo | [github.com/wolfcito/chesscito](https://github.com/wolfcito/chesscito) |
+| Karma GAP project | [karmahq.xyz/project/chesscito](https://www.karmahq.xyz/project/chesscito)                                                                                                               |
+| Public repo       | [github.com/wolfcito/chesscito](https://github.com/wolfcito/chesscito)                                                                                                                   |
 
 ## License
 

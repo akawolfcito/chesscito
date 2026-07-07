@@ -3193,7 +3193,7 @@ export const CHALLENGE_CARD_COPY = {
   joinedTitle: "Mind Challenge",
   passportLabel: "Focus Passport",
   activeBadge: "ACTIVE",
-  includedWithPro: "Included with PRO",
+  includedWithPro: "PRO Benefit included",
   trainingPassStat: "Training Pass",
   accessActive: "Access active",
   dayProgress: "Day {day} / {total}",
