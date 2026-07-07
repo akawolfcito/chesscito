@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 type Props = {
   /** Optional close handler. When provided, X tap calls this to dismiss
@@ -23,6 +24,18 @@ type Props = {
   ariaLive?: "polite" | "assertive";
   /** Aria label for the close button (e.g. "Close victory dialog"). */
   closeLabel?: string;
+  /** When true, render the scrim into `document.body` via a portal so it
+   *  escapes any transformed ancestor. A Radix Sheet's slide-in applies a
+   *  `transform` to its content, which turns `position: fixed` into
+   *  sheet-relative and traps this modal INSIDE the sheet (it then reads as
+   *  an "interior screen" and its z-index is scoped under the dock). Aux
+   *  modals opened from a sheet (Get Peones from the Account sheet) set this.
+   *  Default false — arena/exercises popups already mount at the app root. */
+  portal?: boolean;
+  /** Tailwind z-index utility for the scrim. Default `z-[70]` sits ABOVE the
+   *  PersistentDock (z-60). Aux-family modals pass `z-[55]` to cover the
+   *  z-50 aux sheet while staying UNDER the dock. */
+  scrimZClassName?: string;
   children: ReactNode;
 };
 
@@ -44,17 +57,21 @@ export function VictoryPopupShell({
   role = "dialog",
   ariaLive,
   closeLabel = "Close",
+  portal = false,
+  scrimZClassName = "z-[70]",
   children,
 }: Props) {
   const handleBackdropClick = disableBackdropClose ? undefined : () => onClose?.();
-  return (
+  const scrim = (
     /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
     <div
-      // z-[70] sits above the PersistentDock (z-60 in globals.css) so the
-      // scrim dims the dock and the modal panel is the only interactive
+      // Default z-[70] sits above the PersistentDock (z-60 in globals.css) so
+      // the scrim dims the dock and the modal panel is the only interactive
       // surface. Earlier z-50 left the dock visually on top of the modal
       // in exercises popups (piece-complete / labyrinth-solved / score-saved).
-      className="candy-modal-scrim pointer-events-auto fixed inset-0 z-[70] flex items-center justify-center animate-in fade-in duration-300"
+      // Aux-family callers pass a lower `scrimZClassName` (e.g. z-[55]) to
+      // stay UNDER the dock while covering their z-50 sheet.
+      className={`candy-modal-scrim pointer-events-auto fixed inset-0 ${scrimZClassName} flex items-center justify-center animate-in fade-in duration-300`}
       role={role}
       aria-modal="true"
       aria-label={ariaLabel}
@@ -99,4 +116,9 @@ export function VictoryPopupShell({
       </div>
     </div>
   );
+
+  if (portal && typeof document !== "undefined") {
+    return createPortal(scrim, document.body);
+  }
+  return scrim;
 }
