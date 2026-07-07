@@ -9451,7 +9451,9 @@ button.hud-resource-chip:active:not(:disabled) {
   position: absolute;
   right: 10px;
   top: 4px;
-  z-index: 3;
+  /* Above the ContextualHeader (z-10) — otherwise the header subtree
+     intercepts the tap and the account sheet never opens. */
+  z-index: 20;
 }
 
 .arena-scaffold-hud-top {
