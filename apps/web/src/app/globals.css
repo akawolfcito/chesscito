@@ -9436,9 +9436,20 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .arena-scaffold-hud {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+/* Account entry — top-right of the arena HUD, mirroring the LITE hub
+   account circle. Absolutely anchored so it floats over the ContextualHeader
+   without shifting the title. */
+.arena-scaffold-account {
+  position: absolute;
+  right: 10px;
+  top: 4px;
+  z-index: 3;
 }
 
 .arena-scaffold-hud-top {

@@ -123,6 +123,25 @@ describe("ArenaSelectScaffold", () => {
     expect(screen.queryByText(/PRO/)).not.toBeInTheDocument();
   });
 
+  it("renders the account entry when account prop is provided and fires onTap", async () => {
+    const onTap = vi.fn();
+    render(<ArenaSelectScaffold {...baseProps} account={{ isPro: false, onTap }} />);
+    await userEvent.click(screen.getByTestId("arena-account-chip"));
+    expect(onTap).toHaveBeenCalledOnce();
+  });
+
+  it("adds the PRO ring modifier when account.isPro is true", () => {
+    render(<ArenaSelectScaffold {...baseProps} account={{ isPro: true, onTap: vi.fn() }} />);
+    expect(screen.getByTestId("arena-account-chip").className).toContain(
+      "hub-account-circle--pro",
+    );
+  });
+
+  it("omits the account entry when the account prop is absent", () => {
+    render(<ArenaSelectScaffold {...baseProps} />);
+    expect(screen.queryByTestId("arena-account-chip")).toBeNull();
+  });
+
   it("renders an error message banner when errorMessage is provided", () => {
     render(<ArenaSelectScaffold {...baseProps} errorMessage="AI disconnected" />);
     expect(screen.getByText("AI disconnected")).toBeInTheDocument();

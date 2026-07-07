@@ -1083,6 +1083,19 @@ function ArenaPageInner() {
                   }
                   : undefined
               }
+              account={
+                isConnected
+                  ? {
+                    isPro: proActiveCached,
+                    onTap: () => {
+                      track("arena_account_tap", {
+                        pro_active: proActiveCached,
+                      });
+                      router.push("/exercises?sheet=account");
+                    },
+                  }
+                  : undefined
+              }
               errorMessage={game.errorMessage}
             />
           )}
