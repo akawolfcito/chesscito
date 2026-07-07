@@ -43,6 +43,44 @@ function TagIcon() {
     </svg>
   );
 }
+function TicketIcon() {
+  return (
+    <svg viewBox="0 0 16 16" className="challenge-card-stat-icon" aria-hidden="true">
+      <path
+        d="M2.5 5.4h11v1.3a1.3 1.3 0 0 0 0 2.6v1.3h-11V9.3a1.3 1.3 0 0 0 0-2.6V5.4z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 6.2l0.62 1.45 1.57 0.14-1.19 1.03 0.35 1.54L8 9.6l-1.35 0.8 0.35-1.54-1.19-1.03 1.57-0.14z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+function ShieldCheckIcon() {
+  return (
+    <svg viewBox="0 0 16 16" className="challenge-card-stat-icon" aria-hidden="true">
+      <path
+        d="M8 1.5l5 2v4c0 3.2-2.1 5.2-5 6.5C5.1 12.7 3 10.7 3 7.5v-4l5-2z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5.6 7.7l1.6 1.6 3.1-3.4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 function CrownIcon() {
   return (
     <svg viewBox="0 0 16 16" className="challenge-card-active-chip-crown" aria-hidden="true">
@@ -153,7 +191,10 @@ export function ChallengeCard({
           </span>
           <span className="challenge-card-stat">
             {isActive && seasonPass.source === "pro" ? (
-              t("trainingPassStat")
+              <>
+                <TicketIcon />
+                {t("trainingPassStat")}
+              </>
             ) : (
               <>
                 <ShieldIcon />
@@ -164,7 +205,10 @@ export function ChallengeCard({
           <span className="challenge-card-stat">
             {isActive ? (
               seasonPass.source === "pro" ? (
-                <span data-testid="challenge-pro-coverage">{t("accessActive")}</span>
+                <>
+                  <ShieldCheckIcon />
+                  <span data-testid="challenge-pro-coverage">{t("accessActive")}</span>
+                </>
               ) : (
                 <span data-testid="challenge-day">
                   {`${seasonPass.dayOfChallenge}/${durationDays} ${t("dayStat")}`}
