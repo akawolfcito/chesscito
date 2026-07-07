@@ -65,6 +65,7 @@ vi.mock("@/lib/game/use-chess-game", () => ({
 
 vi.mock("wagmi", () => ({
   useAccount: () => ({ address: undefined, isConnected: false }),
+  useDisconnect: () => ({ disconnect: vi.fn() }),
   useChainId: () => 42220,
   useReadContract: () => ({ data: undefined, isLoading: false }),
   useReadContracts: () => ({ data: [], isLoading: false }),
