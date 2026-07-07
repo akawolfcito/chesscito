@@ -6,6 +6,7 @@ import { HubActionTile } from "@/components/hub/hub-action-tile";
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { LanguageChip } from "@/components/hub/language-chip";
 import { KingdomAnchor } from "@/components/kingdom/kingdom-anchor";
+import { KingdomCard } from "@/components/kingdom/kingdom-card";
 import { PrimaryPlayCta } from "@/components/kingdom/primary-play-cta";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PlayTacticsTile } from "@/components/tactics/play-tactics-tile";
@@ -22,8 +23,10 @@ type PlayHubScaffoldProps = {
   onArenaPress: () => void;
 };
 
-/** Competitive Play home. Tactics is a Play-owned warm-up; Enter Arena remains
- * the only dominant CTA and no Learn/Daily primitives are mounted. */
+/** Play Kingdom home. Mirrors the LEARN/LITE hub's visual system (unified
+ *  vocabulary): floating HUD + Kingdom portal + mode switch + Kingdom hero
+ *  panel + dominant Play Chess CTA + CHESS TOOLS square-tile grid. Pure
+ *  presentational — caller owns navigation + on-chain state. */
 export function PlayHubScaffold({
   mintedVictoryCount,
   isWalletConnected,
@@ -57,7 +60,6 @@ export function PlayHubScaffold({
             >
               <CandyIcon name="trophy" className="candy-tray-pill-icon candy-tray-pill-icon--floating" />
               <span>{mintedVictoryCount}</span>
-              {/* <span className="play-hub-victories-label">{tPlay("victoriesLabel")}</span> */}
             </button>
             <LanguageChip />
           </div>
@@ -94,28 +96,13 @@ export function PlayHubScaffold({
           <KingdomAnchor variant="playhub" showTagline={false} />
           <AppModeSwitch activeMode="play" />
         </div>
-        <div className="play-hub-secondary-actions" aria-label={tPlay("actionsAriaLabel")}>
-          <PlayTacticsTile />
-          <HubActionTile
-            className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
-            iconSrc="/art/redesign/icons/coach.png"
-            label={tPlay("coachLabel")}
-            ariaLabel={tHud("coachAriaLabel")}
-            onClick={onCoachTap}
-            badge={<span className="play-hub-action-badge">PRO</span>}
-          />
-          <HubActionTile
-            className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
-            iconSrc="/art/redesign/icons/shop.png"
-            label={tPlay("shopLabel")}
-            ariaLabel={tPlay("shopAriaLabel")}
-            onClick={onShopTap}
-          />
-        </div>
-      </section>
 
-      <footer className="hub-scaffold-footer play-hub-footer mt-3">
-        <div className="hub-scaffold-cta-row">
+        {/* Kingdom hero panel — one panel, PRO chip is the only per-state
+            difference. The non-PRO chip opens the PRO sheet (onProTap). */}
+        <KingdomCard pro={pro} onProDiscover={onProTap} />
+
+        {/* Dominant CTA — occupies the Start Focus slot of the LEARN/LITE hub. */}
+        <div className="hub-scaffold-cta-row play-hub-cta-row">
           <PrimaryPlayCta
             surface="playhub"
             label={tPlay("arenaLabel")}
@@ -125,7 +112,30 @@ export function PlayHubScaffold({
             pieceIconSrc="/art/hub/enter-arena.png"
           />
         </div>
-      </footer>
+
+        {/* CHESS TOOLS — reuses the LEARN training-path square-tile visual
+            (HubActionTile already mirrors .reward-tile). Tactics stays
+            self-contained; Coach/Shop are prop-driven. */}
+        <section className="play-hub-tools" aria-label={tPlay("chessToolsLabel")}>
+          <h2 className="play-hub-tools-label">{tPlay("chessToolsLabel")}</h2>
+          <div className="play-hub-tools-grid" aria-label={tPlay("actionsAriaLabel")}>
+            <PlayTacticsTile className="" />
+            <HubActionTile
+              iconSrc="/art/redesign/icons/coach.png"
+              label={tPlay("coachLabel")}
+              ariaLabel={tHud("coachAriaLabel")}
+              onClick={onCoachTap}
+              badge={<span className="play-hub-action-badge">PRO</span>}
+            />
+            <HubActionTile
+              iconSrc="/art/redesign/icons/shop.png"
+              label={tPlay("shopLabel")}
+              ariaLabel={tPlay("shopAriaLabel")}
+              onClick={onShopTap}
+            />
+          </div>
+        </section>
+      </section>
     </main>
   );
 }

@@ -3265,13 +3265,24 @@ export const HUB_SCAFFOLD_COPY = {
 export const PLAY_HUB_COPY = {
   rootAriaLabel: "Chesscito Play Hub",
   victoriesLabel: "Victories",
-  victoriesAriaLabel: "Minted Arena victories: {count}",
+  victoriesAriaLabel: "Minted victories: {count}",
   actionsAriaLabel: "Play services",
   coachLabel: "Coach",
   shopLabel: "Shop",
   shopAriaLabel: "Open Play Shop",
   arenaLabel: "PLAY CHESS",
-  arenaAriaLabel: "Enter Arena: full chess vs AI",
+  arenaAriaLabel: "Play Chess: full chess vs AI",
+  // Play Kingdom panel (ref Image 2) — one panel, PRO chip is the only
+  // per-state difference (arena is free-to-all, never a paywall).
+  kingdomPanelTitle: "Play Kingdom",
+  kingdomPanelBody: "Play matches, sharpen tactics, and improve with Coach.",
+  kingdomProActiveChip: "PRO active",
+  kingdomProDiscoverChip: "PRO",
+  kingdomProDiscoverAriaLabel: "Discover PRO benefits",
+  quickMatchLabel: "Quick Match",
+  coachReviewLabel: "Coach Review",
+  rewardsLabel: "Rewards",
+  chessToolsLabel: "CHESS TOOLS",
 } as const;
 
 export const PLAY_TACTICS_COPY = {
