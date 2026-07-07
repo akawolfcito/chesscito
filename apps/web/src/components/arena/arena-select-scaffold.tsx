@@ -47,6 +47,15 @@ type SoftGate = {
   onDismiss: () => void
 }
 
+/** Account entry (top-right of the HUD). Mirrors the LITE hub
+ *  `hub-account-circle`: a compact avatar chip routing into the account
+ *  surface. Caller only passes this when a wallet is connected — the
+ *  scaffold renders nothing otherwise. */
+type ArenaAccountEntry = {
+  isPro: boolean
+  onTap: () => void
+}
+
 type Props = {
   difficulty: ArenaDifficulty
   playerColor: PlayerColor
@@ -55,6 +64,7 @@ type Props = {
   onStart: () => void
   onBack?: () => void
   softGate?: SoftGate
+  account?: ArenaAccountEntry
   errorMessage?: string | null
   onError?: (
     context: import('@/components/error/primitive-boundary').PrimitiveBoundaryErrorContext,
@@ -75,10 +85,12 @@ export function ArenaSelectScaffold({
   onStart,
   onBack,
   softGate,
+  account,
   errorMessage,
   onError,
 }: Props) {
   const t = useTranslations('ARENA_COPY')
+  const tStatus = useTranslations('GLOBAL_STATUS_BAR_COPY')
   const arenaTitle = t('title')
   const colorLabels: Record<PlayerColor, string> = {
     w: t('playAsWhite'),
@@ -118,6 +130,33 @@ export function ArenaSelectScaffold({
         ) : (
           <ContextualHeader variant="title" title={arenaTitle} />
         )}
+        {account ? (
+          <button
+            type="button"
+            onClick={account.onTap}
+            aria-label={
+              account.isPro
+                ? tStatus('proManageLabel')
+                : tStatus('accountLabel')
+            }
+            data-testid="arena-account-chip"
+            className={`hub-account-circle arena-scaffold-account${
+              account.isPro ? ' hub-account-circle--pro' : ''
+            }`}
+          >
+            {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+            <picture className="hub-account-circle-avatar">
+              <source srcSet="/art/avatar-small-account.avif" type="image/avif" />
+              <source srcSet="/art/avatar-small-account.webp" type="image/webp" />
+              <img
+                src="/art/avatar-small-account.png"
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+              />
+            </picture>
+          </button>
+        ) : null}
       </header>
 
       <section className="arena-scaffold-body">
