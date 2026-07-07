@@ -9,6 +9,7 @@ import {
   useDisconnect,
 } from "wagmi";
 import { AccountSheet } from "@/components/account/account-sheet";
+import { daysRemaining } from "@/lib/pro/days-remaining";
 import { useCoachCredits } from "@/lib/coach/use-coach-credits";
 import { formatWalletShort } from "@/lib/wallet/format";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
@@ -1101,6 +1102,10 @@ function ArenaPageInner() {
                 isConnected
                   ? {
                     isPro: proActiveCached,
+                    daysRemaining: daysRemaining(
+                      proStatusFromHook?.expiresAt ?? null,
+                      Date.now(),
+                    ),
                     onTap: () => {
                       track("arena_account_tap", {
                         pro_active: proActiveCached,

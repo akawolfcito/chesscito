@@ -123,18 +123,31 @@ describe("ArenaSelectScaffold", () => {
     expect(screen.queryByText(/PRO/)).not.toBeInTheDocument();
   });
 
-  it("renders the account entry when account prop is provided and fires onTap", async () => {
+  it("renders the account pill (avatar + label) and fires onTap", async () => {
     const onTap = vi.fn();
-    render(<ArenaSelectScaffold {...baseProps} account={{ isPro: false, onTap }} />);
-    await userEvent.click(screen.getByTestId("arena-account-chip"));
+    render(
+      <ArenaSelectScaffold
+        {...baseProps}
+        account={{ isPro: false, daysRemaining: null, onTap }}
+      />,
+    );
+    const chip = screen.getByTestId("arena-account-chip");
+    expect(chip.className).toContain("candy-tray-pill");
+    await userEvent.click(chip);
     expect(onTap).toHaveBeenCalledOnce();
   });
 
-  it("adds the PRO ring modifier when account.isPro is true", () => {
-    render(<ArenaSelectScaffold {...baseProps} account={{ isPro: true, onTap: vi.fn() }} />);
-    expect(screen.getByTestId("arena-account-chip").className).toContain(
-      "hub-account-circle--pro",
+  it("adds the PRO text modifier + days suffix when account.isPro is true", () => {
+    render(
+      <ArenaSelectScaffold
+        {...baseProps}
+        account={{ isPro: true, daysRemaining: 200, onTap: vi.fn() }}
+      />,
     );
+    expect(screen.getByTestId("arena-account-chip").className).toContain(
+      "hub-hud-pill--pro-text",
+    );
+    expect(screen.getByText(/PRO · 200d/)).toBeInTheDocument();
   });
 
   it("omits the account entry when the account prop is absent", () => {

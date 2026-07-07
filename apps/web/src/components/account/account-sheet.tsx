@@ -96,13 +96,10 @@ export function AccountSheet({
         hideClose
         title={t("title")}
         description={t("description")}
-        // z-[70] on both scrim + content so the sheet renders ABOVE the
-        // persistent dock (z-60). Without this the full-screen sheet sits at
-        // the default z-50, behind the dock — invisible on surfaces that mount
-        // the dock (arena/play). Full-screen opaque `sheet-bg-hub` then covers
-        // the dock, so no dock-overlay sentinel is needed.
-        overlayClassName="z-[70]"
-        className="z-[70] sheet-bg-hub rounded-none border-0 h-[100dvh] flex flex-col focus:outline-none focus-visible:outline-none"
+        // Default z-50: the sheet sits BELOW the persistent dock (z-60) so the
+        // dock stays reachable on top — the canonical "aux/destination panel"
+        // rule (badge/shop/trophies/account). Full-screen sheet, dock overlaid.
+        className="sheet-bg-hub rounded-none border-0 h-[100dvh] flex flex-col focus:outline-none focus-visible:outline-none"
       >
         <div className="-mx-6 -mt-6 shrink-0 border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
