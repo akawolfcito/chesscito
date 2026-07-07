@@ -2,7 +2,16 @@
 
 import { useTranslations } from "next-intl";
 
+import { type PassportSlotKind, passportSlots } from "@/lib/daily/passport";
 import type { HubFocusPassport, SeasonChallengeMeta } from "@/components/hub/use-hub-data";
+
+/** Flame sprite basenames in `public/art/focus-passport/` — same assets the
+ *  standalone FocusPassport uses. */
+const FLAME_ASSET: Record<PassportSlotKind, string> = {
+  color: "flame-color",
+  blue: "flame-blue",
+  gray: "flame-gray",
+};
 
 /** Season-pass slice the card needs. Discriminated so the `active` branch
  *  carries the day-of-challenge + shields it must render, and the offer
@@ -119,7 +128,17 @@ export function ChallengeCard({
   const done = isLoading
     ? 0
     : Math.min(Math.max(focusPassport.streak, 0), durationDays);
-  const pct = Math.round((done / durationDays) * 100);
+
+  // 7-flame streak window — same slot logic as the standalone FocusPassport
+  // (frozen-blue = earlier day done, orange-gold = today active, gray =
+  // pending). Slots derive from the streak count, NOT calendar dates, so no
+  // per-weekday labels (would imply data we do not persist — completedDates[]
+  // is P1.5 backlog). Restores the pre-70ee44f7 view the bar replaced; the
+  // "N/21 focus days" ordinal keeps the challenge-scale readout (UX spec §5,
+  // 2026-07-06, day-labels dropped by stakeholder).
+  const slots = isLoading
+    ? passportSlots(0, false).map((s) => ({ ...s, glow: false }))
+    : passportSlots(focusPassport.streak < 0 ? 0 : focusPassport.streak, focusPassport.todayDone);
 
   return (
     <section
@@ -145,7 +164,7 @@ export function ChallengeCard({
               <span
                 className={`challenge-card-active-chip${
                   seasonPass.source === "pro"
-                    ? " challenge-card-active-chip--pro"
+                    ? " challenge-card-active-chip--pro text-center"
                     : ""
                 }`}
                 data-testid="challenge-active-badge"
@@ -157,25 +176,46 @@ export function ChallengeCard({
           </header>
           <p className="challenge-card-passport-label">{t("passportLabel")}</p>
           <div
-            className="challenge-card-progress"
+            className="challenge-card-passport"
             data-testid="challenge-progress"
             data-done={done}
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={durationDays}
-            aria-valuenow={done}
           >
-            {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-            <picture className="challenge-card-progress-flame">
-              <source srcSet="/art/focus-passport/flame-color.avif" type="image/avif" />
-              <source srcSet="/art/focus-passport/flame-color.webp" type="image/webp" />
-              <img src="/art/focus-passport/flame-color.png" alt="" aria-hidden="true" draggable={false} />
-            </picture>
-            <span className="challenge-card-progress-text">
+            <div
+              className="challenge-card-flames"
+              role="list"
+              aria-label={t("passportLabel")}
+            >
+              {slots.map((slot, i) => {
+                const filled = slot.kind !== "gray";
+                const asset = FLAME_ASSET[slot.kind];
+                return (
+                  // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
+                  <picture
+                    key={i}
+                    role="listitem"
+                    data-testid="focus-passport-slot"
+                    data-kind={slot.kind}
+                    data-filled={filled || undefined}
+                    data-glow={slot.glow || undefined}
+                    className={`challenge-card-flame${slot.glow ? " is-glow" : ""}`}
+                  >
+                    <source srcSet={`/art/focus-passport/${asset}.avif`} type="image/avif" />
+                    <source srcSet={`/art/focus-passport/${asset}.webp`} type="image/webp" />
+                    <img
+                      src={`/art/focus-passport/${asset}.png`}
+                      alt={
+                        filled
+                          ? t("dotFilledAria", { index: i + 1 })
+                          : t("dotEmptyAria", { index: i + 1 })
+                      }
+                      draggable={false}
+                    />
+                  </picture>
+                );
+              })}
+            </div>
+            <span className="challenge-card-day-count">
               {t("focusDaysFormat", { done, total: durationDays })}
-            </span>
-            <span className="challenge-card-progress-track">
-              <span className="challenge-card-progress-fill" style={{ width: `${pct}%` }} />
             </span>
           </div>
         </div>

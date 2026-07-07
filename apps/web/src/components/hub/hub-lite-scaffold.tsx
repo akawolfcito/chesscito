@@ -94,42 +94,43 @@ export function HubLiteScaffold({
             />
             <span>{trophies}</span>
           </button>
+          {/* Peones balance + recharge rail (self-contained: taps open the
+              Chesito Card → Get Peones). The green "+" advertises recharge.
+              Left cluster = status pills (trophy · Peones · language), matching
+              the PLAY/FULL header grammar. Hidden for guests by the chip. */}
+          {isWalletConnected ? (
+            <PeonesBalanceChip surface="hub" showRecharge />
+          ) : null}
           <LanguageChip />
         </div>
         <div className="hub-lite-hud-right">
+          {/* Right anchor = account entry (compact circular avatar, ref Image
+              #2). Hub has no account sheet → routes to /exercises?sheet=account.
+              PRO gets a brighter ring accent. */}
           {isWalletConnected ? (
-            <>
-              {/* Peones balance + recharge rail (self-contained: taps open the
-                  Chesito Card → Get Peones). The green "+" advertises recharge.
-                  Hidden for guests by the chip. */}
-              <PeonesBalanceChip surface="hub" showRecharge />
-              {/* Account entry, compact circular avatar (reference Image #2).
-                  Hub has no account sheet → routes to /exercises?sheet=account.
-                  PRO gets a brighter ring accent. */}
-              <button
-                type="button"
-                onClick={onAccountTap}
-                aria-label={
-                  isPro ? tStatus("proManageLabel") : tStatus("accountLabel")
-                }
-                data-testid="hub-account-chip"
-                className={`hub-account-circle${
-                  isPro ? " hub-account-circle--pro" : ""
-                }`}
-              >
-                {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-                <picture className="hub-account-circle-avatar">
-                  <source srcSet="/art/avatar-small-account.avif" type="image/avif" />
-                  <source srcSet="/art/avatar-small-account.webp" type="image/webp" />
-                  <img
-                    src="/art/avatar-small-account.png"
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                  />
-                </picture>
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={onAccountTap}
+              aria-label={
+                isPro ? tStatus("proManageLabel") : tStatus("accountLabel")
+              }
+              data-testid="hub-account-chip"
+              className={`hub-account-circle${
+                isPro ? " hub-account-circle--pro" : ""
+              }`}
+            >
+              {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+              <picture className="hub-account-circle-avatar">
+                <source srcSet="/art/avatar-small-account.avif" type="image/avif" />
+                <source srcSet="/art/avatar-small-account.webp" type="image/webp" />
+                <img
+                  src="/art/avatar-small-account.png"
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                />
+              </picture>
+            </button>
           ) : null}
           {!isWalletConnected && onConnectTap ? (
             <button
