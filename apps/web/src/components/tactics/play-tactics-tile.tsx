@@ -18,9 +18,21 @@ const EMPTY_PROGRESS: PlayTacticsProgress = {
   totalCompleted: 0,
 };
 
+type PlayTacticsTileProps = {
+  /** Tile chrome. Defaults to the legacy pill classes so existing callers
+   *  are unchanged; the Play Kingdom hub passes `""` to fall back to
+   *  `HubActionTile`'s square reward-tile look for the CHESS TOOLS grid. */
+  className?: string;
+};
+
+const DEFAULT_TILE_CLASSNAME =
+  "candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left";
+
 /** Competitive warm-up entry point. Completion locks replay until the next
  * UTC day without touching Learn/Daily Focus state. */
-export function PlayTacticsTile() {
+export function PlayTacticsTile({
+  className = DEFAULT_TILE_CLASSNAME,
+}: PlayTacticsTileProps = {}) {
   const t = useTranslations("PLAY_TACTICS_COPY");
   const today = playTacticsTodayUtc();
   const puzzle = useMemo(() => getDailyTactic(today), [today]);
@@ -35,7 +47,7 @@ export function PlayTacticsTile() {
   return (
     <>
       <HubActionTile
-        className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
+        className={className}
         iconSrc="/art/new-icons-chesscito/ejercicio-diario-chess.png"
         label={t("tileLabel")}
         ariaLabel={

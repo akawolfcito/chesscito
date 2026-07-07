@@ -8608,6 +8608,182 @@ button.hud-resource-chip:active:not(:disabled) {
   /* transform: scale(1.08); */
 }
 
+/* ── Play Kingdom hero panel (KingdomCard) — mirrors the ChallengeCard candy
+   surface: crossed-swords crest + title + PRO chip on top, 2-line body, and a
+   3-benefit inline footer. Identical across PRO/non-PRO (only the chip flips). */
+.kingdom-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px 10px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #fdf2cf 0%, #f6e4b0 100%);
+  border: 2px solid #e3b85a;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.6),
+    0 4px 12px rgba(80, 50, 10, 0.18);
+}
+.kingdom-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.kingdom-card-crest {
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(56px, 16vw, 68px);
+}
+.kingdom-card-crest img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 3px 5px rgba(110, 65, 15, 0.3));
+}
+.kingdom-card-top-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.kingdom-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.kingdom-card-title {
+  margin: 0;
+  font-family: var(--font-game-action);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #4a2f12;
+}
+.kingdom-card-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: 9999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+}
+.kingdom-card-chip--active {
+  background: linear-gradient(180deg, #5bd16a, #2f9d43);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.kingdom-card-chip--discover {
+  border: 1px solid rgba(255, 222, 112, 0.85);
+  background: linear-gradient(180deg, #7c46b8, #5c2e97);
+  color: #fff7c7;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 1px 3px rgba(60, 30, 90, 0.3);
+}
+.kingdom-card-chip--discover:active {
+  transform: translateY(1px);
+}
+.kingdom-card-body {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: rgba(74, 47, 18, 0.78);
+}
+.kingdom-card-benefits {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 3px 12px;
+  margin-top: 4px;
+  padding: 7px 4px 2px;
+  border-top: 1px solid rgba(180, 120, 35, 0.28);
+}
+.kingdom-card-benefit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #4a2f12;
+  white-space: nowrap;
+}
+.kingdom-card-benefit-icon {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: 0 0 auto;
+  color: #9a6a2e;
+}
+
+/* ── CHESS TOOLS grid — reuses the proven cream square-tile look. HubActionTile
+   renders .reward-tile.is-locked; override it back to the cream candy surface
+   (matches Image 1's Tactics/Coach/Shop tiles). ── */
+.play-hub-tools {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.play-hub-tools-label {
+  margin: 0;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #6e4415;
+}
+.play-hub-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 78px);
+  gap: 14px;
+  justify-content: center;
+}
+.play-hub-tools-grid .reward-tile {
+  position: relative;
+  display: flex;
+  width: 78px;
+  min-width: 78px;
+  min-height: 78px;
+  margin: 0;
+  padding: 8px 5px 6px;
+  flex-direction: column-reverse;
+  gap: 3px;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
+  background: linear-gradient(180deg,
+      rgba(255, 248, 222, 0.96) 0%,
+      rgba(247, 226, 175, 0.96) 100%);
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  border-radius: 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1px 0 rgba(150, 90, 20, 0.18),
+    0 1px 2px rgba(110, 65, 15, 0.18);
+  filter: none;
+  overflow: visible;
+}
+.play-hub-tools-grid .reward-tile .reward-tile-piece {
+  position: static;
+  width: 44px;
+  height: 44px;
+  transform: none;
+  filter: drop-shadow(0 3px 3px rgba(110, 65, 15, 0.28));
+}
+.play-hub-tools-grid .reward-tile .reward-tile-label {
+  position: static;
+  width: auto;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
 .hub-scaffold-guide {
   display: flex;
   align-items: center;
