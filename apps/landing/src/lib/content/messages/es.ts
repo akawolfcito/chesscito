@@ -1,12 +1,65 @@
 import type { OnboardingMessages } from "./en";
-import en from "./en";
 
 /**
- * Placeholder — mirrors `en.ts` verbatim until real ES copy is written
- * (see docs/specs/landing-onboarding-slides.md Open questions / Out of
- * scope watch item). Typed against `OnboardingMessages` so it can never
- * silently drift out of shape from the EN source.
+ * Real ES copy for the onboarding slides. Typed against
+ * `OnboardingMessages` so it can never silently drift out of shape
+ * from the EN source. Branded product names (Season Pass, Coach PRO,
+ * PRO, Focus Passport) stay in English; everything else is natural
+ * Spanish. No em/en-dashes per the anti-AI-prose rule.
  */
-const messages: OnboardingMessages = en;
+const messages: OnboardingMessages = {
+  onboarding: {
+    progress: "{current} / {total}",
+    slide1: {
+      welcomeTo: "Bienvenido a",
+      headline: "Convierte el ajedrez en tu ritual diario de enfoque.",
+      support: "Entrena tu mente, gana constancia y crece jugada a jugada.",
+      learnPill: "Aprende",
+      playPill: "Juega",
+      cta: "EMPEZAR",
+    },
+    slide2: {
+      headline: "Crea un hábito diario de ajedrez.",
+      support: "Entrena cada día y desbloquea tu camino de recompensas.",
+      passportLabel: "Focus Passport",
+      passportSub: "21 días de enfoque",
+      seasonPassLabel: "Season Pass",
+      seasonPassPrice: "$0.99",
+      footnote: "El Season Pass desbloquea el camino de recompensas. PRO incluye Season Pass.",
+      cta: "SIGUIENTE",
+    },
+    slide3: {
+      headline: "Juega gratis. Mejora con Coach PRO.",
+      support: "Juega partidas, guarda tu progreso y mejora con Coach PRO.",
+      savedGamesPill: "Partidas guardadas",
+      coachProPill: "Coach PRO",
+      proPill: "PRO $1.99 incluye Season Pass.",
+      cta: "SIGUIENTE",
+    },
+    slide4: {
+      headline: "Elige tu camino",
+      support: "Empieza simple y sigue a tu ritmo.",
+      startLearning: "Aprende las piezas",
+      enterArena: "Juega ajedrez",
+      seasonPassLabel: "Season Pass",
+      seasonPassPrice: "$0.99",
+      seasonPassDescription: "Únete al reto con tu",
+      proLabel: "Suscripción PRO",
+      proPrice: "$1.99",
+      proDescription: "Mejora cada partida con",
+      footnote: "Aprende las piezas primero, luego entra a la arena.",
+      notSureLink: "¿No sabes cuál? Ver otros modos",
+    },
+    welcomeBack: {
+      cta: "EMPEZAR",
+      notSureLink: "¿No sabes cuál? Ver otros modos",
+    },
+    legal: {
+      privacy: "Privacidad",
+      terms: "Términos",
+      support: "Soporte",
+    },
+  },
+};
 
 export default messages;
