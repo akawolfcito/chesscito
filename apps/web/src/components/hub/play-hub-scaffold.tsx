@@ -6,10 +6,10 @@ import { HubActionTile } from "@/components/hub/hub-action-tile";
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { LanguageChip } from "@/components/hub/language-chip";
 import { KingdomCard } from "@/components/kingdom/kingdom-card";
-import { PrimaryPlayCta } from "@/components/kingdom/primary-play-cta";
 import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PlayTacticsTile } from "@/components/tactics/play-tactics-tile";
+import { hapticTap } from "@/lib/haptics";
 
 type PlayHubScaffoldProps = {
   mintedVictoryCount: number;
@@ -99,101 +99,116 @@ export function PlayHubScaffold({
         </div>
       </header>
 
-      <section className="play-hub-body">
-        {/* Title + avatar reuse the EXACT LEARN/LITE mascot (wordmark banner +
-            circular gold-ring wizard) so the two hubs share one identity.
-            Avatar flips to the PRO variant in lockstep with `pro.active`. */}
-        <div className="hub-lite-mascot play-hub-mascot">
-          {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-          <picture className="hub-lite-title">
-            <source
-              srcSet="/art/title-chesscito-288w.avif 288w, /art/title-chesscito-384w.avif 384w, /art/title-chesscito.avif 512w"
-              sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px"
-              type="image/avif"
-            />
-            <source
-              srcSet="/art/title-chesscito-288w.webp 288w, /art/title-chesscito-384w.webp 384w, /art/title-chesscito.webp 512w"
-              sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px"
-              type="image/webp"
-            />
-            <img
-              src="/art/title-chesscito.png"
-              alt="Chesscito"
-              width={512}
-              height={249}
-              draggable={false}
-            />
-          </picture>
-          {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-          <picture className="hub-lite-avatar">
-            <source
-              srcSet={
-                pro.active
-                  ? "/art/avatar-pro-224w.avif 224w, /art/avatar-pro-340w.avif 340w, /art/avatar-pro.avif 499w"
-                  : "/art/avatar-lite-hub-224w.avif 224w, /art/avatar-lite-hub-340w.avif 340w, /art/avatar-lite-hub.avif 499w"
-              }
-              sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
-              type="image/avif"
-            />
-            <source
-              srcSet={
-                pro.active
-                  ? "/art/avatar-pro-224w.webp 224w, /art/avatar-pro-340w.webp 340w, /art/avatar-pro.webp 499w"
-                  : "/art/avatar-lite-hub-224w.webp 224w, /art/avatar-lite-hub-340w.webp 340w, /art/avatar-lite-hub.webp 499w"
-              }
-              sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
-              type="image/webp"
-            />
-            <img
-              src={pro.active ? "/art/avatar-pro.png" : "/art/avatar-lite-hub.png"}
-              alt=""
-              aria-hidden="true"
-              width={499}
-              height={560}
-              draggable={false}
-            />
-          </picture>
-          <AppModeSwitch activeMode="play" />
-        </div>
+      {/* Flat sibling stack — mirrors the LEARN/LITE hub's DOM so both hubs
+          share ONE distribution: header · mascot · panel · CTA · shortcuts flow
+          as direct children of <main> (no intermediate centered body wrapper). */}
 
-        {/* Kingdom hero panel — one panel, PRO chip is the only per-state
-            difference. The non-PRO chip opens the PRO sheet (onProTap). */}
-        <KingdomCard pro={pro} onProDiscover={onProTap} />
+      {/* Title + avatar reuse the EXACT LEARN/LITE mascot (wordmark banner +
+          circular gold-ring wizard) so the two hubs share one identity.
+          Avatar flips to the PRO variant in lockstep with `pro.active`. */}
+      <div className="hub-lite-mascot play-hub-mascot">
+        {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+        <picture className="hub-lite-title">
+          <source
+            srcSet="/art/title-chesscito-288w.avif 288w, /art/title-chesscito-384w.avif 384w, /art/title-chesscito.avif 512w"
+            sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px"
+            type="image/avif"
+          />
+          <source
+            srcSet="/art/title-chesscito-288w.webp 288w, /art/title-chesscito-384w.webp 384w, /art/title-chesscito.webp 512w"
+            sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px"
+            type="image/webp"
+          />
+          <img
+            src="/art/title-chesscito.png"
+            alt="Chesscito"
+            width={512}
+            height={249}
+            draggable={false}
+          />
+        </picture>
+        {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+        <picture className="hub-lite-avatar">
+          <source
+            srcSet={
+              pro.active
+                ? "/art/avatar-pro-224w.avif 224w, /art/avatar-pro-340w.avif 340w, /art/avatar-pro.avif 499w"
+                : "/art/avatar-lite-hub-224w.avif 224w, /art/avatar-lite-hub-340w.avif 340w, /art/avatar-lite-hub.avif 499w"
+            }
+            sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
+            type="image/avif"
+          />
+          <source
+            srcSet={
+              pro.active
+                ? "/art/avatar-pro-224w.webp 224w, /art/avatar-pro-340w.webp 340w, /art/avatar-pro.webp 499w"
+                : "/art/avatar-lite-hub-224w.webp 224w, /art/avatar-lite-hub-340w.webp 340w, /art/avatar-lite-hub.webp 499w"
+            }
+            sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
+            type="image/webp"
+          />
+          <img
+            src={pro.active ? "/art/avatar-pro.png" : "/art/avatar-lite-hub.png"}
+            alt=""
+            aria-hidden="true"
+            width={499}
+            height={560}
+            draggable={false}
+          />
+        </picture>
+        <AppModeSwitch activeMode="play" />
+      </div>
 
-        {/* Dominant CTA — occupies the Start Focus slot of the LEARN/LITE hub. */}
-        <div className="hub-scaffold-cta-row play-hub-cta-row">
-          <PrimaryPlayCta
-            surface="playhub"
-            label={tPlay("arenaLabel")}
-            ariaLabel={tPlay("arenaAriaLabel")}
-            onPress={onArenaPress}
-            className="hub-scaffold-arena-cta play-hub-arena-cta"
-            pieceIconSrc="/art/hub/enter-arena.png"
+      {/* Kingdom hero panel — one panel, PRO chip is the only per-state
+          difference. The non-PRO chip opens the PRO sheet (onProTap). */}
+      <KingdomCard pro={pro} onProDiscover={onProTap} />
+
+      {/* Dominant CTA — occupies the Start Focus slot of the LEARN/LITE hub.
+          A 1:1 blue clone of that button's geometry (`.play-chess-cta` mirrors
+          `.hub-lite-start-focus`), keeping the crossed-swords icon. */}
+      <div className="hub-scaffold-cta-row play-hub-cta-row">
+        <button
+          type="button"
+          className="play-chess-cta"
+          data-testid="play-chess-cta"
+          aria-label={tPlay("arenaAriaLabel")}
+          onClick={() => {
+            hapticTap();
+            onArenaPress();
+          }}
+        >
+          {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+          <picture className="play-chess-cta-icon" aria-hidden="true">
+            <source srcSet="/art/hub/enter-arena.avif" type="image/avif" />
+            <source srcSet="/art/hub/enter-arena.webp" type="image/webp" />
+            <img src="/art/hub/enter-arena.png" alt="" draggable={false} />
+          </picture>
+          <span>{tPlay("arenaLabel")}</span>
+        </button>
+      </div>
+
+      {/* CHESS TOOLS — reuses the LEARN training-path square-tile visual
+          (HubActionTile already mirrors .reward-tile). Tactics stays
+          self-contained; Coach/Shop are prop-driven. Pinned to the floor
+          (margin-top:auto) like the LEARN Training Path. */}
+      <section className="play-hub-tools" aria-label={tPlay("chessToolsLabel")}>
+        <h2 className="play-hub-tools-label">{tPlay("chessToolsLabel")}</h2>
+        <div className="play-hub-tools-grid" aria-label={tPlay("actionsAriaLabel")}>
+          <PlayTacticsTile className="" />
+          <HubActionTile
+            iconSrc="/art/redesign/icons/coach.png"
+            label={tPlay("coachLabel")}
+            ariaLabel={tHud("coachAriaLabel")}
+            onClick={onCoachTap}
+            badge={<span className="play-hub-action-badge">PRO</span>}
+          />
+          <HubActionTile
+            iconSrc="/art/redesign/icons/shop.png"
+            label={tPlay("shopLabel")}
+            ariaLabel={tPlay("shopAriaLabel")}
+            onClick={onShopTap}
           />
         </div>
-
-        {/* CHESS TOOLS — reuses the LEARN training-path square-tile visual
-            (HubActionTile already mirrors .reward-tile). Tactics stays
-            self-contained; Coach/Shop are prop-driven. */}
-        <section className="play-hub-tools" aria-label={tPlay("chessToolsLabel")}>
-          <h2 className="play-hub-tools-label">{tPlay("chessToolsLabel")}</h2>
-          <div className="play-hub-tools-grid" aria-label={tPlay("actionsAriaLabel")}>
-            <PlayTacticsTile className="" />
-            <HubActionTile
-              iconSrc="/art/redesign/icons/coach.png"
-              label={tPlay("coachLabel")}
-              ariaLabel={tHud("coachAriaLabel")}
-              onClick={onCoachTap}
-              badge={<span className="play-hub-action-badge">PRO</span>}
-            />
-            <HubActionTile
-              iconSrc="/art/redesign/icons/shop.png"
-              label={tPlay("shopLabel")}
-              ariaLabel={tPlay("shopAriaLabel")}
-              onClick={onShopTap}
-            />
-          </div>
-        </section>
       </section>
     </main>
   );

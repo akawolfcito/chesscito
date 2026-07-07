@@ -122,6 +122,12 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
       disableBackdropClose={busy}
       ariaLabel={t("title")}
       closeLabel={t("close")}
+      // Opened from inside the Account aux sheet (Chesito Card → Top up), whose
+      // Radix slide-in transform would otherwise trap this `fixed` modal inside
+      // the sheet. Portal to <body> so it covers the whole sheet, and drop to
+      // z-[55] so it sits ABOVE the z-50 sheet but UNDER the z-60 dock.
+      portal
+      scrimZClassName="z-[55]"
     >
       <div
         className="flex flex-col items-center gap-4 text-center"
