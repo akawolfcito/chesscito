@@ -8770,8 +8770,10 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 .play-hub-tools-grid .reward-tile .reward-tile-piece {
   position: static;
-  width: 44px;
-  height: 44px;
+  /* Match the LEARN training-path piece-icon footprint — smaller than the
+     tile so the cream frame reads around each icon (founder 2026-07-07). */
+  width: 34px;
+  height: 34px;
   transform: none;
   filter: drop-shadow(0 3px 3px rgba(110, 65, 15, 0.28));
 }

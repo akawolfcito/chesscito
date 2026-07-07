@@ -3,9 +3,6 @@ import { renderWithIntl as render } from "@/test-utils/render-with-intl";
 import { screen } from "@testing-library/react";
 import { PlayHubScaffold } from "../play-hub-scaffold";
 
-vi.mock("@/components/kingdom/kingdom-anchor", () => ({
-  KingdomAnchor: () => <div data-testid="pro-portal" />,
-}));
 vi.mock("@/components/kingdom/kingdom-card", () => ({
   KingdomCard: ({ pro }: { pro: { active: boolean } }) => (
     <div data-testid="kingdom-card" data-pro={pro.active} />
@@ -49,24 +46,32 @@ const props = {
 };
 
 describe("PlayHubScaffold", () => {
-  it("renders the unified surfaces: portal, Kingdom panel, Play Chess CTA", () => {
+  it("renders the unified surfaces: LEARN mascot, Kingdom panel, Play Chess CTA", () => {
     render(<PlayHubScaffold {...props} />);
 
     expect(screen.getByLabelText("Minted victories: 0")).toHaveTextContent("0");
-    expect(screen.getByTestId("pro-portal")).toBeInTheDocument();
+    // Title + avatar reuse the exact LEARN/LITE mascot markup.
+    expect(screen.getByAltText("Chesscito")).toBeInTheDocument();
     expect(screen.getByTestId("kingdom-card")).toBeInTheDocument();
     expect(screen.getByText("PLAY CHESS")).toBeInTheDocument();
   });
 
-  it("orders portal → switch → Kingdom panel → CTA → CHESS TOOLS", () => {
+  it("orders mascot → switch → Kingdom panel → CTA → CHESS TOOLS", () => {
     render(<PlayHubScaffold {...props} />);
-    const portal = screen.getByTestId("pro-portal");
+    const mascot = screen.getByAltText("Chesscito");
     const modeSwitch = screen.getByTestId("mode-switch");
     const panel = screen.getByTestId("kingdom-card");
     const tools = screen.getByText("CHESS TOOLS");
-    expect(portal.compareDocumentPosition(modeSwitch) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(mascot.compareDocumentPosition(modeSwitch) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(modeSwitch.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(panel.compareDocumentPosition(tools) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("swaps to the PRO avatar when pro is active", () => {
+    render(<PlayHubScaffold {...props} pro={{ active: true, daysRemaining: 200 }} />);
+    expect(screen.getByAltText("Chesscito")).toBeInTheDocument();
+    const avatar = document.querySelector(".hub-lite-avatar img") as HTMLImageElement;
+    expect(avatar.getAttribute("src")).toContain("avatar-pro");
   });
 
   it("has one primary Play Chess CTA and no Learn/Training content", () => {
