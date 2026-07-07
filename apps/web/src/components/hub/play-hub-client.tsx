@@ -105,6 +105,10 @@ export function PlayHubClient({
           shopSheet.openSheet();
         }}
         onArenaPress={handleArenaPress}
+        onAccountTap={() => {
+          track("play_hub_account_tap", { pro_active: pro.active });
+          router.push("/exercises?sheet=account");
+        }}
       />
       <ProSheet {...proSheet.sheetProps} />
       <ShopSheet {...shopSheet.sheetProps} />
