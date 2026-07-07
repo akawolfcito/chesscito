@@ -25,6 +25,7 @@ prestige y ya está desacoplado).
 ## 1. Archivos / flows encontrados
 
 **SaveScore**
+
 - UI: `src/components/exercises/exercises-screen.tsx` → `handleSubmitScore()` (~1632-1733);
   botones en `ContextualActionSlot`, `PieceCompletePrompt`, `BadgeEarnedPrompt`.
 - Firma: `src/app/api/sign-score/route.ts` (EIP-712 `Scoreboard`).
@@ -34,6 +35,7 @@ prestige y ya está desacoplado).
 - Rate limit: `src/lib/server/demo-signing.ts` `enforceRateLimit(ip, player)`.
 
 **Victory**
+
 - Hook: `src/lib/coach/use-mint-victory.ts` (state machine completa).
 - Firma: `src/app/api/sign-victory/route.ts` (EIP-712 `VictoryNFT`, valida el mate por replay).
 - On-chain: `src/lib/contracts/victory.ts` → `mintSigned(...)`; approve+transferFrom ERC-20.
@@ -42,6 +44,7 @@ prestige y ya está desacoplado).
 - Off-chain: `src/app/api/cache-victory/route.ts` → Supabase (`victories`).
 
 **Coach**
+
 - Endpoint: `src/app/api/coach/analyze/route.ts`.
 - Hook: `src/lib/coach/use-coach-analysis.ts`; gateway `request-coach-analyze.ts`.
 - Viewer: `src/app/[locale]/coach/[gameId]/coach-game-client.tsx`.
@@ -110,7 +113,7 @@ pero **no ahora** (out of scope). No bloquea nada del flujo base.
 
 - **Dónde:** `coach-game-client.tsx` `useEffect` (~305-312) llama `coach.askCoach("viewer")`
   automáticamente al montar `/coach/[gameId]` cuando: hay wallet conectada, `gameRecord.analysis
-  === null`, y `coach.phase === "idle"`. No hay gate de intención.
+=== null`, y `coach.phase === "idle"`. No hay gate de intención.
 - **Por qué se dispara al reingresar/cancelar Victory:** al cerrar (X) el popup de Victory,
   `arena/page.tsx` hace `router.push(/coach/{gameId})`. Si el análisis aún no está cacheado
   (race con la persistencia en Redis, cold-load, bookmark, o expiró a 30d), el `useEffect`
@@ -128,12 +131,13 @@ pero **no ahora** (out of scope). No bloquea nada del flujo base.
 auto-load del viewer.
 
 **Cómo gatear (recomendación):**
+
 1. **No** llamar `askCoach("viewer")` en el `useEffect` de cold-load. En su lugar: render del
    **Quick Review local** (gratis, instantáneo) + botón explícito **"Ask Coach"**.
 2. La API real solo dispara con tap en `Ask Coach` / `Why did you win?` / `Analyze`
    (entradas `immediate` / `victory-mint` / `history` ya son user-triggered — se mantienen).
 3. **PRO:** que el salto de welcome **no** auto-arranque el análisis; mostrar el botón con copy
-   **"Included with PRO"** (acción explícita, no "gratis/infinito"). Free: botón con costo en
+   **"PRO Benefit included"** (acción explícita, no "gratis/infinito"). Free: botón con costo en
    Peones o upsell.
 4. Nada de auto-run al cerrar partida, cancelar Victory, reabrir pantalla o entrar al review.
 
@@ -144,16 +148,16 @@ auto-load del viewer.
 
 ## 5. Payment / economy matrix
 
-| Flow | Mecanismo actual | ¿Approve? | ¿Gameplay base? | ¿Peones/rail directo? | Recomendación |
-|---|---|---:|---:|---:|---|
-| Get Peones | Stablecoin direct rail | No | Sí (compra) | Sí | **Keep** |
-| SaveScore (básico) | EIP-712 + tx on-chain `Scoreboard` | No | Sí | **Sí, off-chain/Peones** | **Migrar a off-chain** |
-| Score Proof/Trophy | (no existe aún) | — | No, prestige | Sí (futuro) | **Nuevo, opcional** |
-| Victory NFT | `sign-victory` + approve + `mintSigned` | **Sí** | No, prestige | Más adelante | **Keep on-chain** |
-| Coach real/API | Créditos → Peones → PRO | No tx | Opcional/manual | Peones/PRO | **Gate manual (quitar auto-run)** |
-| Local review | Reglas locales | No | Sí | Gratis | **Keep** |
-| Founder Badge | Shop/contract | Sí | No | No ahora | **Keep legacy** |
-| PRO | `/api/pro/status` + compra | TBD | Opcional | Posible | **Wave 2** |
+| Flow               | Mecanismo actual                        | ¿Approve? | ¿Gameplay base? |    ¿Peones/rail directo? | Recomendación                     |
+| ------------------ | --------------------------------------- | --------: | --------------: | -----------------------: | --------------------------------- |
+| Get Peones         | Stablecoin direct rail                  |        No |     Sí (compra) |                       Sí | **Keep**                          |
+| SaveScore (básico) | EIP-712 + tx on-chain `Scoreboard`      |        No |              Sí | **Sí, off-chain/Peones** | **Migrar a off-chain**            |
+| Score Proof/Trophy | (no existe aún)                         |         — |    No, prestige |              Sí (futuro) | **Nuevo, opcional**               |
+| Victory NFT        | `sign-victory` + approve + `mintSigned` |    **Sí** |    No, prestige |             Más adelante | **Keep on-chain**                 |
+| Coach real/API     | Créditos → Peones → PRO                 |     No tx | Opcional/manual |               Peones/PRO | **Gate manual (quitar auto-run)** |
+| Local review       | Reglas locales                          |        No |              Sí |                   Gratis | **Keep**                          |
+| Founder Badge      | Shop/contract                           |        Sí |              No |                 No ahora | **Keep legacy**                   |
+| PRO                | `/api/pro/status` + compra              |       TBD |        Opcional |                  Posible | **Wave 2**                        |
 
 Insight transversal: el leaderboard **ya** es DB-backed, así que mover SaveScore a off-chain
 es bajo riesgo (la fuente de verdad del ranking no cambia).
@@ -165,15 +169,15 @@ es bajo riesgo (la fuente de verdad del ranking no cambia).
 Estado: se ganan con ejercicios/daily; ya se compran (50 = $0.50). Falta **gasto** real → sin
 sinks, los Peones se acumulan y pierden valor. Proponer sinks **útiles**, no artificiales:
 
-| Sink | Tipo | Costo tentativo |
-|---|---|---:|
-| Hint básico | Ayuda gameplay | 1 |
-| Coach real/manual | Insight/API | 1–3 (o PRO bypass) |
-| Deep Hint | Ayuda premium | 3 |
-| Save Score enhanced / leaderboard entry | Utility | 1–2 |
-| Streak Shield | Retención | 5 |
-| Theme/cosmetic unlock | Vanity | 50–100 |
-| On-chain Score Proof / Trophy | Prestige | stablecoin/rail/NFT (no decidir ahora) |
+| Sink                                    | Tipo           |                        Costo tentativo |
+| --------------------------------------- | -------------- | -------------------------------------: |
+| Hint básico                             | Ayuda gameplay |                                      1 |
+| Coach real/manual                       | Insight/API    |                     1–3 (o PRO bypass) |
+| Deep Hint                               | Ayuda premium  |                                      3 |
+| Save Score enhanced / leaderboard entry | Utility        |                                    1–2 |
+| Streak Shield                           | Retención      |                                      5 |
+| Theme/cosmetic unlock                   | Vanity         |                                 50–100 |
+| On-chain Score Proof / Trophy           | Prestige       | stablecoin/rail/NFT (no decidir ahora) |
 
 **Packs:** `peones_pack_50` = $0.50→50 (live). `peones_pack_100` = $1.00→100 (siguiente).
 `peones_pack_500` futuro. **No** agregar más packs hasta validar el **gasto** primero.
@@ -222,7 +226,7 @@ Coincide con tu preferencia: Coach auto-run → SaveScore → Get Peones → 1�
 
 **Gate del Coach auto-run** (item D): en `coach-game-client.tsx`, reemplazar el `useEffect` que
 llama `askCoach("viewer")` por: mostrar el **Quick Review local** + CTA explícito **"Ask Coach"**
-(con copy "Included with PRO" para PRO). Sin auto-fire de la API en cold-load / post-cancel /
+(con copy "PRO Benefit included" para PRO). Sin auto-fire de la API en cold-load / post-cancel /
 re-entry. Es el cambio de mayor valor, aislado, sin contratos ni economía. TDD: test que afirme
 que montar el viewer sin análisis **no** dispara `/api/coach/analyze` y que el tap **sí**.
 

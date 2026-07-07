@@ -40,9 +40,13 @@ type Props = {
    *  the surface label out of the chip so a future cluster can mount
    *  it on `/exercises`, `/coach`, or `/arena` without code surgery. */
   surface?: PeonesBalanceViewSurface;
+  /** Renders the green "+" recharge affordance inside the chip (the whole
+   *  chip already opens the recharge card on tap; the "+" makes that
+   *  discoverable). Opt-in so surfaces with tight headers stay unchanged. */
+  showRecharge?: boolean;
 };
 
-export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
+export function PeonesBalanceChip({ surface = "hub", showRecharge = false }: Props = {}) {
   const { state, refetch } = usePeonesBalance();
   /** Chesito Card entry point. Tapping the chip opens the rechargeable card
    *  (its own Top up CTA routes into the Get Peones rail). Guests never see
@@ -150,6 +154,11 @@ export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
         >
           {label}
         </span>
+        {showRecharge ? (
+          <span className="peones-chip-plus" aria-hidden="true">
+            +
+          </span>
+        ) : null}
       </div>
 
       {cardOpen ? (

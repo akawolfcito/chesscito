@@ -339,6 +339,14 @@ export function LegacyHubClient({
             isHydrated: isContentLoopHydrated,
           }}
           rewardTiles={rewardTiles}
+          // Same PRO signal that drives the ChallengeCard, so the PRO mascot +
+          // gold ring flip in lockstep with the card on first load (no second
+          // /api/pro/status fetch racing behind it).
+          isPro={seasonPassStatus.source === "pro"}
+          onAccountTap={() => {
+            track("hub_account_chip_tap");
+            router.push("/exercises?sheet=account");
+          }}
         />
       ) : (
       <HubScaffold

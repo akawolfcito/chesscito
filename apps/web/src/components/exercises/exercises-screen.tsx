@@ -291,9 +291,11 @@ function AccountSheet({
 
         <div className="overflow-y-auto overscroll-contain flex-1 pb-[calc(env(safe-area-inset-bottom,0px)+6rem)]">
         <div className="mt-3 flex flex-col gap-3">
-          {/* Chesito Card — the rechargeable Peones "wallet" hero. Visual-first
-           *  spend-economy anchor; its Top up CTA opens the Get Peones rail. */}
-          {!CHESSCITO_LITE_MODE && <ChesitoCard />}
+          {/* Chesito Card — the rechargeable Peones "wallet" hero (balance +
+           *  "+" recharge). Shown in every mode now: in Lite the header dropped
+           *  its standalone Peones chip, so the Account sheet is the one wallet
+           *  home (UX spec §6, 2026-07-06). Top up CTA opens the Get Peones rail. */}
+          <ChesitoCard />
 
           <div className="account-tiles-grid">
             {/* Wallet — tile click copies the full address */}
@@ -755,6 +757,7 @@ export function ExercisesScreen({
     else if (slug === "badges") setActiveDockTab("badge");
     else if (slug === "trophies") setActiveDockTab("trophies");
     else if (slug === "leaderboard") setActiveDockTab("leaderboard");
+    else if (slug === "account") setAccountSheetOpen(true);
     else if (slug === "pro" && !CHESSCITO_LITE_MODE) proSheet.openSheet();
     if (slug) {
       sp.delete("sheet");
@@ -2511,6 +2514,9 @@ export function ExercisesScreen({
               label: tStatus("backLabel"),
             }}
             trailingControl={
+              // Header = Account only. Peones lives inside the Account sheet
+              // now (Chesscito Card hero) — one wallet home, uncluttered header
+              // (UX spec §6, 2026-07-06).
               !address ? (
                 <button
                   type="button"
@@ -2537,16 +2543,29 @@ export function ExercisesScreen({
                   className={`candy-tray-pill hub-hud-pill${proStatus?.active ? " hub-hud-pill--pro-text" : ""}`}
                 >
                   <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
-                    <source srcSet="/art/screen-mission/account-icon.avif" type="image/avif" />
-                    <source srcSet="/art/screen-mission/account-icon.webp" type="image/webp" />
+                    <source srcSet="/art/avatar-small-account.avif" type="image/avif" />
+                    <source srcSet="/art/avatar-small-account.webp" type="image/webp" />
                     <img
-                      src="/art/screen-mission/account-icon.png"
+                      src="/art/avatar-small-account.png"
                       alt=""
                       aria-hidden="true"
                       draggable={false}
                     />
                   </picture>
                   <span>{tStatus("accountChipLabel")}</span>
+                  {proStatus?.active ? (
+                    (() => {
+                      const days = daysRemaining(
+                        proStatus.expiresAt,
+                        Date.now(),
+                      );
+                      return days != null ? (
+                        <span className="hub-hud-pill-pro-days">
+                          PRO · {days}d
+                        </span>
+                      ) : null;
+                    })()
+                  ) : null}
                 </button>
               )
             }

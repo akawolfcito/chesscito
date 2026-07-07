@@ -3819,11 +3819,11 @@
     box-shadow: none;
   }
 
-  .chesscito-dock--lite {
-    background-image: image-set(url("/art/redesign/bg/dock-4slots.avif") type("image/avif"),
-        url("/art/redesign/bg/dock-4slots.webp") type("image/webp"),
-        url("/art/redesign/bg/dock-4slots.png") type("image/png"));
-  }
+  /* Lite dock now carries 5 slots (badge · shop · pieces · trophies ·
+     leaders), so it inherits the base `.chesscito-dock` menu-wall bg used by
+     the PLAY/Full dock instead of the old 4-slot panel art (which baked
+     dividers for exactly 4 slots and misaligned under 5). No `--lite` bg
+     override needed. */
 
   .chesscito-dock-item {
     position: relative;
@@ -5679,7 +5679,7 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: radial-gradient(circle at 35% 30%, #fff6c2 0 30%, #f0c447 60%, #a47410 100%);
+  /* background: radial-gradient(circle at 35% 30%, #fff6c2 0 30%, #f0c447 60%, #a47410 100%); */
   box-shadow:
     0 0 6px rgba(255, 216, 120, 0.7),
     inset 0 0 2px rgba(80, 50, 10, 0.35);
@@ -5700,15 +5700,16 @@ button.hud-resource-chip:active:not(:disabled) {
   padding: 6px 7px 7px;
   border-radius: 14px;
   border: 0;
-  background: linear-gradient(180deg, #fbd64a 0%, #f5a623 60%, #d97f0a 100%);
+  background: linear-gradient(180deg, #ffe26d 0%, #f9ce89 60%, #ffb555 100%);
+  /* background: linear-gradient(180deg, #fbd64a 0%, #f5a623 60%, #d97f0a 100%); */
   box-shadow: none;
   color: rgba(50, 25, 5, 0.95);
   font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
   font-size: 0.72rem;
-  font-weight: 800;
+  /* font-weight: 500; */
   line-height: 1;
   text-align: center;
-  text-shadow: 0 1px 0 rgba(255, 241, 169, 0.74);
+  /* text-shadow: 0 1px 0 rgba(255, 241, 169, 0.74); */
   cursor: pointer;
   transition: transform var(--duration-snap), box-shadow var(--duration-snap);
 }
@@ -5812,13 +5813,14 @@ button.hud-resource-chip:active:not(:disabled) {
 .reward-tile.is-locked {
   opacity: 1;
   filter: none;
-  background: linear-gradient(180deg, #a8acb0 0%, #74787c 55%, #494c50 100%);
-  box-shadow:
+  background: linear-gradient(180deg, #a8acb0 0%, #b7b7b7 55%, #909090 100%);
+  /* background: linear-gradient(180deg, #a8acb0 0%, #74787c 55%, #494c50 100%); */
+  /* box-shadow:
     inset 0 2px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -3px 0 rgba(40, 44, 48, 0.4);
+    inset 0 -3px 0 rgba(40, 44, 48, 0.4); */
   color: #fff8e9;
   text-shadow:
-    0 2px 0 rgba(35, 42, 45, 0.72),
+    0 1px 0 rgba(35, 42, 45, 0.72),
     0 0 5px rgba(20, 24, 27, 0.28);
 }
 
@@ -7294,6 +7296,84 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(180, 83, 9, 0.95);
   text-shadow: none;
 }
+/* Compact "PRO · Nd" suffix on the account chip — a gold inline badge so the
+   PRO tier + remaining days read at a glance without widening the pill much. */
+.hub-hud-pill-pro-days {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #ffd766 0%, #f4a825 100%);
+  color: #5a3708;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+/* Green "+" recharge affordance inside the Peones chip (hub). The chip
+   already opens the recharge card on tap; the circle advertises it. */
+.peones-chip-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-left: 0.15rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 900;
+  line-height: 1;
+  padding-bottom: 1px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 1px 2px rgba(20, 110, 50, 0.4);
+}
+
+/* Compact circular account entry (hub HUD, reference Image #2) — the
+   avatar fills a gold-ringed circle sized to match the neighbouring
+   HUD pills (min-height 2.25rem). */
+.hub-account-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 2px solid #e3b24f;
+  border-radius: 9999px;
+  background: #fce8b8;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 2px 5px rgba(80, 50, 10, 0.25);
+}
+.hub-account-circle:active {
+  transform: scale(0.95);
+}
+.hub-account-circle--pro {
+  border-color: #f5a623;
+  box-shadow:
+    0 0 0 2px rgba(245, 166, 35, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 2px 6px rgba(80, 50, 10, 0.3);
+}
+.hub-account-circle-avatar,
+.hub-account-circle-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.hub-account-circle-avatar img {
+  object-fit: cover;
+}
 
 .hub-scaffold-hud-right {
   justify-content: flex-end;
@@ -7832,7 +7912,7 @@ button.hud-resource-chip:active:not(:disabled) {
   width: min(100%, 210px);
   min-height: 42px;
   padding: 3px;
-  border: 2px solid rgba(171, 104, 15, 0.82);
+  border: .5px solid rgba(171, 104, 15, 0.82);
   border-radius: 9999px;
   background: linear-gradient(180deg, #fff8df 0%, #f5e2b6 100%);
   box-shadow:
@@ -7859,13 +7939,14 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .hub-app-mode-switch-pill[aria-pressed="true"] {
-  background: linear-gradient(180deg, #ffc334 0%, #e58a00 100%);
-  color: #fff8e6;
-  text-shadow: 0 1px 1px rgba(102, 52, 0, 0.85);
-  box-shadow:
+  background: linear-gradient(180deg, #ffe26d 0%, #f9ce89 60%, #ffb555 100%);
+  /* background: linear-gradient(180deg, #ffc334 0%, #e58a00 100%); */
+  color: #5d3515;
+  /* text-shadow: 0 1px 1px rgba(102, 52, 0, 0.85); */
+  /* box-shadow:
     inset 0 1px 0 rgba(255, 245, 180, 0.8),
     inset 0 -2px 0 rgba(148, 75, 0, 0.35),
-    0 1px 2px rgba(90, 45, 0, 0.25);
+    0 1px 2px rgba(90, 45, 0, 0.25); */
 }
 
 .hub-app-mode-switch-pill:not([aria-pressed="true"]):active {
@@ -7960,15 +8041,20 @@ button.hud-resource-chip:active:not(:disabled) {
 /* HUD */
 .hub-lite-hud {
   display: flex;
-  align-items: flex-start;
+  /* One baseline so the strip reads as a single control row, not confetti —
+     the gift no longer floats above the pills (UX spec §10, 2026-07-06). */
+  align-items: center;
   justify-content: space-between;
   width: 100%;
+  /* Breath between the two clusters (larger than the in-cluster gap). */
+  gap: 4px;
 }
 .hub-lite-hud-left,
 .hub-lite-hud-right {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  /* Consistent in-cluster rhythm. */
+  gap: 4px;
 }
 
 /* Mascot — avatar portrait in a CSS gold oval + wordmark (P2-D). The portrait
@@ -8070,44 +8156,67 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(120, 70, 20, 0.5);
   text-align: left;
 }
-/* FOCUS PASSPORT progress bar: flame + "N/21 focus days" + a thin fill track. */
-.challenge-card-progress {
+/* FOCUS PASSPORT week: 7 streak flames + the "N/21 focus days" ordinal.
+   Restored from the pre-70ee44f7 flame view (the bar lost UX); flames sized
+   down one step (1.4rem → 1.15rem) so the panel stays compact. */
+.challenge-card-passport {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 1px;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
 }
-.challenge-card-progress-flame {
-  flex: 0 0 auto;
-  width: 1rem;
+.challenge-card-flames {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+.challenge-card-flame {
+  display: inline-flex;
+  align-items: flex-end;
+  height: 1.15rem;
+  flex-shrink: 0;
   line-height: 0;
 }
-.challenge-card-progress-flame > img {
-  width: 100%;
-  height: auto;
+.challenge-card-flame > img {
+  height: 100%;
+  width: auto;
   display: block;
   filter: drop-shadow(0 1px 1px rgba(110, 65, 15, 0.3));
 }
-.challenge-card-progress-text {
+.challenge-card-flame[data-kind="gray"] > img {
+  opacity: 0.5;
+}
+.challenge-card-flame.is-glow > img {
+  opacity: 0.85;
+  filter: drop-shadow(0 0 5px rgba(255, 176, 60, 0.7));
+}
+.challenge-card-day-count {
   flex: 0 0 auto;
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 800;
   color: #6e4415;
   white-space: nowrap;
 }
-.challenge-card-progress-track {
-  flex: 1 1 auto;
-  height: 8px;
-  border-radius: 9999px;
-  background: rgba(120, 80, 30, 0.18);
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.12);
-  overflow: hidden;
+/* Tappable variant — the flame/streak block routes into today's focus. Button
+   reset so it looks identical to the static div, with a subtle press state. */
+.challenge-card-passport--tap {
+  width: 100%;
+  padding: 3px 4px;
+  margin-left: -4px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 10px;
+  transition:
+    background 0.12s ease,
+    transform 0.12s ease;
 }
-.challenge-card-progress-fill {
-  display: block;
-  height: 100%;
-  border-radius: 9999px;
-  background: linear-gradient(90deg, #ffb347, #ff8a1e);
+.challenge-card-passport--tap:active {
+  transform: scale(0.98);
+  background: rgba(120, 80, 30, 0.08);
 }
 
 /* Bottom row: inline stat chips + Join (offer). */
@@ -8121,7 +8230,7 @@ button.hud-resource-chip:active:not(:disabled) {
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: 3px 14px;
   padding: 7px 11px;
@@ -8202,6 +8311,24 @@ button.hud-resource-chip:active:not(:disabled) {
   letter-spacing: 0.06em;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
+/* PRO-sourced pass reads as a premium perk, not a generic green "Active"
+   badge: gold gradient + crown mark, tied to the PRO gold accent language. */
+.challenge-card-active-chip--pro {
+  gap: 4px;
+  padding: 2px 10px 2px 7px;
+  background: linear-gradient(180deg, #5bd16a, #2f9d43);
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 1px 3px rgba(150, 90, 10, 0.32);
+}
+.challenge-card-active-chip-crown {
+  width: 11px;
+  height: 11px;
+  display: block;
+  flex: 0 0 auto;
+  color: #fff;
+}
 
 /* Start Focus — the unchanged glossy-gold TRAIN PIECES button, with the gold
    ring overlaid on top as a decorative frame (does not block taps). */
@@ -8273,9 +8400,9 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   gap: 4px;
   padding: 4px 4px 3px;
-  border-radius: 16px;
-  background: rgba(60, 120, 40, 0.32);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  /* border-radius: 16px; */
+  /* background: rgba(60, 120, 40, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.18); */
 }
 .hub-lite-training-path-label {
   margin: 0;
@@ -8299,11 +8426,14 @@ button.hud-resource-chip:active:not(:disabled) {
   justify-content: space-between;
 }
 
-/* Daily gift corner-icon (P1-B) — gift glyph + streak badge, opens daily sheet. */
+/* Daily gift corner-icon (P1-B) — gift glyph + streak badge, opens daily sheet.
+   Sized down one step (52→44px) so it reads as a recurring daily-ritual bauble
+   seated on the header baseline, not a primary control (UX spec §4). 44px keeps
+   the tap target at the minimum. */
 .hub-daily-corner {
   position: relative;
-  width: 52px;
-  height: 52px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: none;
   background: transparent;

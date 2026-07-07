@@ -1725,7 +1725,7 @@ const messages = {
     joinedTitle: "Reto Mental",
     passportLabel: "Pasaporte de foco",
     activeBadge: "ACTIVO",
-    includedWithPro: "Incluido con PRO",
+    includedWithPro: "Beneficio PRO incluido",
     trainingPassStat: "Pase de entrenamiento",
     accessActive: "Acceso activo",
     dayProgress: "Día {day} / {total}",
@@ -1739,6 +1739,7 @@ const messages = {
     joinAriaLabel: "Únete al Reto Mental de 21 Días por {price}",
     dotFilledAria: "Día {index} hecho",
     dotEmptyAria: "Día {index}",
+    focusTapAria: "Continúa tu foco de hoy",
   },
   HUB_LITE_COPY: {
     ...en.HUB_LITE_COPY,
