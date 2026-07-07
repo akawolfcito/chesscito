@@ -9450,7 +9450,9 @@ button.hud-resource-chip:active:not(:disabled) {
 .arena-scaffold-account {
   position: absolute;
   right: 10px;
-  top: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
   /* Above the ContextualHeader (z-10) — otherwise the header subtree
      intercepts the tap and the account sheet never opens. */
   z-index: 20;

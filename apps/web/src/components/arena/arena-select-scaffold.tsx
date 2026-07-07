@@ -47,12 +47,14 @@ type SoftGate = {
   onDismiss: () => void
 }
 
-/** Account entry (top-right of the HUD). Mirrors the LITE hub
- *  `hub-account-circle`: a compact avatar chip routing into the account
- *  surface. Caller only passes this when a wallet is connected — the
- *  scaffold renders nothing otherwise. */
+/** Account entry (top-right of the HUD). Mirrors the LEARN /exercises header
+ *  account pill (`candy-tray-pill hub-hud-pill` — avatar + "Account" label +
+ *  PRO days) for one unified visual language. Caller only passes this when a
+ *  wallet is connected — the scaffold renders nothing otherwise. */
 type ArenaAccountEntry = {
   isPro: boolean
+  /** Days left on the active PRO pass; `null` hides the "PRO · Nd" suffix. */
+  daysRemaining: number | null
   onTap: () => void
 }
 
@@ -140,12 +142,12 @@ export function ArenaSelectScaffold({
                 : tStatus('accountLabel')
             }
             data-testid="arena-account-chip"
-            className={`hub-account-circle arena-scaffold-account${
-              account.isPro ? ' hub-account-circle--pro' : ''
+            className={`candy-tray-pill hub-hud-pill arena-scaffold-account${
+              account.isPro ? ' hub-hud-pill--pro-text' : ''
             }`}
           >
             {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-            <picture className="hub-account-circle-avatar">
+            <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
               <source srcSet="/art/avatar-small-account.avif" type="image/avif" />
               <source srcSet="/art/avatar-small-account.webp" type="image/webp" />
               <img
@@ -155,6 +157,12 @@ export function ArenaSelectScaffold({
                 draggable={false}
               />
             </picture>
+            <span>{tStatus('accountChipLabel')}</span>
+            {account.isPro && account.daysRemaining != null ? (
+              <span className="hub-hud-pill-pro-days">
+                PRO · {account.daysRemaining}d
+              </span>
+            ) : null}
           </button>
         ) : null}
       </header>
