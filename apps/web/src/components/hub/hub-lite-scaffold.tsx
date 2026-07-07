@@ -6,6 +6,7 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LanguageChip } from "@/components/hub/language-chip";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
 import { AppModeSwitch } from "@/components/hub/app-mode-switch";
+import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 import { RewardColumn, type RewardTile } from "@/components/kingdom/reward-column";
 import {
   ChallengeCard,
@@ -39,6 +40,14 @@ export type HubLiteScaffoldProps = {
   };
   // ── Training Path (horizontal piece roster) ──
   rewardTiles: RewardTile[];
+  /** PRO subscriber flag. Derived by the container from the SAME season-pass
+   *  status that drives the ChallengeCard (`source === "pro"`) so the PRO
+   *  mascot + gold ring flip in lockstep with the card — not from a second,
+   *  independently-lagging `/api/pro/status` fetch inside this leaf. */
+  isPro: boolean;
+  /** Opens the account surface. Routes to /exercises?sheet=account (the
+   *  account sheet lives there) — the hub has no account sheet of its own. */
+  onAccountTap: () => void;
 };
 
 /** Chesscito Lite hub presenter — habit-first vertical stack (spec
@@ -58,9 +67,12 @@ export function HubLiteScaffold({
   onJoinChallenge,
   primaryFocus,
   rewardTiles,
+  isPro,
+  onAccountTap,
 }: HubLiteScaffoldProps) {
   const t = useTranslations("HUB_LITE_COPY");
   const tHud = useTranslations("HUD_COPY");
+  const tStatus = useTranslations("GLOBAL_STATUS_BAR_COPY");
 
   // Start Focus always reads "Start Focus" (founder: stable label, not the
   // per-variant intent). It still routes to /exercises in every state.
@@ -85,6 +97,40 @@ export function HubLiteScaffold({
           <LanguageChip />
         </div>
         <div className="hub-lite-hud-right">
+          {isWalletConnected ? (
+            <>
+              {/* Peones balance + recharge rail (self-contained: taps open the
+                  Chesito Card → Get Peones). The green "+" advertises recharge.
+                  Hidden for guests by the chip. */}
+              <PeonesBalanceChip surface="hub" showRecharge />
+              {/* Account entry, compact circular avatar (reference Image #2).
+                  Hub has no account sheet → routes to /exercises?sheet=account.
+                  PRO gets a brighter ring accent. */}
+              <button
+                type="button"
+                onClick={onAccountTap}
+                aria-label={
+                  isPro ? tStatus("proManageLabel") : tStatus("accountLabel")
+                }
+                data-testid="hub-account-chip"
+                className={`hub-account-circle${
+                  isPro ? " hub-account-circle--pro" : ""
+                }`}
+              >
+                {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+                <picture className="hub-account-circle-avatar">
+                  <source srcSet="/art/avatar-small-account.avif" type="image/avif" />
+                  <source srcSet="/art/avatar-small-account.webp" type="image/webp" />
+                  <img
+                    src="/art/avatar-small-account.png"
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                  />
+                </picture>
+              </button>
+            </>
+          ) : null}
           {!isWalletConnected && onConnectTap ? (
             <button
               type="button"
@@ -128,17 +174,25 @@ export function HubLiteScaffold({
         {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
         <picture className="hub-lite-avatar">
           <source
-            srcSet="/art/avatar-lite-hub-224w.avif 224w, /art/avatar-lite-hub-340w.avif 340w, /art/avatar-lite-hub.avif 499w"
+            srcSet={
+              isPro
+                ? "/art/avatar-pro-224w.avif 224w, /art/avatar-pro-340w.avif 340w, /art/avatar-pro.avif 499w"
+                : "/art/avatar-lite-hub-224w.avif 224w, /art/avatar-lite-hub-340w.avif 340w, /art/avatar-lite-hub.avif 499w"
+            }
             sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
             type="image/avif"
           />
           <source
-            srcSet="/art/avatar-lite-hub-224w.webp 224w, /art/avatar-lite-hub-340w.webp 340w, /art/avatar-lite-hub.webp 499w"
+            srcSet={
+              isPro
+                ? "/art/avatar-pro-224w.webp 224w, /art/avatar-pro-340w.webp 340w, /art/avatar-pro.webp 499w"
+                : "/art/avatar-lite-hub-224w.webp 224w, /art/avatar-lite-hub-340w.webp 340w, /art/avatar-lite-hub.webp 499w"
+            }
             sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
             type="image/webp"
           />
           <img
-            src="/art/avatar-lite-hub.png"
+            src={isPro ? "/art/avatar-pro.png" : "/art/avatar-lite-hub.png"}
             alt=""
             aria-hidden="true"
             width={499}
@@ -166,20 +220,23 @@ export function HubLiteScaffold({
         >
           {startFocusLabel}
         </button>
-        {/* Decorative gold ring overlaid on top of the (unchanged) button. */}
-        {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-        <picture className="hub-lite-start-focus-ring" aria-hidden="true">
-          <source srcSet="/art/ring-start-focus.avif" type="image/avif" />
-          <source srcSet="/art/ring-start-focus.webp" type="image/webp" />
-          <img
-            src="/art/ring-start-focus.png"
-            alt=""
-            width={512}
-            height={260}
-            fetchPriority="high"
-            draggable={false}
-          />
-        </picture>
+        {/* Decorative gold ring overlaid on top of the (unchanged) button —
+            PRO-only benefit; non-PRO viewers see the CTA without the ring. */}
+        {isPro ? (
+          // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
+          <picture className="hub-lite-start-focus-ring" aria-hidden="true">
+            <source srcSet="/art/ring-start-focus.avif" type="image/avif" />
+            <source srcSet="/art/ring-start-focus.webp" type="image/webp" />
+            <img
+              src="/art/ring-start-focus.png"
+              alt=""
+              width={512}
+              height={260}
+              fetchPriority="high"
+              draggable={false}
+            />
+          </picture>
+        ) : null}
       </div>
 
       <section className="hub-lite-training-path" aria-label={t("trainingPathLabel")}>

@@ -34,6 +34,7 @@ import { useWelcomePackClaim } from "@/lib/shop/use-welcome-pack-claim";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { PeonesHintButton } from "@/components/peones/peones-hint-button";
 import { ChesitoCard } from "@/components/peones/chesito-card";
+import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 // PeonesRetryButton intentionally NOT imported — Sprint 5 commit G
 // unmounted the paid Retry chip pending differential-value
 // calibration. The component + tests + spend endpoint support stay
@@ -755,6 +756,7 @@ export function ExercisesScreen({
     else if (slug === "badges") setActiveDockTab("badge");
     else if (slug === "trophies") setActiveDockTab("trophies");
     else if (slug === "leaderboard") setActiveDockTab("leaderboard");
+    else if (slug === "account") setAccountSheetOpen(true);
     else if (slug === "pro" && !CHESSCITO_LITE_MODE) proSheet.openSheet();
     if (slug) {
       sp.delete("sheet");
@@ -2511,7 +2513,10 @@ export function ExercisesScreen({
               label: tStatus("backLabel"),
             }}
             trailingControl={
-              !address ? (
+              <div className="flex items-center gap-1.5">
+                {/* Peones balance + recharge rail (hides itself for guests). */}
+                <PeonesBalanceChip surface="exercises" />
+                {!address ? (
                 <button
                   type="button"
                   onClick={() => connectWallet()}
@@ -2537,18 +2542,32 @@ export function ExercisesScreen({
                   className={`candy-tray-pill hub-hud-pill${proStatus?.active ? " hub-hud-pill--pro-text" : ""}`}
                 >
                   <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
-                    <source srcSet="/art/screen-mission/account-icon.avif" type="image/avif" />
-                    <source srcSet="/art/screen-mission/account-icon.webp" type="image/webp" />
+                    <source srcSet="/art/avatar-small-account.avif" type="image/avif" />
+                    <source srcSet="/art/avatar-small-account.webp" type="image/webp" />
                     <img
-                      src="/art/screen-mission/account-icon.png"
+                      src="/art/avatar-small-account.png"
                       alt=""
                       aria-hidden="true"
                       draggable={false}
                     />
                   </picture>
                   <span>{tStatus("accountChipLabel")}</span>
+                  {proStatus?.active ? (
+                    (() => {
+                      const days = daysRemaining(
+                        proStatus.expiresAt,
+                        Date.now(),
+                      );
+                      return days != null ? (
+                        <span className="hub-hud-pill-pro-days">
+                          PRO · {days}d
+                        </span>
+                      ) : null;
+                    })()
+                  ) : null}
                 </button>
-              )
+              )}
+              </div>
             }
           />
         </div>

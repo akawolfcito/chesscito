@@ -18,6 +18,11 @@ vi.mock("@/components/hub/hub-daily-tile", () => ({
 vi.mock("@/components/hub/language-chip", () => ({
   LanguageChip: () => <div data-testid="language-chip-stub" />,
 }));
+vi.mock("@/components/peones/peones-balance-chip", () => ({
+  PeonesBalanceChip: ({ surface }: { surface?: string }) => (
+    <div data-testid="peones-chip-stub" data-surface={surface} />
+  ),
+}));
 
 const TILES: RewardTile[] = [
   { id: "rook", state: "claimed" },
@@ -51,6 +56,8 @@ function baseProps(over: Partial<HubLiteScaffoldProps> = {}): HubLiteScaffoldPro
     onJoinChallenge: vi.fn(),
     primaryFocus: { onPress: vi.fn(), contentLoop: action("daily-pending"), isHydrated: true },
     rewardTiles: TILES,
+    isPro: false,
+    onAccountTap: vi.fn(),
     ...over,
   };
 }
@@ -66,6 +73,13 @@ describe("<HubLiteScaffold>", () => {
       "art/avatar-lite-hub-340w.avif",
       "art/avatar-lite-hub-224w.webp",
       "art/avatar-lite-hub-340w.webp",
+      "art/avatar-pro.png",
+      "art/avatar-pro.webp",
+      "art/avatar-pro.avif",
+      "art/avatar-pro-224w.avif",
+      "art/avatar-pro-340w.avif",
+      "art/avatar-pro-224w.webp",
+      "art/avatar-pro-340w.webp",
       "art/title-chesscito-288w.avif",
       "art/title-chesscito-384w.avif",
       "art/title-chesscito-288w.webp",
@@ -102,6 +116,37 @@ describe("<HubLiteScaffold>", () => {
     expect(screen.queryByRole("button", { name: /connect/i })).toBeNull();
   });
 
+  it("connected: shows the Peones chip (hub surface) + Account chip that routes on tap", () => {
+    const onAccountTap = vi.fn();
+    render(
+      <HubLiteScaffold
+        {...baseProps({ isWalletConnected: true, onConnectTap: null, onAccountTap })}
+      />,
+    );
+    expect(screen.getByTestId("peones-chip-stub")).toHaveAttribute("data-surface", "hub");
+    fireEvent.click(screen.getByTestId("hub-account-chip"));
+    expect(onAccountTap).toHaveBeenCalledTimes(1);
+  });
+
+  it("guest: no Peones chip and no Account chip", () => {
+    render(<HubLiteScaffold {...baseProps()} />);
+    expect(screen.queryByTestId("peones-chip-stub")).toBeNull();
+    expect(screen.queryByTestId("hub-account-chip")).toBeNull();
+  });
+
+  it("PRO connected: Account circle gets the PRO ring accent", () => {
+    render(
+      <HubLiteScaffold
+        {...baseProps({
+          isWalletConnected: true,
+          onConnectTap: null,
+          isPro: true,
+        })}
+      />,
+    );
+    expect(screen.getByTestId("hub-account-chip")).toHaveClass("hub-account-circle--pro");
+  });
+
   it("offer state: ChallengeCard shows the Join CTA", () => {
     const onJoin = vi.fn();
     render(<HubLiteScaffold {...baseProps({ onJoinChallenge: onJoin })} />);
@@ -135,8 +180,13 @@ describe("<HubLiteScaffold>", () => {
     expect(screen.getByTestId("start-focus-cta").textContent).toMatch(/Start Focus/i);
   });
 
-  it("Start Focus: prioritizes the AVIF ring with intrinsic dimensions", () => {
+  it("Start Focus (non-PRO): no gold ring overlay", () => {
     const { container } = render(<HubLiteScaffold {...baseProps()} />);
+    expect(container.querySelector(".hub-lite-start-focus-ring")).toBeNull();
+  });
+
+  it("Start Focus (PRO): prioritizes the AVIF ring with intrinsic dimensions", () => {
+    const { container } = render(<HubLiteScaffold {...baseProps({ isPro: true })} />);
     const picture = container.querySelector(".hub-lite-start-focus-ring");
     const sources = picture?.querySelectorAll("source");
     const image = picture?.querySelector("img");
@@ -184,6 +234,24 @@ describe("<HubLiteScaffold>", () => {
       "(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px",
     );
     expect(avatar?.querySelector("img")).toHaveAttribute("width", "499");
+    expect(avatar?.querySelector("img")).toHaveAttribute("height", "560");
+  });
+
+  it("Mascot (PRO): swaps to the avatar-pro derivatives", () => {
+    const { container } = render(<HubLiteScaffold {...baseProps({ isPro: true })} />);
+    const avatar = container.querySelector(".hub-lite-avatar");
+
+    expect(avatar?.querySelector('source[type="image/avif"]')).toHaveAttribute(
+      "srcset",
+      "/art/avatar-pro-224w.avif 224w, /art/avatar-pro-340w.avif 340w, /art/avatar-pro.avif 499w",
+    );
+    expect(avatar?.querySelector('source[type="image/webp"]')).toHaveAttribute(
+      "srcset",
+      "/art/avatar-pro-224w.webp 224w, /art/avatar-pro-340w.webp 340w, /art/avatar-pro.webp 499w",
+    );
+    expect(avatar?.querySelector("img")).toHaveAttribute("src", "/art/avatar-pro.png");
+    expect(avatar?.querySelector("img")).toHaveAttribute("width", "499");
+    // Same intrinsic box as the default avatar → PRO swap is layout-shift-free.
     expect(avatar?.querySelector("img")).toHaveAttribute("height", "560");
   });
 

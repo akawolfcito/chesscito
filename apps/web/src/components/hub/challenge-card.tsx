@@ -43,6 +43,19 @@ function TagIcon() {
     </svg>
   );
 }
+function CrownIcon() {
+  return (
+    <svg viewBox="0 0 16 16" className="challenge-card-active-chip-crown" aria-hidden="true">
+      <path
+        d="M2 5.5l2.6 2.2L8 3.5l3.4 4.2L14 5.5l-1 7H3l-1-7z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="0.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 /** The 21-Day Mind Challenge hero card (Chesscito Lite) — compact layout
  *  (reference Image #10): icon + title + FOCUS PASSPORT progress bar on top, an
@@ -81,9 +94,9 @@ export function ChallengeCard({
       <div className="challenge-card-top">
         {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
         <picture className="challenge-card-icon">
-          <source srcSet="/art/21-challenge-icon.avif" type="image/avif" />
-          <source srcSet="/art/21-challenge-icon.webp" type="image/webp" />
-          <img src="/art/21-challenge-icon.png" alt="" aria-hidden="true" draggable={false} />
+          <source srcSet="/art/21-day-icon.avif" type="image/avif" />
+          <source srcSet="/art/21-day-icon.webp" type="image/webp" />
+          <img src="/art/21-day-icon.png" alt="" aria-hidden="true" draggable={false} />
         </picture>
         <div className="challenge-card-top-main">
           <header className="challenge-card-head">
@@ -92,9 +105,14 @@ export function ChallengeCard({
             </h2>
             {isActive ? (
               <span
-                className="challenge-card-active-chip"
+                className={`challenge-card-active-chip${
+                  seasonPass.source === "pro"
+                    ? " challenge-card-active-chip--pro"
+                    : ""
+                }`}
                 data-testid="challenge-active-badge"
               >
+                {seasonPass.source === "pro" ? <CrownIcon /> : null}
                 {seasonPass.source === "pro" ? t("includedWithPro") : t("activeBadge")}
               </span>
             ) : null}
