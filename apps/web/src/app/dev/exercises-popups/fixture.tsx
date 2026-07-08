@@ -110,15 +110,16 @@ export function ExercisesPopupsFixture({ variant }: { variant: Variant }) {
       )}
 
       {variant === "reward-dual" && (
+        /* MiniPay Lote 2 F1: the off-chain SAVE pin was removed — CLAIM is the
+           only reward pin now (off-chain save auto-runs). */
         <div className="flex min-h-[100dvh] items-center justify-center">
           <div className="flex items-center justify-center gap-3">
-            {(["submitScore", "claimBadge"] as const).map((a) => (
+            {(["claimBadge"] as const).map((a) => (
               <ContextualActionSlot
                 key={a}
                 action={a}
                 shieldsAvailable={0}
                 isBusy={false}
-                onSubmitScore={noop}
                 onUseShield={noop}
                 onClaimBadge={noop}
                 onRetry={noop}

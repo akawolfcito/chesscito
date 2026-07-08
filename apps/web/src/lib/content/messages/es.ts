@@ -1344,6 +1344,7 @@ const messages = {
     claimBadge: "OBTENER",
     submitScore: "GUARDAR",
     later: "Después",
+    continue: "Continuar",
     headerLabel: "¡Insignia obtenida!",
   },
   BADGE_SHEET_COPY: {

@@ -337,6 +337,9 @@ export const BADGE_EARNED_COPY = {
   claimBadge: "CLAIM",
   submitScore: "SAVE",
   later: "Later",
+  /** MiniPay Lote 2 F1: single neutral CTA now that the off-chain save
+   *  auto-runs (no manual SAVE in this prompt). */
+  continue: "Continue",
   headerLabel: "Badge Earned",
 } as const;
 

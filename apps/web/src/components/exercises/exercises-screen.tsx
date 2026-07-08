@@ -2434,12 +2434,7 @@ export function ExercisesScreen({
                     key={a}
                     action={a}
                     shieldsAvailable={shieldCount}
-                    isBusy={
-                      a === "submitScore"
-                        ? isSavingScore
-                        : isBadgeWriting || isClaimConfirming
-                    }
-                    onSubmitScore={() => void handleSubmitScore()}
+                    isBusy={isBadgeWriting || isClaimConfirming}
                     onUseShield={handleUseShield}
                     onClaimBadge={() => void handleClaimBadge()}
                     onRetry={handleRetryApplied}
@@ -2472,8 +2467,7 @@ export function ExercisesScreen({
               <ContextualActionSlot
                 action={contextAction}
                 shieldsAvailable={shieldCount}
-                isBusy={isSavingScore || isBadgeWriting || isClaimConfirming}
-                onSubmitScore={() => void handleSubmitScore()}
+                isBusy={isBadgeWriting || isClaimConfirming}
                 onUseShield={handleUseShield}
                 onClaimBadge={() => void handleClaimBadge()}
                 // Sprint 5 commit G — route the legacy free Retry
@@ -2657,24 +2651,9 @@ export function ExercisesScreen({
               // on the badges sheet, which now owns the switch grid.
               setBadgeSheetOpen(true);
             }}
-            onSubmitScore={
-              canSaveScore
-                ? () => {
-                    setShowPieceComplete(false);
-                    // Submit-and-close used to drop the user back on
-                    // the final exercise of the just-completed piece
-                    // while the score POST flew off; align it with
-                    // the dismiss/next-piece path so the surface
-                    // advances even when the user picks the on-chain
-                    // save route.
-                    void handleSubmitScore();
-                    if (nextPiece) {
-                      setSelectedPiece(nextPiece);
-                      resetBoard();
-                    }
-                  }
-                : undefined
-            }
+            // MiniPay Lote 2 F1: no manual off-chain save CTA here — the score
+            // auto-saves on completion. The primary continuation CTAs
+            // (next piece / labyrinth / choose piece) advance the flow.
           />
         ) : null}
 
@@ -2710,12 +2689,10 @@ export function ExercisesScreen({
           <BadgeEarnedPrompt
             pieceType={selectedPiece}
             totalStars={totalStars}
-            onSubmitScore={() => {
-              autoReset.clear();
-              setShowBadgeEarned(false);
-              void handleSubmitScore();
-            }}
-            onLater={handleBadgeEarnedDismiss}
+            // MiniPay Lote 2 F1: no manual off-chain SAVE CTA — the score
+            // auto-saves. The badge celebration just continues to the piece
+            // complete flow.
+            onContinue={handleBadgeEarnedDismiss}
           />
         ) : null}
 
