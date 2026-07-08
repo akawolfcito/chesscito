@@ -44,11 +44,32 @@ const QUOTA_RECALIBRATION_MIGRATION_PATH = join(
   "20260610020000_savescore_quota_recalibration.sql",
 );
 
+/** MiniPay Delivery Lote 2 (2026-07-08): off-chain save is ALWAYS FREE. The
+ *  forward CREATE OR REPLACE removes the paid branch entirely — no peones_spend,
+ *  no P0001 catch, no insufficient_peones, always mode='free'. This is the
+ *  currently-live definition; the asserts below pin its shape. */
+const ALWAYS_FREE_MIGRATION_PATH = join(
+  process.cwd(),
+  "supabase",
+  "migrations",
+  "20260708120000_savescore_always_free.sql",
+);
+
 const migration = readFileSync(MIGRATION_PATH, "utf-8");
 const quotaRecalibrationMigration = readFileSync(
   QUOTA_RECALIBRATION_MIGRATION_PATH,
   "utf-8",
 );
+const alwaysFreeMigration = readFileSync(ALWAYS_FREE_MIGRATION_PATH, "utf-8");
+
+/** Isolate the body of the always-free save_basic_score for scoped asserts. */
+function alwaysFreeRpcBody(): string {
+  const startIdx = alwaysFreeMigration.search(
+    /create or replace function public\.save_basic_score/i,
+  );
+  expect(startIdx).toBeGreaterThan(-1);
+  return alwaysFreeMigration.slice(startIdx);
+}
 
 /** Isolate the body of the save_basic_score function for scoped asserts. */
 function rpcBody(): string {
@@ -195,5 +216,47 @@ describe("save_basic_score quota recalibration (Slice C3) — TS↔SQL lockstep"
   it("reuses peones_spend (no raw ledger insert) — same atomic contract", () => {
     expect(quotaRecalibrationMigration).toMatch(/public\.peones_spend\(/i);
     expect(quotaRecalibrationMigration).not.toMatch(/insert into public\.peones_ledger/i);
+  });
+});
+
+describe("save_basic_score ALWAYS-FREE (MiniPay Lote 2) — live definition", () => {
+  it("re-creates save_basic_score with the approved signature", () => {
+    expect(alwaysFreeMigration).toMatch(
+      /create or replace function public\.save_basic_score\([\s\S]*?p_save_id\s+text,[\s\S]*?p_wallet\s+text,[\s\S]*?p_attestation_hash\s+text,[\s\S]*?p_metadata\s+jsonb default null[\s\S]*?\)/i,
+    );
+  });
+
+  it("keeps the per-wallet advisory lock + duplicate guard", () => {
+    const body = alwaysFreeRpcBody();
+    expect(body).toMatch(/pg_advisory_xact_lock\(\s*hashtext\(\s*lower\(/i);
+    expect(body).toMatch(/'?duplicate'?/i);
+  });
+
+  it("NEVER calls peones_spend (the save_game sink never fires)", () => {
+    const body = alwaysFreeRpcBody();
+    expect(body).not.toMatch(/public\.peones_spend\(/i);
+  });
+
+  it("has NO paid branch — no P0001 catch, no insufficient_peones", () => {
+    const body = alwaysFreeRpcBody();
+    expect(body).not.toMatch(/when sqlstate 'P0001'/i);
+    expect(body).not.toMatch(/insufficient_peones/i);
+  });
+
+  it("always inserts mode='free', peones_spent=0", () => {
+    const body = alwaysFreeRpcBody();
+    // The only score_saves insert must be the free one.
+    expect(body).toMatch(/'free',\s*0/);
+    expect(body).not.toMatch(/'peones',\s*c_cost/i);
+  });
+
+  it("never inserts raw into peones_ledger", () => {
+    const body = alwaysFreeRpcBody();
+    expect(body).not.toMatch(/insert into public\.peones_ledger/i);
+  });
+
+  it("does NOT touch the legacy scores table or leaderboard_v", () => {
+    expect(alwaysFreeMigration).not.toMatch(/\bpublic\.scores\b/i);
+    expect(alwaysFreeMigration).not.toMatch(/leaderboard_v/i);
   });
 });

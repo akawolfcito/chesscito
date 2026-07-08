@@ -89,8 +89,16 @@ function clampUsed(freeUsed: number): number {
 /**
  * Pure quota math. `freeUsed` is the per-wallet count of existing
  * `score_saves` rows (counted server-side). `proActive` is reserved for
- * a future PRO quota bump — it is intentionally ignored in MVP so the
- * signature is stable when that lands.
+ * a future PRO quota bump — it is intentionally ignored so the signature
+ * is stable when that lands.
+ *
+ * MiniPay Delivery Lote 2 (2026-07-08): off-chain save is now ALWAYS FREE.
+ * Persisting a basic score/progress never costs Peones and works at a 0
+ * balance, matching the always-free `save_basic_score` RPC
+ * (20260708120000_savescore_always_free.sql). So `requiresPeones` is always
+ * `false` and `costPeones` is always `0`, regardless of `freeUsed`. The
+ * `freeUsed`/`freeRemaining` fields remain as informational counters only —
+ * they no longer gate a paywall and are no longer surfaced in the UI.
  */
 export function computeScoreSaveQuota(
   wallet: string,
@@ -98,20 +106,20 @@ export function computeScoreSaveQuota(
   proActive?: boolean,
 ): ScoreSaveQuota {
   // `proActive` is reserved for a future PRO quota bump; intentionally
-  // unused in MVP. Reference it as a no-op to keep the param documented.
+  // unused. Reference it as a no-op to keep the param documented.
   void proActive;
 
   const used = clampUsed(freeUsed);
   const freeRemaining = Math.max(0, FREE_SCORE_SAVE_LIMIT - used);
-  const requiresPeones = freeRemaining === 0;
 
   return {
     wallet: wallet.toLowerCase(),
     freeLimit: FREE_SCORE_SAVE_LIMIT,
     freeUsed: used,
     freeRemaining,
-    requiresPeones,
-    costPeones: requiresPeones ? SCORE_SAVE_COST_PEONES : 0,
+    // Always free: no paywall, no sink. See RPC always-free migration.
+    requiresPeones: false,
+    costPeones: 0,
   };
 }
 
