@@ -36,7 +36,7 @@ describe("<WelcomePackageStamp>", () => {
     render(<WelcomePackageStamp />);
     expect(screen.getByTestId("welcome-package-pending")).toBeInTheDocument();
     expect(screen.getByText("Welcome Package")).toBeInTheDocument();
-    expect(screen.getByText("Tap to claim your reward")).toBeInTheDocument();
+    expect(screen.getByText("Tap to open your Welcome Package")).toBeInTheDocument();
   });
 
   it("shows claimed state when claimed=true", () => {
