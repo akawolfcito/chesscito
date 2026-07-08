@@ -28,9 +28,14 @@ import { usePeonesBalance } from "@/lib/peones/use-peones-balance";
 
 type Props = {
   className?: string;
+  /** Scrim z-index for the Top up sheet. Omit inside the Account aux sheet
+   *  (GetPeonesSheet's z-[55] default is correct there); pass a taller class
+   *  when the card lives in a higher modal (e.g. the chip's z-70 card modal)
+   *  so the sheet stacks above the card, not behind it. */
+  rechargeScrimZClassName?: string;
 };
 
-export function ChesitoCard({ className = "" }: Props) {
+export function ChesitoCard({ className = "", rechargeScrimZClassName }: Props) {
   const { state, refetch } = usePeonesBalance();
   const [rechargeOpen, setRechargeOpen] = useState(false);
 
@@ -95,6 +100,7 @@ export function ChesitoCard({ className = "" }: Props) {
           open={rechargeOpen}
           onOpenChange={setRechargeOpen}
           onSuccess={() => void refetch()}
+          scrimZClassName={rechargeScrimZClassName}
         />
       ) : null}
     </>

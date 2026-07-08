@@ -195,7 +195,9 @@ export function PeonesBalanceChip({ surface = "hub", showRecharge = false }: Pro
                 />
               </picture>
             </button>
-            <ChesitoCard />
+            {/* Card modal is z-[70]; push its Top up sheet above it (default
+             *  z-[55] would render behind the card). */}
+            <ChesitoCard rechargeScrimZClassName="z-[75]" />
           </div>
         </div>
       ) : null}

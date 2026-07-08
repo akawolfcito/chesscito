@@ -25,6 +25,11 @@ export type GetPeonesSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (result: PaymentRailResult) => void;
+  /** Scrim z-index for the portalled shell. Defaults to `z-[55]` (Account aux
+   *  sheet: above the z-50 sheet, under the z-60 dock). Callers layered higher
+   *  — e.g. the Peones chip's z-70 Chesito Card modal — pass a taller class so
+   *  the sheet stacks ABOVE the opener instead of behind it. */
+  scrimZClassName?: string;
 };
 
 function fmtBalance(t: PayableToken): string {
@@ -77,7 +82,12 @@ function PawnSprite({ className }: { className: string }) {
  * (`arena-result-title`), gold price badge (`candy-stat-pill`), candy CTA
  * (`arena-result-primary-cta--amber`). No raw HTML controls; copy trimmed.
  */
-export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheetProps) {
+export function GetPeonesSheet({
+  open,
+  onOpenChange,
+  onSuccess,
+  scrimZClassName = "z-[55]",
+}: GetPeonesSheetProps) {
   const t = useTranslations("GET_PEONES_COPY");
   const selection = useGetPeonesTokenSelection(SKU);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -124,10 +134,11 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
       closeLabel={t("close")}
       // Opened from inside the Account aux sheet (Chesito Card → Top up), whose
       // Radix slide-in transform would otherwise trap this `fixed` modal inside
-      // the sheet. Portal to <body> so it covers the whole sheet, and drop to
-      // z-[55] so it sits ABOVE the z-50 sheet but UNDER the z-60 dock.
+      // the sheet. Portal to <body> so it covers the whole sheet. Default z-[55]
+      // sits ABOVE the z-50 sheet but UNDER the z-60 dock; callers layered higher
+      // (chip's z-70 card modal) pass a taller scrimZClassName.
       portal
-      scrimZClassName="z-[55]"
+      scrimZClassName={scrimZClassName}
     >
       <div
         className="flex flex-col items-center gap-4 text-center"
