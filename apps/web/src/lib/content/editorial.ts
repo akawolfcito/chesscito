@@ -149,11 +149,12 @@ export const MISSION_DETAIL_COPY = {
    *  on-chain Leaderboard Proof action (QA G3 2026-06-11). */
   saveScorePromise: "Climb the leaderboard",
   saveScoreCta: "Save score",
-  /** QA round 2 (2026-06-11): the revived on-chain SAVE — the original
-   *  free (gas-only) submitScoreSigned flow. "For life" belongs HERE:
-   *  the on-chain record is the permanent one. */
-  saveOnChainPromise: "Yours for life",
-  saveOnChainCta: "Save",
+  /** MiniPay delivery audit B6 (2026-07-07): the on-chain SAVE is the
+   *  gas-only submitScoreSigned flow, reframed as an OPTIONAL voluntary
+   *  training proof (not an over-promised "for life"). Copy leads with the
+   *  action; the button stays concise. */
+  saveOnChainPromise: "Save today’s training proof",
+  saveOnChainCta: "Save proof",
   /** Busy label kept beside the spinner so the Save buttons never collapse
    *  to a bare spinner while saving (UX audit Minor 2026-06-14). */
   saving: "Saving…",
@@ -1044,8 +1045,8 @@ export const ROADMAP_COPY = {
       description: "Scheduled brackets with community formats.",
     },
     {
-      title: "VIP Passes",
-      description: "Entry passes tied to future Celo community events.",
+      title: "Community Events",
+      description: "Consistent players may qualify for community events and prizes.",
     },
     {
       title: "Seasonal Rewards",
@@ -3514,7 +3515,11 @@ export const WELCOME_PACKAGE_COPY = {
   claimCta: "Claim",
   dismissCta: "Later",
   trophiesPendingLabel: "Welcome Package",
-  trophiesPendingHint: "Tap to claim your reward",
+  // MiniPay delivery audit B8 (2026-07-07): avoid the vague "claim your
+  // reward" promise on the hint. The claim action itself (claimCta) stays,
+  // since the Welcome Package has a real overlay + Focus Stamp. The hint
+  // uses advance language instead.
+  trophiesPendingHint: "Tap to open your Welcome Package",
   trophiesClaimedLabel: "Focus Stamp: Day 1",
   trophiesClaimedDescription: "Saved on this device. Earned on your first Focus Day.",
   claimedConfirmation: "Focus Stamp: Day 1 saved on this device.",

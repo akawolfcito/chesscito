@@ -230,6 +230,15 @@ export function PersistentDock() {
     (isPlayMode() && pathname.startsWith("/arena"));
   const displayLabel = t(display.labelKey);
 
+  // B5 (MiniPay delivery audit): hide the Leaderboard dock tab on /arena
+  // (PLAY) until a real ELO/ranking exists. LEARN (/exercises) keeps its
+  // puzzle leaderboard. Pure render-time filter — no leaderboard logic
+  // touched; the sheet stays mounted for any deep link.
+  const isArena = pathname.startsWith("/arena");
+  const sideRight = isArena
+    ? SIDE_RIGHT.filter((item) => item.id !== "leaderboard")
+    : SIDE_RIGHT;
+
   return (
     <nav className={`chesscito-dock${CHESSCITO_LITE_MODE ? " chesscito-dock--lite" : ""}`} aria-label={t("navAriaLabel")}>
       {SIDE_LEFT.map((item) => (
@@ -265,7 +274,7 @@ export function PersistentDock() {
         </span>
       </div>
 
-      {SIDE_RIGHT.map((item) => (
+      {sideRight.map((item) => (
         <SideItem key={item.id} item={item} pathname={pathname} router={router} openSheet={openSheet} label={t(item.labelKey)} />
       ))}
     </nav>
