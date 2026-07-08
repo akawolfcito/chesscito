@@ -13,7 +13,15 @@ export const SHIELDS_LEGACY_KEY = "chesscito:shields";
 export const SHIELDS_CONSUMED_KEY = "chesscito:shields:consumed";
 export const SHIELDS_CREDITED_CACHE_KEY = "chesscito:shields:credited-cache";
 
-export const MAX_SHIELDS = 30;
+/** Max ACTIVE (displayed/usable) shields. MiniPay Lote 3 B4 (2026-07-08):
+ *  30 → 3. The displayed count is `min(MAX_SHIELDS, credited - consumed)`, so
+ *  every source (Welcome Pack, Season Pass bonus, rescue) is capped here — no
+ *  source can leave the user showing more than 3. NOTE: `credited` is a
+ *  monotonic server counter and `consumed` is client-local, so two sources
+ *  can push `credited - consumed` above 3; the excess is buffered (drains as
+ *  the user consumes) rather than a hard reject. See risk note in the Lote 3
+ *  deliverable. */
+export const MAX_SHIELDS = 3;
 
 export type LegacyMigrationPayload = {
   legacy: number;

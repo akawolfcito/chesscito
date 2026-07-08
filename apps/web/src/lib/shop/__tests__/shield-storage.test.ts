@@ -47,13 +47,53 @@ describe("shield-storage", () => {
     });
 
     it("over-credit drains naturally as user consumes", () => {
-      writeCreditedCache(33);
+      writeCreditedCache(10);
       window.localStorage.setItem(SHIELDS_CONSUMED_KEY, "2");
-      // 33 - 2 = 31, capped to 30
+      // 10 - 2 = 8, capped to MAX_SHIELDS (3)
       expect(readDisplayedShields()).toBe(MAX_SHIELDS);
+      window.localStorage.setItem(SHIELDS_CONSUMED_KEY, "8");
+      // 10 - 8 = 2 (below cap → shows through)
+      expect(readDisplayedShields()).toBe(2);
+    });
+  });
+
+  // ─── Lote 3 B4: MAX_SHIELDS = 3 cap across all credit sources ─────
+  describe("MAX_SHIELDS = 3 cap (Lote 3 B4)", () => {
+    it("the cap constant is 3", () => {
+      expect(MAX_SHIELDS).toBe(3);
+    });
+
+    // Every credit source funnels through `credited`; these prove the
+    // displayed count never exceeds 3 regardless of how much is credited.
+    it("0 shields + a +3 source → 3 (not more)", () => {
+      writeCreditedCache(3); // 0 existing + 3
+      expect(readDisplayedShields()).toBe(3);
+    });
+
+    it("1 shield + a +3 source → 3 (gains at most 2 effective)", () => {
+      writeCreditedCache(4); // effective 1, source adds 3
+      expect(readDisplayedShields()).toBe(3);
+    });
+
+    it("2 shields + a +3 source → 3, NOT 5", () => {
+      writeCreditedCache(5); // effective 2, source adds 3
+      expect(readDisplayedShields()).toBe(3);
+    });
+
+    it("3 shields + a +3 source → stays 3 (no more above the cap)", () => {
+      writeCreditedCache(6); // effective 3, source adds 3
+      expect(readDisplayedShields()).toBe(3);
+    });
+
+    it("Season Pass (+3) stacking Welcome Pack (+3) → displayed 3, excess buffered", () => {
+      writeCreditedCache(6); // Welcome 3 + Season 3, none consumed
+      window.localStorage.setItem(SHIELDS_CONSUMED_KEY, "0");
+      expect(readDisplayedShields()).toBe(3);
+      // The buffer (credited 6) means display holds at 3 until consumed > 3.
+      window.localStorage.setItem(SHIELDS_CONSUMED_KEY, "3");
+      expect(readDisplayedShields()).toBe(3); // buffer still refills
       window.localStorage.setItem(SHIELDS_CONSUMED_KEY, "4");
-      // 33 - 4 = 29
-      expect(readDisplayedShields()).toBe(29);
+      expect(readDisplayedShields()).toBe(2); // drains below cap
     });
   });
 
