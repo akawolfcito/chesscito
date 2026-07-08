@@ -111,7 +111,14 @@ async function main() {
     );
     redisPatterns.push(`coach:game:${lower}:*`, `coach:analysis:${lower}:*`);
     supaDeletes.push(
+      // FK children of peones_ledger + treasury_payment_intents (Get Peones
+      // treasury canary). MUST precede peones_ledger, else the delete violates
+      // treasury_payment_consumptions_ledger_id_fkey. consumptions →
+      // intents (intent_id FK) so consumptions is deleted first.
+      { table: "treasury_payment_consumptions", column: "wallet" },
+      { table: "treasury_payment_intents", column: "wallet" },
       { table: "peones_ledger", column: "wallet" },
+      { table: "pro_subscriptions", column: "wallet" },
       { table: "score_saves", column: "wallet" },
       { table: "scores", column: "player" },
       { table: "welcome_pack_claims", column: "wallet_address" },

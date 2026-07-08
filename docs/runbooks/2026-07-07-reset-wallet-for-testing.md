@@ -76,9 +76,15 @@ re-hidrata**. PLAY seguirá mostrando tus victorias on-chain.
   DEL coach:pro:<wallet>
   ```
 - **Peones** (`peones_ledger`, Supabase) — economía ganada en LEARN, gastada en
-  ambos. Borrar deja balance 0 (Welcome Pack re-reclamable):
+  ambos. Borrar deja balance 0 (Welcome Pack re-reclamable). **Ojo con la FK del
+  canary de Treasury**: hay que borrar los hijos ANTES de `peones_ledger`
+  (`treasury_payment_consumptions.ledger_id` → `peones_ledger`, y
+  `.intent_id` → `treasury_payment_intents`):
   ```sql
-  delete from public.peones_ledger where wallet = lower('<WALLET>');
+  delete from public.treasury_payment_consumptions where wallet = lower('<WALLET>');
+  delete from public.treasury_payment_intents      where wallet = lower('<WALLET>');
+  delete from public.peones_ledger                 where wallet = lower('<WALLET>');
+  delete from public.pro_subscriptions             where wallet = lower('<WALLET>');
   ```
 
 **Opcional (dedupe de tx):** solo si quisieras re-verificar la MISMA tx de compra
