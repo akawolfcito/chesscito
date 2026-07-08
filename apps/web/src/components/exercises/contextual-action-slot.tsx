@@ -9,7 +9,6 @@ type ContextualActionSlotProps = {
   action: ContextAction;
   shieldsAvailable: number;
   isBusy: boolean;
-  onSubmitScore: () => void;
   onUseShield: () => void;
   onClaimBadge: () => void;
   onRetry: () => void;
@@ -25,7 +24,6 @@ function getHandler(
   props: ContextualActionSlotProps
 ): () => void {
   switch (action) {
-    case "submitScore": return props.onSubmitScore;
     case "useShield": return props.onUseShield;
     case "claimBadge": return props.onClaimBadge;
     case "retry": return props.onRetry;
@@ -107,5 +105,5 @@ export function ContextualActionSlot(props: ContextualActionSlotProps) {
 }
 
 function hasLoading(action: Exclude<ContextAction, null>): boolean {
-  return action === "submitScore" || action === "useShield" || action === "claimBadge";
+  return action === "useShield" || action === "claimBadge";
 }

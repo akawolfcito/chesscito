@@ -5,7 +5,6 @@ import { ContextualActionSlot } from "../contextual-action-slot";
 const noop = () => {};
 
 const baseHandlers = {
-  onSubmitScore: noop,
   onUseShield: noop,
   onClaimBadge: noop,
   onRetry: noop,
@@ -38,13 +37,12 @@ describe("ContextualActionSlot — compact label", () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
-  it("uses the compactLabel ('SAVE') for the submitScore action", () => {
-    // Post-SAVE-local-first (Cluster C) the long "Submit Score" copy was
-    // collapsed into the canonical "SAVE" label across all action-slot
-    // variants. This assertion locks the editorial alignment.
+  // MiniPay Lote 2 F1: the off-chain SAVE pin was removed from the action
+  // slot (off-chain save auto-runs). CLAIM is the compact reward pin now.
+  it("uses the compactLabel ('CLAIM') for the claimBadge action", () => {
     render(
       <ContextualActionSlot
-        action="submitScore"
+        action="claimBadge"
         shieldsAvailable={0}
         isBusy={false}
         compact
@@ -52,10 +50,9 @@ describe("ContextualActionSlot — compact label", () => {
       />,
     );
     const label = screen
-      .getAllByText("SAVE")
+      .getAllByText("CLAIM")
       .find((el) => el.tagName === "SPAN");
     expect(label).toBeDefined();
-    expect(label!.textContent).toBe("SAVE");
-    expect(screen.queryByText("Submit Score")).not.toBeInTheDocument();
+    expect(label!.textContent).toBe("CLAIM");
   });
 });

@@ -104,51 +104,69 @@ describe("<MissionDetailSheet> — guide-only surface (redistribution D1)", () =
   });
 });
 
-describe("<MissionDetailSheet> — save score affordance (D5)", () => {
-  it("renders the promise line + save button and fires the handler", async () => {
-    const onSaveScore = vi.fn();
-    const user = userEvent.setup();
-    renderSheet({ canSaveScore: true, onSaveScore, score: "120" });
+describe("<MissionDetailSheet> — off-chain save state (B2, Lote 2)", () => {
+  it("shows the informative 'Score saved' state, never a green Save CTA", () => {
+    renderSheet({ scoreSaved: true, score: "120" });
 
-    // Promise-first narrative (QA F5/G3): the off-chain save promises
-    // the leaderboard, never on-chain permanence.
-    expect(screen.getByText("Climb the leaderboard")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Save score" }));
-    expect(onSaveScore).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("score-saved-state")).toHaveTextContent(
+      "Score saved",
+    );
+    // The off-chain save is automatic + free: no green protagonist CTA.
+    expect(
+      screen.queryByRole("button", { name: "Save score" }),
+    ).not.toBeInTheDocument();
+    // And no leaderboard "value" promise on the off-chain save.
+    expect(screen.queryByText("Climb the leaderboard")).not.toBeInTheDocument();
   });
 
-  it("disables the save button while a save is in flight", () => {
+  it("surfaces a FREE manual retry only when the auto-save failed", async () => {
+    const onRetrySave = vi.fn();
+    const user = userEvent.setup();
+    renderSheet({ saveFailed: true, onRetrySave, score: "120" });
+
+    const retry = screen.getByRole("button", { name: "Retry save" });
+    await user.click(retry);
+    expect(onRetrySave).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables the retry while a save is in flight", () => {
     renderSheet({
-      canSaveScore: true,
-      onSaveScore: vi.fn(),
+      saveFailed: true,
+      onRetrySave: vi.fn(),
       isSavingScore: true,
       score: "120",
     });
 
-    expect(screen.getByRole("button", { name: "Save score" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Retry save" })).toBeDisabled();
   });
 
-  it("renders no save button when saving is not available", () => {
-    renderSheet({ canSaveScore: false, onSaveScore: vi.fn() });
+  it("renders no save state when there is no pending/saved score", () => {
+    renderSheet({ canSaveScore: false });
 
     expect(
       screen.queryByRole("button", { name: "Save score" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Retry save" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("score-saved-state")).not.toBeInTheDocument();
   });
 
-  it("renders the on-chain save action when available and fires its handler", async () => {
+  it("keeps the on-chain proof as the only explicit save CTA", async () => {
     const onSaveOnChain = vi.fn();
     const user = userEvent.setup();
     renderSheet({
       canSaveScore: true,
-      onSaveScore: vi.fn(),
       canSaveOnChain: true,
       onSaveOnChain,
       score: "120",
     });
 
-    // Its own promise line, distinct from the leaderboard one.
     expect(screen.getByText("Save today’s training proof")).toBeInTheDocument();
+    // No competing green off-chain CTA next to the gold proof.
+    expect(
+      screen.queryByRole("button", { name: "Save score" }),
+    ).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Save proof" }));
     expect(onSaveOnChain).toHaveBeenCalledTimes(1);
   });
@@ -156,7 +174,6 @@ describe("<MissionDetailSheet> — save score affordance (D5)", () => {
   it("hides the on-chain action when unavailable (no dead buttons)", () => {
     renderSheet({
       canSaveScore: true,
-      onSaveScore: vi.fn(),
       canSaveOnChain: false,
       onSaveOnChain: vi.fn(),
     });
@@ -171,7 +188,6 @@ describe("<MissionDetailSheet> — score breakdown (transparency)", () => {
   it("shows stars × 100 breakdown when canSaveScore + totalStars provided", () => {
     renderSheet({
       canSaveScore: true,
-      onSaveScore: vi.fn(),
       score: "1200",
       totalStars: 12,
       maxPossibleStars: 30,
@@ -184,7 +200,6 @@ describe("<MissionDetailSheet> — score breakdown (transparency)", () => {
   it("shows Max indicator when totalStars equals maxPossibleStars", () => {
     renderSheet({
       canSaveScore: true,
-      onSaveScore: vi.fn(),
       score: "3000",
       totalStars: 30,
       maxPossibleStars: 30,
@@ -204,7 +219,6 @@ describe("<MissionDetailSheet> — score breakdown (transparency)", () => {
         isCapture={false}
         score="3000"
         canSaveScore
-        onSaveScore={vi.fn()}
         totalStars={30}
         maxPossibleStars={30}
         trigger={<button type="button">peek</button>}
@@ -220,7 +234,6 @@ describe("<MissionDetailSheet> — score breakdown (transparency)", () => {
   it("does NOT show breakdown when totalStars is absent", () => {
     renderSheet({
       canSaveScore: true,
-      onSaveScore: vi.fn(),
       score: "1200",
     });
 
@@ -230,7 +243,6 @@ describe("<MissionDetailSheet> — score breakdown (transparency)", () => {
   it("does NOT include labyrinths in the breakdown text", () => {
     renderSheet({
       canSaveScore: true,
-      onSaveScore: vi.fn(),
       score: "1200",
       totalStars: 12,
       maxPossibleStars: 30,

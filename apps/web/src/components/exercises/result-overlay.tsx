@@ -53,16 +53,6 @@ type ResultOverlayProps = {
   onDismiss: () => void;
   onRetry?: () => void;
   totalStars?: number;
-  /** SaveScore off-chain (Slice 5): Peones spent on this save (past the 5
-   *  free saves). When > 0 on the score variant, a small cost pill renders
-   *  beside the stars so the player sees the 1-Peón charge. Omitted/0 for
-   *  free saves. */
-  spentPeones?: number;
-  /** SaveScore off-chain: free saves remaining AFTER this save. When set on
-   *  the score variant, a quota pill renders so the player sees the free
-   *  allowance ("2 free saves left"). 0 communicates the next save costs a
-   *  Peón. Omitted for paid saves. */
-  freeSavesLeft?: number;
   /** Recovery CTA for an error variant (e.g. insufficient Peones → "Get
    *  Peones"). When set, it becomes the primary button + a "Not now"
    *  secondary, replacing the Try-again/Dismiss pair. */
@@ -259,8 +249,6 @@ export function ResultOverlay({
   onDismiss,
   onRetry,
   totalStars,
-  spentPeones,
-  freeSavesLeft,
   recoveryCta,
 }: ResultOverlayProps) {
   const tResult = useTranslations("RESULT_OVERLAY_COPY");
@@ -342,28 +330,16 @@ export function ResultOverlay({
               </div>
             </div>
 
-            {(starsLabel ||
-              (spentPeones != null && spentPeones > 0) ||
-              freeSavesLeft != null) && (
+            {/* B2 (Lote 2): off-chain save is free, so no Peones-spent or
+                free-saves-left pills — only the stars earned. */}
+            {starsLabel && (
               <div className="arena-result-stats-row arena-result-stats-row--missionpills">
-                {starsLabel && (
-                  <span className="candy-stat-pill">
-                    <span className="candy-stat-pill-icon">
-                      <CandyIcon name="star" className="h-4 w-4" />
-                    </span>
-                    {starsLabel}
+                <span className="candy-stat-pill">
+                  <span className="candy-stat-pill-icon">
+                    <CandyIcon name="star" className="h-4 w-4" />
                   </span>
-                )}
-                {spentPeones != null && spentPeones > 0 && (
-                  <span className="candy-stat-pill" data-testid="score-peones-spent">
-                    {spentPeones} {tResult("score.peonesSpentLabel")}
-                  </span>
-                )}
-                {freeSavesLeft != null && (
-                  <span className="candy-stat-pill" data-testid="score-free-saves-left">
-                    {freeSavesLeft} {tResult("score.freeSavesLeftLabel")}
-                  </span>
-                )}
+                  {starsLabel}
+                </span>
               </div>
             )}
 
@@ -627,8 +603,10 @@ export function ResultOverlay({
 type BadgeEarnedPromptProps = {
   pieceType: PieceKey;
   totalStars: number;
-  onSubmitScore: () => void;
-  onLater: () => void;
+  /** MiniPay Lote 2 F1: the off-chain score auto-saves, so the badge prompt
+   *  is purely celebratory. Its single primary CTA continues the flow (X /
+   *  scrim / auto-dismiss all resolve to the same continuation). */
+  onContinue: () => void;
 };
 
 const BADGE_AUTO_DISMISS_MS = 15_000;
@@ -636,8 +614,7 @@ const BADGE_AUTO_DISMISS_MS = 15_000;
 export function BadgeEarnedPrompt({
   pieceType,
   totalStars,
-  onSubmitScore,
-  onLater,
+  onContinue,
 }: BadgeEarnedPromptProps) {
   const tBadge = useTranslations("BADGE_EARNED_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
@@ -648,22 +625,22 @@ export function BadgeEarnedPrompt({
     track("modal_open", { id: "badge-earned", piece: pieceType, stars: totalStars });
   }, [pieceType, totalStars]);
 
-  function handleLater() {
+  function handleContinue() {
     setExiting(true);
-    setTimeout(onLater, 250);
+    setTimeout(onContinue, 250);
   }
 
   // Founder vocabulary pass 2026-06-11: migrated from CandyGlassShell
   // (plain green glass) to VictoryPopupShell so the prompt carries the
-  // panel-bg1 forest frame like every other app modal. CTAs follow the
-  // ceremonial vocabulary: SAVE = PrincipalButton, Later = secondary
-  // text action.
+  // panel-bg1 forest frame like every other app modal.
+  // MiniPay Lote 2 F1: the off-chain save auto-runs, so the former green
+  // SAVE CTA is gone — a single neutral "Continue" resolves the celebration.
   return (
     <div className={exiting ? "modal-exiting" : undefined}>
       <VictoryPopupShell
-        onClose={handleLater}
+        onClose={handleContinue}
         ariaLabel={tBadge("headerLabel")}
-        closeLabel={tBadge("later")}
+        closeLabel={tBadge("continue")}
       >
         {/* Auto-dismiss countdown bar — first element inside the panel
             so it reads as a "timer on the modal". */}
@@ -694,16 +671,9 @@ export function BadgeEarnedPrompt({
         </div>
 
         <div className="flex flex-col items-center gap-2">
-          <PrincipalButton size="medium" onClick={onSubmitScore}>
-            {tBadge("submitScore")}
+          <PrincipalButton size="medium" onClick={handleContinue}>
+            {tBadge("continue")}
           </PrincipalButton>
-          <button
-            type="button"
-            onClick={handleLater}
-            className="arena-result-secondary-action"
-          >
-            {tBadge("later")}
-          </button>
         </div>
 
         <div
@@ -734,10 +704,6 @@ type PieceCompletePromptProps = {
    *  source of truth (we never need labyrinthList.length passed
    *  separately). */
   onTryLabyrinth?: () => void;
-  /** Re-surfaces the Submit Score transactional moment that may have
-   *  been lost when the user dismissed BadgeEarnedPrompt with "Later".
-   *  Only wired when canSendOnChain && score is eligible. */
-  onSubmitScore?: () => void;
   /** Opens the PiecePickerSheet from the completion ceremony. Used as
    *  the primary CTA when there is no next piece in the linear order
    *  AND no labyrinth available for the current piece — without this
@@ -757,7 +723,6 @@ export function PieceCompletePrompt({
   onArena,
   onPracticeAgain,
   onTryLabyrinth,
-  onSubmitScore,
   onChoosePiece,
 }: PieceCompletePromptProps) {
   const tComplete = useTranslations("PIECE_COMPLETE_COPY");
@@ -900,16 +865,6 @@ export function PieceCompletePrompt({
               className="arena-result-secondary-action"
             >
               {tComplete("nextPiece", { piece: tPiece(nextPiece) })}
-            </button>
-          )}
-
-          {onSubmitScore && (
-            <button
-              type="button"
-              onClick={() => handleAction(onSubmitScore)}
-              className="arena-result-secondary-action"
-            >
-              {tComplete("submitScore")}
             </button>
           )}
 

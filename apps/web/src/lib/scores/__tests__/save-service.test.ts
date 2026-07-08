@@ -33,19 +33,20 @@ describe("computeScoreSaveQuota", () => {
     expect(q.costPeones).toBe(0);
   });
 
-  it("freeUsed 3 → 0 remaining, requiresPeones, cost 1", () => {
+  // MiniPay Lote 2 (2026-07-08): off-chain save is ALWAYS FREE. Beyond the
+  // former free threshold there is NO paywall — never requiresPeones, cost 0.
+  it("freeUsed 3 → 0 remaining but still free (no paywall)", () => {
     const q = computeScoreSaveQuota("0xabc", 3);
     expect(q.freeRemaining).toBe(0);
-    expect(q.requiresPeones).toBe(true);
-    expect(q.costPeones).toBe(SCORE_SAVE_COST_PEONES);
-    expect(q.costPeones).toBe(1);
+    expect(q.requiresPeones).toBe(false);
+    expect(q.costPeones).toBe(0);
   });
 
-  it("freeUsed > 3 → still requiresPeones, remaining clamped at 0, cost 1", () => {
+  it("freeUsed > 3 → still free, never charges Peones", () => {
     const q = computeScoreSaveQuota("0xabc", 9);
     expect(q.freeRemaining).toBe(0);
-    expect(q.requiresPeones).toBe(true);
-    expect(q.costPeones).toBe(1);
+    expect(q.requiresPeones).toBe(false);
+    expect(q.costPeones).toBe(0);
   });
 
   it("negative freeUsed clamps to 0", () => {
@@ -72,11 +73,12 @@ describe("computeScoreSaveQuota", () => {
     expect(q.wallet).toBe("0xdeadbeef");
   });
 
-  it("proActive does NOT change the result in MVP", () => {
+  it("proActive does NOT change the result (always free either way)", () => {
     const withPro = computeScoreSaveQuota("0xabc", 5, true);
     const without = computeScoreSaveQuota("0xabc", 5, false);
     expect(withPro).toEqual(without);
-    expect(withPro.requiresPeones).toBe(true);
+    expect(withPro.requiresPeones).toBe(false);
+    expect(withPro.costPeones).toBe(0);
     expect(withPro.freeLimit).toBe(3);
   });
 });

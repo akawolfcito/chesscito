@@ -12,11 +12,9 @@ const BASE: ContextActionState = {
   isCorrectChain: true,
 };
 
-describe("getRewardActions — SAVE and CLAIM are independent (no slot fight)", () => {
-  it("scorePending only → [submitScore]", () => {
-    expect(getRewardActions({ ...BASE, scorePending: true })).toEqual([
-      "submitScore",
-    ]);
+describe("getRewardActions — CLAIM is the only reward pin (SAVE removed, Lote 2 F1)", () => {
+  it("scorePending only → [] (off-chain save auto-runs, no SAVE pin)", () => {
+    expect(getRewardActions({ ...BASE, scorePending: true })).toEqual([]);
   });
 
   it("badgeClaimable only → [claimBadge]", () => {
@@ -25,10 +23,10 @@ describe("getRewardActions — SAVE and CLAIM are independent (no slot fight)", 
     ]);
   });
 
-  it("both → [submitScore, claimBadge] (SAVE primary, first)", () => {
+  it("both scorePending + badge → [claimBadge] (no SAVE pin)", () => {
     expect(
       getRewardActions({ ...BASE, scorePending: true, badgeClaimable: true }),
-    ).toEqual(["submitScore", "claimBadge"]);
+    ).toEqual(["claimBadge"]);
   });
 
   it("neither → []", () => {
@@ -74,10 +72,8 @@ describe("getRewardActions — liteMode=true", () => {
     expect(getRewardActions(BASE, { liteMode: true })).toEqual([]);
   });
 
-  it("Full behavior unchanged when liteMode=false (scorePendingOnly → [submitScore])", () => {
-    expect(getRewardActions({ ...BASE, scorePending: true }, { liteMode: false })).toEqual([
-      "submitScore",
-    ]);
+  it("Full (liteMode=false) also has no SAVE pin for a pending score → []", () => {
+    expect(getRewardActions({ ...BASE, scorePending: true }, { liteMode: false })).toEqual([]);
   });
 });
 
@@ -139,10 +135,10 @@ describe("getContextAction — liteMode=true", () => {
     ).toEqual("retry");
   });
 
-  it("Full behavior unchanged when liteMode=false — submitScore returns normally", () => {
+  it("Full (liteMode=false) — a pending score yields null when connected (no SAVE pin)", () => {
     expect(
       getContextAction({ ...BASE, scorePending: true }, { liteMode: false }),
-    ).toEqual("submitScore");
+    ).toEqual(null);
   });
 
   it("Full behavior unchanged — connectWallet for score when disconnected", () => {
@@ -200,16 +196,16 @@ describe("getContextAction", () => {
   });
 
   // ── Progression states ─────────────────────────────────
-  it("returns submitScore when score is pending", () => {
-    expect(getContextAction({ ...BASE, scorePending: true })).toEqual("submitScore");
+  it("returns null for a pending score when connected (SAVE pin removed, save auto-runs)", () => {
+    expect(getContextAction({ ...BASE, scorePending: true })).toEqual(null);
   });
 
   it("returns claimBadge when badge is claimable", () => {
     expect(getContextAction({ ...BASE, badgeClaimable: true })).toEqual("claimBadge");
   });
 
-  // ── Priority: claimBadge > submitScore ─────────────────
-  it("prioritizes claimBadge over submitScore", () => {
+  // ── claimBadge still wins the connected path ───────────
+  it("returns claimBadge when both a score is pending and a badge is claimable", () => {
     expect(getContextAction({ ...BASE, scorePending: true, badgeClaimable: true })).toEqual("claimBadge");
   });
 

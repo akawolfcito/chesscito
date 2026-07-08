@@ -453,11 +453,6 @@ export function ExercisesScreen({
      *  insufficient-funds errors. Only the shop-buy caller sets this. */
     txErrorKind?: TxErrorKind | null;
     retryAction?: () => void;
-    /** SaveScore off-chain (Slice 5): Peones spent on a paid save. Passed
-     *  to the score overlay so the player sees the 1-Peón charge. */
-    spentPeones?: number;
-    /** SaveScore: free saves remaining after this save (free/duplicate). */
-    freeSavesLeft?: number;
     /** Recovery CTA (insufficient Peones → Get Peones). */
     recoveryCta?: { label: string; onPress: () => void };
   } | null>(null);
@@ -466,6 +461,11 @@ export function ExercisesScreen({
   // request. Replaces the wagmi `isScoreWriting`/`isSubmitConfirming` busy
   // signal for the base save path (now off-chain, no tx to confirm).
   const [isSavingScore, setIsSavingScore] = useState(false);
+  // MiniPay Lote 2 (B2): the off-chain save auto-runs on completion and is
+  // silent (no celebration overlay). If that auto-save fails, this flips true
+  // so the mission sheet surfaces a free manual "Retry save" fallback instead
+  // of leaving the player stuck. Reset when a fresh pending score appears.
+  const [autoSaveFailed, setAutoSaveFailed] = useState(false);
   // Get Peones recovery sheet — opened from the insufficient-save overlay.
   const [getPeonesOpen, setGetPeonesOpen] = useState(false);
 
@@ -752,6 +752,10 @@ export function ExercisesScreen({
    *  React could flip the disabled state. Cleared in the finally
    *  branch so retries after failure/timeout still work. */
   const submittingScoreRef = useRef(false);
+  /** MiniPay Lote 2 (B2): the local score the silent auto-save has already
+   *  attempted, so the auto-save effect fires exactly once per distinct score
+   *  (no loop on failure — the manual fallback handles retry). */
+  const autoSavedScoreRef = useRef<number | null>(null);
   /** Same concurrency guard as `submittingScoreRef`, for
    *  `handleUseShield`'s async server call — prevents a rapid
    *  double-tap on the ContextualActionSlot shield action from firing
@@ -1597,16 +1601,21 @@ export function ExercisesScreen({
     }
   }
 
-  async function handleSubmitScore() {
-    // SaveScore off-chain (Slice 5): the base save no longer signs
-    // (/api/sign-score), never broadcasts `submitScoreSigned`, never
-    // prompts approve/send, and never enters the signer 429 loop. It POSTs
-    // /api/scores/save (5 free saves per wallet, then 1 Peón) and renders
-    // exactly what the server returns. The retained on-chain path lives in
-    // @/lib/contracts/scoreboard for the future Leaderboard Proof lane.
+  async function handleSubmitScore(opts?: { silent?: boolean }) {
+    // SaveScore off-chain: the base save no longer signs (/api/sign-score),
+    // never broadcasts `submitScoreSigned`, never prompts approve/send, and
+    // never enters the signer 429 loop. It POSTs /api/scores/save (ALWAYS
+    // FREE — MiniPay Lote 2 B1) and renders exactly what the server returns.
+    // The retained on-chain path lives in @/lib/contracts/scoreboard for the
+    // Leaderboard Proof lane.
+    //
+    // `silent` (B2): the auto-save on completion persists in the background
+    // and never pops the celebration overlay — the inline "Score saved" state
+    // is the feedback. A manual retry (fallback) runs non-silent.
     //
     // `canSaveScore` (no badgeEarned requirement) gates the surface; the
     // scoreboard address is no longer a precondition.
+    const silent = opts?.silent ?? false;
     if (!canSaveScore || !address || isSubmitBusy) {
       return;
     }
@@ -1645,9 +1654,18 @@ export function ExercisesScreen({
         source: "exercises",
       });
 
+      // Silent auto-save (B2): never throw an error overlay at the player in
+      // the background. Any non-success flips the inline fallback so the
+      // mission sheet offers a free manual "Retry save".
+      if (silent && result.status !== "saved" && result.status !== "duplicate") {
+        setAutoSaveFailed(true);
+        return;
+      }
+
       switch (result.status) {
         case "saved":
         case "duplicate": {
+          setAutoSaveFailed(false);
           hapticSuccess();
           // Local-first save state. Empty txHash: off-chain saves have no
           // receipt, so `savedReceiptUrl` stays undefined (no CeloScan
@@ -1655,14 +1673,12 @@ export function ExercisesScreen({
           // to its saved-parity state, same as the on-chain path did.
           recordSaveFor(selectedPiece, scoreNum, "");
 
-          const paid = result.status === "saved" && result.mode === "peones";
-          const spentPeones = paid ? result.spent : undefined;
-          // Communicate the free-save quota progressively: on a free save
-          // (or idempotent duplicate) show how many free saves remain so
-          // the wall never arrives as a surprise.
-          const freeSavesLeft = paid ? undefined : result.quota.freeRemaining;
-
-          setResultOverlay({ variant: "score", spentPeones, freeSavesLeft });
+          // Off-chain save is always free (B1) and silent on auto-save (B2):
+          // the background auto-save persists without popping the celebration
+          // overlay. Only a manual (non-silent) save shows the score overlay.
+          if (!silent) {
+            setResultOverlay({ variant: "score" });
+          }
 
           // Optimistic leaderboard entry (same key the leaderboard sheet
           // reads on open). The combined view (Slice 4) already includes
@@ -1730,6 +1746,23 @@ export function ExercisesScreen({
       setIsSavingScore(false);
     }
   }
+
+  // MiniPay Lote 2 (B2): auto-save the off-chain score the moment a new score
+  // is pending. Off-chain persistence is normal app behaviour (always free),
+  // not a purchase — so it never waits for a CTA tap. Fires once per distinct
+  // score via `autoSavedScoreRef`; a failure flips `autoSaveFailed` (surfacing
+  // the free manual fallback) without looping. The on-chain proof stays the
+  // only explicit value action.
+  useEffect(() => {
+    if (!scorePendingNew || isSubmitBusy) return;
+    if (autoSavedScoreRef.current === localScoreNum) return;
+    autoSavedScoreRef.current = localScoreNum;
+    setAutoSaveFailed(false);
+    void handleSubmitScore({ silent: true });
+    // handleSubmitScore is a stable closure recreated each render; gating on
+    // the score value + the ref makes the effect idempotent without it in deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scorePendingNew, isSubmitBusy, localScoreNum]);
 
   /** QA round 2 (2026-06-11): the ORIGINAL on-chain SAVE, revived as an
    *  explicit second action (gas-only, no Peones). Faithful to the
@@ -2265,8 +2298,13 @@ export function ExercisesScreen({
           maxPossibleStars={maxPossibleStars}
           trainingPath={trainingPath}
           canSaveScore={scorePendingNew}
-          onSaveScore={() => void handleSubmitScore()}
           isSavingScore={isSubmitBusy}
+          // B2: off-chain save auto-runs silently. The sheet shows an
+          // informative "Score saved" state (or a free manual retry on
+          // failure) instead of a competing green CTA.
+          scoreSaved={isSavedAtParity}
+          saveFailed={autoSaveFailed}
+          onRetrySave={() => void handleSubmitScore()}
           canSaveOnChain={scorePendingNew && scoreboardAddress != null}
           onSaveOnChain={() => void handleSaveScoreOnChain()}
           isSavingOnChain={isScoreWriting || isSubmitConfirming}
@@ -2396,12 +2434,7 @@ export function ExercisesScreen({
                     key={a}
                     action={a}
                     shieldsAvailable={shieldCount}
-                    isBusy={
-                      a === "submitScore"
-                        ? isSavingScore
-                        : isBadgeWriting || isClaimConfirming
-                    }
-                    onSubmitScore={() => void handleSubmitScore()}
+                    isBusy={isBadgeWriting || isClaimConfirming}
                     onUseShield={handleUseShield}
                     onClaimBadge={() => void handleClaimBadge()}
                     onRetry={handleRetryApplied}
@@ -2434,8 +2467,7 @@ export function ExercisesScreen({
               <ContextualActionSlot
                 action={contextAction}
                 shieldsAvailable={shieldCount}
-                isBusy={isSavingScore || isBadgeWriting || isClaimConfirming}
-                onSubmitScore={() => void handleSubmitScore()}
+                isBusy={isBadgeWriting || isClaimConfirming}
                 onUseShield={handleUseShield}
                 onClaimBadge={() => void handleClaimBadge()}
                 // Sprint 5 commit G — route the legacy free Retry
@@ -2619,24 +2651,9 @@ export function ExercisesScreen({
               // on the badges sheet, which now owns the switch grid.
               setBadgeSheetOpen(true);
             }}
-            onSubmitScore={
-              canSaveScore
-                ? () => {
-                    setShowPieceComplete(false);
-                    // Submit-and-close used to drop the user back on
-                    // the final exercise of the just-completed piece
-                    // while the score POST flew off; align it with
-                    // the dismiss/next-piece path so the surface
-                    // advances even when the user picks the on-chain
-                    // save route.
-                    void handleSubmitScore();
-                    if (nextPiece) {
-                      setSelectedPiece(nextPiece);
-                      resetBoard();
-                    }
-                  }
-                : undefined
-            }
+            // MiniPay Lote 2 F1: no manual off-chain save CTA here — the score
+            // auto-saves on completion. The primary continuation CTAs
+            // (next piece / labyrinth / choose piece) advance the flow.
           />
         ) : null}
 
@@ -2672,12 +2689,10 @@ export function ExercisesScreen({
           <BadgeEarnedPrompt
             pieceType={selectedPiece}
             totalStars={totalStars}
-            onSubmitScore={() => {
-              autoReset.clear();
-              setShowBadgeEarned(false);
-              void handleSubmitScore();
-            }}
-            onLater={handleBadgeEarnedDismiss}
+            // MiniPay Lote 2 F1: no manual off-chain SAVE CTA — the score
+            // auto-saves. The badge celebration just continues to the piece
+            // complete flow.
+            onContinue={handleBadgeEarnedDismiss}
           />
         ) : null}
 
@@ -2693,8 +2708,6 @@ export function ExercisesScreen({
             errorKind={resultOverlay.errorKind}
             txErrorKind={resultOverlay.txErrorKind}
             totalStars={totalStars}
-            spentPeones={resultOverlay.spentPeones}
-            freeSavesLeft={resultOverlay.freeSavesLeft}
             recoveryCta={resultOverlay.recoveryCta}
             onDismiss={() => setResultOverlay(null)}
             onRetry={resultOverlay.retryAction}

@@ -27,11 +27,9 @@
 import { NextResponse } from "next/server";
 
 import { normalizeWallet } from "@/lib/peones/ledger-service";
-import { buildAttestationHash } from "@/lib/peones/ledger-service-server";
 import {
   computeScoreSaveQuota,
   deriveScoreSaveId,
-  SCORE_SAVE_COST_PEONES,
   type BasicScoreSaveResult,
 } from "@/lib/scores/save-service";
 import {
@@ -48,10 +46,6 @@ const log = createLogger({ route: "/api/scores/save" });
 
 /** Window of the soft limiter; surfaced to the client as a retry hint. */
 const RATE_LIMIT_WINDOW_MS = 60_000;
-
-function todayUtcDate(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -152,22 +146,11 @@ export async function POST(req: Request) {
     return json({ status: "error", reason: "unavailable" }, 503);
   }
 
-  // 5. save_game attestation — deterministic SHA-256 over the canonical
-  //    economic payload, identical to what /api/peones/spend records for
-  //    a save_game debit. Used by the RPC only on the paid path; the free
-  //    path ignores it. NOT a placeholder.
-  const idempotencyKey = `spend:save_game:${saveId}`;
-  const attestationHash = buildAttestationHash({
-    wallet,
-    event_type: "spend",
-    amount: SCORE_SAVE_COST_PEONES,
-    source: "save_game",
-    source_id: saveId,
-    day_utc: todayUtcDate(),
-    idempotency_key: idempotencyKey,
-  });
-
-  // 6. Atomic RPC. Returns a single jsonb object (NOT a table).
+  // 5. Atomic RPC. Returns a single jsonb object (NOT a table). Off-chain
+  //    save is ALWAYS FREE (MiniPay Lote 2): the RPC never calls peones_spend,
+  //    so the `save_game` sink never fires and no attestation is built. The
+  //    `p_attestation_hash` param is kept for call-site compatibility only and
+  //    passed null.
   const { data, error } = await supabase.rpc("save_basic_score", {
     p_save_id: saveId,
     p_wallet: wallet,
@@ -175,7 +158,7 @@ export async function POST(req: Request) {
     p_score: score,
     p_time_ms: timeMs,
     p_game_id: gameId,
-    p_attestation_hash: attestationHash,
+    p_attestation_hash: null,
     p_metadata: null,
   });
 
@@ -184,34 +167,18 @@ export async function POST(req: Request) {
     return json({ status: "error", reason: "save_failed" }, 500);
   }
 
-  // 7. Map jsonb → BasicScoreSaveResult. The RPC returns
-  //    insufficient_peones as DATA (it catches P0001 internally), so no
-  //    error-code parsing is needed for it.
+  // 6. Map jsonb → BasicScoreSaveResult. Off-chain save is always free, so the
+  //    RPC only ever returns `saved` (mode free) or `duplicate` — there is no
+  //    paid path, no `insufficient_peones`, and no 409.
   const row = data as Record<string, unknown>;
   const freeUsed = Number(row.freeUsed ?? 0);
   const quota = computeScoreSaveQuota(wallet, freeUsed);
 
   switch (row.status) {
     case "saved":
-      if (row.mode === "peones") {
-        return json(
-          { status: "saved", mode: "peones", spent: Number(row.spent ?? SCORE_SAVE_COST_PEONES), quota },
-          200,
-        );
-      }
       return json({ status: "saved", mode: "free", quota }, 200);
     case "duplicate":
       return json({ status: "duplicate", quota }, 200);
-    case "insufficient_peones":
-      return json(
-        {
-          status: "insufficient_peones",
-          required: Number(row.required ?? SCORE_SAVE_COST_PEONES),
-          balance: Number(row.balance ?? 0),
-          quota,
-        },
-        409,
-      );
     default:
       log.error("rpc_unexpected_status", { wallet, status: String(row.status) });
       return json({ status: "error", reason: "save_failed" }, 500);

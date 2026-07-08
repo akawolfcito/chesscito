@@ -175,36 +175,30 @@ describe("POST /api/scores/save", () => {
     expect(json.status).toBe("saved");
     expect(json.mode).toBe("free");
     expect(json.quota.freeUsed).toBe(1);
-    expect(json.quota.freeRemaining).toBe(2); // limit 3 - used 1
     expect(json.quota.requiresPeones).toBe(false);
+    expect(json.quota.costPeones).toBe(0);
   });
 
-  it("RPC saved/peones → 200 spent 1", async () => {
-    rpcOk({ status: "saved", mode: "peones", spent: 1, freeUsed: 6, balance: 4 });
+  // MiniPay Lote 2: off-chain save is ALWAYS FREE. Even far beyond the former
+  // 3-save threshold, the response stays free and never charges / never 409s.
+  it("save beyond the old free threshold → still 200 saved/free, never peones", async () => {
+    rpcOk({ status: "saved", mode: "free", freeUsed: 12 });
     const res = await POST(makeRequest(body()));
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.status).toBe("saved");
-    expect(json.mode).toBe("peones");
-    expect(json.spent).toBe(1);
-    expect(json.quota.requiresPeones).toBe(true);
+    expect(json.mode).toBe("free");
+    expect(json.quota.requiresPeones).toBe(false);
+    expect(json.quota.costPeones).toBe(0);
   });
 
   it("RPC duplicate → 200 duplicate", async () => {
     rpcOk({ status: "duplicate", mode: "free", freeUsed: 3 });
     const res = await POST(makeRequest(body()));
     expect(res.status).toBe(200);
-    expect((await res.json()).status).toBe("duplicate");
-  });
-
-  it("RPC insufficient_peones → 409 with required + balance", async () => {
-    rpcOk({ status: "insufficient_peones", required: 1, balance: 0, freeUsed: 6 });
-    const res = await POST(makeRequest(body()));
-    expect(res.status).toBe(409);
     const json = await res.json();
-    expect(json.status).toBe("insufficient_peones");
-    expect(json.required).toBe(1);
-    expect(json.balance).toBe(0);
+    expect(json.status).toBe("duplicate");
+    expect(json.quota.requiresPeones).toBe(false);
   });
 
   it("RPC error → 500 controlled error", async () => {
@@ -218,20 +212,15 @@ describe("POST /api/scores/save", () => {
   });
 
   // ── attestation + wallet + isolation ────────────────────────────
-  it("builds the save_game attestation and passes it to the RPC", async () => {
+  // MiniPay Lote 2: off-chain save is always free → NO save_game attestation is
+  // built (the sink never fires) and p_attestation_hash is passed null.
+  it("does NOT build a save_game attestation; passes p_attestation_hash null", async () => {
     rpcOk({ status: "saved", mode: "free", freeUsed: 1 });
     await POST(makeRequest(body()));
-    expect(buildAttestationHash).toHaveBeenCalledWith(
-      expect.objectContaining({
-        event_type: "spend",
-        source: "save_game",
-        source_id: SAVE_ID,
-        idempotency_key: `spend:save_game:${SAVE_ID}`,
-      }),
-    );
+    expect(buildAttestationHash).not.toHaveBeenCalled();
     expect(supabaseMock.rpc).toHaveBeenCalledWith(
       "save_basic_score",
-      expect.objectContaining({ p_attestation_hash: "att-sentinel" }),
+      expect.objectContaining({ p_attestation_hash: null }),
     );
   });
 

@@ -149,6 +149,12 @@ export const MISSION_DETAIL_COPY = {
    *  on-chain Leaderboard Proof action (QA G3 2026-06-11). */
   saveScorePromise: "Climb the leaderboard",
   saveScoreCta: "Save score",
+  /** MiniPay delivery Lote 2 B2 (2026-07-08): the off-chain save auto-runs and
+   *  is free, so it is no longer a CTA. `scoreSaved` is the informative state
+   *  shown once persisted; `retrySaveCta` is the free manual fallback surfaced
+   *  only if the silent auto-save failed. */
+  scoreSaved: "Score saved",
+  retrySaveCta: "Retry save",
   /** MiniPay delivery audit B6 (2026-07-07): the on-chain SAVE is the
    *  gas-only submitScoreSigned flow, reframed as an OPTIONAL voluntary
    *  training proof (not an over-promised "for life"). Copy leads with the
@@ -331,6 +337,9 @@ export const BADGE_EARNED_COPY = {
   claimBadge: "CLAIM",
   submitScore: "SAVE",
   later: "Later",
+  /** MiniPay Lote 2 F1: single neutral CTA now that the off-chain save
+   *  auto-runs (no manual SAVE in this prompt). */
+  continue: "Continue",
   headerLabel: "Badge Earned",
 } as const;
 
