@@ -234,7 +234,7 @@ describe("crediting", () => {
 
 // ── Season Pass tests ───────────────────────────────────────────────────────
 
-const SP_PRICE = 1_990_000n; // $1.99 in USD6 → 1_990_000 USDC-6-decimals units
+const SP_PRICE = 990_000n; // $0.99 in USD6 → 990_000 USDC-6-decimals units
 const SP_SKU = "lite_season_pass_21";
 const SEASON_ID = "21day-mind-challenge-2026-q3";
 
@@ -297,7 +297,7 @@ describe("season pass", () => {
     expect(json.peonesCredited).toBe(50);
   });
 
-  it("valid $1.99 payment → issues season pass, credits 3 shields", async () => {
+  it("valid $0.99 payment → issues season pass, credits 3 shields", async () => {
     mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, SP_PRICE, 0)]));
     mockedSupabase.mockReturnValue(buildSeasonPassSupabaseMock().supabase);
     const res = await POST(makeRequest(spBody()));

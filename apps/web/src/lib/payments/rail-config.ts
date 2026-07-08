@@ -145,7 +145,7 @@ export type SeasonPass = {
 export const SEASON_PASSES: Record<SeasonPassSku, SeasonPass> = {
   lite_season_pass_21: {
     sku: "lite_season_pass_21",
-    priceUsd6: 1_990_000n, // $1.99
+    priceUsd6: 990_000n, // $0.99
     durationDays: 21,
     shieldsOnPurchase: 3,
     seasonId: "21day-mind-challenge-2026-q3",
