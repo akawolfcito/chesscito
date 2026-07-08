@@ -119,18 +119,18 @@ describe("ResultOverlay — SaveScore recovery + quota communication", () => {
     expect(screen.queryByText(/Try again/i)).not.toBeInTheDocument();
   });
 
-  it("free save: shows the remaining-free-saves quota pill", () => {
+  // MiniPay Lote 2 (B2): off-chain save is free → the score overlay shows NO
+  // Peones-spent or free-saves-left pill, only the stars earned.
+  it("score save: shows stars but no Peones/free-saves pill", () => {
     renderWithIntl(
       <ResultOverlay
         variant="score"
         pieceType="rook"
         totalStars={9}
-        freeSavesLeft={2}
         onDismiss={vi.fn()}
       />,
     );
-    expect(
-      screen.getByTestId("score-free-saves-left").textContent,
-    ).toContain("2");
+    expect(screen.queryByTestId("score-free-saves-left")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("score-peones-spent")).not.toBeInTheDocument();
   });
 });

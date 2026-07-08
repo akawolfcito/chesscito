@@ -53,16 +53,6 @@ type ResultOverlayProps = {
   onDismiss: () => void;
   onRetry?: () => void;
   totalStars?: number;
-  /** SaveScore off-chain (Slice 5): Peones spent on this save (past the 5
-   *  free saves). When > 0 on the score variant, a small cost pill renders
-   *  beside the stars so the player sees the 1-Peón charge. Omitted/0 for
-   *  free saves. */
-  spentPeones?: number;
-  /** SaveScore off-chain: free saves remaining AFTER this save. When set on
-   *  the score variant, a quota pill renders so the player sees the free
-   *  allowance ("2 free saves left"). 0 communicates the next save costs a
-   *  Peón. Omitted for paid saves. */
-  freeSavesLeft?: number;
   /** Recovery CTA for an error variant (e.g. insufficient Peones → "Get
    *  Peones"). When set, it becomes the primary button + a "Not now"
    *  secondary, replacing the Try-again/Dismiss pair. */
@@ -259,8 +249,6 @@ export function ResultOverlay({
   onDismiss,
   onRetry,
   totalStars,
-  spentPeones,
-  freeSavesLeft,
   recoveryCta,
 }: ResultOverlayProps) {
   const tResult = useTranslations("RESULT_OVERLAY_COPY");
@@ -342,28 +330,16 @@ export function ResultOverlay({
               </div>
             </div>
 
-            {(starsLabel ||
-              (spentPeones != null && spentPeones > 0) ||
-              freeSavesLeft != null) && (
+            {/* B2 (Lote 2): off-chain save is free, so no Peones-spent or
+                free-saves-left pills — only the stars earned. */}
+            {starsLabel && (
               <div className="arena-result-stats-row arena-result-stats-row--missionpills">
-                {starsLabel && (
-                  <span className="candy-stat-pill">
-                    <span className="candy-stat-pill-icon">
-                      <CandyIcon name="star" className="h-4 w-4" />
-                    </span>
-                    {starsLabel}
+                <span className="candy-stat-pill">
+                  <span className="candy-stat-pill-icon">
+                    <CandyIcon name="star" className="h-4 w-4" />
                   </span>
-                )}
-                {spentPeones != null && spentPeones > 0 && (
-                  <span className="candy-stat-pill" data-testid="score-peones-spent">
-                    {spentPeones} {tResult("score.peonesSpentLabel")}
-                  </span>
-                )}
-                {freeSavesLeft != null && (
-                  <span className="candy-stat-pill" data-testid="score-free-saves-left">
-                    {freeSavesLeft} {tResult("score.freeSavesLeftLabel")}
-                  </span>
-                )}
+                  {starsLabel}
+                </span>
               </div>
             )}
 

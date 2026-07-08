@@ -1250,6 +1250,8 @@ const messages = {
     nowLabyrinthAriaFormat: "Empezar Laberinto {number}",
     saveScorePromise: "Sube en la tabla de líderes",
     saveScoreCta: "Guardar puntaje",
+    scoreSaved: "Puntaje guardado",
+    retrySaveCta: "Reintentar guardado",
     saveOnChainPromise: "Guarda tu prueba de entrenamiento de hoy",
     saveOnChainCta: "Guardar prueba",
     saving: "Guardando…",

@@ -80,11 +80,11 @@ export function ExercisesPopupsFixture({ variant }: { variant: Variant }) {
       )}
 
       {variant === "score-saved-peones" && (
+        /* B2 (Lote 2): off-chain save is free — no Peones-spent pill. */
         <ResultOverlay
           variant="score"
           pieceType="bishop"
           totalStars={15}
-          spentPeones={1}
           onDismiss={noop}
         />
       )}

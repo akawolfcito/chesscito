@@ -51,8 +51,13 @@ type MissionPanelProps = {
   /** D5 — save-score affordance inside the mission detail sheet.
    *  Forwarded untouched; the host owns gating and busy state. */
   canSaveScore?: boolean
-  onSaveScore?: () => void
   isSavingScore?: boolean
+  /** B2 (Lote 2): off-chain save auto-runs + is free. Forwarded to
+   *  MissionDetailSheet, which renders the informative saved state / free
+   *  manual retry instead of a green CTA. */
+  scoreSaved?: boolean
+  saveFailed?: boolean
+  onRetrySave?: () => void
   /** Score transparency breakdown. Forwarded to MissionDetailSheet. */
   totalStars?: number
   maxPossibleStars?: number
@@ -421,8 +426,10 @@ export function MissionPanelCandy({
   isCapture = false,
   trainingPath,
   canSaveScore,
-  onSaveScore,
   isSavingScore,
+  scoreSaved,
+  saveFailed,
+  onRetrySave,
   totalStars,
   maxPossibleStars,
   canSaveOnChain,
@@ -537,8 +544,10 @@ export function MissionPanelCandy({
               trainingPath={trainingPath}
               onLabyrinthSelect={onLabyrinthSelect}
               canSaveScore={canSaveScore}
-              onSaveScore={onSaveScore}
               isSavingScore={isSavingScore}
+              scoreSaved={scoreSaved}
+              saveFailed={saveFailed}
+              onRetrySave={onRetrySave}
               totalStars={totalStars}
               maxPossibleStars={maxPossibleStars}
               canSaveOnChain={canSaveOnChain}

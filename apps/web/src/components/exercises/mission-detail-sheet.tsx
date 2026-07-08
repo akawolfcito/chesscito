@@ -32,11 +32,19 @@ type Props = {
    *  before reporting so the player lands straight on the board.
    *  Absent → the line renders nothing. */
   onLabyrinthSelect?: (labyrinthId: string) => void;
-  /** D5 — save-score affordance below the objective. Button renders
-   *  only when `canSaveScore` AND the handler are provided. */
+  /** MiniPay Lote 2 (B2): the off-chain save auto-runs on completion and is
+   *  free, so the sheet no longer renders a green "Save score" CTA. It shows
+   *  an informative saved state — or, only if the background auto-save failed,
+   *  a free manual retry.
+   *  `canSaveScore`: a new score is pending (auto-save in flight / just ran).
+   *  `scoreSaved`: the score is persisted → show "✓ Score saved".
+   *  `saveFailed`: the auto-save failed → show the free "Retry save" fallback.
+   */
   canSaveScore?: boolean;
-  onSaveScore?: () => void;
   isSavingScore?: boolean;
+  scoreSaved?: boolean;
+  saveFailed?: boolean;
+  onRetrySave?: () => void;
   /** Score transparency: total exercise stars for the selected piece.
    *  When provided alongside maxPossibleStars, renders the breakdown
    *  line "12★ × 100 pts" (or "Max" indicator when at cap).
@@ -68,8 +76,10 @@ export function MissionDetailSheet({
   trainingPath,
   onLabyrinthSelect,
   canSaveScore = false,
-  onSaveScore,
   isSavingScore = false,
+  scoreSaved = false,
+  saveFailed = false,
+  onRetrySave,
   canSaveOnChain = false,
   onSaveOnChain,
   isSavingOnChain = false,
@@ -120,7 +130,9 @@ export function MissionDetailSheet({
         .findIndex((node) => node.id === nextChallenge.id) + 1
     : 0;
   const showNowLine = Boolean(nextChallenge && onLabyrinthSelect);
-  const showSaveScore = Boolean(canSaveScore && onSaveScore);
+  // B2: the off-chain save is not a CTA. Surface its state (saved / retrying /
+  // just-saved) whenever there is a pending or persisted score to reflect.
+  const showSaveState = Boolean(canSaveScore || scoreSaved || saveFailed);
   const showSaveOnChain = Boolean(canSaveOnChain && onSaveOnChain);
   const pieceName = (() => {
     try {
@@ -262,7 +274,7 @@ export function MissionDetailSheet({
                   </div>
                 </div>
 
-                {(showNowLine || showSaveScore || showSaveOnChain) && (
+                {(showNowLine || showSaveState || showSaveOnChain) && (
                   <picture>
                     <source
                       srcSet="/art/screen-mission/adorno-icon.avif"
@@ -302,25 +314,16 @@ export function MissionDetailSheet({
                   </button>
                 ) : null}
 
-                {/* D5 + QA F5 — save score, below the objective block.
-                    Promise line leads with the reward; the button stays
-                    an explicit action. Same handler the contextual SAVE
-                    pin uses; the parent owns gating and busy state. */}
-                {showSaveScore ? (
-                  <p
-                    className="mt-3 text-center text-xs font-semibold"
-                    style={{
-                      color: "rgba(110, 65, 15, 0.78)",
-                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                    }}
-                  >
-                    {tDetail("saveScorePromise")}
-                  </p>
-                ) : null}
-                {showSaveScore && totalStars !== undefined && maxPossibleStars !== undefined ? (
+                {/* B2 (Lote 2) — the off-chain score save is automatic and
+                    free, so there is NO green "Save score" CTA here. We only
+                    reflect its state: the stars breakdown, then an informative
+                    "Score saved" line (or a free manual retry if the silent
+                    auto-save failed). The on-chain proof below stays the only
+                    explicit value action. */}
+                {showSaveState && totalStars !== undefined && maxPossibleStars !== undefined ? (
                   <p
                     data-testid="score-breakdown"
-                    className="mt-1 text-center text-xs font-medium"
+                    className="mt-3 text-center text-xs font-medium"
                     style={{
                       color: "rgba(110, 65, 15, 0.55)",
                       textShadow: "0 1px 0 rgba(255, 245, 215, 0.4)",
@@ -334,14 +337,17 @@ export function MissionDetailSheet({
                       : tDetail("scoreBreakdown", { stars: totalStars })}
                   </p>
                 ) : null}
-                {showSaveScore ? (
+                {saveFailed && onRetrySave ? (
+                  /* Auto-save failed → free manual retry (never a paywall,
+                     never a competing protagonist CTA). */
                   <button
                     type="button"
-                    aria-label={tDetail("saveScoreCta")}
-                    onClick={onSaveScore}
+                    aria-label={tDetail("retrySaveCta")}
+                    onClick={onRetrySave}
                     disabled={isSavingScore}
                     aria-busy={isSavingScore}
-                    className="candy-tray-pill shop-item-tile-buy-pill shop-item-tile-buy-pill--green mt-1.5"
+                    data-testid="score-save-retry"
+                    className="candy-tray-pill mt-1.5"
                   >
                     {isSavingScore ? (
                       <>
@@ -352,9 +358,27 @@ export function MissionDetailSheet({
                         <span>{tDetail("saving")}</span>
                       </>
                     ) : (
-                      `${tDetail("saveScoreCta")} · ${score}`
+                      tDetail("retrySaveCta")
                     )}
                   </button>
+                ) : scoreSaved ? (
+                  <p
+                    data-testid="score-saved-state"
+                    className="mt-1.5 text-center text-sm font-semibold"
+                    style={{
+                      color: "rgba(21, 128, 61, 0.95)",
+                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.5)",
+                    }}
+                  >
+                    ✓ {tDetail("scoreSaved")}
+                  </p>
+                ) : isSavingScore ? (
+                  <p
+                    data-testid="score-saving-state"
+                    className="mt-1.5 text-center text-xs font-medium opacity-70"
+                  >
+                    {tDetail("saving")}
+                  </p>
                 ) : null}
 
                 {/* QA round 2 — the revived on-chain SAVE: the original
