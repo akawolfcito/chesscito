@@ -67,6 +67,7 @@ import { useSaveScoreState } from "@/hooks/use-save-score-state";
 import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
 import { useConnectPrompt } from "@/lib/connect-prompt/use-connect-prompt";
 import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
+import { canSaveOnChain as deriveCanSaveOnChain } from "@/lib/exercises/save-proof-state";
 import { deriveTxToastState } from "@/lib/exercises/tx-toast-state";
 import { useMiniPay } from "@/hooks/use-minipay";
 import { useSplashLoader } from "@/hooks/use-splash-loader";
@@ -1052,6 +1053,18 @@ export function ExercisesScreen({
     canSaveScore && totalStars >= 1 && localScoreNum > lastSavedScore;
   const isSavedAtParity =
     lastSavedScore > 0 && localScoreNum === lastSavedScore;
+  // The on-chain proof CTA must NOT share `scorePendingNew` with the B2
+  // auto-save, which closes that gate the moment its POST resolves. It is
+  // gated on the absence of a real receipt instead — see
+  // `lib/exercises/save-proof-state`.
+  const canSaveOnChain = deriveCanSaveOnChain({
+    canSaveScore,
+    hasScoreboard: scoreboardAddress != null,
+    totalStars,
+    localScore: localScoreNum,
+    lastSavedScore,
+    lastSavedTxHash,
+  });
 
   // Tx phase tracking for the TxProgressSteps toast. The toast remains
   // mounted while the tx is in flight AND for `SAVE_DONE_HOLD_MS` after
@@ -2305,7 +2318,7 @@ export function ExercisesScreen({
           scoreSaved={isSavedAtParity}
           saveFailed={autoSaveFailed}
           onRetrySave={() => void handleSubmitScore()}
-          canSaveOnChain={scorePendingNew && scoreboardAddress != null}
+          canSaveOnChain={canSaveOnChain}
           onSaveOnChain={() => void handleSaveScoreOnChain()}
           isSavingOnChain={isScoreWriting || isSubmitConfirming}
           shieldCount={shieldCount}
