@@ -28,6 +28,10 @@ export type TxErrorKind =
   | "revert"
   | "unknown";
 
+/** A 4xx/5xx from a signing call, anchored to the literal "http" so it
+ *  cannot match the digits of a contract address, tx hash, or call arg. */
+const HTTP_STATUS_RE = /\bhttp[\s_-]?[45]\d{2}\b/;
+
 export function classifyTxErrorKind(error: unknown): TxErrorKind {
   const msg = error instanceof Error ? error.message : String(error);
   const lower = msg.toLowerCase();
@@ -44,6 +48,16 @@ export function classifyTxErrorKind(error: unknown): TxErrorKind {
   if (lower.includes("badgealreadyclaimed") || lower.includes("already claimed")) {
     return "badgeAlreadyClaimed";
   }
+  // An on-chain revert is self-identifying, so it settles the question
+  // before any of the fuzzy substring checks below get a vote. This
+  // ordering is load-bearing: viem echoes the call args into the
+  // message ("args: (1, 2400, 18000, ...)"), and the signing branch
+  // used to test for the bare substring "400". Every revert whose
+  // score, timeMs, nonce or unix deadline happened to contain those
+  // three digits was reported to the player as "Signing service
+  // unavailable" — a server outage that never happened.
+  if (lower.includes("revert") || lower.includes("execution reverted")) return "revert";
+
   // Server signing endpoint missing config or unavailable. Most often
   // surfaced in local dev when the operator forgot the encrypted
   // signer envs (DRAGON / TORRE_PRINCESA), but also catches prod
@@ -54,6 +68,10 @@ export function classifyTxErrorKind(error: unknown): TxErrorKind {
   // the GCM auth-tag mismatch surfaced by Node's crypto when the
   // TORRE_PRINCESA key doesn't decrypt the DRAGON ciphertext (rotated
   // key, copied wrong env, mismatched envs from prod/dev).
+  //
+  // HTTP_STATUS_RE requires the literal "http" prefix. `requestSignature`
+  // throws the server's `error` string rather than the status code, so
+  // the fallback messages it can produce are matched by name below.
   if (
     lower.includes("missing required env") ||
     lower.includes("sign-badge") ||
@@ -61,12 +79,13 @@ export function classifyTxErrorKind(error: unknown): TxErrorKind {
     lower.includes("sign-victory") ||
     lower.includes("unsupported state") ||
     lower.includes("authenticate data") ||
-    lower.includes("400") ||
+    lower.includes("could not fetch signature") ||
+    lower.includes("could not sign") ||
+    HTTP_STATUS_RE.test(lower) ||
     lower.includes("signing")
   ) {
     return "signingUnavailable";
   }
-  if (lower.includes("revert") || lower.includes("execution reverted")) return "revert";
   return "unknown";
 }
 
