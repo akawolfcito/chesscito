@@ -24,4 +24,18 @@ describe("WelcomeBack", () => {
       "/api/enter?mode=learn",
     );
   });
+
+  /**
+   * This screen used to render `slide1.headline`, so one string had to greet a
+   * returning player and orient a stranger at the same time. Now it owns its
+   * copy, and slide 1 can be rewritten without silently rewriting this.
+   */
+  it("greets a returning player with its own headline, not slide 1's", async () => {
+    render(await WelcomeBack({ preferredMode: "play" }));
+
+    expect(
+      screen.getByRole("heading", { name: /your board is waiting/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/two ways into chess/i)).not.toBeInTheDocument();
+  });
 });
