@@ -825,7 +825,12 @@ export function ExercisesScreen({
   const feeCurrency = useMemo(() => getMiniPayFeeCurrency(chainId), [chainId]);
   const levelId = useMemo(() => getLevelId(selectedPiece), [selectedPiece]);
   const score = useMemo(() => BigInt(Math.max(1, totalStars)) * POINTS_PER_STAR_BIG, [totalStars]);
-  const maxPossibleStars = useMemo(() => getMaxPossibleStars(selectedPiece), [selectedPiece]);
+  // Must read the SAME catalog `totalStars` is normalized against (the merged
+  // one), or an overlay-added exercise shows the player "33/30".
+  const maxPossibleStars = useMemo(
+    () => getMaxPossibleStars(selectedPiece, catalog),
+    [selectedPiece, catalog],
+  );
 
   // v1: tracks last-exercise time only. 1000n fallback after board reset
   // is safe — on-chain time is informational, not used for scoring.
