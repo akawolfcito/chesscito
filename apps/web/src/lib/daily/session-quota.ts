@@ -20,10 +20,11 @@ import { dispatchDailySessionChanged } from "@/lib/daily/session-events";
 
 /** Single source of truth for how many exercises a daily session grants
  *  before it ends ("Great focus today!"). Tune it with ONE env var,
- *  `NEXT_PUBLIC_CHESSCITO_SESSION_LIMIT` (defaults to 5). */
+ *  `NEXT_PUBLIC_CHESSCITO_SESSION_LIMIT` (defaults to 10 — one full piece
+ *  at 3★ each, so the 10★ badge stays reachable in a single good day). */
 export function parseSessionLimit(raw: string | undefined): number {
   const n = raw ? Number.parseInt(raw, 10) : NaN;
-  return Number.isFinite(n) && n > 0 ? n : 5;
+  return Number.isFinite(n) && n > 0 ? n : 10;
 }
 
 export const SESSION_EXERCISE_LIMIT = parseSessionLimit(

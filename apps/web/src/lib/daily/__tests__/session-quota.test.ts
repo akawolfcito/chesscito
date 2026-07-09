@@ -228,26 +228,26 @@ describe("computeApplyDevUnlock", () => {
 // ─── CONSTANTS sanity check ───────────────────────────────────────────────────
 
 describe("constants", () => {
-  it("FREE_EXTRA_QUOTA is 5", () => expect(FREE_EXTRA_QUOTA).toBe(5));
+  it("FREE_EXTRA_QUOTA is 10 (the session default)", () => expect(FREE_EXTRA_QUOTA).toBe(10));
   it("PACK_EXTRA_SLOTS is 5", () => expect(PACK_EXTRA_SLOTS).toBe(5));
-  it("HARD_MAX_EXTRAS equals free + 2 packs = 15", () => expect(HARD_MAX_EXTRAS).toBe(15));
+  it("HARD_MAX_EXTRAS equals free + 2 packs = 20", () => expect(HARD_MAX_EXTRAS).toBe(20));
 });
 
 // ─── parseSessionLimit (single env-backed knob) ──────────────────────────────
 
 describe("parseSessionLimit", () => {
-  it("defaults to 5 when unset", () => {
-    expect(parseSessionLimit(undefined)).toBe(5);
+  it("defaults to 10 when unset", () => {
+    expect(parseSessionLimit(undefined)).toBe(10);
   });
   it("parses a positive integer string", () => {
     expect(parseSessionLimit("8")).toBe(8);
   });
-  it("falls back to 5 for non-numeric values", () => {
-    expect(parseSessionLimit("abc")).toBe(5);
+  it("falls back to 10 for non-numeric values", () => {
+    expect(parseSessionLimit("abc")).toBe(10);
   });
-  it("falls back to 5 for zero or negative values", () => {
-    expect(parseSessionLimit("0")).toBe(5);
-    expect(parseSessionLimit("-3")).toBe(5);
+  it("falls back to 10 for zero or negative values", () => {
+    expect(parseSessionLimit("0")).toBe(10);
+    expect(parseSessionLimit("-3")).toBe(10);
   });
   it("SESSION_EXERCISE_LIMIT is the source of FREE_EXTRA_QUOTA", () => {
     expect(FREE_EXTRA_QUOTA).toBe(SESSION_EXERCISE_LIMIT);
