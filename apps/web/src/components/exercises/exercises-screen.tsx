@@ -1290,9 +1290,12 @@ export function ExercisesScreen({
       hapticSuccess();
       // Session-over freeze: once the daily limit is reached the player can
       // keep replaying completed exercises as practice, but no stars are
-      // persisted. Read the quota BEFORE recordExtraConsumed below so the
-      // attempt that *reaches* the limit (a fresh exercise) still counts.
-      const scoringFrozen = shouldFreezeScoring(CHESSCITO_LITE_MODE, getDailySession());
+      // persisted. A fresh solve always persists — see shouldFreezeScoring.
+      const scoringFrozen = shouldFreezeScoring(
+        CHESSCITO_LITE_MODE,
+        getDailySession(),
+        isReplay,
+      );
       // Compute earned stars + bump streak BEFORE setPhase so the
       // WELL DONE PhaseFlash sees both on its first render.
       //
@@ -2136,15 +2139,14 @@ export function ExercisesScreen({
         position.rank === activeLabyrinth.targetPos.rank;
       if (!reached) return;
       const stars = labyrinthStars(movesCount, activeLabyrinth.optimalMoves);
-      // Session-over freeze: practice replays past the daily limit do not
-      // update the recorded best (read quota before recordExtraConsumed below).
-      const scoringFrozen = shouldFreezeScoring(CHESSCITO_LITE_MODE, getDailySession());
+      // Labyrinths sit outside the daily session: they never spend a quota
+      // slot and their best is never frozen. They feed no score, so there is
+      // nothing to farm — and the path auto-advances the player into one,
+      // which used to silently eat the slot the next exercise needed.
       // Read previous best BEFORE recording so the overlay can
       // contextualize the new score against the player's history.
       const previousBest = getLabyrinthBest(selectedPiece, activeLabyrinth.id);
-      const isNewBest = scoringFrozen
-        ? false
-        : recordLabyrinthBest(selectedPiece, activeLabyrinth.id, movesCount);
+      const isNewBest = recordLabyrinthBest(selectedPiece, activeLabyrinth.id, movesCount);
       setLabyrinthCompleted({
         moves: movesCount,
         optimal: activeLabyrinth.optimalMoves,
@@ -2152,11 +2154,6 @@ export function ExercisesScreen({
         previousBest,
         isNewBest,
       });
-
-      // B2.3a: track extra content consumption (Lite-only; idempotent).
-      if (CHESSCITO_LITE_MODE) {
-        recordExtraConsumed(buildContentId("labyrinth", selectedPiece, activeLabyrinth.id));
-      }
 
       track("labyrinth_complete", {
         labyrinth_id: activeLabyrinth.id,
