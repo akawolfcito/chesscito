@@ -28,7 +28,11 @@ export function Pill({
       >
         {icon}
       </span>
-      <span className="flex flex-col items-start leading-tight">
+      {/* `text-left` is load-bearing: SlideShell centers its whole content box,
+          and `items-start` only aligns the two spans as boxes, not the text
+          inside them. A sublabel that wraps would center its second line under
+          a left-aligned label. */}
+      <span className="flex flex-col items-start text-left leading-tight">
         {/* The label names the thing, the sublabel qualifies it, and the scale
             has to agree. It used to say the opposite (label 0.6, sublabel 0.7)
             with the dimming on the larger of the two, so "21 focus days"

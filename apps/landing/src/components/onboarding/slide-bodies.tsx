@@ -78,13 +78,13 @@ export function Slide1Body() {
           icon={<ArtImage src={ICONS.learn} alt="" />}
           label={t('learnPill')}
           sublabel={t('learnPillSub')}
-          iconRem={2.3}
+          iconRem={1.9}
         />
         <Pill
           icon={<ArtImage src={ICONS.play} alt="" />}
           label={t('playPill')}
           sublabel={t('playPillSub')}
-          iconRem={2.3}
+          iconRem={1.9}
         />
       </div>
     </>
