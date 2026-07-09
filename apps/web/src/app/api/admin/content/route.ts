@@ -17,6 +17,8 @@ import { NextResponse } from "next/server";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { revalidateTag } from "next/cache";
 import { buildCatalog, type LabyrinthRecord } from "@/lib/content/catalog";
+import { exceedsPoolCap, projectedPoolSize } from "@/lib/content/pool-capacity";
+import { MAX_EXERCISES_PER_PIECE } from "@/lib/game/score";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import type {
@@ -92,6 +94,46 @@ export async function POST(request: Request) {
   const built = pool[record.piece]?.find((e) => e.id === record.id);
   if (!built) return err(["validation produced no puzzle"], 400);
 
+  const supabase = getSupabaseServer();
+  if (!supabase) return err(["content store unavailable"], 503);
+
+  // 5b. Pool capacity. A piece grown past MAX_EXERCISES_PER_PIECE lets the client
+  //     compute a score above MAX_SUBMITTABLE_SCORE, and every on-chain save for
+  //     that piece starts failing with a 400 — for the player, not for us. Refuse
+  //     here instead, where the author reads the message and reacts. Labyrinths
+  //     are exempt: they never feed the score.
+  if (kind === "exercise") {
+    const { data: storedIds, error: capacityError } = await supabase
+      .from("content_overlay")
+      .select("id")
+      .eq("kind", "exercise")
+      .eq("piece", record.piece)
+      .eq("disabled", false);
+
+    // Fail closed: without a reliable count we cannot promise the invariant.
+    if (capacityError || !storedIds) {
+      return err([capacityError?.message ?? "capacity check failed"], 500);
+    }
+
+    const capacity = {
+      piece: record.piece,
+      recordId: record.id,
+      disabled: Boolean(record.disabled),
+      overlayIds: storedIds.map((r: { id: string }) => r.id),
+    };
+    if (exceedsPoolCap(capacity)) {
+      return err(
+        [
+          `pool for "${record.piece}" would reach ${projectedPoolSize(capacity)} exercises, ` +
+            `over the ${MAX_EXERCISES_PER_PIECE} allowed per piece. ` +
+            `Raise MAX_EXERCISES_PER_PIECE in lib/game/score.ts (it also raises the ` +
+            `score ceiling the signer validates), or disable an exercise first.`,
+        ],
+        400,
+      );
+    }
+  }
+
   // 6. Persist the delta. optimal_moves is BFS-verified (trusted by read path).
   const updated_at = new Date().toISOString();
   const row: ContentOverlayRow = {
@@ -113,8 +155,6 @@ export async function POST(request: Request) {
     stage: "draft",
   };
 
-  const supabase = getSupabaseServer();
-  if (!supabase) return err(["content store unavailable"], 503);
   const { error } = await supabase
     .from("content_overlay")
     .upsert(row, { onConflict: "kind,id,stage" });

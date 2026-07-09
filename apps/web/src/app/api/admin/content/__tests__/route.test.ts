@@ -23,12 +23,24 @@ vi.mock("@/lib/server/demo-signing", () => ({
 const supabaseMock = vi.hoisted(() => ({
   from: vi.fn(),
   upsert: vi.fn(),
+  select: vi.fn(),
 }));
 vi.mock("@/lib/supabase/server", () => ({
   getSupabaseServer: vi.fn(() => supabaseMock),
 }));
 
+/** Minimal stand-in for the postgrest builder: `.eq()` chains, `await` resolves. */
+function selectChain(result: { data: { id: string }[] | null; error: unknown }) {
+  const chain: Record<string, unknown> = {
+    eq: () => chain,
+    then: (resolve: (value: typeof result) => unknown) => resolve(result),
+  };
+  return chain;
+}
+
 import { POST } from "../route";
+import { EXERCISES } from "@/lib/game/exercises";
+import { MAX_EXERCISES_PER_PIECE } from "@/lib/game/score";
 import { revalidateTag } from "next/cache";
 import { enforceRateLimit } from "@/lib/server/demo-signing";
 import { getSupabaseServer } from "@/lib/supabase/server";
@@ -69,10 +81,21 @@ function authed(body: unknown) {
   return req({ kind: "exercise", record: body }, { "x-admin-token": TOKEN });
 }
 
+/** Pretend the piece already carries these enabled overlay exercises. */
+function withStoredOverlay(ids: string[], error: unknown = null) {
+  supabaseMock.select.mockReturnValue(
+    selectChain({ data: error ? null : ids.map((id) => ({ id })), error }),
+  );
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
-  supabaseMock.from.mockReturnValue({ upsert: supabaseMock.upsert });
+  supabaseMock.from.mockReturnValue({
+    upsert: supabaseMock.upsert,
+    select: supabaseMock.select,
+  });
   supabaseMock.upsert.mockResolvedValue({ error: null });
+  withStoredOverlay([]);
   mockedSupabase.mockReturnValue(supabaseMock as never);
   process.env.ADMIN_TOKEN = TOKEN;
 });
@@ -135,5 +158,69 @@ describe("POST /api/admin/content", () => {
     expect(opts).toMatchObject({ onConflict: "kind,id,stage" });
     expect(row).toMatchObject({ stage: "draft" }); // Save lands at draft
     expect(mockedRevalidate).toHaveBeenCalledWith("content");
+  });
+});
+
+describe("POST /api/admin/content — pool capacity", () => {
+  /** Overlay ids that bring rook's merged pool to exactly `size`. */
+  function fillTo(size: number) {
+    const extra = size - EXERCISES.rook.length;
+    return Array.from({ length: extra }, (_, i) => `rook-extra-${i}`);
+  }
+
+  it("accepts the write that lands exactly on the invariant", async () => {
+    withStoredOverlay(fillTo(MAX_EXERCISES_PER_PIECE - 1));
+
+    const res = await POST(authed(validRecord()));
+
+    expect(res.status).toBe(200);
+    expect(supabaseMock.upsert).toHaveBeenCalled();
+  });
+
+  it("refuses, and never writes, the exercise that would outgrow the invariant", async () => {
+    // The player-facing failure this prevents: a pool past the invariant lets
+    // the client compute a score above MAX_SUBMITTABLE_SCORE, and every
+    // on-chain save for that piece starts returning 400.
+    withStoredOverlay(fillTo(MAX_EXERCISES_PER_PIECE));
+
+    const res = await POST(authed(validRecord()));
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.ok).toBe(false);
+    expect(body.errors[0]).toContain(String(MAX_EXERCISES_PER_PIECE));
+    expect(supabaseMock.upsert).not.toHaveBeenCalled();
+  });
+
+  it("still accepts a write that disables an exercise when the pool is over the cap", async () => {
+    withStoredOverlay(fillTo(MAX_EXERCISES_PER_PIECE + 5));
+
+    const res = await POST(authed(validRecord({ disabled: true })));
+
+    expect(res.status).toBe(200);
+    expect(supabaseMock.upsert).toHaveBeenCalled();
+  });
+
+  it("does not cap labyrinths — they never feed the score", async () => {
+    withStoredOverlay(fillTo(MAX_EXERCISES_PER_PIECE + 5));
+
+    const res = await POST(
+      req(
+        { kind: "labyrinth", record: validRecord({ kind: "labyrinth" }) },
+        { "x-admin-token": TOKEN },
+      ),
+    );
+
+    expect(res.status).toBe(200);
+    expect(supabaseMock.upsert).toHaveBeenCalled();
+  });
+
+  it("fails closed, never writing, when the capacity read errors", async () => {
+    withStoredOverlay([], { message: "boom" });
+
+    const res = await POST(authed(validRecord()));
+
+    expect(res.status).toBe(500);
+    expect(supabaseMock.upsert).not.toHaveBeenCalled();
   });
 });
