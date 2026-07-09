@@ -256,109 +256,21 @@
   letter-spacing: 0;
 }
 
-/* Slide 4 entry-point cards: art on the left, and a right column stacking
-   title, blurb, price chip and CTA. The two tones map to the destinations
-   they open — gold for Learn, blue for Play — matching the CTA chrome
-   (hub-scaffold-practice-cta / hub-scaffold-arena-cta) each one carries. */
-.slide4-mode-card {
-  display: flex;
+/* Slide 4 escape hatch: a text link, never a button. Its hit area is the
+   width of its own text so a thumb that overshoots the primary CTA lands
+   on nothing rather than on the one destination we did not recommend.
+   min-height keeps that area tappable without widening it. */
+.slide4-jump-link {
+  display: inline-flex;
   align-items: center;
-  /* gap: 0.5rem; */
-  width: 100%;
-  /* Extra bottom padding clears the CTA's drop-shadow lip, which paints
-     outside the button box and otherwise sits on the card's border. */
-  padding: 0.1rem 0.6rem 0.1rem;
-  border-radius: 18px;
-  text-align: left;
-}
-
-/* Learn is the card we want picked first, so it carries the hierarchy:
-   a translucent wash of the board's own green (sampled from the slide art,
-   rgb(84,166,63) over rgb(243,227,154)), a defined border and an outer
-   shadow that lifts it off the frame. Play stays flat and cream. The
-   preference reads through elevation and border, not hue alone, so it
-   survives for anyone who cannot separate the two colors. */
-.slide4-mode-card--learn {
-  background:
-    linear-gradient(
-      160deg,
-      rgba(84, 166, 63, 0.22) 0%,
-      rgba(84, 166, 63, 0.1) 45%,
-      rgba(243, 227, 154, 0.55) 100%
-    ),
-    linear-gradient(180deg, rgba(255, 250, 232, 0.96), rgba(250, 240, 205, 0.92));
-  border: 2px solid rgba(84, 166, 63, 0.45);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    0 6px 14px rgba(60, 120, 45, 0.18);
-}
-
-/* Flat, not disabled: the blue CTA it carries is the same token the Hub's
-   Enter Arena button uses, so Play keeps its category identity. */
-.slide4-mode-card--play {
-  background: linear-gradient(180deg, rgba(255, 250, 232, 0.72), rgba(246, 236, 205, 0.66));
-  border: 1.5px solid rgba(110, 65, 15, 0.18);
-  box-shadow: none;
-}
-
-.slide4-mode-card-art {
-  flex: 0 0 34%;
-  width: 34%;
-}
-
-.slide4-mode-card-body {
-  display: flex;
-  flex: 1 1 auto;
-  min-width: 0;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.1rem;
-  padding: 0.2rem;
-}
-
-/* Compact context: same button chrome, sized to the card's right column
-   instead of spanning the full frame width like the slide 1-3 CTAs. */
-.slide4-mode-card .primary-play-cta {
-  width: 100%;
-  min-height: 0;
-  padding: 0.55rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.78rem;
-}
-
-/* Play's CTA is the secondary action, so it goes light, not dark. What
-   pulls the eye here is luminance, not chroma: on a cream card, a dark
-   blue slab is the highest-contrast mark on the slide and beats Learn's
-   mid-tone gold no matter how far its saturation drops. A pale blue with
-   dark blue text sits at the card's own value, keeps the candy bevel and
-   the Hub's blue identity, and still reads as a live button. */
-.slide4-mode-card--play .hub-scaffold-arena-cta {
-  background: linear-gradient(180deg, #a9d6f0, #6fb0da);
-  /* The base token's border is rgba(10, 60, 110, 0.85), a near-opaque navy
-     sized for the Hub's saturated blue fill. Around this pale fill it reads
-     as a hard ring redrawing the button's outline. Kept, but faint: it only
-     has to separate the button from the cream card behind it. */
-  border-color: rgba(126, 178, 214, 0.35);
-  /* Same reason the bevel is rewritten rather than inherited: its outer
-     lip is `0 4px 0 rgba(10, 55, 90, 0.55)`, a solid navy slab that read
-     as the button's shadow only while the border was navy too. Against a
-     pale fill and a faint border it detaches and looks like a pedestal
-     the button is standing on. This lip stays in the fill's own family. */
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -3px 0 rgba(80, 140, 185, 0.35),
-    0 2px 0 rgba(120, 170, 205, 0.45),
-    0 3px 6px rgba(60, 110, 150, 0.18);
-}
-
-/* `.hub-scaffold-arena-cta:active:not(:disabled)` outranks the rule above,
-   so without this the navy pedestal flashes back for the length of a tap. */
-.slide4-mode-card--play .hub-scaffold-arena-cta:active:not(:disabled) {
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -2px 0 rgba(80, 140, 185, 0.35),
-    0 1px 0 rgba(120, 170, 205, 0.45),
-    0 2px 4px rgba(60, 110, 150, 0.16);
+  min-height: 44px;
+  margin-top: 0.5rem;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(110, 65, 15, 0.75);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .primary-play-cta-piece-icon {

@@ -149,57 +149,16 @@ export function Slide3Body() {
   )
 }
 
-function ModeCard({
-  tone,
-  artSrc,
-  title,
-  description,
-  priceIconSrc,
-  priceLabel,
-  price,
-  href,
-  ctaClassName,
-}: {
-  tone: 'learn' | 'play'
-  artSrc: string
-  title: string
-  description: string
-  priceIconSrc: string
-  priceLabel: string
-  price: string
-  href: string
-  ctaClassName: string
-}) {
-  return (
-    <div className={`slide4-mode-card slide4-mode-card--${tone}`}>
-      <ArtImage src={artSrc} alt="" className="slide4-mode-card-art h-16" />
-      <div className="slide4-mode-card-body">
-        <h2 className="fantasy-title text-base font-extrabold leading-tight text-[#3a2600]">
-          {title}
-        </h2>
-        <p className="text-[0.68rem] leading-snug text-[#5a4520]">
-          {description}
-        </p>
-        <div className="candy-tray-pill hub-hud-pill">
-          <span className="candy-tray-pill-icon--floating">
-            <ArtImage src={priceIconSrc} alt="" />
-          </span>
-          <span className="text-[0.62rem]">
-            {priceLabel}{' '}
-            <span className="font-bold text-[#3b9404]">{price}</span>
-          </span>
-        </div>
-        <a
-          href={href}
-          className={`primary-play-cta primary-play-cta--playhub ${ctaClassName}`}
-        >
-          <span className="primary-play-cta-label">{title}</span>
-        </a>
-      </div>
-    </div>
-  )
-}
-
+/**
+ * One recommended action, one quiet way out. The two symmetrical mode cards
+ * this replaced asked the visitor to compare two products and two prices at
+ * the moment they know least, and the prices inverted the very preference
+ * the layout was built to express: Learn showed $0.99 while Play said
+ * "free", so the cheaper-looking path was the one we did not want.
+ *
+ * Both destinations stay reachable and the in-app switch makes the choice
+ * reversible, so the escape hatch is a text link, not a rival button.
+ */
 export function Slide4Body() {
   const t = useTranslations('onboarding.slide4')
   const assets = SLIDE_ASSETS[3]
@@ -208,45 +167,31 @@ export function Slide4Body() {
        PNG's own top edge, which is where its crown and ornate border are
        drawn — slides 1-3 hide that by leading with a fade-masked avatar,
        but text placed there collides with the crown. The margin drops the
-       header into the flat cream area. `px-2` keeps the header and cards
-       off the frame's inner gold bevel, which SlideShell's own px-[9%]
-       lands right on. */
+       header into the flat cream area. `px-1` keeps the content off the
+       frame's inner gold bevel, which SlideShell's px-[9%] lands right on. */
     <div className="mt-10 flex w-full flex-col items-center gap-2 px-1">
-      {/* The only slide whose heading is not centered: the two cards below
-          are left-aligned rows, so a centered title would float free of
-          them. The wolf tucks into the right gutter the title leaves. */}
-      <div className="flex w-full items-start gap-1 text-left">
-        <div className="flex flex-1 flex-col">
-          <h1 className="fantasy-title mt-8 text-lg font-extrabold leading-tight text-[#3a2600]">
-            {t('headline')}
-          </h1>
-          <p className="text-xs text-[#5a4520]">{t('support')}</p>
-        </div>
-        <AvatarWithFade src={assets.avatarSrc} alt="" className="-mt-2 w-20" />
-      </div>
+      <h1 className="fantasy-title text-lg font-extrabold leading-tight text-[#3a2600]">
+        {t('headline')}
+      </h1>
+      <p className="text-xs text-[#5a4520]">{t('support')}</p>
       <Divider />
-      <ModeCard
-        tone="learn"
-        artSrc={ICONS.learn}
-        title={t('startLearning')}
-        description={t('learnDescription')}
-        priceIconSrc={ICONS.seasonPass}
-        priceLabel={t('seasonPassLabel')}
-        price={t('seasonPassPrice')}
+      {/* Plain ArtImage, not AvatarWithFade: this art is the wolf *and* his
+          board, and the avatar fade would dissolve the board's bottom rank. */}
+      <ArtImage
+        src={assets.avatarSrc}
+        alt=""
+        className="w-full max-w-[15rem]"
+      />
+      <p className="text-xs text-[#5a4520]">{t('learnDescription')}</p>
+      <a
         href="/api/enter?mode=learn"
-        ctaClassName="hub-scaffold-practice-cta"
-      />
-      <ModeCard
-        tone="play"
-        artSrc={ICONS.play}
-        title={t('enterArena')}
-        description={t('playDescription')}
-        priceIconSrc={ICONS.pro}
-        priceLabel={t('proLabel')}
-        price={t('proPrice')}
-        href="/api/enter?mode=play"
-        ctaClassName="hub-scaffold-arena-cta"
-      />
+        className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta"
+      >
+        <span className="primary-play-cta-label">{t('startLearning')}</span>
+      </a>
+      <a href="/api/enter?mode=play" className="slide4-jump-link">
+        {t('jumpToPlay')}
+      </a>
     </div>
   )
 }

@@ -23,10 +23,10 @@ describe("OnboardingCarousel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
     expect(screen.getByText("4 / 4")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /choose your path/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /learn the pieces first/i })).toBeInTheDocument();
   });
 
-  it("slide 4 renders both CTAs linking to /api/enter with the correct mode", () => {
+  it("slide 4 offers Learn as the only CTA, with Play reachable via a text link", () => {
     renderWithIntl(<OnboardingCarousel />);
     fireEvent.click(screen.getByRole("button", { name: "START" }));
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
@@ -36,10 +36,13 @@ describe("OnboardingCarousel", () => {
       "href",
       "/api/enter?mode=learn",
     );
-    expect(screen.getByRole("link", { name: "Play Chess" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /jump to play/i })).toHaveAttribute(
       "href",
       "/api/enter?mode=play",
     );
+    // The recommendation only holds if Play never grows back into a rival
+    // button; both destinations stay reachable, one of them quietly.
+    expect(screen.getAllByRole("link")).toHaveLength(5);
   });
 
   it("always shows the Privacy/Terms/Support legal footer", () => {
@@ -73,7 +76,7 @@ describe("OnboardingCarousel", () => {
     fireEvent.click(screen.getByRole("button", { name: "START" }));
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-    expect(screen.getByRole("heading", { name: /choose your path/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /learn the pieces first/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /next slide/i })).toBeDisabled();
 
     fireEvent.click(screen.getByRole("button", { name: /previous slide/i }));
