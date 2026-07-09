@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getMaxSubmittableScore } from "@/lib/game/score";
+import { MAX_SUBMITTABLE_SCORE } from "@/lib/game/score";
 import {
   createDeadline,
   createNonce,
@@ -28,9 +28,9 @@ export async function POST(request: Request) {
     await enforceRateLimit(getRequestIp(request), player);
 
     const levelId = parseInteger(body.levelId, "levelId", 1, 10_000);
-    // Ceiling derived from the catalog, never hardcoded: a stale cap silently
-    // rejects the best players. See lib/game/score.ts.
-    const score = parseInteger(body.score, "score", 0, getMaxSubmittableScore());
+    // Input validation, not anti-cheat, and deliberately generous: a tight
+    // ceiling silently locks out the best players. See lib/game/score.ts.
+    const score = parseInteger(body.score, "score", 0, MAX_SUBMITTABLE_SCORE);
     const timeMs = parseInteger(body.timeMs, "timeMs", 1, 3_600_000);
     const nonce = createNonce();
     const deadline = createDeadline();

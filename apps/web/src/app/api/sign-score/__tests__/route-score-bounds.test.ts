@@ -9,7 +9,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import { getMaxSubmittableScore } from "@/lib/game/score";
+import { MAX_SUBMITTABLE_SCORE } from "@/lib/game/score";
 
 vi.mock("@/lib/server/demo-signing", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/server/demo-signing")>();
@@ -61,12 +61,18 @@ describe("POST /api/sign-score — score bounds", () => {
     expect((await submit(1800)).status).toEqual(200);
   });
 
-  it("signs a perfect run at the catalog ceiling", async () => {
-    expect((await submit(getMaxSubmittableScore())).status).toEqual(200);
+  it("signs a score above today's pools, as the content builder will produce", async () => {
+    // 11 exercises × 3★ × 100 — a pool the deployed baseline does not have.
+    // The route must not consult the live catalog to accept this.
+    expect((await submit(3300)).status).toEqual(200);
+  });
+
+  it("signs at the ceiling", async () => {
+    expect((await submit(MAX_SUBMITTABLE_SCORE)).status).toEqual(200);
   });
 
   it("rejects a score one point above the ceiling", async () => {
-    const res = await submit(getMaxSubmittableScore() + 1);
+    const res = await submit(MAX_SUBMITTABLE_SCORE + 1);
 
     expect(res.status).toEqual(400);
     expect((await res.json()).error).toEqual("Invalid score");
