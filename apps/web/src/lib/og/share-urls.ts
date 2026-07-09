@@ -31,12 +31,25 @@ export type SharePiece = (typeof SHARE_PIECES)[number];
  */
 const PRODUCTION_FALLBACK = "https://www.chesscito.com";
 const APEX_HOST_RE = /^https?:\/\/chesscito\.com(?=\/|$)/i;
-const MAX_STARS = 15;
 const MIN_STARS = 0;
 
-function clampStars(raw: number): number {
+/** A piece pool can never exceed MAX_EXERCISES_PER_PIECE (100) × 3★. Bounds the
+ *  public `max` query param so a crafted link cannot print an absurd ceiling. */
+export const ABSOLUTE_MAX_STARS = 300;
+/** Smallest representable pool: one exercise. */
+const MIN_MAX_STARS = 3;
+/** Baseline pool (10 exercises × 3★). Used when a caller or a legacy link
+ *  omits `max`. Never assume 15 — that was the deprecated 5-exercise pool. */
+export const DEFAULT_MAX_STARS = 30;
+
+export function clampMaxStars(raw: number | undefined): number {
+  if (raw === undefined || !Number.isFinite(raw)) return DEFAULT_MAX_STARS;
+  return Math.min(Math.max(Math.trunc(raw), MIN_MAX_STARS), ABSOLUTE_MAX_STARS);
+}
+
+function clampStars(raw: number, maxStars: number): number {
   if (!Number.isFinite(raw)) return MIN_STARS;
-  return Math.min(Math.max(Math.trunc(raw), MIN_STARS), MAX_STARS);
+  return Math.min(Math.max(Math.trunc(raw), MIN_STARS), maxStars);
 }
 
 function normalizePiece(raw: string): SharePiece {
@@ -55,8 +68,8 @@ export function getShareOrigin(): string {
   return trimmed.replace(APEX_HOST_RE, "https://www.chesscito.com");
 }
 
-type ScoreArgs = { piece: SharePiece; stars: number };
-type BadgeArgs = { piece: SharePiece; stars: number };
+type ScoreArgs = { piece: SharePiece; stars: number; maxStars?: number };
+type BadgeArgs = { piece: SharePiece; stars: number; maxStars?: number };
 type DailyArgs = {
   piece: SharePiece;
   name: string;
@@ -100,18 +113,20 @@ function clampStreak(raw: number): number {
   return Math.min(Math.max(Math.trunc(raw), 0), DAILY_STREAK_MAX);
 }
 
-/** Score share URL (`/share/score?piece=...&stars=...`). */
-export function shareUrlForScore({ piece, stars }: ScoreArgs): string {
+/** Score share URL (`/share/score?piece=...&stars=...&max=...`). */
+export function shareUrlForScore({ piece, stars, maxStars }: ScoreArgs): string {
   const p = normalizePiece(piece);
-  const s = clampStars(stars);
-  return `${getShareOrigin()}/share/score?piece=${p}&stars=${s}`;
+  const m = clampMaxStars(maxStars);
+  const s = clampStars(stars, m);
+  return `${getShareOrigin()}/share/score?piece=${p}&stars=${s}&max=${m}`;
 }
 
-/** Badge share URL (`/share/badge?piece=...&stars=...`). */
-export function shareUrlForBadge({ piece, stars }: BadgeArgs): string {
+/** Badge share URL (`/share/badge?piece=...&stars=...&max=...`). */
+export function shareUrlForBadge({ piece, stars, maxStars }: BadgeArgs): string {
   const p = normalizePiece(piece);
-  const s = clampStars(stars);
-  return `${getShareOrigin()}/share/badge?piece=${p}&stars=${s}`;
+  const m = clampMaxStars(maxStars);
+  const s = clampStars(stars, m);
+  return `${getShareOrigin()}/share/badge?piece=${p}&stars=${s}&max=${m}`;
 }
 
 function clampEndgameMoves(raw: number): number {

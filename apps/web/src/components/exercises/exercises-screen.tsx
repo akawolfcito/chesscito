@@ -2634,6 +2634,7 @@ export function ExercisesScreen({
             nextPiece={nextPiece ?? null}
             hasClaimedBadge={!!hasClaimedBadge}
             totalStars={totalStars}
+            maxPossibleStars={maxPossibleStars}
             onNextPiece={() => {
               setShowPieceComplete(false);
               if (nextPiece) setSelectedPiece(nextPiece);
@@ -2705,6 +2706,7 @@ export function ExercisesScreen({
           <BadgeEarnedPrompt
             pieceType={selectedPiece}
             totalStars={totalStars}
+            maxPossibleStars={maxPossibleStars}
             // MiniPay Lote 2 F1: no manual off-chain SAVE CTA — the score
             // auto-saves. The badge celebration just continues to the piece
             // complete flow.
@@ -2724,6 +2726,7 @@ export function ExercisesScreen({
             errorKind={resultOverlay.errorKind}
             txErrorKind={resultOverlay.txErrorKind}
             totalStars={totalStars}
+            maxPossibleStars={maxPossibleStars}
             recoveryCta={resultOverlay.recoveryCta}
             onDismiss={() => setResultOverlay(null)}
             onRetry={resultOverlay.retryAction}

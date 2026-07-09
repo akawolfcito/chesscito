@@ -12,8 +12,7 @@ import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { ShareModal } from "@/components/share/share-modal";
-import { EXERCISES_PER_PIECE } from "@/lib/game/exercises";
-import { shareUrlForBadge, shareUrlForScore } from "@/lib/og/share-urls";
+import { clampMaxStars, shareUrlForBadge, shareUrlForScore } from "@/lib/og/share-urls";
 import { THEME_CONFIG } from "@/lib/theme";
 
 const PIECE_COMPLETE_AVATAR_BASE = "/art/new-assets-chesscito/fun/avatar-feliz";
@@ -53,6 +52,11 @@ type ResultOverlayProps = {
   onDismiss: () => void;
   onRetry?: () => void;
   totalStars?: number;
+  /** The piece's real star ceiling — `getMaxPossibleStars(piece, catalog)`.
+   *  Drives the stat pill and the share card. Omitted (dev fixtures, shop
+   *  variant) it falls back to the baseline 10-exercise pool, never to the
+   *  deprecated 5-exercise one. */
+  maxPossibleStars?: number;
   /** Recovery CTA for an error variant (e.g. insufficient Peones → "Get
    *  Peones"). When set, it becomes the primary button + a "Not now"
    *  secondary, replacing the Try-again/Dismiss pair. */
@@ -110,19 +114,28 @@ function SuccessImage({
   );
 }
 
-const MAX_STARS = EXERCISES_PER_PIECE * 3;
+/** The meter is a fixed 5-segment bar, not one glyph per exercise: pools run
+ *  from 5 to 100 exercises and a row of 100 stars is not a UI. Segments fill
+ *  proportionally, so at maxStars=15 this reduces to the historical
+ *  `ceil(totalStars / 3)` and a 5-exercise piece looks exactly as it did. */
+const METER_SEGMENTS = 5;
 
 function StarsRow({
   totalStars,
+  maxStars,
   staggered = false,
 }: {
   totalStars: number;
+  maxStars: number;
   staggered?: boolean;
 }) {
-  const filled = Math.min(EXERCISES_PER_PIECE, Math.ceil(totalStars / 3));
+  const filled = Math.min(
+    METER_SEGMENTS,
+    Math.ceil((totalStars * METER_SEGMENTS) / Math.max(1, maxStars)),
+  );
   return (
     <div className="flex items-center gap-1.5">
-      {Array.from({ length: EXERCISES_PER_PIECE }, (_, i) => {
+      {Array.from({ length: METER_SEGMENTS }, (_, i) => {
         const isEarned = i < filled;
         const starDelay = 400 + i * 150;
         return (
@@ -156,7 +169,7 @@ function StarsRow({
             : {}),
         }}
       >
-        {totalStars}/{MAX_STARS}
+        {totalStars}/{maxStars}
       </span>
     </div>
   );
@@ -175,45 +188,55 @@ function useShareText(variant: SuccessVariant, pieceType?: PieceKey, itemLabel?:
   }
 }
 
-function getCardUrl(variant: SuccessVariant, pieceType?: PieceKey, totalStars?: number): string {
-  if (variant === "badge") {
+/** Exported for the share-wiring guard: the score card must point at
+ *  `type=score-saved`, never at `piece-complete` ("{Piece} Mastered" art). */
+export function getCardUrl(
+  variant: SuccessVariant,
+  pieceType?: PieceKey,
+  totalStars?: number,
+  maxPossibleStars?: number,
+): string {
+  if (variant === "badge" || variant === "score") {
     const piece = pieceType ?? "rook";
-    const stars = Math.min(totalStars ?? 0, 15);
-    return `/api/og/exercise?piece=${piece}&stars=${stars}&type=badge-earned`;
-  }
-  if (variant === "score") {
-    const piece = pieceType ?? "rook";
-    const stars = Math.min(totalStars ?? 0, 15);
+    const max = clampMaxStars(maxPossibleStars);
+    const stars = Math.min(totalStars ?? 0, max);
     // Slice A: score share gets its own leaderboard-first OG card. Was
     // type=piece-complete, which wrongly rendered "{Piece} Mastered".
-    return `/api/og/exercise?piece=${piece}&stars=${stars}&type=score-saved`;
+    const type = variant === "badge" ? "badge-earned" : "score-saved";
+    return `/api/og/exercise?piece=${piece}&stars=${stars}&max=${max}&type=${type}`;
   }
   return "/api/og/invite";
 }
 
 /** Canonical page URL the share targets — its OG tags point at the
  *  /api/og/* PNG so WhatsApp/X/Telegram render the rich preview. */
-function getShareUrl(variant: SuccessVariant, pieceType?: PieceKey, totalStars?: number): string | undefined {
+function getShareUrl(
+  variant: SuccessVariant,
+  pieceType?: PieceKey,
+  totalStars?: number,
+  maxPossibleStars?: number,
+): string | undefined {
   if (variant === "badge") {
-    return shareUrlForBadge({ piece: pieceType ?? "rook", stars: totalStars ?? 0 });
+    return shareUrlForBadge({ piece: pieceType ?? "rook", stars: totalStars ?? 0, maxStars: maxPossibleStars });
   }
   if (variant === "score") {
-    return shareUrlForScore({ piece: pieceType ?? "rook", stars: totalStars ?? 0 });
+    return shareUrlForScore({ piece: pieceType ?? "rook", stars: totalStars ?? 0, maxStars: maxPossibleStars });
   }
   return undefined;
 }
 
-function ShareRow({ variant, pieceType, itemLabel, totalStars }: {
+function ShareRow({ variant, pieceType, itemLabel, totalStars, maxPossibleStars }: {
   variant: SuccessVariant;
   pieceType?: PieceKey;
   itemLabel?: string;
   totalStars?: number;
+  maxPossibleStars?: number;
 }) {
   const tShare = useTranslations("SHARE_COPY");
   const [open, setOpen] = useState(false);
   const text = useShareText(variant, pieceType, itemLabel, totalStars);
-  const cardUrl = getCardUrl(variant, pieceType, totalStars);
-  const shareUrl = getShareUrl(variant, pieceType, totalStars);
+  const cardUrl = getCardUrl(variant, pieceType, totalStars, maxPossibleStars);
+  const shareUrl = getShareUrl(variant, pieceType, totalStars, maxPossibleStars);
   return (
     <>
       <Button
@@ -249,6 +272,7 @@ export function ResultOverlay({
   onDismiss,
   onRetry,
   totalStars,
+  maxPossibleStars,
   recoveryCta,
 }: ResultOverlayProps) {
   const tResult = useTranslations("RESULT_OVERLAY_COPY");
@@ -290,8 +314,8 @@ export function ResultOverlay({
     itemLabel,
     totalStars,
   );
-  const shareCardUrl = !isError ? getCardUrl(variant, pieceType, totalStars) : null;
-  const shareCanonicalUrl = !isError ? getShareUrl(variant, pieceType, totalStars) : undefined;
+  const shareCardUrl = !isError ? getCardUrl(variant, pieceType, totalStars, maxPossibleStars) : null;
+  const shareCanonicalUrl = !isError ? getShareUrl(variant, pieceType, totalStars, maxPossibleStars) : undefined;
 
   function handleDismiss() {
     setExiting(true);
@@ -306,7 +330,7 @@ export function ResultOverlay({
   if (variant === "score") {
     const pieceImg = getBadgeImg(pieceType);
     const pieceHasOptimized = THEME_CONFIG.hasOptimizedFormats;
-    const starsLabel = totalStars != null ? `${totalStars}/${MAX_STARS}` : null;
+    const starsLabel = totalStars != null ? `${totalStars}/${clampMaxStars(maxPossibleStars)}` : null;
     return (
       <>
         <div className={exiting ? "modal-exiting" : undefined}>
@@ -459,7 +483,7 @@ export function ResultOverlay({
                 <span className="candy-stat-pill-icon">
                   <CandyIcon name="star" className="h-4 w-4" />
                 </span>
-                {totalStars}/{EXERCISES_PER_PIECE * 3}
+                {totalStars}/{clampMaxStars(maxPossibleStars)}
               </span>
             </div>
           ) : null}
@@ -603,6 +627,8 @@ export function ResultOverlay({
 type BadgeEarnedPromptProps = {
   pieceType: PieceKey;
   totalStars: number;
+  /** The piece's real star ceiling — `getMaxPossibleStars(piece, catalog)`. */
+  maxPossibleStars: number;
   /** MiniPay Lote 2 F1: the off-chain score auto-saves, so the badge prompt
    *  is purely celebratory. Its single primary CTA continues the flow (X /
    *  scrim / auto-dismiss all resolve to the same continuation). */
@@ -614,6 +640,7 @@ const BADGE_AUTO_DISMISS_MS = 15_000;
 export function BadgeEarnedPrompt({
   pieceType,
   totalStars,
+  maxPossibleStars,
   onContinue,
 }: BadgeEarnedPromptProps) {
   const tBadge = useTranslations("BADGE_EARNED_COPY");
@@ -665,9 +692,14 @@ export function BadgeEarnedPrompt({
             size="sm"
           />
 
-          <StarsRow totalStars={totalStars} staggered />
+          <StarsRow totalStars={totalStars} maxStars={maxPossibleStars} staggered />
 
-          <ShareRow variant="badge" pieceType={pieceType} totalStars={totalStars} />
+          <ShareRow
+            variant="badge"
+            pieceType={pieceType}
+            totalStars={totalStars}
+            maxPossibleStars={maxPossibleStars}
+          />
         </div>
 
         <div className="flex flex-col items-center gap-2">
@@ -695,6 +727,8 @@ type PieceCompletePromptProps = {
   nextPiece: PieceKey | null;
   hasClaimedBadge: boolean;
   totalStars: number;
+  /** The piece's real star ceiling — `getMaxPossibleStars(piece, catalog)`. */
+  maxPossibleStars: number;
   onNextPiece: () => void;
   onArena: () => void;
   onPracticeAgain: () => void;
@@ -719,6 +753,7 @@ export function PieceCompletePrompt({
   nextPiece,
   hasClaimedBadge,
   totalStars,
+  maxPossibleStars,
   onNextPiece,
   onArena,
   onPracticeAgain,
@@ -792,7 +827,7 @@ export function PieceCompletePrompt({
 
   const pieceImg = getBadgeImg(pieceType);
   const pieceHasOptimized = THEME_CONFIG.hasOptimizedFormats;
-  const starsLabel = `${totalStars}/${MAX_STARS}`;
+  const starsLabel = `${totalStars}/${maxPossibleStars}`;
 
   return (
     <div className={exiting ? "modal-exiting" : undefined}>

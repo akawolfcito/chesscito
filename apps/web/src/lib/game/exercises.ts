@@ -28,30 +28,19 @@ export const EXERCISES: Record<PieceId, Exercise[]> = {
 export const BADGE_THRESHOLD = 10; // stars; pools vary (5-10 exercises → 15-30★ max per piece)
 
 /**
- * Returns the current pool count for a piece. Per-piece dynamic
- * replacement for the legacy `EXERCISES_PER_PIECE` constant — needed
- * when piece pools diverge from the original 5 (e.g., King senda 5→10
- * planned for Sprint 2-3 of Training Economy Alpha 2026-06-05).
+ * Returns the current pool count for a piece. Pools are per-piece and
+ * dynamic: the baseline ships 10 exercises each, and the Supabase overlay
+ * appends more up to `MAX_EXERCISES_PER_PIECE`.
  *
- * Today every piece returns 5 so this is behavior-identical to the
- * deprecated constant. Callsites migrate to `getExerciseCount(piece)`
- * before any pool grows; once all consumers migrate, the deprecated
- * export below is removed.
+ * Never hardcode a pool size. The deprecated `EXERCISES_PER_PIECE = 5`
+ * constant that used to live here outlived the 5-exercise pools and made
+ * the Badge Earned modal and its share card advertise "12/15" against a
+ * real 30★ ceiling (2026-07-09). Read the catalog, or take
+ * `getMaxPossibleStars(piece, catalog)` for the star ceiling.
  */
 export function getExerciseCount(piece: PieceId): number {
   return EXERCISES[piece].length;
 }
-
-/**
- * @deprecated Use {@link getExerciseCount} for per-piece dynamic count.
- *
- * Kept during Sprint 1 (2026-06-05) for callsites not yet migrated —
- * result-overlay.tsx still imports it for its module-level `MAX_STARS`
- * and the `StarsRow` component. Migration deferred to Sprint 3 when
- * StarsRow takes a `piece` prop. Until then this constant returns 5
- * to keep visual parity with current piece pools.
- */
-export const EXERCISES_PER_PIECE = 5;
 
 /* ── L2 Labyrinths (POC) ──────────────────────────────────────────
  * Obstacles are friendly blocker pieces. The player's piece cannot
