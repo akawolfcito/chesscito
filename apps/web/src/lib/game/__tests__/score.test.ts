@@ -32,7 +32,9 @@ describe("score — the submittable ceiling is a product invariant, not a derive
     expect(MAX_SUBMITTABLE_SCORE).toBe(
       MAX_EXERCISES_PER_PIECE * STARS_PER_EXERCISE * POINTS_PER_STAR,
     );
-    expect(MAX_SUBMITTABLE_SCORE).toBe(9000);
+    // Pinned so raising the invariant is a deliberate edit, never a drift.
+    expect(MAX_EXERCISES_PER_PIECE).toBe(100);
+    expect(MAX_SUBMITTABLE_SCORE).toBe(30_000);
   });
 
   /**

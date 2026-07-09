@@ -40,10 +40,17 @@ export const POINTS_PER_STAR = 100;
 export const STARS_PER_EXERCISE = 3;
 
 /** Product invariant: the most exercises we allow a single piece to hold.
- *  Roughly 3× today's pools — room to keep authoring without touching this.
- *  Guarded by `score.test.ts`: outgrow it and CI fails, so the bump is a
- *  decision rather than an outage. */
-export const MAX_EXERCISES_PER_PIECE = 30;
+ *  Sized for the authoring roadmap (~100 per piece), not for today's 10.
+ *
+ *  Enforced in TWO places, and they must stay in sync:
+ *   - `score.test.ts` fails if a BASELINE pool outgrows it;
+ *   - `/api/admin/content` refuses a builder write that would outgrow it,
+ *     which is the path the overlay actually uses (`lib/content/pool-capacity.ts`).
+ *
+ *  Raising it is a one-line decision. Leaving it stale is an outage: the score
+ *  ceiling below is priced from it, and a pool past the ceiling makes every
+ *  on-chain save for that piece fail with a 400. */
+export const MAX_EXERCISES_PER_PIECE = 100;
 
 /** The bound `/api/sign-score` validates `score` against. */
 export const MAX_SUBMITTABLE_SCORE =
