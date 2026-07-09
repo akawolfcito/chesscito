@@ -39,6 +39,11 @@ function Heading({
   )
 }
 
+/**
+ * Shared skeleton across slides 1-3: art, then what it is, then why it matters,
+ * then the divider, then evidence, then the price. Slide 1 has no price and no
+ * evidence beyond its two mode pills.
+ */
 export function Slide1Body() {
   const t = useTranslations('onboarding.slide1')
   const assets = SLIDE_ASSETS[0]
@@ -65,16 +70,21 @@ export function Slide1Body() {
       <div className="-mt-1 flex flex-col items-center gap-2">
         <Heading headline={t('headline')} support={t('support')} />
       </div>
+      {/* The two pills carry this slide's entire payload: there are two modes,
+          and they are different doors. Bare labels read as feature chips, so
+          each one names the player it is for. */}
       <div className="flex w-full justify-center gap-3">
         <Pill
           icon={<ArtImage src={ICONS.learn} alt="" />}
           label={t('learnPill')}
-          iconRem={2.3}
+          sublabel={t('learnPillSub')}
+          iconRem={1.9}
         />
         <Pill
           icon={<ArtImage src={ICONS.play} alt="" />}
           label={t('playPill')}
-          iconRem={2.3}
+          sublabel={t('playPillSub')}
+          iconRem={1.9}
         />
       </div>
     </>
@@ -97,19 +107,15 @@ export function Slide2Body() {
         support={t('support')}
         headlineClassName="fantasy-title"
       />
-      <div className="h-2 flex gap-2.5">
-        <Pill
-          icon={<ArtImage src={ICONS.focusPassport} alt="" />}
-          label={t('passportLabel')}
-          sublabel={t('passportSub')}
-        />
-        <Pill
-          icon={<ArtImage src={ICONS.seasonPass} alt="" />}
-          label={t('seasonPassLabel')}
-          sublabel={t('seasonPassPrice')}
-        />
-      </div>
-      <p className="text-xs text-[#5a4520] mt-6">{t('footnote')}</p>
+      {/* Focus Passport is what the Season Pass opens, so it stands alone as
+          the evidence. The Season Pass itself is not a sibling chip: it is the
+          product, and it appears below as its price. */}
+      <Pill
+        icon={<ArtImage src={ICONS.focusPassport} alt="" />}
+        label={t('passportLabel')}
+        sublabel={t('passportSub')}
+      />
+      <p className="onboarding-price">{t('price')}</p>
     </>
   )
 }
@@ -137,14 +143,10 @@ export function Slide3Body() {
         />
         <Pill
           icon={<ArtImage src={ICONS.coachPro} alt="" />}
-          label={t('coachProPill')}
+          label={t('coachReviewPill')}
         />
       </div>
-      <Pill
-        icon={<ArtImage src={ICONS.pro} alt="" className="w-8" />}
-        label={t('proPill')}
-        tone="gold"
-      />
+      <p className="onboarding-price">{t('price')}</p>
     </>
   )
 }

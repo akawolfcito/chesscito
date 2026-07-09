@@ -38,14 +38,24 @@ export async function WelcomeBack({ preferredMode }: { preferredMode: PreferredM
         />
       }
     >
-      <AvatarWithFade src={assets.avatarSrc} alt="" className="relative top-3 w-48" />
-      <div className="-mt-3 flex flex-col items-center gap-0.5">
-        <span className="text-sm font-extrabold text-[#3a2600]">
+      {/* Larger than slide 1's `w-48`: this screen carries no pills, no support
+          line and no divider, so the wolf gets the room they were using. */}
+      <AvatarWithFade src={assets.avatarSrc} alt="" className="relative top-9 w-56" />
+      <div className="-mt-4 flex flex-col items-center z-10">
+        <span className="fantasy-title text-xl font-extrabold text-[#3a2600]">
           {t("slide1.welcomeTo")}
         </span>
-        <ArtImage src={assets.titleSrc} alt="Chesscito" className="h-14 w-6/12" />
+        {/* `w-auto`, not `w-6/12`: ArtImage is object-contain, so a width cap
+            narrower than the wordmark binds before the height does and the art
+            never reaches its `h-12`. It rendered small, not stretched. */}
+        <ArtImage src={assets.titleSrc} alt="Chesscito" className="h-12 w-auto -mt-3" />
       </div>
-      <h1 className="-mt-2 text-2xl font-extrabold text-[#3a2600]">{t("slide1.headline")}</h1>
+      {/* Its own key. Borrowing `slide1.headline` made one string greet a
+          returning player and orient a stranger at the same time, and pinned
+          slide 1's copy to this screen. */}
+      <h1 className="fantasy-title mt-1 text-2xl font-extrabold text-[#3a2600]">
+        {t("welcomeBack.headline")}
+      </h1>
     </SlideShell>
   );
 }
