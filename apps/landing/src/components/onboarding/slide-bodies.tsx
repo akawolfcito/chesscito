@@ -211,7 +211,7 @@ export function Slide4Body() {
        header into the flat cream area. `px-2` keeps the header and cards
        off the frame's inner gold bevel, which SlideShell's own px-[9%]
        lands right on. */
-    <div className="mt-10 flex w-full flex-col items-center gap-2 px-2">
+    <div className="mt-10 flex w-full flex-col items-center gap-2 px-1">
       {/* The only slide whose heading is not centered: the two cards below
           are left-aligned rows, so a centered title would float free of
           them. The wolf tucks into the right gutter the title leaves. */}
