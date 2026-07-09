@@ -75,6 +75,41 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
     expect(screen.queryByText("Vertical move")).not.toBeInTheDocument(); // rook-2
   });
 
+  /* Regression (2026-07-09): rotation hid every exercise the player had
+   * already solved, so the sheet could show nothing but locked nodes and
+   * offered no way to replay finished work. Completed exercises always
+   * belong on the path, whether or not today's rotation picked them. */
+  it("always renders completed exercises outside today's visible set", () => {
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        stars={starsById(3, 2)} // rook-1, rook-2 completed; neither is in `visible`
+        totalStars={5}
+        onNavigate={vi.fn()}
+        visibleExerciseIds={visible}
+      />,
+    );
+    expect(screen.getByText("Horizontal move")).toBeInTheDocument(); // rook-1
+    expect(screen.getByText("Vertical move")).toBeInTheDocument(); // rook-2
+    // Unplayed and unrotated stays hidden.
+    expect(screen.queryByText("Corner capture")).not.toBeInTheDocument(); // rook-4
+  });
+
+  it("a completed exercise surfaced by the rotation fix is replayable", () => {
+    const onNavigate = vi.fn();
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        stars={starsById(3, 2)}
+        totalStars={5}
+        onNavigate={onNavigate}
+        visibleExerciseIds={visible}
+      />,
+    );
+    clickRow("Horizontal move"); // rook-1 → pool index 0
+    expect(onNavigate).toHaveBeenCalledWith(0);
+  });
+
   it("visible-set exercises are still gated by the linear senda", () => {
     // rook-8 (pool index 7) is in the visible set but senda still applies:
     // with stars={} maxAllowed=0, so index 7 > 0 → locked.

@@ -134,16 +134,16 @@ describe("isAtFreeLimit", () => {
   it("false when only 2 consumed", () => {
     expect(isAtFreeLimit(sessionWith(["exercise:rook:rook-1", "exercise:rook:rook-2"]))).toBe(false);
   });
-  it("false when only 3 consumed (free quota is now 5)", () => {
-    const ids = ["exercise:rook:rook-1", "exercise:rook:rook-2", "exercise:rook:rook-3"];
+  it("false one short of the free quota", () => {
+    const ids = Array.from({ length: FREE_EXTRA_QUOTA - 1 }, (_, i) => `exercise:rook:rook-${i + 1}`);
     expect(isAtFreeLimit(sessionWith(ids, 0))).toBe(false);
   });
-  it("true when 5 consumed and no paid packs", () => {
-    const ids = Array.from({ length: 5 }, (_, i) => `exercise:rook:rook-${i + 1}`);
+  it("true at the free quota with no paid packs", () => {
+    const ids = Array.from({ length: FREE_EXTRA_QUOTA }, (_, i) => `exercise:rook:rook-${i + 1}`);
     expect(isAtFreeLimit(sessionWith(ids, 0))).toBe(true);
   });
-  it("false when 5 consumed but has paid pack (remaining slots available)", () => {
-    const ids = Array.from({ length: 5 }, (_, i) => `exercise:rook:rook-${i + 1}`);
+  it("false at the free quota when a paid pack adds room", () => {
+    const ids = Array.from({ length: FREE_EXTRA_QUOTA }, (_, i) => `exercise:rook:rook-${i + 1}`);
     expect(isAtFreeLimit(sessionWith(ids, 1))).toBe(false);
   });
   it("false when at hard max (uses isAtHardMax instead)", () => {
@@ -228,26 +228,26 @@ describe("computeApplyDevUnlock", () => {
 // ─── CONSTANTS sanity check ───────────────────────────────────────────────────
 
 describe("constants", () => {
-  it("FREE_EXTRA_QUOTA is 5", () => expect(FREE_EXTRA_QUOTA).toBe(5));
+  it("FREE_EXTRA_QUOTA is 10 (the session default)", () => expect(FREE_EXTRA_QUOTA).toBe(10));
   it("PACK_EXTRA_SLOTS is 5", () => expect(PACK_EXTRA_SLOTS).toBe(5));
-  it("HARD_MAX_EXTRAS equals free + 2 packs = 15", () => expect(HARD_MAX_EXTRAS).toBe(15));
+  it("HARD_MAX_EXTRAS equals free + 2 packs = 20", () => expect(HARD_MAX_EXTRAS).toBe(20));
 });
 
 // ─── parseSessionLimit (single env-backed knob) ──────────────────────────────
 
 describe("parseSessionLimit", () => {
-  it("defaults to 5 when unset", () => {
-    expect(parseSessionLimit(undefined)).toBe(5);
+  it("defaults to 10 when unset", () => {
+    expect(parseSessionLimit(undefined)).toBe(10);
   });
   it("parses a positive integer string", () => {
     expect(parseSessionLimit("8")).toBe(8);
   });
-  it("falls back to 5 for non-numeric values", () => {
-    expect(parseSessionLimit("abc")).toBe(5);
+  it("falls back to 10 for non-numeric values", () => {
+    expect(parseSessionLimit("abc")).toBe(10);
   });
-  it("falls back to 5 for zero or negative values", () => {
-    expect(parseSessionLimit("0")).toBe(5);
-    expect(parseSessionLimit("-3")).toBe(5);
+  it("falls back to 10 for zero or negative values", () => {
+    expect(parseSessionLimit("0")).toBe(10);
+    expect(parseSessionLimit("-3")).toBe(10);
   });
   it("SESSION_EXERCISE_LIMIT is the source of FREE_EXTRA_QUOTA", () => {
     expect(FREE_EXTRA_QUOTA).toBe(SESSION_EXERCISE_LIMIT);
@@ -279,13 +279,28 @@ describe("isSessionOver", () => {
 describe("shouldFreezeScoring", () => {
   it("never freezes when not in Lite mode", () => {
     const ids = Array.from({ length: FREE_EXTRA_QUOTA }, (_, i) => `exercise:rook:rook-${i + 1}`);
-    expect(shouldFreezeScoring(false, sessionWith(ids, 0))).toBe(false);
+    expect(shouldFreezeScoring(false, sessionWith(ids, 0), true)).toBe(false);
   });
   it("does not freeze in Lite before the limit", () => {
-    expect(shouldFreezeScoring(true, sessionWith(["exercise:rook:rook-1"]))).toBe(false);
+    expect(shouldFreezeScoring(true, sessionWith(["exercise:rook:rook-1"]), true)).toBe(false);
   });
-  it("freezes in Lite once the session is over", () => {
+  it("freezes a replay in Lite once the session is over", () => {
     const ids = Array.from({ length: FREE_EXTRA_QUOTA }, (_, i) => `exercise:rook:rook-${i + 1}`);
-    expect(shouldFreezeScoring(true, sessionWith(ids, 0))).toBe(true);
+    expect(shouldFreezeScoring(true, sessionWith(ids, 0), true)).toBe(true);
+  });
+
+  /* Regression (2026-07-09): a session-over freeze applied to a FRESH
+   * exercise discarded its first stars. Progression gates on those stars
+   * (`lastCompleted + 1` in exercise-drawer), so the player stayed pinned
+   * on that exercise forever — no 10★, no badge. A first solve always
+   * persists; the daily limit is enforced by locking fresh content in the
+   * drawer, not by silently voiding a solve already on the board. */
+  it("never freezes a fresh exercise, even past the limit", () => {
+    const ids = Array.from({ length: FREE_EXTRA_QUOTA }, (_, i) => `exercise:rook:rook-${i + 1}`);
+    expect(shouldFreezeScoring(true, sessionWith(ids, 0), false)).toBe(false);
+  });
+  it("never freezes a fresh exercise at hard max", () => {
+    const ids = Array.from({ length: HARD_MAX_EXTRAS }, (_, i) => `exercise:rook:rook-${i}`);
+    expect(shouldFreezeScoring(true, sessionWith(ids, 2), false)).toBe(false);
   });
 });
