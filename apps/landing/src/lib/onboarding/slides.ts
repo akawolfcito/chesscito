@@ -32,7 +32,7 @@ export const SLIDE_ASSETS: readonly SlideAssets[] = [
   },
   {
     step: 4,
-    avatarSrc: "/art/landing-slides/avatar-chesscito-welcome",
+    avatarSrc: "/art/landing-slides/avatar-choice",
     titleSrc: "",
   },
 ] as const;
