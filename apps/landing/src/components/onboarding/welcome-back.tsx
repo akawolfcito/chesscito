@@ -38,7 +38,9 @@ export async function WelcomeBack({ preferredMode }: { preferredMode: PreferredM
         />
       }
     >
-      <AvatarWithFade src={assets.avatarSrc} alt="" className="relative top-9 w-48" />
+      {/* Larger than slide 1's `w-48`: this screen carries no pills, no support
+          line and no divider, so the wolf gets the room they were using. */}
+      <AvatarWithFade src={assets.avatarSrc} alt="" className="relative top-9 w-56" />
       <div className="-mt-4 flex flex-col items-center z-10">
         <span className="fantasy-title text-xl font-extrabold text-[#3a2600]">
           {t("slide1.welcomeTo")}
@@ -51,7 +53,7 @@ export async function WelcomeBack({ preferredMode }: { preferredMode: PreferredM
       {/* Its own key. Borrowing `slide1.headline` made one string greet a
           returning player and orient a stranger at the same time, and pinned
           slide 1's copy to this screen. */}
-      <h1 className="fantasy-title mt-1 text-lg font-extrabold text-[#3a2600]">
+      <h1 className="fantasy-title mt-1 text-2xl font-extrabold text-[#3a2600]">
         {t("welcomeBack.headline")}
       </h1>
     </SlideShell>
