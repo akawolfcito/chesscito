@@ -326,12 +326,23 @@
   font-size: 0.78rem;
 }
 
-/* Play's CTA keeps the Hub's blue identity but drops a step of chroma:
-   the stock --cta-primary-blue-grad tops out near neon (#2bb5f0), which
-   out-shouts the warm gold on Learn and reverses the hierarchy the cards
-   are built to express. Deeper blue recedes; it still reads as a button. */
+/* Play's CTA is the secondary action, so it goes light, not dark. What
+   pulls the eye here is luminance, not chroma: on a cream card, a dark
+   blue slab is the highest-contrast mark on the slide and beats Learn's
+   mid-tone gold no matter how far its saturation drops. A pale blue with
+   dark blue text sits at the card's own value, keeps the candy bevel and
+   the Hub's blue identity, and still reads as a live button. */
 .slide4-mode-card--play .hub-scaffold-arena-cta {
-  background: linear-gradient(180deg, #4f9fd0, #1d5b8c);
+  background: linear-gradient(180deg, #a9d6f0, #6fb0da);
+  border-color: rgba(45, 110, 160, 0.5);
+  /* Darkest stop of the gradient (#6fb0da) sets the floor: this navy
+     clears 4.5:1 there, where #0f4469 only reached 4.30:1. */
+  color: #0a3a5c;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -3px 0 rgba(60, 130, 180, 0.4),
+    0 3px 0 rgba(60, 130, 180, 0.3);
 }
 
 .primary-play-cta-piece-icon {
