@@ -263,21 +263,40 @@
 .slide4-mode-card {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  /* gap: 0.5rem; */
   width: 100%;
-  padding: 0.5rem 0.6rem 0.6rem;
+  /* padding: 0.5rem 0.6rem 0.6rem; */
   border-radius: 18px;
   text-align: left;
 }
 
+/* Learn is the card we want picked first, so it carries the hierarchy:
+   a translucent wash of the board's own green (sampled from the slide art,
+   rgb(84,166,63) over rgb(243,227,154)), a defined border and an outer
+   shadow that lifts it off the frame. Play stays flat and cream. The
+   preference reads through elevation and border, not hue alone, so it
+   survives for anyone who cannot separate the two colors. */
 .slide4-mode-card--learn {
-  background: linear-gradient(160deg, rgba(255, 243, 202, 0.95), rgba(246, 223, 156, 0.85));
-  border: 2px solid rgba(214, 168, 60, 0.5);
+  background:
+    linear-gradient(
+      160deg,
+      rgba(84, 166, 63, 0.22) 0%,
+      rgba(84, 166, 63, 0.1) 45%,
+      rgba(243, 227, 154, 0.55) 100%
+    ),
+    linear-gradient(180deg, rgba(255, 250, 232, 0.96), rgba(250, 240, 205, 0.92));
+  border: 2px solid rgba(84, 166, 63, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 6px 14px rgba(60, 120, 45, 0.18);
 }
 
+/* Flat, not disabled: the blue CTA it carries is the same token the Hub's
+   Enter Arena button uses, so Play keeps its category identity. */
 .slide4-mode-card--play {
-  background: linear-gradient(160deg, rgba(217, 238, 255, 0.95), rgba(176, 213, 245, 0.9));
-  border: 2px solid rgba(96, 156, 214, 0.5);
+  background: linear-gradient(180deg, rgba(255, 250, 232, 0.72), rgba(246, 236, 205, 0.66));
+  border: 1.5px solid rgba(110, 65, 15, 0.18);
+  box-shadow: none;
 }
 
 .slide4-mode-card-art {
@@ -291,17 +310,18 @@
   min-width: 0;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.3rem;
+  gap: 0.1rem;
+  padding: 0.2rem;
 }
 
 /* Compact context: same button chrome, sized to the card's right column
    instead of spanning the full frame width like the slide 1-3 CTAs. */
 .slide4-mode-card .primary-play-cta {
-  width: 100%;
+  /* width: 100%; */
   min-height: 0;
-  padding: 0.55rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
+  padding: 0.5rem;
+  /* border-radius: 999px; */
+  font-size: 0.7rem;
 }
 
 .primary-play-cta-piece-icon {
@@ -321,16 +341,14 @@
     radial-gradient(circle at 75% 75%, rgba(180, 105, 0, 0.35), transparent 35%),
     linear-gradient(145deg, #fbe04b 0%, #fcc00a 28%, #f3aa04 55%, #d38804 100%);
   border: none;
-  border-radius: 22px;
+  /* border-radius: 22px; */
   box-shadow:
     inset 0 3px 0 rgba(255, 255, 255, 0.45),
     inset 0 -5px 0 rgba(142, 78, 0, 0.35),
-    0 6px 0 #9a5a00,
+    /* 0 6px 0 #9a5a00, */
     0 0 0 2px rgba(255, 216, 74, 0.7),
     0 6px 0 2px rgba(255, 216, 74, 0.7),
-    0 0 6px 2px rgba(255, 200, 40, 0.75),
-    0 8px 6px 2px rgba(255, 200, 40, 0.6),
-    0 12px 20px rgba(0, 0, 0, 0.35);
+    0 0 6px 2px rgba(255, 200, 40, 0.75);
   text-shadow:
     -1px -1px 0 #6b3a06,
     1px -1px 0 #6b3a06,
@@ -353,12 +371,12 @@
 
 .hub-scaffold-arena-cta {
   min-height: 70px;
-  font-size: 1.05rem;
+  /* font-size: 1rem; */
   background: var(--cta-primary-blue-grad);
-  border: 2px solid var(--cta-primary-blue-border);
-  border-radius: 22px;
-  box-shadow: var(--cta-primary-blue-bevel);
-  text-shadow: var(--cta-primary-blue-text-shadow);
+  /* border: 2px solid var(--cta-primary-blue-border); */
+  border-radius: 5px;
+  /* box-shadow: var(--cta-primary-blue-bevel); */
+  /* text-shadow: var(--cta-primary-blue-text-shadow); */
   filter: none;
   color: #f4f8ff;
 }

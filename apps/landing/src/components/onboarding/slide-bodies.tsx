@@ -13,10 +13,26 @@ function Divider() {
   )
 }
 
-function Heading({ headline, support }: { headline: string; support: string }) {
+/**
+ * `headlineClassName` exists so slides 2 and 3 can opt their headline into
+ * `.fantasy-title` (Rowdies). Slide 1's headline stays on the body face —
+ * it already sits under the Rowdies "Welcome to" and the CHESSCITO
+ * wordmark, and a third display face there is noise.
+ */
+function Heading({
+  headline,
+  support,
+  headlineClassName = '',
+}: {
+  headline: string
+  support: string
+  headlineClassName?: string
+}) {
   return (
     <>
-      <h1 className="text-sm font-extrabold text-[#3a2600]">{headline}</h1>
+      <h1 className={`text-sm font-extrabold text-[#3a2600] ${headlineClassName}`}>
+        {headline}
+      </h1>
       <Divider />
       <p className="text-xs text-[#5a4520]">{support}</p>
     </>
@@ -37,7 +53,7 @@ export function Slide1Body() {
         className="relative top-9 w-48"
       />
       <div className="-mt-4 flex flex-col items-center z-10">
-        <span className="text-xl font-extrabold text-[#3a2600]">
+        <span className="fantasy-title text-xl font-extrabold text-[#3a2600]">
           {t('welcomeTo')}
         </span>
         <ArtImage
@@ -76,7 +92,11 @@ export function Slide2Body() {
         alt="21-Day Mind Challenge"
         className="h-16 w-full -mt-14 z-10"
       />
-      <Heading headline={t('headline')} support={t('support')} />
+      <Heading
+        headline={t('headline')}
+        support={t('support')}
+        headlineClassName="fantasy-title"
+      />
       <div className="h-2 flex gap-2.5">
         <Pill
           icon={<ArtImage src={ICONS.focusPassport} alt="" />}
@@ -105,7 +125,11 @@ export function Slide3Body() {
         alt="Play Chess Arena"
         className="h-16 w-full -mt-16 z-10"
       />
-      <Heading headline={t('headline')} support={t('support')} />
+      <Heading
+        headline={t('headline')}
+        support={t('support')}
+        headlineClassName="fantasy-title"
+      />
       <div className="flex w-full gap-3 justify-center">
         <Pill
           icon={<ArtImage src={ICONS.savedGames} alt="" />}
@@ -148,9 +172,9 @@ function ModeCard({
 }) {
   return (
     <div className={`slide4-mode-card slide4-mode-card--${tone}`}>
-      <ArtImage src={artSrc} alt="" className="slide4-mode-card-art" />
+      <ArtImage src={artSrc} alt="" className="slide4-mode-card-art h-16" />
       <div className="slide4-mode-card-body">
-        <h2 className="text-base font-extrabold leading-tight text-[#3a2600]">
+        <h2 className="fantasy-title text-base font-extrabold leading-tight text-[#3a2600]">
           {title}
         </h2>
         <p className="text-[0.68rem] leading-snug text-[#5a4520]">
@@ -193,7 +217,7 @@ export function Slide4Body() {
           them. The wolf tucks into the right gutter the title leaves. */}
       <div className="flex w-full items-start gap-1 text-left">
         <div className="flex flex-1 flex-col">
-          <h1 className="text-xl font-extrabold leading-tight text-[#3a2600]">
+          <h1 className="fantasy-title mt-8 text-lg font-extrabold leading-tight text-[#3a2600]">
             {t('headline')}
           </h1>
           <p className="text-xs text-[#5a4520]">{t('support')}</p>
