@@ -138,7 +138,10 @@ export function ExerciseDrawer({
   }
 
   function lockedFor(exercise: Exercise, index: number): boolean {
-    if (rotationOn && !visibleExerciseIds!.has(exercise.id)) return true
+    const isDone = (stars[exercise.id] ?? 0) > 0
+    // Rotation gates only fresh exercises. Solved ones stay open forever.
+    if (rotationOn && !isDone && !visibleExerciseIds!.has(exercise.id))
+      return true
     return index > maxAllowed
   }
 
@@ -148,10 +151,15 @@ export function ExerciseDrawer({
     onNavigate(index)
   }
 
+  // Rotation picks today's fresh set, but anything already solved stays on
+  // the path — the player must always be able to walk back and replay it.
   const rows = exercises
     .map((exercise, index) => ({ exercise, index }))
     .filter(
-      ({ exercise }) => !rotationOn || visibleExerciseIds!.has(exercise.id),
+      ({ exercise }) =>
+        !rotationOn ||
+        visibleExerciseIds!.has(exercise.id) ||
+        (stars[exercise.id] ?? 0) > 0,
     )
 
   const orderedRows = interleaveTrainingRows(rows, labyrinthNodes ?? [])
