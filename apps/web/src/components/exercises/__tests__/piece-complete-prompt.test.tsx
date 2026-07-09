@@ -26,6 +26,7 @@ const baseProps = {
   nextPiece: null,
   hasClaimedBadge: true,
   totalStars: 12,
+  maxPossibleStars: 30,
   onNextPiece: vi.fn(),
   onArena: vi.fn(),
   onPracticeAgain: vi.fn(),

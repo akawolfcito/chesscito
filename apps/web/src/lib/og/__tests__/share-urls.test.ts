@@ -39,15 +39,26 @@ describe("getShareOrigin", () => {
 });
 
 describe("shareUrlForScore", () => {
-  it("builds canonical URL with piece + stars params", () => {
-    expect(shareUrlForScore({ piece: "rook", stars: 9 })).toBe(
-      "https://www.chesscito.com/share/score?piece=rook&stars=9",
+  it("builds canonical URL with piece + stars + max params", () => {
+    expect(shareUrlForScore({ piece: "rook", stars: 9, maxStars: 30 })).toBe(
+      "https://www.chesscito.com/share/score?piece=rook&stars=9&max=30",
     );
   });
 
-  it("clamps stars into [0, 15]", () => {
-    expect(shareUrlForScore({ piece: "bishop", stars: -1 })).toContain("stars=0");
-    expect(shareUrlForScore({ piece: "bishop", stars: 999 })).toContain("stars=15");
+  it("clamps stars into [0, maxStars]", () => {
+    expect(shareUrlForScore({ piece: "bishop", stars: -1, maxStars: 30 })).toContain("stars=0");
+    expect(shareUrlForScore({ piece: "bishop", stars: 999, maxStars: 30 })).toContain("stars=30");
+  });
+
+  /* Regression (2026-07-09): the ceiling was hardcoded to 15 — half of the
+   * real 10-exercise pool — so a 24★ share card advertised 15★. */
+  it("does not clamp a real 10-exercise pool down to 15", () => {
+    expect(shareUrlForScore({ piece: "rook", stars: 24, maxStars: 30 })).toContain("stars=24");
+  });
+
+  it("falls back to the baseline pool when maxStars is omitted", () => {
+    expect(shareUrlForScore({ piece: "rook", stars: 24 })).toContain("stars=24");
+    expect(shareUrlForScore({ piece: "rook", stars: 24 })).toContain("max=30");
   });
 
   it("rejects unknown piece kinds by defaulting to rook", () => {
@@ -57,16 +68,26 @@ describe("shareUrlForScore", () => {
 });
 
 describe("shareUrlForBadge", () => {
-  it("builds canonical URL with piece + stars params", () => {
-    expect(shareUrlForBadge({ piece: "rook", stars: 15 })).toBe(
-      "https://www.chesscito.com/share/badge?piece=rook&stars=15",
+  it("builds canonical URL with piece + stars + max params", () => {
+    expect(shareUrlForBadge({ piece: "rook", stars: 15, maxStars: 30 })).toBe(
+      "https://www.chesscito.com/share/badge?piece=rook&stars=15&max=30",
     );
+  });
+
+  it("does not clamp a real 10-exercise pool down to 15", () => {
+    expect(shareUrlForBadge({ piece: "rook", stars: 30, maxStars: 30 })).toContain("stars=30");
+  });
+
+  it("keeps maxStars inside a sane absolute ceiling", () => {
+    // 100 exercises × 3★ is the pool cap; nothing above it is representable.
+    expect(shareUrlForBadge({ piece: "rook", stars: 5, maxStars: 9_999 })).toContain("max=300");
+    expect(shareUrlForBadge({ piece: "rook", stars: 5, maxStars: 0 })).toContain("max=3");
   });
 
   it("supports all six piece kinds", () => {
     const pieces = ["rook", "bishop", "knight", "pawn", "queen", "king"] as const;
     for (const p of pieces) {
-      expect(shareUrlForBadge({ piece: p, stars: 15 })).toContain(`piece=${p}`);
+      expect(shareUrlForBadge({ piece: p, stars: 15, maxStars: 30 })).toContain(`piece=${p}`);
     }
   });
 });

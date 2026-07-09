@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import { renderWithIntl, screen } from "@/test-utils/render-with-intl";
-import { ResultOverlay } from "../result-overlay";
+import { BadgeEarnedPrompt, ResultOverlay } from "../result-overlay";
 
 // Lottie loads JSON via import — under jsdom the animation doesn't
 // paint, which is fine since we're only asserting DOM + interactivity.
@@ -127,10 +127,78 @@ describe("ResultOverlay — SaveScore recovery + quota communication", () => {
         variant="score"
         pieceType="rook"
         totalStars={9}
+        maxPossibleStars={30}
         onDismiss={vi.fn()}
       />,
     );
     expect(screen.queryByTestId("score-free-saves-left")).not.toBeInTheDocument();
     expect(screen.queryByTestId("score-peones-spent")).not.toBeInTheDocument();
+  });
+});
+
+/* Regression (2026-07-09): both star readouts divided by the deprecated
+ * `EXERCISES_PER_PIECE` (5) instead of the real pool, so a piece with 10
+ * exercises reported "12/15" on a 30★ ceiling. Seen on the founder's device
+ * right after the rook badge minted. */
+describe("star readouts use the real pool, not the legacy 5-exercise constant", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("BadgeEarnedPrompt shows totalStars over the piece's real max", () => {
+    renderWithIntl(
+      <BadgeEarnedPrompt
+        pieceType="rook"
+        totalStars={12}
+        maxPossibleStars={30}
+        onContinue={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("12/30")).toBeInTheDocument();
+    expect(screen.queryByText("12/15")).not.toBeInTheDocument();
+  });
+
+  it("the badge ResultOverlay stat pill shows the real max", () => {
+    renderWithIntl(
+      <ResultOverlay
+        variant="badge"
+        pieceType="rook"
+        totalStars={24}
+        maxPossibleStars={30}
+        onDismiss={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("24/30")).toBeInTheDocument();
+  });
+
+  it("the star meter stays a 5-segment bar and fills proportionally", () => {
+    // 12 of 30 is 40% → 2 of 5 segments. Under the old constant this read
+    // 4 of 5, telling a player at 40% they were nearly done.
+    const { container } = renderWithIntl(
+      <BadgeEarnedPrompt
+        pieceType="rook"
+        totalStars={12}
+        maxPossibleStars={30}
+        onContinue={vi.fn()}
+      />,
+    );
+    const glyphs = Array.from(container.querySelectorAll('span[aria-hidden="true"]'))
+      .map((n) => n.textContent)
+      .filter((t) => t === "★" || t === "☆");
+    expect(glyphs).toEqual(["★", "★", "☆", "☆", "☆"]);
+  });
+
+  it("a 15★ ceiling still fills exactly as it did before", () => {
+    // Behavior parity for any piece whose pool really is 5 exercises.
+    const { container } = renderWithIntl(
+      <BadgeEarnedPrompt
+        pieceType="rook"
+        totalStars={12}
+        maxPossibleStars={15}
+        onContinue={vi.fn()}
+      />,
+    );
+    const glyphs = Array.from(container.querySelectorAll('span[aria-hidden="true"]'))
+      .map((n) => n.textContent)
+      .filter((t) => t === "★" || t === "☆");
+    expect(glyphs).toEqual(["★", "★", "★", "★", "☆"]);
   });
 });

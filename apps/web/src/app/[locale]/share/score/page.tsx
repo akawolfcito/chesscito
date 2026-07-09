@@ -3,22 +3,27 @@ import { Link } from "@/i18n/navigation";
 import { getTranslations } from "next-intl/server";
 import {
   SHARE_PIECES,
+  clampMaxStars,
   getShareOrigin,
   type SharePiece,
 } from "@/lib/og/share-urls";
 
-type SearchParams = { piece?: string; stars?: string };
+type SearchParams = { piece?: string; stars?: string; max?: string };
 
-function normalize(searchParams: SearchParams): { piece: SharePiece; stars: number } {
+function normalize(
+  searchParams: SearchParams,
+): { piece: SharePiece; stars: number; maxStars: number } {
   const rawPiece = (searchParams.piece ?? "").toLowerCase();
   const piece = (SHARE_PIECES as readonly string[]).includes(rawPiece)
     ? (rawPiece as SharePiece)
     : "rook";
+  const rawMax = Number.parseInt(searchParams.max ?? "", 10);
+  const maxStars = clampMaxStars(Number.isFinite(rawMax) ? rawMax : undefined);
   const rawStars = Number.parseInt(searchParams.stars ?? "", 10);
   const stars = Number.isFinite(rawStars)
-    ? Math.min(Math.max(rawStars, 0), 15)
+    ? Math.min(Math.max(rawStars, 0), maxStars)
     : 0;
-  return { piece, stars };
+  return { piece, stars, maxStars };
 }
 
 export async function generateMetadata({
@@ -26,7 +31,7 @@ export async function generateMetadata({
 }: {
   searchParams: SearchParams;
 }): Promise<Metadata> {
-  const { piece, stars } = normalize(searchParams);
+  const { piece, stars, maxStars } = normalize(searchParams);
   const tScore = await getTranslations("SCORE_SHARE_COPY");
   const tShare = await getTranslations("SHARE_COPY");
   const origin = getShareOrigin();
@@ -34,8 +39,8 @@ export async function generateMetadata({
   const description = tShare("score", { stars });
   // Slice A: leaderboard-first score card (was type=piece-complete, which
   // rendered the "{Piece} Mastered" art on a score share).
-  const ogImage = `${origin}/api/og/exercise?piece=${piece}&stars=${stars}&type=score-saved`;
-  const canonical = `${origin}/share/score?piece=${piece}&stars=${stars}`;
+  const ogImage = `${origin}/api/og/exercise?piece=${piece}&stars=${stars}&max=${maxStars}&type=score-saved`;
+  const canonical = `${origin}/share/score?piece=${piece}&stars=${stars}&max=${maxStars}`;
 
   return {
     title,

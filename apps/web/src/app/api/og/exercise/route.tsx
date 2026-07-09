@@ -10,6 +10,7 @@ import {
   sanitizeName,
   parseSquare,
 } from "@/lib/og/validators";
+import { ABSOLUTE_MAX_STARS, DEFAULT_MAX_STARS } from "@/lib/og/share-urls";
 import { buildExerciseFen, toAlgebraic } from "@/lib/og/exercise-fen";
 import {
   ogExerciseCardCopy,
@@ -40,8 +41,11 @@ export async function GET(req: Request) {
     qs.get("piece"),
     ["rook", "bishop", "knight", "pawn", "queen", "king"] as const,
   );
-  const stars = parseIntParam(qs.get("stars"), 0, 15, 0);
-  const maxStars = 15;
+  // `max` is the piece's real star ceiling (pool size × 3). Legacy links omit
+  // it and fall back to the baseline 10-exercise pool. Bounded so a crafted
+  // link cannot print an absurd denominator on the card.
+  const maxStars = parseIntParam(qs.get("max"), 3, ABSOLUTE_MAX_STARS, DEFAULT_MAX_STARS);
+  const stars = parseIntParam(qs.get("stars"), 0, maxStars, 0);
   const type = parseEnumParam(
     qs.get("type"),
     ["piece-complete", "badge-earned", "score-saved", "daily"] as const,

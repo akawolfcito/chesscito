@@ -50,6 +50,7 @@ export function ExercisesPopupsFixture({ variant }: { variant: Variant }) {
           nextPiece={null}
           hasClaimedBadge={true}
           totalStars={15}
+          maxPossibleStars={30}
           onNextPiece={noop}
           onArena={noop}
           onPracticeAgain={noop}
