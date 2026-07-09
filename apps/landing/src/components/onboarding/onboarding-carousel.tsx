@@ -57,9 +57,7 @@ export function OnboardingCarousel() {
             href="/api/enter?mode=learn"
             className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta"
           >
-            <span className="primary-play-cta-label">
-              {slide4("startLearning")}
-            </span>
+            <span className="primary-play-cta-label">{slide4("cta")}</span>
           </a>
         )
       }

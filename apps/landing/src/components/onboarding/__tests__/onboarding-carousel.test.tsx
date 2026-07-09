@@ -20,16 +20,40 @@ describe("OnboardingCarousel", () => {
   it("slide 1 names both modes and sells neither", () => {
     renderWithIntl(<OnboardingCarousel />);
     expect(screen.getByText("Learn")).toBeInTheDocument();
-    expect(screen.getByText("Start from zero")).toBeInTheDocument();
+    expect(screen.getByText("From zero")).toBeInTheDocument();
     expect(screen.getByText("Play")).toBeInTheDocument();
     expect(screen.getByText("Full matches")).toBeInTheDocument();
     expect(screen.queryByText(/\$/)).not.toBeInTheDocument();
   });
 
+  /**
+   * NEXT, NEXT, NEXT, START. The advance button never claims to start
+   * anything, so START means one thing everywhere: you are going in. That is
+   * also the word `welcome-back.tsx` puts in the same spot for a returning
+   * player, who never sees this carousel again.
+   */
+  it("labels the three advance buttons NEXT and only the final CTA START", () => {
+    renderWithIntl(<OnboardingCarousel />);
+
+    expect(screen.getByRole("button", { name: "NEXT" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "START" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
+    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
+    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
+
+    expect(screen.getByText("4 / 4")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "NEXT" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "START" })).toHaveAttribute(
+      "href",
+      "/api/enter?mode=learn",
+    );
+  });
+
   it("advances slide 1 -> 2 -> 3 -> 4 via the CTA button", () => {
     renderWithIntl(<OnboardingCarousel />);
 
-    fireEvent.click(screen.getByRole("button", { name: "START" }));
+    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
     expect(screen.getByText("2 / 4")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /decide better in 21 days/i })).toBeInTheDocument();
 
@@ -52,7 +76,7 @@ describe("OnboardingCarousel", () => {
    */
   it("slide 2 states the Season Pass price once and never mentions PRO", () => {
     renderWithIntl(<OnboardingCarousel />);
-    fireEvent.click(screen.getByRole("button", { name: "START" }));
+    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
 
     expect(screen.getByText("Season Pass, $0.99")).toBeInTheDocument();
     expect(screen.queryByText(/PRO/)).not.toBeInTheDocument();
@@ -66,7 +90,7 @@ describe("OnboardingCarousel", () => {
    */
   it("slide 3 leads with the PRO argument and never says free", () => {
     renderWithIntl(<OnboardingCarousel />);
-    fireEvent.click(screen.getByRole("button", { name: "START" }));
+    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
 
     expect(screen.getByText("Coach PRO, $1.99")).toBeInTheDocument();
@@ -75,11 +99,11 @@ describe("OnboardingCarousel", () => {
 
   it("slide 4 offers Learn as the only CTA, with Play reachable via a text link", () => {
     renderWithIntl(<OnboardingCarousel />);
-    fireEvent.click(screen.getByRole("button", { name: "START" }));
+    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
 
-    expect(screen.getByRole("link", { name: /learn pieces/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "START" })).toHaveAttribute(
       "href",
       "/api/enter?mode=learn",
     );
@@ -104,7 +128,7 @@ describe("OnboardingCarousel", () => {
     const back = screen.getByRole("button", { name: /previous slide/i });
     expect(back).toBeDisabled();
 
-    fireEvent.click(screen.getByRole("button", { name: "START" }));
+    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
     expect(screen.getByText("2 / 4")).toBeInTheDocument();
     expect(back).not.toBeDisabled();
 
@@ -120,7 +144,7 @@ describe("OnboardingCarousel", () => {
 
   it("forward arrow is disabled on slide 4 (no slide 5); back arrow returns to slide 3", () => {
     renderWithIntl(<OnboardingCarousel />);
-    fireEvent.click(screen.getByRole("button", { name: "START" }));
+    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
     expect(screen.getByRole("heading", { name: /learn the pieces first/i })).toBeInTheDocument();

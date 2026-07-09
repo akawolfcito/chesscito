@@ -14,10 +14,13 @@ const messages = {
       headline: "Two ways into chess.",
       support: "Learn the pieces, or jump straight into a match.",
       learnPill: "Learn",
-      learnPillSub: "Start from zero",
+      // Short enough to hold one line beside a 1.9rem icon at 390px. Two
+      // side-by-side pills leave each sublabel very little room, and a wrapped
+      // sublabel is the first thing the eye catches as wrong.
+      learnPillSub: "From zero",
       playPill: "Play",
       playPillSub: "Full matches",
-      cta: "START",
+      cta: "NEXT",
     },
     slide2: {
       // The surviving idea is decision making. Habit, focus, wellbeing and
@@ -43,7 +46,10 @@ const messages = {
       headline: "Learn the pieces first",
       support: "Play chess when you're ready.",
       learnDescription: "Build your daily chess habit.",
-      startLearning: "Learn Pieces",
+      // NEXT, NEXT, NEXT, START. The advance button never claims to start
+      // anything, so START keeps one meaning across the carousel and matches
+      // the word `welcome-back.tsx` puts in the same spot.
+      cta: "START",
       jumpToPlay: "Already know chess? Jump to Play",
     },
     welcomeBack: {

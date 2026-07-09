@@ -17,8 +17,8 @@ const messages: OnboardingMessages = {
       learnPill: "Aprende",
       learnPillSub: "Desde cero",
       playPill: "Juega",
-      playPillSub: "Partidas completas",
-      cta: "EMPEZAR",
+      playPillSub: "Partidas reales",
+      cta: "SIGUIENTE",
     },
     slide2: {
       headline: "Decide mejor en 21 días.",
@@ -40,7 +40,7 @@ const messages: OnboardingMessages = {
       headline: "Aprende las piezas primero",
       support: "Juega ajedrez cuando estés listo.",
       learnDescription: "Crea tu hábito diario de ajedrez.",
-      startLearning: "Aprende las piezas",
+      cta: "EMPEZAR",
       jumpToPlay: "¿Ya sabes jugar? Ve a Play",
     },
     welcomeBack: {
