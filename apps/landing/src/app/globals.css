@@ -256,19 +256,21 @@
   letter-spacing: 0;
 }
 
-/* Compact context: same gold/blue button chrome (hub-scaffold-practice-cta
-   / hub-scaffold-arena-cta below) sized to sit inline next to its price
-   row on Slide 4, instead of full-width below the frame. */
-.slide4-price-row .primary-play-cta {
-  width: auto;
-  min-height: 0;
-  flex: 0 0 auto;
+/* Slide 4 escape hatch: a text link, never a button. Its hit area is the
+   width of its own text, and min-height keeps that area tappable without
+   widening it. It sits inside the frame, above the primary CTA, so the
+   only thing below Learn Pieces is empty meadow. */
+.slide4-jump-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-size: 0.7rem;
+  min-height: 44px;
+  margin-top: 0.25rem;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(110, 65, 15, 0.75);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .primary-play-cta-piece-icon {
@@ -288,16 +290,14 @@
     radial-gradient(circle at 75% 75%, rgba(180, 105, 0, 0.35), transparent 35%),
     linear-gradient(145deg, #fbe04b 0%, #fcc00a 28%, #f3aa04 55%, #d38804 100%);
   border: none;
-  border-radius: 22px;
+  /* border-radius: 22px; */
   box-shadow:
     inset 0 3px 0 rgba(255, 255, 255, 0.45),
     inset 0 -5px 0 rgba(142, 78, 0, 0.35),
-    0 6px 0 #9a5a00,
+    /* 0 6px 0 #9a5a00, */
     0 0 0 2px rgba(255, 216, 74, 0.7),
-    0 6px 0 2px rgba(255, 216, 74, 0.7),
-    0 0 6px 2px rgba(255, 200, 40, 0.75),
-    0 8px 6px 2px rgba(255, 200, 40, 0.6),
-    0 12px 20px rgba(0, 0, 0, 0.35);
+    /* 0 6px 0 2px rgba(255, 216, 74, 0.7), */
+    0 0 6px 2px rgba(255, 200, 40, 0.75);
   text-shadow:
     -1px -1px 0 #6b3a06,
     1px -1px 0 #6b3a06,
@@ -319,8 +319,7 @@
 }
 
 .hub-scaffold-arena-cta {
-  min-height: 70px;
-  font-size: 1.05rem;
+  min-height: 50px;
   background: var(--cta-primary-blue-grad);
   border: 2px solid var(--cta-primary-blue-border);
   border-radius: 22px;

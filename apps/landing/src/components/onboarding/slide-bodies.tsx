@@ -13,10 +13,26 @@ function Divider() {
   )
 }
 
-function Heading({ headline, support }: { headline: string; support: string }) {
+/**
+ * `headlineClassName` exists so slides 2 and 3 can opt their headline into
+ * `.fantasy-title` (Rowdies). Slide 1's headline stays on the body face —
+ * it already sits under the Rowdies "Welcome to" and the CHESSCITO
+ * wordmark, and a third display face there is noise.
+ */
+function Heading({
+  headline,
+  support,
+  headlineClassName = '',
+}: {
+  headline: string
+  support: string
+  headlineClassName?: string
+}) {
   return (
     <>
-      <h1 className="text-sm font-extrabold text-[#3a2600]">{headline}</h1>
+      <h1 className={`text-sm font-extrabold text-[#3a2600] ${headlineClassName}`}>
+        {headline}
+      </h1>
       <Divider />
       <p className="text-xs text-[#5a4520]">{support}</p>
     </>
@@ -34,10 +50,10 @@ export function Slide1Body() {
       <AvatarWithFade
         src={assets.avatarSrc}
         alt=""
-        className="relative top-9"
+        className="relative top-9 w-48"
       />
       <div className="-mt-4 flex flex-col items-center z-10">
-        <span className="text-xl font-extrabold text-[#3a2600]">
+        <span className="fantasy-title text-xl font-extrabold text-[#3a2600]">
           {t('welcomeTo')}
         </span>
         <ArtImage
@@ -70,13 +86,17 @@ export function Slide2Body() {
   const assets = SLIDE_ASSETS[1]
   return (
     <>
-      <AvatarWithFade src={assets.avatarSrc} alt="" className="w-52 mt-9" />
+      <AvatarWithFade src={assets.avatarSrc} alt="" className="w-56 mt-9" />
       <ArtImage
         src={assets.titleSrc}
         alt="21-Day Mind Challenge"
         className="h-16 w-full -mt-14 z-10"
       />
-      <Heading headline={t('headline')} support={t('support')} />
+      <Heading
+        headline={t('headline')}
+        support={t('support')}
+        headlineClassName="fantasy-title"
+      />
       <div className="h-2 flex gap-2.5">
         <Pill
           icon={<ArtImage src={ICONS.focusPassport} alt="" />}
@@ -105,7 +125,11 @@ export function Slide3Body() {
         alt="Play Chess Arena"
         className="h-16 w-full -mt-16 z-10"
       />
-      <Heading headline={t('headline')} support={t('support')} />
+      <Heading
+        headline={t('headline')}
+        support={t('support')}
+        headlineClassName="fantasy-title"
+      />
       <div className="flex w-full gap-3 justify-center">
         <Pill
           icon={<ArtImage src={ICONS.savedGames} alt="" />}
@@ -125,88 +149,49 @@ export function Slide3Body() {
   )
 }
 
+/**
+ * One recommended action, one quiet way out. The two symmetrical mode cards
+ * this replaced asked the visitor to compare two products and two prices at
+ * the moment they know least, and the prices inverted the very preference
+ * the layout was built to express: Learn showed $0.99 while Play said
+ * "free", so the cheaper-looking path was the one we did not want.
+ *
+ * Both destinations stay reachable and the in-app switch makes the choice
+ * reversible, so the escape hatch is a text link, not a rival button.
+ *
+ * The CTA itself lives in the carousel's `ctaSlot`, below the frame, at the
+ * same height START and NEXT occupy on slides 1-3. A button that moves on
+ * the last slide asks the thumb to unlearn three screens of muscle memory
+ * exactly where the tap matters most. The escape link stays up here, above
+ * that button, so overshooting the CTA lands on meadow rather than on Play.
+ */
 export function Slide4Body() {
   const t = useTranslations('onboarding.slide4')
   const assets = SLIDE_ASSETS[3]
   return (
-    <>
-      <AvatarWithFade src={assets.avatarSrc} alt="" className="mt-9 w-24" />
-      <h1 className="text-2xl font-extrabold text-[#3a2600] -mt-24 z-10">
+    /* `mt-10` is load-bearing. SlideShell's content box starts at the frame
+       PNG's own top edge, which is where its crown and ornate border are
+       drawn — slides 1-3 hide that by leading with a fade-masked avatar,
+       but text placed there collides with the crown. The margin drops the
+       header into the flat cream area. `px-1` keeps the content off the
+       frame's inner gold bevel, which SlideShell's px-[9%] lands right on. */
+    <div className="mt-10 flex w-full flex-col items-center gap-2 px-1">
+      <h1 className="fantasy-title text-lg font-extrabold leading-tight text-[#3a2600]">
         {t('headline')}
       </h1>
-      <p className="text-xs text-[#5a4520]">{t('footnote')}</p>
-      {/* <p className="text-sm text-[#5a4520]">{t('support')}</p> */}
-
-      {/* Sally's fix (slide 4 UX review): price info stays a flat,
-          de-emphasized strip — no button bevel/shadow — so it reads as
-          context. Each row now pairs its price info with the matching
-          entry-mode CTA inline (moved in from the row-below-the-frame
-          layout at the founder's request). */}
-      <div className="slide4-price-row flex w-full flex-col gap-2 px-4 py-3 text-xs text-[#5a4520]">
-        <div className="flex items-start gap-2">
-          <ArtImage
-            src={ICONS.seasonPass}
-            alt=""
-            className="mt-0.5 h-16 w-16 shrink-0"
-          />
-          <div className="flex flex-1 flex-col">
-            <p>{t('seasonPassDescription')}</p>
-            <p className="font-extrabold">
-              {t('seasonPassLabel')}:{' '}
-              <span className="font-bold text-[#3b9404]">
-                {t('seasonPassPrice')}
-              </span>
-            </p>
-            <div className="flex w-full justify-center mt-2">
-              <a
-                href="/api/enter?mode=learn"
-                className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta shrink-0"
-              >
-                <span className="primary-play-cta-label">
-                  {t('startLearning')}
-                </span>
-                <span className="primary-play-cta-piece-icon w-full ml-1">
-                  <ArtImage
-                    src={ICONS.learn}
-                    alt=""
-                    className="w-10 -mt-2 -mx-2"
-                  />
-                </span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
+      <p className="text-xs text-[#5a4520]">{t('support')}</p>
       <Divider />
-      <div className="slide4-price-row flex w-full flex-col gap-2 px-4 py-3 text-xs text-[#5a4520]">
-        <div className="flex items-start gap-2">
-          <div className="flex flex-1 flex-col">
-            <p>{t('proDescription')}</p>
-            <p className="font-extrabold">
-              {t('proLabel')}:{' '}
-              <span className="font-bold text-[#3b9404]">{t('proPrice')}</span>
-            </p>
-            <div className="flex w-full justify-center mt-2">
-              <a
-                href="/api/enter?mode=play"
-                className="primary-play-cta primary-play-cta--playhub hub-scaffold-arena-cta shrink-0"
-              >
-                {/* <span className="primary-play-cta-piece-icon">
-                  <ArtImage src={ICONS.enterArenaPiece} alt="" />
-                </span> */}
-                <span className="primary-play-cta-label">
-                  {t('enterArena')}
-                </span>
-              </a>
-            </div>
-          </div>
-          <ArtImage
-            src={ICONS.pro}
-            alt=""
-            className="mt-0.5 h-16 w-16 shrink-0"
-          />
-        </div>
-      </div>
-    </>
+      {/* Plain ArtImage, not AvatarWithFade: this art is the wolf *and* his
+          board, and the avatar fade would dissolve the board's bottom rank. */}
+      <ArtImage
+        src={assets.avatarSrc}
+        alt=""
+        className="w-full max-w-[15rem]"
+      />
+      <p className="text-xs text-[#5a4520]">{t('learnDescription')}</p>
+      <a href="/api/enter?mode=play" className="slide4-jump-link">
+        {t('jumpToPlay')}
+      </a>
+    </div>
   )
 }

@@ -127,7 +127,7 @@ export function SlideShell({
               Train Pieces / Enter Arena row, not squeezed to the frame's
               width. Applies to the single START/NEXT button too; a
               wider full-width button reads fine there as well. */}
-          {ctaSlot ? <div className="w-full">{ctaSlot}</div> : null}
+          {ctaSlot ? <div>{ctaSlot}</div> : null}
         </div>
 
         <div className="w-full pb-1">{footer}</div>
