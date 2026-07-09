@@ -16,6 +16,7 @@ import {
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
+import { parsePieceStars } from "@/lib/exercises/badge-progress";
 import { THEME_CONFIG } from "@/lib/theme";
 import type { PieceId } from "@/lib/game/types";
 import { pieceProgressStorageKey } from "@/lib/lite-progress-storage";
@@ -41,14 +42,11 @@ type BadgeInfo = {
 };
 
 function readStarsFromStorage(piece: PieceId): number[] {
-  if (typeof window === "undefined") return [0, 0, 0, 0, 0];
+  if (typeof window === "undefined") return parsePieceStars(null, piece);
   try {
-    const raw = localStorage.getItem(pieceProgressStorageKey(piece));
-    if (!raw) return [0, 0, 0, 0, 0];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed.stars) ? parsed.stars : [0, 0, 0, 0, 0];
+    return parsePieceStars(localStorage.getItem(pieceProgressStorageKey(piece)), piece);
   } catch {
-    return [0, 0, 0, 0, 0];
+    return parsePieceStars(null, piece);
   }
 }
 

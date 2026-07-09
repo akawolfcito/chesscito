@@ -24,6 +24,17 @@ function setStars(piece: PieceId, stars: number[]) {
   );
 }
 
+/** The shape the app actually persists since the id-keyed migration
+ *  (2026-06-16). `setStars` above writes the legacy array, which is why
+ *  these tests kept passing while the real sheet showed every piece as
+ *  locked. */
+function setStarsById(piece: PieceId, starsById: Record<string, number>) {
+  localStorage.setItem(
+    `chesscito:progress:${piece}`,
+    JSON.stringify({ piece, currentId: `${piece}-1`, stars: starsById }),
+  );
+}
+
 function renderBadgeSheet({
   badgesClaimed = {
     rook: false,
@@ -76,6 +87,39 @@ describe("BadgeSheet — claim action presentation", () => {
 
     expect(screen.getAllByText("Owned").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Locked").length).toBeGreaterThan(0);
+  });
+});
+
+describe("BadgeSheet — id-keyed progress (regression: Claim never rendered)", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("offers Claim for a piece whose id-keyed stars cross the threshold", () => {
+    // 18★ on rook — the founder's on-device progress. Read as a positional
+    // array this scored 0★ and the piece rendered locked, so the Claim CTA
+    // was unreachable for every player past the threshold.
+    setStarsById("rook", {
+      "rook-1": 3,
+      "rook-2": 3,
+      "rook-3": 3,
+      "rook-4": 3,
+      "rook-5": 3,
+      "rook-6": 3,
+    });
+
+    renderBadgeSheet();
+
+    expect(screen.getByRole("button", { name: "Claim Badge" })).toBeInTheDocument();
+    expect(screen.getByText("Claimable")).toBeInTheDocument();
+  });
+
+  it("keeps a piece below the threshold locked", () => {
+    setStarsById("rook", { "rook-1": 3, "rook-2": 3 });
+
+    renderBadgeSheet();
+
+    expect(screen.queryByRole("button", { name: "Claim Badge" })).not.toBeInTheDocument();
   });
 });
 
@@ -196,10 +240,10 @@ describe("BadgeSheet — ContextualHeader canary", () => {
   it("renders the HERO BAND stats line (pieces + stars) below the header", () => {
     setStars("rook", [3, 3, 3, 3, 3]);
     renderBadgeSheet();
-    // 15 of 90 stars (rook full = 15 stars). Bishop is claimed in the
-    // default fixture → piecesClaimed = 1. HERO BAND format renders
-    // "1/6 PIECES" and "15/90 ★" as sibling spans.
+    // The denominator is the real catalog: 6 pieces × 10 exercises × 3★ = 180.
+    // The legacy 5-slot fixture fills rook's first five exercises → 15★.
+    // Bishop is claimed in the default fixture → piecesClaimed = 1.
     expect(screen.getByText(/1\/6 PIECES/i)).toBeInTheDocument();
-    expect(screen.getByText(/15\/90 ★/)).toBeInTheDocument();
+    expect(screen.getByText(/15\/180 ★/)).toBeInTheDocument();
   });
 });
