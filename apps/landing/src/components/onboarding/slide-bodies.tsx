@@ -34,7 +34,7 @@ export function Slide1Body() {
       <AvatarWithFade
         src={assets.avatarSrc}
         alt=""
-        className="relative top-9"
+        className="relative top-9 w-48"
       />
       <div className="-mt-4 flex flex-col items-center z-10">
         <span className="text-xl font-extrabold text-[#3a2600]">
@@ -70,7 +70,7 @@ export function Slide2Body() {
   const assets = SLIDE_ASSETS[1]
   return (
     <>
-      <AvatarWithFade src={assets.avatarSrc} alt="" className="w-52 mt-9" />
+      <AvatarWithFade src={assets.avatarSrc} alt="" className="w-56 mt-9" />
       <ArtImage
         src={assets.titleSrc}
         alt="21-Day Mind Challenge"
@@ -125,88 +125,104 @@ export function Slide3Body() {
   )
 }
 
+function ModeCard({
+  tone,
+  artSrc,
+  title,
+  description,
+  priceIconSrc,
+  priceLabel,
+  price,
+  href,
+  ctaClassName,
+}: {
+  tone: 'learn' | 'play'
+  artSrc: string
+  title: string
+  description: string
+  priceIconSrc: string
+  priceLabel: string
+  price: string
+  href: string
+  ctaClassName: string
+}) {
+  return (
+    <div className={`slide4-mode-card slide4-mode-card--${tone}`}>
+      <ArtImage src={artSrc} alt="" className="slide4-mode-card-art" />
+      <div className="slide4-mode-card-body">
+        <h2 className="text-base font-extrabold leading-tight text-[#3a2600]">
+          {title}
+        </h2>
+        <p className="text-[0.68rem] leading-snug text-[#5a4520]">
+          {description}
+        </p>
+        <div className="candy-tray-pill hub-hud-pill">
+          <span className="candy-tray-pill-icon--floating">
+            <ArtImage src={priceIconSrc} alt="" />
+          </span>
+          <span className="text-[0.62rem]">
+            {priceLabel}{' '}
+            <span className="font-bold text-[#3b9404]">{price}</span>
+          </span>
+        </div>
+        <a
+          href={href}
+          className={`primary-play-cta primary-play-cta--playhub ${ctaClassName}`}
+        >
+          <span className="primary-play-cta-label">{title}</span>
+        </a>
+      </div>
+    </div>
+  )
+}
+
 export function Slide4Body() {
   const t = useTranslations('onboarding.slide4')
   const assets = SLIDE_ASSETS[3]
   return (
-    <>
-      <AvatarWithFade src={assets.avatarSrc} alt="" className="mt-9 w-24" />
-      <h1 className="text-2xl font-extrabold text-[#3a2600] -mt-24 z-10">
-        {t('headline')}
-      </h1>
-      <p className="text-xs text-[#5a4520]">{t('footnote')}</p>
-      {/* <p className="text-sm text-[#5a4520]">{t('support')}</p> */}
-
-      {/* Sally's fix (slide 4 UX review): price info stays a flat,
-          de-emphasized strip — no button bevel/shadow — so it reads as
-          context. Each row now pairs its price info with the matching
-          entry-mode CTA inline (moved in from the row-below-the-frame
-          layout at the founder's request). */}
-      <div className="slide4-price-row flex w-full flex-col gap-2 px-4 py-3 text-xs text-[#5a4520]">
-        <div className="flex items-start gap-2">
-          <ArtImage
-            src={ICONS.seasonPass}
-            alt=""
-            className="mt-0.5 h-16 w-16 shrink-0"
-          />
-          <div className="flex flex-1 flex-col">
-            <p>{t('seasonPassDescription')}</p>
-            <p className="font-extrabold">
-              {t('seasonPassLabel')}:{' '}
-              <span className="font-bold text-[#3b9404]">
-                {t('seasonPassPrice')}
-              </span>
-            </p>
-            <div className="flex w-full justify-center mt-2">
-              <a
-                href="/api/enter?mode=learn"
-                className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta shrink-0"
-              >
-                <span className="primary-play-cta-label">
-                  {t('startLearning')}
-                </span>
-                <span className="primary-play-cta-piece-icon w-full ml-1">
-                  <ArtImage
-                    src={ICONS.learn}
-                    alt=""
-                    className="w-10 -mt-2 -mx-2"
-                  />
-                </span>
-              </a>
-            </div>
-          </div>
+    /* `mt-10` is load-bearing. SlideShell's content box starts at the frame
+       PNG's own top edge, which is where its crown and ornate border are
+       drawn — slides 1-3 hide that by leading with a fade-masked avatar,
+       but text placed there collides with the crown. The margin drops the
+       header into the flat cream area. `px-2` keeps the header and cards
+       off the frame's inner gold bevel, which SlideShell's own px-[9%]
+       lands right on. */
+    <div className="mt-10 flex w-full flex-col items-center gap-2 px-2">
+      {/* The only slide whose heading is not centered: the two cards below
+          are left-aligned rows, so a centered title would float free of
+          them. The wolf tucks into the right gutter the title leaves. */}
+      <div className="flex w-full items-start gap-1 text-left">
+        <div className="flex flex-1 flex-col">
+          <h1 className="text-xl font-extrabold leading-tight text-[#3a2600]">
+            {t('headline')}
+          </h1>
+          <p className="text-xs text-[#5a4520]">{t('support')}</p>
         </div>
+        <AvatarWithFade src={assets.avatarSrc} alt="" className="-mt-2 w-20" />
       </div>
       <Divider />
-      <div className="slide4-price-row flex w-full flex-col gap-2 px-4 py-3 text-xs text-[#5a4520]">
-        <div className="flex items-start gap-2">
-          <div className="flex flex-1 flex-col">
-            <p>{t('proDescription')}</p>
-            <p className="font-extrabold">
-              {t('proLabel')}:{' '}
-              <span className="font-bold text-[#3b9404]">{t('proPrice')}</span>
-            </p>
-            <div className="flex w-full justify-center mt-2">
-              <a
-                href="/api/enter?mode=play"
-                className="primary-play-cta primary-play-cta--playhub hub-scaffold-arena-cta shrink-0"
-              >
-                {/* <span className="primary-play-cta-piece-icon">
-                  <ArtImage src={ICONS.enterArenaPiece} alt="" />
-                </span> */}
-                <span className="primary-play-cta-label">
-                  {t('enterArena')}
-                </span>
-              </a>
-            </div>
-          </div>
-          <ArtImage
-            src={ICONS.pro}
-            alt=""
-            className="mt-0.5 h-16 w-16 shrink-0"
-          />
-        </div>
-      </div>
-    </>
+      <ModeCard
+        tone="learn"
+        artSrc={ICONS.learn}
+        title={t('startLearning')}
+        description={t('learnDescription')}
+        priceIconSrc={ICONS.seasonPass}
+        priceLabel={t('seasonPassLabel')}
+        price={t('seasonPassPrice')}
+        href="/api/enter?mode=learn"
+        ctaClassName="hub-scaffold-practice-cta"
+      />
+      <ModeCard
+        tone="play"
+        artSrc={ICONS.play}
+        title={t('enterArena')}
+        description={t('playDescription')}
+        priceIconSrc={ICONS.pro}
+        priceLabel={t('proLabel')}
+        price={t('proPrice')}
+        href="/api/enter?mode=play"
+        ctaClassName="hub-scaffold-arena-cta"
+      />
+    </div>
   )
 }

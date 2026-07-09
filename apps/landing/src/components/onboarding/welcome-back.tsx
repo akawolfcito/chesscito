@@ -38,7 +38,7 @@ export async function WelcomeBack({ preferredMode }: { preferredMode: PreferredM
         />
       }
     >
-      <AvatarWithFade src={assets.avatarSrc} alt="" className="relative top-3" />
+      <AvatarWithFade src={assets.avatarSrc} alt="" className="relative top-3 w-48" />
       <div className="-mt-3 flex flex-col items-center gap-0.5">
         <span className="text-sm font-extrabold text-[#3a2600]">
           {t("slide1.welcomeTo")}

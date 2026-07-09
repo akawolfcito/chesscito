@@ -256,19 +256,52 @@
   letter-spacing: 0;
 }
 
-/* Compact context: same gold/blue button chrome (hub-scaffold-practice-cta
-   / hub-scaffold-arena-cta below) sized to sit inline next to its price
-   row on Slide 4, instead of full-width below the frame. */
-.slide4-price-row .primary-play-cta {
-  width: auto;
-  min-height: 0;
-  flex: 0 0 auto;
-  display: inline-flex;
+/* Slide 4 entry-point cards: art on the left, and a right column stacking
+   title, blurb, price chip and CTA. The two tones map to the destinations
+   they open — gold for Learn, blue for Play — matching the CTA chrome
+   (hub-scaffold-practice-cta / hub-scaffold-arena-cta) each one carries. */
+.slide4-mode-card {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem 0.6rem;
+  border-radius: 18px;
+  text-align: left;
+}
+
+.slide4-mode-card--learn {
+  background: linear-gradient(160deg, rgba(255, 243, 202, 0.95), rgba(246, 223, 156, 0.85));
+  border: 2px solid rgba(214, 168, 60, 0.5);
+}
+
+.slide4-mode-card--play {
+  background: linear-gradient(160deg, rgba(217, 238, 255, 0.95), rgba(176, 213, 245, 0.9));
+  border: 2px solid rgba(96, 156, 214, 0.5);
+}
+
+.slide4-mode-card-art {
+  flex: 0 0 34%;
+  width: 34%;
+}
+
+.slide4-mode-card-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+
+/* Compact context: same button chrome, sized to the card's right column
+   instead of spanning the full frame width like the slide 1-3 CTAs. */
+.slide4-mode-card .primary-play-cta {
+  width: 100%;
+  min-height: 0;
+  padding: 0.55rem 0.75rem;
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
 }
 
 .primary-play-cta-piece-icon {
