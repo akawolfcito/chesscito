@@ -19,10 +19,24 @@ documentación: el próximo que lo lea va a trabajar sobre un bug que no existe.
 
 ## 1. Barato y cerrable hoy (< 1h cada uno)
 
-**a. Baseline VR `hub-shop-sheet-open` — está ROJO.** Verificado corriéndolo.
-Espera 3 SKUs retirados (`5c8e0f5d`, `6bf6c344`). Es limpieza, no decisión de
-producto. Refrescar con `--update-snapshots=all` y abrir el PNG para confirmar
-que el diff es solo los SKUs que ya no existen.
+**a. Baseline VR `hub-shop-sheet-open` — CERRADO** (`28b2f75`). Era **dos** fallos
+apilados, no uno:
+
+1. El que este doc predijo: el baseline traía los 3 SKUs retirados
+   (`5c8e0f5d`, `6bf6c344`). Refrescado con `--update-snapshots=all`; el PNG
+   confirma que el diff son esos 3 tiles + el header `SHOP` → `Shop`.
+2. **El que nadie vio: contaminación de env.** El test ni siquiera llegaba al
+   screenshot — moría antes en la aserción de precio, con las píldoras en
+   "Coming soon". Causa: un `NEXT_PUBLIC_CHAIN_ID=11142220` exportado en el
+   shell, que **gana sobre `.env.local`** en Next. `getConfiguredChainId()`
+   devolvía Sepolia mientras wagmi resolvía `chainId = 42220` (celo va primera
+   en `chains`), así que `getShopAddress()` → `null`, la query quedaba
+   `enabled: false` y no salía un solo request RPC.
+
+Refrescar el baseline con ese env sucio habría **congelado "Coming soon" en la
+imagen**, dejando un VR verde que certifica una tienda muerta — exactamente
+[[feedback_tests_green_against_dead_shape]] otra vez, ahora en el eje del
+entorno. Antes de correr VR: `env | grep NEXT_PUBLIC`.
 
 **b. Backlog PLAY #7 — icono de Coach en el HUB.** El asset ya existe en los tres
 formatos (`public/art/new-icons-chesscito/training.{png,webp,avif}`). Es un swap
@@ -80,7 +94,7 @@ Borrar una pantalla intermedia.
 
 ## Orden recomendado
 
-1. **(a)** VR rojo — 10 min, quita ruido de CI.
+1. ~~**(a)** VR rojo~~ — CERRADO (`28b2f75`). Ver arriba: eran dos fallos.
 2. **(c)** Custom errors — el mejor ratio dolor/hora, y hoy mismo te mordió tres veces.
 3. **(b)** Icono de Coach — trivial, el asset ya está.
 4. **(d)** Confirmación de LUZ — borrar una pantalla.
