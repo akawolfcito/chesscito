@@ -158,6 +158,12 @@ export function Slide3Body() {
  *
  * Both destinations stay reachable and the in-app switch makes the choice
  * reversible, so the escape hatch is a text link, not a rival button.
+ *
+ * The CTA itself lives in the carousel's `ctaSlot`, below the frame, at the
+ * same height START and NEXT occupy on slides 1-3. A button that moves on
+ * the last slide asks the thumb to unlearn three screens of muscle memory
+ * exactly where the tap matters most. The escape link stays up here, above
+ * that button, so overshooting the CTA lands on meadow rather than on Play.
  */
 export function Slide4Body() {
   const t = useTranslations('onboarding.slide4')
@@ -183,12 +189,6 @@ export function Slide4Body() {
         className="w-full max-w-[15rem]"
       />
       <p className="text-xs text-[#5a4520]">{t('learnDescription')}</p>
-      <a
-        href="/api/enter?mode=learn"
-        className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta"
-      >
-        <span className="primary-play-cta-label">{t('startLearning')}</span>
-      </a>
       <a href="/api/enter?mode=play" className="slide4-jump-link">
         {t('jumpToPlay')}
       </a>

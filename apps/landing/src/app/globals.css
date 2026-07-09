@@ -257,14 +257,14 @@
 }
 
 /* Slide 4 escape hatch: a text link, never a button. Its hit area is the
-   width of its own text so a thumb that overshoots the primary CTA lands
-   on nothing rather than on the one destination we did not recommend.
-   min-height keeps that area tappable without widening it. */
+   width of its own text, and min-height keeps that area tappable without
+   widening it. It sits inside the frame, above the primary CTA, so the
+   only thing below Learn Pieces is empty meadow. */
 .slide4-jump-link {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
   padding: 0 0.5rem;
   font-size: 0.75rem;
   font-weight: 700;

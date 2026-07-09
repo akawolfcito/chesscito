@@ -25,6 +25,7 @@ export function OnboardingCarousel() {
   const slide1 = useTranslations("onboarding.slide1");
   const slide2 = useTranslations("onboarding.slide2");
   const slide3 = useTranslations("onboarding.slide3");
+  const slide4 = useTranslations("onboarding.slide4");
 
   const advanceLabel =
     step === 1 ? slide1("cta") : step === 2 ? slide2("cta") : slide3("cta");
@@ -48,18 +49,18 @@ export function OnboardingCarousel() {
             <span className="primary-play-cta-label">{advanceLabel}</span>
           </button>
         ) : (
-          // Invisible same-size placeholder — slide 4 has no CTA button of
-          // its own (its 2 real CTAs live inline in the frame), but without
-          // this the frame+CTA block is shorter than on slides 1-3, so
-          // SlideShell's vertical centering gives it a bigger top gap than
-          // every other slide. Matching the block height keeps that gap
-          // identical across all 4 slides.
-          <div
-            aria-hidden="true"
-            className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta invisible"
+          // Slide 4's own CTA, sitting exactly where START and NEXT sat on
+          // the three slides before it. Its escape link stays inside the
+          // frame, above this button: a thumb overshooting the CTA then
+          // lands on empty meadow rather than on Play.
+          <a
+            href="/api/enter?mode=learn"
+            className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta"
           >
-            <span className="primary-play-cta-label">{advanceLabel}</span>
-          </div>
+            <span className="primary-play-cta-label">
+              {slide4("startLearning")}
+            </span>
+          </a>
         )
       }
       footer={
