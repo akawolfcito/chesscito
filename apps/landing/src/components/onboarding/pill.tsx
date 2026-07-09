@@ -4,27 +4,24 @@ import type { ReactNode } from "react";
  * `.candy-tray-pill` + `.hub-hud-pill` are ported verbatim from apps/web
  * globals.css — the same HUD chip family used across the Hub — so these
  * pills match the in-app look exactly.
+ *
+ * A pill is a thing you own. Prices are not pills: they render as a line of
+ * text next to the tray, never inside it.
  */
 export function Pill({
   icon,
   label,
   sublabel,
-  tone = "cream",
   iconRem = 1.8,
 }: {
   icon: ReactNode;
   label: string;
   sublabel?: string;
-  tone?: "cream" | "gold";
   /** Overrides `.candy-tray-pill-icon--floating`'s default 1.8rem icon size. */
   iconRem?: number;
 }) {
   return (
-    <div
-      className={`candy-tray-pill hub-hud-pill w-full ${
-        tone === "gold" ? "onboarding-pill--gold" : ""
-      }`}
-    >
+    <div className="candy-tray-pill hub-hud-pill w-full">
       <span
         className="candy-tray-pill-icon--floating"
         style={{ width: `${iconRem}rem`, height: `${iconRem}rem` }}
@@ -32,8 +29,12 @@ export function Pill({
         {icon}
       </span>
       <span className="flex flex-col items-start leading-tight">
-        <span className="text-[0.6rem]">{label}</span>
-        {sublabel ? <span className="text-[0.7rem] opacity-80">{sublabel}</span> : null}
+        {/* The label names the thing, the sublabel qualifies it, and the scale
+            has to agree. It used to say the opposite (label 0.6, sublabel 0.7)
+            with the dimming on the larger of the two, so "21 focus days"
+            outweighed "Focus Passport". */}
+        <span className="text-[0.7rem]">{label}</span>
+        {sublabel ? <span className="text-[0.6rem] opacity-80">{sublabel}</span> : null}
       </span>
     </div>
   );

@@ -4,36 +4,36 @@ import type { OnboardingMessages } from "./en";
  * Real ES copy for the onboarding slides. Typed against
  * `OnboardingMessages` so it can never silently drift out of shape
  * from the EN source. Branded product names (Season Pass, Coach PRO,
- * PRO, Focus Passport) stay in English; everything else is natural
- * Spanish. No em/en-dashes per the anti-AI-prose rule.
+ * PRO, Focus Passport, 21 Day Challenge) stay in English; everything else
+ * is natural Spanish. No em/en-dashes per the anti-AI-prose rule.
  */
 const messages: OnboardingMessages = {
   onboarding: {
     progress: "{current} / {total}",
     slide1: {
       welcomeTo: "Bienvenido a",
-      headline: "Convierte el ajedrez en tu ritual diario de enfoque.",
-      support: "Entrena tu mente, gana constancia y crece jugada a jugada.",
+      headline: "Dos caminos hacia el ajedrez.",
+      support: "Aprende las piezas, o entra directo a una partida.",
       learnPill: "Aprende",
+      learnPillSub: "Desde cero",
       playPill: "Juega",
+      playPillSub: "Partidas completas",
       cta: "EMPEZAR",
     },
     slide2: {
-      headline: "Crea un hábito diario de ajedrez.",
-      support: "Entrena cada día y desbloquea tu camino de recompensas.",
+      headline: "Decide mejor en 21 días.",
+      support: "Un hábito diario que entrena cómo eliges, en el tablero y fuera de él.",
       passportLabel: "Focus Passport",
       passportSub: "21 días de enfoque",
-      seasonPassLabel: "Season Pass",
-      seasonPassPrice: "$0.99",
-      footnote: "El Season Pass desbloquea el camino de recompensas. PRO incluye Season Pass.",
+      price: "Season Pass, $0.99",
       cta: "SIGUIENTE",
     },
     slide3: {
-      headline: "Juega gratis. Mejora con Coach PRO.",
-      support: "Juega partidas, guarda tu progreso y mejora con Coach PRO.",
+      headline: "Coach PRO incluye el Season Pass.",
+      support: "Tus partidas se revisan, y el 21 Day Challenge viene incluido.",
       savedGamesPill: "Partidas guardadas",
-      coachProPill: "Coach PRO",
-      proPill: "PRO $1.99 incluye Season Pass.",
+      coachReviewPill: "Revisión del Coach",
+      price: "Coach PRO, $1.99",
       cta: "SIGUIENTE",
     },
     slide4: {
@@ -44,6 +44,7 @@ const messages: OnboardingMessages = {
       jumpToPlay: "¿Ya sabes jugar? Ve a Play",
     },
     welcomeBack: {
+      headline: "Tu tablero te espera.",
       cta: "EMPEZAR",
       notSureLink: "¿No sabes cuál? Ver otros modos",
     },

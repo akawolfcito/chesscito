@@ -404,29 +404,15 @@
     drop-shadow(0 3px 4px rgba(0, 0, 0, 0.32)) drop-shadow(0 1px 0 rgba(110, 65, 15, 0.45));
 }
 
-/* Local-only modifier (no apps/web equivalent) — gold PRO pill on slide 3,
-   same chip shape/shadow as .hub-hud-pill, cream gradient swapped for gold. */
-.onboarding-pill--gold {
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255, 239, 100, 0.9), transparent 28%),
-    linear-gradient(145deg, #fbe04b 0%, #fcc00a 28%, #f3aa04 55%, #d38804 100%);
-  border: none;
-  border-radius: 22px;
-  box-shadow:
-    inset 0 3px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -5px 0 rgba(142, 78, 0, 0.35);
-    /* 0 6px 0 #9a5a00,
-    0 0 0 2px rgba(255, 216, 74, 0.7),
-    0 6px 0 2px rgba(255, 216, 74, 0.7),
-    0 0 6px 2px rgba(255, 200, 40, 0.75),
-    0 8px 6px 2px rgba(255, 200, 40, 0.6),
-    0 12px 20px rgba(0, 0, 0, 0.35); */
-  text-shadow:
-    -1px -1px 0 #6b3a06,
-    1px -1px 0 #6b3a06,
-    -1px 1px 0 #6b3a06,
-    1px 1px 0 #6b3a06,
-    0 2px 2px rgba(0, 0, 0, 0.5);
-  filter: none;
-  color: #ffffff;
+/* The price of the thing the slide just described. A line, not a chip: a pill
+   is an object you own, and putting a price in the same tray as Focus Passport
+   tells the eye they are the same kind of thing. Slide 3's gold PRO pill lived
+   here until 2026-07-08, when its label ("PRO $1.99 includes Season Pass") was
+   promoted to the slide's headline, where an argument that load-bearing
+   belongs. Recover it from git if a gold treatment is ever wanted again. */
+.onboarding-price {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #5a4520;
 }
