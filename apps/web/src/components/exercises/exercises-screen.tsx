@@ -125,6 +125,7 @@ import { classifyTxError, classifyTxErrorKind, isTransactionTimeout, isUserCance
 import { getContextAction, getRewardActions } from "@/lib/game/context-action";
 import { BADGE_THRESHOLD, labyrinthStars } from "@/lib/game/exercises";
 import { getMaxPossibleStars } from "@/lib/game/progress-adapter";
+import { POINTS_PER_STAR } from "@/lib/game/score";
 import {
   areAllLabyrinthsSolved,
   getLabyrinthBest,
@@ -168,7 +169,7 @@ type SignatureResponse =
   | { error: string };
 
 type PieceKey = "rook" | "bishop" | "knight" | "pawn" | "queen" | "king";
-const POINTS_PER_STAR = 100n;
+const POINTS_PER_STAR_BIG = BigInt(POINTS_PER_STAR);
 
 /**
  * Hold the `<TxProgressSteps current="done">` toast for this many ms after
@@ -823,7 +824,7 @@ export function ExercisesScreen({
   const [paymentToken, setPaymentToken] = useState<PaymentToken | null>(null);
   const feeCurrency = useMemo(() => getMiniPayFeeCurrency(chainId), [chainId]);
   const levelId = useMemo(() => getLevelId(selectedPiece), [selectedPiece]);
-  const score = useMemo(() => BigInt(Math.max(1, totalStars)) * POINTS_PER_STAR, [totalStars]);
+  const score = useMemo(() => BigInt(Math.max(1, totalStars)) * POINTS_PER_STAR_BIG, [totalStars]);
   const maxPossibleStars = useMemo(() => getMaxPossibleStars(selectedPiece), [selectedPiece]);
 
   // v1: tracks last-exercise time only. 1000n fallback after board reset

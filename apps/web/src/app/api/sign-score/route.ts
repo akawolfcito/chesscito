@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getMaxSubmittableScore } from "@/lib/game/score";
 import {
   createDeadline,
   createNonce,
@@ -27,8 +28,9 @@ export async function POST(request: Request) {
     await enforceRateLimit(getRequestIp(request), player);
 
     const levelId = parseInteger(body.levelId, "levelId", 1, 10_000);
-    // Max score: 15 stars × 100 pts = 1500 per piece level
-    const score = parseInteger(body.score, "score", 0, 1_500);
+    // Ceiling derived from the catalog, never hardcoded: a stale cap silently
+    // rejects the best players. See lib/game/score.ts.
+    const score = parseInteger(body.score, "score", 0, getMaxSubmittableScore());
     const timeMs = parseInteger(body.timeMs, "timeMs", 1, 3_600_000);
     const nonce = createNonce();
     const deadline = createDeadline();

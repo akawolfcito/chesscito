@@ -104,10 +104,18 @@ Ojo con el orden: el punto rojo sobre el badge no sirve de nada hasta que el Cla
 
 ---
 
-## Orden que propongo
+## Estado
 
-1. **Bug 2** (badge) — puro, testeable, sin plata de por medio. Empieza aquí.
-2. **Bug 1** (cap de score) — un número y un test que lo ata al catálogo.
-3. Re-smoke de 1 y 2 en tu teléfono viejo (el de 18★ es el mejor caso de prueba que tenemos).
-4. Refrescar baseline VR del shop.
-5. Sistema de notificación (punto rojo) + reubicación del CTA dorado → flujo de diseño.
+- ✅ **Bug 2 arreglado** — `ea39727`. Módulo puro `lib/exercises/badge-progress.ts`, 9 tests.
+- ✅ **Bug 1 arreglado** — `lib/game/score.ts` deriva el techo del catálogo; el route lo consume.
+  El test viejo del route mockeaba `parseInteger` entero, así que nunca ejercía el límite: por eso
+  el cap de 1500 sobrevivió al crecimiento de los pools. `route-score-bounds.test.ts` lo ejerce de
+  verdad (1800 → 200, techo+1 → 400).
+
+## Pendiente
+
+1. Re-smoke de 1 y 2 en el teléfono de 18★ — el mejor caso de prueba que tenemos.
+2. Refrescar baseline VR del shop (`hub-shop-sheet-open`).
+3. Decodificar los custom errors del Scoreboard (`CooldownActive`, `DailyLimitReached`) en vez del
+   "Try again" genérico.
+4. Sistema de notificación (punto rojo) + reubicación del CTA dorado → flujo de diseño.
