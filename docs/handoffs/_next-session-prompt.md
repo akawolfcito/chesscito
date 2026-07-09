@@ -21,12 +21,15 @@ en mainnet.
 
 ## Camino recomendado (en orden, de barato a caro)
 
-1. **Refrescar el baseline VR `hub-shop-sheet-open`** (~10 min)
-   Está **rojo**, verificado. Espera 3 SKUs retirados (`5c8e0f5d`, `6bf6c344`).
-   Usar `--update-snapshots=all` (el flag pelado no reescribe lo que cae bajo el
-   umbral) y **abrir el PNG** para confirmar que el diff son solo esos SKUs.
+1. ~~**Refrescar el baseline VR `hub-shop-sheet-open`**~~ — **HECHO** (`28b2f75`).
+   Eran dos fallos apilados. El segundo, no previsto: un
+   `NEXT_PUBLIC_CHAIN_ID=11142220` exportado en el shell gana sobre `.env.local`,
+   la tienda no lee la cadena y todas las píldoras quedan en "Coming soon".
+   **Antes de correr VR o `pnpm dev`: `env | grep NEXT_PUBLIC`.** Si hay algo, el
+   dev server está apuntando a Sepolia y no te lo va a decir.
 
-2. **Decodificar los custom errors** (~1-2h) — mejor ratio dolor/hora
+2. **Decodificar los custom errors** (~1-2h) — mejor ratio dolor/hora, y ahora
+   es el punto de entrada.
    Verificado: cero hits de `decodeErrorResult` / `ContractFunctionRevertedError`
    en `apps/web/src`. Hoy `BadgeAlreadyClaimed`, `CooldownActive` (`0xc1ab61a1`) y
    `DailyLimitReached` (`0xeba8fe8a`) salen los tres como "Try again".
@@ -52,6 +55,13 @@ esa es decisión de producto, no de ingeniería.
 
 - **Verde no significa verificado.** Un test que aísla un predicado no prueba la
   composición. Un baseline VR con `maxDiffPixelRatio: 0.01` no guarda texto.
+- **Un baseline VR hereda el entorno del que lo escribe.** Refrescar bajo un env
+  contaminado no arregla el test: lo silencia contra una pantalla muerta. Leer
+  siempre el PNG regenerado y preguntarse si la pantalla es la correcta, no solo
+  si el test pasó.
+- **Un fallo puede esconder otro.** El VR de la tienda moría en la precondición,
+  antes de comparar píxeles. Leer el mensaje de error real antes de creerle al
+  handoff sobre la causa.
 - **Una constante derivada de contenido debe ser función del contenido.** Nunca un
   literal. Si dice `@deprecated ... migración diferida a Sprint N`, bórrala en el
   PR que migra al último consumidor y deja que `tsc` enumere el resto.
