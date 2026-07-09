@@ -1,59 +1,77 @@
-# Next session prompt — post 2026-05-30 em-dash sweep cluster
+# Next session prompt — post 2026-07-09 LEARN re-smoke
 
-Paste this in the next session to bootstrap context. Or just say "continuemos" — the agent should detect this file and follow its instructions.
+Di **"continuemos"** y el agente debe leer este archivo y seguirlo.
 
 ---
 
-**State at start of next session:** main = `974afd07`. Three handoffs from 2026-05-30 are committed; the em-dash sweep is the most recent.
+**Estado al arrancar:** `main` = `daf4de36`. Suite **4760 passing / 395 files**.
+El re-smoke de LEARN pasó completo en device; el badge de la torre está minteado
+en mainnet.
 
-**Read first:**
-- `docs/handoffs/2026-05-30-em-dash-sweep-handoff.md` — full session log, what's swept, what's left, why.
-- Earlier same-day handoffs (in chronological order):
-  - `docs/handoffs/2026-05-30-coach-bugs-shop-vitrine-account-inventory-handoff.md`
-  - `docs/handoffs/2026-05-30-playercolor-callouts-vr-refresh-handoff.md`
-  - `docs/handoffs/2026-05-30-shop-cleanup-vr-settle-pro-days-handoff.md`
-- Memory updates this thread: `feedback_anti_ai_prose` (rule was already there; now backed by a regression test that prevents drift).
+**Leer primero:**
+- `docs/handoffs/2026-07-09-session-close-handoff.md` — resumen de la sesión.
+- `docs/backlog/2026-07-09-pending-work-triage.md` — pendientes **auditados contra
+  el código**, con costo estimado y orden recomendado.
 
-**Choose your path:**
+**Antes de tocar nada:** `preview.chesscito.com` necesita un redeploy con
+`04de19fa` o posterior para que el modal muestre `12/30`.
+`NEXT_PUBLIC_CHESSCITO_SESSION_LIMIT` es build-time.
 
-1. **Pre-flight + VR baseline refresh** (post-reboot, ~1h-1.5h)
-   This is the unblocker for everything else. Per `memory/project_disk_telemetry.md`:
-   - `df -h /` + `bash scripts/disk-telemetry.sh save baseline_pre`. Need <30GB free + swap >2GB cleared.
-   - `cd apps/web && pnpm test:e2e:visual` — targets: hub-shop-sheet-open settle fix (`1fec59c8`), Cluster C visor states, shop+vitrine deltas, the 14-baseline backlog from `_bmad-output/implementation-artifacts/deferred-work.md`.
-   - If any baseline drifted from the morning's chunks, refresh in a dedicated `test(vr): refresh baselines` commit with rationale per file.
+---
 
-2. **Em-dash sweep chunks 8+** (~1-2h after VR is green)
-   42 em-dashes remain in editorial.ts + i18n. Each next chunk should be one VR baseline's worth of strings, so the baseline refresh stays atomic with the sweep. Order of attack (by baseline-scope, smallest first):
-   - **vr9-arena-end-state-** (7 baselines) — `"Checkmate — You Win!"`, `"Checkmate — AI Wins"`, `"Stalemate — Draw"`. 3 EN + 2 ES.
-   - **hub-clean** — `proInactiveAriaLabel`, `activeLabel`, `inFlightLabel`, `"Unlock PRO — full experience"`. ~6 EN + 4 ES.
-   - **landing tagline + share-card meta** — `"Train your mind with pre-chess challenges — a Celo MiniPay game"` + the FIDE Master ES line (HARD RULE: don't weaken to imply medical benefit).
-   - **Misc visible hints** — `prizePoolSoonHint`, `analysisPendingHint`, `shieldsStatusEmpty`, `firstStepHint`, etc. ~10 strings; likely no VR coverage but verify each.
-   Each chunk: lower per-file ceilings in `anti-ai-prose.test.ts` to match the post-sweep count.
+## Camino recomendado (en orden, de barato a caro)
 
-3. **MiniPay smoke + production promote** (~30-45 min)
-   Verify the full chain on device after Path 1 completes:
-   - Save Victory from visor end-to-end (not return 400).
-   - sessionStorage scoping: SAVE in game A → lock/unlock → game B → Save tile present.
-   - Shop cards: per-tone pastel + visible icon overhang past left edge.
-   - AccountSheet: Shields + Founder + Manage PRO rows render with correct status + tap targets.
-   If pass → promote to chesscito.com via Vercel UI.
+1. **Refrescar el baseline VR `hub-shop-sheet-open`** (~10 min)
+   Está **rojo**, verificado. Espera 3 SKUs retirados (`5c8e0f5d`, `6bf6c344`).
+   Usar `--update-snapshots=all` (el flag pelado no reescribe lo que cae bajo el
+   umbral) y **abrir el PNG** para confirmar que el diff son solo esos SKUs.
 
-4. **Phase 2 of shop oscuridad — in-context callouts** (~3-4h, gated on user signal)
-   Don't ship reflexively. Confirm users still report oscuridad after Phase 1 lands in production.
+2. **Decodificar los custom errors** (~1-2h) — mejor ratio dolor/hora
+   Verificado: cero hits de `decodeErrorResult` / `ContractFunctionRevertedError`
+   en `apps/web/src`. Hoy `BadgeAlreadyClaimed`, `CooldownActive` (`0xc1ab61a1`) y
+   `DailyLimitReached` (`0xeba8fe8a`) salen los tres como "Try again".
+   Las ABIs salen de `artifacts/`, **nunca a mano**.
 
-5. **Persist `playerColor` in GameRecord** (~1-2h)
-   Removes the parity-based fallback in the visor. Touches `/api/games` POST + GameRecord type + arena POST body.
+3. **Icono de Coach en el HUB** (~30 min) — backlog PLAY #7
+   El asset ya existe en los tres formatos:
+   `public/art/new-icons-chesscito/training.{png,webp,avif}`. Es un swap de ruta.
+   Toca UI → baseline VR en el mismo PR.
 
-6. **Triage the ~39 pre-existing vitest env failures** (~30-60 min)
-   All match `TypeError: window.localStorage.clear is not a function`. Doesn't block shipping but degrades CI signal.
+4. **Quitar la confirmación redundante de LUZ** (~1h) — backlog PLAY #8
 
-**What NOT to touch yet:**
-- Visor structure is locked from Cluster C.
-- The cream-amber-only-on-MOVES rule still holds: data tables get frames, floating affordances don't.
-- Do NOT add a "you'll lose mint chance" warning in resign flow.
-- Do NOT propose a context provider refactor for `TrophiesBody` + `TrophiesHeroBand` unless profiling confirms the duplicate `/api/my-victories` is hurting.
-- Do NOT add em-dashes to user-facing copy. The ceiling test will fail the build.
+5. **Investigar "Claim 3 Shields"** — backlog LEARN #1. **Investigación, no
+   código.** Nadie sabe a qué sistema pertenece ni por qué lanza el 21-Day Mind
+   Challenge. Es el único pendiente con comportamiento inexplicado.
 
-**If user says "ship it":** option 1 + 3 + post-promote smoke.
-**If user says "continuemos":** read this file + the em-dash handoff, then ask which path. Default to option 1 (VR pre-flight) unless the user redirects.
-**If user says "what's pending":** read deferred ledgers in the four 2026-05-30 handoffs.
+Después de eso la conversación es **Belt System vs server-verified progress**, y
+esa es decisión de producto, no de ingeniería.
+
+---
+
+## Reglas que esta sesión ganó a golpes
+
+- **Verde no significa verificado.** Un test que aísla un predicado no prueba la
+  composición. Un baseline VR con `maxDiffPixelRatio: 0.01` no guarda texto.
+- **Una constante derivada de contenido debe ser función del contenido.** Nunca un
+  literal. Si dice `@deprecated ... migración diferida a Sprint N`, bórrala en el
+  PR que migra al último consumidor y deja que `tsc` enumere el resto.
+- **VR:** refrescar con `--update-snapshots=all`, luego leer el PNG.
+
+## Qué NO tocar todavía
+
+- **No abrir el Belt System** hasta que cierren MiniPay/slides. Único item con
+  reloj: `BADGE_THRESHOLD` → proporción, y **la ventana sigue abierta** (hay
+  exactamente un badge minteado).
+- **Nunca construir recovery para el Daily-Streak.** El shield protege el COMBO,
+  no el Daily.
+- **No implementar server-verified progress con umbral proporcional evaluado en
+  vivo** — des-califica retroactivamente. Ver la decisión de diseño en el
+  session-close handoff: bit monótono `qualified(player, piece)`.
+- **No subir el `MAX_STARS`** ni ningún techo a un literal otra vez.
+
+## Si el usuario dice…
+
+- **"continuemos"** → leer este archivo + el triage, y arrancar por el punto 1
+  salvo que redirija.
+- **"qué falta"** → `docs/backlog/2026-07-09-pending-work-triage.md`.
+- **"ship it"** → redeploy de preview y confirmar `12/30` en device antes de nada.
