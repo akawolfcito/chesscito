@@ -263,9 +263,11 @@
 .slide4-mode-card {
   display: flex;
   align-items: center;
-  /* gap: 0.5rem; */
+  gap: 0.5rem;
   width: 100%;
-  /* padding: 0.5rem 0.6rem 0.6rem; */
+  /* Extra bottom padding clears the CTA's drop-shadow lip, which paints
+     outside the button box and otherwise sits on the card's border. */
+  padding: 0.5rem 0.6rem 0.75rem;
   border-radius: 18px;
   text-align: left;
 }
@@ -317,11 +319,19 @@
 /* Compact context: same button chrome, sized to the card's right column
    instead of spanning the full frame width like the slide 1-3 CTAs. */
 .slide4-mode-card .primary-play-cta {
-  /* width: 100%; */
+  width: 100%;
   min-height: 0;
-  padding: 0.5rem;
-  /* border-radius: 999px; */
-  font-size: 0.7rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+/* Play's CTA keeps the Hub's blue identity but drops a step of chroma:
+   the stock --cta-primary-blue-grad tops out near neon (#2bb5f0), which
+   out-shouts the warm gold on Learn and reverses the hierarchy the cards
+   are built to express. Deeper blue recedes; it still reads as a button. */
+.slide4-mode-card--play .hub-scaffold-arena-cta {
+  background: linear-gradient(180deg, #4f9fd0, #1d5b8c);
 }
 
 .primary-play-cta-piece-icon {
@@ -370,13 +380,12 @@
 }
 
 .hub-scaffold-arena-cta {
-  min-height: 70px;
-  /* font-size: 1rem; */
+  min-height: 50px;
   background: var(--cta-primary-blue-grad);
-  /* border: 2px solid var(--cta-primary-blue-border); */
-  border-radius: 5px;
-  /* box-shadow: var(--cta-primary-blue-bevel); */
-  /* text-shadow: var(--cta-primary-blue-text-shadow); */
+  border: 2px solid var(--cta-primary-blue-border);
+  border-radius: 22px;
+  box-shadow: var(--cta-primary-blue-bevel);
+  text-shadow: var(--cta-primary-blue-text-shadow);
   filter: none;
   color: #f4f8ff;
 }
