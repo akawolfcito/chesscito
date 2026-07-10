@@ -1,8 +1,17 @@
 # Spec — receipt-status-verification
 
 **Date**: 2026-07-09
-**Status**: draft
+**Status**: ⚠️ SPLIT — no implementar este archivo
 **Scope**: LEARN only — badge claim + score save. Shop buy and victory mint are documented follow-ups.
+
+> Su red-team (`receipt-status-verification-redteam.md`) devolvió **NEEDS
+> REVISION** con 4 P0. Este documento se conserva como registro del problema y
+> de la iteración. El trabajo implementable vive partido en:
+>
+> 1. **`receipt-status-helper.md`** — helper + clasificador + los tres consumidores
+>    actuales. Sin UI. Todos sus criterios son verificables hoy. **Empezar acá.**
+> 2. **`receipt-status-learn-handlers.md`** — seam testable + handlers de LEARN +
+>    UX de `confirming`. Depende del anterior.
 
 ## Problem
 
