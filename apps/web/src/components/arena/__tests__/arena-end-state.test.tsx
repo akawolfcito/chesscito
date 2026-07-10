@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 
 // Echo-mock: useTranslations returns the i18n key (ignores interpolation
 // values) so assertions stay key-stable across copy edits.
@@ -10,6 +10,12 @@ vi.mock("next-intl", () => ({
 const trackMock = vi.fn();
 vi.mock("@/lib/telemetry", () => ({
   track: (...args: unknown[]) => trackMock(...args),
+}));
+
+// lottie-web drives a real canvas — importing it under jsdom throws on a null
+// 2d context. The win branch renders it; nothing here asserts on the animation.
+vi.mock("@/components/ui/lottie-animation", () => ({
+  LottieAnimation: () => null,
 }));
 
 import { ArenaEndState, type ClaimData, type ClaimPhase } from "../arena-end-state";
@@ -122,5 +128,59 @@ describe("ArenaEndState — F8 phase (b) Save on loss/draw/resign", () => {
     expect(alert).toHaveTextContent("saveErrorHint");
     fireEvent.click(screen.getByRole("button", { name: "saveRetry" }));
     expect(props.onClaimVictory).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("ArenaEndState — a cancelled claim never costs the victory screen", () => {
+  function renderWin(
+    overrides: Partial<React.ComponentProps<typeof ArenaEndState>> = {},
+  ) {
+    const props: React.ComponentProps<typeof ArenaEndState> = {
+      status: "checkmate",
+      isPlayerWin: true,
+      onPlayAgain: vi.fn(),
+      onBackToHub: vi.fn(),
+      claimPhase: "ready" as ClaimPhase,
+      shareStatus: "locked",
+      claimData: baseClaimData,
+      moves: 24,
+      elapsedMs: 90000,
+      difficulty: "easy",
+      onClaimVictory: vi.fn(),
+      gameRecordPersisted: true,
+      claimPrice: "$0.50",
+      ...overrides,
+    };
+    return { props, ...render(<ArenaEndState {...props} />) };
+  }
+
+  it("shows the 'Not saved yet' toast over the celebration, not an error popup", () => {
+    renderWin({ justCancelled: true });
+    expect(screen.getByText("cancelledToast")).toBeInTheDocument();
+    // The dead end: VictoryClaimError's Try Again used to be the only exit.
+    expect(screen.queryByText("tryAgain")).not.toBeInTheDocument();
+  });
+
+  it("keeps the claim reachable after a cancellation", () => {
+    const { props } = renderWin({ justCancelled: true });
+    fireEvent.click(screen.getByRole("button", { name: "primaryLabel · $0.50" }));
+    expect(props.onClaimVictory).toHaveBeenCalledTimes(1);
+  });
+
+  it("self-dismisses the toast after 3200ms", () => {
+    vi.useFakeTimers();
+    try {
+      renderWin({ justCancelled: true });
+      expect(screen.getByText("cancelledToast")).toBeInTheDocument();
+      act(() => void vi.advanceTimersByTime(3200));
+      expect(screen.queryByText("cancelledToast")).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("renders no toast when nothing was cancelled", () => {
+    renderWin();
+    expect(screen.queryByText("cancelledToast")).not.toBeInTheDocument();
   });
 });

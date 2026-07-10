@@ -849,20 +849,17 @@ export const VICTORY_CLAIM_COPY = {
       subtitle: "",
       hint: "Your progress is safe. Tap try again any time.",
     },
-    cancelled: {
-      title: "Saved for later",
-      subtitle: "No transaction was made. Your victory is still here whenever you are ready to claim it.",
-      hint: "Nothing was charged. Tap try again any time.",
-    },
     timeout: {
       title: "Still confirming…",
       subtitle: "The network is taking longer than usual. Your wallet may already have the transaction.",
       hint: "Check your wallet first. If it's still pending, give it a moment before retrying.",
     },
   },
+  /** Transient toast raised over the untouched victory screen when the player
+   *  rejects the wallet prompt. The whole trace of a cancellation. */
+  cancelledToast: "Not saved yet",
   /** Big headline rendered inside the victory-claim-error panel —
-   *  branches on the `kind` prop (cancelled = polite, others = error). */
-  statusHeadlinePaused: "Paused",
+   *  branches on the `kind` prop. */
   statusHeadlineError: "Error",
   statusHeadlineTimeout: "Hang tight",
   /** Secondary action label on the victory-claim-success panel. */

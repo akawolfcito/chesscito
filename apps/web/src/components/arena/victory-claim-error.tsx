@@ -10,7 +10,9 @@ import { formatTime } from "@/lib/game/arena-utils";
 import sparklesData from "@/../public/animations/sparkles.json";
 import { VictoryPopupShell } from "./victory-popup-shell";
 
-export type ClaimEndKind = "error" | "cancelled" | "timeout";
+/** No "cancelled" member: a rejected wallet prompt never mounts this popup. It
+ *  leaves the victory screen standing and raises ClaimCancelledToast instead. */
+export type ClaimEndKind = "error" | "timeout";
 
 type Props = {
   moves: number;
@@ -68,13 +70,10 @@ export function VictoryClaimError({
     ? tArena(`difficulty.${difficultyKey}`)
     : difficulty;
 
-  const isCancelled = kind === "cancelled";
   const isTimeout = kind === "timeout";
-  const statusHeadline = isCancelled
-    ? tClaim("statusHeadlinePaused")
-    : isTimeout
-      ? tClaim("statusHeadlineTimeout")
-      : tClaim("statusHeadlineError");
+  const statusHeadline = isTimeout
+    ? tClaim("statusHeadlineTimeout")
+    : tClaim("statusHeadlineError");
   const tryAgainLabel = tClaim("tryAgain");
   const playAgainLabel = tArena("playAgain");
   const handleClose = onClose ?? onBackToHub;
@@ -83,8 +82,8 @@ export function VictoryClaimError({
     <VictoryPopupShell
       onClose={handleClose}
       ariaLabel={statusHeadline}
-      role={isCancelled ? "dialog" : "alert"}
-      ariaLive={isCancelled ? "polite" : "assertive"}
+      role="alert"
+      ariaLive="assertive"
       closeLabel={tArena("closeResultAria")}
     >
       <div className="victory-popup-sparkles" aria-hidden="true">

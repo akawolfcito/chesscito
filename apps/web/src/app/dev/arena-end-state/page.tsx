@@ -18,7 +18,6 @@ const VARIANTS = new Set([
   "win-claiming",
   "win-success",
   "win-error",
-  "win-cancelled",
   "win-timeout",
   "loss-save",
   "loss-save-claiming",

@@ -555,20 +555,10 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     );
   });
 
-  test("vr9-arena-end-state-win-cancelled — user cancelled (paused)", async ({
-    page,
-  }) => {
-    await page.goto("/dev/arena-end-state?variant=win-cancelled", {
-      waitUntil: "load",
-      timeout: 45_000,
-    });
-    await page.evaluate(() => document.fonts.ready);
-    await settle(page, 800);
-    await expect(page).toHaveScreenshot(
-      "vr9-arena-end-state-win-cancelled.png",
-      FIXTURE_OPTS,
-    );
-  });
+  // No win-cancelled screenshot: cancelling no longer has a screen of its own.
+  // It leaves win-celebration standing (already covered) and raises a toast that
+  // self-dismisses at 3200ms — a timer is a bad subject for a screenshot. The
+  // behaviour is pinned in arena-end-state.test.tsx with fake timers instead.
 
   test("vr9-arena-end-state-win-timeout — still confirming (hang tight)", async ({
     page,

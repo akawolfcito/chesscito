@@ -47,7 +47,11 @@ import type { CoachGameResult } from "@/lib/coach/types";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type ClaimPhase = "ready" | "claiming" | "success" | "error" | "cancelled" | "timeout";
+/** No "cancelled" member by design. Rejecting the wallet prompt is a no-op on an
+ *  optional flow, not an end state: the phase returns to "ready" and `justCancelled`
+ *  carries the transient notice. Modelling it as a phase stranded the player on an
+ *  error-shaped popup that had replaced the victory screen. */
+export type ClaimPhase = "ready" | "claiming" | "success" | "error" | "timeout";
 export type ClaimStep = "signing" | "confirming" | "done";
 export type ShareStatus = "locked" | "generating" | "ready";
 
@@ -143,6 +147,9 @@ export type MintVictoryState = {
    *  hook is in the "error" phase. Consumed by VictoryClaimError to
    *  decide whether to surface the AddCashCta recovery deeplink. */
   errorKind: TxErrorKind | null;
+  /** One-shot: the last attempt was cancelled from the wallet. Cleared by the
+   *  next start() and by reset(). Consumers render it as a transient notice. */
+  justCancelled: boolean;
   /** Begin the claim flow. No-op when already claiming or guard fails. */
   start: () => Promise<void>;
   /** Reset all claim state + sessionStorage chesscito:claim. */
@@ -249,6 +256,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
 
   // ── Claim state ───────────────────────────────────────────────────────────
   const [claimPhase, setClaimPhase] = useState<ClaimPhase>("ready");
+  const [justCancelled, setJustCancelled] = useState(false);
   const [claimStep, setClaimStep] = useState<ClaimStep>("signing");
   const [claimData, setClaimData] = useState<ClaimData>({
     tokenId: null,
@@ -375,6 +383,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
     setClaimStep("signing");
     setClaimError(null);
     setClaimErrorKind(null);
+    setJustCancelled(false);
 
     inp.onClaimTelemetry?.({ stage: "start", gameId: inp.gameId });
 
@@ -700,7 +709,8 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
         inp.onClaimTelemetry?.({ stage: "cancelled", gameId: inp.gameId });
         setClaimError(null);
         setClaimErrorKind(null);
-        setClaimPhase("cancelled");
+        setJustCancelled(true);
+        setClaimPhase("ready");
         return;
       }
       if (isTransactionTimeout(err)) {
@@ -766,6 +776,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
     setShareStatus("locked");
     setClaimError(null);
     setClaimErrorKind(null);
+    setJustCancelled(false);
   }, []);
 
   return {
@@ -775,6 +786,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
     shareStatus,
     error: claimError,
     errorKind: claimErrorKind,
+    justCancelled,
     start,
     reset,
   };

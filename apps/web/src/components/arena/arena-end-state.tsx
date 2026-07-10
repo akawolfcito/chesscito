@@ -18,9 +18,14 @@ import { VictoryCelebration } from "./victory-celebration";
 import { VictoryClaiming } from "./victory-claiming";
 import { VictoryClaimSuccess } from "./victory-claim-success";
 import { VictoryClaimError } from "./victory-claim-error";
+import { ClaimCancelledToast } from "./claim-cancelled-toast";
 import type { TxErrorKind } from "@/lib/errors";
 
-export type ClaimPhase = "ready" | "claiming" | "success" | "error" | "cancelled" | "timeout";
+/** Re-exported from the hook that owns the machine. This used to be a second,
+ *  independent union with the same name, so dropping a member upstream left the
+ *  dead variant reachable here and typecheck stayed green. */
+export type { ClaimPhase } from "@/lib/coach/use-mint-victory";
+import type { ClaimPhase } from "@/lib/coach/use-mint-victory";
 
 export type ShareStatus = "locked" | "generating" | "ready";
 
@@ -41,6 +46,10 @@ type Props = {
   onPlayAgain: () => void;
   onBackToHub: () => void;
   claimPhase: ClaimPhase;
+  /** One-shot from useMintVictory: the last claim was rejected in the wallet.
+   *  Renders a transient "Not saved yet" toast over the untouched victory
+   *  screen. Cancelling must never cost the player the celebration. */
+  justCancelled?: boolean;
   claimStep?: "signing" | "confirming" | "done";
   shareStatus: ShareStatus;
   claimData: ClaimData;
@@ -149,6 +158,7 @@ export function ArenaEndState({
   onDismissPersistError,
   onClose,
   proActive = false,
+  justCancelled = false,
 }: Props) {
   const tArena = useTranslations("ARENA_COPY");
   const tCelebration = useTranslations("VICTORY_CELEBRATION_COPY");
@@ -224,6 +234,14 @@ export function ArenaEndState({
   // returns below), guarded by `isPlayerWin` so wins are untouched.
   const saveResult = mapArenaResult(status, isPlayerWin);
   const [saveToastDismissed, setSaveToastDismissed] = useState(false);
+  // The hook's `justCancelled` stays raised until the next claim or reset, so the
+  // toast needs its own dismissal latch to auto-hide. Re-arms whenever the flag
+  // drops, so a second cancellation re-announces.
+  const [cancelToastDismissed, setCancelToastDismissed] = useState(false);
+  useEffect(() => {
+    if (!justCancelled && cancelToastDismissed) setCancelToastDismissed(false);
+  }, [justCancelled, cancelToastDismissed]);
+  const showCancelToast = justCancelled && !cancelToastDismissed;
   const saveSuccessFiredRef = useRef(false);
   useEffect(() => {
     if (isPlayerWin) return;
@@ -300,17 +318,6 @@ export function ArenaEndState({
             {persistOverlay}
           </>
         );
-      case "cancelled":
-        return (
-          <>
-            <VictoryClaimError
-              {...sharedProps}
-              onRetry={onClaimVictory}
-              kind="cancelled"
-            />
-            {persistOverlay}
-          </>
-        );
       case "timeout":
         return (
           <>
@@ -337,6 +344,9 @@ export function ArenaEndState({
               coachTooShort={isTooShort}
               proActive={proActive}
             />
+            {showCancelToast && (
+              <ClaimCancelledToast onDismiss={() => setCancelToastDismissed(true)} />
+            )}
             {persistOverlay}
           </>
         );
@@ -377,8 +387,9 @@ export function ArenaEndState({
   const saveAriaLabel = tArena("saveMatchAriaLabel", { price: claimPrice ?? "" });
   const isSaveBusy = claimPhase === "claiming";
   const isSaved = claimPhase === "success";
-  const isSaveFailed =
-    claimPhase === "error" || claimPhase === "cancelled" || claimPhase === "timeout";
+  // A cancellation is not a failure: it leaves the phase at "ready" and the Save
+  // tile untouched, so the player can claim again without the tile shouting.
+  const isSaveFailed = claimPhase === "error" || claimPhase === "timeout";
   const handleSaveClick = () => {
     if (!guardedOnClaim || isSaveBusy) return;
     track("monetization.save_victory_tap", {
@@ -695,6 +706,11 @@ export function ArenaEndState({
           tokenId={String(claimData.tokenId)}
           onDismiss={() => setSaveToastDismissed(true)}
         />
+      )}
+      {/* Same notice on the inline (loss/draw/resign) Save path — a rejected
+          prompt leaves the popup as it was and says so, once. */}
+      {showCancelToast && (
+        <ClaimCancelledToast onDismiss={() => setCancelToastDismissed(true)} />
       )}
     </div>
   );
