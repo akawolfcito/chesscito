@@ -240,7 +240,10 @@ export function PersistentDock() {
     : SIDE_RIGHT;
 
   return (
-    <nav className={`chesscito-dock${CHESSCITO_LITE_MODE ? " chesscito-dock--lite" : ""}`} aria-label={t("navAriaLabel")}>
+    <nav
+      className={`chesscito-dock${CHESSCITO_LITE_MODE ? " chesscito-dock--lite" : ""}${isArena ? " chesscito-dock--four" : ""}`}
+      aria-label={t("navAriaLabel")}
+    >
       {SIDE_LEFT.map((item) => (
         <SideItem key={item.id} item={item} pathname={pathname} router={router} openSheet={openSheet} label={t(item.labelKey)} />
       ))}

@@ -3825,6 +3825,16 @@
      dividers for exactly 4 slots and misaligned under 5). No `--lite` bg
      override needed. */
 
+  /* /arena renders exactly 4 slots (badge · shop · center · trophies — the
+     leaderboard tab is filtered out there), so the dock swaps to the panel
+     art whose dividers were baked for 4 slots. Same stretch/fallback as the
+     base so only the image differs. */
+  .chesscito-dock--four {
+    background-image: image-set(url("/art/redesign/bg/dock-4slots.avif") type("image/avif"),
+        url("/art/redesign/bg/dock-4slots.webp") type("image/webp"),
+        url("/art/redesign/bg/dock-4slots.png") type("image/png"));
+  }
+
   .chesscito-dock-item {
     position: relative;
     display: flex;
