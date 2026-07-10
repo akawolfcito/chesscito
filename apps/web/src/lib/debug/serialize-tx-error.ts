@@ -16,8 +16,16 @@
  *  field — which is the one thing this probe is here to read. */
 const LONG_HEX = /0x[0-9a-fA-F]{100,}/g;
 
+/** Keeps the first 4 bytes. On revert data that is the error selector — the
+ *  whole point of the probe, and it was being cut off at 3 bytes. On a
+ *  signature it is 4 bytes of a 65-byte blob, which reveals nothing. */
+const SELECTOR_CHARS = 10; // "0x" + 8 hex
+
 export function redactLongHex(text: string): string {
-  return text.replace(LONG_HEX, (hex) => `0x${hex.slice(2, 8)}…[redacted ${hex.length} chars]`);
+  return text.replace(
+    LONG_HEX,
+    (hex) => `${hex.slice(0, SELECTOR_CHARS)}…[redacted ${hex.length} chars]`,
+  );
 }
 
 export type SerializedTxError = {
@@ -40,7 +48,23 @@ export type SerializedTxErrorChain = {
   /** `cause` chain, outermost first. Depth-capped: a cycle must not hang the probe. */
   causes: SerializedTxError[];
   depth: number;
+  /** Revert data recovered from the RAW message before redaction.
+   *
+   *  Measured on device 2026-07-10: MiniPay does not hand viem structured
+   *  revert data. It surfaces the node's JSON-RPC error blob as the revert
+   *  *reason* string, so `error.data`, `.raw` and `.signature` are all null and
+   *  the only carrier is the text. */
+  revertDataInMessage: string | null;
 };
+
+/** `{"jsonrpc":"2.0","id":1,"error":{"code":3,"message":"execution reverted","data":"0x..."}}`
+ *  embedded inside a viem error message. Not an API — a provider's stringified
+ *  error that happens to be parseable. Treated as evidence, not as a contract. */
+const DATA_IN_MESSAGE = /"data"\s*:\s*"(0x[0-9a-fA-F]{8,})"/;
+
+export function extractRevertDataFromMessage(message: string): string | null {
+  return message.match(DATA_IN_MESSAGE)?.[1] ?? null;
+}
 
 function pick(error: unknown): SerializedTxError {
   if (typeof error !== "object" || error === null) {
@@ -73,10 +97,21 @@ function pick(error: unknown): SerializedTxError {
 
 const MAX_DEPTH = 8;
 
+function rawMessageOf(value: unknown): string | null {
+  if (typeof value !== "object" || value === null) return null;
+  const message = (value as { message?: unknown }).message;
+  return typeof message === "string" ? message : null;
+}
+
 export function serializeTxError(error: unknown): SerializedTxErrorChain {
   const top = pick(error);
   const causes: SerializedTxError[] = [];
   const seen = new Set<unknown>();
+
+  // Scanned on the RAW error, before `pick` redacts long hex out of the
+  // message. Redacting first would destroy the very thing we are hunting.
+  let revertDataInMessage: string | null =
+    extractRevertDataFromMessage(rawMessageOf(error) ?? "") ?? null;
 
   let current: unknown = error;
   seen.add(current);
@@ -89,14 +124,19 @@ export function serializeTxError(error: unknown): SerializedTxErrorChain {
     if (next === undefined || next === null || seen.has(next)) break;
     seen.add(next);
     causes.push(pick(next));
+    revertDataInMessage ??= extractRevertDataFromMessage(rawMessageOf(next) ?? "");
     current = next;
   }
 
-  return { top, causes, depth: causes.length };
+  return { top, causes, depth: causes.length, revertDataInMessage };
 }
 
 /** The one fact that decides go / no-go: did any layer carry revert data? */
 export function findRevertData(chain: SerializedTxErrorChain): string | null {
+  // Checked FIRST because it is where MiniPay actually puts it. The structured
+  // fields below stayed null on every device capture.
+  if (chain.revertDataInMessage) return chain.revertDataInMessage;
+
   for (const layer of [chain.top, ...chain.causes]) {
     if (typeof layer.data === "string" && layer.data.startsWith("0x") && layer.data.length >= 10) {
       return layer.data;
