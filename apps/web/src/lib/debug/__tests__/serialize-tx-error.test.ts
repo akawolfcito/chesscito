@@ -9,11 +9,27 @@ import {
 const SIGNATURE = `0x${"ab".repeat(65)}`; // 65 bytes → 132 chars
 const REVERT_DATA = "0xc1ab61a1"; // CooldownActive()
 
+/** Verbatim from an iPhone 18.7 / MiniPay capture, 2026-07-10, mainnet.
+ *  `claimBadgeSigned` on a badge the wallet already owns. The wallet rejected
+ *  at `eth_estimateGas` and never opened the confirmation sheet. */
+const MINIPAY_REVERT_MESSAGE =
+  'The contract function "claimBadgeSigned" reverted with the following reason:\n' +
+  "Remote method 'eth_estimateGas' failed with an error: " +
+  '{"jsonrpc":"2.0","id":1,"error":{"code":3,"message":"execution reverted",' +
+  `"data":"0xfafe7970${"00".repeat(64)}"}}`;
+
 describe("redactLongHex", () => {
   it("redacts a 65-byte signature", () => {
     const out = redactLongHex(`args: (1, 2400, ${SIGNATURE})`);
     expect(out).not.toContain(SIGNATURE);
     expect(out).toContain("[redacted 132 chars]");
+  });
+
+  // The first capture cut the selector at 3 bytes (`0xfafe79`), leaving the
+  // error ambiguous. 4 bytes is the selector; on a signature it reveals nothing.
+  it("preserves the full 4-byte selector of redacted revert data", () => {
+    const data = `0xfafe7970${"00".repeat(64)}`;
+    expect(redactLongHex(`"data":"${data}"`)).toContain("0xfafe7970…[redacted");
   });
 
   it("leaves a 4-byte selector alone — it is what we came for", () => {
@@ -104,5 +120,39 @@ describe("findRevertData — the go/no-go signal", () => {
   it("does not mistake a user rejection for revert data", () => {
     const err = Object.assign(new Error("User rejected the request"), { code: 4001 });
     expect(findRevertData(serializeTxError(err))).toBeNull();
+  });
+
+  // The device answer: MiniPay hands viem no structured revert data. It puts
+  // the node's JSON-RPC blob into the revert *reason* string, so `data`, `raw`
+  // and `signature` are all null and the text is the only carrier.
+  it("recovers revert data embedded in MiniPay's message blob", () => {
+    const inner = Object.assign(new Error(MINIPAY_REVERT_MESSAGE), {
+      name: "ContractFunctionRevertedError",
+      data: null,
+      raw: null,
+      signature: null,
+    });
+    const outer = Object.assign(new Error(MINIPAY_REVERT_MESSAGE), {
+      name: "ContractFunctionExecutionError",
+      cause: inner,
+    });
+
+    const chain = serializeTxError(outer);
+    expect(chain.revertDataInMessage).toBe(`0xfafe7970${"00".repeat(64)}`);
+    expect(findRevertData(chain)).toBe(`0xfafe7970${"00".repeat(64)}`);
+  });
+
+  it("extracts the data before redaction destroys it", () => {
+    const err = new Error(MINIPAY_REVERT_MESSAGE);
+    const chain = serializeTxError(err);
+    // The message that gets displayed is redacted...
+    expect(chain.top.message).toContain("[redacted");
+    // ...but the data was captured off the raw string first.
+    expect(chain.revertDataInMessage).toMatch(/^0xfafe7970/);
+  });
+
+  it("returns null for a message with no embedded data field", () => {
+    const err = new Error("The contract function reverted: User rejected transaction");
+    expect(serializeTxError(err).revertDataInMessage).toBeNull();
   });
 });
