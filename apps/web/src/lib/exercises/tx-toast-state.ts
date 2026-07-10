@@ -11,12 +11,17 @@
  */
 
 export type TxToastInputs = {
-  /** Wagmi `useWriteContract().isPending` — request being signed. */
+  /** `useOnChainWrite().phase === "signing"` — request being signed. */
   isWriting: boolean;
-  /** Wagmi `useWaitForTransactionReceipt().isLoading` — receipt pending. */
+  /** `useOnChainWrite().phase === "confirming"` — receipt pending. */
   isConfirming: boolean;
-  /** Wagmi `useWaitForTransactionReceipt().isError` — chain revert / RPC error. */
-  isError: boolean;
+  /** The write settled as `failed`.
+   *
+   *  Was `useWaitForTransactionReceipt().isError`, documented here as
+   *  "chain revert / RPC error". It was only ever the RPC error: viem resolves
+   *  the receipt query for a reverted tx, so this branch never fired on the
+   *  revert it was written for. Now fed by the settled outcome. */
+  hasFailed: boolean;
   /** Broadcast tx hash, set once the wallet returns from `writeContract`. */
   txHash: string | null;
   /** Epoch ms when the done-hold window started; null outside the hold. */
@@ -33,7 +38,7 @@ export function deriveTxToastState(inputs: TxToastInputs): TxToastState {
   // Failed wins outright — a chain revert is terminal. The toast stays
   // mounted with `current="failed"` until either a new submit starts
   // (which clears `txHash` upstream) or the surface unmounts.
-  if (inputs.isError && hasTxHash) {
+  if (inputs.hasFailed && hasTxHash) {
     return { show: true, current: "failed" };
   }
 
