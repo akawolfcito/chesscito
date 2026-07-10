@@ -66,6 +66,40 @@ describe("deriveTxToastState — wait phase", () => {
   });
 });
 
+// Device smoke, 2026-07-10: "STEP 2 of 2 — Confirming…" stayed pinned above
+// the dock forever after a successful save. `saveWrite.txHash` is never cleared
+// on `settled`, and the derivation read a bare `hasTxHash` as "receipt in
+// flight". Once the 1500ms done-hold expired, it fell straight back into `wait`.
+describe("deriveTxToastState — settled: a stale hash is not a pending receipt", () => {
+  const settledWithHash = { ...base, txHash: "0xabc" };
+
+  it("hides the toast after a successful save once the done-hold expires", () => {
+    expect(deriveTxToastState(settledWithHash)).toEqual({ show: false });
+  });
+
+  it("hides the toast after a cancellation that had already broadcast", () => {
+    expect(deriveTxToastState({ ...settledWithHash, doneAt: null })).toEqual({
+      show: false,
+    });
+  });
+
+  it("hides the toast after a cancellation before broadcast", () => {
+    expect(deriveTxToastState({ ...base, txHash: null })).toEqual({ show: false });
+  });
+
+  it("never renders `wait` without an in-flight confirmation", () => {
+    const state = deriveTxToastState(settledWithHash);
+    expect(state.show === true && state.current === "wait").toBe(false);
+  });
+
+  it("still renders `wait` while the receipt is genuinely pending", () => {
+    expect(deriveTxToastState({ ...settledWithHash, isConfirming: true })).toEqual({
+      show: true,
+      current: "wait",
+    });
+  });
+});
+
 describe("deriveTxToastState — done phase", () => {
   it("shows current='done' during the done-hold window (doneAt set)", () => {
     expect(
