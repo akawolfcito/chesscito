@@ -1,0 +1,127 @@
+# Índice de backlog — 2026-07-10
+
+> Auditado **contra el código**, no contra las listas. Reemplaza al triage del 2026-07-09.
+> Antes de trabajar un item, verificá que siga vivo: dos entradas ya estaban muertas la
+> última vez que alguien miró.
+
+**Estado:** `main` = `827e7cfe` · 4853 passing / 401 files · smoke de MiniPay cerrado en device.
+
+---
+
+## 0. Cerrado desde el triage anterior — no reabrir
+
+| Item | Cerrado en | Evidencia |
+| --- | --- | --- |
+| CTA dorado "Save proof" inalcanzable | #183 | `exercises-screen.tsx:1072` usa `deriveCanSaveOnChain()` |
+| LEARN #4 Post-Focus Free Practice | #191 | `exercise-drawer.tsx:120` `isExerciseReplayable()` |
+| Baseline VR `hub-shop-sheet-open` rojo | `28b2f75` | eran dos fallos: SKUs retirados + env contaminado |
+| PLAY #7 Coach HUB icon | **#207** | `play-hub-scaffold.tsx` → `new-icons-chesscito/training.png` |
+| Dead-end de cancelación en victory | **#206** | cancelar vuelve a `VictoryCelebration` + toast |
+
+`docs/backlog/2026-07-08-lote2-smoke-findings-learn-play-backlog.md` todavía describe los dos
+primeros como abiertos. Es deriva de documentación.
+
+---
+
+## 1. Investigación primero, no código
+
+**"Claim 3 Shields"** (LEARN #1) — el **único** pendiente con comportamiento inexplicado.
+¿Pertenece al Welcome Pack, al Season Pass o al rescue gift? ¿Duplica los 3 shields de
+onboarding? ¿Por qué al tocarlo lanza el 21-Day Mind Challenge? **No cambiar lógica hasta
+entenderlo.** Puede esconder un bug.
+
+---
+
+## 2. Barato (1–3 h), sobre superficie existente
+
+- **Decoder de custom errors** — `docs/backlog/2026-07-10-custom-errors-decoder.md`. GO con
+  evidencia, **no bloquea estabilidad**: los reverts ya se interceptan, no producen éxito
+  falso, y hay fallback genérico. Hoy `BadgeAlreadyClaimed`, `CooldownActive` y
+  `DailyLimitReached` salen los tres como "Try again". El extractor está escrito; falta el
+  generador de error-ABIs desde `artifacts/` y el mapa nombre → copy.
+- **PLAY #8 — quitar la confirmación redundante de LUZ.** Tocar Coach Review lanza análisis
+  directo; LUZ conserva personalidad en loading y resultado. Borra una pantalla.
+- **Cobertura VR del play hub** (nuevo, 2026-07-10). Ningún test visual visita esa superficie.
+
+---
+
+## 3. Medio (medio día), necesitan ojo de diseño (GOAL → Sally → mock → código)
+
+- **PLAY #9 Coach Analysis Loading Overlay** + **PLAY #10 Save Match Success Celebration** —
+  ambos son "cerrar el loop emocional después de una acción". Agrupables.
+- **LEARN #2 Post-Claim Gift Overlay** — mismo patrón: mostrar QUÉ ganó y para qué sirve.
+- **Modal `Piece Unlocked` fuera del vocabulario visual** —
+  `docs/backlog/2026-07-09-piece-unlocked-modal-visual-vocabulary.md`.
+- **PLAY #11 Dock de 4 slots** — simetría/espaciado tras ocultar Leaderboard. No es swap de
+  asset. Ojo en device + baseline VR.
+- **LEARN #5 Shop Active State** — con Season Pass activo el Shop solo muestra un modal. Hay
+  una pregunta de producto adentro: ¿merece slot en el dock?
+- **PLAY #6 Coach Review Flow** — sin PRO, el diario no debe quedar enterrado. Valor mínimo
+  visible para free.
+- **Icono de Shop sin marco** (nuevo). Tactics y Coach son badges enmarcados; Shop no. No
+  existe asset enmarcado de shop → **pedido de arte**, no cambio de código.
+
+---
+
+## 4. Deuda con consecuencias — decidir, no postergar
+
+- ⚠️ **`/api/sign-badge` firma cualquier `levelId` 1..10000 sin verificar estrellas**
+  (`route.ts:23`). El gate de 10★ es **client-only**. El contrato bloquea reclamar *dos veces*,
+  no reclamar *sin merecerlo*. Cierra con server-verified progress.
+- **Server-verified progress** — el único anti-cheat real. Requerido antes de que haya dinero
+  colgando de un score. **Feature, no un `if`.**
+  Diseño ya decidido: un umbral proporcional evaluado en vivo **des-califica retroactivamente**
+  a medida que crece el pool. Usar un bit monótono `qualified(player, piece)` escrito al cruzar
+  por primera vez; `sign-badge` lee el bit, no el catálogo vivo. Guardar el mapa disperso
+  `exerciseId → stars`, nunca un `totalStars`.
+- **`timeout` ofrece *Try Again*** aunque la tx ya se firmó y transmitió
+  (`WaitForTransactionReceiptTimeoutError`). Reintentar sobre un mint que quizá aterrizó
+  necesita evidencia. **Medir antes de tocar.**
+
+---
+
+## 5. Diferidos de `project_receipt_status_verification`
+
+- Fallo silencioso de `/api/cache-score` (`.catch(() => {})`): tras un receipt exitoso, el
+  leaderboard no ve el score y no hay señal.
+- Divergencia score/badge si la app se cierra durante `confirming`. El badge se auto-cura
+  leyendo la cadena; el score **no** reconcilia.
+- `Invalid player address` se clasifica como `unknown`.
+
+---
+
+## 6. Grande — no abrir sin decidirlo
+
+- **Belt System** (#189) — espina aceptada, **no agendada**. No abrir hasta que cierren
+  MiniPay/slides. Único item con reloj: `BADGE_THRESHOLD` → proporción, barato mientras haya
+  exactamente un badge minteado.
+- **Lote 2.5** — Tactical Day Gift + Proof of Consistency
+  (`docs/backlog/2026-07-08-tactical-day-gift-proof-of-consistency-lote-2.5.md`).
+  El shield protege el COMBO, **no** el Daily. **Nunca construir recovery para el Daily-Streak.**
+
+---
+
+## 7. Issues de GitHub abiertos
+
+| # | Prioridad | Título |
+| --- | --- | --- |
+| 104 | P1 | Treasure hunt — pieza única móvil |
+| 101 | P2 | Prize pool distribution v2 (falta método en el contrato) |
+| 67 | P2 | Exercise world map — visual progression path |
+
+---
+
+## 8. Otros docs de backlog, sin agendar
+
+- `2026-06-17-edge-walls-on-borders.md`
+- `2026-06-17-isolate-dev-tools-into-separate-app.md`
+- `2026-06-26-exercises-sheet-open-slide-unification.md`
+
+## 9. No scopeado
+
+Social login · gift-able PRO (`project_pro_growth_ideas_backlog`) · specs de Welcome Package y
+Exercises Save Flow · Focus Passport P1.5 calendar · Deep Hint · observability tracker +
+deuda de `onProTap`.
+
+**Caveat aceptado:** `MAX_SHIELDS=3` es cap de activos/display; `credited` es monótono y
+bufferea el excedente. Un cap duro real es cambio de modelo.
