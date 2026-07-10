@@ -1,111 +1,85 @@
-# Next session prompt — post 2026-07-09 LEARN re-smoke
+# Next session prompt — post 2026-07-10 receipt-status cluster
 
 Di **"continuemos"** y el agente debe leer este archivo y seguirlo.
 
 ---
 
-**Estado al arrancar:** `main` = `daf4de36`. Suite **4760 passing / 395 files**.
-El re-smoke de LEARN pasó completo en device; el badge de la torre está minteado
-en mainnet.
+**Estado al arrancar:** `main` = `339e0383`. Suite **4848 passing / 401 test files**.
+`tsc` y `lint` limpios. VR 52 passed. E2E minipay 130 passed / 0 failed.
 
 **Leer primero:**
-- `docs/handoffs/2026-07-09-session-close-handoff.md` — resumen de la sesión.
-- `docs/backlog/2026-07-09-pending-work-triage.md` — pendientes **auditados contra
-  el código**, con costo estimado y orden recomendado.
+- `docs/handoffs/2026-07-10-receipt-status-and-minipay-probe-handoff.md` — la sesión.
+- `docs/testing/2026-07-10-minipay-critical-flow-smoke.md` — la matriz pendiente.
 
-**Antes de tocar nada:** `preview.chesscito.com` necesita un redeploy con
-`04de19fa` o posterior para que el modal muestre `12/30`.
-`NEXT_PUBLIC_CHESSCITO_SESSION_LIMIT` es build-time.
+**Modo:** cierre y estabilización. Un solo bloque activo a la vez. Si un hallazgo no
+bloquea el bloque, se **difiere**; no se abre.
 
 ---
 
-## ⚠️ Ruta vigente (2026-07-09, modo cierre y estabilización)
+## Ruta vigente
 
-El camino de abajo quedó **obsoleto**. Los custom errors YA NO son el siguiente
-paso: el síntoma que los motivaba era una misclasificación (#197), y debajo
-apareció algo peor — badge y score declaran éxito sobre el hash, no sobre el
-receipt (#199 cerró el helper; falta el lado del jugador).
+1. **▶️ Smoke del flujo crítico en MiniPay** — bloque activo. **Requiere device.**
+   Matriz en `docs/testing/2026-07-10-minipay-critical-flow-smoke.md`, todas las
+   filas en ⬜. Necesita un redeploy de preview con `339e0383` o posterior.
 
-1. ~~`receipt-status-learn-handlers`~~ — **CERRADO** (#200).
-2. ~~Probe del `raw` de MiniPay~~ — **CERRADO** (#201, #202). Veredicto **GO**
-   para el decoder: la revert data llega, pero dentro de `message`, no en
-   `error.data`. Ver `docs/testing/2026-07-10-minipay-raw-error-probe-results.md`.
-3. **▶️ Smoke del flujo crítico en MiniPay** — bloque activo. Matriz lista en
-   `docs/testing/2026-07-10-minipay-critical-flow-smoke.md`. **Requiere device.**
-4. **Checkpoint de estabilidad.**
+   El paso que importa: **cerrar el overlay de éxito y esperar 2 s**. El toast está
+   suprimido mientras el overlay está montado, así que un label pegado solo se ve
+   después de cerrarlo. Por eso el smoke encontró el bug de #204 y ningún test lo vio.
 
-Después del checkpoint, la siguiente mejora priorizada es el **decoder de custom
-errors** (`docs/backlog/2026-07-10-custom-errors-decoder.md`). **No bloquea
-estabilidad**: los reverts ya se interceptan, no producen éxito falso, y hay
-fallback genérico. Mejora la copy, no la corrección.
+2. **Checkpoint de estabilidad** — solo con la matriz llena. No firmar un checkpoint
+   sobre suite verde: los criterios que más importan son justo los que el código
+   nuevo cambió, y ninguno tiene evidencia de device.
 
-Regla activa: si un hallazgo no bloquea el bloque, se **difiere**, no se abre.
+3. **Decoder de custom errors** — `docs/backlog/2026-07-10-custom-errors-decoder.md`.
+   **GO con evidencia**, y **no bloquea estabilidad**: los reverts ya se interceptan,
+   no producen éxito falso, y hay fallback genérico. Mejora la copy, no la corrección.
+   El extractor ya está escrito; falta el generador de error-ABIs desde `artifacts/`
+   y el mapa nombre → copy.
+
+Después de eso: **Belt System vs server-verified progress**, que es decisión de
+producto, no de ingeniería.
 
 ---
 
-## Camino anterior (histórico, no seguir)
+## Antes de correr cualquier cosa
 
-1. ~~**Refrescar el baseline VR `hub-shop-sheet-open`**~~ — **HECHO** (`28b2f75`).
-   Eran dos fallos apilados. El segundo, no previsto: un
-   `NEXT_PUBLIC_CHAIN_ID=11142220` exportado en el shell gana sobre `.env.local`,
-   la tienda no lee la cadena y todas las píldoras quedan en "Coming soon".
-   **Antes de correr VR o `pnpm dev`: `env | grep NEXT_PUBLIC`.** Si hay algo, el
-   dev server está apuntando a Sepolia y no te lo va a decir.
-
-2. **Decodificar los custom errors** (~1-2h) — mejor ratio dolor/hora, y ahora
-   es el punto de entrada.
-   Verificado: cero hits de `decodeErrorResult` / `ContractFunctionRevertedError`
-   en `apps/web/src`. Hoy `BadgeAlreadyClaimed`, `CooldownActive` (`0xc1ab61a1`) y
-   `DailyLimitReached` (`0xeba8fe8a`) salen los tres como "Try again".
-   Las ABIs salen de `artifacts/`, **nunca a mano**.
-
-3. **Icono de Coach en el HUB** (~30 min) — backlog PLAY #7
-   El asset ya existe en los tres formatos:
-   `public/art/new-icons-chesscito/training.{png,webp,avif}`. Es un swap de ruta.
-   Toca UI → baseline VR en el mismo PR.
-
-4. **Quitar la confirmación redundante de LUZ** (~1h) — backlog PLAY #8
-
-5. **Investigar "Claim 3 Shields"** — backlog LEARN #1. **Investigación, no
-   código.** Nadie sabe a qué sistema pertenece ni por qué lanza el 21-Day Mind
-   Challenge. Es el único pendiente con comportamiento inexplicado.
-
-Después de eso la conversación es **Belt System vs server-verified progress**, y
-esa es decisión de producto, no de ingeniería.
+- **`env | grep NEXT_PUBLIC` debe salir vacío.** Un `NEXT_PUBLIC_CHAIN_ID` exportado
+  en el shell gana sobre `.env.local` y apunta el dev server a Sepolia sin avisar.
+  Para correr limpio sin tocar el shell:
+  `env -u NEXT_PUBLIC_CHAIN_ID -u NEXT_PUBLIC_BADGES_ADDRESS -u NEXT_PUBLIC_SCOREBOARD_ADDRESS pnpm -C apps/web <cmd>`
+- **`lsof -ti:3000` debe salir vacío** antes de VR o E2E. Un dev server viejo sirve el
+  build anterior y produce fallos fantasma (45 de ellos, 2026-07-10).
 
 ---
 
 ## Reglas que esta sesión ganó a golpes
 
-- **Verde no significa verificado.** Un test que aísla un predicado no prueba la
-  composición. Un baseline VR con `maxDiffPixelRatio: 0.01` no guarda texto.
-- **Un baseline VR hereda el entorno del que lo escribe.** Refrescar bajo un env
-  contaminado no arregla el test: lo silencia contra una pantalla muerta. Leer
-  siempre el PNG regenerado y preguntarse si la pantalla es la correcta, no solo
-  si el test pasó.
-- **Un fallo puede esconder otro.** El VR de la tienda moría en la precondición,
-  antes de comparar píxeles. Leer el mensaje de error real antes de creerle al
+- **El entorno miente antes que el código.** Ante un rojo masivo, sospechar del
+  entorno antes que del diff. Comparar contra un baseline en el commit anterior.
+- **Dos suites aisladas verdes no prueban su composición.** El toast pegado de #204
+  vivía exactamente entre dos suites verdes.
+- **Si sabés qué es el error, no le preguntes al texto.** Los errores tipados se
+  clasifican antes que toda heurística de string, incluida la de cancelación.
+- **Un fallo puede esconder otro.** Leer el mensaje de error real antes de creerle al
   handoff sobre la causa.
-- **Una constante derivada de contenido debe ser función del contenido.** Nunca un
-  literal. Si dice `@deprecated ... migración diferida a Sprint N`, bórrala en el
-  PR que migra al último consumidor y deja que `tsc` enumere el resto.
-- **VR:** refrescar con `--update-snapshots=all`, luego leer el PNG.
+- **Un instrumento puede tapar lo que vino a medir.** El redactor del probe censuró el
+  selector que el probe existía para leer.
+- **VR:** refrescar con `--update-snapshots=all`, y después **abrir el PNG**. Un
+  baseline hereda el entorno del que lo escribe.
 
 ## Qué NO tocar todavía
 
-- **No abrir el Belt System** hasta que cierren MiniPay/slides. Único item con
-  reloj: `BADGE_THRESHOLD` → proporción, y **la ventana sigue abierta** (hay
-  exactamente un badge minteado).
-- **Nunca construir recovery para el Daily-Streak.** El shield protege el COMBO,
-  no el Daily.
-- **No implementar server-verified progress con umbral proporcional evaluado en
-  vivo** — des-califica retroactivamente. Ver la decisión de diseño en el
-  session-close handoff: bit monótono `qualified(player, piece)`.
-- **No subir el `MAX_STARS`** ni ningún techo a un literal otra vez.
+- **No implementar el decoder** hasta cerrar el smoke y el checkpoint.
+- **No abrir el Belt System** hasta que cierren MiniPay/slides. Único item con reloj:
+  `BADGE_THRESHOLD` → proporción, mientras haya exactamente un badge minteado.
+- **Nunca construir recovery para el Daily-Streak.** El shield protege el COMBO.
+- **No implementar server-verified progress con umbral proporcional evaluado en vivo**
+  — des-califica retroactivamente. Bit monótono `qualified(player, piece)`.
+- **No subir ningún techo a un literal.** Una constante derivada de contenido debe ser
+  función del contenido.
 
 ## Si el usuario dice…
 
-- **"continuemos"** → leer este archivo + el triage, y arrancar por el punto 1
-  salvo que redirija.
-- **"qué falta"** → `docs/backlog/2026-07-09-pending-work-triage.md`.
-- **"ship it"** → redeploy de preview y confirmar `12/30` en device antes de nada.
+- **"continuemos"** → leer este archivo + el handoff, y arrancar por el punto 1.
+- **"qué falta"** → la matriz del smoke.
+- **"ship it"** → redeploy de preview y confirmar la matriz en device antes de nada.
