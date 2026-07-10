@@ -46,10 +46,16 @@ export function deriveTxToastState(inputs: TxToastInputs): TxToastState {
     return { show: true, current: "done" };
   }
 
-  if (hasTxHash) {
-    // Receipt is in flight — render the wait phase regardless of whether
-    // wagmi has flipped `isConfirming` true yet (there's a one-render gap
-    // between writeContract resolving and the receipt watcher mounting).
+  // `wait` means a receipt is genuinely in flight, so it reads the phase — not
+  // the mere presence of a hash.
+  //
+  // This branch used to be `if (hasTxHash)`, tolerating a one-render gap
+  // between `writeContract` resolving and wagmi's receipt watcher mounting.
+  // That watcher is gone: `useOnChainWrite` flips to `confirming` in the same
+  // tick it publishes the hash, so the tolerance bought nothing — and the hash
+  // outlives `settled`, which pinned "Confirming…" above the dock forever once
+  // the done-hold expired (device smoke, 2026-07-10).
+  if (inputs.isConfirming) {
     return { show: true, current: "wait" };
   }
 
