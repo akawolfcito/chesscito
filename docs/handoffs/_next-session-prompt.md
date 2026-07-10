@@ -26,12 +26,18 @@ paso: el síntoma que los motivaba era una misclasificación (#197), y debajo
 apareció algo peor — badge y score declaran éxito sobre el hash, no sobre el
 receipt (#199 cerró el helper; falta el lado del jugador).
 
-1. **`docs/specs/receipt-status-learn-handlers.md`** — bloque activo. Seam
-   testable + handlers de LEARN + estado `confirming`.
-2. **Probe en device del `raw` de MiniPay** — sin esto, decodificar custom errors
-   es una apuesta (`docs/reviews/2026-07-09-custom-errors-plan-redteam.md`).
-3. **Smoke test del flujo crítico** en mainnet.
+1. ~~`receipt-status-learn-handlers`~~ — **CERRADO** (#200).
+2. ~~Probe del `raw` de MiniPay~~ — **CERRADO** (#201, #202). Veredicto **GO**
+   para el decoder: la revert data llega, pero dentro de `message`, no en
+   `error.data`. Ver `docs/testing/2026-07-10-minipay-raw-error-probe-results.md`.
+3. **▶️ Smoke del flujo crítico en MiniPay** — bloque activo. Matriz lista en
+   `docs/testing/2026-07-10-minipay-critical-flow-smoke.md`. **Requiere device.**
 4. **Checkpoint de estabilidad.**
+
+Después del checkpoint, la siguiente mejora priorizada es el **decoder de custom
+errors** (`docs/backlog/2026-07-10-custom-errors-decoder.md`). **No bloquea
+estabilidad**: los reverts ya se interceptan, no producen éxito falso, y hay
+fallback genérico. Mejora la copy, no la corrección.
 
 Regla activa: si un hallazgo no bloquea el bloque, se **difiere**, no se abre.
 
