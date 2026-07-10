@@ -1,5 +1,12 @@
 # Triage de pendientes — 2026-07-09
 
+> ⚠️ **SUPERADO** por `docs/handoffs/2026-07-10-receipt-status-and-minipay-probe-handoff.md`.
+> El punto (a) cerró en #196. El (c) cambió de forma: el "Try again" era una
+> misclasificación (#197), no falta de decodificación, y debajo apareció algo peor —
+> badge y score declaraban éxito sobre el hash (#199/#200). El decoder está diferido
+> y **no bloquea estabilidad**: `docs/backlog/2026-07-10-custom-errors-decoder.md`.
+> Los puntos 3, 4 y 5 siguen vigentes.
+
 Auditado **contra el código**, no contra las listas. Dos entradas del backlog ya
 estaban cerradas y nadie lo había anotado; un baseline VR está rojo ahora mismo.
 
