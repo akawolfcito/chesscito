@@ -181,6 +181,54 @@ describe("useMintVictory", () => {
     expect(sendMint).toHaveBeenCalledTimes(1);
   });
 
+  // A mined-but-reverted mint used to reach `success`: the receipt was cast to
+  // `{ logs }`, so `status` was never read, the VictoryMinted event was simply
+  // absent, and `tokenId: null` degraded the share link to a CeloScan URL while
+  // the player saw a celebration.
+  it("reverted mint receipt never reaches the success phase", async () => {
+    const txHash = ("0x" + "cd".repeat(32)) as `0x${string}`;
+    const sendApprove = vi.fn().mockResolvedValue(("0x" + "01".repeat(32)) as `0x${string}`);
+    const sendMint = vi.fn().mockResolvedValue(txHash);
+    const waitReceipt = vi.fn().mockResolvedValue({ status: "reverted", logs: [] });
+
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          nonce: "42",
+          deadline: String(Math.floor(Date.now() / 1000) + 300),
+          signature: ("0x" + "ab".repeat(65)) as `0x${string}`,
+        }),
+      })
+      .mockResolvedValue({ ok: true, json: async () => ({}) });
+
+    const { result } = renderHook(() =>
+      useMintVictory({
+        gameId: "550e8400-e29b-41d4-a716-446655440000",
+        walletAddress: "0x1111111111111111111111111111111111111111",
+        difficulty: "easy",
+        result: "win",
+        totalMoves: 12,
+        elapsedMs: 60_000,
+        injected: {
+          address: "0x1111111111111111111111111111111111111111",
+          chainId: 42220,
+          sendApprove,
+          sendMint,
+          waitReceipt,
+        },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.start();
+    });
+
+    await waitFor(() => expect(result.current.phase).not.toBe("claiming"));
+    expect(result.current.phase).not.toBe("success");
+    expect(result.current.errorKind).toBe("revert");
+  });
+
   it("sig rejection → cancelled phase + claimingRef released", async () => {
     const sendSig = vi.fn().mockRejectedValue(new Error("user rejected"));
 
@@ -356,7 +404,7 @@ describe("useMintVictory", () => {
     // (which would crash because wagmi mock returns null for publicClient).
     const sendApprove = vi.fn().mockResolvedValue(("0x" + "00".repeat(32)) as `0x${string}`);
     const sendMint = vi.fn().mockResolvedValue(txHash);
-    const waitReceipt = vi.fn().mockResolvedValue({ logs: [] });
+    const waitReceipt = vi.fn().mockResolvedValue({ status: "success", logs: [] });
 
     // Two sequential successful sign-victory fetches
     const makeSignResponse = () => ({
@@ -428,7 +476,7 @@ describe("useMintVictory", () => {
       const sendMintWithPermit = vi.fn().mockResolvedValue(txHash);
       const sendApprove = vi.fn();
       const sendMint = vi.fn();
-      const waitReceipt = vi.fn().mockResolvedValue({ logs: [] });
+      const waitReceipt = vi.fn().mockResolvedValue({ status: "success", logs: [] });
 
       mockFetch
         .mockResolvedValueOnce({
@@ -483,7 +531,7 @@ describe("useMintVictory", () => {
       const sendMintWithPermit = vi.fn();
       const sendApprove = vi.fn().mockResolvedValue(("0x" + "01".repeat(32)) as `0x${string}`);
       const sendMint = vi.fn().mockResolvedValue(txHash);
-      const waitReceipt = vi.fn().mockResolvedValue({ logs: [] });
+      const waitReceipt = vi.fn().mockResolvedValue({ status: "success", logs: [] });
 
       mockFetch
         .mockResolvedValueOnce({
@@ -582,7 +630,7 @@ describe("useMintVictory", () => {
       const sendMintWithPermit = vi.fn();
       const sendApprove = vi.fn().mockResolvedValue(("0x" + "01".repeat(32)) as `0x${string}`);
       const sendMint = vi.fn().mockResolvedValue(txHash);
-      const waitReceipt = vi.fn().mockResolvedValue({ logs: [] });
+      const waitReceipt = vi.fn().mockResolvedValue({ status: "success", logs: [] });
 
       mockFetch
         .mockResolvedValueOnce({
@@ -650,7 +698,7 @@ describe("useMintVictory", () => {
       const sendMintWithPermit = vi.fn().mockResolvedValue(("0x" + "cc".repeat(32)) as `0x${string}`);
       const sendApprove = vi.fn();
       const sendMint = vi.fn();
-      const waitReceipt = vi.fn().mockResolvedValue({ logs: [] });
+      const waitReceipt = vi.fn().mockResolvedValue({ status: "success", logs: [] });
 
       mockFetch
         .mockResolvedValueOnce({

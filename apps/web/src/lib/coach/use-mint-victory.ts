@@ -16,6 +16,7 @@ import {
   useWriteContract,
 } from "wagmi";
 import { decodeEventLog } from "viem";
+import type { TransactionReceipt } from "viem";
 import { useTranslations } from "next-intl";
 import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
 import { VICTORY_CLAIM_COPY } from "@/lib/content/editorial";
@@ -28,7 +29,10 @@ import {
   normalizePrice,
 } from "@/lib/contracts/tokens";
 import { selectMaxBalanceToken } from "@/lib/contracts/select-payment-token";
-import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
+import {
+  assertReceiptSuccess,
+  waitForReceiptWithTimeout,
+} from "@/lib/contracts/transaction-helpers";
 import { isVictoryPermitMintEnabled } from "@/lib/feature-flags";
 import { permitTokenAbi } from "@/lib/contracts/permit-abi";
 import { permitSignatureToVRS } from "@/lib/contracts/permit-signature";
@@ -598,10 +602,16 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
         });
       }
 
-      type ReceiptLike = { logs: Array<{ data: `0x${string}`; topics: readonly `0x${string}`[] }> };
-      let receipt: ReceiptLike;
+      // The receipt is typed in full, not narrowed to `{ logs }`. That cast is
+      // what hid `status` and let a reverted mint reach the success phase with
+      // an empty log set and `tokenId: null`. Both branches converge on
+      // assertReceiptSuccess so they cannot disagree about what a success is.
+      let receipt: TransactionReceipt;
       if (inp.injected?.waitReceipt) {
-        receipt = (await inp.injected.waitReceipt(claimHash)) as ReceiptLike;
+        receipt = assertReceiptSuccess(
+          claimHash,
+          (await inp.injected.waitReceipt(claimHash)) as TransactionReceipt,
+        );
       } else {
         receipt = await waitForReceiptWithTimeout(publicClient!, claimHash);
       }

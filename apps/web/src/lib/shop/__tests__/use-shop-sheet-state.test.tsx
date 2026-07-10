@@ -264,6 +264,49 @@ describe("useShopSheetState — open/close", () => {
   });
 });
 
+// This suite mocks `waitForReceiptWithTimeout` wholesale (see the vi.mock
+// above), so it cannot observe the helper's new fail-closed behaviour — it can
+// only prove the call site propagates the rejection. The helper's own guarantee
+// is asserted in lib/contracts/__tests__/transaction-helpers.test.ts.
+describe("useShopSheetState — a reverted approve never reaches buyItem", () => {
+  it("aborts the purchase, shows no success, and never fires onPurchaseSuccess", async () => {
+    setReadContractsState({ catalog: makeOnChainItems(), balances: makeBalances() });
+
+    const onPurchaseSuccess = vi.fn();
+    // Approve broadcasts fine; the chain rejects it.
+    writeContractAsyncMock.mockResolvedValueOnce("0xapprove");
+    waitForReceiptMock.mockRejectedValueOnce(
+      Object.assign(new Error("Transaction reverted on-chain: 0xapprove"), {
+        name: "TransactionRevertedError",
+      }),
+    );
+
+    const { result } = renderHook(() => useShopSheetState({ onPurchaseSuccess }));
+
+    act(() => {
+      result.current.sheetProps.onSelectItem(1n);
+    });
+    act(() => {
+      result.current.confirmProps.onConfirm();
+    });
+
+    await waitFor(() => {
+      expect(result.current.confirmProps.purchasePhase).toBe("idle");
+    });
+
+    // Exactly one write: the approve. `buyItem` was never broadcast.
+    expect(writeContractAsyncMock).toHaveBeenCalledTimes(1);
+    const functionNames = writeContractAsyncMock.mock.calls.map(
+      (call) => (call[0] as { functionName?: string })?.functionName,
+    );
+    expect(functionNames).not.toContain("buyItem");
+
+    expect(result.current.sheetProps.successBanner).toBeNull();
+    expect(onPurchaseSuccess).not.toHaveBeenCalled();
+    expect(hapticSuccessMock).not.toHaveBeenCalled();
+  });
+});
+
 describe("useShopSheetState — handleSelectItem", () => {
   it("opens confirm sheet with the selected item + payment token", () => {
     setReadContractsState({ catalog: makeOnChainItems(), balances: makeBalances() });

@@ -1,4 +1,8 @@
-import { TransactionTimeoutError } from "@/lib/contracts/transaction-helpers";
+import {
+  TransactionReceiptUnverifiableError,
+  TransactionRevertedError,
+  TransactionTimeoutError,
+} from "@/lib/contracts/transaction-helpers";
 
 export function isUserCancellation(error: unknown): boolean {
   const msg = error instanceof Error ? error.message : String(error);
@@ -12,6 +16,21 @@ export function isTransactionTimeout(error: unknown): boolean {
   if (error instanceof Error && error.name === "WaitForTransactionReceiptTimeoutError") return true;
   const msg = error instanceof Error ? error.message : String(error);
   return /transaction timed out/i.test(msg);
+}
+
+/** A mined-and-reverted transaction. Recognized by type, never by prose —
+ *  the `name` fallback mirrors `isTransactionTimeout` and covers errors that
+ *  cross a bundle/realm boundary and lose `instanceof`. */
+export function isTransactionReverted(error: unknown): boolean {
+  if (error instanceof TransactionRevertedError) return true;
+  return error instanceof Error && error.name === "TransactionRevertedError";
+}
+
+/** A receipt with no readable `status`. Distinct from a revert: the chain gave
+ *  no verdict, so we must not claim it gave one. */
+export function isReceiptUnverifiable(error: unknown): boolean {
+  if (error instanceof TransactionReceiptUnverifiableError) return true;
+  return error instanceof Error && error.name === "TransactionReceiptUnverifiableError";
 }
 
 /** Locale-agnostic identifier for the kind of tx error. Stable across
@@ -35,6 +54,16 @@ const HTTP_STATUS_RE = /\bhttp[\s_-]?[45]\d{2}\b/;
 export function classifyTxErrorKind(error: unknown): TxErrorKind {
   const msg = error instanceof Error ? error.message : String(error);
   const lower = msg.toLowerCase();
+
+  // Typed outcomes are decided before a single character of prose is read.
+  // These errors carry a receipt: we KNOW what happened. Letting the string
+  // heuristics run first would let a revert whose message mentions "cancelled"
+  // or "400" be silently reclassified — the failure mode this whole module
+  // exists to prevent.
+  if (isTransactionReverted(error)) return "revert";
+  // No verdict from the chain is not a verdict of failure. It must never
+  // report as `revert`, and it must never render as success.
+  if (isReceiptUnverifiable(error)) return "unknown";
 
   if (isUserCancellation(error)) return "cancelled";
   // Timeout takes priority over generic network so the player learns

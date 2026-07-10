@@ -47,35 +47,53 @@ import type { Hash, PublicClient, TransactionReceipt } from "viem";
 export class TransactionRevertedError extends Error {
   readonly hash: Hash;
   readonly receipt: TransactionReceipt;
-  constructor(hash: Hash, receipt: TransactionReceipt) {
-    super(`Transaction reverted on-chain: ${hash}`);
-    this.name = "TransactionRevertedError";
-    this.hash = hash;
-    this.receipt = receipt;
-  }
 }
 
-/** Resuelve SOLO con `receipt.status === "success"`.
- *  @throws TransactionRevertedError  si se minó y revirtió
+/** Distinto de un revert: la cadena no dio veredicto. No colapsar los dos —
+ *  "la cadena dijo que no" y "no pude leer la respuesta" no son el mismo hecho,
+ *  ni en la copy ni en la telemetría. */
+export class TransactionReceiptUnverifiableError extends Error {
+  readonly hash: Hash;
+  readonly receipt: TransactionReceipt;
+  readonly receivedStatus: unknown;
+}
+
+/** PURA. Vale para un receipt de cualquier origen.
+ *  @returns el receipt si `status === "success"`
+ *  @throws TransactionRevertedError              si `status === "reverted"`
+ *  @throws TransactionReceiptUnverifiableError   si el status falta o no se reconoce */
+export function assertReceiptSuccess(
+  hash: Hash,
+  receipt: TransactionReceipt,
+): TransactionReceipt;
+
+/** Resuelve SOLO con `receipt.status === "success"`. Delega en assertReceiptSuccess.
  *  @throws TransactionTimeoutError   si no se minó dentro de timeoutMs */
 export async function waitForReceiptWithTimeout(
   client: PublicClient,
   hash: Hash,
   opts?: { timeoutMs?: number; confirmations?: number },
 ): Promise<TransactionReceipt>;
-
-/** Verifica el status de un hash cuyo receipt vino de una fuente no confiable
- *  (p.ej. `injected.waitReceipt` de MiniPay). Lee del nodo, no de la wallet. */
-export async function assertReceiptSuccess(
-  client: PublicClient,
-  hash: Hash,
-): Promise<TransactionReceipt>;
 ```
+
+> **Corrección al plan original.** El spec pedía
+> `assertReceiptSuccess(client, hash)`, con una lectura extra al nodo, para no
+> confiar en el receipt de MiniPay. Al implementarlo se comprobó que
+> `inp.injected` de `use-mint-victory` **solo existe en tests** (`injected:` no
+> aparece en ningún call site de producción): es un doble, no la wallet. Sin una
+> fuente no confiable que justificarla, la lectura extra es I/O sin motivo. La
+> versión pura cubre ambas ramas y las obliga a coincidir.
 
 ```ts
 // lib/errors.ts
 export function isTransactionReverted(error: unknown): boolean;
+export function isReceiptUnverifiable(error: unknown): boolean;
 ```
+
+Ambos se evalúan **antes que toda heurística de strings, incluida la de
+cancelación**: un revert cuyo mensaje contenga "cancelled" o "400" no debe
+reclasificarse. `TransactionRevertedError` → `"revert"`;
+`TransactionReceiptUnverifiableError` → `"unknown"`, nunca `"revert"`.
 
 `classifyTxErrorKind` mapea `TransactionRevertedError` → `"revert"`.
 El kind y la copy (`RESULT_OVERLAY_COPY.error.revert`) ya existen: **cero claves
@@ -94,9 +112,9 @@ nuevas, cero i18n, cero baselines VR**.
    `isTransactionTimeout` en `:11`).
 5. `classifyTxErrorKind(new TransactionRevertedError(...))` devuelve `"revert"`,
    y lo hace **antes** que las heurísticas de substring.
-6. Dado el path de victory con `injected.waitReceipt`, tras obtener el receipt de
-   la wallet se llama `assertReceiptSuccess(publicClient, claimHash)`. Si el
-   status no es `success`, lanza y `claimPhase` nunca pasa a `"success"`.
+6. Dado el path de victory con `injected.waitReceipt`, el receipt obtenido pasa
+   por `assertReceiptSuccess(claimHash, receipt)`. Si el status no es `success`,
+   lanza y `claimPhase` nunca pasa a `"success"`.
 7. Dado el path de victory sin `injected`, el helper ya lanza. Ambas ramas se
    comportan igual.
 8. Dado un `approve` revertido (shop o victory), la promesa lanza y el flujo
@@ -104,14 +122,9 @@ nuevas, cero i18n, cero baselines VR**.
 
 ## Edge cases
 
-- **`publicClient` ausente en el path inyectado de victory.** Hoy `publicClient!`
-  se usa con non-null assertion en `:606`. Si es `undefined` y hay `injected`,
-  `assertReceiptSuccess` no puede correr. → **fail closed**: lanzar. Un éxito no
-  verificable no se muestra como éxito.
-- **`assertReceiptSuccess` corre justo después de que la wallet ya vio el receipt**,
-  así que el nodo debería tenerlo. Aun así puede devolver
-  `TransactionReceiptNotFoundError` por lag de RPC. → reintentar vía
-  `waitForTransactionReceipt` con timeout corto en vez de `getTransactionReceipt`.
+- **Status ausente o desconocido.** Fail closed, pero **no** como revert:
+  `TransactionReceiptUnverifiableError` → kind `"unknown"`. Un receipt que no
+  podemos leer no autoriza a decir que la cadena rechazó la tx.
 - **Tx reemplazada** (speed-up desde la wallet): viem lanza. Sin cobertura previa;
   no la agregamos acá, pero queda anotada.
 - Un `approve` que revierte es hoy invisible; después será un error. Es un cambio
@@ -122,8 +135,13 @@ nuevas, cero i18n, cero baselines VR**.
 - [ ] `waitForReceiptWithTimeout` lanza `TransactionRevertedError` con `status: "reverted"`.
 - [ ] `waitForReceiptWithTimeout` devuelve el receipt con `status: "success"`.
 - [ ] El timeout sigue lanzando `TransactionTimeoutError` (test de regresión).
+- [ ] `assertReceiptSuccess` lanza `TransactionReceiptUnverifiableError` (y NO
+      `TransactionRevertedError`) con status ausente o desconocido.
 - [ ] `isTransactionReverted` reconoce instancia y duck-type por `name`.
-- [ ] `classifyTxErrorKind(TransactionRevertedError)` → `"revert"`.
+- [ ] `classifyTxErrorKind(TransactionRevertedError)` → `"revert"`, aun cuando el
+      mensaje diga "User rejected" o "HTTP 400".
+- [ ] `classifyTxErrorKind(TransactionReceiptUnverifiableError)` → `"unknown"`.
+- [ ] Un `Error` plano con "User rejected" sigue clasificando `"cancelled"`.
 - [ ] `use-mint-victory`: receipt revertido por el path inyectado ⇒ `claimPhase`
       NO es `"success"`, `onClaimTelemetry` emite `stage: "error"`.
 - [ ] `use-mint-victory`: receipt revertido por el path web ⇒ idem.
