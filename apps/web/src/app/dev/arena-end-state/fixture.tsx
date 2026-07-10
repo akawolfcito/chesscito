@@ -4,7 +4,8 @@ import { ArenaEndState, CoachAnalysisCta, type ClaimPhase } from "@/components/a
 import type { ArenaStatus } from "@/lib/game/types";
 
 type CoachVariant = "coach-cta-enabled" | "coach-cta-disabled-short" | "coach-cta-disabled-persisting";
-type WinVariant = "win-celebration" | "win-claiming" | "win-success" | "win-error" | "win-cancelled" | "win-timeout";
+// No "win-cancelled": a rejected prompt returns to win-celebration + a toast.
+type WinVariant = "win-celebration" | "win-claiming" | "win-success" | "win-error" | "win-timeout";
 // F8 phase (b) — Save on a non-win popup (a resign with moves > 0 so the
 // inline Save tile + its lifecycle surfaces; the bare loss variants keep
 // moves=0 and stay Save-less).
@@ -16,7 +17,6 @@ const WIN_PHASES: Record<WinVariant, ClaimPhase> = {
   "win-claiming": "claiming",
   "win-success": "success",
   "win-error": "error",
-  "win-cancelled": "cancelled",
   "win-timeout": "timeout",
 };
 

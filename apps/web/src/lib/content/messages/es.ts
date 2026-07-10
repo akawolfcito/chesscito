@@ -749,12 +749,6 @@ const messages = {
         subtitle: "",
         hint: "Tu progreso está a salvo. Toca reintentar cuando quieras.",
       },
-      cancelled: {
-        title: "Guardada para después",
-        subtitle:
-          "Nada se confirmó. Tu victoria sigue aquí cuando quieras guardarla.",
-        hint: "No hubo cargo. Toca reintentar cuando quieras.",
-      },
       timeout: {
         title: "Aún confirmando…",
         subtitle:
@@ -762,7 +756,7 @@ const messages = {
         hint: "Revisa primero tu wallet. Si sigue pendiente, espera un momento antes de reintentar.",
       },
     },
-    statusHeadlinePaused: "En pausa",
+    cancelledToast: "Aún sin guardar",
     statusHeadlineError: "Error",
     statusHeadlineTimeout: "Un momento",
     reviewMatchCta: "Analizar partida",

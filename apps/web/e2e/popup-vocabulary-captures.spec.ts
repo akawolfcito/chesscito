@@ -79,7 +79,6 @@ test.describe("Arena end-state popups", () => {
     "win-claiming",
     "win-success",
     "win-error",
-    "win-cancelled",
     "win-timeout",
   ]) {
     test(variant, async ({ page }) => {

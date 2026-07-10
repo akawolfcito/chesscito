@@ -10,7 +10,7 @@
 
 export type XCloseInput = {
   persistState: "idle" | "persisting" | "persisted" | "failed" | "dismissed";
-  claimPhase: "ready" | "claiming" | "success" | "error" | "cancelled" | "timeout";
+  claimPhase: "ready" | "claiming" | "success" | "error" | "timeout";
   walletAddress?: `0x${string}`;
   gameId?: string;
   /** Review F6 (2026-06-13): a 0-move game (e.g. instant resign) has nothing

@@ -1511,6 +1511,7 @@ function ArenaPageInner() {
             onBackToHub={handleBackToHub}
             onClose={handleEndStateClose}
             claimPhase={mint.phase}
+            justCancelled={mint.justCancelled}
             claimStep={mint.step}
             shareStatus={mint.shareStatus}
             claimData={mint.data}

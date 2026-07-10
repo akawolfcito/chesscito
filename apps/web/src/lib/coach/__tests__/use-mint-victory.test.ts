@@ -229,7 +229,7 @@ describe("useMintVictory", () => {
     expect(result.current.errorKind).toBe("revert");
   });
 
-  it("sig rejection → cancelled phase + claimingRef released", async () => {
+  it("sig rejection → back to ready + justCancelled, claimingRef released", async () => {
     const sendSig = vi.fn().mockRejectedValue(new Error("user rejected"));
 
     // Override fetch to reject for sign-victory
@@ -258,12 +258,49 @@ describe("useMintVictory", () => {
       await result.current.start();
     });
 
-    await waitFor(() =>
-      expect(["cancelled", "error"]).toContain(result.current.phase),
-    );
+    // A cancellation is a no-op, not an end state: the player lands back on the
+    // victory celebration with the claim still available. The only trace is the
+    // one-shot notice the consumer renders as a transient "Not saved yet" toast.
+    await waitFor(() => expect(result.current.phase).toBe("ready"));
+    expect(result.current.justCancelled).toBe(true);
+    expect(result.current.error).toBeNull();
+    expect(result.current.errorKind).toBeNull();
 
     // After resolution, reset() must not throw
     expect(() => result.current.reset()).not.toThrow();
+  });
+
+  it("justCancelled is one-shot: cleared by reset()", async () => {
+    const sendSig = vi.fn().mockRejectedValue(new Error("user rejected"));
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ error: "user rejected" }),
+    });
+
+    const { result } = renderHook(() =>
+      useMintVictory({
+        gameId: "550e8400-e29b-41d4-a716-446655440000",
+        walletAddress: "0x1111111111111111111111111111111111111111",
+        difficulty: "easy",
+        result: "win",
+        totalMoves: 12,
+        elapsedMs: 60_000,
+        injected: {
+          address: "0x1111111111111111111111111111111111111111",
+          chainId: 42220,
+          sendSig,
+        },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.start();
+    });
+    await waitFor(() => expect(result.current.justCancelled).toBe(true));
+
+    act(() => result.current.reset());
+    expect(result.current.justCancelled).toBe(false);
+    expect(result.current.phase).toBe("ready");
   });
 
   it("reset clears phase + sessionStorage", () => {
@@ -578,7 +615,7 @@ describe("useMintVictory", () => {
       expect(sendMint).toHaveBeenCalledTimes(1);
     });
 
-    it("flag ON + user rejects permit signature: cancelled phase, no forced fallback", async () => {
+    it("flag ON + user rejects permit signature: back to ready + justCancelled, no forced fallback", async () => {
       vi.stubEnv("NEXT_PUBLIC_VICTORY_PERMIT_MINT_ENABLED", "true");
 
       const sendPermit = vi.fn().mockRejectedValue(new Error("User rejected the request"));
@@ -616,7 +653,8 @@ describe("useMintVictory", () => {
         await result.current.start();
       });
 
-      await waitFor(() => expect(result.current.phase).toBe("cancelled"));
+      await waitFor(() => expect(result.current.phase).toBe("ready"));
+      expect(result.current.justCancelled).toBe(true);
 
       expect(sendApprove).not.toHaveBeenCalled();
       expect(sendMint).not.toHaveBeenCalled();
