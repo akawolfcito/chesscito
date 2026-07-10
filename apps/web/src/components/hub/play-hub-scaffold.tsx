@@ -196,7 +196,7 @@ export function PlayHubScaffold({
         <div className="play-hub-tools-grid" aria-label={tPlay("actionsAriaLabel")}>
           <PlayTacticsTile className="" />
           <HubActionTile
-            iconSrc="/art/redesign/icons/coach.png"
+            iconSrc="/art/new-icons-chesscito/training.png"
             label={tPlay("coachLabel")}
             ariaLabel={tHud("coachAriaLabel")}
             onClick={onCoachTap}
