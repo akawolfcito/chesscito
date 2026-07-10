@@ -109,6 +109,10 @@ import { daysRemaining } from "@/lib/pro/days-remaining";
 import { formatWalletShort } from "@/lib/wallet/format";
 import { ACCEPTED_TOKENS, CELO_TOKEN, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
+import { useOnChainWrite } from "@/lib/exercises/use-onchain-write";
+import { useDoneHold } from "@/lib/exercises/use-done-hold";
+import { applyScoreSaveSuccess } from "@/lib/exercises/apply-score-save-success";
+import { applyBadgeClaimSuccess } from "@/lib/exercises/apply-badge-claim-success";
 import { PIECE_IMAGES } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
@@ -178,7 +182,7 @@ const POINTS_PER_STAR_BIG = BigInt(POINTS_PER_STAR);
  * confirmation reads at the same cadence as other success affordances
  * (Victory NFT mint, badge claim, etc.).
  */
-const SAVE_DONE_HOLD_MS = 1500;
+// SAVE_DONE_HOLD_MS moved to `lib/exercises/use-done-hold` with the timer it governs.
 type CatalogItem = {
   itemId: bigint;
   /** Translator-resolved at memo time from SHOP_ITEM_COPY via the
@@ -310,8 +314,10 @@ export function ExercisesScreen({
   const { disconnect } = useDisconnect();
   const { switchChain } = useSwitchChain();
   const { isMiniPay } = useMiniPay();
-  const { writeContractAsync: writeScoreAsync, isPending: isScoreWriting } = useWriteContract();
-  const { writeContractAsync: writeBadgeAsync, isPending: isBadgeWriting } = useWriteContract();
+  // `isPending` is no longer read: `useOnChainWrite` owns the busy state for
+  // both writes, and it stays busy through confirmation, not just signing.
+  const { writeContractAsync: writeScoreAsync } = useWriteContract();
+  const { writeContractAsync: writeBadgeAsync } = useWriteContract();
   const { writeContractAsync: writeShopAsync, isPending: isShopWriting } = useWriteContract();
   const [selectedPiece, setSelectedPiece] = useState<PieceKey>(initialPiece);
   const [phase, setPhase] = useState<"ready" | "success" | "failure">("ready");
@@ -350,8 +356,8 @@ export function ExercisesScreen({
   const [selectedItemId, setSelectedItemId] = useState<bigint | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [shopTxHash, setShopTxHash] = useState<string | null>(null);
-  const [claimTxHash, setClaimTxHash] = useState<string | null>(null);
-  const [submitTxHash, setSubmitTxHash] = useState<string | null>(null);
+  // claimTxHash / submitTxHash removed: `useOnChainWrite` owns each write's hash
+  // and settles it against a verified receipt.
   const [lastError, setLastError] = useState<string | null>(null);
   const [purchasePhase, setPurchasePhase] = useState<"idle" | "approving" | "buying">("idle");
   // PRO sheet orchestration — owns its own status fetch internally so this
@@ -1002,24 +1008,24 @@ export function ExercisesScreen({
       enabled: Boolean(shopTxHash),
     },
   });
-  const { isLoading: isClaimConfirming } = useWaitForTransactionReceipt({
-    chainId,
-    hash: claimTxHash as `0x${string}` | undefined,
-    query: {
-      enabled: Boolean(claimTxHash),
+  // Badge claim and score save no longer watch the receipt through wagmi:
+  // `useWaitForTransactionReceipt().isSuccess` means "the query resolved", and
+  // viem resolves it for reverted transactions too. Both writes now settle on a
+  // verified receipt via `useOnChainWrite`. The shop watcher above is untouched.
+  const claimWrite = useOnChainWrite();
+  const saveWrite = useOnChainWrite();
+  const doneHold = useDoneHold();
+
+  /** Fails closed: an unverifiable success is not a success. */
+  const confirmReceipt = useCallback(
+    async (hash: `0x${string}`) => {
+      if (!publicClient) {
+        throw new Error("No client available to verify this transaction.");
+      }
+      return waitForReceiptWithTimeout(publicClient, hash);
     },
-  });
-  const {
-    isLoading: isSubmitConfirming,
-    isSuccess: isSubmitSuccess,
-    isError: isSubmitError,
-  } = useWaitForTransactionReceipt({
-    chainId,
-    hash: submitTxHash as `0x${string}` | undefined,
-    query: {
-      enabled: Boolean(submitTxHash),
-    },
-  });
+    [publicClient],
+  );
 
   // `canSendOnChain` keeps its old shape for the claim-badge path (which
   // still requires the badge to have been earned). For the score-save
@@ -1041,8 +1047,8 @@ export function ExercisesScreen({
     () => getScoreboardAddress(chainId),
     [chainId],
   );
-  const isClaimBusy = isBadgeWriting || isClaimConfirming;
-  const isSubmitBusy = isScoreWriting || isSubmitConfirming || isSavingScore;
+  const isClaimBusy = claimWrite.isBusy;
+  const isSubmitBusy = saveWrite.isBusy || isSavingScore;
   const isShopBusy = isShopWriting || isShopConfirming;
 
   // Cluster C — local-first save state. `lastSavedScore` is the last
@@ -1072,55 +1078,12 @@ export function ExercisesScreen({
     lastSavedTxHash,
   });
 
-  // Tx phase tracking for the TxProgressSteps toast. The toast remains
-  // mounted while the tx is in flight AND for `SAVE_DONE_HOLD_MS` after
-  // confirmation (matches the B1 primitive's own done-hold; tokenized as
-  // 3 × `--duration-ceremony` for motion-scale alignment). The surface
-  // owns the unmount boundary so the primitive's internal timer doesn't
-  // conflict with React's re-render cycle.
-  //
-  // The two effects below split cleanly so the done-hold timer is NOT
-  // cleaned up by React's effect-rerun semantics (Cluster C review
-  // patch — premature clear bug fix). One latch ref guarantees the
-  // hold fires once per (txHash, success) pair.
-  const [txDoneAt, setTxDoneAt] = useState<number | null>(null);
-  const pendingSubmitRef = useRef<{
-    piece: typeof selectedPiece;
-    score: number;
-    txHash: string;
-  } | null>(null);
-  const doneHoldStartedForTxRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!isSubmitSuccess || !submitTxHash) return;
-    if (doneHoldStartedForTxRef.current === submitTxHash) return;
-    doneHoldStartedForTxRef.current = submitTxHash;
-
-    // Persist the save to the ORIGINAL piece (piece-switch corruption
-    // fix). recordSaveFor writes localStorage under pending.piece even
-    // if the user has since switched to a different piece selector.
-    const pending = pendingSubmitRef.current;
-    if (pending && pending.txHash === submitTxHash) {
-      recordSaveFor(pending.piece, pending.score, pending.txHash);
-      pendingSubmitRef.current = null;
-    }
-
-    // Start the 1500ms done-hold. txDoneAt is intentionally NOT in this
-    // effect's deps — setting it inside would re-trigger the effect and
-    // React would clear the timer prematurely.
-    setTxDoneAt(Date.now());
-    const timer = window.setTimeout(() => setTxDoneAt(null), SAVE_DONE_HOLD_MS);
-    return () => window.clearTimeout(timer);
-  }, [isSubmitSuccess, submitTxHash, recordSaveFor]);
-
-  // Reset the done-hold + tx-success latch the moment a NEW submit
-  // starts so subsequent submissions get their own hold window.
-  useEffect(() => {
-    if (isScoreWriting && !submitTxHash) {
-      setTxDoneAt(null);
-      doneHoldStartedForTxRef.current = null;
-    }
-  }, [isScoreWriting, submitTxHash]);
+  // The done-hold keeps the TxProgressSteps toast mounted for a beat after a
+  // save lands. It used to share an effect with `recordSaveFor` and a latch ref,
+  // keyed on `useWaitForTransactionReceipt().isSuccess` — which also fired for
+  // reverted transactions, persisting scores that never landed. The timer, the
+  // latch, and its unmount cleanup now live in `useDoneHold`; the persistence
+  // moved behind a verified receipt in `handleSaveScoreOnChain`.
 
   // 4-phase precedence (failed > done > wait > sign) extracted to
   // `lib/exercises/tx-toast-state` for unit-test coverage. The `failed`
@@ -1128,11 +1091,11 @@ export function ExercisesScreen({
   // surfaces as a sticky failed toast instead of stranding the user on
   // a stale "Waiting…" state until the next submit clears it.
   const txToast = deriveTxToastState({
-    isWriting: isScoreWriting,
-    isConfirming: isSubmitConfirming,
-    isError: isSubmitError,
-    txHash: submitTxHash,
-    doneAt: txDoneAt,
+    isWriting: saveWrite.phase === "signing",
+    isConfirming: saveWrite.phase === "confirming",
+    hasFailed: saveWrite.outcome?.status === "failed",
+    txHash: saveWrite.txHash,
+    doneAt: doneHold.doneAt,
   });
   // Suppress the floating tx-progress toast while the ResultOverlay is
   // mounted. The popup owns the success/failure surface (incl. the
@@ -1573,51 +1536,71 @@ export function ExercisesScreen({
     track("badge_claim_tx", { stage: "start", piece: targetPiece });
 
     try {
-      const signed = await requestSignature("/api/sign-badge", {
-        player: address,
-        levelId: Number(claimLevelId),
+      const outcome = await claimWrite.run({
+        broadcast: async () => {
+          const signed = await requestSignature("/api/sign-badge", {
+            player: address,
+            levelId: Number(claimLevelId),
+          });
+
+          const hash = await writeWithOptionalFeeCurrency(writeBadgeAsync, {
+            address: badgesAddress,
+            abi: badgesAbi,
+            functionName: "claimBadgeSigned" as const,
+            args: [claimLevelId, BigInt(signed.nonce), BigInt(signed.deadline), signed.signature] as const,
+            chainId,
+            account: address,
+          });
+          // The wallet accepted it. The chain has not ruled yet.
+          track("badge_claim_tx", { stage: "broadcast", piece: targetPiece });
+          return hash;
+        },
+        confirm: confirmReceipt,
       });
 
-      const txHash = await writeWithOptionalFeeCurrency(writeBadgeAsync, {
-        address: badgesAddress,
-        abi: badgesAbi,
-        functionName: "claimBadgeSigned" as const,
-        args: [claimLevelId, BigInt(signed.nonce), BigInt(signed.deadline), signed.signature] as const,
-        chainId,
-        account: address,
-      });
+      if (outcome.status === "busy") return;
 
-      hapticSuccess();
-      setClaimTxHash(txHash);
-      track("badge_claim_tx", { stage: "success", piece: targetPiece });
-      setJustClaimed(prev => ({ ...prev, [targetPiece]: true }));
-      void refetchAllBadges();
-      // Queue unlock celebration for the next piece
-      const claimedIndex = PIECE_ORDER.indexOf(targetPiece);
-      const nextUnlock = claimedIndex < PIECE_ORDER.length - 1 ? PIECE_ORDER[claimedIndex + 1] : null;
-      if (nextUnlock) {
-        setUnlockedPiece(nextUnlock);
-        track("modal_open", { id: "piece-unlocked", piece: nextUnlock });
-      }
-      setResultOverlay({
-        variant: "badge",
-        txHash,
-      });
-      console.info("[MiniPayTx] result", { label: "claim-badge", txHash, levelId: Number(claimLevelId) });
-    } catch (error) {
-      if (isUserCancellation(error)) {
+      if (outcome.status === "cancelled") {
         track("badge_claim_tx", { stage: "cancelled", piece: targetPiece });
         return;
       }
-      const message = toErrorMessage(error);
-      setLastError(message);
-      track("badge_claim_tx", { stage: "error", piece: targetPiece, error_kind: classifyTxErrorKind(error) });
-      setResultOverlay({
-        variant: "error",
-        errorMessage: classifyTxError(error, tResult),
-        retryAction: () => void handleClaimBadge(piece),
-      });
-      console.warn("[MiniPayTx] error", { label: "claim-badge", levelId: Number(claimLevelId), error: message });
+
+      if (outcome.status === "failed") {
+        const message = toErrorMessage(outcome.error);
+        setLastError(message);
+        track("badge_claim_tx", { stage: "error", piece: targetPiece, error_kind: outcome.kind });
+        setResultOverlay({
+          variant: "error",
+          errorMessage: classifyTxError(outcome.error, tResult),
+          retryAction: () => void handleClaimBadge(piece),
+        });
+        console.warn("[MiniPayTx] error", { label: "claim-badge", levelId: Number(claimLevelId), error: message });
+        return;
+      }
+
+      // Verified on-chain from here down. `stage: "success"` now means the tx
+      // was mined successfully, not that the wallet accepted the broadcast.
+      track("badge_claim_tx", { stage: "success", piece: targetPiece });
+      void refetchAllBadges();
+
+      const claimedIndex = PIECE_ORDER.indexOf(targetPiece);
+      const nextUnlock = claimedIndex < PIECE_ORDER.length - 1 ? PIECE_ORDER[claimedIndex + 1] : null;
+
+      applyBadgeClaimSuccess(
+        {
+          haptic: hapticSuccess,
+          markClaimed: (claimed) =>
+            setJustClaimed((prev) => ({ ...prev, [claimed as PieceKey]: true })),
+          queueNextPieceUnlock: (next) => {
+            if (!next) return;
+            setUnlockedPiece(next as PieceKey);
+            track("modal_open", { id: "piece-unlocked", piece: next });
+          },
+          showOverlay: (hash) => setResultOverlay({ variant: "badge", txHash: hash }),
+        },
+        { piece: targetPiece, nextPiece: nextUnlock, txHash: outcome.txHash },
+      );
+      console.info("[MiniPayTx] result", { label: "claim-badge", txHash: outcome.txHash, levelId: Number(claimLevelId) });
     } finally {
       setClaimingPiece(null);
     }
@@ -1804,89 +1787,104 @@ export function ExercisesScreen({
     submittingScoreRef.current = true;
 
     setLastError(null);
-    // Clear the previous tx's hash so a retry after revert shows
-    // "Signing…" immediately instead of lingering on "Failed" until the
-    // new hash lands (Cluster C SAVE residue defer #1).
-    setSubmitTxHash(null);
+    // Clear the previous tx's state so a retry after revert shows "Signing…"
+    // immediately instead of lingering on "Failed" until the new hash lands
+    // (Cluster C SAVE residue defer #1).
+    saveWrite.reset();
+    doneHold.reset();
     track("score_submit_tx", { stage: "start", piece: selectedPiece });
 
+    // Captured at broadcast so the save persists under the piece the player was
+    // on when they submitted, even if they switch selectors while it confirms.
+    const submittedPiece = selectedPiece;
+    const submittedScore = Number(score);
+    const submittedTimeMs = Number(timeMs);
+    const submittedLevelId = Number(levelId);
+
     try {
-      const signed = await requestSignature("/api/sign-score", {
-        player: address,
-        levelId: Number(levelId),
-        score: Number(score),
-        timeMs: Number(timeMs),
+      const outcome = await saveWrite.run({
+        broadcast: async () => {
+          const signed = await requestSignature("/api/sign-score", {
+            player: address,
+            levelId: submittedLevelId,
+            score: submittedScore,
+            timeMs: submittedTimeMs,
+          });
+
+          const hash = await writeWithOptionalFeeCurrency(writeScoreAsync, {
+            address: scoreboardAddress,
+            abi: scoreboardAbi,
+            functionName: "submitScoreSigned" as const,
+            args: [levelId, score, timeMs, BigInt(signed.nonce), BigInt(signed.deadline), signed.signature] as const,
+            chainId,
+            account: address,
+          });
+          track("score_submit_tx", { stage: "broadcast", piece: submittedPiece });
+          return hash;
+        },
+        confirm: confirmReceipt,
       });
 
-      const txHash = await writeWithOptionalFeeCurrency(writeScoreAsync, {
-        address: scoreboardAddress,
-        abi: scoreboardAbi,
-        functionName: "submitScoreSigned" as const,
-        args: [levelId, score, timeMs, BigInt(signed.nonce), BigInt(signed.deadline), signed.signature] as const,
-        chainId,
-        account: address,
-      });
+      if (outcome.status === "busy") return;
 
-      hapticSuccess();
-      setSubmitTxHash(txHash);
-      // Capture (piece, score, txHash) at broadcast time so the
-      // receipt-success effect persists the SUBMITTED score under the
-      // CORRECT piece even if the user switches pieces before the
-      // receipt arrives.
-      pendingSubmitRef.current = {
-        piece: selectedPiece,
-        score: Number(score),
-        txHash,
-      };
-      track("score_submit_tx", { stage: "success", piece: selectedPiece });
-      setResultOverlay({
-        variant: "score",
-        txHash,
-      });
-      console.info("[MiniPayTx] result", { label: "submit-score", txHash, levelId: Number(levelId) });
-
-      // Write-through to Supabase (fire-and-forget) — this is what the
-      // combined leaderboard reads as the on-chain `scores` source.
-      void fetch("/api/cache-score", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          player: address,
-          levelId: Number(levelId),
-          score: Number(score),
-          timeMs: Number(timeMs),
-          txHash: txHash,
-        }),
-      }).catch(() => {});
-
-      // Optimistic entry for leaderboard
-      try {
-        sessionStorage.setItem(
-          "chesscito:optimistic-score",
-          JSON.stringify({
-            player: address.toLowerCase(),
-            score: Number(score),
-            levelId: Number(levelId),
-            ts: Date.now(),
-          }),
-        );
-      } catch { /* storage unavailable */ }
-      setLeaderboardRefreshTrigger((n) => n + 1);
-    } catch (error) {
-      if (isUserCancellation(error)) {
-        track("score_submit_tx", { stage: "cancelled", piece: selectedPiece });
+      if (outcome.status === "cancelled") {
+        track("score_submit_tx", { stage: "cancelled", piece: submittedPiece });
         showToast(tFooter("submitCanceled"), 2000);
         return;
       }
-      const message = toErrorMessage(error);
-      setLastError(message);
-      track("score_submit_tx", { stage: "error", piece: selectedPiece, error_kind: classifyTxErrorKind(error) });
-      setResultOverlay({
-        variant: "error",
-        errorMessage: classifyTxError(error, tResult),
-        retryAction: () => void handleSaveScoreOnChain(),
-      });
-      console.warn("[MiniPayTx] error", { label: "submit-score", levelId: Number(levelId), error: message });
+
+      if (outcome.status === "failed") {
+        const message = toErrorMessage(outcome.error);
+        setLastError(message);
+        track("score_submit_tx", { stage: "error", piece: submittedPiece, error_kind: outcome.kind });
+        setResultOverlay({
+          variant: "error",
+          errorMessage: classifyTxError(outcome.error, tResult),
+          retryAction: () => void handleSaveScoreOnChain(),
+        });
+        console.warn("[MiniPayTx] error", { label: "submit-score", levelId: submittedLevelId, error: message });
+        return;
+      }
+
+      // Verified on-chain. Nothing below this line ran for a reverted tx before
+      // — it ran for every broadcast, which is the bug.
+      hapticSuccess();
+      track("score_submit_tx", { stage: "success", piece: submittedPiece });
+
+      applyScoreSaveSuccess(
+        {
+          // The sequencer is piece-agnostic (plain string); the screen owns the
+          // PieceId narrowing.
+          recordSaveFor: (piece, saved, hash) => recordSaveFor(piece as PieceKey, saved, hash),
+          writeOptimisticScore: (entry) => {
+            try {
+              sessionStorage.setItem("chesscito:optimistic-score", JSON.stringify(entry));
+            } catch { /* storage unavailable */ }
+          },
+          // Write-through to Supabase — what the combined leaderboard reads as
+          // the on-chain `scores` source. Still fire-and-forget; its silent
+          // failure handling is a tracked, deferred gap.
+          cacheScore: (payload) => {
+            void fetch("/api/cache-score", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(payload),
+            }).catch(() => {});
+          },
+          refreshLeaderboard: () => setLeaderboardRefreshTrigger((n) => n + 1),
+          showOverlay: (hash) => setResultOverlay({ variant: "score", txHash: hash }),
+          startDoneHold: doneHold.start,
+        },
+        {
+          piece: submittedPiece,
+          score: submittedScore,
+          timeMs: submittedTimeMs,
+          levelId: submittedLevelId,
+          player: address,
+          txHash: outcome.txHash,
+        },
+      );
+      console.info("[MiniPayTx] result", { label: "submit-score", txHash: outcome.txHash, levelId: submittedLevelId });
     } finally {
       submittingScoreRef.current = false;
     }
@@ -2323,7 +2321,7 @@ export function ExercisesScreen({
           onRetrySave={() => void handleSubmitScore()}
           canSaveOnChain={canSaveOnChain}
           onSaveOnChain={() => void handleSaveScoreOnChain()}
-          isSavingOnChain={isScoreWriting || isSubmitConfirming}
+          isSavingOnChain={saveWrite.isBusy}
           shieldCount={shieldCount}
           streakCount={streakCount}
           lastEarnedStars={lastEarnedStars}
@@ -2450,7 +2448,7 @@ export function ExercisesScreen({
                     key={a}
                     action={a}
                     shieldsAvailable={shieldCount}
-                    isBusy={isBadgeWriting || isClaimConfirming}
+                    isBusy={claimWrite.isBusy}
                     onUseShield={handleUseShield}
                     onClaimBadge={() => void handleClaimBadge()}
                     onRetry={handleRetryApplied}
@@ -2483,7 +2481,7 @@ export function ExercisesScreen({
               <ContextualActionSlot
                 action={contextAction}
                 shieldsAvailable={shieldCount}
-                isBusy={isBadgeWriting || isClaimConfirming}
+                isBusy={claimWrite.isBusy}
                 onUseShield={handleUseShield}
                 onClaimBadge={() => void handleClaimBadge()}
                 // Sprint 5 commit G — route the legacy free Retry
@@ -2833,8 +2831,9 @@ export function ExercisesScreen({
             autoReset.invalidate();
             setSelectedPiece(piece);
             setResultOverlay(null);
-            setClaimTxHash(null);
-            setSubmitTxHash(null);
+            claimWrite.reset();
+            saveWrite.reset();
+            doneHold.reset();
             setShowBadgeEarned(false);
             setShowPieceComplete(false);
             resetBoard();

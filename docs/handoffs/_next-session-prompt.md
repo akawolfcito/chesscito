@@ -19,7 +19,25 @@ en mainnet.
 
 ---
 
-## Camino recomendado (en orden, de barato a caro)
+## ⚠️ Ruta vigente (2026-07-09, modo cierre y estabilización)
+
+El camino de abajo quedó **obsoleto**. Los custom errors YA NO son el siguiente
+paso: el síntoma que los motivaba era una misclasificación (#197), y debajo
+apareció algo peor — badge y score declaran éxito sobre el hash, no sobre el
+receipt (#199 cerró el helper; falta el lado del jugador).
+
+1. **`docs/specs/receipt-status-learn-handlers.md`** — bloque activo. Seam
+   testable + handlers de LEARN + estado `confirming`.
+2. **Probe en device del `raw` de MiniPay** — sin esto, decodificar custom errors
+   es una apuesta (`docs/reviews/2026-07-09-custom-errors-plan-redteam.md`).
+3. **Smoke test del flujo crítico** en mainnet.
+4. **Checkpoint de estabilidad.**
+
+Regla activa: si un hallazgo no bloquea el bloque, se **difiere**, no se abre.
+
+---
+
+## Camino anterior (histórico, no seguir)
 
 1. ~~**Refrescar el baseline VR `hub-shop-sheet-open`**~~ — **HECHO** (`28b2f75`).
    Eran dos fallos apilados. El segundo, no previsto: un
