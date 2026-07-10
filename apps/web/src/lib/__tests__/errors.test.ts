@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { classifyTxErrorKind } from "../errors";
+import type { Hash, TransactionReceipt } from "viem";
+import {
+  classifyTxErrorKind,
+  isReceiptUnverifiable,
+  isTransactionReverted,
+} from "../errors";
+import {
+  TransactionReceiptUnverifiableError,
+  TransactionRevertedError,
+} from "../contracts/transaction-helpers";
 
 describe("classifyTxErrorKind — ERC2612 permit reverts", () => {
   it("classifies ERC2612ExpiredSignature as revert", () => {
@@ -80,5 +89,80 @@ describe("classifyTxErrorKind — revert vs signingUnavailable disambiguation", 
       "execution reverted\n  address: 0x400aAA176d5f46e45789A8b18C8E990f663959a",
     );
     expect(classifyTxErrorKind(err)).toBe("revert");
+  });
+});
+
+describe("classifyTxErrorKind — TransactionRevertedError is typed, not parsed", () => {
+  const HASH = "0x4001beef" as Hash;
+  const receipt = { status: "reverted" } as unknown as TransactionReceipt;
+
+  it("classifies a TransactionRevertedError as revert", () => {
+    expect(classifyTxErrorKind(new TransactionRevertedError(HASH, receipt))).toBe("revert");
+  });
+
+  // The whole point of the typed error: classification must not depend on the
+  // prose of `message`. A revert whose message happens to read like an HTTP
+  // 4xx must still classify as a revert, because we know what it IS.
+  it("wins over the string heuristics even when the message reads like an HTTP 400", () => {
+    const err = new TransactionRevertedError(HASH, receipt);
+    Object.defineProperty(err, "message", { value: "HTTP 400 signing failed" });
+    expect(classifyTxErrorKind(err)).toBe("revert");
+  });
+
+  it("recognises a cross-realm duck-typed revert by name", () => {
+    // Same escape hatch `isTransactionTimeout` already relies on (errors.ts:11)
+    // for errors that cross a bundle/realm boundary and lose `instanceof`.
+    const err = Object.assign(new Error("HTTP 400"), {
+      name: "TransactionRevertedError",
+    });
+    expect(isTransactionReverted(err)).toBe(true);
+    expect(classifyTxErrorKind(err)).toBe("revert");
+  });
+
+  it("does not treat a plain Error as reverted", () => {
+    expect(isTransactionReverted(new Error("boom"))).toBe(false);
+  });
+
+  // A typed revert must not be demoted to `cancelled` because its prose happens
+  // to contain a cancellation keyword. `isUserCancellation` is a substring
+  // scan; the typed check has to run ahead of it.
+  it("wins over the cancellation heuristic", () => {
+    const err = new TransactionRevertedError(HASH, receipt);
+    Object.defineProperty(err, "message", { value: "User rejected the request" });
+    expect(classifyTxErrorKind(err)).toBe("revert");
+  });
+
+  it("still classifies a plain wallet rejection as cancelled", () => {
+    // Untyped: the heuristic remains the only signal, and must stay silent.
+    expect(classifyTxErrorKind(new Error("User rejected the request"))).toBe("cancelled");
+  });
+});
+
+describe("classifyTxErrorKind — an unverifiable receipt is not a revert", () => {
+  const HASH = "0xdeadbeef" as Hash;
+  const receipt = { transactionHash: HASH } as unknown as TransactionReceipt;
+
+  it("classifies TransactionReceiptUnverifiableError as unknown, never revert", () => {
+    const err = new TransactionReceiptUnverifiableError(HASH, receipt, undefined);
+    expect(classifyTxErrorKind(err)).toBe("unknown");
+    expect(classifyTxErrorKind(err)).not.toBe("revert");
+  });
+
+  it("is not reported as a revert by isTransactionReverted", () => {
+    const err = new TransactionReceiptUnverifiableError(HASH, receipt, "pending");
+    expect(isTransactionReverted(err)).toBe(false);
+    expect(isReceiptUnverifiable(err)).toBe(true);
+  });
+
+  it("recognises a cross-realm duck-typed unverifiable receipt by name", () => {
+    const err = Object.assign(new Error("HTTP 400"), {
+      name: "TransactionReceiptUnverifiableError",
+    });
+    expect(isReceiptUnverifiable(err)).toBe(true);
+    expect(classifyTxErrorKind(err)).toBe("unknown");
+  });
+
+  it("does not treat a plain Error as unverifiable", () => {
+    expect(isReceiptUnverifiable(new Error("boom"))).toBe(false);
   });
 });
