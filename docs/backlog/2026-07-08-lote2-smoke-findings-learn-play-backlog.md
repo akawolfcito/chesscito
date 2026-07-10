@@ -1,5 +1,10 @@
 # Lote 2 — smoke manual + backlog LEARN/PLAY (2026-07-08)
 
+> ⚠️ **PARCIALMENTE SUPERADO.** Índice vigente:
+> `docs/backlog/2026-07-10-backlog-index.md`. Ya cerrados y descritos abajo como
+> abiertos: el **CTA dorado "Save proof"** (#183), **LEARN #4 Post-Focus Free
+> Practice** (#191) y **PLAY #7 Coach HUB icon** (#207). No trabajarlos.
+
 > Lote 2 se mantiene CERRADO. Nada de esto se implementa ahora. Solo
 > confirmación/documentación + backlog priorizable. Item 3 vive en
 > `docs/backlog/2026-07-08-tactical-day-gift-proof-of-consistency-lote-2.5.md`.
