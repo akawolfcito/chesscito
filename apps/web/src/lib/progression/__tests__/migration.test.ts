@@ -81,4 +81,48 @@ describe("seedExistingPlayer", () => {
     );
     expect(second).toBe(first);
   });
+
+  it("stamps EVERY milestone celebratedAt on a full returning player", () => {
+    const seeded = seedExistingPlayer(
+      EMPTY_STORE,
+      input({
+        rookStars: 14,
+        lifetimeStars: 14,
+        completedExercises: 6,
+        pieceStars: 14,
+        pieceCompletedExercises: 6,
+        badgeClaimed: true,
+        allLabyrinthsComplete: true,
+        hadGreatSessionBefore: true,
+      }),
+      true,
+      NOW,
+    );
+
+    // Every seeded event must have celebratedAt
+    expect(Object.values(seeded.events).every((event) => event.celebratedAt)).toBe(true);
+
+    // Guard against vacuous pass — verify the expected milestones are present
+    expect(seeded.events["first-reward"]).toBeDefined();
+    expect(seeded.events["first-labyrinth:rook"]).toBeDefined();
+    expect(seeded.events["special-training"]).toBeDefined();
+    expect(seeded.events["piece-badge-eligible:rook"]).toBeDefined();
+    expect(seeded.events["piece-badge-claimed:rook"]).toBeDefined();
+    expect(seeded.events["mastery:rook"]).toBeDefined();
+  });
+
+  it("never seeds daily milestones even when sessionQuotaExhausted is true", () => {
+    const seeded = seedExistingPlayer(
+      EMPTY_STORE,
+      input({
+        sessionQuotaExhausted: true,
+        dailyStars: 0,
+        hadGreatSessionBefore: false,
+      }),
+      false,
+      NOW,
+    );
+    expect(seeded.events["great-focus-session"]).toBeUndefined();
+    expect(seeded.events["first-great-session"]).toBeUndefined();
+  });
 });
