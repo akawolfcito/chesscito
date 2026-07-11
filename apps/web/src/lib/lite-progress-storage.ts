@@ -31,6 +31,10 @@ export function dailySessionStorageKey(): string {
   return `${progressPrefix()}daily-session`;
 }
 
+export function dailyStarsStorageKey(): string {
+  return `${progressPrefix()}daily-stars`;
+}
+
 /** Only application-owned values are eligible for the hidden QA reset. */
 export function isChesscitoStorageKey(key: string | null): boolean {
   return key?.startsWith(LEGACY_PREFIX) ?? false;
