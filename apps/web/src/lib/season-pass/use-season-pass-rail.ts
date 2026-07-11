@@ -12,6 +12,7 @@ import {
   type SeasonPassSku,
 } from "@/lib/payments/rail-config";
 import { buildSeasonPassTransfer } from "@/lib/payments/transfer-builder";
+import { syncShieldsFromServer } from "@/lib/shop/shield-sync";
 export { mapSeasonPassError } from "@/lib/season-pass/map-season-pass-error";
 
 const CELO_MAINNET_CHAIN_ID = 42220;
@@ -127,6 +128,12 @@ export function useSeasonPassRail({
               overpaid: Boolean(json.overpaid),
             };
             setResult(railResult);
+            // The receipt carries a DELTA (`shieldsCredited`), not the
+            // monotonic counter the HUD renders from — so re-read the
+            // authoritative total before anyone reacts to the success.
+            // Skipping this left the shields chip on its pre-purchase
+            // value until another screen remounted useShieldSync.
+            if (address) await syncShieldsFromServer(address);
             setPhase("success");
             onVerified?.(railResult);
             return;
