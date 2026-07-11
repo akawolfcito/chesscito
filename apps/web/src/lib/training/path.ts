@@ -211,10 +211,13 @@ export type InterleavedRow<E> =
 /** Surface redistribution D6 (presentation-only): merge the drawer's
  *  exercise rows and labyrinth nodes into ONE continuous path. The
  *  first labyrinth lands after the earliest exercises that can reach
- *  its stars unlock (ceil(min/3) at 3★ each); each subsequent lab sits
- *  one exercise later, so the list alternates Ex → Lab → Ex → Lab.
- *  Labs left over past the last exercise append at the tail. The
- *  unlock MODEL is untouched — this orders rows, it never gates them. */
+ *  its stars unlock (ceil(min/3) at 3★ each), floored to
+ *  LABYRINTH_MIN_EXERCISES so the row is never laid out before the
+ *  compound gate (stars AND exercise floor) can possibly be open; each
+ *  subsequent lab sits one exercise later, so the list alternates
+ *  Ex → Lab → Ex → Lab. Labs left over past the last exercise append
+ *  at the tail. The unlock MODEL is untouched — this orders rows, it
+ *  never gates them. */
 export function interleaveTrainingRows<E>(
   exercises: readonly E[],
   labyrinths: readonly TrainingNode[],
@@ -222,7 +225,7 @@ export function interleaveTrainingRows<E>(
   const firstUnlock = labyrinths[0]?.unlock;
   const anchor =
     firstUnlock && firstUnlock.type === "stars"
-      ? Math.ceil(firstUnlock.min / 3)
+      ? Math.max(Math.ceil(firstUnlock.min / 3), LABYRINTH_MIN_EXERCISES)
       : exercises.length;
   const rows: InterleavedRow<E>[] = [];
   let labCursor = 0;

@@ -182,7 +182,9 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
         onLabyrinthSelect={onLabyrinthSelect}
       />,
     );
-    expect(screen.getByText("Unlocks at 6★")).toBeInTheDocument();
+    expect(
+      screen.getByText("Unlocks at 6★ and 3 exercises"),
+    ).toBeInTheDocument();
     const locked = screen.getByText("Labyrinth 1").closest("button");
     expect(locked).toHaveAttribute("data-locked", "true");
     if (locked) fireEvent.click(locked);
@@ -250,8 +252,10 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
     );
     // Section header is gone — one continuous path.
     expect(screen.queryByText("Labyrinths")).not.toBeInTheDocument();
-    // Labyrinth 1 (unlocks at 6★ → after 2 exercises) renders BEFORE
-    // the third exercise ("Center to edge", rook-3).
+    // Labyrinth 1's anchor is floored to LABYRINTH_MIN_EXERCISES (3), not
+    // the stars-only ceil(6/3)=2 — so it renders AFTER the third exercise
+    // ("Center to edge", rook-3) and BEFORE the fourth ("Corner capture",
+    // rook-4), never earlier than the floor allows.
     const texts = screen
       .getAllByRole("button", { hidden: true })
       .map((b) => b.textContent ?? "");
@@ -259,9 +263,14 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
     const thirdExerciseAt = texts.findIndex((t) =>
       t.includes("Center to edge"),
     );
+    const fourthExerciseAt = texts.findIndex((t) =>
+      t.includes("Corner capture"),
+    );
     expect(labAt).toBeGreaterThan(-1);
     expect(thirdExerciseAt).toBeGreaterThan(-1);
-    expect(labAt).toBeLessThan(thirdExerciseAt);
+    expect(fourthExerciseAt).toBeGreaterThan(-1);
+    expect(labAt).toBeGreaterThan(thirdExerciseAt);
+    expect(labAt).toBeLessThan(fourthExerciseAt);
   });
 });
 

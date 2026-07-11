@@ -111,7 +111,11 @@ export const TRAINING_PATH_COPY = {
   exerciseChipFormat: "Exercise {number}: {stars} of 3 stars",
   labyrinthLabelFormat: "Labyrinth {number}",
   labyrinthOpenAriaFormat: "Open Labyrinth {number}",
-  labyrinthLockedStarsFormat: "Unlocks at {stars}★",
+  /** The first labyrinth's unlock is a compound gate: stars AND an
+   *  exercise floor (LABYRINTH_MIN_EXERCISES). A stars-only message lets
+   *  a player with enough stars but too few solves read "unlocked" and
+   *  stay locked with no explanation — this format names both halves. */
+  labyrinthLockedStarsFormat: "Unlocks at {stars}★ and {exercises} exercises",
   labyrinthLockedChain: "Beat previous lab",
   ready: "Ready",
   starsFormat: "{stars}★",

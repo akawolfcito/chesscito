@@ -5,6 +5,7 @@ import {
   getLabyrinthForAutoAdvance,
   interleaveTrainingRows,
   nextPendingLabyrinthAfterExercise,
+  LABYRINTH_MIN_EXERCISES,
   LABYRINTH_UNLOCK_THRESHOLD,
 } from "@/lib/training/path";
 import { EXERCISES } from "@/lib/game/exercises";
@@ -47,11 +48,27 @@ describe("interleaveTrainingRows — presentation-only interleave (D6)", () => {
     const exercises = EXERCISES.rook.map((e) => e.id);
     const rows = interleaveTrainingRows(exercises, rookLabs());
 
-    // First lab unlocks at LABYRINTH_UNLOCK_THRESHOLD stars; at 3★ per
-    // exercise that is reachable after ceil(threshold/3) exercises.
-    const anchor = Math.ceil(LABYRINTH_UNLOCK_THRESHOLD / 3);
+    // First lab unlocks at LABYRINTH_UNLOCK_THRESHOLD stars AND
+    // LABYRINTH_MIN_EXERCISES completed exercises — a compound gate. At 3★
+    // per exercise the stars alone are reachable after ceil(threshold/3)
+    // exercises, but the anchor is floored to the exercise requirement so
+    // the row is never laid out before the gate can possibly be open.
+    const anchor = Math.max(
+      Math.ceil(LABYRINTH_UNLOCK_THRESHOLD / 3),
+      LABYRINTH_MIN_EXERCISES,
+    );
     const firstLabAt = rows.findIndex((r) => r.kind === "labyrinth");
     expect(firstLabAt).toBe(anchor);
+  });
+
+  it("never anchors the first labyrinth earlier than the exercise floor", () => {
+    // Regression: ceil(LABYRINTH_UNLOCK_THRESHOLD / 3) alone would place
+    // this at index 2 (after the 2nd exercise), a slot where the compound
+    // gate (stars AND LABYRINTH_MIN_EXERCISES) is guaranteed still locked.
+    const exercises = EXERCISES.rook.map((e) => e.id);
+    const rows = interleaveTrainingRows(exercises, rookLabs());
+    const firstLabAt = rows.findIndex((r) => r.kind === "labyrinth");
+    expect(firstLabAt).toBeGreaterThanOrEqual(LABYRINTH_MIN_EXERCISES);
   });
 
   it("alternates: each subsequent labyrinth sits one exercise later", () => {
@@ -96,7 +113,10 @@ describe("interleaveTrainingRows — presentation-only interleave (D6)", () => {
 });
 
 describe("nextPendingLabyrinthAfterExercise — the path flows THROUGH labs (QA G1)", () => {
-  const anchor = Math.ceil(LABYRINTH_UNLOCK_THRESHOLD / 3);
+  const anchor = Math.max(
+    Math.ceil(LABYRINTH_UNLOCK_THRESHOLD / 3),
+    LABYRINTH_MIN_EXERCISES,
+  );
   const anchorExerciseId = EXERCISES.rook[anchor - 1].id;
 
   it("returns the available lab when it is the immediate next interleaved row", () => {
@@ -146,7 +166,10 @@ describe("nextPendingLabyrinthAfterExercise — the path flows THROUGH labs (QA 
 });
 
 describe("getLabyrinthForAutoAdvance — path sequencing with late-unlock (Exercise Path Sequencing)", () => {
-  const anchor = Math.ceil(LABYRINTH_UNLOCK_THRESHOLD / 3);
+  const anchor = Math.max(
+    Math.ceil(LABYRINTH_UNLOCK_THRESHOLD / 3),
+    LABYRINTH_MIN_EXERCISES,
+  );
   // Exercise right before the first lab in the interleaved path (happy path anchor)
   const anchorExerciseId = EXERCISES.rook[anchor - 1].id;
   // Exercise AFTER the anchor (player already passed the lab slot)

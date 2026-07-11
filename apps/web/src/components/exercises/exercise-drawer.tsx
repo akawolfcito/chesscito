@@ -13,7 +13,11 @@ import {
 } from '@/lib/game/exercises'
 import { useExerciseDescriptions } from '@/lib/content/catalog-context'
 import { PIECE_IMAGES } from '@/lib/content/editorial'
-import { interleaveTrainingRows, type TrainingNode } from '@/lib/training/path'
+import {
+  interleaveTrainingRows,
+  LABYRINTH_MIN_EXERCISES,
+  type TrainingNode,
+} from '@/lib/training/path'
 import { buildContentId } from '@/lib/daily/session-quota'
 import {
   BASE_PIXEL_OFFSET,
@@ -322,6 +326,7 @@ export function ExerciseDrawer({
                   ? node.unlock.type === 'stars'
                     ? tPath('labyrinthLockedStarsFormat', {
                         stars: node.unlock.min,
+                        exercises: LABYRINTH_MIN_EXERCISES,
                       })
                     : tPath('labyrinthLockedChain')
                   : tPath('labyrinthLabelFormat', { number: labIndex + 1 })
@@ -431,6 +436,7 @@ export function ExerciseDrawer({
                             {node.unlock.type === 'stars'
                               ? tPath('labyrinthLockedStarsFormat', {
                                   stars: node.unlock.min,
+                                  exercises: LABYRINTH_MIN_EXERCISES,
                                 })
                               : tPath('labyrinthLockedChain')}
                           </span>

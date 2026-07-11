@@ -1,6 +1,9 @@
 import type { PieceId } from "@/lib/game/types";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
-import { LABYRINTH_UNLOCK_THRESHOLD } from "@/lib/training/path";
+import {
+  LABYRINTH_MIN_EXERCISES,
+  LABYRINTH_UNLOCK_THRESHOLD,
+} from "@/lib/training/path";
 import type { MilestoneId } from "./types";
 
 /** The gift is a once-ever event, so it reads once-ever counters. A daily
@@ -8,10 +11,6 @@ import type { MilestoneId } from "./types";
  *  Tuesday: the counter resets at UTC midnight and the gift never lands. */
 export const GIFT_STARS = 4;
 export const GIFT_EXERCISES = 2;
-
-/** The exercise floor that keeps the gift and the labyrinth from firing on
- *  the same solve for a perfect player. */
-export const LABYRINTH_EXERCISES = 3;
 
 export const SPECIAL_TRAINING_ROOK_STARS = 12;
 
@@ -60,7 +59,7 @@ export function deriveEarnedMilestones(input: MilestoneInput): EarnedMilestone[]
 
   if (
     input.pieceStars >= LABYRINTH_UNLOCK_THRESHOLD &&
-    input.pieceCompletedExercises >= LABYRINTH_EXERCISES
+    input.pieceCompletedExercises >= LABYRINTH_MIN_EXERCISES
   ) {
     earned.push({ id: "first-labyrinth", piece });
   }

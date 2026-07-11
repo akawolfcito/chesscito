@@ -807,7 +807,7 @@ const messages = {
     exerciseChipFormat: "Ejercicio {number}: {stars} de 3 estrellas",
     labyrinthLabelFormat: "Laberinto {number}",
     labyrinthOpenAriaFormat: "Abrir Laberinto {number}",
-    labyrinthLockedStarsFormat: "Se abre con {stars}★",
+    labyrinthLockedStarsFormat: "Se abre con {stars}★ y {exercises} ejercicios",
     labyrinthLockedChain: "Supera el anterior",
     ready: "Listo",
     starsFormat: "{stars}★",
