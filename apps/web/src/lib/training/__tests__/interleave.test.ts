@@ -9,13 +9,15 @@ import {
 } from "@/lib/training/path";
 import { EXERCISES } from "@/lib/game/exercises";
 
-/** Spread `totalStars` across the pool (3★ per exercise, in catalog order)
- *  and return the id-keyed best-stars map. Sparse: zero entries dropped. */
+/** Spread `totalStars` across the pool (2★ per exercise, in catalog order)
+ *  and return the id-keyed best-stars map. Sparse: zero entries dropped.
+ *  Capped at 2/exercise (not 3) so a 6★ total naturally spans 3+ exercises —
+ *  matching LABYRINTH_MIN_EXERCISES instead of colliding it on exercise 2. */
 function rookStarsTotaling(totalStars: number): Record<string, number> {
   let remaining = totalStars;
   const map: Record<string, number> = {};
   for (const ex of EXERCISES.rook) {
-    const take = Math.min(3, remaining);
+    const take = Math.min(2, remaining);
     remaining -= take;
     if (take > 0) map[ex.id] = take;
   }

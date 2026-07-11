@@ -83,10 +83,12 @@ describe("buildTrainingPath — fresh piece (0★)", () => {
   });
 });
 
-/** Build a stars array for a piece summing exactly `total` (3s then remainder). */
+/** Build a stars array for a piece summing exactly `total` (2s then remainder).
+ *  Capped at 2/exercise (not 3) so a 6★ total naturally spans 3+ exercises —
+ *  matching LABYRINTH_MIN_EXERCISES instead of colliding it on exercise 2. */
 function starsTotaling(piece: PieceId, total: number): number[] {
   return EXERCISES[piece].map(() => {
-    const take = Math.min(3, total);
+    const take = Math.min(2, total);
     total -= take;
     return take;
   });
@@ -149,6 +151,34 @@ describe("buildTrainingPath — labyrinth unlocks", () => {
     expect(lab.status).toBe("complete");
     expect(lab.stars).toBe(labyrinthStars(5, 3));
     expect(lab.stars).toBe(2);
+  });
+});
+
+describe("the first labyrinth needs an exercise floor, not just stars", () => {
+  it("stays locked at 6 stars across only 2 exercises", () => {
+    const path = buildTrainingPath({
+      piece: "rook",
+      progress: { piece: "rook", currentId: null, stars: { "rook-1": 3, "rook-2": 3 } },
+      labyrinthBests: {},
+      badgeClaimed: false,
+    });
+    const firstLab = path.find((node) => node.kind === "labyrinth");
+    expect(firstLab?.status).toBe("locked");
+  });
+
+  it("unlocks at 6 stars across 3 exercises", () => {
+    const path = buildTrainingPath({
+      piece: "rook",
+      progress: {
+        piece: "rook",
+        currentId: null,
+        stars: { "rook-1": 3, "rook-2": 2, "rook-3": 1 },
+      },
+      labyrinthBests: {},
+      badgeClaimed: false,
+    });
+    const firstLab = path.find((node) => node.kind === "labyrinth");
+    expect(firstLab?.status).toBe("available");
   });
 });
 

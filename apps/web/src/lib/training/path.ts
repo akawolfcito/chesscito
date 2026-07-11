@@ -65,6 +65,11 @@ export type PieceMastery = "none" | "badge" | "mastered";
  *  Flat for every piece in v1 (Queen/King asymmetry accepted). */
 export const LABYRINTH_UNLOCK_THRESHOLD = 6;
 
+/** Companion floor to LABYRINTH_UNLOCK_THRESHOLD. Stars alone let a perfect
+ *  player unlock the maze on exercise 2, colliding with the first reward.
+ *  The floor keeps the two milestones a solve apart. */
+export const LABYRINTH_MIN_EXERCISES = 3;
+
 export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
   const { piece, progress, labyrinthBests, badgeClaimed } = input;
   const exercisesCatalog = input.catalog?.exercises ?? EXERCISES;
@@ -75,6 +80,14 @@ export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
     (sum, value) => sum + value,
     0,
   );
+  // Same sparse map as totalStars, counting only entries with value > 0 — a
+  // present 0 means "played, scored nothing", NOT a completion.
+  const completedExercises = Object.values(progress.stars).filter(
+    (value) => value > 0,
+  ).length;
+  const meetsFirstLabGate =
+    totalStars >= LABYRINTH_UNLOCK_THRESHOLD &&
+    completedExercises >= LABYRINTH_MIN_EXERCISES;
 
   // Exercise nodes follow the authored catalog `order` (EXERCISES[piece] is
   // order-sorted at import time). Stars are read by exerciseId — immune to
@@ -106,10 +119,7 @@ export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
         : { type: "node", nodeId: orderedLabyrinths[index - 1].id };
     const previousComplete =
       index === 0 || labyrinthNodes[index - 1].status === "complete";
-    const unlocked =
-      index === 0
-        ? totalStars >= LABYRINTH_UNLOCK_THRESHOLD
-        : previousComplete;
+    const unlocked = index === 0 ? meetsFirstLabGate : previousComplete;
     labyrinthNodes.push({
       id: labyrinth.id,
       kind: "labyrinth",

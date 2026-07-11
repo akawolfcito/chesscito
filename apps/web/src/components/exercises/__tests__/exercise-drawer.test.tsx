@@ -143,7 +143,9 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
 
 describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
   const zeros = starsById();
-  const sixStars = starsById(3, 3); // rook-1 + rook-2 at 3★ each → 6★
+  // rook-1 + rook-2 + rook-3 at 2★ each → 6★ over 3 exercises (the floor —
+  // LABYRINTH_MIN_EXERCISES — needs 3+, not the 2 a 3+3 spread would give).
+  const sixStars = starsById(2, 2, 2);
 
   function rookLabNodes(
     stars: Record<string, number>,
@@ -296,6 +298,7 @@ describe("ExerciseDrawer — overlay descriptions (db-content)", () => {
 describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
   const rook1Id = EXERCISES.rook[0].id; // "rook-1"
   const rook2Id = EXERCISES.rook[1].id; // "rook-2"
+  const rook3Id = EXERCISES.rook[2].id; // "rook-3"
 
   const quotaAtLimit = {
     isAtLimit: true,
@@ -377,7 +380,10 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
   });
 
   describe("labyrinth quota behavior", () => {
-    const sixStars = { [rook1Id]: 3, [rook2Id]: 3 };
+    // 3 exercises at 2★ each → 6★ over 3 exercises, satisfying
+    // LABYRINTH_MIN_EXERCISES (a 3+3 spread over only 2 exercises stays
+    // path-locked under the floor).
+    const sixStars = { [rook1Id]: 2, [rook2Id]: 2, [rook3Id]: 2 };
     function rookLabNodes(starsMap: Record<string, number>, bests: Record<string, number> = {}) {
       return buildTrainingPath({
         piece: "rook",
