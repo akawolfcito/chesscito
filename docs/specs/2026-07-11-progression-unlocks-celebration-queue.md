@@ -241,28 +241,63 @@ it. `first-great-session` never resets.
 
 ### Celebration queue
 
-Conditions are evaluated together after a solve; overlays are drained one at a
-time, never stacked.
+This is **not** an absolute "always show everything" order. It is a priority for
+events that fire in the **same resolution**. Most solves fire nothing.
+
+Three rules govern a drain:
+
+1. **Incremental unlocks first.**
+2. **The highest-hierarchy event closes.**
+3. **Never two major celebrations back to back.**
+
+**Phase 1 — incremental unlocks.** Each gets its own overlay, in this order,
+because each carries a CTA to different content. None of them concludes
+anything; they all invite action.
 
 ```
-1. first-reward
-2. first-labyrinth
-3. piece-badge
-4. special-training
-5. mastery
-6. great-focus-session   (first-great-session rendered inside it)
+first-reward → first-labyrinth → special-training
 ```
 
-Content unlocks precede the session wrap-up. The wrap-up is the only overlay
-that says "you can stop now" — anything shown after it contradicts it. `mastery`
-sits above `great-focus-session` for the same reason: it invites the next piece.
+Special Training gates at 12★, past the 10★ badge, so when it collides with a
+closer the intensity escalates naturally: "a new mode is open" → "and you
+mastered the rook."
 
-`first-great-session` persists as an independent achievement but renders **inside**
-the Great Focus Session overlay rather than as a second modal:
+**Phase 2 — exactly one closer.** The highest tier that fired renders. Every
+lower-tier major that also fired is **absorbed as a line inside it**, never as a
+second modal.
 
-> **Great Focus Session**
-> A deep session, done.
+```
+mastery  >  piece-badge  >  great-focus-session
+```
+
+Showing `MASTERY!` and then `GREAT FOCUS SESSION!` drops the intensity after the
+climax. The closer swallows the rest:
+
+> **Rook Mastered**
+> Every exercise, every labyrinth.
+> Great Focus Session recognized.
 > **Badge unlocked: First Great Session**
+
+`first-great-session` persists as an independent achievement but always renders
+as a line inside whichever closer contains the Great Focus Session — never on
+its own.
+
+In practice, `mastery` and `first-great-session` colliding is near-impossible:
+mastery requires a claimed badge and every labyrinth, so a first great session
+would have happened long before. The rule holds anyway.
+
+### The closer can be a transaction, and it can be cancelled
+
+`piece-badge` is **not an overlay — it is an interactive on-chain claim flow**
+(signature + transaction). If it absorbs a Great Focus Session and the player
+cancels or defers the claim, an earned recognition would vanish with the
+cancelled transaction.
+
+Contract: **an absorbed event persists before the claim flow opens.** If the
+claim is cancelled, deferred, or fails, the absorbed Great Focus Session falls
+back to its own overlay. Recognition is never contingent on signing a
+transaction. This mirrors the existing victory-claim cancellation behavior
+(#206), where cancelling is a no-op rather than a loss.
 
 ### Overlay contract
 
@@ -358,7 +393,11 @@ passed.** Seeding suppresses the overlay while preserving the state.
 | Second Great Focus Session | Celebration fires, `first-great-session` does not re-grant. |
 | Session limit reached | Never shown before a pending recognition drains. |
 | Gift + labyrinth same solve | Gift overlay first, then labyrinth. Never stacked. |
-| Badge + Great Session same solve | Badge first, session wrap-up last. |
+| Badge + Great Session same solve | One closer: the badge flow, Great Session absorbed as a line. |
+| Mastery + Great Session same solve | One closer: Mastery. Great Session absorbed, no second overlay. |
+| Special Training + Mastery same solve | Special Training overlay (incremental) first, Mastery closes. |
+| Badge claim **cancelled** with Great Session absorbed | Great Session still recognized — falls back to its own overlay. Never lost with the tx. |
+| Two majors in one drain | Exactly one overlay renders. Never two back to back. |
 | Close app before claiming | Reward persists, still claimable on return. |
 | Reopen app after celebrating | Celebration does not replay. |
 | Existing player past every gate | No retroactive overlays. |
