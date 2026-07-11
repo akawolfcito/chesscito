@@ -3,10 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 
-import { dispatchShieldChange } from "@/lib/shop/shield-events";
+import { syncShieldsFromServer } from "@/lib/shop/shield-sync";
 import {
   consumeLegacyShieldsForMigration,
-  writeCreditedCache,
   SHIELDS_CONSUMED_KEY,
   SHIELDS_LEGACY_KEY,
   SHIELDS_CREDITED_CACHE_KEY,
@@ -18,8 +17,6 @@ export type UseShieldSyncReturn = {
   /** Manual trigger (e.g., right after a credit-shield write). */
   refresh: () => Promise<void>;
 };
-
-type ShieldsMeOk = { ok: true; credited: number };
 
 /** Boot-time + post-purchase shield reconciliation hook. Spec §
  *  "useShieldSync sequence" (purchase-queue drain step retired in
@@ -57,21 +54,8 @@ export function useShieldSync(): UseShieldSyncReturn {
       }
 
       // 2. Read current credit total.
-      try {
-        const res = await fetch(
-          `/api/shields/me?wallet=${encodeURIComponent(address)}`,
-        );
-        if (res.ok) {
-          const data = (await res.json()) as ShieldsMeOk;
-          if (mountedRef.current) {
-            writeCreditedCache(data.credited);
-            setServerCredited(data.credited);
-            dispatchShieldChange();
-          }
-        }
-      } catch {
-        // ignore — next sync retries
-      }
+      const credited = await syncShieldsFromServer(address);
+      if (credited != null && mountedRef.current) setServerCredited(credited);
     } finally {
       syncingRef.current = false;
     }
