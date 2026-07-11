@@ -94,9 +94,10 @@ voids replay scoring once the session is over.
 |---|---|---|
 | **First Reward** (gift) | `lifetimeStars >= 4` AND `completedExercises >= 2` | Cumulative |
 | **First Labyrinth** | `pieceStars(piece) >= 6` AND `completedExercises(piece) >= 3` | Cumulative, per piece |
-| **Piece Badge** | `pieceStars(piece) >= 10`, claimed on-chain | Cumulative, per piece |
+| **Piece Badge eligible** | `pieceStars(piece) >= 10` | Cumulative, per piece |
+| **Piece Badge claimed** | Claim transaction confirmed on-chain | Cumulative, per piece |
 | **Special Training** | `pieceStars(rook) >= 12` | Cumulative |
-| **Mastery** | Piece Badge claimed AND all labyrinths of that piece complete | Cumulative, per piece |
+| **Mastery** | Piece Badge **claimed** AND all labyrinths of that piece complete | Cumulative, per piece |
 | **Great Focus Session** | `dailyStars >= 8` OR session quota exhausted | **Daily, repeatable** |
 | **First Great Session** | First time Great Focus Session fires | Once, ever |
 
@@ -163,14 +164,22 @@ out and the session was never recognized, it is recognized then.
 
 Evaluation order after every solved activity:
 
-```
+```text
 1. Record the activity (stars, bests, consumed slot)
 2. Evaluate every milestone condition
-3. Drain the celebration queue
-4. Persist each fired event
-5. Return the player to the experience
-6. Only then, on the next attempt to start an activity, evaluate the session limit
+3. PERSIST every fired event + its idempotency key
+4. Build and drain the celebration queue
+5. Render
+6. Return the player to the experience
+7. Only then, on the next attempt to start an activity, evaluate the session limit
 ```
+
+**Persistence precedes rendering, never follows it.** If the app is killed while
+an overlay is on screen, the event must already be on disk — otherwise it is
+either lost or ambiguously re-derived on the next launch. Showing a celebration
+is a consequence of having recorded it, not the other way round. Marking
+`celebratedAt` is a second, separate write once the overlay has actually been
+shown.
 
 The celebration and the limit are never two consecutive modals. The player
 returns to the board in between; the wall appears when they reach for the next
@@ -209,8 +218,9 @@ already-persisted progress; only acknowledgement is new state.
 export type MilestoneId =
   | "first-reward"
   | "first-labyrinth"
-  | "piece-badge"
   | "special-training"
+  | "piece-badge-eligible"
+  | "piece-badge-claimed"
   | "mastery"
   | "great-focus-session"
   | "first-great-session";
@@ -221,12 +231,34 @@ export type MilestoneEvent = {
   piece?: PieceId;
   /** ISO timestamp the condition first became true. */
   earnedAt: string;
-  /** The celebration overlay has been shown. */
-  celebrated: boolean;
-  /** The player has opened the unlocked content. Clears the NEW dot. */
-  opened: boolean;
+  /** Set when the celebration overlay has been shown. */
+  celebratedAt?: string;
+  /** Set when the player first opens the unlocked content. Clears the NEW
+   *  dot. Present ONLY on navigable milestones — `first-reward`,
+   *  `first-labyrinth`, `special-training`. A Great Focus Session, a claimed
+   *  badge and a mastery crown have no destination to open, so `openedAt` is
+   *  meaningless for them and must never be written. */
+  openedAt?: string;
 };
 ```
+
+### Eligible is not claimed
+
+At 10★ the player earns **the right to claim**. The badge does not exist
+on-chain until a transaction confirms. Collapsing both into one milestone makes
+the machine lie about wallet state, so they are two events:
+
+| Event | Meaning | Navigable |
+|---|---|---|
+| `piece-badge-eligible` | 10★ reached. Opens the claim flow. | No |
+| `piece-badge-claimed` | Transaction confirmed. The badge exists. | No |
+
+`mastery` depends on **`piece-badge-claimed`**, never on eligibility — the crown
+cannot rest on a badge that was never minted.
+
+This also makes cancellation precise: **cancelling a claim preserves
+eligibility** and releases any absorbed recognition. The player keeps the right
+to claim, keeps the Great Focus Session, and loses nothing but the transaction.
 
 **Idempotence key:** `${id}` for global milestones, `${id}:${piece}` for
 per-piece ones. A milestone is celebrated exactly once. Re-deriving a condition
@@ -266,8 +298,8 @@ mastered the rook."
 lower-tier major that also fired is **absorbed as a line inside it**, never as a
 second modal.
 
-```
-mastery  >  piece-badge  >  great-focus-session
+```text
+mastery  >  piece-badge-eligible  >  great-focus-session
 ```
 
 Showing `MASTERY!` and then `GREAT FOCUS SESSION!` drops the intensity after the
@@ -288,16 +320,21 @@ would have happened long before. The rule holds anyway.
 
 ### The closer can be a transaction, and it can be cancelled
 
-`piece-badge` is **not an overlay — it is an interactive on-chain claim flow**
-(signature + transaction). If it absorbs a Great Focus Session and the player
-cancels or defers the claim, an earned recognition would vanish with the
-cancelled transaction.
+`piece-badge-eligible` is **not an overlay — it opens an interactive on-chain
+claim flow** (signature + transaction). If it absorbs a Great Focus Session and
+the player cancels or defers the claim, an earned recognition would vanish with
+the cancelled transaction.
 
-Contract: **an absorbed event persists before the claim flow opens.** If the
-claim is cancelled, deferred, or fails, the absorbed Great Focus Session falls
-back to its own overlay. Recognition is never contingent on signing a
-transaction. This mirrors the existing victory-claim cancellation behavior
-(#206), where cancelling is a no-op rather than a loss.
+Contract: **an absorbed event is already persisted before the claim flow opens**
+(step 3 of the evaluation order). If the claim is cancelled, deferred, or fails:
+
+- `piece-badge-eligible` **survives** — the player keeps the right to claim.
+- `piece-badge-claimed` never fires — nothing was minted.
+- The absorbed Great Focus Session is **released to its own overlay**.
+
+Recognition is never contingent on signing a transaction. This mirrors the
+existing victory-claim cancellation behavior (#206), where cancelling is a no-op
+rather than a loss.
 
 ### Overlay contract
 
@@ -322,8 +359,14 @@ Special Training example:
 
 The static `HubTileStatusChip kind="ready"` on the Special Training tile
 (`hub-arena-tile.tsx:53`) is replaced by a NEW chip driven by
-`event.opened === false`. Set when the unlock persists; cleared the first time
+`openedAt === undefined`. Set when the unlock persists; cleared the first time
 the player opens the content. The same rule governs the gift indicator.
+
+`openedAt` only exists on the three **navigable** milestones — `first-reward`,
+`first-labyrinth`, `special-training`. There is nothing to "open" about a Great
+Focus Session, a claimed badge or a mastery crown; they are recognitions, not
+destinations. Writing `openedAt` on them would be inventing a state with no
+meaning.
 
 ## Special Training combinations (model only)
 
@@ -366,11 +409,12 @@ Existing players must not regress.
 
 | Case | Behavior |
 |---|---|
-| Already claimed the gift | `first-reward` seeds as `celebrated: true, opened: true`. No replay. |
-| Gift unlocked, unclaimed | `first-reward` seeds as `celebrated: true, opened: false`. NEW dot persists; no surprise overlay. |
+| Already claimed the gift | `first-reward` seeds with `celebratedAt` and `openedAt` set. No replay. |
+| Gift unlocked, unclaimed | `first-reward` seeds with `celebratedAt` set, `openedAt` unset. NEW dot persists; no surprise overlay. |
 | Already earned `first-focus-day` | Untouched. Keeps the badge. |
-| Already past 12★ rook | `special-training` seeds as `celebrated: true, opened: true`. The tile stays visible, no retroactive overlay. |
-| Already claimed a Piece Badge | Seeds `celebrated: true`. |
+| Already past 12★ rook | `special-training` seeds with `celebratedAt` and `openedAt` set. The tile stays visible, no retroactive overlay. |
+| Already past 10★, badge unclaimed | `piece-badge-eligible` seeds with `celebratedAt` set. Claim stays available, no overlay. |
+| Already claimed a Piece Badge | Both `piece-badge-eligible` and `piece-badge-claimed` seed with `celebratedAt` set. |
 
 The rule: **no retroactive celebration fires for a milestone a player already
 passed.** Seeding suppresses the overlay while preserving the state.
@@ -393,10 +437,12 @@ passed.** Seeding suppresses the overlay while preserving the state.
 | Second Great Focus Session | Celebration fires, `first-great-session` does not re-grant. |
 | Session limit reached | Never shown before a pending recognition drains. |
 | Gift + labyrinth same solve | Gift overlay first, then labyrinth. Never stacked. |
-| Badge + Great Session same solve | One closer: the badge flow, Great Session absorbed as a line. |
+| Badge eligible + Great Session same solve | One closer: the claim flow, Great Session absorbed as a line. |
 | Mastery + Great Session same solve | One closer: Mastery. Great Session absorbed, no second overlay. |
 | Special Training + Mastery same solve | Special Training overlay (incremental) first, Mastery closes. |
-| Badge claim **cancelled** with Great Session absorbed | Great Session still recognized — falls back to its own overlay. Never lost with the tx. |
+| Badge claim **cancelled** with Great Session absorbed | `piece-badge-eligible` survives, `piece-badge-claimed` never fires, Great Session released to its own overlay. |
+| 10★ reached, claim never made | `piece-badge-eligible` persists. `mastery` stays locked even with every labyrinth done. |
+| App killed while an overlay is on screen | The event is already persisted. It does not replay and is not lost. |
 | Two majors in one drain | Exactly one overlay renders. Never two back to back. |
 | Close app before claiming | Reward persists, still claimable on return. |
 | Reopen app after celebrating | Celebration does not replay. |
