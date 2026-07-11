@@ -36,8 +36,19 @@ type Props = {
    *  PersistentDock (z-60). Aux-family modals pass `z-[55]` to cover the
    *  z-50 aux sheet while staying UNDER the dock. */
   scrimZClassName?: string;
+  /** Overrides the `panel-bg1` panel art with a full-panel background (frame
+   *  included). Pass a CSS `image-set(...)` string. The Season Pass
+   *  celebration uses this: its art bakes in the frame, shield and garden, so
+   *  layering it over panel-bg1 would double the frame. */
+  panelBackgroundImage?: string;
+  /** Extra classes on the panel — e.g. an `aspect-*` ratio so a full-panel
+   *  background art is not stretched by `backgroundSize: 100% 100%`. */
+  panelClassName?: string;
   children: ReactNode;
 };
+
+const DEFAULT_PANEL_BG =
+  'image-set(url("/art/new-assets-chesscito/paneles/panel-bg1.avif") type("image/avif"), url("/art/new-assets-chesscito/paneles/panel-bg1.webp") type("image/webp"), url("/art/new-assets-chesscito/paneles/panel-bg1.png") type("image/png"))';
 
 /**
  * Shared shell for all 4 victory popup states (celebration, claiming,
@@ -59,6 +70,8 @@ export function VictoryPopupShell({
   closeLabel = "Close",
   portal = false,
   scrimZClassName = "z-[70]",
+  panelBackgroundImage = DEFAULT_PANEL_BG,
+  panelClassName = "",
   children,
 }: Props) {
   const handleBackdropClick = disableBackdropClose ? undefined : () => onClose?.();
@@ -80,11 +93,10 @@ export function VictoryPopupShell({
     >
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
-        className="relative mx-4 w-full max-w-[340px] max-h-[92dvh] overflow-y-auto overscroll-contain"
+        className={`relative mx-4 w-full max-w-[340px] max-h-[92dvh] overflow-y-auto overscroll-contain ${panelClassName}`}
         onClick={(e) => e.stopPropagation()}
         style={{
-          backgroundImage:
-            'image-set(url("/art/new-assets-chesscito/paneles/panel-bg1.avif") type("image/avif"), url("/art/new-assets-chesscito/paneles/panel-bg1.webp") type("image/webp"), url("/art/new-assets-chesscito/paneles/panel-bg1.png") type("image/png"))',
+          backgroundImage: panelBackgroundImage,
           backgroundSize: "100% 100%",
           backgroundRepeat: "no-repeat",
         }}

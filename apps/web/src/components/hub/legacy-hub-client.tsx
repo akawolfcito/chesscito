@@ -457,8 +457,11 @@ export function LegacyHubClient({
         <SeasonPassSheet
           open={seasonPassSheetOpen}
           onOpenChange={setSeasonPassSheetOpen}
+          // Refresh the entitlement but LEAVE THE SHEET OPEN: the verified
+          // payment renders the celebration, and closing here would unmount it
+          // in the same tick the rail reaches "success". The user dismisses it
+          // via Start Focus or the X.
           onSuccess={() => {
-            setSeasonPassSheetOpen(false);
             void seasonPassStatus.refresh();
           }}
         />

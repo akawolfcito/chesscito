@@ -14244,3 +14244,120 @@ button.hud-resource-chip:active:not(:disabled) {
 .sheet-bg-exercises[data-state="closed"] {
   animation-name: aux-sheet-fade-out !important;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Season Pass celebration — post-purchase "You are in!" screen.
+   The panel art (`/art/celebration/bg-celebration.*`) bakes in the frame, the
+   shield/ribbon crest and the garden, so this layer only stacks type + stats +
+   the Start Focus CTA on top of it. Text color matches the sheet's brown ink.
+   ───────────────────────────────────────────────────────────────────────────── */
+.season-pass-celebration {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  color: rgba(63, 34, 8, 0.95);
+}
+
+/* Zero-size anchor sitting over the crest baked into the art: ConfettiBurst
+   chips fly from the CENTER of their positioned parent, so the burst reads as
+   coming out of the shield rather than out of the headline. */
+.season-pass-celebration-burst {
+  position: absolute;
+  top: -54px;
+  left: 0;
+  right: 0;
+  height: 0;
+}
+
+/* Top margin clears the shield crest baked into the panel art. */
+.season-pass-celebration-title {
+  margin-top: 22px;
+  font-family: var(--font-game-action);
+  font-size: clamp(32px, 8.4vw, 42px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.5);
+}
+
+.season-pass-celebration-subtitle {
+  max-width: 230px;
+  font-size: 15px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: rgba(63, 34, 8, 0.9);
+}
+
+.season-pass-celebration-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(180, 120, 40, 0.35);
+  background: rgba(255, 246, 214, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.season-pass-celebration-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 800;
+  color: rgba(63, 34, 8, 0.95);
+}
+
+.season-pass-celebration-stat-sep {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(63, 34, 8, 0.35);
+}
+
+.season-pass-celebration-habit {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(63, 34, 8, 0.75);
+}
+
+/* The avatar peeks out from BEHIND the CTA: it is painted first (z-index 0)
+   and the button sits on top (z-index 1). Top padding reserves the height the
+   avatar needs so it never overlaps the habit line above. */
+.season-pass-celebration-cta {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  /* >= avatar height minus its overlap with the button, so the sprite never
+     climbs over the habit line above. */
+  padding-top: 116px;
+}
+
+.season-pass-celebration-avatar {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 0;
+  width: 136px;
+  pointer-events: none;
+}
+
+.season-pass-celebration-avatar img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 10px rgba(63, 34, 8, 0.28));
+}
+
+.season-pass-celebration-cta .hub-lite-start-focus {
+  position: relative;
+  z-index: 1;
+}

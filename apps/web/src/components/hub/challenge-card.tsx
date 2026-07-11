@@ -32,7 +32,7 @@ export type ChallengeCardProps = {
   onFocusTap?: () => void;
 };
 
-function CalendarIcon() {
+export function CalendarIcon() {
   return (
     <svg viewBox="0 0 16 16" className="challenge-card-stat-icon" aria-hidden="true">
       <rect x="2" y="3" width="12" height="11" rx="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
@@ -40,7 +40,7 @@ function CalendarIcon() {
     </svg>
   );
 }
-function ShieldIcon() {
+export function ShieldIcon() {
   return (
     <svg viewBox="0 0 16 16" className="challenge-card-stat-icon" aria-hidden="true">
       <path d="M8 1.5l5 2v4c0 3.2-2.1 5.2-5 6.5C5.1 12.7 3 10.7 3 7.5v-4l5-2z" fill="currentColor" />
