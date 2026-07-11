@@ -56,18 +56,40 @@ export function useCelebrationQueue(): UseCelebrationQueueReturn {
       markCelebrated(id, current.piece);
     }
 
+    // Advance the ref SYNCHRONOUSLY, in the same tick. `queueRef.current` is
+    // otherwise only refreshed during render, so two `dismissCurrent()`
+    // calls before React commits (a double-tap) would both read step A as
+    // `[0]`, both mark A celebrated (harmless — idempotent), but both
+    // enqueue the same `prev.slice(1)` updater. Applied sequentially those
+    // updaters compute `[A,B] → [B] → []`, dropping B from the queue
+    // WITHOUT ever marking it celebrated. This is a ref write, not state —
+    // it is safe to do outside the (still pure) updater below.
+    queueRef.current = queueRef.current.slice(1);
     setQueue((prev) => prev.slice(1));
   }, []);
 
   /** Releases a recognition that was absorbed by a claim flow the player
    *  cancelled. Recognition never depends on signing a transaction — it
-   *  re-queues whichever absorbed events are still pending. */
+   *  re-queues whichever absorbed events are still pending.
+   *
+   *  MUST be called BEFORE `dismissCurrent()` on the cancellation path. If
+   *  `dismissCurrent()` runs first, it already stamps every absorbed event
+   *  (including this one) with `celebratedAt`, so `selectPending` returns
+   *  nothing for them and this silently replaces the queue with `[]` —
+   *  recognition lost, not just delayed.
+   *
+   *  Replaces the whole queue rather than splicing into it. That is only
+   *  safe because `buildCelebrationQueue` always emits the closer LAST —
+   *  nothing follows it today. A future reorder of the queue would break
+   *  this assumption silently. */
   const releaseAbsorbed = useCallback((step: CelebrationStep) => {
     const store = getMilestoneStore();
     const pending = selectPending(store).filter((event) =>
       step.absorbed.includes(event.id),
     );
-    setQueue(buildCelebrationQueue(pending));
+    const next = buildCelebrationQueue(pending);
+    queueRef.current = next;
+    setQueue(next);
   }, []);
 
   const openContent = useCallback((id: MilestoneId, piece?: PieceId) => {
