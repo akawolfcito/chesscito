@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAccount, useSignMessage } from "wagmi";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 
-import { dispatchShieldChange } from "@/lib/shop/shield-events";
+import { applyServerCredited } from "@/lib/shop/shield-sync";
 import type { WelcomePackTileState } from "@/components/exercises/welcome-pack-tile";
 
 /**
@@ -196,11 +196,13 @@ export function useWelcomePackClaim(
           setClaimed(true);
           setClaimedAt(at);
           writeCache(walletLower, true, at);
-          // Notify HUD chip + Account inventory row of new balance.
-          // Only fire on fresh claim — already_claimed should NOT
-          // create a phantom shield delta in the UI.
+          // Cache the new counter, THEN notify the HUD chip + Account
+          // inventory row. Dispatching alone just made them re-read a
+          // stale localStorage. `credited` is the absolute INCRBY return,
+          // safe to cache as-is. Only on a fresh claim — already_claimed
+          // must NOT create a phantom shield delta in the UI.
           if (payload.claimed && typeof payload.credited === "number") {
-            dispatchShieldChange();
+            applyServerCredited(payload.credited);
             // Fire post-fresh-claim callback (e.g. auto-close Shop
             // sheet so the player returns to the exercises arena).
             // Only on fresh claim — already_claimed should NOT
