@@ -3232,7 +3232,7 @@ export const CHALLENGE_CARD_COPY = {
   celebrationSubtitle: "Your 21-Day Mind Challenge has started.",
   celebrationDaysStat: "{days} days",
   celebrationShieldsStat: "+{count} Shields",
-  celebrationShieldsPending: "Shields on the way",
+  celebrationShieldsPending: "Shields soon",
   celebrationHabit: "Your 21-day mind habit starts now.",
 } as const;
 
