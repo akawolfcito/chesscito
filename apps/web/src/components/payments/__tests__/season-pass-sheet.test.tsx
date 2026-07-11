@@ -140,7 +140,7 @@ describe('SeasonPassSheet — post-purchase celebration', () => {
     render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
 
     const stats = screen.getByTestId('season-pass-celebration-stats')
-    expect(stats).toHaveTextContent('Shields on the way')
+    expect(stats).toHaveTextContent('Shields soon')
     expect(stats).not.toHaveTextContent('+0 Shields')
   })
 

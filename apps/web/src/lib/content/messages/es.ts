@@ -1747,7 +1747,7 @@ const messages = {
     celebrationSubtitle: "Tu Reto Mental de 21 Días ha comenzado.",
     celebrationDaysStat: "{days} días",
     celebrationShieldsStat: "+{count} Escudos",
-    celebrationShieldsPending: "Escudos en camino",
+    celebrationShieldsPending: "Escudos pronto",
     celebrationHabit: "Tu hábito mental de 21 días empieza ahora.",
   },
   HUB_LITE_COPY: {
