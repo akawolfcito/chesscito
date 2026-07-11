@@ -49,8 +49,10 @@ export type MilestoneStore = {
   dailyDate: string | null;
 };
 
-export const EMPTY_STORE: MilestoneStore = {
+/** Shared, frozen — a fresh store must never let a caller mutate the module
+ *  singleton. Callers that need a `dailyDate` stamp spread over this. */
+export const EMPTY_STORE: MilestoneStore = Object.freeze({
   version: 1,
   events: {},
   dailyDate: null,
-};
+});

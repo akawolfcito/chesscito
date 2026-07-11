@@ -14,25 +14,59 @@ import {
 /** Resets with the UTC day. Everything else is cumulative and permanent. */
 const DAILY_MILESTONES: readonly MilestoneId[] = ["great-focus-session"];
 
+/** Narrows an unknown `events` entry to a well-formed `MilestoneEvent`. A
+ *  partially-written or corrupted entry (e.g. `null`) is silently dropped
+ *  rather than crashing the reader that dereferences it downstream. */
+function isValidMilestoneEvent(value: unknown): value is MilestoneEvent {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as Partial<MilestoneEvent>;
+  return typeof candidate.id === "string" && typeof candidate.earnedAt === "string";
+}
+
 export function parseMilestoneStore(
   raw: string | null,
   today: string = todayUtc(),
 ): MilestoneStore {
-  if (!raw) return EMPTY_STORE;
-  let parsed: Partial<MilestoneStore>;
+  // A fresh store must still stamp `dailyDate` to `today` — leaving it
+  // `null` makes the very next daily-reset comparison see `null !== today`
+  // and wipe an event that was just recorded, before it was ever
+  // celebrated (the "double celebration" bug).
+  const empty = { ...EMPTY_STORE, dailyDate: today };
+  if (!raw) return empty;
+
+  let parsed: unknown;
   try {
-    parsed = JSON.parse(raw) as Partial<MilestoneStore>;
+    parsed = JSON.parse(raw);
   } catch {
-    return EMPTY_STORE;
-  }
-  if (parsed.version !== 1 || typeof parsed.events !== "object" || !parsed.events) {
-    return EMPTY_STORE;
+    return empty;
   }
 
-  const events = { ...parsed.events };
-  if (parsed.dailyDate !== today) {
+  if (
+    typeof parsed !== "object" ||
+    parsed === null ||
+    (parsed as Partial<MilestoneStore>).version !== 1 ||
+    typeof (parsed as Partial<MilestoneStore>).events !== "object" ||
+    !(parsed as Partial<MilestoneStore>).events
+  ) {
+    return empty;
+  }
+
+  const rawEvents = (parsed as MilestoneStore).events;
+  const events: Record<string, MilestoneEvent> = {};
+  for (const [key, event] of Object.entries(rawEvents)) {
+    if (isValidMilestoneEvent(event)) {
+      events[key] = event;
+    }
+  }
+
+  const storedDailyDate = (parsed as Partial<MilestoneStore>).dailyDate ?? null;
+  if (storedDailyDate !== today) {
     for (const id of DAILY_MILESTONES) {
-      delete events[id];
+      for (const key of Object.keys(events)) {
+        if (key === id || key.startsWith(`${id}:`)) {
+          delete events[key];
+        }
+      }
     }
   }
   return { version: 1, events, dailyDate: today };
