@@ -1,15 +1,19 @@
-# Next session prompt — post 2026-07-10 victory-cancel + coach-icon
+# Next session prompt — post 2026-07-11 season-pass celebration
 
 Di **"continuemos"** y el agente debe leer este archivo y seguirlo.
 
 ---
 
-**Estado al arrancar:** `main` = `827e7cfe`. Suite **4853 passing / 401 test files**.
-`tsc` y `lint` limpios. Smoke de MiniPay **cerrado en device (17/17)**, checkpoint firmado.
+**Estado al arrancar:** `main` = `9672302d`. Suite **4865 passing / 401 test files**.
+`tsc` limpio, VR **51/51**. Smoke de MiniPay **cerrado en device (17/17)**, checkpoint firmado.
 
 **Leer primero:**
-- `docs/handoffs/2026-07-10-victory-cancel-and-coach-icon-handoff.md` — la sesión.
+- `docs/handoffs/2026-07-11-season-pass-celebration-handoff.md` — la última sesión.
 - `docs/backlog/2026-07-10-backlog-index.md` — el backlog vigente, auditado contra el código.
+
+**Ya cerrado (2026-07-11):** el Season Pass ahora tiene pantalla de celebración
+post-compra (PRs #210/#211/#212). Probe vivo en `/dev/season-pass-celebration`
+(`?variant=pending` para el estado de shields no acreditados).
 
 **Modo:** pulido sobre lo que ya existe. Un solo bloque activo a la vez.
 
@@ -61,6 +65,16 @@ Después de eso: **Belt System vs server-verified progress**, que es decisión d
 - **Verificá pixeles antes de llamar trivial a un cambio de arte.**
 - **El entorno miente antes que el código.** Rojo masivo → sospechar del entorno.
 - **Dos suites aisladas verdes no prueban su composición.**
+- **Una suite verde puede estar cubriendo nada.** La rama de éxito del Season Pass tenía
+  **cero tests**: cambiarle la forma entera no rompió un solo caso. Antes de confiar en el
+  verde, `grep` el `data-testid` de lo que vas a tocar.
+- **Un `/dev` probe existe para validar la pantalla real, no para ser una segunda.** Monta los
+  mismos componentes; fakeá solo las *entradas*. Su valor está en los estados que no podés
+  provocar a mano — ahí apareció el stat row roto. Gate en `VERCEL_ENV`, **no** `NODE_ENV`
+  (los builds de preview son `NODE_ENV=production`).
+- **La VR no protege la tipografía.** Los fixtures viven bajo `/dev`, que es su propio root
+  layout y nunca carga Rowdies/Fredoka: los 51 baselines están en fuente de sistema.
+  **Decisión del founder (2026-07-11): dejarlo así, NO regenerar baselines por esto.**
 
 ## Qué NO tocar todavía
 
