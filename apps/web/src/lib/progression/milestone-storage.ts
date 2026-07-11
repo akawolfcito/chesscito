@@ -31,7 +31,13 @@ export function parseMilestoneStore(
   // `null` makes the very next daily-reset comparison see `null !== today`
   // and wipe an event that was just recorded, before it was ever
   // celebrated (the "double celebration" bug).
-  const empty = { ...EMPTY_STORE, dailyDate: today };
+  //
+  // Built as its own literal (not `{ ...EMPTY_STORE, dailyDate: today }`) so
+  // `events` is a fresh object per call. `EMPTY_STORE.events` is frozen but
+  // that freeze is shallow — spreading EMPTY_STORE would still alias its
+  // `events` reference into every fresh store, so a future in-place mutation
+  // on one parse-fresh store would poison the shared singleton.
+  const empty: MilestoneStore = { version: 1, events: {}, dailyDate: today };
   if (!raw) return empty;
 
   let parsed: unknown;

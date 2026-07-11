@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   computeMarkCelebrated,
   computeMarkOpened,
@@ -9,6 +9,7 @@ import {
   selectPending,
 } from "@/lib/progression/milestone-storage";
 import { EMPTY_STORE, type MilestoneStore } from "@/lib/progression/types";
+import { milestoneStorageKey } from "@/lib/lite-progress-storage";
 
 const NOW = "2026-07-11T10:00:00.000Z";
 const TODAY = "2026-07-11";
@@ -73,15 +74,29 @@ describe("parseMilestoneStore", () => {
 
   it("regression: great-focus-session survives a record → celebrate → "
     + "re-read round trip on the SAME day instead of celebrating twice", () => {
-    localStorage.clear();
-    recordEarned([{ id: "great-focus-session" }], NOW);
-    markCelebrated("great-focus-session", undefined, NOW);
-    const reread = parseMilestoneStore(
-      localStorage.getItem("chesscito:milestones"),
-      TODAY,
-    );
-    expect(reread.events["great-focus-session"]?.celebratedAt).toBe(NOW);
-    expect(selectPending(reread)).toEqual([]);
+    // recordEarned/markCelebrated read the store through
+    // parseMilestoneStore's default `today = todayUtc()`, i.e. the REAL
+    // clock — they take no `today` param of their own. Freeze the clock to
+    // NOW so the `dailyDate` they persist matches the hardcoded TODAY this
+    // test re-parses with below; otherwise this test is only correct on
+    // 2026-07-11 UTC and silently starts failing the day after (the
+    // mismatch triggers the daily reset and wipes the very event under
+    // test before the assertion runs).
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(NOW));
+    try {
+      localStorage.clear();
+      recordEarned([{ id: "great-focus-session" }], NOW);
+      markCelebrated("great-focus-session", undefined, NOW);
+      const reread = parseMilestoneStore(
+        localStorage.getItem(milestoneStorageKey()),
+        TODAY,
+      );
+      expect(reread.events["great-focus-session"]?.celebratedAt).toBe(NOW);
+      expect(selectPending(reread)).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("deletes a hypothetical per-piece daily entry by id-prefix, not just "
