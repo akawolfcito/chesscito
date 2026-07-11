@@ -45,7 +45,7 @@ function defaultRail() {
 }
 
 describe('SeasonPassSheet', () => {
-  it('shows PRO Benefit included and does not render a purchase CTA', () => {
+  it('shows Included with PRO and does not render a purchase CTA', () => {
     statusMock.mockReturnValue({
       active: true,
       source: 'pro',
@@ -59,7 +59,7 @@ describe('SeasonPassSheet', () => {
     render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
 
     expect(screen.getByTestId('season-pass-included-pro')).toHaveTextContent(
-      'PRO Benefit included',
+      'Included with PRO',
     )
     expect(screen.queryByTestId('season-pass-pay')).toBeNull()
     expect(screen.queryByText(/\+3 shields/i)).toBeNull()

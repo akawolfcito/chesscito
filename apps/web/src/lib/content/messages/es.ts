@@ -1737,6 +1737,12 @@ const messages = {
     dotFilledAria: "Día {index} hecho",
     dotEmptyAria: "Día {index}",
     focusTapAria: "Continúa tu foco de hoy",
+    offerTitle: "Únete al Reto Mental de 21 Días",
+    offerHabit: "Crea un hábito diario de ajedrez y mantén activo tu Pasaporte de foco.",
+    offerPractice: "Práctica ilimitada del reto por {days} días",
+    offerShieldsBonus: "Incluye el bono de +{count} Escudos por compra directa",
+    offerPriceNote: "Pago único · Sin suscripción",
+    proIncludedTitle: "Incluido con PRO",
   },
   HUB_LITE_COPY: {
     ...en.HUB_LITE_COPY,
