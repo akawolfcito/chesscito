@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useAccount } from "wagmi";
 
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { AddCashCta } from "@/components/minipay/add-cash-cta";
+import {
+  CELEBRATION_PANEL_BG,
+  SeasonPassCelebration,
+} from "@/components/payments/season-pass-celebration";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
@@ -24,6 +29,9 @@ import { useSeasonPassStatus } from "@/lib/season-pass/use-season-pass-status";
 
 const SKU = "lite_season_pass_21" as const;
 const FALLBACK_TOKEN = "USDC";
+
+// Inherited by every text in the sheet; amber/red state copy overrides it.
+const SHEET_TEXT_COLOR = "rgba(63, 34, 8, 0.95)";
 
 export type SeasonPassSheetProps = {
   open: boolean;
@@ -59,6 +67,8 @@ function SeasonPassSheetInner({
   onSuccess,
 }: Omit<SeasonPassSheetProps, "open">) {
   const t = useTranslations("CHALLENGE_CARD_COPY");
+  const router = useRouter();
+  const pathname = usePathname();
   const { address } = useAccount();
   const trainingPass = useSeasonPassStatus(address);
   const pass = getSeasonPass(SKU);
@@ -90,9 +100,20 @@ function SeasonPassSheetInner({
         ? "Sending..."
         : rail.phase === "verifying"
           ? "Verifying..."
-          : `Get Pass — ${priceLabel}`;
+          : `Get Pass`;
 
   const isSuccess = rail.phase === "success" && rail.result;
+
+  // Start Focus routes to /exercises — the hub's own destination. Buying from
+  // the LEARN dock already sits there, where a push would be a no-op that
+  // leaves the celebration mounted; close instead.
+  const startFocus = () => {
+    if (pathname === "/exercises") {
+      onOpenChange(false);
+      return;
+    }
+    router.push("/exercises");
+  };
 
   return (
     <VictoryPopupShell
@@ -100,12 +121,26 @@ function SeasonPassSheetInner({
       disableBackdropClose={busy}
       ariaLabel="21-Day Mind Challenge Pass"
       closeLabel="Close"
+      panelBackgroundImage={isSuccess ? CELEBRATION_PANEL_BG : undefined}
     >
       <div
         className="flex flex-col items-center gap-4 text-center"
         data-testid="season-pass-sheet"
+        style={{ color: SHEET_TEXT_COLOR }}
       >
-        {trainingPass.loading ? (
+        {/* The celebration outranks every status branch: once THIS session
+            verified a payment, a refreshed entitlement would otherwise flip the
+            sheet to "Pass Active" and swallow the celebration the buyer just
+            earned. */}
+        {isSuccess && rail.result ? (
+          <div data-testid="season-pass-success" className="w-full">
+            <SeasonPassCelebration
+              durationDays={pass.durationDays}
+              shieldsCredited={rail.result.shieldsCredited}
+              onStartFocus={startFocus}
+            />
+          </div>
+        ) : trainingPass.loading ? (
           <div data-testid="season-pass-status-loading" className="flex flex-col items-center gap-3">
             <p className="arena-result-title">Checking access...</p>
           </div>
@@ -128,30 +163,6 @@ function SeasonPassSheetInner({
             </p>
             <PrincipalButton onClick={() => onOpenChange(false)} className="mt-1">
               Done
-            </PrincipalButton>
-          </div>
-        ) : isSuccess && rail.result ? (
-          <div
-            data-testid="season-pass-success"
-            className="flex flex-col items-center gap-3"
-          >
-            <ShieldIcon />
-            <p className="arena-result-title">Pass Activated!</p>
-            <p className="text-sm opacity-80">
-              {rail.result.shieldsCredited > 0
-                ? `+${rail.result.shieldsCredited} shields added`
-                : "Shields will be credited shortly"}
-            </p>
-            <p className="text-xs opacity-60">Valid for {pass.durationDays} days</p>
-            {rail.result.duplicate ? (
-              <span className="candy-stat-pill text-[0.78rem]">Already active</span>
-            ) : null}
-            <PrincipalButton
-              onClick={() => onOpenChange(false)}
-              className="mt-1"
-              data-testid="season-pass-done"
-            >
-              Let&apos;s play!
             </PrincipalButton>
           </div>
         ) : (
