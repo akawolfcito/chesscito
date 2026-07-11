@@ -3225,6 +3225,15 @@ export const CHALLENGE_CARD_COPY = {
   offerShieldsBonus: "Includes the direct-purchase +{count} Shields bonus",
   offerPriceNote: "One-time payment · No subscription",
   proIncludedTitle: "Included with PRO",
+  // Post-purchase celebration. `celebrationShieldsPending` covers the path
+  // where the payment settled but the shield grant did not (verify-payment
+  // returns shieldsCredited: 0) — never promise shields the wallet lacks.
+  celebrationTitle: "You are in!",
+  celebrationSubtitle: "Your 21-Day Mind Challenge has started.",
+  celebrationDaysStat: "{days} days",
+  celebrationShieldsStat: "+{count} Shields",
+  celebrationShieldsPending: "Shields on the way",
+  celebrationHabit: "Your 21-day mind habit starts now.",
 } as const;
 
 export const HUB_LITE_COPY = {

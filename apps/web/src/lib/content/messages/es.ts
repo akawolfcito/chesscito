@@ -1743,6 +1743,12 @@ const messages = {
     offerShieldsBonus: "Incluye el bono de +{count} Escudos por compra directa",
     offerPriceNote: "Pago único · Sin suscripción",
     proIncludedTitle: "Incluido con PRO",
+    celebrationTitle: "¡Estás dentro!",
+    celebrationSubtitle: "Tu Reto Mental de 21 Días ha comenzado.",
+    celebrationDaysStat: "{days} días",
+    celebrationShieldsStat: "+{count} Escudos",
+    celebrationShieldsPending: "Escudos en camino",
+    celebrationHabit: "Tu hábito mental de 21 días empieza ahora.",
   },
   HUB_LITE_COPY: {
     ...en.HUB_LITE_COPY,
