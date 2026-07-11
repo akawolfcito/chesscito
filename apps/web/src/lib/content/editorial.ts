@@ -3555,3 +3555,51 @@ export const WELCOME_PACKAGE_COPY = {
   errorBody: "Something went wrong. Tap to try again.",
   retryCta: "Try again",
 } as const;
+
+/** Shared unlock overlay copy for the progression milestone machine.
+ *  Keyed by MilestoneId. `absorbed` holds the recognition lines that
+ *  render INSIDE a closer overlay for lower majors that fired in the
+ *  same drain, never as a second modal. */
+export const PROGRESSION_COPY = {
+  "first-reward": {
+    title: "First Reward Earned",
+    body: "Practice pays. Open your gift.",
+    primary: "Open Gift",
+    dismiss: "Later",
+  },
+  "first-labyrinth": {
+    title: "First Maze Unlocked",
+    body: "Guide the rook through it.",
+    primary: "Enter Maze",
+    dismiss: "Later",
+  },
+  "special-training": {
+    title: "Special Training Unlocked",
+    body: "Coordinate the rook and the king.",
+    primary: "Start Training",
+    dismiss: "Later",
+  },
+  "piece-badge-eligible": {
+    title: "Badge Ready to Claim",
+    body: "Ten stars. The badge is yours.",
+    primary: "Claim Badge",
+    dismiss: "Later",
+  },
+  mastery: {
+    title: "Piece Mastered",
+    body: "Every exercise, every maze.",
+    primary: "Continue",
+    dismiss: "Close",
+  },
+  "great-focus-session": {
+    title: "Great Focus Session",
+    body: "A deep session, done.",
+    primary: "Continue",
+    dismiss: "Close",
+  },
+  absorbed: {
+    "great-focus-session": "Great Focus Session recognized.",
+    "first-great-session": "Badge unlocked: First Great Session",
+    "piece-badge-eligible": "Your badge is ready to claim.",
+  },
+} as const;

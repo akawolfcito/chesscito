@@ -7275,6 +7275,46 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
 }
 
+/* ── Progression unlock overlay (2026-07-11) ──
+ * Rendered inside the canonical VictoryPopupShell (forest panel-bg1 +
+ * red X), same shell as the language-switch modal above. The earned
+ * artifact icon replaces the wolf mascot as the central image; the
+ * title reuses `.language-modal-title`. `-absorbed` is a recognition
+ * LINE for a lower major folded into this closer, never a second
+ * modal. `-dismiss` mirrors the plain underlined secondary CTA used
+ * by the Welcome Package modal (no new CTA token family). */
+.progression-overlay-icon {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 0.25rem;
+}
+
+.progression-overlay-body {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(110, 65, 15, 0.55);
+}
+
+.progression-overlay-absorbed {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(120, 65, 5, 0.75);
+}
+
+.progression-overlay-dismiss {
+  align-self: center;
+  margin: 0 auto;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  color: rgba(110, 65, 15, 0.50);
+  background: transparent;
+  border: none;
+}
+
 /* `--pro` modifier — same shape/size as the cream candy chip, but
  * the cream gradient is replaced by the PRO purple palette so PRO
  * subscribers get a visual distinction without changing the chip
