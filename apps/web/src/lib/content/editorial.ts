@@ -3215,6 +3215,16 @@ export const CHALLENGE_CARD_COPY = {
   dotFilledAria: "Day {index} done",
   dotEmptyAria: "Day {index}",
   focusTapAria: "Continue today's focus",
+  // SeasonPassSheet offer state — the checkout must complete the same promise
+  // that starts in onboarding and continues in the ChallengeCard: a daily habit
+  // via the Focus Passport, not "volume + consumables". The +Shields line is the
+  // direct-purchase bonus ONLY; PRO holders see proIncludedTitle with no bonus.
+  offerTitle: "Join the 21-Day Mind Challenge",
+  offerHabit: "Build a daily chess habit and keep your Focus Passport active.",
+  offerPractice: "Unlimited challenge practice for {days} days",
+  offerShieldsBonus: "Includes the direct-purchase +{count} Shields bonus",
+  offerPriceNote: "One-time payment · No subscription",
+  proIncludedTitle: "Included with PRO",
 } as const;
 
 export const HUB_LITE_COPY = {

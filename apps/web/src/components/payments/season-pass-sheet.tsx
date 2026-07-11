@@ -111,7 +111,7 @@ function SeasonPassSheetInner({
           </div>
         ) : trainingPass.active && trainingPass.source === "pro" ? (
           <div data-testid="season-pass-included-pro" className="flex flex-col items-center gap-3">
-            <p className="arena-result-title">{t("includedWithPro")}</p>
+            <p className="arena-result-title">{t("proIncludedTitle")}</p>
             <p className="max-w-[220px] text-sm opacity-80">
               {t("trainingPassStat")} · {t("accessActive")}
             </p>
@@ -157,13 +157,15 @@ function SeasonPassSheetInner({
         ) : (
           <>
             <ShieldIcon />
-            <p className="arena-result-title">21-Day Mind Challenge</p>
-            <p className="text-sm opacity-80 max-w-[220px]">
-              Unlock unlimited practice with +{pass.shieldsOnPurchase} shields for{" "}
-              {pass.durationDays} days.
-            </p>
+            <p className="arena-result-title">{t("offerTitle")}</p>
+            <p className="text-sm opacity-80 max-w-[240px]">{t("offerHabit")}</p>
+            <ul className="flex flex-col items-center gap-1 text-sm opacity-80">
+              <li>{t("offerPractice", { days: pass.durationDays })}</li>
+              <li>{t("offerShieldsBonus", { count: pass.shieldsOnPurchase })}</li>
+            </ul>
 
             <span className="candy-stat-pill text-base font-bold">{priceLabel}</span>
+            <p className="text-[0.7rem] opacity-60">{t("offerPriceNote")}</p>
 
             {!rail.available ? (
               /* ---- UNAVAILABLE (no wallet / wrong chain) ---- */
@@ -275,7 +277,7 @@ function SeasonPassSheetInner({
                 </PrincipalButton>
 
                 <p className="text-[0.7rem] opacity-50">
-                  Paid with {tokenSymbol} on Celo. No subscription.
+                  Paid with {tokenSymbol} on Celo.
                 </p>
               </div>
             )}
