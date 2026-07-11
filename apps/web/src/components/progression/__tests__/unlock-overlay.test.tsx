@@ -1,21 +1,28 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { UnlockOverlay } from "@/components/progression/unlock-overlay";
+import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 
 describe("UnlockOverlay", () => {
   it("names what was unlocked and offers a way in", () => {
+    const onPrimary = vi.fn();
     render(
       <UnlockOverlay
         step={{ id: "special-training", absorbed: [] }}
-        onPrimary={vi.fn()}
+        onPrimary={onPrimary}
         onDismiss={vi.fn()}
       />,
     );
     expect(screen.getByText("Special Training Unlocked")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Start Training" })).toBeInTheDocument();
+    const cta = screen.getByRole("button", { name: "Start Training" });
+    expect(cta).toBeInTheDocument();
+
+    fireEvent.click(cta);
+    expect(onPrimary).toHaveBeenCalledTimes(1);
   });
 
   it("renders an absorbed recognition as a line, never as a second modal", () => {
+    const onDismiss = vi.fn();
     render(
       <UnlockOverlay
         step={{
@@ -24,7 +31,7 @@ describe("UnlockOverlay", () => {
           absorbed: ["great-focus-session", "first-great-session"],
         }}
         onPrimary={vi.fn()}
-        onDismiss={vi.fn()}
+        onDismiss={onDismiss}
       />,
     );
     expect(screen.getByText("Piece Mastered")).toBeInTheDocument();
@@ -33,5 +40,26 @@ describe("UnlockOverlay", () => {
       screen.getByText("Badge unlocked: First Great Session"),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("dialog")).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    onDismiss.mockClear();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close dialog" }));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders in Spanish when the locale is es", () => {
+    render(
+      <UnlockOverlay
+        step={{ id: "special-training", absorbed: [] }}
+        onPrimary={vi.fn()}
+        onDismiss={vi.fn()}
+      />,
+      { locale: "es" },
+    );
+    expect(
+      screen.getByText("Entrenamiento Especial Desbloqueado"),
+    ).toBeInTheDocument();
   });
 });

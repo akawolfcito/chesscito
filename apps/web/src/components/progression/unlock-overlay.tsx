@@ -1,8 +1,8 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
-import { PROGRESSION_COPY } from "@/lib/content/editorial";
 import type { CelebrationStep } from "@/lib/progression/celebration-queue";
 import type { MilestoneId } from "@/lib/progression/types";
 
@@ -35,16 +35,16 @@ type Props = {
  * after the climax.
  */
 export function UnlockOverlay({ step, onPrimary, onDismiss }: Props) {
-  const copy = PROGRESSION_COPY[step.id as keyof typeof PROGRESSION_COPY];
-  if (!copy || !("title" in copy)) return null;
+  const t = useTranslations("PROGRESSION_COPY");
+  if (!t.has(`${step.id}.title`)) return null;
 
   const icon = ICONS[step.id];
 
   return (
     <VictoryPopupShell
       onClose={onDismiss}
-      ariaLabel={copy.title}
-      closeLabel={copy.dismiss}
+      ariaLabel={t(`${step.id}.title`)}
+      closeLabel="Close dialog"
     >
       {icon ? (
         <div className="progression-overlay-icon">
@@ -62,30 +62,27 @@ export function UnlockOverlay({ step, onPrimary, onDismiss }: Props) {
         </div>
       ) : null}
 
-      <h2 className="language-modal-title">{copy.title}</h2>
-      <p className="progression-overlay-body">{copy.body}</p>
+      <h2 className="language-modal-title">{t(`${step.id}.title`)}</h2>
+      <p className="progression-overlay-body">{t(`${step.id}.body`)}</p>
 
       {step.absorbed.map((id) => {
-        const line =
-          PROGRESSION_COPY.absorbed[
-            id as keyof typeof PROGRESSION_COPY.absorbed
-          ];
-        return line ? (
+        const key = `absorbed.${id}`;
+        return t.has(key) ? (
           <p key={id} className="progression-overlay-absorbed">
-            {line}
+            {t(key)}
           </p>
         ) : null;
       })}
 
       <PrincipalButton onClick={onPrimary} className="self-center">
-        {copy.primary}
+        {t(`${step.id}.primary`)}
       </PrincipalButton>
       <button
         type="button"
         onClick={onDismiss}
         className="progression-overlay-dismiss"
       >
-        {copy.dismiss}
+        {t(`${step.id}.dismiss`)}
       </button>
     </VictoryPopupShell>
   );
