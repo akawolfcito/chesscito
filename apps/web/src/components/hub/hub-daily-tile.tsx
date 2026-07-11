@@ -152,7 +152,6 @@ export function HubDailyTile({
     // Detect first Focus Day before recording completion
     if (CHESSCITO_LITE_MODE && prev.totalCompleted === 0) {
       firstFocusDayJustEarned.current = true;
-      welcomePackage.unlock();
     }
     const next = recordDailyCompletion(today);
     setProgress(next);

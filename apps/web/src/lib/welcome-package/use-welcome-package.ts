@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
-import { getDailyProgress } from "@/lib/daily/progress";
 import { DEFAULT_STATE, getWelcomePackageState, setWelcomePackageState } from "./storage";
 import type { WelcomePackageState } from "./types";
 
@@ -33,24 +32,7 @@ const NOOP_RETURN: UseWelcomePackageReturn = {
 function initState(): WelcomePackageState {
   if (typeof window === "undefined" || !CHESSCITO_LITE_MODE) return { ...DEFAULT_STATE };
 
-  let loaded = getWelcomePackageState();
-
-  // Retroactive init: achievement already earned but package state absent.
-  // Pre-saturate autoShowCount=2 to avoid surprise auto-show overlay.
-  if (!loaded.unlocked) {
-    const { totalCompleted } = getDailyProgress();
-    if (totalCompleted >= 1) {
-      loaded = {
-        ...DEFAULT_STATE,
-        unlocked: true,
-        unlockedAt: "retroactive",
-        autoShowCount: 2,
-      };
-      setWelcomePackageState(loaded);
-    }
-  }
-
-  return loaded;
+  return getWelcomePackageState();
 }
 
 export function useWelcomePackage(): UseWelcomePackageReturn {

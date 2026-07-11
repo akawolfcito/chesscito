@@ -24,17 +24,14 @@ describe("useWelcomePackage — Lite mode", () => {
     expect(result.current.shouldAutoShow).toBe(false);
   });
 
-  it("retroactive init: unlocked+autoShowCount=2 when achievement already earned (totalCompleted>=1) but no storage", () => {
+  it("does NOT retroactively unlock from totalCompleted>=1 (Task 10 — gift belongs to the first-reward milestone, not the first Daily Focus)", () => {
     vi.mocked(getDailyProgress).mockReturnValue({ streak: 1, lastCompletedDate: "2026-06-20", totalCompleted: 1 });
     const { result } = renderHook(() => useWelcomePackage());
-    expect(result.current.isUnlocked).toBe(true);
+    expect(result.current.isUnlocked).toBe(false);
     expect(result.current.isClaimed).toBe(false);
-    expect(result.current.isPending).toBe(true);
-    expect(result.current.shouldAutoShow).toBe(false); // autoShowCount=2 → no auto-show
-    const stored = getWelcomePackageState();
-    expect(stored.unlocked).toBe(true);
-    expect(stored.autoShowCount).toBe(2);
-    expect(stored.unlockedAt).toBe("retroactive");
+    expect(result.current.isPending).toBe(false);
+    expect(result.current.shouldAutoShow).toBe(false);
+    expect(getWelcomePackageState().unlocked).toBe(false);
   });
 
   it("unlock() sets unlocked=true and persists", () => {
