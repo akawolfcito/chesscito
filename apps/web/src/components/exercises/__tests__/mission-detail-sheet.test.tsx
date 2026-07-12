@@ -22,9 +22,11 @@ function makeProgress(piece: PieceId, stars: number[]): PieceProgress {
   return { piece, currentId: null, stars: map };
 }
 
+/** Capped at 2/exercise (not 3) so a 6★ total naturally spans 3+ exercises —
+ *  matching LABYRINTH_MIN_EXERCISES instead of colliding it on exercise 2. */
 function starsTotaling(piece: PieceId, total: number): number[] {
   return EXERCISES[piece].map(() => {
-    const take = Math.min(3, total);
+    const take = Math.min(2, total);
     total -= take;
     return take;
   });

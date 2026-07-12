@@ -111,7 +111,11 @@ export const TRAINING_PATH_COPY = {
   exerciseChipFormat: "Exercise {number}: {stars} of 3 stars",
   labyrinthLabelFormat: "Labyrinth {number}",
   labyrinthOpenAriaFormat: "Open Labyrinth {number}",
-  labyrinthLockedStarsFormat: "Unlocks at {stars}★",
+  /** The first labyrinth's unlock is a compound gate: stars AND an
+   *  exercise floor (LABYRINTH_MIN_EXERCISES). A stars-only message lets
+   *  a player with enough stars but too few solves read "unlocked" and
+   *  stay locked with no explanation — this format names both halves. */
+  labyrinthLockedStarsFormat: "Unlocks at {stars}★ and {exercises} exercises",
   labyrinthLockedChain: "Beat previous lab",
   ready: "Ready",
   starsFormat: "{stars}★",
@@ -1013,6 +1017,10 @@ export const ACHIEVEMENTS_COPY = {
     "first-focus-day": {
       title: "First Focus Day",
       description: "Complete your first Daily Focus.",
+    },
+    "first-great-session": {
+      title: "First Great Session",
+      description: "Earn 8 stars in one day, or finish your daily quota.",
     },
     "three-day-rhythm": {
       title: "3-Day Rhythm",
@@ -3554,4 +3562,55 @@ export const WELCOME_PACKAGE_COPY = {
   successCta: "Continue",
   errorBody: "Something went wrong. Tap to try again.",
   retryCta: "Try again",
+} as const;
+
+/** Shared unlock overlay copy for the progression milestone machine.
+ *  Keyed by MilestoneId. `absorbed` holds the recognition lines that
+ *  render INSIDE a closer overlay for lower majors that fired in the
+ *  same drain, never as a second modal. */
+export const PROGRESSION_COPY = {
+  "first-reward": {
+    title: "First Reward Earned",
+    body: "Practice pays. Open your gift.",
+    primary: "Open Gift",
+    dismiss: "Later",
+  },
+  "first-labyrinth": {
+    title: "First Maze Unlocked",
+    body: "Guide the rook through it.",
+    primary: "Enter Maze",
+    dismiss: "Later",
+  },
+  "special-training": {
+    title: "Special Training Unlocked",
+    body: "Coordinate the rook and the king.",
+    primary: "Start Training",
+    dismiss: "Later",
+  },
+  "piece-badge-eligible": {
+    title: "Badge Ready to Claim",
+    body: "Ten stars. The badge is yours.",
+    primary: "Claim Badge",
+    dismiss: "Later",
+  },
+  mastery: {
+    title: "Piece Mastered",
+    body: "Every exercise, every maze.",
+    primary: "Continue",
+    dismiss: "Close",
+  },
+  "great-focus-session": {
+    title: "Great Focus Session",
+    body: "A deep session, done.",
+    primary: "Continue",
+    dismiss: "Close",
+  },
+  absorbed: {
+    "great-focus-session": "Great Focus Session recognized.",
+    "first-great-session": "Badge unlocked: First Great Session",
+    "piece-badge-eligible": "Your badge is ready to claim.",
+  },
+  /** a11y label for the overlay's X. Flat key (not per-milestone): the
+   *  shell renders one close affordance regardless of which step is up. */
+  closeLabel: "Close dialog",
 } as const;

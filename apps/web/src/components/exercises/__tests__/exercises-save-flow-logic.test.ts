@@ -1,9 +1,84 @@
-import { describe, it, expect } from "vitest";
-import {
+import { beforeEach, describe, it, expect, vi } from "vitest";
+
+// The gift is a Lite-only product and `unlockWelcomePackageGift` returns early
+// in Full mode. Tests default to Full, so the writer would be a no-op and every
+// assertion below would pass vacuously. The pure helpers in this file take
+// `liteMode` as a parameter and are untouched by this mock.
+vi.mock("@/lib/feature-flags", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/feature-flags")>();
+  return { ...actual, CHESSCITO_MODE: "learn" as const, CHESSCITO_LITE_MODE: true };
+});
+
+const {
   shouldFireStarsConnectPrompt,
   shouldFireLocalSavedToast,
   shouldShowWPCtaInSlot,
-} from "../exercises-save-flow-logic";
+  unlockWelcomePackageGift,
+} = await import("../exercises-save-flow-logic");
+const { getWelcomePackageState, setWelcomePackageState } = await import(
+  "@/lib/welcome-package/storage"
+);
+
+/**
+ * `unlockWelcomePackageGift()` is the SINGLE writer of `welcomePackage.unlocked`
+ * — `useWelcomePackage().unlock()` was dead code and is gone. Nothing had ever
+ * covered it directly: the idempotence guard it inherited (`if (prev.unlocked)
+ * return`) lost its only test along with the API that used to share it.
+ *
+ * It is called on EVERY resolve where `first-reward` is on disk, not just the
+ * one that earned it. Without the guard, every subsequent solve would re-date
+ * `unlockedAt` — the timestamp would track the player's last exercise instead
+ * of the moment they earned the gift.
+ */
+describe("unlockWelcomePackageGift", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("unlocks a gift that has never been unlocked", () => {
+    unlockWelcomePackageGift();
+
+    const state = getWelcomePackageState();
+    expect(state.unlocked).toBe(true);
+    expect(state.unlockedAt).toBeTruthy();
+  });
+
+  it("is idempotent — a second call does not overwrite unlockedAt", () => {
+    unlockWelcomePackageGift();
+    const first = getWelcomePackageState().unlockedAt;
+
+    unlockWelcomePackageGift();
+
+    expect(getWelcomePackageState().unlockedAt).toBe(first);
+  });
+
+  it("never re-dates an unlock that arrived from somewhere else", () => {
+    const original = "2020-01-01T00:00:00.000Z";
+    setWelcomePackageState({
+      ...getWelcomePackageState(),
+      unlocked: true,
+      unlockedAt: original,
+    });
+
+    unlockWelcomePackageGift();
+
+    expect(getWelcomePackageState().unlockedAt).toBe(original);
+  });
+
+  it("leaves a CLAIMED gift untouched — it cannot un-claim or re-unlock it", () => {
+    unlockWelcomePackageGift();
+    setWelcomePackageState({
+      ...getWelcomePackageState(),
+      claimed: true,
+      claimedAt: new Date().toISOString(),
+    });
+    const before = getWelcomePackageState();
+
+    unlockWelcomePackageGift();
+
+    expect(getWelcomePackageState()).toEqual(before);
+  });
+});
 
 describe("shouldFireStarsConnectPrompt", () => {
   it("returns false in Lite even when disconnected and 3-star (suppressed in Lite)", () => {

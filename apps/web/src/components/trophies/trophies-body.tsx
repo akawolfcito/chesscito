@@ -15,6 +15,7 @@ import { getVictoryAddress } from "@/lib/game/victory-events";
 import { computeAchievements } from "@/lib/achievements/compute";
 import { deriveLiteAchievements } from "@/lib/achievements/lite";
 import { getDailyProgress, type DailyProgress } from "@/lib/daily/progress";
+import { getMilestoneStore } from "@/lib/progression/milestone-storage";
 import { useCoachHistoryCount } from "@/lib/coach/use-coach-history-count";
 import type { VictoryEntry } from "@/lib/game/victory-events";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
@@ -63,10 +64,16 @@ export function TrophiesHeroBand({ showAchievements = true }: { showAchievements
     lastCompletedDate: null,
     totalCompleted: 0,
   });
+  const [hadGreatSession, setHadGreatSession] = useState(false);
   useEffect(() => {
-    if (CHESSCITO_LITE_MODE) setDailyProgress(getDailyProgress());
+    if (CHESSCITO_LITE_MODE) {
+      setDailyProgress(getDailyProgress());
+      setHadGreatSession(getMilestoneStore().events["first-great-session"] !== undefined);
+    }
   }, []);
-  const liteAchievements = CHESSCITO_LITE_MODE ? deriveLiteAchievements(dailyProgress) : [];
+  const liteAchievements = CHESSCITO_LITE_MODE
+    ? deriveLiteAchievements(dailyProgress, hadGreatSession)
+    : [];
   const summary = CHESSCITO_LITE_MODE
     ? {
         list: liteAchievements,
@@ -170,8 +177,12 @@ export function TrophiesBody({
     lastCompletedDate: null,
     totalCompleted: 0,
   });
+  const [hadGreatSession, setHadGreatSession] = useState(false);
   useEffect(() => {
-    if (CHESSCITO_LITE_MODE) setDailyProgress(getDailyProgress());
+    if (CHESSCITO_LITE_MODE) {
+      setDailyProgress(getDailyProgress());
+      setHadGreatSession(getMilestoneStore().events["first-great-session"] !== undefined);
+    }
   }, []);
 
   const configured = getVictoryAddress() !== null;
@@ -233,7 +244,9 @@ export function TrophiesBody({
   const hasVictories = (myVictories?.length ?? 0) > 0;
   const isChampion = isConnected && hasVictories;
   const isEmptyConnected = isConnected && myVictories?.length === 0 && !myLoading && !myError;
-  const liteAchievements = CHESSCITO_LITE_MODE ? deriveLiteAchievements(dailyProgress) : [];
+  const liteAchievements = CHESSCITO_LITE_MODE
+    ? deriveLiteAchievements(dailyProgress, hadGreatSession)
+    : [];
   const summary = CHESSCITO_LITE_MODE
     ? {
         list: liteAchievements,

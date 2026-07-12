@@ -43,10 +43,25 @@ import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
 import { ContextualActionSlot } from "@/components/exercises/contextual-action-slot";
 import {
+  buildProgressByPiece,
+  claimWelcomePackageGift,
+  hasEarnedMilestone,
   shouldFireStarsConnectPrompt,
   shouldFireLocalSavedToast,
   shouldShowWPCtaInSlot,
+  unlockWelcomePackageGift,
+  withBestStars,
 } from "@/components/exercises/exercises-save-flow-logic";
+import { UnlockOverlay } from "@/components/progression/unlock-overlay";
+import { useCelebrationQueue } from "@/lib/progression/use-celebration-queue";
+import {
+  isMilestoneSeedReady,
+  useMilestoneSeeding,
+} from "@/lib/progression/use-milestone-seeding";
+import type { CelebrationStep } from "@/lib/progression/celebration-queue";
+import { addNetStars, getDailyStars } from "@/lib/progression/stars";
+import { WelcomePackageModal } from "@/components/welcome-package/welcome-package-modal";
+import { useLiteWelcomeGiftClaim } from "@/lib/welcome-package/use-lite-welcome-gift-claim";
 import { PersistentDock } from "@/components/exercises/persistent-dock";
 import { TrophiesSheet } from "@/components/exercises/trophies-sheet";
 import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
@@ -60,6 +75,8 @@ import {
   dispatchShieldChange,
   subscribeToShieldChanges,
 } from "@/lib/shop/shield-events";
+import { readPieceStars } from "@/lib/game/exercise-progress";
+import { hasSeededMilestones } from "@/lib/progression/seed-milestones";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
 import { useExerciseCatalog, useLabyrinthCatalog } from "@/lib/content/catalog-context";
 import { useRotationSteering } from "@/hooks/use-rotation-steering";
@@ -159,6 +176,7 @@ import {
   getDailySession,
   isAtFreeLimit,
   isAtHardMax,
+  isSessionOver,
   shouldFreezeScoring,
 } from "@/lib/daily/session-quota";
 import { subscribeToDailySessionChanges } from "@/lib/daily/session-events";
@@ -306,7 +324,7 @@ export function ExercisesScreen({
   const tFooter = useTranslations("FOOTER_CTA_COPY");
   const tResult = useTranslations("RESULT_OVERLAY_COPY");
   const router = useRouter();
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, status: accountStatus } = useAccount();
   const starsConnectPrompt = useConnectPrompt("stars");
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
@@ -662,6 +680,19 @@ export function ExercisesScreen({
     incrementAttemptSeq,
   } = useExerciseProgress(selectedPiece, rotationOptions);
 
+  /** The progression milestone machine. Drained BEFORE the daily-limit guard
+   *  is ever consulted: the player who burns the quota while struggling gets
+   *  the celebration, not the paywall. */
+  const celebration = useCelebrationQueue();
+
+  /** The Welcome Package GIFT — the thing `first-reward` actually unlocks.
+   *  NOT `useWelcomePackClaim` (the server shield Welcome Pack): a different
+   *  product, a different endpoint. The gift is claimed exactly the way
+   *  `<DailyTacticSlot>` claims it: `<WelcomePackageModal>` driven by
+   *  `useLiteWelcomeGiftClaim`, writing `claimed` on success. */
+  const [welcomeGiftOpen, setWelcomeGiftOpen] = useState(false);
+  const welcomeGiftClaim = useLiteWelcomeGiftClaim();
+
   // Phase 2b-2: read the active pools from the catalog context (baseline
   // EXERCISES when no provider is mounted → byte-identical flag-off), so
   // this screen's pool reads agree with the hook's. Phase 2c mounts the
@@ -977,7 +1008,10 @@ export function ExercisesScreen({
 
   // Read hasClaimedBadge for all 6 pieces (batched)
   const BADGE_LEVEL_IDS = [1n, 2n, 3n, 4n, 5n, 6n] as const;
-  const { data: allBadgesData, refetch: refetchAllBadges } = useReadContracts({
+  const {
+    data: allBadgesData,
+    refetch: refetchAllBadges,
+  } = useReadContracts({
     contracts: BADGE_LEVEL_IDS.map((lid) => ({
       address: badgesAddress ?? undefined,
       abi: badgesAbi,
@@ -1000,6 +1034,45 @@ export function ExercisesScreen({
     king: allBadgesData?.[5]?.result as boolean | undefined,
   };
   const hasClaimedBadge = badgesClaimed[selectedPiece];
+
+  /**
+   * The one-time milestone migration (Task 15). THIS is the load-bearing mount:
+   * `resolve()` lives on this screen, and a player can deep-link straight to
+   * `/exercises` without ever passing through the hub — so seeding on the hub
+   * alone would hand that player a parade of retroactive overlays on their very
+   * first solve. It runs in a mount effect, which React flushes long before any
+   * click can reach `resolveMilestones`, so the seed is COMMITTED TO DISK
+   * before the queue is ever built. `seedMilestonesOnce` is guarded by a
+   * persistent marker, so the hub's mount and this one are the same no-op after
+   * the first — neither is the single writer of anything.
+   *
+   * Gated on the badge read: seeding a half-known profile would mark it
+   * migrated with `piece-badge-claimed` / `mastery` unseeded, and a badge minted
+   * months ago would still pop an overlay. A disconnected wallet is ready —
+   * `resolve()` would read the same `badgeClaimed: false`.
+   */
+  const labyrinthIdsByPiece = useMemo(() => {
+    const out: Partial<Record<PieceKey, string[]>> = {};
+    for (const [piece, labs] of Object.entries(labyrinthCatalog)) {
+      out[piece as PieceKey] = labs.map((lab) => lab.id);
+    }
+    return out;
+  }, [labyrinthCatalog]);
+
+  useMilestoneSeeding({
+    // ONE gate, shared with the hub (`legacy-hub-client.tsx`) — see
+    // `isMilestoneSeedReady` for why a disabled read is not "no badges" and
+    // why an unsupported chain never becomes ready. `resolveMilestones`
+    // carries the other half of that contract: it refuses to run while the
+    // profile is unseeded.
+    ready: isMilestoneSeedReady({
+      accountStatus,
+      badgeStateKnown: allBadgesData !== undefined,
+    }),
+    badgeClaimedByPiece: badgesClaimed,
+    labyrinthIdsByPiece,
+    giftAvailable: CHESSCITO_LITE_MODE,
+  });
 
   const { isLoading: isShopConfirming } = useWaitForTransactionReceipt({
     chainId,
@@ -1241,6 +1314,95 @@ export function ExercisesScreen({
     timerStart.current = 0;
   }
 
+  /**
+   * Steps 2–4 of the evaluation order: evaluate every milestone condition,
+   * PERSIST every fired event, then build the celebration queue. Called ONLY
+   * after the activity has been recorded (stars, consumed slot) and after the
+   * daily star ledger has taken the net improvement, so it sees fresh numbers.
+   *
+   * `starsForPiece` is the post-solve map for `selectedPiece` — the hook's
+   * localStorage write happens inside a `setProgress` updater and has not
+   * landed yet when this runs. Omitted by the labyrinth path, which changes
+   * no exercise stars (labyrinth stars feed the daily ledger only).
+   *
+   * Returns the queue it just built, so the caller can tell IN THE SAME TICK
+   * which moments the machine now owns (`celebration.current` is state and is
+   * still the pre-resolve value inside this closure).
+   */
+  function resolveMilestones(
+    starsForPiece?: Record<string, number>,
+    /** Forces inputs the React closure cannot possibly know yet. The only
+     *  caller is the badge-claim success path: `badgesClaimed` was captured at
+     *  render time and `refetchAllBadges()` has not landed, so BOTH still read
+     *  `false` for the piece the chain just minted. Without this, `mastery`
+     *  cannot be evaluated at the moment it is actually earned.
+     *
+     *  `piece` travels WITH `badgeClaimed` — they are one fact about one
+     *  piece. The claim is scoped to `step.piece`, which is NOT necessarily
+     *  `selectedPiece`: a `piece-badge-eligible:rook` event persists PENDING
+     *  across a reload, and the player can come back on bishop and claim it
+     *  from the overlay. Forcing `badgeClaimed: true` onto whatever piece
+     *  happened to be selected would evaluate `mastery` (badge + labyrinths,
+     *  no star gate) for a piece whose badge was never minted — a false crown,
+     *  stamped celebrated forever. */
+    overrides?: { piece?: PieceKey; badgeClaimed?: boolean },
+  ): CelebrationStep[] {
+    // No seed, no resolve. An unseeded profile is one whose on-chain badge
+    // state is still UNKNOWN (`useMilestoneSeeding` stays un-ready while a
+    // wallet is connected to an unsupported chain — `getBadgesAddress` is
+    // null there, so the read never runs and `allBadgesData` is `undefined`
+    // forever). Resolving in that window hands a veteran the full retroactive
+    // parade — first-reward, first-labyrinth, special-training,
+    // piece-badge-eligible — for history they lived through months ago. The
+    // seed is the ONLY thing that suppresses it, so nothing may fire before
+    // it lands. Milestones are not lost: the seed stamps them on the next
+    // mount with a known badge state, and anything genuinely new is derived
+    // from persisted progress on the next solve.
+    if (!hasSeededMilestones()) return [];
+
+    const piece = overrides?.piece ?? selectedPiece;
+
+    // Read BEFORE `resolve` records it — afterwards it is always true.
+    const hadGreatSessionBefore = hasEarnedMilestone("first-great-session");
+
+    const steps = celebration.resolve({
+      piece,
+      progressByPiece: buildProgressByPiece(
+        piece,
+        // Fresh stars exist only for the piece under play. When the caller
+        // overrides the piece (the badge claim), its stars come off the disk.
+        starsForPiece ??
+          (piece === selectedPiece ? progress.stars : readPieceStars(piece)),
+      ),
+      dailyStars: getDailyStars(),
+      sessionQuotaExhausted: isSessionOver(getDailySession()),
+      badgeClaimed: overrides?.badgeClaimed ?? badgesClaimed[piece] === true,
+      allLabyrinthsComplete: areAllLabyrinthsSolved(
+        piece,
+        (labyrinthCatalog[piece] ?? []).map((lab) => lab.id),
+      ),
+      hadGreatSessionBefore,
+      // The gift is a Lite-only product: `unlockWelcomePackageGift()` and
+      // `useWelcomePackage()` are both no-ops in Full mode. Firing
+      // `first-reward` there would celebrate a gift that cannot exist and
+      // hand the player a CTA that opens an empty modal. Gate the MILESTONE,
+      // not just its side effect.
+      giftAvailable: CHESSCITO_LITE_MODE,
+    });
+
+    // The gift has no other writer. `resolve` already persisted the event, so
+    // reading it back here is a read of committed state, not a guess.
+    if (hasEarnedMilestone("first-reward")) unlockWelcomePackageGift();
+
+    return steps;
+  }
+
+  /** Always-fresh mirror so `handleLabyrinthMove` (a useCallback with a
+   *  narrow dep list) can resolve milestones without re-creating itself on
+   *  every render. Same latest-value-ref discipline as `useCelebrationQueue`. */
+  const resolveMilestonesRef = useRef(resolveMilestones);
+  resolveMilestonesRef.current = resolveMilestones;
+
   function handleMove(position: BoardPosition, movesCount: number) {
     const isTarget =
       position.file === currentExercise.targetPos.file &&
@@ -1287,6 +1449,37 @@ export function ExercisesScreen({
         recordExtraConsumed(buildContentId("exercise", selectedPiece, currentExercise.id));
       }
 
+      // ── Evaluation order, steps 1 → 4 ────────────────────────────────
+      // The activity is now recorded (stars via completeExercise, the
+      // consumed slot via recordExtraConsumed). Credit the daily star ledger
+      // with the NET improvement — a replay that does not beat the previous
+      // best contributes nothing — and only then evaluate the milestones, so
+      // the machine sees today's real numbers. A frozen replay persists
+      // nothing, so it credits nothing.
+      let badgeMomentOwnedByQueue = false;
+      {
+        const earnedStars = computeStars(movesCount, currentExercise.optimalMoves);
+        const previousBest = progress.stars[currentExercise.id] ?? 0;
+        const starsAfterSolve = scoringFrozen
+          ? progress.stars
+          : withBestStars(progress.stars, currentExercise.id, earnedStars);
+        if (!scoringFrozen) addNetStars(previousBest, earnedStars);
+        const steps = resolveMilestones(starsAfterSolve);
+        // The badge moment has exactly ONE owner. When this solve made the
+        // machine emit `piece-badge-eligible` (as its own step, or absorbed
+        // into MASTERY), `<UnlockOverlay>` owns it — it carries the claim CTA
+        // the legacy `<BadgeEarnedPrompt>` never had. Priming the legacy
+        // prompt anyway would leave a second celebration ready to pop the
+        // instant the queue drains: the back-to-back this design forbids.
+        badgeMomentOwnedByQueue = steps.some(
+          (step) =>
+            step.id === "piece-badge-eligible" ||
+            step.absorbed.some(
+              (event) => event.id === "piece-badge-eligible",
+            ),
+        );
+      }
+
       // Phase 2 nudge: first ★★★ while disconnected → "Connect to save".
       // Suppressed in Lite (spec P0-1): no on-chain save path exists there.
       if (
@@ -1319,7 +1512,10 @@ export function ExercisesScreen({
         const newTotal = totalStars + starDelta;
 
         if (newTotal >= BADGE_THRESHOLD && !hasClaimedBadge) {
-          setShowBadgeEarned(true);
+          // Only the loser of the ownership contest primes its prompt. The
+          // timers below run either way, so the piece-complete hand-off keeps
+          // its existing 1.5s + 13.5s shape.
+          if (!badgeMomentOwnedByQueue) setShowBadgeEarned(true);
           // Spec: local-save toast fires at t=1500ms (same window as normal path),
           // AFTER the WELL DONE flash. Safety-net schedules 13.5s later so the
           // total auto-dismiss delay from exercise completion stays ~15s.
@@ -1522,14 +1718,17 @@ export function ExercisesScreen({
     setShowPieceComplete(true);
   }
 
-  async function handleClaimBadge(piece?: PieceKey) {
+  /** Resolves TRUE only when the badge is confirmed on-chain. The celebration
+   *  queue reads this: a cancelled or failed claim must NOT consume the
+   *  recognition it was opened from. */
+  async function handleClaimBadge(piece?: PieceKey): Promise<boolean> {
     const claimLevelId = piece ? getLevelId(piece) : levelId;
     if (!address || !badgesAddress || !isConnected || !isCorrectChain || claimLevelId <= 0n) {
-      return;
+      return false;
     }
     // Prevent double-claim (stale cache or rapid taps)
     const targetPiece = piece ?? selectedPiece;
-    if (badgesClaimed[targetPiece] || isClaimBusy) return;
+    if (badgesClaimed[targetPiece] || isClaimBusy) return false;
 
     setLastError(null);
     setClaimingPiece(targetPiece);
@@ -1558,11 +1757,11 @@ export function ExercisesScreen({
         confirm: confirmReceipt,
       });
 
-      if (outcome.status === "busy") return;
+      if (outcome.status === "busy") return false;
 
       if (outcome.status === "cancelled") {
         track("badge_claim_tx", { stage: "cancelled", piece: targetPiece });
-        return;
+        return false;
       }
 
       if (outcome.status === "failed") {
@@ -1575,7 +1774,7 @@ export function ExercisesScreen({
           retryAction: () => void handleClaimBadge(piece),
         });
         console.warn("[MiniPayTx] error", { label: "claim-badge", levelId: Number(claimLevelId), error: message });
-        return;
+        return false;
       }
 
       // Verified on-chain from here down. `stage: "success"` now means the tx
@@ -1601,9 +1800,107 @@ export function ExercisesScreen({
         { piece: targetPiece, nextPiece: nextUnlock, txHash: outcome.txHash },
       );
       console.info("[MiniPayTx] result", { label: "claim-badge", txHash: outcome.txHash, levelId: Number(claimLevelId) });
+      return true;
     } finally {
       setClaimingPiece(null);
     }
+  }
+
+  /**
+   * The overlay's primary CTA — takes the player to what they just unlocked.
+   *
+   * `celebration.current` is read ONCE into a local const: every branch below
+   * mutates the queue, so re-reading `celebration.current` after the first
+   * call would see a DIFFERENT step (or null) from the same render closure.
+   */
+  function handleCelebrationPrimary() {
+    const step = celebration.current;
+    if (!step) return;
+
+    if (step.id === "piece-badge-eligible") {
+      // Recognition never depends on signing. On cancel/failure we call
+      // `releaseAbsorbed` and NOTHING else — `dismissCurrent` would stamp
+      // `celebratedAt` on the absorbed events first, `selectPending` would
+      // then return nothing, and the release would silently clear the queue
+      // to []: a Great Focus Session lost along with the cancelled tx.
+      // The piece the CHAIN is about to mint — not the one on screen. A
+      // pending `piece-badge-eligible:rook` survives a reload, and the player
+      // can switch to bishop before tapping CLAIM. `handleClaimBadge` already
+      // resolves the fallback the same way; naming it here keeps the claim and
+      // the re-resolve below reading from ONE scope.
+      const claimedPiece = (step.piece as PieceKey | undefined) ?? selectedPiece;
+
+      void handleClaimBadge(claimedPiece)
+        .then((claimed) => {
+          if (claimed) {
+            // A solve is otherwise the ONLY trigger of `resolve()`, but
+            // `mastery` needs `badgeClaimed && allLabyrinthsComplete` — a
+            // player who finished every labyrinth first earns the crown HERE,
+            // on the claim, not on a solve. Without this re-resolve the crown
+            // surfaces later, bolted onto an unrelated (possibly replayed)
+            // exercise.
+            //
+            // Dismiss FIRST: `resolve()` REPLACES the queue, so re-resolving
+            // before the dismiss would rebuild a queue whose head is `mastery`
+            // with `piece-badge-eligible` absorbed into it — and the very next
+            // `dismissCurrent()` would stamp the crown celebrated without ever
+            // rendering it. Dismissing first retires the badge step, then the
+            // resolve enqueues the crown alone.
+            celebration.dismissCurrent();
+            // `badgesClaimed` is a render-time closure and `refetchAllBadges()`
+            // has not landed; both still say `false`. Force the value the chain
+            // just confirmed — AND the piece it confirmed it FOR. The forced
+            // field and the rest of the input must describe the same piece, or
+            // `mastery` gets evaluated for `selectedPiece` with someone else's
+            // badge.
+            resolveMilestones(undefined, {
+              piece: claimedPiece,
+              badgeClaimed: true,
+            });
+            return;
+          }
+          celebration.releaseAbsorbed(step);
+        })
+        // `run()` never throws, but `handleClaimBadge` can still reject
+        // outside it (a throwing `applyBadgeClaimSuccess`, a failing refetch).
+        // An unhandled rejection would strand `celebration.current` non-null
+        // FOREVER — freezing the queue and, because the daily-limit banner is
+        // gated on `current === null`, permanently hiding the limit too.
+        .catch(() => celebration.releaseAbsorbed(step));
+      return;
+    }
+
+    celebration.openContent(step.id, step.piece);
+    celebration.dismissCurrent();
+
+    if (step.id === "first-reward") {
+      // The GIFT the player just won — `welcomePackage.unlocked`, claimed
+      // through `<WelcomePackageModal>`. NOT `welcomePack.onClaim()`: that is
+      // `useWelcomePackClaim`, the server SHIELD Welcome Pack — a different
+      // product with a `personal_sign` → `/api/welcome-pack/claim` round-trip,
+      // never gated on this unlock. The overlay promised the gift; the primary
+      // must open the gift.
+      setWelcomeGiftOpen(true);
+      return;
+    }
+
+    if (step.id === "first-labyrinth") {
+      const lab = getNextChallenge(trainingPathRef.current);
+      if (lab) {
+        handleLabyrinthSelect(lab.id);
+        resetBoard();
+      }
+      return;
+    }
+
+    if (step.id === "special-training") {
+      // The Special Training tile lives on the hub right-rail.
+      router.push("/hub");
+      return;
+    }
+
+    // mastery / great-focus-session: recognitions, not destinations. The
+    // primary is "Continue" — closing IS returning to the experience.
   }
 
   async function handleSubmitScore(opts?: { silent?: boolean }) {
@@ -2153,6 +2450,17 @@ export function ExercisesScreen({
         isNewBest,
       });
 
+      // The daily star ledger is fed by exercises AND labyrinths, always as
+      // net improvement — without this a player who spends the session in the
+      // mazes never reaches a Great Focus Session. Labyrinth stars stay OUT of
+      // `pieceStars` (gather-input owns that rule); only the ledger sees them.
+      const previousLabStars =
+        previousBest === null
+          ? 0
+          : labyrinthStars(previousBest, activeLabyrinth.optimalMoves);
+      addNetStars(previousLabStars, stars);
+      resolveMilestonesRef.current();
+
       track("labyrinth_complete", {
         labyrinth_id: activeLabyrinth.id,
         piece: selectedPiece,
@@ -2290,7 +2598,11 @@ export function ExercisesScreen({
             }
           />
         </div>
-        {quotaDisplayState?.isAtLimit && (
+        {/* Step 7 of the evaluation order: the session limit is consulted ONLY
+         *  once every pending recognition has drained. The wall never arrives
+         *  before the praise — a player who burns the quota while struggling
+         *  gets the celebration, not the paywall. */}
+        {celebration.current === null && quotaDisplayState?.isAtLimit && (
           <DailyLimitBanner
             isHardMax={quotaDisplayState.isHardMax}
             onBack={() => router.push("/")}
@@ -2626,7 +2938,37 @@ export function ExercisesScreen({
           />
         ) : null}
 
-        {showPieceComplete && !showBadgeEarned ? (
+        {/* ── The one-dialog rule ──────────────────────────────────────────
+         *  Every popup below is suppressed while the milestone machine has a
+         *  recognition pending. The machine owns the celebration moment; a
+         *  legacy popup rendering alongside `<UnlockOverlay>` would stack two
+         *  `role="dialog"` shells (both are `VictoryPopupShell`, both
+         *  `z-[70]`) and drop the intensity right after the climax.
+         *
+         *  These are RENDER gates, not state gates: the state survives, so
+         *  each popup resumes the moment the queue drains — which is the
+         *  intended flow for the piece-complete menu, the labyrinth
+         *  score card and the tx result overlay (they are continuations, not
+         *  celebrations). The one popup that must NEVER resurface is the
+         *  legacy badge prompt; it is never primed at all when the queue owns
+         *  the badge moment (see `badgeMomentOwnedByQueue` in `handleMove`). */}
+        {/* `<PieceCompletePrompt>` is the LOWEST-priority modal on this screen:
+         *  it is a continuation menu, not a moment. Its 15s `autoReset` timer
+         *  is armed by the solve and keeps ticking through a MiniPay round
+         *  trip, so on the badge path `showPieceComplete` routinely flips true
+         *  while the player is still signing. When the claim confirms,
+         *  `applyBadgeClaimSuccess` sets `resultOverlay` + `unlockedPiece` and
+         *  the queue drains in the SAME commit — every gate below would open
+         *  at once and stack two `aria-modal` surfaces. Yielding to each of
+         *  them defers the menu; it never swallows it, because none of these
+         *  clears `showPieceComplete`. The player still lands on it, alone,
+         *  once the last one is closed. */}
+        {showPieceComplete &&
+        !showBadgeEarned &&
+        !resultOverlay &&
+        !unlockedPiece &&
+        !welcomeGiftOpen &&
+        celebration.current === null ? (
           <PieceCompletePrompt
             pieceType={selectedPiece}
             nextPiece={nextPiece ?? null}
@@ -2672,7 +3014,7 @@ export function ExercisesScreen({
           />
         ) : null}
 
-        {labyrinthCompleted ? (
+        {labyrinthCompleted && celebration.current === null ? (
           <LabyrinthCompleteOverlay
             moves={labyrinthCompleted.moves}
             optimalMoves={labyrinthCompleted.optimal}
@@ -2700,7 +3042,37 @@ export function ExercisesScreen({
           />
         ) : null}
 
-        {showBadgeEarned ? (
+        {/* One dialog, always: the queue emits a single step at a time and
+         *  absorbs lower majors into it as lines. */}
+        {celebration.current ? (
+          <UnlockOverlay
+            step={celebration.current}
+            onPrimary={handleCelebrationPrimary}
+            onDismiss={celebration.dismissCurrent}
+          />
+        ) : null}
+
+        {/* The destination of `first-reward`'s primary. Same modal, same claim
+         *  hook, same `claimed` write `<DailyTacticSlot>` uses — the gift the
+         *  overlay actually promised. */}
+        {welcomeGiftOpen && celebration.current === null ? (
+          <WelcomePackageModal
+            phase={welcomeGiftClaim.claimPhase}
+            onClaim={() => welcomeGiftClaim.handleClaim(claimWelcomePackageGift)}
+            onDismiss={() => {
+              if (welcomeGiftClaim.claimPhase === "signing") return;
+              welcomeGiftClaim.handleSuccess();
+              setWelcomeGiftOpen(false);
+            }}
+            onSuccess={() => {
+              welcomeGiftClaim.handleSuccess();
+              setWelcomeGiftOpen(false);
+            }}
+            onRetry={welcomeGiftClaim.handleRetry}
+          />
+        ) : null}
+
+        {showBadgeEarned && celebration.current === null ? (
           <BadgeEarnedPrompt
             pieceType={selectedPiece}
             totalStars={totalStars}
@@ -2712,7 +3084,10 @@ export function ExercisesScreen({
           />
         ) : null}
 
-        {resultOverlay ? (
+        {/* A failed claim sets this in the SAME tick as `releaseAbsorbed` —
+         *  without the gate the error card would stack on the recognition it
+         *  just released. Recognition first, then the error. */}
+        {resultOverlay && celebration.current === null ? (
           <ResultOverlay
             variant={resultOverlay.variant}
             pieceType={selectedPiece}

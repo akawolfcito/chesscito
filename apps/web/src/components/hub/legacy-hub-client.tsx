@@ -37,6 +37,14 @@ import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { daysRemaining } from "@/lib/pro/days-remaining";
 import { applyDevUnlock } from "@/lib/daily/session-quota";
 import { useShieldSync } from "@/lib/shop/use-shield-sync";
+import { useAccount } from "wagmi";
+import type { PieceId } from "@/lib/game/types";
+import { useLabyrinthCatalog } from "@/lib/content/catalog-context";
+import { SPECIAL_TRAINING_ROOK_STARS } from "@/lib/progression/milestones";
+import {
+  isMilestoneSeedReady,
+  useMilestoneSeeding,
+} from "@/lib/progression/use-milestone-seeding";
 import { track } from "@/lib/telemetry";
 import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
@@ -184,6 +192,50 @@ export function LegacyHubClient({
   // credited-cache via /api/shields/me. Mounted at the scaffold root
   // so the chip sees server-confirmed state on every connect.
   useShieldSync();
+
+  /**
+   * The one-time milestone migration (Task 15). Mounted here AND on the
+   * exercises screen — never here alone. `resolve()` lives on the exercises
+   * screen and a player can deep-link straight to it, so the hub can never be
+   * the only seeding surface (that is the single-writer shape that produced the
+   * shield credited-cache bug, PR #213). `seedMilestonesOnce` is guarded by a
+   * persistent marker, so whichever surface mounts first pays for it and the
+   * other is a no-op.
+   *
+   * Ready when the badge state is KNOWN: `disconnected` reads as "no badges",
+   * exactly what a resolve would see; `connecting` / `reconnecting` waits, so
+   * we never mark a profile migrated with `piece-badge-claimed` unseeded.
+   *
+   * An UNSUPPORTED chain never becomes ready — `getBadgesAddress` is null
+   * there, the batched read stays disabled and `badgesClaimed` stays empty, so
+   * this gate holds false for as long as the player stays on that chain. That
+   * is deliberate and it matches the exercises screen: an unknown badge state
+   * is NOT "no badges". The other half of the contract lives where `resolve()`
+   * does — `resolveMilestones` refuses to run while the profile is unseeded,
+   * so an unseeded player cannot be handed a retroactive parade in the
+   * meantime. The hub never resolves; it only seeds.
+   */
+  const { status: accountStatus } = useAccount();
+  const labyrinthCatalog = useLabyrinthCatalog();
+  const labyrinthIdsByPiece = useMemo(() => {
+    const out: Partial<Record<PieceId, string[]>> = {};
+    for (const [piece, labs] of Object.entries(labyrinthCatalog)) {
+      out[piece as PieceId] = labs.map((lab) => lab.id);
+    }
+    return out;
+  }, [labyrinthCatalog]);
+  useMilestoneSeeding({
+    // The SAME gate the exercises screen uses. `badgesClaimed` is empty until
+    // the batched on-chain read answers — and on an unsupported chain it never
+    // does, which is precisely when we must not seed.
+    ready: isMilestoneSeedReady({
+      accountStatus,
+      badgeStateKnown: Object.keys(badgesClaimed).length > 0,
+    }),
+    badgeClaimedByPiece: badgesClaimed,
+    labyrinthIdsByPiece,
+    giftAvailable: CHESSCITO_LITE_MODE,
+  });
 
   const pro = useMemo(() => deriveProShape(proStatus, Date.now()), [proStatus]);
 
@@ -423,7 +475,12 @@ export function LegacyHubClient({
           },
         }}
         onArenaPress={handleArenaPress}
-        miniArenaUnlocked={(starsPerPiece.rook ?? 0) >= 12}
+        // Single-sourced with the milestone that celebrates this exact tile.
+        // A hardcoded 12 here would let the threshold and its own celebration
+        // drift apart the day the milestone moves.
+        miniArenaUnlocked={
+          (starsPerPiece.rook ?? 0) >= SPECIAL_TRAINING_ROOK_STARS
+        }
       />
       )}
       {process.env.NODE_ENV === "development" &&

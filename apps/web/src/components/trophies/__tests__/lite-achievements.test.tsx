@@ -9,39 +9,40 @@ function progress(overrides: Partial<DailyProgress> = {}): DailyProgress {
 }
 
 describe("<AchievementsGrid> Lite achievements", () => {
-  it("renders 3 achievement tiles when progress is zero (all unearned)", () => {
-    const achievements = deriveLiteAchievements(progress());
+  it("renders 4 achievement tiles when progress is zero (all unearned)", () => {
+    const achievements = deriveLiteAchievements(progress(), false);
     render(<AchievementsGrid achievements={achievements} />);
     expect(screen.getByText("First Focus Day")).toBeInTheDocument();
+    expect(screen.getByText("First Great Session")).toBeInTheDocument();
     expect(screen.getByText("3-Day Rhythm")).toBeInTheDocument();
     expect(screen.getByText("7-Day Focus")).toBeInTheDocument();
   });
 
   it("marks First Focus Day as earned when totalCompleted=1", () => {
-    const achievements = deriveLiteAchievements(progress({ totalCompleted: 1, streak: 1 }));
+    const achievements = deriveLiteAchievements(progress({ totalCompleted: 1, streak: 1 }), false);
     const { container } = render(<AchievementsGrid achievements={achievements} />);
     // Unearned tiles with progress bars show .achievement-tile--locked class
-    expect(container.querySelectorAll(".achievement-tile--locked")).toHaveLength(2);
+    expect(container.querySelectorAll(".achievement-tile--locked")).toHaveLength(3);
     // Earned chip is a <span> from CandyChip (not the section header h3)
     expect(screen.getAllByText("Earned", { selector: "span" })).toHaveLength(1);
   });
 
   it("marks first + rhythm as earned when streak=3", () => {
-    const achievements = deriveLiteAchievements(progress({ totalCompleted: 3, streak: 3 }));
+    const achievements = deriveLiteAchievements(progress({ totalCompleted: 3, streak: 3 }), false);
     const { container } = render(<AchievementsGrid achievements={achievements} />);
-    expect(container.querySelectorAll(".achievement-tile--locked")).toHaveLength(1);
+    expect(container.querySelectorAll(".achievement-tile--locked")).toHaveLength(2);
     expect(screen.getAllByText("Earned", { selector: "span" })).toHaveLength(2);
   });
 
-  it("marks all 3 earned when streak=7", () => {
-    const achievements = deriveLiteAchievements(progress({ totalCompleted: 7, streak: 7 }));
+  it("marks all 4 earned when streak=7 and hadGreatSession=true", () => {
+    const achievements = deriveLiteAchievements(progress({ totalCompleted: 7, streak: 7 }), true);
     const { container } = render(<AchievementsGrid achievements={achievements} />);
     expect(container.querySelectorAll(".achievement-tile--locked")).toHaveLength(0);
-    expect(screen.getAllByText("Earned", { selector: "span" })).toHaveLength(3);
+    expect(screen.getAllByText("Earned", { selector: "span" })).toHaveLength(4);
   });
 
   it("copy contains no prohibited terms", () => {
-    const achievements = deriveLiteAchievements(progress());
+    const achievements = deriveLiteAchievements(progress(), false);
     render(<AchievementsGrid achievements={achievements} />);
     const container = screen.getByRole("button", { name: /first focus day/i }).closest(".flex");
     const text = container?.textContent ?? document.body.textContent ?? "";

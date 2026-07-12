@@ -17,7 +17,6 @@ describe("useWelcomePackage — Full mode guard", () => {
     expect(result.current.isPending).toBe(false);
     expect(result.current.shouldAutoShow).toBe(false);
 
-    act(() => result.current.unlock());
     act(() => result.current.claim());
     act(() => result.current.dismiss());
     act(() => result.current.markShown());

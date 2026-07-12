@@ -78,12 +78,16 @@ describe("HubDailyTile availability signal", () => {
 });
 
 describe("HubArenaTile (Mate) availability signal", () => {
-  it("unlocked tile shows the static ready dot, no timers", () => {
+  // The dot used to be a permanently-lit "ready" chip (no invented
+  // logic behind it). It is now driven by the milestone machine's
+  // `openedAt` — see hub-arena-tile.test.tsx for the full NEW-dot
+  // contract. This test only confirms the timer discipline still holds.
+  it("unlocked, never-opened tile shows the NEW dot, no timers", () => {
     const spy = vi.spyOn(window, "setInterval");
     render(<HubArenaTile setup={MINI_ARENA_SETUPS[0]} unlocked />);
-    expect(screen.getByTestId("hub-tile-status")).toHaveAttribute(
+    expect(screen.getByTestId("hub-tile-new")).toHaveAttribute(
       "data-status",
-      "ready",
+      "new",
     );
     expect(appIntervalCalls(spy)).toHaveLength(0);
     spy.mockRestore();

@@ -112,7 +112,6 @@ export function DailyTacticSlot() {
     const prev = progress;
     if (CHESSCITO_LITE_MODE && prev.totalCompleted === 0) {
       firstFocusDayJustEarned.current = true;
-      welcomePackage.unlock();
     }
     const next = recordDailyCompletion(today);
     setProgress(next);

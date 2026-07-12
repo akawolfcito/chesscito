@@ -807,7 +807,7 @@ const messages = {
     exerciseChipFormat: "Ejercicio {number}: {stars} de 3 estrellas",
     labyrinthLabelFormat: "Laberinto {number}",
     labyrinthOpenAriaFormat: "Abrir Laberinto {number}",
-    labyrinthLockedStarsFormat: "Se abre con {stars}★",
+    labyrinthLockedStarsFormat: "Se abre con {stars}★ y {exercises} ejercicios",
     labyrinthLockedChain: "Supera el anterior",
     ready: "Listo",
     starsFormat: "{stars}★",
@@ -1013,6 +1013,10 @@ const messages = {
       "first-focus-day": {
         title: "Primer Focus Day",
         description: "Completa tu primer Daily Focus.",
+      },
+      "first-great-session": {
+        title: "Primera Gran Sesión",
+        description: "Gana 8 estrellas en un día o agota tu cupo diario.",
       },
       "three-day-rhythm": {
         title: "Ritmo de 3 días",
@@ -2368,6 +2372,50 @@ const messages = {
     emptyMessage: "Aún no hay victorias acuñadas. Sé el primer campeón.",
     loadError: "No se pudo cargar el Salón de la Fama. Intenta de nuevo.",
     retry: "Reintentar",
+  },
+  PROGRESSION_COPY: {
+    "first-reward": {
+      title: "Primera Recompensa Obtenida",
+      body: "La práctica da frutos. Abre tu regalo.",
+      primary: "Abrir Regalo",
+      dismiss: "Después",
+    },
+    "first-labyrinth": {
+      title: "Primer Laberinto Desbloqueado",
+      body: "Guía a la torre a través de él.",
+      primary: "Entrar al Laberinto",
+      dismiss: "Después",
+    },
+    "special-training": {
+      title: "Entrenamiento Especial Desbloqueado",
+      body: "Coordina la torre y el rey.",
+      primary: "Iniciar Entrenamiento",
+      dismiss: "Después",
+    },
+    "piece-badge-eligible": {
+      title: "Insignia Lista para Reclamar",
+      body: "Diez estrellas. La insignia es tuya.",
+      primary: "Reclamar Insignia",
+      dismiss: "Después",
+    },
+    mastery: {
+      title: "Pieza Dominada",
+      body: "Cada ejercicio, cada laberinto.",
+      primary: "Continuar",
+      dismiss: "Cerrar",
+    },
+    "great-focus-session": {
+      title: "Gran Sesión de Enfoque",
+      body: "Una sesión profunda, completada.",
+      primary: "Continuar",
+      dismiss: "Cerrar",
+    },
+    closeLabel: "Cerrar diálogo",
+    absorbed: {
+      "great-focus-session": "Gran Sesión de Enfoque reconocida.",
+      "first-great-session": "Insignia desbloqueada: Primera Gran Sesión",
+      "piece-badge-eligible": "Tu insignia está lista para reclamar.",
+    },
   },
 };
 

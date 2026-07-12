@@ -19,6 +19,7 @@ const ACHIEVEMENT_ICONS: Record<string, CandyIconName> = {
   "five-crowns": "star",
   dedication: "refresh",
   "first-focus-day": "star",
+  "first-great-session": "star",
   "three-day-rhythm": "refresh",
   "seven-day-focus": "crown",
 };
@@ -26,6 +27,7 @@ const ACHIEVEMENT_ICONS: Record<string, CandyIconName> = {
 /** Real badge art assets — used when available, falling back to ACHIEVEMENT_ICONS. */
 const ACHIEVEMENT_ASSETS: Partial<Record<string, string>> = {
   "first-focus-day": "/art/achievements/1day-focus",
+  "first-great-session": "/art/achievements/1day-focus",
   "three-day-rhythm": "/art/achievements/3day-focus",
   "seven-day-focus": "/art/achievements/7day-focus",
 };

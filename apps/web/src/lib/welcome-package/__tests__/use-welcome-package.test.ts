@@ -24,32 +24,23 @@ describe("useWelcomePackage — Lite mode", () => {
     expect(result.current.shouldAutoShow).toBe(false);
   });
 
-  it("retroactive init: unlocked+autoShowCount=2 when achievement already earned (totalCompleted>=1) but no storage", () => {
+  it("does NOT retroactively unlock from totalCompleted>=1 (Task 10 — gift belongs to the first-reward milestone, not the first Daily Focus)", () => {
     vi.mocked(getDailyProgress).mockReturnValue({ streak: 1, lastCompletedDate: "2026-06-20", totalCompleted: 1 });
     const { result } = renderHook(() => useWelcomePackage());
-    expect(result.current.isUnlocked).toBe(true);
+    expect(result.current.isUnlocked).toBe(false);
     expect(result.current.isClaimed).toBe(false);
-    expect(result.current.isPending).toBe(true);
-    expect(result.current.shouldAutoShow).toBe(false); // autoShowCount=2 → no auto-show
-    const stored = getWelcomePackageState();
-    expect(stored.unlocked).toBe(true);
-    expect(stored.autoShowCount).toBe(2);
-    expect(stored.unlockedAt).toBe("retroactive");
+    expect(result.current.isPending).toBe(false);
+    expect(result.current.shouldAutoShow).toBe(false);
+    expect(getWelcomePackageState().unlocked).toBe(false);
   });
 
-  it("unlock() sets unlocked=true and persists", () => {
-    const { result } = renderHook(() => useWelcomePackage());
-    act(() => result.current.unlock());
-    expect(result.current.isUnlocked).toBe(true);
-    expect(getWelcomePackageState().unlocked).toBe(true);
-  });
-
-  it("unlock() is idempotent — does not overwrite unlockedAt on second call", () => {
+  // The hook exposes NO `unlock()`. `unlockWelcomePackageGift()` (exercises
+  // screen) is the single writer of that transition — see the interface doc.
+  it("reflects an unlock written by the single writer, without exposing one", () => {
     setWelcomePackageState({ ...DEFAULT_STATE, unlocked: true, unlockedAt: "2026-06-20T00:00:00Z" });
     const { result } = renderHook(() => useWelcomePackage());
-    const atBefore = getWelcomePackageState().unlockedAt;
-    act(() => result.current.unlock());
-    expect(getWelcomePackageState().unlockedAt).toBe(atBefore);
+    expect(result.current.isUnlocked).toBe(true);
+    expect("unlock" in result.current).toBe(false);
   });
 
   it("claim() sets claimed=true and claimedAt", () => {
