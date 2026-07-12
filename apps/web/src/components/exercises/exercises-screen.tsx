@@ -2839,7 +2839,23 @@ export function ExercisesScreen({
          *  celebrations). The one popup that must NEVER resurface is the
          *  legacy badge prompt; it is never primed at all when the queue owns
          *  the badge moment (see `badgeMomentOwnedByQueue` in `handleMove`). */}
-        {showPieceComplete && !showBadgeEarned && celebration.current === null ? (
+        {/* `<PieceCompletePrompt>` is the LOWEST-priority modal on this screen:
+         *  it is a continuation menu, not a moment. Its 15s `autoReset` timer
+         *  is armed by the solve and keeps ticking through a MiniPay round
+         *  trip, so on the badge path `showPieceComplete` routinely flips true
+         *  while the player is still signing. When the claim confirms,
+         *  `applyBadgeClaimSuccess` sets `resultOverlay` + `unlockedPiece` and
+         *  the queue drains in the SAME commit — every gate below would open
+         *  at once and stack two `aria-modal` surfaces. Yielding to each of
+         *  them defers the menu; it never swallows it, because none of these
+         *  clears `showPieceComplete`. The player still lands on it, alone,
+         *  once the last one is closed. */}
+        {showPieceComplete &&
+        !showBadgeEarned &&
+        !resultOverlay &&
+        !unlockedPiece &&
+        !welcomeGiftOpen &&
+        celebration.current === null ? (
           <PieceCompletePrompt
             pieceType={selectedPiece}
             nextPiece={nextPiece ?? null}

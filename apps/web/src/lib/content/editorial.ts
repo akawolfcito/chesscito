@@ -3606,4 +3606,7 @@ export const PROGRESSION_COPY = {
     "first-great-session": "Badge unlocked: First Great Session",
     "piece-badge-eligible": "Your badge is ready to claim.",
   },
+  /** a11y label for the overlay's X. Flat key (not per-milestone): the
+   *  shell renders one close affordance regardless of which step is up. */
+  closeLabel: "Close dialog",
 } as const;

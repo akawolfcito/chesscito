@@ -44,7 +44,7 @@ export function UnlockOverlay({ step, onPrimary, onDismiss }: Props) {
     <VictoryPopupShell
       onClose={onDismiss}
       ariaLabel={t(`${step.id}.title`)}
-      closeLabel="Close dialog"
+      closeLabel={t("closeLabel")}
     >
       {icon ? (
         <div className="progression-overlay-icon">

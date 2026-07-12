@@ -2406,6 +2406,7 @@ const messages = {
       primary: "Continuar",
       dismiss: "Cerrar",
     },
+    closeLabel: "Cerrar diálogo",
     absorbed: {
       "great-focus-session": "Gran Sesión de Enfoque reconocida.",
       "first-great-session": "Insignia desbloqueada: Primera Gran Sesión",
