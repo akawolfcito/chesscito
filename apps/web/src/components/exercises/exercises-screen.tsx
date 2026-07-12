@@ -338,6 +338,10 @@ export function ExercisesScreen({
   const { writeContractAsync: writeBadgeAsync } = useWriteContract();
   const { writeContractAsync: writeShopAsync, isPending: isShopWriting } = useWriteContract();
   const [selectedPiece, setSelectedPiece] = useState<PieceKey>(initialPiece);
+  // Lets the Special Training celebration open the bridge sheet directly. The
+  // pedestal still manages itself on a normal tap; this only adds an outside
+  // opener. See `handleMilestoneNavigate`.
+  const [miniArenaOpen, setMiniArenaOpen] = useState(false);
   const [phase, setPhase] = useState<"ready" | "success" | "failure">("ready");
   const [boardKey, setBoardKey] = useState(0);
   const [moves, setMoves] = useState(0);
@@ -1894,8 +1898,19 @@ export function ExercisesScreen({
     }
 
     if (step.id === "special-training") {
-      // The Special Training tile lives on the hub right-rail.
-      router.push("/hub");
+      // Open the bridge sheet HERE. The old `router.push("/hub")` aimed at
+      // `HubArenaTile`, which only mounts inside the FULL `HubScaffold` — and
+      // FULL is internal-only. The shipped builds are LEARN (lite) and PLAY,
+      // and LEARN's hub renders `HubLiteScaffold`, which has no such tile. So
+      // the CTA promised Special Training and dropped the player on a hub with
+      // no door. The door that actually ships is `MiniArenaBridgeSlot`, in
+      // this screen's action row.
+      //
+      // The slot is gated on `selectedPiece === "rook"`, and this milestone can
+      // fire while the player is on another piece (it reads `rookStars`), so
+      // select the rook first: the slot mounts on the next render, already open.
+      setSelectedPiece("rook");
+      setMiniArenaOpen(true);
       return;
     }
 
@@ -2683,6 +2698,8 @@ export function ExercisesScreen({
             <MiniArenaBridgeSlot
               setup={MINI_ARENA_SETUPS[0]}
               unlocked={selectedPiece === "rook" && totalStars >= 12}
+              open={miniArenaOpen}
+              onOpenChange={setMiniArenaOpen}
             />
           }
           contextualAction={
