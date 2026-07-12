@@ -73,7 +73,7 @@ class NoopIntersectionObserver {
 vi.stubGlobal("IntersectionObserver", NoopIntersectionObserver);
 
 const { ExercisesScreen } = await import("@/components/exercises/exercises-screen");
-const { LegacyHubClient } = await import("@/components/hub/legacy-hub-client");
+const { LearnHubClient } = await import("@/components/hub/learn-hub-client");
 
 /** Five trivial one-move rook slides — every solve is a clean 3★. */
 const ROOK_POOL: Exercise[] = [1, 2, 3, 4, 5].map((n) => ({
@@ -106,7 +106,7 @@ function renderExercises() {
 }
 
 function renderHub() {
-  return renderWithAppProviders(<LegacyHubClient />);
+  return renderWithAppProviders(<LearnHubClient />);
 }
 
 /** Every celebration overlay is a `VictoryPopupShell` with `aria-modal="true"`.

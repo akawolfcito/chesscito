@@ -8,7 +8,7 @@ import { isMilestoneSeedReady } from "../use-milestone-seeding";
  *
  * The gate shipped bare in the previous fix: the expression lived inline in two
  * components, so nothing could go red if one of them drifted. It is a pure
- * function now, used by BOTH `exercises-screen.tsx` and `legacy-hub-client.tsx`.
+ * function now, used by BOTH `exercises-screen.tsx` and `learn-hub-client.tsx`.
  */
 describe("isMilestoneSeedReady", () => {
   it("waits while wagmi is connecting — the badge read is DISABLED, not empty", () => {
