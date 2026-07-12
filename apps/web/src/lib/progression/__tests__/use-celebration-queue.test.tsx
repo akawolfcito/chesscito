@@ -110,6 +110,10 @@ describe("useCelebrationQueue", () => {
     // (< 2) and `pieceCompletedExercises` stays at 1 (< 3), so neither
     // first-reward nor first-labyrinth fire — the queue holds only the
     // closer, keeping this test's assertions unambiguous.
+    //
+    // The crown absorbs the Great Focus Session. It can no longer absorb
+    // `piece-badge-eligible`: mastery REQUIRES a claimed badge, and a claimed
+    // badge is no longer claimable — the two are exclusive states of one badge.
     const masteryArgs: GatherArgs = {
       piece: "rook",
       progressByPiece: {
@@ -119,7 +123,7 @@ describe("useCelebrationQueue", () => {
           stars: { "rook-1": 10 },
         },
       },
-      dailyStars: 0,
+      dailyStars: 8,
       sessionQuotaExhausted: false,
       badgeClaimed: true,
       allLabyrinthsComplete: true,
@@ -134,8 +138,7 @@ describe("useCelebrationQueue", () => {
 
     expect(result.current.current?.id).toBe("mastery");
     expect(result.current.current?.absorbed).toContainEqual({
-      id: "piece-badge-eligible",
-      piece: "rook",
+      id: "great-focus-session",
     });
 
     act(() => {
@@ -144,7 +147,7 @@ describe("useCelebrationQueue", () => {
 
     expect(getMilestoneStore().events["mastery:rook"].celebratedAt).toBeDefined();
     expect(
-      getMilestoneStore().events["piece-badge-eligible:rook"].celebratedAt,
+      getMilestoneStore().events["great-focus-session"].celebratedAt,
     ).toBeDefined();
   });
 

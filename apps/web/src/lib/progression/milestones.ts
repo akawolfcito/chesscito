@@ -78,9 +78,17 @@ export function deriveEarnedMilestones(input: MilestoneInput): EarnedMilestone[]
   }
 
   if (input.pieceStars >= BADGE_THRESHOLD) {
-    earned.push({ id: "piece-badge-eligible", piece });
+    // The RIGHT to claim does not survive the claim. Deriving it for an owned
+    // badge kept `piece-badge-eligible` permanently earned, and the queue
+    // drains EVERY pending event regardless of the piece on screen — so one
+    // stuck eligibility re-opened "Badge Ready to Claim" on every solve of
+    // every other piece, and its CTA no-ops on an owned badge, so it could
+    // never be celebrated away. The two events are exclusive states of one
+    // badge, not a sequence.
     if (input.badgeClaimed) {
       earned.push({ id: "piece-badge-claimed", piece });
+    } else {
+      earned.push({ id: "piece-badge-eligible", piece });
     }
   }
 

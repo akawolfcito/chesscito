@@ -106,9 +106,14 @@ describe("seedExistingPlayer", () => {
     expect(seeded.events["first-reward"]).toBeDefined();
     expect(seeded.events["first-labyrinth:rook"]).toBeDefined();
     expect(seeded.events["special-training"]).toBeDefined();
-    expect(seeded.events["piece-badge-eligible:rook"]).toBeDefined();
     expect(seeded.events["piece-badge-claimed:rook"]).toBeDefined();
     expect(seeded.events["mastery:rook"]).toBeDefined();
+    // The eligibility does NOT survive the claim: a minted badge is claimed,
+    // not claimable. Seeding it would put a spent recognition on disk, and the
+    // queue drains pending events globally — that is exactly the event that
+    // haunted every other piece with a "Badge Ready to Claim" it could never
+    // dismiss.
+    expect(seeded.events["piece-badge-eligible:rook"]).toBeUndefined();
   });
 
   it("never seeds daily milestones even when sessionQuotaExhausted is true", () => {
