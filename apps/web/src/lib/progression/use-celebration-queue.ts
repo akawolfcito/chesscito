@@ -58,9 +58,12 @@ export function useCelebrationQueue(): UseCelebrationQueueReturn {
     // (pure) updater passed to setQueue below.
     markCelebrated(current.id, current.piece);
     // An absorbed event is recognized together with its closer — it must
-    // not be left pending and resurface as a stray overlay later.
-    for (const id of current.absorbed) {
-      markCelebrated(id, current.piece);
+    // not be left pending and resurface as a stray overlay later. Each
+    // absorbed event carries its OWN piece scope: a piece-scoped closer
+    // absorbs global events, and re-attaching the closer's piece to them
+    // would build a key that matches nothing and write nothing.
+    for (const event of current.absorbed) {
+      markCelebrated(event.id, event.piece);
     }
 
     // Advance the ref SYNCHRONOUSLY, in the same tick. `queueRef.current` is
@@ -92,7 +95,10 @@ export function useCelebrationQueue(): UseCelebrationQueueReturn {
   const releaseAbsorbed = useCallback((step: CelebrationStep) => {
     const store = getMilestoneStore();
     const pending = selectPending(store).filter((event) =>
-      step.absorbed.includes(event.id),
+      step.absorbed.some(
+        (candidate) =>
+          candidate.id === event.id && candidate.piece === event.piece,
+      ),
     );
     const next = buildCelebrationQueue(pending);
     queueRef.current = next;

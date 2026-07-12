@@ -8,6 +8,7 @@ import { HubActionTile } from "@/components/hub/hub-action-tile";
 import { HubTileStatusChip } from "@/components/hub/hub-tile-status-chip";
 import {
   getMilestoneStore,
+  markCelebrated,
   markOpened,
   recordEarned,
 } from "@/lib/progression/milestone-storage";
@@ -97,6 +98,13 @@ export function HubArenaTile({ setup, unlocked }: Props) {
             if (!getMilestoneStore().events[SPECIAL_TRAINING_KEY]) {
               recordEarned([{ id: "special-training" }]);
             }
+            // `recordEarned` writes `earnedAt` and NO `celebratedAt`, which
+            // leaves the event PENDING — the celebration queue would then pop
+            // "SPECIAL TRAINING UNLOCKED" on the player's next solve, for
+            // content they are opening RIGHT NOW. The tap IS the recognition:
+            // stamp it celebrated in the same gesture. Idempotent, so a tile
+            // opened after the overlay already ran is a no-op.
+            markCelebrated("special-training");
             markOpened("special-training");
             setIsNew(false);
             setEverOpened(true);

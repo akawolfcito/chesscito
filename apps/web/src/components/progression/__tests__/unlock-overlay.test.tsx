@@ -28,7 +28,9 @@ describe("UnlockOverlay", () => {
         step={{
           id: "mastery",
           piece: "rook",
-          absorbed: ["great-focus-session", "first-great-session"],
+          // Global events absorbed under a piece-scoped closer: they carry NO
+          // piece, and must not inherit the closer's.
+          absorbed: [{ id: "great-focus-session" }, { id: "first-great-session" }],
         }}
         onPrimary={vi.fn()}
         onDismiss={onDismiss}

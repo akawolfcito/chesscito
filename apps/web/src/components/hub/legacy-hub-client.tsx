@@ -40,6 +40,7 @@ import { useShieldSync } from "@/lib/shop/use-shield-sync";
 import { useAccount } from "wagmi";
 import type { PieceId } from "@/lib/game/types";
 import { useLabyrinthCatalog } from "@/lib/content/catalog-context";
+import { SPECIAL_TRAINING_ROOK_STARS } from "@/lib/progression/milestones";
 import { useMilestoneSeeding } from "@/lib/progression/use-milestone-seeding";
 import { track } from "@/lib/telemetry";
 import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
@@ -458,7 +459,12 @@ export function LegacyHubClient({
           },
         }}
         onArenaPress={handleArenaPress}
-        miniArenaUnlocked={(starsPerPiece.rook ?? 0) >= 12}
+        // Single-sourced with the milestone that celebrates this exact tile.
+        // A hardcoded 12 here would let the threshold and its own celebration
+        // drift apart the day the milestone moves.
+        miniArenaUnlocked={
+          (starsPerPiece.rook ?? 0) >= SPECIAL_TRAINING_ROOK_STARS
+        }
       />
       )}
       {process.env.NODE_ENV === "development" &&

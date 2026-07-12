@@ -133,7 +133,10 @@ describe("useCelebrationQueue", () => {
     });
 
     expect(result.current.current?.id).toBe("mastery");
-    expect(result.current.current?.absorbed).toContain("piece-badge-eligible");
+    expect(result.current.current?.absorbed).toContainEqual({
+      id: "piece-badge-eligible",
+      piece: "rook",
+    });
 
     act(() => {
       result.current.dismissCurrent();
@@ -143,6 +146,54 @@ describe("useCelebrationQueue", () => {
     expect(
       getMilestoneStore().events["piece-badge-eligible:rook"].celebratedAt,
     ).toBeDefined();
+  });
+
+  /** REGRESSION (final review C1). The closer is piece-scoped, the absorbed
+   *  events are GLOBAL. Re-attaching the closer's piece to them built the key
+   *  `great-focus-session:rook`, which matches no event — so `markCelebrated`
+   *  wrote NOTHING and the praise re-fired as a stray overlay on the next
+   *  solve, right after the climax it had been absorbed into. */
+  it("marks a GLOBAL absorbed event celebrated under a piece-scoped closer", () => {
+    const badgeAndGreatSessionArgs: GatherArgs = {
+      piece: "rook",
+      progressByPiece: {
+        rook: { piece: "rook", currentId: null, stars: { "rook-1": 10 } },
+      },
+      dailyStars: 8, // → great-focus-session, a GLOBAL event
+      sessionQuotaExhausted: false,
+      badgeClaimed: false,
+      allLabyrinthsComplete: false,
+      hadGreatSessionBefore: false, // → first-great-session, also GLOBAL
+    };
+
+    const { result } = renderHook(() => useCelebrationQueue());
+
+    act(() => {
+      result.current.resolve(badgeAndGreatSessionArgs);
+    });
+
+    // One dialog: the badge closes, the praise rides inside it.
+    expect(result.current.current?.id).toBe("piece-badge-eligible");
+    expect(result.current.current?.absorbed).toContainEqual({
+      id: "great-focus-session",
+    });
+
+    act(() => {
+      result.current.dismissCurrent();
+    });
+
+    const events = getMilestoneStore().events;
+    expect(events["piece-badge-eligible:rook"].celebratedAt).toBeDefined();
+    expect(events["great-focus-session"].celebratedAt).toBeDefined();
+    expect(events["first-great-session"].celebratedAt).toBeDefined();
+    // The bare global keys are the ONLY ones written — no piece-scoped ghost.
+    expect(events["great-focus-session:rook"]).toBeUndefined();
+
+    // The next solve must not resurrect the praise as a second overlay.
+    act(() => {
+      result.current.resolve(badgeAndGreatSessionArgs);
+    });
+    expect(result.current.current).toBeNull();
   });
 
   it("re-queues a still-pending absorbed event when a claim is cancelled", () => {
@@ -171,7 +222,9 @@ describe("useCelebrationQueue", () => {
     });
 
     expect(result.current.current?.id).toBe("piece-badge-eligible");
-    expect(result.current.current?.absorbed).toContain("great-focus-session");
+    expect(result.current.current?.absorbed).toContainEqual({
+      id: "great-focus-session",
+    });
     const step = result.current.current!;
 
     // Cancellation path: release BEFORE dismissing, per the doc comment on

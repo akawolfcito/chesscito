@@ -65,10 +65,10 @@ export function UnlockOverlay({ step, onPrimary, onDismiss }: Props) {
       <h2 className="language-modal-title">{t(`${step.id}.title`)}</h2>
       <p className="progression-overlay-body">{t(`${step.id}.body`)}</p>
 
-      {step.absorbed.map((id) => {
-        const key = `absorbed.${id}`;
+      {step.absorbed.map((event) => {
+        const key = `absorbed.${event.id}`;
         return t.has(key) ? (
-          <p key={id} className="progression-overlay-absorbed">
+          <p key={event.id} className="progression-overlay-absorbed">
             {t(key)}
           </p>
         ) : null;

@@ -22,8 +22,16 @@ const CLOSER_ORDER: MilestoneId[] = [
 export type CelebrationStep = {
   id: MilestoneId;
   piece?: PieceId;
-  /** Lower majors rendered as lines inside this overlay, never as modals. */
-  absorbed: MilestoneId[];
+  /** Lower majors rendered as lines inside this overlay, never as modals.
+   *
+   *  Carries the FULL event, piece and all — not a bare id. The absorbed
+   *  events do not necessarily share the closer's scope: a piece-scoped
+   *  closer (`mastery:rook`) routinely absorbs GLOBAL events
+   *  (`great-focus-session`). Storing only the id forced the dismiss path to
+   *  re-attach the closer's piece, building the key `great-focus-session:rook`
+   *  — which matches no event, so the absorbed event was never marked
+   *  celebrated and popped again as a stray overlay on the next solve. */
+  absorbed: EarnedMilestone[];
 };
 
 export function buildCelebrationQueue(
@@ -43,10 +51,15 @@ export function buildCelebrationQueue(
 
   const [closerId, ...absorbedClosers] = firedClosers;
   const closer = find(closerId);
-  const absorbed: MilestoneId[] = [...absorbedClosers];
+  // `absorbedClosers` only holds ids `find` already resolved, so every lookup
+  // below is guaranteed to hit — the filter is for the type, not for safety.
+  const absorbed: EarnedMilestone[] = absorbedClosers
+    .map((id) => find(id))
+    .filter((event): event is EarnedMilestone => Boolean(event));
 
   // first-great-session is an achievement, never an overlay of its own.
-  if (find("first-great-session")) absorbed.push("first-great-session");
+  const firstGreatSession = find("first-great-session");
+  if (firstGreatSession) absorbed.push(firstGreatSession);
 
   steps.push({ id: closerId, piece: closer?.piece, absorbed });
   return steps;

@@ -34,19 +34,13 @@ describe("useWelcomePackage — Lite mode", () => {
     expect(getWelcomePackageState().unlocked).toBe(false);
   });
 
-  it("unlock() sets unlocked=true and persists", () => {
-    const { result } = renderHook(() => useWelcomePackage());
-    act(() => result.current.unlock());
-    expect(result.current.isUnlocked).toBe(true);
-    expect(getWelcomePackageState().unlocked).toBe(true);
-  });
-
-  it("unlock() is idempotent — does not overwrite unlockedAt on second call", () => {
+  // The hook exposes NO `unlock()`. `unlockWelcomePackageGift()` (exercises
+  // screen) is the single writer of that transition — see the interface doc.
+  it("reflects an unlock written by the single writer, without exposing one", () => {
     setWelcomePackageState({ ...DEFAULT_STATE, unlocked: true, unlockedAt: "2026-06-20T00:00:00Z" });
     const { result } = renderHook(() => useWelcomePackage());
-    const atBefore = getWelcomePackageState().unlockedAt;
-    act(() => result.current.unlock());
-    expect(getWelcomePackageState().unlockedAt).toBe(atBefore);
+    expect(result.current.isUnlocked).toBe(true);
+    expect("unlock" in result.current).toBe(false);
   });
 
   it("claim() sets claimed=true and claimedAt", () => {

@@ -37,7 +37,10 @@ describe("buildCelebrationQueue", () => {
     ]);
     expect(queue).toHaveLength(1);
     expect(queue[0].id).toBe("mastery");
-    expect(queue[0].absorbed).toEqual(["great-focus-session"]);
+    // Carries the absorbed event WHOLE — a global event keeps its undefined
+    // piece instead of inheriting the closer's, which would build the key
+    // `great-focus-session:rook` and mark nothing celebrated.
+    expect(queue[0].absorbed).toEqual([{ id: "great-focus-session" }]);
   });
 
   it("lets the claim flow close and absorb the session", () => {
@@ -47,7 +50,7 @@ describe("buildCelebrationQueue", () => {
     ]);
     expect(queue).toHaveLength(1);
     expect(queue[0].id).toBe("piece-badge-eligible");
-    expect(queue[0].absorbed).toEqual(["great-focus-session"]);
+    expect(queue[0].absorbed).toEqual([{ id: "great-focus-session" }]);
   });
 
   it("always renders first-great-session inside the closer, never alone", () => {
@@ -57,7 +60,7 @@ describe("buildCelebrationQueue", () => {
     ]);
     expect(queue).toHaveLength(1);
     expect(queue[0].id).toBe("great-focus-session");
-    expect(queue[0].absorbed).toContain("first-great-session");
+    expect(queue[0].absorbed).toContainEqual({ id: "first-great-session" });
   });
 
   it("shows the incremental unlock before the closer when both fire", () => {
@@ -77,8 +80,8 @@ describe("buildCelebrationQueue", () => {
     expect(queue).toHaveLength(1);
     expect(queue[0].id).toBe("mastery");
     expect(queue[0].absorbed).toEqual([
-      "piece-badge-eligible",
-      "great-focus-session",
+      { id: "piece-badge-eligible", piece: "rook" },
+      { id: "great-focus-session" },
     ]);
   });
 

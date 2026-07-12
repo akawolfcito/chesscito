@@ -319,7 +319,7 @@ export function ExercisesScreen({
   const tFooter = useTranslations("FOOTER_CTA_COPY");
   const tResult = useTranslations("RESULT_OVERLAY_COPY");
   const router = useRouter();
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, status: accountStatus } = useAccount();
   const starsConnectPrompt = useConnectPrompt("stars");
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
@@ -1005,7 +1005,6 @@ export function ExercisesScreen({
   const BADGE_LEVEL_IDS = [1n, 2n, 3n, 4n, 5n, 6n] as const;
   const {
     data: allBadgesData,
-    isLoading: isBadgesLoading,
     refetch: refetchAllBadges,
   } = useReadContracts({
     contracts: BADGE_LEVEL_IDS.map((lid) => ({
@@ -1056,7 +1055,16 @@ export function ExercisesScreen({
   }, [labyrinthCatalog]);
 
   useMilestoneSeeding({
-    ready: !isBadgesLoading,
+    // Mirrors the hub's gate (`legacy-hub-client.tsx`). NOT `!isBadgesLoading`:
+    // the badge read is `enabled: Boolean(address && badgesAddress)`, and a
+    // DISABLED TanStack query reports `isLoading === false` — so during
+    // wagmi's reconnect (address still undefined) the screen would call itself
+    // ready, seed the profile with `badgeClaimed: false`, stamp it migrated,
+    // and then fire a retroactive MASTERY overlay on the veteran's next solve.
+    // A disabled read is not the same as "no badges"; only `disconnected` is.
+    ready:
+      accountStatus === "disconnected" ||
+      (accountStatus === "connected" && allBadgesData !== undefined),
     badgeClaimedByPiece: badgesClaimed,
     labyrinthIdsByPiece,
     giftAvailable: CHESSCITO_LITE_MODE,
@@ -1319,6 +1327,12 @@ export function ExercisesScreen({
    */
   function resolveMilestones(
     starsForPiece?: Record<string, number>,
+    /** Forces an input the React closure cannot possibly know yet. The only
+     *  caller is the badge-claim success path: `badgesClaimed` was captured at
+     *  render time and `refetchAllBadges()` has not landed, so BOTH still read
+     *  `false` for the piece the chain just minted. Without this, `mastery`
+     *  cannot be evaluated at the moment it is actually earned. */
+    overrides?: { badgeClaimed?: boolean },
   ): CelebrationStep[] {
     // Read BEFORE `resolve` records it — afterwards it is always true.
     const hadGreatSessionBefore = hasEarnedMilestone("first-great-session");
@@ -1331,7 +1345,8 @@ export function ExercisesScreen({
       ),
       dailyStars: getDailyStars(),
       sessionQuotaExhausted: isSessionOver(getDailySession()),
-      badgeClaimed: badgesClaimed[selectedPiece] === true,
+      badgeClaimed:
+        overrides?.badgeClaimed ?? badgesClaimed[selectedPiece] === true,
       allLabyrinthsComplete: areAllLabyrinthsSolved(
         selectedPiece,
         labyrinthCatalog[selectedPiece].map((lab) => lab.id),
@@ -1429,7 +1444,9 @@ export function ExercisesScreen({
         badgeMomentOwnedByQueue = steps.some(
           (step) =>
             step.id === "piece-badge-eligible" ||
-            step.absorbed.includes("piece-badge-eligible"),
+            step.absorbed.some(
+              (event) => event.id === "piece-badge-eligible",
+            ),
         );
       }
 
@@ -1779,7 +1796,24 @@ export function ExercisesScreen({
       void handleClaimBadge(step.piece as PieceKey | undefined)
         .then((claimed) => {
           if (claimed) {
+            // A solve is otherwise the ONLY trigger of `resolve()`, but
+            // `mastery` needs `badgeClaimed && allLabyrinthsComplete` — a
+            // player who finished every labyrinth first earns the crown HERE,
+            // on the claim, not on a solve. Without this re-resolve the crown
+            // surfaces later, bolted onto an unrelated (possibly replayed)
+            // exercise.
+            //
+            // Dismiss FIRST: `resolve()` REPLACES the queue, so re-resolving
+            // before the dismiss would rebuild a queue whose head is `mastery`
+            // with `piece-badge-eligible` absorbed into it — and the very next
+            // `dismissCurrent()` would stamp the crown celebrated without ever
+            // rendering it. Dismissing first retires the badge step, then the
+            // resolve enqueues the crown alone.
             celebration.dismissCurrent();
+            // `badgesClaimed` is a render-time closure and `refetchAllBadges()`
+            // has not landed; both still say `false`. Force the value the chain
+            // just confirmed.
+            resolveMilestones(undefined, { badgeClaimed: true });
             return;
           }
           celebration.releaseAbsorbed(step);

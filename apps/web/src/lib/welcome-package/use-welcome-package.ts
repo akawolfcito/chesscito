@@ -6,12 +6,16 @@ import { DEFAULT_STATE, getWelcomePackageState, setWelcomePackageState } from ".
 import type { WelcomePackageState } from "./types";
 import { subscribeToWelcomePackageChanges } from "./welcome-package-events";
 
+/** No `unlock()`. The gift is unlocked by `unlockWelcomePackageGift()` on the
+ *  exercises screen — the single writer of that transition. Re-exposing it
+ *  here would re-open the two-writer trap the change-event bus was added to
+ *  close: two hooks holding independent snapshots, each spreading its stale
+ *  view back over storage. */
 export interface UseWelcomePackageReturn {
   isUnlocked: boolean;
   isClaimed: boolean;
   isPending: boolean;
   shouldAutoShow: boolean;
-  unlock: () => void;
   claim: () => void;
   dismiss: () => void;
   markShown: () => void;
@@ -24,7 +28,6 @@ const NOOP_RETURN: UseWelcomePackageReturn = {
   isClaimed: false,
   isPending: false,
   shouldAutoShow: false,
-  unlock: noop,
   claim: noop,
   dismiss: noop,
   markShown: noop,
@@ -71,14 +74,6 @@ export function useWelcomePackage(): UseWelcomePackageReturn {
     [],
   );
 
-  const unlock = useCallback(() => {
-    write((prev) =>
-      prev.unlocked
-        ? null // idempotent
-        : { ...prev, unlocked: true, unlockedAt: new Date().toISOString() },
-    );
-  }, [write]);
-
   const claim = useCallback(() => {
     write((prev) => ({
       ...prev,
@@ -107,7 +102,6 @@ export function useWelcomePackage(): UseWelcomePackageReturn {
     isClaimed: state.claimed,
     isPending: state.unlocked && !state.claimed,
     shouldAutoShow: state.unlocked && !state.claimed && state.autoShowCount < 2,
-    unlock,
     claim,
     dismiss,
     markShown,
