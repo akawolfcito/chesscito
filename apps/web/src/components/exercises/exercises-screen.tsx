@@ -1060,7 +1060,7 @@ export function ExercisesScreen({
   }, [labyrinthCatalog]);
 
   useMilestoneSeeding({
-    // ONE gate, shared with the hub (`legacy-hub-client.tsx`) — see
+    // ONE gate, shared with the hub (`learn-hub-client.tsx`) — see
     // `isMilestoneSeedReady` for why a disabled read is not "no badges" and
     // why an unsupported chain never becomes ready. `resolveMilestones`
     // carries the other half of that contract: it refuses to run while the

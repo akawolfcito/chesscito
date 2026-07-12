@@ -99,7 +99,11 @@ function deriveProShape(
   return { active: true, daysRemaining: days };
 }
 
-/** Client-side container that hydrates `<HubScaffold>` with real data:
+/** The LEARN hub, mounted at `/` whenever `CHESSCITO_MODE !== "play"`.
+ *  (Was `LegacyHubClient`: the name predated the LEARN/PLAY split and read
+ *  as a dead surface. PLAY's hub is `PlayHubClient`.)
+ *
+ *  Client-side container that hydrates `<HubScaffold>` with real data:
  *  - Trophies: count of claimed badges (Badges contract, batched read).
  *  - PRO chip: `useProStatus(address)` shape + days-remaining math.
  *  - Reward tiles: `deriveRewardTiles({ badgesClaimed, starsPerPiece })`.
@@ -109,7 +113,7 @@ function deriveProShape(
  *
  *  Pure presentational composition — no on-chain mutations belong here.
  *  Those stay on `<ExercisesScreen>` until the scaffold becomes the default. */
-export function LegacyHubClient({
+export function LearnHubClient({
   initialSheet,
 }: HubScaffoldClientProps) {
   const tHud = useTranslations("HUD_COPY");
