@@ -66,15 +66,29 @@ const BADGES = "0x2222222222222222222222222222222222222222" as const;
 const TX_HASH = "0x3333333333333333333333333333333333333333333333333333333333333333" as const;
 
 /** A connected wallet on the configured chain — the preconditions
- *  `handleClaimBadge` demands before it will even call `run()`. */
+ *  `handleClaimBadge` demands before it will even call `run()`.
+ *
+ *  `status` and an ANSWERED badge read are not decoration: the seeding gate
+ *  (`isMilestoneSeedReady`) is built from both. Mocking `useAccount` without
+ *  `status` left `accountStatus` undefined, so the gate could never be true and
+ *  this file passed only because `markMilestonesSeeded()` runs in `beforeEach`
+ *  — it never exercised the gate it sits behind. Six `false` results = a real
+ *  player with no badges claimed yet, which is exactly this scenario. */
 vi.mock("wagmi", async (importOriginal) => {
   const actual = await importOriginal<typeof import("wagmi")>();
   return {
     ...actual,
-    useAccount: () => ({ address: WALLET, isConnected: true }),
+    useAccount: () => ({
+      address: WALLET,
+      isConnected: true,
+      status: "connected" as const,
+    }),
     useChainId: () => CHAIN_ID,
     useWriteContract: () => ({ writeContractAsync: vi.fn(), isPending: false, reset: vi.fn() }),
-    useReadContracts: () => ({ data: undefined, refetch: vi.fn() }),
+    useReadContracts: () => ({
+      data: Array.from({ length: 6 }, () => ({ result: false, status: "success" as const })),
+      refetch: vi.fn(),
+    }),
   };
 });
 

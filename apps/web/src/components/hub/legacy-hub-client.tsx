@@ -41,7 +41,10 @@ import { useAccount } from "wagmi";
 import type { PieceId } from "@/lib/game/types";
 import { useLabyrinthCatalog } from "@/lib/content/catalog-context";
 import { SPECIAL_TRAINING_ROOK_STARS } from "@/lib/progression/milestones";
-import { useMilestoneSeeding } from "@/lib/progression/use-milestone-seeding";
+import {
+  isMilestoneSeedReady,
+  useMilestoneSeeding,
+} from "@/lib/progression/use-milestone-seeding";
 import { track } from "@/lib/telemetry";
 import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
@@ -202,6 +205,15 @@ export function LegacyHubClient({
    * Ready when the badge state is KNOWN: `disconnected` reads as "no badges",
    * exactly what a resolve would see; `connecting` / `reconnecting` waits, so
    * we never mark a profile migrated with `piece-badge-claimed` unseeded.
+   *
+   * An UNSUPPORTED chain never becomes ready — `getBadgesAddress` is null
+   * there, the batched read stays disabled and `badgesClaimed` stays empty, so
+   * this gate holds false for as long as the player stays on that chain. That
+   * is deliberate and it matches the exercises screen: an unknown badge state
+   * is NOT "no badges". The other half of the contract lives where `resolve()`
+   * does — `resolveMilestones` refuses to run while the profile is unseeded,
+   * so an unseeded player cannot be handed a retroactive parade in the
+   * meantime. The hub never resolves; it only seeds.
    */
   const { status: accountStatus } = useAccount();
   const labyrinthCatalog = useLabyrinthCatalog();
@@ -213,9 +225,13 @@ export function LegacyHubClient({
     return out;
   }, [labyrinthCatalog]);
   useMilestoneSeeding({
-    ready:
-      accountStatus === "disconnected" ||
-      (accountStatus === "connected" && Object.keys(badgesClaimed).length > 0),
+    // The SAME gate the exercises screen uses. `badgesClaimed` is empty until
+    // the batched on-chain read answers — and on an unsupported chain it never
+    // does, which is precisely when we must not seed.
+    ready: isMilestoneSeedReady({
+      accountStatus,
+      badgeStateKnown: Object.keys(badgesClaimed).length > 0,
+    }),
     badgeClaimedByPiece: badgesClaimed,
     labyrinthIdsByPiece,
     giftAvailable: CHESSCITO_LITE_MODE,

@@ -54,7 +54,10 @@ import {
 } from "@/components/exercises/exercises-save-flow-logic";
 import { UnlockOverlay } from "@/components/progression/unlock-overlay";
 import { useCelebrationQueue } from "@/lib/progression/use-celebration-queue";
-import { useMilestoneSeeding } from "@/lib/progression/use-milestone-seeding";
+import {
+  isMilestoneSeedReady,
+  useMilestoneSeeding,
+} from "@/lib/progression/use-milestone-seeding";
 import type { CelebrationStep } from "@/lib/progression/celebration-queue";
 import { addNetStars, getDailyStars } from "@/lib/progression/stars";
 import { WelcomePackageModal } from "@/components/welcome-package/welcome-package-modal";
@@ -72,6 +75,8 @@ import {
   dispatchShieldChange,
   subscribeToShieldChanges,
 } from "@/lib/shop/shield-events";
+import { readPieceStars } from "@/lib/game/exercise-progress";
+import { hasSeededMilestones } from "@/lib/progression/seed-milestones";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
 import { useExerciseCatalog, useLabyrinthCatalog } from "@/lib/content/catalog-context";
 import { useRotationSteering } from "@/hooks/use-rotation-steering";
@@ -1055,16 +1060,15 @@ export function ExercisesScreen({
   }, [labyrinthCatalog]);
 
   useMilestoneSeeding({
-    // Mirrors the hub's gate (`legacy-hub-client.tsx`). NOT `!isBadgesLoading`:
-    // the badge read is `enabled: Boolean(address && badgesAddress)`, and a
-    // DISABLED TanStack query reports `isLoading === false` — so during
-    // wagmi's reconnect (address still undefined) the screen would call itself
-    // ready, seed the profile with `badgeClaimed: false`, stamp it migrated,
-    // and then fire a retroactive MASTERY overlay on the veteran's next solve.
-    // A disabled read is not the same as "no badges"; only `disconnected` is.
-    ready:
-      accountStatus === "disconnected" ||
-      (accountStatus === "connected" && allBadgesData !== undefined),
+    // ONE gate, shared with the hub (`legacy-hub-client.tsx`) — see
+    // `isMilestoneSeedReady` for why a disabled read is not "no badges" and
+    // why an unsupported chain never becomes ready. `resolveMilestones`
+    // carries the other half of that contract: it refuses to run while the
+    // profile is unseeded.
+    ready: isMilestoneSeedReady({
+      accountStatus,
+      badgeStateKnown: allBadgesData !== undefined,
+    }),
     badgeClaimedByPiece: badgesClaimed,
     labyrinthIdsByPiece,
     giftAvailable: CHESSCITO_LITE_MODE,
@@ -1327,29 +1331,55 @@ export function ExercisesScreen({
    */
   function resolveMilestones(
     starsForPiece?: Record<string, number>,
-    /** Forces an input the React closure cannot possibly know yet. The only
+    /** Forces inputs the React closure cannot possibly know yet. The only
      *  caller is the badge-claim success path: `badgesClaimed` was captured at
      *  render time and `refetchAllBadges()` has not landed, so BOTH still read
      *  `false` for the piece the chain just minted. Without this, `mastery`
-     *  cannot be evaluated at the moment it is actually earned. */
-    overrides?: { badgeClaimed?: boolean },
+     *  cannot be evaluated at the moment it is actually earned.
+     *
+     *  `piece` travels WITH `badgeClaimed` — they are one fact about one
+     *  piece. The claim is scoped to `step.piece`, which is NOT necessarily
+     *  `selectedPiece`: a `piece-badge-eligible:rook` event persists PENDING
+     *  across a reload, and the player can come back on bishop and claim it
+     *  from the overlay. Forcing `badgeClaimed: true` onto whatever piece
+     *  happened to be selected would evaluate `mastery` (badge + labyrinths,
+     *  no star gate) for a piece whose badge was never minted — a false crown,
+     *  stamped celebrated forever. */
+    overrides?: { piece?: PieceKey; badgeClaimed?: boolean },
   ): CelebrationStep[] {
+    // No seed, no resolve. An unseeded profile is one whose on-chain badge
+    // state is still UNKNOWN (`useMilestoneSeeding` stays un-ready while a
+    // wallet is connected to an unsupported chain — `getBadgesAddress` is
+    // null there, so the read never runs and `allBadgesData` is `undefined`
+    // forever). Resolving in that window hands a veteran the full retroactive
+    // parade — first-reward, first-labyrinth, special-training,
+    // piece-badge-eligible — for history they lived through months ago. The
+    // seed is the ONLY thing that suppresses it, so nothing may fire before
+    // it lands. Milestones are not lost: the seed stamps them on the next
+    // mount with a known badge state, and anything genuinely new is derived
+    // from persisted progress on the next solve.
+    if (!hasSeededMilestones()) return [];
+
+    const piece = overrides?.piece ?? selectedPiece;
+
     // Read BEFORE `resolve` records it — afterwards it is always true.
     const hadGreatSessionBefore = hasEarnedMilestone("first-great-session");
 
     const steps = celebration.resolve({
-      piece: selectedPiece,
+      piece,
       progressByPiece: buildProgressByPiece(
-        selectedPiece,
-        starsForPiece ?? progress.stars,
+        piece,
+        // Fresh stars exist only for the piece under play. When the caller
+        // overrides the piece (the badge claim), its stars come off the disk.
+        starsForPiece ??
+          (piece === selectedPiece ? progress.stars : readPieceStars(piece)),
       ),
       dailyStars: getDailyStars(),
       sessionQuotaExhausted: isSessionOver(getDailySession()),
-      badgeClaimed:
-        overrides?.badgeClaimed ?? badgesClaimed[selectedPiece] === true,
+      badgeClaimed: overrides?.badgeClaimed ?? badgesClaimed[piece] === true,
       allLabyrinthsComplete: areAllLabyrinthsSolved(
-        selectedPiece,
-        labyrinthCatalog[selectedPiece].map((lab) => lab.id),
+        piece,
+        (labyrinthCatalog[piece] ?? []).map((lab) => lab.id),
       ),
       hadGreatSessionBefore,
       // The gift is a Lite-only product: `unlockWelcomePackageGift()` and
@@ -1793,7 +1823,14 @@ export function ExercisesScreen({
       // `celebratedAt` on the absorbed events first, `selectPending` would
       // then return nothing, and the release would silently clear the queue
       // to []: a Great Focus Session lost along with the cancelled tx.
-      void handleClaimBadge(step.piece as PieceKey | undefined)
+      // The piece the CHAIN is about to mint — not the one on screen. A
+      // pending `piece-badge-eligible:rook` survives a reload, and the player
+      // can switch to bishop before tapping CLAIM. `handleClaimBadge` already
+      // resolves the fallback the same way; naming it here keeps the claim and
+      // the re-resolve below reading from ONE scope.
+      const claimedPiece = (step.piece as PieceKey | undefined) ?? selectedPiece;
+
+      void handleClaimBadge(claimedPiece)
         .then((claimed) => {
           if (claimed) {
             // A solve is otherwise the ONLY trigger of `resolve()`, but
@@ -1812,8 +1849,14 @@ export function ExercisesScreen({
             celebration.dismissCurrent();
             // `badgesClaimed` is a render-time closure and `refetchAllBadges()`
             // has not landed; both still say `false`. Force the value the chain
-            // just confirmed.
-            resolveMilestones(undefined, { badgeClaimed: true });
+            // just confirmed — AND the piece it confirmed it FOR. The forced
+            // field and the rest of the input must describe the same piece, or
+            // `mastery` gets evaluated for `selectedPiece` with someone else's
+            // badge.
+            resolveMilestones(undefined, {
+              piece: claimedPiece,
+              badgeClaimed: true,
+            });
             return;
           }
           celebration.releaseAbsorbed(step);

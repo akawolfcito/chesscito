@@ -15,6 +15,7 @@ import {
   getMilestoneStore,
   markOpened,
   recordEarned,
+  selectPending,
 } from "@/lib/progression/milestone-storage";
 import { milestoneKey } from "@/lib/progression/types";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
@@ -78,6 +79,43 @@ describe("HubArenaTile NEW dot", () => {
 
     const event = getMilestoneStore().events[SPECIAL_TRAINING_KEY];
     expect(event?.openedAt).toBeDefined();
+  });
+
+  /**
+   * The tap IS the recognition. `recordEarned` writes `earnedAt` and NO
+   * `celebratedAt`, so without the `markCelebrated` in the same gesture the
+   * event stays PENDING and the celebration queue pops "Special Training
+   * Unlocked" on the player's next solve — for content they just opened.
+   */
+  it("stamps the milestone celebrated on tap, so it can never be left pending", () => {
+    const { getByRole } = render(<HubArenaTile setup={setup} unlocked />);
+
+    fireEvent.click(getByRole("button"));
+
+    const store = getMilestoneStore();
+    expect(store.events[SPECIAL_TRAINING_KEY]?.celebratedAt).toBeDefined();
+    // The queue is built from `selectPending` — this is the assertion that
+    // actually says "no overlay will fire for this".
+    expect(selectPending(store).map((event) => event.id)).not.toContain(
+      "special-training",
+    );
+  });
+
+  it("leaves an already-celebrated milestone alone — the tap is idempotent", () => {
+    // A player who saw the overlay first and taps the tile afterwards: the
+    // recognition already happened and must not be re-dated.
+    recordEarned([{ id: "special-training" }]);
+    const { getByRole, unmount } = render(<HubArenaTile setup={setup} unlocked />);
+    fireEvent.click(getByRole("button"));
+    const first = getMilestoneStore().events[SPECIAL_TRAINING_KEY]?.celebratedAt;
+    unmount();
+
+    render(<HubArenaTile setup={setup} unlocked />);
+    fireEvent.click(screen.getByRole("button"));
+
+    expect(getMilestoneStore().events[SPECIAL_TRAINING_KEY]?.celebratedAt).toBe(
+      first,
+    );
   });
 
   it("stays opened after reload once tapped from an empty store", () => {

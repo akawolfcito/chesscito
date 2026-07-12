@@ -61,8 +61,13 @@ export function hasEarnedMilestone(id: MilestoneId, piece?: PieceId): boolean {
  * (`lib/hub/content-loop.ts`). Nothing in `lib/progression/**` writes that
  * flag — `migration.ts` only READS `welcomeClaimed`. Without this bridge the
  * milestone would render a celebration for a gift that is unreachable
- * forever. Idempotent, Lite-only (the gift does not exist in Full mode,
- * matching `useWelcomePackage().unlock()`).
+ * forever.
+ *
+ * The SINGLE writer of `unlocked` — `useWelcomePackage()` exposes no `unlock()`
+ * (it was dead and is gone); the hook only reads the flag this function sets.
+ * Idempotent: an already-unlocked gift keeps its original `unlockedAt`, so a
+ * re-entry can never re-date the unlock. Lite-only — the gift does not exist in
+ * Full mode, and `useWelcomePackage()` is a no-op there too.
  */
 export function unlockWelcomePackageGift(): void {
   if (!CHESSCITO_LITE_MODE) return;
