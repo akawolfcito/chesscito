@@ -12,6 +12,7 @@ import {
   pieceProgressStorageKey,
 } from "@/lib/lite-progress-storage";
 import type { Exercise } from "@/lib/game/types";
+import { markMilestonesSeeded } from "@/lib/progression/seed-milestones";
 
 /**
  * NEW-1 — the badge path with a claim that actually CONFIRMS.
@@ -202,6 +203,10 @@ function seedNearBadge() {
 beforeEach(() => {
   localStorage.clear();
   localStorage.setItem("chesscito:onboarded", "true");
+  // Already on the milestone machine — the one-time migration (Task 15) has
+  // run for this profile. Without the marker, mounting the screen would seed
+  // this player's 12★ as history and suppress the badge moment under test.
+  markMilestonesSeeded();
   claim.run.mockClear();
 });
 

@@ -13,6 +13,7 @@ import {
   pieceProgressStorageKey,
 } from "@/lib/lite-progress-storage";
 import { getDailyStars } from "@/lib/progression/stars";
+import { markMilestonesSeeded } from "@/lib/progression/seed-milestones";
 import { getWelcomePackageState } from "@/lib/welcome-package/storage";
 import type { Exercise } from "@/lib/game/types";
 
@@ -202,6 +203,12 @@ beforeEach(() => {
   localStorage.clear();
   // Skip the first-visit mission briefing so the board is the only surface.
   localStorage.setItem("chesscito:onboarded", "true");
+  // Every player here is ALREADY on the milestone machine: the one-time
+  // migration (Task 15) has run for their profile. Without this marker the
+  // screen would seed them as veterans on mount — correct for a returning
+  // player, but it would stamp the very gates these tests exist to watch
+  // cross, and every celebration below would be (correctly) suppressed.
+  markMilestonesSeeded();
   pushMock.mockClear();
 });
 

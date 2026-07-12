@@ -37,6 +37,10 @@ import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { daysRemaining } from "@/lib/pro/days-remaining";
 import { applyDevUnlock } from "@/lib/daily/session-quota";
 import { useShieldSync } from "@/lib/shop/use-shield-sync";
+import { useAccount } from "wagmi";
+import type { PieceId } from "@/lib/game/types";
+import { useLabyrinthCatalog } from "@/lib/content/catalog-context";
+import { useMilestoneSeeding } from "@/lib/progression/use-milestone-seeding";
 import { track } from "@/lib/telemetry";
 import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
@@ -184,6 +188,37 @@ export function LegacyHubClient({
   // credited-cache via /api/shields/me. Mounted at the scaffold root
   // so the chip sees server-confirmed state on every connect.
   useShieldSync();
+
+  /**
+   * The one-time milestone migration (Task 15). Mounted here AND on the
+   * exercises screen — never here alone. `resolve()` lives on the exercises
+   * screen and a player can deep-link straight to it, so the hub can never be
+   * the only seeding surface (that is the single-writer shape that produced the
+   * shield credited-cache bug, PR #213). `seedMilestonesOnce` is guarded by a
+   * persistent marker, so whichever surface mounts first pays for it and the
+   * other is a no-op.
+   *
+   * Ready when the badge state is KNOWN: `disconnected` reads as "no badges",
+   * exactly what a resolve would see; `connecting` / `reconnecting` waits, so
+   * we never mark a profile migrated with `piece-badge-claimed` unseeded.
+   */
+  const { status: accountStatus } = useAccount();
+  const labyrinthCatalog = useLabyrinthCatalog();
+  const labyrinthIdsByPiece = useMemo(() => {
+    const out: Partial<Record<PieceId, string[]>> = {};
+    for (const [piece, labs] of Object.entries(labyrinthCatalog)) {
+      out[piece as PieceId] = labs.map((lab) => lab.id);
+    }
+    return out;
+  }, [labyrinthCatalog]);
+  useMilestoneSeeding({
+    ready:
+      accountStatus === "disconnected" ||
+      (accountStatus === "connected" && Object.keys(badgesClaimed).length > 0),
+    badgeClaimedByPiece: badgesClaimed,
+    labyrinthIdsByPiece,
+    giftAvailable: CHESSCITO_LITE_MODE,
+  });
 
   const pro = useMemo(() => deriveProShape(proStatus, Date.now()), [proStatus]);
 

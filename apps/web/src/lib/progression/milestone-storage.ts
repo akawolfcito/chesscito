@@ -150,7 +150,10 @@ export function getMilestoneStore(): MilestoneStore {
   }
 }
 
-function persist(store: MilestoneStore): void {
+/** The single write path for a WHOLE store. Exported for the one-time
+ *  migration, which rewrites many events at once and must not reach into
+ *  localStorage on its own. */
+export function persistMilestoneStore(store: MilestoneStore): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(milestoneStorageKey(), JSON.stringify(store));
@@ -158,6 +161,8 @@ function persist(store: MilestoneStore): void {
     // Quota or privacy mode — the caller still gets the correct state back.
   }
 }
+
+const persist = persistMilestoneStore;
 
 /** Persists BEFORE anything is rendered. If the app dies mid-overlay the
  *  event is already on disk, so it neither replays nor gets lost. */

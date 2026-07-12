@@ -54,6 +54,7 @@ import {
 } from "@/components/exercises/exercises-save-flow-logic";
 import { UnlockOverlay } from "@/components/progression/unlock-overlay";
 import { useCelebrationQueue } from "@/lib/progression/use-celebration-queue";
+import { useMilestoneSeeding } from "@/lib/progression/use-milestone-seeding";
 import type { CelebrationStep } from "@/lib/progression/celebration-queue";
 import { addNetStars, getDailyStars } from "@/lib/progression/stars";
 import { WelcomePackageModal } from "@/components/welcome-package/welcome-package-modal";
@@ -1002,7 +1003,11 @@ export function ExercisesScreen({
 
   // Read hasClaimedBadge for all 6 pieces (batched)
   const BADGE_LEVEL_IDS = [1n, 2n, 3n, 4n, 5n, 6n] as const;
-  const { data: allBadgesData, refetch: refetchAllBadges } = useReadContracts({
+  const {
+    data: allBadgesData,
+    isLoading: isBadgesLoading,
+    refetch: refetchAllBadges,
+  } = useReadContracts({
     contracts: BADGE_LEVEL_IDS.map((lid) => ({
       address: badgesAddress ?? undefined,
       abi: badgesAbi,
@@ -1025,6 +1030,37 @@ export function ExercisesScreen({
     king: allBadgesData?.[5]?.result as boolean | undefined,
   };
   const hasClaimedBadge = badgesClaimed[selectedPiece];
+
+  /**
+   * The one-time milestone migration (Task 15). THIS is the load-bearing mount:
+   * `resolve()` lives on this screen, and a player can deep-link straight to
+   * `/exercises` without ever passing through the hub — so seeding on the hub
+   * alone would hand that player a parade of retroactive overlays on their very
+   * first solve. It runs in a mount effect, which React flushes long before any
+   * click can reach `resolveMilestones`, so the seed is COMMITTED TO DISK
+   * before the queue is ever built. `seedMilestonesOnce` is guarded by a
+   * persistent marker, so the hub's mount and this one are the same no-op after
+   * the first — neither is the single writer of anything.
+   *
+   * Gated on the badge read: seeding a half-known profile would mark it
+   * migrated with `piece-badge-claimed` / `mastery` unseeded, and a badge minted
+   * months ago would still pop an overlay. A disconnected wallet is ready —
+   * `resolve()` would read the same `badgeClaimed: false`.
+   */
+  const labyrinthIdsByPiece = useMemo(() => {
+    const out: Partial<Record<PieceKey, string[]>> = {};
+    for (const [piece, labs] of Object.entries(labyrinthCatalog)) {
+      out[piece as PieceKey] = labs.map((lab) => lab.id);
+    }
+    return out;
+  }, [labyrinthCatalog]);
+
+  useMilestoneSeeding({
+    ready: !isBadgesLoading,
+    badgeClaimedByPiece: badgesClaimed,
+    labyrinthIdsByPiece,
+    giftAvailable: CHESSCITO_LITE_MODE,
+  });
 
   const { isLoading: isShopConfirming } = useWaitForTransactionReceipt({
     chainId,
