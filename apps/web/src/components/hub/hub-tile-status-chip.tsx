@@ -3,10 +3,12 @@
  * right-rail tiles (founder micro-block 2026-06-11).
  *
  * STATIC by contract: rendered once from mount-time state, no timers,
- * no live countdown, no costly animation. Two forms:
- *  - dot   → tiny green sphere, "this is ready for you".
- *  - label → one short word/phrase pill ("Next 6h", "Tomorrow",
- *            "PRO", "Ask").
+ * no live countdown, no costly animation. Three forms:
+ *  - dot ("ready") → tiny green sphere, "this is ready for you".
+ *  - dot ("new")   → same visual token, reused for "you have not
+ *                    opened this since it unlocked" (milestone-driven).
+ *  - label         → one short word/phrase pill ("Next 6h", "Tomorrow",
+ *                    "PRO", "Ask").
  */
 
 type Props =

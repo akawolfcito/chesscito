@@ -11,8 +11,15 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { renderWithIntl as render, screen, fireEvent } from "@/test-utils/render-with-intl";
 
 import { HubArenaTile } from "../hub-arena-tile";
-import { markOpened, recordEarned } from "@/lib/progression/milestone-storage";
+import {
+  getMilestoneStore,
+  markOpened,
+  recordEarned,
+} from "@/lib/progression/milestone-storage";
+import { milestoneKey } from "@/lib/progression/types";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
+
+const SPECIAL_TRAINING_KEY = milestoneKey("special-training");
 
 const setup = MINI_ARENA_SETUPS[0];
 
@@ -40,6 +47,45 @@ describe("HubArenaTile NEW dot", () => {
     expect(screen.getByTestId("hub-tile-new")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button"));
+
+    expect(screen.queryByTestId("hub-tile-new")).not.toBeInTheDocument();
+  });
+
+  it("does not flash a stale NEW dot for a veteran whose migration seed lands after mount", () => {
+    // Mount BEFORE the store has anything — matches the real tile, which
+    // sits unconditionally in HubScaffold while `unlocked` is still false.
+    const { rerender } = render(<HubArenaTile setup={setup} unlocked={false} />);
+
+    // Simulate the migration effect (seedExistingPlayer, wired in a later
+    // task) landing AFTER mount and seeding "special-training" WITH
+    // `openedAt` already set — exactly what a veteran player, long past
+    // 12 rook stars, gets so they never see a retroactive NEW dot.
+    recordEarned([{ id: "special-training" }]);
+    markOpened("special-training");
+
+    // Only now does `unlocked` flip true (rook stars arrive via a
+    // post-hydration effect too) — the render where a mount-time snapshot
+    // would already be frozen stale.
+    rerender(<HubArenaTile setup={setup} unlocked />);
+
+    expect(screen.queryByTestId("hub-tile-new")).not.toBeInTheDocument();
+  });
+
+  it("persists openedAt to the store on tap, even when the milestone was never recorded", () => {
+    const { getByRole } = render(<HubArenaTile setup={setup} unlocked />);
+
+    fireEvent.click(getByRole("button"));
+
+    const event = getMilestoneStore().events[SPECIAL_TRAINING_KEY];
+    expect(event?.openedAt).toBeDefined();
+  });
+
+  it("stays opened after reload once tapped from an empty store", () => {
+    const { unmount, getByRole } = render(<HubArenaTile setup={setup} unlocked />);
+    fireEvent.click(getByRole("button"));
+    unmount();
+
+    render(<HubArenaTile setup={setup} unlocked />);
 
     expect(screen.queryByTestId("hub-tile-new")).not.toBeInTheDocument();
   });
