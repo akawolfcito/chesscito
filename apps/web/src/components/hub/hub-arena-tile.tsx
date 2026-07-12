@@ -6,7 +6,11 @@ import { useTranslations } from "next-intl";
 
 import { HubActionTile } from "@/components/hub/hub-action-tile";
 import { HubTileStatusChip } from "@/components/hub/hub-tile-status-chip";
+import { getMilestoneStore, markOpened } from "@/lib/progression/milestone-storage";
+import { milestoneKey } from "@/lib/progression/types";
 import type { MiniArenaSetup } from "@/lib/game/mini-arena";
+
+const SPECIAL_TRAINING_KEY = milestoneKey("special-training");
 
 // The sheet subtree drags chess.js + js-chess-engine (~29KB gz); loading
 // it on first tap keeps both engines out of /hub's first-load bundle.
@@ -34,6 +38,17 @@ export function HubArenaTile({ setup, unlocked }: Props) {
   // Sheet mounts on first tap (dynamic chunk fetch) and STAYS mounted so
   // Radix exit animations work on subsequent closes.
   const [everOpened, setEverOpened] = useState(false);
+  // NEW dot mirrors the milestone machine's `openedAt`: unset means the
+  // player has never opened Special Training since it unlocked. Lazy
+  // initializer reads localStorage once at mount — safe here because
+  // this component only ever mounts client-side, after `unlocked` (fed
+  // by rook stars, which start at 0/false and flip via a post-hydration
+  // effect in use-hub-data.ts) has already gone true; it is never part
+  // of the SSR/hydration pass. `getMilestoneStore()` itself no-ops when
+  // `window` is undefined, so this is also safe if that ever changes.
+  const [isNew, setIsNew] = useState(
+    () => getMilestoneStore().events[SPECIAL_TRAINING_KEY]?.openedAt === undefined,
+  );
 
   if (!unlocked) return null;
 
@@ -45,12 +60,16 @@ export function HubArenaTile({ setup, unlocked }: Props) {
           label={t("mateLabel")}
           ariaLabel={t("arenaUnlockedAriaFormat", { name: setup.name })}
           onClick={() => {
+            markOpened("special-training");
+            setIsNew(false);
             setEverOpened(true);
             setOpen(true);
           }}
-          // Mate has no real cooldown yet — static "ready" dot only,
-          // no invented logic (founder micro-block 2026-06-11).
-          badge={<HubTileStatusChip kind="ready" />}
+          // Replaces the old permanently-lit "ready" dot (founder
+          // micro-block 2026-06-11 admitted it was invented logic — no
+          // real cooldown behind it). The dot now means "you have not
+          // opened this since it unlocked" and clears on first tap.
+          badge={isNew ? <HubTileStatusChip kind="new" /> : null}
         />
       </div>
       {everOpened ? <MiniArenaSheet open={open} onOpenChange={setOpen} setup={setup} /> : null}

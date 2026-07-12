@@ -11,6 +11,7 @@
 
 type Props =
   | { kind: "ready" }
+  | { kind: "new" }
   | { kind: "label"; text: string };
 
 export function HubTileStatusChip(props: Props) {
@@ -20,6 +21,21 @@ export function HubTileStatusChip(props: Props) {
         aria-hidden="true"
         data-testid="hub-tile-status"
         data-status="ready"
+        className="hub-tile-status-dot"
+      />
+    );
+  }
+  if (props.kind === "new") {
+    // Reuses the SAME dot token as `ready` — this is not a new visual
+    // family, just a different meaning gated by milestone `openedAt`
+    // instead of a static "this exists" flag. Own testid because it
+    // answers a different question than `hub-tile-status` ("has this
+    // never been opened") and callers need to assert it independently.
+    return (
+      <span
+        aria-hidden="true"
+        data-testid="hub-tile-new"
+        data-status="new"
         className="hub-tile-status-dot"
       />
     );
