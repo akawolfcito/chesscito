@@ -15,9 +15,12 @@ import {
 } from "@/lib/hub/hero-cta";
 import {
   deriveContentLoopAction,
-  LITE_PRIMARY_PIECE,
+  selectNextAvailablePiece,
+  selectPrimaryPiece,
   type ContentLoopAction,
+  type PathsByPiece,
 } from "@/lib/hub/content-loop";
+import { PLAYABLE_PIECES } from "@/lib/game/exercises";
 import { REWARD_TILE_ORDER } from "@/lib/hub/derive-reward-tiles";
 import { buildTrainingPath } from "@/lib/training/path";
 import {
@@ -294,17 +297,29 @@ export function useHubData(): HubData {
     if (!CHESSCITO_LITE_MODE) return;
     if (dailyProgress === null) return;
 
-    const piece = LITE_PRIMARY_PIECE;
-    const stars = readPieceStars(piece);
-    const progress = { piece, currentId: null as string | null, stars };
-    const labyrinthBests = getLabyrinthBestsMap(piece);
-    const primaryPath = buildTrainingPath({
-      piece,
-      progress,
-      labyrinthBests,
-      badgeClaimed: false,
-      catalog: { exercises: EXERCISES, labyrinths: LABYRINTHS },
-    });
+    // Every playable piece, not just the rook. The loop used to evaluate
+    // `LITE_PRIMARY_PIECE` forever and pass `nextAvailablePiece: null` — a
+    // Lite-v1 hardcode from when the rook was the only piece. It made the
+    // `next-piece` variant unreachable, so a player who had finished the rook
+    // was told to keep training it, and Start Focus dropped them back onto its
+    // last exercise on every entry.
+    const paths: PathsByPiece = {};
+    for (const candidate of PLAYABLE_PIECES) {
+      paths[candidate] = buildTrainingPath({
+        piece: candidate,
+        progress: {
+          piece: candidate,
+          currentId: null as string | null,
+          stars: readPieceStars(candidate),
+        },
+        labyrinthBests: getLabyrinthBestsMap(candidate),
+        badgeClaimed: false,
+        catalog: { exercises: EXERCISES, labyrinths: LABYRINTHS },
+      });
+    }
+
+    const piece = selectPrimaryPiece(PLAYABLE_PIECES, paths);
+    const primaryPath = paths[piece] ?? [];
 
     const action = deriveContentLoopAction({
       daily: dailyProgress,
@@ -315,7 +330,7 @@ export function useHubData(): HubData {
       },
       primaryPiece: piece,
       primaryPath,
-      nextAvailablePiece: null,
+      nextAvailablePiece: selectNextAvailablePiece(PLAYABLE_PIECES, paths, piece),
       sessionQuota: sessionQuotaState,
     });
 
