@@ -10,6 +10,8 @@ export type GatherArgs = {
   badgeClaimed: boolean;
   allLabyrinthsComplete: boolean;
   hadGreatSessionBefore: boolean;
+  /** Lite-only gift. Omitted = available. See `MilestoneInput.giftAvailable`. */
+  giftAvailable?: boolean;
 };
 
 function sumStars(progress: PieceProgress | undefined): number {
@@ -45,5 +47,6 @@ export function gatherMilestoneInput(args: GatherArgs): MilestoneInput {
     badgeClaimed: args.badgeClaimed,
     allLabyrinthsComplete: args.allLabyrinthsComplete,
     hadGreatSessionBefore: args.hadGreatSessionBefore,
+    giftAvailable: args.giftAvailable,
   };
 }

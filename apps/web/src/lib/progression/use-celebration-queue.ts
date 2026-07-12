@@ -16,7 +16,11 @@ import type { MilestoneId } from "./types";
 
 export type UseCelebrationQueueReturn = {
   current: CelebrationStep | null;
-  resolve: (args: GatherArgs) => void;
+  /** Returns the queue it just built. `current` is state and only updates on
+   *  the next render, so a caller that must know IN THE SAME TICK whether the
+   *  machine took ownership of a moment (e.g. the badge) reads this instead of
+   *  a stale `current`. */
+  resolve: (args: GatherArgs) => CelebrationStep[];
   dismissCurrent: () => void;
   releaseAbsorbed: (step: CelebrationStep) => void;
   openContent: (id: MilestoneId, piece?: PieceId) => void;
@@ -35,11 +39,14 @@ export function useCelebrationQueue(): UseCelebrationQueueReturn {
   /** Evaluate → PERSIST → build → expose. Persistence precedes rendering:
    *  an overlay is a consequence of having recorded the event, never the
    *  cause of it. */
-  const resolve = useCallback((args: GatherArgs) => {
+  const resolve = useCallback((args: GatherArgs): CelebrationStep[] => {
     const input = gatherMilestoneInput(args);
     const earned = deriveEarnedMilestones(input);
     const store = recordEarned(earned);
-    setQueue(buildCelebrationQueue(selectPending(store)));
+    const next = buildCelebrationQueue(selectPending(store));
+    queueRef.current = next;
+    setQueue(next);
+    return next;
   }, []);
 
   const dismissCurrent = useCallback(() => {

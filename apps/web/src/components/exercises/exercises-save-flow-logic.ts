@@ -76,6 +76,24 @@ export function unlockWelcomePackageGift(): void {
 }
 
 /**
+ * Marks the Welcome Package gift as claimed. Same write as
+ * `useWelcomePackage().claim()`, done through storage so the exercises screen
+ * does not mount a SECOND stateful `useWelcomePackage()` in a tree where
+ * `<DailyTacticSlot>` already owns one (the duplicate-stateful-hook desync
+ * trap). Lite-only, matching the hook.
+ */
+export function claimWelcomePackageGift(): void {
+  if (!CHESSCITO_LITE_MODE) return;
+  const prev = getWelcomePackageState();
+  if (prev.claimed) return;
+  setWelcomePackageState({
+    ...prev,
+    claimed: true,
+    claimedAt: new Date().toISOString(),
+  });
+}
+
+/**
  * True when the post-3-stars "Connect to save" prompt should fire.
  * Suppressed in Lite: score-save is local-only and needs no wallet gate.
  */

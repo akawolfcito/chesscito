@@ -44,6 +44,7 @@ import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
 import { ContextualActionSlot } from "@/components/exercises/contextual-action-slot";
 import {
   buildProgressByPiece,
+  claimWelcomePackageGift,
   hasEarnedMilestone,
   shouldFireStarsConnectPrompt,
   shouldFireLocalSavedToast,
@@ -53,7 +54,10 @@ import {
 } from "@/components/exercises/exercises-save-flow-logic";
 import { UnlockOverlay } from "@/components/progression/unlock-overlay";
 import { useCelebrationQueue } from "@/lib/progression/use-celebration-queue";
+import type { CelebrationStep } from "@/lib/progression/celebration-queue";
 import { addNetStars, getDailyStars } from "@/lib/progression/stars";
+import { WelcomePackageModal } from "@/components/welcome-package/welcome-package-modal";
+import { useLiteWelcomeGiftClaim } from "@/lib/welcome-package/use-lite-welcome-gift-claim";
 import { PersistentDock } from "@/components/exercises/persistent-dock";
 import { TrophiesSheet } from "@/components/exercises/trophies-sheet";
 import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
@@ -675,6 +679,14 @@ export function ExercisesScreen({
    *  the celebration, not the paywall. */
   const celebration = useCelebrationQueue();
 
+  /** The Welcome Package GIFT — the thing `first-reward` actually unlocks.
+   *  NOT `useWelcomePackClaim` (the server shield Welcome Pack): a different
+   *  product, a different endpoint. The gift is claimed exactly the way
+   *  `<DailyTacticSlot>` claims it: `<WelcomePackageModal>` driven by
+   *  `useLiteWelcomeGiftClaim`, writing `claimed` on success. */
+  const [welcomeGiftOpen, setWelcomeGiftOpen] = useState(false);
+  const welcomeGiftClaim = useLiteWelcomeGiftClaim();
+
   // Phase 2b-2: read the active pools from the catalog context (baseline
   // EXERCISES when no provider is mounted → byte-identical flag-off), so
   // this screen's pool reads agree with the hook's. Phase 2c mounts the
@@ -1264,12 +1276,18 @@ export function ExercisesScreen({
    * localStorage write happens inside a `setProgress` updater and has not
    * landed yet when this runs. Omitted by the labyrinth path, which changes
    * no exercise stars (labyrinth stars feed the daily ledger only).
+   *
+   * Returns the queue it just built, so the caller can tell IN THE SAME TICK
+   * which moments the machine now owns (`celebration.current` is state and is
+   * still the pre-resolve value inside this closure).
    */
-  function resolveMilestones(starsForPiece?: Record<string, number>) {
+  function resolveMilestones(
+    starsForPiece?: Record<string, number>,
+  ): CelebrationStep[] {
     // Read BEFORE `resolve` records it — afterwards it is always true.
     const hadGreatSessionBefore = hasEarnedMilestone("first-great-session");
 
-    celebration.resolve({
+    const steps = celebration.resolve({
       piece: selectedPiece,
       progressByPiece: buildProgressByPiece(
         selectedPiece,
@@ -1283,11 +1301,19 @@ export function ExercisesScreen({
         labyrinthCatalog[selectedPiece].map((lab) => lab.id),
       ),
       hadGreatSessionBefore,
+      // The gift is a Lite-only product: `unlockWelcomePackageGift()` and
+      // `useWelcomePackage()` are both no-ops in Full mode. Firing
+      // `first-reward` there would celebrate a gift that cannot exist and
+      // hand the player a CTA that opens an empty modal. Gate the MILESTONE,
+      // not just its side effect.
+      giftAvailable: CHESSCITO_LITE_MODE,
     });
 
     // The gift has no other writer. `resolve` already persisted the event, so
     // reading it back here is a read of committed state, not a guess.
     if (hasEarnedMilestone("first-reward")) unlockWelcomePackageGift();
+
+    return steps;
   }
 
   /** Always-fresh mirror so `handleLabyrinthMove` (a useCallback with a
@@ -1349,6 +1375,7 @@ export function ExercisesScreen({
       // best contributes nothing — and only then evaluate the milestones, so
       // the machine sees today's real numbers. A frozen replay persists
       // nothing, so it credits nothing.
+      let badgeMomentOwnedByQueue = false;
       {
         const earnedStars = computeStars(movesCount, currentExercise.optimalMoves);
         const previousBest = progress.stars[currentExercise.id] ?? 0;
@@ -1356,7 +1383,18 @@ export function ExercisesScreen({
           ? progress.stars
           : withBestStars(progress.stars, currentExercise.id, earnedStars);
         if (!scoringFrozen) addNetStars(previousBest, earnedStars);
-        resolveMilestones(starsAfterSolve);
+        const steps = resolveMilestones(starsAfterSolve);
+        // The badge moment has exactly ONE owner. When this solve made the
+        // machine emit `piece-badge-eligible` (as its own step, or absorbed
+        // into MASTERY), `<UnlockOverlay>` owns it — it carries the claim CTA
+        // the legacy `<BadgeEarnedPrompt>` never had. Priming the legacy
+        // prompt anyway would leave a second celebration ready to pop the
+        // instant the queue drains: the back-to-back this design forbids.
+        badgeMomentOwnedByQueue = steps.some(
+          (step) =>
+            step.id === "piece-badge-eligible" ||
+            step.absorbed.includes("piece-badge-eligible"),
+        );
       }
 
       // Phase 2 nudge: first ★★★ while disconnected → "Connect to save".
@@ -1391,7 +1429,10 @@ export function ExercisesScreen({
         const newTotal = totalStars + starDelta;
 
         if (newTotal >= BADGE_THRESHOLD && !hasClaimedBadge) {
-          setShowBadgeEarned(true);
+          // Only the loser of the ownership contest primes its prompt. The
+          // timers below run either way, so the piece-complete hand-off keeps
+          // its existing 1.5s + 13.5s shape.
+          if (!badgeMomentOwnedByQueue) setShowBadgeEarned(true);
           // Spec: local-save toast fires at t=1500ms (same window as normal path),
           // AFTER the WELL DONE flash. Safety-net schedules 13.5s later so the
           // total auto-dismiss delay from exercise completion stays ~15s.
@@ -1699,15 +1740,20 @@ export function ExercisesScreen({
       // `celebratedAt` on the absorbed events first, `selectPending` would
       // then return nothing, and the release would silently clear the queue
       // to []: a Great Focus Session lost along with the cancelled tx.
-      void handleClaimBadge(step.piece as PieceKey | undefined).then(
-        (claimed) => {
+      void handleClaimBadge(step.piece as PieceKey | undefined)
+        .then((claimed) => {
           if (claimed) {
             celebration.dismissCurrent();
             return;
           }
           celebration.releaseAbsorbed(step);
-        },
-      );
+        })
+        // `run()` never throws, but `handleClaimBadge` can still reject
+        // outside it (a throwing `applyBadgeClaimSuccess`, a failing refetch).
+        // An unhandled rejection would strand `celebration.current` non-null
+        // FOREVER — freezing the queue and, because the daily-limit banner is
+        // gated on `current === null`, permanently hiding the limit too.
+        .catch(() => celebration.releaseAbsorbed(step));
       return;
     }
 
@@ -1715,9 +1761,13 @@ export function ExercisesScreen({
     celebration.dismissCurrent();
 
     if (step.id === "first-reward") {
-      // Straight into the claim the gift overlay just promised.
-      if (welcomePack.state === "connect") welcomePack.onConnect();
-      else void welcomePack.onClaim();
+      // The GIFT the player just won — `welcomePackage.unlocked`, claimed
+      // through `<WelcomePackageModal>`. NOT `welcomePack.onClaim()`: that is
+      // `useWelcomePackClaim`, the server SHIELD Welcome Pack — a different
+      // product with a `personal_sign` → `/api/welcome-pack/claim` round-trip,
+      // never gated on this unlock. The overlay promised the gift; the primary
+      // must open the gift.
+      setWelcomeGiftOpen(true);
       return;
     }
 
@@ -2775,7 +2825,21 @@ export function ExercisesScreen({
           />
         ) : null}
 
-        {showPieceComplete && !showBadgeEarned ? (
+        {/* ── The one-dialog rule ──────────────────────────────────────────
+         *  Every popup below is suppressed while the milestone machine has a
+         *  recognition pending. The machine owns the celebration moment; a
+         *  legacy popup rendering alongside `<UnlockOverlay>` would stack two
+         *  `role="dialog"` shells (both are `VictoryPopupShell`, both
+         *  `z-[70]`) and drop the intensity right after the climax.
+         *
+         *  These are RENDER gates, not state gates: the state survives, so
+         *  each popup resumes the moment the queue drains — which is the
+         *  intended flow for the piece-complete menu, the labyrinth
+         *  score card and the tx result overlay (they are continuations, not
+         *  celebrations). The one popup that must NEVER resurface is the
+         *  legacy badge prompt; it is never primed at all when the queue owns
+         *  the badge moment (see `badgeMomentOwnedByQueue` in `handleMove`). */}
+        {showPieceComplete && !showBadgeEarned && celebration.current === null ? (
           <PieceCompletePrompt
             pieceType={selectedPiece}
             nextPiece={nextPiece ?? null}
@@ -2821,7 +2885,7 @@ export function ExercisesScreen({
           />
         ) : null}
 
-        {labyrinthCompleted ? (
+        {labyrinthCompleted && celebration.current === null ? (
           <LabyrinthCompleteOverlay
             moves={labyrinthCompleted.moves}
             optimalMoves={labyrinthCompleted.optimal}
@@ -2859,7 +2923,27 @@ export function ExercisesScreen({
           />
         ) : null}
 
-        {showBadgeEarned ? (
+        {/* The destination of `first-reward`'s primary. Same modal, same claim
+         *  hook, same `claimed` write `<DailyTacticSlot>` uses — the gift the
+         *  overlay actually promised. */}
+        {welcomeGiftOpen && celebration.current === null ? (
+          <WelcomePackageModal
+            phase={welcomeGiftClaim.claimPhase}
+            onClaim={() => welcomeGiftClaim.handleClaim(claimWelcomePackageGift)}
+            onDismiss={() => {
+              if (welcomeGiftClaim.claimPhase === "signing") return;
+              welcomeGiftClaim.handleSuccess();
+              setWelcomeGiftOpen(false);
+            }}
+            onSuccess={() => {
+              welcomeGiftClaim.handleSuccess();
+              setWelcomeGiftOpen(false);
+            }}
+            onRetry={welcomeGiftClaim.handleRetry}
+          />
+        ) : null}
+
+        {showBadgeEarned && celebration.current === null ? (
           <BadgeEarnedPrompt
             pieceType={selectedPiece}
             totalStars={totalStars}
@@ -2871,7 +2955,10 @@ export function ExercisesScreen({
           />
         ) : null}
 
-        {resultOverlay ? (
+        {/* A failed claim sets this in the SAME tick as `releaseAbsorbed` —
+         *  without the gate the error card would stack on the recognition it
+         *  just released. Recognition first, then the error. */}
+        {resultOverlay && celebration.current === null ? (
           <ResultOverlay
             variant={resultOverlay.variant}
             pieceType={selectedPiece}

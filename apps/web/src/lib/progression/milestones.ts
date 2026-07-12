@@ -37,6 +37,14 @@ export type MilestoneInput = {
   allLabyrinthsComplete: boolean;
   /** Whether a Great Focus Session was ever recognized before today. */
   hadGreatSessionBefore: boolean;
+  /**
+   * Whether the Welcome Package gift can actually be delivered in this build.
+   * The gift is a Lite-only product — `useWelcomePackage()` and
+   * `unlockWelcomePackageGift()` are both no-ops in Full mode — so a Full
+   * build must not celebrate an unlock it can never hand over. Defaults to
+   * `true`: the gift is assumed available unless the caller says otherwise.
+   */
+  giftAvailable?: boolean;
 };
 
 export type EarnedMilestone = {
@@ -51,6 +59,7 @@ export function deriveEarnedMilestones(input: MilestoneInput): EarnedMilestone[]
   const { piece } = input;
 
   if (
+    (input.giftAvailable ?? true) &&
     input.lifetimeStars >= GIFT_STARS &&
     input.completedExercises >= GIFT_EXERCISES
   ) {
