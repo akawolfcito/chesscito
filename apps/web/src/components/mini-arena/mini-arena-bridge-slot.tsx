@@ -22,6 +22,12 @@ type Props = {
    *  earn. Surfaces like the Hub right rail use this so the
    *  vertical stack stays visually stable across unlock thresholds. */
   renderLocked?: boolean;
+  /** Controlled open state. Pass BOTH `open` and `onOpenChange` to drive the
+   *  sheet from outside — the Special Training celebration does this, so its
+   *  primary CTA opens the content it just promised instead of navigating.
+   *  Omit both to keep the pedestal self-managed (the default). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 /**
@@ -29,9 +35,21 @@ type Props = {
  * bridge setup. Lives in the action row next to the contextual action
  * pin so the bridge entry point doesn't push the board down.
  */
-export function MiniArenaBridgeSlot({ setup, unlocked, renderLocked = false }: Props) {
+export function MiniArenaBridgeSlot({
+  setup,
+  unlocked,
+  renderLocked = false,
+  open: controlledOpen,
+  onOpenChange,
+}: Props) {
   const t = useTranslations("HUB_ACTION_RAIL_COPY");
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : uncontrolledOpen;
+  const setOpen = (next: boolean) => {
+    if (!isControlled) setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  };
   // Signal hierarchy (Sally pass 2026-06-11): the dot marks NEW
   // content — unlocked but never beaten. Once beaten the marker clears
   // entirely (no done-check): the bridge is a permanent replayable
