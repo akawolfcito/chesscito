@@ -15,13 +15,19 @@
 El build de LEARN tiene **dos pantallas** en juego, y es fácil buscar en la equivocada:
 
 - **HUB de LEARN = `/`** (la raíz, no `/hub`: esa es un alias legacy que redirige a `/`).
-  Ahí vive la tile de **Special Training** y su chip NEW. Lo monta
-  `hub-scaffold-client.tsx:15` cuando el modo no es `play` (`LearnHubClient`; se llamaba
-  `LegacyHubClient` y ese nombre hacía pensar en un hub muerto que no existe).
-- **`/exercises`** — la escalera de estrellas, el laberinto, el badge y las celebraciones.
-  El *Daily Tactic* que ves acá **no** es Special Training.
+  Lo monta `hub-scaffold-client.tsx:15` cuando el modo no es `play` (`LearnHubClient`).
+  En LEARN renderiza `HubLiteScaffold`: Mind Challenge, Focus Passport, Start Focus.
+- **`/exercises`** — la escalera de estrellas, el laberinto, el badge, **Special Training**
+  y todas las celebraciones.
 
 PLAY/Arena queda **fuera** de este pase.
+
+> **Special Training vive en `/exercises`, no en el hub.** Su puerta es el pedestal
+> **TRAINING** del action row (`MiniArenaBridgeSlot`, `exercises-screen.tsx:2683`), abierto
+> con 12★ de torre. La tile del hub (`HubArenaTile`) **solo monta en el scaffold FULL, que
+> es interno** — en LEARN no existe. Buscarla ahí es buscar algo que ese build no tiene.
+> Su punto rojo es un marcador propio ("desbloqueado, nunca ganado"), **distinto** del NEW
+> de la máquina de hitos.
 
 ## Antes de empezar
 
@@ -42,8 +48,8 @@ históricos y **no celebrar nada**. Cualquier ✅ acá es una regresión.
 | # | Paso | Esperado |
 | --- | --- | --- |
 | A1 | Abrir la app en MiniPay, en frío, y esperar a que la wallet conecte | **Cero overlays.** Ni regalo, ni laberinto, ni Special Training, ni badge |
-| A2 | En **`/`** (HUB de LEARN), mirar la tile de **Special Training** en el action rail | La tile **está visible** (tenés 12★ de torre) y **sin punto NEW**. Las dos mitades importan: bajo 12★ la tile no existe (`hub-arena-tile.tsx:78`), y el seeding te la marca como ya abierta (`migration.ts:48`). **Sin NEW es un pass, no un fallo** |
-| A2b | ¿La tile NO aparece? | **Eso sí es hallazgo** — tenés el umbral cumplido. Anotarlo con screenshot |
+| A2 | En **`/exercises`** con la **torre** seleccionada, mirar el pedestal **TRAINING** del action row | Está **presente y abierto** (tenés 12★ de torre). Su punto rojo es el marcador "nunca lo ganaste", no el NEW de la máquina de hitos. **No buscar tile de Special Training en el hub: en LEARN no existe** (vive en el scaffold FULL, que es interno) |
+| A2b | Tocar el pedestal TRAINING | Abre la MiniArenaSheet (K+R vs K) |
 | A3 | Matar la app y reabrirla 2–3 veces seguidas | Ninguna celebración aparece en ningún reintento |
 | A4 | Abrir la app **con la wallet aún desconectando** y quedarse en el HUB | No se estampa la corona de Mastery ni un `piece-badge-claimed` falso. Ese es el race |
 | A5 | Grid de trofeos | El badge de torre figura como poseído; ningún trofeo nuevo aparece "recién ganado" |
