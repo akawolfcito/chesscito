@@ -7,7 +7,6 @@ import {
   hasMoreContent,
   hasReadyLabyrinth,
   isPieceFullyComplete,
-  LITE_PRIMARY_PIECE,
   type ContentLoopInput,
 } from "@/lib/hub/content-loop";
 import type { TrainingNode } from "@/lib/training/path";
@@ -104,20 +103,12 @@ function baseInput(overrides?: Partial<ContentLoopInput>): ContentLoopInput {
     daily: dailyDone(),
     today: TODAY,
     welcomePackage: noPending(),
-    primaryPiece: LITE_PRIMARY_PIECE,
+    primaryPiece: "rook",
     primaryPath: PATH_ALL_AVAILABLE,
     nextAvailablePiece: null,
     ...overrides,
   };
 }
-
-// ─── LITE_PRIMARY_PIECE constant ──────────────────────────────────────────────
-
-describe("LITE_PRIMARY_PIECE", () => {
-  it("is exported and equals rook", () => {
-    expect(LITE_PRIMARY_PIECE).toBe("rook");
-  });
-});
 
 // ─── deriveContentLoopAction — priority rules ─────────────────────────────────
 

@@ -385,11 +385,22 @@ export function LearnHubClient({
               : null
           }
           primaryFocus={{
-            // Start Focus always routes to /exercises; the screen gates
-            // fresh-vs-replay by quota (spec destination matrix, option A).
+            // Go where the loop says. Start Focus used to push a bare
+            // `/exercises` and THROW AWAY the destination the Content Loop had
+            // just derived — so `initialPiece` fell back to its `"rook"`
+            // default and the player landed on the rook's `currentId`: the last
+            // exercise they had already solved, with nowhere to advance to.
+            // They replayed it forever. The loop exists to answer exactly this
+            // question; the CTA now asks it.
+            //
+            // `destination` is null only for the come-back-tomorrow variants,
+            // which have nothing to open. Falling back to `/exercises` there
+            // keeps the button alive rather than inert.
             onPress: () => {
-              track("hub_start_focus_tap");
-              router.push("/exercises");
+              track("hub_start_focus_tap", {
+                variant: contentLoopAction?.variant ?? null,
+              });
+              router.push(contentLoopAction?.destination ?? "/exercises");
             },
             contentLoop: contentLoopAction,
             isHydrated: isContentLoopHydrated,

@@ -12,11 +12,6 @@ import { isCompletedToday } from "@/lib/daily/progress";
 import type { DailyProgress } from "@/lib/daily/progress";
 import type { TrainingNode } from "@/lib/training/path";
 
-/** Canonical primary piece for Lite v1. Import this constant — never
- *  hardcode "rook" inline in the Hub caller. */
-export const LITE_PRIMARY_PIECE = "rook" as const;
-export type LitePrimaryPiece = typeof LITE_PRIMARY_PIECE;
-
 /**
  * 10 variants in strict priority order (highest → lowest).
  * deriveContentLoopAction returns exactly ONE — the most urgent.
@@ -57,10 +52,10 @@ export type ContentLoopInput = {
     claimed: boolean;
   };
   /**
-   * Primary piece being evaluated. In Lite v1, always use LITE_PRIMARY_PIECE.
-   * Typed as union to allow future expansion without breaking callers.
+   * The piece being evaluated — and the piece every path-variant CTA points at.
+   * Derive it with `selectPrimaryPiece`; it is no longer pinned to the rook.
    */
-  primaryPiece: LitePrimaryPiece | string;
+  primaryPiece: string;
   /**
    * TrainingNode[] for the primary piece, built by buildTrainingPath().
    *
@@ -230,6 +225,60 @@ export function hasMoreContent(path: TrainingNode[], nextAvailablePiece: string 
   );
 }
 
+// ─── Piece selection ──────────────────────────────────────────────────────────
+
+/** Paths keyed by piece. A piece the caller did not build reads as no content. */
+export type PathsByPiece = Partial<Record<string, TrainingNode[]>>;
+
+/** A piece is worth training when it still holds an unplayed exercise, a ready
+ *  labyrinth, or a score to improve. `isPieceFullyComplete` alone is not enough:
+ *  it ignores stars, so a piece with every exercise played at 1★ would read as
+ *  "done" and get skipped. */
+function hasWorkLeft(path: TrainingNode[] | undefined): boolean {
+  if (!path || path.length === 0) return false;
+  return (
+    hasAvailableExercise(path) ||
+    hasReadyLabyrinth(path) ||
+    hasImprovableExercise(path)
+  );
+}
+
+/**
+ * The piece the player is actually on: the first in `order` that still has work
+ * left. Falls back to the first piece in `order` when everything is finished —
+ * the loop always needs a path to evaluate, and "nothing left to advance to" is
+ * the honest answer there.
+ *
+ * This replaces `LITE_PRIMARY_PIECE` as the loop's subject. Pinning it to the
+ * rook meant a player living on the pawn was still being advised about a rook
+ * they had finished months ago.
+ */
+export function selectPrimaryPiece(
+  order: readonly string[],
+  paths: PathsByPiece,
+): string {
+  return order.find((piece) => hasWorkLeft(paths[piece])) ?? order[0];
+}
+
+/**
+ * The piece to move on to once the primary is done: the next one in `order`,
+ * other than the primary, that still has work left.
+ *
+ * Null when there is nothing left — the loop must never invent a destination.
+ * This used to be hardcoded `null` in `use-hub-data`, which made the entire
+ * `next-piece` variant unreachable.
+ */
+export function selectNextAvailablePiece(
+  order: readonly string[],
+  paths: PathsByPiece,
+  primaryPiece: string,
+): string | null {
+  return (
+    order.find((piece) => piece !== primaryPiece && hasWorkLeft(paths[piece])) ??
+    null
+  );
+}
+
 // ─── Main derivation ──────────────────────────────────────────────────────────
 
 /**
@@ -239,7 +288,15 @@ export function hasMoreContent(path: TrainingNode[], nextAvailablePiece: string 
  * Same inputs always produce the same output (pure, deterministic).
  */
 export function deriveContentLoopAction(input: ContentLoopInput): ContentLoopAction {
-  const { daily, today, welcomePackage, primaryPath, nextAvailablePiece, sessionQuota } = input;
+  const { daily, today, welcomePackage, primaryPiece, primaryPath, nextAvailablePiece, sessionQuota } = input;
+
+  /** The three path variants ship `?piece=rook` in the static table — a Lite-v1
+   *  hardcode. Reasoning about one piece and then walking the player to another
+   *  is how a finished rook kept getting recommended forever. */
+  const toPrimary = (action: ContentLoopAction): ContentLoopAction => ({
+    ...action,
+    destination: `/exercises?piece=${primaryPiece}`,
+  });
 
   // 1. Daily Focus not yet done today — highest priority regardless of anything else.
   if (!isCompletedToday(today, daily)) {
@@ -264,17 +321,17 @@ export function deriveContentLoopAction(input: ContentLoopInput): ContentLoopAct
 
   // 5. Exercises waiting to be played (stars = 0).
   if (hasAvailableExercise(primaryPath)) {
-    return ACTIONS["continue-path"];
+    return toPrimary(ACTIONS["continue-path"]);
   }
 
   // 6. Labyrinth unlocked and pending.
   if (hasReadyLabyrinth(primaryPath)) {
-    return ACTIONS["labyrinth-ready"];
+    return toPrimary(ACTIONS["labyrinth-ready"]);
   }
 
   // 7. All exercises played but improvement possible (stars < 3★).
   if (hasImprovableExercise(primaryPath)) {
-    return ACTIONS["improve-stars"];
+    return toPrimary(ACTIONS["improve-stars"]);
   }
 
   // 8. Piece fully done and another piece is available.
