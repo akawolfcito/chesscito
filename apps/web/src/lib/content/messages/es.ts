@@ -1014,6 +1014,10 @@ const messages = {
         title: "Primer Focus Day",
         description: "Completa tu primer Daily Focus.",
       },
+      "first-great-session": {
+        title: "Primera Gran Sesión",
+        description: "Gana 8 estrellas en un día o agota tu cupo diario.",
+      },
       "three-day-rhythm": {
         title: "Ritmo de 3 días",
         description: "Mantén tu racha de foco por 3 días.",

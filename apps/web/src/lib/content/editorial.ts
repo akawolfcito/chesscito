@@ -1018,6 +1018,10 @@ export const ACHIEVEMENTS_COPY = {
       title: "First Focus Day",
       description: "Complete your first Daily Focus.",
     },
+    "first-great-session": {
+      title: "First Great Session",
+      description: "Earn 8 stars in one day, or finish your daily quota.",
+    },
     "three-day-rhythm": {
       title: "3-Day Rhythm",
       description: "Keep your focus streak for 3 days.",
