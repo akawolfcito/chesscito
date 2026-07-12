@@ -109,12 +109,13 @@ upgrade that can never re-fire after a solve and eat a pending celebration.
 2. **VR coverage gap.** VR is 51/51, but **no fixture reaches the new overlays, the NEW
    chip, or the fourth trophies tile** — the suite runs anonymous with empty storage.
    Green means "nothing existing broke", not "the new UI is covered". Add fixtures.
-3. **`CLAUDE.md` is stale.** It documents a CSS split
-   (`apps/web/src/styles/{arena,hub,coach,exercises}.css`, "P4 CSS split 2026-06-12")
-   that was **reverted** — those files do not exist. It misroutes every new CSS class.
-   Fix during cluster closure.
+3. ~~**`CLAUDE.md` is stale.**~~ **DONE** — PR #216 (`60695ab3`). It routed every new CSS
+   class to `apps/web/src/styles/{arena,hub,coach,exercises}.css`, a split that was
+   reverted; that directory does not exist and `globals.css` is the only stylesheet.
+   Also corrected: all six pieces are playable (`PLAYABLE_PIECES`), not just the rook,
+   and the test baseline (1727 → 5003 / 420).
 4. Cluster closure protocol: close issues/milestone, README "What's live" sync,
-   MEMORY.md sync, branch hygiene.
+   branch hygiene. (MEMORY.md synced; branches deleted.)
 
 ## Open questions
 
