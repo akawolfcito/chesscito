@@ -138,8 +138,9 @@ import { BadgeEarnedPrompt, PieceCompletePrompt, ResultOverlay } from "@/compone
 import { GetPeonesSheet } from "@/components/payments/get-peones-sheet";
 import { LearnShopSheet } from "@/components/learn/learn-shop-sheet";
 import { BadgeSheet } from "@/components/exercises/badge-sheet";
-import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/telemetry";
 import { classifyTxError, classifyTxErrorKind, isTransactionTimeout, isUserCancellation, type TxErrorKind } from "@/lib/errors";
@@ -3146,63 +3147,50 @@ export function ExercisesScreen({
           />
         ) : null}
 
+        {/* Same shell and same primary as every other unlock in the ladder
+         *  (`UnlockOverlay`). This screen used to be the odd one out — a
+         *  `CandyGlassShell` behind a hand-rolled `role="dialog"` wrapper —
+         *  so the piece a player just earned was announced in a visual
+         *  vocabulary nothing else in LEARN speaks. The shell owns the scrim
+         *  and the `aria-modal`, so the wrapper is gone with it. */}
         {unlockedPiece && !resultOverlay && (
-          <div
-            className="fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim animate-in fade-in duration-250"
-            role="dialog"
-            aria-modal="true"
+          <VictoryPopupShell
+            onClose={() => setUnlockedPiece(null)}
+            ariaLabel={tUnlock("title", { piece: tPiece(unlockedPiece) })}
+            closeLabel={tMission("closeLabel")}
           >
-            <div className="relative z-10 mx-4 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-              <CandyGlassShell
-                title={tUnlock("title", { piece: tPiece(unlockedPiece) })}
-                onClose={() => setUnlockedPiece(null)}
-                closeLabel={tMission("closeLabel")}
-                cta={
-                  <Button
-                    type="button"
-                    variant="game-primary"
-                    size="game"
-                    autoFocus
-                    onClick={() => {
-                      setUnlockedPiece(null);
-                      setSelectedPiece(unlockedPiece);
-                      resetBoard();
-                    }}
-                    className="w-full"
-                  >
-                    {tUnlock("cta", { piece: tPiece(unlockedPiece) })}
-                  </Button>
-                }
-              >
-                <div className="flex flex-col items-center gap-4 text-center">
-                  <div className="relative flex items-center justify-center">
-                    <div className="pointer-events-none absolute h-36 w-36">
-                      <LottieAnimation src="/animations/sparkle-burst.lottie" loop={false} className="h-full w-full" />
-                    </div>
-                    <div className="absolute h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.28)_0%,rgba(217,180,74,0.12)_50%,transparent_75%)]" />
-                    <picture className="relative z-10 h-20 w-20">
-                      {THEME_CONFIG.hasOptimizedFormats && (
-                        <>
-                          <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.avif`} type="image/avif" />
-                          <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.webp`} type="image/webp" />
-                        </>
-                      )}
-                      <img src={`${PIECE_IMAGES[unlockedPiece]}.png`} alt={tPiece(unlockedPiece)} className="h-full w-full object-contain drop-shadow-[0_4px_12px_rgba(120,65,5,0.35)]" />
-                    </picture>
-                  </div>
-                  <p
-                    className="text-sm"
-                    style={{
-                      color: "rgba(110, 65, 15, 0.85)",
-                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                    }}
-                  >
-                    {tTutorial(unlockedPiece)}
-                  </p>
-                </div>
-              </CandyGlassShell>
+            <div className="progression-overlay-icon relative flex items-center justify-center">
+              <div className="pointer-events-none absolute h-36 w-36">
+                <LottieAnimation src="/animations/sparkle-burst.lottie" loop={false} className="h-full w-full" />
+              </div>
+              <div className="absolute h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.28)_0%,rgba(217,180,74,0.12)_50%,transparent_75%)]" />
+              <picture className="relative z-10 h-20 w-20">
+                {THEME_CONFIG.hasOptimizedFormats && (
+                  <>
+                    <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.avif`} type="image/avif" />
+                    <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.webp`} type="image/webp" />
+                  </>
+                )}
+                <img src={`${PIECE_IMAGES[unlockedPiece]}.png`} alt={tPiece(unlockedPiece)} className="h-full w-full object-contain drop-shadow-[0_4px_12px_rgba(120,65,5,0.35)]" />
+              </picture>
             </div>
-          </div>
+
+            <h2 className="language-modal-title">
+              {tUnlock("title", { piece: tPiece(unlockedPiece) })}
+            </h2>
+            <p className="progression-overlay-body">{tTutorial(unlockedPiece)}</p>
+
+            <PrincipalButton
+              onClick={() => {
+                setUnlockedPiece(null);
+                setSelectedPiece(unlockedPiece);
+                resetBoard();
+              }}
+              className="self-center"
+            >
+              {tUnlock("cta", { piece: tPiece(unlockedPiece) })}
+            </PrincipalButton>
+          </VictoryPopupShell>
         )}
 
         <div
