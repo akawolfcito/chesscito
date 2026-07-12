@@ -1834,6 +1834,22 @@ export function ExercisesScreen({
       // the re-resolve below reading from ONE scope.
       const claimedPiece = (step.piece as PieceKey | undefined) ?? selectedPiece;
 
+      // Nothing left to claim: the chain already holds this badge. The
+      // recognition is real but SPENT, so consume it. `handleClaimBadge`
+      // returns a silent `false` here, which the cancellation path below reads
+      // as "the player backed out" — leaving the event pending forever. And
+      // because the queue drains every pending event regardless of the piece on
+      // screen, that one stuck event re-opened this overlay on every solve of
+      // every other piece. Found on device (2026-07-12).
+      if (badgesClaimed[claimedPiece]) {
+        celebration.dismissCurrent();
+        return;
+      }
+
+      // Every OTHER failure — cancelled, reverted, no wallet, wrong chain —
+      // keeps the eligibility pending on purpose: that badge is still owed, so
+      // the recognition must survive to be offered again. Only an owned badge
+      // is spent, and only it is consumed above.
       void handleClaimBadge(claimedPiece)
         .then((claimed) => {
           if (claimed) {

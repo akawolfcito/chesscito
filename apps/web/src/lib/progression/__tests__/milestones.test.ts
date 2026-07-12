@@ -77,6 +77,20 @@ describe("piece badge", () => {
     );
     expect(ids(earned)).toContain("piece-badge-claimed");
   });
+
+  /** The RIGHT to claim does not survive the claim. Found on device: an
+   *  already-minted piece kept deriving `piece-badge-eligible`, and because
+   *  the celebration queue drains EVERY pending event regardless of the piece
+   *  on screen, that stuck event re-opened "Badge Ready to Claim" on every
+   *  solve of every other piece — over a board showing 9 stars. Its CTA then
+   *  hit `handleClaimBadge`, which no-ops on an owned badge, so the event was
+   *  never celebrated and the loop fed itself. */
+  it("is NOT eligible any more once the badge is on chain", () => {
+    const earned = deriveEarnedMilestones(
+      input({ pieceStars: 10, badgeClaimed: true }),
+    );
+    expect(ids(earned)).not.toContain("piece-badge-eligible");
+  });
 });
 
 describe("mastery", () => {

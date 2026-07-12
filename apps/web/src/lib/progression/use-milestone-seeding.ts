@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { repairClaimedBadges } from "./repair-claimed-badges";
 import { seedMilestonesOnce, type SeedMilestonesArgs } from "./seed-milestones";
 
 export type UseMilestoneSeedingArgs = SeedMilestonesArgs & {
@@ -83,5 +84,12 @@ export function useMilestoneSeeding(args: UseMilestoneSeedingArgs): void {
       labyrinthIdsByPiece,
       giftAvailable,
     });
+    // Runs on EVERY ready mount, not once: the profiles this repairs were
+    // stamped migrated long before the defect was found, so a one-time marker
+    // would never reach them. It writes only when a stuck eligibility is
+    // actually on disk, and it needs the same known-badge-state gate the seed
+    // does — an unknown badge map would read as "not claimed" and repair
+    // nothing. See `repair-claimed-badges.ts`.
+    repairClaimedBadges(badgeClaimedByPiece);
   }, [args.ready]);
 }
