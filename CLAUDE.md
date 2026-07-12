@@ -7,10 +7,10 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 ## Stack
 - **Monorepo**: Turborepo + pnpm
 - **App principal**: `apps/web` — Next.js 14 App Router + TypeScript
-- **Estilos**: Tailwind CSS + clases custom en `globals.css` (compartidas) y
-  `apps/web/src/styles/{arena,hub,coach,exercises}.css` (exclusivas por superficie,
-  cargadas via route layouts — P4 CSS split 2026-06-12). Una clase nueva va a su
-  archivo de superficie solo si NINGUNA otra ruta la consume; en duda → `globals.css`
+- **Estilos**: Tailwind CSS + clases custom en `apps/web/src/app/globals.css`.
+  **Ese es el ÚNICO archivo CSS del app** — el split por superficie
+  (`src/styles/{arena,hub,coach,exercises}.css`, P4 2026-06-12) fue revertido y ese
+  directorio no existe. Toda clase nueva va a `globals.css`.
 - **Blockchain**: Celo / MiniPay
 
 ## Distribución: Mobile-First via MiniPay
@@ -24,7 +24,8 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
   - Aspect ratio: 1/1 (1024×1024)
 - Componente: `apps/web/src/components/board.tsx`
 - Hit-grid: `.playhub-board-hitgrid` con `inset: 4.9% 4.4% 3.6% 4.6%`
-- Pieza actual: Torre (♖) — lógica en `apps/web/src/lib/game/board.ts`
+- Piezas jugables: las **seis** (`PLAYABLE_PIECES`, `lib/game/exercises.ts:9`). La torre
+  es la primera del recorrido, no la única — lógica en `apps/web/src/lib/game/board.ts`
 
 ## Clases CSS del tablero (`globals.css`)
 - `.playhub-board-canvas` — contenedor con la imagen de fondo
@@ -58,7 +59,10 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 ## Convenciones
 - Commits: Conventional Commits (`feat:`, `fix:`, `style:`, `refactor:`)
 - Firma de commit: `Wolfcito 🐾 @akawolfcito`
-- Tests: Vitest + RTL (unit) + Playwright (E2E + VR); 1727 passing baseline (2026-05-21)
+- Tests: Vitest + RTL (unit) + Playwright (E2E + VR); 5003 passing / 420 files, VR 51/51
+  (baseline 2026-07-12). Un test que verifica "un solo modal a la vez" **debe contar
+  `[aria-modal="true"]`, nunca `role="dialog"`**: `LabyrinthCompleteOverlay` usa
+  `role="alert"`, así que contar roles pasa en verde con dos diálogos en pantalla
 - Idioma de UI: English (ver `lib/content/editorial.ts`)
 - **Git staging**: stagear paths explícitos en `git add`; NUNCA pathspecs con brackets/globs (zsh los interpreta y deja archivos fuera — ya rompió main una vez)
 
