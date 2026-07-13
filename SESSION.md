@@ -1,112 +1,114 @@
-# Session Handoff — 2026-07-13 (c)
+# Session Handoff — 2026-07-13 (d)
 
-> Tercera sesión del día. Las dos anteriores (matchup transition `ef2b0ae3`, player rails
-> `c6b6755c`) quedan resumidas en sus commits; sus tareas abiertas se cerraron acá.
+> Cuarta sesión del día. Cierra **la limpieza completa** (los 3 ítems que dejó la sesión (c)).
+> El orden acordado era limpieza → duelo por enlace → Belt System. **La limpieza terminó.**
 
 ## Completed
 
-**Orden de trabajo acordado con el founder: limpieza → duelo por enlace → Belt System.**
-
-- `7b963843` **refactor(arena): `ArenaPlayerRail` recibe PRO por prop**, ya no por hook.
-  Llamaba `useIsProActive()` adentro → wagmi → **no se podía montar sin `WagmiProvider`**, que
-  es justo lo que el layout `/dev` NO monta. Por eso los rails eran la única superficie que el
-  VR no podía fotografiar. La página de arena ahora hace la única lectura de wallet.
-- `0d69e30a` **test(vr): 5 baselines `vr16` para los rails** (probe `/dev/arena-rails`).
-  Cierra el agujero: **ningún baseline llegaba a un `PlayerAvatar`**, y por eso `c63b34fc`
-  (border-radius) viajó con los 5107 tests en verde.
-- `90858eb0` **spec + red-team de server-verified progress** → **NEEDS REVISION (2 P0)**. Ver
-  Blockers.
-- `fc4b1029` **feasibility del duelo asíncrono por enlace** → **~2–3 días, no meses**.
-- `1f039642` **PLAY #8 — borrada la confirmación de LUZ.** Tocar Ask Coach analiza directo.
-  −344 líneas: `LuzOnboardingPanel`, `onboarding-outcome.ts`, fase `welcome`, `claimWelcome()`,
-  `COACH_ONBOARDING_COPY` y la bandera `chesscito:coach-welcomed`.
-- `aa03de17` **`ONLY_TEST_NO_FUNDS_PK` documentada** (nombre + placeholder; valor solo en `.env`).
-- `a7683a8c` **fix: "Claim 3 Shields" reclama en el lugar**, ya no abre el Shop.
-
-**Fuera del repo:**
-- **Contraste en device: FIRMADO** por el founder (transición + rails). El `text-shadow` alcanza.
-- **Issues #101 y #67 CERRADOS** como muertos, con su razón escrita en el issue.
+- `2b59a829` **Decoder de custom errors** (merge). `BadgeAlreadyClaimed`, `CooldownActive` y
+  `DailyLimitReached` dejan de salir los tres como "Try again". ABI generada desde artifacts
+  (`generate-error-abis.mjs`, hermano del de eventos), extractor promovido fuera de `lib/debug/`,
+  y el mapa nombre → `TxErrorKind` → copy. Cierra el ítem del backlog `2026-07-10`.
+- `75cf0161` **Cobertura VR del play hub** (merge). 3 baselines `vr17` vía probe `/dev/play-hub`.
+  Requirió que el chip de Peones **dejara de leer la wallet por dentro** — ver Notes.
+- `63b60151` **`WoodenBanner` retirado** entero: componente + 5 reglas de CSS + 9 archivos de arte
+  (~139 KB). Revierte el "conservar" del mismo día; el spec de los rails quedó actualizado.
 
 ## Current State
 
-- **Branch**: `main` (commiteado directo, sin PR). **PRs abiertos**: ninguno.
-- **Build**: Vitest **5089 passing / 425 files** · `tsc --noEmit` limpio · lint sin nada nuevo ·
-  VR minipay **55 passed / 1 failed** (el rojo es `hub-shop-sheet-open`, preexistente).
+- **Branch**: `main`, todo pusheado. **PRs abiertos**: ninguno.
+- **Build**: Vitest **5118 passing / 426 files** · `tsc --noEmit` limpio · lint sin nada nuevo ·
+  VR minipay **58 passed / 1 failed** (el rojo es `hub-shop-sheet-open`, **preexistente**: el env
+  local no tiene treasury y el tile de PRO renderiza "Coming soon" donde el test quiere un precio).
 - **Uncommitted work**: sólo este `SESSION.md`.
 
 ## Next Tasks
 
-### Terminar la limpieza (nada de esto toca la espina)
-1. **Decoder de custom errors** — hoy `BadgeAlreadyClaimed`, `CooldownActive` y
-   `DailyLimitReached` salen los tres como "Try again". El extractor ya está escrito; falta el
-   generador de error-ABIs desde `artifacts/` y el mapa nombre → copy.
-   Doc: `docs/backlog/2026-07-10-custom-errors-decoder.md`.
-2. **Cobertura VR del play hub** — `hub-clean — anonymous /hub` (`visual-regression.spec.ts:73`)
-   en realidad navega a `/exercises`: el hub home nunca tuvo baseline. La receta quedó fresca
-   (probe `/dev/*` + fixture presentacional).
-3. **Destino de `WoodenBanner`** — conservado a propósito por el founder, pero sin consumidor. O
-   se le encuentra superficie, o se retira con sus 3 assets.
-
-### Después de la limpieza
-4. **Duelo asíncrono por enlace** (`docs/product/2026-07-13-async-link-duel-feasibility.md`).
-   **Empezar por un spec**, no por código: los riesgos son de producto, no técnicos.
-5. **Belt System** — el GDD, o como mínimo **la decisión del umbral**. Es lo único con reloj.
+1. **Duelo asíncrono por enlace** — `docs/product/2026-07-13-async-link-duel-feasibility.md`.
+   **Empezar por un spec, NO por código**: el doc es explícito en que los riesgos son de producto,
+   no técnicos. ~2–3 días, no meses.
+2. **Belt System** — el GDD, o como mínimo **la decisión del umbral**. Es lo único con reloj.
+3. **El smoke del Hub Tour en MiniPay sigue pendiente** (arrastrado desde el 07-12). Es lo único
+   que separa al Hub Tour de estar cerrado.
 
 ## Blockers
 
-- **El spec de server-verified progress NO va a `/tdd`.** El red-team encontró que su premisa
-  es falsa (ver Notes). Necesita una **decisión de producto** del founder antes de tocar código:
-  ¿(a) defensa en profundidad + passport para el payout, (b) challenge token del servidor, o
-  ambas? Hasta entonces, **no tocar `BADGE_THRESHOLD` ni el progreso verificado**.
+- **El spec de server-verified progress SIGUE bloqueado** (sin cambios desde la sesión (c)).
+  Necesita una decisión de producto: ¿(a) defensa en profundidad + passport para el payout,
+  (b) challenge token del servidor, o ambas? Hasta entonces, **no tocar `BADGE_THRESHOLD`**.
+  Causa: `computeExerciseBfsPath()` viaja en el bundle del cliente, así que re-ejecutar el camino
+  en el servidor prueba que la solución es CORRECTA, nunca que un humano la JUGÓ.
 
 ## Notes
 
-### El hallazgo que invalida el spec (P0)
+### ⚠️ La trampa del selector — casi tiro evidencia buena a la basura
 
-`exercise-bfs.ts` exporta **`computeExerciseBfsPath()`**, que devuelve el **camino óptimo
-completo** — y viaja en el bundle del cliente, junto con el catálogo. Un atacante llama a la
-propia función de la app, POSTea el camino perfecto de cada ejercicio, y el servidor lo
-re-ejecuta, lo encuentra legal y óptimo, y firma. Toma un segundo.
+Los tres selectores registrados en 8 docs (`0xfafe7970` / `0xc1ab61a1` / `0xeba8fe8a`) **son
+correctos**. Los "refuté" durante la sesión con:
 
-**Re-ejecutar prueba que la solución es CORRECTA, nunca que un humano la JUGÓ.** Shippearlo
-creyendo que cierra el agujero es peor que hoy: el score falso pasaría a llevar la firma del
-servidor y una fila en una tabla llamada `exercise_progress`, que a los ojos de cualquiera
-parece evidencia. Segundo P0: el día del deploy, todo jugador honesto con 10★ locales sin
-mintear se come un 403 diciéndole "Finish 10★" — que ya hizo. Necesita shadow mode.
+```ts
+toFunctionSelector("error BadgeAlreadyClaimed(address,uint256)")  // 0xa02cd012 ❌ basura
+toFunctionSelector("BadgeAlreadyClaimed(address,uint256)")        // 0xfafe7970 ✅
+```
 
-**`passport_cache.is_verified` YA existe en el schema** y el leaderboard ya lo joinea: es el
-ancla de identidad más barata que tenemos si el payout necesita protección.
+**viem hashea el string literal que le pasás**, con la palabra `error` adentro. Solidity hashea la
+firma pelada. Llegué a reportarle al founder que el probe en device había "confirmado un número
+inventado" — falso, y la medición del iPhone era legítima. **Me corrigió el test**, no yo: le pedí a
+`decodeErrorResult` que decodificara y viem contradijo mi aritmética.
 
-### El VR miente de dos maneras distintas (las dos vistas HOY)
+**Regla:** cuando un valor recién calculado contradice una medición registrada, sospechá primero de
+tu derivación. Los selectores **no se escriben a mano en ningún lado**, ni en los tests: se derivan
+de la firma. → [[feedback_suspect_your_derivation_first]]
 
-1. **Puede fotografiar un error.** Los primeros 5 baselines de los rails salieron "5 passed" y
-   eran capturas del *Unhandled Runtime Error* de Next (`WagmiProviderNotFoundError`).
-   Playwright escribe el PNG de lo que haya en pantalla y pasa. **Mirar siempre los baselines
-   nuevos.**
-2. **Es ciego a cambios de copy chicos.** `maxDiffPixelRatio: 0.01`; una línea de footer es
-   ~0,45% de los píxeles. Cambié la copy y el test siguió verde con el baseline mintiendo. Y
-   **`--update-snapshots` NO lo arregla**: su default es `changed`, o sea que sólo reescribe si
-   el test **falla**. Hay que forzar **`--update-snapshots=all`** y verificar el **`mtime`** del
-   PNG, no el exit code.
+### El mismo hook de wallet mordió por segunda vez en dos días
 
-**Regla derivada:** un componente que va a tener probe `/dev` **recibe su verdad por props**
-(convención `HubProBadge`), nunca de un hook de wallet.
+`PeonesBalanceChip` llamaba `usePeonesBalance` → `useAccount` de wagmi, **dos niveles debajo** de dos
+scaffolds que en su propio docstring se declaraban presentacionales ("caller owns on-chain state",
+"no data/hooks here"). Los dos mentían, y por eso el play hub **no podía montarse bajo `/dev`**:
+wagmi tira `WagmiProviderNotFoundError` sin provider, y Playwright habría fotografiado el error
+overlay y pasado en verde — exactamente lo que pasó con los rails el día anterior (`0d69e30a`).
 
-### Sobre el bug de "Claim 3 Shields"
+Ahora `PeonesBalanceChipView` recibe el balance por prop y los dos clientes hacen la lectura. El chip
+conectado sigue existiendo con su API vieja para el hub FULL, así que sus 12 tests no se tocaron.
 
-La causa raíz es una trampa de tipos que vale recordar: `use-fail-rescue` declaraba
-`onOpenShop: (focus: "welcome-pack") => void` y `exercises-screen` implementaba `() => void`.
-**TypeScript acepta la firma más angosta**, así que el argumento se tiraba en silencio y el
-deep-link nunca tuvo destino. El compilador no puede protegerte de esto: buscalo a mano cuando
-un callback "no hace lo que dice".
+**La convención (tercera vez que se escribe, aplicarla sin preguntar):** lo que un probe `/dev`
+fotografía **recibe su verdad por props**, nunca de un hook de wallet.
+
+### Lo que fijan los 3 baselines nuevos
+
+- `vr17-play-hub-guest` + `vr17-play-hub-connected` son un **par**: el chip de Peones aparece sólo en
+  el segundo. Un chip que se filtre a invitados, o que desaparezca para quien tiene wallet, rompe una
+  de las dos imágenes.
+- `vr17-play-hub-pro` fija que PRO cambia **tres cosas en simultáneo**: badge del HUD (UNLOCK → 12D),
+  mascota (mago → mago PRO) y chip del KingdomCard (PRO → PRO active). Que una se desincronice es
+  invisible para un test unitario.
+- **Ningún fixture renderiza PRO sin wallet.** En producción PRO implica wallet conectada, y un
+  baseline de un estado inalcanzable es un baseline que miente.
+- **Abrí los 3 PNG y los miré antes de commitearlos.** Ese es el paso que se salteó cuando los rails
+  "pasaron" siendo cinco fotos de un `WagmiProviderNotFoundError`.
+
+### Un grep por nombre de archivo NO prueba que un asset esté sin uso
+
+`CandyBanner` arma la ruta en runtime (`/art/redesign/banners/${name}`). Lo que hizo seguro borrar los
+3 banners es que su tipo `CandyBannerName` es una **unión cerrada** sobre `btn-*`. Los `btn-*` y
+`principalbutton` del mismo directorio se quedan (`PrimaryPlayCTA`, `KingdomCard`, `AppModeSwitch`).
+
+### Deuda que el decoder dejó registrada (no bloquea)
+
+- Los args de los errores (`nextAllowedAt`, `nextWindowStart`) **se decodifican pero no se muestran**.
+  La copy es estática a propósito: mostrar "esperá hasta las 14:32" es zona horaria, formato y
+  probablemente una cuenta regresiva viva. `decodeErrorResult` ya devuelve los args.
+- Sólo `BadgeAlreadyClaimed` tiene evidencia real de device. `CooldownActive` y `DailyLimitReached`
+  se **asumen**. Por eso el probe `/dev/tx-error-probe` **se queda** — es el instrumento para medirlos.
+- `Invalid player address` clasifica como `unknown` → "Something went wrong". Debería ser
+  `signingUnavailable`.
 
 ### Arrastrado (sigue vigente)
 
 - **Dónde vive cada hub**: el LEARN hub sólo renderiza en `/` con `NEXT_PUBLIC_CHESSCITO_MODE=learn`
   **y** `NEXT_PUBLIC_CHESSCITO_LITE_MODE=true`; con sólo el primero, el flag lanza
   "Contradictory Chesscito mode flags".
-- Para verificar visualmente: dev en un puerto propio + Playwright con `BASE_URL=http://localhost:<port>`.
 - **NO mover el timer de la transición fuera de su `useEffect`** (Strict Mode lo cuelga en
   "Preparing AI…" para siempre).
-- La **transición de matchup queda deliberadamente SIN VR** (decisión del founder): es toda
-  timers + animación y no paga el costo de congelar el reloj.
+- El VR es **ciego a cambios de copy chicos** (`maxDiffPixelRatio: 0.01`). `--update-snapshots` por
+  default sólo reescribe si el test **falla**: forzar `--update-snapshots=all` y verificar el `mtime`.
