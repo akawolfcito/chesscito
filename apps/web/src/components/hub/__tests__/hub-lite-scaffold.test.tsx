@@ -19,7 +19,7 @@ vi.mock("@/components/hub/language-chip", () => ({
   LanguageChip: () => <div data-testid="language-chip-stub" />,
 }));
 vi.mock("@/components/peones/peones-balance-chip", () => ({
-  PeonesBalanceChip: ({ surface }: { surface?: string }) => (
+  PeonesBalanceChipView: ({ surface }: { surface?: string }) => (
     <div data-testid="peones-chip-stub" data-surface={surface} />
   ),
 }));
@@ -48,6 +48,9 @@ function baseProps(over: Partial<HubLiteScaffoldProps> = {}): HubLiteScaffoldPro
   return {
     trophies: 1,
     isWalletConnected: false,
+    // Told, not fetched — the container owns the wallet read now.
+    peones: { kind: "guest" },
+    onPeonesRefetch: vi.fn(),
     onConnectTap: vi.fn(),
     onTrophyTap: vi.fn(),
     focusPassport: { streak: 3, totalCompleted: 3, todayDone: true, isLoading: false },

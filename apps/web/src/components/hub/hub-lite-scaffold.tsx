@@ -6,7 +6,8 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LanguageChip } from "@/components/hub/language-chip";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
 import { AppModeSwitch } from "@/components/hub/app-mode-switch";
-import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
+import { PeonesBalanceChipView } from "@/components/peones/peones-balance-chip";
+import type { PeonesBalanceState } from "@/lib/peones/use-peones-balance";
 import { RewardColumn, type RewardTile } from "@/components/kingdom/reward-column";
 import {
   ChallengeCard,
@@ -22,6 +23,11 @@ export type HubLiteScaffoldProps = {
   // ── HUD ──
   trophies: number;
   isWalletConnected: boolean;
+  /** Peones balance, READ BY THE CONTAINER. The chip used to fetch it itself,
+   *  which smuggled a wagmi hook into this "no hooks here" tree and made the
+   *  scaffold impossible to mount in a `/dev` probe. */
+  peones: PeonesBalanceState;
+  onPeonesRefetch: () => void;
   /** null when already connected (Connect chip hides). */
   onConnectTap: (() => void) | null;
   onTrophyTap: () => void;
@@ -59,6 +65,8 @@ export type HubLiteScaffoldProps = {
 export function HubLiteScaffold({
   trophies,
   isWalletConnected,
+  peones,
+  onPeonesRefetch,
   onConnectTap,
   onTrophyTap,
   focusPassport,
@@ -99,7 +107,12 @@ export function HubLiteScaffold({
               Left cluster = status pills (trophy · Peones · language), matching
               the PLAY/FULL header grammar. Hidden for guests by the chip. */}
           {isWalletConnected ? (
-            <PeonesBalanceChip surface="hub" showRecharge />
+            <PeonesBalanceChipView
+              state={peones}
+              onRefetch={onPeonesRefetch}
+              surface="hub"
+              showRecharge
+            />
           ) : null}
           <LanguageChip />
         </div>

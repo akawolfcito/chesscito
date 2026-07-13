@@ -19,6 +19,11 @@ vi.mock("@/components/hub/use-play-hub-data", () => ({
 vi.mock("@/lib/wallet/use-connect-wallet", () => ({
   useConnectWallet: () => ({ connectWallet: connectMock }),
 }));
+// The client owns the Peones read now (the scaffold used to smuggle it in via
+// the chip). Unmocked, this reaches wagmi's useAccount and throws.
+vi.mock("@/lib/peones/use-peones-balance", () => ({
+  usePeonesBalance: () => ({ state: { kind: "guest" }, refetch: vi.fn() }),
+}));
 vi.mock("@/lib/pro/use-pro-sheet-state", () => ({
   useProSheetState: () => proStateMock(),
 }));

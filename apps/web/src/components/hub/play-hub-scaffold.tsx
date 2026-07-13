@@ -6,15 +6,21 @@ import { HubActionTile } from "@/components/hub/hub-action-tile";
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { LanguageChip } from "@/components/hub/language-chip";
 import { KingdomCard } from "@/components/kingdom/kingdom-card";
-import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
+import { PeonesBalanceChipView } from "@/components/peones/peones-balance-chip";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PlayTacticsTile } from "@/components/tactics/play-tactics-tile";
 import { hapticTap } from "@/lib/haptics";
+import type { PeonesBalanceState } from "@/lib/peones/use-peones-balance";
 
 type PlayHubScaffoldProps = {
   mintedVictoryCount: number;
   isWalletConnected: boolean;
   pro: { active: true; daysRemaining: number } | { active: false };
+  /** Peones balance, READ BY THE CALLER. The chip used to fetch it itself, which
+   *  put a wagmi hook inside this tree and made the scaffold impossible to mount
+   *  in a `/dev` probe — so the PLAY hub had zero visual coverage. */
+  peones: PeonesBalanceState;
+  onPeonesRefetch: () => void;
   onConnectTap: () => void;
   onTrophyTap: () => void;
   onProTap: () => void;
@@ -25,12 +31,16 @@ type PlayHubScaffoldProps = {
 
 /** Play Kingdom home. Mirrors the LEARN/LITE hub's visual system (unified
  *  vocabulary): floating HUD + Kingdom portal + mode switch + Kingdom hero
- *  panel + dominant Play Chess CTA + CHESS TOOLS square-tile grid. Pure
- *  presentational — caller owns navigation + on-chain state. */
+ *  panel + dominant Play Chess CTA + CHESS TOOLS square-tile grid.
+ *
+ *  Pure presentational — caller owns navigation + on-chain state. That claim is
+ *  now true: it used to render a Peones chip that read the wallet on its own. */
 export function PlayHubScaffold({
   mintedVictoryCount,
   isWalletConnected,
   pro,
+  peones,
+  onPeonesRefetch,
   onConnectTap,
   onTrophyTap,
   onProTap,
@@ -62,9 +72,15 @@ export function PlayHubScaffold({
               <span>{mintedVictoryCount}</span>
             </button>
             {/* Peones balance + recharge — same universal economy chip as the
-                LEARN header. Self-gates on useAccount (null for guests). */}
+                LEARN header. The chip hides itself on a `guest` balance; the
+                wallet gate here keeps it out of the tree entirely. */}
             {isWalletConnected ? (
-              <PeonesBalanceChip surface="hub" showRecharge />
+              <PeonesBalanceChipView
+                state={peones}
+                onRefetch={onPeonesRefetch}
+                surface="hub"
+                showRecharge
+              />
             ) : null}
             <LanguageChip />
           </div>
