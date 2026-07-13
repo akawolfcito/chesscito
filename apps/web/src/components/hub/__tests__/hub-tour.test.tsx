@@ -17,6 +17,27 @@ function mountTargets(targets: string[]) {
   return host;
 }
 
+/** jsdom measures every element as 0x0. The panel's placement is a function of
+ *  the target's rect, so the rect has to be real for those assertions. */
+function stubRect(
+  target: string,
+  rect: { top: number; left: number; width: number; height: number },
+) {
+  const el = document.querySelector<HTMLElement>(
+    `[data-tour-target="${target}"]`,
+  );
+  if (!el) throw new Error(`no target ${target}`);
+  el.getBoundingClientRect = () =>
+    ({
+      ...rect,
+      bottom: rect.top + rect.height,
+      right: rect.left + rect.width,
+      x: rect.left,
+      y: rect.top,
+      toJSON: () => ({}),
+    }) as DOMRect;
+}
+
 /** The invariant, counted the only way that holds: `LabyrinthCompleteOverlay`
  *  is a dialog carrying `role="alert"`, so counting `role="dialog"` reports one
  *  modal while two are stacked. */
@@ -127,6 +148,46 @@ describe("<HubTour>", () => {
       "data-target",
       "challenge",
     );
+  });
+
+  it("hangs the panel below a target in the top half, so it never covers it", () => {
+    // The header gift lives at the top of the hub. A panel parked at a fixed
+    // offset from the viewport floor drifted all the way down onto Start Focus.
+    stubRect("daily", { top: 12, left: 320, width: 60, height: 60 });
+
+    render(<HubTour steps={steps} onFinish={vi.fn()} />);
+
+    const panel = screen.getByText(HUB_TOUR_COPY.dailyPending).closest(
+      ".hub-tour-panel",
+    ) as HTMLElement;
+    expect(panel.className).toContain("is-below");
+    // Below the target's bottom edge (12 + 60), never on top of it.
+    expect(Number.parseFloat(panel.style.top)).toBeGreaterThan(72);
+  });
+
+  it("lifts the panel above a target in the bottom half", () => {
+    stubRect("daily", { top: 700, left: 40, width: 200, height: 60 });
+
+    render(<HubTour steps={steps} onFinish={vi.fn()} />);
+
+    const panel = screen.getByText(HUB_TOUR_COPY.dailyPending).closest(
+      ".hub-tour-panel",
+    ) as HTMLElement;
+    expect(panel.className).toContain("is-above");
+    expect(panel.style.bottom).not.toBe("");
+  });
+
+  it("points its arrow at the target it is describing", () => {
+    stubRect("daily", { top: 12, left: 320, width: 60, height: 60 });
+
+    render(<HubTour steps={steps} onFinish={vi.fn()} />);
+
+    // Target center is 350px — off the right edge of a 320px centered panel, so
+    // the arrow clamps inside the panel instead of floating past its corner.
+    const arrow = screen.getByTestId("hub-tour-arrow");
+    const left = Number.parseFloat(arrow.style.left);
+    expect(left).toBeGreaterThan(0);
+    expect(left).toBeLessThanOrEqual(320);
   });
 
   it("adapts the copy to a player who already holds the pass and solved today", () => {

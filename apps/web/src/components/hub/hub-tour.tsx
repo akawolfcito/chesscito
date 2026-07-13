@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type CSSProperties,
+} from "react";
 import { useTranslations } from "next-intl";
 
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
@@ -29,6 +35,12 @@ function measure(target: string): Rect | null {
 
 /** Padding around the target, so the ring frames it instead of clipping it. */
 const RING_PAD = 8;
+/** Breathing room between the ring and the panel that points at it. */
+const GAP = 18;
+/** Keep in lockstep with `.hub-tour-panel` width in globals.css. */
+const PANEL_WIDTH = 320;
+/** Minimum distance from the arrow to the panel's rounded corners. */
+const ARROW_INSET = 28;
 
 /** The 3-step LEARN hub tour: a scrim with a hole over the step's target, a
  *  panel explaining it, and Next / Got it / Skip.
@@ -87,10 +99,31 @@ export function HubTour({ steps, onFinish }: HubTourProps) {
 
   if (!step) return null;
 
-  // The panel sits on the far side of the target from the screen's middle, so
-  // it never covers the thing it is describing.
+  // The panel is anchored TO THE TARGET, not to the screen: parked at a fixed
+  // offset from the viewport edge it drifted far from whatever it was
+  // describing (the header gift got a panel sitting on the floor, over Start
+  // Focus). Target in the top half → panel hangs below it; bottom half → panel
+  // sits above it. Either way it never covers the thing it points at.
+  const viewportW = typeof window === "undefined" ? 0 : window.innerWidth;
   const viewportH = typeof window === "undefined" ? 0 : window.innerHeight;
   const targetBelowFold = rect != null && rect.top > viewportH / 2;
+
+  const panelStyle: CSSProperties | undefined = rect
+    ? targetBelowFold
+      ? { bottom: Math.max(GAP, viewportH - rect.top + GAP) }
+      : { top: rect.top + rect.height + GAP }
+    : undefined;
+
+  // The arrow tracks the target's horizontal center, clamped so it stays on the
+  // panel even when the target hugs a screen edge (the daily gift does).
+  const panelWidth = Math.min(PANEL_WIDTH, viewportW - 32);
+  const panelLeft = (viewportW - panelWidth) / 2;
+  const arrowLeft = rect
+    ? Math.min(
+        Math.max(rect.left + rect.width / 2 - panelLeft, ARROW_INSET),
+        panelWidth - ARROW_INSET,
+      )
+    : panelWidth / 2;
 
   return (
     <div
@@ -128,7 +161,14 @@ export function HubTour({ steps, onFinish }: HubTourProps) {
       <div
         className={`hub-tour-panel${targetBelowFold ? " is-above" : " is-below"}`}
         data-step={step.id}
+        style={panelStyle}
       >
+        <span
+          className="hub-tour-arrow"
+          data-testid="hub-tour-arrow"
+          aria-hidden="true"
+          style={{ left: arrowLeft }}
+        />
         <p className="hub-tour-step-counter">
           {t("stepCounter", { current: index + 1, total: reachable.length })}
         </p>

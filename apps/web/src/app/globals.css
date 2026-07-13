@@ -14472,14 +14472,38 @@ button.hud-resource-chip:active:not(:disabled) {
   background-repeat: no-repeat;
 }
 
-/* The panel sits on the far side of the target from the middle of the screen,
-   so it never covers the very thing it is pointing at. */
+/* `top` / `bottom` are set inline from the measured target rect — the panel is
+   anchored to the element it describes, not to a viewport edge. These are the
+   fallbacks for the unmeasurable-target case, where there is no rect to hang
+   off and the panel simply centers itself. */
 .hub-tour-panel.is-below {
-  bottom: 12vh;
+  top: 18vh;
 }
 
 .hub-tour-panel.is-above {
-  top: 12vh;
+  bottom: 18vh;
+}
+
+/* The arrow bridges panel → ring, and sits on the panel edge that faces the
+   target: below-the-target panels point up, above-the-target panels point
+   down. `left` is set inline to the target's horizontal center. */
+.hub-tour-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  transform: translateX(-50%);
+}
+
+.hub-tour-panel.is-below .hub-tour-arrow {
+  top: -10px;
+  border-bottom: 10px solid var(--gold-300, #f3c969);
+}
+
+.hub-tour-panel.is-above .hub-tour-arrow {
+  bottom: -10px;
+  border-top: 10px solid var(--gold-300, #f3c969);
 }
 
 .hub-tour-step-counter {
