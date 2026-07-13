@@ -3,6 +3,8 @@ import {
   TransactionRevertedError,
   TransactionTimeoutError,
 } from "@/lib/contracts/transaction-helpers";
+import { decodeContractErrorName } from "@/lib/contracts/decode-contract-error";
+import { findRevertDataInError } from "@/lib/contracts/revert-data";
 
 export function isUserCancellation(error: unknown): boolean {
   const msg = error instanceof Error ? error.message : String(error);
@@ -43,9 +45,43 @@ export type TxErrorKind =
   | "insufficientFunds"
   | "network"
   | "badgeAlreadyClaimed"
+  | "cooldownActive"
+  | "dailyLimitReached"
+  | "signatureExpired"
   | "signingUnavailable"
   | "revert"
   | "unknown";
+
+/** The custom errors that have earned words of their own.
+ *
+ *  The four player-facing contracts declare 53 errors between them (see the
+ *  generated ABI). Almost all are operator or configuration faults —
+ *  `ItemDisabled`, `InvalidSigner`, `LengthMismatch` — and a player can do
+ *  nothing with them, so they keep the generic revert copy. An error belongs in
+ *  this map only if knowing its name changes what the player would DO next.
+ *
+ *  `MintCooldown` (VictoryNFT) and `CooldownActive` (Scoreboard) are two names
+ *  for one experience: wait a moment. They share the copy on purpose. */
+const CUSTOM_ERROR_KINDS: Record<string, TxErrorKind> = {
+  BadgeAlreadyClaimed: "badgeAlreadyClaimed",
+  CooldownActive: "cooldownActive",
+  MintCooldown: "cooldownActive",
+  DailyLimitReached: "dailyLimitReached",
+  SignatureExpired: "signatureExpired",
+};
+
+/** The kind named by the contract's own revert data, or `null` when there is
+ *  none, it does not decode, or the error it names has no player copy.
+ *
+ *  This is the only branch in the module that rests on evidence rather than
+ *  prose: the contract said which error it threw. It is also the only branch
+ *  that can go silently blind — the revert data rides inside a provider's
+ *  stringified message, which is not an API (see `revert-data.ts`). Every step
+ *  degrades to `null`, and `null` means "carry on as before". */
+function classifyCustomError(error: unknown): TxErrorKind | null {
+  const name = decodeContractErrorName(findRevertDataInError(error));
+  return name ? (CUSTOM_ERROR_KINDS[name] ?? null) : null;
+}
 
 /** A 4xx/5xx from a signing call, anchored to the literal "http" so it
  *  cannot match the digits of a contract address, tx hash, or call arg. */
@@ -55,21 +91,40 @@ export function classifyTxErrorKind(error: unknown): TxErrorKind {
   const msg = error instanceof Error ? error.message : String(error);
   const lower = msg.toLowerCase();
 
+  // What the contract itself said, when it said anything. Computed up front but
+  // deliberately NOT returned yet: a decoded name tells us which revert this
+  // was, never whether a revert is the right story to tell.
+  const custom = classifyCustomError(error);
+
   // Typed outcomes are decided before a single character of prose is read.
   // These errors carry a receipt: we KNOW what happened. Letting the string
   // heuristics run first would let a revert whose message mentions "cancelled"
   // or "400" be silently reclassified — the failure mode this whole module
   // exists to prevent.
-  if (isTransactionReverted(error)) return "revert";
+  if (isTransactionReverted(error)) return custom ?? "revert";
   // No verdict from the chain is not a verdict of failure. It must never
   // report as `revert`, and it must never render as success.
   if (isReceiptUnverifiable(error)) return "unknown";
 
+  // Cancellation and timeout outrank the decoded error ON PURPOSE. viem reports
+  // a wallet rejection as ContractFunctionRevertedError — a revert-shaped class
+  // for a transaction that never reached the chain — so a decoder given the
+  // first vote would turn every cancelled tx into a reported failure. These two
+  // are facts about the WALLET; the revert data is a fact about the CHAIN, and
+  // the chain only gets to speak once we know the player let it.
   if (isUserCancellation(error)) return "cancelled";
   // Timeout takes priority over generic network so the player learns
   // their tx may still be pending in the wallet rather than blaming
   // their connection.
   if (isTransactionTimeout(error)) return "timeout";
+
+  // Past this point the contract's own word beats every substring heuristic
+  // below it. This is the branch MiniPay actually walks: it rejects a reverting
+  // tx at `eth_estimateGas`, so nothing is ever mined and no typed
+  // TransactionRevertedError is ever constructed — the only evidence is the
+  // revert data buried in the message.
+  if (custom) return custom;
+
   if (lower.includes("insufficient funds") || lower.includes("exceeds balance")) {
     return "insufficientFunds";
   }

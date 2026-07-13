@@ -10,6 +10,8 @@
  * build a decoder is a decision that comes after, not before.
  */
 
+import { extractRevertDataFromMessage } from "@/lib/contracts/revert-data";
+
 /** An EIP-712 / ECDSA signature is 65 bytes → 132 chars. Revert data for two
  *  32-byte args is 138. We cannot tell them apart by length alone, so we redact
  *  long hex only inside free-text `message`, never inside a structured `data`
@@ -57,14 +59,10 @@ export type SerializedTxErrorChain = {
   revertDataInMessage: string | null;
 };
 
-/** `{"jsonrpc":"2.0","id":1,"error":{"code":3,"message":"execution reverted","data":"0x..."}}`
- *  embedded inside a viem error message. Not an API — a provider's stringified
- *  error that happens to be parseable. Treated as evidence, not as a contract. */
-const DATA_IN_MESSAGE = /"data"\s*:\s*"(0x[0-9a-fA-F]{8,})"/;
-
-export function extractRevertDataFromMessage(message: string): string | null {
-  return message.match(DATA_IN_MESSAGE)?.[1] ?? null;
-}
+/** Re-exported so the probe page and its tests keep their import surface. The
+ *  regex itself moved to `lib/contracts/revert-data.ts` when the decoder made
+ *  it production code — one copy in the repo, and it outlives this file. */
+export { extractRevertDataFromMessage };
 
 function pick(error: unknown): SerializedTxError {
   if (typeof error !== "object" || error === null) {

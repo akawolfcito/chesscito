@@ -246,6 +246,14 @@ export const RESULT_OVERLAY_COPY = {
      *  from `revert` so the user understands they ALREADY have the
      *  badge — not that the claim failed for some other reason. */
     badgeAlreadyClaimed: "You already own this badge!",
+    /** Scoreboard's CooldownActive and VictoryNFT's MintCooldown, both decoded
+     *  from the contract's revert data. The wait is short (60s on mainnet) and
+     *  the tx never left the wallet, so the player loses nothing by retrying —
+     *  which is the one thing the generic revert copy failed to tell them. */
+    cooldownActive: "Too soon. Wait a moment and try again.",
+    /** Scoreboard's DailyLimitReached. Unlike the cooldown, retrying today will
+     *  not work, so the copy must not invite it. */
+    dailyLimitReached: "You've hit today's on-chain limit. Try again tomorrow.",
     /** Surfaced when the signing endpoint (/api/sign-*) is unreachable
      *  or returns 4xx/5xx (most often missing operator envs in local
      *  dev, but also catches prod signer outages + GCM auth-tag

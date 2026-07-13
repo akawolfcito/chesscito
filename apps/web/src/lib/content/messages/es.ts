@@ -1284,6 +1284,8 @@ const messages = {
       revert: "Falló la confirmación. Esta acción puede no estar disponible ahora.",
       unknown: "Algo salió mal. Por favor reintenta",
       badgeAlreadyClaimed: "¡Ya tienes esta insignia!",
+      cooldownActive: "Muy pronto. Espera un momento y reintenta.",
+      dailyLimitReached: "Alcanzaste el límite on-chain de hoy. Reintenta mañana.",
       signingUnavailable: "Servicio de firma no disponible. Reintenta en un momento.",
       signatureExpired: "La firma expiró. Toca para obtener una nueva.",
       notEnoughPeones:
