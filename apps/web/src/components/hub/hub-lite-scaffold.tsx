@@ -146,8 +146,13 @@ export function HubLiteScaffold({
               <span>{tHud("connectLabel")}</span>
             </button>
           ) : null}
-          {/* Daily gift = corner-icon trigger (P1-B); opens the same daily sheet. */}
-          <HubDailyTile variant="corner-icon" />
+          {/* Daily gift = corner-icon trigger (P1-B); opens the same daily sheet.
+              `data-tour-target` is what the Hub Tour measures its spotlight
+              against — the wrapper, not the tile, so the ring survives the
+              tile swapping its own root between variants. */}
+          <div className="hub-lite-daily-anchor" data-tour-target="daily">
+            <HubDailyTile variant="corner-icon" />
+          </div>
         </div>
       </header>
 
@@ -204,17 +209,19 @@ export function HubLiteScaffold({
         <AppModeSwitch activeMode="learn" />
       </div>
 
-      <ChallengeCard
-        focusPassport={focusPassport}
-        challenge={challenge}
-        seasonPass={seasonPass}
-        onJoinChallenge={onJoinChallenge}
-        // Tapping the flame/streak block routes into today's focus, same as
-        // Start Focus (ritual entry point — UX spec §5 clickability).
-        onFocusTap={primaryFocus.onPress}
-      />
+      <div className="hub-lite-challenge-anchor" data-tour-target="challenge">
+        <ChallengeCard
+          focusPassport={focusPassport}
+          challenge={challenge}
+          seasonPass={seasonPass}
+          onJoinChallenge={onJoinChallenge}
+          // Tapping the flame/streak block routes into today's focus, same as
+          // Start Focus (ritual entry point — UX spec §5 clickability).
+          onFocusTap={primaryFocus.onPress}
+        />
+      </div>
 
-      <div className="hub-lite-start-focus-wrap">
+      <div className="hub-lite-start-focus-wrap" data-tour-target="start-focus">
         <button
           type="button"
           className="hub-lite-start-focus"

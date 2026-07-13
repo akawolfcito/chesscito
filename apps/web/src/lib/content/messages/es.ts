@@ -1763,6 +1763,27 @@ const messages = {
     startFocusAriaLabel: "Comienza el foco de hoy",
     trainingPathLabel: "Ruta de entrenamiento",
   },
+  HUB_TOUR_COPY: {
+    ...en.HUB_TOUR_COPY,
+    rootAriaLabel: "Recorrido del hub",
+    dailyTitle: "Táctica diaria",
+    dailyPending:
+      "Abre este regalo diario para resolver 1 táctica corta y proteger tu racha.",
+    dailyDone:
+      "Aquí vive tu Táctica diaria. Vuelve mañana por la siguiente.",
+    challengeTitle: "Reto Mental de 21 días",
+    challengeJoin:
+      "Convierte tu práctica diaria en un compromiso de 21 días y sigue tus días de foco.",
+    challengeEnrolled:
+      "Sigue tus días de foco y completa tu compromiso de 21 días.",
+    startFocusTitle: "Comenzar foco",
+    startFocus:
+      "Empieza una sesión de entrenamiento y sigue mejorando paso a paso.",
+    next: "Siguiente",
+    done: "Entendido",
+    skip: "Saltar recorrido",
+    stepCounter: "{current} de {total}",
+  },
   SETTINGS_STUB_COPY: {
     title: "Ajustes",
     comingSoonTooltip: "Próximamente",
