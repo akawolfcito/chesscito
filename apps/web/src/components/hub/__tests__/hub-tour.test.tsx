@@ -202,6 +202,75 @@ describe("<HubTour>", () => {
     );
   });
 
+  it("stops selling the moment the pass confirms, even mid-tour", () => {
+    // Found on a real device: the card read ACTIVE and the panel was still
+    // quoting "$0.99". The step OBJECTS were frozen at mount, so a pass that
+    // confirmed one tick after the tour opened kept being sold to its owner.
+    const { rerender } = render(
+      <HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
+    expect(screen.getByTestId("hub-tour-value")).toBeInTheDocument();
+
+    rerender(
+      <HubTour
+        steps={buildHubTourSteps({ ...FRESH, hasSeasonPass: true })}
+        challenge={CHALLENGE}
+        onFinish={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByTestId("hub-tour-value")).toBeNull();
+    expect(screen.queryByText(HUB_TOUR_COPY.challengeAsk)).toBeNull();
+  });
+
+  it("fits the panel to the room that actually exists, not to a 844px phone", () => {
+    // MiniPay's chrome eats the bottom of the viewport. Anchored to an assumed
+    // height, the panel — and "Got it" with it — walked off the screen, and the
+    // tour could not be finished at all.
+    const original = window.innerHeight;
+    try {
+      Object.defineProperty(window, "innerHeight", {
+        value: 600,
+        configurable: true,
+      });
+      // Card sits low: only ~200px left under it, but ~330px above it.
+      stubRect("challenge", { top: 330, left: 6, width: 378, height: 168 });
+
+      render(
+        <HubTour
+          steps={steps}
+          challenge={CHALLENGE}
+          onFinish={vi.fn()}
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
+
+      const panel = screen.getByTestId("hub-tour-value").closest(
+        ".hub-tour-panel",
+      ) as HTMLElement;
+      // It took the roomier side...
+      expect(panel.className).toContain("is-above");
+      // ...and capped itself to that room, so the button stays reachable.
+      const cap = Number.parseFloat(panel.style.maxHeight);
+      expect(cap).toBeGreaterThan(0);
+      expect(cap).toBeLessThanOrEqual(600);
+
+      // The art is the sacrifice, and it is the ONLY one: the deal and the
+      // button — the two things that make the step worth showing — survive.
+      expect(screen.queryByAltText(HUB_TOUR_COPY.challengeHeroAlt)).toBeNull();
+      expect(screen.getByTestId("hub-tour-value")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: HUB_TOUR_COPY.done }),
+      ).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, "innerHeight", {
+        value: original,
+        configurable: true,
+      });
+    }
+  });
+
   it("hangs the panel below a target in the top half, so it never covers it", () => {
     // The header gift lives at the top of the hub. A panel parked at a fixed
     // offset from the viewport floor drifted all the way down onto Start Focus.

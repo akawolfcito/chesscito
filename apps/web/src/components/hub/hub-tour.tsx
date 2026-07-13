@@ -10,7 +10,11 @@ import {
 import { useTranslations } from "next-intl";
 
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
-import type { HubTourOutcome, HubTourStep } from "@/lib/hub/hub-tour";
+import type {
+  HubTourOutcome,
+  HubTourStep,
+  HubTourStepId,
+} from "@/lib/hub/hub-tour";
 
 export type HubTourProps = {
   /** Built by `buildHubTourSteps` — the container owns the player's state. */
@@ -56,6 +60,16 @@ const GAP = 18;
 const PANEL_WIDTH = 320;
 /** Minimum distance from the arrow to the panel's rounded corners. */
 const ARROW_INSET = 28;
+/** Floor for the panel. Below this even a squeezed hero has nothing left to
+ *  give, so the panel keeps its size and overlaps the target instead of
+ *  amputating its own button — a tour you cannot finish is worse than a tour
+ *  that covers the card for a moment. */
+const MIN_PANEL_HEIGHT = 260;
+/** Room the panel needs before the hero art earns its place. Under this the art
+ *  is DROPPED, not shrunk: squeezing it just collided it with the price row. The
+ *  order of sacrifice is deliberate — the art goes first, the deal and the
+ *  button never go at all. */
+const HERO_MIN_SPACE = 340;
 
 /** The 2-step LEARN hub tour: a scrim with a hole over the step's target, a
  *  panel explaining it, and Next / Got it / Skip.
@@ -67,15 +81,23 @@ const ARROW_INSET = 28;
 export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
   const t = useTranslations("HUB_TOUR_COPY");
 
-  // A step whose target never rendered gets dropped, not pointed at: a 2-step
-  // tour beats an arrow aimed at nothing. Resolved once, at mount — the hub
-  // does not add cards mid-tour, and re-filtering per render would let a
+  // WHICH steps run is frozen at mount: a step whose target never rendered gets
+  // dropped, not pointed at, and re-filtering per render would let a
   // late-hydrating card shift the itinerary under the player's feet.
-  const [reachable] = useState<HubTourStep[]>(() =>
-    steps.filter((step) => findTarget(step.target) !== null),
+  //
+  // Only the IDs are frozen. Freezing the step OBJECTS froze their copy too, so
+  // a pass that confirmed one tick after the tour opened kept being sold to its
+  // own owner — the exact lie this component exists to avoid. The bodies are
+  // read LIVE from `steps` on every render.
+  const [reachableIds] = useState<HubTourStepId[]>(() =>
+    steps.filter((s) => findTarget(s.target) !== null).map((s) => s.id),
   );
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
+
+  const reachable = reachableIds
+    .map((id) => steps.find((s) => s.id === id))
+    .filter((s): s is HubTourStep => s !== undefined);
 
   const step = reachable[index] ?? null;
   const isLast = index === reachable.length - 1;
@@ -116,19 +138,38 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
 
   if (!step) return null;
 
-  // The panel is anchored TO THE TARGET, not to the screen: parked at a fixed
-  // offset from the viewport edge it drifted far from whatever it was
-  // describing (the header gift got a panel sitting on the floor, over Start
-  // Focus). Target in the top half → panel hangs below it; bottom half → panel
-  // sits above it. Either way it never covers the thing it points at.
+  // The panel is anchored TO THE TARGET, not to the screen. Which SIDE of the
+  // target it takes is decided by measuring both, never by a top-half/
+  // bottom-half guess: that guess assumed a 844px-tall viewport, and MiniPay's
+  // chrome eats enough of it that the panel — and with it "Got it" — walked off
+  // the bottom of a real phone. The tour became uncompletable.
+  //
+  // So: measure the room on each side, take the roomier one, and CAP the panel
+  // to what is actually there. The hero art absorbs the squeeze (it shrinks);
+  // the button never does.
   const viewportW = typeof window === "undefined" ? 0 : window.innerWidth;
   const viewportH = typeof window === "undefined" ? 0 : window.innerHeight;
-  const targetBelowFold = rect != null && rect.top > viewportH / 2;
+
+  const spaceBelow = rect ? viewportH - (rect.top + rect.height) - GAP * 2 : 0;
+  const spaceAbove = rect ? rect.top - GAP * 2 : 0;
+  const targetBelowFold = rect != null && spaceAbove > spaceBelow;
+  const available = Math.max(
+    MIN_PANEL_HEIGHT,
+    targetBelowFold ? spaceAbove : spaceBelow,
+  );
+
+  // On a short viewport (MiniPay's chrome, a small phone) the art is the first
+  // thing to go. It is the only child that can be dropped without breaking the
+  // step: the price row still states the deal and "Got it" still ends the tour.
+  const showHero = !rect || available >= HERO_MIN_SPACE;
 
   const panelStyle: CSSProperties | undefined = rect
     ? targetBelowFold
-      ? { bottom: Math.max(GAP, viewportH - rect.top + GAP) }
-      : { top: rect.top + rect.height + GAP }
+      ? {
+          bottom: Math.max(GAP, viewportH - rect.top + GAP),
+          maxHeight: available,
+        }
+      : { top: rect.top + rect.height + GAP, maxHeight: available }
     : undefined;
 
   // The arrow tracks the target's horizontal center, clamped so it stays on the
@@ -223,7 +264,7 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
           })}
         </p>
 
-        {isChallenge ? (
+        {isChallenge && showHero ? (
           // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
           <picture className="hub-tour-hero">
             <source
