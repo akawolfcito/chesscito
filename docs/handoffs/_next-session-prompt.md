@@ -1,43 +1,41 @@
-# Next session prompt — post device pass, pre Hub Tour
+# Next session prompt — post Hub Tour parte 1, esperando smoke en device
 
 Di **"continuemos"** y el agente debe leer este archivo y seguirlo.
 
 ---
 
-**Estado al arrancar:** `main` = `2e0d97cf`. Suite **5026 passing / 423 test files**.
-`tsc` limpio. **El device pass de LEARN cerró y está FIRMADO.**
+**Estado al arrancar:** el mini-tour del hub de LEARN (2 pasos: Daily → Challenge) está
+**construido y mergeado a `main`**. Suite **5073 passing / 426 test files**, `tsc` limpio.
+**El founder pushea y trae el resultado del smoke en MiniPay real.**
 
 **Leer primero:**
-- `docs/handoffs/2026-07-12-learn-device-pass-and-hub-tour-spec-handoff.md` — la sesión.
-- `docs/specs/2026-07-12-hub-tour-daily-first-spec.md` — **el spec del próximo cluster.
-  Está completo. NO re-especificar.**
+- `docs/handoffs/2026-07-12-hub-tour-part1-handoff.md` — qué se construyó, qué decisiones NO
+  se re-litigan, y los dos defectos que encontró el device.
+- `docs/specs/2026-07-12-hub-tour-daily-first-spec.md` — **la Parte 2 está especificada y NO
+  construida. No re-especificar.**
 
 ---
 
-## ▶️ Ruta: construir el Hub Tour (Daily-first)
+## ▶️ Ruta
 
-1. **Tour de 3 pasos** en el hub de LEARN (`/`): Daily → Challenge → Start Focus.
-   Llave **`chesscito:hub-tour:v1`** (NO reusar `chesscito:onboarded`: la usa el splash).
-   **Todo jugador lo ve una vez**, tenga la historia que tenga. Copy **dinámico**: a quien
-   ya compró el pass no se le vende el pass.
-2. **Cierre del Daily**: primario **Continue training**, secundario **Join Challenge**.
-3. **Recordatorios del Challenge**: CTA contextual + chip. **Nunca modal.**
+1. **Primero: el resultado del smoke.** Preguntá por él antes de escribir código. Cuatro cosas
+   a confirmar en device:
+   - El "Got it" entra en pantalla y el tour se completa.
+   - El flag `chesscito:hub-tour:v1` impide que reaparezca.
+   - Con pase ACTIVO: el paso 2 muestra el arte **sin** precio ni "Tap Join Challenge".
+   - El CTA **Join Challenge** late, y deja de latir al comprar.
+   Si algo falló, eso manda sobre todo lo demás.
 
-**La restricción que puede hundir el cluster:** el tour monta en el mismo hub que la cola
-de celebración, el welcome gift y la SeasonPassSheet. **El tour es un GATE** — no arranca
-si hay otro modal, y mientras corre nadie más monta uno. El test **debe contar
-`[aria-modal="true"]`, NUNCA `role="dialog"`** (`LabyrinthCompleteOverlay` usa
-`role="alert"`; contar roles pasa en verde con dos diálogos apilados).
-
-**Reusar, no inventar:** `VictoryPopupShell` + `PrincipalButton` + iconos de
-`public/art/**`. Lo único nuevo es el spotlight (scrim + anillo + flecha).
+2. **Después: Parte 2 del spec** — cierre del Daily (**Continue training** primario,
+   **Join Challenge** secundario) + recordatorios del Challenge (CTA contextual + chip,
+   **nunca modal**, máximo uno por día) + el test que fija que `recordDailyCompletion` sigue
+   teniendo **solo tres llamadores**.
 
 ---
 
-## Flujo de trabajo (CAMBIÓ el 2026-07-12)
+## Flujo de trabajo
 
-**Merge local a `main` + UN push.** NO pushear ramas, NO abrir PRs con auto-merge —
-disparaba un preview deploy + otro de prod por cada fix chico.
+**Merge local a `main` + UN push.** NO pushear ramas, NO abrir PRs con auto-merge.
 
 ```
 git -C <ruta> checkout -b <rama>      # trabajar, commits atómicos
@@ -54,25 +52,30 @@ El gate de calidad es **suite verde + `tsc` limpio ANTES del merge local**, no C
 - **Nunca prefijes con `cd`.** `git -C <ruta>` y `pnpm -C <ruta>`.
 - Un comando por llamada. Sin pipes, sin heredocs.
 - Typecheck: `pnpm exec tsc --noEmit` pelado.
-- `env | grep NEXT_PUBLIC` debe salir vacío. `lsof -ti:3000` vacío antes de VR/E2E.
+- `lsof -ti:3000` vacío antes de VR/E2E.
+- Para manejar el hub en navegador: server con
+  `NEXT_PUBLIC_CHESSCITO_MODE=learn NEXT_PUBLIC_CHESSCITO_LITE_MODE=true`, y el script de
+  Playwright **dentro de `apps/web/`** (ahí resuelve el módulo), borrándolo al terminar.
 
 ## Decisiones cerradas (NO re-litigar)
 
-- **Solo LEARN y PLAY se envían. FULL es interno.** Si el único entry point de un feature
-  vive en `HubScaffold` (FULL), **no existe para ningún jugador**.
-- **Los ejercicios mandan el avance de pieza; los laberintos NO retienen el foco.**
-- **El Daily ABRE la sesión.** El Lote 2.5 (Daily como cierre) está SUPERSEDED.
-- **El tour no es onboarding**: todo jugador lo ve una vez. No se suprime por tener historia.
+- **Solo LEARN y PLAY se envían. FULL es interno.**
+- **El Daily ABRE la sesión.** El Lote 2.5 está SUPERSEDED.
+- **El tour no es onboarding**: todo jugador lo ve una vez. Sin Skip.
+- **El paso 2 PIDE la venta** — es la razón por la que MiniPay nos listaría.
+- **Nunca prometer recuperación de racha.** El escudo rescata un **ejercicio fallido**. Hay un
+  test con regex sobre el copy que lo fija.
+- **Precio/escudos/días se interpolan** desde `rail-config.ts`, jamás se escriben como texto.
 - **Nunca construir recovery para el Daily-Streak.**
 
 ## La lección de esta sesión
 
-**Cuatro defectos reales con 5000+ tests en verde**, encontrados por un pase manual en
-device. Cada componente era correcto **solo**; la composición era la mentira. El más caro
-(#220) tenía tres eslabones y arreglar uno solo no lo mataba. **Un pase en device sobre un
-perfil real sigue siendo el único que ve estas cosas.**
+**Dos defectos reales con 5000+ tests en verde**, los dos por confiar en un supuesto de
+viewport en vez de medir: jsdom mide todo como 0×0 y un navegador limpio no tiene el chrome de
+MiniPay. Los tests ahora protegen **reglas** (el botón entra, el arte cede primero, el dueño
+del pase no ve precio), no píxeles.
 
 ## Si el usuario dice…
 
-- **"continuemos"** → leer el handoff + el spec, y arrancar por el tour.
+- **"continuemos"** → pedir el resultado del smoke, después arrancar la Parte 2.
 - **"qué falta"** → `docs/backlog/2026-07-10-backlog-index.md`.

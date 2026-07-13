@@ -1,74 +1,84 @@
-# Handoff — Hub Tour (Daily-first), part 1
+# Handoff — Hub Tour (Daily-first), Parte 1
 
 - **Fecha:** 2026-07-12
-- **Spec:** `docs/specs/2026-07-12-hub-tour-daily-first-spec.md` (**Parte 1 hecha, Parte 2 NO**)
-- **Rama:** `feat/hub-tour-daily-first` → mergeada a `main` local (`63c4ea9d`).
-  **SIN PUSHEAR** — esperando OK del founder, porque el push a `main` deploya prod.
+- **Spec:** `docs/specs/2026-07-12-hub-tour-daily-first-spec.md` — **Parte 1 HECHA, Parte 2 NO**
+- **Estado git:** todo mergeado a `main` **local**. **El founder pushea.**
+- **Suite:** 5073 passing / 426 files (venía de 5026/423). `tsc` limpio.
+- **Pendiente #1:** **smoke en device MiniPay real.** Es lo único que falta para cerrar.
 
-## Qué se construyó
+## Qué quedó construido
 
-El tour de **2 pasos** del hub de LEARN: **Daily → Challenge**.
-
-> **Revisión con Linita (mismo día, ya aplicada):** el paso de **Start Focus se eliminó** —
-> es el control más grande y central del hub, no cambió, y explicarlo gastaba el paso más
-> caro del tour alejando el que lleva la compra. En su lugar, **el regalo pulsa** mientras
-> el Daily esté pendiente: es lo único que sigue señalando el ritual al terminar el tour.
-> El copy del pase **interpola** `{days}/{shields}/{price}` desde `rail-config.ts` (escribir
-> "$0.99" en el texto se pudre sin poner ningún test en rojo, y el repo ya tiene dos precios
-> vivos), y el del daily **conoce la racha** (a quien lleva 12 días no se le dice "start your
-> streak"). Spec actualizado en el mismo commit.
+El mini-tour de **2 pasos** del hub de LEARN: **Daily → Challenge**.
 
 | Archivo | Qué es |
 | --- | --- |
-| `lib/hub/hub-tour.ts` | Lógica pura: itinerario, flag versionado, gate de modales |
-| `components/hub/hub-tour.tsx` | Presenter: scrim + anillo + flecha + panel |
+| `lib/hub/hub-tour.ts` | Lógica pura: itinerario, flag `chesscito:hub-tour:v1`, gate de modales |
+| `components/hub/hub-tour.tsx` | Presenter: scrim + anillo + flecha + panel + arte |
 | `components/hub/use-hub-tour.ts` | Orquestación: *si* corre, y persistencia del resultado |
-| `hub-lite-scaffold.tsx` | Los tres `data-tour-target` (daily / challenge / start-focus) |
-| `learn-hub-client.tsx` | Montaje, LEARN-only, con los steps ya construidos |
+| `hub-lite-scaffold.tsx` | Los `data-tour-target` + pulso del regalo |
+| `challenge-card.tsx` | Pulso del CTA **Join Challenge** |
+| `public/art/mini-tour/**` | `tour-challenge-title` + `tour-challenge-hero` (avif/webp/png) |
 
-**Suite: 5058 passing / 426 files** (venía de 5026/423). `tsc` limpio.
+**Paso 1 (Daily):** copy según racha — *start your streak* (racha 0) / *keep your streak alive*
+(con racha) / *come back tomorrow* (ya hecho hoy).
 
-## Las tres decisiones que quedaron en el código
+**Paso 2 (Challenge):** arte de título + hook + hero + **`21 days · +3 shields · $0.99`** +
+*"Tap Join Challenge to commit."* + **Got it**. A quien ya tiene el pase: solo el arte, sin
+términos ni pedido de compra.
 
-1. **El itinerario es fijo; el copy es lo que se adapta.** Como el tour llega también a
-   veteranos, `buildHubTourSteps` elige el cuerpo honesto por paso: a quien ya compró el
-   pass no se le vende, a quien ya resolvió el daily de hoy se lo manda a mañana.
-2. **El gate decide UNA vez por mount.** Si hay un modal en pantalla cuando el hub asienta,
-   este hub no es elegible y el tour espera al próximo. Re-evaluar en cada render lo haría
-   saltar apenas se cierra la SeasonPassSheet — una emboscada, y justo la invariante de
-   "un solo modal" que el tour existe para respetar.
-3. **El dim ES el `box-shadow` del spotlight** (spread 9999px). Un nodo abre el hueco; sin
-   `mask`, sin `clip-path`. Las anclas son cajas reales — `display: contents` no tiene caja
-   y `getBoundingClientRect()` mediría 0×0.
+## Las decisiones que hay que respetar (no re-litigar)
 
-## El defecto que los tests no vieron
+1. **Sin Skip.** Con 2 pasos, una salida al lado del primario solo desangraba jugadores de la
+   única pantalla que nombra el pase.
+2. **El paso 2 PIDE la venta.** Es la razón por la que MiniPay nos listaría. Un paso que
+   describe el reto y no pide la transacción no es un paso de venta.
+3. **Nunca prometer que el pase perdona un día perdido.** El escudo rescata un **ejercicio
+   fallido**; la recuperación de racha es *never build*. Hay un test con regex sobre el copy
+   (`challengeJoin` + `challengeValue` + `challengeAsk`) que se pone rojo si alguien lo
+   vuelve a prometer.
+4. **Precio/escudos/días se interpolan** desde `lib/payments/rail-config.ts` — la misma fuente
+   que alimenta la ChallengeCard. Escribir `$0.99` como texto se pudre sin poner ningún test
+   en rojo, y el repo tiene dos precios vivos ($0.99 pase, $1.99 PRO).
+5. **Orden de sacrificio en pantallas cortas:** primero se cae **el arte**; el precio y el
+   botón no se caen nunca.
 
-Con los 10 tests del presenter en verde, el panel estaba **anclado al borde del viewport**,
-no al target. El regalo del header vive arriba del todo → su panel aterrizaba en el **piso**
-de la pantalla, tapando Start Focus mientras decía explicar el regalo.
+## Los dos defectos que encontró el device (y que la suite no vio)
 
-Lo encontró un pase con Playwright a 390px, no la suite. **jsdom mide todo como 0×0**, así
-que ninguna aserción de layout podía fallar. Los tres tests nuevos stubean el rect del
-target — la medición que los anteriores nunca hacían.
+1. **El tour no se podía terminar.** El chrome de MiniPay come alto, la card queda más abajo
+   que en un navegador 390×844 limpio, y el panel —con el "Got it" adentro— se salía por
+   abajo. Ahora el panel **mide el espacio arriba y abajo del target**, toma el lado más
+   holgado y **se capa a lo que hay**. Verificado a 844 / 700 / 640px.
+2. **El panel le cobraba $0.99 a quien ya tenía el pase** (card en ACTIVE). `useState`
+   congelaba los **objetos** de los pasos al montar, copy incluido, así que un pase que
+   confirmaba un tick después seguía vendiéndose. Hoy solo se congelan los **IDs**
+   alcanzables; los cuerpos se leen vivos en cada render.
 
-Es la misma lección del device pass anterior: cada componente era correcto solo; la
-composición era la mentira.
+**La lección, que ya es la tercera vez que aparece:** jsdom mide todo como 0×0 y el navegador
+limpio no tiene el chrome de MiniPay. **Ningún test de layout puede fallar por un supuesto de
+viewport falso.** Lo que la suite protege ahora son las *reglas* (el botón entra, el arte cede,
+el dueño no ve precio), no los píxeles.
 
-## Lo que sigue
+## Próxima sesión
 
-1. **Parte 2 del spec, no empezada:**
+1. **Smoke en MiniPay real** (lo trae el founder):
+   - ¿Entra el "Got it" y se completa el tour?
+   - ¿El flag `chesscito:hub-tour:v1` impide que reaparezca?
+   - Con pase ACTIVO: ¿el paso 2 muestra arte **sin** precio ni "Tap Join Challenge"?
+   - ¿Late el CTA **Join Challenge** de la card, y deja de latir al comprar?
+2. **Parte 2 del spec** (no empezada):
    - Cierre del Daily: primario **Continue training**, secundario **Join Challenge**.
    - Recordatorios del Challenge: CTA contextual + chip. **Nunca modal**, máximo uno por día.
-   - Un test que fije que `recordDailyCompletion` sigue teniendo **solo tres llamadores**
-     (`daily-tactic-slot`, `hub-daily-tile`, `/challenge/daily`) — un ejercicio normal nunca
-     cuenta como Daily. Hoy se cumple por accidente, no por contrato.
-2. **Replay del tour desde Settings** (estado `replay` del spec) — no construido.
-3. **Pase en device** del tour sobre un perfil real: es lo único que ve lo que la suite no.
+   - Test que fije que `recordDailyCompletion` sigue teniendo **solo tres llamadores**
+     (`daily-tactic-slot`, `hub-daily-tile`, `/challenge/daily`): hoy se cumple por accidente,
+     no por contrato.
+3. **Replay del tour desde Settings** (estado `replay` del spec) — no construido.
 
 ## Open questions
 
-- El anillo del daily mide `y: -2` a 390px (el icono roza el techo del viewport, y el
-  padding de 8px del anillo se sale). Se ve bien, pero el borde superior queda cortado.
-  ¿Se acepta, o el icono baja unos px?
-- El flag es **local-only** por decisión del spec (no hay tabla de perfiles). Cambiar de
-  dispositivo hace reaparecer el tour una vez. Aceptado hasta que exista `player_profiles`.
+- El anillo del regalo mide `y: -2` a 390px: el borde superior queda cortado contra el techo
+  del viewport. Se ve bien igual. ¿Se acepta o baja el icono unos px?
+- El flag es **local-only** (no hay tabla de perfiles). Cambiar de dispositivo hace reaparecer
+  el tour una vez. Aceptado hasta que exista `player_profiles`.
+- El título del paso 2 es **arte con las palabras horneadas en inglés**. El `alt` lleva el
+  texto traducido (lectores de pantalla + locales no-EN), pero **visualmente un usuario ES ve
+  inglés**. Si eso molesta, hace falta una segunda pieza de arte en ES.
