@@ -54,17 +54,17 @@ export const BASE_PAD: PathPoint = { x: 48.6, y: 51.0 };
  * from the piece sprites.
  */
 export const NODE_PIXEL_OFFSET: readonly PathPoint[] = [
-  { x: -15, y: -20 }, // bottom pad (lower-left)
-  { x: -15, y: -20 }, // top pad (upper-right)
+  { x: -15, y: -23 }, // bottom pad (lower-left)
+  { x: 18, y: -8 }, // top pad (upper-right)
 ];
 
 /** Labyrinth art, per column. Same indexing as `TILE_PADS`. */
 export const LABYRINTH_PIXEL_OFFSET: readonly PathPoint[] = [
-  { x: 18, y: -10 }, // bottom pad (lower-left)
-  { x: 18, y: -10 }, // top pad (upper-right)
+  { x: -15, y: -20 }, // bottom pad (lower-left)
+  { x: 15, y: -10 }, // top pad (upper-right)
 ];
 
-export const BASE_PIXEL_OFFSET = { x: 3, y: -10 } as const;
+export const BASE_PIXEL_OFFSET = { x: 3, y: -13 } as const;
 
 /**
  * The column a node sits in: 0 = bottom/left pad, 1 = top/right pad.
