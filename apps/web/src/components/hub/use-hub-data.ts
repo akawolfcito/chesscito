@@ -144,7 +144,13 @@ export type HubSharedData = {
  *  null when `CHESSCITO_LITE_MODE` is off (Full never reads them). */
 export type HubLiteData = {
   focusPassport: HubFocusPassport | null;
-  contentLoop: { action: ContentLoopAction | null; isHydrated: boolean };
+  contentLoop: {
+    action: ContentLoopAction | null;
+    isHydrated: boolean;
+    /** The piece the loop reasoned about. Start Focus needs it to name the
+     *  piece on destinations that carry none (`?slot=daily`, null). */
+    primaryPiece: PieceId | null;
+  };
   sessionQuota: HubSessionQuota;
   seasonPass: {
     active: boolean;
@@ -293,6 +299,7 @@ export function useHubData(): HubData {
   const welcomePackage = useWelcomePackage();
   const [contentLoopAction, setContentLoopAction] = useState<ContentLoopAction | null>(null);
   const [isContentLoopHydrated, setIsContentLoopHydrated] = useState(false);
+  const [primaryPiece, setPrimaryPiece] = useState<PieceId | null>(null);
   useEffect(() => {
     if (!CHESSCITO_LITE_MODE) return;
     if (dailyProgress === null) return;
@@ -335,6 +342,7 @@ export function useHubData(): HubData {
     });
 
     setContentLoopAction(action);
+    setPrimaryPiece(piece as PieceId);
     setIsContentLoopHydrated(true);
   }, [dailyProgress, welcomePackage.isUnlocked, welcomePackage.isClaimed, sessionQuotaState]);
 
@@ -385,7 +393,11 @@ export function useHubData(): HubData {
     },
     lite: {
       focusPassport,
-      contentLoop: { action: contentLoopAction, isHydrated: isContentLoopHydrated },
+      contentLoop: {
+        action: contentLoopAction,
+        isHydrated: isContentLoopHydrated,
+        primaryPiece,
+      },
       sessionQuota: sessionQuotaState,
       seasonPass: {
         active: seasonPassStatus.active,

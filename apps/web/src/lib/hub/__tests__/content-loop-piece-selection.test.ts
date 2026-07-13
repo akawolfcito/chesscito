@@ -4,6 +4,7 @@ import {
   deriveContentLoopAction,
   selectNextAvailablePiece,
   selectPrimaryPiece,
+  startFocusDestination,
 } from "@/lib/hub/content-loop";
 import type { TrainingNode } from "@/lib/training/path";
 import type { PieceId } from "@/lib/game/types";
@@ -204,5 +205,49 @@ describe("deriveContentLoopAction — destinations follow the primary piece", ()
 
     expect(action.variant).toBe("labyrinth-ready");
     expect(action.destination).toBe("/exercises?piece=bishop");
+  });
+});
+
+/**
+ * The last door back to the rook.
+ *
+ * Selecting a primary piece and pointing the path variants at it is not enough:
+ * the variants that carry NO piece (`daily-pending` → `/exercises?slot=daily`)
+ * and the null-destination ones fall through to `/exercises` bare — where
+ * `initialPiece` defaults to "rook" and the screen opens the rook's `currentId`,
+ * the last exercise the player already solved. Confirmed on device with the
+ * piece selector already live (build f28b426).
+ *
+ * Every /exercises entry must name its piece.
+ */
+describe("startFocusDestination", () => {
+  it("keeps a destination that already names its piece", () => {
+    expect(
+      startFocusDestination("/exercises?piece=bishop", "bishop"),
+    ).toBe("/exercises?piece=bishop");
+  });
+
+  it("adds the primary piece to the daily slot — it used to land on the rook", () => {
+    expect(startFocusDestination("/exercises?slot=daily", "queen")).toBe(
+      "/exercises?slot=daily&piece=queen",
+    );
+  });
+
+  it("names the piece when the destination is null (come back tomorrow)", () => {
+    expect(startFocusDestination(null, "queen")).toBe("/exercises?piece=queen");
+  });
+
+  it("names the piece on a bare /exercises", () => {
+    expect(startFocusDestination("/exercises", "pawn")).toBe(
+      "/exercises?piece=pawn",
+    );
+  });
+
+  it("leaves a non-exercises destination alone", () => {
+    expect(startFocusDestination("/trophies", "pawn")).toBe("/trophies");
+  });
+
+  it("falls back to bare /exercises when no piece is known yet", () => {
+    expect(startFocusDestination(null, null)).toBe("/exercises");
   });
 });

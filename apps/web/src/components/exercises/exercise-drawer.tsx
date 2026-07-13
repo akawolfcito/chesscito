@@ -24,6 +24,7 @@ import {
   BASE_SEAM_OFFSET_Y,
   LABYRINTH_PIXEL_OFFSET,
   NODE_PIXEL_OFFSET,
+  padIndexForNode,
   pathLayout,
 } from '@/lib/exercises/path-layout'
 
@@ -313,6 +314,9 @@ export function ExerciseDrawer({
               // Seam slides the tile nodes with the tile trail; the base
               // node (0) stays anchored to the pinned base cap.
               const seamY = originalIndex === 0 ? 0 : BASE_SEAM_OFFSET_Y
+              // Which painted pad this node lands on. The two pads face
+              // different ways, so each column carries its own nudge.
+              const padIndex = padIndexForNode(originalIndex)
 
               if (row.kind === 'labyrinth') {
                 const node = row.value
@@ -338,7 +342,7 @@ export function ExerciseDrawer({
                     style={{
                       left: `${pos.x}%`,
                       top: `${pos.y}%`,
-                      transform: `translate(calc(-50% + ${LABYRINTH_PIXEL_OFFSET.x}px), calc(-50% + ${LABYRINTH_PIXEL_OFFSET.y + seamY}px))`,
+                      transform: `translate(calc(-50% + ${LABYRINTH_PIXEL_OFFSET[padIndex].x}px), calc(-50% + ${LABYRINTH_PIXEL_OFFSET[padIndex].y + seamY}px))`,
                     }}
                   >
                     <div className="relative flex flex-col items-center gap-0">
@@ -470,8 +474,11 @@ export function ExerciseDrawer({
                 overlayDescriptions,
               )
               // node 0 (exercise 1) sits on the base cap pad → its own knob.
+              // Every other node takes the nudge for the column it landed in.
               const exOffset =
-                originalIndex === 0 ? BASE_PIXEL_OFFSET : NODE_PIXEL_OFFSET
+                originalIndex === 0
+                  ? BASE_PIXEL_OFFSET
+                  : NODE_PIXEL_OFFSET[padIndex]
               const exOffsetY = exOffset.y + seamY
 
               return (

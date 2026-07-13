@@ -41,6 +41,7 @@ import { useAccount } from "wagmi";
 import type { PieceId } from "@/lib/game/types";
 import { useLabyrinthCatalog } from "@/lib/content/catalog-context";
 import { SPECIAL_TRAINING_ROOK_STARS } from "@/lib/progression/milestones";
+import { startFocusDestination } from "@/lib/hub/content-loop";
 import {
   isMilestoneSeedReady,
   useMilestoneSeeding,
@@ -131,6 +132,7 @@ export function LearnHubClient({
   const seasonPassStatus = lite.seasonPass;
   const contentLoopAction = contentLoop.action;
   const isContentLoopHydrated = contentLoop.isHydrated;
+  const contentLoopPrimaryPiece = contentLoop.primaryPiece;
   const sessionQuotaState = sessionQuota;
   // Direct injected connect (RainbowKit removed, P2 2026-06-12). In
   // MiniPay the auto-connect in <WalletProvider> wins before this CTA
@@ -400,7 +402,18 @@ export function LearnHubClient({
               track("hub_start_focus_tap", {
                 variant: contentLoopAction?.variant ?? null,
               });
-              router.push(contentLoopAction?.destination ?? "/exercises");
+              // NAME THE PIECE. `daily-pending` (`?slot=daily`) and the
+              // null-destination variants carry none, and a bare `/exercises`
+              // falls back to `initialPiece`'s "rook" default — which opens the
+              // rook's `currentId`, the last exercise already solved. That was
+              // the third door back into the loop, and it outlived the piece
+              // selector on device.
+              router.push(
+                startFocusDestination(
+                  contentLoopAction?.destination ?? null,
+                  contentLoopPrimaryPiece,
+                ),
+              );
             },
             contentLoop: contentLoopAction,
             isHydrated: isContentLoopHydrated,
