@@ -32,12 +32,12 @@ import { PlayBadgesSheet } from "@/components/play/play-badges-sheet";
 import { PlayLeadersSheet } from "@/components/play/play-leaders-sheet";
 import { isPlayMode } from "@/lib/feature-flags";
 import { ArenaHud } from "@/components/arena/arena-hud";
+import { ArenaPlayerRail } from "@/components/arena/arena-player-rail";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
 import { ArenaEndState, type PersistState } from "@/components/arena/arena-end-state";
 import { useTranslations } from "next-intl";
 import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
-import { CandyIcon } from "@/components/redesign/candy-icon";
 import { GemButton } from "@/components/scene-rooted/gem";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/game/arena-utils";
@@ -329,14 +329,11 @@ function ArenaPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [game.difficulty, game.gameStartedAt], // gameStartedAt forces re-roll on new match
   );
-  const youColorLabel =
-    game.playerColor === "w"
-      ? tArena("playAsWhiteName")
-      : tArena("playAsBlackName");
-  const rivalColorLabel =
-    game.playerColor === "w"
-      ? tArena("playAsBlackName")
-      : tArena("playAsWhiteName");
+  // No piece-color labels (2026-07-13): ArenaBoard flips for a black player
+  // (`flipped = playerColor === "b"`), so the player's pieces are ALWAYS at
+  // the bottom and the rival's always at the top. With the identity rails
+  // sitting on their own side of the board, position encodes the color and a
+  // "White"/"Black" tag is pure redundancy.
 
   // Matchup transition identity. `name` already resolves custom name →
   // Identity Lite nickname → visitor fallback; we suppress the visitor
@@ -983,11 +980,11 @@ function ArenaPageInner() {
     }
   }, [game, handleStartWithLoading, searchParams]);
 
-  // "Change difficulty" pill — returns to the Difficulty Selector without
-  // touching LS (the new pick overwrites it on next Enter Arena).
-  const handleChangeDifficulty = useCallback(() => {
-    game.reset();
-  }, [game]);
+  // The "change difficulty" pill is gone (2026-07-13). It was a <button>
+  // wired straight to game.reset() with NO confirmation, so a tap on what
+  // read as an informational chip destroyed the in-progress match in
+  // silence — while the back chip, which is honestly destructive, DID ask.
+  // Difficulty is now changed via back → confirm → rival selector.
 
   const leaderboardOpen = activeDockTab === "leaderboard";
   const setLeaderboardOpen = useCallback(
@@ -1431,40 +1428,36 @@ function ArenaPageInner() {
     <main className="flex h-[100dvh] flex-col items-center arena-bg">
       <div className="flex w-full max-w-[var(--app-max-width,390px)] flex-1 flex-col min-h-0">
         <ArenaHud
-          isThinking={game.isThinking}
           onBack={handleBack}
           isEndState={isEndState}
           elapsedMs={game.elapsedMs}
           showCoachHint={ENABLE_COACH}
-          youName={tArena("youLabel")}
-          youColorLabel={youColorLabel}
-          rivalName={rival.name}
-          rivalColorLabel={rivalColorLabel}
-          rivalAvatarSrc={`/art/rivals/${rival.avatar}-avatar.png`}
-          vsBelowSlot={
-            !isEndState ? (
-              <button
-                type="button"
-                onClick={handleChangeDifficulty}
-                className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left arena-difficulty-pill arena-rival-chip"
-                aria-label={`${rival.name}, ${difficultyLabel(game.difficulty)}, ${rivalElo} ELO. Tap to change.`}
-              >
-                <CandyIcon
-                  name="shield"
-                  className="candy-tray-pill-icon candy-tray-pill-icon--floating"
-                />
-                <span className="arena-rival-chip-label">
-                  {rival.name}
-                  <span className="arena-rival-chip-meta">
-                    {difficultyLabel(game.difficulty)} · {rivalElo} ELO
-                  </span>
-                </span>
-              </button>
-            ) : null
-          }
         />
 
-        <div className="relative w-full flex-1 min-h-0 flex flex-col justify-center">
+        {/* Board group — the rails and the board are ONE unit, centred
+         *  together. Each rail hugs the board edge on the side where that
+         *  player's own pieces are (ArenaBoard flips for a black player), and
+         *  that adjacency is the whole argument: position encodes the piece
+         *  colour, which is why no White/Black label is rendered anywhere.
+         *
+         *  The rails must live INSIDE this centring wrapper. Rendered outside
+         *  it, the leftover vertical space opens up between rail and board and
+         *  they drift apart into three loose elements.
+         *
+         *  Turn emphasis: it is the player's move whenever the rival is not
+         *  thinking — which correctly stays true while a promotion overlay is
+         *  open (the board is locked, but the move is still theirs). Nobody is
+         *  to move once the match is over, so neither rail is active then. */}
+        <div className="relative w-full flex-1 min-h-0 flex flex-col justify-center gap-1.5">
+          <ArenaPlayerRail
+            side="rival"
+            name={rival.name}
+            meta={`${difficultyLabel(game.difficulty)} · ${rivalElo} ELO`}
+            avatarSrc={`/art/rivals/${rival.avatar}-avatar.png`}
+            isThinking={game.isThinking && !isEndState}
+            isActive={game.isThinking && !isEndState}
+          />
+
           <div className="w-full px-2">
             <ArenaBoard
               pieces={game.pieces}
@@ -1481,6 +1474,14 @@ function ArenaPageInner() {
               playerColor={game.playerColor}
             />
           </div>
+
+          <ArenaPlayerRail
+            side="you"
+            name={tArena("youLabel")}
+            meta={playerNickname}
+            isActive={!game.isThinking && !isEndState}
+          />
+
           {game.pendingPromotion && (
             <PromotionOverlay onSelect={game.promoteWith} onCancel={game.cancelPromotion} />
           )}

@@ -36,7 +36,6 @@ function renderHud(overrides: Partial<Parameters<typeof ArenaHud>[0]> = {}) {
   const onBack = vi.fn();
   render(
     <ArenaHud
-      isThinking={false}
       onBack={onBack}
       isEndState={false}
       elapsedMs={0}
@@ -69,21 +68,31 @@ describe("ArenaHud — coach hint signpost", () => {
   });
 });
 
-describe("ArenaHud — matchup identity labels", () => {
-  it("renders You + rival names with their piece-color tags", () => {
-    renderHud({
-      youName: "You",
-      youColorLabel: "White",
-      rivalName: "Kairo",
-      rivalColorLabel: "Black",
-    });
-    expect(screen.getByText("You")).toBeInTheDocument();
-    expect(screen.getByText("White")).toBeInTheDocument();
-    expect(screen.getByText("Kairo")).toBeInTheDocument();
-    expect(screen.getByText("Black")).toBeInTheDocument();
+describe("ArenaHud — header only, no matchup art", () => {
+  // The symmetric "You ⚔ Bot" header is gone (spec
+  // docs/specs/2026-07-13-arena-hud-player-rails-spec.md).
+  //
+  // ArenaHud owns NEITHER rail. Both belong to the board group in
+  // arena/page.tsx, wrapped together with ArenaBoard in one centred flex
+  // column, because a rail's whole job is to sit hard against the side of the
+  // board where that player's pieces are. When the rival rail lived here — a
+  // sibling of the header, OUTSIDE the board's `flex-1 justify-center`
+  // wrapper — the leftover vertical space opened up BETWEEN the rail and the
+  // board, and the rails read as three loose elements instead of two sides of
+  // a match. Caught on the first screenshot, not by any test.
+
+  it("renders neither rail", () => {
+    renderHud();
+    expect(document.querySelector(".arena-rail")).toBeNull();
   });
 
-  it("omits the labels when names are not supplied", () => {
+  it("drops the VS banner — the matchup transition already did that beat", () => {
+    renderHud();
+    expect(document.querySelector(".arena-hud-matchup")).toBeNull();
+    expect(screen.queryByText(/^vs$/i)).not.toBeInTheDocument();
+  });
+
+  it("drops the piece-color labels — board orientation encodes them", () => {
     renderHud();
     expect(document.querySelector(".arena-matchup-label")).toBeNull();
   });

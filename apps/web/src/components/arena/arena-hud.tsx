@@ -1,21 +1,23 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { ArenaConfirmModal } from "@/components/arena/arena-confirm-modal";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { LottieAnimation } from "@/components/ui/lottie-animation";
-import { PlayerAvatar } from "@/components/redesign/player-avatar";
-import { WoodenBanner } from "@/components/redesign/wooden-banner";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { formatTime } from "@/lib/game/arena-utils";
-import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 import { useShieldsCount } from "@/lib/shop/use-shields-count";
 
+/** ArenaHud is the match HEADER — back chip + timer, nothing else.
+ *
+ *  It deliberately owns NEITHER identity rail. Both rails are mounted by
+ *  arena/page.tsx inside the board group, so they sit hard against the board
+ *  edge on the side where that player's own pieces are (spec
+ *  docs/specs/2026-07-13-arena-hud-player-rails-spec.md). A rail rendered here
+ *  would fall outside the board's centring wrapper and drift away from it. */
 type Props = {
-  isThinking: boolean;
   onBack: () => void;
   isEndState?: boolean;
   elapsedMs: number;
@@ -23,35 +25,7 @@ type Props = {
    *  in-match Coach signpost beneath the matchup row. Gated by
    *  NEXT_PUBLIC_ENABLE_COACH at the call site (arena/page.tsx). */
   showCoachHint?: boolean;
-  /** Optional slot rendered DIRECTLY under the central VS banner, in
-   *  the same flex column as the wooden plate. Used to anchor the
-   *  difficulty selector pill so it visually anchors the matchup
-   *  axis rather than floating below the avatar row. */
-  vsBelowSlot?: ReactNode;
-  /** Matchup identity labels above each avatar (2026-06-15): the local
-   *  player on the left, the named rival on the right, each tagged with
-   *  the piece color they play. Omitted → labels are not rendered. */
-  youName?: string;
-  youColorLabel?: string;
-  rivalName?: string;
-  rivalColorLabel?: string;
-  /** Custom rival avatar sprite (full `.png` path) for the bot slot, so the
-   *  gameplay HUD shows the SELECTED rival (Pipo/Mara/Kairo) instead of the
-   *  generic red avatar. Omitted → falls back to the red bot art. */
-  rivalAvatarSrc?: string;
 };
-
-/** Name + piece-color label that sits above a matchup avatar. */
-function MatchupLabel({ name, color }: { name: string; color?: string }) {
-  return (
-    <span className="arena-matchup-label">
-      <span className="arena-matchup-label-name">{name}</span>
-      {color ? (
-        <span className="arena-matchup-label-color">{color}</span>
-      ) : null}
-    </span>
-  );
-}
 
 /** Back chip in the canonical `candy-nav-button` envelope. During an
  *  active match, tapping it opens a clear "leave the match?" modal
@@ -201,24 +175,12 @@ export function ArenaShieldsChip() {
   );
 }
 
-export function ArenaHud({
-  isThinking,
-  onBack,
-  isEndState,
-  elapsedMs,
-  vsBelowSlot,
-  youName,
-  youColorLabel,
-  rivalName,
-  rivalColorLabel,
-  rivalAvatarSrc,
-}: Props) {
+export function ArenaHud({ onBack, isEndState, elapsedMs }: Props) {
   const t = useTranslations("ARENA_COPY");
   const needsBackConfirm = !isEndState;
-  const isProActive = useIsProActive();
 
   return (
-    <div className="arena-hud flex flex-col gap-4">
+    <div className="arena-hud flex flex-col">
       {/* Header — canonical <ContextualHeader back-control> envelope
        *  (52–64 px). The bespoke QUIT?-state back chip lives in the
        *  `backSlot` override; the live timer occupies the trailing
@@ -247,48 +209,12 @@ export function ArenaHud({
        *  smaller viewports. ArenaShieldsChip export preserved for the
        *  /dev/arena-shields-chip fixture. */}
 
-      {/* Row 2: Matchup art (Heads) — Symmetric Battle Header */}
-      <div className="arena-hud-matchup relative flex items-end justify-between px-2 pt-2">
-        <div className="flex flex-1 flex-col items-center justify-end gap-1">
-          {youName ? (
-            <MatchupLabel name={youName} color={youColorLabel} />
-          ) : null}
-          <PlayerAvatar
-            variant="you"
-            pro={isProActive}
-            className="h-24 w-24 drop-shadow-xl"
-          />
-        </div>
-
-        <div className="flex shrink-0 flex-col items-center justify-center gap-2 self-center">
-          <WoodenBanner variant="vs" className="scale-90 drop-shadow-lg" />
-          {vsBelowSlot}
-        </div>
-
-        <div className="flex flex-1 flex-col items-center justify-end gap-1">
-          {rivalName ? (
-            <MatchupLabel name={rivalName} color={rivalColorLabel} />
-          ) : null}
-          <div className="relative">
-            <PlayerAvatar
-              variant="bot"
-              pro={isProActive}
-              customSrc={rivalAvatarSrc}
-              alt={rivalName}
-              className="h-24 w-24 drop-shadow-xl"
-            />
-            {isThinking && (
-              <span className="pointer-events-none absolute -top-2 -right-2 flex h-8 w-12">
-                <LottieAnimation
-                  src="/animations/sandy-loading.lottie"
-                  loop
-                  className="h-full w-full"
-                />
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* The symmetric "You ⚔ Bot" matchup row + VS banner that used to sit
+       *  here are gone: ArenaMatchupTransition (2026-07-13) already performs
+       *  the VS reveal on entry, so the in-match HUD was repeating a beat the
+       *  player had just watched — at the cost of four rows of chrome above
+       *  the board. The identity rails that replace it live with the board in
+       *  arena/page.tsx (see the Props note above). */}
     </div>
   );
 }

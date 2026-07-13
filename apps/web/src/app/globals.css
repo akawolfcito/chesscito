@@ -4759,9 +4759,8 @@
   margin-inline: auto;
 }
 
-.arena-hud-matchup {
-  min-height: 0;
-}
+/* `.arena-hud-matchup` retired 2026-07-13 — the symmetric You-vs-Bot row it
+ * sized is gone, replaced by the player rails (see .arena-rail). */
 
 /* ── Arena action bar (below board) ── */
 .arena-action-bar {
@@ -9994,22 +9993,75 @@ button.hud-resource-chip:active:not(:disabled) {
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-/* Gameplay HUD matchup identity labels (2026-06-15) — "You / White" vs
- * "{Rival} / Black" above the avatars so the match reads as a named
- * rivalry, not a faceless AI. */
-.arena-matchup-label {
+/* Arena player rails (2026-07-13) — spec:
+ * docs/specs/2026-07-13-arena-hud-player-rails-spec.md
+ *
+ * Replaces the symmetric "You ⚔ Bot" header (.arena-matchup-label,
+ * .arena-rival-chip and the VS banner, all retired). The rival rail sits
+ * ABOVE the board and the player rail BELOW it — each on the side where its
+ * own pieces are, since ArenaBoard flips for a black player. Position is
+ * therefore what encodes the piece color, which is why there is no
+ * White/Black label here and no color ring on the avatar.
+ *
+ * The avatar perimeter is NOT available: PlayerAvatar layers the PRO
+ * ornament frame there. Never add a color ring or a rivals.ts difficulty
+ * frame to these avatars — see spec §4. */
+.arena-rail {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  line-height: 1;
-  text-align: center;
-  max-width: 7.5rem;
+  gap: 0.6rem;
+  padding: 0.3rem 0.55rem;
+  /* Fixed height whether or not the meta line renders. A visitor has no
+   * Identity Lite nickname; if the rail collapsed to one line, the board
+   * would jump vertically between a connected and a disconnected session. */
+  min-height: 3.9rem;
+  border-radius: 0.9rem;
+  /* Inactive rails recede; the active one is lifted below. */
+  opacity: 0.72;
+  transition:
+    opacity 180ms ease-out,
+    background-color 180ms ease-out;
 }
 
-.arena-matchup-label-name {
+/* Turn indicator — the rail of whoever must move is lifted out of the
+ * background. Derived purely from isThinking + isEndState, so it costs no new
+ * state. Neither rail is active once the match is over. */
+.arena-rail.is-active {
+  opacity: 1;
+  background-color: rgba(255, 246, 224, 0.16);
+}
+
+.arena-rail-avatar {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+}
+
+/* Thinking animation, pinned to the rival avatar's top-right corner. */
+.arena-rail-thinking {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.6rem;
+  display: flex;
+  width: 2.6rem;
+  height: 1.7rem;
+  pointer-events: none;
+}
+
+.arena-rail-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.arena-rail-name {
   font-family: var(--font-game-action, system-ui, sans-serif);
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 950;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
   color: #fff8e9;
   text-shadow:
     0 2px 0 rgba(82, 43, 8, 0.5),
@@ -10017,43 +10069,21 @@ button.hud-resource-chip:active:not(:disabled) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
 }
 
-.arena-matchup-label-color {
-  margin-top: 2px;
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: rgba(63, 34, 8, 0.82);
-  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.5);
-}
-
-/* Rival chip under the VS banner (2026-06-15) — "{name}" over
- * "{difficulty} · {elo} ELO". Reuses the HUD pill envelope but carries a
- * stacked two-line label, so it gets a touch more height than the
- * single-line chips. Tap still opens the change-difficulty selector. */
-.arena-rival-chip {
-  min-height: 2.7rem;
-}
-
-.arena-rival-chip-label {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  line-height: 1.05;
+/* Rival: "Easy · 477 ELO". Player: the Identity Lite nickname, which can run
+ * long — it truncates rather than wrapping, because a second line would push
+ * the board. */
+.arena-rail-meta {
   font-family: var(--font-game-action, system-ui, sans-serif);
-  font-weight: 900;
-  font-size: 0.84rem;
-  color: rgba(63, 34, 8, 0.95);
-  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
-}
-
-.arena-rival-chip-meta {
-  font-size: 0.6rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 800;
   letter-spacing: 0.01em;
-  color: rgba(86, 44, 6, 0.72);
-  text-shadow: none;
+  color: rgba(255, 240, 210, 0.78);
+  text-shadow: 0 1px 0 rgba(82, 43, 8, 0.42);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .arena-scaffold-error {
