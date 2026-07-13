@@ -31,19 +31,39 @@ transacción).
 
 ---
 
-## Parte 1 — El tour (3 pasos)
+## Parte 1 — El tour (2 pasos)
 
-En el HUB de LEARN (`/`). Botones: **Next** (1–2), **Got it** (3), **Skip tour** en los tres.
+> **Revisión 2026-07-12 (founder + Linita):** el tour baja de 3 pasos a **2**. El paso de
+> **Start Focus se elimina**: es el control más grande, brillante y central del hub, y no
+> cambió — un panel explicándolo gasta el paso más caro del tour en lo único que nadie
+> necesita que le expliquen, y aleja el paso que lleva la compra. El tour enseña el ritual
+> gratis y después vende el compromiso. Nada más.
+>
+> Al desaparecer ese paso, **el regalo queda con un pulso** mientras el Daily esté pendiente:
+> es lo único que sigue señalando el ritual cuando el tour termina.
 
-| # | Señala | Copy — estado A | Copy — estado B |
-| --- | --- | --- | --- |
-| 1 | Regalo del header | **Daily pendiente:** "Open this daily gift to solve 1 short tactic and protect your streak." | **Daily hecho hoy:** "Your Daily Tactic lives here. Come back tomorrow for the next one." |
-| 2 | Mind Challenge card | **No inscrito — Join Challenge:** "Turn your daily practice into a 21-day commitment and track your focus days." | **Inscrito — Mind Challenge:** "Track your focus days and complete your 21-day commitment." |
-| 3 | CTA Start Focus | "Begin a training session and keep improving step by step." | — |
+En el HUB de LEARN (`/`). Botones: **Next** (paso 1), **Got it** (paso 2), **Skip tour** en
+ambos. El contador dice **1 OF 2 / 2 OF 2** — se deriva de la cantidad de pasos alcanzables,
+no está escrito a mano.
+
+| # | Señala | Copy |
+| --- | --- | --- |
+| 1 | Regalo del header | **Racha 0:** *Start your streak today* — "Open the daily gift and solve 1 quick tactic. Come back each day to keep your streak alive." |
+| | | **Con racha:** *Daily Tactic* — "Open your daily gift, solve 1 quick tactic, and keep your streak alive." |
+| | | **Daily hecho hoy:** *Daily Tactic* — "Your Daily Tactic lives here. Come back tomorrow for the next one." |
+| 2 | Mind Challenge card | **No inscrito:** *Join the 21-Day Challenge* — "Commit to {days} focus days, track your progress, and get {shields} shields with your {price} pass." |
+| | | **Inscrito:** *21-Day Mind Challenge* — "Track your focus days and complete your {days}-day commitment." |
 
 **El copy es dinámico por necesidad, no por lujo.** Como todo jugador recibe el tour,
 muchos ya tendrán el pass o ya habrán hecho el Daily de hoy. Mostrarles "Join Challenge"
-cuando ya pagaron es mentirles.
+cuando ya pagaron es mentirles — y decirle *"start your streak"* a alguien que lleva 12 días
+también.
+
+**`{days}` / `{shields}` / `{price}` se interpolan desde `lib/payments/rail-config.ts`**, la
+misma fuente que alimenta la ChallengeCard. Escribir `$0.99` como texto en el copy lo
+pudriría en silencio el día que el precio se mueva, **sin poner un solo test en rojo** — y el
+repo ya tiene dos precios vivos ($0.99 el pase, $1.99 PRO), así que la confusión no es
+hipotética.
 
 **El tour no navega.** Es informativo: señala, explica, avanza. Los spotlights no son
 clickables (ver No-goals).

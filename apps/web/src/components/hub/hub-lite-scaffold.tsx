@@ -149,8 +149,20 @@ export function HubLiteScaffold({
           {/* Daily gift = corner-icon trigger (P1-B); opens the same daily sheet.
               `data-tour-target` is what the Hub Tour measures its spotlight
               against — the wrapper, not the tile, so the ring survives the
-              tile swapping its own root between variants. */}
-          <div className="hub-lite-daily-anchor" data-tour-target="daily">
+              tile swapping its own root between variants.
+
+              The pulse is the tour's last word: once it ends, nothing else on
+              the hub points at the daily, and the tour no longer spends a step
+              on Start Focus. It runs only while the daily is actually pending —
+              a solved daily that keeps pulsing is a nag, not a cue. */}
+          <div
+            className={`hub-lite-daily-anchor${
+              !focusPassport.isLoading && !focusPassport.todayDone
+                ? " is-pending"
+                : ""
+            }`}
+            data-tour-target="daily"
+          >
             <HubDailyTile variant="corner-icon" />
           </div>
         </div>
@@ -221,7 +233,7 @@ export function HubLiteScaffold({
         />
       </div>
 
-      <div className="hub-lite-start-focus-wrap" data-tour-target="start-focus">
+      <div className="hub-lite-start-focus-wrap">
         <button
           type="button"
           className="hub-lite-start-focus"

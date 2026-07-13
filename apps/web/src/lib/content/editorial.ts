@@ -3254,23 +3254,30 @@ export const HUB_LITE_COPY = {
   trainingPathLabel: "Training Path",
 } as const;
 
-/** The 3-step hub tour. Two bodies per step where the player's state can make
- *  one of them a lie (they already solved the daily; they already hold the
- *  pass). See docs/specs/2026-07-12-hub-tour-daily-first-spec.md. */
+/** The 2-step hub tour: the free ritual, then the 21-day commitment.
+ *
+ *  Every body has a variant for each way the player's state could make it a
+ *  lie — they already solved today's daily, they are mid-streak, they already
+ *  hold the pass. `{days}` / `{shields}` / `{price}` are INTERPOLATED from the
+ *  same season-pass config that feeds the ChallengeCard (rail-config.ts).
+ *  Typing "$0.99" here would rot silently the day pricing moves, and no test
+ *  would go red. See docs/specs/2026-07-12-hub-tour-daily-first-spec.md. */
 export const HUB_TOUR_COPY = {
   rootAriaLabel: "Hub tour",
+  dailyTitleStart: "Start your streak today",
   dailyTitle: "Daily Tactic",
-  dailyPending:
-    "Open this daily gift to solve 1 short tactic and protect your streak.",
+  dailyStart:
+    "Open the daily gift and solve 1 quick tactic. Come back each day to keep your streak alive.",
+  dailyKeep:
+    "Open your daily gift, solve 1 quick tactic, and keep your streak alive.",
   dailyDone:
     "Your Daily Tactic lives here. Come back tomorrow for the next one.",
-  challengeTitle: "21-Day Mind Challenge",
+  challengeTitle: "Join the 21-Day Challenge",
+  challengeTitleEnrolled: "21-Day Mind Challenge",
   challengeJoin:
-    "Turn your daily practice into a 21-day commitment and track your focus days.",
+    "Commit to {days} focus days, track your progress, and get {shields} shields with your {price} pass.",
   challengeEnrolled:
-    "Track your focus days and complete your 21-day commitment.",
-  startFocusTitle: "Start Focus",
-  startFocus: "Begin a training session and keep improving step by step.",
+    "Track your focus days and complete your {days}-day commitment.",
   next: "Next",
   done: "Got it",
   skip: "Skip tour",

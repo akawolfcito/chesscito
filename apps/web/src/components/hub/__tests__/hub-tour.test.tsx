@@ -45,7 +45,12 @@ function modalCount() {
   return document.querySelectorAll('[aria-modal="true"]').length;
 }
 
-const ALL_TARGETS = ["daily", "challenge", "start-focus"];
+const ALL_TARGETS = ["daily", "challenge"];
+
+/** The pass's real terms, as the ChallengeCard receives them. */
+const CHALLENGE = { days: 21, shields: 3, price: "$0.99" };
+
+const FRESH = { dailyDone: false, streak: 0, hasSeasonPass: false };
 
 beforeEach(() => {
   mountTargets(ALL_TARGETS);
@@ -57,29 +62,51 @@ afterEach(() => {
 });
 
 describe("<HubTour>", () => {
-  const steps = buildHubTourSteps({ dailyDone: false, hasSeasonPass: false });
+  const steps = buildHubTourSteps(FRESH);
 
   it("is the only modal on screen while it runs", () => {
-    render(<HubTour steps={steps} onFinish={vi.fn()} />);
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
     expect(modalCount()).toBe(1);
   });
 
-  it("opens on the daily and walks to start focus", () => {
-    render(<HubTour steps={steps} onFinish={vi.fn()} />);
-    expect(screen.getByText(HUB_TOUR_COPY.dailyPending)).toBeInTheDocument();
+  it("opens on the daily and closes on the challenge — two steps, not three", () => {
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
+    expect(screen.getByText(HUB_TOUR_COPY.dailyStart)).toBeInTheDocument();
+    expect(screen.getByText("1 of 2")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-    expect(screen.getByText(HUB_TOUR_COPY.challengeJoin)).toBeInTheDocument();
 
+    expect(screen.getByText("2 of 2")).toBeInTheDocument();
+    // Last step → the primary closes the tour instead of promising another one.
+    expect(
+      screen.getByRole("button", { name: HUB_TOUR_COPY.done }),
+    ).toBeInTheDocument();
+  });
+
+  it("quotes the pass's real terms instead of a hardcoded price", () => {
+    // The whole point of interpolating: a "$0.99" typed into the copy would
+    // survive a price change with the suite green. Feed it different terms and
+    // the panel must say THOSE.
+    render(
+      <HubTour
+        steps={steps}
+        challenge={{ days: 30, shields: 5, price: "$2.49" }}
+        onFinish={vi.fn()}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-    expect(screen.getByText(HUB_TOUR_COPY.startFocus)).toBeInTheDocument();
+
+    expect(
+      screen.getByText(
+        "Commit to 30 focus days, track your progress, and get 5 shields with your $2.49 pass.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("closes on Got it and reports the tour completed", () => {
     const onFinish = vi.fn();
-    render(<HubTour steps={steps} onFinish={onFinish} />);
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={onFinish} />);
 
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.done }));
 
@@ -88,7 +115,7 @@ describe("<HubTour>", () => {
 
   it("reports a skip as a skip — it is a decision, not a postponement", () => {
     const onFinish = vi.fn();
-    render(<HubTour steps={steps} onFinish={onFinish} />);
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={onFinish} />);
 
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.skip }));
 
@@ -96,31 +123,30 @@ describe("<HubTour>", () => {
   });
 
   it("offers Skip on every step, not just the first", () => {
-    render(<HubTour steps={steps} onFinish={vi.fn()} />);
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
     expect(
       screen.getByRole("button", { name: HUB_TOUR_COPY.skip }),
     ).toBeInTheDocument();
   });
 
-  it("skips a step whose target never mounted — a 2-step tour beats an arrow pointing at nothing", () => {
+  it("skips a step whose target never mounted — a 1-step tour beats an arrow pointing at nothing", () => {
     document.body.innerHTML = "";
-    mountTargets(["daily", "start-focus"]);
+    mountTargets(["daily"]);
 
-    render(<HubTour steps={steps} onFinish={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
 
-    expect(screen.queryByText(HUB_TOUR_COPY.challengeJoin)).toBeNull();
-    expect(screen.getByText(HUB_TOUR_COPY.startFocus)).toBeInTheDocument();
-    // Last reachable step → the primary is the closer, not another Next.
-    expect(screen.getByRole("button", { name: HUB_TOUR_COPY.done })).toBeInTheDocument();
+    expect(screen.getByText("1 of 1")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: HUB_TOUR_COPY.done }),
+    ).toBeInTheDocument();
   });
 
   it("finishes immediately when no target is on screen at all", () => {
     document.body.innerHTML = "";
     const onFinish = vi.fn();
 
-    render(<HubTour steps={steps} onFinish={onFinish} />);
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={onFinish} />);
 
     expect(onFinish).toHaveBeenCalledWith("completed");
     expect(modalCount()).toBe(0);
@@ -128,16 +154,16 @@ describe("<HubTour>", () => {
 
   it("ignores a tap outside the panel — the tour exits by Skip or by finishing", () => {
     const onFinish = vi.fn();
-    render(<HubTour steps={steps} onFinish={onFinish} />);
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={onFinish} />);
 
     fireEvent.click(screen.getByTestId("hub-tour-scrim"));
 
     expect(onFinish).not.toHaveBeenCalled();
-    expect(screen.getByText(HUB_TOUR_COPY.dailyPending)).toBeInTheDocument();
+    expect(screen.getByText(HUB_TOUR_COPY.dailyStart)).toBeInTheDocument();
   });
 
   it("spotlights the target of the current step", () => {
-    render(<HubTour steps={steps} onFinish={vi.fn()} />);
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
     expect(screen.getByTestId("hub-tour-spotlight")).toHaveAttribute(
       "data-target",
       "daily",
@@ -155,11 +181,11 @@ describe("<HubTour>", () => {
     // offset from the viewport floor drifted all the way down onto Start Focus.
     stubRect("daily", { top: 12, left: 320, width: 60, height: 60 });
 
-    render(<HubTour steps={steps} onFinish={vi.fn()} />);
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
 
-    const panel = screen.getByText(HUB_TOUR_COPY.dailyPending).closest(
-      ".hub-tour-panel",
-    ) as HTMLElement;
+    const panel = screen
+      .getByText(HUB_TOUR_COPY.dailyStart)
+      .closest(".hub-tour-panel") as HTMLElement;
     expect(panel.className).toContain("is-below");
     // Below the target's bottom edge (12 + 60), never on top of it.
     expect(Number.parseFloat(panel.style.top)).toBeGreaterThan(72);
@@ -168,11 +194,11 @@ describe("<HubTour>", () => {
   it("lifts the panel above a target in the bottom half", () => {
     stubRect("daily", { top: 700, left: 40, width: 200, height: 60 });
 
-    render(<HubTour steps={steps} onFinish={vi.fn()} />);
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
 
-    const panel = screen.getByText(HUB_TOUR_COPY.dailyPending).closest(
-      ".hub-tour-panel",
-    ) as HTMLElement;
+    const panel = screen
+      .getByText(HUB_TOUR_COPY.dailyStart)
+      .closest(".hub-tour-panel") as HTMLElement;
     expect(panel.className).toContain("is-above");
     expect(panel.style.bottom).not.toBe("");
   });
@@ -180,7 +206,7 @@ describe("<HubTour>", () => {
   it("points its arrow at the target it is describing", () => {
     stubRect("daily", { top: 12, left: 320, width: 60, height: 60 });
 
-    render(<HubTour steps={steps} onFinish={vi.fn()} />);
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
 
     // Target center is 350px — off the right edge of a 320px centered panel, so
     // the arrow clamps inside the panel instead of floating past its corner.
@@ -190,12 +216,18 @@ describe("<HubTour>", () => {
     expect(left).toBeLessThanOrEqual(320);
   });
 
-  it("adapts the copy to a player who already holds the pass and solved today", () => {
-    const veteran = buildHubTourSteps({ dailyDone: true, hasSeasonPass: true });
-    render(<HubTour steps={veteran} onFinish={vi.fn()} />);
+  it("tells a veteran to keep the streak and does not re-sell a pass they own", () => {
+    const veteran = buildHubTourSteps({
+      dailyDone: false,
+      streak: 12,
+      hasSeasonPass: true,
+    });
+    render(<HubTour steps={veteran} challenge={CHALLENGE} onFinish={vi.fn()} />);
 
-    expect(screen.getByText(HUB_TOUR_COPY.dailyDone)).toBeInTheDocument();
+    expect(screen.getByText(HUB_TOUR_COPY.dailyKeep)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-    expect(screen.getByText(HUB_TOUR_COPY.challengeEnrolled)).toBeInTheDocument();
+    expect(
+      screen.getByText("Track your focus days and complete your 21-day commitment."),
+    ).toBeInTheDocument();
   });
 });

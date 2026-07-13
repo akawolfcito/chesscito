@@ -376,9 +376,25 @@ export function LearnHubClient({
     () =>
       buildHubTourSteps({
         dailyDone: liteFocusPassport.todayDone,
+        // A veteran mid-streak is invited to KEEP it, never to "start" one.
+        streak: liteFocusPassport.streak,
         hasSeasonPass: seasonPassStatus.active,
       }),
-    [liteFocusPassport.todayDone, seasonPassStatus.active],
+    [
+      liteFocusPassport.todayDone,
+      liteFocusPassport.streak,
+      seasonPassStatus.active,
+    ],
+  );
+  // The pass's terms come from the same meta the ChallengeCard renders
+  // (rail-config.ts), so the tour cannot quote a price the card contradicts.
+  const hubTourChallenge = useMemo(
+    () => ({
+      days: lite.challenge.durationDays,
+      shields: lite.challenge.shieldBonus,
+      price: lite.challenge.priceLabel,
+    }),
+    [lite.challenge],
   );
 
   return (
@@ -575,7 +591,11 @@ export function LearnHubClient({
         />
       )}
       {CHESSCITO_LITE_MODE && hubTour.open ? (
-        <HubTour steps={hubTourSteps} onFinish={hubTour.finish} />
+        <HubTour
+          steps={hubTourSteps}
+          challenge={hubTourChallenge}
+          onFinish={hubTour.finish}
+        />
       ) : null}
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
