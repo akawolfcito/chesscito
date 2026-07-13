@@ -2116,9 +2116,6 @@ export const PRO_COPY = {
   taglineSub: "Your monthly training pass.",
   subtitle: "Monthly pass that keeps Chesscito open. Renew when you want.",
   priceLabel: "$1.99 USD / 30 days",
-  /** M1 funnel (Commit 5) — secondary pricing line that surfaces the
-   *  per-day cost without replacing the canonical 30-day price. */
-  priceSubLabel: "≈ 6 cents a day",
   durationLabel: "30 days",
   ctaBuy: "Activate PRO",
   /** Short CTA label used when the wallet is not connected — fits a
