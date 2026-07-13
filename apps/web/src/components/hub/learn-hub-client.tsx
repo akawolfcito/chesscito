@@ -51,6 +51,12 @@ import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import { useHubData } from "@/components/hub/use-hub-data";
 import { HubLiteScaffold } from "@/components/hub/hub-lite-scaffold";
+import { useHubTour } from "@/components/hub/use-hub-tour";
+import { buildHubTourSteps } from "@/lib/hub/hub-tour";
+const HubTour = dynamic(
+  () => import("@/components/hub/hub-tour").then((m) => m.HubTour),
+  { ssr: false },
+);
 const SeasonPassSheet = CHESSCITO_LITE_MODE
   ? dynamic(
       () => import("@/components/payments/season-pass-sheet").then((m) => m.SeasonPassSheet),
@@ -358,6 +364,23 @@ export function LearnHubClient({
     isLoading: true,
   };
 
+  // The Hub Tour (LEARN only). Held back until BOTH signals it narrates have
+  // resolved — the daily's todayDone and the season pass — because its copy is
+  // the product decision: a player who already holds the pass is never sold it
+  // again, and one who already solved today's daily is pointed at tomorrow.
+  const hubTour = useHubTour({
+    enabled: CHESSCITO_LITE_MODE,
+    ready: !liteFocusPassport.isLoading && !seasonPassStatus.loading,
+  });
+  const hubTourSteps = useMemo(
+    () =>
+      buildHubTourSteps({
+        dailyDone: liteFocusPassport.todayDone,
+        hasSeasonPass: seasonPassStatus.active,
+      }),
+    [liteFocusPassport.todayDone, seasonPassStatus.active],
+  );
+
   return (
     <>
       {CHESSCITO_LITE_MODE ? (
@@ -551,6 +574,9 @@ export function LearnHubClient({
           }}
         />
       )}
+      {CHESSCITO_LITE_MODE && hubTour.open ? (
+        <HubTour steps={hubTourSteps} onFinish={hubTour.finish} />
+      ) : null}
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
         <SheetContent

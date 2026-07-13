@@ -14405,3 +14405,115 @@ button.hud-resource-chip:active:not(:disabled) {
   position: relative;
   z-index: 1;
 }
+
+/* Tour anchors. Layout-transparent by construction: the daily wrapper is a flex
+   box inside the header's flex row, the challenge wrapper is a full-width flex
+   item exactly like the card it wraps. They exist so the spotlight has a stable
+   element to measure — `display: contents` would NOT work here, it has no box
+   and getBoundingClientRect() would return 0x0. */
+.hub-lite-daily-anchor {
+  display: flex;
+  align-items: center;
+}
+
+.hub-lite-challenge-anchor {
+  display: flex;
+  width: 100%;
+}
+
+/* ── Hub Tour (LEARN) ────────────────────────────────────────────────────────
+   The 3-step intro to the Daily-first hub. The scrim itself is NOT dimmed:
+   the dim is the spotlight's outer box-shadow, which is what cuts the hole
+   over the target. One node, one paint — no mask, no clip-path. */
+.hub-tour-scrim {
+  position: fixed;
+  inset: 0;
+  /* Above the PersistentDock (z-60), same tier as the other app modals. */
+  z-index: 70;
+  /* Swallows every tap outside the panel: the tour exits by Skip or by
+     finishing, never by a stray backdrop tap. */
+  pointer-events: auto;
+}
+
+.hub-tour-spotlight {
+  position: absolute;
+  border-radius: 16px;
+  border: 2px solid var(--gold-300, #f3c969);
+  /* The 9999px spread IS the scrim — everything outside the ring is dimmed to
+     the same 60% black the rest of the app uses (--overlay-scrim). */
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.60);
+  pointer-events: none;
+  transition: top 180ms ease, left 180ms ease, width 180ms ease, height 180ms ease;
+}
+
+/* The target measured to nothing (hidden ancestor). Dim the screen anyway so
+   the panel stays legible, but do not draw a 0x0 ring in the corner. */
+.hub-tour-spotlight.is-unmeasured {
+  inset: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background-color: rgba(0, 0, 0, 0.60);
+}
+
+.hub-tour-panel {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(320px, calc(100% - 32px));
+  padding: 20px 22px 16px;
+  text-align: center;
+  background-image: image-set(
+    url("/art/new-assets-chesscito/paneles/panel-bg1.avif") type("image/avif"),
+    url("/art/new-assets-chesscito/paneles/panel-bg1.webp") type("image/webp"),
+    url("/art/new-assets-chesscito/paneles/panel-bg1.png") type("image/png")
+  );
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+/* The panel sits on the far side of the target from the middle of the screen,
+   so it never covers the very thing it is pointing at. */
+.hub-tour-panel.is-below {
+  bottom: 12vh;
+}
+
+.hub-tour-panel.is-above {
+  top: 12vh;
+}
+
+.hub-tour-step-counter {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(110, 65, 15, 0.65);
+}
+
+.hub-tour-title {
+  margin-top: 2px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #3f2208;
+}
+
+.hub-tour-body {
+  margin-top: 8px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: rgba(63, 34, 8, 0.88);
+}
+
+.hub-tour-primary {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.hub-tour-skip {
+  margin-top: 10px;
+  padding: 6px 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(110, 65, 15, 0.72);
+  text-decoration: underline;
+}
