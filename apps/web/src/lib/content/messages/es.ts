@@ -1777,12 +1777,11 @@ const messages = {
     challengeTitle: "Únete al Reto de 21 días",
     challengeTitleEnrolled: "Reto Mental de 21 días",
     challengeJoin:
-      "Comprométete a {days} días de foco, sigue tu progreso y recibe {shields} escudos con tu pase de {price}.",
+      "Desbloquea tu pase de {price}: {days} días de foco registrados, más {shields} escudos para rescatar un ejercicio fallido. Toca Unirme al Reto para comprometerte.",
     challengeEnrolled:
       "Sigue tus días de foco y completa tu compromiso de {days} días.",
     next: "Siguiente",
     done: "Entendido",
-    skip: "Saltar recorrido",
     stepCounter: "{current} de {total}",
   },
   SETTINGS_STUB_COPY: {

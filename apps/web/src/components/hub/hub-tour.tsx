@@ -110,7 +110,6 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
     setIndex((i) => i + 1);
   }, [isLast, onFinish]);
 
-  const handleSkip = useCallback(() => onFinish("skipped"), [onFinish]);
 
   if (!step) return null;
 
@@ -196,6 +195,10 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
           })}
         </p>
 
+        {/* No Skip. At two steps the tour is shorter than the escape hatch was
+            worth: an exit link next to the primary just bled players out of the
+            one screen that names the ritual and the pass. Two taps and it is
+            over. */}
         <PrincipalButton
           size="medium"
           onClick={handleNext}
@@ -203,11 +206,6 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
         >
           {isLast ? t("done") : t("next")}
         </PrincipalButton>
-
-        {/* Skip lives on every step: the tour never becomes a wall. */}
-        <button type="button" className="hub-tour-skip" onClick={handleSkip}>
-          {t("skip")}
-        </button>
       </div>
     </div>
   );

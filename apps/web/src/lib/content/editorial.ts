@@ -3274,13 +3274,20 @@ export const HUB_TOUR_COPY = {
     "Your Daily Tactic lives here. Come back tomorrow for the next one.",
   challengeTitle: "Join the 21-Day Challenge",
   challengeTitleEnrolled: "21-Day Mind Challenge",
+  /** The one screen that asks for money. It names the price, what the money
+   *  buys, and the exact button to press — a description of the challenge that
+   *  forgets to ask for the sale is not a sales step.
+   *
+   *  A shield rescues a FAILED EXERCISE. It does not forgive a missed day, and
+   *  this copy must never imply it does — streak recovery is a permanent
+   *  never-build, and promising it here would sell something that does not
+   *  exist. */
   challengeJoin:
-    "Commit to {days} focus days, track your progress, and get {shields} shields with your {price} pass.",
+    "Unlock your {price} pass: {days} focus days tracked, plus {shields} shields to rescue a failed exercise. Tap Join Challenge to commit.",
   challengeEnrolled:
     "Track your focus days and complete your {days}-day commitment.",
   next: "Next",
   done: "Got it",
-  skip: "Skip tour",
   stepCounter: "{current} of {total}",
 } as const;
 
