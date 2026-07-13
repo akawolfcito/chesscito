@@ -8,48 +8,50 @@ import {
   markHubTourSeen,
 } from "@/lib/hub/hub-tour";
 
+const FRESH = { dailyDone: false, streak: 0, hasSeasonPass: false };
+
 describe("buildHubTourSteps", () => {
-  it("walks daily → challenge → start-focus in that order", () => {
-    const steps = buildHubTourSteps({ dailyDone: false, hasSeasonPass: false });
-    expect(steps.map((step) => step.id)).toEqual([
+  it("teaches the free ritual, then sells the commitment — and stops there", () => {
+    expect(buildHubTourSteps(FRESH).map((step) => step.id)).toEqual([
       "daily",
       "challenge",
-      "start-focus",
     ]);
   });
 
-  it("sells the pending daily to a player who has not solved it today", () => {
-    const [daily] = buildHubTourSteps({ dailyDone: false, hasSeasonPass: false });
-    expect(daily.bodyKey).toBe("dailyPending");
+  it("never spends a step on Start Focus — the biggest button on the hub needs no panel", () => {
+    const targets = buildHubTourSteps(FRESH).map((step) => step.target);
+    expect(targets).not.toContain("start-focus");
+  });
+
+  it("invites a fresh profile to START a streak", () => {
+    const [daily] = buildHubTourSteps(FRESH);
+    expect(daily.bodyKey).toBe("dailyStart");
+  });
+
+  it("invites a veteran mid-streak to KEEP it, never to start one", () => {
+    const [daily] = buildHubTourSteps({ ...FRESH, streak: 12 });
+    expect(daily.bodyKey).toBe("dailyKeep");
   });
 
   it("points a solved daily at tomorrow instead of re-selling it", () => {
-    const [daily] = buildHubTourSteps({ dailyDone: true, hasSeasonPass: false });
+    const [daily] = buildHubTourSteps({ ...FRESH, dailyDone: true, streak: 3 });
     expect(daily.bodyKey).toBe("dailyDone");
   });
 
   it("offers the challenge to a player without the pass", () => {
-    const [, challenge] = buildHubTourSteps({
-      dailyDone: false,
-      hasSeasonPass: false,
-    });
+    const [, challenge] = buildHubTourSteps(FRESH);
     expect(challenge.bodyKey).toBe("challengeJoin");
   });
 
   it("never re-sells the pass to a player who already bought it", () => {
-    const [, challenge] = buildHubTourSteps({
-      dailyDone: true,
-      hasSeasonPass: true,
-    });
+    const [, challenge] = buildHubTourSteps({ ...FRESH, hasSeasonPass: true });
     expect(challenge.bodyKey).toBe("challengeEnrolled");
   });
 
   it("names a DOM target for every step so the spotlight can measure it", () => {
-    const steps = buildHubTourSteps({ dailyDone: false, hasSeasonPass: false });
-    expect(steps.map((step) => step.target)).toEqual([
+    expect(buildHubTourSteps(FRESH).map((step) => step.target)).toEqual([
       "daily",
       "challenge",
-      "start-focus",
     ]);
   });
 });

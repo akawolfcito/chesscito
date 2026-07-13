@@ -14,47 +14,60 @@ export const HUB_TOUR_STORAGE_KEY = "chesscito:hub-tour:v1";
 
 export type HubTourOutcome = "completed" | "skipped";
 
-/** Also the `data-tour-target` attribute value the presenter measures. */
-export type HubTourStepId = "daily" | "challenge" | "start-focus";
+/** Also the `data-tour-target` attribute value the presenter measures.
+ *
+ *  There is deliberately NO `start-focus` step. Start Focus is the largest,
+ *  brightest, most central control on the hub and it did not change — a panel
+ *  explaining it spends the tour's most expensive step on the one thing nobody
+ *  needs explained, and pushes the step that carries the purchase further away.
+ *  The hub tour teaches the ritual, then sells the commitment. That's it. */
+export type HubTourStepId = "daily" | "challenge";
 
 export type HubTourStep = {
   id: HubTourStepId;
   target: HubTourStepId;
   /** Key into `HUB_TOUR_COPY`. */
   bodyKey:
-    | "dailyPending"
+    | "dailyStart"
+    | "dailyKeep"
     | "dailyDone"
     | "challengeJoin"
-    | "challengeEnrolled"
-    | "startFocus";
+    | "challengeEnrolled";
 };
 
 export type HubTourContext = {
   /** Today's Daily Tactic is already solved. */
   dailyDone: boolean;
+  /** Days already strung together. A veteran mid-streak must not be told to
+   *  "start your streak" — same rule as never re-selling a pass someone owns. */
+  streak: number;
   /** The player holds the 21-Day pass. */
   hasSeasonPass: boolean;
 };
 
-/** Every player gets all three steps — the copy adapts, the itinerary does not.
- *  Since the tour reaches veterans too, many already hold the pass or already
- *  solved today's daily; selling either one back to them is a lie. */
+/** Two steps: the free ritual, then the 21-day commitment. The itinerary is
+ *  fixed; the COPY is what adapts. The tour reaches veterans too, so a body
+ *  that assumes a fresh profile would lie to most of the people reading it. */
 export function buildHubTourSteps({
   dailyDone,
+  streak,
   hasSeasonPass,
 }: HubTourContext): HubTourStep[] {
   return [
     {
       id: "daily",
       target: "daily",
-      bodyKey: dailyDone ? "dailyDone" : "dailyPending",
+      bodyKey: dailyDone
+        ? "dailyDone"
+        : streak > 0
+          ? "dailyKeep"
+          : "dailyStart",
     },
     {
       id: "challenge",
       target: "challenge",
       bodyKey: hasSeasonPass ? "challengeEnrolled" : "challengeJoin",
     },
-    { id: "start-focus", target: "start-focus", bodyKey: "startFocus" },
   ];
 }
 

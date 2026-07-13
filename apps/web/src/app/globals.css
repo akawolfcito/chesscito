@@ -14421,6 +14421,29 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 100%;
 }
 
+/* The daily gift breathes while today's tactic is unsolved. This is what the
+   tour hands off to: it no longer spends a step on Start Focus, so after
+   "Got it" the pulse is the only thing still pointing at the ritual. */
+@keyframes hub-daily-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+.hub-lite-daily-anchor.is-pending {
+  animation: hub-daily-pulse 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-lite-daily-anchor.is-pending {
+    animation: none;
+  }
+}
+
 /* ── Hub Tour (LEARN) ────────────────────────────────────────────────────────
    The 3-step intro to the Daily-first hub. The scrim itself is NOT dimmed:
    the dim is the spotlight's outer box-shadow, which is what cuts the hole

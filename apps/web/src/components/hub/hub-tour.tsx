@@ -15,8 +15,23 @@ import type { HubTourOutcome, HubTourStep } from "@/lib/hub/hub-tour";
 export type HubTourProps = {
   /** Built by `buildHubTourSteps` — the container owns the player's state. */
   steps: HubTourStep[];
+  /** The pass's real terms, from the SAME config that feeds the ChallengeCard
+   *  (`rail-config.ts`). Interpolated, never typed into the copy: a "$0.99"
+   *  baked into a string rots the day pricing moves, silently, with the suite
+   *  still green. */
+  challenge: { days: number; shields: number; price: string };
   /** Fires once, on the way out. The container persists the flag. */
   onFinish: (outcome: HubTourOutcome) => void;
+};
+
+/** The headline changes with the body: a fresh profile is invited to START a
+ *  streak, a veteran to KEEP one, and a pass holder is not sold anything. */
+const TITLE_KEY: Record<HubTourStep["bodyKey"], string> = {
+  dailyStart: "dailyTitleStart",
+  dailyKeep: "dailyTitle",
+  dailyDone: "dailyTitle",
+  challengeJoin: "challengeTitle",
+  challengeEnrolled: "challengeTitleEnrolled",
 };
 
 type Rect = { top: number; left: number; width: number; height: number };
@@ -42,14 +57,14 @@ const PANEL_WIDTH = 320;
 /** Minimum distance from the arrow to the panel's rounded corners. */
 const ARROW_INSET = 28;
 
-/** The 3-step LEARN hub tour: a scrim with a hole over the step's target, a
+/** The 2-step LEARN hub tour: a scrim with a hole over the step's target, a
  *  panel explaining it, and Next / Got it / Skip.
  *
  *  It is a GATE, not a competitor: the container only mounts it when no other
  *  `aria-modal` is on screen, and while it runs the scrim swallows every tap
  *  outside the panel. The spotlight is deliberately NOT clickable (spec
  *  no-goal) — the tour informs, it does not navigate. */
-export function HubTour({ steps, onFinish }: HubTourProps) {
+export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
   const t = useTranslations("HUB_TOUR_COPY");
 
   // A step whose target never rendered gets dropped, not pointed at: a 2-step
@@ -172,16 +187,14 @@ export function HubTour({ steps, onFinish }: HubTourProps) {
         <p className="hub-tour-step-counter">
           {t("stepCounter", { current: index + 1, total: reachable.length })}
         </p>
-        <h2 className="hub-tour-title">
-          {t(
-            step.id === "daily"
-              ? "dailyTitle"
-              : step.id === "challenge"
-                ? "challengeTitle"
-                : "startFocusTitle",
-          )}
-        </h2>
-        <p className="hub-tour-body">{t(step.bodyKey)}</p>
+        <h2 className="hub-tour-title">{t(TITLE_KEY[step.bodyKey])}</h2>
+        <p className="hub-tour-body">
+          {t(step.bodyKey, {
+            days: challenge.days,
+            shields: challenge.shields,
+            price: challenge.price,
+          })}
+        </p>
 
         <PrincipalButton
           size="medium"

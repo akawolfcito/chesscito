@@ -1766,19 +1766,20 @@ const messages = {
   HUB_TOUR_COPY: {
     ...en.HUB_TOUR_COPY,
     rootAriaLabel: "Recorrido del hub",
+    dailyTitleStart: "Empieza hoy tu racha",
     dailyTitle: "Táctica diaria",
-    dailyPending:
-      "Abre este regalo diario para resolver 1 táctica corta y proteger tu racha.",
+    dailyStart:
+      "Abre el regalo diario y resuelve 1 táctica corta. Vuelve cada día para mantener viva tu racha.",
+    dailyKeep:
+      "Abre tu regalo diario, resuelve 1 táctica corta y mantén viva tu racha.",
     dailyDone:
       "Aquí vive tu Táctica diaria. Vuelve mañana por la siguiente.",
-    challengeTitle: "Reto Mental de 21 días",
+    challengeTitle: "Únete al Reto de 21 días",
+    challengeTitleEnrolled: "Reto Mental de 21 días",
     challengeJoin:
-      "Convierte tu práctica diaria en un compromiso de 21 días y sigue tus días de foco.",
+      "Comprométete a {days} días de foco, sigue tu progreso y recibe {shields} escudos con tu pase de {price}.",
     challengeEnrolled:
-      "Sigue tus días de foco y completa tu compromiso de 21 días.",
-    startFocusTitle: "Comenzar foco",
-    startFocus:
-      "Empieza una sesión de entrenamiento y sigue mejorando paso a paso.",
+      "Sigue tus días de foco y completa tu compromiso de {days} días.",
     next: "Siguiente",
     done: "Entendido",
     skip: "Saltar recorrido",
