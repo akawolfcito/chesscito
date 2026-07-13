@@ -76,6 +76,29 @@ describe("selectPrimaryPiece", () => {
 
     expect(selectPrimaryPiece(ORDER, paths)).toBe("knight");
   });
+
+  /** Founder call (2026-07-12): the EXERCISES drive piece advancement. The rook
+   *  ships three labyrinths, so letting a pending one hold the focus would pin
+   *  the player to a piece whose badge they already claimed — the very loop this
+   *  rule exists to break. Side content stays visible; it does not hold the path
+   *  hostage. */
+  it("does not let a pending labyrinth hold the focus on a finished piece", () => {
+    const rookWithMaze: TrainingNode[] = [
+      ...finished("rook"),
+      {
+        id: "rook-lab-2",
+        kind: "labyrinth",
+        piece: "rook",
+        unlock: { type: "stars", min: 6 },
+        status: "available",
+        stars: null,
+      },
+    ];
+    const paths = { rook: rookWithMaze, bishop: unfinished("bishop") };
+
+    expect(selectPrimaryPiece(ORDER, paths)).toBe("bishop");
+    expect(selectNextAvailablePiece(ORDER, paths, "bishop")).toBeNull();
+  });
 });
 
 describe("selectNextAvailablePiece", () => {
