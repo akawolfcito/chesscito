@@ -42,6 +42,8 @@ import { GemButton } from "@/components/scene-rooted/gem";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/game/arena-utils";
 import { mapArenaResult } from "@/lib/coach/game-result";
+import { ArenaMatchupTransition } from "@/components/arena/arena-matchup-transition";
+import { useDisplayName } from "@/hooks/use-display-name";
 import { useProStatus } from "@/lib/pro/use-pro-status";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { ProSheet } from "@/components/pro/pro-sheet";
@@ -93,6 +95,10 @@ export default function ArenaPage() {
     </Suspense>
   );
 }
+
+/** Hold time for the matchup transition between PLAY and the board.
+ *  Long enough for the staged ribbon reveal; also used by "Play again". */
+const MATCHUP_TRANSITION_MS = 1800;
 
 function ArenaPageInner() {
   const router = useRouter();
@@ -332,6 +338,26 @@ function ArenaPageInner() {
       ? tArena("playAsBlackName")
       : tArena("playAsWhiteName");
 
+  // Matchup transition identity. `name` already resolves custom name →
+  // Identity Lite nickname → visitor fallback; we suppress the visitor
+  // fallback so an unconnected player just reads "You" with no second line.
+  const { name: playerDisplayName, isVisitor: playerIsVisitor } =
+    useDisplayName(address as `0x${string}` | undefined);
+  const playerNickname = playerIsVisitor ? undefined : playerDisplayName;
+  // Same art the board HUD gives the "you" slot (PlayerAvatar variant="you"),
+  // so the player does not change face between the transition and the board.
+  const playerAvatarSrc = "/art/new-icons-chesscito/avatar-blue.png";
+
+  const matchupProps = {
+    rivalName: rival.name,
+    rivalAvatarSrc: `/art/rivals/${rival.avatar}-avatar.png`,
+    rivalFrame: rival.frame,
+    playerLabel: tArena("you"),
+    playerNickname,
+    playerAvatarSrc,
+    getReadyLabel: tArena("getReady"),
+  };
+
   // T13: extracted hooks — now the sole source of truth.
   // Hooks read all live values from liveRef internally; pass current game
   // context so it's always up-to-date when the user fires an action.
@@ -516,12 +542,15 @@ function ArenaPageInner() {
   // Mode the cleanup ran on the simulated-unmount and the auto-launch
   // ref-guard blocked re-scheduling, so the user got stuck on "Preparing
   // AI..." forever.
+  //
+  // 1800ms is the matchup transition's staged reveal (ribbons in, then
+  // "Get ready!"), not a loader — the engine is ready long before this.
   useEffect(() => {
     if (!isPreparing) return;
     const timer = setTimeout(() => {
       game.startGame();
       setIsPreparing(false);
-    }, 400);
+    }, MATCHUP_TRANSITION_MS);
     return () => clearTimeout(timer);
   }, [isPreparing, game]);
 
@@ -1027,6 +1056,15 @@ function ArenaPageInner() {
   ) : null;
 
   // Difficulty selection
+  // The matchup transition owns the whole screen. It returns before the
+  // selector branches on purpose: the play dock is a *sibling* of the
+  // selector, so rendering the transition inside those branches left the
+  // dock on screen (and, once the transition went out of flow, floated it
+  // to the top of a now-empty <main>).
+  if (isPreparing) {
+    return <ArenaMatchupTransition {...matchupProps} />;
+  }
+
   if (game.status === "selecting") {
     const navIcon = (
       src: string,
@@ -1057,16 +1095,7 @@ function ArenaPageInner() {
           className="arena-select-route flex h-[100dvh] min-h-0 flex-col items-center overflow-hidden arena-bg"
           data-testid="arena-difficulty-selector"
         >
-          {isPreparing ? (
-            <div className="flex flex-1 flex-col items-center justify-center gap-4 animate-in fade-in duration-300 arena-scaffold">
-              <p className="text-sm font-semibold text-amber-400/80">
-                {difficultyLabel(game.difficulty)}
-              </p>
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-400/30 border-t-amber-400" />
-              <p className="text-sm font-medium text-amber-100/80">{tArena("preparingAi")}</p>
-            </div>
-          ) : (
-            <ArenaSelectScaffold
+          <ArenaSelectScaffold
               difficulty={game.difficulty}
               playerColor={game.playerColor}
               onSelectDifficulty={(level) => {
@@ -1117,7 +1146,6 @@ function ArenaPageInner() {
               }
               errorMessage={game.errorMessage}
             />
-          )}
           <div
             className="arena-select-dock-shell shrink-0 relative z-[60] pointer-events-auto"
             style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
@@ -1196,15 +1224,7 @@ function ArenaPageInner() {
     return (
       <main className="flex min-h-[100dvh] flex-col arena-bg" data-testid="arena-difficulty-selector">
         <div className="flex flex-1 flex-col items-center justify-center">
-          {isPreparing ? (
-            <div className="flex flex-col items-center gap-4 animate-in fade-in duration-300">
-              <p className="text-sm font-semibold text-amber-400/80">
-                {difficultyLabel(game.difficulty)}
-              </p>
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-400/30 border-t-amber-400" />
-              <p className="text-sm font-medium text-amber-100/80">{tArena("preparingAi")}</p>
-            </div>
-          ) : (
+          {(
             <ArenaEntryPanel
               difficulty={game.difficulty}
               playerColor={game.playerColor}

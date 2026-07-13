@@ -636,6 +636,8 @@ const messages = {
     newGame: "Nueva partida",
     aiThinking: "IA pensando…",
     preparingAi: "Preparando IA…",
+    getReady: "¡Prepárate!",
+    you: "Tú",
     promotionTitle: "Promueve el peón a:",
     endState: {
       checkmate: {

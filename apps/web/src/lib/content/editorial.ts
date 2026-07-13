@@ -1114,6 +1114,12 @@ export const ARENA_COPY = {
   newGame: "New Game",
   aiThinking: "AI is thinking…",
   preparingAi: "Preparing AI…",
+  /** Matchup transition (PLAY → board). Anchored above the pawn divider
+   *  baked into the background art. */
+  getReady: "Get ready!",
+  /** Primary label on the player's ribbon; the deterministic nickname
+   *  renders underneath it. */
+  you: "You",
   promotionTitle: "Promote pawn to:",
   endState: {
     checkmate: {

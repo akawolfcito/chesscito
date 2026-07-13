@@ -76,7 +76,11 @@ vi.mock("wagmi", () => ({
 }));
 
 vi.mock("next-intl", () => ({
-  useTranslations: () => (k: string) => k,
+  // `.raw` is part of next-intl's translator contract (Identity Lite reads the
+  // nickname template through it). Without it the mock lies about the API and
+  // any consumer of useDisplayName throws.
+  useTranslations: () =>
+    Object.assign((k: string) => k, { raw: (k: string) => k }),
   useLocale: () => "en",
 }));
 

@@ -425,6 +425,11 @@
     --playhub-board-bg: image-set(url("/art/chesscito-board.avif") type("image/avif"),
         url("/art/chesscito-board.webp") type("image/webp"),
         url("/art/chesscito-board.png") type("image/png"));
+    /* Matchup transition (PLAY → board). The art already carries the VS crest
+       and the pawn divider — nothing draws them in CSS. */
+    --arena-matchup-bg: image-set(url("/art/arena/bg-matchup.avif") type("image/avif"),
+        url("/art/arena/bg-matchup.webp") type("image/webp"),
+        url("/art/arena/bg-matchup.png") type("image/png"));
   }
 
   .dark {
@@ -14654,5 +14659,193 @@ button.hud-resource-chip:active:not(:disabled) {
 @media (prefers-reduced-motion: reduce) {
   .challenge-card-join.is-pulsing {
     animation: none;
+  }
+}
+
+/* ── Arena matchup transition (PLAY → board, ~1.8s auto-advance) ──────────
+   Spec: docs/specs/2026-07-13-arena-matchup-transition-spec.md
+   The background art bakes in the VS crest (centre) and the pawn divider
+   (~80% height). Everything below only positions ribbons over that art. */
+
+/* Full-bleed: the transition owns the viewport, so the play dock and the
+   selector behind it are covered for its whole 1.8s. */
+.arena-matchup {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin-inline: auto;
+  overflow: hidden;
+  background-image: var(--arena-matchup-bg);
+  background-size: cover;
+  background-position: center;
+}
+
+.arena-matchup-side {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Rival clears the crest above; player clears it below and stops short of
+   the "Get ready!" line. The crest occupies roughly 36%–56% of the art. */
+.arena-matchup-side--rival {
+  top: 9%;
+  animation: arena-matchup-in-left 320ms ease-out both;
+}
+
+.arena-matchup-side--player {
+  top: 59%;
+  animation: arena-matchup-in-right 320ms ease-out 120ms both;
+}
+
+/* No plate behind the pair — the framed avatar and the name sit straight on
+   the art. The colour of the avatar frame still carries the difficulty. */
+.arena-matchup-ribbon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 86%;
+}
+
+/* Mirrored halves: the rival reads from the left edge, the player from the
+   right, so the two sides lean into the crest between them. */
+.arena-matchup-side--rival .arena-matchup-ribbon {
+  justify-content: flex-start;
+}
+
+.arena-matchup-side--player .arena-matchup-ribbon {
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+
+.arena-matchup-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.arena-matchup-side--player .arena-matchup-text {
+  text-align: right;
+}
+
+.arena-matchup-ribbon--gold {
+  --arena-matchup-frame: #f3c969;
+}
+
+.arena-matchup-ribbon--silver {
+  --arena-matchup-frame: #cfd8e3;
+}
+
+.arena-matchup-ribbon--blue {
+  --arena-matchup-frame: #6fb3f2;
+}
+
+.arena-matchup-ribbon--player {
+  --arena-matchup-frame: #f3c969;
+}
+
+.arena-matchup-avatar {
+  flex: none;
+  width: 68px;
+  height: 68px;
+  border: 2px solid var(--arena-matchup-frame, #f3c969);
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.arena-matchup-name {
+  overflow: hidden;
+  font-family: var(--font-game-action);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff6e0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 2px 0 rgba(30, 22, 12, 0.55), 0 0 10px rgba(243, 201, 105, 0.35);
+}
+
+/* Height is reserved even when empty so the late nickname adds no shift. */
+.arena-matchup-nickname {
+  min-height: 1.05rem;
+  overflow: hidden;
+  font-family: var(--font-game-action);
+  font-size: 0.78rem;
+  color: rgba(255, 246, 224, 0.72);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Anchored just above the pawn divider drawn into the background art. */
+.arena-matchup-getready {
+  position: absolute;
+  bottom: 23%;
+  width: 100%;
+  font-family: var(--font-game-action);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #fff6e0;
+  text-align: center;
+  text-shadow: 0 2px 0 rgba(30, 22, 12, 0.6), 0 0 14px rgba(243, 201, 105, 0.5);
+  animation: arena-matchup-pop 300ms ease-out 260ms both;
+}
+
+@keyframes arena-matchup-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes arena-matchup-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes arena-matchup-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Reduced motion: keep the 1.8s beat (it is a staged reveal, not a loader),
+   drop the travel — fade only. */
+@media (prefers-reduced-motion: reduce) {
+
+  .arena-matchup-side--rival,
+  .arena-matchup-side--player,
+  .arena-matchup-getready {
+    animation: arena-matchup-fade 200ms ease-out both;
+  }
+}
+
+@keyframes arena-matchup-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }
