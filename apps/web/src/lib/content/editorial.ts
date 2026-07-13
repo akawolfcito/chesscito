@@ -1608,6 +1608,10 @@ export const COACH_COPY = {
   /** /coach/history page header — back navigation + no-wallet gate. */
   backLabel: "Back",
   connectWalletForHistory: "Connect your wallet to view your Coach history.",
+  /** The PLAY dock now routes here instead of opening the ProSheet, whose
+   *  primary CTA was "Connect wallet". So this branch IS the connect funnel:
+   *  the copy above states the gate, this button opens it. */
+  connectWalletButton: "Connect Wallet",
   /** ARIA region label shared by all three render branches of
    *  <CoachHistory /> (loading, empty, content). Stable label keeps the
    *  landmark name consistent so AT users land on the same region as

@@ -480,6 +480,7 @@ const messages = {
     backLabel: "Atrás",
     connectWalletForHistory:
       "Conecta tu wallet para ver tu historial del Coach.",
+    connectWalletButton: "Conectar Wallet",
     historyAriaLabel: "Historial de análisis del Coach",
     resultLabels: {
       win: "Victoria",
