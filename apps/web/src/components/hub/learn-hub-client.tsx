@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
+import { usePeonesBalance } from "@/lib/peones/use-peones-balance";
 
 import { HubScaffold } from "@/components/hub/hub-scaffold";
 const BadgeSheet = dynamic(
@@ -144,6 +145,10 @@ export function LearnHubClient({
   // MiniPay the auto-connect in <WalletProvider> wins before this CTA
   // ever renders; on desktop it triggers the extension prompt.
   const { connectWallet } = useConnectWallet();
+
+  // The scaffold takes no hooks (its docstring says so). The Peones chip used
+  // to break that promise from two levels down; the read lives here now.
+  const peones = usePeonesBalance();
 
   // PRO sheet orchestration. Owns its own status fetch internally so
   // we don't double-fetch /api/pro/status from this surface.
@@ -403,6 +408,8 @@ export function LearnHubClient({
         <HubLiteScaffold
           trophies={trophies}
           isWalletConnected={isConnected}
+          peones={peones.state}
+          onPeonesRefetch={() => void peones.refetch()}
           onConnectTap={
             isConnected
               ? null

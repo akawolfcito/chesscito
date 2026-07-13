@@ -33,7 +33,10 @@ import {
   emitPeonesBalanceViewed,
   type PeonesBalanceViewSurface,
 } from "@/lib/peones/telemetry";
-import { usePeonesBalance } from "@/lib/peones/use-peones-balance";
+import {
+  usePeonesBalance,
+  type PeonesBalanceState,
+} from "@/lib/peones/use-peones-balance";
 
 type Props = {
   /** Sprint 3 commit G mounts the chip only on `/hub`; the prop keeps
@@ -46,8 +49,36 @@ type Props = {
   showRecharge?: boolean;
 };
 
-export function PeonesBalanceChip({ surface = "hub", showRecharge = false }: Props = {}) {
-  const { state, refetch } = usePeonesBalance();
+type ViewProps = Props & {
+  state: PeonesBalanceState;
+  /** Called after the recharge card closes, so the chip reflects a balance the
+   *  player may have topped up from inside it. */
+  onRefetch: () => void;
+};
+
+/** The chip, told its balance instead of fetching it.
+ *
+ *  Split out 2026-07-13 so the LEARN and PLAY hub scaffolds can be mounted in a
+ *  `/dev` probe and photographed. The connected `PeonesBalanceChip` below reads
+ *  the wallet through `usePeonesBalance` → `useAccount`, and wagmi THROWS when
+ *  no WagmiProvider is above it — which the `/dev` layout deliberately does not
+ *  mount. A scaffold that renders it cannot be captured; Playwright would write
+ *  a PNG of Next's error overlay and pass (it did exactly that with the arena
+ *  rails, 0d69e30a).
+ *
+ *  Same convention as `HubProBadge` and `ArenaPlayerRail`: whatever a probe
+ *  photographs receives its truth by prop, never from a wallet hook.
+ *
+ *  The recharge card (`ChesitoCard`) is still self-contained and still reads the
+ *  wallet — but it only mounts on tap, and a hook that never runs cannot throw.
+ *  A probe must not open it. */
+export function PeonesBalanceChipView({
+  state,
+  onRefetch,
+  surface = "hub",
+  showRecharge = false,
+}: ViewProps) {
+  const refetch = onRefetch;
   /** Chesito Card entry point. Tapping the chip opens the rechargeable card
    *  (its own Top up CTA routes into the Get Peones rail). Guests never see
    *  the chip, so there is no guest entry. Mounted only while open. */
@@ -202,5 +233,24 @@ export function PeonesBalanceChip({ surface = "hub", showRecharge = false }: Pro
         </div>
       ) : null}
     </>
+  );
+}
+
+/** The chip, wired to the wallet. Reads `usePeonesBalance` (→ wagmi's
+ *  `useAccount`) and hands the result to the view above.
+ *
+ *  Mount this anywhere a WagmiProvider is in scope. Where one is NOT — the
+ *  `/dev` probe layout — mount `PeonesBalanceChipView` and pass the state in.
+ *  The LEARN and PLAY hub scaffolds do the latter, so that their callers own
+ *  every wallet read and the scaffolds stay photographable. */
+export function PeonesBalanceChip({ surface = "hub", showRecharge = false }: Props = {}) {
+  const { state, refetch } = usePeonesBalance();
+  return (
+    <PeonesBalanceChipView
+      state={state}
+      onRefetch={() => void refetch()}
+      surface={surface}
+      showRecharge={showRecharge}
+    />
   );
 }

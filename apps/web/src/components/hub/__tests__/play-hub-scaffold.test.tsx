@@ -15,7 +15,7 @@ vi.mock("@/components/hub/app-mode-switch", () => ({
 }));
 vi.mock("@/components/hub/language-chip", () => ({ LanguageChip: () => null }));
 vi.mock("@/components/peones/peones-balance-chip", () => ({
-  PeonesBalanceChip: () => <div data-testid="peones-chip" />,
+  PeonesBalanceChipView: () => <div data-testid="peones-chip" />,
 }));
 vi.mock("@/components/hub/hub-pro-badge", () => ({
   HubProBadge: ({ ariaLabel }: { ariaLabel: string }) => <button aria-label={ariaLabel}>PRO</button>,
@@ -49,6 +49,10 @@ const props = {
   mintedVictoryCount: 0,
   isWalletConnected: true,
   pro: { active: false } as const,
+  // The scaffold is told the balance; it no longer fetches it. A wagmi hook in
+  // this tree is what kept the PLAY hub out of every VR baseline.
+  peones: { kind: "success", balance: 12, dailyEarnedCapped: 0, dailyCap: 10, lastEventAt: null } as const,
+  onPeonesRefetch: vi.fn(),
   onConnectTap: vi.fn(),
   onTrophyTap: vi.fn(),
   onProTap: vi.fn(),

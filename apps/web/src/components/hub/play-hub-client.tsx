@@ -10,6 +10,7 @@ import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { daysRemaining } from "@/lib/pro/days-remaining";
 import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
+import { usePeonesBalance } from "@/lib/peones/use-peones-balance";
 import { track } from "@/lib/telemetry";
 
 const ProSheet = dynamic(
@@ -50,6 +51,9 @@ export function PlayHubClient({
   const router = useRouter();
   const { address, isConnected, mintedVictoryCount } = usePlayHubData();
   const { connectWallet } = useConnectWallet();
+  // The scaffold is presentational: every wallet read happens here, so the
+  // scaffold stays mountable in a /dev probe (and photographable).
+  const peones = usePeonesBalance();
   const proSheet = useProSheetState();
   const shopSheet = useShopSheetState({
     onSelectProItem: proSheet.openSheet,
@@ -80,6 +84,8 @@ export function PlayHubClient({
         mintedVictoryCount={mintedVictoryCount}
         isWalletConnected={isConnected}
         pro={pro}
+        peones={peones.state}
+        onPeonesRefetch={() => void peones.refetch()}
         onConnectTap={() => {
           track("play_hub_connect_tap");
           connectWallet();
