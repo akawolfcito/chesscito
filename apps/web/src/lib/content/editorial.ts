@@ -3254,6 +3254,29 @@ export const HUB_LITE_COPY = {
   trainingPathLabel: "Training Path",
 } as const;
 
+/** The 3-step hub tour. Two bodies per step where the player's state can make
+ *  one of them a lie (they already solved the daily; they already hold the
+ *  pass). See docs/specs/2026-07-12-hub-tour-daily-first-spec.md. */
+export const HUB_TOUR_COPY = {
+  rootAriaLabel: "Hub tour",
+  dailyTitle: "Daily Tactic",
+  dailyPending:
+    "Open this daily gift to solve 1 short tactic and protect your streak.",
+  dailyDone:
+    "Your Daily Tactic lives here. Come back tomorrow for the next one.",
+  challengeTitle: "21-Day Mind Challenge",
+  challengeJoin:
+    "Turn your daily practice into a 21-day commitment and track your focus days.",
+  challengeEnrolled:
+    "Track your focus days and complete your 21-day commitment.",
+  startFocusTitle: "Start Focus",
+  startFocus: "Begin a training session and keep improving step by step.",
+  next: "Next",
+  done: "Got it",
+  skip: "Skip tour",
+  stepCounter: "{current} of {total}",
+} as const;
+
 export const LEADERBOARD_TABS_COPY = {
   tabs: {
     puzzlesWeek: "Puzzles this week",
