@@ -1,142 +1,141 @@
-# Spec — Hub Tour + Daily-First Onboarding (LEARN)
+# Spec — Hub Tour + Daily-First (LEARN)
 
-- **Fecha:** 2026-07-12
-- **Estado:** propuesto, sin implementar
+- **Fecha:** 2026-07-12 · **Estado:** propuesto, sin implementar
 - **Reemplaza:** `docs/backlog/2026-07-08-tactical-day-gift-proof-of-consistency-lote-2.5.md`
 
 ---
 
-## La decisión que este spec toma
+## Las dos decisiones de producto
 
-**El Daily Tactic ABRE la sesión.** No la cierra.
+**1. El Daily Tactic ABRE la sesión.** No la cierra.
 
-El Lote 2.5 proponía lo contrario: Great Focus → desbloquea el Tactical Day Gift →
-resolverlo cierra el día. Son diseños **opuestos** y no pueden convivir. El founder
-eligió Daily-first (2026-07-12), así que el Lote 2.5 queda **superseded**, no diferido.
+El Lote 2.5 proponía lo opuesto (Great Focus → desbloquea el gift → resolverlo cierra el
+día). Son diseños incompatibles. Founder eligió Daily-first, así que 2.5 queda superseded.
 
-**Por qué es correcto:** la llama de la racha ya se enciende **solo** con el Daily
-(`recordDailyCompletion`, único escritor del streak). Y el Content Loop ya prioriza el
-Daily por encima de todo (`daily-pending` es la variante #1). El sistema **ya sabe** que
-el Daily es lo primero — lo que falta es **decírselo al jugador**. Falta el momento, no
-la lógica.
+Es la lectura correcta porque **el sistema ya lo sabe y no lo dice**: `recordDailyCompletion`
+es el ÚNICO escritor de la racha, y `daily-pending` es la variante #1 del Content Loop.
+Falta el momento, no la lógica.
 
-**Regla general:** el Daily crea el hábito; el Challenge convierte el hábito en
-compromiso (y en transacción).
+**2. El tour NO es onboarding. Es la introducción a una jerarquía nueva del Hub.**
+
+> **Todo jugador —nuevo o existente— ve esta versión del tour UNA vez, sin importar su
+> progreso.** Completarlo o saltarlo cuenta como visto.
+
+No se suprime por tener historia. Esto **no contradice** la regla de la máquina de hitos
+("un veterano nunca ve overlays retroactivos"): esa regla existe para no celebrar cosas ya
+ganadas. Un tour no celebra nada — informa sobre una pantalla que cambió, y el veterano es
+justamente quien necesita que le expliquen qué se movió.
+
+**Regla general:** el Daily crea el hábito; el Challenge lo convierte en compromiso (y en
+transacción).
 
 ---
 
-## Parte 1 — El tour de 3 pasos
+## Parte 1 — El tour (3 pasos)
 
-Un tour de bienvenida en el HUB de LEARN (`/`), **solo la primera vez**.
+En el HUB de LEARN (`/`). Botones: **Next** (1–2), **Got it** (3), **Skip tour** en los tres.
 
-| # | Paso | Señala | Mensaje |
+| # | Señala | Copy — estado A | Copy — estado B |
 | --- | --- | --- | --- |
-| 1 | **Daily Tactic** | El regalo del header | "Open this daily gift to solve 1 short tactic and protect your streak." |
-| 2 | **Join Challenge** | La Mind Challenge card | "Turn your daily practice into a 21-day commitment and track your focus days." |
-| 3 | **Start Focus** | El CTA principal | "Begin a training session and keep improving step by step." |
+| 1 | Regalo del header | **Daily pendiente:** "Open this daily gift to solve 1 short tactic and protect your streak." | **Daily hecho hoy:** "Your Daily Tactic lives here. Come back tomorrow for the next one." |
+| 2 | Mind Challenge card | **No inscrito — Join Challenge:** "Turn your daily practice into a 21-day commitment and track your focus days." | **Inscrito — Mind Challenge:** "Track your focus days and complete your 21-day commitment." |
+| 3 | CTA Start Focus | "Begin a training session and keep improving step by step." | — |
 
-- Botones: **Next** (pasos 1–2), **Got it** (paso 3), **Skip tour** en los tres.
-- Al terminar o saltar: el jugador vuelve al Hub intacto y decide.
-- **El tour no navega a ningún lado.** Es informativo. Los spotlights **no** son
-  clickables (ver No-goals).
+**El copy es dinámico por necesidad, no por lujo.** Como todo jugador recibe el tour,
+muchos ya tendrán el pass o ya habrán hecho el Daily de hoy. Mostrarles "Join Challenge"
+cuando ya pagaron es mentirles.
 
-### Estados de UI (requisito de CLAUDE.md)
+**El tour no navega.** Es informativo: señala, explica, avanza. Los spotlights no son
+clickables (ver No-goals).
 
-| Estado | Condición | Comportamiento |
-| --- | --- | --- |
-| `not-started` | Flag ausente | El tour arranca al montar el hub, después del splash |
-| `step-1/2/3` | En curso | Scrim oscuro + highlight del target + panel + flecha/label |
-| `completed` | *Got it* en el paso 3 | Flag escrito. Nunca más |
-| `skipped` | *Skip tour* en cualquier paso | Flag escrito. **Nunca más** — saltar es una decisión, no un aplazamiento |
-| `suppressed` | Jugador con historia | Nunca corre (ver Migración) |
+### Estados
+
+| Estado | Comportamiento |
+| --- | --- |
+| `not-seen` | Se lanza en el próximo Hub elegible (post-splash, sin otro modal en pantalla) |
+| `step-1/2/3` | En curso |
+| `completed` | Llegó a *Got it*. No vuelve automáticamente |
+| `skipped` | Eligió *Skip tour*. No vuelve automáticamente — **saltar es una decisión, no un aplazamiento** |
+| `replay` | Lanzado a mano desde Settings/Help. Nunca automático |
 
 ### Edge cases
 
-- **Tap fuera del panel** → no-op. El tour no se cierra por accidente; se sale por
-  *Skip* o completándolo.
-- **Cerrar la app a mitad del tour** → al volver, **reinicia en el paso 1**. El flag se
-  escribe SOLO al completar o saltar. Un tour a medias no es un tour dado.
-- **Target no montado** (ej. la Mind Challenge card no renderiza) → **saltar ese paso**,
-  no mostrar un panel que apunta a la nada. Un tour de 2 pasos es mejor que una flecha
-  al vacío.
-- **Rotación de pantalla / resize** → el highlight se re-mide contra el target real.
-- **PLAY** → el tour **no existe**. Es LEARN-only.
+- **Tap fuera del panel** → no-op. Se sale por *Skip* o completando.
+- **App cerrada a mitad del tour** → reinicia en el paso 1. El flag se escribe SOLO al
+  completar o saltar: un tour a medias no es un tour dado.
+- **Target no montado** (la card no renderiza) → **saltar ese paso**. Un tour de 2 pasos
+  es mejor que una flecha al vacío.
+- **Resize / rotación** → el highlight se re-mide contra el target real.
+- **PLAY** → el tour no existe. LEARN-only.
 
 ### Persistencia
 
-Llave nueva: **`chesscito:hub-tour`**. **NO reusar `chesscito:onboarded`** — esa la
-consume `use-splash-loader.ts:7` para el splash, y colgarle un segundo significado
-rompería el splash el día que uno de los dos cambie.
+**Llave versionada: `chesscito:hub-tour:v1`.** Cuando el Hub cambie estructuralmente otra
+vez, `v2` se lanza sola sin tocar el historial.
 
-### Migración (jugadores existentes)
+**NO reusar `chesscito:onboarded`** — la consume `use-splash-loader.ts:7` para el splash.
+Dos significados en una llave se rompen el día que uno de los dos cambia.
 
-Un jugador con historia **nunca** debe ver el tour. Sembrar el flag como completado si
-al montar existe cualquier progreso previo (progreso de pieza, daily, o milestones
-sembrados). Misma lección que la máquina de hitos: **el estado se preserva, el overlay
-se suprime**.
-
----
-
-## Parte 2 — El flujo de la primera sesión
-
-1. **Hub** → tour de 3 pasos → el jugador toca **Daily Tactic**.
-2. **Primer Daily:** resuelve 1 ejercicio → **arranca su racha** → celebración breve.
-3. **Después del Daily:** CTA primario **Continue training**; secundario **Join Challenge**.
-4. **Si se une:** conecta wallet → paga → activa el reto de 21 días → vuelve al Hub.
-5. **Si no se une:** sigue con **Start Focus**, sin bloqueo. El reto **nunca** es un muro.
-6. **Días siguientes:** Hub → Daily destacado → 1 ejercicio → racha protegida →
-   entrenamiento opcional.
-
-### Recordatorios del Challenge
-
-Solo si **no** se ha unido: después del Daily, o al 2.º/3.º día. **Nunca más de uno por
-día.** Un recordatorio que se repite es un anuncio.
+**v1 es local-only, y es una limitación consciente.** No hay tabla de perfiles todavía
+(Identity Lite PR2 no arrancó), así que persistir por wallet no es construible hoy:
+cambiar de dispositivo hará que el tour reaparezca una vez. Aceptado. Cuando exista
+`player_profiles`, el flag se sincroniza y esta nota se borra.
 
 ---
 
-## La restricción de ingeniería (load-bearing)
+## Parte 2 — El flujo
 
-**Exactamente un `aria-modal` a la vez.** Esta es la regla que el cluster de progresión
-ganó a golpes, y el tour es el candidato perfecto para romperla: monta en el hub, al
-mismo tiempo que la cola de celebración, el regalo de bienvenida y la SeasonPassSheet.
+1. Jugador (nuevo o existente) entra al Hub tras el rollout.
+2. Post-splash, y **solo si no hay otro modal en pantalla**, aparece el tour.
+3. Daily → Challenge (adaptado a su estado) → Start Focus.
+4. Completa o salta → se persiste `v1`.
+5. **El Hub queda libre.** El Daily conserva su énfasis visual si está pendiente, pero el
+   jugador elige lo que quiera. *(Intención de UX, no una garantía: el tour no fuerza el
+   tap ni bloquea Start Focus.)*
+6. Si abre el Daily: resuelve 1 táctica → arranca/protege la racha → celebración breve.
+7. **Cierre del Daily:** primario **Continue training**; secundario **Join Challenge**
+   (solo si no está inscrito).
+8. Si no se une: entrena sin bloqueo. **El reto nunca es un muro.**
 
-**El tour es un GATE:** mientras corre, nada más puede renderizar un modal. Y como
-`LabyrinthCompleteOverlay` usa `role="alert"`, el test que lo verifique **debe contar
-`[aria-modal="true"]`**, nunca `role="dialog"`.
+### El Daily es un ritual aislado — y ya lo es
 
-Un jugador nuevo no tiene hitos que celebrar, así que en el caso feliz no hay colisión.
-Pero "el caso feliz no colisiona" **no es un guard** — hay que escribirlo.
+Tocar **Daily Tactic** inicia el Daily. Tocar **Start Focus** inicia entrenamiento normal.
+**Un ejercicio normal NUNCA cuenta como Daily.**
+
+Esto **ya se cumple en el código**: `recordDailyCompletion` tiene exactamente tres
+llamadores (`daily-tactic-slot`, `hub-daily-tile`, `/challenge/daily`) y `exercises-screen`
+**no es uno de ellos**. No hay nada que arreglar; hay algo que **no romper**. Un test lo fija.
+
+### Recordatorios del Challenge (cerrado, no abierto)
+
+- Post-Daily: **CTA secundario contextual**.
+- Día 2 o 3: **chip/banner en el Hub**.
+- **Nunca un modal automático.** Máximo **uno por día**.
+- Al inscribirse: **desaparece de inmediato**.
 
 ---
 
-## Reuso (no inventar arte)
+## Implementation constraints
 
-- **Panel:** `VictoryPopupShell` (el marco de los overlays de progresión).
-- **Primario:** `PrincipalButton` (el verde/dorado de la familia).
-- **Iconos:** los canónicos de `public/art/**`. **Auditar antes de crear.**
-- **Nuevo, mínimo:** el spotlight (scrim que oscurece + anillo de highlight sobre el
-  target + flecha con label). Es lo único que no existe.
-
-Las imágenes de referencia del founder son **no estrictas en detalle**: lo que se toma es
-la forma (panel + mensaje claro + señalamiento), no los pixeles.
+- **Exactamente un `aria-modal` a la vez.** El tour monta en el mismo hub que la cola de
+  celebración, el regalo de bienvenida y la SeasonPassSheet. **El tour es un GATE**:
+  mientras corre, nada más renderiza un modal; y no arranca si ya hay uno.
+- El test que lo verifique **debe contar `[aria-modal="true"]`, nunca `role="dialog"`**
+  (`LabyrinthCompleteOverlay` usa `role="alert"`; contar roles pasa en verde con dos
+  diálogos apilados).
+- **Reuso:** `VictoryPopupShell` (panel) + `PrincipalButton` (primario) + iconos canónicos
+  de `public/art/**`. **Auditar antes de crear arte.**
+- **Lo único nuevo:** el spotlight (scrim + anillo de highlight sobre el target + flecha
+  con label).
+- Las referencias visuales del founder son **no estrictas en detalle**: se toma la forma
+  (panel + mensaje claro + señalamiento), no los pixeles.
 
 ---
 
-## No-goals (explícitos)
+## No-goals
 
-- **Spotlights clickables.** El founder lo marcó como ideal pero de costo alto. El tour
-  es **informativo**: señala, explica, avanza. Clickable = fase 2, con su propia decisión.
+- **Spotlights clickables.** Ideal, caro. Fase 2, con su propia decisión.
 - **Tour en PLAY.**
 - **Bloquear la app** hasta completar el tour. *Skip* siempre disponible.
-- **Recovery de racha.** Sigue prohibido (regla permanente).
-
----
-
-## Open questions
-
-1. **¿El tour corre antes o después del splash?** Asumo después (el splash ya tiene su
-   propia llave y su propio momento).
-2. **¿"Continue training" post-Daily entra en este cluster o en el siguiente?** Es la
-   pieza que conecta el Daily con el Content Loop, y hoy no existe.
-3. **¿El recordatorio del Challenge es un modal o un chip?** Un modal al 2.º día, sin
-   pedirlo, es intrusivo. Propongo chip/banner, no modal.
+- **Recovery de racha.** Prohibido, regla permanente.
+- **Persistencia server-side del flag.** No hay backend de perfiles todavía.
