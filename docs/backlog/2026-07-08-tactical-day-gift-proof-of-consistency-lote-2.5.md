@@ -1,7 +1,20 @@
 # Backlog / Lote 2.5 — Tactical Day Gift + Proof of Consistency
 
-> **Estado:** documentado, NO implementar en Lote 2. Registrado 2026-07-08.
-> Cluster siguiente al Lote 2 (off-chain free save). No tocar en esta entrega.
+> ## ⛔ SUPERSEDED (2026-07-12) — NO IMPLEMENTAR
+>
+> Reemplazado por **`docs/specs/2026-07-12-hub-tour-daily-first-spec.md`**.
+>
+> **Por qué:** este doc pone el Daily Tactic como el **CIERRE** de la sesión (Great Focus
+> → desbloquea el gift → resolverlo cierra el día). El founder decidió lo **opuesto**
+> (2026-07-12): el Daily **ABRE** la sesión, y un tour de 3 pasos guía al jugador hacia
+> él. Los dos diseños no pueden convivir: o el Daily es la puerta de entrada o es el
+> premio final.
+>
+> Se conserva como registro de la decisión descartada, no como trabajo pendiente. Lo que
+> sigue vivo de acá es la **proof of consistency** on-chain (guardar la prueba del día),
+> que es ortogonal a cuándo cae el Daily y puede reevaluarse por separado.
+
+> **Estado original:** documentado, NO implementar en Lote 2. Registrado 2026-07-08.
 
 ## Flujo objetivo (futuro)
 
