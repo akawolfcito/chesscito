@@ -7,8 +7,17 @@ vi.mock("@/i18n/navigation", () => ({
   Link: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+const addressMock = vi.hoisted(() =>
+  vi.fn<() => string | undefined>(() => "0x1111111111111111111111111111111111111111"),
+);
+const connectWalletMock = vi.hoisted(() => vi.fn());
+
 vi.mock("wagmi", () => ({
-  useAccount: () => ({ address: "0x1111111111111111111111111111111111111111" }),
+  useAccount: () => ({ address: addressMock() }),
+}));
+
+vi.mock("@/lib/wallet/use-connect-wallet", () => ({
+  useConnectWallet: () => ({ connectWallet: connectWalletMock }),
 }));
 
 vi.mock("next-intl", () => ({
@@ -132,5 +141,23 @@ describe("/coach/history tap-entry routing", () => {
   it("legacy selected branch is gone — no inline CoachPanel mounted", () => {
     render(<CoachHistoryPage />);
     expect(screen.queryByTestId("coach-panel")).toBeNull();
+  });
+});
+
+// The PLAY dock used to hand a wallet-less player the ProSheet, whose primary
+// CTA is literally "Connect wallet". Now that the Coach routes here instead,
+// THIS branch is the connect funnel. A sentence with no button would not be a
+// softer sell — it would be a dead end.
+describe("/coach/history without a wallet", () => {
+  it("offers a real way to connect, not just a sentence", () => {
+    addressMock.mockReturnValue(undefined);
+    connectWalletMock.mockReset();
+    render(<CoachHistoryPage />);
+
+    const cta = screen.getByRole("button", { name: /connect/i });
+    fireEvent.click(cta);
+
+    expect(connectWalletMock).toHaveBeenCalledTimes(1);
+    addressMock.mockReturnValue("0x1111111111111111111111111111111111111111");
   });
 });

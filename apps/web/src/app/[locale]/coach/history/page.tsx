@@ -13,6 +13,7 @@ import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import type { CoachAnalysisRecord, GameRecord } from "@/lib/coach/types";
 import { useCoachCredits } from "@/lib/coach/use-coach-credits";
 import { useIsProActive } from "@/lib/pro/use-is-pro-active";
+import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 
 type HistoryEntry = CoachAnalysisRecord & { game: GameRecord };
 
@@ -51,6 +52,7 @@ function PageHeader({ onBack }: { onBack: () => void }) {
 export default function CoachHistoryPage() {
   const t = useTranslations("COACH_COPY");
   const { address } = useAccount();
+  const { connectWallet } = useConnectWallet();
   const router = useRouter();
   const { credits } = useCoachCredits();
   const isPro = useIsProActive();
@@ -58,9 +60,21 @@ export default function CoachHistoryPage() {
 
   if (!address) {
     return (
+      // The PLAY dock used to hand this player the ProSheet, whose primary CTA
+      // is literally "Connect wallet". Now that the Coach opens the Journal
+      // instead, this branch IS the connect funnel — the copy states the gate,
+      // and the button has to open it. Without the button we'd have traded a
+      // paywall for a dead end (red team P0, 2026-07-13).
       <main className="tj-root">
         <PageHeader onBack={() => router.push("/")} />
         <p className="tj-no-wallet-text">{t("connectWalletForHistory")}</p>
+        <PrincipalButton
+          size="medium"
+          className="self-center"
+          onClick={() => connectWallet()}
+        >
+          {t("connectWalletButton")}
+        </PrincipalButton>
       </main>
     );
   }

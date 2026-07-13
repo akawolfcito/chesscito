@@ -52,6 +52,22 @@ describe("ProSheet", () => {
     expect(screen.getByText(PRO_COPY.perksActive[0])).toBeInTheDocument();
   });
 
+  // The per-day line was clutter AND a hand-written derivative of $1.99/30.
+  // The day PRO's price moves, a baked string like that lies without turning a
+  // single test red — the exact trap the Hub Tour walked into. The price is
+  // already stated, in full, right above it.
+  it("never hand-writes a per-day price derived from the real one", () => {
+    renderSheet();
+    expect(screen.queryByText(/cents a day/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/centavos al día/i)).not.toBeInTheDocument();
+  });
+
+  // The line that earns its place stays: it says something the price cannot.
+  it("keeps the no-auto-billing promise", () => {
+    renderSheet();
+    expect(screen.getByText(/no auto-billing/i)).toBeInTheDocument();
+  });
+
   // AC-3.8 — addendum §3.6 / §6.1 commit #4 — kicker now renders as
   // the uppercase "TRAINING PASS" pill in the candy-panel redesign,
   // sourced from PRO_COPY.trainingPassLabel.

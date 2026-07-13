@@ -274,7 +274,6 @@ const messages = {
     subtitle:
       "Pase mensual que mantiene a Chesscito abierto. Renueva cuando quieras.",
     priceLabel: "$1.99 USD / 30 días",
-    priceSubLabel: "≈ 6 centavos al día",
     durationLabel: "30 días",
     ctaBuy: "Activar PRO",
     ctaConnectWallet: "Conectar wallet",
@@ -480,6 +479,7 @@ const messages = {
     backLabel: "Atrás",
     connectWalletForHistory:
       "Conecta tu wallet para ver tu historial del Coach.",
+    connectWalletButton: "Conectar Wallet",
     historyAriaLabel: "Historial de análisis del Coach",
     resultLabels: {
       win: "Victoria",

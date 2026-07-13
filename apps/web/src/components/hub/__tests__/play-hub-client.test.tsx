@@ -79,12 +79,18 @@ describe("PlayHubClient", () => {
     expect(pushMock).not.toHaveBeenCalledWith(expect.stringContaining("/exercises"));
   });
 
-  it("opens PRO for a free player and routes active PRO to Coach", async () => {
-    const { unmount } = render(<PlayHubClient />);
+  // The Coach used to hand a free player the paywall. It cannot anymore: a
+  // player who never buys PRO would never learn the analysis exists, and so
+  // could never want it. The journal was never PRO-gated — only this hub hid
+  // it. If someone ever restores the `if`, these two go red.
+  it("routes a free player to the journal instead of the paywall", async () => {
+    render(<PlayHubClient />);
     await userEvent.click(screen.getByText("coach"));
-    expect(openProMock).toHaveBeenCalledTimes(1);
-    unmount();
+    expect(pushMock).toHaveBeenCalledWith("/coach/history");
+    expect(openProMock).not.toHaveBeenCalled();
+  });
 
+  it("routes an active PRO player to the same journal", async () => {
     proStateMock.mockReturnValue({
       proStatus: { active: true, expiresAt: Date.now() + 7 * 86_400_000 },
       openSheet: openProMock,
@@ -93,6 +99,7 @@ describe("PlayHubClient", () => {
     render(<PlayHubClient />);
     await userEvent.click(screen.getByText("coach"));
     expect(pushMock).toHaveBeenCalledWith("/coach/history");
+    expect(openProMock).not.toHaveBeenCalled();
   });
 
   it("opens the Play shop in place", async () => {

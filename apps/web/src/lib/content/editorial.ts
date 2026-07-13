@@ -1608,6 +1608,10 @@ export const COACH_COPY = {
   /** /coach/history page header — back navigation + no-wallet gate. */
   backLabel: "Back",
   connectWalletForHistory: "Connect your wallet to view your Coach history.",
+  /** The PLAY dock now routes here instead of opening the ProSheet, whose
+   *  primary CTA was "Connect wallet". So this branch IS the connect funnel:
+   *  the copy above states the gate, this button opens it. */
+  connectWalletButton: "Connect Wallet",
   /** ARIA region label shared by all three render branches of
    *  <CoachHistory /> (loading, empty, content). Stable label keeps the
    *  landmark name consistent so AT users land on the same region as
@@ -2112,9 +2116,6 @@ export const PRO_COPY = {
   taglineSub: "Your monthly training pass.",
   subtitle: "Monthly pass that keeps Chesscito open. Renew when you want.",
   priceLabel: "$1.99 USD / 30 days",
-  /** M1 funnel (Commit 5) — secondary pricing line that surfaces the
-   *  per-day cost without replacing the canonical 30-day price. */
-  priceSubLabel: "≈ 6 cents a day",
   durationLabel: "30 days",
   ctaBuy: "Activate PRO",
   /** Short CTA label used when the wallet is not connected — fits a

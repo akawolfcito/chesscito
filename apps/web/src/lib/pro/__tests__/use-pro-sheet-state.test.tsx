@@ -44,6 +44,7 @@ const useProStatusMock = vi.hoisted(() =>
 );
 const trackMock = vi.hoisted(() => vi.fn());
 const hapticSuccessMock = vi.hoisted(() => vi.fn());
+const usePathnameMock = vi.hoisted(() => vi.fn<() => string | null>(() => "/"));
 
 vi.mock("wagmi", () => ({
   useAccount: () => useAccountMock(),
@@ -74,6 +75,10 @@ vi.mock("@/lib/telemetry", () => ({
 
 vi.mock("@/lib/haptics", () => ({
   hapticSuccess: () => hapticSuccessMock(),
+}));
+
+vi.mock("@/i18n/navigation", () => ({
+  usePathname: () => usePathnameMock(),
 }));
 
 import { useProSheetState } from "../use-pro-sheet-state";
@@ -127,6 +132,8 @@ beforeEach(() => {
   trackMock.mockReset();
   hapticSuccessMock.mockReset();
   waitReceiptMock.mockReset();
+  usePathnameMock.mockReset();
+  usePathnameMock.mockReturnValue("/");
 
   useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
   useChainIdMock.mockReturnValue(42220);
@@ -187,6 +194,59 @@ describe("useProSheetState — open/close lifecycle", () => {
     expect(result.current.open).toBe(false);
     expect(result.current.sheetProps.errorMessage).toBeNull();
     expect(result.current.sheetProps.verifyFailedTxHash).toBeNull();
+  });
+});
+
+// Now that the Coach dock opens the Journal instead of the paywall, the only
+// way to know whether that was a good idea is to see which SURFACE sold the
+// pass. Entries into the journal are not purchases attributable to it — without
+// this, a dip in PRO would have been unreadable: cause or cure, we couldn't
+// tell. Attribution is by surface (pathname), not by CTA within a surface.
+describe("useProSheetState — purchase attribution", () => {
+  it("attributes the purchase to the surface that opened the sheet", async () => {
+    withSufficientBalances();
+    usePathnameMock.mockReturnValue("/coach/history");
+    const { result } = renderProSheetHook();
+
+    act(() => {
+      result.current.openSheet();
+    });
+    await act(async () => {
+      await result.current.sheetProps.onPurchase();
+    });
+
+    expect(trackMock).toHaveBeenCalledWith(
+      "pro_purchase_started",
+      expect.objectContaining({ source: "/coach/history" }),
+    );
+    expect(trackMock).toHaveBeenCalledWith(
+      "pro_purchase_confirmed",
+      expect.objectContaining({ source: "/coach/history" }),
+    );
+  });
+
+  it("freezes the source at open, so navigating mid-purchase cannot rewrite it", async () => {
+    withSufficientBalances();
+    usePathnameMock.mockReturnValue("/coach/history");
+    const { result, rerender } = renderProSheetHook();
+
+    act(() => {
+      result.current.openSheet();
+    });
+
+    // The player drifts elsewhere while the sheet is up. The sale still
+    // belongs to the surface that made it.
+    usePathnameMock.mockReturnValue("/");
+    rerender();
+
+    await act(async () => {
+      await result.current.sheetProps.onPurchase();
+    });
+
+    expect(trackMock).toHaveBeenCalledWith(
+      "pro_purchase_started",
+      expect.objectContaining({ source: "/coach/history" }),
+    );
   });
 });
 

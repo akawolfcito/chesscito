@@ -368,10 +368,12 @@ export function ProSheet(props: ProSheetProps) {
               </ul>
 
               {/* Center card — branches by subscription state.
-               *  Non-active: price card with $1.99 USD / 30 days + the
-               *  per-day equivalent (M1 funnel adds priceSubLabel under
-               *  priceLabel so the price stays readable while the
-               *  per-day cost lowers the perceived barrier).
+               *  Non-active: the price card. The per-day equivalent that used
+               *  to sit under it is gone (2026-07-13): it was clutter, and it
+               *  was a hand-written derivative of $1.99/30 — the day PRO's
+               *  price moves, a baked string like that lies without turning a
+               *  single test red. `noAutoBillingLine` stays: it says something
+               *  the price cannot.
                *  Active: ProActiveBadge + the extend/renew sub-line. */}
               {showActiveBanner && days !== null && status?.expiresAt ? (
                 <div
@@ -433,12 +435,6 @@ export function ProSheet(props: ProSheetProps) {
                     style={{ color: "rgb(91, 33, 182)" }}
                   >
                     {t("priceLabel")}
-                  </p>
-                  <p
-                    className="mt-0.5 text-nano font-semibold"
-                    style={{ color: "rgba(110, 65, 15, 0.78)" }}
-                  >
-                    {t("priceSubLabel")}
                   </p>
                   <p
                     className="mt-0.5 text-nano"

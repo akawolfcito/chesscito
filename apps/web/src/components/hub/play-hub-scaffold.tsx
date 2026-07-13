@@ -195,12 +195,14 @@ export function PlayHubScaffold({
         <h2 className="play-hub-tools-label">{tPlay("chessToolsLabel")}</h2>
         <div className="play-hub-tools-grid" aria-label={tPlay("actionsAriaLabel")}>
           <PlayTacticsTile className="" />
+          {/* No PRO badge: the tile no longer guards a paywall. It opens the
+              Journal, which any connected wallet can read. The badge would be
+              announcing a wall that isn't there. */}
           <HubActionTile
             iconSrc="/art/new-icons-chesscito/training.png"
             label={tPlay("coachLabel")}
             ariaLabel={tHud("coachAriaLabel")}
             onClick={onCoachTap}
-            badge={<span className="play-hub-action-badge">PRO</span>}
           />
           <HubActionTile
             iconSrc="/art/redesign/icons/shop.png"

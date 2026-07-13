@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderWithIntl as render } from "@/test-utils/render-with-intl";
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { PlayHubScaffold } from "../play-hub-scaffold";
 
 vi.mock("@/components/kingdom/kingdom-card", () => ({
@@ -25,9 +25,24 @@ vi.mock("@/components/tactics/play-tactics-tile", () => ({
     <button className={className}>Tactics</button>
   ),
 }));
+// The mock MUST render `badge` — otherwise a test asserting the Coach tile
+// carries no PRO badge would pass while the real tile still wears one.
 vi.mock("@/components/hub/hub-action-tile", () => ({
-  HubActionTile: ({ label, ariaLabel, className }: { label: string; ariaLabel: string; className?: string }) => (
-    <button aria-label={ariaLabel} className={className}>{label}</button>
+  HubActionTile: ({
+    label,
+    ariaLabel,
+    className,
+    badge,
+  }: {
+    label: string;
+    ariaLabel: string;
+    className?: string;
+    badge?: React.ReactNode;
+  }) => (
+    <button aria-label={ariaLabel} className={className}>
+      {label}
+      {badge}
+    </button>
   ),
 }));
 const props = {
@@ -102,5 +117,15 @@ describe("PlayHubScaffold", () => {
     for (const label of ["Tactics", "Coach", "Shop"]) {
       expect(screen.getByText(label)).not.toHaveClass("candy-tray-pill");
     }
+  });
+
+  // The tile no longer guards a paywall, so it must not wear one. A badge that
+  // announces a wall where none exists is a lie the player pays for by never
+  // opening the door.
+  it("does not brand the Coach tile as PRO-locked", () => {
+    render(<PlayHubScaffold {...props} />);
+
+    const coachTile = screen.getByText("Coach").closest("button") as HTMLElement;
+    expect(within(coachTile).queryByText("PRO")).not.toBeInTheDocument();
   });
 });
