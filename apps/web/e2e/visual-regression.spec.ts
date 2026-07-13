@@ -1039,4 +1039,87 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
       FIXTURE_OPTS,
     );
   });
+
+  // vr16 — arena player rails. Added 2026-07-13 to close a real hole: no
+  // baseline in this file reached a `PlayerAvatar`, so a border-radius change
+  // to `.player-card-img` (c63b34fc) shipped with all 5107 unit tests and all
+  // 50 VR baselines green. The rails are the sole consumer of the redesign
+  // PlayerAvatar, so these five lock that surface. Backed by /dev/arena-rails.
+  test("vr16-arena-rail-rival-idle — rival rail, not to move", async ({ page }) => {
+    await page.goto("/dev/arena-rails?variant=rival-idle", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr16-arena-rail-rival-idle.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  // The "thinking" Lottie renders to a canvas and never settles, so masking it
+  // is the only way to keep this deterministic. The mask still locks the
+  // animation's position and footprint — only its current frame is ignored.
+  test("vr16-arena-rail-rival-thinking — active rival, thinking anim masked", async ({
+    page,
+  }) => {
+    await page.goto("/dev/arena-rails?variant=rival-thinking", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot("vr16-arena-rail-rival-thinking.png", {
+      ...FIXTURE_OPTS,
+      mask: [page.locator(".arena-rail-thinking")],
+    });
+  });
+
+  test("vr16-arena-rail-you-active — player rail, to move, with nickname", async ({
+    page,
+  }) => {
+    await page.goto("/dev/arena-rails?variant=you-active", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr16-arena-rail-you-active.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  // Both rails stacked: with nickname and without. They must be the SAME
+  // height — a visitor session must not shift the board vertically.
+  test("vr16-arena-rail-you-no-meta — visitor rail keeps its height", async ({
+    page,
+  }) => {
+    await page.goto("/dev/arena-rails?variant=you-no-meta", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr16-arena-rail-you-no-meta.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  // PRO is an ornamental PNG frame behind the avatar, never a CSS ring — and
+  // it draws on BOTH rails, the rival's included, when the player subscribes.
+  test("vr16-arena-rails-pro — ornament frame on both rails", async ({ page }) => {
+    await page.goto("/dev/arena-rails?variant=rails-pro", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr16-arena-rails-pro.png",
+      FIXTURE_OPTS,
+    );
+  });
 });
