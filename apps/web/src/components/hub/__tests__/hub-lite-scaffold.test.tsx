@@ -180,6 +180,17 @@ describe("<HubLiteScaffold>", () => {
     expect(screen.getByTestId("start-focus-cta").textContent).toMatch(/Start Focus/i);
   });
 
+  it("Start Focus: carries the train-pieces icon, decorative and before the label", () => {
+    render(<HubLiteScaffold {...baseProps()} />);
+    const cta = screen.getByTestId("start-focus-cta");
+    const icon = cta.querySelector(".hub-lite-start-focus-icon");
+    expect(icon).not.toBeNull();
+    expect(icon?.getAttribute("aria-hidden")).toBe("true");
+    expect(icon?.querySelector("img")?.getAttribute("src")).toBe("/art/hub/train-pieces.png");
+    // Decorative: the accessible name still comes from the label alone.
+    expect(cta.textContent).toMatch(/Start Focus/i);
+  });
+
   it("Start Focus (non-PRO): no gold ring overlay", () => {
     const { container } = render(<HubLiteScaffold {...baseProps()} />);
     expect(container.querySelector(".hub-lite-start-focus-ring")).toBeNull();

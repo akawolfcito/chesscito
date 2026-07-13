@@ -241,6 +241,12 @@ export function HubLiteScaffold({
           aria-label={t("startFocusAriaLabel")}
           onClick={primaryFocus.onPress}
         >
+          {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+          <picture className="hub-lite-start-focus-icon" aria-hidden="true">
+            <source srcSet="/art/hub/train-pieces.avif" type="image/avif" />
+            <source srcSet="/art/hub/train-pieces.webp" type="image/webp" />
+            <img src="/art/hub/train-pieces.png" alt="" width={64} height={64} draggable={false} />
+          </picture>
           {startFocusLabel}
         </button>
         {/* Decorative gold ring overlaid on top of the (unchanged) button —
