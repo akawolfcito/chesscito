@@ -1122,4 +1122,63 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
       FIXTURE_OPTS,
     );
   });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // vr17 — PLAY hub home. Added 2026-07-13 to close the last big hole.
+  //
+  // The PLAY hub had NO visual coverage at all. `hub-clean — anonymous /hub`
+  // (line 73) navigates to `/exercises`, and every other `hub-*` baseline
+  // belongs to LEARN — so the play hub's HUD, mascot, Kingdom panel, PLAY CHESS
+  // CTA and CHESS TOOLS dock had never been photographed. The Coach tile lost
+  // its PRO badge that same week with 5000+ tests green and nothing watching.
+  //
+  // Backed by /dev/play-hub, which forced the Peones chip to stop reading the
+  // wallet on its own (it called wagmi's useAccount two levels below a scaffold
+  // that advertised itself as presentational). The scaffold takes the balance as
+  // a prop now, so these are photographs of the hub — not of a Next.js error
+  // overlay, which is what the arena rails silently captured first.
+  // ──────────────────────────────────────────────────────────────────────────
+
+  test("vr17-play-hub-guest — no wallet: Connect chip, no Peones, PRO locked", async ({
+    page,
+  }) => {
+    await page.goto("/dev/play-hub?variant=guest", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot("vr17-play-hub-guest.png", FIXTURE_OPTS);
+  });
+
+  // The Peones chip appears ONLY here. Its absence in the guest shot above and
+  // its presence in this one is the pair that locks the wallet gate: a chip that
+  // leaks to guests, or vanishes for holders, breaks one of the two images.
+  test("vr17-play-hub-connected — wallet, no PRO: Peones chip + trophies", async ({
+    page,
+  }) => {
+    await page.goto("/dev/play-hub?variant=connected", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot("vr17-play-hub-connected.png", FIXTURE_OPTS);
+  });
+
+  // PRO flips three things at once, in lockstep: the HUD badge (UNLOCK → 12D),
+  // the mascot (wizard → PRO wizard), and the Kingdom panel chip (PRO → PRO
+  // active). One of them drifting out of step is invisible to a unit test and
+  // obvious in this image.
+  test("vr17-play-hub-pro — PRO active: badge, PRO mascot, panel chip", async ({
+    page,
+  }) => {
+    await page.goto("/dev/play-hub?variant=pro", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot("vr17-play-hub-pro.png", FIXTURE_OPTS);
+  });
 });
