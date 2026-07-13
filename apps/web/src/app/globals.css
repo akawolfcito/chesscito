@@ -14486,6 +14486,11 @@ button.hud-resource-chip:active:not(:disabled) {
   width: min(320px, calc(100% - 32px));
   padding: 20px 22px 16px;
   text-align: center;
+  /* A column, so a `max-height` set from the measured space squeezes the hero
+     (the one flexible child) instead of pushing the button off the phone. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   background-image: image-set(
     url("/art/new-assets-chesscito/paneles/panel-bg1.avif") type("image/avif"),
     url("/art/new-assets-chesscito/paneles/panel-bg1.webp") type("image/webp"),
@@ -14569,16 +14574,36 @@ button.hud-resource-chip:active:not(:disabled) {
   height: auto;
 }
 
+/* The only child allowed to shrink. `min-height: 0` is what lets it actually do
+   so inside a flex column — without it the image keeps its intrinsic height and
+   the panel overflows, which is precisely how "Got it" ended up below the fold
+   on a real MiniPay screen. */
 .hub-tour-hero {
-  display: block;
+  display: flex;
+  justify-content: center;
+  flex: 0 1 auto;
+  min-height: 0;
   width: min(100%, 268px);
   margin: 8px auto 0;
 }
 
 .hub-tour-hero img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  max-height: 124px;
+  object-fit: contain;
   border-radius: 12px;
+}
+
+/* Everything that is not the hero holds its size: the deal and the button are
+   the two things that may never be squeezed out of the panel. */
+.hub-tour-title-art,
+.hub-tour-value,
+.hub-tour-ask,
+.hub-tour-primary,
+.hub-tour-body,
+.hub-tour-step-counter {
+  flex: 0 0 auto;
 }
 
 /* The terms, kept visible without a paragraph: one line, same numbers the
