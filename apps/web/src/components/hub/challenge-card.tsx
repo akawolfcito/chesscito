@@ -275,7 +275,12 @@ export function ChallengeCard({
         {isActive ? null : (
           <button
             type="button"
-            className="challenge-card-join"
+            // Pulses only while the purchase is actually available: `null` means
+            // the status is still resolving (or the player already owns it), and
+            // a CTA that throbs while disabled advertises a dead button.
+            className={`challenge-card-join${
+              onJoinChallenge ? " is-pulsing" : ""
+            }`}
             data-testid="challenge-join-cta"
             aria-label={t("joinAriaLabel", { price: challenge.priceLabel })}
             onClick={onJoinChallenge ?? undefined}

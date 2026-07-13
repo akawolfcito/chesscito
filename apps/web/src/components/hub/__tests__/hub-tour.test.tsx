@@ -98,9 +98,20 @@ describe("<HubTour>", () => {
 
     expect(
       screen.getByText(
-        "Commit to 30 focus days, track your progress, and get 5 shields with your $2.49 pass.",
+        "Unlock your $2.49 pass: 30 focus days tracked, plus 5 shields to rescue a failed exercise. Tap Join Challenge to commit.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("never promises that the pass forgives a missed day", () => {
+    // A shield rescues a FAILED EXERCISE. Streak recovery is a permanent
+    // never-build, so this — the one screen that asks for money — must not sell
+    // it. The rule is enforced on the copy itself, not on a render, so it holds
+    // for whoever rewrites the sales pitch next.
+    expect(HUB_TOUR_COPY.challengeJoin).toMatch(/exercise/i);
+    expect(HUB_TOUR_COPY.challengeJoin).not.toMatch(
+      /miss(ed)? (a )?day|recover|restore|streak/i,
+    );
   });
 
   it("closes on Got it and reports the tour completed", () => {
@@ -113,21 +124,11 @@ describe("<HubTour>", () => {
     expect(onFinish).toHaveBeenCalledWith("completed");
   });
 
-  it("reports a skip as a skip — it is a decision, not a postponement", () => {
-    const onFinish = vi.fn();
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={onFinish} />);
-
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.skip }));
-
-    expect(onFinish).toHaveBeenCalledWith("skipped");
-  });
-
-  it("offers Skip on every step, not just the first", () => {
+  it("has no escape hatch — at two steps, an exit link only bleeds players out of the pass", () => {
     render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-    expect(
-      screen.getByRole("button", { name: HUB_TOUR_COPY.skip }),
-    ).toBeInTheDocument();
+    // The panel offers exactly one control per step: the one that advances it.
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+    expect(screen.queryByText(/skip/i)).toBeNull();
   });
 
   it("skips a step whose target never mounted — a 1-step tour beats an arrow pointing at nothing", () => {

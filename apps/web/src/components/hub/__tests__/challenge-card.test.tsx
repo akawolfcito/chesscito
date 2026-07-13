@@ -38,6 +38,38 @@ afterEach(() => {
 })
 
 describe('<ChallengeCard>', () => {
+  it('pulses the Join CTA while the purchase is available', () => {
+    // The transaction this whole surface exists for. Once the hub tour ends,
+    // the pulse is the only thing still pointing at it.
+    render(
+      <ChallengeCard
+        focusPassport={passport()}
+        challenge={CHALLENGE}
+        seasonPass={{ active: false, isLoading: false }}
+        onJoinChallenge={() => {}}
+      />,
+    )
+    expect(screen.getByTestId('challenge-join-cta').className).toContain(
+      'is-pulsing',
+    )
+  })
+
+  it('never pulses a CTA that cannot be tapped', () => {
+    // `null` = status still resolving. A throbbing disabled button advertises a
+    // dead control.
+    render(
+      <ChallengeCard
+        focusPassport={passport()}
+        challenge={CHALLENGE}
+        seasonPass={{ active: false, isLoading: true }}
+        onJoinChallenge={null}
+      />,
+    )
+    expect(screen.getByTestId('challenge-join-cta').className).not.toContain(
+      'is-pulsing',
+    )
+  })
+
   it('loading: empty progress, stable structure (stats + CTA), aria-busy', () => {
     render(
       <ChallengeCard
