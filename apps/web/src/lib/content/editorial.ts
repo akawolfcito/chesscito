@@ -3163,7 +3163,9 @@ export const HUB_ACTION_RAIL_COPY = {
    *  the asset. When PRO is active the panel unmounts and the HUD chip
    *  ("PRO 7d") becomes the only recognition surface. */
   proDiscoveryTitle: "PRO",
-  proDiscoverySubtitle: "Unlock the full experience",
+  /* One word by design: it rides as a floating label on the PRO chip's foot,
+   * where a sentence would wrap over the art (founder 2026-07-13). */
+  proDiscoverySubtitle: "Unlock",
   proDiscoveryAriaLabel:
     "Unlock PRO: full experience.",
   /** Arena tile aria labels — composed from MiniArenaSetup.name. */

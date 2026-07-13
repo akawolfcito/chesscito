@@ -1,14 +1,12 @@
 "use client";
 
 type Props = {
-  /** PRO subscription state. The panel art swaps with the state
-   *  (purple `bg-suscription` when inactive, all-gold
-   *  `bg-suscription-pro` when active) and so does the sub-text below
-   *  the "PRO" title:
-   *    - inactive: short promotional kicker ("Unlock the full
-   *      experience"-style, supplied by `sublineInactive`).
-   *    - active:   the days-remaining label in large type so the
-   *      remaining-time value is legible at a glance. */
+  /** PRO subscription state. The chip art swaps with the state (purple
+   *  `pro-chip-inactive` when inactive, all-gold `pro-chip-active` when
+   *  active) and so does the floating foot label:
+   *    - inactive: a one-word upsell kicker ("Unlock", supplied by
+   *      `sublineInactive`).
+   *    - active:   the days-remaining value ("7d"). */
   active: boolean;
   daysRemaining?: number;
   /** Accessible name — supplied by the parent so the copy stays in
@@ -25,12 +23,12 @@ type Props = {
 };
 
 /**
- * Top-right Hub PRO entry point — a crowned subscription panel rendered
- * at HUD-corner scale. The frame art swaps with PRO state (purple
- * `bg-suscription` for the upsell, all-gold `bg-suscription-pro` once
- * active, founder 2026-06-15) and the sub-text below the "PRO" title
- * swaps between the inactive promo kicker and the active days-remaining
- * count.
+ * Top-right Hub PRO entry point — a crowned subscription chip rendered at
+ * HUD-corner scale. The art swaps with PRO state (purple
+ * `pro-chip-inactive` for the upsell, all-gold `pro-chip-active` once
+ * active) and the copy rides as a floating label pinned to the chip's foot
+ * — it overlaps the chip base rather than growing the slot, so the HUD row
+ * height is the same in both states.
  *
  * Replaces:
  *   - the inline `<HudResourceChip tone="pro">` in the HUD top row
@@ -60,22 +58,24 @@ export function HubProBadge({
       ? daysLabel
       : sublineInactive;
 
-  // Subscription frame art (founder 2026-06-15): the panel now swaps with
-  // PRO state — purple `bg-suscription` for the discovery/upsell state,
-  // all-gold `bg-suscription-pro` once the subscription is active.
-  const bgAsset = active ? "bg-suscription-pro" : "bg-suscription";
+  // Chip art (founder 2026-07-13): the crowned "PRO" wordmark is baked into
+  // the sprite — purple `pro-chip-inactive` for the upsell, all-gold
+  // `pro-chip-active` once the subscription is live. The DOM carries no "PRO"
+  // text of its own; the accessible name comes from `ariaLabel`.
+  const bgAsset = active ? "pro-chip-active" : "pro-chip-inactive";
 
   const content = (
     <>
       <picture className="hub-pro-badge-bg">
         <source srcSet={`/art/hub/${bgAsset}.avif`} type="image/avif" />
         <source srcSet={`/art/hub/${bgAsset}.webp`} type="image/webp" />
-        <img src={`/art/hub/${bgAsset}.png`} alt="" width={300} height={289} />
+        <img src={`/art/hub/${bgAsset}.png`} alt="" width={600} height={351} />
       </picture>
-      <span className="hub-pro-badge-content" aria-hidden="true">
-        <span className="hub-pro-badge-title">PRO</span>
-        {subline && <span className="hub-pro-badge-sub">{subline}</span>}
-      </span>
+      {subline && (
+        <span className="hub-pro-badge-label" aria-hidden="true">
+          {subline}
+        </span>
+      )}
     </>
   );
 

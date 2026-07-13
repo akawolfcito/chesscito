@@ -33,7 +33,7 @@ export default function ProChipDevPage({
             daysRemaining={active ? 7 : undefined}
             daysLabel={active ? "7d" : undefined}
             sublineInactive={
-              active ? undefined : "Unlock the full experience"
+              active ? undefined : "Unlock"
             }
             ariaLabel={active ? "PRO: 7 days left" : "Unlock PRO"}
           />

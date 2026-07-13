@@ -1688,7 +1688,7 @@ const messages = {
     mateLabel: "Training", // matches the hardcoded exercises action-row pin; translate both together when pin labels get i18n
     coachLabel: "Coach",
     proDiscoveryTitle: "PRO",
-    proDiscoverySubtitle: "Desbloquea la experiencia completa",
+    proDiscoverySubtitle: "Desbloquear",
     proDiscoveryAriaLabel:
       "Desbloquea PRO: experiencia completa.",
     arenaUnlockedAriaFormat: "Entrenamiento especial: {name}",
