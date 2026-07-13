@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Hash, TransactionReceipt } from "viem";
+import { toFunctionSelector, type Hash, type TransactionReceipt } from "viem";
 import {
   classifyTxErrorKind,
   isReceiptUnverifiable,
@@ -164,5 +164,132 @@ describe("classifyTxErrorKind — an unverifiable receipt is not a revert", () =
 
   it("does not treat a plain Error as unverifiable", () => {
     expect(isReceiptUnverifiable(new Error("boom"))).toBe(false);
+  });
+});
+
+/** Wraps revert data the way MiniPay actually delivers it: the node's JSON-RPC
+ *  error blob, stringified into viem's message. Measured on device 2026-07-10 —
+ *  `error.data`, `.raw` and `.signature` all come back null, so the text is the
+ *  only carrier. */
+function minipayRevert(fn: string, data: string): Error {
+  return new Error(
+    `The contract function "${fn}" reverted with the following reason:\n` +
+      "Remote method 'eth_estimateGas' failed with an error: " +
+      '{"jsonrpc":"2.0","id":1,"error":{"code":3,"message":"execution reverted",' +
+      `"data":"${data}"}}`,
+  );
+}
+
+/** 32 bytes of zeroes — a valid ABI-encoded word for every arg type below. */
+const WORD = "00".repeat(32);
+
+/** Revert data for `signature`, with `args` zero-filled words.
+ *
+ *  Selectors are DERIVED, never typed: they are 4 bytes of a keccak hash, and
+ *  no reviewer can spot a wrong one. Note `toFunctionSelector` hashes the exact
+ *  string it is handed — give it `"error Foo(uint256)"` and it hashes the word
+ *  "error" too, returning a selector that belongs to nothing. Solidity hashes
+ *  the bare signature, so that is what goes in. */
+function revertData(signature: string, args: number): string {
+  return `${toFunctionSelector(signature)}${WORD.repeat(args)}`;
+}
+
+const BADGE_ALREADY_CLAIMED = revertData("BadgeAlreadyClaimed(address,uint256)", 2);
+const COOLDOWN_ACTIVE = revertData("CooldownActive(uint256)", 1);
+const DAILY_LIMIT_REACHED = revertData("DailyLimitReached(uint256,uint256)", 2);
+const MINT_COOLDOWN = revertData("MintCooldown(uint256)", 1);
+const SIGNATURE_EXPIRED = revertData("SignatureExpired(uint256)", 1);
+/** Decodable, but the player gets no special words for it. Nobody wants to read
+ *  "ItemDisabled" off a phone. */
+const ITEM_DISABLED = revertData("ItemDisabled(uint256)", 1);
+
+describe("classifyTxErrorKind — custom errors decoded from revert data", () => {
+  it("reads BadgeAlreadyClaimed out of MiniPay's message", () => {
+    const err = minipayRevert("claimBadgeSigned", BADGE_ALREADY_CLAIMED);
+    expect(classifyTxErrorKind(err)).toBe("badgeAlreadyClaimed");
+  });
+
+  it("reads CooldownActive", () => {
+    const err = minipayRevert("submitScoreSigned", COOLDOWN_ACTIVE);
+    expect(classifyTxErrorKind(err)).toBe("cooldownActive");
+  });
+
+  it("reads DailyLimitReached", () => {
+    const err = minipayRevert("submitScoreSigned", DAILY_LIMIT_REACHED);
+    expect(classifyTxErrorKind(err)).toBe("dailyLimitReached");
+  });
+
+  // Two contracts, two names, one thing to tell the player: wait a moment.
+  it("folds VictoryNFT's MintCooldown into the same cooldown copy", () => {
+    const err = minipayRevert("mintVictorySigned", MINT_COOLDOWN);
+    expect(classifyTxErrorKind(err)).toBe("cooldownActive");
+  });
+
+  it("reads SignatureExpired", () => {
+    const err = minipayRevert("claimBadgeSigned", SIGNATURE_EXPIRED);
+    expect(classifyTxErrorKind(err)).toBe("signatureExpired");
+  });
+
+  // Decodable is not the same as player-facing. An operator/config error gets
+  // the generic revert copy, exactly as it does today.
+  it("leaves an error with no player copy as a generic revert", () => {
+    const err = minipayRevert("buyItem", ITEM_DISABLED);
+    expect(classifyTxErrorKind(err)).toBe("revert");
+  });
+
+  // Also delivered structured by wallets that are not MiniPay. Never seen in
+  // the field; cheap to accept.
+  it("reads revert data a wallet attached as a structured field", () => {
+    const err = Object.assign(new Error("execution reverted"), {
+      data: COOLDOWN_ACTIVE,
+    });
+    expect(classifyTxErrorKind(err)).toBe("cooldownActive");
+  });
+
+  it("finds revert data nested in the cause chain", () => {
+    // viem wraps: the readable summary is on top, the node's blob is a cause or
+    // two down. `cause` is assigned rather than passed to the constructor —
+    // the tsconfig lib predates the ES2022 Error options argument.
+    const inner = minipayRevert("submitScoreSigned", DAILY_LIMIT_REACHED);
+    const outer = Object.assign(new Error("Transaction failed"), { cause: inner });
+    expect(classifyTxErrorKind(outer)).toBe("dailyLimitReached");
+  });
+});
+
+describe("classifyTxErrorKind — the decoder degrades, it never lies", () => {
+  // Risk #1 in the plan: the message shape is a provider's stringified error,
+  // not an API. MiniPay can change it in a patch release and this extractor
+  // would stop matching IN SILENCE. When it does, the player must land exactly
+  // where they land today — on the generic revert copy — not on a crash and not
+  // on a wrong kind.
+  it("falls back to a generic revert when the message shape changes", () => {
+    const err = new Error(
+      "Remote method 'eth_estimateGas' failed: execution reverted, revertData=0xfafe7970",
+    );
+    expect(classifyTxErrorKind(err)).toBe("revert");
+  });
+
+  it("falls back to a generic revert when the selector is unknown to us", () => {
+    const err = minipayRevert("submitScoreSigned", `0xdeadbeef${WORD}`);
+    expect(classifyTxErrorKind(err)).toBe("revert");
+  });
+
+  // Risk #3: a wallet rejection arrives as viem's ContractFunctionRevertedError
+  // — a REVERT-shaped class for something that never reached the chain. The
+  // decoder must not get a vote before `isUserCancellation`, or every cancelled
+  // tx becomes a reported failure.
+  it("still calls a wallet rejection cancelled, even carrying revert data", () => {
+    const err = Object.assign(new Error("User rejected the request"), {
+      name: "ContractFunctionRevertedError",
+      data: BADGE_ALREADY_CLAIMED,
+    });
+    expect(classifyTxErrorKind(err)).toBe("cancelled");
+  });
+
+  it("still calls a timeout a timeout, even carrying revert data", () => {
+    const err = Object.assign(new Error("Transaction timed out"), {
+      data: COOLDOWN_ACTIVE,
+    });
+    expect(classifyTxErrorKind(err)).toBe("timeout");
   });
 });
