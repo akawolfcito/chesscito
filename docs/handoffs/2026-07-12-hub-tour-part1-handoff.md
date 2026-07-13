@@ -7,7 +7,16 @@
 
 ## Qué se construyó
 
-El tour de 3 pasos del hub de LEARN: **Daily → Challenge → Start Focus**.
+El tour de **2 pasos** del hub de LEARN: **Daily → Challenge**.
+
+> **Revisión con Linita (mismo día, ya aplicada):** el paso de **Start Focus se eliminó** —
+> es el control más grande y central del hub, no cambió, y explicarlo gastaba el paso más
+> caro del tour alejando el que lleva la compra. En su lugar, **el regalo pulsa** mientras
+> el Daily esté pendiente: es lo único que sigue señalando el ritual al terminar el tour.
+> El copy del pase **interpola** `{days}/{shields}/{price}` desde `rail-config.ts` (escribir
+> "$0.99" en el texto se pudre sin poner ningún test en rojo, y el repo ya tiene dos precios
+> vivos), y el del daily **conoce la racha** (a quien lleva 12 días no se le dice "start your
+> streak"). Spec actualizado en el mismo commit.
 
 | Archivo | Qué es |
 | --- | --- |
