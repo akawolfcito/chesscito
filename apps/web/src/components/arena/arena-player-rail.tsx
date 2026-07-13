@@ -2,7 +2,6 @@
 
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PlayerAvatar } from "@/components/redesign/player-avatar";
-import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 
 /** Which side of the board this rail belongs to. The rival sits above the
  *  board, the player below it — matching where their own pieces are, since
@@ -29,6 +28,13 @@ type Props = {
   /** Rival persona sprite (full `.png` path); the avif/webp siblings are
    *  derived by PlayerAvatar. */
   avatarSrc?: string;
+  /** Is the player a PRO subscriber? Draws the ornamental frame behind BOTH
+   *  avatars (spec §4). Arrives as a prop — the rail must stay presentational.
+   *  It used to call `useIsProActive()` itself, which reaches into wagmi, so
+   *  the rail threw without a WagmiProvider and could not be mounted in the
+   *  /dev VR fixtures (whose layout mounts no wallet stack). That is why the
+   *  rails were the one surface with no visual baseline. */
+  pro?: boolean;
 };
 
 /** Compact identity strip for one side of the match.
@@ -45,9 +51,8 @@ export function ArenaPlayerRail({
   isActive = false,
   isThinking = false,
   avatarSrc,
+  pro = false,
 }: Props) {
-  const isProActive = useIsProActive();
-
   return (
     <div
       className={`arena-rail arena-rail--${side}${isActive ? " is-active" : ""}`}
@@ -55,7 +60,7 @@ export function ArenaPlayerRail({
       <span className="arena-rail-avatar">
         <PlayerAvatar
           variant={side === "rival" ? "bot" : "you"}
-          pro={isProActive}
+          pro={pro}
           customSrc={avatarSrc}
           alt={name}
           className="h-14 w-14"

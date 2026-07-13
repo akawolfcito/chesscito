@@ -25,19 +25,9 @@ vi.mock("@/components/ui/lottie-animation", () => ({
   LottieAnimation: () => <div data-testid="thinking-lottie" />,
 }));
 
-// useIsProActive reaches into wagmi (useAccount → useConfig) and would need a
-// WagmiProvider. Stubbed per-test via mockedPro.
-const mockedPro = vi.fn<() => boolean>(() => false);
-vi.mock("@/lib/pro/use-is-pro-active", () => ({
-  useIsProActive: () => mockedPro(),
-}));
-
 import { ArenaPlayerRail } from "../arena-player-rail";
 
-afterEach(() => {
-  cleanup();
-  mockedPro.mockReturnValue(false);
-});
+afterEach(cleanup);
 
 describe("ArenaPlayerRail — identity", () => {
   it("renders the name and the meta line", () => {
@@ -106,14 +96,30 @@ describe("ArenaPlayerRail — thinking indicator", () => {
 describe("ArenaPlayerRail — PRO ornament", () => {
   // HARD RULE (spec §4): the avatar perimeter belongs to PRO. No piece-color
   // ring, no rivals.ts difficulty frame may be layered there.
+  //
+  // `pro` arrives as a PROP, not from useIsProActive() inside the rail. The
+  // rail used to call the hook itself, which reaches into wagmi (useAccount →
+  // useConfig) and threw WagmiProviderNotFoundError anywhere without a
+  // WagmiProvider — including the /dev VR fixtures, whose layout deliberately
+  // mounts no wallet stack. That made the rail the one surface VR could not
+  // photograph. Truth-by-prop matches the HubProBadge convention and keeps the
+  // rail presentational.
   it("passes the PRO state through to the avatar", () => {
-    mockedPro.mockReturnValue(true);
-    render(<ArenaPlayerRail side="you" name="You" />);
+    render(<ArenaPlayerRail side="you" name="You" pro />);
     expect(document.querySelector(".player-card--pro")).toBeInTheDocument();
   });
 
   it("renders no PRO ornament when PRO is inactive", () => {
     render(<ArenaPlayerRail side="you" name="You" />);
     expect(document.querySelector(".player-card--pro")).toBeNull();
+  });
+
+  it("does not reach for a wallet — renders with no WagmiProvider mounted", () => {
+    // Regression guard for the VR hole: if someone reintroduces a wallet hook
+    // here, this render throws and the /dev/arena-rails baselines silently go
+    // back to photographing a Next.js error overlay.
+    expect(() =>
+      render(<ArenaPlayerRail side="rival" name="Pipo" meta="Easy · 487 ELO" />),
+    ).not.toThrow();
   });
 });

@@ -45,6 +45,7 @@ import { mapArenaResult } from "@/lib/coach/game-result";
 import { ArenaMatchupTransition } from "@/components/arena/arena-matchup-transition";
 import { useDisplayName } from "@/hooks/use-display-name";
 import { useProStatus } from "@/lib/pro/use-pro-status";
+import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { ProSheet } from "@/components/pro/pro-sheet";
 import { CoachLoading } from "@/components/coach/coach-loading";
@@ -151,6 +152,10 @@ function ArenaPageInner() {
   // the app so the chip and the Coach gate never disagree.
   const { status: proStatusFromHook } = useProStatus(address?.toLowerCase());
   const proActiveCached = proStatusFromHook?.active === true;
+  // Owns the wallet read for BOTH player rails (they used to call this hook
+  // themselves, which made them unmountable without a WagmiProvider — and so
+  // unphotographable by the /dev VR fixtures). One call, passed down as a prop.
+  const isProActive = useIsProActive();
   const proSheet = useProSheetState();
   // Account sheet (extracted 2026-07-07) — arena mounts the SAME sheet as
   // learn/exercises so the account entry opens in-mode (play `/exercises` is
@@ -1456,6 +1461,7 @@ function ArenaPageInner() {
             avatarSrc={`/art/rivals/${rival.avatar}-avatar.png`}
             isThinking={game.isThinking && !isEndState}
             isActive={game.isThinking && !isEndState}
+            pro={isProActive}
           />
 
           <div className="w-full px-2">
@@ -1480,6 +1486,7 @@ function ArenaPageInner() {
             name={tArena("youLabel")}
             meta={playerNickname}
             isActive={!game.isThinking && !isEndState}
+            pro={isProActive}
           />
 
           {game.pendingPromotion && (
