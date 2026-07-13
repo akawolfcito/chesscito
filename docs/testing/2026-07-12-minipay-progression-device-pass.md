@@ -1,6 +1,17 @@
 # Device pass — máquina de hitos en MiniPay (perfil del founder)
 
-**Fecha**: 2026-07-12 · **Estado**: pendiente de correr
+**Fecha**: 2026-07-12 · **Estado**: **CORRIDO Y FIRMADO** (reporte del founder, en device)
+
+> **Resultado: PASA.** El pase encontró **cuatro** defectos reales con la suite en verde,
+> los cuatro corregidos y reverificados en device:
+> 1. **Overlay fantasma "Badge Ready to Claim"** (#220) — el hallazgo caro. Ver abajo.
+> 2. **CTA de Special Training a un hub sin puerta** (#219).
+> 3. **Loop de START FOCUS** en el último ejercicio de la torre (`27c08be9`, `9dfa36c5`).
+> 4. **Piece Unlocked** con el vocabulario visual viejo (`e8d7a4d2`).
+>
+> Los reportes son del founder en device; no presenciados por el agente.
+> Nada quedó abierto que impida completar los flujos ni que corrompa progreso,
+> pagos o estado. **Checkpoint: FIRMAR.**
 **Build bajo prueba**: `main` ≥ `#214` (`9cfc24db`) · `learn-preview.chesscito.com` · Celo Mainnet
 **Cuenta**: la del founder — **12★ de torre, badge de torre ya minteado**
 

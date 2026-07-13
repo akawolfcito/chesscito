@@ -1,104 +1,78 @@
-# Next session prompt — post 2026-07-12 milestone machine
+# Next session prompt — post device pass, pre Hub Tour
 
 Di **"continuemos"** y el agente debe leer este archivo y seguirlo.
 
 ---
 
-**Estado al arrancar:** `main` = `60695ab3`. Suite **5003 passing / 420 test files**.
-`tsc` limpio, VR **51/51**. Smoke de MiniPay cerrado en device (17/17) — pero **el cluster
-de progression NO ha sido ejercitado en device todavía** (ver punto 1).
+**Estado al arrancar:** `main` = `2e0d97cf`. Suite **5026 passing / 423 test files**.
+`tsc` limpio. **El device pass de LEARN cerró y está FIRMADO.**
 
 **Leer primero:**
-- `docs/handoffs/2026-07-12-progression-unlocks-celebration-queue-handoff.md` — la última sesión.
-- `docs/backlog/2026-07-10-backlog-index.md` — el backlog vigente, auditado contra el código.
-
-**Ya cerrado (2026-07-12):** la **máquina de hitos** (PR #214). Las recompensas de LEARN
-ahora disparan cuando se ganan: regalo a 4★ + 2 ejercicios, laberinto a 6★ + 3 ejercicios,
-Great Focus Session a 8★ netas o cuota agotada, un solo modal por vez, y el session limit
-**nunca antes del reconocimiento**. Spec en
-`docs/specs/2026-07-11-progression-unlocks-celebration-queue.md`.
-
-**Modo:** pulido sobre lo que ya existe. Un solo bloque activo a la vez.
+- `docs/handoffs/2026-07-12-learn-device-pass-and-hub-tour-spec-handoff.md` — la sesión.
+- `docs/specs/2026-07-12-hub-tour-daily-first-spec.md` — **el spec del próximo cluster.
+  Está completo. NO re-especificar.**
 
 ---
 
-## Ruta vigente
+## ▶️ Ruta: construir el Hub Tour (Daily-first)
 
-1. **▶️ Device pass de MiniPay sobre el cluster de progression.** Es lo único del cluster que
-   **no** está verificado. Hacerlo con **un perfil real de 12★ y badge de torre minteado** —
-   el del founder — porque esa es exactamente la forma que expuso la carrera de seeding
-   (`useAccount().status` vs una lectura de contrato deshabilitada). Caminos a recorrer:
-   ganar el regalo (4★/2 ejercicios), desbloquear el laberinto, llegar a la Great Focus
-   Session, reclamar el badge, y **cancelar** un claim para confirmar que el reconocimiento
-   sobrevive. Ningún jugador real ha visto esta máquina todavía.
+1. **Tour de 3 pasos** en el hub de LEARN (`/`): Daily → Challenge → Start Focus.
+   Llave **`chesscito:hub-tour:v1`** (NO reusar `chesscito:onboarded`: la usa el splash).
+   **Todo jugador lo ve una vez**, tenga la historia que tenga. Copy **dinámico**: a quien
+   ya compró el pass no se le vende el pass.
+2. **Cierre del Daily**: primario **Continue training**, secundario **Join Challenge**.
+3. **Recordatorios del Challenge**: CTA contextual + chip. **Nunca modal.**
 
-2. **Hueco de VR.** VR está 51/51 **pero ningún fixture llega a los overlays nuevos, al chip
-   NEW del hub, ni al cuarto tile de trofeos** — la suite corre anónima con storage vacío.
-   Verde significa "no rompí lo viejo", **no** "lo nuevo está cubierto". Agregar fixtures.
+**La restricción que puede hundir el cluster:** el tour monta en el mismo hub que la cola
+de celebración, el welcome gift y la SeasonPassSheet. **El tour es un GATE** — no arranca
+si hay otro modal, y mientras corre nadie más monta uno. El test **debe contar
+`[aria-modal="true"]`, NUNCA `role="dialog"`** (`LabyrinthCompleteOverlay` usa
+`role="alert"`; contar roles pasa en verde con dos diálogos apilados).
 
-3. **Investigar "Claim 3 Shields"** — sigue abierto. El único pendiente con comportamiento
-   *inexplicado*. **Investigación, no código.**
-
-4. **Decoder de custom errors** — `docs/backlog/2026-07-10-custom-errors-decoder.md`. GO,
-   no bloquea estabilidad.
+**Reusar, no inventar:** `VictoryPopupShell` + `PrincipalButton` + iconos de
+`public/art/**`. Lo único nuevo es el spotlight (scrim + anillo + flecha).
 
 ---
 
-## Antes de correr cualquier cosa
+## Flujo de trabajo (CAMBIÓ el 2026-07-12)
 
-- **`env | grep NEXT_PUBLIC` debe salir vacío.** **Confirmado sucio otra vez el 2026-07-12**:
-  el shell exporta `NEXT_PUBLIC_CHAIN_ID=11142220` y **le gana a `.env.local`**, apuntando a
-  Sepolia sin avisar. Para correr limpio sin tocar el shell:
-  `env -u NEXT_PUBLIC_CHAIN_ID -u NEXT_PUBLIC_BADGES_ADDRESS -u NEXT_PUBLIC_SCOREBOARD_ADDRESS pnpm -C apps/web <cmd>`
-- **`lsof -ti:3000` debe salir vacío** antes de VR o E2E.
-- El **play hub** solo se monta con `NEXT_PUBLIC_CHESSCITO_MODE=play` (flag de build).
+**Merge local a `main` + UN push.** NO pushear ramas, NO abrir PRs con auto-merge —
+disparaba un preview deploy + otro de prod por cada fix chico.
 
-## Higiene de comandos (evita prompts de permiso)
+```
+git -C <ruta> checkout -b <rama>      # trabajar, commits atómicos
+git -C <ruta> checkout main
+git -C <ruta> merge --no-ff <rama>
+git -C <ruta> push origin main        # UNA vez
+git -C <ruta> branch -d <rama>
+```
 
-- **Nunca prefijes con `cd`.** Usá `git -C <ruta>` y `pnpm -C <ruta>`.
-- **Un comando por llamada.** Sin pipes, sin `;` encadenados, sin heredocs.
-- Typecheck con `pnpm exec tsc --noEmit` pelado.
-- Archivos temporales: la tool Write, nunca `>` (zsh tiene `noclobber`).
+El gate de calidad es **suite verde + `tsc` limpio ANTES del merge local**, no CI después.
 
-## Reglas que estas sesiones ganaron a golpes
+## Higiene de comandos
 
-- **Contar `role="dialog"` en un test deja pasar modales apilados.** `LabyrinthCompleteOverlay`
-  usa `role="alert"`. Contar **`[aria-modal="true"]`**. Esto escondió dos diálogos apilados en
-  el momento del badge de TODOS los jugadores, con la suite verde.
-- **Dos suites aisladas verdes no prueban su composición.** Confirmado a lo grande en #214: con
-  4900+ tests en verde se escondían celebración doble, un CTA al producto equivocado, un regalo
-  des-reclamándose solo, y una corona de maestría sobre una pieza jamás minteada. Cada
-  componente era correcto **solo**.
-- **Un componente que cachea storage al montar se pudre.** Pasó con los shields (#213) y otra
-  vez con el welcome-package (#214). Si algo nuevo escribe un storage compartido, **todo lector
-  necesita un event bus** — escribir y NO notificar es un no-op disfrazado de fix.
-- **Persistir ANTES de renderizar.** Mostrar una celebración es consecuencia de haberla
-  registrado, nunca al revés.
-- **Un test que pasa por el motivo equivocado no es un guard.** Un mock de `useAccount` sin
-  `status` hacía que un gate nuevo nunca se evaluara; el test pasaba por otra razón.
-- **Una constante duplicada en dos sistemas que deben coincidir es un bug en espera.**
-- **Un flujo opcional no puede tener estado terminal de cancelación.** Cancelar es un no-op.
-- **El entorno miente antes que el código.** Rojo masivo → sospechar del entorno.
-- **La VR no protege la tipografía.** Los fixtures viven bajo `/dev` y nunca cargan
-  Rowdies/Fredoka. **Decisión del founder (2026-07-11): dejarlo así.**
+- **Nunca prefijes con `cd`.** `git -C <ruta>` y `pnpm -C <ruta>`.
+- Un comando por llamada. Sin pipes, sin heredocs.
+- Typecheck: `pnpm exec tsc --noEmit` pelado.
+- `env | grep NEXT_PUBLIC` debe salir vacío. `lsof -ti:3000` vacío antes de VR/E2E.
 
-## Qué NO tocar todavía
+## Decisiones cerradas (NO re-litigar)
 
-- **No abrir el Belt System** hasta que cierren MiniPay/slides.
-- **Nunca construir recovery para el Daily-Streak.** El shield protege el COMBO.
-- **No implementar server-verified progress con umbral proporcional evaluado en vivo** — des-
-  califica retroactivamente. Bit monótono `qualified(player, piece)`.
-- **No tocar el *Try Again* de `timeout`** sin medir: la tx ya se firmó y transmitió.
-- **No renombrar `first-focus-day`.** Mide constancia y es correcto; `first-great-session` mide
-  profundidad y es un logro aparte. Renombrar revocaría un badge ya ganado.
+- **Solo LEARN y PLAY se envían. FULL es interno.** Si el único entry point de un feature
+  vive en `HubScaffold` (FULL), **no existe para ningún jugador**.
+- **Los ejercicios mandan el avance de pieza; los laberintos NO retienen el foco.**
+- **El Daily ABRE la sesión.** El Lote 2.5 (Daily como cierre) está SUPERSEDED.
+- **El tour no es onboarding**: todo jugador lo ve una vez. No se suprime por tener historia.
+- **Nunca construir recovery para el Daily-Streak.**
 
-## Trade-offs aceptados (no re-litigar sin el founder)
+## La lección de esta sesión
 
-- `first-focus-day` y `first-great-session` **comparten el icono** `1day-focus`. Aceptado hasta
-  encargar arte.
-- En **cadena no soportada** no hay celebraciones hasta volver a la correcta. Nada se pierde.
+**Cuatro defectos reales con 5000+ tests en verde**, encontrados por un pase manual en
+device. Cada componente era correcto **solo**; la composición era la mentira. El más caro
+(#220) tenía tres eslabones y arreglar uno solo no lo mataba. **Un pase en device sobre un
+perfil real sigue siendo el único que ve estas cosas.**
 
 ## Si el usuario dice…
 
-- **"continuemos"** → leer este archivo + el handoff, y arrancar por el punto 1.
+- **"continuemos"** → leer el handoff + el spec, y arrancar por el tour.
 - **"qué falta"** → `docs/backlog/2026-07-10-backlog-index.md`.
