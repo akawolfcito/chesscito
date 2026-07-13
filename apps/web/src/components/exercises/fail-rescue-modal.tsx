@@ -56,7 +56,8 @@ export type FailRescueModalProps = {
   onUseShield: () => void;
   /** Tap "Retry anyway" or X (same handler — see decision §3). */
   onRetryAnyway: () => void;
-  /** Tap "Claim free" deep link — only consumed by variant C. */
+  /** Tap "Claim 3 Shields" — only consumed by variant C. Claims the free
+   *  Welcome Pack IN PLACE; it is no longer a Shop deep link. */
   onClaimFree: () => void;
   /** Fired the first time this component renders with variant A, so
    *  the hook can persist a "primer shown" flag. Subsequent rescues
@@ -106,14 +107,15 @@ export function FailRescueModal({
   const kicker = hasShields
     ? tRescue("kicker.withShields")
     : tRescue("kicker.withoutShields");
-  // Footer differs across all three non-primer states: C still deep-
-  // links to the Shop (welcome pack claim); D spends Peones in place,
-  // same as A/B, so it gets its own cost-callout line instead.
+  // Footer differs across all three non-primer states. C claims the free
+  // Welcome Pack in place (it used to deep-link to the Shop — see
+  // use-fail-rescue.ts); D spends Peones in place. Nothing here leaves the
+  // rescue any more.
   let footer: string;
   if (hasShields) {
     footer = tRescue("footer.withShields");
   } else if (variant === "C") {
-    footer = tRescue("footer.deepLink");
+    footer = tRescue("footer.claimInPlace");
   } else {
     footer = tRescue("footer.peonesFallback", { n: SHIELD_RESCUE_PEONES_COST });
   }

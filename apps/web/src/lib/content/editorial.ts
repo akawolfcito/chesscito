@@ -3423,11 +3423,16 @@ export const RESCUE_MODAL_COPY = {
       "You ran out of Shields. Use Peones to keep your streak alive.",
   },
   /** Small footer line under the secondary CTA — clarifies what
-   *  the primary CTA actually does (deep-link to Shop for C, spend
-   *  Peones in place for D). */
+   *  the primary CTA actually does (claim the free gift in place for C,
+   *  spend Peones in place for D). Neither leaves the rescue.
+   *
+   *  `deepLink` ("We'll take you to the Shop.") was retired 2026-07-13 with the
+   *  Shop trip it described: the Welcome Pack is free, so there was nothing to
+   *  buy and no reason to send the player to a catalog of paid SKUs. */
   footer: {
     withShields: "Keep your streak alive.",
-    deepLink: "We’ll take you to the Shop.",
+    /** Variant C only. */
+    claimInPlace: "It's free. Yours right here.",
     /** Variant D only. */
     peonesFallback: "Costs {n} Peones.",
   },

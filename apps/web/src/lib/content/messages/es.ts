@@ -2297,7 +2297,7 @@ const messages = {
     },
     footer: {
       withShields: "Mantén tu racha viva.",
-      deepLink: "Te llevamos a la Tienda.",
+      claimInPlace: "Es gratis. Es tuyo, aquí mismo.",
       peonesFallback: "Cuesta {n} Peones.",
     },
     pills: {

@@ -25,8 +25,7 @@ import { attemptShieldSpendWithPeones } from "@/lib/peones/shield-spend-fallback
  *
  *   - onUseShield  → POST /api/shields/spend (server-authoritative)
  *   - onRetryAnyway → bumps ignore counter + calls onSkipped
- *   - onClaimFree  → opens shop focused on welcome-pack
- *   - onGetShields → opens shop focused on shield SKU
+ *   - onClaimFree  → claims the free Welcome Pack IN PLACE (no Shop trip)
  *
  * The caller passes `onRescued` (run AFTER server confirms shield
  * spend — streak intact, board reset) and `onSkipped` (run when the
@@ -101,11 +100,18 @@ export type UseFailRescueOptions = {
    *  for our infra glitch. Caller resets the board but PRESERVES the
    *  streak. Distinct from onSkipped per red-team E11. */
   onServerError: () => void;
-  /** Opens the Shop sheet focused on the welcome-pack tile. Shield's
-   *  own Shop-TX SKU was retired (PR #164) — variant D now spends
-   *  Peones via onUseShield instead of deep-linking to the Shop, so
-   *  this only ever fires for the welcome-pack claim (variant C). */
-  onOpenShop: (focus: "welcome-pack") => void;
+  /** Claims the FREE Welcome Pack, in place, without leaving the rescue
+   *  (variant C). MUST be wired to the same `useWelcomePackClaim()` instance
+   *  the caller owns — see `welcomePackClaimed` below.
+   *
+   *  This used to be `onOpenShop("welcome-pack")`, which sent the player out
+   *  to a catalog of paid SKUs to collect a gift that costs nothing. Worse,
+   *  the focus never arrived: the caller implemented `() => void` against a
+   *  `(focus: "welcome-pack") => void` contract, which TypeScript accepts, so
+   *  the argument was silently dropped and the Shop opened unfocused. The
+   *  player tapped "Claim 3 Shields" and landed on the store. Fixed
+   *  2026-07-13. */
+  onClaimWelcomePack: () => void;
   /** Stable per-rescue-attempt counter — same value across retries of
    *  one rescue tap, advances on a genuinely new attempt. Threaded
    *  through to the Peones fallback's idempotency key. Owned by the
@@ -249,7 +255,7 @@ export function useFailRescue(
   }, []);
 
   const onClaimFree = useCallback(() => {
-    optionsRef.current.onOpenShop("welcome-pack");
+    optionsRef.current.onClaimWelcomePack();
   }, []);
 
   return {

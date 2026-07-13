@@ -40,12 +40,37 @@ function baseOptions(
     onRescued: vi.fn(),
     onSkipped: vi.fn(),
     onServerError: vi.fn(),
-    onOpenShop: vi.fn(),
+    onClaimWelcomePack: vi.fn(),
     attemptSeq: 1,
     welcomePackClaimed: false,
     ...overrides,
   };
 }
+
+describe("useFailRescue — onClaimFree (variant C)", () => {
+  beforeEach(() => {
+    useAccountMock.mockReturnValue({ address: WALLET });
+    setShieldsCount(0);
+  });
+
+  // The Welcome Pack is a FREE gift. It used to deep-link into the Shop
+  // ("We'll take you to the Shop"), which sent the player out of the rescue to
+  // a catalog of paid SKUs to collect something that costs nothing — and the
+  // focus argument was dropped on the floor by the caller anyway
+  // (exercises-screen implemented `() => void` against a
+  // `(focus: "welcome-pack") => void` contract; TS accepts the narrower
+  // signature, so the deep link never had a target). Claim in place instead.
+  it("claims the Welcome Pack in place — never routes to the Shop", () => {
+    const onClaimWelcomePack = vi.fn();
+    const { result } = renderHook(() =>
+      useFailRescue(baseOptions({ onClaimWelcomePack })),
+    );
+
+    act(() => { result.current.onClaimFree(); });
+
+    expect(onClaimWelcomePack).toHaveBeenCalledTimes(1);
+  });
+});
 
 type FetchArgs = [string, RequestInit | undefined];
 

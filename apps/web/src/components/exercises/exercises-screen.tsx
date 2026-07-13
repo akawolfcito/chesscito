@@ -1295,18 +1295,23 @@ export function ExercisesScreen({
       autoReset.clear();
       resetBoard();
     },
-    onOpenShop: () => {
-      // Variante B (red-team approved): preserve phase=failure
-      // throughout the shop visit so the modal re-mounts cleanly
-      // when the sheet closes — with the freshly-acquired shields
-      // now available. Don't resetStreak; opening shop in the
-      // middle of a rescue is the player ACTING on their streak,
-      // not abandoning it. The display-phase trick below
-      // (storeOpen ? "ready" : phase) hides the PhaseFlash overlay
-      // while the shop is on-screen so it doesn't sit above the
-      // Sheet z-stack.
+    // The Welcome Pack is FREE, so the rescue no longer leaves for the Shop to
+    // collect it — it claims in place and the modal re-renders with the three
+    // shields already in hand (useShieldsCount picks up the credit the claim
+    // dispatches). `welcomePack` below is the SAME instance the ShopSheet uses,
+    // which is what keeps `welcomePackClaimed` honest.
+    //
+    // A player with no wallet CAN reach variant C. Claiming needs a signature,
+    // so onClaim() would return early and the button would do nothing at all.
+    // Route them to connect instead — a dead primary CTA in a modal whose only
+    // other exit forfeits the streak is a trap.
+    onClaimWelcomePack: () => {
       autoReset.clear();
-      setStoreOpen(true);
+      if (welcomePack.state === "connect") {
+        welcomePack.onConnect();
+        return;
+      }
+      welcomePack.onClaim();
     },
   });
 
