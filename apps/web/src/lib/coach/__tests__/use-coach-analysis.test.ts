@@ -156,8 +156,6 @@ describe("useCoachAnalysis (skeleton)", () => {
   });
 
   it("askCoach leaves historyMeta undefined when server omits it (free user)", async () => {
-    // Skip the welcome gate so askCoach goes straight to startCoachAnalysis.
-    localStorage.setItem("chesscito:coach-welcomed", "1");
     vi.stubGlobal("fetch", vi.fn().mockImplementation((url: string) => {
       if (typeof url === "string" && url.includes("/api/coach/credits")) {
         return Promise.resolve({
@@ -202,7 +200,13 @@ describe("useCoachAnalysis (skeleton)", () => {
     vi.unstubAllGlobals();
   });
 
-  it("claimWelcome writes localStorage chesscito:coach-welcomed", async () => {
+  // PLAY #8 — a first-time free user goes STRAIGHT to analysis. The "welcome"
+  // phase (Luz asking "shall I analyze this?" after you already tapped Ask
+  // Coach) is gone: the tap IS the consent, and the cost is already disclosed
+  // on the CTA itself by CoachCostRibbon ("1" peon) plus the credits hint.
+  // This test is the regression guard — if a confirmation gate comes back, the
+  // phase will stall somewhere other than "result".
+  it("askCoach analyzes immediately for a first-time free user — no welcome gate", async () => {
     localStorage.removeItem("chesscito:coach-welcomed");
     vi.stubGlobal("fetch", vi.fn().mockImplementation((url: string) => {
       if (typeof url === "string" && url.includes("/api/coach/credits")) {
@@ -231,6 +235,9 @@ describe("useCoachAnalysis (skeleton)", () => {
       result: "win",
       difficulty: "easy",
       elapsedMs: 3000,
+      // Connected — otherwise askCoach short-circuits to the free quick review
+      // ("fallback") and never reaches the branch this test is about.
+      isConnected: true,
       injected: {
         address: "0x1111111111111111111111111111111111111111",
         proActive: false,
@@ -238,9 +245,9 @@ describe("useCoachAnalysis (skeleton)", () => {
       },
     }));
 
-    await act(async () => { await result.current.claimWelcome(); });
+    act(() => { result.current.askCoach("immediate"); });
 
-    expect(localStorage.getItem("chesscito:coach-welcomed")).toBeTruthy();
+    await waitFor(() => expect(result.current.phase).toBe("result"));
     vi.unstubAllGlobals();
   });
 });
@@ -259,7 +266,6 @@ describe("useCoachAnalysis — Peones fallback (Sprint 4 commit F)", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     localStorage.clear();
-    localStorage.setItem("chesscito:coach-welcomed", "1");
     Object.defineProperty(window.navigator, "onLine", {
       value: true,
       configurable: true,

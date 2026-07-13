@@ -17,6 +17,10 @@ import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 import { attemptCoachSpendWithPeones } from "@/lib/peones/coach-spend-fallback";
 import type { CoachLocale } from "./prompt-template";
 
+/** No "welcome" phase. Tapping Ask Coach IS the consent — a second modal
+ *  asking "shall I analyze this?" after the user already asked was pure
+ *  friction, and the cost is disclosed on the CTA itself (CoachCostRibbon +
+ *  the credits hint), not in the modal. Removed by PLAY #8, 2026-07-13. */
 export type CoachPhase =
   | "idle"
   | "loading"
@@ -24,7 +28,6 @@ export type CoachPhase =
   | "result"
   | "fallback"
   | "paywall"
-  | "welcome"
   | "history";
 
 export type CoachAnalysisInjected = {
@@ -78,7 +81,6 @@ export type CoachAnalysisState = {
   askCoach: (source?: "immediate" | "victory-mint" | "history" | "viewer") => void;
   analyzeFromHistory: (gameId: string) => void;
   reanalyze: () => Promise<void>;
-  claimWelcome: () => Promise<void>;
   abort: () => void;
 };
 
@@ -375,28 +377,12 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
       return;
     }
 
-    // PRO subscribers skip the "Meet Your Coach" welcome modal entirely
-    if (proActive) {
-      try { localStorage.setItem("chesscito:coach-welcomed", "1"); } catch { /* ignore */ }
-      void startCoachAnalysis();
-      return;
-    }
-
-    // First time (free user) → show welcome
-    try {
-      const welcomed = localStorage.getItem("chesscito:coach-welcomed");
-      if (!welcomed) {
-        setPhaseState("welcome");
-        return;
-      }
-    } catch { /* localStorage unavailable */ }
-
-    // Returning user → go straight to analysis
+    // Everyone else → straight to analysis. PRO and free, first time or not:
+    // the tap on Ask Coach is the consent (PLAY #8).
     void startCoachAnalysis();
   }, [
     address,
     isConnected,
-    proActive,
     input.result,
     input.difficulty,
     input.moves,
@@ -492,15 +478,6 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
     }
   }, [address, coachReanalyzeGameId, activeLocale]);
 
-  // --- claimWelcome ---
-  // Mirrors arena/page.tsx handleClaimWelcome (lines 772-776).
-  // Owns the chesscito:coach-welcomed localStorage write per spec migration rule #4.
-  const claimWelcome = useCallback(async () => {
-    try { localStorage.setItem("chesscito:coach-welcomed", "1"); } catch { /* ignore */ }
-    setPhaseState("idle");
-    await startCoachAnalysis();
-  }, [startCoachAnalysis]);
-
   // --- abort ---
   const abort = useCallback(() => {
     coachAbortRef.current?.abort();
@@ -521,7 +498,6 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
     askCoach,
     analyzeFromHistory,
     reanalyze,
-    claimWelcome,
     abort,
   };
 }

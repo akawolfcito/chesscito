@@ -1767,26 +1767,11 @@ export const COACH_ENTRY_COPY = {
   drawReviewCta: "How did this end?",
 } as const;
 
-/**
- * First-call onboarding for the Coach demo (Task 2, 2026-05-26 cluster).
- * Spec: _bmad-output/planning-artifacts/coach-demo-redesign-discovery-2026-05-26.md §3
- *
- * Fires once per wallet, the first time the user engages Coach in the
- * post-game CoachPanel (free counter calls_used === 0). The intro is
- * branched by the Arena game outcome so Luz opens in the right
- * emotional register. Wiring lives in the post-game CTA replacement
- * (handoff cluster A1 task 4); this block is the copy source only.
- */
-export const COACH_ONBOARDING_COPY = {
-  intros: {
-    win: "Hi, I'm Luz. I watched your game. You won with judgment. Want me to show you what I saw?",
-    lose: "Hi, I'm Luz. I watched your game. Losing hurts, I know, but you already did some things well. Want me to show you?",
-    draw: "Hi, I'm Luz. I watched your game. A draw, interesting. Want me to show you where it was close?",
-  },
-  /** "sí / ahora no" choice that follows the intro. */
-  ctaAccept: "Yes, show me",
-  ctaDecline: "Not now",
-} as const;
+/* COACH_ONBOARDING_COPY removed by PLAY #8 (2026-07-13). It fed the "welcome"
+ * modal where Luz asked "want me to show you?" AFTER the user had already
+ * tapped Ask Coach — a confirmation of a decision already made. Luz keeps her
+ * voice where it earns its place: the loading state (COACH_COPY.coachThinking /
+ * analyzing / slowThinking) and the result. */
 
 /**
  * Post-game CoachPreviewCard counter band — labels for the new

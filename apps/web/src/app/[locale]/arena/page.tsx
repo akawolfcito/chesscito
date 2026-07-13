@@ -51,8 +51,6 @@ import { ProSheet } from "@/components/pro/pro-sheet";
 import { CoachLoading } from "@/components/coach/coach-loading";
 import { CoachPanel } from "@/components/coach/coach-panel";
 import { CoachFallback } from "@/components/coach/coach-fallback";
-import { LuzOnboardingPanel } from "@/components/coach/luz-onboarding-panel";
-import { gameStatusToOnboardingOutcome } from "@/lib/coach/onboarding-outcome";
 import { routeCoachPreviewCta } from "@/lib/coach/coach-preview-route";
 import { shouldRedirectToCoachViewer } from "@/lib/coach/coach-redirect";
 import { CoachHistory } from "@/components/coach/coach-history";
@@ -1602,23 +1600,6 @@ function ArenaPageInner() {
       {/* Coach phases (behind NEXT_PUBLIC_ENABLE_COACH flag) */}
       {ENABLE_COACH && (
         <>
-          {coach.phase === "welcome" && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300 px-4">
-              <div className="relative z-10 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-                <CandyGlassShell
-                  title="Luz"
-                  onClose={() => coach.setPhase("idle")}
-                  closeLabel="Close"
-                >
-                  <LuzOnboardingPanel
-                    outcome={gameStatusToOnboardingOutcome(game.status, isPlayerWin)}
-                    onAccept={() => void coach.claimWelcome()}
-                    onDecline={() => coach.setPhase("idle")}
-                  />
-                </CandyGlassShell>
-              </div>
-            </div>
-          )}
           {coach.phase === "loading" && (
             // Founder feedback 2026-06-13: the loading state now wears the
             // same forest-cream panel-bg1 shell (green border) as the rest of

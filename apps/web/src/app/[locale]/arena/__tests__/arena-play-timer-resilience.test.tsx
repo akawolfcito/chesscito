@@ -144,7 +144,6 @@ vi.mock("@/components/pro/pro-sheet", () => ({ ProSheet: () => null }));
 vi.mock("@/components/coach/coach-loading", () => ({ CoachLoading: () => null }));
 vi.mock("@/components/coach/coach-panel", () => ({ CoachPanel: () => null }));
 vi.mock("@/components/coach/coach-fallback", () => ({ CoachFallback: () => null }));
-vi.mock("@/components/coach/luz-onboarding-panel", () => ({ LuzOnboardingPanel: () => null }));
 vi.mock("@/components/coach/coach-history", () => ({ CoachHistory: () => null }));
 vi.mock("@/components/connect-prompt/connect-prompt-toast", () => ({ ConnectPromptToast: () => null }));
 vi.mock("@/components/redesign/tx-progress-steps", () => ({ TxProgressSteps: () => null }));
@@ -199,9 +198,6 @@ vi.mock("@/lib/coach/fallback-engine", () => ({
 }));
 vi.mock("@/lib/coach/paywall-gate", () => ({
   shouldShowPaywall: () => false,
-}));
-vi.mock("@/lib/coach/onboarding-outcome", () => ({
-  gameStatusToOnboardingOutcome: () => "won",
 }));
 vi.mock("@/lib/coach/coach-preview-route", () => ({
   routeCoachPreviewCta: vi.fn(),

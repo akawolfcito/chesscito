@@ -538,16 +538,6 @@ const messages = {
     lossReviewCta: "Vamos a ver qué pasó.",
     drawReviewCta: "¿Cómo terminó esto?",
   },
-  COACH_ONBOARDING_COPY: {
-    ...en.COACH_ONBOARDING_COPY,
-    intros: {
-      win: "Hola, soy Luz. Vi tu partida. Ganaste con criterio. ¿Te cuento qué vi?",
-      lose: "Hola, soy Luz. Vi tu partida. Perder duele, lo sé, pero ya hiciste cosas bien. ¿Te las muestro?",
-      draw: "Hola, soy Luz. Vi tu partida. Empate, interesante. ¿Te muestro dónde estuvo cerca?",
-    },
-    ctaAccept: "Sí, mostrame",
-    ctaDecline: "Ahora no",
-  },
   COACH_CTA_COPY: {
     ...en.COACH_CTA_COPY,
     askWithCounter: "Pedile a Luz tu análisis (te quedan {count} gratis)",
