@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { usePathname } from "@/i18n/navigation";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 import { useTranslations } from "next-intl";
 import { getConfiguredChainId } from "@/lib/contracts/chains";
@@ -147,6 +148,7 @@ export function useProSheetState(
         price_usd6: Number(pack.priceUsd6),
         days_granted: pack.durationDays,
         tx_hash_prefix: result.txHash.slice(0, 10),
+        source: sourceRef.current,
       });
       refetchProStatus();
       hapticSuccess();
@@ -218,9 +220,23 @@ export function useProSheetState(
   const errorMessage = previewErrorMessage ?? railErrorMessage;
   const verifyFailedTxHash = errorKind === "verifyFailed" ? rail.txHash : null;
 
+  // Which SURFACE sold the pass. Frozen at open, not read at purchase: the
+  // player can navigate while the sheet is up, and crediting the sale to
+  // wherever they drifted would answer the wrong question. This is what makes
+  // "the Coach opens the Journal" a falsifiable bet — entries into the journal
+  // are not purchases attributable to it, so without this a dip in PRO would be
+  // unreadable: cause or cure, we couldn't tell.
+  //
+  // Attribution is by surface, not by CTA within a surface: the PRO chip and
+  // the Coach tile both live at "/". If CTA-level attribution is ever needed,
+  // that's when openSheet grows a parameter — not before.
+  const livePathname = usePathname();
+  const sourceRef = useRef<string>("/");
+
   const openSheet = useCallback(() => {
+    sourceRef.current = livePathname ?? "/";
     setOpen(true);
-  }, []);
+  }, [livePathname]);
 
   const closeSheet = useCallback(() => {
     if (purchaseState !== "idle" || isRetryingVerify) return;
@@ -244,6 +260,7 @@ export function useProSheetState(
     track("pro_purchase_started", {
       item_id: 6,
       price_usd6: Number(pack.priceUsd6),
+      source: sourceRef.current,
     });
     setAttemptToken((n) => n + 1);
     await rail.pay();
