@@ -284,6 +284,29 @@ export function selectNextAvailablePiece(
   );
 }
 
+/**
+ * The URL Start Focus actually opens.
+ *
+ * Every /exercises entry must NAME ITS PIECE. Two variants do not carry one —
+ * `daily-pending` (`?slot=daily`) and the null-destination ones — and a bare
+ * `/exercises` lands on `initialPiece`'s "rook" default, which opens the rook's
+ * `currentId`: the last exercise the player already solved, with nowhere to go.
+ * That was the third and last door back into the rook loop, and it survived the
+ * piece selector (confirmed on device, build f28b426).
+ *
+ * Non-exercises destinations (`/trophies`) are left alone.
+ */
+export function startFocusDestination(
+  destination: string | null,
+  primaryPiece: string | null,
+): string {
+  const target = destination ?? "/exercises";
+  if (!target.startsWith("/exercises")) return target;
+  if (target.includes("piece=")) return target;
+  if (!primaryPiece) return target;
+  return `${target}${target.includes("?") ? "&" : "?"}piece=${primaryPiece}`;
+}
+
 // ─── Main derivation ──────────────────────────────────────────────────────────
 
 /**

@@ -42,13 +42,38 @@ export const BASE_PAD: PathPoint = { x: 48.6, y: 51.0 };
  *
  * The pads' isometric centers differ from the sprites' visual centers, so
  * each node is nudged by a constant pixel amount (mobile 390px width). EDIT
- * BY HAND until the icons sit on the pads: `+x` = right, `+y` = down. The
- * base pad and labyrinth art each get their own knob because their
- * perspective differs from the tile's exercise pads.
+ * BY HAND until the icons sit on the pads: `+x` = right, `+y` = down.
+ *
+ * PER COLUMN. The two pads in a tile are painted in different perspectives —
+ * one sits left of the trail, one right — so a single nudge that centers the
+ * left column necessarily throws the right one off. Index matches `TILE_PADS`:
+ * `[0]` = bottom/left pad, `[1]` = top/right pad.
+ *
+ * The base pad and the labyrinth art keep their own knobs: the base is a
+ * different image entirely, and the maze sprite has a different visual center
+ * from the piece sprites.
  */
-export const NODE_PIXEL_OFFSET = { x: -15, y: -20 } as const;
-export const LABYRINTH_PIXEL_OFFSET = { x: 18, y: -10 } as const;
+export const NODE_PIXEL_OFFSET: readonly PathPoint[] = [
+  { x: -15, y: -20 }, // bottom pad (lower-left)
+  { x: -15, y: -20 }, // top pad (upper-right)
+];
+
+/** Labyrinth art, per column. Same indexing as `TILE_PADS`. */
+export const LABYRINTH_PIXEL_OFFSET: readonly PathPoint[] = [
+  { x: 18, y: -10 }, // bottom pad (lower-left)
+  { x: 18, y: -10 }, // top pad (upper-right)
+];
+
 export const BASE_PIXEL_OFFSET = { x: 3, y: -10 } as const;
+
+/**
+ * The column a node sits in: 0 = bottom/left pad, 1 = top/right pad.
+ * Node 0 lives on the base cap and has no column — callers use
+ * `BASE_PIXEL_OFFSET` for it and never ask.
+ */
+export function padIndexForNode(nodeIndex: number): number {
+  return (nodeIndex - 1) % TILE_PADS.length;
+}
 
 /**
  * Vertical seam calibration. The base cap stays pinned to the very bottom
