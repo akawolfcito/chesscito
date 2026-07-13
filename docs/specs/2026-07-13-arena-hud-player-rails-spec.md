@@ -190,7 +190,7 @@ Edge cases:
 
 | Element | Fate |
 |---|---|
-| `WoodenBanner variant="vs"` | **removed from HUD.** NOTE: contrary to the original draft, `ArenaMatchupTransition` does *not* use `WoodenBanner` — the component is now unreferenced app-wide. Left in place pending a call from the founder; it is a generic 3-variant component, not arena-specific. |
+| `WoodenBanner variant="vs"` | **removed from HUD**, and the component is now **deleted** (founder call, 2026-07-13, reversing the earlier "keep it" call). It went unreferenced app-wide once the symmetric matchup header became the player rails, and no surface wanted it back. Retired with its 5 CSS rules and its 9 art files (`banner-chess`, `banner-your-turn`, `vs-medal` × avif/webp/png). Recoverable from git history if a surface ever asks. |
 | `MatchupLabel` (name + color) | **deleted.** Replaced by the rail's own name/meta lines. |
 | `arena-matchup-label-color` CSS | **deleted** — the color text is gone (see §2). |
 | `youColorLabel` / `rivalColorLabel` props | **deleted** from `ArenaHud`. `page.tsx:332-339` derivation goes with them. |
