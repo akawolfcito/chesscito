@@ -230,17 +230,22 @@ export function hasMoreContent(path: TrainingNode[], nextAvailablePiece: string 
 /** Paths keyed by piece. A piece the caller did not build reads as no content. */
 export type PathsByPiece = Partial<Record<string, TrainingNode[]>>;
 
-/** A piece is worth training when it still holds an unplayed exercise, a ready
- *  labyrinth, or a score to improve. `isPieceFullyComplete` alone is not enough:
- *  it ignores stars, so a piece with every exercise played at 1★ would read as
- *  "done" and get skipped. */
+/**
+ * A piece still holds the focus while its EXERCISES are unfinished — unplayed,
+ * or played below three stars.
+ *
+ * Labyrinths deliberately do NOT count (founder call, 2026-07-12). The rook
+ * ships three of them, so counting them would pin a player to a piece whose
+ * badge they already claimed, which is exactly the loop this rule exists to
+ * break. A pending labyrinth is side content: it must stay VISIBLE, but it must
+ * never hold the path hostage.
+ *
+ * `isPieceFullyComplete` is not enough on its own: it ignores stars, so a piece
+ * played end to end at one star would read as done and get skipped.
+ */
 function hasWorkLeft(path: TrainingNode[] | undefined): boolean {
   if (!path || path.length === 0) return false;
-  return (
-    hasAvailableExercise(path) ||
-    hasReadyLabyrinth(path) ||
-    hasImprovableExercise(path)
-  );
+  return hasAvailableExercise(path) || hasImprovableExercise(path);
 }
 
 /**
