@@ -14554,6 +14554,50 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(63, 34, 8, 0.88);
 }
 
+/* The challenge step is carried by art. Height is the binding constraint: at
+   390x844 the card it points at ends at y≈439, so the panel below it has ~380px
+   to live in. Title art + hook + hero + terms + ask + button lands near 320px —
+   these caps are what keep the "Got it" on screen. */
+.hub-tour-title-art {
+  display: block;
+  width: min(100%, 244px);
+  margin: 2px auto 0;
+}
+
+.hub-tour-title-art img {
+  width: 100%;
+  height: auto;
+}
+
+.hub-tour-hero {
+  display: block;
+  width: min(100%, 268px);
+  margin: 8px auto 0;
+}
+
+.hub-tour-hero img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+
+/* The terms, kept visible without a paragraph: one line, same numbers the
+   ChallengeCard shows, straight from rail-config.ts. */
+.hub-tour-value {
+  margin-top: 10px;
+  font-family: var(--font-game-action);
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #3f2208;
+}
+
+.hub-tour-ask {
+  margin-top: 2px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(110, 65, 15, 0.78);
+}
+
 .hub-tour-primary {
   margin-top: 16px;
   width: 100%;

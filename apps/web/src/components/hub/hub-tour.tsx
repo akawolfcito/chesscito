@@ -79,6 +79,9 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
 
   const step = reachable[index] ?? null;
   const isLast = index === reachable.length - 1;
+  const isChallenge = step?.id === "challenge";
+  /** Only a player who can still buy gets the terms + the ask. */
+  const isSalesStep = step?.bodyKey === "challengeJoin";
 
   // Nothing to point at (a hub that rendered none of the three) → the tour is
   // over before it starts, and it counts as given: re-arming it would relaunch
@@ -186,7 +189,32 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
         <p className="hub-tour-step-counter">
           {t("stepCounter", { current: index + 1, total: reachable.length })}
         </p>
-        <h2 className="hub-tour-title">{t(TITLE_KEY[step.bodyKey])}</h2>
+        {isChallenge ? (
+          // The headline is ART: the words are baked into the image, so the alt
+          // text is what a screen reader — and any non-EN locale — actually
+          // receives. It is not decorative.
+          // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
+          <picture className="hub-tour-title-art">
+            <source
+              srcSet="/art/mini-tour/tour-challenge-title.avif"
+              type="image/avif"
+            />
+            <source
+              srcSet="/art/mini-tour/tour-challenge-title.webp"
+              type="image/webp"
+            />
+            <img
+              src="/art/mini-tour/tour-challenge-title.png"
+              alt={t("challengeTitleAlt")}
+              width={780}
+              height={89}
+              draggable={false}
+            />
+          </picture>
+        ) : (
+          <h2 className="hub-tour-title">{t(TITLE_KEY[step.bodyKey])}</h2>
+        )}
+
         <p className="hub-tour-body">
           {t(step.bodyKey, {
             days: challenge.days,
@@ -194,6 +222,44 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
             price: challenge.price,
           })}
         </p>
+
+        {isChallenge ? (
+          // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
+          <picture className="hub-tour-hero">
+            <source
+              srcSet="/art/mini-tour/tour-challenge-hero.avif"
+              type="image/avif"
+            />
+            <source
+              srcSet="/art/mini-tour/tour-challenge-hero.webp"
+              type="image/webp"
+            />
+            <img
+              src="/art/mini-tour/tour-challenge-hero.png"
+              alt={t("challengeHeroAlt")}
+              width={840}
+              height={370}
+              draggable={false}
+            />
+          </picture>
+        ) : null}
+
+        {/* The terms stay VISIBLE, but as one line instead of a paragraph — the
+            art carries the pitch, the row keeps the deal honest, and the ask
+            names the button the player has to press. Only for a player who can
+            still buy: an owner gets the art and nothing else. */}
+        {isSalesStep ? (
+          <>
+            <p className="hub-tour-value" data-testid="hub-tour-value">
+              {t("challengeValue", {
+                days: challenge.days,
+                shields: challenge.shields,
+                price: challenge.price,
+              })}
+            </p>
+            <p className="hub-tour-ask">{t("challengeAsk")}</p>
+          </>
+        ) : null}
 
         {/* No Skip. At two steps the tour is shorter than the escape hatch was
             worth: an exit link next to the primary just bled players out of the

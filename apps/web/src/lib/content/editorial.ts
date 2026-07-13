@@ -3274,18 +3274,24 @@ export const HUB_TOUR_COPY = {
     "Your Daily Tactic lives here. Come back tomorrow for the next one.",
   challengeTitle: "Join the 21-Day Challenge",
   challengeTitleEnrolled: "21-Day Mind Challenge",
-  /** The one screen that asks for money. It names the price, what the money
-   *  buys, and the exact button to press — a description of the challenge that
-   *  forgets to ask for the sale is not a sales step.
+  /** The one screen that asks for money — carried by art, not by a paragraph.
+   *  The hook sells the outcome, `challengeValue` keeps the terms visible in a
+   *  single line, and `challengeAsk` names the button. A step that describes
+   *  the challenge and forgets to ask for the transaction is not a sales step.
    *
-   *  A shield rescues a FAILED EXERCISE. It does not forgive a missed day, and
-   *  this copy must never imply it does — streak recovery is a permanent
-   *  never-build, and promising it here would sell something that does not
-   *  exist. */
-  challengeJoin:
-    "Unlock your {price} pass: {days} focus days tracked, plus {shields} shields to rescue a failed exercise. Tap Join Challenge to commit.",
+   *  NOTHING here may imply the pass forgives a missed day. A shield rescues a
+   *  FAILED EXERCISE; streak recovery is a permanent never-build, and selling it
+   *  would be selling something that does not exist. */
+  challengeJoin: "Decide better in {days} days. Track your streak, build a daily habit.",
+  challengeValue: "{days} days · +{shields} shields · {price}",
+  challengeAsk: "Tap Join Challenge to commit.",
   challengeEnrolled:
     "Track your focus days and complete your {days}-day commitment.",
+  /** Alt text for the headline art — the art bakes the words in, so this is what
+   *  a screen reader (and any non-EN locale) actually gets. */
+  challengeTitleAlt: "21-Day Mind Challenge",
+  challengeHeroAlt:
+    "Chesscito's mascot beside a 21-day calendar and a Season Pass chest",
   next: "Next",
   done: "Got it",
   stepCounter: "{current} of {total}",

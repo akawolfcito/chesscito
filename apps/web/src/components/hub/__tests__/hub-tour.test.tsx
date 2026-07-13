@@ -83,10 +83,10 @@ describe("<HubTour>", () => {
     ).toBeInTheDocument();
   });
 
-  it("quotes the pass's real terms instead of a hardcoded price", () => {
-    // The whole point of interpolating: a "$0.99" typed into the copy would
-    // survive a price change with the suite green. Feed it different terms and
-    // the panel must say THOSE.
+  it("keeps the pass's real terms visible and quotes them from config, not from a string", () => {
+    // The art carries the pitch, but the deal stays on screen. A "$0.99" typed
+    // into the copy would survive a price change with the suite green — feed the
+    // panel different terms and it must say THOSE.
     render(
       <HubTour
         steps={steps}
@@ -96,21 +96,46 @@ describe("<HubTour>", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
 
+    expect(screen.getByTestId("hub-tour-value")).toHaveTextContent(
+      "30 days · +5 shields · $2.49",
+    );
+    // And it asks for the transaction by naming the button.
+    expect(screen.getByText(HUB_TOUR_COPY.challengeAsk)).toBeInTheDocument();
+  });
+
+  it("shows the art but not the sales pitch to a player who already owns the pass", () => {
+    const owner = buildHubTourSteps({ ...FRESH, hasSeasonPass: true });
+    render(<HubTour steps={owner} challenge={CHALLENGE} onFinish={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
+
+    expect(screen.getByAltText(HUB_TOUR_COPY.challengeHeroAlt)).toBeInTheDocument();
+    expect(screen.queryByTestId("hub-tour-value")).toBeNull();
+    expect(screen.queryByText(HUB_TOUR_COPY.challengeAsk)).toBeNull();
+  });
+
+  it("carries the headline as art, with the words reachable as alt text", () => {
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
+
+    // Baked-in words: without alt, a screen reader (and every non-EN locale)
+    // gets a nameless image where the headline should be.
     expect(
-      screen.getByText(
-        "Unlock your $2.49 pass: 30 focus days tracked, plus 5 shields to rescue a failed exercise. Tap Join Challenge to commit.",
-      ),
+      screen.getByAltText(HUB_TOUR_COPY.challengeTitleAlt),
     ).toBeInTheDocument();
   });
 
   it("never promises that the pass forgives a missed day", () => {
     // A shield rescues a FAILED EXERCISE. Streak recovery is a permanent
     // never-build, so this — the one screen that asks for money — must not sell
-    // it. The rule is enforced on the copy itself, not on a render, so it holds
-    // for whoever rewrites the sales pitch next.
-    expect(HUB_TOUR_COPY.challengeJoin).toMatch(/exercise/i);
-    expect(HUB_TOUR_COPY.challengeJoin).not.toMatch(
-      /miss(ed)? (a )?day|recover|restore|streak/i,
+    // it. Enforced on the copy itself, so it holds for whoever rewrites the
+    // pitch next.
+    const salesCopy = [
+      HUB_TOUR_COPY.challengeJoin,
+      HUB_TOUR_COPY.challengeValue,
+      HUB_TOUR_COPY.challengeAsk,
+    ].join(" ");
+    expect(salesCopy).not.toMatch(
+      /miss(ed)? (a )?day|recover|restore|save your streak|protect your streak/i,
     );
   });
 

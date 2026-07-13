@@ -1777,9 +1777,14 @@ const messages = {
     challengeTitle: "Únete al Reto de 21 días",
     challengeTitleEnrolled: "Reto Mental de 21 días",
     challengeJoin:
-      "Desbloquea tu pase de {price}: {days} días de foco registrados, más {shields} escudos para rescatar un ejercicio fallido. Toca Unirme al Reto para comprometerte.",
+      "Decide mejor en {days} días. Sigue tu racha, construye un hábito diario.",
+    challengeValue: "{days} días · +{shields} escudos · {price}",
+    challengeAsk: "Toca Join Challenge para comprometerte.",
     challengeEnrolled:
       "Sigue tus días de foco y completa tu compromiso de {days} días.",
+    challengeTitleAlt: "Reto Mental de 21 días",
+    challengeHeroAlt:
+      "La mascota de Chesscito junto a un calendario de 21 días y un cofre del Season Pass",
     next: "Siguiente",
     done: "Entendido",
     stepCounter: "{current} de {total}",
