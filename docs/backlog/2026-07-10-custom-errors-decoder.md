@@ -1,42 +1,76 @@
-# Siguiente mejora priorizada — decoder de custom errors
+# Decoder de custom errors — ✅ HECHO (2026-07-13)
 
-**Fecha**: 2026-07-10 · **Estado**: GO aceptado, **no implementar todavía**
-**Evidencia**: `docs/testing/2026-07-10-minipay-raw-error-probe-results.md`
+**Estado**: implementado y mergeado. **Evidencia original**:
+`docs/testing/2026-07-10-minipay-raw-error-probe-results.md`
 
-## Por qué no bloquea estabilidad
+## Qué se construyó
 
-Los reverts ya se interceptan (MiniPay rechaza en `eth_estimateGas`), no producen
-éxito falso (#199 / #200), y existe fallback genérico (`error.revert`). El
-decoder mejora la **copy**, no la corrección.
+1. ✅ **Extractor** — `extractRevertDataFromMessage()` + `findRevertDataInError()`.
+   **Promovido** de `lib/debug/serialize-tx-error.ts` (que muere con el probe) a
+   `lib/contracts/revert-data.ts`. Una sola copia de la regex en el repo.
+2. ✅ **Generador** — `apps/contracts/scripts/generate-error-abis.mjs`, hermano de
+   `generate-event-abis.mjs`. 53 errores de los 4 contratos que el jugador toca →
+   `lib/contracts/generated/contract-errors.ts`. `pnpm --filter hardhat generate:error-abis`,
+   y corre solo dentro de `build`.
+3. ✅ **Mapa** nombre → `TxErrorKind` → copy, en `lib/errors.ts` (`CUSTOM_ERROR_KINDS`).
 
-## Qué hay que construir
+**5 de los 53 errores tienen copy propia.** El resto son fallas de operador o de
+configuración (`ItemDisabled`, `InvalidSigner`, `LengthMismatch`) con las que el jugador
+no puede hacer nada: se decodifican y caen igual al `revert` genérico. Un error entra al
+mapa solo si saber su nombre **cambia lo que el jugador haría después**.
 
-1. ✅ **Extractor** — `extractRevertDataFromMessage()`, ya escrito y con el
-   mensaje real del device como fixture (`lib/debug/serialize-tx-error.ts`).
-2. ⬜ **Generador de error-ABIs** desde `apps/contracts/artifacts/**`, hermano de
-   `generate-event-abis.mjs`. Nunca a mano ([[feedback_verifier_abi_lesson]]).
-3. ⬜ **Mapa** selector/nombre → `TxErrorKind` → copy, con claves nuevas en
-   `editorial.ts` + `messages/es.ts` (`en.ts` es derivado).
+| Custom error | `TxErrorKind` |
+| --- | --- |
+| `BadgeAlreadyClaimed` | `badgeAlreadyClaimed` (ya existía) |
+| `CooldownActive` (Scoreboard) | `cooldownActive` **(nuevo)** |
+| `MintCooldown` (VictoryNFT) | `cooldownActive` — dos nombres, una experiencia |
+| `DailyLimitReached` | `dailyLimitReached` **(nuevo)** |
+| `SignatureExpired` | `signatureExpired` (la copy existía; ahora es un kind) |
 
-## Riesgos, todos registrados
+## Cómo se atendió cada riesgo
 
-1. 🔴 **La extracción desde `message` no es contractual.** Es el error del
-   provider, stringificado. Una actualización de MiniPay cambia el formato y el
-   extractor deja de matchear **en silencio**.
-   → El fallback debe ser el `revert` genérico actual. **Nunca una excepción.**
-2. 🟠 **Diferencias entre dispositivos y providers.** La única captura es
-   iPhone / iOS 18.7 / MiniPay. Android, y cualquier wallet web, pueden
-   serializar distinto — o entregar `error.data` estructurado, que el decoder
-   también debe aceptar.
-3. 🟠 **Una cancelación llega como `ContractFunctionRevertedError`** de viem, con
-   `reason: "User rejected transaction"`. Un decoder que trate esa clase como
-   revert on-chain convertiría cancelaciones en fallos.
-   → `isUserCancellation` debe seguir corriendo antes. Nuestro
-   `TransactionRevertedError` es propio, no el de viem: no confundirlos.
-4. 🟡 **Solo hay evidencia real de `BadgeAlreadyClaimed`** (`0xfafe7970`).
-   `CooldownActive` (`0xc1ab61a1`) y `DailyLimitReached` (`0xeba8fe8a`) se
-   asumen iguales por venir del mismo camino de estimación. Sin medir.
+1. 🔴 **La extracción desde `message` no es contractual.** Cada paso degrada a `null`, y
+   `null` significa "seguí como antes": selector desconocido, data truncada, o un MiniPay
+   que cambia el formato → el jugador cae en la copy de `revert` que ya veía. Hay test.
+   **El decoder puede mejorar un mensaje; nunca puede ser la razón de que algo se rompa.**
+2. 🟠 **Otros dispositivos / providers.** `findRevertDataInError()` acepta también las formas
+   estructuradas (`.data`, `.data.data` anidado, el `.signature` de 4 bytes de viem) y camina
+   la cadena de `cause`. Sin evidencia de campo todavía — es seguro barato.
+3. 🟠 **La cancelación llega con forma de revert.** `isUserCancellation` e `isTransactionTimeout`
+   se resuelven **antes** de que el decoder tenga voto. Son hechos sobre la **wallet**; la revert
+   data es un hecho sobre la **cadena**, y la cadena solo habla si el jugador la dejó hablar.
+   Hay un test que lo fija con una cancelación que además trae revert data.
+4. 🟡 **Solo `BadgeAlreadyClaimed` tiene evidencia real de device.** Sigue siendo cierto:
+   `CooldownActive` y `DailyLimitReached` se asumen por venir del mismo camino de estimación.
+   **Por eso el probe `/dev/tx-error-probe` se queda** — es el instrumento para medirlos.
 
-## Costo
+## La trampa que casi tira la evidencia a la basura
 
-1-2h. El extractor ya está hecho.
+Los tres selectores registrados en los docs (`0xfafe7970` / `0xc1ab61a1` / `0xeba8fe8a`)
+**son correctos**. Durante esta sesión los "refuté" con esto:
+
+```ts
+toFunctionSelector("error BadgeAlreadyClaimed(address,uint256)")  // 0xa02cd012 ❌
+```
+
+**viem hashea el string que le das, literal** — con la palabra `error` adentro. Solidity
+hashea la firma pelada. Lo correcto:
+
+```ts
+toFunctionSelector("BadgeAlreadyClaimed(address,uint256)")        // 0xfafe7970 ✅
+```
+
+Llegué a acusar al probe de haber "confirmado un número inventado". Lo que salvó la
+situación fue el test: le pedí a `decodeErrorResult` que decodificara y viem contradijo mi
+aritmética. **Cuando un valor calculado contradice una medición registrada, sospechá primero
+de tu derivación.** Los selectores no se escriben a mano en ningún lado del código nuevo:
+se derivan de la firma, incluso en los tests.
+
+## Sigue abierto (no bloquea)
+
+- `Invalid player address` (escenario 2 del probe) clasifica como `unknown` → *"Something went
+  wrong"*. Es una falla del endpoint de firma y debería ser `signingUnavailable`.
+- Los args del error (`nextAllowedAt`, `nextWindowStart`) **se decodifican pero no se muestran**.
+  La copy es estática a propósito: mostrar "esperá hasta las 14:32" es zona horaria, formato y
+  probablemente una cuenta regresiva viva. `decodeErrorResult` ya devuelve los args, así que
+  hacerlo después no cuesta más que hacerlo ahora.
