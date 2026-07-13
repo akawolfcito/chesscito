@@ -96,9 +96,14 @@ export function PlayHubClient({
           proSheet.openSheet();
         }}
         onCoachTap={() => {
+          // The Coach opens the room instead of selling the door. The journal
+          // was never PRO-gated — /coach/history renders for any connected
+          // wallet — so the paywall here only guaranteed that a player who
+          // never bought PRO never learned the analysis existed. The sale now
+          // lives inside, behind the player's own matches. `pro_active` stays
+          // on the event: it is how we count free players entering.
           track("play_hub_coach_tap", { pro_active: pro.active });
-          if (pro.active) router.push("/coach/history");
-          else proSheet.openSheet();
+          router.push("/coach/history");
         }}
         onShopTap={() => {
           track("play_hub_shop_tap", { wallet_connected: Boolean(address) });
