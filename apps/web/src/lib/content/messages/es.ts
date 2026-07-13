@@ -626,6 +626,7 @@ const messages = {
     startMatch: "JUGAR",
     backToHub: "HUB",
     backToHubAria: "Volver al Hub",
+    leaveMatchAria: "Salir de la partida",
     closeResultAria: "Cerrar",
     playAsWhite: "Juega como Blancas",
     playAsBlack: "Juega como Negras",

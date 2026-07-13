@@ -520,19 +520,32 @@ function ArenaPageInner() {
 
   const handleBackToHub = () => router.push("/");
 
-  // handleBack — direct router.push to root. The unmount cleanup of
-  // /arena recovers refs (persistAbortRef) and resets game state
-  // implicitly. Calling game.reset() BEFORE router.push() caused the
-  // status to flip to "selecting" for one render frame, producing a
-  // visible selector flash (2026-05-27 fix).
+  // handleBack — leaving a match lands on the RIVAL SELECTOR, not the hub
+  // (2026-07-13). "I'm done with this match" almost always means "give me a
+  // different one"; the hub stays one tap away via the selector's own back
+  // chip. Leaving terminates the match like a resign, so the persisted save is
+  // dropped and it cannot resume.
   //
-  // Leaving an in-progress match terminates it like a resign: we drop the
-  // persisted save so re-entering /arena lands on the rival selector instead
-  // of resuming at the exact second the user walked away. clearArenaGame()
-  // only touches localStorage (no React state), so it adds no selector flash.
+  // Everything here must be explicit — two things that used to do this work
+  // for us no longer run:
+  //
+  //   1. NO UNMOUNT. `/arena` → `/arena?fresh=1` is a same-route navigation,
+  //      so the page re-renders instead of remounting and the unmount cleanup
+  //      the 2026-05-27 fix leaned on never fires. Hence resetArenaState().
+  //
+  //   2. THE `?fresh=1` EFFECT IS SPENT. `freshResetRef` is single-shot per
+  //      mount, so a player who ENTERED via `/arena?fresh=1` has already burned
+  //      it — pushing the same URL would change nothing and leave them stranded
+  //      in the finished match. Hence the explicit game.reset().
+  //
+  // game.reset() flipping status to "selecting" was the "selector flash" the
+  // 2026-05-27 fix removed — but that was when the destination was the hub.
+  // The selector is now the destination, so it is an arrival, not a flash.
   const handleBack = () => {
     clearArenaGame();
-    handleBackToHub();
+    resetArenaState();
+    game.reset();
+    router.push("/arena?fresh=1");
   };
 
   // Preparing timer — scheduled inside a useEffect tied to isPreparing so

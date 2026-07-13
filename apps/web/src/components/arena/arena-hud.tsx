@@ -81,7 +81,7 @@ function ArenaBackChip({
       <button
         type="button"
         onClick={handleClick}
-        aria-label={t("backToHubAria")}
+        aria-label={t("leaveMatchAria")}
         className="candy-nav-button"
       >
         <CandyBanner name="btn-back" className="h-8 w-8" />

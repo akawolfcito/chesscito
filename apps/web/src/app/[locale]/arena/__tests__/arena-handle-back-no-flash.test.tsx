@@ -1,24 +1,32 @@
 /**
- * Regression guard for handleBack selector flash (2026-05-27 fix — commit 12489b06).
+ * Guard for the arena BACK destination (2026-07-13).
  *
- * Bug: When the user tapped BACK during an active game, the page briefly
- * mounted DifficultySelector for ~1 frame before navigating to root.
+ * HISTORY — the 2026-05-27 "selector flash" fix (commit 12489b06) stripped
+ * resetArenaState() + game.reset() out of handleBack because game.reset()
+ * flipped status to "selecting" synchronously, flashing the selector on the
+ * way OUT to the hub. That fix was correct *for a hub destination*.
  *
- * Root cause: handleBack() called resetArenaState() + game.reset() before
- * handleBackToHub(). game.reset() flipped game.status to "selecting"
- * synchronously, causing the selector branch to re-render before
- * router.push("/") completed.
+ * CHANGE — leaving a match now lands on the rival selector (`/arena?fresh=1`),
+ * not the hub. The old flash concern dissolves: the selector is no longer a
+ * frame glimpsed in transit, it IS the destination.
  *
- * Fix: Remove resetArenaState() + game.reset() from handleBack. Direct
- * router.push("/") is sufficient. Unmount cleanup of /arena already
- * recovers refs and resets game state via useEffect returns.
+ * Two traps this file exists to guard:
  *
- * This describe block replaces the tautology (expect(true).toBe(true)) that
- * shipped with the original fix. It mocks useChessGame + useRouter and
- * renders the full ArenaPage to assert the three invariants:
- *   1. router.push called with "/"
- *   2. arena-difficulty-selector test-id absent from DOM
- *   3. game.reset NOT called
+ *   1. SAME-ROUTE NAV DOES NOT UNMOUNT. `/arena` → `/arena?fresh=1` re-renders
+ *      the page; it does not remount it. handleBack can therefore NOT delegate
+ *      cleanup to unmount effects (which is what the 2026-05-27 fix relied on).
+ *      It must reset explicitly.
+ *
+ *   2. THE `?fresh=1` EFFECT IS SINGLE-SHOT PER MOUNT (`freshResetRef`,
+ *      page.tsx). A player who ENTERED via `/arena?fresh=1` has already burned
+ *      that ref. Pushing `?fresh=1` again would leave the URL unchanged and the
+ *      ref spent — game.reset() would never fire and the player would be
+ *      STRANDED in the finished match. handleBack must not depend on it.
+ *
+ * Invariants asserted below:
+ *   1. router.push called with "/arena?fresh=1"
+ *   2. game.reset IS called (explicitly — nothing else will do it)
+ *   3. the persisted save is dropped (leaving == resign)
  */
 
 import { describe, expect, it, vi, beforeEach } from "vitest";
@@ -235,39 +243,52 @@ vi.mock("@/lib/contracts/select-payment-token", () => ({
 import ArenaPage from "../page";
 import { ARENA_GAME_KEY } from "@/lib/game/arena-persistence";
 
-describe("arena/handleBack — no selector flash (regression for 2026-05-27 fix)", () => {
+describe("arena/handleBack — leaving a match lands on the rival selector", () => {
   beforeEach(() => {
     pushMock.mockReset();
     resetMock.mockReset();
     window.localStorage.clear();
   });
 
-  it("BACK during isEndState navigates to root WITHOUT mounting DifficultySelector first and without calling game.reset", async () => {
+  // The HUD back chip is labelled by its ACTION ("leave match"), not by a
+  // destination — `backToHubAria` stays reserved for the surfaces that really
+  // do go to the hub (selector scaffold, entry panel, end-state overlays).
+  // useTranslations is mocked to (k) => k, so the key IS the accessible name.
+  it("BACK on end-state navigates to the rival selector, not the hub", async () => {
     render(<ArenaPage />);
 
-    // With isEndState=true, ArenaBackChip skips the confirm state and fires
-    // onBack immediately on the first click (no QUIT? intermediate step).
-    // The aria-label key is "backToHubAria" (useTranslations returns the key
-    // in test mode when next-intl is mocked to (k) => k).
-    const backBtn = await screen.findByRole("button", { name: /backToHubAria/i });
+    // isEndState=true → ArenaBackChip fires onBack immediately (no confirm).
+    const backBtn = await screen.findByRole("button", { name: /leaveMatchAria/i });
     act(() => fireEvent.click(backBtn));
 
-    expect(pushMock).toHaveBeenCalledWith("/");
-    expect(screen.queryByTestId("arena-difficulty-selector")).toBeNull();
-    expect(resetMock).not.toHaveBeenCalled();
+    expect(pushMock).toHaveBeenCalledWith("/arena?fresh=1");
+    expect(pushMock).not.toHaveBeenCalledWith("/");
+  });
+
+  // Trap 2 (see file header): the `?fresh=1` effect is single-shot per mount,
+  // and this navigation does not remount. If handleBack leaned on that effect,
+  // a player who entered via ?fresh=1 would never see the selector again.
+  // handleBack must call game.reset() itself.
+  it("BACK resets the game itself rather than relying on the ?fresh=1 effect", async () => {
+    render(<ArenaPage />);
+
+    const backBtn = await screen.findByRole("button", { name: /leaveMatchAria/i });
+    act(() => fireEvent.click(backBtn));
+
+    expect(resetMock).toHaveBeenCalled();
   });
 
   // Leaving terminates the match like a resign: the persisted save is dropped
-  // so re-entering /arena starts fresh instead of resuming at the exact second
-  // the user walked away (2026-06-15 fix).
+  // so the selector does not resume the match the user just walked away from
+  // (2026-06-15 fix, preserved).
   it("BACK clears the persisted arena save so the match does not resume", async () => {
     window.localStorage.setItem(ARENA_GAME_KEY, JSON.stringify({ fen: "x", savedAt: 1 }));
     render(<ArenaPage />);
 
-    const backBtn = await screen.findByRole("button", { name: /backToHubAria/i });
+    const backBtn = await screen.findByRole("button", { name: /leaveMatchAria/i });
     act(() => fireEvent.click(backBtn));
 
     expect(window.localStorage.getItem(ARENA_GAME_KEY)).toBeNull();
-    expect(pushMock).toHaveBeenCalledWith("/");
+    expect(pushMock).toHaveBeenCalledWith("/arena?fresh=1");
   });
 });

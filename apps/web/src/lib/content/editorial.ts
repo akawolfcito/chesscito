@@ -1089,6 +1089,13 @@ export const ARENA_COPY = {
   startMatch: "PLAY",
   backToHub: "HUB",
   backToHubAria: "Back to Hub",
+  /** ARIA label for the in-match HUD back chip. NOT "Back to Hub" (2026-07-13):
+   *  leaving a match lands on the rival selector (`/arena?fresh=1`), not the
+   *  hub, so the chip is named for its ACTION. Same honesty rule as
+   *  `closeResultAria` below. `backToHubAria` stays reserved for the surfaces
+   *  that really do go to the hub (selector scaffold, entry panel, end-state
+   *  overlay close). */
+  leaveMatchAria: "Leave match",
   /** ARIA label for the end-state popup close (X). NOT "Back to Hub": the
    *  destination is state-dependent (evaluateXClose routes to the Arena
    *  selector, Coach viewer, or Training Journal, never /hub), so the label

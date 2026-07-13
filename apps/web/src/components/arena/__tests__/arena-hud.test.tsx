@@ -89,24 +89,27 @@ describe("ArenaHud — matchup identity labels", () => {
   });
 });
 
+// The chip is named for its ACTION ("Leave match"), not a destination — as of
+// 2026-07-13 leaving lands on the rival selector, not the hub. See
+// ARENA_COPY.leaveMatchAria.
 describe("ArenaHud — back/quit confirmation modal", () => {
   it("tapping BACK during an active match opens the quit modal (not immediate)", () => {
     const { onBack } = renderHud({ isEndState: false });
-    fireEvent.click(screen.getByRole("button", { name: /back to hub/i }));
+    fireEvent.click(screen.getByRole("button", { name: /leave match/i }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(onBack).not.toHaveBeenCalled();
   });
 
   it("confirming the quit modal fires onBack once", () => {
     const { onBack } = renderHud({ isEndState: false });
-    fireEvent.click(screen.getByRole("button", { name: /back to hub/i }));
+    fireEvent.click(screen.getByRole("button", { name: /leave match/i }));
     fireEvent.click(screen.getByTestId("arena-quit-confirm"));
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it("end-state BACK fires onBack immediately with no modal", () => {
     const { onBack } = renderHud({ isEndState: true });
-    fireEvent.click(screen.getByRole("button", { name: /back to hub/i }));
+    fireEvent.click(screen.getByRole("button", { name: /leave match/i }));
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(onBack).toHaveBeenCalledTimes(1);
   });
