@@ -1,114 +1,102 @@
-# Session Handoff — 2026-07-13 (d)
+# Session Handoff — 2026-07-13 (e)
 
-> Cuarta sesión del día. Cierra **la limpieza completa** (los 3 ítems que dejó la sesión (c)).
-> El orden acordado era limpieza → duelo por enlace → Belt System. **La limpieza terminó.**
+> Quinta sesión del día. **No se escribió código de producto: se corrigió el RUMBO.**
+> Empezó como "arranquemos el spec del duelo" y terminó reemplazando la directriz entera.
 
 ## Completed
 
-- `2b59a829` **Decoder de custom errors** (merge). `BadgeAlreadyClaimed`, `CooldownActive` y
-  `DailyLimitReached` dejan de salir los tres como "Try again". ABI generada desde artifacts
-  (`generate-error-abis.mjs`, hermano del de eventos), extractor promovido fuera de `lib/debug/`,
-  y el mapa nombre → `TxErrorKind` → copy. Cierra el ítem del backlog `2026-07-10`.
-- `75cf0161` **Cobertura VR del play hub** (merge). 3 baselines `vr17` vía probe `/dev/play-hub`.
-  Requirió que el chip de Peones **dejara de leer la wallet por dentro** — ver Notes.
-- `63b60151` **`WoodenBanner` retirado** entero: componente + 5 reglas de CSS + 9 archivos de arte
-  (~139 KB). Revierte el "conservar" del mismo día; el spec de los rails quedó actualizado.
+- `57a49e57` **Directriz consolidada** — `docs/product/2026-07-13-direction-where-we-are.md`.
+  Modelo de **frentes → capas → gates**. Reemplaza la directriz binaria del mismo día.
+- `987a6488` **Investigación del duelo preservada** — spec v3 + red-team v3 (marcados
+  **ARTEFACTO HISTÓRICO**, no son el plan de D1) + la probe de device `/dev/duel-link-probe`.
+- Ambos **pusheados a `origin/main`**.
 
 ## Current State
 
-- **Branch**: `main`, todo pusheado. **PRs abiertos**: ninguno.
-- **Build**: Vitest **5118 passing / 426 files** · `tsc --noEmit` limpio · lint sin nada nuevo ·
-  VR minipay **58 passed / 1 failed** (el rojo es `hub-shop-sheet-open`, **preexistente**: el env
-  local no tiene treasury y el tile de PRO renderiza "Coming soon" donde el test quiere un precio).
+- **Branch**: `main`, sincronizado con `origin/main`. **PRs abiertos**: ninguno.
+- **Build**: `tsc --noEmit` limpio · eslint sin hallazgos. **La suite NO se corrió** — no se tocó
+  código de producto (la probe vive bajo `/dev` y no se enlaza desde ningún lado).
 - **Uncommitted work**: sólo este `SESSION.md`.
 
 ## Next Tasks
 
-1. **Duelo asíncrono por enlace** — `docs/product/2026-07-13-async-link-duel-feasibility.md`.
-   **Empezar por un spec, NO por código**: el doc es explícito en que los riesgos son de producto,
-   no técnicos. ~2–3 días, no meses.
-2. **Belt System** — el GDD, o como mínimo **la decisión del umbral**. Es lo único con reloj.
-3. **El smoke del Hub Tour en MiniPay sigue pendiente** (arrastrado desde el 07-12). Es lo único
-   que separa al Hub Tour de estar cerrado.
+### ▶️ Arrancar por el **Frente 1 — pulir el aprendizaje actual** (frente principal)
+
+Es lo que decidió el founder al cerrar la sesión. **No es construir contenido nuevo: es pulir lo que
+ya se ve.** Detalle en la directriz, §6.
+
+1. **Definir qué aborda el usuario primero en cada sesión** y simplificar el primer recorrido.
+2. **Revisar ejercicios**: instrucciones y dificultad.
+3. **Ocultar contenido que no esté a la altura** — incluye **mejorar o esconder temporalmente el
+   laberinto de peones** si daña la percepción.
+4. Aprovechar que muchos usuarios **tardan** en desbloquear contenido avanzado: es tiempo regalado
+   para pulirlo antes de que lleguen.
+
+**Gate:** comprensión y finalización aceptables. ⚠️ **Las señales y umbrales concretos se definen
+ANTES del experimento** — la directriz (§14) prohíbe inventarlos por adelantado.
+
+### Paralelo barato (si sobra sesión, NO desplaza al Frente 1)
+
+- **Frente 2 — Peones**: **inventariar fuentes y sinks.** No existe hoy y es la primera tarea. Lo
+  único leído del código: `PEONES_DAILY_CAP = 6`, `SHIELD_RESCUE_PEONES_COST = 2`,
+  `PEONES_WELCOME_PACK_AMOUNT = 1`, `peonesReward: 50` (compra).
+  **NO tocar precios antes de medir.**
+- **Frente 3 / T1 — Themes**: el **catálogo de arte** (página `/dev` que lista cada slot con sus
+  dimensiones). Es lo que destraba el cuello de botella real, que es el **arte**, no el código.
 
 ## Blockers
 
-- **El spec de server-verified progress SIGUE bloqueado** (sin cambios desde la sesión (c)).
-  Necesita una decisión de producto: ¿(a) defensa en profundidad + passport para el payout,
-  (b) challenge token del servidor, o ambas? Hasta entonces, **no tocar `BADGE_THRESHOLD`**.
-  Causa: `computeExerciseBfsPath()` viaja en el bundle del cliente, así que re-ejecutar el camino
-  en el servidor prueba que la solución es CORRECTA, nunca que un humano la JUGÓ.
+- **Ninguno para el Frente 1.**
+- **MiniPay**: la app está **EN REVISIÓN**. **No hay pedidos oficiales abiertos.** Es un canal en
+  observación, **no un bloqueo del roadmap**. Cuando aprueben → correr `/dev/duel-link-probe` desde
+  WhatsApp, navegador y MiniPay, con captura de cada uno.
+- **Belt System**: sigue bloqueado por la decisión de *server-verified progress* (sin cambios).
+- **Smoke del Hub Tour en device**: arrastrado desde 2026-07-12.
 
 ## Notes
 
-### ⚠️ La trampa del selector — casi tiro evidencia buena a la basura
+### ⚠️ Lo más importante que dejó esta sesión: cómo NO trabajar
 
-Los tres selectores registrados en 8 docs (`0xfafe7970` / `0xc1ab61a1` / `0xeba8fe8a`) **son
-correctos**. Los "refuté" durante la sesión con:
+**El founder dijo "me siento perdido y no siento que tengamos una directriz".** La causa fue mía:
+especifiqué el duelo **tres veces** (v1 cookie → v2 wallet sin autenticar → v3 sesión firmada) antes
+de preguntar lo único que importaba: **"¿dónde aterriza el jugador invitado?"**. La respuesta —el
+webview de WhatsApp no tiene wallet— invalidaba el modelo de identidad de las tres versiones.
 
-```ts
-toFunctionSelector("error BadgeAlreadyClaimed(address,uint256)")  // 0xa02cd012 ❌ basura
-toFunctionSelector("BadgeAlreadyClaimed(address,uint256)")        // 0xfafe7970 ✅
-```
+**La regla:** en una feature cuyo corazón es un enlace, **el camino del enlace se mide ANTES de
+diseñar el asiento**. Y más general: **cuando una iniciativa parezca menor, preguntar por su TECHO
+antes de descartarla** — despaché el theme builder como "tooling interno" (era: marketplace de
+creadores) y el duelo como "growth puro" (era: economía de espectadores). **Las dos veces me
+corrigió el founder.**
 
-**viem hashea el string literal que le pasás**, con la palabra `error` adentro. Solidity hashea la
-firma pelada. Llegué a reportarle al founder que el probe en device había "confirmado un número
-inventado" — falso, y la medición del iPhone era legítima. **Me corrigió el test**, no yo: le pedí a
-`decodeErrorResult` que decodificara y viem contradijo mi aritmética.
+### El principio que ahora gobierna el roadmap
 
-**Regla:** cuando un valor recién calculado contradice una medición registrada, sospechá primero de
-tu derivación. Los selectores **no se escriben a mano en ningún lado**, ni en los tests: se derivan
-de la firma. → [[feedback_suspect_your_derivation_first]]
+> **Construir la capa mínima que demuestre valor, medirla, y dejar que el resultado desbloquee la
+> siguiente.**
 
-### El mismo hook de wallet mordió por segunda vez en dos días
+**Antes de rankear CUALQUIER idea nueva, leer la tabla de §2 de la directriz** y ubicarla: ¿qué
+frente? ¿qué capa? ¿cuál es la próxima capa mínima? ¿nos estamos adelantando?
 
-`PeonesBalanceChip` llamaba `usePeonesBalance` → `useAccount` de wagmi, **dos niveles debajo** de dos
-scaffolds que en su propio docstring se declaraban presentacionales ("caller owns on-chain state",
-"no data/hooks here"). Los dos mentían, y por eso el play hub **no podía montarse bajo `/dev`**:
-wagmi tira `WagmiProviderNotFoundError` sin provider, y Playwright habría fotografiado el error
-overlay y pasado en verde — exactamente lo que pasó con los rails el día anterior (`0d69e30a`).
+### Correcciones que NO hay que re-litigar
 
-Ahora `PeonesBalanceChipView` recibe el balance por prop y los dos clientes hacen la lectura. El chip
-conectado sigue existiendo con su API vieja para el hub FULL, así que sus 12 tests no se tocaron.
+- **El duelo NO está congelado.** Se construye por capas. **D1 = abrir un enlace y jugar, SIN
+  wallet**, en cualquier navegador móvil o PWA. **No depende de MiniPay.**
+- **El spec v3 del duelo NO es el plan de D1** (es wallet-first). Se conserva por su árbitro, su
+  expiración, su concurrencia, su persistencia, su seguridad y su matriz de estados.
+- **El listado de MiniPay NO es "lo único con reloj"** — eso fue una inferencia mía, no un hecho.
+- **Las cifras de Peones del founder son HIPÓTESIS**, no diagnóstico. Nada de precios sin medir.
 
-**La convención (tercera vez que se escribe, aplicarla sin preguntar):** lo que un probe `/dev`
-fotografía **recibe su verdad por props**, nunca de un hook de wallet.
+### Deuda de seguridad descubierta (no bloquea, pero está viva en producción)
 
-### Lo que fijan los 3 baselines nuevos
-
-- `vr17-play-hub-guest` + `vr17-play-hub-connected` son un **par**: el chip de Peones aparece sólo en
-  el segundo. Un chip que se filtre a invitados, o que desaparezca para quien tiene wallet, rompe una
-  de las dos imágenes.
-- `vr17-play-hub-pro` fija que PRO cambia **tres cosas en simultáneo**: badge del HUD (UNLOCK → 12D),
-  mascota (mago → mago PRO) y chip del KingdomCard (PRO → PRO active). Que una se desincronice es
-  invisible para un test unitario.
-- **Ningún fixture renderiza PRO sin wallet.** En producción PRO implica wallet conectada, y un
-  baseline de un estado inalcanzable es un baseline que miente.
-- **Abrí los 3 PNG y los miré antes de commitearlos.** Ese es el paso que se salteó cuando los rails
-  "pasaron" siendo cinco fotos de un `WagmiProviderNotFoundError`.
-
-### Un grep por nombre de archivo NO prueba que un asset esté sin uso
-
-`CandyBanner` arma la ruta en runtime (`/art/redesign/banners/${name}`). Lo que hizo seguro borrar los
-3 banners es que su tipo `CandyBannerName` es una **unión cerrada** sobre `btn-*`. Los `btn-*` y
-`principalbutton` del mismo directorio se quedan (`PrimaryPlayCTA`, `KingdomCard`, `AppModeSwitch`).
-
-### Deuda que el decoder dejó registrada (no bloquea)
-
-- Los args de los errores (`nextAllowedAt`, `nextWindowStart`) **se decodifican pero no se muestran**.
-  La copy es estática a propósito: mostrar "esperá hasta las 14:32" es zona horaria, formato y
-  probablemente una cuenta regresiva viva. `decodeErrorResult` ya devuelve los args.
-- Sólo `BadgeAlreadyClaimed` tiene evidencia real de device. `CooldownActive` y `DailyLimitReached`
-  se **asumen**. Por eso el probe `/dev/tx-error-probe` **se queda** — es el instrumento para medirlos.
-- `Invalid player address` clasifica como `unknown` → "Something went wrong". Debería ser
-  `signingUnavailable`.
+**`/api/games` acepta la wallet del body sin firma** (`api/games/route.ts:21`; el único chequeo es
+`isAddress()` — valida el **formato, no la propiedad**). Hoy sólo permite vandalizar el archivo de
+otro. **Cualquier feature que use la wallet como AUTORIZACIÓN (no como etiqueta) tiene que resolver
+esto primero.** Es exactamente el defecto que mató a la v2 del spec del duelo.
 
 ### Arrastrado (sigue vigente)
 
 - **Dónde vive cada hub**: el LEARN hub sólo renderiza en `/` con `NEXT_PUBLIC_CHESSCITO_MODE=learn`
-  **y** `NEXT_PUBLIC_CHESSCITO_LITE_MODE=true`; con sólo el primero, el flag lanza
-  "Contradictory Chesscito mode flags".
+  **y** `NEXT_PUBLIC_CHESSCITO_LITE_MODE=true`.
 - **NO mover el timer de la transición fuera de su `useEffect`** (Strict Mode lo cuelga en
-  "Preparing AI…" para siempre).
-- El VR es **ciego a cambios de copy chicos** (`maxDiffPixelRatio: 0.01`). `--update-snapshots` por
-  default sólo reescribe si el test **falla**: forzar `--update-snapshots=all` y verificar el `mtime`.
+  "Preparing AI…").
+- Lo que un probe `/dev` fotografía **recibe su verdad por props**, nunca de un hook de wallet — si
+  no, Playwright fotografía un `WagmiProviderNotFoundError` y **pasa en verde**.

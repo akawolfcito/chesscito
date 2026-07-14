@@ -1,37 +1,63 @@
-# Next session prompt — post Hub Tour parte 1, esperando smoke en device
+# Next session prompt — Frente 1: pulir ejercicios y primera sesión
 
-Di **"continuemos"** y el agente debe leer este archivo y seguirlo.
-
----
-
-**Estado al arrancar:** el mini-tour del hub de LEARN (2 pasos: Daily → Challenge) está
-**construido y mergeado a `main`**. Suite **5073 passing / 426 test files**, `tsc` limpio.
-**El founder pushea y trae el resultado del smoke en MiniPay real.**
-
-**Leer primero:**
-- `docs/handoffs/2026-07-12-hub-tour-part1-handoff.md` — qué se construyó, qué decisiones NO
-  se re-litigan, y los dos defectos que encontró el device.
-- `docs/specs/2026-07-12-hub-tour-daily-first-spec.md` — **la Parte 2 está especificada y NO
-  construida. No re-especificar.**
+Decí **"continuemos"** y el agente lee este archivo y lo sigue.
 
 ---
 
-## ▶️ Ruta
+**Estado al arrancar:** `main` limpio y sincronizado con `origin/main`. Sin PRs abiertos. La sesión
+anterior **no escribió código de producto: corrigió el rumbo.**
 
-1. **Primero: el resultado del smoke.** Preguntá por él antes de escribir código. Cuatro cosas
-   a confirmar en device:
-   - El "Got it" entra en pantalla y el tour se completa.
-   - El flag `chesscito:hub-tour:v1` impide que reaparezca.
-   - Con pase ACTIVO: el paso 2 muestra el arte **sin** precio ni "Tap Join Challenge".
-   - El CTA **Join Challenge** late, y deja de latir al comprar.
-   Si algo falló, eso manda sobre todo lo demás.
+## 📍 Leer PRIMERO, antes de tocar nada
 
-2. **Después: Parte 2 del spec** — cierre del Daily (**Continue training** primario,
-   **Join Challenge** secundario) + recordatorios del Challenge (CTA contextual + chip,
-   **nunca modal**, máximo uno por día) + el test que fija que `recordDailyCompletion` sigue
-   teniendo **solo tres llamadores**.
+1. **`docs/product/2026-07-13-direction-where-we-are.md`** — **la directriz vigente.** Modelo de
+   **frentes → capas → gates**. La tabla de §2 es el índice: **toda idea nueva se ubica ahí antes de
+   diseñarla.**
+2. `SESSION.md` — el handoff de la sesión (e).
+
+**El principio que gobierna todo:**
+
+> Construir la capa mínima que demuestre valor, medirla, y dejar que el resultado desbloquee la
+> siguiente.
 
 ---
+
+## ▶️ La tarea: Frente 1 — pulir el aprendizaje actual
+
+**Es el frente principal.** Directriz §6.
+
+**NO es construir contenido nuevo. Es pulir lo que el usuario ya ve.**
+
+1. **Definir qué aborda el usuario primero en cada sesión** y simplificar el primer recorrido.
+2. **Revisar ejercicios**: instrucciones y dificultad.
+3. **Ocultar el contenido que no esté a la altura** — incluye **mejorar o esconder temporalmente el
+   laberinto de peones** si daña la percepción.
+4. Aprovechar que muchos usuarios **tardan** en desbloquear contenido avanzado: es tiempo regalado
+   para pulirlo antes de que lleguen.
+
+**Empezá preguntándole al founder qué le molesta HOY del primer recorrido.** No auditar a ciegas: él
+tiene el juicio de producto, y este frente es de percepción, no de corrección técnica.
+
+**Gate:** comprensión y finalización aceptables.
+⚠️ **Los umbrales concretos se definen ANTES del experimento, no ahora** (directriz §14). Un número
+inventado sin instrumentación es falsa precisión, y es peor que la ambigüedad porque parece medido.
+
+---
+
+## Reglas del roadmap que NO se re-litigan
+
+- **El duelo NO está congelado** — se construye por capas. **D1 = abrir un enlace y jugar, SIN
+  wallet**, en cualquier navegador móvil o PWA. **No depende de MiniPay.**
+- **El spec v3 del duelo NO es el plan de D1** (es wallet-first, marcado ARTEFACTO HISTÓRICO).
+- **MiniPay está EN REVISIÓN, sin pedidos oficiales abiertos.** Es un **canal**, no un bloqueo.
+- **Las cifras de Peones son HIPÓTESIS.** Inventariar fuentes y sinks **antes** de tocar precios.
+- **Cuando una iniciativa parezca menor, preguntar por su TECHO antes de descartarla.** Ya pasó dos
+  veces en una sesión (themes → marketplace; duelo → economía de espectadores).
+
+## Paralelo barato (NO desplaza al Frente 1)
+
+- **Peones**: inventariar fuentes y sinks. No existe y es la primera tarea del frente.
+- **Themes / catálogo de arte**: página `/dev` que lista cada slot con sus dimensiones. Destraba el
+  cuello de botella real, que es **el arte**, no el código.
 
 ## Flujo de trabajo
 
@@ -49,33 +75,13 @@ El gate de calidad es **suite verde + `tsc` limpio ANTES del merge local**, no C
 
 ## Higiene de comandos
 
-- **Nunca prefijes con `cd`.** `git -C <ruta>` y `pnpm -C <ruta>`.
+- **Nunca prefijes con `cd`.** Usá `git -C <ruta>` y `pnpm -C <ruta>`.
 - Un comando por llamada. Sin pipes, sin heredocs.
 - Typecheck: `pnpm exec tsc --noEmit` pelado.
 - `lsof -ti:3000` vacío antes de VR/E2E.
-- Para manejar el hub en navegador: server con
-  `NEXT_PUBLIC_CHESSCITO_MODE=learn NEXT_PUBLIC_CHESSCITO_LITE_MODE=true`, y el script de
-  Playwright **dentro de `apps/web/`** (ahí resuelve el módulo), borrándolo al terminar.
-
-## Decisiones cerradas (NO re-litigar)
-
-- **Solo LEARN y PLAY se envían. FULL es interno.**
-- **El Daily ABRE la sesión.** El Lote 2.5 está SUPERSEDED.
-- **El tour no es onboarding**: todo jugador lo ve una vez. Sin Skip.
-- **El paso 2 PIDE la venta** — es la razón por la que MiniPay nos listaría.
-- **Nunca prometer recuperación de racha.** El escudo rescata un **ejercicio fallido**. Hay un
-  test con regex sobre el copy que lo fija.
-- **Precio/escudos/días se interpolan** desde `rail-config.ts`, jamás se escriben como texto.
-- **Nunca construir recovery para el Daily-Streak.**
-
-## La lección de esta sesión
-
-**Dos defectos reales con 5000+ tests en verde**, los dos por confiar en un supuesto de
-viewport en vez de medir: jsdom mide todo como 0×0 y un navegador limpio no tiene el chrome de
-MiniPay. Los tests ahora protegen **reglas** (el botón entra, el arte cede primero, el dueño
-del pase no ve precio), no píxeles.
 
 ## Si el usuario dice…
 
-- **"continuemos"** → pedir el resultado del smoke, después arrancar la Parte 2.
-- **"qué falta"** → `docs/backlog/2026-07-10-backlog-index.md`.
+- **"continuemos"** → preguntar qué le molesta hoy del primer recorrido, y arrancar el Frente 1.
+- **"qué falta"** → la directriz, §12 (activo / en preparación / diferido).
+- **"y el duelo?"** → no está congelado; la próxima capa es D1 y **no depende de MiniPay**.
