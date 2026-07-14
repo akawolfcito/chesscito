@@ -661,6 +661,164 @@ con nada.**
 
 ---
 
+## 15.5 — 🔴 A5.5 · AUDITORÍA DE FUENTE DE VERDAD (GATE BLOQUEANTE)
+
+**Fecha**: 2026-07-13. **Estado**: auditoría cerrada. **Bloquea A6, A9, A10, A11 y Rook Rails.**
+**Verificado contra el código Y contra la base configurada** (12 filas reales leídas).
+
+### 15.5.1 — El veredicto
+
+> ## 🔴 El catálogo de Git NO es lo que consume el jugador.
+>
+> `/exercises` sirve **baseline ⊕ overlay de Supabase**, y **el overlay gana por `id`**.
+> **Hay 12 filas en `content_overlay`, y las 12 colisionan con ids oficiales de torre.**
+> **`rook-1` tiene una fila `published`, visible desde CUALQUIER `CONTENT_STAGE` → producción ya sirve
+> `rook-1` desde Supabase, no desde Git.**
+
+### 15.5.2 — Flujo de lectura real de `/exercises`
+
+```
+app/[locale]/exercises/page.tsx:89
+  envStageFloor()               ← env CONTENT_STAGE. null → baseline-only (kill-switch, 0 DB hits)
+        │ no-null
+        ▼
+  getMergedCatalog()            ← unstable_cache, tag "content", TTL 60s
+        ▼
+  loadMergedCatalog()
+    ├── getBaseline()           ← puzzles.generated.ts  (lo que produce import-puzzles desde Git)
+    ├── fetchOverlayRows(floor) ← Supabase `content_overlay`, timeout 2s → null = fallback a baseline
+    ├── resolveVisibleRows()    ← 1 fila por (kind,id): la de MENOR rank ≥ floor
+    └── mergeOverlay()          ← ⚠️ POR ID: la fila del overlay REEMPLAZA la entrada del baseline
+        ▼
+  <ContentCatalogProvider>      ← se serializa al cliente; ExercisesScreen lee de acá
+```
+
+**Entornos (verificado con `vercel env ls`):**
+
+| Entorno | `CONTENT_STAGE` | Overlay |
+| --- | --- | --- |
+| **Production** | **SETEADO** (desde hace 26 días) | 🔴 **ACTIVO** |
+| Preview | ausente | ✅ baseline-only |
+| Local (`apps/web/.env`) | **`draft`** | 🔴 **ACTIVO — y con el piso más permisivo: ve las 12 filas** |
+
+### 15.5.3 — Estado real de las filas de torre en Supabase
+
+**12 filas. Ninguna es contenido nuevo: son ediciones del builder sobre los ejercicios oficiales.**
+Ninguna tiene `explanation`.
+
+| id | stage | FEN vs Git | order vs Git | Efecto si la fila aplica |
+| --- | --- | --- | --- | --- |
+| `rook-1` | **published** + draft | igual | igual | 🔴 **borra el título curado**, pierde el prompt |
+| `rook-2` | **preview** + draft | 🔴 **DISTINTO** (`g2→g8`, no `a2→a8`) | igual | 🔴 **otro ejercicio** + borra título |
+| `rook-3` | draft | — | — | 🔴 **RESUCITA el duplicado retirado en A3** |
+| `rook-4` | draft | igual | igual | ✅ **DESCARTADA por el linter** (tag `capture` falso) |
+| `rook-5` | draft | — | — | ✅ **DESCARTADA por el linter** (tag `capture` falso) |
+| `rook-6` | draft | 🔴 **el board VIEJO de 21 bloqueadores** | 5 → **11** | 🔴 **revierte A5** + reordena |
+| `rook-7` | draft | 🔴 **el board VIEJO de 14** | 6 → **10** | 🔴 **revierte A5** + reordena |
+| `rook-8` | draft | igual | 7 → **5** | 🔴 reordena |
+| `rook-9` | draft | igual | 8 → **6** | ✅ **DESCARTADA por el linter** (tag `capture` falso) |
+| `rook-10` | draft | igual | 9 → **7** | 🔴 reordena |
+
+**Hallazgo colateral:** las filas conservan **los tags falsos que A2 eliminó** (`capture` en rook-4/5/9,
+`blocked-rank` en rook-6). **El linter semántico de A8 las rechaza y las descarta** — o sea que A8, sin
+proponérselo, **ya está protegiendo el runtime**. Pero **el descarte es SILENCIOSO**
+(`buildOverlayRow` → `null` → `continue`): nadie se entera de que una fila publicada no llegó.
+
+### 15.5.4 — La matriz de precedencia
+
+| Campo | JSON generado | Supabase | Precedencia actual | Riesgo |
+| --- | --- | --- | --- | --- |
+| `id` | ✅ | ✅ | **Supabase gana** (mismo id → reemplaza; id nuevo → se agrega) | 🔴 **Colisión accidental: basta insertar `id=rook-1`** |
+| `order` | ✅ | ✅ | **Supabase gana** | 🔴 Reordena el recorrido (ya pasa: rook-6 → 11) |
+| `fen` / `startPos` / `targetPos` | ✅ | ✅ | **Supabase gana** | 🔴 **Revierte A5** (boards viejos en la DB) |
+| `obstacles` | ✅ (derivado del FEN) | ✅ (derivado del FEN) | **Supabase gana** | 🔴 Igual que FEN |
+| `enemies` | ❌ (no existe aún) | ❌ | — | 🟠 **Fase B necesitará columna** |
+| `principle` | ✅ | ❌ **SIN COLUMNA** | **se pierde** | 🔴 |
+| `title` | ✅ | ❌ **SIN COLUMNA** | 🔴 **se BORRA**: `mergeOverlay:145` hace `delete descriptions[id]` cuando la fila no trae `explanation` | 🔴 **El jugador vuelve a la etiqueta i18n vieja — o a `Exercise N` en los ids nuevos, que no tienen entrada i18n** |
+| `playerPrompt` | ✅ | ❌ **SIN COLUMNA** | **se pierde** → el prompt desaparece | 🔴 |
+| `learningObjective` | ✅ | ❌ **SIN COLUMNA** | **se pierde** | 🟠 |
+| `tags` | ✅ | ✅ | **Supabase gana** | 🔴 **Reintroduce los tags falsos** (mitigado: el linter descarta la fila) |
+| `optimalMoves` | ✅ (BFS) | ✅ (`optimal_moves`) | **Recalculado y verificado** (`buildOverlayRow:85`) | 🟢 **Trust-but-verify: la única defensa que ya existía** |
+| `tier` | ✅ | ✅ | **Supabase gana** | 🟢 Bajo |
+| `stage` (estado) | — | ✅ `draft`/`preview`/`published` | Piso por env | 🟠 El piso es un env var: un typo apaga TODO el overlay |
+
+### 15.5.5 — Respuestas a las 19 preguntas (resumen)
+
+1-5. Ver §15.5.2. **Supabase es un OVERLAY por `id` sobre el baseline compilado**, no un fallback y no
+un catálogo aparte. **6.** Gana **Supabase**. **7.** **Reemplaza el objeto COMPLETO** (`list[idx] = entry`,
+`mergeOverlay:139`) — no hace merge de campos: lo que la tabla no tiene, **se pierde**.
+**8.** `id, kind, piece, fen, target, mover, tier, tags, explanation, order, disabled, optimal_moves,
+updated_at, stage`. **9.** Eso mismo. **10.** 🔴 **SÍ — y ya lo hizo con los 10 ejercicios de torre.**
+**11.** ❌ **NO sobreviven: no hay columnas.** **12.** ✅ **Sí aparecen** (`rook-distance-1`,
+`rook-no-diagonal-1` no tienen fila) — **pero en un env con piso `draft`, `rook-3` resucita y el pool
+queda con 11 ejercicios.** **13.** 🔴 **Sí** — el `order` de la DB gana. **14.** 12 filas (§15.5.3).
+**15.** Producción sirve **`rook-1` desde Supabase**; el resto, desde el baseline (asumiendo piso
+`published`, que es el único con fila `published`). **16.** `unstable_cache` (tag `content`, TTL 60s)
++ timeout de 2s + kill-switch por `CONTENT_STAGE`. **17.** 🔴 **SÍ** — `requirePedagogy:false` en
+`merged-catalog.ts:79`: **una fila publicada llega al jugador sin `title` ni `playerPrompt`.**
+**18.** 🔴 **SÍ.** **19.** Ver §15.5.6.
+
+### 15.5.6 — Impacto sobre los commits ya hechos
+
+| Commit | ¿Llega al jugador? |
+| --- | --- |
+| **A0** — obstáculos en práctica | 🟢 **SEGURO.** Es código de runtime; el overlay no lo toca. |
+| **A2** — tags falsos fuera | 🟢 **SEGURO en el baseline** — y de yapa, el linter **descarta** las filas de la DB que aún los traen. |
+| **A8** — linter semántico | 🟢 **SEGURO, y protege el runtime** (descarta 4 filas mentirosas). ⚠️ Silenciosamente. |
+| **A1/A7** — pedagogía visible | 🔴 **PARCIALMENTE OCULTO.** Para `rook-1` en **producción**, el título curado **se borra** y el prompt **no existe**. En un env con piso `draft`, se pierde en **6 de 10**. |
+| **A3/A4** — ids nuevos | 🟠 **Llegan** — pero con piso `draft` **`rook-3` vuelve** y el pool queda inconsistente. |
+| **A5** — recorte de obstáculos | 🔴 **REVERTIDO** en cualquier env con piso `draft`: las filas de `rook-6`/`rook-7` traen **los boards viejos**. |
+
+### 15.5.7 — Arquitectura recomendada
+
+**El diagnóstico de fondo:** el overlay se diseñó como *"deltas sobre el baseline"*, pero **se
+implementó como reemplazo total por `id`, sin espacio de nombres**. Una fila del builder y un ejercicio
+oficial **compiten por la misma clave** — y gana la fila.
+
+1. **`content/exercises.json` es la fuente de verdad del currículo oficial** (ids, orden, FEN, principio,
+   título, prompt, objetivo, tier, tags, óptimos). Pasa por Git, review, importador, BFS y linter.
+2. **Supabase guarda lo que NO es oficial**: borradores, contenido del builder, experimentos, comunidad.
+3. **Namespacing de ids** — `official:rook-1`, `builder:<uuid>`, `community:<uuid>`. **Una fila NO puede
+   ganar por compartir `id` de casualidad.**
+4. **`source`**: `"official" | "builder" | "community" | "official-override"`.
+5. **El override oficial es EXPLÍCITO**: `{ source: "official-override", baseExerciseId, contentVersion }`
+   — y aun así **no debería borrar campos que no puede almacenar**.
+6. **Merge por CAMPO, no por objeto**: lo que el overlay no trae, **hereda del baseline**. Hoy
+   `list[idx] = entry` pisa todo, y por eso el título curado desaparece.
+7. **`publish` valida como el release**: `principle`, `title`, `playerPrompt`, `learningObjective`,
+   tablero legal, objetivo alcanzable, obstáculos aplicados, `optimalMoves` por BFS, coherencia
+   tags↔geometría, sin colisión no autorizada. **Draft puede estar incompleto; publish no.**
+8. **El descarte deja de ser silencioso**: una fila rechazada se loguea y se cuenta.
+
+### 15.5.8 — Migración mínima (lo más barato que destraba el gate)
+
+**Opción A — LIMPIAR (recomendada, 5 minutos, cero código):**
+> **Borrar las 12 filas de `content_overlay`.** No son contenido: son ediciones de prueba del builder
+> sobre ejercicios que Git ya define mejor. Con la tabla vacía, **el jugador recibe exactamente el
+> catálogo de Git** y los seis commits quedan íntegros.
+> **Reversible**: el contenido de las filas queda registrado en §15.5.3 y en el probe.
+
+**Opción B — apagar el overlay** (quitar `CONTENT_STAGE` de Production). Destraba igual, pero **apaga el
+builder** y deja el problema para después.
+
+**Opción C — arreglar la arquitectura primero** (namespacing + merge por campo + columnas nuevas).
+**Es lo correcto a mediano plazo, y NO hace falta para destrabar A6.**
+
+**Recomiendo A ahora + C agendado.** B sólo si el founder quiere el builder congelado.
+
+### 15.5.9 — El GATE
+
+**No se avanza a A6/A9/A10/A11/Rook Rails hasta que se cumpla UNA de estas dos:**
+
+- [ ] **(1) El catálogo de Git es el que consume el jugador** — verificado con `content_overlay` vacía
+      (o sin filas que colisionen con ids oficiales), **más una lectura de producción que lo confirme**.
+- [ ] **(2) Existe un mecanismo probado de precedencia** que garantice que Git gane sobre las filas
+      viejas sin perder datos (namespacing + merge por campo + backfill de las columnas pedagógicas).
+
+**Hoy no se cumple ninguna.**
+
+---
+
 ## 16. Preguntas abiertas reales
 
 Sólo quedan **tres**, y las tres son de producto — ninguna bloquea empezar por A0.
