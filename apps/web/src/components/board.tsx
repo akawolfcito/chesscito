@@ -175,8 +175,12 @@ export function Board({
     return getValidTargets(pieceType, selectedPosition, obstacles ?? [], isCapture, captureTargets, targetPosition ?? undefined);
   }, [pieceType, selectedPosition, obstacles, isCapture, captureTargets, targetPosition]);
 
-  // Labyrinth walls render AS the cell (stone tile), not as a chained piece —
-  // a blocked square reads clearer than a locked rook (founder 2026-06-16).
+  // Blockers render AS the cell (stone tile), not as a chained piece — a blocked
+  // square reads clearer than a locked rook (founder 2026-06-16). Exercises paint
+  // them too: the rules layer has always stopped the ray on an obstacle, so a
+  // blocker the player cannot SEE reads as a broken board rather than a chess
+  // rule. (A9 gives the exercise blocker its own friendly-piece art; the maze
+  // keeps the ambient wall.)
   const obstacleKeySet = useMemo(
     () => new Set((obstacles ?? []).map((o) => `${o.file},${o.rank}`)),
     [obstacles],
@@ -538,8 +542,7 @@ export function Board({
     const rankIdx = rank - 1;
     const square = squareByKey.get(`${file},${rankIdx}`);
     if (!square) return null;
-    const isWall =
-      mode === "labyrinth" && obstacleKeySet.has(`${file},${rankIdx}`);
+    const isWall = obstacleKeySet.has(`${file},${rankIdx}`);
     const isPeones =
       !!peonesHint && peonesHint.file === file && peonesHint.rank === rankIdx;
     return (

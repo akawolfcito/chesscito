@@ -2857,7 +2857,7 @@ export function ExercisesScreen({
               startPosition={activeExercise.startPos}
               mode={activeLabyrinth ? "labyrinth" : "practice"}
               targetPosition={activeExercise.targetPos}
-              obstacles={activeLabyrinth?.obstacles}
+              obstacles={activeExercise.obstacles}
               captureTargets={activeExercise.captureTargets}
               isLocked={!activeLabyrinth ? (phase === "failure" || phase === "success") : labyrinthCompleted !== null}
               onMove={activeLabyrinth ? handleLabyrinthMove : handleMove}
