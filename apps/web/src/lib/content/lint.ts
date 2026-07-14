@@ -21,6 +21,7 @@
 import type { BoardPosition, Exercise, PieceId } from "@/lib/game/types";
 import { posToSquare, type MappedPuzzle } from "@/lib/game/fen-puzzle";
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
+import { getValidTargets } from "@/lib/game/board";
 
 export type LintResult = { errors: string[]; warnings: string[] };
 
@@ -133,45 +134,128 @@ export function lintPuzzle(
 
   /* ── Warnings — judgement calls ────────────────────────────────── */
 
-  // Decorative obstacles — the ones that can ALL come off together without the
-  // puzzle changing. Testing each blocker on its own would be useless: rook-6
-  // stacks parallel blockers, so removing any single one leaves the others doing
-  // its job, and every last blocker looks load-bearing. So peel them off greedily
-  // and keep only what the optimal route actually needs.
+  // Decorative obstacles — the ones that can ALL come off together without
+  // changing what the player DECIDES.
   //
-  // rook-6 shipped 21 blockers to author a 3-move detour. Difficulty has to come
-  // from the decision, not from the mess.
+  // Two traps, both hit for real while authoring this:
+  //
+  //  1. Testing each blocker on its own is useless. rook-6 stacked parallel
+  //     blockers, so removing any single one left the others doing its job and
+  //     all 21 looked load-bearing. The peel has to be greedy and cumulative.
+  //
+  //  2. Preserving `optimalMoves` alone is NOT enough, and following it is
+  //     actively harmful. Peeled against that criterion, rook-6 collapses to ONE
+  //     blocker with its optimal still at 3 — while the number of optimal routes
+  //     goes 2 -> 7 and the first move goes from 8 choices to 11. The exercise
+  //     still "measures" the same and has stopped being a decision: the detour
+  //     becomes automatic. The honest invariant is the whole DECISION PROFILE.
+  //
+  // So: drop what changes nothing the player experiences; keep everything else.
+  // The goal is the minimum set that preserves the LESSON, not the minimum set.
   if (obstacles.length > 0 && optimalMoves > 0) {
-    const solvesTheSame = (kept: BoardPosition[]) => {
-      const probe: Exercise = {
-        id: "lint-probe",
-        optimalMoves: 0,
-        startPos,
-        targetPos,
-        obstacles: kept,
-        captureTargets: mapped.captureTargets,
-        isCapture: mapped.isCapture,
-      };
-      const bfs = computeExerciseBfs(piece, probe);
-      return bfs !== null && bfs.optimalMoves === optimalMoves;
-    };
-
-    let kept = [...obstacles];
-    const droppable: string[] = [];
-    for (const o of obstacles) {
-      const candidate = kept.filter((x) => !samePos(x, o));
-      if (solvesTheSame(candidate)) {
-        kept = candidate;
-        droppable.push(at(o));
+    const shipped = decisionProfile(piece, mapped, obstacles);
+    if (shipped) {
+      let kept = [...obstacles];
+      const droppable: string[] = [];
+      for (const o of obstacles) {
+        const candidate = kept.filter((x) => !samePos(x, o));
+        const p = decisionProfile(piece, mapped, candidate);
+        if (
+          p &&
+          p.optimalMoves === shipped.optimalMoves &&
+          p.optimalRoutes === shipped.optimalRoutes &&
+          p.firstMoveChoices === shipped.firstMoveChoices
+        ) {
+          kept = candidate;
+          droppable.push(at(o));
+        }
       }
-    }
-    if (droppable.length > 0) {
-      warnings.push(
-        `${label}: ${droppable.length}/${obstacles.length} obstacles are decorative — ` +
-          `${kept.length} keep optimalMoves at ${optimalMoves}. Droppable: ${droppable.join(" ")}`,
-      );
+      if (droppable.length > 0) {
+        warnings.push(
+          `${label}: ${droppable.length}/${obstacles.length} obstacles are decorative — ` +
+            `${kept.length} preserve the decision (optimal ${shipped.optimalMoves}, ` +
+            `${shipped.optimalRoutes} optimal routes, ${shipped.firstMoveChoices} first moves). ` +
+            `Droppable: ${droppable.join(" ")}`,
+        );
+      }
     }
   }
 
   return { errors, warnings };
+}
+
+/**
+ * What the player actually experiences on a board: how long the best route is,
+ * how many best routes there are, and how wide the first decision is.
+ *
+ * `optimalMoves` alone cannot tell a puzzle from a corridor — a board can keep
+ * its move count while every choice in it evaporates. These three together can.
+ */
+type DecisionProfile = {
+  optimalMoves: number;
+  optimalRoutes: number;
+  firstMoveChoices: number;
+};
+
+function decisionProfile(
+  piece: PieceId,
+  mapped: MappedPuzzle,
+  obstacles: BoardPosition[],
+): DecisionProfile | null {
+  const probe: Exercise = {
+    id: "lint-probe",
+    optimalMoves: 0,
+    startPos: mapped.startPos,
+    targetPos: mapped.targetPos,
+    obstacles,
+    captureTargets: mapped.captureTargets,
+    isCapture: mapped.isCapture,
+  };
+  const bfs = computeExerciseBfs(piece, probe);
+  if (!bfs) return null;
+
+  const targets = (from: BoardPosition) =>
+    getValidTargets(
+      piece,
+      from,
+      obstacles,
+      mapped.isCapture ?? false,
+      mapped.captureTargets,
+      mapped.targetPos,
+    );
+
+  // Count the shortest routes by layered BFS, NOT by walking every branch: the
+  // exhaustive walk is exponential in the optimal depth, and the 7-move rook
+  // labyrinths hang it. Distances first, then dynamic programming over them —
+  // a path is optimal exactly when every step increases the distance by one.
+  const key = (p: BoardPosition) => `${p.file},${p.rank}`;
+  const dist = new Map<string, number>([[key(mapped.startPos), 0]]);
+  const order: BoardPosition[] = [mapped.startPos];
+  for (let i = 0; i < order.length; i += 1) {
+    const u = order[i];
+    const du = dist.get(key(u))!;
+    if (du >= bfs.optimalMoves) continue; // nothing past the target layer matters
+    for (const m of targets(u)) {
+      if (dist.has(key(m))) continue;
+      dist.set(key(m), du + 1);
+      order.push(m);
+    }
+  }
+
+  const routes = new Map<string, number>([[key(mapped.startPos), 1]]);
+  for (const u of order) {
+    const du = dist.get(key(u))!;
+    const wu = routes.get(key(u)) ?? 0;
+    if (wu === 0 || du >= bfs.optimalMoves) continue;
+    for (const m of targets(u)) {
+      if (dist.get(key(m)) !== du + 1) continue; // only forward edges lie on a shortest path
+      routes.set(key(m), (routes.get(key(m)) ?? 0) + wu);
+    }
+  }
+
+  return {
+    optimalMoves: bfs.optimalMoves,
+    optimalRoutes: routes.get(key(mapped.targetPos)) ?? 0,
+    firstMoveChoices: targets(mapped.startPos).length,
+  };
 }

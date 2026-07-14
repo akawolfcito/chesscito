@@ -152,18 +152,40 @@ describe("semantic linter — errors (deterministic)", () => {
 });
 
 describe("semantic linter — warnings (heuristic)", () => {
-  it("flags obstacles that do not change the solution as decorative", () => {
-    // Two blockers: a4 shuts the a-file and shapes the route; h8 touches nothing.
+  it("flags an obstacle that changes nothing the player decides", () => {
+    // a1 -> h1 is one slide down the rank. A blocker on d4 is on no optimal route
+    // and on neither of the rook's opening rays, so it alters nothing: not the
+    // move count, not the route count, not the first choice. Pure decoration.
+    //
+    // Note how hard such a square is to find: on an open board with a 3-move
+    // route set, nearly every square sits on SOME optimal route, which is why the
+    // criterion below keeps most blockers. That is the intent — it fires on
+    // decoration, not on anything that quietly narrows the player's options.
     const { errors, warnings } = lint({
       id: "x",
-      fen: "7N/8/8/8/N7/8/8/R7 w - - 0 1",
+      fen: "8/8/8/8/3N4/8/8/R7 w - - 0 1",
+      target: "h1",
+      tags: [],
+    });
+    expect(errors).toHaveLength(0); // decoration is a smell, never a build break
+    expect(warnings.some((w) => /decorative/i.test(w) && /d4/.test(w))).toBe(true);
+  });
+
+  it("keeps a blocker that quietly removes an optimal route", () => {
+    // The trap this criterion exists to avoid. A blocker on h8 never appears on
+    // the route the player takes, so "does it change optimalMoves?" says drop it.
+    // But it DOES delete one of the optimal routes (a1 -> h1 -> h8 -> a8), which
+    // narrows the choice. optimalMoves alone cannot see that; the decision
+    // profile can. Peeled by move count alone, rook-6 fell from 21 blockers to
+    // ONE — same optimal of 3, but its optimal routes went 2 -> 7 and its first
+    // move went from 8 choices to 11. The detour stopped being a decision.
+    const { warnings } = lint({
+      id: "x",
+      fen: "7N/8/8/8/N7/8/8/R7 w - - 0 1", // a4 + h8
       target: "a8",
       tags: ["blocked-file"],
     });
-    expect(errors).toHaveLength(0); // decoration is a smell, never a build break
-    expect(warnings.some((w) => /decorative/i.test(w) && /h8/.test(w))).toBe(true);
-    // ...and a4, which is doing the actual work, is NOT offered up for removal.
-    expect(warnings.some((w) => /Droppable:.*a4/.test(w))).toBe(false);
+    expect(warnings.some((w) => /Droppable:.*h8/.test(w))).toBe(false);
   });
 
   it("peels blockers off together, not one at a time", () => {

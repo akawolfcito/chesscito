@@ -117,47 +117,15 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       },
       "obstacles": [
         {
-          "file": 0,
-          "rank": 7
-        },
-        {
-          "file": 1,
-          "rank": 7
-        },
-        {
           "file": 3,
           "rank": 7
-        },
-        {
-          "file": 6,
-          "rank": 7
-        },
-        {
-          "file": 7,
-          "rank": 7
-        },
-        {
-          "file": 0,
-          "rank": 6
-        },
-        {
-          "file": 7,
-          "rank": 6
         },
         {
           "file": 3,
           "rank": 4
         },
         {
-          "file": 0,
-          "rank": 3
-        },
-        {
           "file": 2,
-          "rank": 3
-        },
-        {
-          "file": 3,
           "rank": 3
         },
         {
@@ -169,36 +137,12 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
           "rank": 3
         },
         {
-          "file": 3,
-          "rank": 2
-        },
-        {
           "file": 0,
           "rank": 1
         },
         {
           "file": 7,
           "rank": 1
-        },
-        {
-          "file": 0,
-          "rank": 0
-        },
-        {
-          "file": 1,
-          "rank": 0
-        },
-        {
-          "file": 3,
-          "rank": 0
-        },
-        {
-          "file": 6,
-          "rank": 0
-        },
-        {
-          "file": 7,
-          "rank": 0
         }
       ],
       "tier": "medium",
@@ -224,19 +168,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       },
       "obstacles": [
         {
-          "file": 1,
-          "rank": 6
-        },
-        {
           "file": 2,
           "rank": 6
         },
         {
           "file": 3,
-          "rank": 6
-        },
-        {
-          "file": 5,
           "rank": 6
         },
         {
@@ -274,10 +210,6 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         {
           "file": 5,
           "rank": 2
-        },
-        {
-          "file": 1,
-          "rank": 1
         }
       ],
       "tier": "medium",

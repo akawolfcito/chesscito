@@ -94,6 +94,23 @@ describe("rook pedagogy", () => {
     expect(EXERCISES.rook.find((e) => e.id === "rook-no-diagonal-1")?.optimalMoves).toBe(2);
   });
 
+  it("keeps the trimmed exercises' decision intact (A5)", () => {
+    // rook-6 shipped 21 blockers and rook-7 shipped 14, most of them scenery. The
+    // trim is pinned to the DECISION, not to the blocker count: same optimal, same
+    // number of optimal routes, same first-move width as the boards they replace.
+    //
+    // Peeled by optimalMoves alone, rook-6 would collapse to a single blocker —
+    // still a 3-move detour, but its optimal routes go 2 -> 7 and its first move
+    // widens from 8 choices to 11. That is a cheaper board, not the same lesson.
+    const rook6 = EXERCISES.rook.find((e) => e.id === "rook-6");
+    const rook7 = EXERCISES.rook.find((e) => e.id === "rook-7");
+
+    expect(rook6?.optimalMoves).toBe(3);
+    expect(rook6?.obstacles).toHaveLength(7); // was 21
+    expect(rook7?.optimalMoves).toBe(4);
+    expect(rook7?.obstacles).toHaveLength(11); // was 14
+  });
+
   it("states the principle in the prompt, never the solution", () => {
     // A prompt that names squares is a walkthrough, not a lesson.
     for (const ex of EXERCISES.rook) {
