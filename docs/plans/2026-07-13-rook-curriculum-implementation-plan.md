@@ -931,6 +931,76 @@ que tocarlos todos, y el éxito sigue siendo `targetPos`.
 
 ---
 
+## 15.7 — A9 cerrado: el bloqueador es una PIEZA, no un muro
+
+**El problema.** Las dos superficies pintaban el obstáculo igual (`.playhub-board-cell.is-wall`), y
+eso enseñaba la lección equivocada. En un **laberinto** el obstáculo es *escenografía*: un muro de
+piedra que marca el borde del nivel. En un **ejercicio** es una *regla de ajedrez* — «no podés saltar
+tu propia pieza, ni comerla» — y un muro dice «acá se termina el nivel», que es otra cosa.
+
+**Lo que se construyó:**
+
+| Superficie | Render del obstáculo | Clase |
+| --- | --- | --- |
+| `practice` | **Caballo blanco propio** (arte canónico `w-knight`), atenuado, más chico, sin animación | `.playhub-board-piece-float.is-friendly-blocker` |
+| `labyrinth` | **Muro ambiental, intacto** | `.playhub-board-cell.is-wall` |
+
+- **Arte reutilizado**, no nuevo: `PIECE_IMG.knight` (el mismo sprite que ya usaba el tablero).
+- **No es interactivo**: `pointer-events: none` + `aria-hidden`. El tap lo recibe la casilla de abajo
+  y la **regla** es la que rechaza el movimiento — que es lo que enseña.
+- **No se tocó** tablero, orden, BFS ni dificultad. Los 60 puzzles quedan idénticos.
+
+**El gate que impide que el arte mienta.** `obstacles` es `BoardPosition[]`: lleva **casillas, no
+tipos de pieza**. El tablero no puede verificar lo que dibuja. Hoy los 60 puzzles usan caballos
+blancos y sólo por eso el sprite dice la verdad — pero un alfil blanco autorado mañana se
+renderizaría como caballo. En vez de ensanchar `obstacles` (ver abajo), el **linter de contenido**
+sostiene la invariante: un bloqueador de ejercicio que no sea caballo **no compila**
+(`lib/content/catalog.ts`). Los laberintos quedan exentos: su obstáculo es muro, la pieza detrás
+nunca se dibuja.
+
+> ### ⚠️ El gate es una INVARIANTE TEMPORAL — tiene fecha de vencimiento
+>
+> **Decisión del founder (2026-07-14).** El gate «los bloqueadores deben ser caballos» es
+> **andamiaje, no un objetivo de diseño**. Existe sólo porque el modelo de obstáculos pierde el tipo
+> de pieza.
+>
+> **Se ELIMINA** cuando se generalice el modelo para conservar el tipo real (§15.7.1). En ese momento
+> el tablero dibuja lo que dice el FEN, el arte ya no puede mentir, y el gate deja de proteger nada:
+> sólo restringe lo que los autores pueden escribir.
+>
+> **No se abre esa refactorización ahora.**
+
+### 15.7.0 — El orden 6 → 7 se mantiene (decisión del founder, 2026-07-14)
+
+Revisado visualmente sobre capturas reales a 390 px. **A9 aprobado.**
+
+La observación que motivó la revisión: el ejercicio 6 ofrece **2** movimientos iniciales y el 7 salta a
+**7**. Medido en el navegador, el salto es **nominal, no de dificultad**: en el 7 las siete opciones
+están **todas sobre la fila 1** (la columna está cerrada a cero por el caballo en d2), así que son
+**la misma idea repetida siete veces**. El 6, con dos opciones, ofrece **dos ideas distintas**.
+
+**El orden se mantiene, y la razón es pedagógica, no numérica:**
+
+> Primero se **introduce** que una pieza propia bloquea (6), y después se **aplica** ese concepto a
+> una **columna cerrada** (7). El concepto antes que su aplicación.
+
+El conteo de opciones iniciales **no es la métrica de dificultad** de esta curva. Queda dicho para que
+no se re-litigue con el número en la mano.
+
+### 15.7.1 — Lo que A9 NO hizo, y por qué comparte destino con §15.6.3
+
+Ensanchar `obstacles` a `{ pos, piece }` sería lo "correcto" — pero es **la misma cirugía** que ya
+está registrada en **§15.6.3**: el estado del BFS deja de ser sólo la posición.
+
+> **Captura** (Fase B, §6) y **objetivos múltiples** (§15.6.3) **piden la MISMA generalización del
+> BFS**: el estado pasa de `posición` a `(posición, pendientes)`. Si se hace una, la otra sale casi
+> gratis; si se hacen por separado, se paga dos veces.
+
+**Ninguna de las dos se implementa todavía.** A9 se apoya en el gate de contenido justamente para
+**no** abrir esa cirugía antes de tiempo. Sigue **registrado, no agendado**.
+
+---
+
 ## 16. Preguntas abiertas reales
 
 Sólo quedan **tres**, y las tres son de producto — ninguna bloquea empezar por A0.
