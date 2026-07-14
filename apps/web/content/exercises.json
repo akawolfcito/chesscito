@@ -43,7 +43,6 @@
     "mover": "g7",
     "tier": "easy",
     "tags": [
-      "capture",
       "corner-turn"
     ],
     "order": 3
@@ -56,7 +55,6 @@
     "mover": "g2",
     "tier": "easy",
     "tags": [
-      "capture",
       "corner-turn"
     ],
     "order": 4
@@ -70,7 +68,7 @@
     "tier": "medium",
     "tags": [
       "detour",
-      "blocked-rank"
+      "blocked-file"
     ],
     "order": 5
   },
@@ -108,7 +106,7 @@
     "mover": "a1",
     "tier": "medium",
     "tags": [
-      "capture",
+      "friendly-blocker",
       "detour"
     ],
     "order": 8
@@ -236,7 +234,7 @@
     "mover": "a1",
     "tier": "medium",
     "tags": [
-      "capture",
+      "friendly-blocker",
       "detour"
     ],
     "order": 8
@@ -366,7 +364,6 @@
     "mover": "a1",
     "tier": "medium",
     "tags": [
-      "capture",
       "long-route"
     ],
     "order": 8
@@ -645,7 +642,7 @@
     "mover": "a8",
     "tier": "medium",
     "tags": [
-      "capture",
+      "friendly-blocker",
       "detour",
       "blocked-line"
     ],

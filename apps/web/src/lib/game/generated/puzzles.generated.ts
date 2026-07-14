@@ -65,7 +65,6 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       },
       "tier": "easy",
       "tags": [
-        "capture",
         "corner-turn"
       ]
     },
@@ -82,7 +81,6 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       },
       "tier": "easy",
       "tags": [
-        "capture",
         "corner-turn"
       ]
     },
@@ -186,7 +184,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "medium",
       "tags": [
         "detour",
-        "blocked-rank"
+        "blocked-file"
       ]
     },
     {
@@ -314,7 +312,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       ],
       "tier": "medium",
       "tags": [
-        "capture",
+        "friendly-blocker",
         "detour"
       ]
     },
@@ -534,7 +532,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       ],
       "tier": "medium",
       "tags": [
-        "capture",
+        "friendly-blocker",
         "detour"
       ]
     },
@@ -730,7 +728,6 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       },
       "tier": "medium",
       "tags": [
-        "capture",
         "long-route"
       ]
     },
@@ -1224,7 +1221,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       ],
       "tier": "medium",
       "tags": [
-        "capture",
+        "friendly-blocker",
         "detour",
         "blocked-line"
       ]
