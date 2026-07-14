@@ -271,37 +271,73 @@ export function useExerciseProgress(
    *  connected (wallet always wins), or the guest hasn't yet completed
    *  the canonical 5 — in those cases the selector falls back to canonical
    *  / wallet. Otherwise the persistent per-device guest session id. */
-  const [guestSessionSeed, setGuestSessionSeed] = useState<string | null>(null);
-  useEffect(() => {
+  /**
+   * Derived from `progress`, synchronously — deliberately NOT in an effect.
+   *
+   * It used to be an effect, and that opened a window: on the render right after
+   * progress loads, the stars are real but the seed is still the `null` left over
+   * from the empty pre-load pass. `null` is ambiguous — the visible-set selector
+   * reads a seedless guest as a FIRST-TIMER and returns the canonical five. That
+   * is the right answer for someone with no progress and a badly wrong one for a
+   * returning player, whose exercise is not among those five. Steering then evicts
+   * them from their own exercise, and the eviction persists.
+   *
+   * Deriving the seed in the same pass as the stars it depends on means the window
+   * cannot exist. `hydrated` keeps the localStorage read out of the initial,
+   * SSR-matching render, so no hydration mismatch; `getOrCreateGuestSessionId` is
+   * get-or-create, so re-running it is a no-op.
+   */
+  const guestSessionSeed = useMemo(() => {
+    if (!hydrated) return null;
+    if (!rotationEnabled || address) return null;
     // `isGuestGraduated` + the rotation selector still consume the
     // positional stars array; bridge the id-map → array (catalog order).
     const starsArray = starsIdMapToArray(piece, progress.stars, catalog);
-    if (!rotationEnabled || address || !isGuestGraduated(starsArray)) {
-      setGuestSessionSeed(null);
-      return;
-    }
-    setGuestSessionSeed(getOrCreateGuestSessionId());
-  }, [rotationEnabled, address, piece, progress.stars, catalog]);
+    if (!isGuestGraduated(starsArray)) return null;
+    return getOrCreateGuestSessionId();
+  }, [hydrated, rotationEnabled, address, piece, progress.stars, catalog]);
 
   // `rotation.sessionSeed` is a test override; real callers rely on the
   // derived guest seed above. A connected wallet still wins inside
   // computeVisibleExerciseIds (`address ?? sessionSeed`).
   const effectiveSessionSeed = rotation?.sessionSeed ?? guestSessionSeed;
+  /**
+   * Today's visible set — and `null` until progress has actually loaded.
+   *
+   * The set is chosen by star count: unplayed exercises float to the top, and only
+   * the first few survive the cut. Before the load effect runs, `progress.stars` is
+   * empty, so EVERY exercise looks unplayed and the cut is decided by the session
+   * hash alone — a different five each time, because a guest's seed is created
+   * fresh per session.
+   *
+   * That was not merely a cosmetic wobble. `useRotationSteering` reads this set and
+   * navigates the player out of any exercise that is not in it, and that navigation
+   * PERSISTS. So a returning player could be steered off their real exercise by a
+   * set computed from progress the app had not read yet — and which exercise they
+   * landed on depended on a coin flip. It is the same mistake as the resume bug in
+   * `loadProgress`, wearing different clothes: deciding from state that is not
+   * ready, and then writing the decision down.
+   *
+   * `null` is the honest answer here, and every reader already handles it as "no
+   * rotation opinion yet" — steering no-ops, and the list shows everything.
+   */
   const visibleExerciseIds = useMemo(
     () =>
-      computeVisibleExerciseIds(
-        {
-          piece,
-          enabled: rotationEnabled,
-          address: address ?? null,
-          sessionSeed: effectiveSessionSeed,
-          dateUtc: rotationDateUtc,
-          // The visible-set selector reads the native id-map directly.
-          starsById: progress.stars,
-        },
-        catalog,
-      ),
-    [rotationEnabled, piece, address, effectiveSessionSeed, rotationDateUtc, progress.stars, catalog],
+      hydrated
+        ? computeVisibleExerciseIds(
+            {
+              piece,
+              enabled: rotationEnabled,
+              address: address ?? null,
+              sessionSeed: effectiveSessionSeed,
+              dateUtc: rotationDateUtc,
+              // The visible-set selector reads the native id-map directly.
+              starsById: progress.stars,
+            },
+            catalog,
+          )
+        : null,
+    [hydrated, rotationEnabled, piece, address, effectiveSessionSeed, rotationDateUtc, progress.stars, catalog],
   );
   /** Mirror into a ref so `goToExercise` can read the current visible set
    *  without taking it as a dependency (keeps the callback identity

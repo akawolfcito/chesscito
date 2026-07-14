@@ -175,6 +175,52 @@ describe("resume — a pool that is not ready yet is NOT a retired exercise", ()
   });
 });
 
+describe("resume — rotation must not vote before progress has loaded", () => {
+  /**
+   * The second half of the resume bug, and the half that actually MOVED people.
+   *
+   * Today's visible set is chosen by star count — unplayed exercises float up, and
+   * only the first few survive the cut. Before progress loads, `stars` is empty, so
+   * every exercise looks unplayed and the cut falls to the session hash: a
+   * different five every run, because a guest's seed is minted per session.
+   *
+   * `useRotationSteering` then navigates the player out of any exercise not in that
+   * set — and persists the move. So a returning player was steered off their real
+   * exercise by a set computed from progress the app had not read yet, landing
+   * somewhere decided by a coin flip. In the browser this showed up as exercises 8
+   * and 10 opening as exercise 1 on some runs and not others.
+   *
+   * `null` until hydrated is the honest answer: no opinion is better than a random
+   * one, and every reader already treats null as "no rotation opinion yet".
+   */
+  it("keeps the resumed exercise inside today's set, so steering cannot evict it", () => {
+    // Nine exercises mastered, resuming on the tenth. The tenth is the only
+    // unplayed one, so a set computed from REAL progress must float it to the top
+    // and cannot possibly exclude it — which is what makes the player safe from
+    // steering. Computed from the empty pre-load stars, all ten look unplayed and
+    // the cut is a coin flip, which is how the tenth got evicted from its own set.
+    const target = ROOK[9];
+    seed({
+      piece: "rook",
+      currentId: target.id,
+      stars: Object.fromEntries(ROOK.slice(0, 9).map((ex) => [ex.id, 3])),
+    });
+
+    const { result } = renderHook(
+      () =>
+        useExerciseProgress("rook", {
+          enabled: true,
+          sessionSeed: "any-seed",
+          dateUtc: "2026-07-14",
+        }),
+      { wrapper: wrapperFor(fullCatalog()) },
+    );
+
+    expect(result.current.currentExercise.id).toBe(target.id);
+    expect(result.current.visibleExerciseIds?.has(target.id)).toBe(true);
+  });
+});
+
 describe("resume — progress belongs to ids, not to positions", () => {
   it("does not hand a new exercise the stars of a retired one", () => {
     const brandNew: Exercise[] = [
