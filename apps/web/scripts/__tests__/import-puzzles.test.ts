@@ -55,10 +55,15 @@ describe("buildCatalog — CSV", () => {
   });
 
   it("rejects an unsolvable puzzle (boxed mover, BFS returns null)", () => {
+    // The box is built from KNIGHTS: exercise blockers must be knights (A9 — the
+    // board draws them as the player's own knight), and that rule reports first,
+    // so a box built from rooks would be rejected for the wrong reason and this
+    // test would never reach the BFS. The shape under test is unchanged: the
+    // mover on b2 is walled in on all four sides and a8 is unreachable.
     const csv =
       HEADER +
       "\n" +
-      'exercise,rook,"8/8/8/8/8/1R6/RRR5/1R6 w - - 0 1",a8,b2,easy,,Trapped.,';
+      'exercise,rook,"8/8/8/8/8/1N6/NRN5/1N6 w - - 0 1",a8,b2,easy,,Trapped.,';
     const cat = buildCatalog(parseCsv(csv));
     expect(cat.errors.length).toBeGreaterThan(0);
     expect(cat.errors.some((e) => e.includes("unsolvable"))).toBe(true);

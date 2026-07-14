@@ -7,7 +7,7 @@
  * the argv guard) stays in scripts/import-puzzles.ts, which re-exports these.
  */
 import type { Exercise, ExerciseTier, PieceId } from "@/lib/game/types";
-import { mapFenPuzzle, puzzleId, posToSquare, type PuzzleInput, type MappedPuzzle } from "@/lib/game/fen-puzzle";
+import { mapFenPuzzle, parseFenBoard, puzzleId, posToSquare, type PuzzleInput, type MappedPuzzle } from "@/lib/game/fen-puzzle";
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
 import { lintPuzzle } from "@/lib/content/lint";
 
@@ -111,6 +111,32 @@ export function buildCatalog(
   ) => {
     let mapped: MappedPuzzle;
     try { mapped = mapFenPuzzle(input); } catch (e) { errors.push(`${label}: ${(e as Error).message}`); return; }
+    // A9 — an exercise blocker is drawn as the player's own KNIGHT, because that
+    // is what every one of them is. `obstacles` carries squares, not piece types,
+    // so the board cannot check the claim: if content ever ships a white bishop as
+    // a blocker, the square would quietly render a knight and the board would lie
+    // about the position. Rather than widen `obstacles` (that is the shared
+    // BFS-state generalization — plan §15.6.3/§15.7.1, deliberately not open yet),
+    // the gate holds the content to what the art can tell the truth about.
+    // Labyrinths are exempt: their obstacles are stone walls, so the piece behind
+    // them is never drawn.
+    //
+    // ⚠️ TEMPORARY INVARIANT — DELETE THIS RULE when the obstacle model carries the
+    // real piece type. At that point the board draws whatever the FEN says, the art
+    // can no longer lie, and this gate stops protecting anything: it only narrows
+    // what authors may write. It is scaffolding, not a design goal.
+    if (input.kind === "exercise") {
+      const moverSq = posToSquare(mapped.startPos);
+      const notKnights = [...parseFenBoard(input.fen).entries()]
+        .filter(([sq, p]) => sq !== moverSq && p.color === "w" && p.type !== "knight")
+        .map(([sq, p]) => `${p.type} on ${sq}`);
+      if (notKnights.length) {
+        errors.push(
+          `${label}: exercise blockers must be white knights (the board draws them as knights); found ${notKnights.join(", ")}`,
+        );
+        return;
+      }
+    }
     const probe: Exercise = { id: "probe", optimalMoves: 0, ...toExerciseFields(mapped) };
     const bfs = computeExerciseBfs(input.piece, probe);
     // Lint BEFORE the solvability bail-out: a target buried under a blocker is

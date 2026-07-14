@@ -151,6 +151,58 @@ describe("semantic linter — errors (deterministic)", () => {
   });
 });
 
+describe("A9 — the blocker art can only tell the truth the content allows", () => {
+  /**
+   * Practice draws each obstacle as a white knight: the player's own piece,
+   * which is what teaches "you cannot jump it and you cannot take it". But
+   * `obstacles` carries squares only — the piece type is dropped on the way to
+   * the board — so the board cannot verify what it is drawing. The gate does it
+   * instead: content that ships a non-knight blocker does not compile, which is
+   * what keeps the knight art from becoming a lie about the position.
+   */
+  it("rejects an exercise blocker that is not a knight", () => {
+    const { errors } = lint({
+      id: "x",
+      fen: "8/8/8/8/B7/8/8/R7 w - - 0 1", // a white BISHOP on a4 — would render as a knight
+      target: "a8",
+      tags: ["blocked-file"],
+    });
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(/must be white knights/);
+    expect(errors[0]).toMatch(/bishop on a4/);
+  });
+
+  it("accepts the knight, which is what every shipped blocker already is", () => {
+    const { errors } = lint({
+      id: "x",
+      fen: "8/8/8/8/N7/8/8/R7 w - - 0 1",
+      target: "a8",
+      tags: ["blocked-file"],
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it("leaves the labyrinth alone — its obstacles are walls, not pieces", () => {
+    // The maze never draws the piece behind the wall, so the rule has nothing to
+    // protect there and must not constrain how mazes are authored.
+    const cat = buildCatalog(
+      [],
+      [
+        {
+          piece: "rook",
+          fen: "8/8/8/8/B7/8/8/R7 w - - 0 1",
+          mover: "a1",
+          target: "a8",
+          order: 0,
+        },
+      ],
+      [],
+      { requirePedagogy: true },
+    );
+    expect(cat.errors).toEqual([]);
+  });
+});
+
 describe("semantic linter — warnings (heuristic)", () => {
   it("flags an obstacle that changes nothing the player decides", () => {
     // a1 -> h1 is one slide down the rank. A blocker on d4 is on no optimal route
