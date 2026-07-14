@@ -49,6 +49,7 @@ vi.mock("wagmi", () => ({
 import { act, renderHook } from "@testing-library/react";
 import { track } from "@/lib/telemetry";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
+import { seedProgress } from "./helpers/seed-progress";
 
 const mockTrack = vi.mocked(track);
 
@@ -97,11 +98,7 @@ describe("useExerciseProgress — telemetry", () => {
       // arrays shift, and they shift by design — position is all they carry.
       localStorage.setItem(
         "chesscito:progress:rook",
-        JSON.stringify({
-          piece: "rook",
-          exerciseIndex: 3,
-          stars: [3, 3, 3, 0, 0],
-        }),
+        seedProgress("rook", 3, [3, 3, 3, 0, 0]),
       );
 
       renderHook(() => useExerciseProgress("rook"));
@@ -144,11 +141,7 @@ describe("useExerciseProgress — telemetry", () => {
     it("marks isReplay=true and reports unchanged bestStars on no-improvement replay", async () => {
       localStorage.setItem(
         "chesscito:progress:rook",
-        JSON.stringify({
-          piece: "rook",
-          exerciseIndex: 0,
-          stars: [3, 0, 0, 0, 0],
-        }),
+        seedProgress("rook", 0, [3, 0, 0, 0, 0]),
       );
 
       const { result } = renderHook(() => useExerciseProgress("rook"));
@@ -190,11 +183,7 @@ describe("useExerciseProgress — telemetry", () => {
     it("does NOT fire on replay without improvement", async () => {
       localStorage.setItem(
         "chesscito:progress:rook",
-        JSON.stringify({
-          piece: "rook",
-          exerciseIndex: 0,
-          stars: [3, 0, 0, 0, 0],
-        }),
+        seedProgress("rook", 0, [3, 0, 0, 0, 0]),
       );
 
       const { result } = renderHook(() => useExerciseProgress("rook"));
@@ -212,11 +201,7 @@ describe("useExerciseProgress — telemetry", () => {
     it("reports only the positive delta on replay improvement", async () => {
       localStorage.setItem(
         "chesscito:progress:rook",
-        JSON.stringify({
-          piece: "rook",
-          exerciseIndex: 0,
-          stars: [1, 0, 0, 0, 0],
-        }),
+        seedProgress("rook", 0, [1, 0, 0, 0, 0]),
       );
 
       const { result } = renderHook(() => useExerciseProgress("rook"));
@@ -236,11 +221,7 @@ describe("useExerciseProgress — telemetry", () => {
     it("fires exactly once when crossing 10★ for the first time", async () => {
       localStorage.setItem(
         "chesscito:progress:rook",
-        JSON.stringify({
-          piece: "rook",
-          exerciseIndex: 3,
-          stars: [3, 3, 3, 0, 0], // total 9, just below
-        }),
+        seedProgress("rook", 3, [3, 3, 3, 0, 0]),
       );
 
       const { result } = renderHook(() => useExerciseProgress("rook"));
@@ -262,11 +243,7 @@ describe("useExerciseProgress — telemetry", () => {
     it("does NOT fire when the user was already at or above the threshold", async () => {
       localStorage.setItem(
         "chesscito:progress:rook",
-        JSON.stringify({
-          piece: "rook",
-          exerciseIndex: 4,
-          stars: [3, 3, 3, 3, 0], // total 12, already above
-        }),
+        seedProgress("rook", 4, [3, 3, 3, 3, 0]),
       );
 
       const { result } = renderHook(() => useExerciseProgress("rook"));
@@ -298,11 +275,7 @@ describe("useExerciseProgress — telemetry", () => {
       // are ≥1★ — uses getExerciseCount, not a hardcoded 5.
       localStorage.setItem(
         "chesscito:progress:rook",
-        JSON.stringify({
-          piece: "rook",
-          exerciseIndex: 9,
-          stars: [3, 3, 2, 1, 1, 1, 1, 1, 1, 0],
-        }),
+        seedProgress("rook", 9, [3, 3, 2, 1, 1, 1, 1, 1, 1, 0]),
       );
 
       const { result } = renderHook(() => useExerciseProgress("rook"));
@@ -327,11 +300,7 @@ describe("useExerciseProgress — telemetry", () => {
       // complete — five slots remain at 0.
       localStorage.setItem(
         "chesscito:progress:king",
-        JSON.stringify({
-          piece: "king",
-          exerciseIndex: 5,
-          stars: [3, 3, 3, 3, 3, 0, 0, 0, 0, 0],
-        }),
+        seedProgress("king", 5, [3, 3, 3, 3, 3, 0, 0, 0, 0, 0]),
       );
 
       const { result } = renderHook(() => useExerciseProgress("king"));
@@ -350,11 +319,8 @@ describe("useExerciseProgress — telemetry", () => {
       // already mastered. Closing the last slot completes the senda.
       localStorage.setItem(
         "chesscito:progress:king",
-        JSON.stringify({
-          piece: "king",
-          exerciseIndex: 9, // last King slot (king-8, appended at index 9)
-          stars: [3, 3, 3, 3, 3, 3, 3, 3, 3, 0],
-        }),
+        // index 9 = last King slot (king-8, appended at index 9)
+        seedProgress("king", 9, [3, 3, 3, 3, 3, 3, 3, 3, 3, 0]),
       );
 
       const { result } = renderHook(() => useExerciseProgress("king"));
@@ -376,11 +342,7 @@ describe("useExerciseProgress — telemetry", () => {
     it("does NOT re-fire on replay when senda was already closed", async () => {
       localStorage.setItem(
         "chesscito:progress:rook",
-        JSON.stringify({
-          piece: "rook",
-          exerciseIndex: 4,
-          stars: [3, 3, 3, 3, 1],
-        }),
+        seedProgress("rook", 4, [3, 3, 3, 3, 1]),
       );
 
       const { result } = renderHook(() => useExerciseProgress("rook"));

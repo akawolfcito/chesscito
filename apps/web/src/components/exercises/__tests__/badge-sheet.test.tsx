@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { BadgeSheet } from "../badge-sheet";
 import type { PieceId } from "@/lib/game/types";
 import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
+import { seedProgress } from "@/hooks/__tests__/helpers/seed-progress";
 
 const pieces: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
 
@@ -20,7 +21,7 @@ vi.mock("@/lib/wallet/use-connect-wallet", () => ({
 function setStars(piece: PieceId, stars: number[]) {
   localStorage.setItem(
     `chesscito:progress:${piece}`,
-    JSON.stringify({ piece, exerciseIndex: 0, stars }),
+    seedProgress(piece, 0, stars),
   );
 }
 

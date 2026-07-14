@@ -1,26 +1,39 @@
 /**
- * Legacy → id-map migration on load (Exercises-Builder cluster,
- * 2026-06-16).
+ * Legacy positional progress — retired, on purpose (founder, 2026-07-14).
  *
- * Before this cluster the hook stored `stars` as a positional array and
- * the active exercise as `exerciseIndex`. The persistence layer now
- * stores an id-map (`Record<exerciseId, number>`) + `currentId`. These
- * tests prove that real legacy localStorage data (positional `stars[]`)
- * migrates losslessly by CURRENT catalog order: every value lands under
- * the right exerciseId, mastery is unchanged, and the migrated id-map
- * shape is written back so subsequent loads are idempotent.
+ * Until now a legacy record (`{ exerciseIndex, stars: number[] }`) was migrated
+ * "losslessly by CURRENT catalog order": `stars[i]` was credited to `pool[i].id`.
+ * That was only ever safe while the catalog kept the order the array was written
+ * against. **A6 reordered the entire rook curriculum**, so it is not safe any
+ * more — and nothing in the record says which pool it was written against, so the
+ * app cannot even tell whether it is safe.
  *
- * (The pure positional `migrateStarsLength` helper + its array pad/
- * truncate semantics were removed in this cluster — pad/truncate by
- * length is meaningless under an id-map, where missing ids simply read
- * as 0 and unknown ids are dropped.)
+ * The array is therefore AMBIGUOUS, and it is decoded no further:
+ *
+ *  - modern id-keyed progress  → preserved in full;
+ *  - new ids                   → inherit nothing;
+ *  - retired ids               → contribute nothing;
+ *  - legacy `stars[]`          → NOT credited;
+ *  - legacy `exerciseIndex`    → may ORIENT navigation, never certify learning.
+ *
+ * The reasoning, because this looks like a regression until you see it: crediting
+ * the array by today's order would tell a player they have mastered an exercise
+ * they never solved, and mastery unlocks tiers — so the false claim compounds
+ * into content they have not earned. A player can re-earn stars in minutes. They
+ * cannot un-learn a lie the app told them about what they know.
+ *
+ * Losing ambiguous progress beats certifying the wrong learning.
+ *
+ * (The destructive write-back this file used to assert — "the migrated shape is
+ * persisted so subsequent loads are idempotent" — is gone too. It is what turned
+ * a transient race into permanent data loss; see use-exercise-progress-resume.)
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Sprint 3 commit F — the hook imports wagmi + the training earn helper.
-// Migration tests don't exercise either, but the mocks keep the
-// renderHook calls from blowing up on missing providers.
+// These tests don't exercise either, but the mocks keep the renderHook calls
+// from blowing up on missing providers.
 vi.mock("@/lib/peones/training-earn", () => ({
   submitTrainingExerciseEarn: vi.fn().mockResolvedValue({
     kind: "success",
@@ -40,25 +53,18 @@ vi.mock("@/lib/telemetry", () => ({ track: vi.fn() }));
 import { EXERCISES } from "@/lib/game/exercises";
 
 const id = (piece: "rook" | "king" | "pawn", i: number) => EXERCISES[piece][i].id;
+const key = (piece: string) => `chesscito:progress:${piece}`;
 
-describe("useExerciseProgress — legacy stars[5] preservation (real catalog today)", () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
-
+describe("legacy positional progress is not credited", () => {
+  beforeEach(() => localStorage.clear());
   afterEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
   });
 
-  /** King pool is 10 today (king-1..10). A legacy user with stars[5]
-   *  migrates: each value lands under king-1..5 by catalog order, the
-   *  remaining ids stay unset (read as 0), total star count is unchanged,
-   *  and currentId resolves from the legacy exerciseIndex. The migrated
-   *  id-map shape is written back for idempotent subsequent loads. */
-  it("migrates legacy King [3,3,2,1,0] to an id-map preserving every value", async () => {
+  it("credits no stars from a legacy King array, however complete it looks", async () => {
     localStorage.setItem(
-      "chesscito:progress:king",
+      key("king"),
       JSON.stringify({ piece: "king", exerciseIndex: 4, stars: [3, 3, 2, 1, 0] }),
     );
 
@@ -68,55 +74,50 @@ describe("useExerciseProgress — legacy stars[5] preservation (real catalog tod
     const { result } = renderHook(() => useExerciseProgress("king"));
     act(() => {});
 
-    expect(result.current.progress.stars[id("king", 0)]).toBe(3);
-    expect(result.current.progress.stars[id("king", 1)]).toBe(3);
-    expect(result.current.progress.stars[id("king", 2)]).toBe(2);
-    expect(result.current.progress.stars[id("king", 3)]).toBe(1);
-    expect(result.current.progress.stars[id("king", 4)] ?? 0).toBe(0);
-    expect(result.current.progress.currentId).toBe(id("king", 4));
-    // totalStars unchanged: 3 + 3 + 2 + 1 + 0 = 9.
-    expect(result.current.totalStars).toBe(9);
-
-    // Migrated id-map shape persisted back (no array left).
-    const persisted = JSON.parse(
-      localStorage.getItem("chesscito:progress:king") ?? "null",
-    );
-    expect(Array.isArray(persisted.stars)).toBe(false);
-    expect(persisted.stars[id("king", 0)]).toBe(3);
-    expect(persisted.currentId).toBe(id("king", 4));
-    expect("exerciseIndex" in persisted).toBe(false);
+    // Nine stars' worth of claims, none of them attributable. All dropped.
+    expect(Object.keys(result.current.progress.stars)).toHaveLength(0);
+    expect(result.current.totalStars).toBe(0);
   });
 
-  // A length-10 legacy array on a 10-piece (Pawn): every value maps by
-  // catalog order; sparse map drops the trailing zeros but the read +
-  // mastery are identical.
-  it("maps a length-10 legacy stars array verbatim by catalog order (Pawn)", async () => {
+  it("still uses exerciseIndex to decide where to resume", async () => {
+    // Orientation is a guess the player can correct with one tap. It asserts
+    // nothing about what they learned, so it costs nothing if it is wrong.
     localStorage.setItem(
-      "chesscito:progress:pawn",
-      JSON.stringify({
-        piece: "pawn",
-        exerciseIndex: 9,
-        stars: [3, 3, 3, 3, 0, 0, 0, 0, 0, 0],
-      }),
+      key("king"),
+      JSON.stringify({ piece: "king", exerciseIndex: 4, stars: [3, 3, 2, 1, 0] }),
     );
 
     const { renderHook, act } = await import("@testing-library/react");
     const { useExerciseProgress } = await import("@/hooks/use-exercise-progress");
 
-    const { result } = renderHook(() => useExerciseProgress("pawn"));
+    const { result } = renderHook(() => useExerciseProgress("king"));
     act(() => {});
 
-    expect(result.current.progress.stars[id("pawn", 0)]).toBe(3);
-    expect(result.current.progress.stars[id("pawn", 3)]).toBe(3);
-    expect(result.current.progress.stars[id("pawn", 4)] ?? 0).toBe(0);
-    expect(result.current.progress.currentId).toBe(id("pawn", 9));
-    expect(result.current.totalStars).toBe(12);
+    expect(result.current.currentExercise.id).toBe(id("king", 4));
   });
 
-  it("migrates Rook legacy stars[5] by catalog order (pool grew to 10)", async () => {
+  it("never rewrites the legacy record — load stays read-only", async () => {
+    // The write-back is what made the old behaviour dangerous rather than merely
+    // wrong: a load against a half-loaded pool did not mis-read the progress, it
+    // overwrote it. Nothing is persisted here, so nothing can be destroyed.
+    const legacy = { piece: "pawn", exerciseIndex: 2, stars: [3, 3, 1] };
+    localStorage.setItem(key("pawn"), JSON.stringify(legacy));
+
+    const { renderHook, act } = await import("@testing-library/react");
+    const { useExerciseProgress } = await import("@/hooks/use-exercise-progress");
+
+    renderHook(() => useExerciseProgress("pawn"));
+    act(() => {});
+
+    expect(JSON.parse(localStorage.getItem(key("pawn")) ?? "null")).toEqual(legacy);
+  });
+
+  it("gives a legacy Rook player a clean slate, not a wrong one", async () => {
+    // Rook is the piece A6 reordered, so it is the piece where crediting by
+    // today's order would be provably wrong. It gets zero, and starts over.
     localStorage.setItem(
-      "chesscito:progress:rook",
-      JSON.stringify({ piece: "rook", exerciseIndex: 4, stars: [3, 3, 3, 3, 0] }),
+      key("rook"),
+      JSON.stringify({ piece: "rook", exerciseIndex: 3, stars: [3, 3, 3, 2, 0] }),
     );
 
     const { renderHook, act } = await import("@testing-library/react");
@@ -125,29 +126,19 @@ describe("useExerciseProgress — legacy stars[5] preservation (real catalog tod
     const { result } = renderHook(() => useExerciseProgress("rook"));
     act(() => {});
 
-    // Values preserved under rook-1..4; trailing ids unset (read as 0).
-    expect(result.current.progress.stars[id("rook", 0)]).toBe(3);
-    expect(result.current.progress.stars[id("rook", 3)]).toBe(3);
-    expect(result.current.progress.stars[id("rook", 4)] ?? 0).toBe(0);
-    expect(result.current.totalStars).toBe(12);
+    expect(result.current.totalStars).toBe(0);
+    expect(result.current.progress.stars[id("rook", 0)] ?? 0).toBe(0);
   });
 });
 
-describe("useExerciseProgress — id-map sanitization on load", () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
+describe("useExerciseProgress — id-map load", () => {
+  beforeEach(() => localStorage.clear());
   afterEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
   });
 
-  /** An id-map persisted with an unknown id (e.g. a removed exercise) and
-   *  an out-of-range value: the unknown id is dropped, the value is
-   *  clamped. This replaces the legacy "truncate when pool shrank" path —
-   *  under an id-map a removed exercise's stars simply vanish from the
-   *  map; surviving exercises keep their stars by id. */
-  it("drops ids absent from the current pool and clamps values", async () => {
+  it("clamps values, and keeps ids absent from the pool out of the mastery total", async () => {
     localStorage.setItem(
       "chesscito:progress:rook",
       JSON.stringify({
@@ -156,7 +147,7 @@ describe("useExerciseProgress — id-map sanitization on load", () => {
         stars: {
           [id("rook", 0)]: 3,
           [id("rook", 1)]: 7, // clamp → 3
-          "rook-removed-legacy": 3, // unknown → dropped
+          "rook-removed-legacy": 3, // unknown → scores nothing
         },
       }),
     );
@@ -169,7 +160,10 @@ describe("useExerciseProgress — id-map sanitization on load", () => {
 
     expect(result.current.progress.stars[id("rook", 0)]).toBe(3);
     expect(result.current.progress.stars[id("rook", 1)]).toBe(3);
-    expect("rook-removed-legacy" in result.current.progress.stars).toBe(false);
+    // The removed id's stars stay in the record and are scored against the pool,
+    // so they contribute nothing. Deleting them on load was the destructive half
+    // of the resume bug: a pool that had not finished loading looked exactly like
+    // a pool that had removed the exercise, and the deletion was permanent.
     // Surviving stars only: 3 + 3 = 6.
     expect(result.current.totalStars).toBe(6);
   });

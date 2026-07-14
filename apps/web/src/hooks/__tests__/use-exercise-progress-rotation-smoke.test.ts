@@ -25,6 +25,7 @@ vi.mock("wagmi", () => ({ useAccount: useAccountMock }));
 
 import { act, renderHook } from "@testing-library/react";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
+import { seedProgress } from "./helpers/seed-progress";
 import { EXERCISES } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
 
@@ -34,7 +35,7 @@ const ROTATION = { enabled: true, dateUtc: "2026-06-08" };
 function seed(piece: PieceId, stars: number[]): void {
   localStorage.setItem(
     `chesscito:progress:${piece}`,
-    JSON.stringify({ piece, exerciseIndex: 0, stars }),
+    seedProgress(piece, 0, stars),
   );
 }
 

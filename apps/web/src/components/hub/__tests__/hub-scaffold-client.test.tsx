@@ -165,6 +165,7 @@ vi.mock("@/lib/contracts/scoreboard", () => ({
 }));
 
 import { HubScaffoldClient } from "../hub-scaffold-client";
+import { seedProgress } from "@/hooks/__tests__/helpers/seed-progress";
 
 const TEST_WALLET = "0x000000000000000000000000000000000000abcd";
 
@@ -404,7 +405,7 @@ describe("HubScaffoldClient — tap handlers", () => {
     const user = userEvent.setup();
     localStorage.setItem(
       "chesscito:progress:queen",
-      JSON.stringify({ piece: "queen", exerciseIndex: 0, stars: [3, 3, 3, 3, 0] }),
+      seedProgress("queen", 0, [3, 3, 3, 3, 0]),
     );
     useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
     setBadges([true, true, false, false, false, false]);
@@ -421,7 +422,7 @@ describe("HubScaffoldClient — tap handlers", () => {
     const user = userEvent.setup();
     localStorage.setItem(
       "chesscito:progress:rook",
-      JSON.stringify({ piece: "rook", exerciseIndex: 0, stars: [3, 3, 3, 3, 0] }),
+      seedProgress("rook", 0, [3, 3, 3, 3, 0]),
     );
     render(<HubScaffoldClient />);
 
@@ -607,7 +608,7 @@ describe("HubScaffoldClient — telemetry", () => {
     const user = userEvent.setup();
     localStorage.setItem(
       "chesscito:progress:rook",
-      JSON.stringify({ piece: "rook", exerciseIndex: 0, stars: [3, 3, 3, 3, 0] }),
+      seedProgress("rook", 0, [3, 3, 3, 3, 0]),
     );
     render(<HubScaffoldClient />);
 
@@ -788,7 +789,7 @@ describe("HubScaffoldClient — Lite Mode", () => {
   it("does not show MiniArena tile in Lite even when rook stars >= 12", async () => {
     localStorage.setItem(
       "chesscito:progress:rook",
-      JSON.stringify({ piece: "rook", exerciseIndex: 0, stars: [3, 3, 3, 3, 0] }),
+      seedProgress("rook", 0, [3, 3, 3, 3, 0]),
     );
     render(<HubScaffoldClientLite />);
     // Give the component a chance to hydrate localStorage
@@ -839,7 +840,7 @@ describe("HubScaffoldClient — MiniArena tile (Full Mode)", () => {
   it("shows MiniArena tile in Full when rook stars >= 12", async () => {
     localStorage.setItem(
       "chesscito:progress:rook",
-      JSON.stringify({ piece: "rook", exerciseIndex: 0, stars: [3, 3, 3, 3, 0] }),
+      seedProgress("rook", 0, [3, 3, 3, 3, 0]),
     );
     render(<HubScaffoldClient />);
     expect(await screen.findByTestId("mini-arena-trigger")).toBeInTheDocument();

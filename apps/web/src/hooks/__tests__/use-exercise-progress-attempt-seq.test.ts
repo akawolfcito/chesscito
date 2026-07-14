@@ -38,6 +38,7 @@ vi.mock("wagmi", () => ({
 }));
 
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
+import { seedProgress } from "./helpers/seed-progress";
 
 describe("useExerciseProgress — attemptSeq (Sprint 5 commit B)", () => {
   beforeEach(() => {
@@ -116,11 +117,7 @@ describe("useExerciseProgress — attemptSeq (Sprint 5 commit B)", () => {
     // and advance once.
     localStorage.setItem(
       "chesscito:progress:rook",
-      JSON.stringify({
-        piece: "rook",
-        exerciseIndex: 0,
-        stars: [3, 0, 0, 0, 0],
-      }),
+      seedProgress("rook", 0, [3, 0, 0, 0, 0]),
     );
     const { result } = renderHook(() => useExerciseProgress("rook"));
     await Promise.resolve();

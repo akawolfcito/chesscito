@@ -38,6 +38,7 @@ vi.mock("wagmi", () => ({
 import { act, renderHook } from "@testing-library/react";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
 import { EXERCISES } from "@/lib/game/exercises";
+import { seedProgress } from "./helpers/seed-progress";
 
 const W = "0xabcdef0123456789abcdef0123456789abcdef01";
 const ROOK_1 = EXERCISES.rook[0].id;
@@ -96,11 +97,7 @@ describe("useExerciseProgress.completeExercise — Peones earn wireup", () => {
   it("calls submit with delta of bestStars when replay improves the score", async () => {
     localStorage.setItem(
       "chesscito:progress:rook",
-      JSON.stringify({
-        piece: "rook",
-        exerciseIndex: 0,
-        stars: [1, 0, 0, 0, 0],
-      }),
+      seedProgress("rook", 0, [1, 0, 0, 0, 0]),
     );
     setConnected();
     const { result } = renderHook(() => useExerciseProgress("rook"));
@@ -123,11 +120,7 @@ describe("useExerciseProgress.completeExercise — Peones earn wireup", () => {
   it("does NOT call submit on replay without improvement (same best)", async () => {
     localStorage.setItem(
       "chesscito:progress:rook",
-      JSON.stringify({
-        piece: "rook",
-        exerciseIndex: 0,
-        stars: [3, 0, 0, 0, 0],
-      }),
+      seedProgress("rook", 0, [3, 0, 0, 0, 0]),
     );
     setConnected();
     const { result } = renderHook(() => useExerciseProgress("rook"));
@@ -143,11 +136,7 @@ describe("useExerciseProgress.completeExercise — Peones earn wireup", () => {
   it("does NOT call submit when the new attempt is worse than the best", async () => {
     localStorage.setItem(
       "chesscito:progress:rook",
-      JSON.stringify({
-        piece: "rook",
-        exerciseIndex: 0,
-        stars: [3, 0, 0, 0, 0],
-      }),
+      seedProgress("rook", 0, [3, 0, 0, 0, 0]),
     );
     setConnected();
     const { result } = renderHook(() => useExerciseProgress("rook"));

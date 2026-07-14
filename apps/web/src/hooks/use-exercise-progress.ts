@@ -78,9 +78,24 @@ function sanitizeStarsById(
  *    `currentId = pool[exerciseIndex]?.id`. The migrated id-map shape is
  *    written back so subsequent loads are idempotent (no array left).
  *  - Already id-keyed `{ currentId, stars: Record<id, number> }` —
- *    sanitized (unknown ids dropped, values clamped, sparse). `currentId`
- *    is kept only if it still names a pool exercise, else null.
+ *    values clamped. `currentId` is carried through UNVALIDATED — see below.
  *  - Anything missing/corrupt → empty progress.
+ *
+ * ## The pool decides what to RENDER, never what to REMEMBER
+ *
+ * This function used to validate the stored `currentId` against the pool and null
+ * it when it did not match, and to drop stars for ids the pool did not contain.
+ * That looked like sanitisation. It was data loss, because the pool it validated
+ * against is not guaranteed to be the real one: the catalog context can hand over
+ * an incomplete pool on the first pass (Phase 2c mounts the merged catalog at the
+ * /exercises boundary). To a membership check, "not loaded yet" and "deleted" are
+ * the same answer — so a live id got thrown away and the player was dropped back
+ * onto exercise 1, intermittently, depending on which pass won.
+ *
+ * Resolving an id against the pool is a RENDER concern, and the render path
+ * already handles a miss: `currentIdIndex < 0 → safeIndex 0`. A stale id costs
+ * nothing there. So load now carries the id through as stored, and the fallback
+ * happens where it is free and reversible instead of where it is permanent.
  */
 function loadProgress(piece: PieceId, pool: Exercise[]): PieceProgress {
   if (typeof window === "undefined") {
@@ -94,36 +109,48 @@ function loadProgress(piece: PieceId, pool: Exercise[]): PieceProgress {
     }
     const parsed = JSON.parse(raw) as Record<string, unknown>;
 
-    // Legacy positional shape: stars is an array. Migrate by catalog order.
+    const rawCurrentId =
+      typeof parsed.currentId === "string" ? parsed.currentId : null;
+
+    // Legacy positional shape: `stars` is an array indexed by POOL POSITION. It
+    // can only be read against the pool it was written against — and that pool is
+    // gone. A6 reordered the whole rook curriculum, so `stars[3]` no longer names
+    // the exercise it named when it was written.
+    //
+    // So the stars are NOT credited. Migrating them by today's order would hand
+    // exercise N the stars earned on a different exercise entirely: a player would
+    // be told they have mastered something they never solved, and mastery gates
+    // tiers. Losing ambiguous progress is a smaller harm than certifying learning
+    // that did not happen — the player can re-earn stars; they cannot un-learn a
+    // lie the app told them about themselves.
+    //
+    // `exerciseIndex` still ORIENTS: it picks where to resume, which is a guess
+    // the app is allowed to make and the player can immediately correct. It
+    // certifies nothing.
+    //
+    // Nothing is written back. The legacy record stays as it is until a real save
+    // replaces it, so a pool that is still loading can never turn this into a
+    // permanent wipe.
     if (Array.isArray(parsed.stars)) {
-      const legacyStars = parsed.stars as unknown[];
-      const stars: Record<string, number> = {};
-      for (let i = 0; i < pool.length; i += 1) {
-        const value = clampStars(legacyStars[i]);
-        if (value > 0) stars[pool[i].id] = value;
-      }
       const legacyIndex =
         typeof parsed.exerciseIndex === "number" ? parsed.exerciseIndex : 0;
-      const currentId = pool[legacyIndex]?.id ?? null;
-      const result: PieceProgress = { piece, currentId, stars };
-      // Persist the migrated id-map shape (drops the legacy array).
-      saveProgress(result);
-      return result;
+      const currentId = pool[legacyIndex]?.id ?? rawCurrentId;
+      return { piece, currentId, stars: {} };
     }
 
-    // Already id-keyed: sanitize. A non-object `stars` is treated as empty.
+    // Already id-keyed. Clamp the values, but keep every id: an id the pool does
+    // not know may be retired — or may just not have loaded yet, and this is not
+    // the place that can tell the difference.
     const starsObj =
       parsed.stars && typeof parsed.stars === "object"
         ? (parsed.stars as Record<string, unknown>)
         : {};
-    const stars = sanitizeStarsById(pool, starsObj);
-    const rawCurrentId =
-      typeof parsed.currentId === "string" ? parsed.currentId : null;
-    const currentId =
-      rawCurrentId && pool.some((ex) => ex.id === rawCurrentId)
-        ? rawCurrentId
-        : null;
-    return { piece, currentId, stars };
+    const stars: Record<string, number> = {};
+    for (const [id, value] of Object.entries(starsObj)) {
+      const clamped = clampStars(value);
+      if (clamped > 0) stars[id] = clamped;
+    }
+    return { piece, currentId: rawCurrentId, stars };
   } catch {
     return emptyProgress(piece);
   }

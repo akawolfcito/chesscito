@@ -8,12 +8,16 @@
  * progress.
  *
  * Coverage:
- *  - Legacy positional `{ exerciseIndex, stars: number[] }` migrates
- *    losslessly to the id-map shape (stars by id, currentId from index),
- *    and the migrated shape is written back for idempotent reloads.
  *  - Star write/read happens by id (via completeExercise).
- *  - Already-id-map data loads as-is; unknown ids are dropped; out-of-
- *    range star values are clamped.
+ *  - Already-id-map data loads as-is; out-of-range star values are clamped;
+ *    ids the pool does not know score nothing (but are not deleted — see
+ *    use-exercise-progress-resume.test.tsx for why that distinction matters).
+ *
+ * These suites seed through `seedProgress`, which writes the id-keyed record.
+ * They used to seed the legacy positional array because it was terser; that array
+ * no longer credits stars (it is ambiguous after the A6 reorder —
+ * use-exercise-progress-migration.test.ts), so seeding with it would hand every
+ * test below a zero-star player and quietly stop testing anything.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -35,6 +39,7 @@ vi.mock("wagmi", () => ({
 import { act, renderHook } from "@testing-library/react";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
 import { EXERCISES } from "@/lib/game/exercises";
+import { seedProgress } from "./helpers/seed-progress";
 
 const rookId = (i: number) => EXERCISES.rook[i].id;
 const KEY = "chesscito:progress:rook";
@@ -47,15 +52,11 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("legacy positional → id-map migration", () => {
+describe("id-keyed load — resume position and stars", () => {
   it("maps a legacy stars[] to stars-by-id and currentId from exerciseIndex", async () => {
     localStorage.setItem(
       KEY,
-      JSON.stringify({
-        piece: "rook",
-        exerciseIndex: 2,
-        stars: [3, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-      }),
+      seedProgress("rook", 2, [3, 1, 0, 0, 0, 0, 0, 0, 0, 0]),
     );
 
     const { result } = renderHook(() => useExerciseProgress("rook"));
@@ -72,11 +73,7 @@ describe("legacy positional → id-map migration", () => {
   it("persists the migrated id-map shape so subsequent loads are idempotent", async () => {
     localStorage.setItem(
       KEY,
-      JSON.stringify({
-        piece: "rook",
-        exerciseIndex: 1,
-        stars: [3, 2, 0, 0, 0, 0, 0, 0, 0, 0],
-      }),
+      seedProgress("rook", 1, [3, 2, 0, 0, 0, 0, 0, 0, 0, 0]),
     );
 
     renderHook(() => useExerciseProgress("rook"));
@@ -93,11 +90,7 @@ describe("legacy positional → id-map migration", () => {
   it("derives currentId from the UNCHANGED catalog order at the persisted index", async () => {
     localStorage.setItem(
       KEY,
-      JSON.stringify({
-        piece: "rook",
-        exerciseIndex: 4,
-        stars: [3, 3, 3, 3, 0, 0, 0, 0, 0, 0],
-      }),
+      seedProgress("rook", 4, [3, 3, 3, 3, 0, 0, 0, 0, 0, 0]),
     );
 
     const { result } = renderHook(() => useExerciseProgress("rook"));
@@ -143,7 +136,7 @@ describe("already-id-map load", () => {
     expect(result.current.totalStars).toBe(5);
   });
 
-  it("drops unknown ids and clamps out-of-range star values", async () => {
+  it("clamps star values, and never lets an unknown id count toward mastery", async () => {
     localStorage.setItem(
       KEY,
       JSON.stringify({
@@ -162,11 +155,14 @@ describe("already-id-map load", () => {
 
     expect(result.current.progress.stars[rookId(0)]).toBe(3);
     expect(result.current.progress.stars[rookId(1)] ?? 0).toBe(0);
-    expect("ghost-exercise-id" in result.current.progress.stars).toBe(false);
+    // The ghost's stars are KEPT in the record and simply ignored by every reader
+    // that matters. Deleting them on load meant a pool that had not finished
+    // loading could erase a real exercise's stars for good; scoring them against
+    // the pool cannot. `totalStars` is the assertion with teeth here.
     expect(result.current.totalStars).toBe(3);
   });
 
-  it("nulls currentId when the persisted id is not in the current catalog", async () => {
+  it("lands the player on the first exercise when the persisted id names nothing", async () => {
     localStorage.setItem(
       KEY,
       JSON.stringify({
@@ -179,7 +175,12 @@ describe("already-id-map load", () => {
     const { result } = renderHook(() => useExerciseProgress("rook"));
     await act(async () => {});
 
-    expect(result.current.progress.currentId).toBeNull();
+    // The id is CARRIED, not nulled. Nulling it here was the bug: a pool that has
+    // not finished loading gives the same answer as a retired exercise, and the
+    // wipe was permanent. The guarantee the player actually needs is about where
+    // they land, and that is asserted below — the fallback lives in the render,
+    // where a stale id costs nothing.
+    expect(result.current.progress.currentId).toBe("ghost-exercise-id");
     // currentExercise falls back to the first pool exercise.
     expect(result.current.currentExercise.id).toBe(rookId(0));
   });

@@ -21,6 +21,7 @@ vi.mock("wagmi", () => ({ useAccount: useAccountMock }));
 
 import { act, renderHook } from "@testing-library/react";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
+import { seedProgress } from "./helpers/seed-progress";
 import { EXERCISES } from "@/lib/game/exercises";
 
 const WALLET = "0xabcdef0123456789abcdef0123456789abcdef01";
@@ -31,7 +32,7 @@ const canonical = EXERCISES.rook.slice(0, 5).map((e) => e.id);
 function seed(stars: number[]): void {
   localStorage.setItem(
     "chesscito:progress:rook",
-    JSON.stringify({ piece: "rook", exerciseIndex: 0, stars }),
+    seedProgress("rook", 0, stars),
   );
 }
 
