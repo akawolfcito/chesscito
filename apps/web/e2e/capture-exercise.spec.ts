@@ -1,78 +1,93 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * Capture exercise (rook exercise 4) — the first on-board interaction
- * where the target square contains an enemy instead of an empty cell.
- * Validates that:
- *  - The mission chip reads "Capture" instead of a coordinate.
- *  - The 2-move capture path (a1 → h1 → h8) registers as success:
- *    phase flash appears AND progress stars[3] updates in localStorage.
+ * Capturing an enemy piece — the pawn, because the pawn is the only piece that
+ * captures. (The rook models everything blocking its path as an obstacle it must
+ * go around; capture is a pawn mechanic, see fen-puzzle.ts.) This used to point at
+ * a "rook capture exercise" that no longer exists — a dead premise on a dead URL
+ * (`/` is the hub now) — so it was red while looking like coverage. It now exercises
+ * the real thing.
  *
- * Regression signals if this spec fails:
- *  - Capture copy regressed to coordinate-only.
- *  - Rook's 2-move capture doesn't set phase="success".
- *  - Progress doesn't persist after completion.
+ * pawn-3 is the first capture in the pawn curriculum: c5 × d6 in a single diagonal
+ * move. It proves:
+ *  - the mission chip reads "Capture", not a bare coordinate;
+ *  - taking the target sets phase=success and persists 3 stars for the exercise.
+ *
+ * Progress is seeded in the shape the app actually stores — `currentId` + an
+ * id-keyed stars map — not the legacy positional array, which no longer credits
+ * stars at all (it is ambiguous after the A6 reorder; see
+ * use-exercise-progress-migration.test.ts). Seeding legacy here would hand the test
+ * a zero-star player and quietly test less than it claims to.
  */
-test.describe("Play hub — rook capture exercise", () => {
+
+// pawn-3 in the pawn curriculum, and the three exercises before it (pawn-1,
+// pawn-2), so mastery is non-trivial and the resume lands on the right board.
+const POOL_BEFORE = ["pawn-1", "pawn-2"];
+const TARGET_ID = "pawn-3";
+
+test.describe("Play hub — pawn capture exercise", () => {
   test.beforeEach(async ({ page }) => {
-    // Onboarded + rook progress jumped to exercise index 3 (first capture)
-    // with 3 prior exercises marked as completed.
-    await page.addInitScript(() => {
-      window.localStorage.setItem("chesscito:onboarded", "true");
-      window.localStorage.setItem(
-        "chesscito:progress:rook",
-        JSON.stringify({
-          piece: "rook",
-          exerciseIndex: 3,
-          stars: [1, 1, 1, 0, 0],
-        }),
-      );
-    });
+    await page.addInitScript(
+      (seed: { currentId: string; done: string[] }) => {
+        window.localStorage.setItem("chesscito:onboarded", "true");
+        window.localStorage.setItem(
+          "chesscito:progress:pawn",
+          JSON.stringify({
+            piece: "pawn",
+            currentId: seed.currentId,
+            stars: Object.fromEntries(seed.done.map((id) => [id, 3])),
+          }),
+        );
+      },
+      { currentId: TARGET_ID, done: POOL_BEFORE },
+    );
   });
 
   test("mission chip reads Capture on a capture exercise", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/en/exercises?piece=pawn");
     await page.waitForLoadState("networkidle");
 
-    // The mission peek chip in the header shows "Capture" for capture
-    // exercises (sentence case) — see mission-panel-candy.tsx.
+    // The mission peek chip shows "Capture" for capture exercises rather than a
+    // target coordinate — see mission-panel-candy.tsx.
     const missionChip = page.getByRole("button", {
       name: /open mission details.*capture/i,
     });
-    await expect(missionChip).toBeVisible();
+    await expect(missionChip).toBeVisible({ timeout: 15_000 });
   });
 
-  test("a1 → h1 → h8 captures the target and marks the exercise complete", async ({ page }) => {
-    await page.goto("/");
+  test("c5 × d6 captures the target and marks the exercise complete", async ({ page }) => {
+    await page.goto("/en/exercises?piece=pawn");
     await page.waitForLoadState("networkidle");
 
-    // Select the rook at a1 → legal moves highlight.
-    await page.getByRole("gridcell", { name: "Square a1" }).click();
-    await expect(page.locator(".playhub-board-cell.is-highlighted").first()).toBeVisible();
+    // Confirm we resumed onto pawn-3 and not another board.
+    await expect(page.getByText(/capture/i).first()).toBeVisible({ timeout: 15_000 });
 
-    // First move: a1 → h1 (along the rank). Not the target, no reset.
-    await page.getByRole("gridcell", { name: "Square h1" }).click();
+    // Pick up the pawn. Retried because the sprite drops pointerdown while
+    // `mountedRef` is still false — a rejection with no DOM trace, so a single tap
+    // is a race. Retry until the legal moves light up.
+    const pawn = page.locator(
+      ".playhub-board-piece-float:not(.is-friendly-blocker)",
+    ).first();
+    const highlights = page.locator(".playhub-board-cell.is-highlighted");
+    await expect(async () => {
+      await pawn.click();
+      await expect(highlights.first()).toBeVisible({ timeout: 1_000 });
+    }).toPass({ timeout: 15_000 });
 
-    // Second select — rook is now at h1.
-    await page.getByRole("gridcell", { name: "Square h1" }).click();
-    await expect(page.locator(".playhub-board-cell.is-highlighted").first()).toBeVisible();
+    // c5 × d6 — the diagonal capture, one move, worth full marks.
+    await page.getByRole("gridcell", { name: "Square d6" }).click();
 
-    // Second move: h1 → h8 (along the file). This captures the target.
-    await page.getByRole("gridcell", { name: "Square h8" }).click();
-
-    // Phase flash text appears — "Well done!" (PHASE_FLASH_COPY.success).
-    await expect(page.getByText(/well done!/i)).toBeVisible({ timeout: 2_000 });
-
-    // Progress persisted: stars[3] > 0 after completion.
-    await page.waitForFunction(() => {
-      try {
-        const raw = window.localStorage.getItem("chesscito:progress:rook");
-        if (!raw) return false;
-        const parsed = JSON.parse(raw) as { stars: number[] };
-        return Array.isArray(parsed.stars) && parsed.stars[3] > 0;
-      } catch {
-        return false;
-      }
-    });
+    // Asserted on the persisted result, not the transient "Well done!" flash.
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(() => {
+            const raw = window.localStorage.getItem("chesscito:progress:pawn");
+            if (!raw) return null;
+            return (JSON.parse(raw) as { stars: Record<string, number> }).stars["pawn-3"] ?? 0;
+          }),
+        { timeout: 5_000 },
+      )
+      .toBe(3);
   });
 });
