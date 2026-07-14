@@ -42,9 +42,9 @@ describe("ExerciseDrawer — legacy (no visibleExerciseIds)", () => {
     render(<ExerciseDrawer {...baseProps} onNavigate={vi.fn()} />);
     // Full list present.
     expect(screen.getByText("Move along the rank")).toBeInTheDocument(); // rook-1
-    expect(screen.getByText("The rook is not a bishop")).toBeInTheDocument(); // rook-8
+    expect(screen.getByText("The boxed star")).toBeInTheDocument(); // rook-8
     // Fresh progress → only index 0 unlocked; a later one is path-locked.
-    const locked = screen.getByText("Turn the other corner").closest("button"); // rook-5
+    const locked = screen.getByText("The rook is not a bishop").closest("button"); // rook-no-diagonal-1
     expect(locked).toHaveAttribute("data-locked", "true");
   });
 
@@ -57,7 +57,7 @@ describe("ExerciseDrawer — legacy (no visibleExerciseIds)", () => {
 });
 
 describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
-  const visible = new Set(["rook-3", "rook-6", "rook-8"]); // pool idx 2, 5, 7
+  const visible = new Set(["rook-distance-1", "rook-6", "rook-8"]); // pool idx 2, 5, 7
 
   it("renders ONLY today's visible set", () => {
     render(
@@ -67,9 +67,9 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
         visibleExerciseIds={visible}
       />,
     );
-    expect(screen.getByText("The file works both ways")).toBeInTheDocument(); // rook-3
+    expect(screen.getByText("One square is a move too")).toBeInTheDocument(); // rook-distance-1
     expect(screen.getByText("Find the shortest route")).toBeInTheDocument(); // rook-6
-    expect(screen.getByText("The rook is not a bishop")).toBeInTheDocument(); // rook-8
+    expect(screen.getByText("The boxed star")).toBeInTheDocument(); // rook-8
     // Outside the set → not rendered.
     expect(screen.queryByText("Move along the rank")).not.toBeInTheDocument(); // rook-1
     expect(screen.queryByText("Move along the file")).not.toBeInTheDocument(); // rook-2
@@ -120,7 +120,7 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
         visibleExerciseIds={visible}
       />,
     );
-    expect(screen.getByText("The rook is not a bishop").closest("button")).toHaveAttribute("data-locked", "true");
+    expect(screen.getByText("The boxed star").closest("button")).toHaveAttribute("data-locked", "true");
   });
 
   it("navigates with the REAL pool index, not the visible-slot index", () => {
@@ -135,8 +135,8 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
         visibleExerciseIds={visible}
       />,
     );
-    // "The rook is not a bishop" = rook-8 = pool index 7 (the 3rd visible row).
-    clickRow("The rook is not a bishop");
+    // "The boxed star" = rook-8 = pool index 7 (the 3rd visible row).
+    clickRow("The boxed star");
     expect(onNavigate).toHaveBeenCalledWith(7);
   });
 });
@@ -254,14 +254,14 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
     expect(screen.queryByText("Labyrinths")).not.toBeInTheDocument();
     // Labyrinth 1's anchor is floored to LABYRINTH_MIN_EXERCISES (3), not
     // the stars-only ceil(6/3)=2 — so it renders AFTER the third exercise
-    // ("The file works both ways", rook-3) and BEFORE the fourth ("Turn the corner",
+    // ("One square is a move too", rook-3) and BEFORE the fourth ("Turn the corner",
     // rook-4), never earlier than the floor allows.
     const texts = screen
       .getAllByRole("button", { hidden: true })
       .map((b) => b.textContent ?? "");
     const labAt = texts.findIndex((t) => t.includes("Labyrinth 1"));
     const thirdExerciseAt = texts.findIndex((t) =>
-      t.includes("The file works both ways"),
+      t.includes("One square is a move too"),
     );
     const fourthExerciseAt = texts.findIndex((t) =>
       t.includes("Turn the corner"),

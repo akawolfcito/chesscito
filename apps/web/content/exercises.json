@@ -32,20 +32,20 @@
     "learningObjective": "The player recognises the rook's vertical movement along a file."
   },
   {
-    "id": "rook-3",
+    "id": "rook-distance-1",
     "piece": "rook",
     "fen": "8/3R4/8/8/8/8/8/8 w - - 0 1",
-    "target": "d2",
+    "target": "d6",
     "mover": "d7",
     "tier": "easy",
     "tags": [
-      "straight-line"
+      "variable-distance"
     ],
     "order": 2,
-    "principle": "file-movement",
-    "title": "The file works both ways",
-    "playerPrompt": "A file runs down as well as up. Take the star.",
-    "learningObjective": "The player sees that direction along a file is free. (Duplicates rook-2's principle; A3 repurposes this slot to teach variable distance.)"
+    "principle": "variable-distance",
+    "title": "One square is a move too",
+    "playerPrompt": "A rook may move just one square. Take it.",
+    "learningObjective": "The player learns the rook chooses its distance: one square is as legal as seven. Replaces rook-3 (d7 to d2), which only repeated rook-2's file movement."
   },
   {
     "id": "rook-4",
@@ -64,20 +64,20 @@
     "learningObjective": "The player learns the rook turns BETWEEN moves: an L-shaped route costs two moves, not one."
   },
   {
-    "id": "rook-5",
+    "id": "rook-no-diagonal-1",
     "piece": "rook",
-    "fen": "8/8/8/8/8/8/6R1/8 w - - 0 1",
-    "target": "c7",
-    "mover": "g2",
+    "fen": "8/8/8/8/3R4/8/8/8 w - - 0 1",
+    "target": "e5",
+    "mover": "d4",
     "tier": "easy",
     "tags": [
-      "corner-turn"
+      "no-diagonal"
     ],
     "order": 4,
-    "principle": "direction-change",
-    "title": "Turn the other corner",
-    "playerPrompt": "Same idea, mirrored. Two moves, one turn.",
-    "learningObjective": "Reinforces rook-4. (Same principle and difficulty; A4 replaces this slot with 'The rook is not a bishop'.)"
+    "principle": "no-diagonal",
+    "title": "The rook is not a bishop",
+    "playerPrompt": "The star is one diagonal step away. The rook still needs two moves.",
+    "learningObjective": "The player learns the rook never moves diagonally: the nearest-looking square is not the cheapest. Replaces rook-5, which was rook-4's corner turn a second time."
   },
   {
     "id": "rook-6",
@@ -125,10 +125,10 @@
       "boxed-target"
     ],
     "order": 7,
-    "principle": "no-diagonal",
-    "title": "The rook is not a bishop",
-    "playerPrompt": "The star is one diagonal step away — and the rook needs four moves.",
-    "learningObjective": "The player learns the rook never moves diagonally: an adjacent diagonal square can cost a long way around."
+    "principle": "no-diagonal-advanced",
+    "title": "The boxed star",
+    "playerPrompt": "One diagonal step away, and four moves of work. Box it out.",
+    "learningObjective": "The advanced form of no-diagonal: with the two adjacent squares blocked, the one-step diagonal costs four moves. Follows rook-no-diagonal-1, which teaches the clean case in two."
   },
   {
     "id": "rook-9",

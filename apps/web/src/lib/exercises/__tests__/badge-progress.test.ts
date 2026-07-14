@@ -16,9 +16,9 @@ describe("parsePieceStars — id-keyed progress (the shape the app writes since 
     const raw = idKeyed({
       "rook-1": 3,
       "rook-2": 3,
-      "rook-3": 3,
+      "rook-distance-1": 3,
       "rook-4": 3,
-      "rook-5": 3,
+      "rook-no-diagonal-1": 3,
       "rook-6": 3,
     });
 
@@ -29,7 +29,7 @@ describe("parsePieceStars — id-keyed progress (the shape the app writes since 
   });
 
   it("orders values by catalog position, not by object key order", () => {
-    const raw = idKeyed({ "rook-3": 3, "rook-1": 1 });
+    const raw = idKeyed({ "rook-distance-1": 3, "rook-1": 1 });
 
     const stars = parsePieceStars(raw, "rook");
 

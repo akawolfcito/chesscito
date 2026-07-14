@@ -45,7 +45,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "learningObjective": "The player recognises the rook's vertical movement along a file."
     },
     {
-      "id": "rook-3",
+      "id": "rook-distance-1",
       "optimalMoves": 1,
       "startPos": {
         "file": 3,
@@ -53,16 +53,16 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       },
       "targetPos": {
         "file": 3,
-        "rank": 1
+        "rank": 5
       },
       "tier": "easy",
       "tags": [
-        "straight-line"
+        "variable-distance"
       ],
-      "principle": "file-movement",
-      "title": "The file works both ways",
-      "playerPrompt": "A file runs down as well as up. Take the star.",
-      "learningObjective": "The player sees that direction along a file is free. (Duplicates rook-2's principle; A3 repurposes this slot to teach variable distance.)"
+      "principle": "variable-distance",
+      "title": "One square is a move too",
+      "playerPrompt": "A rook may move just one square. Take it.",
+      "learningObjective": "The player learns the rook chooses its distance: one square is as legal as seven. Replaces rook-3 (d7 to d2), which only repeated rook-2's file movement."
     },
     {
       "id": "rook-4",
@@ -85,24 +85,24 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "learningObjective": "The player learns the rook turns BETWEEN moves: an L-shaped route costs two moves, not one."
     },
     {
-      "id": "rook-5",
+      "id": "rook-no-diagonal-1",
       "optimalMoves": 2,
       "startPos": {
-        "file": 6,
-        "rank": 1
+        "file": 3,
+        "rank": 3
       },
       "targetPos": {
-        "file": 2,
-        "rank": 6
+        "file": 4,
+        "rank": 4
       },
       "tier": "easy",
       "tags": [
-        "corner-turn"
+        "no-diagonal"
       ],
-      "principle": "direction-change",
-      "title": "Turn the other corner",
-      "playerPrompt": "Same idea, mirrored. Two moves, one turn.",
-      "learningObjective": "Reinforces rook-4. (Same principle and difficulty; A4 replaces this slot with 'The rook is not a bishop'.)"
+      "principle": "no-diagonal",
+      "title": "The rook is not a bishop",
+      "playerPrompt": "The star is one diagonal step away. The rook still needs two moves.",
+      "learningObjective": "The player learns the rook never moves diagonally: the nearest-looking square is not the cheapest. Replaces rook-5, which was rook-4's corner turn a second time."
     },
     {
       "id": "rook-6",
@@ -316,10 +316,10 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "detour",
         "boxed-target"
       ],
-      "principle": "no-diagonal",
-      "title": "The rook is not a bishop",
-      "playerPrompt": "The star is one diagonal step away — and the rook needs four moves.",
-      "learningObjective": "The player learns the rook never moves diagonally: an adjacent diagonal square can cost a long way around."
+      "principle": "no-diagonal-advanced",
+      "title": "The boxed star",
+      "playerPrompt": "One diagonal step away, and four moves of work. Box it out.",
+      "learningObjective": "The advanced form of no-diagonal: with the two adjacent squares blocked, the one-step diagonal costs four moves. Follows rook-no-diagonal-1, which teaches the clean case in two."
     },
     {
       "id": "rook-9",
@@ -2362,12 +2362,12 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
 export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "rook-1": "Move along the rank",
   "rook-2": "Move along the file",
-  "rook-3": "The file works both ways",
+  "rook-distance-1": "One square is a move too",
   "rook-4": "Turn the corner",
-  "rook-5": "Turn the other corner",
+  "rook-no-diagonal-1": "The rook is not a bishop",
   "rook-6": "Find the shortest route",
   "rook-7": "Plan the whole route",
-  "rook-8": "The rook is not a bishop",
+  "rook-8": "The boxed star",
   "rook-9": "Your own piece blocks the way",
   "rook-10": "The file is closed"
 };

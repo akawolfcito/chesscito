@@ -80,7 +80,7 @@ describe("rotation — getPieceMasteryStars", () => {
     expect(getPieceMasteryStars("rook")).toBe(0);
   });
   it("sums best stars across the pool, clamped to 3 each", () => {
-    const map: ExerciseStarsById = { "rook-1": 3, "rook-2": 2, "rook-3": 99 };
+    const map: ExerciseStarsById = { "rook-1": 3, "rook-2": 2, "rook-distance-1": 99 };
     expect(getPieceMasteryStars("rook", map)).toBe(8); // 3 + 2 + 3
   });
 });
