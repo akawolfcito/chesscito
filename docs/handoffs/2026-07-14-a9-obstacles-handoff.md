@@ -91,7 +91,35 @@ leen como decisión. No lo toqué (dijiste no cambiar orden ni dificultad). Qued
 
 ---
 
-## 4.5 🔴 HALLAZGO — el estado sembrado NO aterriza en el ejercicio pedido
+## 4.5 ✅ RESUELTO — el estado sembrado NO aterrizaba en el ejercicio pedido
+
+> **Cerrado el 2026-07-14.** Eran **tres bugs**, no uno, y todos el mismo pecado: *decidir con estado
+> que todavía no cargó, y persistir la decisión.* Fixes: `d6d17f73` (loadProgress) y `4724f5ac`
+> (rotación/steering). Red: `e2e/rook-ten-exercises-smoke.spec.ts` — **30/30 en dos corridas
+> `--repeat-each=3`** con la rotación encendida. Detalle abajo, y el patrón en
+> [[feedback_never_decide_from_unhydrated_state]].
+>
+> 1. **`loadProgress` validaba el `currentId` contra el pool** — que puede llegar incompleto. Para un
+>    chequeo de pertenencia, *"todavía no cargó"* y *"fue borrado"* son la misma respuesta. Y en la
+>    rama legacy **escribía el resultado de vuelta**: pérdida de datos permanente.
+> 2. **El set visible del día se computaba con las estrellas vacías** (pre-hidratación) → los 10
+>    parecían sin jugar → el corte salía por hash de sesión (aleatorio) → el steering **expulsaba** al
+>    jugador de su propio ejercicio y lo persistía.
+> 3. **`guestSessionSeed` se derivaba en un efecto** → en el render posterior a la carga las estrellas
+>    eran reales pero la semilla seguía `null`, y `null` es **ambiguo**: el selector lee "invitado sin
+>    semilla" como **primerizo** y devuelve los *canonical five*. Correcto sin progreso; muy incorrecto
+>    para quien vuelve.
+>
+> **La pista que lo resolvió:** apagar la rotación. Con `NEXT_PUBLIC_ENABLE_EXERCISE_ROTATION=false`
+> pasaba 30/30; con `true`, 28/30. Ese experimento valió más que diez teorías.
+>
+> **Decisión de producto tomada:** las estrellas legacy (array posicional) **ya no se acreditan** —
+> A6 reordenó el pool, así que migrarlas acredita el ejercicio equivocado. `exerciseIndex` solo
+> orienta la navegación. *Perder progreso ambiguo es preferible a certificar el aprendizaje
+> equivocado.*
+
+<details>
+<summary>El hallazgo original, como se reportó</summary>
 
 **Esto es lo que tiene que atacar el smoke funcional de los 10 de torre.**
 
@@ -121,6 +149,8 @@ jugador vuelve a la app y el estado se resuelve mal, **lo tiran al ejercicio 1**
 > **Las capturas SÍ son válidas.** Cada una verificó su chip de misión, su conteo de bloqueadores y su
 > conteo de opciones **antes** de disparar. Lo que es inestable es *llegar* al ejercicio, no lo que se
 > ve cuando se llega.
+
+</details>
 
 ---
 
@@ -185,16 +215,20 @@ con su `node_modules`. **Por hard links casi no cuestan disco**, pero sí inflan
 - [x] A9 commiteado en 3 commits atómicos.
 - [x] Spec de capturas **borrado** (no determinístico — §4.5).
 
+- [x] **Guard de disco** (`8d400213`) — preventivo, no destructivo.
+- [x] **Bug de reanudación arreglado** (`d6d17f73`, `4724f5ac`) — ver §4.5.
+- [x] **Smoke funcional de los 10** (`c81748d3`) — 30/30 × 2 corridas, rotación ON.
+
 **Sigue:**
-- [ ] **Guard de disco** — bloque y commit separados. Preventivo: verifica espacio, aborta con mensaje
-      claro, **no borra nada**.
-- [ ] **Smoke funcional de los 10 ejercicios de torre.** Primer trabajo: §4.5. El smoke no puede
-      asumir que sembrar progreso te deja en el ejercicio que pediste — **hoy no lo hace**.
-- [ ] **NO** avanzar con A10/A11 hasta que el smoke esté.
+- [ ] **A10/A11** — recién ahora están destrabados.
+- [ ] `video: "off"` en `playwright.config.ts` (los videos son el artefacto pesado).
+- [ ] Limpiar los 4 worktrees stale en `.claude/worktrees/` (verificar merge antes).
 
 ## Preguntas abiertas
 
-1. §4.5: ¿el fallback al ejercicio 1 es una carrera de hidratación o steering de rotación? Hay que
-   decidir si el smoke lo **documenta** o lo **arregla**.
-2. `capture-exercise.spec.ts` siembra con la forma legacy (`exerciseIndex`). Si esa forma ya no es
-   confiable, ese spec está verde por suerte.
+1. **`capture-exercise.spec.ts` siembra con la forma legacy (`exerciseIndex` + array de estrellas).**
+   Ese array ya **no acredita estrellas**, así que ese spec ahora corre con un jugador de 0★. Sigue
+   verde, pero puede estar probando menos de lo que cree. Vale revisarlo.
+2. La rotación está **ON en dev** y **el steering puede navegar y persistir**. ¿Es el comportamiento
+   deseado que la rotación mueva a un jugador que vuelve, aunque sea con un set correcto? Hoy no lo
+   hace (su ejercicio siempre está en el set), pero la capacidad sigue ahí.
