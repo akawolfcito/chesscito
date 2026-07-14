@@ -84,14 +84,32 @@ describe("rook pedagogy", () => {
     expect(ids).toContain("rook-no-diagonal-1");
   });
 
-  it("keeps a monotonic difficulty ramp — no spikes out of order", () => {
-    // The published optimals: 1,1,1,2,2,3,4,4,3,4. The ramp is what the player
-    // feels; A6 reorders the tail, and this is the guard that it stays a ramp.
+  it("walks the curriculum in order (A6)", () => {
+    // move -> distinguish -> restrict -> plan. Each principle is introduced clean
+    // and then escalated: no-diagonal in two moves (4) before its boxed form in
+    // four (8); a single blocker (6) before a shut file (7) before a maze (9, 10).
+    // Mastery is the ramp, not just the list of principles.
+    expect(EXERCISES.rook.map((e) => e.id)).toEqual([
+      "rook-1",              // move along the rank
+      "rook-2",              // move along the file
+      "rook-distance-1",     // one square is a move too
+      "rook-no-diagonal-1",  // the rook is not a bishop
+      "rook-4",              // turn the corner
+      "rook-9",              // your own piece blocks the way
+      "rook-10",             // the file is closed
+      "rook-8",              // the boxed star
+      "rook-6",              // find the shortest route
+      "rook-7",              // plan the whole route
+    ]);
+  });
+
+  it("ramps difficulty without a spike", () => {
     const optimals = EXERCISES.rook.map((ex) => ex.optimalMoves);
-    expect(optimals.slice(0, 5)).toEqual([1, 1, 1, 2, 2]);
-    // Variable distance really is one move; the clean no-diagonal really is two.
-    expect(EXERCISES.rook.find((e) => e.id === "rook-distance-1")?.optimalMoves).toBe(1);
-    expect(EXERCISES.rook.find((e) => e.id === "rook-no-diagonal-1")?.optimalMoves).toBe(2);
+    expect(optimals).toEqual([1, 1, 1, 2, 2, 3, 4, 4, 3, 4]);
+    // Obstacles rise monotonically once they appear — the clutter never jumps the
+    // way it used to (0 straight to 21).
+    const obstacles = EXERCISES.rook.map((ex) => ex.obstacles?.length ?? 0);
+    expect(obstacles).toEqual([0, 0, 0, 0, 0, 2, 4, 2, 7, 11]);
   });
 
   it("keeps the trimmed exercises' decision intact (A5)", () => {

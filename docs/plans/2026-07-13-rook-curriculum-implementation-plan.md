@@ -864,6 +864,73 @@ explícitos, columnas pedagógicas en la tabla, y validación de `publish` a la 
 
 ---
 
+## 15.6 — A6 cerrado + auditoría de objetivos coleccionables
+
+### 15.6.1 — Decisión del founder (2026-07-14): la torre puede tener 12
+
+**No se retira ningún ejercicio para sostener un máximo artificial de 10.** Los ejercicios no sólo
+cubren principios distintos: **también escalan el dominio** con rutas más largas, más bloqueos, más
+decisiones y optimización. **Cuando la captura entre en Fase B, se AGREGAN los dos ejercicios nuevos y
+la torre queda con 12.** Nada se elimina automáticamente.
+
+Esto **deroga** la fila *"La torre mantiene 10 ejercicios"* de §2 y el hueco de los puestos 7/8 de §8.
+
+### 15.6.2 — Orden final de la Entrega 1 (medido, no estimado)
+
+| # | id | Título | Óptimo | Obst. | Rutas óptimas | Opciones 1er mov. |
+| --: | --- | --- | --: | --: | --: | --: |
+| 1 | `rook-1` | Move along the rank | 1 | 0 | 1 | 14 |
+| 2 | `rook-2` | Move along the file | 1 | 0 | 1 | 14 |
+| 3 | `rook-distance-1` | One square is a move too | 1 | 0 | 1 | 14 |
+| 4 | `rook-no-diagonal-1` | The rook is not a bishop | 2 | 0 | 2 | 14 |
+| 5 | `rook-4` | Turn the corner | 2 | 0 | 2 | 14 |
+| 6 | `rook-9` | Your own piece blocks the way | 3 | 2 | 2 | **2** |
+| 7 | `rook-10` | The file is closed | 4 | 4 | 15 | 7 |
+| 8 | `rook-8` | The boxed star | 4 | 2 | 18 | 6 |
+| 9 | `rook-6` | Find the shortest route | 3 | 7 | 2 | 8 |
+| 10 | `rook-7` | Plan the whole route | 4 | 11 | 3 | 14 |
+
+- **Óptimo:** `1, 1, 1, 2, 2, 3, 4, 4, 3, 4`
+- **Obstáculos:** `0, 0, 0, 0, 0, 2, 4, 2, 7, 11` — **monótono desde que aparecen.** (Antes saltaba de 0 a 21.)
+- **Rutas óptimas:** `1, 1, 1, 2, 2, 2, 15, 18, 2, 3`
+- **Decisiones iniciales:** `14, 14, 14, 14, 14, 2, 7, 6, 8, 14`
+
+**Lectura de la curva:** el recorrido escala en **dos ejes distintos**, y eso es deliberado.
+Los puestos **7 y 8** (15 y 18 rutas óptimas) enseñan *"rodeá como quieras, pero rodeá"* — la ruta da
+igual. Los puestos **9 y 10** (2 y 3 rutas) enseñan *"hay una ruta correcta y hay que encontrarla"*.
+**Es el paso de ejecutar a optimizar**, y es exactamente donde `computeStars` empieza a medir algo.
+
+⚠️ **La única aspereza que queda:** el puesto **6** (`rook-9`) arranca con **2 opciones** de primer
+movimiento y el **7** salta a 7. Es un embudo muy angosto seguido de una apertura. **No lo toco en A6**
+(el orden es el que pidió el founder), pero queda anotado como candidato de pulido.
+
+### 15.6.3 — 🔴 Objetivos coleccionables: el motor NO los soporta
+
+**Auditado antes de cualquier diseño de estrellas múltiples. El resultado es negativo, en las tres capas:**
+
+| Capa | Qué soporta hoy | Evidencia |
+| --- | --- | --- |
+| **Modelo** | **UNA sola casilla objetivo.** `Exercise.targetPos: BoardPosition` — singular, no lista. | `lib/game/types.ts` |
+| **Condición de éxito** | **Llegar a esa casilla.** No hay concepto de *"me faltan N"*. | `exercises-screen.tsx:1417-1424` — `isTarget = position === targetPos` |
+| **BFS** | **El estado es la POSICIÓN, punto.** | `exercise-bfs.ts:13` lo dice literal: *"Position alone is the BFS state"* |
+
+**`captureTargets` NO es lo que parece.** Existe, pero es **exclusivo del peón** y es una **allow-list de
+casillas diagonales legales** (`board.ts:50-67`), **no un set de objetivos a juntar**: el peón no tiene
+que tocarlos todos, y el éxito sigue siendo `targetPos`.
+
+**Qué haría falta (NO se construye en A6):**
+
+1. **Modelo**: `targets: BoardPosition[]` (o `collectibles`), y éxito = **conjunto vacío**.
+2. **BFS**: el estado pasa a ser **`(posición, pendientes)`** — el mismo salto conceptual que exige la
+   captura en Fase B (§6). **Las dos features piden la MISMA generalización del BFS.** Si se hace una,
+   la otra sale casi gratis; si se hacen por separado, se paga dos veces.
+3. **Runtime**: estado de recolectados + render de N estrellas + `computeStars` contra el óptimo del
+   recorrido completo (que es un **TSP chico**, no un camino más corto — ojo con asumir que es lo mismo).
+
+**Registrado, no agendado.** No entra en A6 ni en la Entrega 1.
+
+---
+
 ## 16. Preguntas abiertas reales
 
 Sólo quedan **tres**, y las tres son de producto — ninguna bloquea empezar por A0.

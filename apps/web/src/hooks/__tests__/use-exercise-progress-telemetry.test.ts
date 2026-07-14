@@ -89,8 +89,12 @@ describe("useExerciseProgress — telemetry", () => {
 
     it("emits the HYDRATED exerciseId when localStorage points to a non-default slot (no SSR-default fire)", async () => {
       // User had previously navigated to rook-4 (slot index 3) with stars.
-      // The SSR-default render would show rook-1 (slot 0); after hydration
-      // the hook lands on rook-4. Only the hydrated id must be emitted.
+      // The SSR-default render would show rook-1 (slot 0); after hydration the
+      // hook lands on whatever sits at slot 3. NOTE this is the LEGACY positional
+      // shape, which migrates by catalog POSITION — so the A6 reorder moves it:
+      // slot 3 used to be rook-4 and is now rook-no-diagonal-1. Id-keyed progress
+      // (everything written since 2026-06-16) is immune; only un-migrated legacy
+      // arrays shift, and they shift by design — position is all they carry.
       localStorage.setItem(
         "chesscito:progress:rook",
         JSON.stringify({
@@ -107,7 +111,7 @@ describe("useExerciseProgress — telemetry", () => {
       expect(started).toHaveLength(1);
       expect(started[0]![1]).toMatchObject({
         piece: "rook",
-        exerciseId: "rook-4",
+        exerciseId: "rook-no-diagonal-1",
         slotIndex: 3,
       });
     });

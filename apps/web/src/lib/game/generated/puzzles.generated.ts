@@ -65,6 +65,26 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "learningObjective": "The player learns the rook chooses its distance: one square is as legal as seven. Replaces rook-3 (d7 to d2), which only repeated rook-2's file movement."
     },
     {
+      "id": "rook-no-diagonal-1",
+      "optimalMoves": 2,
+      "startPos": {
+        "file": 3,
+        "rank": 3
+      },
+      "targetPos": {
+        "file": 4,
+        "rank": 4
+      },
+      "tier": "easy",
+      "tags": [
+        "no-diagonal"
+      ],
+      "principle": "no-diagonal",
+      "title": "The rook is not a bishop",
+      "playerPrompt": "The star is one diagonal step away. The rook still needs two moves.",
+      "learningObjective": "The player learns the rook never moves diagonally: the nearest-looking square is not the cheapest. Replaces rook-5, which was rook-4's corner turn a second time."
+    },
+    {
       "id": "rook-4",
       "optimalMoves": 2,
       "startPos": {
@@ -85,8 +105,79 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "learningObjective": "The player learns the rook turns BETWEEN moves: an L-shaped route costs two moves, not one."
     },
     {
-      "id": "rook-no-diagonal-1",
-      "optimalMoves": 2,
+      "id": "rook-9",
+      "optimalMoves": 3,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 2,
+        "rank": 2
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 2
+        },
+        {
+          "file": 2,
+          "rank": 0
+        }
+      ],
+      "tier": "medium",
+      "tags": [
+        "friendly-blocker",
+        "detour"
+      ],
+      "principle": "friendly-blocker",
+      "title": "Your own piece blocks the way",
+      "playerPrompt": "You cannot jump over your own piece. Go around it.",
+      "learningObjective": "The player learns a friendly piece stops the rook's ray and cannot be captured."
+    },
+    {
+      "id": "rook-10",
+      "optimalMoves": 4,
+      "startPos": {
+        "file": 3,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 3,
+        "rank": 4
+      },
+      "obstacles": [
+        {
+          "file": 2,
+          "rank": 4
+        },
+        {
+          "file": 4,
+          "rank": 4
+        },
+        {
+          "file": 3,
+          "rank": 3
+        },
+        {
+          "file": 3,
+          "rank": 1
+        }
+      ],
+      "tier": "medium",
+      "tags": [
+        "detour",
+        "blocked-file",
+        "rook-lift"
+      ],
+      "principle": "blocked-file",
+      "title": "The file is closed",
+      "playerPrompt": "The file is shut. Step out, climb, and come back.",
+      "learningObjective": "The player learns to leave a blocked file, travel on a free one, and re-enter above the blocker."
+    },
+    {
+      "id": "rook-8",
+      "optimalMoves": 4,
       "startPos": {
         "file": 3,
         "rank": 3
@@ -95,14 +186,25 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "file": 4,
         "rank": 4
       },
-      "tier": "easy",
-      "tags": [
-        "no-diagonal"
+      "obstacles": [
+        {
+          "file": 3,
+          "rank": 4
+        },
+        {
+          "file": 4,
+          "rank": 3
+        }
       ],
-      "principle": "no-diagonal",
-      "title": "The rook is not a bishop",
-      "playerPrompt": "The star is one diagonal step away. The rook still needs two moves.",
-      "learningObjective": "The player learns the rook never moves diagonally: the nearest-looking square is not the cheapest. Replaces rook-5, which was rook-4's corner turn a second time."
+      "tier": "medium",
+      "tags": [
+        "detour",
+        "boxed-target"
+      ],
+      "principle": "no-diagonal-advanced",
+      "title": "The boxed star",
+      "playerPrompt": "One diagonal step away, and four moves of work. Box it out.",
+      "learningObjective": "The advanced form of no-diagonal: with the two adjacent squares blocked, the one-step diagonal costs four moves. Follows rook-no-diagonal-1, which teaches the clean case in two."
     },
     {
       "id": "rook-6",
@@ -221,108 +323,6 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "title": "Plan the whole route",
       "playerPrompt": "Look before you move. Plan all four.",
       "learningObjective": "The player plans a multi-leg route ahead of the first move rather than improvising."
-    },
-    {
-      "id": "rook-8",
-      "optimalMoves": 4,
-      "startPos": {
-        "file": 3,
-        "rank": 3
-      },
-      "targetPos": {
-        "file": 4,
-        "rank": 4
-      },
-      "obstacles": [
-        {
-          "file": 3,
-          "rank": 4
-        },
-        {
-          "file": 4,
-          "rank": 3
-        }
-      ],
-      "tier": "medium",
-      "tags": [
-        "detour",
-        "boxed-target"
-      ],
-      "principle": "no-diagonal-advanced",
-      "title": "The boxed star",
-      "playerPrompt": "One diagonal step away, and four moves of work. Box it out.",
-      "learningObjective": "The advanced form of no-diagonal: with the two adjacent squares blocked, the one-step diagonal costs four moves. Follows rook-no-diagonal-1, which teaches the clean case in two."
-    },
-    {
-      "id": "rook-9",
-      "optimalMoves": 3,
-      "startPos": {
-        "file": 0,
-        "rank": 0
-      },
-      "targetPos": {
-        "file": 2,
-        "rank": 2
-      },
-      "obstacles": [
-        {
-          "file": 0,
-          "rank": 2
-        },
-        {
-          "file": 2,
-          "rank": 0
-        }
-      ],
-      "tier": "medium",
-      "tags": [
-        "friendly-blocker",
-        "detour"
-      ],
-      "principle": "friendly-blocker",
-      "title": "Your own piece blocks the way",
-      "playerPrompt": "You cannot jump over your own piece. Go around it.",
-      "learningObjective": "The player learns a friendly piece stops the rook's ray and cannot be captured."
-    },
-    {
-      "id": "rook-10",
-      "optimalMoves": 4,
-      "startPos": {
-        "file": 3,
-        "rank": 0
-      },
-      "targetPos": {
-        "file": 3,
-        "rank": 4
-      },
-      "obstacles": [
-        {
-          "file": 2,
-          "rank": 4
-        },
-        {
-          "file": 4,
-          "rank": 4
-        },
-        {
-          "file": 3,
-          "rank": 3
-        },
-        {
-          "file": 3,
-          "rank": 1
-        }
-      ],
-      "tier": "medium",
-      "tags": [
-        "detour",
-        "blocked-file",
-        "rook-lift"
-      ],
-      "principle": "blocked-file",
-      "title": "The file is closed",
-      "playerPrompt": "The file is shut. Step out, climb, and come back.",
-      "learningObjective": "The player learns to leave a blocked file, travel on a free one, and re-enter above the blocker."
     }
   ],
   "bishop": [

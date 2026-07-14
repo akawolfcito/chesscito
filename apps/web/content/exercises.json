@@ -57,7 +57,7 @@
     "tags": [
       "corner-turn"
     ],
-    "order": 3,
+    "order": 4,
     "principle": "direction-change",
     "title": "Turn the corner",
     "playerPrompt": "Change direction between moves — never inside one.",
@@ -73,7 +73,7 @@
     "tags": [
       "no-diagonal"
     ],
-    "order": 4,
+    "order": 3,
     "principle": "no-diagonal",
     "title": "The rook is not a bishop",
     "playerPrompt": "The star is one diagonal step away. The rook still needs two moves.",
@@ -90,7 +90,7 @@
       "detour",
       "blocked-file"
     ],
-    "order": 5,
+    "order": 8,
     "principle": "route-planning",
     "title": "Find the shortest route",
     "playerPrompt": "The file is shut. Many roads work — find the shortest.",
@@ -107,7 +107,7 @@
       "detour",
       "blocked-file"
     ],
-    "order": 6,
+    "order": 9,
     "principle": "route-planning-advanced",
     "title": "Plan the whole route",
     "playerPrompt": "Look before you move. Plan all four.",
@@ -141,7 +141,7 @@
       "friendly-blocker",
       "detour"
     ],
-    "order": 8,
+    "order": 5,
     "principle": "friendly-blocker",
     "title": "Your own piece blocks the way",
     "playerPrompt": "You cannot jump over your own piece. Go around it.",
@@ -159,7 +159,7 @@
       "blocked-file",
       "rook-lift"
     ],
-    "order": 9,
+    "order": 6,
     "principle": "blocked-file",
     "title": "The file is closed",
     "playerPrompt": "The file is shut. Step out, climb, and come back.",
