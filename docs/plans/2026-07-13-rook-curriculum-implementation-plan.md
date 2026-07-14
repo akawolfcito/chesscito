@@ -810,12 +810,57 @@ builder** y deja el problema para después.
 
 **No se avanza a A6/A9/A10/A11/Rook Rails hasta que se cumpla UNA de estas dos:**
 
-- [ ] **(1) El catálogo de Git es el que consume el jugador** — verificado con `content_overlay` vacía
-      (o sin filas que colisionen con ids oficiales), **más una lectura de producción que lo confirme**.
-- [ ] **(2) Existe un mecanismo probado de precedencia** que garantice que Git gane sobre las filas
-      viejas sin perder datos (namespacing + merge por campo + backfill de las columnas pedagógicas).
+- [x] **(1) El catálogo de Git es el que consume el jugador** — ✅ **CUMPLIDO 2026-07-13.**
+- [ ] (2) Mecanismo de precedencia (namespacing + merge por campo) — **queda como trabajo posterior.**
 
-**Hoy no se cumple ninguna.**
+### ✅ Evidencia del cierre del gate (2026-07-13)
+
+1. **Respaldo fiel primero.** Las 12 filas exportadas con **las 14 columnas, `updated_at` incluido**, a
+   `private/backups/2026-07-13-content-overlay-backup.json` + un `.sql` con 12 `insert` que las
+   reconstruye idénticas. (`private/` está gitignored.)
+2. **Borrado acotado.** Sólo `kind='exercise'` con los 10 ids oficiales de torre. **12 filas borradas;
+   `content_overlay` quedó en 0.** No se tocó `CONTENT_STAGE`.
+3. **Verificación con el camino de lectura REAL** — `scripts/verify-catalog-source.ts` corre
+   `loadMergedCatalog()` (el mismo código que sirve `/exercises`) contra **la base de producción**, en
+   **los tres pisos** (`draft`, `preview`, `published`): **PASS en los tres.**
+
+```
+CONTENT_STAGE=published|preview|draft
+catalog source      : baseline+overlay      ← la DB fue consultada de verdad
+overlay rows applied: 0                     ← y no tenía nada que decir
+
+  #  id                    optimal  obstacles  title
+   1  rook-1                      1          0  Move along the rank
+   2  rook-2                      1          0  Move along the file
+   3  rook-distance-1             1          0  One square is a move too      ← A3
+   4  rook-4                      2          0  Turn the corner
+   5  rook-no-diagonal-1          2          0  The rook is not a bishop      ← A4
+   6  rook-6                      3          7  Find the shortest route       ← A5 (era 21)
+   7  rook-7                      4         11  Plan the whole route          ← A5 (era 14)
+   8  rook-8                      4          2  The boxed star
+   9  rook-9                      3          2  Your own piece blocks the way
+  10  rook-10                     4          4  The file is closed
+
+PASS — el catálogo servido ES el catálogo de Git (ids, orden, títulos, prompts, recortes).
+```
+
+**Confirmado explícitamente:** los ids nuevos (`rook-distance-1`, `rook-no-diagonal-1`) aparecen; los
+10 títulos y prompts curados sobreviven; los tableros recortados llegan con **7 y 11** obstáculos.
+
+> ⚠️ **La trampa que casi me como.** La PRIMERA corrida dio `PASS` con `source: baseline-only` — porque
+> `tsx` **no carga `.env`**, el cliente de Supabase quedó sin configurar, `fetchOverlayRows` devolvió
+> `null` y el script cayó al baseline **sin haber consultado la base**. Un verde que no probaba nada.
+> El script ahora **aborta si Supabase no está configurado** y **exige `source === "baseline+overlay"`**:
+> `baseline-only` significa *"no llegué a la DB"*, y eso **no es evidencia de que esté vacía**.
+> (Misma familia que `feedback_vr_green_can_photograph_an_error`.)
+
+> ⚠️ **Lo que este gate NO afirma.** Producción sigue corriendo **el build anterior**, así que hoy sirve
+> **su** baseline compilado — no el currículo nuevo, que todavía no se deployó. Lo que quedó probado es
+> que **el overlay ya no pisa a Git**. El currículo nuevo llega al jugador **con el próximo deploy**.
+
+**Trabajo posterior, registrado y NO incluido en esta limpieza:** namespacing de ids (`official:` /
+`builder:` / `community:`), campo `source`, **merge por campo en vez de por objeto**, overrides oficiales
+explícitos, columnas pedagógicas en la tabla, y validación de `publish` a la altura del release. → §15.5.7.
 
 ---
 
