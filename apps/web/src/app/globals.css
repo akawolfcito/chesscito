@@ -3116,6 +3116,20 @@
     backface-visibility: hidden;
   }
 
+  /* Friendly blocker (practice exercises). It is the player's OWN piece — the
+     lesson is that it cannot be jumped or captured — so it keeps the canonical
+     piece art and reads as inert rather than as scenery: seated on the square,
+     slightly smaller and dimmed, never lifted, never animated. The maze's stone
+     wall (.playhub-board-cell.is-wall) stays a different thing entirely: that one
+     IS scenery, and it should keep looking like it. */
+  .playhub-board-piece-float.is-friendly-blocker {
+    z-index: 9; /* under the moving piece: it never competes for attention */
+    transform: translate(-50%, -55%) scale(0.88);
+    filter: saturate(0.55) brightness(0.82);
+    opacity: 0.9;
+    transition: none;
+  }
+
   .playhub-board-piece-float.is-selected {
     /* Tactile "picked up" pose: scale bump + tiny CCW rotation so
        the selected piece feels physically lifted. 1.16 (was 1.12)

@@ -326,4 +326,82 @@ describe("<Board>", () => {
       expect(container.querySelector(".playhub-board-cell.is-wall")).toBeInTheDocument();
     });
   });
+
+  /**
+   * A9 — the two surfaces mean different things, so they must not look alike.
+   *
+   * In a MAZE the obstacle is scenery: a stone wall marking the level's edge.
+   * In an EXERCISE it is a chess rule — "you cannot jump over your own piece,
+   * and you cannot capture it" — and painting that as a wall teaches the wrong
+   * lesson: the player reads a boundary instead of a piece.
+   */
+  describe("blockers — practice vs labyrinth", () => {
+    const obstacles = [{ file: 3, rank: 3 }];
+
+    it("renders a friendly PIECE in practice, never a wall", () => {
+      const { container } = render(
+        <Board
+          pieceType="rook"
+          startPosition={{ file: 0, rank: 0 }}
+          mode="practice"
+          obstacles={obstacles}
+        />,
+      );
+      expect(
+        container.querySelector(".playhub-board-piece-float.is-friendly-blocker"),
+      ).toBeInTheDocument();
+      expect(container.querySelector(".playhub-board-cell.is-wall")).toBeNull();
+    });
+
+    it("renders a WALL in the labyrinth, never a friendly piece", () => {
+      const { container } = render(
+        <Board
+          pieceType="rook"
+          startPosition={{ file: 0, rank: 0 }}
+          mode="labyrinth"
+          obstacles={obstacles}
+        />,
+      );
+      expect(container.querySelector(".playhub-board-cell.is-wall")).toBeInTheDocument();
+      expect(
+        container.querySelector(".playhub-board-piece-float.is-friendly-blocker"),
+      ).toBeNull();
+    });
+
+    it("paints one blocker per obstacle in practice", () => {
+      const { container } = render(
+        <Board
+          pieceType="rook"
+          startPosition={{ file: 0, rank: 0 }}
+          mode="practice"
+          obstacles={[
+            { file: 3, rank: 3 },
+            { file: 4, rank: 4 },
+            { file: 5, rank: 5 },
+          ]}
+        />,
+      );
+      expect(
+        container.querySelectorAll(".playhub-board-piece-float.is-friendly-blocker"),
+      ).toHaveLength(3);
+    });
+
+    it("keeps the blocker out of the way of taps", () => {
+      // It must never swallow the tap: the cell button underneath has to receive
+      // it and refuse the move, which is the rule doing the teaching.
+      const { container } = render(
+        <Board
+          pieceType="rook"
+          startPosition={{ file: 0, rank: 0 }}
+          mode="practice"
+          obstacles={obstacles}
+        />,
+      );
+      const blocker = container.querySelector<HTMLElement>(
+        ".playhub-board-piece-float.is-friendly-blocker",
+      );
+      expect(blocker?.style.pointerEvents).toBe("none");
+      expect(blocker?.getAttribute("aria-hidden")).toBe("true");
+    });
+  });
 });

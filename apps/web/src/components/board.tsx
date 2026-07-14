@@ -361,6 +361,47 @@ export function Board({
         );
       })()}
 
+      {/* Friendly blockers (practice only). The maze paints obstacles as ambient
+          stone walls — a level boundary. An exercise cannot: its whole lesson is
+          a CHESS rule ("you cannot jump over your own piece, and you cannot
+          capture it"), and a wall says "the level ends here" instead. So practice
+          renders the blocker as what the FEN actually encodes — a white knight,
+          the player's own piece — using the canonical piece art.
+
+          Not interactive and not a drop target: pointer events stay off, so the
+          cell button underneath still receives the tap and refuses the move,
+          exactly as the rules layer already decided. */}
+      {mode !== "labyrinth" && (obstacles ?? []).map((o) => {
+        const center = cellCenter(o.file, o.rank);
+        const pw = pieceWidth();
+        return (
+          <picture
+            key={`blocker-${o.file}-${o.rank}`}
+            aria-hidden="true"
+            className="playhub-board-piece-float is-friendly-blocker"
+            style={{
+              left: `${center.x}%`,
+              top: `${center.y}%`,
+              width: `${pw}%`,
+              pointerEvents: "none",
+            }}
+          >
+            {THEME_CONFIG.hasOptimizedFormats && (
+              <>
+                <source srcSet={PIECE_IMG.knight.replace(".png", ".avif")} type="image/avif" />
+                <source srcSet={PIECE_IMG.knight.replace(".png", ".webp")} type="image/webp" />
+              </>
+            )}
+            <img
+              src={PIECE_IMG.knight}
+              alt=""
+              className={PIECE_IMG_CLASS}
+              style={{ width: "100%" }}
+            />
+          </picture>
+        );
+      })}
+
       {/* Floating piece layer — same element moves with transition.
           Sprint 4 commit N — also the drag handle. Pointer events
           enabled so the piece can capture pointerdown; the cell
@@ -542,7 +583,12 @@ export function Board({
     const rankIdx = rank - 1;
     const square = squareByKey.get(`${file},${rankIdx}`);
     if (!square) return null;
-    const isWall = obstacleKeySet.has(`${file},${rankIdx}`);
+    // The maze keeps its ambient stone wall. An exercise does NOT: there the
+    // blocker is a chess rule ("you cannot jump your own piece"), and a stone
+    // tile states a level boundary instead — so practice paints a real piece in
+    // the floating layer below, and the cell stays plain.
+    const isWall =
+      mode === "labyrinth" && obstacleKeySet.has(`${file},${rankIdx}`);
     const isPeones =
       !!peonesHint && peonesHint.file === file && peonesHint.rank === rankIdx;
     return (

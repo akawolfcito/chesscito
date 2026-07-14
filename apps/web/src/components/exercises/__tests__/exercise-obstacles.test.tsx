@@ -141,6 +141,12 @@ describe("A0 — exercise obstacles reach the board", () => {
     const { container } = renderScreen();
     // The rule is only honest if the cause is visible: a ray that dies on an
     // empty-looking square reads as a broken board, not as a chess rule.
-    expect(container.querySelector(".playhub-board-cell.is-wall")).toBeInTheDocument();
+    //
+    // A9 gave it its final form — the player's OWN piece, not the maze's stone
+    // wall. What matters here is unchanged: something is there, and the player
+    // can see it. (Which form belongs to which surface is pinned in board.test.tsx.)
+    expect(
+      container.querySelector(".playhub-board-piece-float.is-friendly-blocker"),
+    ).toBeInTheDocument();
   });
 });
