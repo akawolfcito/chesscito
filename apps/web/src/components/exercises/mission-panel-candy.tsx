@@ -29,6 +29,9 @@ type MissionPanelProps = {
   contextualAction: ReactNode
   persistentDock: ReactNode
   pieceHint?: string
+  /** Curated prompt for the ACTIVE exercise; forwarded to the mission detail
+   *  sheet, where it replaces the generic per-piece hint (A1/A7). */
+  exercisePrompt?: string
   isCapture?: boolean
   /** Live retry-shield count from `readDisplayedShields()`. Rendered
    *  by the persistent shield-chip row inserted between the
@@ -361,6 +364,7 @@ export function MissionPanelCandy({
   streakCount,
   lastEarnedStars,
   pieceHint,
+  exercisePrompt,
   failureRescueSlot,
 }: MissionPanelProps) {
   const tMission = useTranslations('MISSION_BRIEFING_COPY')
@@ -453,6 +457,7 @@ export function MissionPanelCandy({
               selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
               targetLabel={targetLabel}
               isCapture={isCapture}
+              exercisePrompt={exercisePrompt}
               score={score}
               trainingPath={trainingPath}
               onLabyrinthSelect={onLabyrinthSelect}

@@ -44,6 +44,31 @@ export type Exercise = {
    *  — if surfaced later it gets EN/ES i18n in a separate commit. Plain
    *  guidance for content reviewers on what the exercise teaches. */
   objective?: string;
+
+  /* ── Pedagogy (A1). The exercise says what it teaches.
+   *  Before this, the catalog knew the lesson only as `tags` — an internal
+   *  taxonomy that never reached the player, so the UI fell back to
+   *  "Exercise 1..10" and a player captured a star without ever learning
+   *  what for. These four are CURATED, never derived from tags: three tags
+   *  turned out to be lies, and text generated from a lie is a lesson that
+   *  lies with the authority of a system. The linter enforces them for
+   *  curated pieces (lib/content/lint.ts).
+   *  Plan: docs/plans/2026-07-13-rook-curriculum-implementation-plan.md §7 */
+
+  /** The single chess principle this exercise exists to teach, as a stable
+   *  slug (e.g. "rank-movement", "no-diagonal", "friendly-blocker"). One per
+   *  exercise — if it teaches two things, it is two exercises. */
+  principle?: string;
+  /** User-facing title. Short, imperative, no jargon ("Move along the rank").
+   *  Replaces the "Exercise {n}" fallback in the drawer. */
+  title?: string;
+  /** User-facing prompt shown when the exercise opens. One sentence that
+   *  states the PRINCIPLE, never the solution: "You cannot jump over your own
+   *  piece. Go around it." — not "Move to b1, then b3". */
+  playerPrompt?: string;
+  /** Authoring-only. What the player should walk away knowing. Read by content
+   *  reviewers; never rendered. */
+  learningObjective?: string;
   /** Lowercase kebab-case content tags (e.g. "straight-line",
    *  "blocked-file", "detour", "capture", "edge-control", "rook-lift").
    *  Used for authoring organization + future rotation variety bias. */

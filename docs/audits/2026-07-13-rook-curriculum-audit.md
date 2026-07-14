@@ -33,11 +33,25 @@ Cinco hallazgos, en orden de gravedad:
    capturar. `rook-9` tiene dos caballos, pero son bloqueadores incapturables. El tag anuncia una
    lección que el motor no puede entregar.
 
-3. **🔴 El jugador nunca lee qué está aprendiendo.** `GENERATED_EXERCISE_DESCRIPTIONS` es `{}`
-   (`puzzles.generated.ts:2325`), así que `resolveExerciseDescription` cae al fallback y la UI muestra
-   literalmente **"Exercise 1"… "Exercise 10"** (`editorial.ts:1265`). **El principio existe en los
-   datos (`tags`) y muere ahí.** El campo `objective` del tipo `Exercise` (`types.ts:46`) ya está
-   declarado — y está vacío en los 10.
+3. **🔴 El jugador lee una ETIQUETA, no una lección — y dos de ellas le mienten.**
+
+   > ⚠️ **CORRECCIÓN (2026-07-13, durante A1/A7).** La v1 de este punto afirmaba que la UI mostraba
+   > literalmente **"Exercise 1"… "Exercise 10"**. **ERA FALSO.** `GENERATED_EXERCISE_DESCRIPTIONS`
+   > sí estaba vacío, pero `resolveExerciseDescription` tiene **un escalón intermedio que no vi**:
+   > `EXERCISE_DESCRIPTIONS` (`editorial.ts:1271`), un mapa i18n con una etiqueta por cada id. El
+   > fallback `Exercise {n}` **nunca se alcanzaba**. Verifiqué mal: busqué `"rook-1"` en `src/` y sólo
+   > miré los hits de tests, sin abrir el resolver hasta el final.
+
+   Lo que el jugador **sí** leía era un **nombre**, no un principio: *"Horizontal move"*, *"Around the
+   wall"*, *"Boxed-in square"*. Nombran la postal, no enseñan la regla — y **el ejercicio no dice en
+   ninguna parte qué principio practica**.
+
+   **Y la mentira de los tags también llegaba a la pantalla**: `rook-4` = *"Corner capture"*, `rook-5`
+   = *"Cross capture"*, `rook-9` = *"Capture detour"* — **en tableros donde no hay absolutamente nada
+   que capturar**. No era sólo metadata sucia: **el jugador leía la palabra "capture" y el juego no le
+   permitía capturar nada.**
+
+   El campo `objective` del tipo `Exercise` (`types.ts:46`) ya estaba declarado — y vacío en los 10.
 
 4. **🟠 Hay ejercicios duplicados y un temario con huecos.** `rook-4` y `rook-5` son el **mismo
    ejercicio** (giro en L, 2 movimientos, tablero vacío) con distintas coordenadas. `rook-2` y

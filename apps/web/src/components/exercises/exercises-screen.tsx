@@ -2651,6 +2651,7 @@ export function ExercisesScreen({
           phase={storeOpen ? "ready" : phase}
           targetLabel={targetLabel}
           pieceHint={pieceHint}
+          exercisePrompt={currentExercise.playerPrompt}
           isCapture={Boolean(currentExercise.isCapture)}
           isDockSheetOpen={activeDockTab !== null}
           labyrinthMode={effectiveLabyrinthMode}
@@ -2973,6 +2974,7 @@ export function ExercisesScreen({
             pieceType={selectedPiece}
             targetLabel={targetLabel}
             isCapture={Boolean(currentExercise.isCapture)}
+            exercisePrompt={currentExercise.playerPrompt}
             onPlay={markOnboarded}
           />
         ) : null}

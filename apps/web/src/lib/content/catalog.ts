@@ -36,6 +36,9 @@ const TIERS: ExerciseTier[] = ["easy", "medium", "hard"];
 export type LabyrinthRecord = {
   id?: string; piece: PieceId; fen: string; target: string; mover?: string;
   tier?: ExerciseTier; tags?: string[]; explanation?: string; order: number;
+  /* Pedagogy (A1) — curated copy. `title` is what the drawer renders; the
+   * linter requires all four on curated pieces. */
+  principle?: string; title?: string; playerPrompt?: string; learningObjective?: string;
   /** Soft-delete flag. A disabled record stays in content/*.json (so it can
    *  be re-enabled from the builder) but is excluded from the generated
    *  catalog, so the game never surfaces it. Absent/false → live. */
@@ -64,11 +67,30 @@ function toExerciseFields(m: MappedPuzzle) {
   return rest;
 }
 
+export type BuildCatalogOptions = {
+  /** Enforce complete pedagogy on curated pieces (lib/content/lint.ts).
+   *
+   *  ON for `pnpm import-puzzles` — the gate everything must cross before it can
+   *  ship. A curated exercise with no title does not compile there, which is
+   *  what makes the "Exercise N" fallback unreachable in the shipped catalog.
+   *
+   *  OFF by default, because the other callers are AUTHORING paths, and a draft
+   *  is allowed to be incomplete:
+   *   - the Supabase overlay has no columns for the four fields yet, so
+   *     enforcing it would silently drop every rook row the builder publishes;
+   *   - the builder's write routes would refuse a rook exercise until their UI
+   *     grows the fields.
+   *  Both still meet the gate at import time, which fails loudly and early. */
+  requirePedagogy?: boolean;
+};
+
 export function buildCatalog(
   rows: string[][],
   labRecords: LabyrinthRecord[] = [],
   exerciseRecords: ExerciseRecord[] = [],
+  options: BuildCatalogOptions = {},
 ): BuiltCatalog {
+  const requirePedagogy = options.requirePedagogy ?? false;
   const errors: string[] = [];
   const warnings: string[] = [];
   const exercises = emptyByPiece();
@@ -94,7 +116,9 @@ export function buildCatalog(
     // Lint BEFORE the solvability bail-out: a target buried under a blocker is
     // ALSO unsolvable, and "no path" alone sends the author hunting for a routing
     // bug instead of the one square at fault.
-    const lint = lintPuzzle(input.piece, mapped, bfs?.optimalMoves ?? 0, label);
+    const lint = lintPuzzle(input.piece, mapped, bfs?.optimalMoves ?? 0, label, {
+      requirePedagogy,
+    });
     errors.push(...lint.errors);
     warnings.push(...lint.warnings);
     if (lint.errors.length) return;
@@ -111,7 +135,12 @@ export function buildCatalog(
     exercise.__order = order;
     if (input.kind === "labyrinth") labyrinths[input.piece].push(exercise);
     else exercises[input.piece].push(exercise);
-    if (mapped.objective) descriptions[id] = mapped.objective;
+    // The descriptions map is what `resolveExerciseDescription` renders in the
+    // drawer, so the curated TITLE owns it. `objective` stays the fallback for
+    // uncurated pieces (it is authoring prose, which is why it never read well
+    // as a row label — and why every row said "Exercise N" instead).
+    const rowLabel = mapped.title ?? mapped.objective;
+    if (rowLabel) descriptions[id] = rowLabel;
   };
 
   body.forEach((r, i) => {
@@ -134,6 +163,8 @@ export function buildCatalog(
     addPuzzle({
       kind: "labyrinth", piece: rec.piece, tier: rec.tier ?? "medium", fen: rec.fen,
       target: rec.target, mover: rec.mover, tags: rec.tags, explanation: rec.explanation,
+      principle: rec.principle, title: rec.title,
+      playerPrompt: rec.playerPrompt, learningObjective: rec.learningObjective,
     }, `labyrinths.json '${rec.id ?? rec.fen}'`, rec.id, rec.order);
   }
 
@@ -143,6 +174,8 @@ export function buildCatalog(
     addPuzzle({
       kind: "exercise", piece: rec.piece, tier: rec.tier ?? "medium", fen: rec.fen,
       target: rec.target, mover: rec.mover, tags: rec.tags, explanation: rec.explanation,
+      principle: rec.principle, title: rec.title,
+      playerPrompt: rec.playerPrompt, learningObjective: rec.learningObjective,
     }, `exercises.json '${rec.id ?? rec.fen}'`, rec.id, rec.order);
   }
 

@@ -14,6 +14,10 @@ vi.mock("node:fs", () => ({ ...fsMocks, default: fsMocks }));
 import { writeBaselineRecord } from "../baseline-write";
 import type { LabyrinthRecord } from "@/lib/labyrinth-builder/store";
 
+/** Rook is a CURATED piece (lib/content/lint.ts), so a rook exercise without
+ *  pedagogy no longer validates — the same gate that makes "Exercise N"
+ *  unreachable. Carrying the copy here also proves the four fields survive the
+ *  builder's write path, not just the CLI import. */
 const VALID_EXERCISE: LabyrinthRecord = {
   piece: "rook",
   fen: "8/8/8/8/8/8/8/R7 w - - 0 1",
@@ -23,6 +27,10 @@ const VALID_EXERCISE: LabyrinthRecord = {
   tags: ["straight-line"],
   order: 2,
   id: "rook-ex",
+  principle: "rank-movement",
+  title: "Move along the rank",
+  playerPrompt: "Reach the star without leaving the rank.",
+  learningObjective: "The player recognises horizontal rook movement.",
 };
 
 // Boxed rook with no path from b2 to a8 — unsolvable.

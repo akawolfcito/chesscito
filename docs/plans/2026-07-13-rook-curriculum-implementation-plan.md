@@ -79,6 +79,36 @@ eficiente.
 | `computeStars`: 3★ si `movesUsed <= optimalMoves` | `scoring.ts:13` | Si el tablero es más fácil de lo que dice `optimalMoves`, **3★ automáticas**. |
 | Muros sólo se dibujan en `mode === "labyrinth"` | `board.ts:541-542` | En `practice` los obstáculos **no se ven** — aunque se pasaran. |
 
+### 3.0 — 🔴 TERCERA CORRECCIÓN (añadida durante A1/A7): el fallback `Exercise N` NUNCA se veía
+
+**La auditoría, y la primera versión de este plan, afirmaron que la UI mostraba "Exercise 1…10".
+ERA FALSO.** `resolveExerciseDescription` tiene **tres** escalones, no dos: mapa generado (vacío) →
+**`EXERCISE_DESCRIPTIONS` (`editorial.ts:1271`)** → fallback. Ese mapa i18n del medio **siempre tuvo una
+etiqueta por ejercicio**, así que el fallback era inalcanzable.
+
+**Qué cambia y qué NO cambia:**
+
+- ❌ **NO era cierto** que el jugador viera *"Exercise 1"*. Veía *"Horizontal move"*, *"Around the
+  wall"*, *"Boxed-in square"*.
+- ✅ **SIGUE SIENDO CIERTO** que el jugador **no lee la lección**: esas etiquetas **nombran la postal**,
+  no enseñan el principio.
+- 🔴 **Y es PEOR de lo que dijo la auditoría en otro eje**: la mentira de la captura **llegaba a la
+  pantalla**. `rook-4` = *"Corner capture"*, `rook-5` = *"Cross capture"*, `rook-9` = *"Capture
+  detour"* — **en tableros sin nada que capturar**. No era metadata sucia: **era una promesa rota
+  frente al jugador.**
+
+**Consecuencia para A7:** su trabajo **no es** "matar el fallback" (ya era inalcanzable). Es
+**reemplazar etiquetas-nombre, algunas falsas, por título + prompt curados**. El fallback se conserva
+en el código como defensa y **el linter lo vuelve inalcanzable para las piezas curadas** — que es lo
+que se pidió.
+
+**Deuda menor que queda abierta:** las 10 entradas de torre en `EXERCISE_DESCRIPTIONS`
+(`editorial.ts:1271-1281`) quedaron **muertas** (el mapa generado gana) y **dos siguen mintiendo**
+("Corner capture", "Cross capture"). No se borran en este bloque para no tocar la paridad
+`editorial.ts` ⇄ `messages/es.ts`. **Son inalcanzables, pero conviene limpiarlas.**
+
+---
+
 ### 3.1 — Las dos correcciones a la auditoría
 
 **🔴 CORRECCIÓN 1 — Los obstáculos de ejercicio se descartan (hallazgo nuevo, el más grave del plan).**

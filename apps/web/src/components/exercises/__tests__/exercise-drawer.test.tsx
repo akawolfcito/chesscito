@@ -41,17 +41,17 @@ describe("ExerciseDrawer — legacy (no visibleExerciseIds)", () => {
   it("renders the full pool and locks beyond the linear senda", () => {
     render(<ExerciseDrawer {...baseProps} onNavigate={vi.fn()} />);
     // Full list present.
-    expect(screen.getByText("Horizontal move")).toBeInTheDocument(); // rook-1
-    expect(screen.getByText("Boxed-in square")).toBeInTheDocument(); // rook-8
+    expect(screen.getByText("Move along the rank")).toBeInTheDocument(); // rook-1
+    expect(screen.getByText("The rook is not a bishop")).toBeInTheDocument(); // rook-8
     // Fresh progress → only index 0 unlocked; a later one is path-locked.
-    const locked = screen.getByText("Cross capture").closest("button"); // rook-5
+    const locked = screen.getByText("Turn the other corner").closest("button"); // rook-5
     expect(locked).toHaveAttribute("data-locked", "true");
   });
 
   it("navigates by pool index for an unlocked row", () => {
     const onNavigate = vi.fn();
     render(<ExerciseDrawer {...baseProps} onNavigate={onNavigate} />);
-    clickRow("Horizontal move"); // rook-1, pool index 0
+    clickRow("Move along the rank"); // rook-1, pool index 0
     expect(onNavigate).toHaveBeenCalledWith(0);
   });
 });
@@ -67,12 +67,12 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
         visibleExerciseIds={visible}
       />,
     );
-    expect(screen.getByText("Center to edge")).toBeInTheDocument(); // rook-3
-    expect(screen.getByText("Around the wall")).toBeInTheDocument(); // rook-6
-    expect(screen.getByText("Boxed-in square")).toBeInTheDocument(); // rook-8
+    expect(screen.getByText("The file works both ways")).toBeInTheDocument(); // rook-3
+    expect(screen.getByText("Find the shortest route")).toBeInTheDocument(); // rook-6
+    expect(screen.getByText("The rook is not a bishop")).toBeInTheDocument(); // rook-8
     // Outside the set → not rendered.
-    expect(screen.queryByText("Horizontal move")).not.toBeInTheDocument(); // rook-1
-    expect(screen.queryByText("Vertical move")).not.toBeInTheDocument(); // rook-2
+    expect(screen.queryByText("Move along the rank")).not.toBeInTheDocument(); // rook-1
+    expect(screen.queryByText("Move along the file")).not.toBeInTheDocument(); // rook-2
   });
 
   /* Regression (2026-07-09): rotation hid every exercise the player had
@@ -89,10 +89,10 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
         visibleExerciseIds={visible}
       />,
     );
-    expect(screen.getByText("Horizontal move")).toBeInTheDocument(); // rook-1
-    expect(screen.getByText("Vertical move")).toBeInTheDocument(); // rook-2
+    expect(screen.getByText("Move along the rank")).toBeInTheDocument(); // rook-1
+    expect(screen.getByText("Move along the file")).toBeInTheDocument(); // rook-2
     // Unplayed and unrotated stays hidden.
-    expect(screen.queryByText("Corner capture")).not.toBeInTheDocument(); // rook-4
+    expect(screen.queryByText("Turn the corner")).not.toBeInTheDocument(); // rook-4
   });
 
   it("a completed exercise surfaced by the rotation fix is replayable", () => {
@@ -106,7 +106,7 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
         visibleExerciseIds={visible}
       />,
     );
-    clickRow("Horizontal move"); // rook-1 → pool index 0
+    clickRow("Move along the rank"); // rook-1 → pool index 0
     expect(onNavigate).toHaveBeenCalledWith(0);
   });
 
@@ -120,7 +120,7 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
         visibleExerciseIds={visible}
       />,
     );
-    expect(screen.getByText("Boxed-in square").closest("button")).toHaveAttribute("data-locked", "true");
+    expect(screen.getByText("The rook is not a bishop").closest("button")).toHaveAttribute("data-locked", "true");
   });
 
   it("navigates with the REAL pool index, not the visible-slot index", () => {
@@ -135,8 +135,8 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
         visibleExerciseIds={visible}
       />,
     );
-    // "Boxed-in square" = rook-8 = pool index 7 (the 3rd visible row).
-    clickRow("Boxed-in square");
+    // "The rook is not a bishop" = rook-8 = pool index 7 (the 3rd visible row).
+    clickRow("The rook is not a bishop");
     expect(onNavigate).toHaveBeenCalledWith(7);
   });
 });
@@ -254,17 +254,17 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
     expect(screen.queryByText("Labyrinths")).not.toBeInTheDocument();
     // Labyrinth 1's anchor is floored to LABYRINTH_MIN_EXERCISES (3), not
     // the stars-only ceil(6/3)=2 — so it renders AFTER the third exercise
-    // ("Center to edge", rook-3) and BEFORE the fourth ("Corner capture",
+    // ("The file works both ways", rook-3) and BEFORE the fourth ("Turn the corner",
     // rook-4), never earlier than the floor allows.
     const texts = screen
       .getAllByRole("button", { hidden: true })
       .map((b) => b.textContent ?? "");
     const labAt = texts.findIndex((t) => t.includes("Labyrinth 1"));
     const thirdExerciseAt = texts.findIndex((t) =>
-      t.includes("Center to edge"),
+      t.includes("The file works both ways"),
     );
     const fourthExerciseAt = texts.findIndex((t) =>
-      t.includes("Corner capture"),
+      t.includes("Turn the corner"),
     );
     expect(labAt).toBeGreaterThan(-1);
     expect(thirdExerciseAt).toBeGreaterThan(-1);
@@ -276,7 +276,7 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
 
 describe("ExerciseDrawer — overlay descriptions (db-content)", () => {
   it("renders an overlay description from ContentCatalogProvider over the baseline text", () => {
-    // rook-1 resolves to "Horizontal move" from the baseline generated map.
+    // rook-1 resolves to "Move along the rank" from the baseline generated map.
     // An overlay description for rook-1 must win when the drawer threads the
     // injected descriptions map from context.
     const overlay = {
@@ -293,12 +293,12 @@ describe("ExerciseDrawer — overlay descriptions (db-content)", () => {
       </ContentCatalogProvider>,
     );
     expect(screen.getByText("Overlay rook description")).toBeInTheDocument();
-    expect(screen.queryByText("Horizontal move")).not.toBeInTheDocument();
+    expect(screen.queryByText("Move along the rank")).not.toBeInTheDocument();
   });
 
   it("falls back to the baseline description with no provider", () => {
     render(<ExerciseDrawer {...baseProps} onNavigate={vi.fn()} />);
-    expect(screen.getByText("Horizontal move")).toBeInTheDocument();
+    expect(screen.getByText("Move along the rank")).toBeInTheDocument();
   });
 });
 
@@ -325,7 +325,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
         quotaState={quotaAtLimit}
       />,
     );
-    const row = screen.getByText("Horizontal move").closest("button");
+    const row = screen.getByText("Move along the rank").closest("button");
     expect(row).toBeEnabled();
   });
 
@@ -341,7 +341,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
       />,
     );
     // rook-1 should be enabled (consumed today)
-    const row = screen.getByText("Horizontal move").closest("button");
+    const row = screen.getByText("Move along the rank").closest("button");
     expect(row).toBeEnabled();
   });
 
@@ -355,7 +355,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
         quotaState={quotaAtLimit}
       />,
     );
-    const row = screen.getByText("Vertical move").closest("button"); // rook-2
+    const row = screen.getByText("Move along the file").closest("button"); // rook-2
     expect(row).toHaveAttribute("data-locked", "true");
   });
 
@@ -370,7 +370,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
         quotaState={quotaAtLimit}
       />,
     );
-    const row = screen.getByText("Vertical move").closest("button"); // rook-2
+    const row = screen.getByText("Move along the file").closest("button"); // rook-2
     expect(row).toHaveAttribute("data-quota-locked", "true");
   });
 
@@ -384,7 +384,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
       />,
     );
     // rook-1 (index 0) is always unlocked in legacy mode
-    const row = screen.getByText("Horizontal move").closest("button");
+    const row = screen.getByText("Move along the rank").closest("button");
     expect(row).toBeEnabled();
   });
 

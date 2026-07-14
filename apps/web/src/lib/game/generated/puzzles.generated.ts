@@ -18,7 +18,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "easy",
       "tags": [
         "straight-line"
-      ]
+      ],
+      "principle": "rank-movement",
+      "title": "Move along the rank",
+      "playerPrompt": "Reach the star without leaving the rank.",
+      "learningObjective": "The player recognises the rook's horizontal movement along a rank."
     },
     {
       "id": "rook-2",
@@ -34,7 +38,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "easy",
       "tags": [
         "straight-line"
-      ]
+      ],
+      "principle": "file-movement",
+      "title": "Move along the file",
+      "playerPrompt": "Now go straight up the file.",
+      "learningObjective": "The player recognises the rook's vertical movement along a file."
     },
     {
       "id": "rook-3",
@@ -50,7 +58,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "easy",
       "tags": [
         "straight-line"
-      ]
+      ],
+      "principle": "file-movement",
+      "title": "The file works both ways",
+      "playerPrompt": "A file runs down as well as up. Take the star.",
+      "learningObjective": "The player sees that direction along a file is free. (Duplicates rook-2's principle; A3 repurposes this slot to teach variable distance.)"
     },
     {
       "id": "rook-4",
@@ -66,7 +78,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "easy",
       "tags": [
         "corner-turn"
-      ]
+      ],
+      "principle": "direction-change",
+      "title": "Turn the corner",
+      "playerPrompt": "Change direction between moves — never inside one.",
+      "learningObjective": "The player learns the rook turns BETWEEN moves: an L-shaped route costs two moves, not one."
     },
     {
       "id": "rook-5",
@@ -82,7 +98,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "easy",
       "tags": [
         "corner-turn"
-      ]
+      ],
+      "principle": "direction-change",
+      "title": "Turn the other corner",
+      "playerPrompt": "Same idea, mirrored. Two moves, one turn.",
+      "learningObjective": "Reinforces rook-4. (Same principle and difficulty; A4 replaces this slot with 'The rook is not a bishop'.)"
     },
     {
       "id": "rook-6",
@@ -185,7 +205,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "detour",
         "blocked-file"
-      ]
+      ],
+      "principle": "route-planning",
+      "title": "Find the shortest route",
+      "playerPrompt": "The file is shut. Many roads work — find the shortest.",
+      "learningObjective": "The player plans around a blocked file instead of pushing into it."
     },
     {
       "id": "rook-7",
@@ -260,7 +284,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "detour",
         "blocked-file"
-      ]
+      ],
+      "principle": "route-planning-advanced",
+      "title": "Plan the whole route",
+      "playerPrompt": "Look before you move. Plan all four.",
+      "learningObjective": "The player plans a multi-leg route ahead of the first move rather than improvising."
     },
     {
       "id": "rook-8",
@@ -287,7 +315,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "detour",
         "boxed-target"
-      ]
+      ],
+      "principle": "no-diagonal",
+      "title": "The rook is not a bishop",
+      "playerPrompt": "The star is one diagonal step away — and the rook needs four moves.",
+      "learningObjective": "The player learns the rook never moves diagonally: an adjacent diagonal square can cost a long way around."
     },
     {
       "id": "rook-9",
@@ -314,7 +346,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "friendly-blocker",
         "detour"
-      ]
+      ],
+      "principle": "friendly-blocker",
+      "title": "Your own piece blocks the way",
+      "playerPrompt": "You cannot jump over your own piece. Go around it.",
+      "learningObjective": "The player learns a friendly piece stops the rook's ray and cannot be captured."
     },
     {
       "id": "rook-10",
@@ -350,7 +386,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "detour",
         "blocked-file",
         "rook-lift"
-      ]
+      ],
+      "principle": "blocked-file",
+      "title": "The file is closed",
+      "playerPrompt": "The file is shut. Step out, climb, and come back.",
+      "learningObjective": "The player learns to leave a blocked file, travel on a free one, and re-enter above the blocker."
     }
   ],
   "bishop": [
@@ -2319,4 +2359,15 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
   ]
 };
 
-export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {};
+export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
+  "rook-1": "Move along the rank",
+  "rook-2": "Move along the file",
+  "rook-3": "The file works both ways",
+  "rook-4": "Turn the corner",
+  "rook-5": "Turn the other corner",
+  "rook-6": "Find the shortest route",
+  "rook-7": "Plan the whole route",
+  "rook-8": "The rook is not a bishop",
+  "rook-9": "Your own piece blocks the way",
+  "rook-10": "The file is closed"
+};

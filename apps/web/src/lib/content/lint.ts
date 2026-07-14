@@ -24,6 +24,18 @@ import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
 
 export type LintResult = { errors: string[]; warnings: string[] };
 
+/**
+ * Pieces whose EXERCISES must carry complete pedagogy (`principle`, `title`,
+ * `playerPrompt`, `learningObjective`). Missing copy is a build error here — the
+ * "Exercise {n}" fallback survives in code as a defence, but for a curated piece
+ * it is unreachable, because content without a title never compiles.
+ *
+ * A piece joins this list the moment its curriculum is curated. Rook is first
+ * (2026-07-13); the other five still ship uncurated and must not break the build
+ * for a lesson nobody has written yet.
+ */
+export const CURATED_PIECES: readonly PieceId[] = ["rook"];
+
 const samePos = (a: BoardPosition, b: BoardPosition) =>
   a.file === b.file && a.rank === b.rank;
 
@@ -39,7 +51,9 @@ export function lintPuzzle(
   mapped: MappedPuzzle,
   optimalMoves: number,
   label: string,
+  options: { requirePedagogy?: boolean } = {},
 ): LintResult {
+  const requirePedagogy = options.requirePedagogy ?? true;
   const errors: string[] = [];
   const warnings: string[] = [];
   const tags = mapped.tags ?? [];
@@ -49,6 +63,27 @@ export function lintPuzzle(
   const at = (p: BoardPosition) => posToSquare(p);
 
   /* ── Errors — decidable from the board ─────────────────────────── */
+
+  // Curated pieces must say what they teach. This is the rule that kills the
+  // "Exercise {n}" fallback at the source: a rook exercise with no title does
+  // not compile, so it can never reach a player unnamed.
+  if (requirePedagogy && mapped.kind === "exercise" && CURATED_PIECES.includes(piece)) {
+    const missing = (
+      [
+        ["principle", mapped.principle],
+        ["title", mapped.title],
+        ["playerPrompt", mapped.playerPrompt],
+        ["learningObjective", mapped.learningObjective],
+      ] as const
+    )
+      .filter(([, v]) => !v)
+      .map(([k]) => k);
+    if (missing.length > 0) {
+      errors.push(
+        `${label}: ${piece} is a curated piece — missing pedagogy: ${missing.join(", ")}`,
+      );
+    }
+  }
 
   // A `capture` tag with nothing to capture. The lie that started this linter.
   if (tags.includes("capture") && capturable.length === 0 && !mapped.isCapture) {

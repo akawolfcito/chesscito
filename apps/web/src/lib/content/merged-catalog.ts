@@ -68,10 +68,15 @@ function buildOverlayRow(
     explanation: row.explanation ?? undefined,
     order: row.order,
   };
+  // Pedagogy is NOT enforced on overlay rows: the Supabase table has no columns
+  // for principle/title/playerPrompt/learningObjective, so requiring them would
+  // drop every rook row the builder publishes. Overlay rows inherit the
+  // baseline's copy; adding the columns is the gate for turning this on.
   const cat = buildCatalog(
     [],
     row.kind === "labyrinth" ? [rec] : [],
     row.kind === "exercise" ? [rec] : [],
+    { requirePedagogy: false },
   );
   if (cat.errors.length) return null;
   const pool = row.kind === "labyrinth" ? cat.labyrinths : cat.exercises;

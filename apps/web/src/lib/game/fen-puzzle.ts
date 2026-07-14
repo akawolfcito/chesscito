@@ -53,6 +53,11 @@ export type PuzzleInput = {
   tier: ExerciseTier;
   tags?: string[];
   explanation?: string;
+  /* Pedagogy (A1) — curated, carried through the FEN round-trip untouched. */
+  principle?: string;
+  title?: string;
+  playerPrompt?: string;
+  learningObjective?: string;
 };
 
 export type MappedPuzzle = {
@@ -66,6 +71,10 @@ export type MappedPuzzle = {
   tier: ExerciseTier;
   tags?: string[];
   objective?: string;
+  principle?: string;
+  title?: string;
+  playerPrompt?: string;
+  learningObjective?: string;
 };
 
 const samePos = (a: BoardPosition, b: BoardPosition) => a.file === b.file && a.rank === b.rank;
@@ -116,7 +125,18 @@ export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
     tier: input.tier,
     tags: input.tags && input.tags.length ? input.tags : undefined,
     objective: input.explanation && input.explanation.trim() ? input.explanation.trim() : undefined,
+    principle: trimmed(input.principle),
+    title: trimmed(input.title),
+    playerPrompt: trimmed(input.playerPrompt),
+    learningObjective: trimmed(input.learningObjective),
   };
+}
+
+/** Blank-or-whitespace collapses to undefined, so "present but empty" can never
+ *  masquerade as curated copy — the linter treats both as missing. */
+function trimmed(v: string | undefined): string | undefined {
+  const s = v?.trim();
+  return s ? s : undefined;
 }
 
 /** FNV-1a → base36, 8 chars. Content-addressed so authoring order never

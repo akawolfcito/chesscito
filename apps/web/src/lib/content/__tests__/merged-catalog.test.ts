@@ -55,8 +55,18 @@ function row(over: Partial<ContentOverlayRow> = {}): ContentOverlayRow {
 }
 
 // One baseline rook exercise: a1 → h1, order 0, with a description.
+// Rook is a curated piece, so BASELINE content must carry its pedagogy (the gate
+// that makes "Exercise N" unreachable). Overlay rows are exempt — the Supabase
+// table has no columns for it yet — which is exactly what `row()` below models.
 const BASE = baselineWith([
-  { id: "rook-base-1", piece: "rook", fen: EMPTY_BOARD, target: "h1", mover: "a1", order: 0, explanation: "Base one" },
+  {
+    id: "rook-base-1", piece: "rook", fen: EMPTY_BOARD, target: "h1", mover: "a1",
+    order: 0, explanation: "Base one",
+    principle: "rank-movement",
+    title: "Move along the rank",
+    playerPrompt: "Reach the star without leaving the rank.",
+    learningObjective: "The player recognises horizontal rook movement.",
+  },
 ]);
 
 describe("mergeOverlay", () => {

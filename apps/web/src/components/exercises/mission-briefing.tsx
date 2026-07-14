@@ -11,6 +11,9 @@ type MissionBriefingProps = {
   pieceType: PieceId;
   targetLabel: string;
   isCapture: boolean;
+  /** Curated one-line prompt for the ACTIVE exercise. Absent on uncurated
+   *  pieces → the generic per-piece movement hint stands in. */
+  exercisePrompt?: string;
   onPlay: () => void;
 };
 
@@ -40,6 +43,7 @@ export function MissionBriefing({
   pieceType,
   targetLabel,
   isCapture,
+  exercisePrompt,
   onPlay,
 }: MissionBriefingProps) {
   const t = useTranslations("MISSION_BRIEFING_COPY");
@@ -67,7 +71,9 @@ export function MissionBriefing({
   const objective = isCapture
     ? t("captureHint")
     : t("moveObjective", { piece: pieceName, target: targetLabel });
-  const hint = t(`moveHint.${pieceType}`);
+  // The curated prompt states the lesson THIS exercise teaches; the generic
+  // per-piece hint only restates how the piece moves. Curated copy wins (A1/A7).
+  const hint = exercisePrompt ?? t(`moveHint.${pieceType}`);
 
   function handleDismiss() {
     setExiting(true);

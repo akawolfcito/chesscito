@@ -18,17 +18,28 @@ import { buildCatalog, type ExerciseRecord } from "@/lib/content/catalog";
  * Plan: docs/plans/2026-07-13-rook-curriculum-implementation-plan.md (A8, §11)
  */
 
+/** Rook is a CURATED piece, so every fixture must carry complete pedagogy or the
+ *  linter rejects it on that ground alone — which is the point of the rule, and
+ *  is asserted on its own below. The board-level rules are what these fixtures
+ *  are here to exercise, so the copy is present and boring. */
 const base: ExerciseRecord = {
   piece: "rook",
   fen: "8/8/8/8/8/8/8/R7 w - - 0 1",
   mover: "a1",
   target: "h1",
   order: 0,
+  principle: "rank-movement",
+  title: "Move along the rank",
+  playerPrompt: "Reach the star without leaving the rank.",
+  learningObjective: "The player recognises horizontal rook movement.",
 };
 
-/** Build one exercise and return whatever the linter said about it. */
+/** Build one exercise and return whatever the linter said about it. Runs with the
+ *  release gate ON — the same setting `pnpm import-puzzles` uses. */
 function lint(rec: Partial<ExerciseRecord>) {
-  const cat = buildCatalog([], [], [{ ...base, ...rec } as ExerciseRecord]);
+  const cat = buildCatalog([], [], [{ ...base, ...rec } as ExerciseRecord], {
+    requirePedagogy: true,
+  });
   return { errors: cat.errors, warnings: cat.warnings };
 }
 
@@ -89,6 +100,43 @@ describe("semantic linter — errors (deterministic)", () => {
     const { errors } = lint({ id: "x", tags: ["friendly-blocker"] });
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatch(/friendly-blocker/);
+  });
+
+  it("rejects a curated exercise with no pedagogy — this is what kills 'Exercise N'", () => {
+    // The fallback stays in the code as a defence for uncurated pieces. For a
+    // curated piece it must be unreachable, and the only way to guarantee that
+    // is to refuse to compile content with nothing to say.
+    const { errors } = lint({
+      id: "x",
+      title: undefined,
+      playerPrompt: undefined,
+      principle: undefined,
+      learningObjective: undefined,
+    });
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(/missing pedagogy/);
+    expect(errors[0]).toMatch(/title/);
+  });
+
+  it("treats whitespace-only copy as missing, not as curated", () => {
+    const { errors } = lint({ id: "x", title: "   " });
+    expect(errors[0]).toMatch(/missing pedagogy: title/);
+  });
+
+  it("leaves uncurated pieces alone", () => {
+    // Five pieces still ship uncurated. The linter must not break their build
+    // for a lesson nobody has written yet.
+    const { errors } = lint({
+      id: "x",
+      piece: "knight",
+      fen: "8/8/8/8/8/8/8/N7 w - - 0 1",
+      target: "b3",
+      principle: undefined,
+      title: undefined,
+      playerPrompt: undefined,
+      learningObjective: undefined,
+    });
+    expect(errors).toHaveLength(0);
   });
 
   it("rejects a target that sits on top of a blocker", () => {
@@ -154,7 +202,9 @@ describe("the shipped catalog is honest", () => {
     const { resolve } = await import("node:path");
     const read = (f: string) =>
       JSON.parse(readFileSync(resolve(process.cwd(), "content", f), "utf8"));
-    const cat = buildCatalog([], read("labyrinths.json"), read("exercises.json"));
+    const cat = buildCatalog([], read("labyrinths.json"), read("exercises.json"), {
+      requirePedagogy: true,
+    });
     expect(cat.errors).toEqual([]);
   });
 });

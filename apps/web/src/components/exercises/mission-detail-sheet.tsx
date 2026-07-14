@@ -21,6 +21,10 @@ type Props = {
   selectedPiece: PieceId;
   targetLabel: string;
   isCapture: boolean;
+  /** Curated one-line prompt for the ACTIVE exercise ("You cannot jump over
+   *  your own piece. Go around it."). Absent on uncurated pieces → the generic
+   *  per-piece movement hint stands in. */
+  exercisePrompt?: string;
   /** Local score, surfaced on the save-score button so the player
    *  knows what they're saving. */
   score: string;
@@ -72,6 +76,7 @@ export function MissionDetailSheet({
   selectedPiece,
   targetLabel,
   isCapture,
+  exercisePrompt,
   score,
   trainingPath,
   onLabyrinthSelect,
@@ -144,7 +149,10 @@ export function MissionDetailSheet({
   const objective = isCapture
     ? tBriefing("captureHint")
     : tBriefing("moveObjective", { piece: pieceName, target: targetLabel });
-  const hint = tBriefing(`moveHint.${selectedPiece}`);
+  // The curated prompt states the lesson THIS exercise teaches; the generic
+  // per-piece hint only restates how the piece moves, which the player already
+  // knows by exercise six. Curated copy wins wherever it exists (A1/A7).
+  const hint = exercisePrompt ?? tBriefing(`moveHint.${selectedPiece}`);
 
   const triggerEl = isValidElement(trigger)
     ? cloneElement(trigger as ReactElement<{ onClick?: (e: ReactMouseEvent) => void }>, {

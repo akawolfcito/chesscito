@@ -29,7 +29,12 @@ async function main() {
   const rows = existsSync(csvPath) ? parseCsv(readFileSync(csvPath, "utf8")) : [];
   const labs = existsSync(labsPath) ? JSON.parse(readFileSync(labsPath, "utf8")) : [];
   const exes = existsSync(exercisesPath) ? JSON.parse(readFileSync(exercisesPath, "utf8")) : [];
-  const cat = buildCatalog(rows, labs, exes);
+  // The gate: nothing ships without its lesson. A curated piece (rook today)
+  // with a missing title/prompt/principle fails HERE, loudly, which is what makes
+  // the "Exercise N" fallback unreachable in the shipped catalog. Authoring paths
+  // (builder routes, Supabase overlay) stay permissive — a draft may be
+  // incomplete; a release may not.
+  const cat = buildCatalog(rows, labs, exes, { requirePedagogy: true });
   if (cat.errors.length) {
     console.error(`import-puzzles: ${cat.errors.length} error(s):`);
     for (const e of cat.errors) console.error("  - " + e);

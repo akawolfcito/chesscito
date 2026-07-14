@@ -9,7 +9,11 @@
     "tags": [
       "straight-line"
     ],
-    "order": 0
+    "order": 0,
+    "principle": "rank-movement",
+    "title": "Move along the rank",
+    "playerPrompt": "Reach the star without leaving the rank.",
+    "learningObjective": "The player recognises the rook's horizontal movement along a rank."
   },
   {
     "id": "rook-2",
@@ -21,7 +25,11 @@
     "tags": [
       "straight-line"
     ],
-    "order": 1
+    "order": 1,
+    "principle": "file-movement",
+    "title": "Move along the file",
+    "playerPrompt": "Now go straight up the file.",
+    "learningObjective": "The player recognises the rook's vertical movement along a file."
   },
   {
     "id": "rook-3",
@@ -33,7 +41,11 @@
     "tags": [
       "straight-line"
     ],
-    "order": 2
+    "order": 2,
+    "principle": "file-movement",
+    "title": "The file works both ways",
+    "playerPrompt": "A file runs down as well as up. Take the star.",
+    "learningObjective": "The player sees that direction along a file is free. (Duplicates rook-2's principle; A3 repurposes this slot to teach variable distance.)"
   },
   {
     "id": "rook-4",
@@ -45,7 +57,11 @@
     "tags": [
       "corner-turn"
     ],
-    "order": 3
+    "order": 3,
+    "principle": "direction-change",
+    "title": "Turn the corner",
+    "playerPrompt": "Change direction between moves — never inside one.",
+    "learningObjective": "The player learns the rook turns BETWEEN moves: an L-shaped route costs two moves, not one."
   },
   {
     "id": "rook-5",
@@ -57,7 +73,11 @@
     "tags": [
       "corner-turn"
     ],
-    "order": 4
+    "order": 4,
+    "principle": "direction-change",
+    "title": "Turn the other corner",
+    "playerPrompt": "Same idea, mirrored. Two moves, one turn.",
+    "learningObjective": "Reinforces rook-4. (Same principle and difficulty; A4 replaces this slot with 'The rook is not a bishop'.)"
   },
   {
     "id": "rook-6",
@@ -70,7 +90,11 @@
       "detour",
       "blocked-file"
     ],
-    "order": 5
+    "order": 5,
+    "principle": "route-planning",
+    "title": "Find the shortest route",
+    "playerPrompt": "The file is shut. Many roads work — find the shortest.",
+    "learningObjective": "The player plans around a blocked file instead of pushing into it."
   },
   {
     "id": "rook-7",
@@ -83,7 +107,11 @@
       "detour",
       "blocked-file"
     ],
-    "order": 6
+    "order": 6,
+    "principle": "route-planning-advanced",
+    "title": "Plan the whole route",
+    "playerPrompt": "Look before you move. Plan all four.",
+    "learningObjective": "The player plans a multi-leg route ahead of the first move rather than improvising."
   },
   {
     "id": "rook-8",
@@ -96,7 +124,11 @@
       "detour",
       "boxed-target"
     ],
-    "order": 7
+    "order": 7,
+    "principle": "no-diagonal",
+    "title": "The rook is not a bishop",
+    "playerPrompt": "The star is one diagonal step away — and the rook needs four moves.",
+    "learningObjective": "The player learns the rook never moves diagonally: an adjacent diagonal square can cost a long way around."
   },
   {
     "id": "rook-9",
@@ -109,7 +141,11 @@
       "friendly-blocker",
       "detour"
     ],
-    "order": 8
+    "order": 8,
+    "principle": "friendly-blocker",
+    "title": "Your own piece blocks the way",
+    "playerPrompt": "You cannot jump over your own piece. Go around it.",
+    "learningObjective": "The player learns a friendly piece stops the rook's ray and cannot be captured."
   },
   {
     "id": "rook-10",
@@ -123,7 +159,11 @@
       "blocked-file",
       "rook-lift"
     ],
-    "order": 9
+    "order": 9,
+    "principle": "blocked-file",
+    "title": "The file is closed",
+    "playerPrompt": "The file is shut. Step out, climb, and come back.",
+    "learningObjective": "The player learns to leave a blocked file, travel on a free one, and re-enter above the blocker."
   },
   {
     "id": "bishop-1",
