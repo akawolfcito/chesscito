@@ -129,40 +129,51 @@ jugador vuelve a la app y el estado se resuelve mal, **lo tiran al ejercicio 1**
 **Medido hoy, no supuesto.** Disco: **425 G usados de 460 G. Contenedor APFS: 7.4 GB libres.**
 El sistema vive crónicamente al 98%: **cualquier** corrida de Playwright es la gota que rebalsa.
 
-### Dónde está el espacio
+### ⚠️ Mi primer diagnóstico estaba MAL. La medición me corrigió.
 
-| Qué | Peso | ¿Seguro de borrar? |
+**Dije:** «el hog son los `node_modules` (21.5 G)». **Falso, y de forma instructiva.**
+
+> **`du` sobre `node_modules` de pnpm MIENTE.** pnpm usa **hard links** contra un store global: cada
+> `node_modules` parece pesar 1.6 GB, pero los bytes existen **una sola vez**. `du` los cuenta una vez
+> por carpeta. Borré **13 GB** de `node_modules` y **recuperé 0.8 GB**.
+
+**Dónde estaba el espacio de verdad** (medido, con `~/Library/pnpm/store` y `~/.npm`):
+
+| Qué | Peso | Resultado |
 | --- | --- | --- |
-| **Chrome** (`Caches/Google` 23 G + `App Support/Google` 23 G) | **~46 G** | Caché sí; el resto es tu perfil |
-| **`node_modules`** — 76 carpetas en `~/development` | **21.5 G** | Sí, en repos dormidos |
-| JetBrains + VS Code + Cursor + Claude (App Support) | ~20 G | Parcial |
-| **Playwright — navegadores viejos** (chromium 1148, 1169 + headless shells) | **~900 M** | **Sí — basura pura** |
-| `e2e-results` de una corrida fallida | 31 M / 3 fallos | Sí |
+| **`~/.npm/_cacache`** — caché de npm | **12 G** | ✅ purgado (`npm cache clean --force`) |
+| **`~/Library/pnpm/store/v10`** — store **huérfano** | **14 G** | ✅ eliminado — el pnpm pineado es **8.10.0**, que usa **v3**. Nadie usaba v10. |
+| `~/Library/pnpm/store/v3` — store activo | 5.5 G | ✅ podado (`pnpm store prune`): 2796 paquetes |
+| **Playwright — chromiums viejos** (1148, 1169 + headless shells) | ~1.9 G | ✅ eliminados. Solo se usa 1208. |
+| Chrome (`Caches/Google` + `App Support/Google`) | ~46 G | ⬜ **intacto** — decidiste no tocarlo |
 
-**Tu hipótesis era correcta, pero parcial.** Playwright **sí** acumula silenciosamente:
-- **3 versiones de Chromium** conviven (`chromium-1148/1169/1208`); descarga la nueva en cada bump y
-  **nunca borra la vieja**. Sólo 1208 se usa.
-- `video: "retain-on-failure"` + `trace: "on-first-retry"` → **31 MB por 3 tests fallidos**. Una VR
-  suite (51 snapshots) que falle feo escribe **GB**, y quedan ahí hasta la próxima corrida.
+**Resultado: 2.9 GB → 33 GB libres.** Suite verde después (5100/5100), Playwright corre.
 
-Pero Playwright es **el gatillo, no el hog**: el hog es Chrome (46 G) + node_modules (21.5 G).
+### Tu hipótesis, evaluada
 
-### Alternativas — de más barata a más estructural
+Tenías razón en el **mecanismo** ("se quedan ahí silenciosamente"), pero el culpable no era Playwright:
 
-1. **Recupero inmediato (~25 G, 5 min):** vaciar caché de Chrome (23 G, se regenera solo) y borrar
-   los chromium viejos de `~/Library/Caches/ms-playwright/` (~900 M).
-2. **`node_modules` de repos dormidos (~15 G):** 76 carpetas para los proyectos que no tocás. Un
-   `pnpm store prune` + borrar `node_modules` de repos inactivos (se reinstalan con un comando).
-3. **Adelgazar los artefactos de Playwright:** `video: "off"` en `playwright.config.ts`. El video es
-   lo pesado; screenshot + trace ya te dan el diagnóstico. **Cambio de una línea.**
-4. **Guard de preflight (lo que evita el crash):** un hook/script que **se niegue a correr Playwright
-   si hay menos de N GB libres**, en vez de morir a mitad de camino y dejar basura. Esto es lo que
-   convierte "se murió codex" en "me avisó antes de empezar".
-5. **Estructural: sacar la VR de la máquina.** Correr la suite visual en CI y no localmente. Es la
-   única opción que deja de pelear por los 7 GB.
+- Playwright **sí** acumula: guarda **un Chromium por versión** que instalaste y **nunca borra el
+  viejo**; y `video: retain-on-failure` escribió **31 MB en 3 tests fallidos** (una VR suite que falle
+  feo escribe GB, y quedan hasta la próxima corrida).
+- Pero eso es **el gatillo, no el hog**. El hog eran **26 GB de caches de paquetes** que ningún
+  proyecto referenciaba — incluido un **store de pnpm entero (v10, 14 GB) que ninguna versión
+  instalada usa**.
 
-**No ejecuté ninguna** — todas tocan cosas fuera del repo y varias son destructivas. Decime cuáles y
-las hago (1, 3 y 4 son las de mejor relación beneficio/riesgo).
+### El residuo específico de chesscito
+
+`.claude/worktrees/` tiene **4 worktrees viejos** (`feat-pr4/5/6`, `victory-nft-permit-mint`), cada uno
+con su `node_modules`. **Por hard links casi no cuestan disco**, pero sí inflan el store y ensucian.
+**Pendiente:** verificar si esas branches están mergeadas y limpiar los worktrees (`git worktree prune`).
+
+### Lo que queda como defensa permanente
+
+- ✅ **Guard de preflight** (commit `8d400213`): Playwright **se niega a arrancar** con < 10 GB libres,
+  en vez de morir a mitad y dejar basura que hace más probable la próxima muerte. **No borra nada.**
+- ⬜ **`video: "off"`** en `playwright.config.ts` — el video es el artefacto pesado; screenshot + trace
+  ya alcanzan para diagnosticar. Cambio de una línea, no lo hice.
+- ⬜ **Higiene periódica:** `npm cache clean --force` + `pnpm store prune` cada tanto. Los caches de
+  paquetes crecen sin techo y **nadie los mira**.
 
 ---
 
