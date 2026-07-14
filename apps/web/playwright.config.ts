@@ -5,6 +5,10 @@ const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 export default defineConfig({
   testDir: "./e2e",
   outputDir: "./e2e-results/artifacts",
+  // Refuse to start when the disk is nearly full, instead of dying mid-suite and
+  // leaving videos and traces behind — which is what makes the NEXT run likelier
+  // to die. Measures and aborts; never deletes. Floor: DISK_MIN_FREE_GB (10).
+  globalSetup: "./scripts/preflight-disk.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
