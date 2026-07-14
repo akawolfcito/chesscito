@@ -9,6 +9,7 @@
 import type { Exercise, ExerciseTier, PieceId } from "@/lib/game/types";
 import { mapFenPuzzle, puzzleId, posToSquare, type PuzzleInput, type MappedPuzzle } from "@/lib/game/fen-puzzle";
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
+import { lintPuzzle } from "@/lib/content/lint";
 
 export function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
@@ -90,6 +91,13 @@ export function buildCatalog(
     try { mapped = mapFenPuzzle(input); } catch (e) { errors.push(`${label}: ${(e as Error).message}`); return; }
     const probe: Exercise = { id: "probe", optimalMoves: 0, ...toExerciseFields(mapped) };
     const bfs = computeExerciseBfs(input.piece, probe);
+    // Lint BEFORE the solvability bail-out: a target buried under a blocker is
+    // ALSO unsolvable, and "no path" alone sends the author hunting for a routing
+    // bug instead of the one square at fault.
+    const lint = lintPuzzle(input.piece, mapped, bfs?.optimalMoves ?? 0, label);
+    errors.push(...lint.errors);
+    warnings.push(...lint.warnings);
+    if (lint.errors.length) return;
     if (!bfs) { errors.push(`${label}: unsolvable (no path) from ${posToSquare(mapped.startPos)} to ${posToSquare(mapped.targetPos)}`); return; }
     const id = idOverride || puzzleId(input.piece, `${input.kind}|${input.fen}|${input.target}|${input.mover ?? ""}`);
     if (seenIds.has(id)) { errors.push(`${label}: duplicate id '${id}'`); return; }
