@@ -66,8 +66,17 @@ describe("LABYRINTHS catalog — per-piece counts (regression guards)", () => {
     );
   };
 
-  it("Rook keeps its 3 migrated labyrinths", () => {
-    hasAll("rook", ["rook-lab-1", "rook-lab-2", "rook-lab-3"]);
+  it("Rook ships its four Rook Rails levels (A10/A11)", () => {
+    // The four migrated rook labs (rook-lab-1/2/3 + rook-gen-*) were replaced by
+    // the designed Rook Rails ladder — new ids because the boards, optimal moves
+    // and taught principle all changed (plan §10.3). Break Through (level 4) is
+    // Phase B and deliberately absent.
+    hasAll("rook", [
+      "rook-rail-one-turn",
+      "rook-rail-two-turns",
+      "rook-rail-dead-end",
+      "rook-rail-two-roads",
+    ]);
   });
 
   it("Bishop keeps its 2 migrated labyrinths", () => {

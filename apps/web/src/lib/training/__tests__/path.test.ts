@@ -292,13 +292,13 @@ describe("buildTrainingPath — catalog coverage and ordering", () => {
     expect(byKind(rook, "labyrinth").map((n) => n.id)).toEqual(
       LABYRINTHS.rook.map((lab) => lab.id),
     );
-    // rook-gen-… and rook-lab-1 both carry order 0 → id breaks the tie, so the
-    // builder test record sorts ahead of rook-lab-1.
+    // Rook Rails ladder, authored order 0..3 (A10/A11). Break Through (level 4)
+    // is Phase B and absent from Delivery 1.
     expect(byKind(rook, "labyrinth").map((n) => n.id)).toEqual([
-      "rook-gen-00q06dtn", // order 0 (id tie-break < rook-lab-1)
-      "rook-lab-1", // order 0
-      "rook-lab-2", // order 1
-      "rook-lab-3", // order 2
+      "rook-rail-one-turn", // order 0
+      "rook-rail-two-turns", // order 1
+      "rook-rail-dead-end", // order 2
+      "rook-rail-two-roads", // order 3
     ]);
   });
 });

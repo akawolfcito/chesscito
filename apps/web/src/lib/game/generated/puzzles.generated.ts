@@ -1410,166 +1410,51 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
 export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
   "rook": [
     {
-      "id": "rook-gen-00q06dtn",
-      "optimalMoves": 5,
+      "id": "rook-rail-one-turn",
+      "optimalMoves": 2,
       "startPos": {
-        "file": 0,
-        "rank": 0
-      },
-      "targetPos": {
-        "file": 7,
-        "rank": 7
-      },
-      "obstacles": [
-        {
-          "file": 0,
-          "rank": 7
-        },
-        {
-          "file": 1,
-          "rank": 7
-        },
-        {
-          "file": 3,
-          "rank": 6
-        },
-        {
-          "file": 4,
-          "rank": 6
-        },
-        {
-          "file": 6,
-          "rank": 6
-        },
-        {
-          "file": 7,
-          "rank": 6
-        },
-        {
-          "file": 1,
-          "rank": 5
-        },
-        {
-          "file": 2,
-          "rank": 5
-        },
-        {
-          "file": 3,
-          "rank": 5
-        },
-        {
-          "file": 6,
-          "rank": 4
-        },
-        {
-          "file": 7,
-          "rank": 4
-        },
-        {
-          "file": 0,
-          "rank": 3
-        },
-        {
-          "file": 1,
-          "rank": 3
-        },
-        {
-          "file": 3,
-          "rank": 3
-        },
-        {
-          "file": 4,
-          "rank": 3
-        },
-        {
-          "file": 5,
-          "rank": 3
-        },
-        {
-          "file": 6,
-          "rank": 3
-        },
-        {
-          "file": 3,
-          "rank": 2
-        },
-        {
-          "file": 6,
-          "rank": 2
-        },
-        {
-          "file": 0,
-          "rank": 1
-        },
-        {
-          "file": 1,
-          "rank": 1
-        },
-        {
-          "file": 5,
-          "rank": 1
-        },
-        {
-          "file": 3,
-          "rank": 0
-        },
-        {
-          "file": 7,
-          "rank": 0
-        }
-      ],
-      "tier": "medium"
-    },
-    {
-      "id": "rook-lab-1",
-      "optimalMoves": 6,
-      "startPos": {
-        "file": 2,
+        "file": 1,
         "rank": 1
       },
       "targetPos": {
-        "file": 4,
-        "rank": 2
+        "file": 6,
+        "rank": 5
       },
       "obstacles": [
-        {
-          "file": 3,
-          "rank": 7
-        },
-        {
-          "file": 5,
-          "rank": 7
-        },
-        {
-          "file": 7,
-          "rank": 7
-        },
         {
           "file": 1,
           "rank": 6
         },
         {
+          "file": 0,
+          "rank": 1
+        },
+        {
+          "file": 2,
+          "rank": 1
+        },
+        {
           "file": 1,
-          "rank": 5
-        },
+          "rank": 0
+        }
+      ],
+      "tier": "medium",
+      "title": "One Turn"
+    },
+    {
+      "id": "rook-rail-two-turns",
+      "optimalMoves": 3,
+      "startPos": {
+        "file": 1,
+        "rank": 1
+      },
+      "targetPos": {
+        "file": 5,
+        "rank": 4
+      },
+      "obstacles": [
         {
-          "file": 3,
-          "rank": 5
-        },
-        {
-          "file": 1,
-          "rank": 4
-        },
-        {
-          "file": 5,
-          "rank": 4
-        },
-        {
-          "file": 7,
-          "rank": 4
-        },
-        {
-          "file": 3,
+          "file": 0,
           "rank": 3
         },
         {
@@ -1581,197 +1466,67 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
           "rank": 2
         },
         {
-          "file": 3,
-          "rank": 2
-        },
-        {
-          "file": 5,
-          "rank": 2
-        },
-        {
-          "file": 3,
-          "rank": 1
-        },
-        {
           "file": 4,
           "rank": 1
         },
         {
-          "file": 0,
-          "rank": 0
-        },
-        {
-          "file": 6,
-          "rank": 0
-        },
-        {
-          "file": 7,
+          "file": 2,
           "rank": 0
         }
       ],
-      "tier": "medium"
+      "tier": "medium",
+      "title": "Two Turns"
     },
     {
-      "id": "rook-lab-2",
-      "optimalMoves": 6,
+      "id": "rook-rail-dead-end",
+      "optimalMoves": 4,
       "startPos": {
-        "file": 3,
-        "rank": 7
-      },
-      "targetPos": {
         "file": 3,
         "rank": 0
       },
-      "obstacles": [
-        {
-          "file": 0,
-          "rank": 7
-        },
-        {
-          "file": 4,
-          "rank": 7
-        },
-        {
-          "file": 5,
-          "rank": 7
-        },
-        {
-          "file": 6,
-          "rank": 7
-        },
-        {
-          "file": 7,
-          "rank": 7
-        },
-        {
-          "file": 0,
-          "rank": 6
-        },
-        {
-          "file": 1,
-          "rank": 6
-        },
-        {
-          "file": 7,
-          "rank": 6
-        },
-        {
-          "file": 0,
-          "rank": 5
-        },
-        {
-          "file": 3,
-          "rank": 5
-        },
-        {
-          "file": 4,
-          "rank": 5
-        },
-        {
-          "file": 5,
-          "rank": 5
-        },
-        {
-          "file": 7,
-          "rank": 5
-        },
-        {
-          "file": 0,
-          "rank": 4
-        },
-        {
-          "file": 3,
-          "rank": 4
-        },
-        {
-          "file": 5,
-          "rank": 4
-        },
-        {
-          "file": 7,
-          "rank": 4
-        },
-        {
-          "file": 0,
-          "rank": 3
-        },
-        {
-          "file": 5,
-          "rank": 3
-        },
-        {
-          "file": 7,
-          "rank": 3
-        },
-        {
-          "file": 0,
-          "rank": 2
-        },
-        {
-          "file": 2,
-          "rank": 2
-        },
-        {
-          "file": 3,
-          "rank": 2
-        },
-        {
-          "file": 4,
-          "rank": 2
-        },
-        {
-          "file": 5,
-          "rank": 2
-        },
-        {
-          "file": 7,
-          "rank": 2
-        },
-        {
-          "file": 0,
-          "rank": 1
-        },
-        {
-          "file": 3,
-          "rank": 1
-        },
-        {
-          "file": 7,
-          "rank": 1
-        },
-        {
-          "file": 0,
-          "rank": 0
-        },
-        {
-          "file": 1,
-          "rank": 0
-        },
-        {
-          "file": 5,
-          "rank": 0
-        },
-        {
-          "file": 6,
-          "rank": 0
-        },
-        {
-          "file": 7,
-          "rank": 0
-        }
-      ],
-      "tier": "medium"
-    },
-    {
-      "id": "rook-lab-3",
-      "optimalMoves": 7,
-      "startPos": {
-        "file": 1,
-        "rank": 2
-      },
       "targetPos": {
         "file": 3,
-        "rank": 3
+        "rank": 5
+      },
+      "obstacles": [
+        {
+          "file": 2,
+          "rank": 3
+        },
+        {
+          "file": 0,
+          "rank": 2
+        },
+        {
+          "file": 3,
+          "rank": 2
+        },
+        {
+          "file": 4,
+          "rank": 1
+        },
+        {
+          "file": 2,
+          "rank": 0
+        },
+        {
+          "file": 5,
+          "rank": 0
+        }
+      ],
+      "tier": "medium",
+      "title": "Dead End"
+    },
+    {
+      "id": "rook-rail-two-roads",
+      "optimalMoves": 6,
+      "startPos": {
+        "file": 0,
+        "rank": 1
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 6
       },
       "obstacles": [
         {
@@ -1783,43 +1538,15 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
           "rank": 6
         },
         {
-          "file": 5,
-          "rank": 6
-        },
-        {
           "file": 6,
           "rank": 6
         },
         {
-          "file": 3,
+          "file": 7,
           "rank": 5
         },
         {
-          "file": 2,
-          "rank": 4
-        },
-        {
-          "file": 3,
-          "rank": 4
-        },
-        {
-          "file": 4,
-          "rank": 4
-        },
-        {
-          "file": 0,
-          "rank": 3
-        },
-        {
-          "file": 2,
-          "rank": 3
-        },
-        {
-          "file": 4,
-          "rank": 3
-        },
-        {
-          "file": 6,
+          "file": 1,
           "rank": 3
         },
         {
@@ -1828,34 +1555,15 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
         },
         {
           "file": 2,
-          "rank": 2
-        },
-        {
-          "file": 6,
-          "rank": 2
-        },
-        {
-          "file": 0,
           "rank": 1
         },
         {
           "file": 1,
-          "rank": 1
-        },
-        {
-          "file": 2,
-          "rank": 1
-        },
-        {
-          "file": 3,
-          "rank": 1
-        },
-        {
-          "file": 4,
-          "rank": 1
+          "rank": 0
         }
       ],
-      "tier": "medium"
+      "tier": "medium",
+      "title": "Two Roads"
     }
   ],
   "bishop": [
@@ -2292,6 +2000,10 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
 };
 
 export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
+  "rook-rail-one-turn": "One Turn",
+  "rook-rail-two-turns": "Two Turns",
+  "rook-rail-dead-end": "Dead End",
+  "rook-rail-two-roads": "Two Roads",
   "rook-1": "Move along the rank",
   "rook-2": "Move along the file",
   "rook-distance-1": "One square is a move too",

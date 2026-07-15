@@ -468,7 +468,12 @@ describe("L2 labyrinth — queen path existence", () => {
 });
 
 describe("L2 labyrinth — rook path existence", () => {
-  const rookLabIds: string[] = ["rook-lab-1", "rook-lab-2", "rook-lab-3"];
+  const rookLabIds: string[] = [
+    "rook-rail-one-turn",
+    "rook-rail-two-turns",
+    "rook-rail-dead-end",
+    "rook-rail-two-roads",
+  ];
 
   it.each(rookLabIds)("%s: BFS reaches target in exactly lab.optimalMoves", (id) => {
     const lab = LABYRINTHS.rook.find((l) => l.id === id);
@@ -550,15 +555,15 @@ describe("L2 labyrinth — bishop path existence", () => {
   );
 });
 
-describe("L2 labyrinth — rook-lab-1 legacy data integrity", () => {
-  it("rook-lab-1 has at least one obstacle and a positive optimal", () => {
+describe("L2 labyrinth — first Rook Rails level data integrity", () => {
+  it("the first rook rail has at least one obstacle and a positive optimal", () => {
     const [first] = LABYRINTHS.rook;
     expect(first).toBeDefined();
     expect(first.obstacles?.length ?? 0).toBeGreaterThan(0);
     expect(first.optimalMoves).toBeGreaterThan(0);
   });
 
-  it("rook-lab-1 obstacles are all inside the 8x8 board", () => {
+  it("the first rook rail's obstacles are all inside the 8x8 board", () => {
     const [first] = LABYRINTHS.rook;
     for (const obstacle of first.obstacles ?? []) {
       expect(obstacle.file).toBeGreaterThanOrEqual(0);
@@ -568,7 +573,7 @@ describe("L2 labyrinth — rook-lab-1 legacy data integrity", () => {
     }
   });
 
-  it("rook-lab-1 start and target are not on an obstacle", () => {
+  it("the first rook rail's start and target are not on an obstacle", () => {
     const [first] = LABYRINTHS.rook;
     const onObstacle = (p: { file: number; rank: number }) =>
       first.obstacles?.some((o) => o.file === p.file && o.rank === p.rank) ?? false;

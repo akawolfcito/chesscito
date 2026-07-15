@@ -23,14 +23,17 @@ describe("generated catalog — fully content-sourced", () => {
     );
   });
 
-  it("keeps the migrated rook labs in authored relative order", () => {
+  it("keeps the Rook Rails ladder in its authored order", () => {
+    // The ladder is a curriculum: One Turn → Two Turns → Dead End → Two Roads,
+    // easiest first. `order` (0..3) pins it, and the sequence must survive the
+    // catalog round-trip.
     const ids = LABYRINTHS.rook.map((e) => e.id);
-    const i1 = ids.indexOf("rook-lab-1");
-    const i2 = ids.indexOf("rook-lab-2");
-    const i3 = ids.indexOf("rook-lab-3");
-    expect(i1).toBeGreaterThanOrEqual(0);
-    expect(i1).toBeLessThan(i2);
-    expect(i2).toBeLessThan(i3);
+    expect(ids).toEqual([
+      "rook-rail-one-turn",
+      "rook-rail-two-turns",
+      "rook-rail-dead-end",
+      "rook-rail-two-roads",
+    ]);
   });
 
   it("EXERCISES.bishop sources entirely from GENERATED_EXERCISES.bishop", () => {
