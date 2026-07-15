@@ -1,102 +1,91 @@
-# Session Handoff — 2026-07-13 (e)
+# Session Handoff — 2026-07-14 (Rook Rails close + Graphify)
 
-> Quinta sesión del día. **No se escribió código de producto: se corrigió el RUMBO.**
-> Empezó como "arranquemos el spec del duelo" y terminó reemplazando la directriz entera.
+## Next session objective (tight, in order)
+1. Install & configure **Graphify**; generate the initial repo graph (no product-logic changes).
+2. Resume the close of **Rook Rails Delivery 1**.
+3. Design + validate the one missing board: **Two Turns**.
+4. Close the four labyrinths visually and technically **before** Phase B.
 
-## Completed
-
-- `57a49e57` **Directriz consolidada** — `docs/product/2026-07-13-direction-where-we-are.md`.
-  Modelo de **frentes → capas → gates**. Reemplaza la directriz binaria del mismo día.
-- `987a6488` **Investigación del duelo preservada** — spec v3 + red-team v3 (marcados
-  **ARTEFACTO HISTÓRICO**, no son el plan de D1) + la probe de device `/dev/duel-link-probe`.
-- Ambos **pusheados a `origin/main`**.
+## Start here
+Read this file, then `docs/audits/2026-07-14-rook-rails-board-audit.md` (the approved
+classification + engine evidence). Plan: `docs/plans/2026-07-13-rook-curriculum-implementation-plan.md`
+(§9 redesign callout). Full session detail: `docs/handoffs/2026-07-14-a9-obstacles-handoff.md`.
 
 ## Current State
+- **Branch**: `fix/exercise-obstacles-a0` · last commit `15f9835d`.
+- **Build**: 🔴 **RED** — 2 order-tests fail (`generated-merge`, `path.test`) because the file's
+  rail ids/orders do NOT yet match the approved classification (below). Expected until the remap.
+  BFS verifier itself is green (declared optimal = engine minimum for all 4).
+- **Uncommitted**: `apps/web/content/labyrinths.json` + regenerated `puzzles.generated.ts` — the
+  founder's manual rail redesign (WIP). `docs/audits/2026-07-14-rook-rails-board-audit.md` untracked.
+  Do NOT revert; this is the work in progress.
 
-- **Branch**: `main`, sincronizado con `origin/main`. **PRs abiertos**: ninguno.
-- **Build**: `tsc --noEmit` limpio · eslint sin hallazgos. **La suite NO se corrió** — no se tocó
-  código de producto (la probe vive bajo `/dev` y no se enlaza desde ningún lado).
-- **Uncommitted work**: sólo este `SESSION.md`.
+## Approved Rook Rails classification (by board geometry, NOT builder name)
+The board→level mapping is decided. The **ids/orders in the file do not reflect it yet** — that remap
+is part of the close.
 
-## Next Tasks
+| Order | Level | Board (mover→target) | Status |
+|--:|---|---|---|
+| 0 | **Two Turns** | *to be designed* | founder designs in builder → I validate |
+| 1 | **Dead End** | `a4 → e4` | approved: detours a6/a8 cost +2 (anticipate the mistake, no infinite trap); best wall grouping (13+10) |
+| 2 | **Two Roads** | `g1 → b7` | approved **with caveat** (see below) |
+| 3 | **Rook Run** | `d8 → f1` | approved as the final level (optimal 8, single dense line) |
+| — | reserve | `c6 → e1` | optimal 8; NOT in the main ladder |
 
-### ▶️ Arrancar por el **Frente 1 — pulir el aprendizaje actual** (frente principal)
+**Dead End is a penalised detour (+2), not an infinite pocket** — teaches anticipation without trapping
+the player. Founder decision; do not "fix" it into a ∞ dead end.
 
-Es lo que decidió el founder al cerrar la sesión. **No es construir contenido nuevo: es pulir lo que
-ya se ve.** Detalle en la directriz, §6.
+### Two Roads (`g1 → b7`) caveat — NON-blocking
+Two complete routes of different cost, confirmed against the engine:
+- central road, cost 6, 3★: `g1 → f1 → f3 → d3 → d6 → b6 → b7`
+- right-edge road, cost 7, 2★: `g1 → g2 → h2 → h5 → e5 → e6 → b6 → b7`
 
-1. **Definir qué aborda el usuario primero en cada sesión** y simplificar el primer recorrido.
-2. **Revisar ejercicios**: instrucciones y dificultad.
-3. **Ocultar contenido que no esté a la altura** — incluye **mejorar o esconder temporalmente el
-   laberinto de peones** si daña la percepción.
-4. Aprovechar que muchos usuarios **tardan** en desbloquear contenido avanzado: es tiempo regalado
-   para pulirlo antes de que lleguen.
+They are spatially distinct. Caveat: the two cost-6 mouths (f1, c1) converge and share the back half,
+so it reads as "one central road, two mouths + one alternative" rather than a clean two-roads split,
+and the penalty is only +1. **Do NOT redesign Two Roads unless the final visual review shows the
+contrast doesn't read.**
 
-**Gate:** comprensión y finalización aceptables. ⚠️ **Las señales y umbrales concretos se definen
-ANTES del experimento** — la directriz (§14) prohíbe inventarlos por adelantado.
+## Immediate pending work
+**Design `Two Turns` manually in the builder**, meeting:
+- optimal 3–4 moves; two clear direction changes;
+- grouped walls + visible corridors; not a trivial single corridor;
+- none of the Dead End / Two Roads complexity;
+- feels like the FIRST Special Training, not another basic exercise.
 
-### Paralelo barato (si sobra sesión, NO desplaza al Frente 1)
+Then, once the FEN exists, I validate: (1) BFS optimal; (2) optimal-route count; (3) opening decisions;
+(4) redundant-obstacle scan; (5) title↔geometry match; (6) mobile contact sheet of all four; (7) stop
+for human review.
 
-- **Frente 2 — Peones**: **inventariar fuentes y sinks.** No existe hoy y es la primera tarea. Lo
-  único leído del código: `PEONES_DAILY_CAP = 6`, `SHIELD_RESCUE_PEONES_COST = 2`,
-  `PEONES_WELCOME_PACK_AMOUNT = 1`, `peonesReward: 50` (compra).
-  **NO tocar precios antes de medir.**
-- **Frente 3 / T1 — Themes**: el **catálogo de arte** (página `/dev` que lista cada slot con sus
-  dimensiones). Es lo que destraba el cuello de botella real, que es el **arte**, no el código.
+**Also part of the close**: remap the 4 rail records to the approved ids/orders (Two Turns 0, Dead End
+1 ← a4→e4, Two Roads 2 ← g1→b7, Rook Run 3 ← d8→f1; c6→e1 out of the main ladder), then update the
+order-tests (`generated-merge`, `path.test`) and run the suite green. Regenerate after editing:
+`pnpm -C apps/web import-puzzles`, and **kill :3000 first** or a stale dev server serves the old catalog.
 
-## Blockers
+## Graphify (do first, in its own commit — never mixed with labyrinth changes)
+```bash
+uv tool install graphifyy && graphify install      # or: pipx install graphifyy && graphify install
+```
+Then `/graphify .` — expect `graphify-out/{graph.html,GRAPH_REPORT.md,graph.json}`.
+Before committing: decide if `graphify-out/` should be gitignored; confirm it holds NO secrets / `.env`
+/ private backups / Supabase data; document install only if it helps the permanent flow.
 
-- **Ninguno para el Frente 1.**
-- **MiniPay**: la app está **EN REVISIÓN**. **No hay pedidos oficiales abiertos.** Es un canal en
-  observación, **no un bloqueo del roadmap**. Cuando aprueben → correr `/dev/duel-link-probe` desde
-  WhatsApp, navegador y MiniPay, con captura de cada uno.
-- **Belt System**: sigue bloqueado por la decisión de *server-verified progress* (sin cambios).
-- **Smoke del Hub Tour en device**: arrastrado desde 2026-07-12.
+## Out of scope (do NOT start)
+Capture for rook/bishop/queen · multiple collectible stars · BFS generalization · **Break Through** ·
+builder/Supabase refactor · redesign of already-approved exercises.
 
-## Notes
+## Done-when (close criteria)
+Graphify installed & tested · `Two Turns` has a final validated FEN · all four Rook Rails have final
+order + names · a joint mobile visual review exists · suite + TypeScript green · Phase B NOT started.
 
-### ⚠️ Lo más importante que dejó esta sesión: cómo NO trabajar
+## Validation tooling (session scratchpad — may not survive next session)
+`rail-analyze.js` (optimal, routes, opening decisions, per-move commit cost, dead-end/two-roads
+detection), `rail-audit.js` (per-board audit + wall grouping), `rail-search.js`. Read-only, matches the
+real engine. Path: `/private/tmp/claude-502/.../scratchpad/`. Rebuildable from `src/test-utils/bfs-optimal.ts`
+if gone. **Design boards by hand, then validate — do NOT generate from metrics** (memory:
+`feedback_metrics_dont_make_a_maze`).
 
-**El founder dijo "me siento perdido y no siento que tengamos una directriz".** La causa fue mía:
-especifiqué el duelo **tres veces** (v1 cookie → v2 wallet sin autenticar → v3 sesión firmada) antes
-de preguntar lo único que importaba: **"¿dónde aterriza el jugador invitado?"**. La respuesta —el
-webview de WhatsApp no tiene wallet— invalidaba el modelo de identidad de las tres versiones.
-
-**La regla:** en una feature cuyo corazón es un enlace, **el camino del enlace se mide ANTES de
-diseñar el asiento**. Y más general: **cuando una iniciativa parezca menor, preguntar por su TECHO
-antes de descartarla** — despaché el theme builder como "tooling interno" (era: marketplace de
-creadores) y el duelo como "growth puro" (era: economía de espectadores). **Las dos veces me
-corrigió el founder.**
-
-### El principio que ahora gobierna el roadmap
-
-> **Construir la capa mínima que demuestre valor, medirla, y dejar que el resultado desbloquee la
-> siguiente.**
-
-**Antes de rankear CUALQUIER idea nueva, leer la tabla de §2 de la directriz** y ubicarla: ¿qué
-frente? ¿qué capa? ¿cuál es la próxima capa mínima? ¿nos estamos adelantando?
-
-### Correcciones que NO hay que re-litigar
-
-- **El duelo NO está congelado.** Se construye por capas. **D1 = abrir un enlace y jugar, SIN
-  wallet**, en cualquier navegador móvil o PWA. **No depende de MiniPay.**
-- **El spec v3 del duelo NO es el plan de D1** (es wallet-first). Se conserva por su árbitro, su
-  expiración, su concurrencia, su persistencia, su seguridad y su matriz de estados.
-- **El listado de MiniPay NO es "lo único con reloj"** — eso fue una inferencia mía, no un hecho.
-- **Las cifras de Peones del founder son HIPÓTESIS**, no diagnóstico. Nada de precios sin medir.
-
-### Deuda de seguridad descubierta (no bloquea, pero está viva en producción)
-
-**`/api/games` acepta la wallet del body sin firma** (`api/games/route.ts:21`; el único chequeo es
-`isAddress()` — valida el **formato, no la propiedad**). Hoy sólo permite vandalizar el archivo de
-otro. **Cualquier feature que use la wallet como AUTORIZACIÓN (no como etiqueta) tiene que resolver
-esto primero.** Es exactamente el defecto que mató a la v2 del spec del duelo.
-
-### Arrastrado (sigue vigente)
-
-- **Dónde vive cada hub**: el LEARN hub sólo renderiza en `/` con `NEXT_PUBLIC_CHESSCITO_MODE=learn`
-  **y** `NEXT_PUBLIC_CHESSCITO_LITE_MODE=true`.
-- **NO mover el timer de la transición fuera de su `useEffect`** (Strict Mode lo cuelga en
-  "Preparing AI…").
-- Lo que un probe `/dev` fotografía **recibe su verdad por props**, nunca de un hook de wallet — si
-  no, Playwright fotografía un `WagmiProviderNotFoundError` y **pasa en verde**.
+## Reference
+- Rook Rails must keep the **ambient stone wall** (A9): obstacles are `.is-wall`, never friendly pieces.
+- Rail ids are new on purpose (board/optimal/principle changed → plan §10.3); old ids drop, loadProgress
+  discards orphans, no migration.
+- Contact sheets: Rook Rails D1 (v1, superseded) → https://claude.ai/code/artifact/546e590e-7313-4107-ab7a-071d5561cd1a
