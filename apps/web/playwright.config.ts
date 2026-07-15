@@ -53,5 +53,10 @@ export default defineConfig({
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    // Serve the catalog uncached under E2E: the merged-catalog `unstable_cache`
+    // "content" entry only revalidates on write, so a persisted `.next/cache`
+    // from a prior run would otherwise serve stale boards after a catalog
+    // regen. Prod never sets this — caching strategy there is untouched.
+    env: { CONTENT_CACHE_DISABLED: "1" },
   },
 });

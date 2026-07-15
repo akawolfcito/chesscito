@@ -79,6 +79,11 @@ type MissionPanelProps = {
    *  the mission peek chip label. */
   labyrinthMode?: boolean
   labyrinthOptimalMoves?: number
+  /** Identity of the active labyrinth. Surfaced on the mission chip as
+   *  data-* attributes so E2E can pin the rendered board to its catalog
+   *  entry (id/title/optimalMoves) without matching bare on-board numbers. */
+  labyrinthId?: string
+  labyrinthTitle?: string
   /** Tap on an unlocked labyrinth node in the mission detail sheet's
    *  training path. Forwarded down; absent → read-only rail. */
   onLabyrinthSelect?: (labyrinthId: string) => void
@@ -354,6 +359,8 @@ export function MissionPanelCandy({
   isDockSheetOpen,
   labyrinthMode = false,
   labyrinthOptimalMoves,
+  labyrinthId,
+  labyrinthTitle,
   onLabyrinthSelect,
   headerSlot,
   actionRowLeft,
@@ -416,6 +423,18 @@ export function MissionPanelCandy({
         key={targetLabel}
         className="truncate text-sm font-extrabold"
         style={candyChipTextStyle}
+        data-testid={
+          labyrinthMode && labyrinthOptimalMoves
+            ? 'mission-optimal-moves'
+            : undefined
+        }
+        data-optimal-moves={
+          labyrinthMode && labyrinthOptimalMoves
+            ? labyrinthOptimalMoves
+            : undefined
+        }
+        data-labyrinth-id={labyrinthMode ? labyrinthId : undefined}
+        data-labyrinth-title={labyrinthMode ? labyrinthTitle : undefined}
       >
         {visibleMissionLabel}
       </span>

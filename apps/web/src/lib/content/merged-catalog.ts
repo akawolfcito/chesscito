@@ -232,12 +232,22 @@ export async function loadMergedCatalog(): Promise<MergedCatalog> {
  * (tagged "content"); the admin write route calls `revalidateTag("content")`
  * on save, so players are served from cache with zero per-request DB hits.
  */
-export const getMergedCatalog = unstable_cache(
-  loadMergedCatalog,
-  // Stage floor is fixed per deployment (env) — include it in the key so two
-  // deployments at different stages never share a cache entry (red-team P1).
-  ["content-merged-catalog", envStageFloor() ?? "baseline"],
-  // Tag for on-save local revalidation + a TTL so every env self-refreshes
-  // within the window (no cross-deployment fan-out).
-  { tags: [CONTENT_TAG], revalidate: CONTENT_TTL_SECONDS },
-);
+// Test seam: the `unstable_cache` "content" tag only revalidates on a write
+// (revalidateTag), NOT when the compiled baseline changes — so a persisted
+// `.next/cache` entry from a previous run can serve stale boards after a
+// `pnpm import-puzzles`. E2E sets CONTENT_CACHE_DISABLED=1 to read the catalog
+// uncached (fresh baseline every request). Production never sets it, so the
+// caching strategy is unchanged.
+export const getMergedCatalog: () => Promise<MergedCatalog> =
+  process.env.CONTENT_CACHE_DISABLED === "1"
+    ? loadMergedCatalog
+    : unstable_cache(
+        loadMergedCatalog,
+        // Stage floor is fixed per deployment (env) — include it in the key so
+        // two deployments at different stages never share a cache entry
+        // (red-team P1).
+        ["content-merged-catalog", envStageFloor() ?? "baseline"],
+        // Tag for on-save local revalidation + a TTL so every env self-refreshes
+        // within the window (no cross-deployment fan-out).
+        { tags: [CONTENT_TAG], revalidate: CONTENT_TTL_SECONDS },
+      );

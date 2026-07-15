@@ -2656,6 +2656,8 @@ export function ExercisesScreen({
           isDockSheetOpen={activeDockTab !== null}
           labyrinthMode={effectiveLabyrinthMode}
           labyrinthOptimalMoves={activeLabyrinth?.optimalMoves}
+          labyrinthId={activeLabyrinth?.id}
+          labyrinthTitle={activeLabyrinth?.title}
           onLabyrinthSelect={handleLabyrinthSelect}
           score={score.toString()}
           totalStars={totalStars}
