@@ -431,6 +431,31 @@ a premiar planificar**. El sistema ya sabe medirlo. **Nadie le dio nada que medi
 
 **Entrega 1 sale con 4 niveles** (1, 2, 3, 5). `Break Through` llega con el motor. **No se disfraza.**
 
+> ### ⚠️ A10/A11 — pedagógicamente válida, visualmente INSUFICIENTE (founder, 2026-07-14)
+>
+> Los 4 tableros de la primera pasada (`rook-rail-*`, commit `f9c7bb35`) **cumplen los principios y
+> las métricas** —óptimo, rutas, decisiones, 0 obstáculos redundantes, verifier verde— **pero no se
+> sienten como laberintos.** Se leen como *ejercicios de ruta con muros*. La causa raíz: se
+> **generaron desde métricas** (un buscador que filtra por óptimo/rutas/decisión), y las métricas no
+> miden la **identidad espacial** de un laberinto. Correcto ≠ evocador.
+>
+> **Estado:** placeholder válido. **NO definitivos.** Los principios y las métricas se conservan; los
+> **layouts se rediseñan**.
+>
+> **Enfoque del rediseño** (más humano/visual, probablemente con el builder a mano, y VALIDANDO contra
+> el motor después — no generando desde métricas):
+> - **pasillos más claros** (corredores legibles, no obstáculos dispersos);
+> - **agrupación de muros** (bloques contiguos que leen como pared, no casillas sueltas);
+> - **sensación real de camino** (el ojo sigue una ruta);
+> - **falsas rutas más visibles** (el callejón/bifurcación se VE como tentación);
+> - **mejor identidad de "laberinto"**.
+>
+> **Orden invertido a propósito:** primero el diseño espacial humano, DESPUÉS la validación métrica
+> contra `computeExerciseBfs` / el verifier. Las métricas dejan de ser el generador y pasan a ser el
+> filtro de aceptación.
+>
+> **No se avanza a Fase B (`Break Through`) hasta cerrar este rediseño.**
+
 ---
 
 ## 10. Estrategia de IDs y progreso

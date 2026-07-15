@@ -222,11 +222,20 @@ con su `node_modules`. **Por hard links casi no cuestan disco**, pero sí inflan
 - [x] **capture-exercise.spec.ts** → forma moderna + captura real de peón (`f10560d5`).
 - [x] **A10/A11 — Rook Rails Delivery 1** (`f9c7bb35` contenido, `c5a02530` capturas).
 
-**🛑 FRENO PARA REVISIÓN VISUAL HUMANA (pediste esto antes de Fase B).**
-Contact sheet: artifact publicado. Los 4 niveles a 390px con la torre seleccionada.
+### 🟡 REVISIÓN VISUAL: válida pedagógicamente, INSUFICIENTE visualmente (founder, 2026-07-14)
 
-**Sigue (post-revisión):**
-- [ ] Tu OK visual de los 4 niveles → recién ahí, Fase B (Break Through + captura).
+Los 4 tableros **cumplen principios y métricas** pero **no se sienten como laberintos** — se leen como
+*ejercicios de ruta con muros*. Causa: se **generaron desde métricas**, y las métricas no miden la
+identidad espacial. **Placeholder válido, NO definitivos.** Se rediseñan (ver plan §9, el callout).
+
+**Criterios del rediseño** (más humano/visual, con el builder a mano, validar contra el motor DESPUÉS):
+pasillos más claros · agrupación de muros · sensación real de camino · falsas rutas más visibles ·
+mejor identidad de "laberinto".
+
+**Sigue:**
+- [ ] **Rediseño espacial de los 4 rails** (manual → validar métricas después). Los principios/métricas
+      quedan; los layouts no.
+- [ ] **NO Fase B** (Break Through) hasta cerrar el rediseño.
 - [ ] `video: "off"` en `playwright.config.ts` (los videos son el artefacto pesado).
 - [ ] Limpiar los 4 worktrees stale en `.claude/worktrees/` (verificar merge antes).
 
