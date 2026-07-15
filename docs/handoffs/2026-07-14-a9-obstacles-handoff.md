@@ -219,10 +219,35 @@ con su `node_modules`. **Por hard links casi no cuestan disco**, pero sí inflan
 - [x] **Bug de reanudación arreglado** (`d6d17f73`, `4724f5ac`) — ver §4.5.
 - [x] **Smoke funcional de los 10** (`c81748d3`) — 30/30 × 2 corridas, rotación ON.
 
-**Sigue:**
-- [ ] **A10/A11** — recién ahora están destrabados.
+- [x] **capture-exercise.spec.ts** → forma moderna + captura real de peón (`f10560d5`).
+- [x] **A10/A11 — Rook Rails Delivery 1** (`f9c7bb35` contenido, `c5a02530` capturas).
+
+**🛑 FRENO PARA REVISIÓN VISUAL HUMANA (pediste esto antes de Fase B).**
+Contact sheet: artifact publicado. Los 4 niveles a 390px con la torre seleccionada.
+
+**Sigue (post-revisión):**
+- [ ] Tu OK visual de los 4 niveles → recién ahí, Fase B (Break Through + captura).
 - [ ] `video: "off"` en `playwright.config.ts` (los videos son el artefacto pesado).
 - [ ] Limpiar los 4 worktrees stale en `.claude/worktrees/` (verificar merge antes).
+
+### A10/A11 — Rook Rails Delivery 1 (medido, no estimado)
+
+| Nivel | id | Óptimo | Rutas | Decisiones iniciales | Obstáculos | Decisión |
+| --- | --- | --: | --: | --: | --: | --- |
+| 1 One Turn | `rook-rail-one-turn` | 2 | 1 | 4 | 4 | reconocer el giro |
+| 2 Two Turns | `rook-rail-two-turns` | 3 | 1 | 4 | 5 | bifurcación falsa |
+| 3 Dead End | `rook-rail-dead-end` | 4 | 1 | 2 | 6 | d2=ruta (3★), e1=callejón +2 (2★) |
+| 4 Two Roads | `rook-rail-two-roads` | 6 | 2 | 2 | 8 | b2=corto (3★), a1=largo +2 (2★) |
+
+- **0 obstáculos redundantes** en los 4 (cada uno cambia una decisión). Pasan el linter sin warning.
+- **Óptimo declarado = BFS mínimo** (verifier oficial, hard-fail). Verde.
+- **Break Through (nivel 4) NO entra** — necesita captura (Fase B).
+- **Muro ambiental conservado** en laberintos (A9): obstáculos = `.is-wall`, no piezas.
+- IDs nuevos (cambió tablero, óptimo y principio → §10.3). Los 4 viejos salen del pool; `loadProgress`
+  descarta huérfanos, sin migración.
+- Obst por debajo del rango del plan (spec pedía 8-10 / 10-14) **a propósito**: la regla #1 del spec
+  ("se juzga por decisiones, no obstáculos") gana sobre la cuenta. Si querés más densidad visual, es
+  ajuste de revisión.
 
 ## Preguntas abiertas
 
