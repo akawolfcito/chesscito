@@ -295,10 +295,10 @@ describe("buildTrainingPath — catalog coverage and ordering", () => {
     // Rook Rails ladder, authored order 0..3 (A10/A11). Break Through (level 4)
     // is Phase B and absent from Delivery 1.
     expect(byKind(rook, "labyrinth").map((n) => n.id)).toEqual([
-      "rook-rail-one-turn", // order 0
-      "rook-rail-two-turns", // order 1
-      "rook-rail-dead-end", // order 2
-      "rook-rail-two-roads", // order 3
+      "rook-rail-two-turns", // order 0
+      "rook-rail-dead-end", // order 1
+      "rook-rail-two-roads", // order 2
+      "rook-rail-rook-run", // order 3
     ]);
   });
 });

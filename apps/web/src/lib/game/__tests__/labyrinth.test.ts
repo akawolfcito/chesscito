@@ -469,10 +469,10 @@ describe("L2 labyrinth — queen path existence", () => {
 
 describe("L2 labyrinth — rook path existence", () => {
   const rookLabIds: string[] = [
-    "rook-rail-one-turn",
     "rook-rail-two-turns",
     "rook-rail-dead-end",
     "rook-rail-two-roads",
+    "rook-rail-rook-run",
   ];
 
   it.each(rookLabIds)("%s: BFS reaches target in exactly lab.optimalMoves", (id) => {

@@ -72,10 +72,10 @@ describe("LABYRINTHS catalog — per-piece counts (regression guards)", () => {
     // and taught principle all changed (plan §10.3). Break Through (level 4) is
     // Phase B and deliberately absent.
     hasAll("rook", [
-      "rook-rail-one-turn",
       "rook-rail-two-turns",
       "rook-rail-dead-end",
       "rook-rail-two-roads",
+      "rook-rail-rook-run",
     ]);
   });
 

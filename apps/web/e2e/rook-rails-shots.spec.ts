@@ -12,10 +12,10 @@ const OUT = process.env.SHOT_DIR ?? "rook-rails-shots";
 // Full unlock: exercise stars over the gate, and the earlier rails marked
 // complete (a present labyrinth-best = completed), so every rail is tappable.
 const RAILS = [
-  { n: 1, id: "rook-rail-one-turn", title: "One Turn", optimal: 2 },
-  { n: 2, id: "rook-rail-two-turns", title: "Two Turns", optimal: 3 },
-  { n: 3, id: "rook-rail-dead-end", title: "Dead End", optimal: 4 },
-  { n: 4, id: "rook-rail-two-roads", title: "Two Roads", optimal: 6 },
+  { n: 1, id: "rook-rail-two-turns", title: "Two Turns", optimal: 8 },
+  { n: 2, id: "rook-rail-dead-end", title: "Dead End", optimal: 6 },
+  { n: 3, id: "rook-rail-two-roads", title: "Two Roads", optimal: 6 },
+  { n: 4, id: "rook-rail-rook-run", title: "Rook Run", optimal: 8 },
 ];
 
 test.beforeAll(() => mkdirSync(OUT, { recursive: true }));
@@ -41,9 +41,9 @@ for (const rail of RAILS) {
       window.localStorage.setItem(
         "chesscito:labyrinth-best:rook",
         JSON.stringify({
-          "rook-rail-one-turn": 2,
-          "rook-rail-two-turns": 3,
-          "rook-rail-dead-end": 4,
+          "rook-rail-two-turns": 8,
+          "rook-rail-dead-end": 6,
+          "rook-rail-two-roads": 6,
         }),
       );
     });

@@ -24,15 +24,15 @@ describe("generated catalog — fully content-sourced", () => {
   });
 
   it("keeps the Rook Rails ladder in its authored order", () => {
-    // The ladder is a curriculum: One Turn → Two Turns → Dead End → Two Roads,
+    // The ladder is a curriculum: Two Turns → Dead End → Two Roads → Rook Run,
     // easiest first. `order` (0..3) pins it, and the sequence must survive the
     // catalog round-trip.
     const ids = LABYRINTHS.rook.map((e) => e.id);
     expect(ids).toEqual([
-      "rook-rail-one-turn",
       "rook-rail-two-turns",
       "rook-rail-dead-end",
       "rook-rail-two-roads",
+      "rook-rail-rook-run",
     ]);
   });
 
