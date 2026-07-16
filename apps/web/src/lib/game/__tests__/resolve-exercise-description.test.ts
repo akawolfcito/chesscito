@@ -35,6 +35,14 @@ vi.mock("@/lib/game/generated/puzzles.generated", () => ({
     queen: [],
     king: [],
   },
+  GENERATED_QUEENS: {
+    rook: [],
+    bishop: [],
+    knight: [],
+    pawn: [],
+    queen: [],
+    king: [],
+  },
   GENERATED_EXERCISE_DESCRIPTIONS: {
     "bishop-gen-test": "Take the long diagonal to h6.",
   },

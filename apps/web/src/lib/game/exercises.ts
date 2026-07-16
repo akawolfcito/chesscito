@@ -5,6 +5,7 @@ import {
   GENERATED_LABYRINTHS,
   GENERATED_DIAGONAL_RUN,
   GENERATED_KNIGHT_TOUR,
+  GENERATED_QUEENS,
 } from "@/lib/game/generated/puzzles.generated";
 
 /** Pieces with exercises defined and playable */
@@ -106,6 +107,21 @@ export const KNIGHT_TOUR: Record<PieceId, Exercise[]> = {
   pawn:   GENERATED_KNIGHT_TOUR.pawn,
   queen:  GENERATED_KNIGHT_TOUR.queen,
   king:   GENERATED_KNIGHT_TOUR.king,
+};
+
+/* ── N-Queens (Special Training, kind:"queens") ──────────────────────────
+ * The queen's signature game. Same adapter story as KNIGHT_TOUR, and the same
+ * grader: coverage, never move count. `optimalMoves` holds the queens the
+ * PLAYER places (ceiling - 1), so the denominator is `optimalMoves + 1` — the
+ * arithmetic `buildTrainingPath` already runs for the tour.
+ * Spec: docs/specs/2026-07-16-signature-games-spec.md §2. */
+export const QUEENS: Record<PieceId, Exercise[]> = {
+  rook:   GENERATED_QUEENS.rook,
+  bishop: GENERATED_QUEENS.bishop,
+  knight: GENERATED_QUEENS.knight,
+  pawn:   GENERATED_QUEENS.pawn,
+  queen:  GENERATED_QUEENS.queen,
+  king:   GENERATED_QUEENS.king,
 };
 
 /**
