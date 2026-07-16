@@ -18,7 +18,7 @@
 
 Chesscito is an educational MiniApp on **Celo**, designed to be used with MiniPay-compatible wallets. Players solve short pre-chess puzzles — moving a single piece to a target square in the fewest moves possible — earning on-chain badges and scores as proof of progress.
 
-- **Learn** how all six chess pieces move through interactive puzzles and labyrinths
+- **Learn** how all six chess pieces move through interactive puzzles, labyrinths, and signature games
 - **Earn** Peones (in-game currency), on-chain badges, and leaderboard scores on Celo Mainnet
 - **Play** with MiniPay-compatible wallets or MetaMask — no setup friction
 - **Battle** full chess vs AI in Arena and save any finished match as an on-chain NFT
@@ -26,16 +26,24 @@ Chesscito is an educational MiniApp on **Celo**, designed to be used with MiniPa
 
 ## Gameplay
 
-All six pieces. 78 exercises plus labyrinth challenges. Stars awarded by precision.
+All six pieces. 59 exercises plus a second lane of longer challenges. Stars awarded by precision.
 
-| Piece            | Training               |
-| ---------------- | ---------------------- |
-| Rook (Torre)     | Exercises + labyrinths |
-| Bishop (Alfil)   | Exercises + labyrinths |
-| Knight (Caballo) | Exercises + labyrinths |
-| Pawn (Peón)      | Exercises + labyrinths |
-| Queen (Dama)     | Exercises + labyrinths |
-| King (Rey)       | Exercises + labyrinths |
+Every piece trains on two lanes: short **exercises** (move one piece to a target square), and
+**Special Training** — a longer challenge built around what makes that piece itself. Three pieces
+have their signature game; the rest still run labyrinths.
+
+| Piece            | Exercises | Special Training                 |
+| ---------------- | --------- | -------------------------------- |
+| Rook (Torre)     | 10        | Rail labyrinths (4)              |
+| Bishop (Alfil)   | 9         | **Diagonal Run** (3)             |
+| Knight (Caballo) | 10        | **Knight's Tour** (3)            |
+| Pawn (Peón)      | 10        | Labyrinths (4)                   |
+| Queen (Dama)     | 10        | **N-Queens** (3)                 |
+| King (Rey)       | 10        | Labyrinth (1)                    |
+
+Signature games grade by **coverage**, not by move count: the Knight's Tour asks you to visit a
+share of the board, N-Queens asks you to place queens that cannot see each other. Blocks break a
+queen's rays, which is why one board fits nine queens where a bare 8×8 fits eight.
 
 Stars are awarded based on move efficiency:
 
