@@ -2816,6 +2816,346 @@ export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = {
   "king": []
 };
 
+export const GENERATED_QUEENS: Record<PieceId, Exercise[]> = {
+  "rook": [],
+  "bishop": [],
+  "knight": [],
+  "pawn": [],
+  "queen": [
+    {
+      "id": "queens-1",
+      "optimalMoves": 4,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 7
+        },
+        {
+          "file": 1,
+          "rank": 7
+        },
+        {
+          "file": 2,
+          "rank": 7
+        },
+        {
+          "file": 3,
+          "rank": 7
+        },
+        {
+          "file": 4,
+          "rank": 7
+        },
+        {
+          "file": 5,
+          "rank": 7
+        },
+        {
+          "file": 6,
+          "rank": 7
+        },
+        {
+          "file": 7,
+          "rank": 7
+        },
+        {
+          "file": 0,
+          "rank": 6
+        },
+        {
+          "file": 1,
+          "rank": 6
+        },
+        {
+          "file": 2,
+          "rank": 6
+        },
+        {
+          "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 4,
+          "rank": 6
+        },
+        {
+          "file": 5,
+          "rank": 6
+        },
+        {
+          "file": 6,
+          "rank": 6
+        },
+        {
+          "file": 7,
+          "rank": 6
+        },
+        {
+          "file": 0,
+          "rank": 5
+        },
+        {
+          "file": 1,
+          "rank": 5
+        },
+        {
+          "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 3,
+          "rank": 5
+        },
+        {
+          "file": 4,
+          "rank": 5
+        },
+        {
+          "file": 5,
+          "rank": 5
+        },
+        {
+          "file": 6,
+          "rank": 5
+        },
+        {
+          "file": 7,
+          "rank": 5
+        },
+        {
+          "file": 5,
+          "rank": 4
+        },
+        {
+          "file": 6,
+          "rank": 4
+        },
+        {
+          "file": 7,
+          "rank": 4
+        },
+        {
+          "file": 5,
+          "rank": 3
+        },
+        {
+          "file": 6,
+          "rank": 3
+        },
+        {
+          "file": 7,
+          "rank": 3
+        },
+        {
+          "file": 5,
+          "rank": 2
+        },
+        {
+          "file": 6,
+          "rank": 2
+        },
+        {
+          "file": 7,
+          "rank": 2
+        },
+        {
+          "file": 5,
+          "rank": 1
+        },
+        {
+          "file": 6,
+          "rank": 1
+        },
+        {
+          "file": 7,
+          "rank": 1
+        },
+        {
+          "file": 5,
+          "rank": 0
+        },
+        {
+          "file": 6,
+          "rank": 0
+        },
+        {
+          "file": 7,
+          "rank": 0
+        }
+      ],
+      "tier": "easy",
+      "principle": "queens-intro",
+      "title": "The Quiet Room",
+      "playerPrompt": "No queen may see another. Fill the room."
+    },
+    {
+      "id": "queens-2",
+      "optimalMoves": 5,
+      "startPos": {
+        "file": 0,
+        "rank": 1
+      },
+      "targetPos": {
+        "file": 0,
+        "rank": 1
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 7
+        },
+        {
+          "file": 1,
+          "rank": 7
+        },
+        {
+          "file": 2,
+          "rank": 7
+        },
+        {
+          "file": 3,
+          "rank": 7
+        },
+        {
+          "file": 4,
+          "rank": 7
+        },
+        {
+          "file": 5,
+          "rank": 7
+        },
+        {
+          "file": 6,
+          "rank": 7
+        },
+        {
+          "file": 7,
+          "rank": 7
+        },
+        {
+          "file": 0,
+          "rank": 6
+        },
+        {
+          "file": 1,
+          "rank": 6
+        },
+        {
+          "file": 2,
+          "rank": 6
+        },
+        {
+          "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 4,
+          "rank": 6
+        },
+        {
+          "file": 5,
+          "rank": 6
+        },
+        {
+          "file": 6,
+          "rank": 6
+        },
+        {
+          "file": 7,
+          "rank": 6
+        },
+        {
+          "file": 6,
+          "rank": 5
+        },
+        {
+          "file": 7,
+          "rank": 5
+        },
+        {
+          "file": 6,
+          "rank": 4
+        },
+        {
+          "file": 7,
+          "rank": 4
+        },
+        {
+          "file": 6,
+          "rank": 3
+        },
+        {
+          "file": 7,
+          "rank": 3
+        },
+        {
+          "file": 6,
+          "rank": 2
+        },
+        {
+          "file": 7,
+          "rank": 2
+        },
+        {
+          "file": 6,
+          "rank": 1
+        },
+        {
+          "file": 7,
+          "rank": 1
+        },
+        {
+          "file": 6,
+          "rank": 0
+        },
+        {
+          "file": 7,
+          "rank": 0
+        }
+      ],
+      "tier": "medium",
+      "principle": "queens-planning",
+      "title": "Wider Court",
+      "playerPrompt": "More room, same rule. Every queen you place closes lines for the next."
+    },
+    {
+      "id": "queens-3",
+      "optimalMoves": 8,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 2
+        },
+        {
+          "file": 2,
+          "rank": 0
+        }
+      ],
+      "tier": "hard",
+      "principle": "queens-blocks",
+      "title": "Nine on Eight",
+      "playerPrompt": "A block cuts a queen's line. Two of them fit a ninth queen on a board that holds eight."
+    }
+  ],
+  "king": []
+};
+
 export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "rook-rail-two-turns": "Two Turns",
   "rook-rail-dead-end": "Dead End",
@@ -2827,6 +3167,9 @@ export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "knight-tour-1": "The Short Tour",
   "knight-tour-2": "Wider Ground",
   "knight-tour-3": "The Long Tour",
+  "queens-1": "The Quiet Room",
+  "queens-2": "Wider Court",
+  "queens-3": "Nine on Eight",
   "rook-1": "Move along the rank",
   "rook-2": "Move along the file",
   "rook-distance-1": "One square is a move too",

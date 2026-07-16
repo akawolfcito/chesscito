@@ -224,6 +224,42 @@
     "order": 2
   },
   {
+    "id": "queens-1",
+    "piece": "queen",
+    "kind": "queens",
+    "fen": "NNNNNNNN/NNNNNNNN/NNNNNNNN/5NNN/5NNN/5NNN/5NNN/Q4NNN w - - 0 1",
+    "mover": "a1",
+    "tier": "easy",
+    "title": "The Quiet Room",
+    "principle": "queens-intro",
+    "playerPrompt": "No queen may see another. Fill the room.",
+    "order": 3
+  },
+  {
+    "id": "queens-2",
+    "piece": "queen",
+    "kind": "queens",
+    "fen": "NNNNNNNN/NNNNNNNN/6NN/6NN/6NN/6NN/Q5NN/6NN w - - 0 1",
+    "mover": "a2",
+    "tier": "medium",
+    "title": "Wider Court",
+    "principle": "queens-planning",
+    "playerPrompt": "More room, same rule. Every queen you place closes lines for the next.",
+    "order": 4
+  },
+  {
+    "id": "queens-3",
+    "piece": "queen",
+    "kind": "queens",
+    "fen": "8/8/8/8/8/N7/8/Q1N5 w - - 0 1",
+    "mover": "a1",
+    "tier": "hard",
+    "title": "Nine on Eight",
+    "principle": "queens-blocks",
+    "playerPrompt": "A block cuts a queen's line. Two of them fit a ninth queen on a board that holds eight.",
+    "order": 5
+  },
+  {
     "id": "king-lab-1",
     "piece": "king",
     "fen": "8/8/8/8/8/8/8/2N1K3 w - - 0 1",
