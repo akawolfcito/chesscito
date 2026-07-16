@@ -64,9 +64,18 @@ i18n EN/ES → probe `/dev/knight-tour` → e2e.
 ## Next Tasks (en orden)
 
 ### 1. [PRIMERO] N-Queens (`kind: "queens"`) — spec §2
-Ya tiene la mitad del camino hecho: **`tourStars` sirve tal cual** (califica % de un conjunto),
-y el patrón bucket + `tourIds` en `buildTrainingPath` se replica. Ojo: Queens necesita su propio
-`queenIds` o generalizar `tourIds` a "ids que califican por cobertura".
+**📋 PLAN YA ESCRITO: `docs/plans/2026-07-16-n-queens-plan.md`. Leerlo primero — tiene el modelo
+de datos derivado, los stages, el refactor que pide y la pregunta abierta para el founder.**
+
+Titulares:
+- **`tourStars` y `recordTourBest` sirven TAL CUAL.** `optimalMoves` = techo − 1; denominador =
+  `optimalMoves + 1`. `buildTrainingPath` funciona sin cambiar la fórmula.
+- **`getQueenMoves(origin, blockers)` YA corta los rayos en los bloques** (`rules/queen.ts`) →
+  Queens **NO** necesita la cirugía `{pos,piece}`. Verificado en el código.
+- **El techo de Queens SÍ es alcanzable** (backtracking exacto en 8×8), a diferencia del tour →
+  **derivar N del solver, NO autorearlo**.
+- **Refactor que pide:** `tourIds` → `coverageIds` en `path.ts` (Queens es el 2º cliente; si se
+  agrega un `queenIds` paralelo, la 3ª pieza agrega un tercero).
 
 ### 2+3. Safe Path + Promotion Run (JUNTOS, nunca separados)
 Exigen la cirugía `{pos, piece}` + capa de ataque (plan §15.6.3). **No son los baratos.**
