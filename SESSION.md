@@ -1,68 +1,80 @@
-# Session Handoff — 2026-07-15 (Bishop training stabilized)
+# Session Handoff — 2026-07-16 (Exercise lane closed · merged to preview)
 
-> Paramos acá a propósito. Retomamos EXACTAMENTE en este punto cuando el usuario diga **"continuemos"**.
-> La sesión anterior cerró con un crash de Claude Code justo al ir a commitear la última tarea de alfil;
-> esta sesión recuperó el estado, commiteó y dejó este handoff.
+> Retomamos EXACTAMENTE acá cuando el usuario diga **"continuemos"**.
+> **Próxima tarea: Knight's Tour.** El contrato ya está cerrado — NO re-especificar:
+> `docs/specs/2026-07-16-signature-games-spec.md`.
 
-## Completed
-- **[9cc609a]** `feat: stabilize bishop training` — commit único aprobado (currículo B4.3 + Diagonal Run D1–D3),
-  reemplaza el bloque "pivot" del commit deshecho. Verificado antes de commitear: **vitest 5136/5136 (434 files)**,
-  `tsc --noEmit` limpio, `git diff --check` limpio. E2E verde según auditoría D3.
-  - Alfil = **9 ejercicios** (currículo B4.3).
-  - Juego lúdico del alfil = **Diagonal Run** (control por turnos / glide): `kind:"pivot"` → `kind:"diagonal-run"`
-    en todo el pipeline; módulo puro `diagonal-run.ts` (glide + `glideBfs`); `DiagonalRunBoard` reusa `<GameBoard>`;
-    3 niveles (`bishop-run-1/2/3`); i18n `DIAGONAL_RUN_COPY` EN/ES; completado vía ledger de laberinto.
-  - Experiencia **pivot retirada** (módulo, lint, probe `/dev/pivot-spike`, tests/E2E). Labs históricos
-    `bishop-lab-3/-4` conservados en contenido, ocultos de nav.
-  - 15 docs de auditoría en `docs/audits/2026-07-15-bishop-*` (B0…B4.3, D1…D3).
+## Estado
 
-## Current State
-- **Branch**: `fix/exercise-obstacles-a0` — 5 commits ahead de `main`, NO mergeado, sin PR abierto.
-- **Build**: passing — vitest 5136/5136, tsc limpio, git diff --check limpio.
-- **Uncommitted work**: no (solo este SESSION.md).
+- **`main` = `1b89fd44`, pusheado. La rama `fix/exercise-obstacles-a0` se mergeó (fast-forward, 40 commits).**
+- **Suite: vitest 5137/5137 (434 files) · `tsc --noEmit` limpio · VR minipay 58/1.**
+  El rojo (`hub-shop-sheet-open`) es **preexistente** (env sin treasury → "Coming soon"). No perseguirlo.
+- **Deploy VERIFICADO en preview**: `preview.chesscito.com` → `learn-preview.chesscito.com`.
+  El copy curado del caballo está vivo ("The knight's leap", "The knight jumps over").
 
-## Next Tasks (en orden — arrancar acá con "continuemos")
+## Completed esta sesión
 
-### 1. [PRIMERA] Validar claridad de las 2 líneas de Chesscito: **ejercicios** vs **juegos lúdicos**
-Confirmar qué tan definido está cada carril por pieza. Estado según lo hablado:
+1. **Gap pedagógico CERRADO — las 6 piezas curadas.** Los 59 ejercicios tienen
+   `principle`/`title`/`playerPrompt`/`learningObjective`. `CURATED_PIECES` = las 6, así que
+   **el build de release ahora exige pedagogía completa**. Un commit atómico por pieza
+   (`4bf29372` knight · `5399ccb2` pawn · `0509ebd5` queen · `cdf0a95e` king).
+   Datos mecánicos verificados idénticos (FEN/mover/target/tier/tags/order sin tocar).
+2. **Chip de misión → banda full-width slim** (`65637889`, `85653f23`). Salió del medio de la
+   fila de 3 chips a una banda pegada debajo, estilo Diagonal Run. Zona superior ~105px → ~84px.
+3. **Las DOS bandas se fusionaron en UNA** (`4a039ccf`). "Move to g1" + "Tap the bishop to
+   begin." eran dos bandas apiladas. El DR ahora **hoistea** su línea al host vía `onBandChange`;
+   la banda de misión la aloja y **adoptó los hooks `dr-band`/`dr-band-msg`/`data-phase`**, así que
+   el E2E real sigue verde. Sin `onBandChange` (el spike `/dev`) el board renderiza su banda local.
+4. **Audit de redundancia + su herramienta** (`b72baf63`): `pnpm -C apps/web exec tsx scripts/audit-redundancy.ts`.
+5. **Spec de los 4 juegos** (`1b89fd44`) — decisiones del founder cerradas.
 
-| Pieza    | Ejercicios                          | Juego lúdico                                        |
-|----------|-------------------------------------|-----------------------------------------------------|
-| Torre    | ✅ bien definidos (referencia)      | ✅ **Laberinto** (Rook Rails)                        |
-| Alfil    | ✅ 9 ejercicios (B4.3) — validar    | ✅ **Diagonal Run** (recién shippeado)               |
-| Caballo  | ⬜ por auditar                      | 💡 idea: **recorrido del caballo** sin repetir casillas (knight's tour) |
-| Dama     | ⬜ por auditar                      | 💡 idea: **N reinas** sin que se coman entre sí       |
-| Peón     | ⬜ por auditar                      | ❓ **sin idea** — proponer juego                     |
-| Rey      | ⬜ por auditar                      | ❓ **sin idea** — proponer juego                     |
+## Next Tasks (en orden — arrancar acá)
 
-Tarea concreta: (a) auditar si los ejercicios ya están bien definidos en alfil y cuánto en las demás piezas;
-(b) proponer juegos lúdicos para **peón** y **rey** (sin idea aún); (c) proponer alternativas adicionales para
-cualquier pieza si hay mejores. Confirmar knight's tour (caballo) y N-reinas (dama) como candidatos.
+### 1. [PRIMERA] Knight's Tour (`kind: "knight-tour"`)
+Spec completo en `docs/specs/2026-07-16-signature-games-spec.md` §1. **Es el más barato y por eso va primero.**
+Patrón a seguir: Diagonal Run, end-to-end (módulo puro → board que reusa `<GameBoard>` → `kind` en
+`labyrinths.json` → host desde el catálogo runtime → i18n EN/ES → probe `/dev` → e2e).
 
-### 2. Rediseño del chip "MOVE TO XX" → chip de misión full-width (estilo Diagonal Run)
-Hoy: chip "MOVE TO XX" está **en la mitad** entre los otros 2 chips y abre el modal MISSION.
-Objetivo: reemplazarlo por el **mismo chip/banda compacta** que creamos en el juego lúdico del alfil (donde va
-el detalle de lo que sucede). Debe quedar **debajo** de los otros 2 y **a lo ancho** de la pantalla (full-width);
-al hacer click debe hacer **exactamente lo mismo que hoy**: abrir el modal MISSION e iniciar la misión.
-(Referencia de estilo: la banda de `DiagonalRunBoard` / `mission-panel-candy` / `mission-detail-sheet`.)
+### 2. N-Queens · 3+4. Safe Path + Promotion Run (JUNTOS, nunca separados)
 
-### 3. Pendiente arrastrado de Rook Rails (de la sesión previa, no bloqueante)
-- Abrir PR `fix/exercise-obstacles-a0` → `main` (bundlea A0 obstacle fix + Rook Rails D1 + e2e hardening + Bishop).
-  Correr suite completa + VR antes de merge.
-- Rook Rails **Phase B** "Break Through" (order 4) — fuera de alcance de D1.
-- En merge: Cluster Closure Protocol (CLAUDE.md).
+## ⚠️ El hallazgo que ordena el trabajo (leer antes de estimar)
+
+`MappedPuzzle` (`lib/game/fen-puzzle.ts:63`) lleva `obstacles`/`captureTargets` como
+**`BoardPosition[]` — casillas SIN tipo de pieza**. Es el muro que A9 encontró y **rechazó a
+propósito** (por eso existe el gate de caballos en `lint.ts`).
+
+- **Una capa de amenaza NECESITA tipos** (una torre no ataca como un alfil) → **Safe Path y
+  Promotion Run exigen la cirugía `{pos, piece}`** (plan §15.6.3). **NO son los baratos.**
+- **Knight's Tour no necesita tipos** (caballo + muros; un muro es un muro) → va primero.
+- **N-Queens tampoco** (todas son damas, sin ambigüedad).
+- Safe Path y Promotion Run **comparten** la cirugía + la capa de ataque: **hacerlos seguidos**.
+
+**Gap de grading:** `labyrinthStars(moves, optimal)` califica por movimientos. Tour y Queens
+califican por **% de un conjunto**. Necesitan un segundo grader — **no doblar el existente**.
+
+## Deuda registrada (NO aplicada, a propósito)
+
+**4 duplicados reales** — `docs/audits/2026-07-16-exercise-redundancy-audit.md`:
+`pawn-3/pawn-4` · `queen-6/queen-10` (el más fuerte: el mismo tablero espejado) ·
+`king-2/king-4` · `king-6/king-9`. Son **4 ediciones de tablero para el builder**, no trabajo
+de motor. El doc propone qué lección nueva pone cada uno en su lugar.
+
+> **Medir le ganó al olfato:** 4 de mis 6 sospechas a ojo estaban mal en ambas direcciones
+> (knight-6/9/10 escalan, no repiten; y los 2 reales no los vi). El tool también se equivocó
+> primero — sin `reach` marcaba el par que el audit de torre creó a propósito.
 
 ## Blockers
-- Ninguno funcional.
-- **Revisión visual pendiente de Diagonal Run**: D3 dejó el commit hecho pero la revisión visual del flujo real
-  (390×844) queda para confirmar. El shot dev mostró el overlay "1 error" de Next (ruido del app-shell en dev,
-  no del juego; el E2E real que suprime errores pasa en verde). Verificar en la revisión.
-- **Deploy caveat**: regenerar el catálogo NO invalida el `unstable_cache` tag `"content"`; Vercel preview/prod
-  necesita `revalidateTag("content")` o build fresco. E2E lo bypassa con `CONTENT_CACHE_DISABLED=1`.
 
-## Notes
-- Regenerar catálogo: `pnpm -C apps/web import-puzzles`; luego `rm -rf apps/web/.next` antes de dev.
-- Playwright auto-arranca `pnpm dev`; correr un proyecto: `--project=minipay`.
-- Boards de Special Training se identifican por **FEN+mover+target**, nunca por ID. No rediseñar boards aprobados.
-- Detalle completo del trabajo de alfil: `docs/audits/2026-07-15-bishop-d1-diagonal-run-contract.md` (contrato),
-  `-d3-diagonal-run-graduation.md` (integración final), `-b4_3-curriculum.md` (currículo 9 ejercicios).
+- Ninguno funcional.
+- **`contextual-header.spec.ts` falla 6/6 — PREEXISTENTE, no es regresión** (confirmado en HEAD
+  sin cambios). El header no monta en `/`; probable gate del Hub Tour que su `bypassFirstVisit`
+  no cubre (setea `onboarded`+`welcome-dismissed`, pero no `chesscito:hub-tour:v1`). Spec stale.
+- **Deploy caveat**: regenerar el catálogo NO invalida el `unstable_cache` tag `"content"`.
+  Un build fresco sí. E2E lo bypassa con `CONTENT_CACHE_DISABLED=1`.
+
+## Notas
+
+- Regenerar catálogo: `pnpm -C apps/web import-puzzles`; después `rm -rf apps/web/.next` antes de dev.
+- La banda de misión es **el hogar del status line**: `missionStatus` en `MissionPanelCandy`.
+  El contador de Queens (`<dama> ×N`) y el % del Tour van ahí.
+- El founder pule niveles en `/dev/labyrinth-builder`. **Construir la mecánica, no perfeccionar niveles.**
