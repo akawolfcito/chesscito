@@ -14,6 +14,7 @@ import {
   LABYRINTHS,
   labyrinthStars,
 } from "@/lib/game/exercises";
+import { tourStars } from "@/lib/game/tour-score";
 
 /** Injected catalog for the training path (default = baseline). Phase 2c
  *  passes the merged (baseline ⊕ overlay) catalog. */
@@ -57,6 +58,15 @@ export type TrainingPathInput = {
   badgeClaimed: boolean;
   /** Injected catalog (default = baseline EXERCISES/LABYRINTHS). */
   catalog?: TrainingCatalog;
+  /** Ids in the labyrinth lane that are actually Knight's Tour levels, so the
+   *  node picks `tourStars` over `labyrinthStars`.
+   *
+   *  Tours ride the labyrinth machinery (nav, unlock, completion) but not its
+   *  grader: their best is COVERAGE and their optimalMoves is the reachable
+   *  ceiling, so `best <= optimalMoves` always holds — labyrinthStars' top band.
+   *  Unrouted, every tour scores 3 stars, dead ends included. Absent/empty =
+   *  no tours, and the labyrinth lane is untouched. */
+  tourIds?: ReadonlySet<string>;
 };
 
 export type PieceMastery = "none" | "badge" | "mastered";
@@ -71,7 +81,7 @@ export const LABYRINTH_UNLOCK_THRESHOLD = 6;
 export const LABYRINTH_MIN_EXERCISES = 3;
 
 export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
-  const { piece, progress, labyrinthBests, badgeClaimed } = input;
+  const { piece, progress, labyrinthBests, badgeClaimed, tourIds } = input;
   const exercisesCatalog = input.catalog?.exercises ?? EXERCISES;
   const labyrinthsCatalog = input.catalog?.labyrinths ?? LABYRINTHS;
   // Across-pool exercise mastery: sum the best stars in the id-map. Sparse
@@ -126,7 +136,14 @@ export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
       piece,
       unlock,
       status: complete ? "complete" : unlocked ? "available" : "locked",
-      stars: complete ? labyrinthStars(best, labyrinth.optimalMoves) : 0,
+      // A tour's best is coverage against a ceiling; a labyrinth's is moves
+      // against an optimum. `optimalMoves` holds ceiling-1 for a tour, so the
+      // square count it was measured against is optimalMoves + 1.
+      stars: !complete
+        ? 0
+        : tourIds?.has(labyrinth.id)
+          ? tourStars(best, labyrinth.optimalMoves + 1)
+          : labyrinthStars(best, labyrinth.optimalMoves),
     });
   }
 
