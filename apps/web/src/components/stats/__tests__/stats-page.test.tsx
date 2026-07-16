@@ -479,7 +479,7 @@ describe("StatsPage", () => {
     expect(screen.getByText("Starts")).toBeInTheDocument();
     expect(screen.getByText("Completed")).toBeInTheDocument();
     expect(screen.getByText("Shares")).toBeInTheDocument();
-    expect(screen.getByText("Continued to Lite")).toBeInTheDocument();
+    expect(screen.getByText("Continued to Learn")).toBeInTheDocument();
     // Numeric values from SAMPLE_STATS.challengeFunnel
     expect(screen.getByText("42")).toBeInTheDocument();
     expect(screen.getByText("38")).toBeInTheDocument();

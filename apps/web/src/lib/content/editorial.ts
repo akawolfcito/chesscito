@@ -2710,7 +2710,7 @@ export const LANDING_COPY = {
       },
       {
         label: "PLAY",
-        body: "Full chess unlocks itself. You did it, step by step.",
+        body: "Complete chess unlocks itself. You did it, step by step.",
       },
     ],
   },
@@ -3293,7 +3293,7 @@ export const SECONDARY_CTA_COPY = {
   },
 } as const;
 
-/** Focus Passport (Chesscito Lite P1) — streak-based daily-focus card.
+/** Focus Passport (Chesscito Learn P1) — streak-based daily-focus card.
  *  Local-only; copy deliberately avoids any "verified", "on-chain",
  *  "proof", NFT/mint, or health/medical claims (it reflects a local
  *  streak, not a server- or chain-backed record). `{count}` is the
@@ -3358,7 +3358,7 @@ export const CHALLENGE_CARD_COPY = {
 } as const;
 
 export const HUB_LITE_COPY = {
-  rootAriaLabel: "Chesscito Lite home",
+  rootAriaLabel: "Chesscito Learn home",
   // Start Focus label intents (keyed by start-focus-label.ts).
   startFocus: "Start Focus",
   continue: "Continue",

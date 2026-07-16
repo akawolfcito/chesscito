@@ -8,6 +8,7 @@ import '../globals.css';
 import { WalletProvider } from "@/components/wallet-provider"
 import { DesktopAppFrame } from "@/components/chrome/desktop-app-frame"
 import { routing } from "@/i18n/routing"
+import { CHESSCITO_MODE } from "@/lib/feature-flags"
 
 const fredoka = Fredoka({
   subsets: ['latin'],
@@ -30,11 +31,19 @@ const rowdies = Rowdies({
 });
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.chesscito.com";
+const IS_LEARN_MODE = CHESSCITO_MODE === "learn";
+const APP_TITLE = IS_LEARN_MODE ? "Chesscito Learn" : "chesscito";
+const APP_DESCRIPTION = IS_LEARN_MODE
+  ? "Daily pre-chess training for learning chess piece movement in MiniPay."
+  : "MiniPay MiniApp for playful cognitive enrichment through pre-chess challenges.";
+const SOCIAL_DESCRIPTION = IS_LEARN_MODE
+  ? "Build a daily training habit while learning chess piece movements on Celo."
+  : "Learn chess piece movements with gamified on-chain challenges on Celo.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
-  title: 'chesscito',
-  description: 'MiniPay MiniApp for playful cognitive enrichment through pre-chess challenges.',
+  title: APP_TITLE,
+  description: APP_DESCRIPTION,
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-icon.png',
@@ -55,8 +64,8 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'chesscito',
-    description: 'Learn chess piece movements with gamified on-chain challenges on Celo.',
+    title: APP_TITLE,
+    description: SOCIAL_DESCRIPTION,
     url: BASE_URL,
     // Candy-branded OG rendered via Satori (replaces the stale v1 dark-wizard
     // /art/og-home.jpg). Portrait 1080×1350, same CardShell as the share cards.
@@ -65,8 +74,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'chesscito',
-    description: 'Learn chess piece movements with gamified on-chain challenges on Celo.',
+    title: APP_TITLE,
+    description: SOCIAL_DESCRIPTION,
     images: ['/api/og/home'],
   },
   other: {

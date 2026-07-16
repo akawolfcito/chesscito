@@ -880,7 +880,7 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
               sublabel="Shared after completing"
             />
             <StatCard
-              label="Continued to Lite"
+              label="Continued to Learn"
               value={stats.challengeFunnel.continueToLite}
               sublabel="Tapped continue to app"
             />

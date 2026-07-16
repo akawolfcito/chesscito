@@ -22,6 +22,7 @@ vi.mock("@/components/hub/hub-scaffold-client", () => ({
   HubScaffoldClient: () => ({ type: "HubScaffoldClient", props: {} }),
 }));
 
+import { appRootTitle } from "@/lib/content/app-branding";
 import HomePage, { generateMetadata } from "../page";
 
 type SearchParamsLike = {
@@ -133,6 +134,12 @@ describe("/ page (canonical Hub server route)", () => {
   });
 
   describe("metadata", () => {
+    it("uses Learn branding only for the Learn deployment", () => {
+      expect(appRootTitle("learn")).toBe("Chesscito Learn");
+      expect(appRootTitle("play")).toBe("Chesscito");
+      expect(appRootTitle("full")).toBe("Chesscito");
+    });
+
     it("marks the app root noindex and canonicalizes the default locale", () => {
       const metadata = generateMetadata({ params: { locale: "en" } });
       expect(metadata.robots).toEqual({ index: false, follow: false });

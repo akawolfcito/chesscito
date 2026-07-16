@@ -22,7 +22,7 @@ export type HubDailyTriggerProps = {
  *
  *  - `tile` (default for the Full hub right-rail) → the existing
  *    `HubActionTile` (byte-identical: same icon dims, priority, label).
- *  - `corner-icon` (Lite hub, P1-B) → a compact top-right gift glyph + badge.
+ *  - `corner-icon` (Learn hub, P1-B) → a compact top-right gift glyph + badge.
  *    Reuses the canonical `shop/welcome-gift` asset; no new art.
  *
  *  This component is the ONLY thing that changes between variants — the daily

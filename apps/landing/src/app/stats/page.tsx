@@ -5,7 +5,7 @@ import { LEARN_URL, PLAY_URL } from "@/lib/app-urls";
 
 export const metadata: Metadata = {
   title: "Stats — Chesscito",
-  description: "Activity and progress stats for Chesscito Lite and Chesscito Full.",
+  description: "Activity and progress stats for Chesscito Learn and Chesscito Play.",
 };
 
 export default function StatsPage() {
@@ -34,7 +34,7 @@ export default function StatsPage() {
         </p>
 
         <ul className="grid grid-cols-1 gap-4 md:grid-cols-2" role="list">
-          {/* Lite */}
+          {/* Learn */}
           <li
             className="flex flex-col gap-3 rounded-2xl border px-6 py-6"
             style={{
@@ -51,13 +51,13 @@ export default function StatsPage() {
                 color: "var(--landing-text)",
               }}
             >
-              Lite
+              Learn
             </span>
             <h2
               className="fantasy-title text-lg font-extrabold"
               style={{ color: "var(--landing-text)", textShadow: "var(--landing-text-shadow)" }}
             >
-              Chesscito Lite
+              Chesscito Learn
             </h2>
             <p className="text-sm leading-relaxed" style={{ color: "var(--paper-text-muted)" }}>
               Daily habits, streak data, and exercises completed.
@@ -71,11 +71,11 @@ export default function StatsPage() {
                 color: "var(--landing-text)",
               }}
             >
-              View Lite Stats →
+              View Learn Stats →
             </a>
           </li>
 
-          {/* Full */}
+          {/* Play */}
           <li
             className="flex flex-col gap-3 rounded-2xl border px-6 py-6"
             style={{
@@ -93,13 +93,13 @@ export default function StatsPage() {
                 color: "var(--landing-text)",
               }}
             >
-              Full
+              Play
             </span>
             <h2
               className="fantasy-title text-lg font-extrabold"
               style={{ color: "var(--landing-text)", textShadow: "var(--landing-text-shadow)" }}
             >
-              Chesscito Full
+              Chesscito Play
             </h2>
             <p className="text-sm leading-relaxed" style={{ color: "var(--paper-text-muted)" }}>
               Arena matches, leaderboard rankings, and achievements.
@@ -113,7 +113,7 @@ export default function StatsPage() {
                 color: "var(--landing-text)",
               }}
             >
-              View Full Stats →
+              View Play Stats →
             </a>
           </li>
         </ul>

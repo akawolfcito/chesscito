@@ -4,7 +4,8 @@ import { preload } from "react-dom";
 
 import { HubScaffoldClient } from "@/components/hub/hub-scaffold-client";
 import { routing } from "@/i18n/routing";
-import { isLiteModeServer } from "@/lib/feature-flags";
+import { appRootTitle } from "@/lib/content/app-branding";
+import { CHESSCITO_MODE, isLiteModeServer } from "@/lib/feature-flags";
 import { EXERCISES } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
 
@@ -56,7 +57,7 @@ export function generateMetadata({
   const canonical = params.locale === routing.defaultLocale ? "/" : `/${params.locale}`;
 
   return {
-    title: "Chesscito",
+    title: appRootTitle(CHESSCITO_MODE),
     robots: { index: false, follow: false },
     alternates: {
       canonical,
@@ -72,7 +73,7 @@ export function generateMetadata({
 /**
  * Canonical Chesscito application entrypoint.
  *
- * Lite and Full deployments render the same Hub scaffold here; build-time
+ * Learn and Full deployments render the same Hub scaffold here; build-time
  * feature flags select the appropriate product experience. Legacy query
  * contracts from `/hub` remain intact because the temporary alias forwards
  * them to this page before the existing whitelist logic runs.
