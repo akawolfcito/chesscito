@@ -49,34 +49,31 @@ function renderBoard(props: Partial<Parameters<typeof QueensBoard>[0]> = {}) {
 /** Cells are the board's own gridcells — named "Square h8" by <GameBoard>. */
 const tap = (sq: string) => screen.getByRole("gridcell", { name: `Square ${sq}` });
 
-describe("QueensBoard — the entry ritual", () => {
+describe("QueensBoard — playable from the first frame", () => {
   it("starts with the level's own queen on the board", () => {
     renderBoard();
     expect(screen.getByTestId("q-queen-a1")).toBeInTheDocument();
   });
 
-  it("refuses to place until the player has tapped the queen", async () => {
+  it("places on the first tap, with no piece to select first", async () => {
+    // The tour needs a select step because the player moves THAT knight. Here
+    // every tap places a NEW queen, so the gate was a toll that taught nothing
+    // (founder, 2026-07-16).
     const user = userEvent.setup();
     renderBoard();
     await user.click(tap("h8"));
-    expect(screen.queryByTestId("q-queen-h8")).not.toBeInTheDocument();
-    expect(screen.getByTestId("q-piece-hint")).toBeInTheDocument();
+    expect(screen.getByTestId("q-queen-h8")).toBeInTheDocument();
   });
 
   it("never gives the safe squares away to a player", async () => {
     // The board must NOT mark them: "which squares are safe" is the puzzle, not
-    // a hint. Light them up and the player taps the dot instead of thinking
-    // (founder, 2026-07-16).
-    const user = userEvent.setup();
+    // a hint. Light them up and the player taps the dot instead of thinking.
     renderBoard();
-    await user.click(tap("a1"));
     expect(screen.queryByTestId("q-spark-h8")).not.toBeInTheDocument();
   });
 
-  it("lights them for authoring, where seeing the safe set IS the point", async () => {
-    const user = userEvent.setup();
+  it("lights them for authoring, where seeing the safe set IS the point", () => {
     renderBoard({ showSafeSquares: true });
-    await user.click(tap("a1"));
     expect(screen.getByTestId("q-spark-h8")).toBeInTheDocument();
     // The whole a-file is under the queen's fire — not one of them is safe.
     expect(screen.queryByTestId("q-spark-a5")).not.toBeInTheDocument();
@@ -87,15 +84,22 @@ describe("QueensBoard — placing", () => {
   it("places a queen on a safe square", async () => {
     const user = userEvent.setup();
     renderBoard();
-    await user.click(tap("a1"));
     await user.click(tap("h8"));
     expect(screen.getByTestId("q-queen-h8")).toBeInTheDocument();
+  });
+
+  it("ignores a tap on a queen already standing there", async () => {
+    const user = userEvent.setup();
+    renderBoard();
+    await user.click(tap("a1"));
+    // Nothing to do and nothing to scold: no second queen, no refusal beat.
+    expect(screen.getAllByTestId(/^q-queen-/)).toHaveLength(1);
+    expect(screen.queryByTestId("q-attack-a1")).not.toBeInTheDocument();
   });
 
   it("rejects an attacked square without placing and without penalty", async () => {
     const user = userEvent.setup();
     renderBoard();
-    await user.click(tap("a1"));
     await user.click(tap("a5")); // under fire from a1 down the open file
     expect(screen.queryByTestId("q-queen-a5")).not.toBeInTheDocument();
     // The rejection must TEACH, not just buzz: the board rings the square AND
@@ -114,7 +118,6 @@ describe("QueensBoard — the run ends", () => {
     const user = userEvent.setup();
     const onComplete = vi.fn();
     renderBoard({ onComplete });
-    await user.click(tap("a1"));
     await user.click(tap("h8"));
     // 2 queens on the board, against an exact ceiling of 2 — a full clear.
     expect(onComplete).toHaveBeenCalledWith(2, 2);
@@ -124,7 +127,6 @@ describe("QueensBoard — the run ends", () => {
     const user = userEvent.setup();
     const onComplete = vi.fn();
     renderBoard({ onComplete });
-    await user.click(tap("a1"));
     await user.click(tap("h8"));
     await user.click(tap("a5"));
     await user.click(tap("a1"));

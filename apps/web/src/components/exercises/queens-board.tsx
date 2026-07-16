@@ -40,13 +40,13 @@ const parse = (s: string): BoardPosition => ({
 });
 const same = (a: BoardPosition, b: BoardPosition) =>
   a.file === b.file && a.rank === b.rank;
-function hintPlacement(file: number): "left" | "right" | "top" {
-  if (file <= 1) return "right";
-  if (file >= 6) return "left";
-  return "top";
-}
 
-type Phase = "idle" | "selected" | "done";
+/** No "idle": the board is playable from the first frame. The tour needs a
+ *  select step because the player moves THAT knight; here every tap places a NEW
+ *  queen, so "tap your queen first" was a toll that taught nothing (founder,
+ *  2026-07-16). The spec asked for a mini-tour — an instructional beat — and I
+ *  had built a gate. The mission band carries the instruction instead. */
+type Phase = "playing" | "done";
 
 export function QueensBoard({
   level,
@@ -93,14 +93,11 @@ export function QueensBoard({
   const BLOCKS = useMemo(() => level.obstacles ?? [], [level.obstacles]);
 
   const [queens, setQueens] = useState<BoardPosition[]>([START]);
-  const [selected, setSelected] = useState(false);
-  const [phase, setPhase] = useState<Phase>("idle");
+  const [phase, setPhase] = useState<Phase>("playing");
   const [transient, setTransient] = useState<string | null>(null);
-  const [pieceHint, setPieceHint] = useState(false);
   /** The square the player was just refused, for the attack beat. */
   const [refused, setRefused] = useState<string | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const beatTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completedRef = useRef(false);
 
@@ -120,7 +117,6 @@ export function QueensBoard({
     const pending = timers.current;
     return () => {
       pending.forEach(clearTimeout);
-      if (hintTimer.current) clearTimeout(hintTimer.current);
       if (beatTimer.current) clearTimeout(beatTimer.current);
     };
   }, []);
@@ -134,25 +130,9 @@ export function QueensBoard({
     (sq: string) => {
       if (phase === "done") return;
       const pos = parse(sq);
-      const onQueen = queens.some((q) => same(q, pos));
 
-      if (!selected) {
-        if (onQueen) {
-          setSelected(true);
-          setPhase("selected");
-          setTransient(null);
-          setPieceHint(false);
-          hapticTap();
-        } else {
-          hapticReject();
-          flash(t("tapQueenFirst"));
-          setPieceHint(true);
-          if (hintTimer.current) clearTimeout(hintTimer.current);
-          hintTimer.current = setTimeout(() => setPieceHint(false), 2200);
-        }
-        return;
-      }
-      if (onQueen) return;
+      // A queen already stands there — nothing to do, and nothing to scold.
+      if (queens.some((q) => same(q, pos))) return;
 
       if (BLOCKS.some((b) => same(b, pos))) {
         hapticReject();
@@ -179,14 +159,13 @@ export function QueensBoard({
       if (isQueensStuck(nextQueens, BLOCKS)) {
         hapticSuccess();
         setPhase("done");
-        setSelected(false);
         if (!completedRef.current) {
           completedRef.current = true;
           onComplete?.(nextQueens.length, CEILING);
         }
       }
     },
-    [phase, selected, queens, t, BLOCKS, CEILING, onComplete],
+    [phase, queens, t, BLOCKS, CEILING, onComplete],
   );
 
   const placed = queens.length;
@@ -194,7 +173,7 @@ export function QueensBoard({
   const stars = phase === "done" ? tourStars(placed, CEILING) : 0;
   const safe = useMemo(
     () =>
-      showSafeSquares && phase === "selected" ? safeSquares(queens, BLOCKS) : [],
+      showSafeSquares && phase === "playing" ? safeSquares(queens, BLOCKS) : [],
     [showSafeSquares, phase, queens, BLOCKS],
   );
   const safeLabels = new Set(safe.map(LABEL));
@@ -212,8 +191,7 @@ export function QueensBoard({
     );
   }, [refused, queens, BLOCKS]);
 
-  const bandMessage =
-    phase === "idle" ? t("tapQueen") : phase === "done" ? t("done") : t("choose");
+  const bandMessage = phase === "done" ? t("done") : t("choose");
 
   /* What the band SAYS — the objective, or why the last tap was refused. The
      count is NOT in here: the host's chip carries it, so this 30px strip does
@@ -308,21 +286,6 @@ export function QueensBoard({
           </picture>
         );
       })}
-      {pieceHint ? (
-        <div
-          role="status"
-          aria-live="polite"
-          data-testid="q-piece-hint"
-          className="playhub-board-select-hint"
-          data-placement={hintPlacement(START.file)}
-          style={{
-            left: `${cellCenter(START.file, START.rank).x}%`,
-            top: `${cellCenter(START.file, START.rank).y}%`,
-          }}
-        >
-          {t("tapQueenFirst")}
-        </div>
-      ) : null}
     </>
   );
 

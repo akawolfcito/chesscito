@@ -1426,9 +1426,12 @@ export const QUEENS_COPY = {
     count: "queen {placed}/{ceiling}",
   },
   band: {
-    tapQueen: "Tap the queen to begin.",
-    tapQueenFirst: "Tap your queen first.",
-    choose: "Place a queen where none can see her.",
+    /** The mission, in the player's own words (founder, 2026-07-16). "Attack" is
+     *  the chess idea being taught; "see her" was a metaphor sitting in front of
+     *  it. Deliberately NOT "no two on a line" — a block CUTS a line, which is
+     *  exactly what queens-3 turns on, and that phrasing would make the level
+     *  that teaches it look like a bug. */
+    choose: "Place queens so none attack each other.",
     /** The rejection has to TEACH — the board flashes what is watched while
      *  this reads. Never a penalty, per spec §2. */
     illegal: "That square is watched by a queen.",
@@ -3733,11 +3736,56 @@ export const PROGRESSION_COPY = {
     primary: "Open Gift",
     dismiss: "Later",
   },
+  /**
+   * ⚠️ Keyed by MILESTONE, so the generic copy below is shown to whatever piece
+   * just unlocked its lane — and it used to read "First Maze Unlocked / Guide
+   * the rook through it" for ALL SIX. The bishop got "guide the rook" for its
+   * Diagonal Run, the knight for its Tour, the queen for N-Queens. Right for
+   * exactly one piece, and the more signature games shipped, the more it lied
+   * (founder caught it on the queen, 2026-07-16).
+   *
+   * `byPiece` names the game the player actually unlocked and states its
+   * mission in one line — the unlock moment is the first place the mission can
+   * be told, so it tells it. The generic stays as a neutral fallback: it must
+   * never again name a piece or a game, because it cannot know either.
+   */
   "first-labyrinth": {
-    title: "First Maze Unlocked",
-    body: "Guide the rook through it.",
-    primary: "Enter Maze",
+    title: "First Challenge Unlocked",
+    body: "Your first Special Training is ready.",
+    primary: "Enter",
     dismiss: "Later",
+    byPiece: {
+      rook: {
+        title: "First Maze Unlocked",
+        body: "Guide the rook to the star in as few moves as you can.",
+        primary: "Enter Maze",
+      },
+      bishop: {
+        title: "Diagonal Run Unlocked",
+        body: "The bishop only turns on a pivot. Choose them to reach the star.",
+        primary: "Start Run",
+      },
+      knight: {
+        title: "Knight's Tour Unlocked",
+        body: "Every square you leave closes behind you. Cover as many as you can.",
+        primary: "Start Tour",
+      },
+      queen: {
+        title: "Queens Unlocked",
+        body: "Place queens so none attack each other. Fill the board.",
+        primary: "Start Puzzle",
+      },
+      pawn: {
+        title: "First Maze Unlocked",
+        body: "Guide the pawn to the star in as few moves as you can.",
+        primary: "Enter Maze",
+      },
+      king: {
+        title: "First Maze Unlocked",
+        body: "Guide the king to the star in as few moves as you can.",
+        primary: "Enter Maze",
+      },
+    },
   },
   "special-training": {
     title: "Special Training Unlocked",

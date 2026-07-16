@@ -1617,9 +1617,7 @@ const messages = {
       count: "dama {placed}/{ceiling}",
     },
     band: {
-      tapQueen: "Toca la dama para comenzar.",
-      tapQueenFirst: "Primero toca tu dama.",
-      choose: "Coloca una dama donde ninguna pueda verla.",
+      choose: "Coloca las damas sin que ninguna se ataque.",
       illegal: "Esa casilla está vigilada por una dama.",
       blocked: "Esa casilla es un muro.",
       done: "No quedan casillas seguras.",
@@ -2473,10 +2471,42 @@ const messages = {
       dismiss: "Después",
     },
     "first-labyrinth": {
-      title: "Primer Laberinto Desbloqueado",
-      body: "Guía a la torre a través de él.",
-      primary: "Entrar al Laberinto",
+      title: "Primer Desafío Desbloqueado",
+      body: "Tu primer Entrenamiento Especial está listo.",
+      primary: "Entrar",
       dismiss: "Después",
+      byPiece: {
+        rook: {
+          title: "Primer Laberinto Desbloqueado",
+          body: "Guía a la torre hasta la estrella en los menos movimientos posibles.",
+          primary: "Entrar al Laberinto",
+        },
+        bishop: {
+          title: "Carrera Diagonal Desbloqueada",
+          body: "El alfil solo gira en un pivote. Elígelos para llegar a la estrella.",
+          primary: "Empezar Carrera",
+        },
+        knight: {
+          title: "Gira del Caballo Desbloqueada",
+          body: "Cada casilla que dejas queda cerrada. Cubre todas las que puedas.",
+          primary: "Empezar Gira",
+        },
+        queen: {
+          title: "Damas Desbloqueadas",
+          body: "Coloca las damas sin que ninguna se ataque. Llena el tablero.",
+          primary: "Empezar Puzzle",
+        },
+        pawn: {
+          title: "Primer Laberinto Desbloqueado",
+          body: "Guía al peón hasta la estrella en los menos movimientos posibles.",
+          primary: "Entrar al Laberinto",
+        },
+        king: {
+          title: "Primer Laberinto Desbloqueado",
+          body: "Guía al rey hasta la estrella en los menos movimientos posibles.",
+          primary: "Entrar al Laberinto",
+        },
+      },
     },
     "special-training": {
       title: "Entrenamiento Especial Desbloqueado",
