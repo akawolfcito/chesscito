@@ -1416,10 +1416,13 @@ export const QUEENS_COPY = {
     "queens-3":
       "A block cuts a queen's line. Two of them fit a ninth queen on a board that holds eight.",
   },
-  /** Mission chip. The spec asks it to state the target count, so the host
-   *  composes it as "<queen> ×N" from the level's own ceiling. */
+  /** Mission chip, "<queen> ×N" per spec §2, where N is the level's own exact
+   *  ceiling. It states the GOAL, not the running total: the live count already
+   *  rides the mission band (placed/ceiling · %), and two counters saying nearly
+   *  the same thing in one band is how a player learns to read neither. Same
+   *  split the tour uses — its chip states the bar ("Cover 80%"). */
   chip: {
-    goal: "Fill the board",
+    goal: "queen ×{n}",
   },
   band: {
     tapQueen: "Tap the queen to begin.",
