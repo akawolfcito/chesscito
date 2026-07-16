@@ -417,27 +417,27 @@ export function MissionPanelCandy({
         ? tMission('openDetailsCaptureAriaLabel')
         : tMission('openDetailsTargetAriaFormat', { target: targetLabel })
 
-  /* Mission peek — moved out of the mid chip-row into a full-width band
-     below the two chips (2026-07-15). Same MissionDetailSheet trigger and
-     tap behavior; restyled from the `candy-tray-pill` to the Diagonal Run
-     band look (warm amber paper, rounded, full width) so both playful
-     surfaces read as one family. The E2E hooks (`mission-optimal-moves`
-     testid + data-* attrs, `Open mission details` aria-label) are kept
-     verbatim on the same elements. */
+  /* Mission peek — full-width band below the two chips (2026-07-15),
+     compacted to a SLIM strip on Sally's unified-tray pass (same day):
+     the chip row and this band read as ONE quest tray, so the band
+     carries a single text line (~30px) instead of panel weight (~50px)
+     and gives the recovered height back to the board. Full-width keeps
+     the tap target generous despite the reduced height (Fitts: 390px
+     wide beats a 44px pill). Same MissionDetailSheet trigger and tap
+     behavior; Diagonal Run band palette. The E2E hooks
+     (`mission-optimal-moves` testid + data-* attrs, `Open mission
+     details` aria-label) are kept verbatim on the same elements. */
   const missionBand = (
     <button
       type="button"
       data-testid="mission-band"
-      className="flex w-full items-center justify-center gap-2 rounded-lg border border-amber-300/40 bg-amber-100/95 px-3 py-2 text-[#3f2208]"
+      className="flex min-h-[30px] w-full items-center justify-center gap-1.5 rounded-lg border border-amber-300/40 bg-amber-100/95 px-3 py-1 text-[#3f2208]"
       aria-label={missionAriaLabel}
     >
-      <CandyIcon
-        name="crosshair"
-        className="candy-tray-pill-icon candy-tray-pill-icon--floating"
-      />
+      <CandyIcon name="crosshair" className="candy-tray-pill-icon" />
       <span
         key={targetLabel}
-        className="truncate text-sm font-extrabold"
+        className="truncate text-xs font-extrabold leading-tight"
         style={candyChipTextStyle}
         data-testid={showMoveCounter ? 'mission-optimal-moves' : undefined}
         data-optimal-moves={showMoveCounter ? labyrinthOptimalMoves : undefined}
@@ -482,11 +482,11 @@ export function MissionPanelCandy({
           </div>
         </div>
 
-        {/* Mission band — full-width, below the two chips (2026-07-15).
-            Was the mid-row peek pill; now a Diagonal-Run-style band so the
-            mission CTA reads as its own affordance and spans the surface.
-            Tap opens the same MissionDetailSheet. */}
-        <div className="mt-1.5">
+        {/* Mission band — full-width, attached right under the chip row
+            (2026-07-15, Sally unified-tray pass). mt-1 keeps it visually
+            glued to the chips so row + band read as one tray, not two
+            stacked headers. Tap opens the same MissionDetailSheet. */}
+        <div className="mt-1">
           <MissionDetailSheet
             open={missionDetailOpen}
             onOpenChange={setMissionDetailOpen}
