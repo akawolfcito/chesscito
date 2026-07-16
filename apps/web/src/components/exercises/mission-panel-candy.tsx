@@ -32,6 +32,11 @@ type MissionPanelProps = {
   /** Curated prompt for the ACTIVE exercise; forwarded to the mission detail
    *  sheet, where it replaces the generic per-piece hint (A1/A7). */
   exercisePrompt?: string
+  /** Curated TITLE of the active exercise ("Step by step"). Rendered as the
+   *  mission band's tail so the band names the lesson instead of only the
+   *  target square. Short and imperative by construction, which is why the
+   *  band takes this and not `exercisePrompt` — see `missionTail`. */
+  exerciseTitle?: string
   isCapture?: boolean
   /** Live retry-shield count from `readDisplayedShields()`. Rendered
    *  by the persistent shield-chip row inserted between the
@@ -383,6 +388,7 @@ export function MissionPanelCandy({
   lastEarnedStars,
   pieceHint,
   exercisePrompt,
+  exerciseTitle,
   failureRescueSlot,
   missionStatus,
 }: MissionPanelProps) {
@@ -413,10 +419,25 @@ export function MissionPanelCandy({
   const showMoveCounter = labyrinthMode && !!labyrinthOptimalMoves && !diagonalRunMode
   const visibleMissionLabel =
     showMoveCounter
-      ? String(labyrinthOptimalMoves)
+      ? (labyrinthTitle ?? String(labyrinthOptimalMoves))
       : isCapture
       ? tMission('captureLabel')
       : tMission('visibleMissionTargetFormat', { target: targetLabel })
+
+  /* The band's tail — what the band SAYS beyond where to go. It read "Move to
+     b6" and nothing else for an exercise, and a bare "4" for a labyrinth, while
+     the lesson sat unread inside the mission modal (founder, 2026-07-16).
+     Precedence: a live game line (Diagonal Run) always wins; a Special Training
+     level names its cost; an exercise names its lesson. `title` is the right
+     field for this and `playerPrompt` is not — the title is curated short and
+     imperative ("Step by step"), while the prompt is a full sentence that a
+     30px strip can only truncate into noise. The prompt stays in the modal,
+     which is where it fits. */
+  const missionTail =
+    missionStatus?.message ??
+    (showMoveCounter
+      ? tMission('missionMovesFormat', { moves: labyrinthOptimalMoves })
+      : exerciseTitle)
   const missionAriaLabel =
     showMoveCounter
       ? tMission('openDetailsLabyrinthAriaFormat', { moves: labyrinthOptimalMoves })
@@ -454,20 +475,20 @@ export function MissionPanelCandy({
       >
         {visibleMissionLabel}
       </span>
-      {/* Hoisted status line (Diagonal Run). One band, two facts: where to
-          go, and what to do next — the founder saw these stacked as two
-          bands (2026-07-16). Carries the `dr-band-msg` hook so the real-flow
-          E2E keeps reading the live line from wherever it renders. */}
-      {missionStatus ? (
+      {/* The tail: the live Diagonal Run line, a level's move cost, or the
+          exercise's lesson. One band, two facts — where to go, and what this
+          is about. Carries the `dr-band-msg` hook (only when a game owns the
+          line) so the real-flow E2E keeps reading it from wherever it renders. */}
+      {missionTail ? (
         <span
           className="truncate text-xs font-semibold leading-tight opacity-90"
           style={candyChipTextStyle}
-          data-testid="dr-band-msg"
+          data-testid={missionStatus ? 'dr-band-msg' : 'mission-band-tail'}
         >
           <span aria-hidden="true" className="mx-1 opacity-50">
             ·
           </span>
-          {missionStatus.message}
+          {missionTail}
         </span>
       ) : null}
     </button>

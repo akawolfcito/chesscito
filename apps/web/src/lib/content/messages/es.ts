@@ -1537,6 +1537,7 @@ const messages = {
     closeLabel: "Cerrar",
     visibleMissionTargetFormat: "Mover a {target}",
     captureLabel: "Captura",
+    missionMovesFormat: "{moves} movimientos",
     openDetailsLabyrinthAriaFormat:
       "Abrir detalles de misión: ruta óptima {moves} movimientos",
     openDetailsCaptureAriaLabel: "Abrir detalles de misión: capturar objetivo",

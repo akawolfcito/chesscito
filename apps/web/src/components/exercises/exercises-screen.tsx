@@ -2709,6 +2709,7 @@ export function ExercisesScreen({
           targetLabel={targetLabel}
           pieceHint={pieceHint}
           exercisePrompt={runPrompt ?? currentExercise.playerPrompt}
+          exerciseTitle={runTitle ?? currentExercise.title}
           isCapture={Boolean(currentExercise.isCapture)}
           isDockSheetOpen={activeDockTab !== null}
           labyrinthMode={effectiveLabyrinthMode}

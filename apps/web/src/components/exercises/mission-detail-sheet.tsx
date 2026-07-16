@@ -189,7 +189,11 @@ export function MissionDetailSheet({
             {/* Candy panel — same cream wood + grass border as
                 <MissionBriefing>. `backgroundSize: 100% 100%` lets the
                 asset stretch with content so the grass border always
-                wraps the panel, even when the journey list grows. */}
+                wraps the panel, even when the journey list grows.
+                `minHeight` keeps a short mission (a one-line prompt) from
+                collapsing the panel into a letterbox — the art needs room to
+                read as a panel (founder, 2026-07-16). The same stretch that
+                grows it also fills it. */}
             <div
               className="relative w-full"
               style={{
@@ -197,6 +201,7 @@ export function MissionDetailSheet({
                   'image-set(url("/art/screen-mission/panel-mision-icon.avif") type("image/avif"), url("/art/screen-mission/panel-mision-icon.webp") type("image/webp"), url("/art/screen-mission/panel-mision-icon.png") type("image/png"))',
                 backgroundSize: "100% 100%",
                 backgroundRepeat: "no-repeat",
+                minHeight: "300px",
               }}
             >
               {/* Close button — absolute against the panel frame so it

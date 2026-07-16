@@ -769,6 +769,10 @@ export const MISSION_BRIEFING_COPY = {
   /** Short label rendered on the mission peek pill when the active
    *  exercise is a capture (vs a position move). */
   captureLabel: "Capture",
+  /** Mission band tail for a Special Training level. The band used to read a
+   *  bare "4" — the optimal-move count with nothing to say it was a count
+   *  (founder, 2026-07-16). A number alone is not information. */
+  missionMovesFormat: "{moves} moves",
   /** ARIA labels for the mission peek pill — three variants for the
    *  active mode (labyrinth / capture / standard move). */
   openDetailsLabyrinthAriaFormat: "Open mission details: optimal path {moves} moves",
