@@ -58,15 +58,17 @@ export type TrainingPathInput = {
   badgeClaimed: boolean;
   /** Injected catalog (default = baseline EXERCISES/LABYRINTHS). */
   catalog?: TrainingCatalog;
-  /** Ids in the labyrinth lane that are actually Knight's Tour levels, so the
-   *  node picks `tourStars` over `labyrinthStars`.
+  /** Ids in the labyrinth lane graded by COVERAGE rather than by move count, so
+   *  the node picks `tourStars` over `labyrinthStars`. The Knight's Tour and
+   *  N-Queens are both in here — hence the neutral name: a second game asking
+   *  the same question is what a `queensIds` parallel would have hidden.
    *
-   *  Tours ride the labyrinth machinery (nav, unlock, completion) but not its
-   *  grader: their best is COVERAGE and their optimalMoves is the reachable
-   *  ceiling, so `best <= optimalMoves` always holds — labyrinthStars' top band.
-   *  Unrouted, every tour scores 3 stars, dead ends included. Absent/empty =
-   *  no tours, and the labyrinth lane is untouched. */
-  tourIds?: ReadonlySet<string>;
+   *  These games ride the labyrinth machinery (nav, unlock, completion) but not
+   *  its grader: their best is COVERAGE and their optimalMoves is a ceiling, so
+   *  `best <= optimalMoves` always holds — labyrinthStars' top band. Unrouted,
+   *  every run scores 3 stars, dead ends included. Absent/empty = none, and the
+   *  labyrinth lane is untouched. */
+  coverageIds?: ReadonlySet<string>;
 };
 
 export type PieceMastery = "none" | "badge" | "mastered";
@@ -81,7 +83,7 @@ export const LABYRINTH_UNLOCK_THRESHOLD = 6;
 export const LABYRINTH_MIN_EXERCISES = 3;
 
 export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
-  const { piece, progress, labyrinthBests, badgeClaimed, tourIds } = input;
+  const { piece, progress, labyrinthBests, badgeClaimed, coverageIds } = input;
   const exercisesCatalog = input.catalog?.exercises ?? EXERCISES;
   const labyrinthsCatalog = input.catalog?.labyrinths ?? LABYRINTHS;
   // Across-pool exercise mastery: sum the best stars in the id-map. Sparse
@@ -136,12 +138,13 @@ export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
       piece,
       unlock,
       status: complete ? "complete" : unlocked ? "available" : "locked",
-      // A tour's best is coverage against a ceiling; a labyrinth's is moves
-      // against an optimum. `optimalMoves` holds ceiling-1 for a tour, so the
-      // square count it was measured against is optimalMoves + 1.
+      // A coverage game's best is measured against a ceiling; a labyrinth's is
+      // moves against an optimum. `optimalMoves` holds ceiling-1 for both the
+      // tour (squares) and queens (queens the player places), so the total it
+      // was measured against is optimalMoves + 1 either way.
       stars: !complete
         ? 0
-        : tourIds?.has(labyrinth.id)
+        : coverageIds?.has(labyrinth.id)
           ? tourStars(best, labyrinth.optimalMoves + 1)
           : labyrinthStars(best, labyrinth.optimalMoves),
     });
