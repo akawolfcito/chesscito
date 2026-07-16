@@ -2404,18 +2404,29 @@ export function ExercisesScreen({
    *  labyrinthAvailable gate are gone — unlock now lives in the path
    *  node statuses: first lab at 6★, then chain by completion). */
   const labyrinthList = specialTrainingCatalog[selectedPiece] ?? [];
-  // Drawer node labels: a Special Training entry's authored title (localized for
-  // pivots via i18n), keyed by id for COPY only. Untitled labs are omitted so the
-  // drawer falls back to the generic "Special Training N" (B4.2.3).
+  // Drawer node labels: a Special Training entry's authored title, keyed by id
+  // for COPY only. Untitled labs are omitted so the drawer falls back to the
+  // generic "Special Training N" (B4.2.3).
+  //
+  // Every signature game routes its title through i18n. `entry.title` is the
+  // AUTHORING copy in content/*.json — English, always — so a game that skips
+  // this lookup ships its English title to Spanish players, silently: the row
+  // is titled, just in the wrong language, which reads as content rather than
+  // as a bug.
   const specialTrainingLabels = useMemo(() => {
     const out: Record<string, string> = {};
     const pivotIds = new Set((diagonalRunCatalog[selectedPiece] ?? []).map((p) => p.id));
+    const knightTourIds = new Set((knightTourCatalog[selectedPiece] ?? []).map((p) => p.id));
     for (const entry of specialTrainingCatalog[selectedPiece] ?? []) {
-      const title = pivotIds.has(entry.id) ? tRun(`title.${entry.id}`) : entry.title;
+      const title = pivotIds.has(entry.id)
+        ? tRun(`title.${entry.id}`)
+        : knightTourIds.has(entry.id)
+          ? tTour(`title.${entry.id}`)
+          : entry.title;
       if (title) out[entry.id] = title;
     }
     return out;
-  }, [specialTrainingCatalog, diagonalRunCatalog, selectedPiece, tRun]);
+  }, [specialTrainingCatalog, diagonalRunCatalog, knightTourCatalog, selectedPiece, tRun, tTour]);
   const activeLabyrinth =
     labyrinthMode && selectedLabyrinthId
       ? labyrinthList.find((lab) => lab.id === selectedLabyrinthId) ?? null
