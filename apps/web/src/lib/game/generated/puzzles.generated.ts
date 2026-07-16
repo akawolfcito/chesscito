@@ -561,7 +561,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "knight-l-shape",
         "center-control"
-      ]
+      ],
+      "principle": "l-shape-move",
+      "title": "The knight's leap",
+      "playerPrompt": "The knight jumps in an L. Land it on the star.",
+      "learningObjective": "The player can recognise the knight's L-shaped jump — two squares one way, one across."
     },
     {
       "id": "knight-2",
@@ -578,7 +582,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "knight-l-shape",
         "corner-escape"
-      ]
+      ],
+      "principle": "corner-reach",
+      "title": "Out of the corner",
+      "playerPrompt": "In the corner the knight has just two jumps. Pick the one to the star.",
+      "learningObjective": "The player understands the knight's reach depends on where it stands, and shrinks near an edge."
     },
     {
       "id": "knight-3",
@@ -595,7 +603,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "knight-l-shape",
         "corner-escape"
-      ]
+      ],
+      "principle": "corner-both-jumps",
+      "title": "The other corner jump",
+      "playerPrompt": "Same corner, the knight's other jump. Take it.",
+      "learningObjective": "The player learns to see all of a knight's jumps from a square, not just the first one."
     },
     {
       "id": "knight-4",
@@ -611,7 +623,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "easy",
       "tags": [
         "knight-l-shape"
-      ]
+      ],
+      "principle": "two-hop",
+      "title": "Two hops out",
+      "playerPrompt": "No single jump reaches it. Chain two.",
+      "learningObjective": "The player learns to build a knight route out of more than one hop."
     },
     {
       "id": "knight-5",
@@ -629,7 +645,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "corner-escape",
         "center-control",
         "knight-l-shape"
-      ]
+      ],
+      "principle": "reach-the-center",
+      "title": "Into the center",
+      "playerPrompt": "Head out of the corner toward the middle, hop by hop.",
+      "learningObjective": "The player learns to steer the knight toward the center, where it has the most jumps."
     },
     {
       "id": "knight-6",
@@ -646,7 +666,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "knight-l-shape",
         "long-route"
-      ]
+      ],
+      "principle": "long-route",
+      "title": "The long way by leaps",
+      "playerPrompt": "The star is far. Link the jumps to reach it.",
+      "learningObjective": "The player learns to cover distance by chaining several knight hops."
     },
     {
       "id": "knight-7",
@@ -663,7 +687,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "knight-l-shape",
         "long-route"
-      ]
+      ],
+      "principle": "plan-the-hops",
+      "title": "Plan your jumps",
+      "playerPrompt": "Think a few jumps ahead before you leap.",
+      "learningObjective": "The player learns to look ahead and plan a knight route instead of hopping one move at a time."
     },
     {
       "id": "knight-8",
@@ -698,7 +726,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "jump-over",
         "center-control"
-      ]
+      ],
+      "principle": "jump-over",
+      "title": "The knight jumps over",
+      "playerPrompt": "Other pieces get blocked — the knight doesn't. Leap right over them.",
+      "learningObjective": "The player learns the knight's signature power: it is the only piece that jumps over others, so blockers never stop it."
     },
     {
       "id": "knight-9",
@@ -714,7 +746,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "medium",
       "tags": [
         "long-route"
-      ]
+      ],
+      "principle": "long-route-advanced",
+      "title": "Across the board",
+      "playerPrompt": "From the corner, reach deep into the far side. Chain the hops.",
+      "learningObjective": "The player gains confidence planning a long knight journey across open space."
     },
     {
       "id": "knight-10",
@@ -732,7 +768,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "knight-l-shape",
         "long-route",
         "corner-escape"
-      ]
+      ],
+      "principle": "corner-departure",
+      "title": "Across from the corner",
+      "playerPrompt": "Leave the top corner and hop across to the star.",
+      "learningObjective": "The player learns to launch the knight out of a corner toward a far target, choosing an efficient chain of hops."
     }
   ],
   "pawn": [
@@ -2426,5 +2466,15 @@ export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "bishop-6": "Your own piece blocks the turn",
   "bishop-7": "Both turns blocked",
   "bishop-8": "Blocked on the long diagonal",
-  "bishop-10": "The long way around"
+  "bishop-10": "The long way around",
+  "knight-1": "The knight's leap",
+  "knight-2": "Out of the corner",
+  "knight-3": "The other corner jump",
+  "knight-4": "Two hops out",
+  "knight-5": "Into the center",
+  "knight-6": "The long way by leaps",
+  "knight-7": "Plan your jumps",
+  "knight-8": "The knight jumps over",
+  "knight-9": "Across the board",
+  "knight-10": "Across from the corner"
 };

@@ -35,7 +35,7 @@ export type LintResult = { errors: string[]; warnings: string[] };
  * (2026-07-13); the other five still ship uncurated and must not break the build
  * for a lesson nobody has written yet.
  */
-export const CURATED_PIECES: readonly PieceId[] = ["rook", "bishop"];
+export const CURATED_PIECES: readonly PieceId[] = ["rook", "bishop", "knight"];
 
 const samePos = (a: BoardPosition, b: BoardPosition) =>
   a.file === b.file && a.rank === b.rank;
