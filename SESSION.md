@@ -4,68 +4,65 @@
 
 ## Completed
 
-- **Knight's Tour — el juego firma del caballo, end to end** (merge `aa323e99`, 8 commits atómicos).
-  Módulo puro · grader de cobertura · ledger propio · catálogo · 3 niveles · board · host · i18n
-  EN/ES · probe `/dev/knight-tour` · e2e. **Detalle: `docs/plans/2026-07-16-knight-tour-plan.md`.**
-- **Fix (`162ea1ae`)**: el drawer mostraba el título del tour **en inglés a jugadores ES**
-  (`specialTrainingLabels` no ruteaba los tours por i18n). Invisible: la fila tenía título, en el
-  idioma equivocado.
-- **Regla derogada (`ad95b7a4`)**: la verificación de deploys **NO es tarea del agente**.
-  Reescrita en `CLAUDE.md` §"Verificación de deploys" — estaba codificada en el repo y cada
-  sesión la heredaba.
-- **Plan de N-Queens escrito (`26434aa5`)**: `docs/plans/2026-07-16-n-queens-plan.md`.
+- **N-Queens — el juego firma de la dama, end to end** (merge `2d42d53b`, 13 commits atómicos).
+  Módulo puro con **techo EXACTO por solver** · catálogo · 3 niveles · board · host · i18n EN/ES ·
+  probe `/dev/queens` · e2e 12/12. **Detalle: `docs/handoffs/2026-07-16-n-queens-handoff.md`.**
+- **Regla del founder**: los bloques **rompen los rayos** → `queens-3` mete **9 damas** en un 8×8
+  que solo admite 8. El e2e lo asegura de punta a punta.
+- **3 bugs preexistentes arreglados de paso**: el unlock decía "Guide the rook" a **5 de 6 piezas**;
+  el chip enmarcaba juegos de cobertura con "Move to" (el tour decía "Move to Cover 80%"); el ruteo
+  i18n del drawer no tenía tests (extraído a `lib/content/special-training-labels.ts` con guardián).
+- **Review del founder aplicada**: sin puntos de casillas seguras (eran la respuesta, no una pista),
+  sin peaje de selección, chip contador + banda con el objetivo.
 
 ## Current State
 
-- **Branch**: `main`, sincronizado con `origin/main`.
-- **Build**: vitest **5172/5172 (439 files)** · `tsc --noEmit` limpio · e2e del tour **8/8**
+- **Branch**: `main`, sincronizado con `origin/main`. Sin PRs abiertos, árbol limpio.
+- **Build**: vitest **5212/5212 (444 files)** · `tsc --noEmit` limpio · e2e queens **12/12**
   (`--project=minipay`).
-- **Uncommitted work**: no. Árbol limpio, sin PRs abiertos.
 
 ## Next Tasks
 
-1. **N-Queens (`kind: "queens"`)** — spec §2 (`docs/specs/2026-07-16-signature-games-spec.md`).
-   **Leer `docs/plans/2026-07-16-n-queens-plan.md` PRIMERO**: tiene el modelo de datos derivado,
-   los stages y el refactor que pide. ⚠️ **Tiene una pregunta abierta para el founder — hacerla
-   antes de codear** (ver Blockers).
-2. **Safe Path (rey) + Promotion Run (peón)** — spec §3/§4. **JUNTOS, nunca separados**: comparten
+1. **Niveles de queens**: los 3 son andamio (construidos para medir, se ven literales). El founder
+   los afina en `/dev/labyrinth-builder`. **No requiere código** — el techo se recalcula solo.
+2. **Overlay TRY AGAIN + feedback al fallar, para TODAS las piezas** (founder, 2026-07-16): un beat
+   corto + el objetivo en una línea. Capa sobre la mecánica, no la mecánica.
+3. **Safe Path (rey) + Promotion Run (peón)** — spec §3/§4. **JUNTOS, nunca separados**: comparten
    la cirugía `{pos, piece}` + capa de ataque (plan §15.6.3). **No son los baratos.**
-3. **Maestría** — el founder la maneja "en su momento" (ver Notes).
+4. **Cluster closure de N-Queens**: issues/milestone, README sync, MEMORY.md sync.
 
 ## Blockers
 
-- ⚠️ **Pregunta abierta para el founder, ANTES de codear N-Queens**: ¿los bloques rompen los rayos
-  de la dama para "abrir posibilidades" (spec §2, última línea)? El código dice que sí
-  (`getQueenMoves` ya corta en bloqueadores) y es ajedrecísticamente correcto, pero **cambia por
-  completo el diseño de niveles y el techo**.
-- **`contextual-header.spec.ts` falla 6/6 — PREEXISTENTE**, no es regresión (su `bypassFirstVisit`
-  no setea `chesscito:hub-tour:v1`).
+- **Maestría de la dama**: quien completó `queen-lab-1..3` y reclamó el badge **pierde la maestría**
+  (el pool ahora exige `queens-1..3`). Mismo caso que alfil y caballo. **Decisión del founder.**
+- **`contextual-header.spec.ts` falla 6/6 — PREEXISTENTE**, no es regresión.
 - **VR `hub-shop-sheet-open` roja también en `main`** (env sin treasury). No perseguir.
 - ⚠️ **`hub-clean` VR pasa cambios sin verlos** (`maxDiffPixelRatio: 0.005` ≈ 12k píxeles).
 
 ## Notes
 
+- ⚠️ **El patrón del hermano es un mal default — leer el spec primero.** Tres veces esta sesión el
+  spec decía una cosa y se implementó el patrón del Knight's Tour: los puntos de casillas seguras,
+  el chip ("counter chip" era literal), y la puerta de selección ("mini-tour" era un momento
+  instructivo, no un peaje). El founder cazó las tres.
+- ⚠️ **Techo exacto vs cota superior**: el de queens es exacto (backtracking) → sus niveles NO
+  necesitan filtro como los del tour. **Derivar N del solver, jamás autorearlo**: medir salvó un
+  nivel 6×6 cuyo techo real era 5 (ninguna solución 6×6 tiene dama en esquina).
+  → [[feedback_reachable_is_not_achievable]]
+- ⚠️ **`getRookMoves` corta el rayo ANTES del bloqueador** (modela piezas propias). Para "¿está
+  atacada esta casilla?" hay que pasar **solo los bloques**, nunca las otras damas.
 - 📌 **Los deploys los verifica el founder, visualmente. NO hacerlo por iniciativa propia** →
   `CLAUDE.md` §"Verificación de deploys".
-- 📌 **El carril 2 NO es "laberintos": es el juego lúdico, uno por pieza** (aclaración del founder,
-  2026-07-16). Para la torre *resulta ser* un laberinto porque ese es su juego (curado, con
-  título). Los laberintos genéricos **sin título** de peón/dama/rey son **relleno ocupando el
-  slot** hasta que llegue su juego — no son un carril. Los 5 del caballo eran eso, y el tour los
-  reemplazó: el slot se llenó, no se perdió nada. → [[project_signature_games_per_piece]]
-- ⚠️ **Un juego de cobertura NO puede usar el carril de laberinto para calificar** — `labyrinthStars`
-  queda **ciega** (3★ a todo) y `recordLabyrinthBest` se **invierte** (la peor corrida pisa la mejor).
-  Ambos fijados con test. → [[feedback_same_shape_number_wrong_meaning]]
-- ⚠️ **Techo ≠ alcanzable**: el techo del tour es una cota superior (BFS), por eso sus niveles se
-  filtraron con Warnsdorff. **El de N-Queens SÍ es exacto** (backtracking 8×8) → derivar N del
-  solver, nunca autorearlo. → [[feedback_reachable_is_not_achievable]]
-- **Maestría, medido y diferido**: un jugador que ya completó `knight-lab-1..5` y reclamó el badge
-  **pierde la maestría** (`complete` → `available`), porque exige el pool actual (los 3 tours) y
-  están sin jugar. Le habría pasado igual al alfil con los pivotes. **El founder lo maneja después.**
+- 📌 **El carril 2 es UN JUEGO por pieza.** El juego firma REEMPLAZA los laberintos crudos de su
+  pieza en el carril (`specialTrainingCatalog`); los `*-lab-N` sin título quedan en contenido, sin
+  seleccionar. → [[project_signature_games_per_piece]]
+- ⚠️ **Metacaracteres de zsh en `git commit -m`** (`?? []`, backticks) mutilan el mensaje en
+  silencio. Usar `git commit -F <archivo>`.
+- ⚠️ **`git checkout -- <archivo>` se lleva TODO lo no commiteado de ese archivo** — no sirve para
+  revertir una mutación puntual.
 - **Deuda**: el probe de Diagonal Run forkeó el board en un spike copiado
-  (`components/dev/diagonal-run-spike.tsx`) — dos implementaciones de las mismas reglas sin nada que
-  las sincronice. El probe del tour renderiza el board REAL para no repetirlo.
-- **Deuda**: 4 duplicados de ejercicios (`docs/audits/2026-07-16-exercise-redundancy-audit.md`) —
-  ediciones de tablero para el builder, no trabajo de motor.
+  (`components/dev/diagonal-run-spike.tsx`). Los probes del tour y de queens renderizan el board REAL.
+- **Deuda**: 4 duplicados de ejercicios (`docs/audits/2026-07-16-exercise-redundancy-audit.md`).
 - Regenerar catálogo: `pnpm -C apps/web import-puzzles`; después `rm -rf apps/web/.next`.
   Regenerarlo **NO** invalida el `unstable_cache` tag `"content"`; un build fresco sí.
 - El founder pule niveles en `/dev/labyrinth-builder`. **Construir la mecánica, no perfeccionar niveles.**
