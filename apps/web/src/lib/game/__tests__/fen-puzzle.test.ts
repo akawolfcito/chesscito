@@ -195,6 +195,103 @@ describe("mapFenPuzzle", () => {
   });
 });
 
+/** Stage 1 of docs/specs/2026-07-16-safe-path-promotion-run-plan.md.
+ *  The FEN has always carried piece types; mapFenPuzzle threw them away.
+ *  `enemies` is ADDITIVE — `obstacles`/`captureTargets` keep their exact
+ *  meaning so the other 27 call sites never learn this happened. */
+describe("mapFenPuzzle — typed enemies (threat kinds)", () => {
+  const SAFE_PATH_FEN = "8/8/8/3r4/8/8/8/K6b w - - 0 1";
+
+  it("accepts black pieces when the mover is a king", () => {
+    // Today this throws: ':146' rejects any black piece unless the mover is a
+    // pawn. Safe Path IS a king surrounded by black enemies.
+    expect(() =>
+      mapFenPuzzle({
+        kind: "safe-path",
+        piece: "king",
+        fen: SAFE_PATH_FEN,
+        mover: "a1",
+        target: "h8",
+        tier: "medium",
+      }),
+    ).not.toThrow();
+  });
+
+  it("keeps each enemy's piece type — a rook does not attack like a bishop", () => {
+    const result = mapFenPuzzle({
+      kind: "safe-path",
+      piece: "king",
+      fen: SAFE_PATH_FEN,
+      mover: "a1",
+      target: "h8",
+      tier: "medium",
+    });
+
+    expect(result.enemies).toEqual([
+      { pos: squareToPos("d5"), piece: "rook" },
+      { pos: squareToPos("h1"), piece: "bishop" },
+    ]);
+  });
+
+  it("does not route black enemies into captureTargets — the king cannot capture", () => {
+    // D1: enemies are static and untouchable, which is what keeps the attack
+    // map a per-level constant.
+    const result = mapFenPuzzle({
+      kind: "safe-path",
+      piece: "king",
+      fen: SAFE_PATH_FEN,
+      mover: "a1",
+      target: "h8",
+      tier: "medium",
+    });
+
+    expect(result.captureTargets).toBeUndefined();
+  });
+
+  it("still routes WHITE pieces to obstacles, untyped, on a threat kind", () => {
+    const result = mapFenPuzzle({
+      kind: "safe-path",
+      piece: "king",
+      fen: "8/8/8/3r4/8/8/8/K5NR w - - 0 1",
+      mover: "a1",
+      target: "h8",
+      tier: "medium",
+    });
+
+    expect(result.obstacles).toEqual([squareToPos("g1"), squareToPos("h1")]);
+    expect(result.enemies).toEqual([{ pos: squareToPos("d5"), piece: "rook" }]);
+  });
+
+  it("leaves the non-threat kinds exactly as they were", () => {
+    const result = mapFenPuzzle({
+      kind: "exercise",
+      piece: "rook",
+      fen: "8/8/8/8/8/8/8/R5N1 w - - 0 1",
+      mover: "a1",
+      target: "h1",
+      tier: "easy",
+    });
+
+    expect(result.obstacles).toEqual([squareToPos("g1")]);
+    expect(result.enemies).toBeUndefined();
+  });
+
+  it("still rejects black pieces on kinds that cannot model a threat", () => {
+    // The ':146' guard is widened for the threat kinds, NOT removed: a black
+    // rook in a bishop exercise is still an authoring mistake.
+    expect(() =>
+      mapFenPuzzle({
+        kind: "exercise",
+        piece: "bishop",
+        fen: "8/8/8/3r4/8/8/8/B7 w - - 0 1",
+        mover: "a1",
+        target: "h8",
+        tier: "easy",
+      }),
+    ).toThrow(FenError);
+  });
+});
+
 describe("puzzleId", () => {
   it("is deterministic and content-addressed", () => {
     const a = puzzleId("rook", "8/8/8/8/8/8/8/R7|h1");

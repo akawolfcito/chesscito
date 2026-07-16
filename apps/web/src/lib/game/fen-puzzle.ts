@@ -49,7 +49,8 @@ export type PuzzleKind =
   | "labyrinth"
   | "diagonal-run"
   | "knight-tour"
-  | "queens";
+  | "queens"
+  | "safe-path";
 
 /** The kinds graded by COVERAGE instead of arrival: they have no destination and
  *  no route, only a ceiling to fill. Everything that branches on "is there a
@@ -60,6 +61,17 @@ export const COVERAGE_KINDS = ["knight-tour", "queens"] as const;
 
 export function isCoverageKind(kind: PuzzleKind): boolean {
   return (COVERAGE_KINDS as readonly string[]).includes(kind);
+}
+
+/** The kinds that model BLACK pieces as static threats instead of as capture
+ *  targets. They are the only ones that read `enemies`, and the only ones
+ *  allowed a black piece without a pawn's capture semantics — everywhere else a
+ *  black piece is still an authoring mistake (see the guard in mapFenPuzzle).
+ *  Ask THIS, never `kind === "safe-path"`: Promotion Run is next in line. */
+export const THREAT_KINDS = ["safe-path"] as const;
+
+export function isThreatKind(kind: PuzzleKind): boolean {
+  return (THREAT_KINDS as readonly string[]).includes(kind);
 }
 
 export type PuzzleInput = {
@@ -81,6 +93,11 @@ export type PuzzleInput = {
   learningObjective?: string;
 };
 
+/** A black piece that projects a threat. The FEN has always carried the type;
+ *  until now mapFenPuzzle discarded it into a bare square. It cannot: a rook
+ *  does not attack like a bishop, so a threat layer needs the type. */
+export type TypedEnemy = { pos: BoardPosition; piece: PieceId };
+
 export type MappedPuzzle = {
   kind: PuzzleKind;
   piece: PieceId;
@@ -97,6 +114,10 @@ export type MappedPuzzle = {
   targetPos: BoardPosition;
   obstacles?: BoardPosition[];
   captureTargets?: BoardPosition[];
+  /** Static black pieces that project attacked squares. ADDITIVE: only the
+   *  threat kinds populate it, so `obstacles`/`captureTargets` keep the exact
+   *  meaning their other 27 call sites already rely on. */
+  enemies?: TypedEnemy[];
   isCapture?: boolean;
   tier: ExerciseTier;
   tags?: string[];
@@ -139,9 +160,15 @@ export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
 
   const obstacles: BoardPosition[] = [];
   const captureTargets: BoardPosition[] = [];
+  const enemies: TypedEnemy[] = [];
+  const isThreat = isThreatKind(input.kind);
   for (const [sq, p] of board) {
     if (sq === moverSq) continue;
+    // White stays untyped on purpose: a wall is a wall, and 27 call sites read
+    // `obstacles` as bare squares.
     if (p.color === "w") { obstacles.push(squareToPos(sq)); continue; }
+    // Black means one of three things, and the kind decides which:
+    if (isThreat) { enemies.push({ pos: squareToPos(sq), piece: p.type }); continue; }
     if (input.piece !== "pawn") {
       throw new FenError(`black piece on ${sq}: captures unsupported for ${input.piece}; model as obstacles`);
     }
@@ -158,6 +185,7 @@ export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
     targetPos,
     obstacles: obstacles.length ? obstacles : undefined,
     captureTargets: captureTargets.length ? captureTargets : undefined,
+    enemies: enemies.length ? enemies : undefined,
     isCapture: isCapture || undefined,
     tier: input.tier,
     tags: input.tags && input.tags.length ? input.tags : undefined,
