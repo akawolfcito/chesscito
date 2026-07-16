@@ -82,13 +82,22 @@ Antes de implementar cualquier feature con flujo interactivo, el spec DEBE enume
 - Edge cases por estado (¿qué pasa si tap en elemento locked? ¿qué pasa al completar el último item?)
 - Sin esta enumeración, los bugs de flujo aparecen en QA post-entrega y cuestan rondas extra
 
-## Verificación de deploys
+## Verificación de deploys — NO es mi tarea (founder, 2026-07-16)
 
-Después de cada deploy (Vercel preview o prod):
+**NO verifiques deploys por tu cuenta. Solo si te lo piden explícitamente.**
 
-1. Confirmar que el build nuevo propagó (poll a la URL de producción hasta ver el deploy live)
-2. Correr smoke test contra la URL live y reportar pass/fail
-3. No cerrar la sesión con un deploy sin confirmar
+El founder lo verifica **visualmente**: le cuesta 0 tokens y menos de 1 segundo. Que yo
+haga polling a la URL + smoke test cuesta minutos y tokens para producir la misma
+respuesta que él ya tiene de un vistazo.
+
+- ❌ NO poll a la URL esperando que propague el build.
+- ❌ NO smoke test contra la URL live por iniciativa propia.
+- ❌ NO dejar "verificar el deploy" como próxima tarea en el handoff.
+- ✅ Mergear, pushear, y **avanzar**. Si el deploy está mal, él lo ve antes que yo.
+- ✅ Si pide "verificá el deploy" explícitamente: ahí sí, y con smoke test.
+
+> Regla anterior (derogada): "después de cada deploy, poll + smoke test + no cerrar sesión
+> sin confirmar". Se escribió pensando en que yo era el único que podía mirar. No lo soy.
 
 ## Cluster Closure Protocol
 

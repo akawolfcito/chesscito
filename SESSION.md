@@ -9,7 +9,8 @@
 - **`main` = merge de `feat/knight-tour` (`--no-ff`, 8 commits atómicos). Pusheado.**
 - **Suite: vitest 5172/5172 (439 files) · `tsc --noEmit` limpio · e2e del tour 8/8**
   contra el board real en `--project=minipay`.
-- ⚠️ **Deploy NO verificado** — el merge no se desplegó todavía. Es lo primero de la próxima sesión.
+- 📌 **El deploy lo verifica el founder, visualmente. NO es tarea del agente** (2026-07-16) —
+  ver `CLAUDE.md` §"Verificación de deploys". No lo pongas como próxima tarea.
 
 ## Qué se construyó — Knight's Tour, end to end
 
@@ -62,9 +63,7 @@ i18n EN/ES → probe `/dev/knight-tour` → e2e.
 
 ## Next Tasks (en orden)
 
-### 0. [PRIMERO] Verificar el deploy del merge en preview + smoke.
-
-### 1. N-Queens (`kind: "queens"`) — spec §2
+### 1. [PRIMERO] N-Queens (`kind: "queens"`) — spec §2
 Ya tiene la mitad del camino hecho: **`tourStars` sirve tal cual** (califica % de un conjunto),
 y el patrón bucket + `tourIds` en `buildTrainingPath` se replica. Ojo: Queens necesita su propio
 `queenIds` o generalizar `tourIds` a "ids que califican por cobertura".
