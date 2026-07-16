@@ -47,6 +47,10 @@ type ExerciseDrawerProps = {
   streakCount?: number
   visibleExerciseIds?: ReadonlySet<string> | null
   labyrinthNodes?: TrainingNode[]
+  /** Resolved display label per Special Training node id (title, localized for
+   *  pivots). Absent id → the generic "Special Training N" fallback. Keyed by id
+   *  for COPY only; the drawer never branches behaviour on it (B4.2.3). */
+  labyrinthLabels?: Record<string, string>
   onLabyrinthSelect?: (labyrinthId: string) => void
   quotaState?: QuotaState | null
   badgeClaimable?: boolean
@@ -80,6 +84,7 @@ export function ExerciseDrawer({
   streakCount,
   visibleExerciseIds,
   labyrinthNodes,
+  labyrinthLabels,
   onLabyrinthSelect,
   quotaState,
   badgeClaimable,
@@ -321,6 +326,12 @@ export function ExerciseDrawer({
               if (row.kind === 'labyrinth') {
                 const node = row.value
                 const labIndex = (labyrinthNodes ?? []).indexOf(node)
+                // B4.2.3: a Special Training node shows its authored title (Rook
+                // Rails, Pivot Challenge) when it has one; untitled labs fall back
+                // to the generic "Special Training N". No id drives behaviour.
+                const nodeLabel =
+                  labyrinthLabels?.[node.id] ??
+                  tPath('specialTrainingLabelFormat', { number: labIndex + 1 })
                 const isLocked = node.status === 'locked'
                 const isQuotaLocked = !isLocked && !isLabReplayable(node)
                 const isDone = node.status === 'complete'
@@ -333,7 +344,7 @@ export function ExerciseDrawer({
                         exercises: LABYRINTH_MIN_EXERCISES,
                       })
                     : tPath('labyrinthLockedChain')
-                  : tPath('labyrinthLabelFormat', { number: labIndex + 1 })
+                  : nodeLabel
 
                 return (
                   <div
@@ -382,9 +393,7 @@ export function ExerciseDrawer({
                       {/* Labyrint icon node */}
                       <button
                         type="button"
-                        aria-label={tPath('labyrinthLabelFormat', {
-                          number: labIndex + 1,
-                        })}
+                        aria-label={nodeLabel}
                         data-locked={effectiveLocked ? 'true' : undefined}
                         data-quota-locked={isQuotaLocked ? 'true' : undefined}
                         onClick={() => {
@@ -430,11 +439,7 @@ export function ExerciseDrawer({
                           </span>
                         )}
                         {/* Accessible text for screen readers and tests */}
-                        <span className="sr-only">
-                          {tPath('labyrinthLabelFormat', {
-                            number: labIndex + 1,
-                          })}
-                        </span>
+                        <span className="sr-only">{nodeLabel}</span>
                         {isLocked ? (
                           <span className="sr-only">
                             {node.unlock.type === 'stars'

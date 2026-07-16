@@ -23,6 +23,7 @@ const RAILS = [
 // Full unlock: exercise stars over the gate + the first three rails marked
 // complete (a present labyrinth-best = completed), so every rail is tappable.
 async function seedAndOpenRail(page: Page, n: number): Promise<void> {
+  const railTitle = RAILS.find((r) => r.n === n)!.title;
   // The dev error overlay steals the lower third of the shot; silence it.
   await page.addInitScript(() => {
     window.addEventListener("error", (e) => e.stopImmediatePropagation(), true);
@@ -54,8 +55,8 @@ async function seedAndOpenRail(page: Page, n: number): Promise<void> {
 
   // Open the training-path drawer (the stars pill, aria-label "Exercises").
   await page.getByRole("button", { name: "Exercises" }).first().click();
-  // Tap "Labyrinth N" (N = order + 1).
-  await page.getByRole("button", { name: new RegExp(`Labyrinth ${n}\\b`, "i") }).click();
+  // Special Training nodes now carry their authored title (B4.2.3).
+  await page.getByRole("button", { name: railTitle }).click();
 }
 
 /** Select the mover and wait for its reachable squares to light up. */

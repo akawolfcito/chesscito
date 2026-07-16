@@ -30,6 +30,10 @@ export const STAGE_RANK: Record<ContentStage, number> = {
 export interface BaselineCatalog {
   exercises: Record<PieceId, Exercise[]>;
   labyrinths: Record<PieceId, Exercise[]>;
+  /** Pivot Challenge pool (kind:"pivot"). Baseline-sourced this phase — the
+   *  overlay does not manage pivot rows yet, so it passes straight through.
+   *  Optional so partial fixtures stay valid; `getBaseline()` always sets it. */
+  diagonalRun?: Record<PieceId, Exercise[]>;
   descriptions: Record<string, string>;
 }
 

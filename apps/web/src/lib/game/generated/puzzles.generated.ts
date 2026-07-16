@@ -339,9 +339,12 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       },
       "tier": "easy",
       "tags": [
-        "straight-line",
         "long-diagonal"
-      ]
+      ],
+      "principle": "diagonal-movement",
+      "title": "The diagonal move",
+      "playerPrompt": "The bishop moves diagonally. Slide it to the star.",
+      "learningObjective": "The player recognises the bishop moves along a diagonal, never in a straight rank or file."
     },
     {
       "id": "bishop-2",
@@ -356,9 +359,13 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       },
       "tier": "easy",
       "tags": [
-        "straight-line",
-        "long-diagonal"
-      ]
+        "long-diagonal",
+        "same-color"
+      ],
+      "principle": "both-diagonals",
+      "title": "The other diagonal",
+      "playerPrompt": "This bishop lives on light squares and always will. Take its diagonal to the star.",
+      "learningObjective": "The bishop uses both diagonal directions. This one starts on a light square and, like every bishop, never leaves its colour."
     },
     {
       "id": "bishop-3",
@@ -373,8 +380,13 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       },
       "tier": "easy",
       "tags": [
-        "straight-line"
-      ]
+        "short-diagonal",
+        "ray-choice"
+      ],
+      "principle": "diagonal-choice",
+      "title": "Pick the diagonal",
+      "playerPrompt": "Four diagonals leave this square. Choose the one that reaches the star.",
+      "learningObjective": "From the centre four diagonals open up; the player chooses the one that reaches the star, a short hop this time."
     },
     {
       "id": "bishop-4",
@@ -389,8 +401,13 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       },
       "tier": "easy",
       "tags": [
-        "pivot"
-      ]
+        "pivot",
+        "no-straight-line"
+      ],
+      "principle": "no-straight-line",
+      "title": "The bishop is not a rook",
+      "playerPrompt": "The bishop cannot slide straight along the row. Turn on a diagonal to reach the star.",
+      "learningObjective": "The bishop can never move along a rank or file: to reach a square on its own row it must turn on a diagonal, two moves instead of one."
     },
     {
       "id": "bishop-5",
@@ -406,7 +423,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "easy",
       "tags": [
         "pivot"
-      ]
+      ],
+      "principle": "pivot-choice",
+      "title": "Choose the turn",
+      "playerPrompt": "There are two squares where you can turn toward the star. Pick either one.",
+      "learningObjective": "Two different squares let the bishop turn and reach the star; the turning point is a choice, not a fixed spot."
     },
     {
       "id": "bishop-6",
@@ -427,9 +448,13 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       ],
       "tier": "medium",
       "tags": [
-        "detour",
-        "blocked-diagonal"
-      ]
+        "friendly-blocker",
+        "detour"
+      ],
+      "principle": "friendly-blocker",
+      "title": "Your own piece blocks the turn",
+      "playerPrompt": "Your own knight blocks the turn. You cannot jump it, so find the way around.",
+      "learningObjective": "A friendly piece on the natural turning square stops the bishop; it cannot jump over or capture its own piece, so it routes around."
     },
     {
       "id": "bishop-7",
@@ -454,9 +479,13 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       ],
       "tier": "medium",
       "tags": [
-        "detour",
-        "blocked-diagonal"
-      ]
+        "friendly-blocker",
+        "detour"
+      ],
+      "principle": "friendly-blocker-advanced",
+      "title": "Both turns blocked",
+      "playerPrompt": "Both turning squares are blocked. Plan a longer route to the star.",
+      "learningObjective": "With both natural turning squares blocked, the player has to find the longer third route."
     },
     {
       "id": "bishop-8",
@@ -477,36 +506,14 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       ],
       "tier": "medium",
       "tags": [
+        "blocked-diagonal",
         "detour",
         "long-diagonal"
-      ]
-    },
-    {
-      "id": "bishop-9",
-      "optimalMoves": 4,
-      "startPos": {
-        "file": 0,
-        "rank": 0
-      },
-      "targetPos": {
-        "file": 6,
-        "rank": 6
-      },
-      "obstacles": [
-        {
-          "file": 5,
-          "rank": 5
-        },
-        {
-          "file": 3,
-          "rank": 3
-        }
       ],
-      "tier": "medium",
-      "tags": [
-        "friendly-blocker",
-        "detour"
-      ]
+      "principle": "blocked-diagonal",
+      "title": "Blocked on the long diagonal",
+      "playerPrompt": "A knight sits on your diagonal. Step off, go around, and rejoin the diagonal past it.",
+      "learningObjective": "A piece sitting on the bishop's diagonal stops the ray; the player leaves the diagonal and rejoins it beyond the blocker."
     },
     {
       "id": "bishop-10",
@@ -527,9 +534,15 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       ],
       "tier": "medium",
       "tags": [
+        "blocked-diagonal",
         "detour",
-        "long-diagonal"
-      ]
+        "long-diagonal",
+        "route-planning"
+      ],
+      "principle": "route-planning",
+      "title": "The long way around",
+      "playerPrompt": "Plan the whole route around the knight before you move.",
+      "learningObjective": "The full-board detour: the player plans the whole multi-leg route around a blocker on the long diagonal before moving."
     }
   ],
   "knight": [
@@ -2311,11 +2324,90 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
   ]
 };
 
+export const GENERATED_DIAGONAL_RUN: Record<PieceId, Exercise[]> = {
+  "rook": [],
+  "bishop": [
+    {
+      "id": "bishop-run-1",
+      "optimalMoves": 1,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 6,
+        "rank": 0
+      },
+      "obstacles": [
+        {
+          "file": 4,
+          "rank": 4
+        }
+      ],
+      "tier": "medium",
+      "principle": "pivot-intro",
+      "title": "First Pivot",
+      "playerPrompt": "Tap a pivot square; the bishop turns there toward the star."
+    },
+    {
+      "id": "bishop-run-2",
+      "optimalMoves": 2,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 5,
+        "rank": 1
+      },
+      "obstacles": [
+        {
+          "file": 4,
+          "rank": 2
+        }
+      ],
+      "tier": "medium",
+      "principle": "pivot-choice",
+      "title": "Turn to the Star",
+      "playerPrompt": "Pick the pivot whose turn reaches the star."
+    },
+    {
+      "id": "bishop-run-3",
+      "optimalMoves": 2,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 1,
+        "rank": 7
+      },
+      "obstacles": [
+        {
+          "file": 2,
+          "rank": 6
+        }
+      ],
+      "tier": "medium",
+      "principle": "pivot-route",
+      "title": "The Long Run",
+      "playerPrompt": "Choose your pivots to run the bishop up to the star."
+    }
+  ],
+  "knight": [],
+  "pawn": [],
+  "queen": [],
+  "king": []
+};
+
 export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "rook-rail-two-turns": "Two Turns",
   "rook-rail-dead-end": "Dead End",
   "rook-rail-rook-run": "Rook Run",
   "rook-rail-two-roads": "Two Roads",
+  "bishop-run-1": "First Pivot",
+  "bishop-run-2": "Turn to the Star",
+  "bishop-run-3": "The Long Run",
   "rook-1": "Move along the rank",
   "rook-2": "Move along the file",
   "rook-distance-1": "One square is a move too",
@@ -2325,5 +2417,14 @@ export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "rook-7": "Plan the whole route",
   "rook-8": "The boxed star",
   "rook-9": "Your own piece blocks the way",
-  "rook-10": "The file is closed"
+  "rook-10": "The file is closed",
+  "bishop-1": "The diagonal move",
+  "bishop-2": "The other diagonal",
+  "bishop-3": "Pick the diagonal",
+  "bishop-4": "The bishop is not a rook",
+  "bishop-5": "Choose the turn",
+  "bishop-6": "Your own piece blocks the turn",
+  "bishop-7": "Both turns blocked",
+  "bishop-8": "Blocked on the long diagonal",
+  "bishop-10": "The long way around"
 };

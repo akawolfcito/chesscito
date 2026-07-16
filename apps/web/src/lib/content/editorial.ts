@@ -110,6 +110,10 @@ export const TRAINING_PATH_COPY = {
   exercisesLabel: "Exercises",
   exerciseChipFormat: "Exercise {number}: {stars} of 3 stars",
   labyrinthLabelFormat: "Labyrinth {number}",
+  /** Generic fallback label for a Special Training node with no authored title
+   *  (B4.2.3). Named entries — Rook Rails, Pivot Challenge — use their own title
+   *  instead; only untitled labs fall through to this. */
+  specialTrainingLabelFormat: "Special Training {number}",
   labyrinthOpenAriaFormat: "Open Labyrinth {number}",
   /** The first labyrinth's unlock is a compound gate: stars AND an
    *  exercise floor (LABYRINTH_MIN_EXERCISES). A stars-only message lets
@@ -144,8 +148,8 @@ export const MISSION_DETAIL_COPY = {
   /** Surface redistribution D1 (spec 2026-06-11): the one live "what
    *  do I do now" line. Only labyrinth recommendations render it; when
    *  the path has nothing pending, the objective above IS the answer. */
-  nowLabyrinthFormat: "Now: Labyrinth {number}",
-  nowLabyrinthAriaFormat: "Start Labyrinth {number}",
+  nowLabyrinthFormat: "Now: Special Training {number}",
+  nowLabyrinthAriaFormat: "Start Special Training {number}",
   /** D5: save score affordance inside Mission, below the objective.
    *  The promise line leads with the reward (QA F5 promise-first) and
    *  must describe what the OFF-CHAIN save actually delivers — a
@@ -1279,16 +1283,15 @@ export const EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "rook-8": "Boxed-in square",
   "rook-9": "Capture detour",
   "rook-10": "The long way up",
-  "bishop-1": "Main diagonal",
-  "bishop-2": "Anti diagonal",
-  "bishop-3": "Short diagonal",
-  "bishop-4": "Two-move path",
-  "bishop-5": "Tricky route",
-  "bishop-6": "Blocked pivot",
-  "bishop-7": "Twin pivot block",
-  "bishop-8": "Diagonal detour",
-  "bishop-9": "Capture detour",
-  "bishop-10": "Long diagonal wall",
+  "bishop-1": "The diagonal move",
+  "bishop-2": "The other diagonal",
+  "bishop-3": "Pick the diagonal",
+  "bishop-4": "The bishop is not a rook",
+  "bishop-5": "Choose the turn",
+  "bishop-6": "Your own piece blocks the turn",
+  "bishop-7": "Both turns blocked",
+  "bishop-8": "Blocked on the long diagonal",
+  "bishop-10": "The long way around",
   "knight-1": "L-jump center",
   "knight-2": "L-jump corner",
   "knight-3": "Horizontal L",
@@ -1338,6 +1341,34 @@ export const PRACTICE_COPY = {
 /** L2 Labyrinth — second level of per-piece pedagogy ladder.
  *  Unlocked after L1 mastery (badge claimable). Player navigates
  *  obstacles to reach the star in minimum moves. */
+/**
+ * Diagonal Run copy (Special Training). Level titles/prompts keyed by id for
+ * COPY only (never behaviour), plus the shared turn-state band strings the game
+ * board renders. Mirrored in messages/es.ts. Design: docs/audits/2026-07-15-bishop-d1-*.
+ */
+export const DIAGONAL_RUN_COPY = {
+  title: {
+    "bishop-run-1": "First Pivot",
+    "bishop-run-2": "Turn to the Star",
+    "bishop-run-3": "The Long Run",
+  },
+  prompt: {
+    "bishop-run-1": "Tap a pivot square; the bishop turns there toward the star.",
+    "bishop-run-2": "Pick the pivot whose turn reaches the star.",
+    "bishop-run-3": "Choose your pivots to run the bishop up to the star.",
+  },
+  /** Turn-state band strings, shared across levels. */
+  band: {
+    tapBishop: "Tap the bishop to begin.",
+    tapBishopFirst: "Tap your bishop first.",
+    choose: "Choose a pivot square.",
+    sliding: "Sliding…",
+    illegal: "The bishop cannot move there.",
+    lost: "This path cannot reach the star. Try again.",
+    won: "You found the way!",
+  },
+} as const;
+
 export const LABYRINTH_COPY = {
   toggleExercises: "Exercises",
   toggleLabyrinths: "Labyrinths",
@@ -1352,7 +1383,7 @@ export const LABYRINTH_COPY = {
   missionTitle: "Labyrinth",
   missionHint: (optimal: number) => `Reach the star · optimal ${optimal} moves`,
   movesLabel: (n: number) => `${n} ${n === 1 ? "move" : "moves"}`,
-  completeTitle: "Labyrinth Solved!",
+  completeTitle: "Training Complete!",
   completeStars: (stars: number) => `${stars}/3 ★`,
   completeMoves: (moves: number, optimal: number) =>
     moves === optimal
@@ -1374,7 +1405,7 @@ export const LABYRINTH_COPY = {
   /** QA F2 (2026-06-11): muted exit pin in the contextual action row
    *  while the labyrinth layer is on. Replaces the full-width BACK TO
    *  EXERCISES band, which visually resurrected the retired tab strip. */
-  exitLabyrinth: "Exit Labyrinth",
+  exitLabyrinth: "Exit Training",
   /** Primary CTA shown when the user completes a labyrinth that closes the
    *  full training cascade — i.e. the labyrinth belongs to the final piece
    *  (King). Replaces "Try again" because at that point the natural next

@@ -3,6 +3,7 @@ import {
   GENERATED_EXERCISES,
   GENERATED_EXERCISE_DESCRIPTIONS,
   GENERATED_LABYRINTHS,
+  GENERATED_DIAGONAL_RUN,
 } from "@/lib/game/generated/puzzles.generated";
 
 /** Pieces with exercises defined and playable */
@@ -68,6 +69,23 @@ export const LABYRINTHS: Record<PieceId, Exercise[]> = {
   pawn:   GENERATED_LABYRINTHS.pawn,
   queen:  GENERATED_LABYRINTHS.queen,
   king:   GENERATED_LABYRINTHS.king,
+};
+
+/* ── Diagonal Run (Special Training, kind:"diagonal-run") ────────────────
+ * A separate runtime bucket sourced from content/labyrinths.json rows tagged
+ * `kind:"pivot"`. Each level is a turn-based pivot game (see diagonal-run.ts). Projected into the training
+ * target); the connector squares are DERIVED at runtime via * never stored. During the piece-stabilisation phase these are PROJECTED into
+ * `buildTrainingPath` as `labyrinth` nodes (adapter in the exercises screen) so
+ * the whole navigation/unlock/completion machinery is reused without adding a
+ * `TrainingNodeKind`. Promote to a first-class node only if several pieces need
+ * distinct Special-Training semantics. Design: docs/audits/2026-07-15-bishop-b4_1-*. */
+export const DIAGONAL_RUN: Record<PieceId, Exercise[]> = {
+  rook:   GENERATED_DIAGONAL_RUN.rook,
+  bishop: GENERATED_DIAGONAL_RUN.bishop,
+  knight: GENERATED_DIAGONAL_RUN.knight,
+  pawn:   GENERATED_DIAGONAL_RUN.pawn,
+  queen:  GENERATED_DIAGONAL_RUN.queen,
+  king:   GENERATED_DIAGONAL_RUN.king,
 };
 
 /**

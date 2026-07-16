@@ -42,11 +42,22 @@ describe("generated catalog — fully content-sourced", () => {
     );
   });
 
-  it("keeps the migrated bishop exercises in authored relative order", () => {
-    // order = original catalog index, so the wave-1 ids stay in sequence.
+  it("ships the 9 curated bishop exercises in mastery order (bishop-9 removed)", () => {
+    // B4.3: the curriculum is 9 exercises ordered by mastery; bishop-9 (a pure
+    // duplicate of bishop-8, mislabelled "capture") is gone, and bishop-10 moves
+    // up to fill the last slot.
     const ids = EXERCISES.bishop.map((e) => e.id);
-    expect(ids[0]).toBe("bishop-1");
-    expect(ids.indexOf("bishop-1")).toBeLessThan(ids.indexOf("bishop-2"));
-    expect(ids.indexOf("bishop-9")).toBeLessThan(ids.indexOf("bishop-10"));
+    expect(ids).toEqual([
+      "bishop-1",
+      "bishop-2",
+      "bishop-3",
+      "bishop-4",
+      "bishop-5",
+      "bishop-6",
+      "bishop-7",
+      "bishop-8",
+      "bishop-10",
+    ]);
+    expect(ids).not.toContain("bishop-9");
   });
 });

@@ -32,7 +32,7 @@ type Props = {
    *  longer renders the path — it only derives the one live "Now: X"
    *  line via `getNextChallenge()`. Absent → no line. */
   trainingPath?: TrainingNode[];
-  /** Tap on the "Now: Labyrinth N" line. The sheet closes itself
+  /** Tap on the "Now: Special Training N" line. The sheet closes itself
    *  before reporting so the player lands straight on the board.
    *  Absent → the line renders nothing. */
   onLabyrinthSelect?: (labyrinthId: string) => void;

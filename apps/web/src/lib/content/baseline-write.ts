@@ -25,7 +25,11 @@ const GEN_PATH = resolve(ROOT, "src/lib/game/generated/puzzles.generated.ts");
 
 /** A builder record tagged with the bucket it belongs to. The on-disk JSON
  *  files do NOT store `kind` (it is implied by the file). */
-export type KindedRecord = LabyrinthRecord & { kind?: ContentKind };
+// The dev builder's `kind` is the BUCKET selector (exercise vs labyrinth file),
+// which is a different axis from LabyrinthRecord's own routing `kind`
+// (labyrinth vs pivot). Omit the record's field so the builder's ContentKind
+// wins here without the two unioning down to "labyrinth".
+export type KindedRecord = Omit<LabyrinthRecord, "kind"> & { kind?: ContentKind };
 
 export type BaselineWriteResult =
   | { ok: true; id: string; warnings: string[] }

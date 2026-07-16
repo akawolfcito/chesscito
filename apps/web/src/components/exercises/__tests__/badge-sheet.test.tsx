@@ -241,10 +241,10 @@ describe("BadgeSheet — ContextualHeader canary", () => {
   it("renders the HERO BAND stats line (pieces + stars) below the header", () => {
     setStars("rook", [3, 3, 3, 3, 3]);
     renderBadgeSheet();
-    // The denominator is the real catalog: 6 pieces × 10 exercises × 3★ = 180.
-    // The legacy 5-slot fixture fills rook's first five exercises → 15★.
-    // Bishop is claimed in the default fixture → piecesClaimed = 1.
+    // The denominator is the real catalog: 5 pieces × 10 + bishop × 9 = 59
+    // exercises × 3★ = 177 (bishop-9 retired in B4.3). The legacy 5-slot fixture
+    // fills rook's first five exercises → 15★. Bishop is claimed → piecesClaimed = 1.
     expect(screen.getByText(/1\/6 PIECES/i)).toBeInTheDocument();
-    expect(screen.getByText(/15\/180 ★/)).toBeInTheDocument();
+    expect(screen.getByText(/15\/177 ★/)).toBeInTheDocument();
   });
 });

@@ -56,6 +56,42 @@
     "order": 1
   },
   {
+    "id": "bishop-run-1",
+    "piece": "bishop",
+    "kind": "diagonal-run",
+    "fen": "8/8/8/4N3/8/8/8/B7 w - - 0 1",
+    "target": "g1",
+    "mover": "a1",
+    "title": "First Pivot",
+    "principle": "pivot-intro",
+    "playerPrompt": "Tap a pivot square; the bishop turns there toward the star.",
+    "order": 0
+  },
+  {
+    "id": "bishop-run-2",
+    "piece": "bishop",
+    "kind": "diagonal-run",
+    "fen": "8/8/8/8/8/4N3/8/B7 w - - 0 1",
+    "target": "f2",
+    "mover": "a1",
+    "title": "Turn to the Star",
+    "principle": "pivot-choice",
+    "playerPrompt": "Pick the pivot whose turn reaches the star.",
+    "order": 1
+  },
+  {
+    "id": "bishop-run-3",
+    "piece": "bishop",
+    "kind": "diagonal-run",
+    "fen": "8/2N5/8/8/8/8/8/B7 w - - 0 1",
+    "target": "b8",
+    "mover": "a1",
+    "title": "The Long Run",
+    "principle": "pivot-route",
+    "playerPrompt": "Choose your pivots to run the bishop up to the star.",
+    "order": 2
+  },
+  {
     "id": "knight-lab-1",
     "piece": "knight",
     "fen": "8/8/8/8/3N4/8/2N5/N7 w - - 0 1",

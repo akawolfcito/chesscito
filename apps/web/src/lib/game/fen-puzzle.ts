@@ -45,7 +45,7 @@ export function posToSquare(pos: BoardPosition): string {
 }
 
 export type PuzzleInput = {
-  kind: "exercise" | "labyrinth";
+  kind: "exercise" | "labyrinth" | "diagonal-run";
   piece: PieceId;
   fen: string;
   target: string;
@@ -61,7 +61,7 @@ export type PuzzleInput = {
 };
 
 export type MappedPuzzle = {
-  kind: "exercise" | "labyrinth";
+  kind: "exercise" | "labyrinth" | "diagonal-run";
   piece: PieceId;
   startPos: BoardPosition;
   targetPos: BoardPosition;

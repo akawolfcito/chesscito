@@ -24,7 +24,11 @@ describe("pool mastery equivalence (slice F)", () => {
     ];
     for (const piece of PLAYABLE_PIECES) {
       for (const stars of samples) {
-        expect(calculatePoolMasteryFromArray(piece, stars)).toBe(totalStars(stars));
+        // A positional array only aligns with the pool up to its length; the
+        // bishop is 9 (B4.3), so trim the 10-slot fixture to the real pool before
+        // comparing the two mastery paths.
+        const sized = stars.slice(0, EXERCISES[piece].length);
+        expect(calculatePoolMasteryFromArray(piece, sized)).toBe(totalStars(sized));
       }
     }
   });

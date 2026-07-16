@@ -78,6 +78,10 @@ type MissionPanelProps = {
    *  contextual action row (QA F2 2026-06-11). These two only shape
    *  the mission peek chip label. */
   labyrinthMode?: boolean
+  /** Pivot Challenge is a Special Training that is NOT measured in moves, so the
+   *  chip must never show the optimal-moves counter. Derived by the host from the
+   *  runtime catalog (activePivot), never from an id (B4.2.1). */
+  diagonalRunMode?: boolean
   labyrinthOptimalMoves?: number
   /** Identity of the active labyrinth. Surfaced on the mission chip as
    *  data-* attributes so E2E can pin the rendered board to its catalog
@@ -358,6 +362,7 @@ export function MissionPanelCandy({
   isSavingOnChain,
   isDockSheetOpen,
   labyrinthMode = false,
+  diagonalRunMode = false,
   labyrinthOptimalMoves,
   labyrinthId,
   labyrinthTitle,
@@ -396,14 +401,17 @@ export function MissionPanelCandy({
     textShadow: '0 1px 0 rgba(255, 245, 215, 0.65)',
   } as const
 
+  // Pivot Challenge is not measured in moves: suppress the optimal-moves chip so
+  // it never reads "2" (or "0 / 2 moves") — it falls back to the target square.
+  const showMoveCounter = labyrinthMode && !!labyrinthOptimalMoves && !diagonalRunMode
   const visibleMissionLabel =
-    labyrinthMode && labyrinthOptimalMoves
+    showMoveCounter
       ? String(labyrinthOptimalMoves)
       : isCapture
       ? tMission('captureLabel')
       : tMission('visibleMissionTargetFormat', { target: targetLabel })
   const missionAriaLabel =
-    labyrinthMode && labyrinthOptimalMoves
+    showMoveCounter
       ? tMission('openDetailsLabyrinthAriaFormat', { moves: labyrinthOptimalMoves })
       : isCapture
         ? tMission('openDetailsCaptureAriaLabel')
@@ -423,16 +431,8 @@ export function MissionPanelCandy({
         key={targetLabel}
         className="truncate text-sm font-extrabold"
         style={candyChipTextStyle}
-        data-testid={
-          labyrinthMode && labyrinthOptimalMoves
-            ? 'mission-optimal-moves'
-            : undefined
-        }
-        data-optimal-moves={
-          labyrinthMode && labyrinthOptimalMoves
-            ? labyrinthOptimalMoves
-            : undefined
-        }
+        data-testid={showMoveCounter ? 'mission-optimal-moves' : undefined}
+        data-optimal-moves={showMoveCounter ? labyrinthOptimalMoves : undefined}
         data-labyrinth-id={labyrinthMode ? labyrinthId : undefined}
         data-labyrinth-title={labyrinthMode ? labyrinthTitle : undefined}
       >

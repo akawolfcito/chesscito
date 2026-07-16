@@ -20,7 +20,7 @@
  */
 
 import { createContext, useContext, type ReactNode } from "react";
-import { EXERCISES, LABYRINTHS } from "@/lib/game/exercises";
+import { EXERCISES, LABYRINTHS, DIAGONAL_RUN } from "@/lib/game/exercises";
 import { GENERATED_EXERCISE_DESCRIPTIONS } from "@/lib/game/generated/puzzles.generated";
 import type { Exercise, PieceId } from "@/lib/game/types";
 
@@ -28,12 +28,18 @@ import type { Exercise, PieceId } from "@/lib/game/types";
 export interface ContentCatalog {
   exercises: Record<PieceId, Exercise[]>;
   labyrinths: Record<PieceId, Exercise[]>;
+  /** Pivot Challenge pool (kind:"pivot"). Separate runtime bucket; projected
+   *  into the training path as labyrinth nodes by the exercises-screen adapter.
+   *  Optional so partial fixtures/providers stay valid — readers fall back to
+   *  the baseline `DIAGONAL_RUN` (same pattern as the no-provider baseline default). */
+  diagonalRun?: Record<PieceId, Exercise[]>;
   descriptions: Record<string, string>;
 }
 
 const DEFAULT_CATALOG: ContentCatalog = {
   exercises: EXERCISES,
   labyrinths: LABYRINTHS,
+  diagonalRun: DIAGONAL_RUN,
   descriptions: GENERATED_EXERCISE_DESCRIPTIONS,
 };
 
@@ -62,6 +68,12 @@ export function useExerciseCatalog(): Record<PieceId, Exercise[]> {
 /** Active by-piece labyrinth pools. Baseline `LABYRINTHS` with no provider. */
 export function useLabyrinthCatalog(): Record<PieceId, Exercise[]> {
   return useContext(ContentCatalogContext).labyrinths;
+}
+
+/** Active by-piece Pivot Challenge pools. Baseline `DIAGONAL_RUN` with no provider
+ *  (or when a provider supplies a catalog without the optional `diagonalRun` field). */
+export function useDiagonalRunCatalog(): Record<PieceId, Exercise[]> {
+  return useContext(ContentCatalogContext).diagonalRun ?? DIAGONAL_RUN;
 }
 
 /** Active exercise descriptions map. Baseline generated map with no provider. */

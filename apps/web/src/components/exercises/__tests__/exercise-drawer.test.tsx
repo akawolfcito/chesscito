@@ -168,8 +168,8 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
         onLabyrinthSelect={vi.fn()}
       />,
     );
-    expect(screen.getByText("Labyrinth 1")).toBeInTheDocument();
-    expect(screen.getByText("Labyrinth 3")).toBeInTheDocument();
+    expect(screen.getByText("Special Training 1")).toBeInTheDocument();
+    expect(screen.getByText("Special Training 3")).toBeInTheDocument();
   });
 
   it("locked labs are disabled with rule copy and never fire the handler", () => {
@@ -185,7 +185,7 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
     expect(
       screen.getByText("Unlocks at 6★ and 3 exercises"),
     ).toBeInTheDocument();
-    const locked = screen.getByText("Labyrinth 1").closest("button");
+    const locked = screen.getByText("Special Training 1").closest("button");
     expect(locked).toHaveAttribute("data-locked", "true");
     if (locked) fireEvent.click(locked);
     expect(onLabyrinthSelect).not.toHaveBeenCalled();
@@ -195,7 +195,7 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
     const onLabyrinthSelect = vi.fn();
     const onOpenChange = vi.fn();
     const nodes = rookLabNodes(sixStars);
-    // "Labyrinth 1" is the first lab node as buildTrainingPath orders them
+    // "Special Training 1" is the first lab node as buildTrainingPath orders them
     // (ascending optimalMoves, then catalog index) — derive the id rather
     // than hardcode it, so the test survives generated-puzzle appends.
     const firstLabId = nodes[0]?.id;
@@ -210,7 +210,7 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
         onLabyrinthSelect={onLabyrinthSelect}
       />,
     );
-    const row = screen.getByText("Labyrinth 1").closest("button");
+    const row = screen.getByText("Special Training 1").closest("button");
     expect(row).toBeEnabled();
     if (row) fireEvent.click(row);
     expect(onLabyrinthSelect).toHaveBeenCalledWith(firstLabId);
@@ -231,14 +231,14 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
         onLabyrinthSelect={onLabyrinthSelect}
       />,
     );
-    const row = screen.getByText("Labyrinth 1").closest("button");
+    const row = screen.getByText("Special Training 1").closest("button");
     if (row) fireEvent.click(row);
     expect(onLabyrinthSelect).toHaveBeenCalledWith(firstLabId);
   });
 
   it("without labyrinthNodes the drawer stays exercise-only (legacy)", () => {
     render(<ExerciseDrawer {...baseProps} onNavigate={vi.fn()} />);
-    expect(screen.queryByText(/Labyrinth \d/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Special Training \d/)).not.toBeInTheDocument();
   });
 
   it("interleaves labyrinths into the exercise list — no separate section (D6)", () => {
@@ -252,14 +252,14 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
     );
     // Section header is gone — one continuous path.
     expect(screen.queryByText("Labyrinths")).not.toBeInTheDocument();
-    // Labyrinth 1's anchor is floored to LABYRINTH_MIN_EXERCISES (3), not
+    // Special Training 1's anchor is floored to LABYRINTH_MIN_EXERCISES (3), not
     // the stars-only ceil(6/3)=2 — so it renders AFTER the third exercise
     // ("One square is a move too", rook-3) and BEFORE the fourth ("Turn the corner",
     // rook-4), never earlier than the floor allows.
     const texts = screen
       .getAllByRole("button", { hidden: true })
       .map((b) => b.textContent ?? "");
-    const labAt = texts.findIndex((t) => t.includes("Labyrinth 1"));
+    const labAt = texts.findIndex((t) => t.includes("Special Training 1"));
     const thirdExerciseAt = texts.findIndex((t) =>
       t.includes("One square is a move too"),
     );
@@ -417,7 +417,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
           quotaState={{ isAtLimit: true, consumedContentIds: [], piece: "rook" }}
         />,
       );
-      const row = screen.getByText("Labyrinth 1").closest("button");
+      const row = screen.getByText("Special Training 1").closest("button");
       expect(row).toBeEnabled();
     });
 
@@ -440,7 +440,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
           }}
         />,
       );
-      const row = screen.getByText("Labyrinth 1").closest("button");
+      const row = screen.getByText("Special Training 1").closest("button");
       expect(row).toBeEnabled();
     });
 
@@ -457,7 +457,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
           quotaState={{ isAtLimit: true, consumedContentIds: [], piece: "rook" }}
         />,
       );
-      const row = screen.getByText("Labyrinth 1").closest("button");
+      const row = screen.getByText("Special Training 1").closest("button");
       expect(row).toHaveAttribute("data-quota-locked", "true");
     });
 
@@ -474,7 +474,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
           // no quotaState — path lock only
         />,
       );
-      const row = screen.getByText("Labyrinth 1").closest("button");
+      const row = screen.getByText("Special Training 1").closest("button");
       expect(row).toHaveAttribute("data-locked", "true");
     });
   });

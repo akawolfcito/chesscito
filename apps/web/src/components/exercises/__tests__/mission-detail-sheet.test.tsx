@@ -85,9 +85,9 @@ describe("<MissionDetailSheet> — guide-only surface (redistribution D1)", () =
     });
 
     const nowLine = screen.getByRole("button", {
-      name: "Start Labyrinth 1",
+      name: "Start Special Training 1",
     });
-    expect(nowLine).toHaveTextContent("Now: Labyrinth 1");
+    expect(nowLine).toHaveTextContent("Now: Special Training 1");
 
     await user.click(nowLine);
     expect(onOpenChange).toHaveBeenCalledWith(false);
@@ -101,7 +101,7 @@ describe("<MissionDetailSheet> — guide-only surface (redistribution D1)", () =
     });
 
     expect(
-      screen.queryByRole("button", { name: /Start Labyrinth/ }),
+      screen.queryByRole("button", { name: /Start Special Training/ }),
     ).not.toBeInTheDocument();
   });
 });

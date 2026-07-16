@@ -17,6 +17,7 @@ import {
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 
 import { Board } from "@/components/board";
+import { DiagonalRunBoard } from "@/components/exercises/diagonal-run-board";
 import { useCoachCredits } from "@/lib/coach/use-coach-credits";
 import { ExerciseDrawer } from "@/components/exercises/exercise-drawer";
 import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
@@ -78,7 +79,7 @@ import {
 import { readPieceStars } from "@/lib/game/exercise-progress";
 import { hasSeededMilestones } from "@/lib/progression/seed-milestones";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
-import { useExerciseCatalog, useLabyrinthCatalog } from "@/lib/content/catalog-context";
+import { useExerciseCatalog, useLabyrinthCatalog, useDiagonalRunCatalog } from "@/lib/content/catalog-context";
 import { useRotationSteering } from "@/hooks/use-rotation-steering";
 import { useSaveScoreState } from "@/hooks/use-save-score-state";
 import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
@@ -313,6 +314,9 @@ export function ExercisesScreen({
   const tShopItem = useTranslations("SHOP_ITEM_COPY");
   const tCapture = useTranslations("CAPTURE_COPY");
   const tLab = useTranslations("LABYRINTH_COPY");
+  // Pivot Challenge copy (title + prompt), keyed by id for COPY only — mode is
+  // still derived from the runtime catalog, never from the id (B4.2.1).
+  const tRun = useTranslations("DIAGONAL_RUN_COPY");
   const tPath = useTranslations("TRAINING_PATH_COPY");
   const tMission = useTranslations("MISSION_BRIEFING_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
@@ -707,6 +711,20 @@ export function ExercisesScreen({
   // (list, king-gate, training path) agree with the merged catalog under the
   // flag — and stay baseline (byte-identical) when no provider is mounted.
   const labyrinthCatalog = useLabyrinthCatalog();
+  const diagonalRunCatalog = useDiagonalRunCatalog();
+  // Special Training navigation pool. A piece that has Pivot Challenges surfaces
+  // THOSE (projected as labyrinth-kind nodes downstream) and hides its raw
+  // labyrinths this phase — bishop-lab-3/-4 stay in content, just unselected.
+  // Pieces without pivots keep their labyrinths byte-identically. This is the
+  // adapter that lets the whole labyrinth nav/unlock/completion machinery serve
+  // pivots without adding a TrainingNodeKind (design: docs/audits/…-b4_1-*).
+  const specialTrainingCatalog: typeof labyrinthCatalog = useMemo(() => {
+    const out = { ...labyrinthCatalog };
+    for (const piece of Object.keys(out) as (keyof typeof out)[]) {
+      if (diagonalRunCatalog[piece]?.length) out[piece] = diagonalRunCatalog[piece];
+    }
+    return out;
+  }, [labyrinthCatalog, diagonalRunCatalog]);
 
   // Progress is keyed by exerciseId (currentId). Derive the pool index for
   // the index-based affordances (drawer activeIndex, tutorial-hint gate,
@@ -1058,11 +1076,11 @@ export function ExercisesScreen({
    */
   const labyrinthIdsByPiece = useMemo(() => {
     const out: Partial<Record<PieceKey, string[]>> = {};
-    for (const [piece, labs] of Object.entries(labyrinthCatalog)) {
+    for (const [piece, labs] of Object.entries(specialTrainingCatalog)) {
       out[piece as PieceKey] = labs.map((lab) => lab.id);
     }
     return out;
-  }, [labyrinthCatalog]);
+  }, [specialTrainingCatalog]);
 
   useMilestoneSeeding({
     // ONE gate, shared with the hub (`learn-hub-client.tsx`) — see
@@ -1389,7 +1407,7 @@ export function ExercisesScreen({
       badgeClaimed: overrides?.badgeClaimed ?? badgesClaimed[piece] === true,
       allLabyrinthsComplete: areAllLabyrinthsSolved(
         piece,
-        (labyrinthCatalog[piece] ?? []).map((lab) => lab.id),
+        (specialTrainingCatalog[piece] ?? []).map((lab) => lab.id),
       ),
       hadGreatSessionBefore,
       // The gift is a Lite-only product: `unlockWelcomePackageGift()` and
@@ -2367,13 +2385,33 @@ export function ExercisesScreen({
    *  taps (the old `labyrinthList[0]` hardcode and the 10★
    *  labyrinthAvailable gate are gone — unlock now lives in the path
    *  node statuses: first lab at 6★, then chain by completion). */
-  const labyrinthList = labyrinthCatalog[selectedPiece] ?? [];
+  const labyrinthList = specialTrainingCatalog[selectedPiece] ?? [];
+  // Drawer node labels: a Special Training entry's authored title (localized for
+  // pivots via i18n), keyed by id for COPY only. Untitled labs are omitted so the
+  // drawer falls back to the generic "Special Training N" (B4.2.3).
+  const specialTrainingLabels = useMemo(() => {
+    const out: Record<string, string> = {};
+    const pivotIds = new Set((diagonalRunCatalog[selectedPiece] ?? []).map((p) => p.id));
+    for (const entry of specialTrainingCatalog[selectedPiece] ?? []) {
+      const title = pivotIds.has(entry.id) ? tRun(`title.${entry.id}`) : entry.title;
+      if (title) out[entry.id] = title;
+    }
+    return out;
+  }, [specialTrainingCatalog, diagonalRunCatalog, selectedPiece, tRun]);
   const activeLabyrinth =
     labyrinthMode && selectedLabyrinthId
       ? labyrinthList.find((lab) => lab.id === selectedLabyrinthId) ?? null
       : null;
   const effectiveLabyrinthMode = activeLabyrinth !== null;
   const activeExercise = activeLabyrinth ?? currentExercise;
+  // Pivot mode is derived from the runtime catalog (not an id-set/prefix): the
+  // active Special-Training node is a Pivot Challenge iff it lives in the pivot
+  // pool for this piece. Only then does the board intercept taps.
+  const activeDiagonalRun =
+    activeLabyrinth &&
+    (diagonalRunCatalog[selectedPiece] ?? []).some((p) => p.id === activeLabyrinth.id)
+      ? activeLabyrinth
+      : null;
 
   /** Integrated training path (Slice 2 — read-only display in the
    *  mission detail sheet). Bests live in localStorage, so
@@ -2388,10 +2426,10 @@ export function ExercisesScreen({
         labyrinthList.map((lab) => [lab.id, getLabyrinthBest(selectedPiece, lab.id)]),
       ),
       badgeClaimed: badgesClaimed[selectedPiece] === true,
-      catalog: { exercises: catalog, labyrinths: labyrinthCatalog },
+      catalog: { exercises: catalog, labyrinths: specialTrainingCatalog },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPiece, progress, badgesClaimed, labyrinthCompleted, catalog, labyrinthCatalog]);
+  }, [selectedPiece, progress, badgesClaimed, labyrinthCompleted, catalog, specialTrainingCatalog]);
 
   /** Always-fresh mirror of the path for callbacks that fire from
    *  timers (success auto-advance) — the 1500ms closure would
@@ -2523,20 +2561,30 @@ export function ExercisesScreen({
     [activeLabyrinth, selectedPiece, isConnected, address],
   );
 
-  const targetLabel = activeLabyrinth
-    ? // Labyrinth chip becomes a live counter: "0 / 4 · optimal" (no
-      //  moves yet) → "3 / 4 · optimal" (live) → "5 / 4 · over" past
-      //  optimal so the player can pace themselves in real time.
-      `${labyrinthMoves} / ${activeLabyrinth.optimalMoves} moves`
-    : activeExercise.isCapture
-      ? tCapture("statsLabel")
-      : `${String.fromCharCode(97 + activeExercise.targetPos.file)}${activeExercise.targetPos.rank + 1}`;
+  // Pivot Challenge copy, resolved from the i18n layer (EN/ES) by id.
+  const runTitle = activeDiagonalRun ? tRun(`title.${activeDiagonalRun.id}`) : null;
+  const runPrompt = activeDiagonalRun ? tRun(`prompt.${activeDiagonalRun.id}`) : null;
 
-  const pieceHint = activeLabyrinth
-    ? `${tLab("missionTitle")} · ${tLab("missionHint", { optimal: activeLabyrinth.optimalMoves })}`
-    : currentExercise.isCapture
-      ? tMission("captureHintCompact")
-      : tMission(`pieceHint.${selectedPiece}` as const);
+  const targetLabel = activeDiagonalRun
+    ? // Pivot is not measured in moves: the chip shows the destination square,
+      //  never a "0 / 2 moves" counter (B4.2.1).
+      `${String.fromCharCode(97 + activeDiagonalRun.targetPos.file)}${activeDiagonalRun.targetPos.rank + 1}`
+    : activeLabyrinth
+      ? // Labyrinth chip becomes a live counter: "0 / 4 · optimal" (no
+        //  moves yet) → "3 / 4 · optimal" (live) → "5 / 4 · over" past
+        //  optimal so the player can pace themselves in real time.
+        `${labyrinthMoves} / ${activeLabyrinth.optimalMoves} moves`
+      : activeExercise.isCapture
+        ? tCapture("statsLabel")
+        : `${String.fromCharCode(97 + activeExercise.targetPos.file)}${activeExercise.targetPos.rank + 1}`;
+
+  const pieceHint = activeDiagonalRun
+    ? (runPrompt as string)
+    : activeLabyrinth
+      ? `${tLab("missionTitle")} · ${tLab("missionHint", { optimal: activeLabyrinth.optimalMoves })}`
+      : currentExercise.isCapture
+        ? tMission("captureHintCompact")
+        : tMission(`pieceHint.${selectedPiece}` as const);
 
   // Show movement lane hints on the first exercise of each piece (until the player earns stars)
   const tutorialHints = useMemo(() => {
@@ -2651,13 +2699,14 @@ export function ExercisesScreen({
           phase={storeOpen ? "ready" : phase}
           targetLabel={targetLabel}
           pieceHint={pieceHint}
-          exercisePrompt={currentExercise.playerPrompt}
+          exercisePrompt={runPrompt ?? currentExercise.playerPrompt}
           isCapture={Boolean(currentExercise.isCapture)}
           isDockSheetOpen={activeDockTab !== null}
           labyrinthMode={effectiveLabyrinthMode}
+          diagonalRunMode={activeDiagonalRun !== null}
           labyrinthOptimalMoves={activeLabyrinth?.optimalMoves}
           labyrinthId={activeLabyrinth?.id}
-          labyrinthTitle={activeLabyrinth?.title}
+          labyrinthTitle={runTitle ?? activeLabyrinth?.title}
           onLabyrinthSelect={handleLabyrinthSelect}
           score={score.toString()}
           totalStars={totalStars}
@@ -2854,20 +2903,30 @@ export function ExercisesScreen({
           }
           persistentDock={<PersistentDock />}
           board={
-            <Board
-              key={`${boardKey}-${labyrinthMode ? `lab-${labyrinthKey}` : "ex"}`}
-              pieceType={selectedPiece}
-              startPosition={activeExercise.startPos}
-              mode={activeLabyrinth ? "labyrinth" : "practice"}
-              targetPosition={activeExercise.targetPos}
-              obstacles={activeExercise.obstacles}
-              captureTargets={activeExercise.captureTargets}
-              isLocked={!activeLabyrinth ? (phase === "failure" || phase === "success") : labyrinthCompleted !== null}
-              onMove={activeLabyrinth ? handleLabyrinthMove : handleMove}
-              isCapture={activeExercise.isCapture ?? false}
-              tutorialHints={activeLabyrinth ? undefined : tutorialHints}
-              peonesHint={activeLabyrinth ? null : peonesHintSquare}
-            />
+            activeDiagonalRun ? (
+              <DiagonalRunBoard
+                key={`dr-${activeDiagonalRun.id}-${labyrinthKey}`}
+                level={activeDiagonalRun}
+                onComplete={(moves) =>
+                  handleLabyrinthMove(activeDiagonalRun.targetPos, moves)
+                }
+              />
+            ) : (
+              <Board
+                key={`${boardKey}-${labyrinthMode ? `lab-${labyrinthKey}` : "ex"}`}
+                pieceType={selectedPiece}
+                startPosition={activeExercise.startPos}
+                mode={activeLabyrinth ? "labyrinth" : "practice"}
+                targetPosition={activeExercise.targetPos}
+                obstacles={activeExercise.obstacles}
+                captureTargets={activeExercise.captureTargets}
+                isLocked={!activeLabyrinth ? (phase === "failure" || phase === "success") : labyrinthCompleted !== null}
+                onMove={activeLabyrinth ? handleLabyrinthMove : handleMove}
+                isCapture={activeExercise.isCapture ?? false}
+                tutorialHints={activeLabyrinth ? undefined : tutorialHints}
+                peonesHint={activeLabyrinth ? null : peonesHintSquare}
+              />
+            )
           }
           exerciseDrawer={
             <ExerciseDrawer
@@ -2883,6 +2942,7 @@ export function ExercisesScreen({
               streakCount={streakCount}
               visibleExerciseIds={visibleExerciseIds}
               labyrinthNodes={trainingPath.filter((n) => n.kind === "labyrinth")}
+              labyrinthLabels={specialTrainingLabels}
               onLabyrinthSelect={handleLabyrinthSelect}
               quotaState={
                 quotaDisplayState?.isAtLimit

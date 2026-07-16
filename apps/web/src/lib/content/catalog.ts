@@ -9,6 +9,7 @@
 import type { Exercise, ExerciseTier, PieceId } from "@/lib/game/types";
 import { mapFenPuzzle, parseFenBoard, puzzleId, posToSquare, type PuzzleInput, type MappedPuzzle } from "@/lib/game/fen-puzzle";
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
+import { pivotBfs } from "@/lib/game/diagonal-run";
 import { lintPuzzle } from "@/lib/content/lint";
 
 export function parseCsv(text: string): string[][] {
@@ -36,6 +37,11 @@ const TIERS: ExerciseTier[] = ["easy", "medium", "hard"];
 export type LabyrinthRecord = {
   id?: string; piece: PieceId; fen: string; target: string; mover?: string;
   tier?: ExerciseTier; tags?: string[]; explanation?: string; order: number;
+  /** Routing within Special Training. Absent → "labyrinth" (back-compat: every
+   *  existing content/labyrinths.json row). `"diagonal-run"` routes the record to
+   *  the Diagonal Run bucket (GENERATED_DIAGONAL_RUN) instead — same source file, a
+   *  separate runtime bucket. Design: docs/audits/2026-07-15-bishop-d1-*. */
+  kind?: "labyrinth" | "diagonal-run";
   /* Pedagogy (A1) — curated copy. `title` is what the drawer renders; the
    * linter requires all four on curated pieces. */
   principle?: string; title?: string; playerPrompt?: string; learningObjective?: string;
@@ -52,6 +58,9 @@ export type ExerciseRecord = LabyrinthRecord;
 export type BuiltCatalog = {
   exercises: Record<PieceId, Exercise[]>;
   labyrinths: Record<PieceId, Exercise[]>;
+  /** Diagonal Run pool (kind:"diagonal-run"). A separate runtime bucket even
+   *  though it shares content/labyrinths.json as its source. Never overlaps labs. */
+  diagonalRun: Record<PieceId, Exercise[]>;
   descriptions: Record<string, string>;
   errors: string[];
   warnings: string[];
@@ -95,6 +104,7 @@ export function buildCatalog(
   const warnings: string[] = [];
   const exercises = emptyByPiece();
   const labyrinths = emptyByPiece();
+  const diagonalRun = emptyByPiece();
   const descriptions: Record<string, string> = {};
   const seenIds = new Set<string>();
   const seenPositions = new Set<string>();
@@ -104,7 +114,7 @@ export function buildCatalog(
   for (const n of ["kind", "piece", "fen", "target", "tier"]) {
     if (header.length && col(n) < 0) errors.push(`missing required column '${n}'`);
   }
-  if (errors.length) return { exercises, labyrinths, descriptions, errors, warnings };
+  if (errors.length) return { exercises, labyrinths, diagonalRun, descriptions, errors, warnings };
 
   const addPuzzle = (
     input: PuzzleInput, label: string, idOverride: string | undefined, order: number,
@@ -125,14 +135,14 @@ export function buildCatalog(
     // real piece type. At that point the board draws whatever the FEN says, the art
     // can no longer lie, and this gate stops protecting anything: it only narrows
     // what authors may write. It is scaffolding, not a design goal.
-    if (input.kind === "exercise") {
+    if (input.kind === "exercise" || input.kind === "diagonal-run") {
       const moverSq = posToSquare(mapped.startPos);
       const notKnights = [...parseFenBoard(input.fen).entries()]
         .filter(([sq, p]) => sq !== moverSq && p.color === "w" && p.type !== "knight")
         .map(([sq, p]) => `${p.type} on ${sq}`);
       if (notKnights.length) {
         errors.push(
-          `${label}: exercise blockers must be white knights (the board draws them as knights); found ${notKnights.join(", ")}`,
+          `${label}: ${input.kind} blockers must be white knights (the board draws them as knights); found ${notKnights.join(", ")}`,
         );
         return;
       }
@@ -149,6 +159,24 @@ export function buildCatalog(
     warnings.push(...lint.warnings);
     if (lint.errors.length) return;
     if (!bfs) { errors.push(`${label}: unsolvable (no path) from ${posToSquare(mapped.startPos)} to ${posToSquare(mapped.targetPos)}`); return; }
+    // Diagonal Run contract (D1): the level must be solvable under glide-pivot
+    // transitions (the game's own semantics, NOT the free-bishop BFS), and
+    // start/target must share a colour — a bishop never leaves its colour. The
+    // stored optimalMoves is overridden with the PIVOT optimum below.
+    let diagonalRunOptimal: number | null = null;
+    if (input.kind === "diagonal-run") {
+      const { startPos: s, targetPos: t, obstacles: obs = [] } = mapped;
+      if ((s.file + s.rank) % 2 !== (t.file + t.rank) % 2) {
+        errors.push(`${label}: diagonal-run start ${posToSquare(s)} and target ${posToSquare(t)} are different colours — the target is unreachable`);
+        return;
+      }
+      const pv = pivotBfs(s, t, obs);
+      if (!pv.reachable) {
+        errors.push(`${label}: diagonal-run target ${posToSquare(t)} is unreachable by pivot turns from ${posToSquare(s)}`);
+        return;
+      }
+      diagonalRunOptimal = pv.optimalMoves;
+    }
     const id = idOverride || puzzleId(input.piece, `${input.kind}|${input.fen}|${input.target}|${input.mover ?? ""}`);
     if (seenIds.has(id)) { errors.push(`${label}: duplicate id '${id}'`); return; }
     seenIds.add(id);
@@ -157,9 +185,10 @@ export function buildCatalog(
       warnings.push(`${label}: duplicate position (same piece+fen+target as an earlier puzzle)`);
     }
     seenPositions.add(positionKey);
-    const exercise = { id, optimalMoves: bfs.optimalMoves, ...toExerciseFields(mapped) } as Exercise & { __order?: number };
+    const exercise = { id, optimalMoves: diagonalRunOptimal ?? bfs.optimalMoves, ...toExerciseFields(mapped) } as Exercise & { __order?: number };
     exercise.__order = order;
-    if (input.kind === "labyrinth") labyrinths[input.piece].push(exercise);
+    if (input.kind === "diagonal-run") diagonalRun[input.piece].push(exercise);
+    else if (input.kind === "labyrinth") labyrinths[input.piece].push(exercise);
     else exercises[input.piece].push(exercise);
     // The descriptions map is what `resolveExerciseDescription` renders in the
     // drawer, so the curated TITLE owns it. `objective` stays the fallback for
@@ -187,7 +216,7 @@ export function buildCatalog(
     if (rec.disabled) continue; // soft-deleted → excluded from the catalog
     if (!PIECES.includes(rec.piece)) { errors.push(`labyrinths.json '${rec.id ?? rec.fen}': bad piece`); continue; }
     addPuzzle({
-      kind: "labyrinth", piece: rec.piece, tier: rec.tier ?? "medium", fen: rec.fen,
+      kind: rec.kind ?? "labyrinth", piece: rec.piece, tier: rec.tier ?? "medium", fen: rec.fen,
       target: rec.target, mover: rec.mover, tags: rec.tags, explanation: rec.explanation,
       principle: rec.principle, title: rec.title,
       playerPrompt: rec.playerPrompt, learningObjective: rec.learningObjective,
@@ -215,10 +244,12 @@ export function buildCatalog(
     ) => ((a.__order ?? 0) - (b.__order ?? 0)) || a.id.localeCompare(b.id);
     (exercises[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
     (labyrinths[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
+    (diagonalRun[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
     for (const e of exercises[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of labyrinths[p] as (Exercise & { __order?: number })[]) delete e.__order;
+    for (const e of diagonalRun[p] as (Exercise & { __order?: number })[]) delete e.__order;
   }
-  return { exercises, labyrinths, descriptions, errors, warnings };
+  return { exercises, labyrinths, diagonalRun, descriptions, errors, warnings };
 }
 
 export function renderGeneratedModule(cat: BuiltCatalog): string {
@@ -230,6 +261,8 @@ import type { Exercise, PieceId } from "@/lib/game/types";
 export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = ${j(cat.exercises)};
 
 export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = ${j(cat.labyrinths)};
+
+export const GENERATED_DIAGONAL_RUN: Record<PieceId, Exercise[]> = ${j(cat.diagonalRun)};
 
 export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = ${j(cat.descriptions)};
 `;

@@ -32,9 +32,10 @@ describe("rotation — getExercisePool", () => {
     for (const piece of PLAYABLE_PIECES) {
       // Exercises are now fully content-sourced (migrated into
       // content/exercises.json 2026-06-16), so EXERCISES[piece] ===
-      // GENERATED_EXERCISES[piece] (10 per piece in wave 1).
+      // GENERATED_EXERCISES[piece]. 10 per piece in wave 1; the bishop dropped
+      // to 9 in B4.3 (bishop-9 retired as a duplicate).
       expect(getExercisePool(piece)).toHaveLength(GENERATED_EXERCISES[piece].length);
-      expect(GENERATED_EXERCISES[piece]).toHaveLength(10);
+      expect(GENERATED_EXERCISES[piece]).toHaveLength(piece === "bishop" ? 9 : 10);
     }
   });
 

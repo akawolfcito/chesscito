@@ -21,6 +21,7 @@ import type { Exercise, PieceId } from "@/lib/game/types";
 import {
   GENERATED_EXERCISES,
   GENERATED_LABYRINTHS,
+  GENERATED_DIAGONAL_RUN,
   GENERATED_EXERCISE_DESCRIPTIONS,
 } from "@/lib/game/generated/puzzles.generated";
 import { getSupabaseServer } from "@/lib/supabase/server";
@@ -154,6 +155,9 @@ export function mergeOverlay(
   return {
     exercises: finalize(exercises),
     labyrinths: finalize(labyrinths),
+    // Pivots are baseline-only this phase: the overlay has no pivot rows, so the
+    // compiled bucket passes straight through the merge untouched.
+    diagonalRun: baseline.diagonalRun,
     descriptions,
     source: "baseline+overlay",
     overlayCount: applied,
@@ -165,6 +169,7 @@ export function getBaseline(): BaselineCatalog {
   return {
     exercises: GENERATED_EXERCISES,
     labyrinths: GENERATED_LABYRINTHS,
+    diagonalRun: GENERATED_DIAGONAL_RUN,
     descriptions: GENERATED_EXERCISE_DESCRIPTIONS,
   };
 }

@@ -109,6 +109,7 @@ export default async function ExercisesPage({
       value={{
         exercises: merged.exercises,
         labyrinths: merged.labyrinths,
+        diagonalRun: merged.diagonalRun,
         descriptions: merged.descriptions,
       }}
     >

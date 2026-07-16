@@ -129,10 +129,10 @@ function solve(exercise: Exercise) {
  *  Pack CTA legitimately owns the idle action slot until it is claimed.) */
 async function enterLabyrinth() {
   fireEvent.click(screen.getByRole("button", { name: "Exercises" }));
-  const node = await screen.findByRole("button", { name: "Labyrinth 1" });
+  const node = await screen.findByRole("button", { name: "Special Training 1" });
   fireEvent.click(node);
   // The exit pin only exists inside the labyrinth layer — proof we are in.
-  await screen.findByRole("button", { name: "Exit Labyrinth" });
+  await screen.findByRole("button", { name: "Exit Training" });
 }
 
 /** Modals on screen, counted the way the player experiences them: every one of
@@ -308,13 +308,13 @@ describe("one dialog per drain (composition)", () => {
       expect(screen.getByText("Great Focus Session")).toBeInTheDocument();
     });
     expect(modalCount()).toBe(1);
-    expect(screen.queryByText("Labyrinth Solved!")).not.toBeInTheDocument();
+    expect(screen.queryByText("Training Complete!")).not.toBeInTheDocument();
 
     // The maze score card is a CONTINUATION, not a celebration — suppressed,
     // never lost. It comes back the moment the queue drains.
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     await waitFor(() => {
-      expect(screen.getByText("Labyrinth Solved!")).toBeInTheDocument();
+      expect(screen.getByText("Training Complete!")).toBeInTheDocument();
     });
     expect(modalCount()).toBe(1);
   });
@@ -380,7 +380,7 @@ describe("the daily star ledger takes only NET improvement", () => {
     solve(ROOK_LAB);
 
     await waitFor(() => {
-      expect(screen.getByText("Labyrinth Solved!")).toBeInTheDocument();
+      expect(screen.getByText("Training Complete!")).toBeInTheDocument();
     });
     expect(getDailyStars()).toBe(3);
   });
