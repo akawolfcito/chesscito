@@ -1614,7 +1614,7 @@ const messages = {
         "Un bloque corta la línea de una dama. Dos de ellos meten una novena dama en un tablero que admite ocho.",
     },
     chip: {
-      goal: "dama ×{n}",
+      count: "dama {placed}/{ceiling}",
     },
     band: {
       tapQueen: "Toca la dama para comenzar.",

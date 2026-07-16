@@ -63,9 +63,19 @@ describe("QueensBoard — the entry ritual", () => {
     expect(screen.getByTestId("q-piece-hint")).toBeInTheDocument();
   });
 
-  it("lights the safe squares once the queen is tapped", async () => {
+  it("never gives the safe squares away to a player", async () => {
+    // The board must NOT mark them: "which squares are safe" is the puzzle, not
+    // a hint. Light them up and the player taps the dot instead of thinking
+    // (founder, 2026-07-16).
     const user = userEvent.setup();
     renderBoard();
+    await user.click(tap("a1"));
+    expect(screen.queryByTestId("q-spark-h8")).not.toBeInTheDocument();
+  });
+
+  it("lights them for authoring, where seeing the safe set IS the point", async () => {
+    const user = userEvent.setup();
+    renderBoard({ showSafeSquares: true });
     await user.click(tap("a1"));
     expect(screen.getByTestId("q-spark-h8")).toBeInTheDocument();
     // The whole a-file is under the queen's fire — not one of them is safe.
@@ -88,10 +98,14 @@ describe("QueensBoard — placing", () => {
     await user.click(tap("a1"));
     await user.click(tap("a5")); // under fire from a1 down the open file
     expect(screen.queryByTestId("q-queen-a5")).not.toBeInTheDocument();
-    // The rejection must TEACH, not just buzz: the board shows what is watched.
+    // The rejection must TEACH, not just buzz: the board rings the square AND
+    // the queen watching it. With no sparks to lean on, this IS the feedback
+    // loop the spec's "no penalty, retry freely" is built around.
     expect(screen.getByTestId("q-attack-a5")).toBeInTheDocument();
-    // No penalty: the safe square is still there and still playable.
-    expect(screen.getByTestId("q-spark-h8")).toBeInTheDocument();
+    expect(screen.getByTestId("q-attacker-a1")).toBeInTheDocument();
+    // No penalty: the position is untouched and h8 is still placeable.
+    await user.click(tap("h8"));
+    expect(screen.getByTestId("q-queen-h8")).toBeInTheDocument();
   });
 });
 

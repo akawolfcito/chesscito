@@ -2487,10 +2487,15 @@ export function ExercisesScreen({
       ? activeLabyrinth
       : null;
 
-  /** The queens board's band, hoisted like the other two. */
+  /** The queens board's band, hoisted like the other two — plus the live count,
+   *  which the mission CHIP renders rather than the band strip. Keeping the
+   *  number out of the message is what leaves room for the objective sentence
+   *  (founder, 2026-07-16). */
   const [queensBand, setQueensBand] = useState<{
     message: string
     phase: string
+    placed: number
+    ceiling: number
   } | null>(null);
 
   /** The active node graded by coverage, whichever game it belongs to. The two
@@ -2726,10 +2731,13 @@ export function ExercisesScreen({
         //  rides the mission band, which is where the status line lives.
         tTour("chip.goal")
       : activeQueens
-      ? // "queen ×N" (spec §2). N is the level's own exact ceiling, and
-        //  optimalMoves holds ceiling-1 (the queens the PLAYER places), so the
-        //  total on the board at a full clear is optimalMoves + 1.
-        tQueens("chip.goal", { n: activeQueens.optimalMoves + 1 })
+      ? // The counter chip (spec §2). optimalMoves holds ceiling-1 (the queens
+        //  the PLAYER places), so the ceiling is optimalMoves + 1 — and before
+        //  the board reports in, the level's own queen is already the 1.
+        tQueens("chip.count", {
+          placed: queensBand?.placed ?? 1,
+          ceiling: queensBand?.ceiling ?? activeQueens.optimalMoves + 1,
+        })
       : activeLabyrinth
       ? // Labyrinth chip becomes a live counter: "0 / 4 · optimal" (no
         //  moves yet) → "3 / 4 · optimal" (live) → "5 / 4 · over" past
@@ -2872,6 +2880,9 @@ export function ExercisesScreen({
           diagonalRunMode={
             activeDiagonalRun !== null || activeKnightTour !== null || activeQueens !== null
           }
+          // The two games with no destination: the chip drops its "Move to"
+          // frame for them. The Diagonal Run keeps it — it names a square.
+          coverageMode={activeCoverage !== null}
           // Gated on the game being active, not merely on the state being set: a
           // stale line must never outlive the board that wrote it.
           missionStatus={

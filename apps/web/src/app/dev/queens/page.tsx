@@ -43,6 +43,11 @@ function QueensProbe() {
   const [index, setIndex] = useState(0);
   const [runKey, setRunKey] = useState(0);
   const [result, setResult] = useState<{ placed: number; ceiling: number } | null>(null);
+  /** OFF by default, on purpose: the probe must photograph what SHIPS, and the
+   *  game does not light the safe squares — finding them is the puzzle. The
+   *  toggle is here for AUTHORING, where seeing the safe set at a glance is
+   *  exactly what you want (founder, 2026-07-16). */
+  const [hints, setHints] = useState(false);
   const level = levels[index];
 
   if (!level) {
@@ -89,11 +94,27 @@ function QueensProbe() {
           >
             Retry
           </button>
+          <button
+            type="button"
+            data-testid="q-hints"
+            aria-pressed={hints}
+            onClick={() => setHints((h) => !h)}
+            className={[
+              "rounded border px-2 py-1 text-xs",
+              hints
+                ? "border-sky-300 bg-sky-200 text-slate-900"
+                : "border-slate-600 text-slate-300",
+            ].join(" ")}
+          >
+            {/* Authoring aid — NOT what a player sees. */}
+            Hints {hints ? "on" : "off"}
+          </button>
         </div>
 
         <QueensBoard
           key={`${level.id}-${runKey}`}
           level={level}
+          showSafeSquares={hints}
           onComplete={(placed, ceiling) => setResult({ placed, ceiling })}
         />
 

@@ -1416,13 +1416,14 @@ export const QUEENS_COPY = {
     "queens-3":
       "A block cuts a queen's line. Two of them fit a ninth queen on a board that holds eight.",
   },
-  /** Mission chip, "<queen> ×N" per spec §2, where N is the level's own exact
-   *  ceiling. It states the GOAL, not the running total: the live count already
-   *  rides the mission band (placed/ceiling · %), and two counters saying nearly
-   *  the same thing in one band is how a player learns to read neither. Same
-   *  split the tour uses — its chip states the bar ("Cover 80%"). */
+  /** Mission chip — a COUNTER, per spec §2. It carries the running total AND
+   *  the ceiling, which is what frees the band strip to say the objective in
+   *  words; when the count lived in the band, the sentence got truncated away
+   *  and a stuck player had nothing to read (founder, 2026-07-16).
+   *
+   *  No "Move to" frame around it: this game has nowhere to move to. */
   chip: {
-    goal: "queen ×{n}",
+    count: "queen {placed}/{ceiling}",
   },
   band: {
     tapQueen: "Tap the queen to begin.",

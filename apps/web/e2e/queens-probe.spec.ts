@@ -39,10 +39,21 @@ test.describe("N-Queens probe", () => {
     await expect(page.getByTestId("q-band-msg")).toContainText("20%");
   });
 
-  test("selecting sparks only the squares no queen can see", async ({ page }) => {
+  test("the board never gives the safe squares away", async ({ page }) => {
+    // Finding them IS the puzzle (founder, 2026-07-16). Marked, the player taps
+    // the dot and never reasons — and "no penalty, retry freely" would be
+    // protecting them from a risk they were never asked to take.
     await selectQueen(page);
-    // The 5x5 room holds 25 squares. a1 is taken, and it watches 12 of the rest
-    // (4 up the file, 4 along the rank, 4 on the diagonal) — 12 are safe.
+    await expect(sparks(page)).toHaveCount(0);
+  });
+
+  test("the hints toggle is an AUTHORING aid, off by default", async ({ page }) => {
+    // The probe photographs what ships, so it starts like the game. Flipped, it
+    // shows the safe set the builder wants at a glance: the 5x5 room holds 25
+    // squares, a1 takes one and watches 12 (4 file, 4 rank, 4 diagonal).
+    await expect(page.getByTestId("q-hints")).toHaveAttribute("aria-pressed", "false");
+    await selectQueen(page);
+    await page.getByTestId("q-hints").click();
     await expect(sparks(page)).toHaveCount(12);
     await expect(page.getByTestId("q-spark-a5")).toHaveCount(0); // a1's file
     await expect(page.getByTestId("q-spark-e1")).toHaveCount(0); // a1's rank
@@ -55,11 +66,13 @@ test.describe("N-Queens probe", () => {
     await expect(page.getByTestId("q-band-msg")).toContainText(/watched by a queen/i);
     await expect(page.getByTestId("q-queen-a5")).toHaveCount(0);
     // The refusal TEACHES: the square is ringed and so is the queen watching it.
+    // With nothing marking the safe squares, this IS the feedback loop.
     await expect(page.getByTestId("q-attack-a5")).toBeVisible();
     await expect(page.getByTestId("q-attacker-a1")).toBeVisible();
-    // And it costs NOTHING: same count, same 12 safe squares, still playable.
+    // And it costs NOTHING: same count, and the board is still playable.
     await expect(page.getByTestId("q-band-msg")).toContainText("1/5");
-    await expect(sparks(page)).toHaveCount(12);
+    await cell(page, "b3").click();
+    await expect(page.getByTestId("q-queen-b3")).toBeVisible();
   });
 
   test("a blocked square is refused as a wall, not as a watched square", async ({ page }) => {
@@ -75,8 +88,10 @@ test.describe("N-Queens probe", () => {
     await cell(page, "b3").click();
     await expect(page.getByTestId("q-queen-b3")).toBeVisible();
     await expect(page.getByTestId("q-band-msg")).toContainText("2/5");
-    // b3 now watches b4/b5/c4/d5/a4..., so the safe set shrinks — the whole
-    // tension of the game: every queen you place makes the next one harder.
+    // b3 now watches b4/b5/c4/d5/a4..., so the safe set shrinks to 4 — the
+    // whole tension of the game: every queen makes the next one harder. Read
+    // through the authoring toggle, since the player is never shown this.
+    await page.getByTestId("q-hints").click();
     await expect(sparks(page)).toHaveCount(4);
   });
 

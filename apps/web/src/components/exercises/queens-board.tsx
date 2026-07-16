@@ -52,6 +52,7 @@ export function QueensBoard({
   level,
   onComplete,
   onBandChange,
+  showSafeSquares = false,
 }: {
   level: Exercise;
   /** Fired once when the run ends, with the coverage the host must grade.
@@ -60,9 +61,29 @@ export function QueensBoard({
    *  grade this. `placed` counts the level's own queen, so a full clear is
    *  placed === ceiling. */
   onComplete?: (placed: number, ceiling: number) => void;
-  /** Hoists the status line to the host's mission band, same contract as
-   *  <KnightTourBoard>. Unwired (the /dev probe) the local band renders. */
-  onBandChange?: (band: { message: string; phase: string }) => void;
+  /** Hoists the status line to the host's mission band. Unlike the tour's, this
+   *  reports the count as DATA rather than baked into the message: the host's
+   *  chip owns the counter, which leaves the 30px band strip for the objective
+   *  instead of truncating it away. */
+  onBandChange?: (band: {
+    message: string;
+    phase: string;
+    placed: number;
+    ceiling: number;
+  }) => void;
+  /** Light up every safe square.
+   *
+   *  ⚠️ OFF in the game, and that is the whole design (founder, 2026-07-16).
+   *  For the Knight's Tour, marking the legal jumps teaches the L — the rule IS
+   *  the lesson, and planning the tour stays hard. Here "which squares are safe"
+   *  is not a hint, it is THE PUZZLE: light them up and the player stops
+   *  thinking and taps the dot. The spec already said so and I misread it —
+   *  "reject it, no penalty, retry freely" only means anything if the player has
+   *  to reason and risk being wrong.
+   *
+   *  Kept as an opt-in for AUTHORING (the builder, the /dev probe's toggle),
+   *  where seeing the safe set at a glance is exactly the point. */
+  showSafeSquares?: boolean;
 }) {
   const t = useTranslations("QUEENS_COPY.band");
   const START = level.startPos;
@@ -172,8 +193,9 @@ export function QueensBoard({
   const pct = CEILING > 0 ? Math.round((placed / CEILING) * 100) : 0;
   const stars = phase === "done" ? tourStars(placed, CEILING) : 0;
   const safe = useMemo(
-    () => (phase === "selected" ? safeSquares(queens, BLOCKS) : []),
-    [phase, queens, BLOCKS],
+    () =>
+      showSafeSquares && phase === "selected" ? safeSquares(queens, BLOCKS) : [],
+    [showSafeSquares, phase, queens, BLOCKS],
   );
   const safeLabels = new Set(safe.map(LABEL));
   const queenLabels = new Set(queens.map(LABEL));
@@ -193,17 +215,16 @@ export function QueensBoard({
   const bandMessage =
     phase === "idle" ? t("tapQueen") : phase === "done" ? t("done") : t("choose");
 
-  /* Progress is the whole point of the surface: the spec asks for the 80% line
-     to be visible, so the count rides the band on every single turn, not just at
-     the end. Composed once so the local and hoisted bands cannot drift. */
-  const bandLine =
-    (transient ?? bandMessage) +
-    ` · ${placed}/${CEILING} · ${pct}%` +
-    (phase === "done" ? ` · ${"★".repeat(stars)}` : "");
+  /* What the band SAYS — the objective, or why the last tap was refused. The
+     count is NOT in here: the host's chip carries it, so this 30px strip does
+     not have to choose between the number and the sentence. It used to carry
+     both and truncated the objective away, which is the one thing a player who
+     is stuck needs to read (founder, 2026-07-16). */
+  const bandText = (transient ?? bandMessage) + (phase === "done" ? ` · ${"★".repeat(stars)}` : "");
 
   useEffect(() => {
-    onBandChange?.({ message: bandLine, phase });
-  }, [bandLine, phase, onBandChange]);
+    onBandChange?.({ message: bandText, phase, placed, ceiling: CEILING });
+  }, [bandText, phase, placed, CEILING, onBandChange]);
 
   const renderCell = (_file: number, _rank: number, sq: string) => {
     const p = parse(sq);
@@ -314,8 +335,10 @@ export function QueensBoard({
           data-phase={phase}
           className="mx-auto w-full max-w-[23.5rem] rounded-lg border border-amber-300/40 bg-amber-100/95 px-3 py-1.5 text-[#3f2208]"
         >
+          {/* The probe has no mission chip, so the local band shows the count
+              the host's chip would own. Same numbers, one source. */}
           <div className="text-xs leading-tight" data-testid="q-band-msg">
-            {bandLine}
+            {`${placed}/${CEILING} · ${pct}% · ${bandText}`}
           </div>
         </div>
       )}
