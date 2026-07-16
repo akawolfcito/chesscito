@@ -25,22 +25,38 @@
   Todo gateado por `CHESSCITO_MODE`: el default sigue diciendo "chesscito". Verificado buscando "Lite"
   **en el árbol del merge**: no sobrevive ningún string visible; solo quedan identificadores internos
   (`CHESSCITO_LITE_MODE`, `isLite`, `lite-stats`), que es el alcance declarado del commit.
+- **SAFE PATH — la lógica pura está TERMINADA** (etapas 1-3 de 6). Plan aprobado por el founder:
+  `docs/specs/2026-07-16-safe-path-promotion-run-plan.md` (**leerlo antes de seguir** — §3 son las 7
+  decisiones D1-D7, §1 es lo que el código desmintió del spec padre).
+  - `f3469bd` **etapa 1 — el modelo typed**. Hallazgo: **el FEN siempre supo el tipo**; `mapFenPuzzle`
+    ya leía `p.type` y lo tiraba al aplanar. **El contenido NO necesita migración.** Y
+    `fen-puzzle.ts:146` tiraba `FenError` ante cualquier negra si el mover no era peón → **Safe Path
+    estaba bloqueado en el import**, cosa que el spec padre no menciona. `enemies` es **aditivo**: los
+    27 call sites de `obstacles` no se enteraron.
+  - `ed8e09a` **etapa 2 — `attack-map.ts`**. **Ningún** módulo de `rules/*` sirve, cada uno falla
+    distinto (tabla en el plan §1.3). El peor es el peón: es una función de *movimiento*.
+  - `3e66ba0` **fix — los muros cortan el rayo**. El primer corte de attack-map solo conocía enemigos.
+    Lo destapó el test del rodeo, no una review.
+  - `b46ea46` **etapa 3 — `safe-path.ts`**. `legalKingSteps` (puede pisar) vs `isCaught` (lo matan) van
+    **separados a propósito**: fusionarlos reconstruye un laberinto de muros y borra la lección.
 
 ## Current State
 
-- **Branch**: `main` = `c699318b`. ⚠️ **ADELANTADA a `origin/main` (sin pushear)**: el merge de
-  learn-branding + este handoff.
-- **Build**: passing **medido en este árbol** — vitest **5214/5214** (444 files, +2 de `appRootTitle`),
-  `tsc --noEmit` limpio (exit 0). El `Error: boom` del output es ruido intencional de
-  `primitive-boundary.test.tsx`.
+- **Branch**: `main` = `b46ea46`. ⚠️ **ADELANTADA a `origin/main`**: pusheé hasta `8ade8d10`, así que
+  los 4 commits de Safe Path (`f3469bd`, `ed8e09a`, `3e66ba0`, `b46ea46`) **están sin pushear**.
+- **Build**: passing **medido en este árbol** — vitest **5252/5252** (446 files), `tsc --noEmit` exit 0.
+  El `Error: boom` del output es ruido intencional de `primitive-boundary.test.tsx`.
 - **Uncommitted work**: no.
 
 ## Next Tasks
 
-0. **Pushear `main`** (`c699318b`) — está adelantada a `origin/main` y sin pushear.
-1. **EN CURSO — Safe Path (rey) + Promotion Run (peón)**: el founder eligió este frente sobre el duelo
-   (2026-07-16). Spec §3/§4, **van JUNTOS**, exigen la cirugía `{pos,piece}` + capa de amenaza
-   (plan §15.6.3). **No son los baratos.** 🛑 Leer la nota de `getQueenMoves` en Notes antes de empezar.
+0. **Pushear `main`** (`b46ea46`) — 4 commits de Safe Path sin pushear.
+1. **EN CURSO — Safe Path, etapa 4 de 6: CONTENIDO.** Las etapas 1-3 (lógica pura) están hechas. Sigue:
+   dar de alta el kind `safe-path` en `content/labyrinths.json` + niveles placeholder, y que
+   `import-puzzles` los verifique con `safePathOptimalMoves` (null = injugable = rechazar).
+   **Los niveles son andamio a propósito** — el founder los pule en `/dev/labyrinth-builder`.
+   Después: etapa 5 (`safe-path-board.tsx` + probe `/dev/safe-path` que **sí** dibuja las zonas, D3) y
+   etapa 6 (host desde el catálogo runtime + `use-fail-rescue` + i18n + e2e). Tabla en el plan §4.
 2. **Triar 5 locales no-mergeadas** que el barrido no tocó (nunca estuvieron en la lista):
    `backup/main-before-author-rewrite` (huele a red de un rewrite de historia — **no borrar sin mirar**),
    `chore/minipay-gate`, `feat/board-renderer`, `feat/progression-unlocks-celebration-queue`,
@@ -80,6 +96,10 @@
 - 📐 **El carril 2 hoy**: 3 de 6 piezas con juego firma (alfil → Diagonal Run, caballo → Knight's Tour,
   dama → N-Queens). **Torre = 4 laberintos `rook-rail-*` curados** (su juego firma ES un laberinto).
   Peón (4 labs) y rey (1 lab) siguen en relleno sin título.
+- ✅ **RESUELTO y era peor de lo que decía** — la nota de abajo culpaba a `getQueenMoves`. La verdad:
+  **los 5 módulos de `rules/*` fallan**, cada uno distinto, y por eso `attack-map.ts` (`ed8e09a`) es
+  módulo nuevo y no wrapper. **No volver a intentar reusar `rules/*` para amenazas.** Tabla completa
+  en el plan §1.3. Nota original, por el registro:
 - ⚠️ **`getQueenMoves` NO sirve tal cual para la capa de ataque** — el plan de queens afirmaba que sí y
   servía a medias. `getRookMoves` corta el rayo **ANTES** del bloqueador (`rules/rook.ts:38`): modela
   piezas propias, así que la bloqueadora no queda atacada. **Releer antes de empezar Safe Path**, que es
