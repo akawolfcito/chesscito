@@ -1576,6 +1576,27 @@ const messages = {
       won: "¡Encontraste el camino!",
     },
   },
+  KNIGHT_TOUR_COPY: {
+    title: {
+      "knight-tour-1": "La gira corta",
+      "knight-tour-2": "Terreno abierto",
+      "knight-tour-3": "La gira larga",
+    },
+    prompt: {
+      "knight-tour-1":
+        "Cada casilla que dejas queda cerrada. Cubre todas las que puedas.",
+      "knight-tour-2": "Más espacio, misma regla. No te encierres en una esquina.",
+      "knight-tour-3":
+        "Deja las casillas difíciles para el principio. Los bordes se quedan sin salidas primero.",
+    },
+    band: {
+      tapKnight: "Toca el caballo para comenzar.",
+      tapKnightFirst: "Primero toca tu caballo.",
+      choose: "Salta a una casilla que no hayas usado.",
+      illegal: "El caballo no puede saltar hasta ahí.",
+      done: "No quedan saltos.",
+    },
+  },
   LABYRINTH_COPY: {
     toggleExercises: "Ejercicios",
     toggleLabyrinths: "Laberintos",
