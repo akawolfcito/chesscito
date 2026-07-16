@@ -12,12 +12,34 @@ That path is **fewest-moves-is-better**, in three places:
 | Place | Behaviour | What it does to a tour |
 |---|---|---|
 | `recordLabyrinthBest` (`labyrinth-progress.ts:77`) | records only if `moves < prev` | a run covering **3** squares overwrites a run covering **10** as an "improvement" |
-| `labyrinthStars(moves, optimal)` (`exercises.ts:125`) | `moves <= optimal → 3★` | a **full** tour (most moves) scores **0★**; a 2-tap run scores 3★ |
+| `labyrinthStars(moves, optimal)` (`exercises.ts:125`) | `moves <= optimal → 3★` | **3★ para todo**: ver corrección abajo |
 | `addNetStars(prevLabStars, stars)` (`:2545`) | feeds the daily ledger | inherits the same inversion |
 
 Knight's Tour scores **coverage ÷ reachable** — more is better. So it cannot ride
 `handleLabyrinthMove` as-is. This is the concrete shape of the spec's "grading gap"
 line, and the reason the game is cheap **but not free**.
+
+### Corrección (2026-07-16, la escribió el test, no yo)
+
+Mi primera versión de esta tabla decía que un tour completo sacaría **0★** bajo
+`labyrinthStars`. **Es falso**, y el test de contraste lo tumbó. Verificado con la
+función real (`tsx -e`, optimal = 19):
+
+| moves | 3 | 10 | 15 | 19 |
+|---|---|---|---|---|
+| `labyrinthStars(moves, 19)` | 3 | 3 | 3 | 3 |
+
+Cubrir un bolsillo de N casillas cuesta N−1 movimientos, que es **exactamente** el
+`optimal` que ese nivel llevaría. Así que toda corrida cae en `moves <= optimal`, la
+primera banda, que devuelve 3 sin mirar nada más. `labyrinthStars` no se **invierte**
+con un tour: se queda **ciega** — el tour perfecto y el callejón de 3 saltos puntúan
+igual. Peor síntoma que el que yo había imaginado, y más difícil de ver en QA: nadie
+reporta un bug cuando siempre le dan 3 estrellas.
+
+**Lo que sí se invierte es el ledger**, y eso queda en pie tal cual: `recordLabyrinthBest`
+guarda el número más chico, así que el callejón pisa al tour perfecto como "récord nuevo".
+La conclusión del plan no cambia — grader propio + ledger propio — pero la razón del
+grader es la ceguera, no la inversión.
 
 **Decision I propose** (this is the one thing I want signed before I code):
 give the tour its **own completion handler + its own grader**, and store its best
