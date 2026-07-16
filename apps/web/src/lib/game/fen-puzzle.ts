@@ -45,10 +45,13 @@ export function posToSquare(pos: BoardPosition): string {
 }
 
 export type PuzzleInput = {
-  kind: "exercise" | "labyrinth" | "diagonal-run";
+  kind: "exercise" | "labyrinth" | "diagonal-run" | "knight-tour";
   piece: PieceId;
   fen: string;
-  target: string;
+  /** The square to reach. OPTIONAL for `knight-tour` only, which has no
+   *  destination — see `targetPos` on MappedPuzzle. Required for every other
+   *  kind: without it the puzzle has no win condition. */
+  target?: string;
   mover?: string;
   tier: ExerciseTier;
   tags?: string[];
@@ -61,9 +64,17 @@ export type PuzzleInput = {
 };
 
 export type MappedPuzzle = {
-  kind: "exercise" | "labyrinth" | "diagonal-run";
+  kind: "exercise" | "labyrinth" | "diagonal-run" | "knight-tour";
   piece: PieceId;
   startPos: BoardPosition;
+  /** The square to reach. For `knight-tour` this is the START square, which
+   *  encodes "no target": a tour ends when the knight runs out of unvisited
+   *  squares, and the start is the one square it provably can never arrive at
+   *  (it is X-ed out on the first jump). `Exercise.targetPos` is required and
+   *  read in 100+ places, so a sentinel buys the game its way in without an
+   *  Optional that every one of those callers would have to answer for. Nothing
+   *  in the tour's own path reads it — the board and host use the coverage
+   *  handler, never a target check. */
   targetPos: BoardPosition;
   obstacles?: BoardPosition[];
   captureTargets?: BoardPosition[];
@@ -81,7 +92,7 @@ const samePos = (a: BoardPosition, b: BoardPosition) => a.file === b.file && a.r
 
 export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
   const board = parseFenBoard(input.fen);
-  const targetPos = squareToPos(input.target);
+  const isTour = input.kind === "knight-tour";
 
   let moverSq: string;
   if (input.mover && input.mover.trim()) {
@@ -98,7 +109,14 @@ export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
   }
 
   const startPos = squareToPos(moverSq);
-  if (samePos(startPos, targetPos)) throw new FenError("target equals start");
+  // Resolved after the mover, because a tour's "target" IS the mover's square.
+  if (!isTour && !input.target?.trim()) throw new FenError("target is required");
+  const targetPos = isTour ? startPos : squareToPos(input.target!);
+  // A tour is exempt: its target and start are the same square BY DEFINITION,
+  // which is exactly the mistake this guard catches for every other kind.
+  if (!isTour && samePos(startPos, targetPos)) {
+    throw new FenError("target equals start");
+  }
 
   const obstacles: BoardPosition[] = [];
   const captureTargets: BoardPosition[] = [];
@@ -111,7 +129,7 @@ export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
     captureTargets.push(squareToPos(sq));
   }
 
-  const targetIsBlack = board.get(input.target.trim())?.color === "b";
+  const targetIsBlack = board.get(input.target?.trim() ?? "")?.color === "b";
   const isCapture = input.piece === "pawn" && (captureTargets.length > 0 || targetIsBlack);
 
   return {

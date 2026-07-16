@@ -34,6 +34,9 @@ export interface BaselineCatalog {
    *  overlay does not manage pivot rows yet, so it passes straight through.
    *  Optional so partial fixtures stay valid; `getBaseline()` always sets it. */
   diagonalRun?: Record<PieceId, Exercise[]>;
+  /** Knight's Tour pool (kind:"knight-tour"). Baseline-sourced, same as
+   *  `diagonalRun`: the overlay does not manage tour rows yet. */
+  knightTour?: Record<PieceId, Exercise[]>;
   descriptions: Record<string, string>;
 }
 

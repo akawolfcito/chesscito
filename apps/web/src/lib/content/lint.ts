@@ -161,7 +161,13 @@ export function lintPuzzle(
   //
   // So: drop what changes nothing the player experiences; keep everything else.
   // The goal is the minimum set that preserves the LESSON, not the minimum set.
-  if (obstacles.length > 0 && optimalMoves > 0) {
+  //
+  // A tour is exempt, and not as a convenience: the peel asks "does removing
+  // this wall change the best ROUTE", and a tour has no route — it has a
+  // ceiling. Every wall moves that ceiling by construction, so the peel would
+  // report a tour's walls as decorative while they are the only thing defining
+  // the level. Wrong question, confidently answered. Don't ask it.
+  if (mapped.kind !== "knight-tour" && obstacles.length > 0 && optimalMoves > 0) {
     const shipped = decisionProfile(piece, mapped, obstacles);
     if (shipped) {
       let kept = [...obstacles];

@@ -22,6 +22,7 @@ import {
   GENERATED_EXERCISES,
   GENERATED_LABYRINTHS,
   GENERATED_DIAGONAL_RUN,
+  GENERATED_KNIGHT_TOUR,
   GENERATED_EXERCISE_DESCRIPTIONS,
 } from "@/lib/game/generated/puzzles.generated";
 import { getSupabaseServer } from "@/lib/supabase/server";
@@ -158,6 +159,7 @@ export function mergeOverlay(
     // Pivots are baseline-only this phase: the overlay has no pivot rows, so the
     // compiled bucket passes straight through the merge untouched.
     diagonalRun: baseline.diagonalRun,
+    knightTour: baseline.knightTour,
     descriptions,
     source: "baseline+overlay",
     overlayCount: applied,
@@ -170,6 +172,7 @@ export function getBaseline(): BaselineCatalog {
     exercises: GENERATED_EXERCISES,
     labyrinths: GENERATED_LABYRINTHS,
     diagonalRun: GENERATED_DIAGONAL_RUN,
+    knightTour: GENERATED_KNIGHT_TOUR,
     descriptions: GENERATED_EXERCISE_DESCRIPTIONS,
   };
 }

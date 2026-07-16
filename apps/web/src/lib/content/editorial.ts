@@ -1373,6 +1373,36 @@ export const DIAGONAL_RUN_COPY = {
   },
 } as const;
 
+export const KNIGHT_TOUR_COPY = {
+  title: {
+    "knight-tour-1": "The Short Tour",
+    "knight-tour-2": "Wider Ground",
+    "knight-tour-3": "The Long Tour",
+  },
+  prompt: {
+    "knight-tour-1":
+      "Every square you leave is closed behind you. Cover as much as you can.",
+    "knight-tour-2": "More room, same rule. Do not strand yourself in a corner.",
+    "knight-tour-3":
+      "Save the hard squares for early. The edges run out of exits first.",
+  },
+  /** Turn-state band strings, shared across levels. The band also carries the
+   *  live count, which the board appends — the spec asks for the 80% line to be
+   *  visible while playing, not only once the run is over. */
+  /** Mission chip. A tour has no destination square and is not measured in
+   *  moves, so the chip states the bar instead of counting anything. */
+  chip: {
+    goal: "Cover 80%",
+  },
+  band: {
+    tapKnight: "Tap the knight to begin.",
+    tapKnightFirst: "Tap your knight first.",
+    choose: "Jump to a square you have not used.",
+    illegal: "The knight cannot jump there.",
+    done: "No jumps left.",
+  },
+} as const;
+
 export const LABYRINTH_COPY = {
   toggleExercises: "Exercises",
   toggleLabyrinths: "Labyrinths",

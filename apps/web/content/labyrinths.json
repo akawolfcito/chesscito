@@ -132,6 +132,42 @@
     "order": 4
   },
   {
+    "id": "knight-tour-1",
+    "piece": "knight",
+    "kind": "knight-tour",
+    "fen": "8/8/8/NNNNNNNN/NNNNNNNN/8/8/N7 w - - 0 1",
+    "mover": "a1",
+    "tier": "easy",
+    "title": "The Short Tour",
+    "principle": "tour-intro",
+    "playerPrompt": "Every square you leave is closed behind you. Cover as much as you can.",
+    "order": 5
+  },
+  {
+    "id": "knight-tour-2",
+    "piece": "knight",
+    "kind": "knight-tour",
+    "fen": "8/NNNNNNNN/NNNNNNNN/8/8/8/8/N7 w - - 0 1",
+    "mover": "a1",
+    "tier": "medium",
+    "title": "Wider Ground",
+    "principle": "tour-planning",
+    "playerPrompt": "More room, same rule. Do not strand yourself in a corner.",
+    "order": 6
+  },
+  {
+    "id": "knight-tour-3",
+    "piece": "knight",
+    "kind": "knight-tour",
+    "fen": "NNNNNNNN/NNNNNNNN/8/8/8/8/8/N7 w - - 0 1",
+    "mover": "a1",
+    "tier": "hard",
+    "title": "The Long Tour",
+    "principle": "tour-route",
+    "playerPrompt": "Save the hard squares for early. The edges run out of exits first.",
+    "order": 7
+  },
+  {
     "id": "pawn-lab-1",
     "piece": "pawn",
     "fen": "8/8/8/8/3N4/3Np3/3P4/8 w - - 0 1",

@@ -10,7 +10,13 @@ import type { Exercise, ExerciseTier, PieceId } from "@/lib/game/types";
 import { mapFenPuzzle, parseFenBoard, puzzleId, posToSquare, type PuzzleInput, type MappedPuzzle } from "@/lib/game/fen-puzzle";
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
 import { pivotBfs } from "@/lib/game/diagonal-run";
+import { reachableSquares } from "@/lib/game/knight-tour";
 import { lintPuzzle } from "@/lib/content/lint";
+
+/** Floor for a shippable Knight's Tour level, in reachable squares. Below this
+ *  the "puzzle" is a knight boxed into a corner with a jump or two — the founder
+ *  tunes feel in the builder, but this catches a level that is not a game. */
+const TOUR_MIN_REACHABLE = 8;
 
 export function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
@@ -35,13 +41,15 @@ const PIECES: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
 const TIERS: ExerciseTier[] = ["easy", "medium", "hard"];
 
 export type LabyrinthRecord = {
-  id?: string; piece: PieceId; fen: string; target: string; mover?: string;
+  id?: string; piece: PieceId; fen: string; mover?: string;
+  /** Required except on `kind:"knight-tour"`, which has no destination. */
+  target?: string;
   tier?: ExerciseTier; tags?: string[]; explanation?: string; order: number;
   /** Routing within Special Training. Absent → "labyrinth" (back-compat: every
    *  existing content/labyrinths.json row). `"diagonal-run"` routes the record to
    *  the Diagonal Run bucket (GENERATED_DIAGONAL_RUN) instead — same source file, a
    *  separate runtime bucket. Design: docs/audits/2026-07-15-bishop-d1-*. */
-  kind?: "labyrinth" | "diagonal-run";
+  kind?: "labyrinth" | "diagonal-run" | "knight-tour";
   /* Pedagogy (A1) — curated copy. `title` is what the drawer renders; the
    * linter requires all four on curated pieces. */
   principle?: string; title?: string; playerPrompt?: string; learningObjective?: string;
@@ -61,6 +69,11 @@ export type BuiltCatalog = {
   /** Diagonal Run pool (kind:"diagonal-run"). A separate runtime bucket even
    *  though it shares content/labyrinths.json as its source. Never overlaps labs. */
   diagonalRun: Record<PieceId, Exercise[]>;
+  /** Knight's Tour pool (kind:"knight-tour"). Same story as diagonalRun: one
+   *  source file, its own bucket. `optimalMoves` here means the REACHABLE
+   *  CEILING (squares - 1), not a shortest path — a tour maximises, it never
+   *  arrives. Grade it with tourStars, never labyrinthStars. */
+  knightTour: Record<PieceId, Exercise[]>;
   descriptions: Record<string, string>;
   errors: string[];
   warnings: string[];
@@ -105,6 +118,7 @@ export function buildCatalog(
   const exercises = emptyByPiece();
   const labyrinths = emptyByPiece();
   const diagonalRun = emptyByPiece();
+  const knightTour = emptyByPiece();
   const descriptions: Record<string, string> = {};
   const seenIds = new Set<string>();
   const seenPositions = new Set<string>();
@@ -114,7 +128,7 @@ export function buildCatalog(
   for (const n of ["kind", "piece", "fen", "target", "tier"]) {
     if (header.length && col(n) < 0) errors.push(`missing required column '${n}'`);
   }
-  if (errors.length) return { exercises, labyrinths, diagonalRun, descriptions, errors, warnings };
+  if (errors.length) return { exercises, labyrinths, diagonalRun, knightTour, descriptions, errors, warnings };
 
   const addPuzzle = (
     input: PuzzleInput, label: string, idOverride: string | undefined, order: number,
@@ -147,18 +161,38 @@ export function buildCatalog(
         return;
       }
     }
+    // Knight's Tour has no destination, so there is no path to verify — the
+    // contract is the REACHABLE SET (spec §1). Its ceiling replaces the BFS
+    // optimum: covering N squares costs N-1 moves. Everything below (a path
+    // BFS, "unsolvable (no path)") asks about a target the level does not have.
+    let tourCeiling: number | null = null;
+    if (input.kind === "knight-tour") {
+      const reach = reachableSquares(mapped.startPos, mapped.obstacles ?? []);
+      // A pocket this small is not a game — it is a knight with nowhere to go.
+      // Cheap to author by accident (one wall too many) and invisible until a
+      // player opens it, so it fails at import instead.
+      if (reach.length < TOUR_MIN_REACHABLE) {
+        errors.push(
+          `${label}: knight-tour reaches only ${reach.length} square(s) from ` +
+            `${posToSquare(mapped.startPos)} — a level needs at least ${TOUR_MIN_REACHABLE}. ` +
+            `Check the walls boxing the knight in.`,
+        );
+        return;
+      }
+      tourCeiling = reach.length - 1;
+    }
     const probe: Exercise = { id: "probe", optimalMoves: 0, ...toExerciseFields(mapped) };
-    const bfs = computeExerciseBfs(input.piece, probe);
+    const bfs = input.kind === "knight-tour" ? null : computeExerciseBfs(input.piece, probe);
     // Lint BEFORE the solvability bail-out: a target buried under a blocker is
     // ALSO unsolvable, and "no path" alone sends the author hunting for a routing
     // bug instead of the one square at fault.
-    const lint = lintPuzzle(input.piece, mapped, bfs?.optimalMoves ?? 0, label, {
+    const lint = lintPuzzle(input.piece, mapped, tourCeiling ?? bfs?.optimalMoves ?? 0, label, {
       requirePedagogy,
     });
     errors.push(...lint.errors);
     warnings.push(...lint.warnings);
     if (lint.errors.length) return;
-    if (!bfs) { errors.push(`${label}: unsolvable (no path) from ${posToSquare(mapped.startPos)} to ${posToSquare(mapped.targetPos)}`); return; }
+    if (!bfs && tourCeiling === null) { errors.push(`${label}: unsolvable (no path) from ${posToSquare(mapped.startPos)} to ${posToSquare(mapped.targetPos)}`); return; }
     // Diagonal Run contract (D1): the level must be solvable under glide-pivot
     // transitions (the game's own semantics, NOT the free-bishop BFS), and
     // start/target must share a colour — a bishop never leaves its colour. The
@@ -177,17 +211,18 @@ export function buildCatalog(
       }
       diagonalRunOptimal = pv.optimalMoves;
     }
-    const id = idOverride || puzzleId(input.piece, `${input.kind}|${input.fen}|${input.target}|${input.mover ?? ""}`);
+    const id = idOverride || puzzleId(input.piece, `${input.kind}|${input.fen}|${input.target ?? ""}|${input.mover ?? ""}`);
     if (seenIds.has(id)) { errors.push(`${label}: duplicate id '${id}'`); return; }
     seenIds.add(id);
-    const positionKey = `${input.piece.trim()}|${input.fen.trim()}|${input.target.trim()}`;
+    const positionKey = `${input.piece.trim()}|${input.fen.trim()}|${input.target?.trim() ?? ""}`;
     if (seenPositions.has(positionKey)) {
       warnings.push(`${label}: duplicate position (same piece+fen+target as an earlier puzzle)`);
     }
     seenPositions.add(positionKey);
-    const exercise = { id, optimalMoves: diagonalRunOptimal ?? bfs.optimalMoves, ...toExerciseFields(mapped) } as Exercise & { __order?: number };
+    const exercise = { id, optimalMoves: tourCeiling ?? diagonalRunOptimal ?? bfs!.optimalMoves, ...toExerciseFields(mapped) } as Exercise & { __order?: number };
     exercise.__order = order;
-    if (input.kind === "diagonal-run") diagonalRun[input.piece].push(exercise);
+    if (input.kind === "knight-tour") knightTour[input.piece].push(exercise);
+    else if (input.kind === "diagonal-run") diagonalRun[input.piece].push(exercise);
     else if (input.kind === "labyrinth") labyrinths[input.piece].push(exercise);
     else exercises[input.piece].push(exercise);
     // The descriptions map is what `resolveExerciseDescription` renders in the
@@ -245,11 +280,13 @@ export function buildCatalog(
     (exercises[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
     (labyrinths[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
     (diagonalRun[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
+    (knightTour[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
     for (const e of exercises[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of labyrinths[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of diagonalRun[p] as (Exercise & { __order?: number })[]) delete e.__order;
+    for (const e of knightTour[p] as (Exercise & { __order?: number })[]) delete e.__order;
   }
-  return { exercises, labyrinths, diagonalRun, descriptions, errors, warnings };
+  return { exercises, labyrinths, diagonalRun, knightTour, descriptions, errors, warnings };
 }
 
 export function renderGeneratedModule(cat: BuiltCatalog): string {
@@ -263,6 +300,8 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = ${j(cat.exercise
 export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = ${j(cat.labyrinths)};
 
 export const GENERATED_DIAGONAL_RUN: Record<PieceId, Exercise[]> = ${j(cat.diagonalRun)};
+
+export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = ${j(cat.knightTour)};
 
 export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = ${j(cat.descriptions)};
 `;

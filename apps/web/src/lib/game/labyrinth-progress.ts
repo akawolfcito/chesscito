@@ -63,6 +63,35 @@ export function areAllLabyrinthsSolved(
   });
 }
 
+/**
+ * Records a Knight's Tour run. Shares this map (bests are keyed by level id,
+ * and a tour id never collides with a labyrinth id) but inverts the improvement
+ * test: a tour's best is the MOST squares covered, a labyrinth's is the FEWEST
+ * moves. Passing a tour to `recordLabyrinthBest` silently files the player's
+ * worst run as their record — the value is the same shape, only the direction
+ * differs, so nothing would ever throw.
+ *
+ * Readers must grade the returned best with `tourStars`, never `labyrinthStars`.
+ */
+export function recordTourBest(
+  piece: PieceId,
+  tourId: string,
+  visited: number,
+): boolean {
+  if (typeof window === "undefined") return false;
+  if (visited <= 0) return false;
+  const map = readMap(piece);
+  const prev = map[tourId];
+  const isImprovement = typeof prev !== "number" || visited > prev;
+  if (!isImprovement) return false;
+  try {
+    localStorage.setItem(storageKey(piece), JSON.stringify({ ...map, [tourId]: visited }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Records a completion. Returns true when the new score replaced
  *  the previous best (or this was the first completion). */
 export function recordLabyrinthBest(
