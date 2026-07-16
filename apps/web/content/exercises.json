@@ -846,7 +846,11 @@
       "one-step",
       "orthogonal-step"
     ],
-    "order": 0
+    "order": 0,
+    "principle": "one-step",
+    "title": "The king's single step",
+    "playerPrompt": "The king moves just one square. Step up to the star.",
+    "learningObjective": "The player learns the king moves one square at a time, in any direction."
   },
   {
     "id": "king-2",
@@ -859,7 +863,11 @@
       "one-step",
       "diagonal-step"
     ],
-    "order": 1
+    "order": 1,
+    "principle": "diagonal-step",
+    "title": "A step on the diagonal",
+    "playerPrompt": "The king also steps diagonally. Take the one-square hop.",
+    "learningObjective": "The player learns the king's single step works on diagonals too, not only straight."
   },
   {
     "id": "king-3",
@@ -872,7 +880,11 @@
       "one-step",
       "short-route"
     ],
-    "order": 2
+    "order": 2,
+    "principle": "chain-steps",
+    "title": "Step by step",
+    "playerPrompt": "The star is a few squares away. Walk there, one step at a time.",
+    "learningObjective": "The player learns to cover ground with the king by chaining single steps."
   },
   {
     "id": "king-4",
@@ -885,7 +897,11 @@
       "one-step",
       "diagonal-step"
     ],
-    "order": 3
+    "order": 3,
+    "principle": "free-choice-step",
+    "title": "The other diagonal step",
+    "playerPrompt": "Step diagonally the other way to the star.",
+    "learningObjective": "The player reinforces that the king chooses freely among all its surrounding squares."
   },
   {
     "id": "king-5",
@@ -899,7 +915,11 @@
       "short-route",
       "edge-control"
     ],
-    "order": 4
+    "order": 4,
+    "principle": "walk-to-edge",
+    "title": "Walk to the corner",
+    "playerPrompt": "Head toward the corner, one step per move.",
+    "learningObjective": "The player routes the king across several squares toward an edge."
   },
   {
     "id": "king-6",
@@ -912,7 +932,11 @@
       "diagonal-step",
       "edge-control"
     ],
-    "order": 5
+    "order": 5,
+    "principle": "long-walk",
+    "title": "The long walk",
+    "playerPrompt": "Cross the whole board, one step at a time, to the far corner.",
+    "learningObjective": "The player plans a long king journey and feels how slowly the king travels."
   },
   {
     "id": "king-7",
@@ -926,7 +950,11 @@
       "detour",
       "blocked-square"
     ],
-    "order": 6
+    "order": 6,
+    "principle": "around-the-blocker",
+    "title": "Step around your piece",
+    "playerPrompt": "Your own piece blocks the way up. Step around it.",
+    "learningObjective": "The player learns to route the king around a square it cannot enter."
   },
   {
     "id": "king-9",
@@ -939,7 +967,11 @@
       "diagonal-step",
       "edge-control"
     ],
-    "order": 7
+    "order": 7,
+    "principle": "long-walk-advanced",
+    "title": "Corner to corner",
+    "playerPrompt": "Walk the king from this corner all the way to the opposite one.",
+    "learningObjective": "The player executes the king's longest journey, corner to corner."
   },
   {
     "id": "king-10",
@@ -953,7 +985,11 @@
       "detour",
       "blocked-square"
     ],
-    "order": 8
+    "order": 8,
+    "principle": "boxed-detour",
+    "title": "Around the wall",
+    "playerPrompt": "A wall of your pieces blocks the way down. Step around to reach the star.",
+    "learningObjective": "The player plans a detour around a cluster of blockers with the king."
   },
   {
     "id": "king-8",
@@ -967,6 +1003,10 @@
       "detour",
       "blocked-square"
     ],
-    "order": 9
+    "order": 9,
+    "principle": "blocked-diagonal-step",
+    "title": "The blocked diagonal",
+    "playerPrompt": "The diagonal square is taken by your own piece. Find another way.",
+    "learningObjective": "The player detours the king when its direct diagonal step is blocked."
   }
 ]

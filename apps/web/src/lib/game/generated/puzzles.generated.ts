@@ -1348,7 +1348,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "one-step",
         "orthogonal-step"
-      ]
+      ],
+      "principle": "one-step",
+      "title": "The king's single step",
+      "playerPrompt": "The king moves just one square. Step up to the star.",
+      "learningObjective": "The player learns the king moves one square at a time, in any direction."
     },
     {
       "id": "king-2",
@@ -1365,7 +1369,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "one-step",
         "diagonal-step"
-      ]
+      ],
+      "principle": "diagonal-step",
+      "title": "A step on the diagonal",
+      "playerPrompt": "The king also steps diagonally. Take the one-square hop.",
+      "learningObjective": "The player learns the king's single step works on diagonals too, not only straight."
     },
     {
       "id": "king-3",
@@ -1382,7 +1390,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "one-step",
         "short-route"
-      ]
+      ],
+      "principle": "chain-steps",
+      "title": "Step by step",
+      "playerPrompt": "The star is a few squares away. Walk there, one step at a time.",
+      "learningObjective": "The player learns to cover ground with the king by chaining single steps."
     },
     {
       "id": "king-4",
@@ -1399,7 +1411,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "one-step",
         "diagonal-step"
-      ]
+      ],
+      "principle": "free-choice-step",
+      "title": "The other diagonal step",
+      "playerPrompt": "Step diagonally the other way to the star.",
+      "learningObjective": "The player reinforces that the king chooses freely among all its surrounding squares."
     },
     {
       "id": "king-5",
@@ -1417,7 +1433,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "diagonal-step",
         "short-route",
         "edge-control"
-      ]
+      ],
+      "principle": "walk-to-edge",
+      "title": "Walk to the corner",
+      "playerPrompt": "Head toward the corner, one step per move.",
+      "learningObjective": "The player routes the king across several squares toward an edge."
     },
     {
       "id": "king-6",
@@ -1434,7 +1454,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "diagonal-step",
         "edge-control"
-      ]
+      ],
+      "principle": "long-walk",
+      "title": "The long walk",
+      "playerPrompt": "Cross the whole board, one step at a time, to the far corner.",
+      "learningObjective": "The player plans a long king journey and feels how slowly the king travels."
     },
     {
       "id": "king-7",
@@ -1458,7 +1482,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "orthogonal-step",
         "detour",
         "blocked-square"
-      ]
+      ],
+      "principle": "around-the-blocker",
+      "title": "Step around your piece",
+      "playerPrompt": "Your own piece blocks the way up. Step around it.",
+      "learningObjective": "The player learns to route the king around a square it cannot enter."
     },
     {
       "id": "king-9",
@@ -1475,7 +1503,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "diagonal-step",
         "edge-control"
-      ]
+      ],
+      "principle": "long-walk-advanced",
+      "title": "Corner to corner",
+      "playerPrompt": "Walk the king from this corner all the way to the opposite one.",
+      "learningObjective": "The player executes the king's longest journey, corner to corner."
     },
     {
       "id": "king-10",
@@ -1511,7 +1543,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "orthogonal-step",
         "detour",
         "blocked-square"
-      ]
+      ],
+      "principle": "boxed-detour",
+      "title": "Around the wall",
+      "playerPrompt": "A wall of your pieces blocks the way down. Step around to reach the star.",
+      "learningObjective": "The player plans a detour around a cluster of blockers with the king."
     },
     {
       "id": "king-8",
@@ -1535,7 +1571,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "diagonal-step",
         "detour",
         "blocked-square"
-      ]
+      ],
+      "principle": "blocked-diagonal-step",
+      "title": "The blocked diagonal",
+      "playerPrompt": "The diagonal square is taken by your own piece. Find another way.",
+      "learningObjective": "The player detours the king when its direct diagonal step is blocked."
     }
   ]
 };
@@ -2576,5 +2616,15 @@ export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "queen-7": "Boxed in on the rank",
   "queen-8": "The long way to the center",
   "queen-9": "Leave and re-enter the rank",
-  "queen-10": "Around your own piece"
+  "queen-10": "Around your own piece",
+  "king-1": "The king's single step",
+  "king-2": "A step on the diagonal",
+  "king-3": "Step by step",
+  "king-4": "The other diagonal step",
+  "king-5": "Walk to the corner",
+  "king-6": "The long walk",
+  "king-7": "Step around your piece",
+  "king-9": "Corner to corner",
+  "king-10": "Around the wall",
+  "king-8": "The blocked diagonal"
 };

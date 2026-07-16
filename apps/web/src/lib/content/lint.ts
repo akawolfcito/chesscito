@@ -31,11 +31,20 @@ export type LintResult = { errors: string[]; warnings: string[] };
  * "Exercise {n}" fallback survives in code as a defence, but for a curated piece
  * it is unreachable, because content without a title never compiles.
  *
- * A piece joins this list the moment its curriculum is curated. Rook is first
- * (2026-07-13); the other five still ship uncurated and must not break the build
- * for a lesson nobody has written yet.
+ * A piece joins this list the moment its curriculum is curated. Rook and bishop
+ * came first (2026-07-13/15); knight, pawn, queen and king followed (2026-07-15),
+ * so all six are now curated and the release build enforces complete pedagogy for
+ * every exercise. The runtime path (`requirePedagogy: false`) still tolerates
+ * missing copy, which is what keeps non-release catalogs building.
  */
-export const CURATED_PIECES: readonly PieceId[] = ["rook", "bishop", "knight", "pawn", "queen"];
+export const CURATED_PIECES: readonly PieceId[] = [
+  "rook",
+  "bishop",
+  "knight",
+  "pawn",
+  "queen",
+  "king",
+];
 
 const samePos = (a: BoardPosition, b: BoardPosition) =>
   a.file === b.file && a.rank === b.rank;

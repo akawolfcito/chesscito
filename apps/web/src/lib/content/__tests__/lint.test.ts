@@ -36,9 +36,9 @@ const base: ExerciseRecord = {
 
 /** Build one exercise and return whatever the linter said about it. Runs with the
  *  release gate ON — the same setting `pnpm import-puzzles` uses. */
-function lint(rec: Partial<ExerciseRecord>) {
+function lint(rec: Partial<ExerciseRecord>, requirePedagogy = true) {
   const cat = buildCatalog([], [], [{ ...base, ...rec } as ExerciseRecord], {
-    requirePedagogy: true,
+    requirePedagogy,
   });
   return { errors: cat.errors, warnings: cat.warnings };
 }
@@ -123,9 +123,30 @@ describe("semantic linter — errors (deterministic)", () => {
     expect(errors[0]).toMatch(/missing pedagogy: title/);
   });
 
-  it("leaves uncurated pieces alone", () => {
-    // The king still ships uncurated. The linter must not break its build
-    // for a lesson nobody has written yet.
+  it("skips the pedagogy gate off the release path", () => {
+    // All six pieces are now curated, so the escape hatch is no longer a piece
+    // but the build mode: the runtime catalog builds with requirePedagogy=false
+    // and must tolerate an exercise whose copy has not been written yet.
+    const { errors } = lint(
+      {
+        id: "x",
+        piece: "king",
+        fen: "8/8/8/8/8/8/8/4K3 w - - 0 1",
+        mover: "e1",
+        target: "e2",
+        principle: undefined,
+        title: undefined,
+        playerPrompt: undefined,
+        learningObjective: undefined,
+      },
+      false,
+    );
+    expect(errors).toHaveLength(0);
+  });
+
+  it("enforces pedagogy for every curated piece on the release path", () => {
+    // The counterpart to the escape hatch: on the release build, a curated
+    // piece with missing copy is a hard error. king is curated like the rest.
     const { errors } = lint({
       id: "x",
       piece: "king",
@@ -137,7 +158,7 @@ describe("semantic linter — errors (deterministic)", () => {
       playerPrompt: undefined,
       learningObjective: undefined,
     });
-    expect(errors).toHaveLength(0);
+    expect(errors[0]).toMatch(/missing pedagogy/);
   });
 
   it("rejects a target that sits on top of a blocker", () => {
