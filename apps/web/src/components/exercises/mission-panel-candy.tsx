@@ -417,10 +417,18 @@ export function MissionPanelCandy({
         ? tMission('openDetailsCaptureAriaLabel')
         : tMission('openDetailsTargetAriaFormat', { target: targetLabel })
 
-  const missionPeek = (
+  /* Mission peek — moved out of the mid chip-row into a full-width band
+     below the two chips (2026-07-15). Same MissionDetailSheet trigger and
+     tap behavior; restyled from the `candy-tray-pill` to the Diagonal Run
+     band look (warm amber paper, rounded, full width) so both playful
+     surfaces read as one family. The E2E hooks (`mission-optimal-moves`
+     testid + data-* attrs, `Open mission details` aria-label) are kept
+     verbatim on the same elements. */
+  const missionBand = (
     <button
       type="button"
-      className="candy-tray-pill"
+      data-testid="mission-band"
+      className="flex w-full items-center justify-center gap-2 rounded-lg border border-amber-300/40 bg-amber-100/95 px-3 py-2 text-[#3f2208]"
       aria-label={missionAriaLabel}
     >
       <CandyIcon
@@ -469,33 +477,38 @@ export function MissionPanelCandy({
               showLabel
             />
           </div>
-          <div className="flex-1 min-w-0">
-            <MissionDetailSheet
-              open={missionDetailOpen}
-              onOpenChange={setMissionDetailOpen}
-              selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
-              targetLabel={targetLabel}
-              isCapture={isCapture}
-              exercisePrompt={exercisePrompt}
-              score={score}
-              trainingPath={trainingPath}
-              onLabyrinthSelect={onLabyrinthSelect}
-              canSaveScore={canSaveScore}
-              isSavingScore={isSavingScore}
-              scoreSaved={scoreSaved}
-              saveFailed={saveFailed}
-              onRetrySave={onRetrySave}
-              totalStars={totalStars}
-              maxPossibleStars={maxPossibleStars}
-              canSaveOnChain={canSaveOnChain}
-              onSaveOnChain={onSaveOnChain}
-              isSavingOnChain={isSavingOnChain}
-              trigger={missionPeek}
-            />
-          </div>
           <div className="shrink-0 min-w-[4.5rem]">
             {exerciseDrawer}
           </div>
+        </div>
+
+        {/* Mission band — full-width, below the two chips (2026-07-15).
+            Was the mid-row peek pill; now a Diagonal-Run-style band so the
+            mission CTA reads as its own affordance and spans the surface.
+            Tap opens the same MissionDetailSheet. */}
+        <div className="mt-1.5">
+          <MissionDetailSheet
+            open={missionDetailOpen}
+            onOpenChange={setMissionDetailOpen}
+            selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
+            targetLabel={targetLabel}
+            isCapture={isCapture}
+            exercisePrompt={exercisePrompt}
+            score={score}
+            trainingPath={trainingPath}
+            onLabyrinthSelect={onLabyrinthSelect}
+            canSaveScore={canSaveScore}
+            isSavingScore={isSavingScore}
+            scoreSaved={scoreSaved}
+            saveFailed={saveFailed}
+            onRetrySave={onRetrySave}
+            totalStars={totalStars}
+            maxPossibleStars={maxPossibleStars}
+            canSaveOnChain={canSaveOnChain}
+            onSaveOnChain={onSaveOnChain}
+            isSavingOnChain={isSavingOnChain}
+            trigger={missionBand}
+          />
         </div>
 
         {/* QA F2 (2026-06-11): the full-width BACK TO EXERCISES band is
