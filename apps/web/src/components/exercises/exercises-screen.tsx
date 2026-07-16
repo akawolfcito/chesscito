@@ -2413,6 +2413,15 @@ export function ExercisesScreen({
       ? activeLabyrinth
       : null;
 
+  /** Diagonal Run's live status line, hoisted here so it can render inside
+   *  the mission band instead of as a second band under it (2026-07-16).
+   *  Only the DR board writes this; every other board leaves it null and the
+   *  mission band stays a plain "Move to XX". */
+  const [diagonalRunBand, setDiagonalRunBand] = useState<{
+    message: string
+    phase: string
+  } | null>(null);
+
   /** Integrated training path (Slice 2 — read-only display in the
    *  mission detail sheet). Bests live in localStorage, so
    *  `labyrinthCompleted` acts as a refresh signal to re-read them
@@ -2704,6 +2713,9 @@ export function ExercisesScreen({
           isDockSheetOpen={activeDockTab !== null}
           labyrinthMode={effectiveLabyrinthMode}
           diagonalRunMode={activeDiagonalRun !== null}
+          // Gated on the DR being active, not merely on the state being set: a
+          // stale line must never outlive the board that wrote it.
+          missionStatus={activeDiagonalRun ? (diagonalRunBand ?? undefined) : undefined}
           labyrinthOptimalMoves={activeLabyrinth?.optimalMoves}
           labyrinthId={activeLabyrinth?.id}
           labyrinthTitle={runTitle ?? activeLabyrinth?.title}
@@ -2910,6 +2922,7 @@ export function ExercisesScreen({
                 onComplete={(moves) =>
                   handleLabyrinthMove(activeDiagonalRun.targetPos, moves)
                 }
+                onBandChange={setDiagonalRunBand}
               />
             ) : (
               <Board

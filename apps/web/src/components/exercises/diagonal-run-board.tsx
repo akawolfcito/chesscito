@@ -14,7 +14,7 @@
  * ledger.
  */
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { GameBoard } from "@/lib/game/game-board";
 import { cellCenter, pieceWidth } from "@/lib/game/board-geometry";
@@ -51,10 +51,19 @@ type Phase = "idle" | "selected" | "sliding" | "lost" | "won";
 export function DiagonalRunBoard({
   level,
   onComplete,
+  onBandChange,
 }: {
   level: Exercise;
   /** Fired once on capture with the moves used, so the host records the best. */
   onComplete?: (moves: number) => void;
+  /** Hoists the status line to the host's mission band (2026-07-16). The
+   *  founder saw TWO stacked bands — "Move to g1" above "Tap the bishop to
+   *  begin." — where the surface only ever wanted one. When this is wired
+   *  the board stops rendering its own band and reports the line upward;
+   *  the host renders it inside the mission band, carrying the `dr-band`
+   *  test hooks with it. Left unwired (the /dev spike), the local band
+   *  still renders, so the probe keeps working standalone. */
+  onBandChange?: (band: { message: string; phase: string }) => void;
 }) {
   const t = useTranslations("DIAGONAL_RUN_COPY.band");
   const START = level.startPos;
@@ -184,6 +193,17 @@ export function DiagonalRunBoard({
             ? t("lost")
             : t("won");
 
+  /* The whole status line, suffixes included. Composed once so the local
+     band and the hoisted host band can never drift apart. */
+  const bandLine =
+    (transient ?? bandMessage) +
+    (phase === "won" ? ` · ${movesUsed}/${OPTIMAL} · ${"★".repeat(stars)}` : "") +
+    (phase === "selected" && movesUsed > 0 ? ` · ${movesUsed}` : "");
+
+  useEffect(() => {
+    onBandChange?.({ message: bandLine, phase });
+  }, [bandLine, phase, onBandChange]);
+
   const renderCell = (_file: number, _rank: number, sq: string) => {
     const p = parse(sq);
     const dark = (p.file + p.rank) % 2 === 1;
@@ -282,17 +302,19 @@ export function DiagonalRunBoard({
 
   return (
     <div className="flex w-full flex-col gap-2">
-      <div
-        data-testid="dr-band"
-        data-phase={phase}
-        className="mx-auto w-full max-w-[23.5rem] rounded-lg border border-amber-300/40 bg-amber-100/95 px-3 py-1.5 text-[#3f2208]"
-      >
-        <div className="text-xs leading-tight" data-testid="dr-band-msg">
-          {transient ?? bandMessage}
-          {phase === "won" ? ` · ${movesUsed}/${OPTIMAL} · ${"★".repeat(stars)}` : ""}
-          {phase === "selected" && movesUsed > 0 ? ` · ${movesUsed}` : ""}
+      {/* Local band — only when the host is NOT hosting the line in its
+          mission band. Two stacked bands is what this replaced. */}
+      {!onBandChange && (
+        <div
+          data-testid="dr-band"
+          data-phase={phase}
+          className="mx-auto w-full max-w-[23.5rem] rounded-lg border border-amber-300/40 bg-amber-100/95 px-3 py-1.5 text-[#3f2208]"
+        >
+          <div className="text-xs leading-tight" data-testid="dr-band-msg">
+            {bandLine}
+          </div>
         </div>
-      </div>
+      )}
       <div
         className="playhub-board-canvas"
         data-testid="dr-board"

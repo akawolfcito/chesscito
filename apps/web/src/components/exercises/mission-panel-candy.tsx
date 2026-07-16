@@ -120,6 +120,12 @@ type MissionPanelProps = {
    *  (no rescue host wired), failure behavior stays byte-identical to
    *  pre-cluster. */
   failureRescueSlot?: ReactNode
+  /** Live status line hoisted out of a game board (Diagonal Run) so the
+   *  surface shows ONE band instead of two stacked ones — "Move to g1"
+   *  sat above "Tap the bishop to begin." until 2026-07-16. When set, the
+   *  mission band renders the line beside the target and adopts the
+   *  `dr-band` / `dr-band-msg` / `data-phase` hooks the board used to own. */
+  missionStatus?: { message: string; phase: string }
 }
 
 type FlashConfig = { textKey: 'success' | 'failure'; accent: string; stroke: string }
@@ -378,6 +384,7 @@ export function MissionPanelCandy({
   pieceHint,
   exercisePrompt,
   failureRescueSlot,
+  missionStatus,
 }: MissionPanelProps) {
   const tMission = useTranslations('MISSION_BRIEFING_COPY')
   const tHud = useTranslations('HUD_COPY')
@@ -430,14 +437,15 @@ export function MissionPanelCandy({
   const missionBand = (
     <button
       type="button"
-      data-testid="mission-band"
+      data-testid={missionStatus ? 'dr-band' : 'mission-band'}
+      data-phase={missionStatus?.phase}
       className="flex min-h-[30px] w-full items-center justify-center gap-1.5 rounded-lg border border-amber-300/40 bg-amber-100/95 px-3 py-1 text-[#3f2208]"
       aria-label={missionAriaLabel}
     >
       <CandyIcon name="crosshair" className="candy-tray-pill-icon" />
       <span
         key={targetLabel}
-        className="truncate text-xs font-extrabold leading-tight"
+        className="shrink-0 truncate text-xs font-extrabold leading-tight"
         style={candyChipTextStyle}
         data-testid={showMoveCounter ? 'mission-optimal-moves' : undefined}
         data-optimal-moves={showMoveCounter ? labyrinthOptimalMoves : undefined}
@@ -446,6 +454,22 @@ export function MissionPanelCandy({
       >
         {visibleMissionLabel}
       </span>
+      {/* Hoisted status line (Diagonal Run). One band, two facts: where to
+          go, and what to do next — the founder saw these stacked as two
+          bands (2026-07-16). Carries the `dr-band-msg` hook so the real-flow
+          E2E keeps reading the live line from wherever it renders. */}
+      {missionStatus ? (
+        <span
+          className="truncate text-xs font-semibold leading-tight opacity-90"
+          style={candyChipTextStyle}
+          data-testid="dr-band-msg"
+        >
+          <span aria-hidden="true" className="mx-1 opacity-50">
+            ·
+          </span>
+          {missionStatus.message}
+        </span>
+      ) : null}
     </button>
   )
 
