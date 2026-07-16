@@ -142,6 +142,18 @@ describe("attackedSquares — composition", () => {
     expect(attacks([]).size).toBe(0);
   });
 
+  it("a white wall blocks a ray — a rook does not see through a wall", () => {
+    // Found while writing the safe-path detour test: the first cut of this
+    // module only knew about enemies, so a rook happily watched straight
+    // THROUGH a wall and the detour level became unsolvable for no reason.
+    const set = attackedSquares([enemy("d8", "rook")], [squareToPos("d5")]);
+
+    expect(set.has("d6")).toBe(true);
+    expect(set.has("d5")).toBe(true); // the wall's own square is watched
+    expect(set.has("d4")).toBe(false); // shadow behind the wall
+    expect(set.has("d1")).toBe(false);
+  });
+
   it("does not watch an enemy's own square unless another enemy watches it", () => {
     // A lone rook does not attack the square it stands on.
     const set = attacks([enemy("d4", "rook")]);

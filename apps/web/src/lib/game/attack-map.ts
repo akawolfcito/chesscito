@@ -103,11 +103,21 @@ function addSteps(
  * Every square watched by at least one enemy.
  *
  * Enemies block each other's rays but are themselves watched — an enemy's
- * square is never a refuge. Returns squares in `posToSquare` form ("d5") so
- * membership is a Set lookup instead of an O(n) position scan.
+ * square is never a refuge. `walls` (the white obstacles) block rays too: a
+ * rook does not see through a wall. The KING is deliberately not among them,
+ * per the module docblock.
+ *
+ * Returns squares in `posToSquare` form ("d5") so membership is a Set lookup
+ * instead of an O(n) position scan.
  */
-export function attackedSquares(enemies: readonly TypedEnemy[]): Set<string> {
-  const occupied = new Set(enemies.map((e) => posToSquare(e.pos)));
+export function attackedSquares(
+  enemies: readonly TypedEnemy[],
+  walls: readonly BoardPosition[] = [],
+): Set<string> {
+  const occupied = new Set([
+    ...enemies.map((e) => posToSquare(e.pos)),
+    ...walls.map(posToSquare),
+  ]);
   const watched = new Set<string>();
 
   for (const { pos, piece } of enemies) {
