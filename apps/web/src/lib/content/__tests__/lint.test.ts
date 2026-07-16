@@ -124,14 +124,14 @@ describe("semantic linter — errors (deterministic)", () => {
   });
 
   it("leaves uncurated pieces alone", () => {
-    // Queen and king still ship uncurated. The linter must not break their
-    // build for a lesson nobody has written yet.
+    // The king still ships uncurated. The linter must not break its build
+    // for a lesson nobody has written yet.
     const { errors } = lint({
       id: "x",
-      piece: "queen",
-      fen: "8/8/8/8/8/8/8/Q7 w - - 0 1",
-      mover: "a1",
-      target: "a8",
+      piece: "king",
+      fen: "8/8/8/8/8/8/8/4K3 w - - 0 1",
+      mover: "e1",
+      target: "e2",
       principle: undefined,
       title: undefined,
       playerPrompt: undefined,

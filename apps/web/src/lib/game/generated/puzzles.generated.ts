@@ -1072,7 +1072,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "straight-line",
         "diagonal-line"
-      ]
+      ],
+      "principle": "any-direction",
+      "title": "The queen goes anywhere",
+      "playerPrompt": "The queen slides in any straight line. Take the long diagonal to the star.",
+      "learningObjective": "The player learns the queen moves like a rook and a bishop combined, in any straight direction."
     },
     {
       "id": "queen-2",
@@ -1088,7 +1092,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "easy",
       "tags": [
         "straight-line"
-      ]
+      ],
+      "principle": "rook-lines",
+      "title": "Straight up the file",
+      "playerPrompt": "Like a rook, the queen races up the file. Go.",
+      "learningObjective": "The player learns the queen moves along ranks and files, just like a rook."
     },
     {
       "id": "queen-3",
@@ -1104,7 +1112,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "easy",
       "tags": [
         "diagonal-line"
-      ]
+      ],
+      "principle": "bishop-lines",
+      "title": "And along the diagonal",
+      "playerPrompt": "Like a bishop, the queen steps along the diagonal. Take it.",
+      "learningObjective": "The player learns the queen also moves along diagonals, just like a bishop."
     },
     {
       "id": "queen-4",
@@ -1120,7 +1132,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "easy",
       "tags": [
         "straight-line"
-      ]
+      ],
+      "principle": "rank-line",
+      "title": "Across the rank",
+      "playerPrompt": "Slide straight along the rank to the star.",
+      "learningObjective": "The player reinforces that the queen sweeps a whole rank in a single move."
     },
     {
       "id": "queen-5",
@@ -1137,7 +1153,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "rook-bishop-combo",
         "pivot"
-      ]
+      ],
+      "principle": "turn-combo",
+      "title": "Turn once to arrive",
+      "playerPrompt": "One straight line won't reach it. Turn once to get there.",
+      "learningObjective": "The player learns to reach a square by turning between two of the queen's straight moves."
     },
     {
       "id": "queen-6",
@@ -1165,7 +1185,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "rook-bishop-combo",
         "detour",
         "blocked-line"
-      ]
+      ],
+      "principle": "around-the-blocker",
+      "title": "Your own piece blocks the line",
+      "playerPrompt": "A friendly piece shuts the rank. Go around it to the star.",
+      "learningObjective": "The player learns a friendly piece stops the queen's line and cannot be passed or captured."
     },
     {
       "id": "queen-7",
@@ -1197,7 +1221,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "straight-line",
         "detour",
         "blocked-line"
-      ]
+      ],
+      "principle": "boxed-detour",
+      "title": "Boxed in on the rank",
+      "playerPrompt": "The straight path to the star is walled off. Find the way around.",
+      "learningObjective": "The player plans a detour when the direct queen line is blocked."
     },
     {
       "id": "queen-8",
@@ -1229,7 +1257,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "rook-bishop-combo",
         "long-range",
         "detour"
-      ]
+      ],
+      "principle": "long-detour",
+      "title": "The long way to the center",
+      "playerPrompt": "The diagonal is blocked partway. Route around to reach the star.",
+      "learningObjective": "The player combines the queen's lines to route around a blocker over long range."
     },
     {
       "id": "queen-9",
@@ -1261,7 +1293,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "straight-line",
         "detour",
         "blocked-line"
-      ]
+      ],
+      "principle": "reopen-the-line",
+      "title": "Leave and re-enter the rank",
+      "playerPrompt": "The rank is shut just ahead. Step off, go around, and come back.",
+      "learningObjective": "The player learns to leave a blocked line and rejoin it beyond the blocker."
     },
     {
       "id": "queen-10",
@@ -1289,7 +1325,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "friendly-blocker",
         "detour",
         "blocked-line"
-      ]
+      ],
+      "principle": "friendly-blocker",
+      "title": "Around your own piece",
+      "playerPrompt": "Your own piece blocks the rank. Loop around it to the star.",
+      "learningObjective": "The player confirms the queen must route around a friendly piece it cannot pass through."
     }
   ],
   "king": [
@@ -2526,5 +2566,15 @@ export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "pawn-7": "Blocked ahead — capture around",
   "pawn-8": "A path of captures",
   "pawn-9": "Take the star",
-  "pawn-10": "Capture into promotion"
+  "pawn-10": "Capture into promotion",
+  "queen-1": "The queen goes anywhere",
+  "queen-2": "Straight up the file",
+  "queen-3": "And along the diagonal",
+  "queen-4": "Across the rank",
+  "queen-5": "Turn once to arrive",
+  "queen-6": "Your own piece blocks the line",
+  "queen-7": "Boxed in on the rank",
+  "queen-8": "The long way to the center",
+  "queen-9": "Leave and re-enter the rank",
+  "queen-10": "Around your own piece"
 };

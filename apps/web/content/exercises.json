@@ -674,7 +674,11 @@
       "straight-line",
       "diagonal-line"
     ],
-    "order": 0
+    "order": 0,
+    "principle": "any-direction",
+    "title": "The queen goes anywhere",
+    "playerPrompt": "The queen slides in any straight line. Take the long diagonal to the star.",
+    "learningObjective": "The player learns the queen moves like a rook and a bishop combined, in any straight direction."
   },
   {
     "id": "queen-2",
@@ -686,7 +690,11 @@
     "tags": [
       "straight-line"
     ],
-    "order": 1
+    "order": 1,
+    "principle": "rook-lines",
+    "title": "Straight up the file",
+    "playerPrompt": "Like a rook, the queen races up the file. Go.",
+    "learningObjective": "The player learns the queen moves along ranks and files, just like a rook."
   },
   {
     "id": "queen-3",
@@ -698,7 +706,11 @@
     "tags": [
       "diagonal-line"
     ],
-    "order": 2
+    "order": 2,
+    "principle": "bishop-lines",
+    "title": "And along the diagonal",
+    "playerPrompt": "Like a bishop, the queen steps along the diagonal. Take it.",
+    "learningObjective": "The player learns the queen also moves along diagonals, just like a bishop."
   },
   {
     "id": "queen-4",
@@ -710,7 +722,11 @@
     "tags": [
       "straight-line"
     ],
-    "order": 3
+    "order": 3,
+    "principle": "rank-line",
+    "title": "Across the rank",
+    "playerPrompt": "Slide straight along the rank to the star.",
+    "learningObjective": "The player reinforces that the queen sweeps a whole rank in a single move."
   },
   {
     "id": "queen-5",
@@ -723,7 +739,11 @@
       "rook-bishop-combo",
       "pivot"
     ],
-    "order": 4
+    "order": 4,
+    "principle": "turn-combo",
+    "title": "Turn once to arrive",
+    "playerPrompt": "One straight line won't reach it. Turn once to get there.",
+    "learningObjective": "The player learns to reach a square by turning between two of the queen's straight moves."
   },
   {
     "id": "queen-6",
@@ -737,7 +757,11 @@
       "detour",
       "blocked-line"
     ],
-    "order": 5
+    "order": 5,
+    "principle": "around-the-blocker",
+    "title": "Your own piece blocks the line",
+    "playerPrompt": "A friendly piece shuts the rank. Go around it to the star.",
+    "learningObjective": "The player learns a friendly piece stops the queen's line and cannot be passed or captured."
   },
   {
     "id": "queen-7",
@@ -751,7 +775,11 @@
       "detour",
       "blocked-line"
     ],
-    "order": 6
+    "order": 6,
+    "principle": "boxed-detour",
+    "title": "Boxed in on the rank",
+    "playerPrompt": "The straight path to the star is walled off. Find the way around.",
+    "learningObjective": "The player plans a detour when the direct queen line is blocked."
   },
   {
     "id": "queen-8",
@@ -765,7 +793,11 @@
       "long-range",
       "detour"
     ],
-    "order": 7
+    "order": 7,
+    "principle": "long-detour",
+    "title": "The long way to the center",
+    "playerPrompt": "The diagonal is blocked partway. Route around to reach the star.",
+    "learningObjective": "The player combines the queen's lines to route around a blocker over long range."
   },
   {
     "id": "queen-9",
@@ -779,7 +811,11 @@
       "detour",
       "blocked-line"
     ],
-    "order": 8
+    "order": 8,
+    "principle": "reopen-the-line",
+    "title": "Leave and re-enter the rank",
+    "playerPrompt": "The rank is shut just ahead. Step off, go around, and come back.",
+    "learningObjective": "The player learns to leave a blocked line and rejoin it beyond the blocker."
   },
   {
     "id": "queen-10",
@@ -793,7 +829,11 @@
       "detour",
       "blocked-line"
     ],
-    "order": 9
+    "order": 9,
+    "principle": "friendly-blocker",
+    "title": "Around your own piece",
+    "playerPrompt": "Your own piece blocks the rank. Loop around it to the star.",
+    "learningObjective": "The player confirms the queen must route around a friendly piece it cannot pass through."
   },
   {
     "id": "king-1",
