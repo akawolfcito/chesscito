@@ -499,7 +499,11 @@
     "tags": [
       "forward-move"
     ],
-    "order": 0
+    "order": 0,
+    "principle": "forward-step",
+    "title": "The pawn steps forward",
+    "playerPrompt": "The pawn walks straight ahead, one square. Take the step.",
+    "learningObjective": "The player learns the pawn advances straight forward, never sideways or back."
   },
   {
     "id": "pawn-2",
@@ -512,7 +516,11 @@
       "forward-move",
       "slow-advance"
     ],
-    "order": 1
+    "order": 1,
+    "principle": "slow-advance",
+    "title": "One rank at a time",
+    "playerPrompt": "Keep marching straight up the file to the star.",
+    "learningObjective": "The player learns the pawn only moves forward, climbing the board push by push."
   },
   {
     "id": "pawn-3",
@@ -524,7 +532,11 @@
     "tags": [
       "diagonal-capture"
     ],
-    "order": 2
+    "order": 2,
+    "principle": "diagonal-capture",
+    "title": "Capture on the diagonal",
+    "playerPrompt": "The pawn steps diagonally only to capture. Take the piece on the star.",
+    "learningObjective": "The player learns the pawn captures diagonally — a different move from its straight advance."
   },
   {
     "id": "pawn-4",
@@ -537,7 +549,11 @@
       "diagonal-capture",
       "directional-move"
     ],
-    "order": 3
+    "order": 3,
+    "principle": "capture-side",
+    "title": "Take to the side",
+    "playerPrompt": "An enemy waits one diagonal step away. Capture it.",
+    "learningObjective": "The player learns a pawn only leaves its file by capturing diagonally, to either side."
   },
   {
     "id": "pawn-5",
@@ -551,7 +567,11 @@
       "diagonal-capture",
       "capture-route"
     ],
-    "order": 4
+    "order": 4,
+    "principle": "capture-route",
+    "title": "March, then capture",
+    "playerPrompt": "Walk up the file, then capture across to reach the star.",
+    "learningObjective": "The player combines forward pushes with a diagonal capture to change files."
   },
   {
     "id": "pawn-6",
@@ -565,7 +585,11 @@
       "slow-advance",
       "promotion-path"
     ],
-    "order": 5
+    "order": 5,
+    "principle": "promotion",
+    "title": "March to promote",
+    "playerPrompt": "Push all the way to the last rank, where the pawn transforms.",
+    "learningObjective": "The player learns a pawn that reaches the far rank promotes into a stronger piece."
   },
   {
     "id": "pawn-7",
@@ -579,7 +603,11 @@
       "diagonal-capture",
       "capture-route"
     ],
-    "order": 6
+    "order": 6,
+    "principle": "blocked-forward",
+    "title": "Blocked ahead — capture around",
+    "playerPrompt": "The square straight ahead is blocked. Capture diagonally to get moving.",
+    "learningObjective": "The player learns that when the forward square is shut, a diagonal capture is the way past."
   },
   {
     "id": "pawn-8",
@@ -593,7 +621,11 @@
       "diagonal-capture",
       "directional-move"
     ],
-    "order": 7
+    "order": 7,
+    "principle": "capture-chain",
+    "title": "A path of captures",
+    "playerPrompt": "Enemies stand in the way. Capture your way through to the star.",
+    "learningObjective": "The player strings diagonal captures together to carve a route forward."
   },
   {
     "id": "pawn-9",
@@ -607,7 +639,11 @@
       "diagonal-capture",
       "directional-move"
     ],
-    "order": 8
+    "order": 8,
+    "principle": "advance-then-take",
+    "title": "Take the star",
+    "playerPrompt": "Advance up the file, then capture the piece sitting on the star.",
+    "learningObjective": "The player recognises when the goal must be reached by a capture, not a push."
   },
   {
     "id": "pawn-10",
@@ -621,7 +657,11 @@
       "blocked-forward",
       "diagonal-capture"
     ],
-    "order": 9
+    "order": 9,
+    "principle": "promotion-by-capture",
+    "title": "Capture into promotion",
+    "playerPrompt": "The square ahead is blocked. Capture diagonally, then step onto the last rank.",
+    "learningObjective": "The player learns a pawn can capture past a blocker and still reach promotion."
   },
   {
     "id": "queen-1",

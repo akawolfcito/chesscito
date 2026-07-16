@@ -790,7 +790,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "easy",
       "tags": [
         "forward-move"
-      ]
+      ],
+      "principle": "forward-step",
+      "title": "The pawn steps forward",
+      "playerPrompt": "The pawn walks straight ahead, one square. Take the step.",
+      "learningObjective": "The player learns the pawn advances straight forward, never sideways or back."
     },
     {
       "id": "pawn-2",
@@ -807,7 +811,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "forward-move",
         "slow-advance"
-      ]
+      ],
+      "principle": "slow-advance",
+      "title": "One rank at a time",
+      "playerPrompt": "Keep marching straight up the file to the star.",
+      "learningObjective": "The player learns the pawn only moves forward, climbing the board push by push."
     },
     {
       "id": "pawn-3",
@@ -830,7 +838,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "easy",
       "tags": [
         "diagonal-capture"
-      ]
+      ],
+      "principle": "diagonal-capture",
+      "title": "Capture on the diagonal",
+      "playerPrompt": "The pawn steps diagonally only to capture. Take the piece on the star.",
+      "learningObjective": "The player learns the pawn captures diagonally — a different move from its straight advance."
     },
     {
       "id": "pawn-4",
@@ -854,7 +866,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "diagonal-capture",
         "directional-move"
-      ]
+      ],
+      "principle": "capture-side",
+      "title": "Take to the side",
+      "playerPrompt": "An enemy waits one diagonal step away. Capture it.",
+      "learningObjective": "The player learns a pawn only leaves its file by capturing diagonally, to either side."
     },
     {
       "id": "pawn-5",
@@ -879,7 +895,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "slow-advance",
         "diagonal-capture",
         "capture-route"
-      ]
+      ],
+      "principle": "capture-route",
+      "title": "March, then capture",
+      "playerPrompt": "Walk up the file, then capture across to reach the star.",
+      "learningObjective": "The player combines forward pushes with a diagonal capture to change files."
     },
     {
       "id": "pawn-6",
@@ -897,7 +917,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "forward-move",
         "slow-advance",
         "promotion-path"
-      ]
+      ],
+      "principle": "promotion",
+      "title": "March to promote",
+      "playerPrompt": "Push all the way to the last rank, where the pawn transforms.",
+      "learningObjective": "The player learns a pawn that reaches the far rank promotes into a stronger piece."
     },
     {
       "id": "pawn-7",
@@ -928,7 +952,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "blocked-forward",
         "diagonal-capture",
         "capture-route"
-      ]
+      ],
+      "principle": "blocked-forward",
+      "title": "Blocked ahead — capture around",
+      "playerPrompt": "The square straight ahead is blocked. Capture diagonally to get moving.",
+      "learningObjective": "The player learns that when the forward square is shut, a diagonal capture is the way past."
     },
     {
       "id": "pawn-8",
@@ -957,7 +985,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "capture-route",
         "diagonal-capture",
         "directional-move"
-      ]
+      ],
+      "principle": "capture-chain",
+      "title": "A path of captures",
+      "playerPrompt": "Enemies stand in the way. Capture your way through to the star.",
+      "learningObjective": "The player strings diagonal captures together to carve a route forward."
     },
     {
       "id": "pawn-9",
@@ -982,7 +1014,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "slow-advance",
         "diagonal-capture",
         "directional-move"
-      ]
+      ],
+      "principle": "advance-then-take",
+      "title": "Take the star",
+      "playerPrompt": "Advance up the file, then capture the piece sitting on the star.",
+      "learningObjective": "The player recognises when the goal must be reached by a capture, not a push."
     },
     {
       "id": "pawn-10",
@@ -1013,7 +1049,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "promotion-path",
         "blocked-forward",
         "diagonal-capture"
-      ]
+      ],
+      "principle": "promotion-by-capture",
+      "title": "Capture into promotion",
+      "playerPrompt": "The square ahead is blocked. Capture diagonally, then step onto the last rank.",
+      "learningObjective": "The player learns a pawn can capture past a blocker and still reach promotion."
     }
   ],
   "queen": [
@@ -2476,5 +2516,15 @@ export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "knight-7": "Plan your jumps",
   "knight-8": "The knight jumps over",
   "knight-9": "Across the board",
-  "knight-10": "Across from the corner"
+  "knight-10": "Across from the corner",
+  "pawn-1": "The pawn steps forward",
+  "pawn-2": "One rank at a time",
+  "pawn-3": "Capture on the diagonal",
+  "pawn-4": "Take to the side",
+  "pawn-5": "March, then capture",
+  "pawn-6": "March to promote",
+  "pawn-7": "Blocked ahead — capture around",
+  "pawn-8": "A path of captures",
+  "pawn-9": "Take the star",
+  "pawn-10": "Capture into promotion"
 };
