@@ -1,91 +1,68 @@
-# Session Handoff — 2026-07-14 (Rook Rails close + Graphify)
+# Session Handoff — 2026-07-15 (Bishop training stabilized)
 
-## Next session objective (tight, in order)
-1. Install & configure **Graphify**; generate the initial repo graph (no product-logic changes).
-2. Resume the close of **Rook Rails Delivery 1**.
-3. Design + validate the one missing board: **Two Turns**.
-4. Close the four labyrinths visually and technically **before** Phase B.
+> Paramos acá a propósito. Retomamos EXACTAMENTE en este punto cuando el usuario diga **"continuemos"**.
+> La sesión anterior cerró con un crash de Claude Code justo al ir a commitear la última tarea de alfil;
+> esta sesión recuperó el estado, commiteó y dejó este handoff.
 
-## Start here
-Read this file, then `docs/audits/2026-07-14-rook-rails-board-audit.md` (the approved
-classification + engine evidence). Plan: `docs/plans/2026-07-13-rook-curriculum-implementation-plan.md`
-(§9 redesign callout). Full session detail: `docs/handoffs/2026-07-14-a9-obstacles-handoff.md`.
+## Completed
+- **[9cc609a]** `feat: stabilize bishop training` — commit único aprobado (currículo B4.3 + Diagonal Run D1–D3),
+  reemplaza el bloque "pivot" del commit deshecho. Verificado antes de commitear: **vitest 5136/5136 (434 files)**,
+  `tsc --noEmit` limpio, `git diff --check` limpio. E2E verde según auditoría D3.
+  - Alfil = **9 ejercicios** (currículo B4.3).
+  - Juego lúdico del alfil = **Diagonal Run** (control por turnos / glide): `kind:"pivot"` → `kind:"diagonal-run"`
+    en todo el pipeline; módulo puro `diagonal-run.ts` (glide + `glideBfs`); `DiagonalRunBoard` reusa `<GameBoard>`;
+    3 niveles (`bishop-run-1/2/3`); i18n `DIAGONAL_RUN_COPY` EN/ES; completado vía ledger de laberinto.
+  - Experiencia **pivot retirada** (módulo, lint, probe `/dev/pivot-spike`, tests/E2E). Labs históricos
+    `bishop-lab-3/-4` conservados en contenido, ocultos de nav.
+  - 15 docs de auditoría en `docs/audits/2026-07-15-bishop-*` (B0…B4.3, D1…D3).
 
 ## Current State
-- **Branch**: `fix/exercise-obstacles-a0` · last commit `15f9835d`.
-- **Build**: 🔴 **RED** — 2 order-tests fail (`generated-merge`, `path.test`) because the file's
-  rail ids/orders do NOT yet match the approved classification (below). Expected until the remap.
-  BFS verifier itself is green (declared optimal = engine minimum for all 4).
-- **Uncommitted**: `apps/web/content/labyrinths.json` + regenerated `puzzles.generated.ts` — the
-  founder's manual rail redesign (WIP). `docs/audits/2026-07-14-rook-rails-board-audit.md` untracked.
-  Do NOT revert; this is the work in progress.
+- **Branch**: `fix/exercise-obstacles-a0` — 5 commits ahead de `main`, NO mergeado, sin PR abierto.
+- **Build**: passing — vitest 5136/5136, tsc limpio, git diff --check limpio.
+- **Uncommitted work**: no (solo este SESSION.md).
 
-## Approved Rook Rails classification (by board geometry, NOT builder name)
-The board→level mapping is decided. The **ids/orders in the file do not reflect it yet** — that remap
-is part of the close.
+## Next Tasks (en orden — arrancar acá con "continuemos")
 
-| Order | Level | Board (mover→target) | Status |
-|--:|---|---|---|
-| 0 | **Two Turns** | *to be designed* | founder designs in builder → I validate |
-| 1 | **Dead End** | `a4 → e4` | approved: detours a6/a8 cost +2 (anticipate the mistake, no infinite trap); best wall grouping (13+10) |
-| 2 | **Two Roads** | `g1 → b7` | approved **with caveat** (see below) |
-| 3 | **Rook Run** | `d8 → f1` | approved as the final level (optimal 8, single dense line) |
-| — | reserve | `c6 → e1` | optimal 8; NOT in the main ladder |
+### 1. [PRIMERA] Validar claridad de las 2 líneas de Chesscito: **ejercicios** vs **juegos lúdicos**
+Confirmar qué tan definido está cada carril por pieza. Estado según lo hablado:
 
-**Dead End is a penalised detour (+2), not an infinite pocket** — teaches anticipation without trapping
-the player. Founder decision; do not "fix" it into a ∞ dead end.
+| Pieza    | Ejercicios                          | Juego lúdico                                        |
+|----------|-------------------------------------|-----------------------------------------------------|
+| Torre    | ✅ bien definidos (referencia)      | ✅ **Laberinto** (Rook Rails)                        |
+| Alfil    | ✅ 9 ejercicios (B4.3) — validar    | ✅ **Diagonal Run** (recién shippeado)               |
+| Caballo  | ⬜ por auditar                      | 💡 idea: **recorrido del caballo** sin repetir casillas (knight's tour) |
+| Dama     | ⬜ por auditar                      | 💡 idea: **N reinas** sin que se coman entre sí       |
+| Peón     | ⬜ por auditar                      | ❓ **sin idea** — proponer juego                     |
+| Rey      | ⬜ por auditar                      | ❓ **sin idea** — proponer juego                     |
 
-### Two Roads (`g1 → b7`) caveat — NON-blocking
-Two complete routes of different cost, confirmed against the engine:
-- central road, cost 6, 3★: `g1 → f1 → f3 → d3 → d6 → b6 → b7`
-- right-edge road, cost 7, 2★: `g1 → g2 → h2 → h5 → e5 → e6 → b6 → b7`
+Tarea concreta: (a) auditar si los ejercicios ya están bien definidos en alfil y cuánto en las demás piezas;
+(b) proponer juegos lúdicos para **peón** y **rey** (sin idea aún); (c) proponer alternativas adicionales para
+cualquier pieza si hay mejores. Confirmar knight's tour (caballo) y N-reinas (dama) como candidatos.
 
-They are spatially distinct. Caveat: the two cost-6 mouths (f1, c1) converge and share the back half,
-so it reads as "one central road, two mouths + one alternative" rather than a clean two-roads split,
-and the penalty is only +1. **Do NOT redesign Two Roads unless the final visual review shows the
-contrast doesn't read.**
+### 2. Rediseño del chip "MOVE TO XX" → chip de misión full-width (estilo Diagonal Run)
+Hoy: chip "MOVE TO XX" está **en la mitad** entre los otros 2 chips y abre el modal MISSION.
+Objetivo: reemplazarlo por el **mismo chip/banda compacta** que creamos en el juego lúdico del alfil (donde va
+el detalle de lo que sucede). Debe quedar **debajo** de los otros 2 y **a lo ancho** de la pantalla (full-width);
+al hacer click debe hacer **exactamente lo mismo que hoy**: abrir el modal MISSION e iniciar la misión.
+(Referencia de estilo: la banda de `DiagonalRunBoard` / `mission-panel-candy` / `mission-detail-sheet`.)
 
-## Immediate pending work
-**Design `Two Turns` manually in the builder**, meeting:
-- optimal 3–4 moves; two clear direction changes;
-- grouped walls + visible corridors; not a trivial single corridor;
-- none of the Dead End / Two Roads complexity;
-- feels like the FIRST Special Training, not another basic exercise.
+### 3. Pendiente arrastrado de Rook Rails (de la sesión previa, no bloqueante)
+- Abrir PR `fix/exercise-obstacles-a0` → `main` (bundlea A0 obstacle fix + Rook Rails D1 + e2e hardening + Bishop).
+  Correr suite completa + VR antes de merge.
+- Rook Rails **Phase B** "Break Through" (order 4) — fuera de alcance de D1.
+- En merge: Cluster Closure Protocol (CLAUDE.md).
 
-Then, once the FEN exists, I validate: (1) BFS optimal; (2) optimal-route count; (3) opening decisions;
-(4) redundant-obstacle scan; (5) title↔geometry match; (6) mobile contact sheet of all four; (7) stop
-for human review.
+## Blockers
+- Ninguno funcional.
+- **Revisión visual pendiente de Diagonal Run**: D3 dejó el commit hecho pero la revisión visual del flujo real
+  (390×844) queda para confirmar. El shot dev mostró el overlay "1 error" de Next (ruido del app-shell en dev,
+  no del juego; el E2E real que suprime errores pasa en verde). Verificar en la revisión.
+- **Deploy caveat**: regenerar el catálogo NO invalida el `unstable_cache` tag `"content"`; Vercel preview/prod
+  necesita `revalidateTag("content")` o build fresco. E2E lo bypassa con `CONTENT_CACHE_DISABLED=1`.
 
-**Also part of the close**: remap the 4 rail records to the approved ids/orders (Two Turns 0, Dead End
-1 ← a4→e4, Two Roads 2 ← g1→b7, Rook Run 3 ← d8→f1; c6→e1 out of the main ladder), then update the
-order-tests (`generated-merge`, `path.test`) and run the suite green. Regenerate after editing:
-`pnpm -C apps/web import-puzzles`, and **kill :3000 first** or a stale dev server serves the old catalog.
-
-## Graphify (do first, in its own commit — never mixed with labyrinth changes)
-```bash
-uv tool install graphifyy && graphify install      # or: pipx install graphifyy && graphify install
-```
-Then `/graphify .` — expect `graphify-out/{graph.html,GRAPH_REPORT.md,graph.json}`.
-Before committing: decide if `graphify-out/` should be gitignored; confirm it holds NO secrets / `.env`
-/ private backups / Supabase data; document install only if it helps the permanent flow.
-
-## Out of scope (do NOT start)
-Capture for rook/bishop/queen · multiple collectible stars · BFS generalization · **Break Through** ·
-builder/Supabase refactor · redesign of already-approved exercises.
-
-## Done-when (close criteria)
-Graphify installed & tested · `Two Turns` has a final validated FEN · all four Rook Rails have final
-order + names · a joint mobile visual review exists · suite + TypeScript green · Phase B NOT started.
-
-## Validation tooling (session scratchpad — may not survive next session)
-`rail-analyze.js` (optimal, routes, opening decisions, per-move commit cost, dead-end/two-roads
-detection), `rail-audit.js` (per-board audit + wall grouping), `rail-search.js`. Read-only, matches the
-real engine. Path: `/private/tmp/claude-502/.../scratchpad/`. Rebuildable from `src/test-utils/bfs-optimal.ts`
-if gone. **Design boards by hand, then validate — do NOT generate from metrics** (memory:
-`feedback_metrics_dont_make_a_maze`).
-
-## Reference
-- Rook Rails must keep the **ambient stone wall** (A9): obstacles are `.is-wall`, never friendly pieces.
-- Rail ids are new on purpose (board/optimal/principle changed → plan §10.3); old ids drop, loadProgress
-  discards orphans, no migration.
-- Contact sheets: Rook Rails D1 (v1, superseded) → https://claude.ai/code/artifact/546e590e-7313-4107-ab7a-071d5561cd1a
+## Notes
+- Regenerar catálogo: `pnpm -C apps/web import-puzzles`; luego `rm -rf apps/web/.next` antes de dev.
+- Playwright auto-arranca `pnpm dev`; correr un proyecto: `--project=minipay`.
+- Boards de Special Training se identifican por **FEN+mover+target**, nunca por ID. No rediseñar boards aprobados.
+- Detalle completo del trabajo de alfil: `docs/audits/2026-07-15-bishop-d1-diagonal-run-contract.md` (contrato),
+  `-d3-diagonal-run-graduation.md` (integración final), `-b4_3-curriculum.md` (currículo 9 ejercicios).
