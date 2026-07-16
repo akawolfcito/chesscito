@@ -353,7 +353,8 @@ export default function LabyrinthBuilderPage() {
     setState({
       piece: rec.piece,
       start: derived.start,
-      goal: rec.target,
+      // A knight-tour record carries no target — it has no goal square to load.
+      goal: rec.target ?? null,
       walls: derived.walls,
       captures: rec.piece === "pawn" ? derived.captures : [],
       order: rec.order,
