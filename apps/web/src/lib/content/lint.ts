@@ -19,7 +19,7 @@
  * Plan:  docs/plans/2026-07-13-rook-curriculum-implementation-plan.md §11
  */
 import type { BoardPosition, Exercise, PieceId } from "@/lib/game/types";
-import { posToSquare, type MappedPuzzle } from "@/lib/game/fen-puzzle";
+import { posToSquare, isCoverageKind, type MappedPuzzle } from "@/lib/game/fen-puzzle";
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
 import { getValidTargets } from "@/lib/game/board";
 
@@ -162,12 +162,14 @@ export function lintPuzzle(
   // So: drop what changes nothing the player experiences; keep everything else.
   // The goal is the minimum set that preserves the LESSON, not the minimum set.
   //
-  // A tour is exempt, and not as a convenience: the peel asks "does removing
-  // this wall change the best ROUTE", and a tour has no route — it has a
-  // ceiling. Every wall moves that ceiling by construction, so the peel would
-  // report a tour's walls as decorative while they are the only thing defining
-  // the level. Wrong question, confidently answered. Don't ask it.
-  if (mapped.kind !== "knight-tour" && obstacles.length > 0 && optimalMoves > 0) {
+  // The coverage kinds are exempt, and not as a convenience: the peel asks "does
+  // removing this wall change the best ROUTE", and they have no route — they
+  // have a ceiling. Every wall moves that ceiling by construction, so the peel
+  // would report their walls as decorative while they are the only thing
+  // defining the level. Wrong question, confidently answered. Don't ask it.
+  // (A queens block is even further from decorative: it BREAKS RAYS, so it is
+  // what lets two queens share a line at all.)
+  if (!isCoverageKind(mapped.kind) && obstacles.length > 0 && optimalMoves > 0) {
     const shipped = decisionProfile(piece, mapped, obstacles);
     if (shipped) {
       let kept = [...obstacles];
