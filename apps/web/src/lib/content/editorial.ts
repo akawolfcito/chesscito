@@ -1403,6 +1403,38 @@ export const KNIGHT_TOUR_COPY = {
   },
 } as const;
 
+export const QUEENS_COPY = {
+  title: {
+    "queens-1": "The Quiet Room",
+    "queens-2": "Wider Court",
+    "queens-3": "Nine on Eight",
+  },
+  prompt: {
+    "queens-1": "No queen may see another. Fill the room.",
+    "queens-2":
+      "More room, same rule. Every queen you place closes lines for the next.",
+    "queens-3":
+      "A block cuts a queen's line. Two of them fit a ninth queen on a board that holds eight.",
+  },
+  /** Mission chip. The spec asks it to state the target count, so the host
+   *  composes it as "<queen> ×N" from the level's own ceiling. */
+  chip: {
+    goal: "Fill the board",
+  },
+  band: {
+    tapQueen: "Tap the queen to begin.",
+    tapQueenFirst: "Tap your queen first.",
+    choose: "Place a queen where none can see her.",
+    /** The rejection has to TEACH — the board flashes what is watched while
+     *  this reads. Never a penalty, per spec §2. */
+    illegal: "That square is watched by a queen.",
+    /** A block is scenery, not a chess rule — saying "a queen watches it" would
+     *  be a lie, and the player would go hunting for the queen. */
+    blocked: "That square is a wall.",
+    done: "No safe squares left.",
+  },
+} as const;
+
 export const LABYRINTH_COPY = {
   toggleExercises: "Exercises",
   toggleLabyrinths: "Labyrinths",

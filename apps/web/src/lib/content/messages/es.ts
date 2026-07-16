@@ -1600,6 +1600,31 @@ const messages = {
       done: "No quedan saltos.",
     },
   },
+  QUEENS_COPY: {
+    title: {
+      "queens-1": "La sala tranquila",
+      "queens-2": "Corte abierta",
+      "queens-3": "Nueve en ocho",
+    },
+    prompt: {
+      "queens-1": "Ninguna dama puede ver a otra. Llena la sala.",
+      "queens-2":
+        "Más espacio, misma regla. Cada dama que colocas cierra líneas para la siguiente.",
+      "queens-3":
+        "Un bloque corta la línea de una dama. Dos de ellos meten una novena dama en un tablero que admite ocho.",
+    },
+    chip: {
+      goal: "Llena el tablero",
+    },
+    band: {
+      tapQueen: "Toca la dama para comenzar.",
+      tapQueenFirst: "Primero toca tu dama.",
+      choose: "Coloca una dama donde ninguna pueda verla.",
+      illegal: "Esa casilla está vigilada por una dama.",
+      blocked: "Esa casilla es un muro.",
+      done: "No quedan casillas seguras.",
+    },
+  },
   LABYRINTH_COPY: {
     toggleExercises: "Ejercicios",
     toggleLabyrinths: "Laberintos",
