@@ -20,7 +20,7 @@
  */
 
 import { createContext, useContext, type ReactNode } from "react";
-import { EXERCISES, LABYRINTHS, DIAGONAL_RUN } from "@/lib/game/exercises";
+import { EXERCISES, LABYRINTHS, DIAGONAL_RUN, KNIGHT_TOUR } from "@/lib/game/exercises";
 import { GENERATED_EXERCISE_DESCRIPTIONS } from "@/lib/game/generated/puzzles.generated";
 import type { Exercise, PieceId } from "@/lib/game/types";
 
@@ -33,6 +33,9 @@ export interface ContentCatalog {
    *  Optional so partial fixtures/providers stay valid — readers fall back to
    *  the baseline `DIAGONAL_RUN` (same pattern as the no-provider baseline default). */
   diagonalRun?: Record<PieceId, Exercise[]>;
+  /** Knight's Tour pool (kind:"knight-tour"). Same bucket/adapter pattern as
+   *  `diagonalRun`; graded by coverage, never by move count. */
+  knightTour?: Record<PieceId, Exercise[]>;
   descriptions: Record<string, string>;
 }
 
@@ -40,6 +43,7 @@ const DEFAULT_CATALOG: ContentCatalog = {
   exercises: EXERCISES,
   labyrinths: LABYRINTHS,
   diagonalRun: DIAGONAL_RUN,
+  knightTour: KNIGHT_TOUR,
   descriptions: GENERATED_EXERCISE_DESCRIPTIONS,
 };
 
@@ -74,6 +78,12 @@ export function useLabyrinthCatalog(): Record<PieceId, Exercise[]> {
  *  (or when a provider supplies a catalog without the optional `diagonalRun` field). */
 export function useDiagonalRunCatalog(): Record<PieceId, Exercise[]> {
   return useContext(ContentCatalogContext).diagonalRun ?? DIAGONAL_RUN;
+}
+
+/** Active by-piece Knight's Tour pools. Baseline `KNIGHT_TOUR` with no provider
+ *  (or when a provider supplies a catalog without the optional field). */
+export function useKnightTourCatalog(): Record<PieceId, Exercise[]> {
+  return useContext(ContentCatalogContext).knightTour ?? KNIGHT_TOUR;
 }
 
 /** Active exercise descriptions map. Baseline generated map with no provider. */

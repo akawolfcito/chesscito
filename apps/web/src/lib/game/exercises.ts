@@ -4,6 +4,7 @@ import {
   GENERATED_EXERCISE_DESCRIPTIONS,
   GENERATED_LABYRINTHS,
   GENERATED_DIAGONAL_RUN,
+  GENERATED_KNIGHT_TOUR,
 } from "@/lib/game/generated/puzzles.generated";
 
 /** Pieces with exercises defined and playable */
@@ -86,6 +87,25 @@ export const DIAGONAL_RUN: Record<PieceId, Exercise[]> = {
   pawn:   GENERATED_DIAGONAL_RUN.pawn,
   queen:  GENERATED_DIAGONAL_RUN.queen,
   king:   GENERATED_DIAGONAL_RUN.king,
+};
+
+/* ── Knight's Tour (Special Training, kind:"knight-tour") ────────────────
+ * Same adapter story as DIAGONAL_RUN: its own runtime bucket, sourced from
+ * content/labyrinths.json, projected into `buildTrainingPath` as `labyrinth`
+ * nodes so the nav/unlock/completion machinery is reused.
+ *
+ * ⚠️ The grader does NOT come along for the ride. A tour's stored best is
+ * coverage and its `optimalMoves` is the reachable ceiling, so it must be graded
+ * with `tourStars` (see lib/game/tour-score.ts) and written with
+ * `recordTourBest`. `labyrinthStars` cannot read it: every run lands in its
+ * 3-star band. Spec: docs/specs/2026-07-16-signature-games-spec.md §1. */
+export const KNIGHT_TOUR: Record<PieceId, Exercise[]> = {
+  rook:   GENERATED_KNIGHT_TOUR.rook,
+  bishop: GENERATED_KNIGHT_TOUR.bishop,
+  knight: GENERATED_KNIGHT_TOUR.knight,
+  pawn:   GENERATED_KNIGHT_TOUR.pawn,
+  queen:  GENERATED_KNIGHT_TOUR.queen,
+  king:   GENERATED_KNIGHT_TOUR.king,
 };
 
 /**

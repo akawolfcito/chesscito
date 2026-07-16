@@ -18,6 +18,7 @@ import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 
 import { Board } from "@/components/board";
 import { DiagonalRunBoard } from "@/components/exercises/diagonal-run-board";
+import { KnightTourBoard } from "@/components/exercises/knight-tour-board";
 import { useCoachCredits } from "@/lib/coach/use-coach-credits";
 import { ExerciseDrawer } from "@/components/exercises/exercise-drawer";
 import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
@@ -79,7 +80,7 @@ import {
 import { readPieceStars } from "@/lib/game/exercise-progress";
 import { hasSeededMilestones } from "@/lib/progression/seed-milestones";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
-import { useExerciseCatalog, useLabyrinthCatalog, useDiagonalRunCatalog } from "@/lib/content/catalog-context";
+import { useExerciseCatalog, useLabyrinthCatalog, useDiagonalRunCatalog, useKnightTourCatalog } from "@/lib/content/catalog-context";
 import { useRotationSteering } from "@/hooks/use-rotation-steering";
 import { useSaveScoreState } from "@/hooks/use-save-score-state";
 import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
@@ -147,12 +148,14 @@ import { track } from "@/lib/telemetry";
 import { classifyTxError, classifyTxErrorKind, isTransactionTimeout, isUserCancellation, type TxErrorKind } from "@/lib/errors";
 import { getContextAction, getRewardActions } from "@/lib/game/context-action";
 import { BADGE_THRESHOLD, labyrinthStars } from "@/lib/game/exercises";
+import { tourStars } from "@/lib/game/tour-score";
 import { getMaxPossibleStars } from "@/lib/game/progress-adapter";
 import { POINTS_PER_STAR } from "@/lib/game/score";
 import {
   areAllLabyrinthsSolved,
   getLabyrinthBest,
   recordLabyrinthBest,
+  recordTourBest,
 } from "@/lib/game/labyrinth-progress";
 import {
   buildTrainingPath,
@@ -317,6 +320,7 @@ export function ExercisesScreen({
   // Pivot Challenge copy (title + prompt), keyed by id for COPY only — mode is
   // still derived from the runtime catalog, never from the id (B4.2.1).
   const tRun = useTranslations("DIAGONAL_RUN_COPY");
+  const tTour = useTranslations("KNIGHT_TOUR_COPY");
   const tPath = useTranslations("TRAINING_PATH_COPY");
   const tMission = useTranslations("MISSION_BRIEFING_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
@@ -712,19 +716,33 @@ export function ExercisesScreen({
   // flag — and stay baseline (byte-identical) when no provider is mounted.
   const labyrinthCatalog = useLabyrinthCatalog();
   const diagonalRunCatalog = useDiagonalRunCatalog();
+  const knightTourCatalog = useKnightTourCatalog();
   // Special Training navigation pool. A piece that has Pivot Challenges surfaces
   // THOSE (projected as labyrinth-kind nodes downstream) and hides its raw
   // labyrinths this phase — bishop-lab-3/-4 stay in content, just unselected.
   // Pieces without pivots keep their labyrinths byte-identically. This is the
   // adapter that lets the whole labyrinth nav/unlock/completion machinery serve
   // pivots without adding a TrainingNodeKind (design: docs/audits/…-b4_1-*).
+  // ⚠️ A signature game REPLACES the piece's raw labyrinths here (that is what
+  // the bishop's pivots did to bishop-lab-3/-4: still in content, unselected).
+  // So the knight's five labyrinths give way to its three tours. Same rule, one
+  // more piece — but it is a product call, not a mechanical one: flip the branch
+  // to a concat if both lanes should ship.
   const specialTrainingCatalog: typeof labyrinthCatalog = useMemo(() => {
     const out = { ...labyrinthCatalog };
     for (const piece of Object.keys(out) as (keyof typeof out)[]) {
       if (diagonalRunCatalog[piece]?.length) out[piece] = diagonalRunCatalog[piece];
+      else if (knightTourCatalog[piece]?.length) out[piece] = knightTourCatalog[piece];
     }
     return out;
-  }, [labyrinthCatalog, diagonalRunCatalog]);
+  }, [labyrinthCatalog, diagonalRunCatalog, knightTourCatalog]);
+
+  /** The ids in the Special Training lane that grade by COVERAGE, not by moves.
+   *  Passed to buildTrainingPath so the drawer picks tourStars. */
+  const tourIds = useMemo(
+    () => new Set((knightTourCatalog[selectedPiece] ?? []).map((t) => t.id)),
+    [knightTourCatalog, selectedPiece],
+  );
 
   // Progress is keyed by exerciseId (currentId). Derive the pool index for
   // the index-based affordances (drawer activeIndex, tutorial-hint gate,
@@ -2422,6 +2440,21 @@ export function ExercisesScreen({
     phase: string
   } | null>(null);
 
+  /** Same derivation as activeDiagonalRun, from the runtime catalog rather than
+   *  an id prefix (B4.2.1): the active node is a tour iff it lives in the tour
+   *  pool for this piece. */
+  const activeKnightTour =
+    activeLabyrinth &&
+    (knightTourCatalog[selectedPiece] ?? []).some((p) => p.id === activeLabyrinth.id)
+      ? activeLabyrinth
+      : null;
+
+  /** The tour's own band, hoisted like the Diagonal Run's. */
+  const [knightTourBand, setKnightTourBand] = useState<{
+    message: string
+    phase: string
+  } | null>(null);
+
   /** Integrated training path (Slice 2 — read-only display in the
    *  mission detail sheet). Bests live in localStorage, so
    *  `labyrinthCompleted` acts as a refresh signal to re-read them
@@ -2436,6 +2469,7 @@ export function ExercisesScreen({
       ),
       badgeClaimed: badgesClaimed[selectedPiece] === true,
       catalog: { exercises: catalog, labyrinths: specialTrainingCatalog },
+      tourIds,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPiece, progress, badgesClaimed, labyrinthCompleted, catalog, specialTrainingCatalog]);
@@ -2570,15 +2604,76 @@ export function ExercisesScreen({
     [activeLabyrinth, selectedPiece, isConnected, address],
   );
 
+  /** Knight's Tour completion — the coverage twin of handleLabyrinthMove.
+   *
+   *  It exists BECAUSE it cannot reuse that handler: every scoring step there
+   *  reads a move count where this reads coverage, and both are plain numbers,
+   *  so reuse would compile, run, and be wrong in silence. labyrinthStars would
+   *  award 3 to every run (best <= ceiling always), and recordLabyrinthBest
+   *  would file the player's worst run as their record.
+   *
+   *  Fires once, when the knight has no jumps left — a tour is never abandoned
+   *  mid-run, it ends when the board says so. */
+  const handleTourComplete = useCallback(
+    (visited: number, reachable: number) => {
+      if (!activeKnightTour) return;
+      const stars = tourStars(visited, reachable);
+      const previousBest = getLabyrinthBest(selectedPiece, activeKnightTour.id);
+      const isNewBest = recordTourBest(selectedPiece, activeKnightTour.id, visited);
+      setLabyrinthCompleted({
+        moves: visited,
+        optimal: reachable,
+        stars,
+        previousBest,
+        isNewBest,
+      });
+
+      // Net improvement into the daily ledger, same rule as the labyrinths:
+      // replaying a level you already aced must not farm stars.
+      const previousTourStars =
+        previousBest === null ? 0 : tourStars(previousBest, reachable);
+      addNetStars(previousTourStars, stars);
+      resolveMilestonesRef.current();
+
+      track("labyrinth_complete", {
+        labyrinth_id: activeKnightTour.id,
+        piece: selectedPiece,
+        moves: visited,
+        optimal: reachable,
+        stars,
+        is_new_best: isNewBest,
+        previous_best: previousBest ?? null,
+      });
+
+      if (isConnected && address && previousBest === null) {
+        void submitLabyrinthCompletionEarn({
+          wallet: address,
+          piece: selectedPiece,
+          labyrinthId: activeKnightTour.id,
+          bestBefore: previousBest,
+        });
+      }
+    },
+    [activeKnightTour, selectedPiece, isConnected, address],
+  );
+
   // Pivot Challenge copy, resolved from the i18n layer (EN/ES) by id.
   const runTitle = activeDiagonalRun ? tRun(`title.${activeDiagonalRun.id}`) : null;
   const runPrompt = activeDiagonalRun ? tRun(`prompt.${activeDiagonalRun.id}`) : null;
+  // Knight's Tour copy, same id-keyed i18n shape.
+  const tourTitle = activeKnightTour ? tTour(`title.${activeKnightTour.id}`) : null;
+  const tourPrompt = activeKnightTour ? tTour(`prompt.${activeKnightTour.id}`) : null;
 
   const targetLabel = activeDiagonalRun
     ? // Pivot is not measured in moves: the chip shows the destination square,
       //  never a "0 / 2 moves" counter (B4.2.1).
       `${String.fromCharCode(97 + activeDiagonalRun.targetPos.file)}${activeDiagonalRun.targetPos.rank + 1}`
-    : activeLabyrinth
+    : activeKnightTour
+      ? // Same rule: a tour is not measured in moves either, and it has no
+        //  destination square to name. The chip states the bar; the live count
+        //  rides the mission band, which is where the status line lives.
+        tTour("chip.goal")
+      : activeLabyrinth
       ? // Labyrinth chip becomes a live counter: "0 / 4 · optimal" (no
         //  moves yet) → "3 / 4 · optimal" (live) → "5 / 4 · over" past
         //  optimal so the player can pace themselves in real time.
@@ -2589,6 +2684,8 @@ export function ExercisesScreen({
 
   const pieceHint = activeDiagonalRun
     ? (runPrompt as string)
+    : activeKnightTour
+    ? (tourPrompt as string)
     : activeLabyrinth
       ? `${tLab("missionTitle")} · ${tLab("missionHint", { optimal: activeLabyrinth.optimalMoves })}`
       : currentExercise.isCapture
@@ -2709,17 +2806,23 @@ export function ExercisesScreen({
           targetLabel={targetLabel}
           pieceHint={pieceHint}
           exercisePrompt={runPrompt ?? currentExercise.playerPrompt}
-          exerciseTitle={runTitle ?? currentExercise.title}
+          exerciseTitle={runTitle ?? tourTitle ?? currentExercise.title}
           isCapture={Boolean(currentExercise.isCapture)}
           isDockSheetOpen={activeDockTab !== null}
           labyrinthMode={effectiveLabyrinthMode}
-          diagonalRunMode={activeDiagonalRun !== null}
-          // Gated on the DR being active, not merely on the state being set: a
+          diagonalRunMode={activeDiagonalRun !== null || activeKnightTour !== null}
+          // Gated on the game being active, not merely on the state being set: a
           // stale line must never outlive the board that wrote it.
-          missionStatus={activeDiagonalRun ? (diagonalRunBand ?? undefined) : undefined}
+          missionStatus={
+            activeDiagonalRun
+              ? (diagonalRunBand ?? undefined)
+              : activeKnightTour
+                ? (knightTourBand ?? undefined)
+                : undefined
+          }
           labyrinthOptimalMoves={activeLabyrinth?.optimalMoves}
           labyrinthId={activeLabyrinth?.id}
-          labyrinthTitle={runTitle ?? activeLabyrinth?.title}
+          labyrinthTitle={runTitle ?? tourTitle ?? activeLabyrinth?.title}
           onLabyrinthSelect={handleLabyrinthSelect}
           score={score.toString()}
           totalStars={totalStars}
@@ -2924,6 +3027,15 @@ export function ExercisesScreen({
                   handleLabyrinthMove(activeDiagonalRun.targetPos, moves)
                 }
                 onBandChange={setDiagonalRunBand}
+              />
+            ) : activeKnightTour ? (
+              <KnightTourBoard
+                key={`kt-${activeKnightTour.id}-${labyrinthKey}`}
+                level={activeKnightTour}
+                // NOT handleLabyrinthMove: a tour reports coverage, and that
+                // handler grades move counts. See handleTourComplete.
+                onComplete={handleTourComplete}
+                onBandChange={setKnightTourBand}
               />
             ) : (
               <Board

@@ -1389,6 +1389,11 @@ export const KNIGHT_TOUR_COPY = {
   /** Turn-state band strings, shared across levels. The band also carries the
    *  live count, which the board appends — the spec asks for the 80% line to be
    *  visible while playing, not only once the run is over. */
+  /** Mission chip. A tour has no destination square and is not measured in
+   *  moves, so the chip states the bar instead of counting anything. */
+  chip: {
+    goal: "Cover 80%",
+  },
   band: {
     tapKnight: "Tap the knight to begin.",
     tapKnightFirst: "Tap your knight first.",

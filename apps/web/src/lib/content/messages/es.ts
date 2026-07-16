@@ -1589,6 +1589,9 @@ const messages = {
       "knight-tour-3":
         "Deja las casillas difíciles para el principio. Los bordes se quedan sin salidas primero.",
     },
+    chip: {
+      goal: "Cubre el 80%",
+    },
     band: {
       tapKnight: "Toca el caballo para comenzar.",
       tapKnightFirst: "Primero toca tu caballo.",

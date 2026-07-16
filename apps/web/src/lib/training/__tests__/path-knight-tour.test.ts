@@ -25,8 +25,10 @@ const emptyByPiece = (): Record<PieceId, Exercise[]> => ({
 
 // Enough exercise stars to clear the first-labyrinth gate, so the node is live.
 const progress: PieceProgress = {
+  piece: "knight",
+  currentId: "knight-1",
   stars: { "knight-1": 3, "knight-2": 3, "knight-3": 3 },
-} as PieceProgress;
+};
 
 function pathWith(best: number, tourIds?: ReadonlySet<string>) {
   const labyrinths = emptyByPiece();
