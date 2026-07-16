@@ -87,6 +87,12 @@ type MissionPanelProps = {
    *  chip must never show the optimal-moves counter. Derived by the host from the
    *  runtime catalog (activePivot), never from an id (B4.2.1). */
   diagonalRunMode?: boolean
+  /** The active game is scored by COVERAGE (Knight's Tour, N-Queens), so it has
+   *  no destination square and the chip's "Move to {target}" frame does not
+   *  apply — `targetLabel` is the whole statement on its own. Distinct from
+   *  `diagonalRunMode`, which also suppresses the move counter but DOES name a
+   *  square to reach ("Move to h8" is right for it). */
+  coverageMode?: boolean
   labyrinthOptimalMoves?: number
   /** Identity of the active labyrinth. Surfaced on the mission chip as
    *  data-* attributes so E2E can pin the rendered board to its catalog
@@ -374,6 +380,7 @@ export function MissionPanelCandy({
   isDockSheetOpen,
   labyrinthMode = false,
   diagonalRunMode = false,
+  coverageMode = false,
   labyrinthOptimalMoves,
   labyrinthId,
   labyrinthTitle,
@@ -422,6 +429,12 @@ export function MissionPanelCandy({
       ? (labyrinthTitle ?? String(labyrinthOptimalMoves))
       : isCapture
       ? tMission('captureLabel')
+      : coverageMode
+      ? // A coverage game has NOWHERE to move to, so the "Move to" frame is
+        //  meaningless on it: the tour shipped reading "Move to Cover 80%" and
+        //  queens read "Move to queen 1/5" (founder, 2026-07-16). The label is
+        //  already the whole statement — show it as it is.
+        targetLabel
       : tMission('visibleMissionTargetFormat', { target: targetLabel })
 
   /* The band's tail — what the band SAYS beyond where to go. It read "Move to

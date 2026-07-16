@@ -44,11 +44,29 @@ export function posToSquare(pos: BoardPosition): string {
   return String.fromCharCode(97 + pos.file) + (pos.rank + 1);
 }
 
+export type PuzzleKind =
+  | "exercise"
+  | "labyrinth"
+  | "diagonal-run"
+  | "knight-tour"
+  | "queens";
+
+/** The kinds graded by COVERAGE instead of arrival: they have no destination and
+ *  no route, only a ceiling to fill. Everything that branches on "is there a
+ *  target" asks THIS, not the kind — the tour was the first, queens the second,
+ *  and a third would otherwise mean hunting every `!== "knight-tour"` in the
+ *  tree. Grade them with tourStars, never labyrinthStars. */
+export const COVERAGE_KINDS = ["knight-tour", "queens"] as const;
+
+export function isCoverageKind(kind: PuzzleKind): boolean {
+  return (COVERAGE_KINDS as readonly string[]).includes(kind);
+}
+
 export type PuzzleInput = {
-  kind: "exercise" | "labyrinth" | "diagonal-run" | "knight-tour";
+  kind: PuzzleKind;
   piece: PieceId;
   fen: string;
-  /** The square to reach. OPTIONAL for `knight-tour` only, which has no
+  /** The square to reach. OPTIONAL for the coverage kinds, which have no
    *  destination — see `targetPos` on MappedPuzzle. Required for every other
    *  kind: without it the puzzle has no win condition. */
   target?: string;
@@ -64,17 +82,18 @@ export type PuzzleInput = {
 };
 
 export type MappedPuzzle = {
-  kind: "exercise" | "labyrinth" | "diagonal-run" | "knight-tour";
+  kind: PuzzleKind;
   piece: PieceId;
   startPos: BoardPosition;
-  /** The square to reach. For `knight-tour` this is the START square, which
-   *  encodes "no target": a tour ends when the knight runs out of unvisited
-   *  squares, and the start is the one square it provably can never arrive at
-   *  (it is X-ed out on the first jump). `Exercise.targetPos` is required and
+  /** The square to reach. For the coverage kinds this is the START square, which
+   *  encodes "no target": they end when no legal square is left, and the start is
+   *  the one square that can never be arrived at (the tour X-es it out on the
+   *  first jump; a queens level already has a queen standing on it).
+   *  `Exercise.targetPos` is required and
    *  read in 100+ places, so a sentinel buys the game its way in without an
    *  Optional that every one of those callers would have to answer for. Nothing
-   *  in the tour's own path reads it — the board and host use the coverage
-   *  handler, never a target check. */
+   *  in their own path reads it — the board and host use the coverage handler,
+   *  never a target check. */
   targetPos: BoardPosition;
   obstacles?: BoardPosition[];
   captureTargets?: BoardPosition[];
@@ -92,7 +111,7 @@ const samePos = (a: BoardPosition, b: BoardPosition) => a.file === b.file && a.r
 
 export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
   const board = parseFenBoard(input.fen);
-  const isTour = input.kind === "knight-tour";
+  const isCoverage = isCoverageKind(input.kind);
 
   let moverSq: string;
   if (input.mover && input.mover.trim()) {
@@ -109,12 +128,12 @@ export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
   }
 
   const startPos = squareToPos(moverSq);
-  // Resolved after the mover, because a tour's "target" IS the mover's square.
-  if (!isTour && !input.target?.trim()) throw new FenError("target is required");
-  const targetPos = isTour ? startPos : squareToPos(input.target!);
-  // A tour is exempt: its target and start are the same square BY DEFINITION,
-  // which is exactly the mistake this guard catches for every other kind.
-  if (!isTour && samePos(startPos, targetPos)) {
+  // Resolved after the mover, because a coverage kind's "target" IS the mover's square.
+  if (!isCoverage && !input.target?.trim()) throw new FenError("target is required");
+  const targetPos = isCoverage ? startPos : squareToPos(input.target!);
+  // The coverage kinds are exempt: their target and start are the same square BY
+  // DEFINITION, which is exactly the mistake this guard catches for every other kind.
+  if (!isCoverage && samePos(startPos, targetPos)) {
     throw new FenError("target equals start");
   }
 

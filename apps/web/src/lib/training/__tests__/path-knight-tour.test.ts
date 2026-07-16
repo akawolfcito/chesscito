@@ -30,7 +30,7 @@ const progress: PieceProgress = {
   stars: { "knight-1": 3, "knight-2": 3, "knight-3": 3 },
 };
 
-function pathWith(best: number, tourIds?: ReadonlySet<string>) {
+function pathWith(best: number, coverageIds?: ReadonlySet<string>) {
   const labyrinths = emptyByPiece();
   // Ceiling 23 = the 24-square placeholder level (knight-tour-1).
   labyrinths.knight = [tour("knight-tour-1", 23)];
@@ -40,12 +40,12 @@ function pathWith(best: number, tourIds?: ReadonlySet<string>) {
     labyrinthBests: { "knight-tour-1": best },
     badgeClaimed: false,
     catalog: { exercises: emptyByPiece(), labyrinths },
-    tourIds,
+    coverageIds,
   });
 }
 
-const starsOf = (best: number, tourIds?: ReadonlySet<string>) =>
-  pathWith(best, tourIds).find((n) => n.id === "knight-tour-1")!.stars;
+const starsOf = (best: number, coverageIds?: ReadonlySet<string>) =>
+  pathWith(best, coverageIds).find((n) => n.id === "knight-tour-1")!.stars;
 
 describe("buildTrainingPath — knight-tour grading", () => {
   const TOURS = new Set(["knight-tour-1"]);
@@ -62,7 +62,7 @@ describe("buildTrainingPath — knight-tour grading", () => {
     expect(starsOf(3, TOURS)).toBe(0); // 3/24 = 12%
   });
 
-  it("without tourIds it would hand the dead end 3 stars — the bug this prevents", () => {
+  it("without coverageIds it would hand the dead end 3 stars — the bug this prevents", () => {
     // Pinning the wrong behaviour on purpose: this is what the drawer showed
     // before the grader was routed, and it is silent (nobody reports a bug that
     // awards them the top score).

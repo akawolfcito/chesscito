@@ -7,16 +7,22 @@
  * the argv guard) stays in scripts/import-puzzles.ts, which re-exports these.
  */
 import type { Exercise, ExerciseTier, PieceId } from "@/lib/game/types";
-import { mapFenPuzzle, parseFenBoard, puzzleId, posToSquare, type PuzzleInput, type MappedPuzzle } from "@/lib/game/fen-puzzle";
+import { mapFenPuzzle, parseFenBoard, puzzleId, posToSquare, isCoverageKind, type PuzzleInput, type MappedPuzzle } from "@/lib/game/fen-puzzle";
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
 import { pivotBfs } from "@/lib/game/diagonal-run";
 import { reachableSquares } from "@/lib/game/knight-tour";
+import { maxQueens } from "@/lib/game/queens";
 import { lintPuzzle } from "@/lib/content/lint";
 
 /** Floor for a shippable Knight's Tour level, in reachable squares. Below this
  *  the "puzzle" is a knight boxed into a corner with a jump or two — the founder
  *  tunes feel in the builder, but this catches a level that is not a game. */
 const TOUR_MIN_REACHABLE = 8;
+
+/** Floor for a shippable queens level, in TOTAL queens (the level's own queen
+ *  included). Below this there is no game to play: at 1 the board is sealed, and
+ *  at 2-3 the whole level is over in a tap or two. */
+const QUEENS_MIN_CEILING = 4;
 
 export function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
@@ -42,14 +48,15 @@ const TIERS: ExerciseTier[] = ["easy", "medium", "hard"];
 
 export type LabyrinthRecord = {
   id?: string; piece: PieceId; fen: string; mover?: string;
-  /** Required except on `kind:"knight-tour"`, which has no destination. */
+  /** Required except on the coverage kinds (`knight-tour`, `queens`), which have
+   *  no destination. */
   target?: string;
   tier?: ExerciseTier; tags?: string[]; explanation?: string; order: number;
   /** Routing within Special Training. Absent → "labyrinth" (back-compat: every
    *  existing content/labyrinths.json row). `"diagonal-run"` routes the record to
    *  the Diagonal Run bucket (GENERATED_DIAGONAL_RUN) instead — same source file, a
    *  separate runtime bucket. Design: docs/audits/2026-07-15-bishop-d1-*. */
-  kind?: "labyrinth" | "diagonal-run" | "knight-tour";
+  kind?: "labyrinth" | "diagonal-run" | "knight-tour" | "queens";
   /* Pedagogy (A1) — curated copy. `title` is what the drawer renders; the
    * linter requires all four on curated pieces. */
   principle?: string; title?: string; playerPrompt?: string; learningObjective?: string;
@@ -74,6 +81,15 @@ export type BuiltCatalog = {
    *  CEILING (squares - 1), not a shortest path — a tour maximises, it never
    *  arrives. Grade it with tourStars, never labyrinthStars. */
   knightTour: Record<PieceId, Exercise[]>;
+  /** N-Queens pool (kind:"queens"). Its own bucket, same source file.
+   *  `optimalMoves` is the queens the PLAYER places: the ceiling minus the one
+   *  the level starts with, so `optimalMoves + 1` is the score's denominator —
+   *  the same arithmetic the tour uses. Grade it with tourStars.
+   *
+   *  Unlike the tour's, this ceiling is EXACT rather than an upper bound: it
+   *  comes from a solver that backtracks the real placement, so it is always
+   *  achievable and the pass line is always playable. */
+  queens: Record<PieceId, Exercise[]>;
   descriptions: Record<string, string>;
   errors: string[];
   warnings: string[];
@@ -119,6 +135,7 @@ export function buildCatalog(
   const labyrinths = emptyByPiece();
   const diagonalRun = emptyByPiece();
   const knightTour = emptyByPiece();
+  const queens = emptyByPiece();
   const descriptions: Record<string, string> = {};
   const seenIds = new Set<string>();
   const seenPositions = new Set<string>();
@@ -128,7 +145,7 @@ export function buildCatalog(
   for (const n of ["kind", "piece", "fen", "target", "tier"]) {
     if (header.length && col(n) < 0) errors.push(`missing required column '${n}'`);
   }
-  if (errors.length) return { exercises, labyrinths, diagonalRun, knightTour, descriptions, errors, warnings };
+  if (errors.length) return { exercises, labyrinths, diagonalRun, knightTour, queens, descriptions, errors, warnings };
 
   const addPuzzle = (
     input: PuzzleInput, label: string, idOverride: string | undefined, order: number,
@@ -161,12 +178,14 @@ export function buildCatalog(
         return;
       }
     }
-    // Knight's Tour has no destination, so there is no path to verify — the
-    // contract is the REACHABLE SET (spec §1). Its ceiling replaces the BFS
-    // optimum: covering N squares costs N-1 moves. Everything below (a path
-    // BFS, "unsolvable (no path)") asks about a target the level does not have.
-    let tourCeiling: number | null = null;
+    // The coverage kinds have no destination, so there is no path to verify —
+    // the contract is a CEILING, and it replaces the BFS optimum. Everything
+    // below (a path BFS, "unsolvable (no path)") asks about a target the level
+    // does not have.
+    let coverageCeiling: number | null = null;
     if (input.kind === "knight-tour") {
+      // The tour's contract is the REACHABLE SET (spec §1): covering N squares
+      // costs N-1 moves.
       const reach = reachableSquares(mapped.startPos, mapped.obstacles ?? []);
       // A pocket this small is not a game — it is a knight with nowhere to go.
       // Cheap to author by accident (one wall too many) and invisible until a
@@ -179,20 +198,38 @@ export function buildCatalog(
         );
         return;
       }
-      tourCeiling = reach.length - 1;
+      coverageCeiling = reach.length - 1;
+    }
+    if (input.kind === "queens") {
+      // Queens are SOLVED, not surveyed (spec §2). `maxQueens` backtracks the
+      // real placement, so this ceiling is exact — an authored N above the true
+      // maximum would make the level silently impossible, which is the trap the
+      // tour's BFS upper bound walked into. Derive it, never trust it.
+      const ceiling = maxQueens([mapped.startPos], mapped.obstacles ?? []);
+      if (ceiling < QUEENS_MIN_CEILING) {
+        errors.push(
+          `${label}: queens has a ceiling of ${ceiling} queen(s) from ` +
+            `${posToSquare(mapped.startPos)} — a level needs at least ${QUEENS_MIN_CEILING}. ` +
+            `Check the blocks crowding the board.`,
+        );
+        return;
+      }
+      // Minus the queen the level starts with: the player places the rest, and
+      // `optimalMoves + 1` is the denominator the score divides by.
+      coverageCeiling = ceiling - 1;
     }
     const probe: Exercise = { id: "probe", optimalMoves: 0, ...toExerciseFields(mapped) };
-    const bfs = input.kind === "knight-tour" ? null : computeExerciseBfs(input.piece, probe);
+    const bfs = isCoverageKind(input.kind) ? null : computeExerciseBfs(input.piece, probe);
     // Lint BEFORE the solvability bail-out: a target buried under a blocker is
     // ALSO unsolvable, and "no path" alone sends the author hunting for a routing
     // bug instead of the one square at fault.
-    const lint = lintPuzzle(input.piece, mapped, tourCeiling ?? bfs?.optimalMoves ?? 0, label, {
+    const lint = lintPuzzle(input.piece, mapped, coverageCeiling ?? bfs?.optimalMoves ?? 0, label, {
       requirePedagogy,
     });
     errors.push(...lint.errors);
     warnings.push(...lint.warnings);
     if (lint.errors.length) return;
-    if (!bfs && tourCeiling === null) { errors.push(`${label}: unsolvable (no path) from ${posToSquare(mapped.startPos)} to ${posToSquare(mapped.targetPos)}`); return; }
+    if (!bfs && coverageCeiling === null) { errors.push(`${label}: unsolvable (no path) from ${posToSquare(mapped.startPos)} to ${posToSquare(mapped.targetPos)}`); return; }
     // Diagonal Run contract (D1): the level must be solvable under glide-pivot
     // transitions (the game's own semantics, NOT the free-bishop BFS), and
     // start/target must share a colour — a bishop never leaves its colour. The
@@ -219,9 +256,10 @@ export function buildCatalog(
       warnings.push(`${label}: duplicate position (same piece+fen+target as an earlier puzzle)`);
     }
     seenPositions.add(positionKey);
-    const exercise = { id, optimalMoves: tourCeiling ?? diagonalRunOptimal ?? bfs!.optimalMoves, ...toExerciseFields(mapped) } as Exercise & { __order?: number };
+    const exercise = { id, optimalMoves: coverageCeiling ?? diagonalRunOptimal ?? bfs!.optimalMoves, ...toExerciseFields(mapped) } as Exercise & { __order?: number };
     exercise.__order = order;
-    if (input.kind === "knight-tour") knightTour[input.piece].push(exercise);
+    if (input.kind === "queens") queens[input.piece].push(exercise);
+    else if (input.kind === "knight-tour") knightTour[input.piece].push(exercise);
     else if (input.kind === "diagonal-run") diagonalRun[input.piece].push(exercise);
     else if (input.kind === "labyrinth") labyrinths[input.piece].push(exercise);
     else exercises[input.piece].push(exercise);
@@ -281,12 +319,14 @@ export function buildCatalog(
     (labyrinths[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
     (diagonalRun[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
     (knightTour[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
+    (queens[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
     for (const e of exercises[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of labyrinths[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of diagonalRun[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of knightTour[p] as (Exercise & { __order?: number })[]) delete e.__order;
+    for (const e of queens[p] as (Exercise & { __order?: number })[]) delete e.__order;
   }
-  return { exercises, labyrinths, diagonalRun, knightTour, descriptions, errors, warnings };
+  return { exercises, labyrinths, diagonalRun, knightTour, queens, descriptions, errors, warnings };
 }
 
 export function renderGeneratedModule(cat: BuiltCatalog): string {
@@ -302,6 +342,8 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = ${j(cat.labyrin
 export const GENERATED_DIAGONAL_RUN: Record<PieceId, Exercise[]> = ${j(cat.diagonalRun)};
 
 export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = ${j(cat.knightTour)};
+
+export const GENERATED_QUEENS: Record<PieceId, Exercise[]> = ${j(cat.queens)};
 
 export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = ${j(cat.descriptions)};
 `;

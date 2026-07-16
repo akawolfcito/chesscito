@@ -40,10 +40,22 @@ export function UnlockOverlay({ step, onPrimary, onDismiss }: Props) {
 
   const icon = ICONS[step.id];
 
+  /**
+   * Per-piece copy wins when it exists; the milestone's generic line is the
+   * fallback. A milestone-keyed string cannot know which game the player just
+   * unlocked, which is how "Guide the rook through it" ended up greeting the
+   * queen (founder, 2026-07-16) — so where the piece is known and the copy
+   * exists, the piece's own words are the truthful ones.
+   */
+  const copy = (field: "title" | "body" | "primary") => {
+    const scoped = `${step.id}.byPiece.${step.piece}.${field}`;
+    return step.piece && t.has(scoped) ? t(scoped) : t(`${step.id}.${field}`);
+  };
+
   return (
     <VictoryPopupShell
       onClose={onDismiss}
-      ariaLabel={t(`${step.id}.title`)}
+      ariaLabel={copy("title")}
       closeLabel={t("closeLabel")}
     >
       {icon ? (
@@ -62,8 +74,8 @@ export function UnlockOverlay({ step, onPrimary, onDismiss }: Props) {
         </div>
       ) : null}
 
-      <h2 className="language-modal-title">{t(`${step.id}.title`)}</h2>
-      <p className="progression-overlay-body">{t(`${step.id}.body`)}</p>
+      <h2 className="language-modal-title">{copy("title")}</h2>
+      <p className="progression-overlay-body">{copy("body")}</p>
 
       {step.absorbed.map((event) => {
         const key = `absorbed.${event.id}`;
@@ -75,7 +87,7 @@ export function UnlockOverlay({ step, onPrimary, onDismiss }: Props) {
       })}
 
       <PrincipalButton onClick={onPrimary} className="self-center">
-        {t(`${step.id}.primary`)}
+        {copy("primary")}
       </PrincipalButton>
       <button
         type="button"

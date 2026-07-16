@@ -37,6 +37,8 @@ export interface BaselineCatalog {
   /** Knight's Tour pool (kind:"knight-tour"). Baseline-sourced, same as
    *  `diagonalRun`: the overlay does not manage tour rows yet. */
   knightTour?: Record<PieceId, Exercise[]>;
+  /** N-Queens pool (kind:"queens"). Baseline-sourced, same as the two above. */
+  queens?: Record<PieceId, Exercise[]>;
   descriptions: Record<string, string>;
 }
 
