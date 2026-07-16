@@ -6,7 +6,7 @@
 
 ## Estado
 
-- **`main` = `1b89fd44`, pusheado. La rama `fix/exercise-obstacles-a0` se mergeó (fast-forward, 40 commits).**
+- **`main` = `18e9168a`, pusheado. La rama `fix/exercise-obstacles-a0` se mergeó (fast-forward, 40 commits).**
 - **Suite: vitest 5137/5137 (434 files) · `tsc --noEmit` limpio · VR minipay 58/1.**
   El rojo (`hub-shop-sheet-open`) es **preexistente** (env sin treasury → "Coming soon"). No perseguirlo.
 - **Deploy VERIFICADO en preview**: `preview.chesscito.com` → `learn-preview.chesscito.com`.
@@ -27,6 +27,13 @@
    el E2E real sigue verde. Sin `onBandChange` (el spike `/dev`) el board renderiza su banda local.
 4. **Audit de redundancia + su herramienta** (`b72baf63`): `pnpm -C apps/web exec tsx scripts/audit-redundancy.ts`.
 5. **Spec de los 4 juegos** (`1b89fd44`) — decisiones del founder cerradas.
+6. **La banda dice QUÉ es la misión** (`18e9168a`, feedback del founder ya cerrado):
+   - Ejercicio: `Move to e2 · The king's single step` (antes solo "Move to e2").
+   - Laberinto: `Two Turns · 8 moves` (antes un **"4" pelado**, un número sin decir de qué).
+   - Modal MISSION: `min-height: 300px` (no se aplasta con una misión de una línea).
+   - **La cola toma `title`, NO `playerPrompt`**: el título es corto e imperativo por
+     construcción; el prompt es una frase entera que en 30px solo se trunca en ruido. El
+     prompt se queda en el modal, que es donde entra.
 
 ## Next Tasks (en orden — arrancar acá)
 
@@ -66,6 +73,13 @@ de motor. El doc propone qué lección nueva pone cada uno en su lugar.
 ## Blockers
 
 - Ninguno funcional.
+- ⚠️ **`hub-clean` VR pasa cambios sin verlos**: su `maxDiffPixelRatio: 0.005` son ~12k píxeles
+  y la cola de la banda son ~4k. Su baseline quedó mostrando una banda que ya no se envía, y
+  `--update-snapshots` NO lo reescribe porque **solo escribe cuando el test falla**. Deriva
+  registrada, no perseguida.
+- 📌 Los rails que el founder corrigió en `/dev/labyrinth-builder` viven en el **overlay de
+  Supabase**, no en `content/labyrinths.json`. Las capturas locales muestran los placeholder
+  viejos — es esperado, no un bug.
 - **`contextual-header.spec.ts` falla 6/6 — PREEXISTENTE, no es regresión** (confirmado en HEAD
   sin cambios). El header no monta en `/`; probable gate del Hub Tour que su `bypassFirstVisit`
   no cubre (setea `onboarded`+`welcome-dismissed`, pero no `chesscito:hub-tour:v1`). Spec stale.
