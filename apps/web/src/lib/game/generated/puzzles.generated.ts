@@ -2560,6 +2560,262 @@ export const GENERATED_DIAGONAL_RUN: Record<PieceId, Exercise[]> = {
   "king": []
 };
 
+export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = {
+  "rook": [],
+  "bishop": [],
+  "knight": [
+    {
+      "id": "knight-tour-1",
+      "optimalMoves": 23,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 4
+        },
+        {
+          "file": 1,
+          "rank": 4
+        },
+        {
+          "file": 2,
+          "rank": 4
+        },
+        {
+          "file": 3,
+          "rank": 4
+        },
+        {
+          "file": 4,
+          "rank": 4
+        },
+        {
+          "file": 5,
+          "rank": 4
+        },
+        {
+          "file": 6,
+          "rank": 4
+        },
+        {
+          "file": 7,
+          "rank": 4
+        },
+        {
+          "file": 0,
+          "rank": 3
+        },
+        {
+          "file": 1,
+          "rank": 3
+        },
+        {
+          "file": 2,
+          "rank": 3
+        },
+        {
+          "file": 3,
+          "rank": 3
+        },
+        {
+          "file": 4,
+          "rank": 3
+        },
+        {
+          "file": 5,
+          "rank": 3
+        },
+        {
+          "file": 6,
+          "rank": 3
+        },
+        {
+          "file": 7,
+          "rank": 3
+        }
+      ],
+      "tier": "easy",
+      "principle": "tour-intro",
+      "title": "The Short Tour",
+      "playerPrompt": "Every square you leave is closed behind you. Cover as much as you can."
+    },
+    {
+      "id": "knight-tour-2",
+      "optimalMoves": 39,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 6
+        },
+        {
+          "file": 1,
+          "rank": 6
+        },
+        {
+          "file": 2,
+          "rank": 6
+        },
+        {
+          "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 4,
+          "rank": 6
+        },
+        {
+          "file": 5,
+          "rank": 6
+        },
+        {
+          "file": 6,
+          "rank": 6
+        },
+        {
+          "file": 7,
+          "rank": 6
+        },
+        {
+          "file": 0,
+          "rank": 5
+        },
+        {
+          "file": 1,
+          "rank": 5
+        },
+        {
+          "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 3,
+          "rank": 5
+        },
+        {
+          "file": 4,
+          "rank": 5
+        },
+        {
+          "file": 5,
+          "rank": 5
+        },
+        {
+          "file": 6,
+          "rank": 5
+        },
+        {
+          "file": 7,
+          "rank": 5
+        }
+      ],
+      "tier": "medium",
+      "principle": "tour-planning",
+      "title": "Wider Ground",
+      "playerPrompt": "More room, same rule. Do not strand yourself in a corner."
+    },
+    {
+      "id": "knight-tour-3",
+      "optimalMoves": 47,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 7
+        },
+        {
+          "file": 1,
+          "rank": 7
+        },
+        {
+          "file": 2,
+          "rank": 7
+        },
+        {
+          "file": 3,
+          "rank": 7
+        },
+        {
+          "file": 4,
+          "rank": 7
+        },
+        {
+          "file": 5,
+          "rank": 7
+        },
+        {
+          "file": 6,
+          "rank": 7
+        },
+        {
+          "file": 7,
+          "rank": 7
+        },
+        {
+          "file": 0,
+          "rank": 6
+        },
+        {
+          "file": 1,
+          "rank": 6
+        },
+        {
+          "file": 2,
+          "rank": 6
+        },
+        {
+          "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 4,
+          "rank": 6
+        },
+        {
+          "file": 5,
+          "rank": 6
+        },
+        {
+          "file": 6,
+          "rank": 6
+        },
+        {
+          "file": 7,
+          "rank": 6
+        }
+      ],
+      "tier": "hard",
+      "principle": "tour-route",
+      "title": "The Long Tour",
+      "playerPrompt": "Save the hard squares for early. The edges run out of exits first."
+    }
+  ],
+  "pawn": [],
+  "queen": [],
+  "king": []
+};
+
 export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "rook-rail-two-turns": "Two Turns",
   "rook-rail-dead-end": "Dead End",
@@ -2568,6 +2824,9 @@ export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "bishop-run-1": "First Pivot",
   "bishop-run-2": "Turn to the Star",
   "bishop-run-3": "The Long Run",
+  "knight-tour-1": "The Short Tour",
+  "knight-tour-2": "Wider Ground",
+  "knight-tour-3": "The Long Tour",
   "rook-1": "Move along the rank",
   "rook-2": "Move along the file",
   "rook-distance-1": "One square is a move too",
