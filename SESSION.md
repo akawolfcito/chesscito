@@ -83,12 +83,13 @@
 
 ## Current State
 
-- **Branch**: `main` = `ee793fd` + este handoff. ⚠️ **ADELANTADA a `origin/main`** si el push no salió.
+- **Branch**: `main` = `1a4a65e`, **sincronizada con `origin/main`** (verificado con `fetch`, no contra
+  la ref local — que estaba vieja y decía 1 commit sin pushear).
   **Safe Path CERRADO** (el founder lo aprobó, "me gusta bastante"). **Promotion Run: 7 de 10.**
 - **Build**: passing **medido en este árbol** — vitest **5303/5303** (449 files), `tsc --noEmit` exit 0,
   e2e `safe-path-probe` **7/7** (`--project=minipay`). El `Error: boom` del output es ruido intencional
   de `primitive-boundary.test.tsx`.
-- **Uncommitted work**: no.
+- **Uncommitted work**: no. Árbol limpio, **sin PRs abiertos** (todo fue push directo a `main`).
 
 ## Next Tasks
 
