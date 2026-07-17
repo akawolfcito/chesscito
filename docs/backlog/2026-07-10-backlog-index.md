@@ -90,6 +90,31 @@ entenderlo.** Puede esconder un bug.
 
 ---
 
+## 5.1 Nombre custom: hoy es una promesa que solo ve su dueño (2026-07-17)
+
+El chip **Chesscito ID** de la Account sheet muestra el nick **generado** a propósito:
+`useDisplayName().name` resuelve custom > generado, pero el nombre custom vive **solo** en
+`localStorage` y **nunca viaja al servidor** (la ruta de guardado de scores no lo lleva). El
+leaderboard le muestra al resto siempre el generado — `leaderboard-sheet.tsx:148-154` solo pisa
+tu propia fila, en tu propio device.
+
+Consecuencias, en orden:
+
+- **El lápiz de edición NO va en el chip** hasta que el nombre custom sea real. Editar un
+  "Chesscito ID" que ningún otro jugador ve es una promesa falsa. El esfuerzo no es la razón:
+  `DisplayNameDialog` + el lápiz de `ProfileBanner` **ya existen y están cableados** en
+  `ProfileSheet`, con tests.
+- **Ese editor hoy es casi inalcanzable**: `ProfileSheet` solo abre por el deep-link
+  `?sheet=profile`, y en modo LEARN está apagado (`learn-hub-client.tsx:180`). O sea que en el
+  build que shippea, nadie tiene un nombre custom. Decidir si el editor **vuelve** (con el
+  nombre viajando al server) o si se **retira** — hoy es superficie muerta que igual mantenemos.
+
+El feature real no es "poner el lápiz": es **que el nombre elegido llegue al leaderboard de los
+demás**. Eso toca server + una pregunta de moderación (`validateNickname` ya tiene el blocklist,
+pero nadie lo llama).
+
+---
+
 ## 6. Grande — no abrir sin decidirlo
 
 - **Belt System** (#189) — espina aceptada, **no agendada**. No abrir hasta que cierren
