@@ -6,13 +6,18 @@
  * prod bundle. Pure: no node:fs, no process side-effects. The CLI (`main()` +
  * the argv guard) stays in scripts/import-puzzles.ts, which re-exports these.
  */
-import type { Exercise, ExerciseTier, PieceId } from "@/lib/game/types";
-import { mapFenPuzzle, parseFenBoard, puzzleId, posToSquare, isCoverageKind, type PuzzleInput, type MappedPuzzle } from "@/lib/game/fen-puzzle";
+import type { BoardPosition, Exercise, ExerciseTier, PieceId } from "@/lib/game/types";
+import { mapFenPuzzle, parseFenBoard, puzzleId, posToSquare, isCoverageKind, usesOwnSolver, type PuzzleInput, type MappedPuzzle } from "@/lib/game/fen-puzzle";
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
 import { pivotBfs } from "@/lib/game/diagonal-run";
 import { reachableSquares } from "@/lib/game/knight-tour";
 import { maxQueens } from "@/lib/game/queens";
 import { safePathOptimalMoves } from "@/lib/game/safe-path";
+import {
+  promotionRunSolve,
+  isPromotable,
+  PROMOTABLE_PIECES,
+} from "@/lib/game/promotion-run";
 import { lintPuzzle } from "@/lib/content/lint";
 
 /** Floor for a shippable Knight's Tour level, in reachable squares. Below this
@@ -49,15 +54,25 @@ const TIERS: ExerciseTier[] = ["easy", "medium", "hard"];
 
 export type LabyrinthRecord = {
   id?: string; piece: PieceId; fen: string; mover?: string;
-  /** Required except on the coverage kinds (`knight-tour`, `queens`), which have
-   *  no destination. */
+  /** Required except on the TARGETLESS kinds (`knight-tour`, `queens`, which have
+   *  no destination, and `promotion-run`, whose destination is a rank). */
   target?: string;
   tier?: ExerciseTier; tags?: string[]; explanation?: string; order: number;
+  /** `promotion-run` only, and REQUIRED there: the piece the level asks the pawn
+   *  to crown (P3). Flat in the JSON because that is what an author types; it
+   *  becomes the typed `mission` on the way into the catalog. */
+  promoteTo?: PieceId;
   /** Routing within Special Training. Absent → "labyrinth" (back-compat: every
    *  existing content/labyrinths.json row). `"diagonal-run"` routes the record to
    *  the Diagonal Run bucket (GENERATED_DIAGONAL_RUN) instead — same source file, a
    *  separate runtime bucket. Design: docs/audits/2026-07-15-bishop-d1-*. */
-  kind?: "labyrinth" | "diagonal-run" | "knight-tour" | "queens" | "safe-path";
+  kind?:
+    | "labyrinth"
+    | "diagonal-run"
+    | "knight-tour"
+    | "queens"
+    | "safe-path"
+    | "promotion-run";
   /* Pedagogy (A1) — curated copy. `title` is what the drawer renders; the
    * linter requires all four on curated pieces. */
   principle?: string; title?: string; playerPrompt?: string; learningObjective?: string;
@@ -100,6 +115,15 @@ export type BuiltCatalog = {
    *  through a watched square. Only `safePathOptimalMoves` reads the attack
    *  map, so only it can measure the route the player is allowed to take. */
   safePath: Record<PieceId, Exercise[]>;
+  /** Promotion Run pool (kind:"promotion-run"). Its own bucket, same source file.
+   *  Graded by ARRIVAL like safe-path — `optimalMoves` is a move count, lower is
+   *  better, and it feeds `labyrinthStars`, never tourStars.
+   *
+   *  Measured by `promotionRunSolve` and by nothing else. The generic BFS is not
+   *  merely imprecise here, it is wrong in kind: it would walk the pawn onto
+   *  empty diagonals, which is the one move a pawn may never make, and the whole
+   *  lesson of the game. */
+  promotionRun: Record<PieceId, Exercise[]>;
   descriptions: Record<string, string>;
   errors: string[];
   warnings: string[];
@@ -147,6 +171,7 @@ export function buildCatalog(
   const knightTour = emptyByPiece();
   const queens = emptyByPiece();
   const safePath = emptyByPiece();
+  const promotionRun = emptyByPiece();
   const descriptions: Record<string, string> = {};
   const seenIds = new Set<string>();
   const seenPositions = new Set<string>();
@@ -156,7 +181,7 @@ export function buildCatalog(
   for (const n of ["kind", "piece", "fen", "target", "tier"]) {
     if (header.length && col(n) < 0) errors.push(`missing required column '${n}'`);
   }
-  if (errors.length) return { exercises, labyrinths, diagonalRun, knightTour, queens, safePath, descriptions, errors, warnings };
+  if (errors.length) return { exercises, labyrinths, diagonalRun, knightTour, queens, safePath, promotionRun, descriptions, errors, warnings };
 
   const addPuzzle = (
     input: PuzzleInput, label: string, idOverride: string | undefined, order: number,
@@ -248,18 +273,91 @@ export function buildCatalog(
         mapped.obstacles ?? [],
       );
     }
-    const usesOwnSolver = isCoverageKind(input.kind) || input.kind === "safe-path";
+    // Promotion Run — same shape as safe-path above, and for a stronger reason.
+    // The generic BFS is not merely blind to threats here, it does not know the
+    // pawn: it would route it diagonally across empty squares, which is the one
+    // move a pawn may never make, and the whole lesson of the game.
+    //
+    // The MISSION is checked first, and before the lint, because it is the win
+    // condition (P3) and no route check can see it fail: a level asking for a
+    // king walks the board perfectly and is still unwinnable on the last rank.
+    // ⚠️ `optimalMoves` here is NOT a difficulty measure, and cannot be: every
+    // move a pawn makes — push or capture — advances exactly one rank, so EVERY
+    // winning run from rank r is exactly `7 - r` moves long. The number is the
+    // same for the level's easiest and hardest routes. What separates them is
+    // WHICH squares, so the path is kept: the captures are the only thing worth
+    // counting, and they cannot be read off the length.
+    let promotionRunPath: BoardPosition[] | null = null;
+    let promotionRunOptimal: number | null = null;
+    if (input.kind === "promotion-run") {
+      const promoteTo = input.mission?.promoteTo;
+      if (!promoteTo) {
+        errors.push(
+          `${label}: promotion-run needs a mission — set 'promoteTo'. The level asks the ` +
+            `player to crown a named piece; without one it has no win condition. Not ` +
+            `defaulted to a queen on purpose: choosing IS the mechanic.`,
+        );
+        return;
+      }
+      if (!isPromotable(promoteTo)) {
+        errors.push(
+          `${label}: a pawn cannot promote to ${promoteTo} — the mission is unwinnable. ` +
+            `Promote to one of: ${PROMOTABLE_PIECES.join(", ")}.`,
+        );
+        return;
+      }
+      promotionRunPath = promotionRunSolve(
+        mapped.startPos,
+        mapped.enemies ?? [],
+        mapped.obstacles ?? [],
+        { promoteTo },
+      );
+      promotionRunOptimal = promotionRunPath?.length ?? null;
+    }
     const probe: Exercise = { id: "probe", optimalMoves: 0, ...toExerciseFields(mapped) };
-    const bfs = usesOwnSolver ? null : computeExerciseBfs(input.piece, probe);
+    const bfs = usesOwnSolver(input.kind) ? null : computeExerciseBfs(input.piece, probe);
     // Lint BEFORE the solvability bail-out: a target buried under a blocker is
     // ALSO unsolvable, and "no path" alone sends the author hunting for a routing
     // bug instead of the one square at fault.
-    const lint = lintPuzzle(input.piece, mapped, coverageCeiling ?? safePathOptimal ?? bfs?.optimalMoves ?? 0, label, {
+    const lint = lintPuzzle(input.piece, mapped, coverageCeiling ?? safePathOptimal ?? promotionRunOptimal ?? bfs?.optimalMoves ?? 0, label, {
       requirePedagogy,
     });
     errors.push(...lint.errors);
     warnings.push(...lint.warnings);
     if (lint.errors.length) return;
+    // No run reaches the last rank alive. The causes all look different to an
+    // author and identical to the solver, so the message lists them: the message
+    // IS the debugging surface, there is no route to stare at.
+    if (input.kind === "promotion-run" && promotionRunOptimal === null) {
+      errors.push(
+        `${label}: promotion-run has no winning run from ${posToSquare(mapped.startPos)} — ` +
+          `the pawn is watched where it stands, or sealed in with nothing to capture, or the ` +
+          `only way to the last rank is a diagonal with no victim on it. Remember a pawn ` +
+          `cannot change file without capturing, and that every victim is ALIVE until it is ` +
+          `eaten: check what the enemies watch on the way, not just at the end.`,
+      );
+      return;
+    }
+    // A Promotion Run that never has to capture is not this game. The pawn's one
+    // lesson is that it cannot change file without capturing; a run that pushes
+    // straight up an open file never asks the question, and the enemies are
+    // scenery. Same call as safe-path's warning below: playable, so a warning.
+    //
+    // Captures are counted by FILE CHANGES, which is exact rather than clever: a
+    // pawn has no other way to leave its file. That is the entire game, stated as
+    // arithmetic.
+    if (input.kind === "promotion-run" && promotionRunPath !== null) {
+      const files = [mapped.startPos, ...promotionRunPath].map((p) => p.file);
+      const captures = files.filter((f, i) => i > 0 && f !== files[i - 1]).length;
+      if (captures === 0) {
+        warnings.push(
+          `${label}: promotion-run's run never has to capture — the pawn marches straight up ` +
+            `its file. The level is playable but teaches nothing: a pawn only changes file by ` +
+            `capturing, so a run that never does is a walk. Seal the file with a wall and put ` +
+            `something on a diagonal.`,
+        );
+      }
+    }
     // Reported here rather than where it is measured, for the same reason as
     // the line below: the lint names the one square at fault, and "no safe
     // route" alone sends the author hunting for a routing bug instead.
@@ -291,7 +389,12 @@ export function buildCatalog(
         );
       }
     }
-    if (!bfs && coverageCeiling === null && safePathOptimal === null) { errors.push(`${label}: unsolvable (no path) from ${posToSquare(mapped.startPos)} to ${posToSquare(mapped.targetPos)}`); return; }
+    // Every kind with its own solver has already reported its own failure, in its
+    // own words, by the time this runs. This line is the generic BFS's verdict,
+    // so it must not speak for a game the BFS never measured — and it would speak
+    // NONSENSE for the targetless kinds, whose start and target are the same
+    // square: "no path from c2 to c2" is not a bug an author can act on.
+    if (!bfs && coverageCeiling === null && safePathOptimal === null && promotionRunOptimal === null && input.kind !== "promotion-run") { errors.push(`${label}: unsolvable (no path) from ${posToSquare(mapped.startPos)} to ${posToSquare(mapped.targetPos)}`); return; }
     // Diagonal Run contract (D1): the level must be solvable under glide-pivot
     // transitions (the game's own semantics, NOT the free-bishop BFS), and
     // start/target must share a colour — a bishop never leaves its colour. The
@@ -318,9 +421,10 @@ export function buildCatalog(
       warnings.push(`${label}: duplicate position (same piece+fen+target as an earlier puzzle)`);
     }
     seenPositions.add(positionKey);
-    const exercise = { id, optimalMoves: coverageCeiling ?? safePathOptimal ?? diagonalRunOptimal ?? bfs!.optimalMoves, ...toExerciseFields(mapped) } as Exercise & { __order?: number };
+    const exercise = { id, optimalMoves: coverageCeiling ?? safePathOptimal ?? promotionRunOptimal ?? diagonalRunOptimal ?? bfs!.optimalMoves, ...toExerciseFields(mapped) } as Exercise & { __order?: number };
     exercise.__order = order;
-    if (input.kind === "safe-path") safePath[input.piece].push(exercise);
+    if (input.kind === "promotion-run") promotionRun[input.piece].push(exercise);
+    else if (input.kind === "safe-path") safePath[input.piece].push(exercise);
     else if (input.kind === "queens") queens[input.piece].push(exercise);
     else if (input.kind === "knight-tour") knightTour[input.piece].push(exercise);
     else if (input.kind === "diagonal-run") diagonalRun[input.piece].push(exercise);
@@ -354,6 +458,10 @@ export function buildCatalog(
     addPuzzle({
       kind: rec.kind ?? "labyrinth", piece: rec.piece, tier: rec.tier ?? "medium", fen: rec.fen,
       target: rec.target, mover: rec.mover, tags: rec.tags, explanation: rec.explanation,
+      // Flat in the JSON, typed from here on. A missing one is not defaulted to a
+      // queen: promotion-run REQUIRES a mission, and a silent default would make
+      // the level's win condition depend on a forgotten field.
+      mission: rec.promoteTo ? { promoteTo: rec.promoteTo } : undefined,
       principle: rec.principle, title: rec.title,
       playerPrompt: rec.playerPrompt, learningObjective: rec.learningObjective,
     }, `labyrinths.json '${rec.id ?? rec.fen}'`, rec.id, rec.order);
@@ -384,14 +492,16 @@ export function buildCatalog(
     (knightTour[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
     (queens[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
     (safePath[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
+    (promotionRun[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
     for (const e of exercises[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of labyrinths[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of diagonalRun[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of knightTour[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of queens[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of safePath[p] as (Exercise & { __order?: number })[]) delete e.__order;
+    for (const e of promotionRun[p] as (Exercise & { __order?: number })[]) delete e.__order;
   }
-  return { exercises, labyrinths, diagonalRun, knightTour, queens, safePath, descriptions, errors, warnings };
+  return { exercises, labyrinths, diagonalRun, knightTour, queens, safePath, promotionRun, descriptions, errors, warnings };
 }
 
 export function renderGeneratedModule(cat: BuiltCatalog): string {
@@ -411,6 +521,8 @@ export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = ${j(cat.knight
 export const GENERATED_QUEENS: Record<PieceId, Exercise[]> = ${j(cat.queens)};
 
 export const GENERATED_SAFE_PATH: Record<PieceId, Exercise[]> = ${j(cat.safePath)};
+
+export const GENERATED_PROMOTION_RUN: Record<PieceId, Exercise[]> = ${j(cat.promotionRun)};
 
 export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = ${j(cat.descriptions)};
 `;

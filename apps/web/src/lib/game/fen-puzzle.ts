@@ -3,12 +3,13 @@ import type {
   PieceId,
   ExerciseTier,
   TypedEnemy,
+  MissionSpec,
 } from "@/lib/game/types";
 
-/** Re-exported so the threat modules can keep importing it from here, next to
- *  the mapper that produces it. Defined in types.ts because `Exercise` carries
- *  it and this module imports types.ts — see the note there. */
-export type { TypedEnemy };
+/** Re-exported so the threat modules can keep importing them from here, next to
+ *  the mapper that produces them. Defined in types.ts because `Exercise` carries
+ *  them and this module imports types.ts — see the note there. */
+export type { TypedEnemy, MissionSpec };
 
 export class FenError extends Error {}
 
@@ -60,25 +61,71 @@ export type PuzzleKind =
   | "diagonal-run"
   | "knight-tour"
   | "queens"
-  | "safe-path";
+  | "safe-path"
+  | "promotion-run";
 
 /** The kinds graded by COVERAGE instead of arrival: they have no destination and
- *  no route, only a ceiling to fill. Everything that branches on "is there a
- *  target" asks THIS, not the kind — the tour was the first, queens the second,
- *  and a third would otherwise mean hunting every `!== "knight-tour"` in the
- *  tree. Grade them with tourStars, never labyrinthStars. */
+ *  no route, only a ceiling to fill. Grade them with tourStars, never
+ *  labyrinthStars.
+ *
+ *  ⚠️ This used to answer "is there a target?" too, and Promotion Run split the
+ *  two apart: it is targetless AND arrival-graded. Ask `isTargetlessKind` about
+ *  the target and THIS about the grading — a single predicate meaning both is
+ *  how a coverage percentage ends up where a move count belongs. */
 export const COVERAGE_KINDS = ["knight-tour", "queens"] as const;
 
 export function isCoverageKind(kind: PuzzleKind): boolean {
   return (COVERAGE_KINDS as readonly string[]).includes(kind);
 }
 
+/** The kinds that bring their OWN solver, because the generic exercise BFS
+ *  cannot measure their route — not "measures it roughly", cannot:
+ *  - the coverage kinds have no route at all, only a ceiling;
+ *  - safe-path's BFS walks the king with `getKingMoves`, which is threat-blind
+ *    and routes him through watched squares;
+ *  - promotion-run's would send the pawn diagonally across empty squares, the
+ *    one move a pawn may never make.
+ *
+ *  Anything that asks the BFS a question about the route — the optimum, or
+ *  whether a wall is decorative — must ask THIS first and stay quiet. A wrong
+ *  answer here is worse than no answer: it is confident, and it names a square.
+ */
+export const OWN_SOLVER_KINDS = [
+  ...COVERAGE_KINDS,
+  "safe-path",
+  "promotion-run",
+] as const;
+
+export function usesOwnSolver(kind: PuzzleKind): boolean {
+  return (OWN_SOLVER_KINDS as readonly string[]).includes(kind);
+}
+
+/** The kinds with no destination SQUARE, for two unrelated reasons:
+ *  - the coverage kinds have no destination at all; they end when no legal
+ *    square is left.
+ *  - Promotion Run has a destination RANK. The pawn crowns on whatever file its
+ *    captures led to, so naming a square would be a lie the moment a shorter run
+ *    crowned one file over — which the solver does, given the chance.
+ *
+ *  All of them park the sentinel `targetPos = startPos` (see MappedPuzzle), so
+ *  nothing in their path may read `targetPos` and expect a goal. */
+export const TARGETLESS_KINDS = [...COVERAGE_KINDS, "promotion-run"] as const;
+
+export function isTargetlessKind(kind: PuzzleKind): boolean {
+  return (TARGETLESS_KINDS as readonly string[]).includes(kind);
+}
+
 /** The kinds that model BLACK pieces as static threats instead of as capture
  *  targets. They are the only ones that read `enemies`, and the only ones
  *  allowed a black piece without a pawn's capture semantics — everywhere else a
  *  black piece is still an authoring mistake (see the guard in mapFenPuzzle).
- *  Ask THIS, never `kind === "safe-path"`: Promotion Run is next in line. */
-export const THREAT_KINDS = ["safe-path"] as const;
+ *  Ask THIS, never `kind === "safe-path"`.
+ *
+ *  ⚠️ Promotion Run joining this list is what takes the pawn's black pieces away
+ *  from `captureTargets`: the pawn was always allowed them, but untyped, and a
+ *  threat layer that cannot tell a rook from a knight cannot say what it
+ *  watches. Its enemies are BOTH — victims to eat and eyes to avoid. */
+export const THREAT_KINDS = ["safe-path", "promotion-run"] as const;
 
 export function isThreatKind(kind: PuzzleKind): boolean {
   return (THREAT_KINDS as readonly string[]).includes(kind);
@@ -93,6 +140,9 @@ export type PuzzleInput = {
    *  kind: without it the puzzle has no win condition. */
   target?: string;
   mover?: string;
+  /** `promotion-run` only: the piece to crown. Carried through the round-trip
+   *  untouched — the FEN cannot express it, because it is not a position. */
+  mission?: MissionSpec;
   tier: ExerciseTier;
   tags?: string[];
   explanation?: string;
@@ -107,10 +157,11 @@ export type MappedPuzzle = {
   kind: PuzzleKind;
   piece: PieceId;
   startPos: BoardPosition;
-  /** The square to reach. For the coverage kinds this is the START square, which
-   *  encodes "no target": they end when no legal square is left, and the start is
-   *  the one square that can never be arrived at (the tour X-es it out on the
-   *  first jump; a queens level already has a queen standing on it).
+  /** The square to reach. For the TARGETLESS kinds this is the START square, which
+   *  encodes "no target": the coverage ones end when no legal square is left, and
+   *  the start is the one square that can never be arrived at (the tour X-es it
+   *  out on the first jump; a queens level already has a queen standing on it).
+   *  Promotion Run is targetless for its own reason — it wins on a RANK.
    *  `Exercise.targetPos` is required and
    *  read in 100+ places, so a sentinel buys the game its way in without an
    *  Optional that every one of those callers would have to answer for. Nothing
@@ -123,6 +174,12 @@ export type MappedPuzzle = {
    *  threat kinds populate it, so `obstacles`/`captureTargets` keep the exact
    *  meaning their other 27 call sites already rely on. */
   enemies?: TypedEnemy[];
+  /** Promotion Run — the piece the level asks the pawn to crown (P3). The win
+   *  condition, not decoration: reaching rank 8 and crowning the wrong piece is
+   *  not a win, so a mission a pawn cannot legally promote to is an unwinnable
+   *  level. Typed from the start so the bishop-pair variant (§3.5) slots in as a
+   *  widened type rather than surgery. */
+  mission?: MissionSpec;
   isCapture?: boolean;
   tier: ExerciseTier;
   tags?: string[];
@@ -137,7 +194,7 @@ const samePos = (a: BoardPosition, b: BoardPosition) => a.file === b.file && a.r
 
 export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
   const board = parseFenBoard(input.fen);
-  const isCoverage = isCoverageKind(input.kind);
+  const isTargetless = isTargetlessKind(input.kind);
 
   let moverSq: string;
   if (input.mover && input.mover.trim()) {
@@ -154,12 +211,12 @@ export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
   }
 
   const startPos = squareToPos(moverSq);
-  // Resolved after the mover, because a coverage kind's "target" IS the mover's square.
-  if (!isCoverage && !input.target?.trim()) throw new FenError("target is required");
-  const targetPos = isCoverage ? startPos : squareToPos(input.target!);
-  // The coverage kinds are exempt: their target and start are the same square BY
+  // Resolved after the mover, because a targetless kind's "target" IS the mover's square.
+  if (!isTargetless && !input.target?.trim()) throw new FenError("target is required");
+  const targetPos = isTargetless ? startPos : squareToPos(input.target!);
+  // The targetless kinds are exempt: their target and start are the same square BY
   // DEFINITION, which is exactly the mistake this guard catches for every other kind.
-  if (!isCoverage && samePos(startPos, targetPos)) {
+  if (!isTargetless && samePos(startPos, targetPos)) {
     throw new FenError("target equals start");
   }
 
@@ -191,6 +248,7 @@ export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
     obstacles: obstacles.length ? obstacles : undefined,
     captureTargets: captureTargets.length ? captureTargets : undefined,
     enemies: enemies.length ? enemies : undefined,
+    mission: input.mission,
     isCapture: isCapture || undefined,
     tier: input.tier,
     tags: input.tags && input.tags.length ? input.tags : undefined,

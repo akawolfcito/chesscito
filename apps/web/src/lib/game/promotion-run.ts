@@ -25,9 +25,25 @@
  *
  * Spec: docs/specs/2026-07-16-safe-path-promotion-run-plan.md §3.3-§3.4, stage 7.
  */
-import type { BoardPosition, PieceId } from "@/lib/game/types";
+import type { BoardPosition, MissionSpec, PieceId } from "@/lib/game/types";
 import { attackedSquares } from "@/lib/game/attack-map";
 import { posToSquare, type TypedEnemy } from "@/lib/game/fen-puzzle";
+
+/** Re-exported: this is the module the mission belongs to, but `Exercise` has to
+ *  carry it, so it is DEFINED in types.ts to avoid a cycle. See the note there. */
+export type { MissionSpec };
+
+/** What a pawn may become. Not `PieceId` minus nothing: a pawn cannot stay a
+ *  pawn, and it cannot crown a second king. A mission naming either is an
+ *  unwinnable level — the content lint rejects it at import (stage 8).
+ *
+ *  ⚠️ This does NOT constrain the route: the walk to the last rank is the same
+ *  whatever you crown. It constrains what the level may ASK for. */
+export const PROMOTABLE_PIECES = ["queen", "rook", "bishop", "knight"] as const;
+
+export function isPromotable(piece: PieceId): boolean {
+  return (PROMOTABLE_PIECES as readonly string[]).includes(piece);
+}
 
 /** White pawn: up the board. The last rank is where it promotes. */
 const PROMOTION_RANK = 7;
@@ -52,13 +68,6 @@ export type PawnRunState = {
 export type PawnMove = {
   to: BoardPosition;
   captures: BoardPosition | null;
-};
-
-/** What the level asks the player to crown. A typed contract rather than a
- *  hardcoded queen: the mission IS the mechanic (P3), and the bishop-pair
- *  variant (§3.5) should slot in as a widened type, not as surgery. */
-export type MissionSpec = {
-  promoteTo: PieceId;
 };
 
 /**

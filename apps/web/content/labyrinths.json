@@ -305,5 +305,44 @@
     "playerPrompt": "The bishop watches a whole diagonal, not a square.",
     "learningObjective": "The player learns that a sliding piece controls a line all the way across the board, unlike the knight's fixed jumps.",
     "order": 2
+  },
+  {
+    "id": "pawn-promotion-1",
+    "piece": "pawn",
+    "kind": "promotion-run",
+    "fen": "8/8/8/8/1rN5/8/2P5/8 w - - 0 1",
+    "mover": "c2",
+    "promoteTo": "queen",
+    "title": "No Way Around",
+    "principle": "capture-to-change-file",
+    "playerPrompt": "The wall blocks your file. The rook is not in your way — it is the way.",
+    "learningObjective": "The player learns that a pawn cannot change file without capturing, so a blocked file is not something to walk around: the enemy on the diagonal is the only door.",
+    "order": 0
+  },
+  {
+    "id": "pawn-promotion-2",
+    "piece": "pawn",
+    "kind": "promotion-run",
+    "fen": "8/8/1Nr5/8/1rN5/8/2P5/8 w - - 0 1",
+    "mover": "c2",
+    "promoteTo": "queen",
+    "title": "Pay for Every File",
+    "principle": "each-file-costs-a-capture",
+    "playerPrompt": "Two walls, two rooks. You will change file twice, and each one has a price.",
+    "learningObjective": "The player learns to read a whole run before starting it: every file the pawn needs must be paid for with a capture, and the captures must exist in the right order.",
+    "order": 1
+  },
+  {
+    "id": "pawn-promotion-3",
+    "piece": "pawn",
+    "kind": "promotion-run",
+    "fen": "8/8/n7/8/1rNr4/8/2P5/8 w - - 0 1",
+    "mover": "c2",
+    "promoteTo": "knight",
+    "title": "Not Every Meal Is Free",
+    "principle": "a-capture-can-be-bait",
+    "playerPrompt": "Two rooks to eat, and only one of them is dinner. The knight is watching.",
+    "learningObjective": "The player learns that a capture is a square you must then stand on, so the right question is not what can I take, but what is watching the square I would land on.",
+    "order": 2
   }
 ]

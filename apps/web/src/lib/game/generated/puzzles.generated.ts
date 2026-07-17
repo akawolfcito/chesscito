@@ -3258,6 +3258,146 @@ export const GENERATED_SAFE_PATH: Record<PieceId, Exercise[]> = {
   ]
 };
 
+export const GENERATED_PROMOTION_RUN: Record<PieceId, Exercise[]> = {
+  "rook": [],
+  "bishop": [],
+  "knight": [],
+  "pawn": [
+    {
+      "id": "pawn-promotion-1",
+      "optimalMoves": 6,
+      "startPos": {
+        "file": 2,
+        "rank": 1
+      },
+      "targetPos": {
+        "file": 2,
+        "rank": 1
+      },
+      "obstacles": [
+        {
+          "file": 2,
+          "rank": 3
+        }
+      ],
+      "enemies": [
+        {
+          "pos": {
+            "file": 1,
+            "rank": 3
+          },
+          "piece": "rook"
+        }
+      ],
+      "mission": {
+        "promoteTo": "queen"
+      },
+      "tier": "medium",
+      "principle": "capture-to-change-file",
+      "title": "No Way Around",
+      "playerPrompt": "The wall blocks your file. The rook is not in your way — it is the way.",
+      "learningObjective": "The player learns that a pawn cannot change file without capturing, so a blocked file is not something to walk around: the enemy on the diagonal is the only door."
+    },
+    {
+      "id": "pawn-promotion-2",
+      "optimalMoves": 6,
+      "startPos": {
+        "file": 2,
+        "rank": 1
+      },
+      "targetPos": {
+        "file": 2,
+        "rank": 1
+      },
+      "obstacles": [
+        {
+          "file": 1,
+          "rank": 5
+        },
+        {
+          "file": 2,
+          "rank": 3
+        }
+      ],
+      "enemies": [
+        {
+          "pos": {
+            "file": 2,
+            "rank": 5
+          },
+          "piece": "rook"
+        },
+        {
+          "pos": {
+            "file": 1,
+            "rank": 3
+          },
+          "piece": "rook"
+        }
+      ],
+      "mission": {
+        "promoteTo": "queen"
+      },
+      "tier": "medium",
+      "principle": "each-file-costs-a-capture",
+      "title": "Pay for Every File",
+      "playerPrompt": "Two walls, two rooks. You will change file twice, and each one has a price.",
+      "learningObjective": "The player learns to read a whole run before starting it: every file the pawn needs must be paid for with a capture, and the captures must exist in the right order."
+    },
+    {
+      "id": "pawn-promotion-3",
+      "optimalMoves": 6,
+      "startPos": {
+        "file": 2,
+        "rank": 1
+      },
+      "targetPos": {
+        "file": 2,
+        "rank": 1
+      },
+      "obstacles": [
+        {
+          "file": 2,
+          "rank": 3
+        }
+      ],
+      "enemies": [
+        {
+          "pos": {
+            "file": 0,
+            "rank": 5
+          },
+          "piece": "knight"
+        },
+        {
+          "pos": {
+            "file": 1,
+            "rank": 3
+          },
+          "piece": "rook"
+        },
+        {
+          "pos": {
+            "file": 3,
+            "rank": 3
+          },
+          "piece": "rook"
+        }
+      ],
+      "mission": {
+        "promoteTo": "knight"
+      },
+      "tier": "medium",
+      "principle": "a-capture-can-be-bait",
+      "title": "Not Every Meal Is Free",
+      "playerPrompt": "Two rooks to eat, and only one of them is dinner. The knight is watching.",
+      "learningObjective": "The player learns that a capture is a square you must then stand on, so the right question is not what can I take, but what is watching the square I would land on."
+    }
+  ],
+  "queen": [],
+  "king": []
+};
+
 export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "rook-rail-two-turns": "Two Turns",
   "rook-rail-dead-end": "Dead End",
@@ -3275,6 +3415,9 @@ export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "king-safe-1": "The Knight Sees",
   "king-safe-2": "Two Watchers",
   "king-safe-3": "The Long Eye",
+  "pawn-promotion-1": "No Way Around",
+  "pawn-promotion-2": "Pay for Every File",
+  "pawn-promotion-3": "Not Every Meal Is Free",
   "rook-1": "Move along the rank",
   "rook-2": "Move along the file",
   "rook-distance-1": "One square is a move too",

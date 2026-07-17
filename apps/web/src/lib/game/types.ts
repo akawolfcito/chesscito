@@ -16,6 +16,16 @@ export type BoardPiece = {
  *  module — the other direction would be a cycle. `fen-puzzle` re-exports it. */
 export type TypedEnemy = { pos: BoardPosition; piece: PieceId };
 
+/** What a Promotion Run level asks the player to crown (P3). Here rather than in
+ *  `promotion-run.ts` for the same reason as `TypedEnemy`: `Exercise` carries it
+ *  and that module imports this one, so the other direction would be a cycle.
+ *  `promotion-run.ts` and `fen-puzzle.ts` both re-export it.
+ *
+ *  A record rather than a bare `PieceId` on purpose: the bishop-pair variant
+ *  (plan §3.5) is a second win condition, and this is where it lands — a widened
+ *  type, not surgery on every caller. */
+export type MissionSpec = { promoteTo: PieceId };
+
 export type SquareState = {
   file: number;
   rank: number;
@@ -93,6 +103,11 @@ export type Exercise = {
    *  Never route with these directly: `lib/game/attack-map.ts` turns them into
    *  the watched set, and only it knows that a ray also watches its blocker. */
   enemies?: TypedEnemy[];
+
+  /** Promotion Run — the piece this level asks the pawn to crown. Absent on
+   *  every other kind. The board checks it AT the promotion; the route to rank 8
+   *  does not depend on it. */
+  mission?: MissionSpec;
 
   /* ── Labyrinth System v0.2 — mint metadata (all optional, additive).
    *  Spec: docs/superpowers/specs/2026-06-02-labyrinth-system-v0.2.md §4.1
