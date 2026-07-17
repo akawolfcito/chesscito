@@ -6,7 +6,7 @@ import {
   writeBaselineRecord,
   type KindedRecord,
 } from "@/lib/content/baseline-write";
-import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
+import { canWriteBaseline, isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 export const runtime = "nodejs";
 
@@ -17,7 +17,15 @@ export async function GET(req: Request) {
   const filter = new URL(req.url).searchParams.get("kind");
   const kind: ContentKind | undefined =
     filter === "exercise" || filter === "labyrinth" ? filter : undefined;
-  return NextResponse.json({ ok: true, records: readBaselineRecords(kind) });
+  // `canWrite` is the server telling the builder what the SERVER can do: the
+  // builder is a client component and cannot read process.env.VERCEL itself. On
+  // a deploy the fs is read-only, so Save must render disabled with a reason
+  // rather than fire a 500 out of writeFileSync (spec behavior 15).
+  return NextResponse.json({
+    ok: true,
+    records: readBaselineRecords(kind),
+    canWrite: canWriteBaseline(),
+  });
 }
 
 export async function POST(req: Request) {

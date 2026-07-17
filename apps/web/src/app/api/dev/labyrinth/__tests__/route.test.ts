@@ -248,6 +248,23 @@ describe("GET /api/dev/labyrinth", () => {
     expect(res.status).not.toBe(404);
   });
 
+  /** The builder is a client component: it cannot read process.env.VERCEL, so
+   *  the server has to TELL it whether Save can work. On a Vercel deploy the fs
+   *  is read-only, so the baseline write is local-only and the UI must say so
+   *  instead of firing a 500 from writeFileSync (spec behavior 15). */
+  it("reports canWrite:false on a deploy, where the fs is read-only", async () => {
+    vi.stubEnv("VERCEL", "1");
+    vi.stubEnv("VERCEL_ENV", "preview");
+    const res = await GET(getRequest());
+    expect(await res.json()).toMatchObject({ canWrite: false });
+  });
+
+  it("reports canWrite:true locally", async () => {
+    vi.stubEnv("VERCEL", undefined);
+    const res = await GET(getRequest());
+    expect(await res.json()).toMatchObject({ canWrite: true });
+  });
+
   it("returns records from both labyrinths.json and exercises.json", async () => {
     vi.stubEnv("NODE_ENV", "development");
     fsMocks.existsSync.mockReturnValue(true);
