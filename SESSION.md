@@ -40,6 +40,11 @@
   - `b2b40ca` **etapa 6 — cableado**. Reemplaza el laberinto de relleno del rey. ⚠️ **Es el PRIMER juego
     de Special Training que se puede PERDER** → toma prestada la máquina de fallo de ejercicios entera
     (phase, modal, gate FTUX, auto-reset). Escudos: gratis, `use-fail-rescue` ya era genérico.
+  - `93aae14` **beat de ataque, 850ms** antes del fallo: el modal tapaba el láser y el jugador leía
+    "caught" sin ver **de qué**. Medido en pantalla real: láser a 53ms, modal a 924ms → 871ms de rayo
+    limpio (antes ~0). El timer vive en un ref y se cancela en `resetBoard` + unmount.
+    ⚠️ **`SAFE_PATH_ATTACK_BEAT_MS` (850) debe quedar POR ENCIMA** de los 460ms de
+    `.playhub-board-laser`; si se retimea la animación, retimear esto.
 - **Safe Path — lógica pura** (etapas 1-3). Plan aprobado por el founder:
   `docs/specs/2026-07-16-safe-path-promotion-run-plan.md` (**leerlo antes de seguir** — §3 son las 7
   decisiones D1-D7, §1 es lo que el código desmintió del spec padre).
@@ -57,7 +62,8 @@
 
 ## Current State
 
-- **Branch**: `main` = `b2b40ca` + este handoff.
+- **Branch**: `main` = `93aae14` + este handoff. **Safe Path CERRADO** — el founder lo aprobó
+  ("me gusta bastante", 2026-07-16) y no dejó pendientes de código.
 - **Build**: passing **medido en este árbol** — vitest **5281/5281** (448 files), `tsc --noEmit` exit 0,
   e2e `safe-path-probe` **7/7** (`--project=minipay`). El `Error: boom` del output es ruido intencional
   de `primitive-boundary.test.tsx`.
@@ -69,7 +75,9 @@
    la superficie — el juego no dibuja las zonas, así que sin ese toggle no se puede diseñar. Los tres
    son andamio a propósito. ⚠️ `/dev/labyrinth-builder` **NO conoce `safe-path`** todavía: no sabe
    dibujar enemigos typed ni el mapa de amenaza. Si el founder quiere autorar ahí, es trabajo aparte.
-2. **PRÓXIMO JUEGO — Promotion Run (peón)**, etapa 7 del plan §4. 🛑 **Antes de escribir código,
+2. **⬅️ ESTO SIGUE. PRÓXIMO JUEGO — Promotion Run (peón)**, etapa 7 del plan §4. Cierra el carril 2
+   (6/6 piezas). El founder ya lo pidió: "con eso cerramos este juego y continuamos con el que sigue".
+   🛑 **Antes de escribir código,
    contestar la §3.3 Q2**: ¿el peón usa el mapa de ataque, o solo un set de casillas letales? El spec
    padre dice que comparte la capa con Safe Path y después lo describe como "stepping on one loses",
    que es otra cosa. Y el peón **captura**, lo que mutaría un mapa compartido → dinámico, justo lo que
