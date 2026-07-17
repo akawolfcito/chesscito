@@ -4,6 +4,30 @@
 
 ## Completed
 
+- **PROMOTION RUN — etapa 9 de 10: TABLERO + PROBE** (`a0ef796`). `promotion-run-board.tsx` +
+  `/dev/promotion-run`. Suite **5333/5333** (451 files), `tsc` limpio, VR 58/59 (la roja es
+  `hub-shop-sheet-open`, **preexistente en `main`**). **Falta solo la etapa 10** → cierra el carril 2 (6/6).
+  - **Lo que NO se comparte con Safe Path, y es el juego**: el mapa de amenaza es **VIVO** (P2) →
+    los enemigos son **estado**, no constante. Safe Path memoiza el mapa una vez por nivel porque
+    sus enemigos son intocables (D1); acá el peón **se los come**. No es una optimización: los
+    niveles **cuelgan su única ruta de eso** — el peón corona en casillas que siguen siendo mortales
+    hasta que se come a quien las vigila. Un tablero que copiara el memo del rey los haría injugables.
+  - El nivel de test se **midió contra el módulo puro antes** de escribirlo en los tests: peón c6,
+    torre negra b7. `c7` es un empuje legal y una tumba; `xb7`→`b8` es la única corrida, y funciona
+    **solo porque b8 estaba vigilada hasta que el peón se comió la torre**. Esa aserción es toda la
+    diferencia con el tablero del rey.
+  - ⛔ **Sin estrellas, a propósito.** El problema que destapó la etapa 8 llegó acá: toda corrida
+    ganadora mide `7 - fila_inicial`, así que `labyrinthStars` da **3★ a cualquiera que gane**. El
+    tablero reporta `(moves, optimal)` y **no dice nada del grado**; el probe lo dice en pantalla en
+    vez de imprimir un número que no significa nada. **Qué miden las estrellas sigue abierto (etapa 10).**
+  - **Zones (D3) dibuja el mapa VIVO** — uno congelado al arranque mentiría justo en el momento del
+    que trata el nivel. Apagado por defecto: **confirmado por el founder** — el jugador deduce el
+    peligro de las piezas o no aprende nada.
+  - Muros = piedra (`.is-wall`), como todos los hermanos del carril. **Lo del caballo blanco es la
+    convención del FEN, no del render** — el handoff anterior lo insinuaba al revés.
+  - El adapter `PROMOTION_RUN` obligó a tocar el mock de `resolve-exercise-description.test.ts`, que
+    enumera los exports generados a mano: **el mismo peaje que pagó cada juego firma al entrar**.
+
 - **PROMOTION RUN — etapa 8 de 10: CONTENIDO** (`617bdb4`). Los tres niveles del peón están en el
   catálogo (`pawn-promotion-1/2/3`), medidos por el solver. Suite **5316/5316** (450 files), `tsc`
   limpio, `import-puzzles` sin errores (sus 12 warnings son todos preexistentes).
@@ -110,11 +134,12 @@
 
 ## Current State
 
-- **Branch**: `main` limpia y **sincronizada con `origin/main`** (verificado contra el remoto, no
-  contra la ref local). El trabajo de la sesión es `617bdb4`; arriba va solo este handoff.
-  **Sin PRs abiertos** — todo fue push directo a `main`.
-  **Safe Path CERRADO** (el founder lo aprobó, "me gusta bastante"). **Promotion Run: 8 de 10.**
-- **Build**: passing **medido en este árbol** — vitest **5316/5316** (450 files), `tsc --noEmit` exit 0.
+- **Branch**: `main`. El trabajo de esta sesión es `a0ef796`; arriba va solo este handoff.
+  ⚠️ **`a0ef796` está SIN PUSHEAR** al momento de escribir esto. **Sin PRs abiertos** — todo fue
+  push directo a `main`.
+  **Safe Path CERRADO** (el founder lo aprobó, "me gusta bastante"). **Promotion Run: 9 de 10.**
+- **Build**: passing **medido en este árbol** — vitest **5333/5333** (451 files), `tsc --noEmit` exit 0,
+  VR **58/59** (`hub-shop-sheet-open` roja **también en `main`**, env sin treasury).
   El `Error: boom` del output es ruido intencional de `primitive-boundary.test.tsx`.
 - **Uncommitted work**: no. Árbol limpio.
 
@@ -124,24 +149,35 @@
    la superficie — el juego no dibuja las zonas, así que sin ese toggle no se puede diseñar. Los tres
    son andamio a propósito. ⚠️ `/dev/labyrinth-builder` **NO conoce `safe-path`** todavía: no sabe
    dibujar enemigos typed ni el mapa de amenaza. Si el founder quiere autorar ahí, es trabajo aparte.
-2. **⬅️ ESTO SIGUE — Promotion Run, etapa 9 de 10: TABLERO + PROBE.** `promotion-run-board.tsx` +
-   `/dev/promotion-run` que **dibuja el mapa de amenaza** (D3, el toggle Zones es la superficie de
-   autoría — igual que `/dev/safe-path`). El contenido (8) ya está en el catálogo, en
-   `GENERATED_PROMOTION_RUN`. Ojo con lo que el tablero tiene que hacer distinto a Safe Path: el mapa
-   es **VIVO** (P2 — el comido deja de vigilar, recalcular por posición) y las negras son **las dos
-   cosas a la vez**: víctimas para comer y ojos que matan. Después: **10** (host — **reusa la ruta de
-   fallo de Safe Path tal cual** — + selector de promoción + cadena de valores + i18n + e2e). Plan §4.
-   Cierra el carril 2 (**6/6**).
-   - ⚠️ **La etapa 10 hereda un problema de grading que la 8 destapó**: toda corrida ganadora mide lo
-     mismo (`7 - fila_inicial`), así que `labyrinthStars` por movidas le da **3★ a cualquiera que
-     gane**. Es el juego, no un bug: el peón no puede hacer una ruta más corta. Si las estrellas
-     tienen que significar algo acá, hay que decidir **qué miden** (¿capturas?, ¿intentos?, ¿el
-     escudo gastado?) — es decisión de producto, no de código.
-3. **Triar 5 locales no-mergeadas** que el barrido no tocó (nunca estuvieron en la lista):
+2. **⬅️ ESTO SIGUE — Promotion Run, etapa 10 de 10: HOST. Cierra el carril 2 (6/6).** Plan §4.
+   El tablero (9) ya existe y está probado; falta cablearlo al juego:
+   - **Host** en `exercises-screen.tsx`, reemplazando los 4 `pawn-lab-*` de relleno. **Reusa la ruta
+     de fallo de Safe Path tal cual** (`use-fail-rescue`, phase, modal, gate FTUX, auto-reset) — el
+     tablero ya expone `onCaught(sq)` con la misma firma que `SafePathBoard`.
+     ⚠️ **Cablear desde el catálogo runtime, NUNCA por id/prefijo** (B4.2.1).
+   - **Selector de promoción**: `mission.promoteTo` ya viaja typed en los 3 niveles
+     (`queen`/`queen`/`knight`). **Elegir ES la mecánica** (revierte D7) — el selector es del host,
+     no del tablero, que no posee chrome. El tablero dispara `onComplete(moves, optimal)` al llegar
+     a la última fila y **no sabe nada de la coronación**.
+   - **Cadena de valores** (P4) + i18n EN/ES + e2e del probe (el de Safe Path llegó en su etapa de
+     cableado, no en la del tablero — mismo orden acá).
+   - ⚠️ **Decisión de producto que la etapa 10 NO puede esquivar**: toda corrida ganadora mide lo
+     mismo (`7 - fila_inicial`), así que `labyrinthStars` por movidas da **3★ a cualquiera que gane**.
+     Es el juego, no un bug: el peón no puede hacer una ruta más corta. El tablero y el probe **hoy
+     no muestran estrellas** justamente para no grabar la mentira. Hay que decidir **qué miden**
+     (¿capturas?, ¿intentos?, ¿el escudo gastado?) — o si acá no hay estrellas.
+   - ⚠️ **Sigue abierto para el founder**: la misión de `pawn-promotion-3` pide **caballo** y es
+     andamio. Sin una razón *en el tablero* para querer un caballo (un mate, un tenedor), enseña a
+     obedecer, no ajedrez. P4 es de esta etapa: ahí se decide si el nivel gana su pedido o pasa a dama.
+3. **Afinar los 3 niveles del peón** (founder, no requiere código): `/dev/promotion-run` con **Zones
+   on**. ⚠️ El toggle dibuja el mapa **vivo**: comé una pieza y su zona desaparece — que es de lo que
+   tratan estos niveles. Igual que con el rey, `/dev/labyrinth-builder` **NO conoce `promotion-run`**:
+   no sabe dibujar enemigos typed ni el mapa de amenaza. Autorar ahí es trabajo aparte.
+4. **Triar 5 locales no-mergeadas** que el barrido no tocó (nunca estuvieron en la lista):
    `backup/main-before-author-rewrite` (huele a red de un rewrite de historia — **no borrar sin mirar**),
    `chore/minipay-gate`, `feat/board-renderer`, `feat/progression-unlocks-celebration-queue`,
    `phase-1-ui-zone-map`.
-4. **Pendientes del founder del handoff de queens** (no agendados): afinar los 3 niveles en
+5. **Pendientes del founder del handoff de queens** (no agendados): afinar los 3 niveles en
    `/dev/labyrinth-builder` (**no hace falta tocar código**, el techo se recalcula solo) · **overlay
    TRY AGAIN + feedback al fallar, para TODAS las piezas** (el rey ya lo tiene; falta el resto) ·
    decidir la **maestría** perdida (Blockers).
