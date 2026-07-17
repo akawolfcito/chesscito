@@ -1,7 +1,8 @@
-import { mapFenPuzzle } from "@/lib/game/fen-puzzle";
+import { buildCatalog, type BuiltCatalog } from "@/lib/content/catalog";
 import { computeExerciseBfsPath } from "@/lib/game/exercise-bfs";
-import type { BoardPosition, Exercise } from "@/lib/game/types";
-import { toPuzzleInput, type BuilderState } from "./state";
+import { isTargetlessKind, type PuzzleKind } from "@/lib/game/fen-puzzle";
+import type { BoardPosition, Exercise, PieceId } from "@/lib/game/types";
+import { toLabyrinthRecord, type BuilderState } from "./state";
 
 export type ValidationResult = {
   ok: boolean;
@@ -11,41 +12,79 @@ export type ValidationResult = {
   warnings: string[];
 };
 
-/** Validate a builder state live. `tracedPath` (optional) is the author's
- *  intended route as algebraic squares; if the BFS optimal is SHORTER than the
- *  traced route, warn about an accidental shortcut (RED-TEAM B2). */
+/** Which BuiltCatalog bucket a kind lands in — the only place that mapping
+ *  lives, so reading a built record back never drifts from buildCatalog's own
+ *  routing. */
+const BUCKET_OF: Record<PuzzleKind, keyof BuiltCatalog & string> = {
+  exercise: "exercises",
+  labyrinth: "labyrinths",
+  "diagonal-run": "diagonalRun",
+  "knight-tour": "knightTour",
+  queens: "queens",
+  "safe-path": "safePath",
+  "promotion-run": "promotionRun",
+};
+
+/** buildCatalog prefixes every error with the record's file+id label. Strip it
+ *  so the live message matches the bare text the builder shows. */
+const stripLabel = (m: string): string =>
+  m.replace(/^(?:labyrinths|exercises)\.json '[^']*':\s*/, "");
+
+/**
+ * Validate a builder draft LIVE against the SAME validator that gates the save
+ * (P0-4). `validateBuilder` no longer owns a second opinion: it builds the
+ * record Save would write and asks `buildCatalog` — so the solvers, the
+ * diagonal-run knight lint and the promotion-run mission requirement all speak
+ * with one voice, and no draft the builder lets you paint can be rejected on
+ * save. The only judgement left here is the AUTHOR-facing shortcut warning
+ * (traced route vs the BFS optimum), which buildCatalog knows nothing about.
+ *
+ * `optimalMoves` and `path` are DISPLAY aids, not the verdict: the pass/fail
+ * decision is buildCatalog's alone. The path highlight is computed only for the
+ * kinds whose route the generic BFS actually models (exercise, labyrinth); the
+ * own-solver kinds have no single route to draw.
+ */
 export function validateBuilder(s: BuilderState, tracedPath?: string[]): ValidationResult {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-  if (!s.start) errors.push("Set a start square.");
-  if (!s.goal) errors.push("Set a goal square.");
-  if (s.start && s.goal && s.start === s.goal) errors.push("Start and goal must differ.");
+  // Author guidance for an INCOMPLETE draft — the record cannot even be built
+  // yet, so this precedes delegation. Kind-aware: a targetless game has no goal.
+  const preErrors: string[] = [];
+  if (!s.start) preErrors.push("Set a start square.");
+  if (!s.goal && !isTargetlessKind(s.kind)) preErrors.push("Set a goal square.");
+  if (s.start && s.goal && s.start === s.goal) preErrors.push("Start and goal must differ.");
+  if (preErrors.length) return { ok: false, optimalMoves: null, path: [], errors: preErrors, warnings: [] };
+
+  let cat: BuiltCatalog;
+  try {
+    const record = toLabyrinthRecord(s);
+    cat = s.kind === "exercise"
+      ? buildCatalog([], [], [record])
+      : buildCatalog([], [record], []);
+  } catch (e) {
+    return { ok: false, optimalMoves: null, path: [], errors: [(e as Error).message], warnings: [] };
+  }
+
+  const errors = cat.errors.map(stripLabel);
+  const warnings = cat.warnings.map(stripLabel);
   if (errors.length) return { ok: false, optimalMoves: null, path: [], errors, warnings };
 
-  let exercise: Exercise;
-  try {
-    const mapped = mapFenPuzzle(toPuzzleInput(s));
-    exercise = {
-      id: "preview",
-      optimalMoves: 0,
-      startPos: mapped.startPos,
-      targetPos: mapped.targetPos,
-      obstacles: mapped.obstacles,
-      captureTargets: mapped.captureTargets,
-      isCapture: mapped.isCapture,
-    };
-  } catch (e) {
-    return { ok: false, optimalMoves: null, path: [], errors: [(e as Error).message], warnings };
+  const built = (cat[BUCKET_OF[s.kind]] as Record<PieceId, Exercise[]>)[s.piece].find(
+    (e) => e.id === "draft",
+  );
+  const optimalMoves = built?.optimalMoves ?? null;
+
+  // Route highlight + shortcut warning only where the generic BFS is the real
+  // solver. For the own-solver kinds the route is not a single path (a coverage
+  // ceiling, an arrival under threats), so drawing one would lie.
+  let path: BoardPosition[] = [];
+  if ((s.kind === "exercise" || s.kind === "labyrinth") && built) {
+    const bfs = computeExerciseBfsPath(s.piece, built);
+    path = bfs?.path ?? [];
+    if (tracedPath && bfs && tracedPath.length - 1 > bfs.optimalMoves) {
+      warnings.push(
+        `There is a shorter path (${bfs.optimalMoves}) than your traced route (${tracedPath.length - 1}). Add walls to remove the shortcut.`,
+      );
+    }
   }
 
-  const bfs = computeExerciseBfsPath(s.piece, exercise);
-  if (!bfs) {
-    return { ok: false, optimalMoves: null, path: [], errors: ["No path: the goal is unreachable."], warnings };
-  }
-  if (tracedPath && tracedPath.length - 1 > bfs.optimalMoves) {
-    warnings.push(
-      `There is a shorter path (${bfs.optimalMoves}) than your traced route (${tracedPath.length - 1}). Add walls to remove the shortcut.`,
-    );
-  }
-  return { ok: true, optimalMoves: bfs.optimalMoves, path: bfs.path, errors, warnings };
+  return { ok: true, optimalMoves, path, errors, warnings };
 }
