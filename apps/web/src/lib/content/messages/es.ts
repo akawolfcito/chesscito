@@ -1653,6 +1653,11 @@ const messages = {
       caught: "Te atraparon. Esa casilla estaba vigilada.",
       done: "¡Coronaste!",
     },
+    picker: {
+      title: "Tu peón llegó al borde",
+      mission: "Invocá {piece} al tablero.",
+      hint: "Un peón que cruza el tablero se convierte en la pieza que elijas.",
+    },
   },
   LABYRINTH_COPY: {
     toggleExercises: "Ejercicios",

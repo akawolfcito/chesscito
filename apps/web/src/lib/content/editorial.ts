@@ -1486,6 +1486,24 @@ export const PROMOTION_RUN_COPY = {
     caught: "Caught. That square was watched.",
     done: "Promoted!",
   },
+  /** The promotion picker (P3/P5 — auto-queen is dead so this choice exists).
+   *
+   *  ⚠️ Reframes P4, which said promotion teaches the VALUE CHAIN (queen 9,
+   *  rook 5, …). Founder, 2026-07-16: the player does not know how to play a
+   *  knight yet, so "crown a knight and you mate" teaches nothing — it teaches
+   *  obedience. What promotion teaches at THIS stage is that it SUMMONS a piece
+   *  of your choosing. The numbers come back when there is a level that earns
+   *  them. */
+  picker: {
+    title: "Your pawn reached the edge",
+    /** The mission, stated plainly. The founder's condition for failing a wrong
+     *  pick at all: "siempre y cuando en el modal se le muestre de manera clara
+     *  cuál es la misión". A choice you were never told is a gotcha. */
+    mission: "Summon a {piece} onto the board.",
+    /** Named for what it is. "Promote" is the chess word; "summon" is what a
+     *  player who has never promoted actually sees happen. */
+    hint: "A pawn that crosses the board becomes any piece you choose.",
+  },
 } as const;
 
 export const LABYRINTH_COPY = {
