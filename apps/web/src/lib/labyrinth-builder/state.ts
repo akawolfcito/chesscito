@@ -50,6 +50,15 @@ export type BuilderState = {
   tier?: ExerciseTier;
   /** Freeform authoring tags (e.g. "straight-line"). Persisted verbatim. */
   tags?: string[];
+  /** The teaching guide — AUTHORING-ONLY pedagogy the player never sees. The
+   *  single principle slug this level exists to teach (e.g. "rank-movement").
+   *  UI-owned so a load→edit→save round-trips the founder's edit, not the
+   *  loaded copy. */
+  principle?: string;
+  /** The teaching guide — what the player should walk away knowing. Read by
+   *  content reviewers; never rendered in-game. Editable so the founder can
+   *  author it here for every piece. See `principle`. */
+  learningObjective?: string;
   id?: string;
 };
 
@@ -76,6 +85,11 @@ const UI_OWNED_FIELDS = new Set([
   "explanation",
   "tier",
   "tags",
+  // The teaching guide — editable in the builder now, so its edit must win
+  // over the loaded copy. `title` and `playerPrompt` stay OUT: they are
+  // player-facing copy the builder cannot express, and still ride extraFields.
+  "principle",
+  "learningObjective",
 ]);
 
 /** Everything on a record the builder UI cannot express (pedagogy, `kind`,
@@ -147,6 +161,9 @@ export function toLabyrinthRecord(s: BuilderState, id = "draft"): LabyrinthRecor
     tier: s.tier,
     tags: s.tags,
     explanation: s.explanation,
+    // Authoring-only teaching guide (never shown to players).
+    principle: s.principle,
+    learningObjective: s.learningObjective,
     order: s.order,
   };
 }

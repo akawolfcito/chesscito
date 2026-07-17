@@ -29,12 +29,26 @@ describe("extraFields", () => {
     expect(extraFields(QUEENS_RECORD).kind).toBe("queens");
   });
 
-  it("carries pedagogy and promoteTo, which the UI also cannot express", () => {
+  it("carries player-facing copy and promoteTo, which the UI cannot express", () => {
     const extras = extraFields({ ...QUEENS_RECORD, promoteTo: "knight" });
 
+    // `title` / `playerPrompt` are shown to players and the builder has no
+    // field for them, so they ride along as passengers.
     expect(extras.title).toBe("The Quiet Room");
-    expect(extras.principle).toBe("queens-intro");
     expect(extras.promoteTo).toBe("knight");
+  });
+
+  it("does NOT carry the teaching guide — the UI owns it now", () => {
+    // `principle` and `learningObjective` became editable in the builder
+    // (the authoring-only teaching guide), so they are UI-owned: the builder's
+    // edit must win, not the loaded copy that extraFields would re-impose.
+    const extras = extraFields({
+      ...QUEENS_RECORD,
+      learningObjective: "No queen shares a line with another.",
+    });
+
+    expect(extras).not.toHaveProperty("principle");
+    expect(extras).not.toHaveProperty("learningObjective");
   });
 
   it("drops `bucket`: it is a read-time tag, never part of the record", () => {

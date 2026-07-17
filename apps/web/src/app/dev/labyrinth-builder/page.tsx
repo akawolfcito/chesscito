@@ -384,6 +384,10 @@ export default function LabyrinthBuilderPage() {
       explanation: rec.explanation,
       tier: rec.tier,
       tags: rec.tags,
+      // The authoring-only teaching guide, so the founder reads (and can edit)
+      // what this level is meant to teach instead of it hiding in editExtras.
+      principle: rec.principle,
+      learningObjective: rec.learningObjective,
       id: rec.id,
     });
     setEditExtras(extraFields(rec));
@@ -441,6 +445,10 @@ export default function LabyrinthBuilderPage() {
             explanation: state.explanation || undefined,
             tier: state.tier || undefined,
             tags: state.tags && state.tags.length ? state.tags : undefined,
+            // The teaching guide the UI now owns wins over the loaded copy in
+            // editExtras (undefined → dropped by JSON, clearing it on purpose).
+            principle: state.principle || undefined,
+            learningObjective: state.learningObjective || undefined,
             order: state.order,
           },
         }),
@@ -808,6 +816,55 @@ export default function LabyrinthBuilderPage() {
                 </span>
               ) : null}
             </label>
+          </div>
+
+          {/* Teaching guide — authoring-only pedagogy the player never sees.
+              It answers "what is this level meant to teach?" so the founder can
+              review and improve every exercise/game. Pre-filled on Edit; saved
+              on Save. `principle` is a stable one-lesson slug; learningObjective
+              is the plain-language takeaway. */}
+          <div className="rounded border border-sky-900/60 bg-sky-950/30 p-3 text-sm">
+            <p className="mb-2 font-semibold text-sky-200">
+              Teaching guide{" "}
+              <span className="font-normal text-sky-400/70">
+                — authoring only, never shown to players
+              </span>
+            </p>
+            <label className="mb-2 flex flex-col">
+              <span className="text-neutral-400">
+                learning objective (what the player should walk away knowing)
+              </span>
+              <textarea
+                value={state.learningObjective ?? ""}
+                onChange={(e) =>
+                  update({ learningObjective: e.target.value || undefined })
+                }
+                rows={2}
+                placeholder="e.g. The rook travels any distance along one rank."
+                className="rounded bg-neutral-800 px-2 py-1"
+                data-allow-select="true"
+              />
+            </label>
+            <label className="flex flex-col">
+              <span className="text-neutral-400">
+                principle (one-lesson slug)
+              </span>
+              <input
+                type="text"
+                value={state.principle ?? ""}
+                onChange={(e) =>
+                  update({ principle: e.target.value || undefined })
+                }
+                placeholder="e.g. rank-movement"
+                className="rounded bg-neutral-800 px-2 py-1 font-mono text-xs"
+              />
+            </label>
+            {!state.learningObjective && !state.principle ? (
+              <p className="mt-2 text-xs text-sky-400/70">
+                No teaching guide authored yet — write what this{" "}
+                {bucket === "exercise" ? "exercise" : "game"} is meant to teach.
+              </p>
+            ) : null}
           </div>
 
           {/* Validation */}

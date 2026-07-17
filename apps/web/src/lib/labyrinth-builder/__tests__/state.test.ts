@@ -5,6 +5,8 @@ import { mapFenPuzzle } from "@/lib/game/fen-puzzle";
 import {
   buildFenBlock,
   emptyState,
+  extraFields,
+  toLabyrinthRecord,
   toPuzzleInput,
   type BuilderState,
 } from "../state";
@@ -103,6 +105,48 @@ describe("labyrinth-builder/state", () => {
     it("throws when goal is null", () => {
       const s = { ...emptyState(), start: "a1" };
       expect(() => buildFenBlock(s)).toThrow("start and goal required");
+    });
+  });
+
+  describe("teaching guide (authoring-only pedagogy)", () => {
+    // The founder authors "what this teaches" in the builder now. These two
+    // fields are UI-owned so a load→edit→save round-trips them from state,
+    // instead of only surviving as opaque extraFields the UI never shows.
+    const withGuide: BuilderState = {
+      kind: "labyrinth",
+      piece: "rook",
+      start: "a1",
+      goal: "a8",
+      walls: [],
+      enemies: [],
+      order: 0,
+      principle: "rank-movement",
+      learningObjective: "The rook travels any distance along one rank.",
+    };
+
+    it("toLabyrinthRecord emits principle and learningObjective from state", () => {
+      const rec = toLabyrinthRecord(withGuide);
+      expect(rec.principle).toBe("rank-movement");
+      expect(rec.learningObjective).toBe(
+        "The rook travels any distance along one rank.",
+      );
+    });
+
+    it("extraFields no longer carries them — the UI owns them now", () => {
+      const extras = extraFields({
+        id: "rook-1",
+        piece: "rook",
+        principle: "rank-movement",
+        learningObjective: "Anything.",
+        title: "Along the Rank",
+        playerPrompt: "Slide straight to the star.",
+      });
+      // UI-owned → the builder's edit wins, not the loaded copy.
+      expect(extras).not.toHaveProperty("principle");
+      expect(extras).not.toHaveProperty("learningObjective");
+      // Player-facing copy the builder still cannot express stays a passenger.
+      expect(extras.title).toBe("Along the Rank");
+      expect(extras.playerPrompt).toBe("Slide straight to the star.");
     });
   });
 
