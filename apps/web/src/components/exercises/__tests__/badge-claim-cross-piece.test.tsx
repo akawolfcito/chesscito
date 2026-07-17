@@ -178,6 +178,14 @@ function solve(exercise: Exercise) {
   fireEvent.click(screen.getByRole("gridcell", { name: to }));
 }
 
+/** The WELL DONE flash now holds for the player's tap before the queued
+ *  recognition takes the stage (founder 2026-07-17). Wait for the prompt to
+ *  arm, then tap past it. */
+async function tapPastWellDone() {
+  await screen.findByText("Tap to Continue", undefined, { timeout: 2500 });
+  fireEvent.click(screen.getByRole("button", { name: "Tap to Continue" }));
+}
+
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -277,7 +285,8 @@ describe("a badge claimed for a piece OTHER than the one on screen", () => {
     // A bishop solve re-surfaces the rook closer: the queue finds
     // `piece-badge-eligible` by id, with no regard for `selectedPiece`.
     solve(BISHOP_POOL[2]);
-    expect(screen.getByText("Badge Ready to Claim")).toBeInTheDocument();
+    await tapPastWellDone();
+    expect(await screen.findByText("Badge Ready to Claim")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Claim Badge" }));
     expect(claim.run).toHaveBeenCalledTimes(1);
@@ -304,6 +313,8 @@ describe("a badge claimed for a piece OTHER than the one on screen", () => {
     renderScreen();
 
     solve(BISHOP_POOL[2]);
+    await tapPastWellDone();
+    await screen.findByText("Badge Ready to Claim");
     fireEvent.click(screen.getByRole("button", { name: "Claim Badge" }));
     await act(async () => {
       claim.confirm();

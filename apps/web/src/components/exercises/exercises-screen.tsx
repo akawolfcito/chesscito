@@ -3732,8 +3732,15 @@ export function ExercisesScreen({
         ) : null}
 
         {/* One dialog, always: the queue emits a single step at a time and
-         *  absorbs lower majors into it as lines. */}
-        {celebration.current ? (
+         *  absorbs lower majors into it as lines.
+         *
+         *  Separated from the WELL DONE flash (founder 2026-07-17): while the
+         *  flash is holding for the player's tap, its reward/milestone modal
+         *  stays back. Stacking the two buried the celebration under the reward
+         *  ("First Reward Earned" popped on top of "Well done!"). The queue
+         *  state survives untouched, so the moment the player taps to continue
+         *  (`awaitFlashTap` clears), this resumes as its own beat. */}
+        {celebration.current && !awaitFlashTap ? (
           <UnlockOverlay
             step={celebration.current}
             onPrimary={handleCelebrationPrimary}

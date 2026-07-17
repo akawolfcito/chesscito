@@ -100,6 +100,14 @@ function solve(exercise: Exercise) {
   fireEvent.click(screen.getByRole("gridcell", { name: to }));
 }
 
+/** The WELL DONE flash now holds for the player's tap before the queued
+ *  recognition takes the stage (founder 2026-07-17). Wait for the prompt to
+ *  arm, then tap past it. */
+async function tapPastWellDone() {
+  await screen.findByText("Tap to Continue", undefined, { timeout: 2500 });
+  fireEvent.click(screen.getByRole("button", { name: "Tap to Continue" }));
+}
+
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -153,6 +161,7 @@ describe("Special Training celebration — the CTA opens the door it promised", 
     renderScreen();
 
     solve(ROOK_POOL[3]);
+    await tapPastWellDone();
 
     const cta = await screen.findByRole("button", { name: "Start Training" });
     fireEvent.click(cta);

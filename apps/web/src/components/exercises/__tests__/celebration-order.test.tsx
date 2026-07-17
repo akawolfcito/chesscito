@@ -143,6 +143,18 @@ function modalCount(): number {
   return document.querySelectorAll('[aria-modal="true"]').length;
 }
 
+/** The WELL DONE flash now holds for the player's tap, and its reward/milestone
+ *  modal stays back until then (they no longer stack — founder 2026-07-17).
+ *  Drive that tap the way a player does: wait for the prompt to arm, tap it, and
+ *  let the flash fade out so the queued recognition can take the stage. */
+async function tapPastWellDone() {
+  await screen.findByText("Tap to Continue", undefined, { timeout: 2500 });
+  fireEvent.click(screen.getByRole("button", { name: "Tap to Continue" }));
+  await waitFor(() => {
+    expect(screen.queryByText("Tap to Continue")).not.toBeInTheDocument();
+  });
+}
+
 function seedRookProgress(currentId: string, stars: Record<string, number>) {
   localStorage.setItem(
     pieceProgressStorageKey("rook"),
@@ -217,7 +229,7 @@ afterEach(() => {
 });
 
 describe("celebration order on the exercises screen", () => {
-  it("never shows the session limit while a recognition is pending", () => {
+  it("never shows the session limit while a recognition is pending", async () => {
     exhaustSessionQuota();
     renderScreen();
 
@@ -225,23 +237,25 @@ describe("celebration order on the exercises screen", () => {
     expect(screen.getByText("Great focus today!")).toBeInTheDocument();
 
     // A fresh solve with the quota already burned: the session ended, so the
-    // Great Focus Session fires.
+    // Great Focus Session fires — after the WELL DONE flash is tapped past.
     solve(ROOK_POOL[0]);
+    await tapPastWellDone();
 
-    expect(screen.getByText("Great Focus Session")).toBeInTheDocument();
+    expect(await screen.findByText("Great Focus Session")).toBeInTheDocument();
     expect(screen.queryByText("Great focus today!")).not.toBeInTheDocument();
   });
 
-  it("shows the gift overlay before the maze overlay, never stacked", () => {
+  it("shows the gift overlay before the maze overlay, never stacked", async () => {
     // 6★ across 2 exercises already; the third solve crosses BOTH the gift
     // gate (4★ / 2 exercises) and the maze gate (6★ / 3 exercises) at once.
     seedRookProgress("t-rook-3", { "t-rook-1": 3, "t-rook-2": 3 });
     renderScreen();
 
     solve(ROOK_POOL[2]);
+    await tapPastWellDone();
 
+    expect(await screen.findByText("First Reward Earned")).toBeInTheDocument();
     expect(screen.getAllByRole("dialog")).toHaveLength(1);
-    expect(screen.getByText("First Reward Earned")).toBeInTheDocument();
     expect(screen.queryByText("First Maze Unlocked")).not.toBeInTheDocument();
   });
 
@@ -400,7 +414,8 @@ describe("first-reward routes to the gift, not the shield Welcome Pack", () => {
     renderScreen();
 
     solve(ROOK_POOL[1]);
-    expect(screen.getByText("First Reward Earned")).toBeInTheDocument();
+    await tapPastWellDone();
+    expect(await screen.findByText("First Reward Earned")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Open Gift" }));
 
@@ -418,6 +433,8 @@ describe("first-reward routes to the gift, not the shield Welcome Pack", () => {
     renderScreen();
 
     solve(ROOK_POOL[1]);
+    await tapPastWellDone();
+    await screen.findByText("First Reward Earned");
     fireEvent.click(screen.getByRole("button", { name: "Open Gift" }));
     await screen.findByTestId("welcome-package-modal");
 
