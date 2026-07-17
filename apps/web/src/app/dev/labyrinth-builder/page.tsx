@@ -24,6 +24,7 @@ import {
   watchedSquares,
 } from "@/lib/labyrinth-builder/authoring";
 import { PROMOTABLE_PIECES } from "@/lib/game/promotion-run";
+import { BuilderPreview, isPreviewable } from "@/components/dev/builder-preview";
 import {
   formatPublishResult,
   type PublishResultLike,
@@ -160,6 +161,9 @@ export default function LabyrinthBuilderPage() {
   // a save round-trips them instead of dropping them.
   const [editExtras, setEditExtras] = useState<Record<string, unknown>>({});
   const [brush, setBrush] = useState<Brush>("start");
+  /** Paint = author the position; Preview = play the real board on the draft.
+   *  Only one board is mounted at a time (behavior 11). */
+  const [mode, setMode] = useState<"paint" | "preview">("paint");
   const [tracedPath, setTracedPath] = useState<string[]>([]);
   const [fenInput, setFenInput] = useState("");
   const [targetInput, setTargetInput] = useState("");
@@ -220,6 +224,12 @@ export default function LabyrinthBuilderPage() {
   // The squares the enemies watch, for the authoring overlay (AC-9). Empty for
   // non-threat kinds, so the wash only appears where it means something.
   const watched = useMemo(() => watchedSquares(state), [state]);
+
+  // Preview is offered only for a VALID draft of a kind with a standalone board
+  // (behavior 13: never mount a board on a broken level). `showPreview` falls
+  // back to paint the instant the draft breaks or the kind stops qualifying.
+  const canPreview = result.ok && !!result.preview && isPreviewable(state.kind);
+  const showPreview = mode === "preview" && canPreview;
   const traceIndex = useMemo(() => {
     const m = new Map<string, number>();
     tracedPath.forEach((sq, i) => m.set(sq, i + 1));
@@ -520,6 +530,41 @@ export default function LabyrinthBuilderPage() {
             ))}
           </div>
 
+          {/* Paint = author the position; Preview = play the real board. */}
+          <div className="flex gap-2" role="group" aria-label="Board mode">
+            {(["paint", "preview"] as const).map((m) => {
+              const disabled = m === "preview" && !canPreview;
+              // Highlight what is actually shown, not the stale mode flag.
+              const activeStyle = m === "preview" ? showPreview : !showPreview;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => setMode(m)}
+                  title={
+                    disabled
+                      ? "Preview needs a valid draft of a game with its own board (queens, tour, diagonal-run, promotion-run, safe-path)."
+                      : undefined
+                  }
+                  className={`rounded px-3 py-1 text-sm capitalize transition-colors ${
+                    activeStyle
+                      ? "bg-neutral-100 font-semibold text-black"
+                      : disabled
+                        ? "cursor-not-allowed bg-neutral-900 text-neutral-600"
+                        : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800"
+                  }`}
+                >
+                  {m}
+                </button>
+              );
+            })}
+          </div>
+
+          {showPreview && result.preview ? (
+            <BuilderPreview exercise={result.preview} kind={state.kind} />
+          ) : (
+            <>
           <ProceduralBoard
             onCellClick={(_file, _rank, sq) => handleCell(sq)}
             renderCell={(_file, _rank, sq) => {
@@ -596,6 +641,8 @@ export default function LabyrinthBuilderPage() {
             piece=start · ★=goal · dark tile=wall · red ring=capture · red
             wash=watched by an enemy · blue dot=BFS path · number=traced order
           </p>
+            </>
+          )}
         </section>
 
         {/* ── Controls column ── */}

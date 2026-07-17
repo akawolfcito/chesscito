@@ -10,6 +10,10 @@ export type ValidationResult = {
   path: BoardPosition[];
   errors: string[];
   warnings: string[];
+  /** The built Exercise for a VALID draft — the same object buildCatalog files,
+   *  ready to feed a real game board as Preview (behavior 10). `null` whenever
+   *  the draft is invalid: never mount a board on a broken level (edge case). */
+  preview: Exercise | null;
 };
 
 /** Which BuiltCatalog bucket a kind lands in — the only place that mapping
@@ -51,7 +55,7 @@ export function validateBuilder(s: BuilderState, tracedPath?: string[]): Validat
   if (!s.start) preErrors.push("Set a start square.");
   if (!s.goal && !isTargetlessKind(s.kind)) preErrors.push("Set a goal square.");
   if (s.start && s.goal && s.start === s.goal) preErrors.push("Start and goal must differ.");
-  if (preErrors.length) return { ok: false, optimalMoves: null, path: [], errors: preErrors, warnings: [] };
+  if (preErrors.length) return { ok: false, optimalMoves: null, path: [], errors: preErrors, warnings: [], preview: null };
 
   let cat: BuiltCatalog;
   try {
@@ -60,12 +64,12 @@ export function validateBuilder(s: BuilderState, tracedPath?: string[]): Validat
       ? buildCatalog([], [], [record])
       : buildCatalog([], [record], []);
   } catch (e) {
-    return { ok: false, optimalMoves: null, path: [], errors: [(e as Error).message], warnings: [] };
+    return { ok: false, optimalMoves: null, path: [], errors: [(e as Error).message], warnings: [], preview: null };
   }
 
   const errors = cat.errors.map(stripLabel);
   const warnings = cat.warnings.map(stripLabel);
-  if (errors.length) return { ok: false, optimalMoves: null, path: [], errors, warnings };
+  if (errors.length) return { ok: false, optimalMoves: null, path: [], errors, warnings, preview: null };
 
   const built = (cat[BUCKET_OF[s.kind]] as Record<PieceId, Exercise[]>)[s.piece].find(
     (e) => e.id === "draft",
@@ -86,5 +90,5 @@ export function validateBuilder(s: BuilderState, tracedPath?: string[]): Validat
     }
   }
 
-  return { ok: true, optimalMoves, path, errors, warnings };
+  return { ok: true, optimalMoves, path, errors, warnings, preview: built ?? null };
 }
