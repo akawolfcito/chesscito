@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { PUZZLE_KINDS, isThreatKind, type PuzzleKind } from "@/lib/game/fen-puzzle";
+import { PUZZLE_KINDS, isThreatKind, squareToPos, type PuzzleKind } from "@/lib/game/fen-puzzle";
+import { attackedSquares } from "@/lib/game/attack-map";
+import type { BuilderState } from "../state";
 import {
   KIND_CAPABILITY,
   isKindEditable,
   kindLabel,
+  watchedSquares,
 } from "../authoring";
 
 describe("KIND_CAPABILITY", () => {
@@ -34,5 +37,27 @@ describe("KIND_CAPABILITY", () => {
     for (const kind of PUZZLE_KINDS) {
       expect(kindLabel(kind as PuzzleKind).length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("watchedSquares (AC-9)", () => {
+  const draft = (over: Partial<BuilderState>): BuilderState => ({
+    kind: "safe-path", piece: "king", start: "a1", goal: "h8",
+    walls: [], enemies: [], order: 0, ...over,
+  });
+
+  it("marks EXACTLY the squares the game's attackedSquares computes", () => {
+    const state = draft({
+      walls: ["d5"],
+      enemies: [{ square: "d4", piece: "knight" }, { square: "f6", piece: "rook" }],
+    });
+    const typed = state.enemies.map((e) => ({ pos: squareToPos(e.square), piece: e.piece }));
+    expect(watchedSquares(state)).toEqual(attackedSquares(typed, [squareToPos("d5")]));
+  });
+
+  it("is empty for a non-threat kind even with black pieces on the board", () => {
+    expect(
+      watchedSquares(draft({ kind: "labyrinth", enemies: [{ square: "d4", piece: "knight" }] })),
+    ).toEqual(new Set());
   });
 });

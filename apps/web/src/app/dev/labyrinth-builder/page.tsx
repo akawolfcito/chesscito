@@ -21,6 +21,7 @@ import {
   isKindEditable,
   kindLabel,
   isTargetlessKind,
+  watchedSquares,
 } from "@/lib/labyrinth-builder/authoring";
 import { PROMOTABLE_PIECES } from "@/lib/game/promotion-run";
 import {
@@ -82,6 +83,15 @@ const CELL_OVERLAY: Record<string, CSSProperties> = {
     borderRadius: "50%",
     border: "3px solid rgba(248, 113, 113, 0.95)",
     boxShadow: "0 0 8px rgba(248,113,113,0.7)",
+    pointerEvents: "none",
+  },
+  // A translucent red wash over a square an enemy watches — the SAME set the
+  // game computes (attackedSquares). Threat kinds only; drawn UNDER the sprites.
+  watched: {
+    position: "absolute",
+    inset: 0,
+    background: "rgba(248, 113, 113, 0.22)",
+    borderRadius: "12%",
     pointerEvents: "none",
   },
   sprite: {
@@ -207,6 +217,9 @@ export default function LabyrinthBuilderPage() {
     () => new Set(result.path.map((p) => posKey(p))),
     [result.path],
   );
+  // The squares the enemies watch, for the authoring overlay (AC-9). Empty for
+  // non-threat kinds, so the wash only appears where it means something.
+  const watched = useMemo(() => watchedSquares(state), [state]);
   const traceIndex = useMemo(() => {
     const m = new Map<string, number>();
     tracedPath.forEach((sq, i) => m.set(sq, i + 1));
@@ -516,8 +529,12 @@ export default function LabyrinthBuilderPage() {
               const isCapture = state.enemies.some((e) => e.square === sq);
               const inPath = pathSquares.has(sq);
               const traceOrder = traceIndex.get(sq);
+              const isWatched = watched.has(sq);
               return (
                 <>
+                  {isWatched && !isStart && !isCapture && (
+                    <span style={CELL_OVERLAY.watched} />
+                  )}
                   {isWall && !isStart && !isGoal && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src="/art/labyrinths/wall.png" alt="" style={CELL_OVERLAY.wall} />
@@ -576,8 +593,8 @@ export default function LabyrinthBuilderPage() {
             </button>
           </div>
           <p className="text-xs text-neutral-500">
-            piece=start · ★=goal · dark tile=wall · red ring=capture · blue
-            dot=BFS path · number=traced order
+            piece=start · ★=goal · dark tile=wall · red ring=capture · red
+            wash=watched by an enemy · blue dot=BFS path · number=traced order
           </p>
         </section>
 

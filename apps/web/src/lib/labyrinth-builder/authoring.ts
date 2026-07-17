@@ -1,9 +1,12 @@
-import type { PieceId } from "@/lib/game/types";
+import type { PieceId, TypedEnemy } from "@/lib/game/types";
 import {
   isTargetlessKind,
   isThreatKind,
+  squareToPos,
   type PuzzleKind,
 } from "@/lib/game/fen-puzzle";
+import { attackedSquares } from "@/lib/game/attack-map";
+import type { BuilderState } from "./state";
 
 /**
  * What each game lets an author paint — ONE table, read by the UI, never
@@ -64,6 +67,24 @@ const KIND_LABEL: Record<PuzzleKind, string> = {
 
 export function kindLabel(kind: PuzzleKind): string {
   return KIND_LABEL[kind];
+}
+
+/**
+ * The squares the draft's enemies watch — computed by the very function the game
+ * uses (`attackedSquares`), so the authoring overlay shows EXACTLY what the
+ * player will face, never an approximation that could drift (AC-9).
+ *
+ * Empty for the non-threat kinds: their black pieces are capture targets or
+ * absent, not eyes. The author converts algebraic squares to positions here;
+ * attackedSquares returns algebraic squares for O(1) membership.
+ */
+export function watchedSquares(state: BuilderState): Set<string> {
+  if (!isThreatKind(state.kind)) return new Set<string>();
+  const enemies: TypedEnemy[] = state.enemies.map((e) => ({
+    pos: squareToPos(e.square),
+    piece: e.piece,
+  }));
+  return attackedSquares(enemies, state.walls.map(squareToPos));
 }
 
 // Re-exported so callers read one module for authoring capability, deriving the
