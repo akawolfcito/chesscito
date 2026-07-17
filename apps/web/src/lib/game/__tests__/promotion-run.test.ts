@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   legalPawnMoves,
   promotionRunSolve,
+  promotionRunStars,
   type PawnRunState,
 } from "@/lib/game/promotion-run";
 import { squareToPos, type TypedEnemy } from "@/lib/game/fen-puzzle";
@@ -260,5 +261,38 @@ describe("promotionRunSolve — the founder's sketch", () => {
     );
 
     expect(run).toBeNull();
+  });
+});
+
+describe("promotionRunStars — moves cannot grade this game, so failures do", () => {
+  /** Founder, 2026-07-16, deciding what a star means here.
+   *
+   *  ⚠️ This exists because `labyrinthStars` CANNOT work on this game and never
+   *  will: a pawn advances exactly one rank per move, so every winning run from
+   *  rank r measures exactly `7 - r`. Moves == optimal for ANY win → three stars
+   *  for everyone. The difficulty was never the route's length; it is not dying
+   *  on the way. So that is what gets graded. */
+
+  it("gives three stars to a clean run", () => {
+    expect(promotionRunStars(0)).toBe(3);
+  });
+
+  it("takes a star per failure", () => {
+    expect(promotionRunStars(1)).toBe(2);
+    expect(promotionRunStars(2)).toBe(1);
+  });
+
+  it("floors at one star — winning is still winning", () => {
+    // Never 0: the player who dies six times and still promotes did the thing
+    // the level asked. A zero would read as "you failed" on a win.
+    expect(promotionRunStars(3)).toBe(1);
+    expect(promotionRunStars(99)).toBe(1);
+  });
+
+  it("counts a wrong crown as a failure, same as a death", () => {
+    // Two ways to fail this game — caught on a watched square, or crowning the
+    // piece the mission did not ask for. Both are the run going wrong, so both
+    // cost the same. The caller passes the total; this does not care which.
+    expect(promotionRunStars(1)).toBe(2);
   });
 });

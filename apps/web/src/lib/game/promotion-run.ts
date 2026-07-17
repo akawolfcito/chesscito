@@ -48,6 +48,34 @@ export function isPromotable(piece: PieceId): boolean {
 /** White pawn: up the board. The last rank is where it promotes. */
 const PROMOTION_RANK = 7;
 
+/**
+ * Stars for a Promotion Run, by how many times the run went wrong.
+ *
+ * ⛔ `labyrinthStars` CANNOT grade this game, and no tuning fixes it: a pawn
+ * advances exactly one rank per move, so EVERY winning run from rank r measures
+ * exactly `7 - r`. Moves always equals optimal on a win → three stars for
+ * everyone, forever. The two numbers are both `number` and would wire together
+ * without a type error, which is precisely how a scoreboard starts lying.
+ *
+ * The route's length was never the difficulty. Not dying on the way is. So that
+ * is what this grades (founder, 2026-07-16).
+ *
+ * `failures` counts BOTH ways to lose a run: caught on a watched square, and
+ * crowning the piece the mission did not ask for. Both are the run going wrong.
+ *
+ * ⚠️ A shield does NOT erase a failure. It buys the player out of the
+ * CONSEQUENCE (restarting the run), not out of the record — otherwise three
+ * stars would be purchasable, and a star that can be bought grades a wallet.
+ *
+ * Floors at 1: the player who dies five times and still promotes did the thing
+ * the level asked, and a 0 would read as "you failed" on a win.
+ */
+export function promotionRunStars(failures: number): number {
+  if (failures <= 0) return 3;
+  if (failures === 1) return 2;
+  return 1;
+}
+
 const inBoard = (f: number, r: number) => f >= 0 && f < 8 && r >= 0 && r < 8;
 const samePos = (a: BoardPosition, b: BoardPosition) =>
   a.file === b.file && a.rank === b.rank;
