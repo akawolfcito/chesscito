@@ -194,6 +194,13 @@ import { DailyLimitBanner } from "@/components/daily/daily-limit-banner";
 // in isolation. The import is below with the other contract helpers.
 
 
+/** How long the Safe Path attack beat gets before the failure modal covers the
+ *  board (founder, 2026-07-16). The laser is a 460ms CSS animation
+ *  (`.playhub-board-laser`); this leaves it room to land and register rather
+ *  than flashing under a modal that was already opening. Keep it ABOVE that
+ *  460ms — if the animation is ever retimed, retime this with it. */
+const SAFE_PATH_ATTACK_BEAT_MS = 850;
+
 type SignatureResponse =
   | { nonce: string; deadline: string; signature: `0x${string}`; error?: never }
   | { error: string };
@@ -1377,6 +1384,12 @@ export function ExercisesScreen({
     // and all three mean the same thing for the king: walk back to the start
     // (D5). Losing on step 9 of 10 costs the whole run.
     setSafePathResetKey((previous) => previous + 1);
+    // A beat still in flight belongs to a run that no longer exists. Left
+    // pending, it would fire a failure into the fresh board it lands on.
+    if (safePathBeatTimer.current) {
+      clearTimeout(safePathBeatTimer.current);
+      safePathBeatTimer.current = null;
+    }
   }
 
   /**
@@ -2528,6 +2541,18 @@ export function ExercisesScreen({
    *  whether he was rescued by a shield or the player waved the modal away. */
   const [safePathResetKey, setSafePathResetKey] = useState(0);
 
+  /** Holds the attack beat so it can be cancelled. Without this, leaving the
+   *  level mid-beat fires a failure into a board that is no longer there — and
+   *  worse, into whatever level replaced it. */
+  const safePathBeatTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (safePathBeatTimer.current) clearTimeout(safePathBeatTimer.current);
+    },
+    [],
+  );
+
   /**
    * The king stepped where an enemy watches, and was seen (D4).
    *
@@ -2538,31 +2563,45 @@ export function ExercisesScreen({
    * exercise one wholesale: the same `phase = "failure"`, the same rescue
    * modal, the same FTUX gate, the same auto-reset fallback. The shield already
    * means "you failed, take another run at it" — that is exactly what happened.
+   *
+   * ⏱ The failure is DELAYED by the attack beat (founder, 2026-07-16). Firing
+   * it immediately was correct and unreadable: the modal covered the board
+   * before the laser landed, so the player was told "caught" without ever
+   * seeing BY WHAT. The beam is the lesson — it names the piece that saw him
+   * and draws its line of attack — and a lesson nobody sees is not one. The
+   * board is already frozen in its `caught` phase, so the wait costs no
+   * agency: there is nothing the player could do with those 850ms anyway.
    */
   function handleSafePathCaught(caughtOn: string) {
     if (!activeSafePath) return;
-    setPhase("failure");
-    shieldRescueAttemptIdRef.current += 1;
-    track("exercise_fail", {
-      piece: selectedPiece,
-      exercise_id: activeSafePath.id,
-      moves: safePathBand?.moves ?? 0,
-      is_capture: false,
-      // Which square did the killing. Level-design telemetry: it names the trap
-      // that actually works, which is the one thing the builder cannot show.
-      caught_on: caughtOn,
-      isLite: CHESSCITO_LITE_MODE,
-    });
-    // Same gate as the exercise path: the modal pitches streaks and shields,
-    // and a player who has never met either is being over-pitched. Without the
-    // context, the run just restarts after a beat — the king still walks home,
-    // because handleRetryApplied lands in resetBoard.
-    const hasRescueContext =
-      streakCount >= 1 || shieldCount >= 1 || welcomePack.state === "claimed";
-    if (!hasRescueContext) {
-      autoReset.schedule(() => handleRetryApplied("auto_reset"), 1500);
-    }
-    // else: the modal owns the dwell, and its own handlers reset the board.
+    const caughtId = activeSafePath.id;
+    const movesAtCatch = safePathBand?.moves ?? 0;
+    if (safePathBeatTimer.current) clearTimeout(safePathBeatTimer.current);
+    safePathBeatTimer.current = setTimeout(() => {
+      safePathBeatTimer.current = null;
+      setPhase("failure");
+      shieldRescueAttemptIdRef.current += 1;
+      track("exercise_fail", {
+        piece: selectedPiece,
+        exercise_id: caughtId,
+        moves: movesAtCatch,
+        is_capture: false,
+        // Which square did the killing. Level-design telemetry: it names the
+        // trap that actually works, which the builder cannot show.
+        caught_on: caughtOn,
+        isLite: CHESSCITO_LITE_MODE,
+      });
+      // Same gate as the exercise path: the modal pitches streaks and shields,
+      // and a player who has never met either is being over-pitched. Without
+      // the context the run just restarts — the king still walks home, because
+      // handleRetryApplied lands in resetBoard.
+      const hasRescueContext =
+        streakCount >= 1 || shieldCount >= 1 || welcomePack.state === "claimed";
+      if (!hasRescueContext) {
+        autoReset.schedule(() => handleRetryApplied("auto_reset"), 1500);
+      }
+      // else: the modal owns the dwell, and its own handlers reset the board.
+    }, SAFE_PATH_ATTACK_BEAT_MS);
   }
 
   /** The active node graded by coverage, whichever game it belongs to. The two
