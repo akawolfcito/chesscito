@@ -42,12 +42,24 @@ que todavía cree que hay dos.** No hay que construir el conocimiento: hay que d
 ### Y una pérdida peor que el kind: el enemigo tipado
 
 `buildFenBlock` (`state.ts:35-36`) serializa **muros → `N`** y **capturas → `p`**, siempre.
-`pawn-promotion-1` ("No Way Around") tiene una **torre negra** en b4 y su
-`learningObjective` dice que *"el enemigo en la diagonal es la única puerta"*. Un load→save
-la reescribiría como **peón negro**: el nivel deja de enseñar lo que dice.
+✅ **MEDIDO (etapa 1, 2026-07-17).** La afirmación era correcta y **corta**: no era solo la
+torre. Con el serializador viejo, **6 de los 34 records** se reescriben mal —
+los 3 de Safe Path y los 3 de Promotion Run:
 
-⚠️ **NO ejecutado** (`deriveStateFromFen` vive sin exportar dentro de `page.tsx`). Literal en
-el código: `buildFenBlock` solo emite `N` y `p`. **La etapa 1 lo mide antes de afirmarlo.**
+| Record | El FEN dice | Un load→save escribía |
+|--------|-------------|----------------------|
+| `king-safe-1` | `n` caballo — *"The Knight Sees"* | `p` peón |
+| `king-safe-2` | `n` caballo ×2 | `p` peón ×2 |
+| `king-safe-3` | `b` alfil | `p` peón |
+| `pawn-promotion-1/2/3` | `r` torre — *"el enemigo de la diagonal es la única puerta"* | `p` peón |
+
+La causa no era una rama de código: era el **tipo**. `captures: string[]` **no puede** cargar
+un tipo de pieza, así que `buildFenBlock` tenía que inventar uno, y inventaba `p`.
+
+`deriveStateFromFen` vivía sin exportar dentro de `page.tsx` — por eso el par nunca se pudo
+testear, y por eso la pérdida sobrevivió tanto. Ahora vive junto a su inverso y
+`fen-round-trip.test.ts` corre los dos sobre los **34 records reales**. Verificado que el test
+es load-bearing: al revertir el serializador a `"p"`, caen esos 6 y solo esos 6.
 
 ## Goal
 

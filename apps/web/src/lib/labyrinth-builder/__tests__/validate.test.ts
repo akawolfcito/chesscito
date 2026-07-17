@@ -8,7 +8,7 @@ const base = (overrides: Partial<BuilderState>): BuilderState => ({
   start: "a1",
   goal: "a8",
   walls: [],
-  captures: [],
+  enemies: [],
   order: 0,
   ...overrides,
 });
@@ -52,7 +52,7 @@ describe("validateBuilder", () => {
 
   it("errors when the position is unsolvable (knight boxed in the corner)", () => {
     const result = validateBuilder(
-      base({ piece: "knight", start: "a1", goal: "h8", walls: ["b3", "c2"], captures: [] }),
+      base({ piece: "knight", start: "a1", goal: "h8", walls: ["b3", "c2"], enemies: [] }),
     );
     expect(result.ok).toBe(false);
     expect(result.optimalMoves).toBeNull();
@@ -61,7 +61,7 @@ describe("validateBuilder", () => {
 
   it("validates a solvable pawn lab", () => {
     const result = validateBuilder(
-      base({ piece: "pawn", start: "a2", goal: "a4", walls: [], captures: [] }),
+      base({ piece: "pawn", start: "a2", goal: "a4", walls: [], enemies: [] }),
     );
     expect(result.ok).toBe(true);
     expect(result.optimalMoves).not.toBeNull();
