@@ -266,5 +266,44 @@
     "target": "a1",
     "mover": "e1",
     "order": 0
+  },
+  {
+    "id": "king-safe-1",
+    "piece": "king",
+    "kind": "safe-path",
+    "fen": "8/8/2n5/8/8/8/8/K7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "title": "The Knight Sees",
+    "principle": "reading-a-threat",
+    "playerPrompt": "The knight is not in your way. The squares it watches are.",
+    "learningObjective": "The player learns that a piece controls squares far from itself, and that the short route is not always the safe one.",
+    "order": 0
+  },
+  {
+    "id": "king-safe-2",
+    "piece": "king",
+    "kind": "safe-path",
+    "fen": "8/8/2n5/8/8/5n2/8/K7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "title": "Two Watchers",
+    "principle": "overlapping-threats",
+    "playerPrompt": "Two knights, two zones. Find the gap between them.",
+    "learningObjective": "The player learns to read more than one threat at a time and to find the seam between two controlled zones.",
+    "order": 1
+  },
+  {
+    "id": "king-safe-3",
+    "piece": "king",
+    "kind": "safe-path",
+    "fen": "8/8/2n5/8/8/8/6b1/K7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "title": "The Long Eye",
+    "principle": "rays-reach-far",
+    "playerPrompt": "The bishop watches a whole diagonal, not a square.",
+    "learningObjective": "The player learns that a sliding piece controls a line all the way across the board, unlike the knight's fixed jumps.",
+    "order": 2
   }
 ]

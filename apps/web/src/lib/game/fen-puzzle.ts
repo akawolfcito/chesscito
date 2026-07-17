@@ -1,4 +1,14 @@
-import type { BoardPosition, PieceId, ExerciseTier } from "@/lib/game/types";
+import type {
+  BoardPosition,
+  PieceId,
+  ExerciseTier,
+  TypedEnemy,
+} from "@/lib/game/types";
+
+/** Re-exported so the threat modules can keep importing it from here, next to
+ *  the mapper that produces it. Defined in types.ts because `Exercise` carries
+ *  it and this module imports types.ts — see the note there. */
+export type { TypedEnemy };
 
 export class FenError extends Error {}
 
@@ -92,11 +102,6 @@ export type PuzzleInput = {
   playerPrompt?: string;
   learningObjective?: string;
 };
-
-/** A black piece that projects a threat. The FEN has always carried the type;
- *  until now mapFenPuzzle discarded it into a bare square. It cannot: a rook
- *  does not attack like a bishop, so a threat layer needs the type. */
-export type TypedEnemy = { pos: BoardPosition; piece: PieceId };
 
 export type MappedPuzzle = {
   kind: PuzzleKind;

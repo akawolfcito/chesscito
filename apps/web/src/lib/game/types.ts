@@ -11,6 +11,11 @@ export type BoardPiece = {
   position: BoardPosition;
 };
 
+/** A static black piece that projects a threat. Lives HERE rather than next to
+ *  `mapFenPuzzle` because `Exercise` carries it and fen-puzzle.ts imports this
+ *  module — the other direction would be a cycle. `fen-puzzle` re-exports it. */
+export type TypedEnemy = { pos: BoardPosition; piece: PieceId };
+
 export type SquareState = {
   file: number;
   rank: number;
@@ -83,6 +88,11 @@ export type Exercise = {
    *  captureTargets or targetPos. Rendered as capturable markers
    *  without a lock icon, visually distinct from obstacles. */
   captureTargets?: BoardPosition[];
+  /** Safe Path — the static black pieces that WATCH squares. Typed, because a
+   *  rook does not attack like a bishop, and `obstacles` is squares-only.
+   *  Never route with these directly: `lib/game/attack-map.ts` turns them into
+   *  the watched set, and only it knows that a ray also watches its blocker. */
+  enemies?: TypedEnemy[];
 
   /* ── Labyrinth System v0.2 — mint metadata (all optional, additive).
    *  Spec: docs/superpowers/specs/2026-06-02-labyrinth-system-v0.2.md §4.1

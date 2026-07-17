@@ -12,6 +12,7 @@ import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
 import { pivotBfs } from "@/lib/game/diagonal-run";
 import { reachableSquares } from "@/lib/game/knight-tour";
 import { maxQueens } from "@/lib/game/queens";
+import { safePathOptimalMoves } from "@/lib/game/safe-path";
 import { lintPuzzle } from "@/lib/content/lint";
 
 /** Floor for a shippable Knight's Tour level, in reachable squares. Below this
@@ -56,7 +57,7 @@ export type LabyrinthRecord = {
    *  existing content/labyrinths.json row). `"diagonal-run"` routes the record to
    *  the Diagonal Run bucket (GENERATED_DIAGONAL_RUN) instead — same source file, a
    *  separate runtime bucket. Design: docs/audits/2026-07-15-bishop-d1-*. */
-  kind?: "labyrinth" | "diagonal-run" | "knight-tour" | "queens";
+  kind?: "labyrinth" | "diagonal-run" | "knight-tour" | "queens" | "safe-path";
   /* Pedagogy (A1) — curated copy. `title` is what the drawer renders; the
    * linter requires all four on curated pieces. */
   principle?: string; title?: string; playerPrompt?: string; learningObjective?: string;
@@ -90,6 +91,15 @@ export type BuiltCatalog = {
    *  comes from a solver that backtracks the real placement, so it is always
    *  achievable and the pass line is always playable. */
   queens: Record<PieceId, Exercise[]>;
+  /** Safe Path pool (kind:"safe-path"). Its own bucket, same source file.
+   *  Graded by ARRIVAL, so unlike the coverage kinds `optimalMoves` is a move
+   *  count — lower is better — and it feeds `labyrinthStars`, never tourStars.
+   *
+   *  It is NOT the generic exercise BFS: that one walks the king by
+   *  `getKingMoves`, which knows nothing about threats and would route him
+   *  through a watched square. Only `safePathOptimalMoves` reads the attack
+   *  map, so only it can measure the route the player is allowed to take. */
+  safePath: Record<PieceId, Exercise[]>;
   descriptions: Record<string, string>;
   errors: string[];
   warnings: string[];
@@ -136,6 +146,7 @@ export function buildCatalog(
   const diagonalRun = emptyByPiece();
   const knightTour = emptyByPiece();
   const queens = emptyByPiece();
+  const safePath = emptyByPiece();
   const descriptions: Record<string, string> = {};
   const seenIds = new Set<string>();
   const seenPositions = new Set<string>();
@@ -145,7 +156,7 @@ export function buildCatalog(
   for (const n of ["kind", "piece", "fen", "target", "tier"]) {
     if (header.length && col(n) < 0) errors.push(`missing required column '${n}'`);
   }
-  if (errors.length) return { exercises, labyrinths, diagonalRun, knightTour, queens, descriptions, errors, warnings };
+  if (errors.length) return { exercises, labyrinths, diagonalRun, knightTour, queens, safePath, descriptions, errors, warnings };
 
   const addPuzzle = (
     input: PuzzleInput, label: string, idOverride: string | undefined, order: number,
@@ -218,18 +229,69 @@ export function buildCatalog(
       // `optimalMoves + 1` is the denominator the score divides by.
       coverageCeiling = ceiling - 1;
     }
+    // Safe Path is graded by ARRIVAL, so it is not a coverage kind — but the
+    // generic BFS still cannot measure it. That BFS walks the king with
+    // `getKingMoves`, which models friendly blockers and knows nothing about
+    // threats: it would route him straight through a watched square and store a
+    // route the player is not allowed to take. Only `safePathOptimalMoves`
+    // reads the attack map, so it is the authority and the generic BFS is
+    // skipped rather than overridden.
+    //
+    // `null` means UNWINNABLE — the refuge is watched, or the king is sealed in.
+    // Measured here, reported after the lint (see below).
+    let safePathOptimal: number | null = null;
+    if (input.kind === "safe-path") {
+      safePathOptimal = safePathOptimalMoves(
+        mapped.startPos,
+        mapped.targetPos,
+        mapped.enemies ?? [],
+        mapped.obstacles ?? [],
+      );
+    }
+    const usesOwnSolver = isCoverageKind(input.kind) || input.kind === "safe-path";
     const probe: Exercise = { id: "probe", optimalMoves: 0, ...toExerciseFields(mapped) };
-    const bfs = isCoverageKind(input.kind) ? null : computeExerciseBfs(input.piece, probe);
+    const bfs = usesOwnSolver ? null : computeExerciseBfs(input.piece, probe);
     // Lint BEFORE the solvability bail-out: a target buried under a blocker is
     // ALSO unsolvable, and "no path" alone sends the author hunting for a routing
     // bug instead of the one square at fault.
-    const lint = lintPuzzle(input.piece, mapped, coverageCeiling ?? bfs?.optimalMoves ?? 0, label, {
+    const lint = lintPuzzle(input.piece, mapped, coverageCeiling ?? safePathOptimal ?? bfs?.optimalMoves ?? 0, label, {
       requirePedagogy,
     });
     errors.push(...lint.errors);
     warnings.push(...lint.warnings);
     if (lint.errors.length) return;
-    if (!bfs && coverageCeiling === null) { errors.push(`${label}: unsolvable (no path) from ${posToSquare(mapped.startPos)} to ${posToSquare(mapped.targetPos)}`); return; }
+    // Reported here rather than where it is measured, for the same reason as
+    // the line below: the lint names the one square at fault, and "no safe
+    // route" alone sends the author hunting for a routing bug instead.
+    if (input.kind === "safe-path" && safePathOptimal === null) {
+      errors.push(
+        `${label}: safe-path has no safe route from ${posToSquare(mapped.startPos)} to ` +
+          `${posToSquare(mapped.targetPos)} — the refuge is watched, or the king is sealed in ` +
+          `by the enemies. Reachable is not achievable: check what the enemies see, not the walls.`,
+      );
+      return;
+    }
+    // A Safe Path level earns its threats only if they change the answer. The
+    // king's shortest possible walk is the Chebyshev distance; if the safe route
+    // is exactly that long, a shortest route was never watched and the player
+    // strolls past the danger without ever having to read it.
+    //
+    // A WARNING, not an error: unlike a tour with nowhere to jump, this level is
+    // still playable, and the founder tunes feel in the builder. Telling him the
+    // threats are decorative beats refusing to build his draft.
+    if (input.kind === "safe-path" && safePathOptimal !== null) {
+      const naive = Math.max(
+        Math.abs(mapped.startPos.file - mapped.targetPos.file),
+        Math.abs(mapped.startPos.rank - mapped.targetPos.rank),
+      );
+      if (safePathOptimal <= naive) {
+        warnings.push(
+          `${label}: safe-path route is ${safePathOptimal} moves, the same as an unguarded ` +
+            `king walk — the threats never force a detour. The level is playable but teaches nothing.`,
+        );
+      }
+    }
+    if (!bfs && coverageCeiling === null && safePathOptimal === null) { errors.push(`${label}: unsolvable (no path) from ${posToSquare(mapped.startPos)} to ${posToSquare(mapped.targetPos)}`); return; }
     // Diagonal Run contract (D1): the level must be solvable under glide-pivot
     // transitions (the game's own semantics, NOT the free-bishop BFS), and
     // start/target must share a colour — a bishop never leaves its colour. The
@@ -256,9 +318,10 @@ export function buildCatalog(
       warnings.push(`${label}: duplicate position (same piece+fen+target as an earlier puzzle)`);
     }
     seenPositions.add(positionKey);
-    const exercise = { id, optimalMoves: coverageCeiling ?? diagonalRunOptimal ?? bfs!.optimalMoves, ...toExerciseFields(mapped) } as Exercise & { __order?: number };
+    const exercise = { id, optimalMoves: coverageCeiling ?? safePathOptimal ?? diagonalRunOptimal ?? bfs!.optimalMoves, ...toExerciseFields(mapped) } as Exercise & { __order?: number };
     exercise.__order = order;
-    if (input.kind === "queens") queens[input.piece].push(exercise);
+    if (input.kind === "safe-path") safePath[input.piece].push(exercise);
+    else if (input.kind === "queens") queens[input.piece].push(exercise);
     else if (input.kind === "knight-tour") knightTour[input.piece].push(exercise);
     else if (input.kind === "diagonal-run") diagonalRun[input.piece].push(exercise);
     else if (input.kind === "labyrinth") labyrinths[input.piece].push(exercise);
@@ -320,13 +383,15 @@ export function buildCatalog(
     (diagonalRun[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
     (knightTour[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
     (queens[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
+    (safePath[p] as (Exercise & { __order?: number })[]).sort(byOrderThenId);
     for (const e of exercises[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of labyrinths[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of diagonalRun[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of knightTour[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of queens[p] as (Exercise & { __order?: number })[]) delete e.__order;
+    for (const e of safePath[p] as (Exercise & { __order?: number })[]) delete e.__order;
   }
-  return { exercises, labyrinths, diagonalRun, knightTour, queens, descriptions, errors, warnings };
+  return { exercises, labyrinths, diagonalRun, knightTour, queens, safePath, descriptions, errors, warnings };
 }
 
 export function renderGeneratedModule(cat: BuiltCatalog): string {
@@ -344,6 +409,8 @@ export const GENERATED_DIAGONAL_RUN: Record<PieceId, Exercise[]> = ${j(cat.diago
 export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = ${j(cat.knightTour)};
 
 export const GENERATED_QUEENS: Record<PieceId, Exercise[]> = ${j(cat.queens)};
+
+export const GENERATED_SAFE_PATH: Record<PieceId, Exercise[]> = ${j(cat.safePath)};
 
 export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = ${j(cat.descriptions)};
 `;

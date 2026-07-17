@@ -3156,6 +3156,108 @@ export const GENERATED_QUEENS: Record<PieceId, Exercise[]> = {
   "king": []
 };
 
+export const GENERATED_SAFE_PATH: Record<PieceId, Exercise[]> = {
+  "rook": [],
+  "bishop": [],
+  "knight": [],
+  "pawn": [],
+  "queen": [],
+  "king": [
+    {
+      "id": "king-safe-1",
+      "optimalMoves": 8,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 7
+      },
+      "enemies": [
+        {
+          "pos": {
+            "file": 2,
+            "rank": 5
+          },
+          "piece": "knight"
+        }
+      ],
+      "tier": "medium",
+      "principle": "reading-a-threat",
+      "title": "The Knight Sees",
+      "playerPrompt": "The knight is not in your way. The squares it watches are.",
+      "learningObjective": "The player learns that a piece controls squares far from itself, and that the short route is not always the safe one."
+    },
+    {
+      "id": "king-safe-2",
+      "optimalMoves": 8,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 7
+      },
+      "enemies": [
+        {
+          "pos": {
+            "file": 2,
+            "rank": 5
+          },
+          "piece": "knight"
+        },
+        {
+          "pos": {
+            "file": 5,
+            "rank": 2
+          },
+          "piece": "knight"
+        }
+      ],
+      "tier": "medium",
+      "principle": "overlapping-threats",
+      "title": "Two Watchers",
+      "playerPrompt": "Two knights, two zones. Find the gap between them.",
+      "learningObjective": "The player learns to read more than one threat at a time and to find the seam between two controlled zones."
+    },
+    {
+      "id": "king-safe-3",
+      "optimalMoves": 9,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 7
+      },
+      "enemies": [
+        {
+          "pos": {
+            "file": 2,
+            "rank": 5
+          },
+          "piece": "knight"
+        },
+        {
+          "pos": {
+            "file": 6,
+            "rank": 1
+          },
+          "piece": "bishop"
+        }
+      ],
+      "tier": "medium",
+      "principle": "rays-reach-far",
+      "title": "The Long Eye",
+      "playerPrompt": "The bishop watches a whole diagonal, not a square.",
+      "learningObjective": "The player learns that a sliding piece controls a line all the way across the board, unlike the knight's fixed jumps."
+    }
+  ]
+};
+
 export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "rook-rail-two-turns": "Two Turns",
   "rook-rail-dead-end": "Dead End",
@@ -3170,6 +3272,9 @@ export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "queens-1": "The Quiet Room",
   "queens-2": "Wider Court",
   "queens-3": "Nine on Eight",
+  "king-safe-1": "The Knight Sees",
+  "king-safe-2": "Two Watchers",
+  "king-safe-3": "The Long Eye",
   "rook-1": "Move along the rank",
   "rook-2": "Move along the file",
   "rook-distance-1": "One square is a move too",
