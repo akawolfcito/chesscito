@@ -1475,6 +1475,19 @@ export const SAFE_PATH_COPY = {
   },
 } as const;
 
+export const PROMOTION_RUN_COPY = {
+  band: {
+    /** The mission states the pawn's rule, because the rule IS the puzzle: a
+     *  pawn cannot change file without capturing, so the enemies on the
+     *  diagonals are not in the way — they are the steps. */
+    walk: "Reach the last rank. The only way to change file is to capture.",
+    /** Same wording as Safe Path's on purpose: it is the same lesson, and the
+     *  king taught it first. */
+    caught: "Caught. That square was watched.",
+    done: "Promoted!",
+  },
+} as const;
+
 export const LABYRINTH_COPY = {
   toggleExercises: "Exercises",
   toggleLabyrinths: "Labyrinths",

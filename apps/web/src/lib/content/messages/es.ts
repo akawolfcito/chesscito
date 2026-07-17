@@ -1647,6 +1647,13 @@ const messages = {
       done: "A salvo.",
     },
   },
+  PROMOTION_RUN_COPY: {
+    band: {
+      walk: "Llegá a la última fila. La única forma de cambiar de columna es comiendo.",
+      caught: "Te atraparon. Esa casilla estaba vigilada.",
+      done: "¡Coronaste!",
+    },
+  },
   LABYRINTH_COPY: {
     toggleExercises: "Ejercicios",
     toggleLabyrinths: "Laberintos",

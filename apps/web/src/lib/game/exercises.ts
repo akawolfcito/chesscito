@@ -7,6 +7,7 @@ import {
   GENERATED_KNIGHT_TOUR,
   GENERATED_QUEENS,
   GENERATED_SAFE_PATH,
+  GENERATED_PROMOTION_RUN,
 } from "@/lib/game/generated/puzzles.generated";
 
 /** Pieces with exercises defined and playable */
@@ -139,6 +140,24 @@ export const SAFE_PATH: Record<PieceId, Exercise[]> = {
   pawn:   GENERATED_SAFE_PATH.pawn,
   queen:  GENERATED_SAFE_PATH.queen,
   king:   GENERATED_SAFE_PATH.king,
+};
+
+/* ── Promotion Run (Special Training, kind:"promotion-run") ──────────────
+ * The pawn's signature game, and the last one: this closes the lane at 6/6.
+ *
+ * ⚠️ `optimalMoves` is here because every level carries it, but it GRADES
+ * NOTHING. A pawn advances exactly one rank per move, so every winning run from
+ * rank r measures exactly `7 - r` — the easiest and the hardest route are the
+ * same length. Feed this to `labyrinthStars` and every player who wins gets 3★.
+ * What a star means here is an open product decision (stage 10).
+ * Plan: docs/specs/2026-07-16-safe-path-promotion-run-plan.md §4. */
+export const PROMOTION_RUN: Record<PieceId, Exercise[]> = {
+  rook:   GENERATED_PROMOTION_RUN.rook,
+  bishop: GENERATED_PROMOTION_RUN.bishop,
+  knight: GENERATED_PROMOTION_RUN.knight,
+  pawn:   GENERATED_PROMOTION_RUN.pawn,
+  queen:  GENERATED_PROMOTION_RUN.queen,
+  king:   GENERATED_PROMOTION_RUN.king,
 };
 
 /**
