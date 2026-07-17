@@ -20,7 +20,7 @@
  */
 
 import { createContext, useContext, type ReactNode } from "react";
-import { EXERCISES, LABYRINTHS, DIAGONAL_RUN, KNIGHT_TOUR, QUEENS, SAFE_PATH } from "@/lib/game/exercises";
+import { EXERCISES, LABYRINTHS, DIAGONAL_RUN, KNIGHT_TOUR, QUEENS, SAFE_PATH, PROMOTION_RUN } from "@/lib/game/exercises";
 import { GENERATED_EXERCISE_DESCRIPTIONS } from "@/lib/game/generated/puzzles.generated";
 import type { Exercise, PieceId } from "@/lib/game/types";
 
@@ -43,6 +43,11 @@ export interface ContentCatalog {
    *  OPPOSITE grader to its two neighbours above: arrival, by MOVE COUNT —
    *  lower is better. Graded with labyrinthStars, never tourStars. */
   safePath?: Record<PieceId, Exercise[]>;
+  /** Promotion Run pool (kind:"promotion-run"). Same bucket/adapter pattern,
+   *  but graded by NEITHER of its neighbours: not coverage, and not moves.
+   *  Every winning run is the same length, so it grades FAILURES
+   *  (`promotionRunStars`). See the note there before wiring it to anything. */
+  promotionRun?: Record<PieceId, Exercise[]>;
   descriptions: Record<string, string>;
 }
 
@@ -53,6 +58,7 @@ const DEFAULT_CATALOG: ContentCatalog = {
   knightTour: KNIGHT_TOUR,
   queens: QUEENS,
   safePath: SAFE_PATH,
+  promotionRun: PROMOTION_RUN,
   descriptions: GENERATED_EXERCISE_DESCRIPTIONS,
 };
 
@@ -105,6 +111,13 @@ export function useQueensCatalog(): Record<PieceId, Exercise[]> {
  *  (or when a provider supplies a catalog without the optional field). */
 export function useSafePathCatalog(): Record<PieceId, Exercise[]> {
   return useContext(ContentCatalogContext).safePath ?? SAFE_PATH;
+}
+
+/** Active by-piece Promotion Run pools. Baseline `PROMOTION_RUN` with no
+ *  provider (or when a provider supplies a catalog without the optional
+ *  field). */
+export function usePromotionRunCatalog(): Record<PieceId, Exercise[]> {
+  return useContext(ContentCatalogContext).promotionRun ?? PROMOTION_RUN;
 }
 
 /** Active exercise descriptions map. Baseline generated map with no provider. */

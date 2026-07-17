@@ -1476,6 +1476,26 @@ export const SAFE_PATH_COPY = {
 } as const;
 
 export const PROMOTION_RUN_COPY = {
+  title: {
+    "pawn-promotion-1": "No Way Around",
+    "pawn-promotion-2": "Pay for Every File",
+    "pawn-promotion-3": "Not Every Meal Is Free",
+  },
+  prompt: {
+    "pawn-promotion-1":
+      "The wall blocks your file. The rook is not in your way: it is the way.",
+    "pawn-promotion-2":
+      "Two walls, two rooks. You will change file twice, and each one has a price.",
+    "pawn-promotion-3":
+      "Two rooks to eat, and only one of them is dinner. The knight is watching.",
+  },
+  /** Mission chip — a live PROGRESS counter, not a grade. `optimal` is always
+   *  `7 - startRank`, so "2/6" means "two moves into a six-move run", and the
+   *  6 is not a target to beat: it cannot be beaten or missed. The stars come
+   *  from `promotionRunStars` (failures), never from this. */
+  chip: {
+    count: "move {moves}/{optimal}",
+  },
   band: {
     /** The mission states the pawn's rule, because the rule IS the puzzle: a
      *  pawn cannot change file without capturing, so the enemies on the

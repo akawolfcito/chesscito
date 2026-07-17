@@ -1648,6 +1648,22 @@ const messages = {
     },
   },
   PROMOTION_RUN_COPY: {
+    title: {
+      "pawn-promotion-1": "No hay vuelta",
+      "pawn-promotion-2": "Cada columna se paga",
+      "pawn-promotion-3": "No toda comida es gratis",
+    },
+    prompt: {
+      "pawn-promotion-1":
+        "El muro te tapa la columna. La torre no te estorba: la torre es el camino.",
+      "pawn-promotion-2":
+        "Dos muros, dos torres. Vas a cambiar de columna dos veces, y cada una tiene precio.",
+      "pawn-promotion-3":
+        "Dos torres para comer, y solo una es la cena. El caballo está mirando.",
+    },
+    chip: {
+      count: "paso {moves}/{optimal}",
+    },
     band: {
       walk: "Llegá a la última fila. La única forma de cambiar de columna es comiendo.",
       caught: "Te atraparon. Esa casilla estaba vigilada.",

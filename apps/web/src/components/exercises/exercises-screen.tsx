@@ -21,6 +21,8 @@ import { DiagonalRunBoard } from "@/components/exercises/diagonal-run-board";
 import { KnightTourBoard } from "@/components/exercises/knight-tour-board";
 import { QueensBoard } from "@/components/exercises/queens-board";
 import { SafePathBoard } from "@/components/exercises/safe-path-board";
+import { PromotionRunBoard } from "@/components/exercises/promotion-run-board";
+import { PromotionPicker } from "@/components/exercises/promotion-picker";
 import { useCoachCredits } from "@/lib/coach/use-coach-credits";
 import { ExerciseDrawer } from "@/components/exercises/exercise-drawer";
 import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
@@ -82,7 +84,7 @@ import {
 import { readPieceStars } from "@/lib/game/exercise-progress";
 import { hasSeededMilestones } from "@/lib/progression/seed-milestones";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
-import { useExerciseCatalog, useLabyrinthCatalog, useDiagonalRunCatalog, useKnightTourCatalog, useQueensCatalog, useSafePathCatalog } from "@/lib/content/catalog-context";
+import { useExerciseCatalog, useLabyrinthCatalog, useDiagonalRunCatalog, useKnightTourCatalog, useQueensCatalog, useSafePathCatalog, usePromotionRunCatalog } from "@/lib/content/catalog-context";
 import { resolveSpecialTrainingLabels } from "@/lib/content/special-training-labels";
 import { useRotationSteering } from "@/hooks/use-rotation-steering";
 import { useSaveScoreState } from "@/hooks/use-save-score-state";
@@ -138,7 +140,7 @@ import { applyBadgeClaimSuccess } from "@/lib/exercises/apply-badge-claim-succes
 import { PIECE_IMAGES } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
-import type { BoardPosition } from "@/lib/game/types";
+import type { BoardPosition, PieceId } from "@/lib/game/types";
 import { BadgeEarnedPrompt, PieceCompletePrompt, ResultOverlay } from "@/components/exercises/result-overlay";
 import { GetPeonesSheet } from "@/components/payments/get-peones-sheet";
 import { LearnShopSheet } from "@/components/learn/learn-shop-sheet";
@@ -151,6 +153,7 @@ import { track } from "@/lib/telemetry";
 import { classifyTxError, classifyTxErrorKind, isTransactionTimeout, isUserCancellation, type TxErrorKind } from "@/lib/errors";
 import { getContextAction, getRewardActions } from "@/lib/game/context-action";
 import { BADGE_THRESHOLD, labyrinthStars } from "@/lib/game/exercises";
+import { promotionRunStars } from "@/lib/game/promotion-run";
 import { tourStars } from "@/lib/game/tour-score";
 import { getMaxPossibleStars } from "@/lib/game/progress-adapter";
 import { POINTS_PER_STAR } from "@/lib/game/score";
@@ -333,6 +336,7 @@ export function ExercisesScreen({
   const tTour = useTranslations("KNIGHT_TOUR_COPY");
   const tQueens = useTranslations("QUEENS_COPY");
   const tSafePath = useTranslations("SAFE_PATH_COPY");
+  const tPromotionRun = useTranslations("PROMOTION_RUN_COPY");
   const tPath = useTranslations("TRAINING_PATH_COPY");
   const tMission = useTranslations("MISSION_BRIEFING_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
@@ -731,6 +735,7 @@ export function ExercisesScreen({
   const knightTourCatalog = useKnightTourCatalog();
   const queensCatalog = useQueensCatalog();
   const safePathCatalog = useSafePathCatalog();
+  const promotionRunCatalog = usePromotionRunCatalog();
   // Special Training navigation pool. A piece that has Pivot Challenges surfaces
   // THOSE (projected as labyrinth-kind nodes downstream) and hides its raw
   // labyrinths this phase — bishop-lab-3/-4 stay in content, just unselected.
@@ -749,9 +754,12 @@ export function ExercisesScreen({
       else if (knightTourCatalog[piece]?.length) out[piece] = knightTourCatalog[piece];
       else if (queensCatalog[piece]?.length) out[piece] = queensCatalog[piece];
       else if (safePathCatalog[piece]?.length) out[piece] = safePathCatalog[piece];
+      // The last piece to get one. This retires the pawn's four untitled filler
+      // labyrinths — the lane is 6/6 signature games now.
+      else if (promotionRunCatalog[piece]?.length) out[piece] = promotionRunCatalog[piece];
     }
     return out;
-  }, [labyrinthCatalog, diagonalRunCatalog, knightTourCatalog, queensCatalog, safePathCatalog]);
+  }, [labyrinthCatalog, diagonalRunCatalog, knightTourCatalog, queensCatalog, safePathCatalog, promotionRunCatalog]);
 
   /** The ids in the Special Training lane that grade by COVERAGE, not by moves.
    *  Passed to buildTrainingPath so the drawer picks tourStars. Both signature
@@ -1384,6 +1392,19 @@ export function ExercisesScreen({
     // and all three mean the same thing for the king: walk back to the start
     // (D5). Losing on step 9 of 10 costs the whole run.
     setSafePathResetKey((previous) => previous + 1);
+    /* Promotion Run, same story, same reason — and the SAME meaning for both of
+       its two failures (caught, and crowning the wrong piece): back to the
+       start of the run.
+
+       The founder's first instinct was for a shield to buy a re-PICK on a wrong
+       crown — resume on the last rank rather than replay six moves — and then
+       ruled that keeping the existing behaviour was fine if it cost much
+       (2026-07-17). It does not just cost less; it is also the safer machine:
+       a shield that means "back to the start" here and "just re-choose" there
+       is ONE token with two meanings, and that drifts. One shield, one promise.
+       The picker re-opens on its own when the pawn reaches the rank again. */
+    setPromotionRunResetKey((previous) => previous + 1);
+    setPromotionPick(null);
     // A beat still in flight belongs to a run that no longer exists. Left
     // pending, it would fire a failure into the fresh board it lands on.
     if (safePathBeatTimer.current) {
@@ -2527,6 +2548,13 @@ export function ExercisesScreen({
       ? activeLabyrinth
       : null;
 
+  /** And once more for the pawn's — the sixth and last. */
+  const activePromotionRun =
+    activeLabyrinth &&
+    (promotionRunCatalog[selectedPiece] ?? []).some((p) => p.id === activeLabyrinth.id)
+      ? activeLabyrinth
+      : null;
+
   /** Safe Path's band. Unlike the queens', the count it carries is a MOVE
    *  count against the optimal — lower is better. Same shape as queens', which
    *  is exactly why the two must never be wired to the same grader. */
@@ -2545,6 +2573,34 @@ export function ExercisesScreen({
    *  level mid-beat fires a failure into a board that is no longer there — and
    *  worse, into whatever level replaced it. */
   const safePathBeatTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /** Promotion Run's band. Same shape as the two above and a THIRD meaning: the
+   *  count is live progress through a run whose length is fixed, so it is not a
+   *  target to beat. It grades nothing. */
+  const [promotionRunBand, setPromotionRunBand] = useState<{
+    message: string
+    phase: string
+    moves: number
+    optimal: number
+  } | null>(null);
+
+  /** Bumped to send the pawn — and the pieces it ate — back to the start. */
+  const [promotionRunResetKey, setPromotionRunResetKey] = useState(0);
+
+  /** Set when the pawn reaches the last rank: the picker is up and waiting for a
+   *  choice (P3/P5). Cleared on reset. Not a boolean because the square it
+   *  crowned on is what the completion reports. */
+  const [promotionPick, setPromotionPick] = useState<{ moves: number } | null>(null);
+
+  /** How many times THIS run went wrong — caught, or crowned wrong. This is the
+   *  grade (`promotionRunStars`), because moves cannot be: every winning run is
+   *  the same length.
+   *
+   *  ⚠️ A shield does NOT clear this. It buys the player out of replaying the
+   *  run, not out of the record — otherwise three stars would be purchasable,
+   *  and a star you can buy grades a wallet. Cleared only when the level is
+   *  opened or completed, never by a rescue. */
+  const promotionRunFailures = useRef(0);
 
   useEffect(
     () => () => {
@@ -2602,6 +2658,90 @@ export function ExercisesScreen({
       }
       // else: the modal owns the dwell, and its own handlers reset the board.
     }, SAFE_PATH_ATTACK_BEAT_MS);
+  }
+
+  /**
+   * The pawn landed where a SURVIVING enemy watches (P1).
+   *
+   * Safe Path's failure path, verbatim — same beat, same modal, same FTUX gate,
+   * same auto-reset. The one difference is bookkeeping: this game grades
+   * failures, so the run remembers.
+   */
+  function handlePromotionRunCaught(caughtOn: string) {
+    if (!activePromotionRun) return;
+    const caughtId = activePromotionRun.id;
+    const movesAtCatch = promotionRunBand?.moves ?? 0;
+    promotionRunFailures.current += 1;
+    if (safePathBeatTimer.current) clearTimeout(safePathBeatTimer.current);
+    // The same 850ms of clean beam, and for the same reason: the modal used to
+    // cover the laser and the player read "caught" without seeing by what.
+    safePathBeatTimer.current = setTimeout(() => {
+      safePathBeatTimer.current = null;
+      setPhase("failure");
+      shieldRescueAttemptIdRef.current += 1;
+      track("exercise_fail", {
+        piece: selectedPiece,
+        exercise_id: caughtId,
+        moves: movesAtCatch,
+        is_capture: false,
+        caught_on: caughtOn,
+        isLite: CHESSCITO_LITE_MODE,
+      });
+      const hasRescueContext =
+        streakCount >= 1 || shieldCount >= 1 || welcomePack.state === "claimed";
+      if (!hasRescueContext) {
+        autoReset.schedule(() => handleRetryApplied("auto_reset"), 1500);
+      }
+    }, SAFE_PATH_ATTACK_BEAT_MS);
+  }
+
+  /**
+   * The player crowned a piece (P3/P5). The picker reports; this judges.
+   *
+   * The mission is a typed contract (`{ promoteTo }`) and the picker names it on
+   * screen, so a wrong crown is a choice the player was told about and made
+   * anyway — which is the founder's condition for it costing anything.
+   *
+   * ⚠️ A wrong crown is a FAILURE, not a loss of chess: crowning a queen is
+   * never an error at the board. What failed is the MISSION. It routes through
+   * the same rescue machine as being caught, and lands back at the start, so a
+   * shield means exactly one thing in this game (see resetBoard).
+   */
+  function handlePromotionPick(piece: PieceId) {
+    if (!activePromotionRun || !promotionPick) return;
+    const asked = activePromotionRun.mission?.promoteTo;
+    if (piece !== asked) {
+      promotionRunFailures.current += 1;
+      setPromotionPick(null);
+      setPhase("failure");
+      shieldRescueAttemptIdRef.current += 1;
+      track("exercise_fail", {
+        piece: selectedPiece,
+        exercise_id: activePromotionRun.id,
+        moves: promotionPick.moves,
+        is_capture: false,
+        // Which piece they reached for instead. This is the only telemetry that
+        // can tell "nobody read the mission" apart from "everyone auto-queens".
+        promoted_to: piece,
+        asked_for: asked ?? null,
+        isLite: CHESSCITO_LITE_MODE,
+      });
+      const hasRescueContext =
+        streakCount >= 1 || shieldCount >= 1 || welcomePack.state === "claimed";
+      if (!hasRescueContext) {
+        autoReset.schedule(() => handleRetryApplied("auto_reset"), 1500);
+      }
+      return;
+    }
+
+    // Right piece: the run is done. Graded by FAILURES — see promotionRunStars.
+    setPromotionPick(null);
+    const failures = promotionRunFailures.current;
+    promotionRunFailures.current = 0;
+    handleLabyrinthMove(activePromotionRun.targetPos, promotionPick.moves, {
+      metric: failures,
+      starsFor: promotionRunStars,
+    });
   }
 
   /** The active node graded by coverage, whichever game it belongs to. The two
@@ -2700,7 +2840,28 @@ export function ExercisesScreen({
    *  player reaches the target. The Board's internal counter is the
    *  source of truth for move count. */
   const handleLabyrinthMove = useCallback(
-    (position: BoardPosition, movesCount: number) => {
+    (
+      position: BoardPosition,
+      movesCount: number,
+      /**
+       * Promotion Run only. Everything else grades MOVES with `labyrinthStars`
+       * and leaves this alone.
+       *
+       * ⚠️ Why it exists: that game cannot be graded by moves at all. A pawn
+       * advances exactly one rank per move, so every winning run measures
+       * `7 - startRank` — moves always equals optimal, three stars for
+       * everyone. It grades FAILURES instead (`promotionRunStars`).
+       *
+       * `starsFor` is injected rather than a plain `stars` number because the
+       * BEST is stored and re-graded: `previousBest` has to go through the same
+       * function, or the ledger compares failures against a move-count scale
+       * and silently invents stars. Both are `number`; nothing would complain.
+       * `metric` is what gets STORED as the best — failures here, moves
+       * everywhere else. Both are lower-is-better, so the store's own
+       * semantics hold.
+       */
+      grading?: { metric: number; starsFor: (metric: number) => number },
+    ) => {
       if (!activeLabyrinth) return;
       // Mirror the Board's internal counter to drive the live HUD
       // chip. Fires on every move; the completion check below only
@@ -2710,7 +2871,11 @@ export function ExercisesScreen({
         position.file === activeLabyrinth.targetPos.file &&
         position.rank === activeLabyrinth.targetPos.rank;
       if (!reached) return;
-      const stars = labyrinthStars(movesCount, activeLabyrinth.optimalMoves);
+      const metric = grading ? grading.metric : movesCount;
+      const starsFor =
+        grading?.starsFor ??
+        ((m: number) => labyrinthStars(m, activeLabyrinth.optimalMoves));
+      const stars = starsFor(metric);
       // Labyrinths sit outside the daily session: they never spend a quota
       // slot and their best is never frozen. They feed no score, so there is
       // nothing to farm — and the path auto-advances the player into one,
@@ -2718,7 +2883,7 @@ export function ExercisesScreen({
       // Read previous best BEFORE recording so the overlay can
       // contextualize the new score against the player's history.
       const previousBest = getLabyrinthBest(selectedPiece, activeLabyrinth.id);
-      const isNewBest = recordLabyrinthBest(selectedPiece, activeLabyrinth.id, movesCount);
+      const isNewBest = recordLabyrinthBest(selectedPiece, activeLabyrinth.id, metric);
       setLabyrinthCompleted({
         moves: movesCount,
         optimal: activeLabyrinth.optimalMoves,
@@ -2731,10 +2896,7 @@ export function ExercisesScreen({
       // net improvement — without this a player who spends the session in the
       // mazes never reaches a Great Focus Session. Labyrinth stars stay OUT of
       // `pieceStars` (gather-input owns that rule); only the ledger sees them.
-      const previousLabStars =
-        previousBest === null
-          ? 0
-          : labyrinthStars(previousBest, activeLabyrinth.optimalMoves);
+      const previousLabStars = previousBest === null ? 0 : starsFor(previousBest);
       addNetStars(previousLabStars, stars);
       resolveMilestonesRef.current();
 
@@ -2834,6 +2996,13 @@ export function ExercisesScreen({
   // Safe Path copy, same id-keyed i18n shape.
   const safePathTitle = activeSafePath ? tSafePath(`title.${activeSafePath.id}`) : null;
   const safePathPrompt = activeSafePath ? tSafePath(`prompt.${activeSafePath.id}`) : null;
+  // Promotion Run copy, same id-keyed i18n shape.
+  const promotionRunTitle = activePromotionRun
+    ? tPromotionRun(`title.${activePromotionRun.id}`)
+    : null;
+  const promotionRunPrompt = activePromotionRun
+    ? tPromotionRun(`prompt.${activePromotionRun.id}`)
+    : null;
 
   const targetLabel = activeDiagonalRun
     ? // Pivot is not measured in moves: the chip shows the destination square,
@@ -2860,6 +3029,15 @@ export function ExercisesScreen({
           moves: safePathBand?.moves ?? 0,
           optimal: activeSafePath.optimalMoves,
         })
+      : activePromotionRun
+      ? // Looks like BOTH of the two above and means a third thing: pure live
+        //  progress. `optimal` here is `7 - startRank`, which every winning run
+        //  hits exactly — it cannot be beaten or missed, so it is not a target.
+        //  The stars come from failures, never from this number.
+        tPromotionRun("chip.count", {
+          moves: promotionRunBand?.moves ?? 0,
+          optimal: activePromotionRun.optimalMoves,
+        })
       : activeLabyrinth
       ? // Labyrinth chip becomes a live counter: "0 / 4 · optimal" (no
         //  moves yet) → "3 / 4 · optimal" (live) → "5 / 4 · over" past
@@ -2877,6 +3055,8 @@ export function ExercisesScreen({
     ? (queensPrompt as string)
     : activeSafePath
     ? (safePathPrompt as string)
+    : activePromotionRun
+    ? (promotionRunPrompt as string)
     : activeLabyrinth
       ? `${tLab("missionTitle")} · ${tLab("missionHint", { optimal: activeLabyrinth.optimalMoves })}`
       : currentExercise.isCapture
@@ -2997,7 +3177,7 @@ export function ExercisesScreen({
           targetLabel={targetLabel}
           pieceHint={pieceHint}
           exercisePrompt={runPrompt ?? currentExercise.playerPrompt}
-          exerciseTitle={runTitle ?? tourTitle ?? queensTitle ?? safePathTitle ?? currentExercise.title}
+          exerciseTitle={runTitle ?? tourTitle ?? queensTitle ?? safePathTitle ?? promotionRunTitle ?? currentExercise.title}
           isCapture={Boolean(currentExercise.isCapture)}
           isDockSheetOpen={activeDockTab !== null}
           labyrinthMode={effectiveLabyrinthMode}
@@ -3018,11 +3198,13 @@ export function ExercisesScreen({
                   ? (queensBand ?? undefined)
                   : activeSafePath
                     ? (safePathBand ?? undefined)
-                    : undefined
+                    : activePromotionRun
+                      ? (promotionRunBand ?? undefined)
+                      : undefined
           }
           labyrinthOptimalMoves={activeLabyrinth?.optimalMoves}
           labyrinthId={activeLabyrinth?.id}
-          labyrinthTitle={runTitle ?? tourTitle ?? queensTitle ?? safePathTitle ?? activeLabyrinth?.title}
+          labyrinthTitle={runTitle ?? tourTitle ?? queensTitle ?? safePathTitle ?? promotionRunTitle ?? activeLabyrinth?.title}
           onLabyrinthSelect={handleLabyrinthSelect}
           score={score.toString()}
           totalStars={totalStars}
@@ -3261,6 +3443,20 @@ export function ExercisesScreen({
                 onCaught={handleSafePathCaught}
                 onBandChange={setSafePathBand}
               />
+            ) : activePromotionRun ? (
+              <PromotionRunBoard
+                key={`pr-${activePromotionRun.id}-${labyrinthKey}`}
+                level={activePromotionRun}
+                resetKey={promotionRunResetKey}
+                /* Neither neighbour's handler. The board only reports that the
+                   pawn REACHED the last rank — the run is not over yet, because
+                   the crown has not been chosen (P3/P5). So this opens the
+                   picker, and `handlePromotionPick` is what finishes (or fails)
+                   the level. */
+                onComplete={(moves) => setPromotionPick({ moves })}
+                onCaught={handlePromotionRunCaught}
+                onBandChange={setPromotionRunBand}
+              />
             ) : (
               <Board
                 key={`${boardKey}-${labyrinthMode ? `lab-${labyrinthKey}` : "ex"}`}
@@ -3388,6 +3584,20 @@ export function ExercisesScreen({
             isCapture={Boolean(currentExercise.isCapture)}
             exercisePrompt={currentExercise.playerPrompt}
             onPlay={markOnboarded}
+          />
+        ) : null}
+
+        {/* The crown. Mounts only while the pawn is standing on the last rank
+            waiting to become something — `promotionPick` is set by the board's
+            arrival and cleared by the pick, by a reset, or by a wrong choice.
+
+            One `aria-modal` at a time holds by construction: a wrong pick
+            clears this BEFORE it sets phase="failure", so the picker is gone
+            before the rescue modal mounts. They cannot overlap. */}
+        {activePromotionRun && promotionPick ? (
+          <PromotionPicker
+            promoteTo={activePromotionRun.mission?.promoteTo ?? "queen"}
+            onPick={handlePromotionPick}
           />
         ) : null}
 
