@@ -30,11 +30,10 @@
   - 🧯 **Guard que no conocía**: `editorial.ts` tiene **techo de 0 em-dashes**
     (`anti-ai-prose.test.ts`). El prompt del nivel 1 venía con uno copiado del JSON.
 
-- 🔴 **LO ÚNICO SIN VERIFICAR — el cableado al `/exercises` real.** Los tests cubren el selector solo,
-  el tablero solo, y el probe end-to-end. **NINGUNO monta el host.** No sembré estrellas ni entré a
-  Special Training a mirarlo, cosa que el commit de Safe Path (`b2b40ca`) **sí** hizo. Lo que puede
-  estar mal y ningún test lo diría: que el carril del peón no reemplace los `pawn-lab-*`, que el
-  selector no aparezca, que el escudo no resetee. **Verificarlo es el primer paso de la próxima sesión.**
+- ✅ **EL CABLEADO AL `/exercises` REAL: VERIFICADO POR EL FOUNDER** (2026-07-17, *"se ve muy bien;
+  exactamente como lo esperaba"*). Era el único hueco: **ningún test monta el host** — cubren el
+  selector solo, el tablero solo y el probe. ⚠️ **Ese hueco sigue abierto para el próximo cambio**:
+  si alguien toca el carril, no hay red que avise. La evidencia es el ojo del founder, no la suite.
 
 - **PROMOTION RUN — etapa 9 de 10: TABLERO + PROBE** (`a0ef796`). `promotion-run-board.tsx` +
   `/dev/promotion-run`. Suite **5333/5333** (451 files), `tsc` limpio, VR 58/59 (la roja es
@@ -179,25 +178,27 @@
 
 ## Next Tasks
 
-1. **🔴 ESTO PRIMERO — verificar el cableado del peón en el `/exercises` REAL.** Es lo único de la
-   etapa 10 sin cubrir: **ningún test monta el host**. Sembrar estrellas, entrar a Special Training
-   con el peón, y mirar que (a) el carril muestre `pawn-promotion-*` y **no** los `pawn-lab-*`,
-   (b) el selector aparezca al llegar a la última fila y **diga la misión**, (c) coronar mal mande a
-   TRY AGAIN, (d) el escudo resetee al inicio. El commit de Safe Path (`b2b40ca`) hizo exactamente
-   esta verificación a mano; esta sesión no llegó. **Y correr el VR**: el carril del peón cambió.
+1. **⬅️ ESTO SIGUE — EL BUILDER** (acordado con el founder, 2026-07-17). **No sabe autorar NINGÚN
+   juego firma, y no falla ruidoso.** Solo conoce `exercise|labyrinth`
+   (`labyrinth-builder/page.tsx:116`), **te los LISTA igual** porque los 5 comparten
+   `labyrinths.json` (`baseline-write.ts:50` pisa el kind real con `"labyrinth"`), y al guardar el
+   record se reemplaza **entero** (`:80`) con `kind` en `BUILDER_FIELDS` → **el `kind` se pierde** y
+   el nivel **degrada a laberinto común**, con el BFS genérico y el lint de muros decorativos encima
+   (las dos cosas que `OWN_SOLVER_KINDS` eximió por nombre porque MIENTEN sobre estos juegos).
+   - ⚠️ **Tracé el código, NO ejecuté un guardado.** Primer paso: **medirlo** — ¿`buildCatalog` lo
+     rechaza y falla ruidoso, o lo escribe corrupto? Ambas son malas; cuál es, no lo sé.
+   - ⚠️ **Arreglar el `kind` NO alcanza**: no hay pincel para enemigos negros **typed** ni forma de
+     dibujar el mapa de amenaza. **Los enemigos SON el juego.** Y el del peón es **vivo**.
+   - 📐 **Bien hecho cubre los 5 juegos firma, no solo el peón.** Detalle completo:
+     memoria `project_builder_only_knows_two_kinds`.
+   - 🎯 Mientras tanto, la autoría real son los probes con **Zones on** (`/dev/promotion-run`,
+     `/dev/safe-path`, `/dev/queens`) — ⚠️ gatean por `NODE_ENV`: **solo local, 404ean en preview**.
 2. **Cluster Closure Protocol del carril 2** (CLAUDE.md) — el carril quedó **6/6**, es un cluster que
    cierra: issues + milestone · **README** (la tabla dice "Exercises + labyrinths" para piezas que ya
-   no tienen laberintos: **con el peón ya son las 6**) · memoria · branches · handoff a `docs/handoffs/`.
-3. **El builder no sabe autorar NINGÚN juego firma** (diferido por el founder esta sesión, "luego
-   vemos"). Solo conoce `exercise|labyrinth`, **te los lista igual** porque comparten
-   `labyrinths.json`, y guardarlos les **borra el `kind`** → degrada el nivel a laberinto común.
-   ⚠️ **Tracé el código, no ejecuté un guardado**: medir si falla ruidoso o corrompe callado.
-   Arreglarlo bien cubre **los 5**, no solo el peón. Y ni con el `kind` arreglado alcanza: no hay
-   pincel para enemigos typed ni mapa de amenaza. **Hoy la autoría real son los probes con Zones on.**
-4. **Afinar los niveles del rey y del peón** (founder, no requiere código): `/dev/safe-path` y
-   `/dev/promotion-run` con **Zones on**. En el del peón el mapa es **vivo**: comé una pieza y su zona
-   desaparece. ⛔ **NO usar el builder** para esto (punto 3).
-   ⚠️ Ambos probes gatean por `NODE_ENV` → **404ean en preview, solo andan en local**.
+   no tienen laberintos: **con el peón ya son las 6**) · memoria · branches.
+3. **Correr el VR** — no se re-corrió tras el cableado del host y **el carril del peón cambió**.
+   Baseline de la etapa 9: 58/59 (`hub-shop-sheet-open` roja también en `main`, env sin treasury).
+   ⚠️ **Un VR verde puede ser la foto de un error de Next**: mirar los baselines nuevos.
 5. **Triar 5 locales no-mergeadas** que el barrido no tocó (nunca estuvieron en la lista):
    `backup/main-before-author-rewrite` (huele a red de un rewrite de historia — **no borrar sin mirar**),
    `chore/minipay-gate`, `feat/board-renderer`, `feat/progression-unlocks-celebration-queue`,
