@@ -40,6 +40,39 @@ export function emptyState(piece: PieceId = "rook"): BuilderState {
   return { piece, start: null, goal: null, walls: [], enemies: [], order: 0 };
 }
 
+/** The record fields the builder UI owns and re-derives on every save. Anything
+ *  NOT listed here is data the UI cannot draw, and `extraFields` carries it
+ *  through verbatim so an edit never drops it.
+ *
+ *  ⚠️ `kind` must stay OUT of this set. It was in it, and that is why saving a
+ *  signature game re-wrote it as a plain labyrinth: the UI cannot express the
+ *  kind, so claiming ownership of it meant silently discarding it.
+ *  `bucket` IS listed — it is a read-time tag, not part of the record. */
+const UI_OWNED_FIELDS = new Set([
+  "id",
+  "bucket",
+  "piece",
+  "fen",
+  "target",
+  "mover",
+  "order",
+  "explanation",
+  "tier",
+  "tags",
+]);
+
+/** Everything on a record the builder UI cannot express (pedagogy, `kind`,
+ *  `promoteTo`, `disabled`, …), so a read-modify-write round-trips it instead of
+ *  dropping it. Lives here, not in the page, so the invariant is testable —
+ *  the same reason `deriveStateFromFen` moved out (etapa 1). */
+export function extraFields(rec: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(rec)) {
+    if (!UI_OWNED_FIELDS.has(k)) out[k] = v;
+  }
+  return out;
+}
+
 const FEN_LETTER: Record<PieceId, string> = {
   rook: "R", knight: "N", bishop: "B", queen: "Q", king: "K", pawn: "P",
 };

@@ -23,7 +23,7 @@ const VALID_ROOK = {
 };
 
 const VALID_ROOK_EXERCISE = {
-  kind: "exercise",
+  bucket: "exercise",
   piece: "rook",
   fen: "8/8/8/8/8/8/8/R7 w - - 0 1",
   target: "h1",
@@ -32,6 +32,22 @@ const VALID_ROOK_EXERCISE = {
   tags: ["straight-line"],
   order: 2,
   id: "rook-ex",
+};
+
+// Copied verbatim from content/labyrinths.json: a signature game lives in the
+// `labyrinth` BUCKET while its `kind` says which game it is. Note the absent
+// `target` — queens is targetless.
+const QUEENS_RECORD = {
+  id: "queens-1",
+  piece: "queen",
+  kind: "queens",
+  fen: "NNNNNNNN/NNNNNNNN/NNNNNNNN/5NNN/5NNN/5NNN/5NNN/Q4NNN w - - 0 1",
+  mover: "a1",
+  tier: "easy",
+  title: "The Quiet Room",
+  principle: "queens-intro",
+  playerPrompt: "No queen may see another. Fill the room.",
+  order: 3,
 };
 
 // A boxed rook with no path from b2 to a8 — verified unsolvable by the
@@ -99,7 +115,7 @@ describe("POST /api/dev/labyrinth", () => {
     ).toBe(true);
   });
 
-  it("routes a kind:\"exercise\" record to exercises.json (not labyrinths.json)", async () => {
+  it("routes a bucket:\"exercise\" record to exercises.json (not labyrinths.json)", async () => {
     vi.stubEnv("NODE_ENV", "development");
     const res = await POST(postRequest(JSON.stringify(VALID_ROOK_EXERCISE)));
     const json = (await res.json()) as { ok: boolean };
@@ -185,6 +201,45 @@ describe("POST /api/dev/labyrinth", () => {
       String(c[0]).endsWith("src/lib/game/generated/puzzles.generated.ts"),
     );
     expect(String(genWrite?.[1])).not.toContain("rook-ex");
+  });
+
+  /** The write half of the corruption: a signature game's `kind` has to reach
+   *  disk. Before this stage the bucket rode in `kind`'s place, so saving
+   *  `queens-1` persisted it as a plain labyrinth and the game vanished from
+   *  its pool. */
+  it("persists a signature game's kind to disk", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    const res = await POST(
+      postRequest(JSON.stringify({ ...QUEENS_RECORD, bucket: "labyrinth" })),
+    );
+    expect(res.status).toBe(200);
+    const labWrite = fsMocks.writeFileSync.mock.calls.find((c) =>
+      String(c[0]).endsWith("content/labyrinths.json"),
+    );
+    const payload = JSON.parse(String(labWrite?.[1])) as Array<Record<string, unknown>>;
+    const saved = payload.find((r) => r.id === "queens-1");
+    expect(saved?.kind).toBe("queens");
+    // The read-time tag must NOT have followed the record onto disk.
+    expect(saved).not.toHaveProperty("bucket");
+  });
+
+  /** AC-6. Disable goes through this same write path, so it must not be the
+   *  one place a kind gets dropped. */
+  it("preserves the kind when a signature game is soft-disabled", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    const res = await POST(
+      postRequest(
+        JSON.stringify({ ...QUEENS_RECORD, bucket: "labyrinth", disabled: true }),
+      ),
+    );
+    expect(res.status).toBe(200);
+    const labWrite = fsMocks.writeFileSync.mock.calls.find((c) =>
+      String(c[0]).endsWith("content/labyrinths.json"),
+    );
+    const payload = JSON.parse(String(labWrite?.[1])) as Array<Record<string, unknown>>;
+    const saved = payload.find((r) => r.id === "queens-1");
+    expect(saved?.kind).toBe("queens");
+    expect(saved?.disabled).toBe(true);
   });
 
   it("auto-assigns a stable generated id when the record has none", async () => {
@@ -276,18 +331,40 @@ describe("GET /api/dev/labyrinth", () => {
     const res = await GET(getRequest());
     const json = (await res.json()) as {
       ok: boolean;
-      records: Array<{ id: string; kind: string }>;
+      records: Array<{ id: string; bucket: string; kind?: string }>;
     };
     expect(res.status).toBe(200);
     expect(json.ok).toBe(true);
     expect(json.records).toHaveLength(2);
     const lab = json.records.find((r) => r.id === "rook-x");
     const ex = json.records.find((r) => r.id === "rook-ex");
-    expect(lab?.kind).toBe("labyrinth");
-    expect(ex?.kind).toBe("exercise");
+    expect(lab?.bucket).toBe("labyrinth");
+    expect(ex?.bucket).toBe("exercise");
+    // Neither fixture declares a game, and the reader must not invent one —
+    // `kind` absent is what the 19 legit labyrinths carry.
+    expect(lab?.kind).toBeUndefined();
+    expect(ex?.kind).toBeUndefined();
   });
 
-  it("filters by ?kind=exercise", async () => {
+  /** The regression this whole stage exists for: a signature game came back
+   *  claiming to be a plain labyrinth, and saving it wrote that lie to disk. */
+  it("returns a signature game's real kind alongside its bucket", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    fsMocks.existsSync.mockReturnValue(true);
+    fsMocks.readFileSync.mockImplementation((p: string) =>
+      String(p).endsWith("content/exercises.json")
+        ? JSON.stringify([])
+        : JSON.stringify([QUEENS_RECORD]),
+    );
+    const res = await GET(getRequest("?bucket=labyrinth"));
+    const json = (await res.json()) as {
+      records: Array<{ id: string; bucket: string; kind?: string }>;
+    };
+    expect(json.records[0].kind).toBe("queens");
+    expect(json.records[0].bucket).toBe("labyrinth");
+  });
+
+  it("filters by ?bucket=exercise", async () => {
     vi.stubEnv("NODE_ENV", "development");
     fsMocks.existsSync.mockReturnValue(true);
     fsMocks.readFileSync.mockImplementation((p: string) =>
@@ -295,18 +372,18 @@ describe("GET /api/dev/labyrinth", () => {
         ? JSON.stringify([VALID_ROOK_EXERCISE])
         : JSON.stringify([VALID_ROOK]),
     );
-    const res = await GET(getRequest("?kind=exercise"));
+    const res = await GET(getRequest("?bucket=exercise"));
     const json = (await res.json()) as {
       ok: boolean;
-      records: Array<{ id: string; kind: string }>;
+      records: Array<{ id: string; bucket: string }>;
     };
     expect(res.status).toBe(200);
     expect(json.records).toHaveLength(1);
     expect(json.records[0].id).toBe("rook-ex");
-    expect(json.records[0].kind).toBe("exercise");
+    expect(json.records[0].bucket).toBe("exercise");
   });
 
-  it("filters by ?kind=labyrinth", async () => {
+  it("filters by ?bucket=labyrinth", async () => {
     vi.stubEnv("NODE_ENV", "development");
     fsMocks.existsSync.mockReturnValue(true);
     fsMocks.readFileSync.mockImplementation((p: string) =>
@@ -314,15 +391,15 @@ describe("GET /api/dev/labyrinth", () => {
         ? JSON.stringify([VALID_ROOK_EXERCISE])
         : JSON.stringify([VALID_ROOK]),
     );
-    const res = await GET(getRequest("?kind=labyrinth"));
+    const res = await GET(getRequest("?bucket=labyrinth"));
     const json = (await res.json()) as {
       ok: boolean;
-      records: Array<{ id: string; kind: string }>;
+      records: Array<{ id: string; bucket: string }>;
     };
     expect(res.status).toBe(200);
     expect(json.records).toHaveLength(1);
     expect(json.records[0].id).toBe("rook-x");
-    expect(json.records[0].kind).toBe("labyrinth");
+    expect(json.records[0].bucket).toBe("labyrinth");
   });
 
   it("returns an empty array when both files are missing", async () => {

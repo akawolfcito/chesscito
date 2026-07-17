@@ -7,10 +7,15 @@ import {
   buildFenBlock,
   deriveStateFromFen,
   emptyState,
+  extraFields,
   type AuthoredEnemy,
   type BuilderState,
 } from "@/lib/labyrinth-builder/state";
 import type { LabyrinthRecord } from "@/lib/labyrinth-builder/store";
+// `import type` ONLY: baseline-write imports node:fs, and this is a client
+// component. The type is erased at compile time, so nothing follows it into the
+// browser bundle.
+import type { BucketedRecord } from "@/lib/content/baseline-write";
 import { validateBuilder } from "@/lib/labyrinth-builder/validate";
 import {
   formatPublishResult,
@@ -116,32 +121,10 @@ const CELL_OVERLAY: Record<string, CSSProperties> = {
 };
 
 type Brush = "start" | "goal" | "wall" | "capture" | "trace";
-type Kind = "exercise" | "labyrinth";
-
-// Fields the builder UI cannot (yet) express but that live on a record. We
-// carry them through verbatim on an EDIT so a read-modify-write never drops
-// exercise-only data (tier, tags, …).
-const BUILDER_FIELDS = new Set([
-  "id",
-  "kind",
-  "piece",
-  "fen",
-  "target",
-  "mover",
-  "order",
-  "explanation",
-  "tier",
-  "tags",
-]);
+/** WHICH FILE the record lives in. Not the game — that is the record's `kind`. */
+type Bucket = "exercise" | "labyrinth";
 
 const TIERS: ExerciseTier[] = ["easy", "medium", "hard"];
-function extraFields(rec: LabyrinthRecord): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(rec)) {
-    if (!BUILDER_FIELDS.has(k)) out[k] = v;
-  }
-  return out;
-}
 
 function posKey(p: BoardPosition): string {
   return posToSquare(p);
@@ -155,7 +138,7 @@ function posKey(p: BoardPosition): string {
 export default function LabyrinthBuilderPage() {
   if (!isDevSurfaceEnabled()) notFound();
 
-  const [kind, setKind] = useState<Kind>("exercise");
+  const [bucket, setBucket] = useState<Bucket>("exercise");
   const [state, setState] = useState<BuilderState>(() => emptyState("rook"));
   // Exercise-only (or otherwise non-UI) fields of the record being edited, so
   // a save round-trips them instead of dropping them.
@@ -166,7 +149,7 @@ export default function LabyrinthBuilderPage() {
   const [targetInput, setTargetInput] = useState("");
   const [moverInput, setMoverInput] = useState("");
   const [loadNote, setLoadNote] = useState<string | null>(null);
-  const [records, setRecords] = useState<LabyrinthRecord[]>([]);
+  const [records, setRecords] = useState<BucketedRecord[]>([]);
   const [toast, setToast] = useState<{
     kind: "ok" | "warn" | "err";
     text: string;
@@ -184,10 +167,10 @@ export default function LabyrinthBuilderPage() {
 
   const refreshRecords = useCallback(async () => {
     try {
-      const res = await fetch(`/api/dev/labyrinth?kind=${kind}`);
+      const res = await fetch(`/api/dev/labyrinth?bucket=${bucket}`);
       const data = (await res.json()) as {
         ok?: boolean;
-        records?: LabyrinthRecord[];
+        records?: BucketedRecord[];
         canWrite?: boolean;
       };
       if (data?.ok && Array.isArray(data.records)) setRecords(data.records);
@@ -195,7 +178,7 @@ export default function LabyrinthBuilderPage() {
     } catch {
       /* dev-only tool — silently ignore fetch failures */
     }
-  }, [kind]);
+  }, [bucket]);
 
   useEffect(() => {
     void refreshRecords();
@@ -352,9 +335,9 @@ export default function LabyrinthBuilderPage() {
     setToast(null);
   }
 
-  function handleKindChange(next: Kind) {
-    if (next === kind) return;
-    setKind(next);
+  function handleBucketChange(next: Bucket) {
+    if (next === bucket) return;
+    setBucket(next);
     // Switching surfaces discards any in-progress edit so we never save a
     // record into the wrong bucket.
     setState(emptyState(state.piece));
@@ -376,10 +359,12 @@ export default function LabyrinthBuilderPage() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          kind,
+          bucket,
           record: {
             // Preserved exercise-only / unknown fields (tier, tags, …) first,
-            // so an edit never drops them; explicit fields below win.
+            // so an edit never drops them; explicit fields below win. This is
+            // also what carries the record's `kind` through: the UI cannot
+            // express it, so editExtras is its only ride.
             ...editExtras,
             id: state.id || undefined,
             piece: state.piece,
@@ -416,7 +401,7 @@ export default function LabyrinthBuilderPage() {
       const res = await fetch("/api/dev/promote", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ kind, id, to }),
+        body: JSON.stringify({ bucket, id, to }),
       });
       const data = (await res.json()) as PromoteResultLike;
       setToast(formatPromoteResult(data, id));
@@ -430,14 +415,17 @@ export default function LabyrinthBuilderPage() {
   // path (no destructive removal). A disabled record stays in content/*.json
   // for re-enabling but is excluded from the generated catalog. Operates on
   // the list row directly so it never disturbs the current edit.
-  async function handleToggleDisabled(rec: LabyrinthRecord) {
+  async function handleToggleDisabled(rec: BucketedRecord) {
     try {
       // Toggle through the publish proxy so the enable/disable also lands in the
       // draft overlay (baseline + overlay), same "todo en 1" path as Save.
+      // The whole record rides along, `kind` included, so disabling a signature
+      // game no longer demotes it to a labyrinth on the way out (AC-6). The
+      // read-time `bucket` tag goes too; writeBaselineRecord strips it.
       const res = await fetch("/api/dev/publish", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ kind, record: { ...rec, disabled: !rec.disabled } }),
+        body: JSON.stringify({ bucket, record: { ...rec, disabled: !rec.disabled } }),
       });
       const data = (await res.json()) as PublishResultLike;
       if (!data?.baseline?.ok) {
@@ -460,9 +448,9 @@ export default function LabyrinthBuilderPage() {
     }
   }
 
-  const generatedByKind =
-    kind === "exercise" ? GENERATED_EXERCISES : GENERATED_LABYRINTHS;
-  const existing = generatedByKind[state.piece] ?? [];
+  const generatedByBucket =
+    bucket === "exercise" ? GENERATED_EXERCISES : GENERATED_LABYRINTHS;
+  const existing = generatedByBucket[state.piece] ?? [];
 
   return (
     <main className="min-h-screen bg-black p-4 text-neutral-100">
@@ -470,21 +458,21 @@ export default function LabyrinthBuilderPage() {
         {/* ── Board column ── */}
         <section className="flex flex-col gap-3">
           <h1 className="text-lg font-bold tracking-tight text-neutral-100">
-            {kind === "exercise" ? "Exercise" : "Labyrinth"} Builder{" "}
+            {bucket === "exercise" ? "Exercise" : "Labyrinth"} Builder{" "}
             <span className="text-xs font-medium uppercase tracking-widest text-neutral-500">
               dev
             </span>
           </h1>
 
-          {/* Kind toggle — same editor authors both surfaces. */}
-          <div className="flex gap-2" role="group" aria-label="Puzzle kind">
-            {(["exercise", "labyrinth"] as Kind[]).map((k) => (
+          {/* Bucket toggle — same editor authors both files. */}
+          <div className="flex gap-2" role="group" aria-label="Content bucket">
+            {(["exercise", "labyrinth"] as Bucket[]).map((k) => (
               <button
                 key={k}
                 type="button"
-                onClick={() => handleKindChange(k)}
+                onClick={() => handleBucketChange(k)}
                 className={`rounded px-3 py-1 text-sm capitalize transition-colors ${
-                  kind === k
+                  bucket === k
                     ? "bg-neutral-100 font-semibold text-black"
                     : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800"
                 }`}
@@ -643,13 +631,13 @@ export default function LabyrinthBuilderPage() {
                   update({ explanation: e.target.value || undefined })
                 }
                 placeholder={
-                  kind === "exercise"
+                  bucket === "exercise"
                     ? "e.g. Move your Rook straight to h8"
                     : undefined
                 }
                 className="rounded bg-neutral-800 px-2 py-1"
               />
-              {kind === "exercise" && !state.explanation ? (
+              {bucket === "exercise" && !state.explanation ? (
                 <span className="mt-1 text-xs text-amber-400/80">
                   Empty → shows the generic “Exercise N” label in-game.
                 </span>
@@ -686,10 +674,10 @@ export default function LabyrinthBuilderPage() {
               <button
                 type="button"
                 onClick={handleNew}
-                title={`Start a fresh ${kind} (discard current edit)`}
+                title={`Start a fresh ${bucket} (discard current edit)`}
                 className="rounded bg-neutral-700 px-3 py-1 text-xs hover:bg-neutral-600"
               >
-                + New {kind}
+                + New {bucket}
               </button>
             </div>
           ) : null}
@@ -824,7 +812,7 @@ mover=${fenBlock.mover}`}
           {/* Existing labyrinths — load one to edit */}
           <div className="rounded border border-neutral-800 bg-neutral-900 p-3 text-sm">
             <p className="mb-2 font-semibold text-neutral-300">
-              Existing {state.piece} {kind === "exercise" ? "exercises" : "labyrinths"} (load to edit)
+              Existing {state.piece} {bucket === "exercise" ? "exercises" : "labyrinths"} (load to edit)
             </p>
             {pieceRecords.length ? (
               <ul className="flex flex-col gap-1">

@@ -4,7 +4,7 @@ import type { ContentBucket } from "@/lib/content/overlay-types";
 import {
   readBaselineRecords,
   writeBaselineRecord,
-  type KindedRecord,
+  type BucketedRecord,
 } from "@/lib/content/baseline-write";
 import { canWriteBaseline, isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
@@ -14,8 +14,12 @@ export async function GET(req: Request) {
   if (!isDevSurfaceEnabled()) {
     return new NextResponse("Not found", { status: 404 });
   }
-  const filter = new URL(req.url).searchParams.get("kind");
-  const kind: ContentBucket | undefined =
+  // `?bucket=` selects the FILE, not the game. It used to be `?kind=`, which
+  // read as "give me the queens levels" and meant "give me labyrinths.json" —
+  // and the response now carries each record's real `kind`, so the two names
+  // would actively contradict each other.
+  const filter = new URL(req.url).searchParams.get("bucket");
+  const bucket: ContentBucket | undefined =
     filter === "exercise" || filter === "labyrinth" ? filter : undefined;
   // `canWrite` is the server telling the builder what the SERVER can do: the
   // builder is a client component and cannot read process.env.VERCEL itself. On
@@ -23,7 +27,7 @@ export async function GET(req: Request) {
   // rather than fire a 500 out of writeFileSync (spec behavior 15).
   return NextResponse.json({
     ok: true,
-    records: readBaselineRecords(kind),
+    records: readBaselineRecords(bucket),
     canWrite: canWriteBaseline(),
   });
 }
@@ -32,21 +36,27 @@ export async function POST(req: Request) {
   if (!isDevSurfaceEnabled()) {
     return new NextResponse("Not found", { status: 404 });
   }
-  let body: KindedRecord;
+  let body: Partial<BucketedRecord>;
   try {
-    body = (await req.json()) as KindedRecord;
+    body = (await req.json()) as Partial<BucketedRecord>;
   } catch {
     return NextResponse.json({ ok: false, errors: ["invalid JSON"] }, { status: 400 });
   }
-  // `kind` selects the bucket (default "labyrinth" for back-compat); it is not
-  // persisted — the file the record lands in implies it.
-  const kind: ContentBucket = body.kind === "exercise" ? "exercise" : "labyrinth";
-  const { kind: _kind, ...rec } = body;
+  // `bucket` selects the file (default "labyrinth" for back-compat) and is not
+  // persisted — the file the record lands in implies it. The record's own
+  // `kind` is left ALONE: it rides through to disk, which is the whole point.
+  const bucket: ContentBucket = body.bucket === "exercise" ? "exercise" : "labyrinth";
+  const { bucket: _bucket, ...rec } = body;
 
-  const result = writeBaselineRecord(kind, rec as LabyrinthRecord);
+  const result = writeBaselineRecord(bucket, rec as LabyrinthRecord);
   if (!result.ok) {
     return NextResponse.json({ ok: false, errors: result.errors }, { status: 400 });
   }
-  // `rec` was mutated in place to carry the resolved id.
-  return NextResponse.json({ ok: true, saved: rec, warnings: result.warnings });
+  // The id may have been auto-assigned on write; take it from the result rather
+  // than from `rec` (the writer no longer mutates its input).
+  return NextResponse.json({
+    ok: true,
+    saved: { ...rec, id: result.id },
+    warnings: result.warnings,
+  });
 }
