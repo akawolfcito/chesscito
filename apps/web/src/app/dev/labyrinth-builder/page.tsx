@@ -139,7 +139,7 @@ export default function LabyrinthBuilderPage() {
   if (!isDevSurfaceEnabled()) notFound();
 
   const [bucket, setBucket] = useState<Bucket>("exercise");
-  const [state, setState] = useState<BuilderState>(() => emptyState("rook"));
+  const [state, setState] = useState<BuilderState>(() => emptyState("rook", "exercise"));
   // Exercise-only (or otherwise non-UI) fields of the record being edited, so
   // a save round-trips them instead of dropping them.
   const [editExtras, setEditExtras] = useState<Record<string, unknown>>({});
@@ -306,6 +306,10 @@ export default function LabyrinthBuilderPage() {
       return;
     }
     setState({
+      // The record's real kind rides the state now, so the live validator judges
+      // it as the game it is. Absent → the bucket's default (a plain labyrinth,
+      // or an exercise in the exercise bucket).
+      kind: rec.kind ?? (bucket === "exercise" ? "exercise" : "labyrinth"),
       piece: rec.piece,
       start: derived.start,
       // A knight-tour record carries no target — it has no goal square to load.
@@ -313,8 +317,9 @@ export default function LabyrinthBuilderPage() {
       walls: derived.walls,
       // ⚠️ Still drops a non-pawn's enemies, which DESTROYS a safe-path level on
       // load (its knight is the game). Deliberately unchanged here: this stage
-      // only makes the type survive. The policy is kind-aware in etapa 2.
+      // only makes the type survive. Kind-aware enemy loading is a later stage.
       enemies: rec.piece === "pawn" ? derived.enemies : [],
+      promoteTo: rec.promoteTo,
       order: rec.order,
       explanation: rec.explanation,
       tier: rec.tier,
@@ -328,7 +333,7 @@ export default function LabyrinthBuilderPage() {
   }
 
   function handleNew() {
-    setState(emptyState(state.piece));
+    setState(emptyState(state.piece, bucket === "exercise" ? "exercise" : "labyrinth"));
     setEditExtras({});
     setTracedPath([]);
     setLoadNote(null);
@@ -340,7 +345,7 @@ export default function LabyrinthBuilderPage() {
     setBucket(next);
     // Switching surfaces discards any in-progress edit so we never save a
     // record into the wrong bucket.
-    setState(emptyState(state.piece));
+    setState(emptyState(state.piece, next === "exercise" ? "exercise" : "labyrinth"));
     setEditExtras({});
     setTracedPath([]);
     setLoadNote(null);

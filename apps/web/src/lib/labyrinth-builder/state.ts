@@ -1,5 +1,12 @@
 import type { ExerciseTier, PieceId } from "@/lib/game/types";
-import { parseFenBoard, squareToPos, type PuzzleInput } from "@/lib/game/fen-puzzle";
+import {
+  parseFenBoard,
+  squareToPos,
+  isTargetlessKind,
+  type PuzzleInput,
+  type PuzzleKind,
+} from "@/lib/game/fen-puzzle";
+import type { LabyrinthRecord } from "@/lib/content/catalog";
 
 /**
  * An enemy in AUTHOR coordinates: a square plus WHICH piece stands there.
@@ -18,14 +25,24 @@ import { parseFenBoard, squareToPos, type PuzzleInput } from "@/lib/game/fen-puz
 export type AuthoredEnemy = { square: string; piece: PieceId };
 
 export type BuilderState = {
+  /** WHICH GAME this draft is — first-class from the day the field exists, never
+   *  optional and never derived from the bucket. The validator reads it to speak
+   *  the same verdict Save will (AC-5); the day it drives an authoring UI (goal
+   *  optional, typed enemies) is additive, not a refactor. */
+  kind: PuzzleKind;
   piece: PieceId;
   start: string | null;
+  /** `null` is a LEGAL final state when isTargetlessKind(kind); elsewhere it is
+   *  an incomplete draft. buildFenBlock and the validator both branch on kind. */
   goal: string | null;
   walls: string[];
-  /** Black pieces on the board. Typed (see AuthoredEnemy). Pawn-only downstream
-   *  TODAY — making that kind-aware (safe-path's enemies are THREATS, not
-   *  capture targets) is etapa 2 of the spec. */
+  /** Black pieces on the board. Typed (see AuthoredEnemy). Whether they are
+   *  capture targets (pawn) or static threats (safe-path) is decided downstream
+   *  by kind — the type survives the round-trip either way. */
   enemies: AuthoredEnemy[];
+  /** `promotion-run` only: the piece the level asks the pawn to crown. Required
+   *  there (the catalog rejects the record without it), absent elsewhere. */
+  promoteTo?: PieceId;
   order: number;
   explanation?: string;
   /** Difficulty tier — drives the rotation engine's gating. Defaults to
@@ -36,8 +53,8 @@ export type BuilderState = {
   id?: string;
 };
 
-export function emptyState(piece: PieceId = "rook"): BuilderState {
-  return { piece, start: null, goal: null, walls: [], enemies: [], order: 0 };
+export function emptyState(piece: PieceId = "rook", kind: PuzzleKind = "labyrinth"): BuilderState {
+  return { kind, piece, start: null, goal: null, walls: [], enemies: [], order: 0 };
 }
 
 /** The record fields the builder UI owns and re-derives on every save. Anything
@@ -81,8 +98,11 @@ const FEN_LETTER: Record<PieceId, string> = {
  *  walls = white knights (filler); enemies = their OWN black piece, so the type
  *  survives a load→save. Always returns an explicit `mover` (B5). Throws if
  *  start/goal missing. */
-export function buildFenBlock(s: BuilderState): { fen: string; target: string; mover: string } {
-  if (!s.start || !s.goal) throw new Error("start and goal required");
+export function buildFenBlock(s: BuilderState): { fen: string; target: string | undefined; mover: string } {
+  // The targetless kinds (queens, knight-tour, promotion-run) have no goal by
+  // design — `null` there is a finished draft, not a missing field. Everywhere
+  // else a goal is still required.
+  if (!s.start || (!s.goal && !isTargetlessKind(s.kind))) throw new Error("start and goal required");
   const grid: (string | null)[][] = Array.from({ length: 8 }, () => Array(8).fill(null));
   const put = (sq: string, ch: string) => { const p = squareToPos(sq); grid[7 - p.rank][p.file] = ch; };
   for (const w of s.walls) put(w, "N");      // wall filler (white)
@@ -96,14 +116,38 @@ export function buildFenBlock(s: BuilderState): { fen: string; target: string; m
       return run ? out + run : out;
     })
     .join("/");
-  return { fen: `${placement} w - - 0 1`, target: s.goal, mover: s.start };
+  return { fen: `${placement} w - - 0 1`, target: s.goal ?? undefined, mover: s.start };
 }
 
 export function toPuzzleInput(s: BuilderState): PuzzleInput {
   const { fen, target, mover } = buildFenBlock(s);
   return {
-    kind: "labyrinth", piece: s.piece, tier: "medium",
+    kind: s.kind, piece: s.piece, tier: s.tier ?? "medium",
     fen, target, mover, explanation: s.explanation,
+    // promotion-run carries its win condition here; the FEN cannot express it.
+    mission: s.promoteTo ? { promoteTo: s.promoteTo } : undefined,
+  };
+}
+
+/** The record Save would write for this draft — the exact input the ONE
+ *  validator (buildCatalog) decides on. `kind:"exercise"` is left OFF the record
+ *  (LabyrinthRecord's kind excludes it); the exercise bucket is expressed by
+ *  routing the record through buildCatalog's `exerciseRecords`, which forces it.
+ *  The draft id defaults to a fixed sentinel so its errors carry a stable label. */
+export function toLabyrinthRecord(s: BuilderState, id = "draft"): LabyrinthRecord {
+  const { fen, target, mover } = buildFenBlock(s);
+  return {
+    id,
+    piece: s.piece,
+    ...(s.kind === "exercise" ? {} : { kind: s.kind }),
+    fen,
+    mover,
+    target,
+    promoteTo: s.promoteTo,
+    tier: s.tier,
+    tags: s.tags,
+    explanation: s.explanation,
+    order: s.order,
   };
 }
 

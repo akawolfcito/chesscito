@@ -4,6 +4,7 @@ import type { BuilderState } from "../state";
 import { validateBuilder } from "../validate";
 
 const base = (overrides: Partial<BuilderState>): BuilderState => ({
+  kind: "labyrinth",
   piece: "rook",
   start: "a1",
   goal: "a8",
@@ -56,7 +57,9 @@ describe("validateBuilder", () => {
     );
     expect(result.ok).toBe(false);
     expect(result.optimalMoves).toBeNull();
-    expect(result.errors.some((e) => /unreachable/i.test(e))).toBe(true);
+    // The message now comes from buildCatalog (the one validator): "unsolvable
+    // (no path) from a1 to h8". Same verdict Save gives, by construction.
+    expect(result.errors.some((e) => /unsolvable|no path/i.test(e))).toBe(true);
   });
 
   it("validates a solvable pawn lab", () => {

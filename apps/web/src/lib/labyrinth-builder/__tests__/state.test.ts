@@ -14,6 +14,7 @@ describe("labyrinth-builder/state", () => {
     it("defaults to a rook with empty endpoints and collections", () => {
       const s = emptyState();
       expect(s).toEqual({
+        kind: "labyrinth",
         piece: "rook",
         start: null,
         goal: null,
@@ -31,6 +32,7 @@ describe("labyrinth-builder/state", () => {
   describe("toPuzzleInput", () => {
     it("emits a labyrinth puzzle and round-trips through mapFenPuzzle", () => {
       const s: BuilderState = {
+        kind: "labyrinth",
         piece: "rook",
         start: "a1",
         goal: "a8",
@@ -57,6 +59,7 @@ describe("labyrinth-builder/state", () => {
   describe("buildFenBlock", () => {
     it("always returns mover === start (B5)", () => {
       const s: BuilderState = {
+        kind: "labyrinth",
         piece: "rook",
         start: "d4",
         goal: "d8",
@@ -71,6 +74,7 @@ describe("labyrinth-builder/state", () => {
       // A knight lesson where the walls are ALSO white knights. Without an
       // explicit mover this FEN has 3 white knights => "ambiguous mover".
       const s: BuilderState = {
+        kind: "labyrinth",
         piece: "knight",
         start: "b1",
         goal: "f7",
@@ -105,6 +109,7 @@ describe("labyrinth-builder/state", () => {
   describe("pawn captures", () => {
     it("emits a lowercase black pawn and maps to captureTargets + isCapture", () => {
       const s: BuilderState = {
+        kind: "labyrinth",
         piece: "pawn",
         start: "d2",
         goal: "e3",

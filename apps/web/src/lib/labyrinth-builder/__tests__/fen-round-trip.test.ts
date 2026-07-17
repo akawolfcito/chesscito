@@ -22,22 +22,21 @@ const records = JSON.parse(readFileSync(LABS, "utf8")) as LabyrinthRecord[];
 
 /** The FEN placement is what we are testing; `goal` only feeds the `target`
  *  field and never reaches the placement. The targetless games (queens, tour,
- *  promotion-run) have no goal by design, so they borrow one here purely to get
- *  past buildFenBlock's guard. Making that guard kind-aware is etapa 2. */
-const GOAL_PLACEHOLDER = "h8";
-
+ *  promotion-run) have no goal by design — buildFenBlock's guard is now
+ *  kind-aware, so `null` passes it for exactly those kinds. */
 describe.each(records.map((r) => [r.kind ?? "labyrinth", r.id ?? r.fen, r] as const))(
   "round-trip [%s] %s",
-  (_kind, _id, rec) => {
+  (kind, _id, rec) => {
     it("derive → buildFenBlock reproduces the FEN", () => {
       const derived = deriveStateFromFen(rec.fen, rec.piece, rec.mover ?? "");
       expect(derived.ok).toBe(true);
       if (!derived.ok) return;
 
       const rebuilt = buildFenBlock({
+        kind,
         piece: rec.piece,
         start: derived.start,
-        goal: rec.target ?? GOAL_PLACEHOLDER,
+        goal: rec.target ?? null,
         walls: derived.walls,
         enemies: derived.enemies,
         order: rec.order,
