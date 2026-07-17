@@ -17,7 +17,7 @@
  * "this is a piece like yours" about something that is scenery.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { GameBoard } from "@/lib/game/game-board";
 import { cellCenter, pieceWidth } from "@/lib/game/board-geometry";
@@ -64,7 +64,7 @@ export function KnightTourBoard({
 }) {
   const t = useTranslations("KNIGHT_TOUR_COPY.band");
   const START = level.startPos;
-  const WALLS = level.obstacles ?? [];
+  const WALLS = useMemo(() => level.obstacles ?? [], [level.obstacles]);
   // The ceiling the score is measured against. The catalog already stored it as
   // level.optimalMoves (squares - 1), but the board recomputes rather than
   // reading it back: the /dev probe hands this component hand-written levels

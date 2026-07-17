@@ -130,9 +130,9 @@ describe("renderGeneratedModule — safe-path", () => {
   it("emits the bucket, so the levels can reach the runtime", () => {
     // A bucket the generator does not emit is a bucket the game never sees.
     const cat = buildCatalog([], [safePathRecord()], []);
-    const module = renderGeneratedModule(cat);
+    const rendered = renderGeneratedModule(cat);
 
-    expect(module).toContain("export const GENERATED_SAFE_PATH");
-    expect(module).toContain("safe-path-test");
+    expect(rendered).toContain("export const GENERATED_SAFE_PATH");
+    expect(rendered).toContain("safe-path-test");
   });
 });

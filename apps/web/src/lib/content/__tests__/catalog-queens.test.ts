@@ -83,8 +83,8 @@ describe("renderGeneratedModule — queens", () => {
     // A bucket the generator does not emit is a bucket the game never sees:
     // import-puzzles would build the levels and drop them on the floor.
     const cat = buildCatalog([], [queensRecord()], []);
-    const module = renderGeneratedModule(cat);
-    expect(module).toContain("export const GENERATED_QUEENS");
-    expect(module).toContain("queens-test");
+    const rendered = renderGeneratedModule(cat);
+    expect(rendered).toContain("export const GENERATED_QUEENS");
+    expect(rendered).toContain("queens-test");
   });
 });

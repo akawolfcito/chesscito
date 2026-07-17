@@ -14,7 +14,7 @@
  * ledger.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { GameBoard } from "@/lib/game/game-board";
 import { cellCenter, pieceWidth } from "@/lib/game/board-geometry";
@@ -68,7 +68,7 @@ export function DiagonalRunBoard({
   const t = useTranslations("DIAGONAL_RUN_COPY.band");
   const START = level.startPos;
   const TARGET = level.targetPos;
-  const BLOCKERS = level.obstacles ?? [];
+  const BLOCKERS = useMemo(() => level.obstacles ?? [], [level.obstacles]);
   const OPTIMAL = pivotBfs(START, TARGET, BLOCKERS).optimalMoves;
 
   const [bishop, setBishop] = useState<BoardPosition>(START);
@@ -261,11 +261,10 @@ export function DiagonalRunBoard({
           return (
             <picture
               key={`blk-${LABEL(b)}`}
-              aria-hidden="true"
               className="playhub-board-piece-float is-friendly-blocker"
               style={{ left: `${c.x}%`, top: `${c.y}%`, width: `${pw}%`, pointerEvents: "none" }}
             >
-              <img src={KNIGHT_SRC} alt="" className="playhub-board-piece-img" style={{ width: "100%" }} />
+              <img src={KNIGHT_SRC} alt="" aria-hidden="true" className="playhub-board-piece-img" style={{ width: "100%" }} />
             </picture>
           );
         })}

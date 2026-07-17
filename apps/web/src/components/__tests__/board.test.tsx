@@ -401,7 +401,9 @@ describe("<Board>", () => {
         ".playhub-board-piece-float.is-friendly-blocker",
       );
       expect(blocker?.style.pointerEvents).toBe("none");
-      expect(blocker?.getAttribute("aria-hidden")).toBe("true");
+      // aria-hidden lives on the inner <img> (a <picture> does not support ARIA);
+      // the decorative blocker stays out of the a11y tree either way.
+      expect(blocker?.querySelector("img")?.getAttribute("aria-hidden")).toBe("true");
     });
   });
 

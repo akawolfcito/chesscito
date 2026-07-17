@@ -188,9 +188,9 @@ describe("buildCatalog — promotion-run routing", () => {
 describe("renderGeneratedModule — promotion-run", () => {
   it("emits the bucket, so the levels can reach the runtime", () => {
     const cat = buildCatalog([], [runRecord()], []);
-    const module = renderGeneratedModule(cat);
+    const rendered = renderGeneratedModule(cat);
 
-    expect(module).toContain("export const GENERATED_PROMOTION_RUN");
-    expect(module).toContain("promotion-run-test");
+    expect(rendered).toContain("export const GENERATED_PROMOTION_RUN");
+    expect(rendered).toContain("promotion-run-test");
   });
 });

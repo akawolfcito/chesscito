@@ -416,7 +416,6 @@ export function Board({
         return (
           <picture
             key={`blocker-${o.file}-${o.rank}`}
-            aria-hidden="true"
             className="playhub-board-piece-float is-friendly-blocker"
             style={{
               left: `${center.x}%`,
@@ -434,6 +433,7 @@ export function Board({
             <img
               src={PIECE_IMG.knight}
               alt=""
+              aria-hidden="true"
               className={PIECE_IMG_CLASS}
               style={{ width: "100%" }}
             />

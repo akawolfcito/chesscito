@@ -50,12 +50,13 @@ export function AppModeSwitch({ activeMode }: AppModeSwitchProps) {
           onClick={() => selectMode(mode)}
           className="hub-app-mode-switch-pill"
         >
-          <picture className="hub-app-mode-switch-icon" aria-hidden="true">
+          <picture className="hub-app-mode-switch-icon">
             <source srcSet={`${asset}.avif`} type="image/avif" />
             <source srcSet={`${asset}.webp`} type="image/webp" />
             <img
               src={`${asset}.png`}
               alt=""
+              aria-hidden="true"
               width={width}
               height={height}
               draggable={false}

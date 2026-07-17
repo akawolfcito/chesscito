@@ -255,11 +255,10 @@ export function DiagonalRunSpike() {
           return (
             <picture
               key={`blk-${LABEL(b)}`}
-              aria-hidden="true"
               className="playhub-board-piece-float is-friendly-blocker"
               style={{ left: `${c.x}%`, top: `${c.y}%`, width: `${pw}%`, pointerEvents: "none" }}
             >
-              <img src={KNIGHT_SRC} alt="" className="playhub-board-piece-img" style={{ width: "100%" }} />
+              <img src={KNIGHT_SRC} alt="" aria-hidden="true" className="playhub-board-piece-img" style={{ width: "100%" }} />
             </picture>
           );
         })}

@@ -156,7 +156,7 @@ export function useSeasonPassRail({
         }
       }
     },
-    [address, sku, tokenEntry, retryDelaysMs],
+    [address, sku, tokenEntry, retryDelaysMs, onVerified],
   );
 
   const pay = useCallback(async () => {
