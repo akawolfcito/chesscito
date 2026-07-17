@@ -45,6 +45,27 @@
     limpio (antes ~0). El timer vive en un ref y se cancela en `resetBoard` + unmount.
     ⚠️ **`SAFE_PATH_ATTACK_BEAT_MS` (850) debe quedar POR ENCIMA** de los 460ms de
     `.playhub-board-laser`; si se retimea la animación, retimear esto.
+- **PROMOTION RUN (peón) — lógica pura hecha** (etapa 7 de 10), `ee793fd`. **Decisiones del founder
+  cerradas** en el plan §3.3 (P1-P6). Lo que el spec dejaba abierto ya no lo está:
+  - **El mapa de ataque SÍ aplica** y es la misma regla del rey (caés en vigilada, te comen → TRY
+    AGAIN → escudos, por la máquina que Safe Path ya cableó). **Pero es VIVO**: el peón come, y el
+    comido deja de vigilar.
+  - ⚠️ **El mapa dinámico es barato SOLO acá, y la razón es la regla del peón: nunca retrocede.**
+    Cada movida sube exactamente una fila → grafo DAG de ≤6 plies × 3 ramas → **~3⁶ caminos**. El
+    solver los enumera TODOS y es exacto por fuerza bruta. **NO llevar esto al rey**: capturar +
+    deambular es búsqueda cíclica sobre (posición × sobrevivientes), que es justo lo que D1 evita.
+  - ⛔ **REVIERTE D7 (auto-dama)**: la misión nombra la pieza a coronar ("coroná una dama o un
+    caballo") → **elegir ES la mecánica**, el selector entra al MVP. La misión es contrato tipado
+    (`{ promoteTo }`), no una dama hardcodeada.
+  - **Par de alfiles: diferido** (§3.5), y **no por costo** — es una 2da condición de victoria y
+    enseña una lección *del alfil* dentro del juego *del peón*, que ya tiene la suya.
+  - ⚠️ **Trampas de autoría que encontré midiendo, no razonando** (viven en los tests):
+    la víctima está viva en todos los pasos previos, así que **no puede atacar el arranque ni el
+    camino** — un caballo en b4 ataca **c2**, y el peón muere antes de mover. Las dos víctimas del
+    sketch son **torres, y es forzado**. · La Ta6 del founder **no amenaza** a través del muro en b6
+    (su sketch no tenía muros): el equivalente es **h6**. · Y dejada en a6, esa torre **no amenaza:
+    ALIMENTA** — `b5 ×a6` es una captura nueva y el peón corona por la columna a. **Sumar un enemigo
+    puede hacer el nivel más fácil**: los enemigos son los escalones.
 - **Safe Path — lógica pura** (etapas 1-3). Plan aprobado por el founder:
   `docs/specs/2026-07-16-safe-path-promotion-run-plan.md` (**leerlo antes de seguir** — §3 son las 7
   decisiones D1-D7, §1 es lo que el código desmintió del spec padre).
@@ -62,9 +83,9 @@
 
 ## Current State
 
-- **Branch**: `main` = `93aae14` + este handoff. **Safe Path CERRADO** — el founder lo aprobó
-  ("me gusta bastante", 2026-07-16) y no dejó pendientes de código.
-- **Build**: passing **medido en este árbol** — vitest **5281/5281** (448 files), `tsc --noEmit` exit 0,
+- **Branch**: `main` = `ee793fd` + este handoff. ⚠️ **ADELANTADA a `origin/main`** si el push no salió.
+  **Safe Path CERRADO** (el founder lo aprobó, "me gusta bastante"). **Promotion Run: 7 de 10.**
+- **Build**: passing **medido en este árbol** — vitest **5303/5303** (449 files), `tsc --noEmit` exit 0,
   e2e `safe-path-probe` **7/7** (`--project=minipay`). El `Error: boom` del output es ruido intencional
   de `primitive-boundary.test.tsx`.
 - **Uncommitted work**: no.
@@ -75,20 +96,22 @@
    la superficie — el juego no dibuja las zonas, así que sin ese toggle no se puede diseñar. Los tres
    son andamio a propósito. ⚠️ `/dev/labyrinth-builder` **NO conoce `safe-path`** todavía: no sabe
    dibujar enemigos typed ni el mapa de amenaza. Si el founder quiere autorar ahí, es trabajo aparte.
-2. **⬅️ ESTO SIGUE. PRÓXIMO JUEGO — Promotion Run (peón)**, etapa 7 del plan §4. Cierra el carril 2
-   (6/6 piezas). El founder ya lo pidió: "con eso cerramos este juego y continuamos con el que sigue".
-   🛑 **Antes de escribir código,
-   contestar la §3.3 Q2**: ¿el peón usa el mapa de ataque, o solo un set de casillas letales? El spec
-   padre dice que comparte la capa con Safe Path y después lo describe como "stepping on one loses",
-   que es otra cosa. Y el peón **captura**, lo que mutaría un mapa compartido → dinámico, justo lo que
-   D1 evita. **El modelo typed ya está hecho**: `enemies` es aditivo y el FEN ya trae los tipos.
-2. **Triar 5 locales no-mergeadas** que el barrido no tocó (nunca estuvieron en la lista):
+2. **⬅️ ESTO SIGUE — Promotion Run, etapa 8 de 10: CONTENIDO.** La lógica pura (7) está hecha y las
+   decisiones del founder cerradas (plan §3.3): **no hay nada que preguntarle para arrancar**. Sigue:
+   `MissionSpec` + kind `promotion-run` en `labyrinths.json` + niveles, y que `import-puzzles` rechace
+   el nivel cuyo `promotionRunSolve` da `null`. **Diseñar a mano, filtrar con el solver** — el sketch
+   verificado ya vive en `promotion-run.test.ts` (`c3>b4>b5>c6>c7>c8`; víctimas = **torres**, muros en
+   c4+b6). Después: **9** (tablero + probe `/dev/promotion-run`) y **10** (host — **reusa la ruta de
+   fallo de Safe Path tal cual** — + selector de promoción + cadena de valores + i18n + e2e). Plan §4.
+   Cierra el carril 2 (**6/6**).
+3. **Triar 5 locales no-mergeadas** que el barrido no tocó (nunca estuvieron en la lista):
    `backup/main-before-author-rewrite` (huele a red de un rewrite de historia — **no borrar sin mirar**),
    `chore/minipay-gate`, `feat/board-renderer`, `feat/progression-unlocks-celebration-queue`,
    `phase-1-ui-zone-map`.
-3. **Pendientes del founder del handoff de queens** (no agendados): afinar los 3 niveles en
+4. **Pendientes del founder del handoff de queens** (no agendados): afinar los 3 niveles en
    `/dev/labyrinth-builder` (**no hace falta tocar código**, el techo se recalcula solo) · **overlay
-   TRY AGAIN + feedback al fallar, para TODAS las piezas** · decidir la **maestría** perdida (Blockers).
+   TRY AGAIN + feedback al fallar, para TODAS las piezas** (el rey ya lo tiene; falta el resto) ·
+   decidir la **maestría** perdida (Blockers).
 
 ## Blockers
 
