@@ -525,7 +525,7 @@ export default function LabyrinthBuilderPage() {
     <main className="min-h-screen bg-black p-4 text-neutral-100 lg:h-screen lg:overflow-hidden">
       <div className="mx-auto flex max-w-5xl flex-col gap-4 lg:h-full lg:min-h-0 lg:max-w-none lg:flex-row">
         {/* ── Board column (stays put; the panel on the right scrolls) ── */}
-        <section className="flex flex-col gap-3 lg:min-h-0 lg:w-[30rem] lg:shrink-0 lg:overflow-y-auto lg:pr-1">
+        <section className="flex flex-col gap-3 lg:min-h-0 lg:w-[35rem] lg:shrink-0 lg:overflow-y-auto lg:pr-1">
           <h1 className="text-lg font-bold tracking-tight text-neutral-100">
             {bucket === "exercise" ? "Exercise" : "Labyrinth"} Builder{" "}
             <span className="text-xs font-medium uppercase tracking-widest text-neutral-500">

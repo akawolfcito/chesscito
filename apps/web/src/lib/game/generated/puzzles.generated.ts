@@ -1927,42 +1927,34 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "rook-rail-rook-run",
-      "optimalMoves": 8,
+      "optimalMoves": 10,
       "startPos": {
-        "file": 3,
-        "rank": 7
+        "file": 4,
+        "rank": 6
       },
       "targetPos": {
-        "file": 5,
-        "rank": 0
+        "file": 4,
+        "rank": 4
       },
       "obstacles": [
-        {
-          "file": 0,
-          "rank": 7
-        },
-        {
-          "file": 1,
-          "rank": 7
-        },
-        {
-          "file": 2,
-          "rank": 7
-        },
-        {
-          "file": 5,
-          "rank": 7
-        },
-        {
-          "file": 6,
-          "rank": 7
-        },
         {
           "file": 7,
           "rank": 7
         },
         {
           "file": 1,
+          "rank": 6
+        },
+        {
+          "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 5,
+          "rank": 6
+        },
+        {
+          "file": 1,
           "rank": 5
         },
         {
@@ -1970,7 +1962,15 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
           "rank": 5
         },
         {
+          "file": 3,
+          "rank": 5
+        },
+        {
           "file": 4,
+          "rank": 5
+        },
+        {
+          "file": 5,
           "rank": 5
         },
         {
@@ -1982,15 +1982,11 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
           "rank": 4
         },
         {
-          "file": 4,
-          "rank": 4
-        },
-        {
           "file": 5,
           "rank": 4
         },
         {
-          "file": 2,
+          "file": 1,
           "rank": 3
         },
         {
@@ -2006,31 +2002,27 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
           "rank": 3
         },
         {
-          "file": 0,
+          "file": 1,
           "rank": 2
-        },
-        {
-          "file": 2,
-          "rank": 2
-        },
-        {
-          "file": 6,
-          "rank": 2
-        },
-        {
-          "file": 0,
-          "rank": 1
-        },
-        {
-          "file": 4,
-          "rank": 1
         },
         {
           "file": 5,
+          "rank": 2
+        },
+        {
+          "file": 7,
+          "rank": 2
+        },
+        {
+          "file": 2,
           "rank": 1
         },
         {
-          "file": 6,
+          "file": 3,
+          "rank": 1
+        },
+        {
+          "file": 7,
           "rank": 1
         },
         {
@@ -2038,11 +2030,11 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
           "rank": 0
         },
         {
-          "file": 1,
+          "file": 6,
           "rank": 0
         },
         {
-          "file": 2,
+          "file": 7,
           "rank": 0
         }
       ],
