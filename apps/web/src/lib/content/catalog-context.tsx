@@ -20,7 +20,7 @@
  */
 
 import { createContext, useContext, type ReactNode } from "react";
-import { EXERCISES, LABYRINTHS, DIAGONAL_RUN, KNIGHT_TOUR, QUEENS } from "@/lib/game/exercises";
+import { EXERCISES, LABYRINTHS, DIAGONAL_RUN, KNIGHT_TOUR, QUEENS, SAFE_PATH } from "@/lib/game/exercises";
 import { GENERATED_EXERCISE_DESCRIPTIONS } from "@/lib/game/generated/puzzles.generated";
 import type { Exercise, PieceId } from "@/lib/game/types";
 
@@ -39,6 +39,10 @@ export interface ContentCatalog {
   /** N-Queens pool (kind:"queens"). Same bucket/adapter pattern; graded by
    *  coverage, never by move count. */
   queens?: Record<PieceId, Exercise[]>;
+  /** Safe Path pool (kind:"safe-path"). Same bucket/adapter pattern, but the
+   *  OPPOSITE grader to its two neighbours above: arrival, by MOVE COUNT —
+   *  lower is better. Graded with labyrinthStars, never tourStars. */
+  safePath?: Record<PieceId, Exercise[]>;
   descriptions: Record<string, string>;
 }
 
@@ -48,6 +52,7 @@ const DEFAULT_CATALOG: ContentCatalog = {
   diagonalRun: DIAGONAL_RUN,
   knightTour: KNIGHT_TOUR,
   queens: QUEENS,
+  safePath: SAFE_PATH,
   descriptions: GENERATED_EXERCISE_DESCRIPTIONS,
 };
 
@@ -94,6 +99,12 @@ export function useKnightTourCatalog(): Record<PieceId, Exercise[]> {
  *  (or when a provider supplies a catalog without the optional field). */
 export function useQueensCatalog(): Record<PieceId, Exercise[]> {
   return useContext(ContentCatalogContext).queens ?? QUEENS;
+}
+
+/** Active by-piece Safe Path pools. Baseline `SAFE_PATH` with no provider
+ *  (or when a provider supplies a catalog without the optional field). */
+export function useSafePathCatalog(): Record<PieceId, Exercise[]> {
+  return useContext(ContentCatalogContext).safePath ?? SAFE_PATH;
 }
 
 /** Active exercise descriptions map. Baseline generated map with no provider. */

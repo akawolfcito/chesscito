@@ -20,6 +20,7 @@ import { Board } from "@/components/board";
 import { DiagonalRunBoard } from "@/components/exercises/diagonal-run-board";
 import { KnightTourBoard } from "@/components/exercises/knight-tour-board";
 import { QueensBoard } from "@/components/exercises/queens-board";
+import { SafePathBoard } from "@/components/exercises/safe-path-board";
 import { useCoachCredits } from "@/lib/coach/use-coach-credits";
 import { ExerciseDrawer } from "@/components/exercises/exercise-drawer";
 import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
@@ -81,7 +82,7 @@ import {
 import { readPieceStars } from "@/lib/game/exercise-progress";
 import { hasSeededMilestones } from "@/lib/progression/seed-milestones";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
-import { useExerciseCatalog, useLabyrinthCatalog, useDiagonalRunCatalog, useKnightTourCatalog, useQueensCatalog } from "@/lib/content/catalog-context";
+import { useExerciseCatalog, useLabyrinthCatalog, useDiagonalRunCatalog, useKnightTourCatalog, useQueensCatalog, useSafePathCatalog } from "@/lib/content/catalog-context";
 import { resolveSpecialTrainingLabels } from "@/lib/content/special-training-labels";
 import { useRotationSteering } from "@/hooks/use-rotation-steering";
 import { useSaveScoreState } from "@/hooks/use-save-score-state";
@@ -324,6 +325,7 @@ export function ExercisesScreen({
   const tRun = useTranslations("DIAGONAL_RUN_COPY");
   const tTour = useTranslations("KNIGHT_TOUR_COPY");
   const tQueens = useTranslations("QUEENS_COPY");
+  const tSafePath = useTranslations("SAFE_PATH_COPY");
   const tPath = useTranslations("TRAINING_PATH_COPY");
   const tMission = useTranslations("MISSION_BRIEFING_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
@@ -721,6 +723,7 @@ export function ExercisesScreen({
   const diagonalRunCatalog = useDiagonalRunCatalog();
   const knightTourCatalog = useKnightTourCatalog();
   const queensCatalog = useQueensCatalog();
+  const safePathCatalog = useSafePathCatalog();
   // Special Training navigation pool. A piece that has Pivot Challenges surfaces
   // THOSE (projected as labyrinth-kind nodes downstream) and hides its raw
   // labyrinths this phase — bishop-lab-3/-4 stay in content, just unselected.
@@ -738,9 +741,10 @@ export function ExercisesScreen({
       if (diagonalRunCatalog[piece]?.length) out[piece] = diagonalRunCatalog[piece];
       else if (knightTourCatalog[piece]?.length) out[piece] = knightTourCatalog[piece];
       else if (queensCatalog[piece]?.length) out[piece] = queensCatalog[piece];
+      else if (safePathCatalog[piece]?.length) out[piece] = safePathCatalog[piece];
     }
     return out;
-  }, [labyrinthCatalog, diagonalRunCatalog, knightTourCatalog, queensCatalog]);
+  }, [labyrinthCatalog, diagonalRunCatalog, knightTourCatalog, queensCatalog, safePathCatalog]);
 
   /** The ids in the Special Training lane that grade by COVERAGE, not by moves.
    *  Passed to buildTrainingPath so the drawer picks tourStars. Both signature
@@ -1368,6 +1372,11 @@ export function ExercisesScreen({
     setMoves(0);
     setElapsedMs(0);
     timerStart.current = 0;
+    // Safe Path keys off its own id, not boardKey, so the bump above never
+    // reaches it. Every rescue path lands here — shield, skip, server error —
+    // and all three mean the same thing for the king: walk back to the start
+    // (D5). Losing on step 9 of 10 costs the whole run.
+    setSafePathResetKey((previous) => previous + 1);
   }
 
   /**
@@ -2498,9 +2507,72 @@ export function ExercisesScreen({
     ceiling: number
   } | null>(null);
 
+  /** Same derivation again, for the king's signature game. */
+  const activeSafePath =
+    activeLabyrinth &&
+    (safePathCatalog[selectedPiece] ?? []).some((p) => p.id === activeLabyrinth.id)
+      ? activeLabyrinth
+      : null;
+
+  /** Safe Path's band. Unlike the queens', the count it carries is a MOVE
+   *  count against the optimal — lower is better. Same shape as queens', which
+   *  is exactly why the two must never be wired to the same grader. */
+  const [safePathBand, setSafePathBand] = useState<{
+    message: string
+    phase: string
+    moves: number
+    optimal: number
+  } | null>(null);
+
+  /** Bumped to walk the king back to the start after he is caught (D5) —
+   *  whether he was rescued by a shield or the player waved the modal away. */
+  const [safePathResetKey, setSafePathResetKey] = useState(0);
+
+  /**
+   * The king stepped where an enemy watches, and was seen (D4).
+   *
+   * ⚠️ Safe Path is the FIRST Special Training game that can be LOST. A
+   * labyrinth, a tour, a pivot run, a queens board — none of them have a
+   * failure state; the worst outcome is a worse score. So rather than grow a
+   * second failure machine for the Special Training lane, this borrows the
+   * exercise one wholesale: the same `phase = "failure"`, the same rescue
+   * modal, the same FTUX gate, the same auto-reset fallback. The shield already
+   * means "you failed, take another run at it" — that is exactly what happened.
+   */
+  function handleSafePathCaught(caughtOn: string) {
+    if (!activeSafePath) return;
+    setPhase("failure");
+    shieldRescueAttemptIdRef.current += 1;
+    track("exercise_fail", {
+      piece: selectedPiece,
+      exercise_id: activeSafePath.id,
+      moves: safePathBand?.moves ?? 0,
+      is_capture: false,
+      // Which square did the killing. Level-design telemetry: it names the trap
+      // that actually works, which is the one thing the builder cannot show.
+      caught_on: caughtOn,
+      isLite: CHESSCITO_LITE_MODE,
+    });
+    // Same gate as the exercise path: the modal pitches streaks and shields,
+    // and a player who has never met either is being over-pitched. Without the
+    // context, the run just restarts after a beat — the king still walks home,
+    // because handleRetryApplied lands in resetBoard.
+    const hasRescueContext =
+      streakCount >= 1 || shieldCount >= 1 || welcomePack.state === "claimed";
+    if (!hasRescueContext) {
+      autoReset.schedule(() => handleRetryApplied("auto_reset"), 1500);
+    }
+    // else: the modal owns the dwell, and its own handlers reset the board.
+  }
+
   /** The active node graded by coverage, whichever game it belongs to. The two
    *  are mutually exclusive (a node lives in exactly one pool), so this is the
-   *  one thing `handleCoverageComplete` needs to know. */
+   *  one thing `handleCoverageComplete` needs to know.
+   *
+   *  ⚠️ Safe Path is NOT here. It is arrival-graded, so it goes through
+   *  `handleLabyrinthMove` like the Diagonal Run. Adding it to this pair would
+   *  hand a move count to a coverage grader — both are `number`, so nothing
+   *  would complain and everyone would get three stars. */
   const activeCoverage = activeKnightTour ?? activeQueens;
 
   /** Integrated training path (Slice 2 — read-only display in the
@@ -2720,6 +2792,9 @@ export function ExercisesScreen({
   // N-Queens copy, same id-keyed i18n shape.
   const queensTitle = activeQueens ? tQueens(`title.${activeQueens.id}`) : null;
   const queensPrompt = activeQueens ? tQueens(`prompt.${activeQueens.id}`) : null;
+  // Safe Path copy, same id-keyed i18n shape.
+  const safePathTitle = activeSafePath ? tSafePath(`title.${activeSafePath.id}`) : null;
+  const safePathPrompt = activeSafePath ? tSafePath(`prompt.${activeSafePath.id}`) : null;
 
   const targetLabel = activeDiagonalRun
     ? // Pivot is not measured in moves: the chip shows the destination square,
@@ -2738,6 +2813,14 @@ export function ExercisesScreen({
           placed: queensBand?.placed ?? 1,
           ceiling: queensBand?.ceiling ?? activeQueens.optimalMoves + 1,
         })
+      : activeSafePath
+      ? // Looks like the queens chip and means the opposite: this counts MOVES
+        //  against the optimal, so lower is better. Same reason the two games
+        //  must never share a grader.
+        tSafePath("chip.count", {
+          moves: safePathBand?.moves ?? 0,
+          optimal: activeSafePath.optimalMoves,
+        })
       : activeLabyrinth
       ? // Labyrinth chip becomes a live counter: "0 / 4 · optimal" (no
         //  moves yet) → "3 / 4 · optimal" (live) → "5 / 4 · over" past
@@ -2753,6 +2836,8 @@ export function ExercisesScreen({
     ? (tourPrompt as string)
     : activeQueens
     ? (queensPrompt as string)
+    : activeSafePath
+    ? (safePathPrompt as string)
     : activeLabyrinth
       ? `${tLab("missionTitle")} · ${tLab("missionHint", { optimal: activeLabyrinth.optimalMoves })}`
       : currentExercise.isCapture
@@ -2873,7 +2958,7 @@ export function ExercisesScreen({
           targetLabel={targetLabel}
           pieceHint={pieceHint}
           exercisePrompt={runPrompt ?? currentExercise.playerPrompt}
-          exerciseTitle={runTitle ?? tourTitle ?? queensTitle ?? currentExercise.title}
+          exerciseTitle={runTitle ?? tourTitle ?? queensTitle ?? safePathTitle ?? currentExercise.title}
           isCapture={Boolean(currentExercise.isCapture)}
           isDockSheetOpen={activeDockTab !== null}
           labyrinthMode={effectiveLabyrinthMode}
@@ -2892,11 +2977,13 @@ export function ExercisesScreen({
                 ? (knightTourBand ?? undefined)
                 : activeQueens
                   ? (queensBand ?? undefined)
-                  : undefined
+                  : activeSafePath
+                    ? (safePathBand ?? undefined)
+                    : undefined
           }
           labyrinthOptimalMoves={activeLabyrinth?.optimalMoves}
           labyrinthId={activeLabyrinth?.id}
-          labyrinthTitle={runTitle ?? tourTitle ?? queensTitle ?? activeLabyrinth?.title}
+          labyrinthTitle={runTitle ?? tourTitle ?? queensTitle ?? safePathTitle ?? activeLabyrinth?.title}
           onLabyrinthSelect={handleLabyrinthSelect}
           score={score.toString()}
           totalStars={totalStars}
@@ -3118,6 +3205,22 @@ export function ExercisesScreen({
                 // Same coverage handler as the tour, for the same reason.
                 onComplete={handleCoverageComplete}
                 onBandChange={setQueensBand}
+              />
+            ) : activeSafePath ? (
+              <SafePathBoard
+                key={`sp-${activeSafePath.id}-${labyrinthKey}`}
+                level={activeSafePath}
+                resetKey={safePathResetKey}
+                // handleLabyrinthMove, NOT handleCoverageComplete: this game is
+                // graded by ARRIVAL, like the Diagonal Run. Its neighbours above
+                // report coverage; wiring this one to them would feed a move
+                // count to a percentage grader — same `number`, opposite
+                // meaning, no type error, three stars for everyone.
+                onComplete={(moves) =>
+                  handleLabyrinthMove(activeSafePath.targetPos, moves)
+                }
+                onCaught={handleSafePathCaught}
+                onBandChange={setSafePathBand}
               />
             ) : (
               <Board
