@@ -1623,6 +1623,30 @@ const messages = {
       done: "No quedan casillas seguras.",
     },
   },
+  /** ⚠️ Nada acá puede nombrar una casilla vigilada ni insinuar dónde está el
+   *  peligro: son invisibles a propósito (plan D2) y deducirlas ES el juego.
+   *  Decí la REGLA, nunca la posición. */
+  SAFE_PATH_COPY: {
+    title: {
+      "king-safe-1": "El caballo ve",
+      "king-safe-2": "Dos vigías",
+      "king-safe-3": "El ojo largo",
+    },
+    prompt: {
+      "king-safe-1":
+        "El caballo no te estorba. Las casillas que vigila, sí.",
+      "king-safe-2": "Dos caballos, dos zonas. Encontrá el hueco entre ellas.",
+      "king-safe-3": "El alfil vigila una diagonal entera, no una casilla.",
+    },
+    chip: {
+      count: "paso {moves}/{optimal}",
+    },
+    band: {
+      walk: "Llegá al refugio sin pisar donde vigila el enemigo.",
+      caught: "Te atraparon. Esa casilla estaba vigilada.",
+      done: "A salvo.",
+    },
+  },
   LABYRINTH_COPY: {
     toggleExercises: "Ejercicios",
     toggleLabyrinths: "Laberintos",

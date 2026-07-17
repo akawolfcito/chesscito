@@ -6,6 +6,7 @@ import {
   GENERATED_DIAGONAL_RUN,
   GENERATED_KNIGHT_TOUR,
   GENERATED_QUEENS,
+  GENERATED_SAFE_PATH,
 } from "@/lib/game/generated/puzzles.generated";
 
 /** Pieces with exercises defined and playable */
@@ -122,6 +123,22 @@ export const QUEENS: Record<PieceId, Exercise[]> = {
   pawn:   GENERATED_QUEENS.pawn,
   queen:  GENERATED_QUEENS.queen,
   king:   GENERATED_QUEENS.king,
+};
+
+/* ── Safe Path (Special Training, kind:"safe-path") ──────────────────────
+ * The king's signature game. Same adapter story as QUEENS, but the OPPOSITE
+ * grader: this one is ARRIVAL-graded, so `optimalMoves` is a move count —
+ * LOWER IS BETTER — and it feeds `labyrinthStars`, never `tourStars`. The two
+ * are both `number` and would swap without a type error, which is exactly how
+ * a scoreboard starts lying.
+ * Plan: docs/specs/2026-07-16-safe-path-promotion-run-plan.md §4. */
+export const SAFE_PATH: Record<PieceId, Exercise[]> = {
+  rook:   GENERATED_SAFE_PATH.rook,
+  bishop: GENERATED_SAFE_PATH.bishop,
+  knight: GENERATED_SAFE_PATH.knight,
+  pawn:   GENERATED_SAFE_PATH.pawn,
+  queen:  GENERATED_SAFE_PATH.queen,
+  king:   GENERATED_SAFE_PATH.king,
 };
 
 /**

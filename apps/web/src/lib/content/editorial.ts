@@ -1442,6 +1442,39 @@ export const QUEENS_COPY = {
   },
 } as const;
 
+/** Safe Path — the king's signature game (kind:"safe-path").
+ *
+ *  ⚠️ NOTHING here may name a watched square, list one, or hint at where the
+ *  danger is. The watched squares are invisible BY DESIGN (plan D2): they are a
+ *  deduction from the enemy pieces the player can see, and reading them is the
+ *  skill. Copy that says "watch out for d4" hands over the answer the board
+ *  deliberately withholds. Say the RULE, never the position. */
+export const SAFE_PATH_COPY = {
+  title: {
+    "king-safe-1": "The Knight Sees",
+    "king-safe-2": "Two Watchers",
+    "king-safe-3": "The Long Eye",
+  },
+  prompt: {
+    "king-safe-1": "The knight is not in your way. The squares it watches are.",
+    "king-safe-2": "Two knights, two zones. Find the gap between them.",
+    "king-safe-3": "The bishop watches a whole diagonal, not a square.",
+  },
+  /** Mission chip — a move COUNTER against the optimal, like the labyrinth's.
+   *  Arrival-graded: LOWER IS BETTER, the opposite of the coverage games. */
+  chip: {
+    count: "move {moves}/{optimal}",
+  },
+  band: {
+    /** The mission. States the king's rule, not the board's secret. */
+    walk: "Reach the refuge without stepping where the enemy watches.",
+    /** He walked in and was seen. The board is already naming the killer in
+     *  orange; this says what happened, not where to have gone. */
+    caught: "Caught. That square was watched.",
+    done: "Safe.",
+  },
+} as const;
+
 export const LABYRINTH_COPY = {
   toggleExercises: "Exercises",
   toggleLabyrinths: "Labyrinths",
