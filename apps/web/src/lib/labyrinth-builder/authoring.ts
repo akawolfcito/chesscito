@@ -43,10 +43,10 @@ export const KIND_CAPABILITY: Record<PuzzleKind, KindCapability> = {
   queens: { enemyPieces: [], editable: true },
   // Its enemies are BOTH victims to eat and eyes to avoid; typed from etapa 1.
   "promotion-run": { enemyPieces: NON_KING_ENEMIES, editable: true },
-  // ⛔ editable:false until the Safe Path stage (spec §Etapas 7). Loading it now
-  //    drops its typed threats on the floor — the knight that IS the game. Flip
-  //    this to true only when the typed enemy brush lands.
-  "safe-path": { enemyPieces: NON_KING_ENEMIES, editable: false },
+  // Editable since etapa 7: the typed enemy brush lets an author place its
+  // threats, and the loader keeps them (isThreatKind) instead of dropping the
+  // knight that IS the level.
+  "safe-path": { enemyPieces: NON_KING_ENEMIES, editable: true },
 };
 
 /** Whether the builder will open a record of this kind for editing. */

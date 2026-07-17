@@ -21,7 +21,9 @@ import {
   isKindEditable,
   kindLabel,
   isTargetlessKind,
+  isThreatKind,
   watchedSquares,
+  KIND_CAPABILITY,
 } from "@/lib/labyrinth-builder/authoring";
 import { PROMOTABLE_PIECES } from "@/lib/game/promotion-run";
 import { BuilderPreview, isPreviewable } from "@/components/dev/builder-preview";
@@ -60,6 +62,17 @@ const PIECE_SRC: Record<PieceId, string> = {
   pawn: `${THEME_CONFIG.piecesBase}/w-pawn.png`,
   queen: `${THEME_CONFIG.piecesBase}/w-queen.png`,
   king: `${THEME_CONFIG.piecesBase}/w-king.png`,
+};
+
+// Black sprites for enemies, so a threat's TYPE is visible on the paint board —
+// a knight and a rook watch very different squares.
+const ENEMY_SRC: Record<PieceId, string> = {
+  rook: `${THEME_CONFIG.piecesBase}/b-rook.png`,
+  bishop: `${THEME_CONFIG.piecesBase}/b-bishop.png`,
+  knight: `${THEME_CONFIG.piecesBase}/b-knight.png`,
+  pawn: `${THEME_CONFIG.piecesBase}/b-pawn.png`,
+  queen: `${THEME_CONFIG.piecesBase}/b-queen.png`,
+  king: `${THEME_CONFIG.piecesBase}/b-king.png`,
 };
 const STAR_SRC = "/art/redesign/icons/star.png";
 
@@ -164,6 +177,9 @@ export default function LabyrinthBuilderPage() {
   /** Paint = author the position; Preview = play the real board on the draft.
    *  Only one board is mounted at a time (behavior 11). */
   const [mode, setMode] = useState<"paint" | "preview">("paint");
+  /** Which black piece the enemy brush paints on a threat kind (safe-path,
+   *  promotion-run). Ignored elsewhere — the pawn's captures stay pawns. */
+  const [enemyPiece, setEnemyPiece] = useState<PieceId>("knight");
   const [tracedPath, setTracedPath] = useState<string[]>([]);
   const [fenInput, setFenInput] = useState("");
   const [targetInput, setTargetInput] = useState("");
@@ -256,9 +272,11 @@ export default function LabyrinthBuilderPage() {
     setState((prev) => ({
       ...prev,
       piece,
-      enemies: piece === "pawn" ? prev.enemies : [],
+      // A threat kind keeps its enemies across a piece swap; elsewhere only a
+      // pawn has any (its capture targets).
+      enemies: isThreatKind(prev.kind) || piece === "pawn" ? prev.enemies : [],
     }));
-    if (brush === "capture" && piece !== "pawn") setBrush("start");
+    if (brush === "capture" && piece !== "pawn" && !isThreatKind(state.kind)) setBrush("start");
   }
 
   function toggleIn(list: string[], sq: string): string[] {
@@ -283,10 +301,13 @@ export default function LabyrinthBuilderPage() {
         update({ walls: toggleIn(state.walls, sq) });
         break;
       case "capture":
-        // The capture brush still paints a black PAWN — the only enemy the
-        // builder can express today. A TYPED brush (safe-path's knights, rooks…)
-        // is etapa 7; what changed here is that the type now SURVIVES a save.
-        if (state.piece === "pawn") update({ enemies: toggleEnemy(state.enemies, sq, "pawn") });
+        // Threat kinds paint the SELECTED black piece (safe-path's knight, a
+        // promotion-run's rook…); a pawn exercise still paints its pawn captures.
+        if (isThreatKind(state.kind)) {
+          update({ enemies: toggleEnemy(state.enemies, sq, enemyPiece) });
+        } else if (state.piece === "pawn") {
+          update({ enemies: toggleEnemy(state.enemies, sq, "pawn") });
+        }
         break;
       case "trace":
         setTracedPath((prev) =>
@@ -317,7 +338,7 @@ export default function LabyrinthBuilderPage() {
       start: derived.start,
       goal: target || prev.goal,
       walls: derived.walls,
-      enemies: piece === "pawn" ? derived.enemies : [],
+      enemies: isThreatKind(prev.kind) || piece === "pawn" ? derived.enemies : [],
     }));
     setTracedPath([]);
     const notes = [...derived.notes];
@@ -354,10 +375,10 @@ export default function LabyrinthBuilderPage() {
       // A knight-tour record carries no target — it has no goal square to load.
       goal: rec.target ?? null,
       walls: derived.walls,
-      // ⚠️ Still drops a non-pawn's enemies, which DESTROYS a safe-path level on
-      // load (its knight is the game). Deliberately unchanged here: this stage
-      // only makes the type survive. Kind-aware enemy loading is a later stage.
-      enemies: rec.piece === "pawn" ? derived.enemies : [],
+      // A threat kind KEEPS its typed enemies (the knight that IS a safe-path
+      // level); a pawn keeps its capture targets. This is the load that used to
+      // drop safe-path's threats on the floor — the whole point of the redesign.
+      enemies: isThreatKind(recKind) || rec.piece === "pawn" ? derived.enemies : [],
       promoteTo: rec.promoteTo,
       order: rec.order,
       explanation: rec.explanation,
@@ -571,7 +592,8 @@ export default function LabyrinthBuilderPage() {
               const isStart = state.start === sq;
               const isGoal = state.goal === sq;
               const isWall = state.walls.includes(sq);
-              const isCapture = state.enemies.some((e) => e.square === sq);
+              const enemy = state.enemies.find((e) => e.square === sq);
+              const isCapture = !!enemy;
               const inPath = pathSquares.has(sq);
               const traceOrder = traceIndex.get(sq);
               const isWatched = watched.has(sq);
@@ -584,8 +606,12 @@ export default function LabyrinthBuilderPage() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src="/art/labyrinths/wall.png" alt="" style={CELL_OVERLAY.wall} />
                   )}
-                  {isCapture && !isStart && (
-                    <span style={CELL_OVERLAY.capture} />
+                  {enemy && !isStart && (
+                    <>
+                      <span style={CELL_OVERLAY.capture} />
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={ENEMY_SRC[enemy.piece]} alt="" style={CELL_OVERLAY.sprite} />
+                    </>
                   )}
                   {isStart ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -609,11 +635,14 @@ export default function LabyrinthBuilderPage() {
           <div className="flex flex-wrap gap-2">
             {(["start", "goal", "wall", "capture", "trace"] as Brush[]).map((b) => {
               const disabled =
-                (b === "capture" && state.piece !== "pawn") ||
+                // The enemy brush is for a pawn's captures OR a threat kind's
+                // typed pieces; hidden for the kinds that have neither.
+                (b === "capture" && state.piece !== "pawn" && !isThreatKind(state.kind)) ||
                 // The targetless kinds (queens, knight-tour, promotion-run) have
                 // no goal square to paint — hide the brush so it can't be set.
                 (b === "goal" && isTargetlessKind(state.kind));
               if (disabled) return null;
+              const label = b === "capture" && isThreatKind(state.kind) ? "enemy" : b;
               return (
                 <button
                   key={b}
@@ -625,7 +654,7 @@ export default function LabyrinthBuilderPage() {
                       : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"
                   }`}
                 >
-                  {b}
+                  {label}
                 </button>
               );
             })}
@@ -637,9 +666,31 @@ export default function LabyrinthBuilderPage() {
               clear trace
             </button>
           </div>
+          {isThreatKind(state.kind) ? (
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Enemy piece">
+              <span className="text-xs text-neutral-500">enemy:</span>
+              {KIND_CAPABILITY[state.kind].enemyPieces.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => {
+                    setEnemyPiece(p);
+                    setBrush("capture");
+                  }}
+                  className={`rounded px-2 py-1 text-xs capitalize ${
+                    enemyPiece === p
+                      ? "bg-neutral-100 text-black"
+                      : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <p className="text-xs text-neutral-500">
-            piece=start · ★=goal · dark tile=wall · red ring=capture · red
-            wash=watched by an enemy · blue dot=BFS path · number=traced order
+            piece=start · ★=goal · dark tile=wall · red ring/black piece=enemy ·
+            red wash=watched by an enemy · blue dot=BFS path · number=traced order
           </p>
             </>
           )}

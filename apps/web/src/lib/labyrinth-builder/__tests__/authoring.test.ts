@@ -15,9 +15,9 @@ describe("KIND_CAPABILITY", () => {
     expect(Object.keys(KIND_CAPABILITY).sort()).toEqual([...PUZZLE_KINDS].sort());
   });
 
-  it("keeps Safe Path off-limits until its own stage; everything else opens", () => {
+  it("opens every kind for editing — Safe Path included, from its own stage", () => {
     for (const kind of PUZZLE_KINDS) {
-      expect(isKindEditable(kind)).toBe(kind !== "safe-path");
+      expect(isKindEditable(kind)).toBe(true);
     }
   });
 
