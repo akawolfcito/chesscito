@@ -134,14 +134,58 @@ watched squares are a **deduction**, not hidden information. Highlighting them p
 reading for the player, and reading the threat **is** the skill the game teaches. Real chess
 highlights nothing. The founder's call is also consistent with the N-Queens precedent.
 
-### 3.3 Still open — Promotion Run only (does NOT block Safe Path)
+### 3.3 Promotion Run — settled (founder, 2026-07-16)
 
-**Q2 — does Promotion Run use the attack map, or a flat lethal-square set?** The parent spec
-says the two games "share the attack layer", then defines the pawn's rule as *"stepping on one
-loses"* — a lethal-square set, not an attack map. The pawn also **captures** (its only way to
-change file), so any enemy it removes would mutate a shared map → dynamic, the very thing D1
-avoids. **These may be two concepts under one name.** Decide at stage 7; Safe Path does not
-wait on it.
+**Q2 is answered: the attack map DOES apply, and it is the same rule as the king's.** An enemy
+never moves, but if it sees the pawn it takes it → TRY AGAIN → shields, through the machinery
+Safe Path already wired. Founder's own example: add a rook on a6 to the c2 sketch and `×c6`
+lands the pawn where the rook watches — it captured, and got captured back. That is a trade,
+not a bug, and it is real chess.
+
+| # | Decision |
+|---|---|
+| **P1** | **Attack map applies.** Landing on a watched square loses, exactly like Safe Path D4. |
+| **P2** | **The map IS dynamic** — the pawn captures, and a captured enemy stops watching. See §3.4: this is cheap here, and only here. |
+| **P3** | **The mission names the piece to promote to** ("promote a queen", "promote a knight"). Choosing IS the mechanic. |
+| **P4** | **Promotion teaches the value chain** (queen 9, rook 5, bishop/knight 3, pawn 1). |
+| **P5** | ⛔ **REVERSES D7.** Auto-queen is dead: P3 makes the promotion picker load-bearing, not chrome. |
+| **P6** | **Bishop pair deferred** — see §3.5. The mission ships as a TYPED contract so it slots in later without surgery. |
+
+### 3.4 Why the dynamic map is cheap for the pawn and ruinous for the king
+
+D1 made the king's enemies untouchable precisely to keep the attack map a per-level constant:
+a king who captures mutates the map, and a king **wanders**, so the search becomes
+(position × surviving enemies) over a graph with cycles. That is a different, much bigger game.
+
+**The pawn's own rule dissolves it. A pawn never retreats.** Every move — push or capture —
+advances the rank by exactly one. So:
+
+- the state graph is a **DAG**, acyclic by construction;
+- a run is at most 6 moves (rank 2 → rank 8);
+- each ply branches at most 3 ways (push, capture left, capture right);
+- so the WHOLE tree is ≤ 3⁶ ≈ 729 paths.
+
+Enumerate it exhaustively with a DFS and recompute `attackedSquares` at each node. That is
+~700 × 8 enemies of work: microseconds. **No memoisation, no cleverness, no ceiling to
+approximate.** The solver is exact by brute force.
+
+> Do not carry this back to Safe Path. The cheapness is not a property of the attack layer —
+> it is a property of *never retreating*, which only the pawn has.
+
+### 3.5 Deferred: the bishop pair
+
+The founder's late idea: seed a white bishop on the board and make the mission "end with a
+bishop pair" (opposite-coloured squares) or a deliberately bad same-coloured pair.
+
+**Deferred, and NOT for cost.** The square colour is `(file + rank) % 2` — free. The reason is
+that it is a **second win condition**, and it teaches a *bishop* lesson (two bishops on opposite
+colours cover the whole board) inside the *pawn's* game, which already has one: **you only
+change file by capturing**. Two lessons in one game is none. The bishop also already has its own
+signature game (Diagonal Run) — that is where this belongs, if anywhere.
+
+**What this plan does now so it costs nothing later:** the mission is a typed contract
+(`{ promoteTo: PieceId }`), never a hardcoded queen. Adding a variant later is a widened type,
+not surgery — the same instinct that made `enemies` additive in stage 1.
 
 ---
 
@@ -157,7 +201,10 @@ Staged TDD, one atomic commit per stage, full suite before each.
 | 4 | Content: `safe-path` kind + placeholder levels; `import-puzzles` BFS-verifies | lint gate; **solver-measured** achievability, not BFS reachability |
 | 5 | `safe-path-board.tsx` (reuse `<GameBoard>`, hoist status via `onBandChange`); zones hidden (D2); `/dev/safe-path` probe **renders the map** (D3) | probe photographs the mechanic standalone |
 | 6 | Host wiring from the runtime catalog (never id/prefix — B4.2.1); **`use-fail-rescue` on caught → `onRescued` = reset to start, `onSkipped` = reset to start minus a star** (D5/D6); i18n EN/ES; E2E | rescue modal fires on caught; shield spend resets the board |
-| 7..n | Promotion Run — same ladder, scope set by §3.3 Q2 | |
+| 7 | `lib/game/promotion-run.ts` — pawn moves (push free / capture diagonal / never retreat), `isCaught` on the LIVE map, exhaustive DFS solver returning the shortest run that promotes to the mission's piece | push blocked by any piece; capture needs a victim; the captured enemy stops watching MID-RUN; no run exists → null; the promotion square reachable only on the diagonal must hold a victim |
+| 8 | `MissionSpec` + content: `promotion-run` kind, `{ promoteTo }` per level, import-puzzles rejects a level whose mission is unachievable | a level that can promote but never to the ASKED piece is unwinnable and must fail at import |
+| 9 | `promotion-run-board.tsx` + `/dev/promotion-run` (draws the map, D3) | |
+| 10 | Host wiring (reuses Safe Path's failure path verbatim) + the promotion picker + value-chain copy + i18n + E2E | |
 
 **Grading:** Safe Path is arrival-graded → reuse `labyrinthStars`. It is **not** a coverage
 kind; do not add it to `COVERAGE_KINDS`.
