@@ -18,7 +18,7 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 import { enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import { STAGE_RANK } from "@/lib/content/overlay-types";
 import type {
-  ContentKind,
+  ContentBucket,
   ContentStage,
   ContentStageRequest,
 } from "@/lib/content/overlay-types";
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     return err(["invalid JSON"], 400);
   }
 
-  const kind: ContentKind = body?.kind === "labyrinth" ? "labyrinth" : "exercise";
+  const kind: ContentBucket = body?.kind === "labyrinth" ? "labyrinth" : "exercise";
   const id = body?.id;
   let from = body?.from; // optional: auto-detected from the freshest version
   const to = body?.to;

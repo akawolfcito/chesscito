@@ -14,13 +14,13 @@
  * status — the raw body (which may carry DB detail) and the token are never echoed.
  */
 import { NextResponse } from "next/server";
-import type { ContentKind, ContentStage } from "@/lib/content/overlay-types";
+import type { ContentBucket, ContentStage } from "@/lib/content/overlay-types";
 import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 export const runtime = "nodejs";
 
 type PromoteBody = {
-  kind?: ContentKind;
+  kind?: ContentBucket;
   id?: string;
   from?: ContentStage;
   to?: ContentStage;
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, errors: ["invalid JSON"] }, { status: 400 });
   }
 
-  const kind: ContentKind = b.kind === "labyrinth" ? "labyrinth" : "exercise";
+  const kind: ContentBucket = b.kind === "labyrinth" ? "labyrinth" : "exercise";
   const { id, from, to } = b;
   if (!id || typeof id !== "string") {
     return NextResponse.json({ ok: false, errors: ["missing id"] }, { status: 400 });

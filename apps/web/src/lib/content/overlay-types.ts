@@ -9,7 +9,10 @@
  */
 import type { Exercise, ExerciseTier, PieceId } from "@/lib/game/types";
 
-export type ContentKind = "exercise" | "labyrinth";
+/** Which of the two content buckets a puzzle is stored in — a routing axis, NOT
+ *  the puzzle's own `kind` (labyrinth vs queens vs safe-path vs …). The two are
+ *  independent: a `kind:"queens"` puzzle lives in the `labyrinth` bucket. */
+export type ContentBucket = "exercise" | "labyrinth";
 
 /**
  * Content maturity ladder (content-staging-model). Lower rank = less mature
@@ -58,7 +61,7 @@ export interface MergedCatalog extends BaselineCatalog {
  */
 export interface ContentOverlayRow {
   id: string;
-  kind: ContentKind;
+  kind: ContentBucket;
   piece: PieceId;
   fen: string;
   target: string;
@@ -85,7 +88,7 @@ export interface ContentOverlayRow {
  * the client never supplies them.
  */
 export interface ContentWriteRequest {
-  kind: ContentKind;
+  kind: ContentBucket;
   /** Save always lands at `draft`; the server assigns stage, so the client never
    *  supplies it (nor the BFS-derived / audit fields). */
   record: Omit<ContentOverlayRow, "optimal_moves" | "updated_at" | "stage">;
@@ -101,7 +104,7 @@ export type ContentWriteResult =
  * for that id (content-staging-model Behavior 4). Runs as one transaction.
  */
 export interface ContentStageRequest {
-  kind: ContentKind;
+  kind: ContentBucket;
   id: string;
   /** Optional — omit to auto-detect the freshest existing version ("set to `to`"). */
   from?: ContentStage;

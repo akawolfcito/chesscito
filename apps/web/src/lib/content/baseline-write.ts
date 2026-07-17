@@ -15,7 +15,7 @@ import { resolve, dirname } from "node:path";
 import { upsertRecord, type LabyrinthRecord } from "@/lib/labyrinth-builder/store";
 import { puzzleId } from "@/lib/game/fen-puzzle";
 import { parseCsv, buildCatalog, renderGeneratedModule } from "@/lib/content/catalog";
-import type { ContentKind } from "@/lib/content/overlay-types";
+import type { ContentBucket } from "@/lib/content/overlay-types";
 
 const ROOT = resolve(process.cwd());
 const LABS_PATH = resolve(ROOT, "content/labyrinths.json");
@@ -27,9 +27,9 @@ const GEN_PATH = resolve(ROOT, "src/lib/game/generated/puzzles.generated.ts");
  *  files do NOT store `kind` (it is implied by the file). */
 // The dev builder's `kind` is the BUCKET selector (exercise vs labyrinth file),
 // which is a different axis from LabyrinthRecord's own routing `kind`
-// (labyrinth vs pivot). Omit the record's field so the builder's ContentKind
+// (labyrinth vs pivot). Omit the record's field so the builder's ContentBucket
 // wins here without the two unioning down to "labyrinth".
-export type KindedRecord = Omit<LabyrinthRecord, "kind"> & { kind?: ContentKind };
+export type KindedRecord = Omit<LabyrinthRecord, "kind"> & { kind?: ContentBucket };
 
 export type BaselineWriteResult =
   | { ok: true; id: string; warnings: string[] }
@@ -42,7 +42,7 @@ function readRecords(path: string): LabyrinthRecord[] {
 }
 
 /** Read both buckets (kind-tagged), optionally filtered. Powers the dev GET. */
-export function readBaselineRecords(filter?: ContentKind): KindedRecord[] {
+export function readBaselineRecords(filter?: ContentBucket): KindedRecord[] {
   const wantLabs = filter !== "exercise";
   const wantExercises = filter !== "labyrinth";
   const out: KindedRecord[] = [];
@@ -62,7 +62,7 @@ export function readBaselineRecords(filter?: ContentKind): KindedRecord[] {
  * absent), and that id is returned. On a validation failure NOTHING is written.
  */
 export function writeBaselineRecord(
-  kind: ContentKind,
+  kind: ContentBucket,
   record: LabyrinthRecord,
 ): BaselineWriteResult {
   // Auto-assign a stable, content-addressed id so future saves overwrite the

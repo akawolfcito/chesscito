@@ -22,7 +22,7 @@ import { MAX_EXERCISES_PER_PIECE } from "@/lib/game/score";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import type {
-  ContentKind,
+  ContentBucket,
   ContentOverlayRow,
   ContentWriteRequest,
 } from "@/lib/content/overlay-types";
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
   } catch {
     return err(["invalid JSON"], 400);
   }
-  const kind: ContentKind = body?.kind === "labyrinth" ? "labyrinth" : "exercise";
+  const kind: ContentBucket = body?.kind === "labyrinth" ? "labyrinth" : "exercise";
   const record = body?.record;
   if (!record || typeof record !== "object") return err(["missing record"], 400);
   if (!record.id) return err(["missing record id"], 400);

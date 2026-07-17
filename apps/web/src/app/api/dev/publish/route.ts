@@ -17,13 +17,13 @@
  */
 import { NextResponse } from "next/server";
 import type { LabyrinthRecord } from "@/lib/labyrinth-builder/store";
-import type { ContentKind } from "@/lib/content/overlay-types";
+import type { ContentBucket } from "@/lib/content/overlay-types";
 import { writeBaselineRecord } from "@/lib/content/baseline-write";
 import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 export const runtime = "nodejs";
 
-type PublishBody = { kind?: ContentKind; record?: LabyrinthRecord };
+type PublishBody = { kind?: ContentBucket; record?: LabyrinthRecord };
 
 type OverlayResult = { ok: boolean; revalidated?: boolean; errors: string[] };
 
@@ -47,7 +47,7 @@ function overlayErrorForStatus(status: number): string {
 }
 
 async function publishToOverlay(
-  kind: ContentKind,
+  kind: ContentBucket,
   record: LabyrinthRecord,
   origin: string,
 ): Promise<OverlayResult> {
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const kind: ContentKind = body.kind === "exercise" ? "exercise" : "labyrinth";
+  const kind: ContentBucket = body.kind === "exercise" ? "exercise" : "labyrinth";
   const record = body.record;
   if (!record || typeof record !== "object") {
     return NextResponse.json(

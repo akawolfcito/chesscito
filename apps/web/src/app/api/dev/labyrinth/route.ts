@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { LabyrinthRecord } from "@/lib/labyrinth-builder/store";
-import type { ContentKind } from "@/lib/content/overlay-types";
+import type { ContentBucket } from "@/lib/content/overlay-types";
 import {
   readBaselineRecords,
   writeBaselineRecord,
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
     return new NextResponse("Not found", { status: 404 });
   }
   const filter = new URL(req.url).searchParams.get("kind");
-  const kind: ContentKind | undefined =
+  const kind: ContentBucket | undefined =
     filter === "exercise" || filter === "labyrinth" ? filter : undefined;
   // `canWrite` is the server telling the builder what the SERVER can do: the
   // builder is a client component and cannot read process.env.VERCEL itself. On
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
   }
   // `kind` selects the bucket (default "labyrinth" for back-compat); it is not
   // persisted — the file the record lands in implies it.
-  const kind: ContentKind = body.kind === "exercise" ? "exercise" : "labyrinth";
+  const kind: ContentBucket = body.kind === "exercise" ? "exercise" : "labyrinth";
   const { kind: _kind, ...rec } = body;
 
   const result = writeBaselineRecord(kind, rec as LabyrinthRecord);
