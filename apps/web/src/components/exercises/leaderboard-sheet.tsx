@@ -375,7 +375,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
             <div className="flex flex-col gap-2.5">
               <div
                 data-testid="leaderboard-own-row"
-                className="leaderboard-row-compact leaderboard-row-compact--top2"
+                className="leaderboard-row-compact leaderboard-row-compact--identity"
               >
                 <div className="leaderboard-rank-pill">{ownRow.rank}</div>
                 <div className="flex flex-1 min-width-0 items-center gap-1.5">

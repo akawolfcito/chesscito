@@ -12558,6 +12558,28 @@ button.hud-resource-chip:active:not(:disabled) {
   color: #92400e;
 }
 
+/* The pinned "Your rank" row (founder 2026-07-17). Wears the SAME cream shell
+ * as the Account sheet's Chesscito ID chip (`.account-identity-chip`) — both
+ * answer "which one is me?", so both read as one surface. Previously it wore
+ * `--top2`, a silver-rank color it had no claim to: the row is the CALLER,
+ * whatever rank they hold. The cream also lifts it off the translucent-white
+ * competitor rows, which is the point of pinning it. */
+.leaderboard-row-compact--identity {
+  background: var(--cta-secondary-cream-grad);
+  border: 1px solid var(--cta-secondary-cream-border);
+  box-shadow: var(--cta-secondary-cream-bevel);
+  color: var(--cta-secondary-cream-color);
+  text-shadow: var(--cta-secondary-cream-text-shadow);
+}
+
+.leaderboard-row-compact--identity:active {
+  background: var(--cta-secondary-cream-grad);
+}
+
+.leaderboard-row-compact--identity .leaderboard-rank-pill {
+  color: var(--cta-secondary-cream-color);
+}
+
 /* The caller's own row, highlighted IN the full list (founder 2026-06-16) so
  * they can spot themselves among everyone — a blue wash + accent border that
  * matches the "you" identity, distinct from the gold/silver/bronze top ranks. */

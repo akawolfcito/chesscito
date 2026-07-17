@@ -174,6 +174,29 @@ describe("LeaderboardSheet — on-chain marker + own rank (QA 2026-06-11)", () =
     expect(ownRow.closest(".overflow-y-auto")).toBeNull();
   });
 
+  it("wears the Chesscito ID chip's identity shell — 'this row is me'", async () => {
+    // 2026-07-17: the pinned Your-rank row carried `--top2`, a rank color it
+    // has no claim to: the row is the CALLER, whatever rank they hold. It now
+    // wears the same cream identity shell as the Account sheet's Chesscito ID
+    // chip, so the player meets one "this is me" surface in both places.
+    accountState.address = "0xABCD000000000000000000000000000000001234";
+    accountState.isConnected = true;
+    const own = { rank: 42, rowId: "id_own", variant: { piece: "queen", style: "coral", number: 42 }, score: 120, isVerified: false, hasOnchain: true, walletShort: "0xABCD…1234" };
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ rows, player: own }),
+    }) as unknown as typeof fetch;
+
+    render(<LeaderboardSheet open onOpenChange={() => {}} showTrigger={false} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("leaderboard-own-row")).toBeInTheDocument();
+    });
+    const ownRow = screen.getByTestId("leaderboard-own-row");
+    expect(ownRow).toHaveClass("leaderboard-row-compact--identity");
+    expect(ownRow).not.toHaveClass("leaderboard-row-compact--top2");
+  });
+
   it("disconnected: legacy array request, no Your-rank row", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
