@@ -55,14 +55,20 @@ export function posToSquare(pos: BoardPosition): string {
   return String.fromCharCode(97 + pos.file) + (pos.rank + 1);
 }
 
-export type PuzzleKind =
-  | "exercise"
-  | "labyrinth"
-  | "diagonal-run"
-  | "knight-tour"
-  | "queens"
-  | "safe-path"
-  | "promotion-run";
+/** The canonical list of every game kind — the single source the `PuzzleKind`
+ *  type is derived from, so a new kind is added in exactly one place and any
+ *  exhaustive table (KIND_CAPABILITY) can iterate it. */
+export const PUZZLE_KINDS = [
+  "exercise",
+  "labyrinth",
+  "diagonal-run",
+  "knight-tour",
+  "queens",
+  "safe-path",
+  "promotion-run",
+] as const;
+
+export type PuzzleKind = (typeof PUZZLE_KINDS)[number];
 
 /** The kinds graded by COVERAGE instead of arrival: they have no destination and
  *  no route, only a ceiling to fill. Grade them with tourStars, never
