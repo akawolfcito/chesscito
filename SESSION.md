@@ -4,6 +4,38 @@
 
 ## Completed
 
+- **PROMOTION RUN — ETAPA 10 DE 10: CABLEADO. EL CARRIL 2 QUEDA 6/6.** Suite **5344/5344**
+  (452 files), `tsc` limpio, **e2e del probe 28/28**. Cuatro commits:
+  - `2dc3bad` **las estrellas cuentan FALLOS** (`promotionRunStars`). Decisión del founder. 3 limpio,
+    −1 por fallo, **piso en 1** (quien murió cinco veces y coronó hizo lo que el nivel pidió).
+    ⛔ **El escudo NO borra el fallo**: compra la consecuencia, no el registro — si no, 3★ serían
+    comprables, y una estrella que se compra califica una billetera.
+  - `05b21f7` **el selector de coronación**. **Reencuadra P4 por decisión del founder**: P4 decía
+    "coronar enseña la cadena de valores (dama 9, torre 5…)", pero el jugador **todavía no sabe jugar
+    un caballo** → "coroná caballo y das mate" es una frase que no puede evaluar, y obedecerla enseña
+    obediencia. La lección de esta etapa es **"un peón que cruza INVOCA la pieza que elijas"**. Los
+    números vuelven cuando haya un nivel que se los gane. El modal **dice la misión en claro**
+    (condición explícita del founder para que errar cueste algo) y ofrece **las cuatro siempre**, sin
+    pre-marcar la pedida.
+  - `1f471d3` **el host**. ⚠️ **DOS formas de fallar, UNA promesa del escudo**: te comen, o coronás
+    mal → **las dos vuelven al inicio**. El founder propuso primero que el escudo comprara un
+    *re-pick* y después dijo de conservar el comportamiento anterior si costaba mucho. **No solo
+    cuesta menos: es la máquina más segura** — un escudo que significa "al inicio" acá y "solo
+    reelegí" allá es UN token con dos sentidos, y eso deriva.
+    ⚠️ **`handleLabyrinthMove` ahora acepta un grader inyectado** (`{metric, starsFor}`). Se inyecta
+    la **función**, no un número de estrellas, porque **el best se guarda y se RE-gradúa**:
+    `previousBest` tiene que pasar por el mismo grader o el ledger compara fallos contra una escala
+    de movidas e inventa estrellas en silencio. Los dos son `number`; nada se quejaría.
+  - `01ce87b` **e2e del probe, 28/28**. Cada casilla **medida contra el solver** antes de escribirla.
+  - 🧯 **Guard que no conocía**: `editorial.ts` tiene **techo de 0 em-dashes**
+    (`anti-ai-prose.test.ts`). El prompt del nivel 1 venía con uno copiado del JSON.
+
+- 🔴 **LO ÚNICO SIN VERIFICAR — el cableado al `/exercises` real.** Los tests cubren el selector solo,
+  el tablero solo, y el probe end-to-end. **NINGUNO monta el host.** No sembré estrellas ni entré a
+  Special Training a mirarlo, cosa que el commit de Safe Path (`b2b40ca`) **sí** hizo. Lo que puede
+  estar mal y ningún test lo diría: que el carril del peón no reemplace los `pawn-lab-*`, que el
+  selector no aparezca, que el escudo no resetee. **Verificarlo es el primer paso de la próxima sesión.**
+
 - **PROMOTION RUN — etapa 9 de 10: TABLERO + PROBE** (`a0ef796`). `promotion-run-board.tsx` +
   `/dev/promotion-run`. Suite **5333/5333** (451 files), `tsc` limpio, VR 58/59 (la roja es
   `hub-shop-sheet-open`, **preexistente en `main`**). **Falta solo la etapa 10** → cierra el carril 2 (6/6).
@@ -134,54 +166,47 @@
 
 ## Current State
 
-- **Branch**: `main`, árbol limpio. El trabajo de esta sesión es `a0ef796` (el tablero); arriba van
-  este handoff y `76b8e32` (inventario de probes).
-  ⚠️ **3 commits SIN PUSHEAR** al momento de escribir esto (`a0ef796`, `c930433`, `76b8e32`) —
-  `origin/main` sigue en `9a50f44`. **Sin PRs abiertos** — todo fue push directo a `main`.
-  **Safe Path CERRADO** (el founder lo aprobó, "me gusta bastante"). **Promotion Run: 9 de 10.**
-- **Build**: passing **medido en este árbol** — vitest **5333/5333** (451 files), `tsc --noEmit` exit 0,
-  VR **58/59** (`hub-shop-sheet-open` roja **también en `main`**, env sin treasury).
+- **Branch**: `main`, árbol limpio. ⚠️ **8 commits SIN PUSHEAR** — `origin/main` sigue en `9a50f44`.
+  **Sin PRs abiertos** — todo fue push directo a `main`.
+  **Safe Path CERRADO** (el founder lo aprobó, "me gusta bastante").
+  **PROMOTION RUN 10/10 — el carril 2 está COMPLETO: las 6 piezas con juego firma.**
+- **Build**: passing **medido en este árbol** — vitest **5344/5344** (452 files), `tsc --noEmit` exit 0,
+  **e2e del probe de promotion-run 28/28**. VR **58/59** medido en la etapa 9
+  (`hub-shop-sheet-open` roja **también en `main`**, env sin treasury); **no lo re-corrí tras el
+  cableado del host** — el carril del peón cambió, así que puede haber baselines que mirar.
   El `Error: boom` del output es ruido intencional de `primitive-boundary.test.tsx`.
 - **Uncommitted work**: no. Árbol limpio.
 
 ## Next Tasks
 
-1. **Afinar los 3 niveles del rey** (founder, no requiere código): `/dev/safe-path` con **Zones on** es
-   la superficie — el juego no dibuja las zonas, así que sin ese toggle no se puede diseñar. Los tres
-   son andamio a propósito. ⚠️ `/dev/labyrinth-builder` **NO conoce `safe-path`** todavía: no sabe
-   dibujar enemigos typed ni el mapa de amenaza. Si el founder quiere autorar ahí, es trabajo aparte.
-2. **⬅️ ESTO SIGUE — Promotion Run, etapa 10 de 10: HOST. Cierra el carril 2 (6/6).** Plan §4.
-   El tablero (9) ya existe y está probado; falta cablearlo al juego:
-   - **Host** en `exercises-screen.tsx`, reemplazando los 4 `pawn-lab-*` de relleno. **Reusa la ruta
-     de fallo de Safe Path tal cual** (`use-fail-rescue`, phase, modal, gate FTUX, auto-reset) — el
-     tablero ya expone `onCaught(sq)` con la misma firma que `SafePathBoard`.
-     ⚠️ **Cablear desde el catálogo runtime, NUNCA por id/prefijo** (B4.2.1).
-   - **Selector de promoción**: `mission.promoteTo` ya viaja typed en los 3 niveles
-     (`queen`/`queen`/`knight`). **Elegir ES la mecánica** (revierte D7) — el selector es del host,
-     no del tablero, que no posee chrome. El tablero dispara `onComplete(moves, optimal)` al llegar
-     a la última fila y **no sabe nada de la coronación**.
-   - **Cadena de valores** (P4) + i18n EN/ES + e2e del probe (el de Safe Path llegó en su etapa de
-     cableado, no en la del tablero — mismo orden acá).
-   - ⚠️ **Decisión de producto que la etapa 10 NO puede esquivar**: toda corrida ganadora mide lo
-     mismo (`7 - fila_inicial`), así que `labyrinthStars` por movidas da **3★ a cualquiera que gane**.
-     Es el juego, no un bug: el peón no puede hacer una ruta más corta. El tablero y el probe **hoy
-     no muestran estrellas** justamente para no grabar la mentira. Hay que decidir **qué miden**
-     (¿capturas?, ¿intentos?, ¿el escudo gastado?) — o si acá no hay estrellas.
-   - ⚠️ **Sigue abierto para el founder**: la misión de `pawn-promotion-3` pide **caballo** y es
-     andamio. Sin una razón *en el tablero* para querer un caballo (un mate, un tenedor), enseña a
-     obedecer, no ajedrez. P4 es de esta etapa: ahí se decide si el nivel gana su pedido o pasa a dama.
-3. **Afinar los 3 niveles del peón** (founder, no requiere código): `/dev/promotion-run` con **Zones
-   on**. ⚠️ El toggle dibuja el mapa **vivo**: comé una pieza y su zona desaparece — que es de lo que
-   tratan estos niveles. Igual que con el rey, `/dev/labyrinth-builder` **NO conoce `promotion-run`**:
-   no sabe dibujar enemigos typed ni el mapa de amenaza. Autorar ahí es trabajo aparte.
-4. **Triar 5 locales no-mergeadas** que el barrido no tocó (nunca estuvieron en la lista):
+1. **🔴 ESTO PRIMERO — verificar el cableado del peón en el `/exercises` REAL.** Es lo único de la
+   etapa 10 sin cubrir: **ningún test monta el host**. Sembrar estrellas, entrar a Special Training
+   con el peón, y mirar que (a) el carril muestre `pawn-promotion-*` y **no** los `pawn-lab-*`,
+   (b) el selector aparezca al llegar a la última fila y **diga la misión**, (c) coronar mal mande a
+   TRY AGAIN, (d) el escudo resetee al inicio. El commit de Safe Path (`b2b40ca`) hizo exactamente
+   esta verificación a mano; esta sesión no llegó. **Y correr el VR**: el carril del peón cambió.
+2. **Cluster Closure Protocol del carril 2** (CLAUDE.md) — el carril quedó **6/6**, es un cluster que
+   cierra: issues + milestone · **README** (la tabla dice "Exercises + labyrinths" para piezas que ya
+   no tienen laberintos: **con el peón ya son las 6**) · memoria · branches · handoff a `docs/handoffs/`.
+3. **El builder no sabe autorar NINGÚN juego firma** (diferido por el founder esta sesión, "luego
+   vemos"). Solo conoce `exercise|labyrinth`, **te los lista igual** porque comparten
+   `labyrinths.json`, y guardarlos les **borra el `kind`** → degrada el nivel a laberinto común.
+   ⚠️ **Tracé el código, no ejecuté un guardado**: medir si falla ruidoso o corrompe callado.
+   Arreglarlo bien cubre **los 5**, no solo el peón. Y ni con el `kind` arreglado alcanza: no hay
+   pincel para enemigos typed ni mapa de amenaza. **Hoy la autoría real son los probes con Zones on.**
+4. **Afinar los niveles del rey y del peón** (founder, no requiere código): `/dev/safe-path` y
+   `/dev/promotion-run` con **Zones on**. En el del peón el mapa es **vivo**: comé una pieza y su zona
+   desaparece. ⛔ **NO usar el builder** para esto (punto 3).
+   ⚠️ Ambos probes gatean por `NODE_ENV` → **404ean en preview, solo andan en local**.
+5. **Triar 5 locales no-mergeadas** que el barrido no tocó (nunca estuvieron en la lista):
    `backup/main-before-author-rewrite` (huele a red de un rewrite de historia — **no borrar sin mirar**),
    `chore/minipay-gate`, `feat/board-renderer`, `feat/progression-unlocks-celebration-queue`,
    `phase-1-ui-zone-map`.
-5. **Pendientes del founder del handoff de queens** (no agendados): afinar los 3 niveles en
-   `/dev/labyrinth-builder` (**no hace falta tocar código**, el techo se recalcula solo) · **overlay
-   TRY AGAIN + feedback al fallar, para TODAS las piezas** (el rey ya lo tiene; falta el resto) ·
-   decidir la **maestría** perdida (Blockers).
+6. **Pendientes del founder del handoff de queens** (no agendados): **overlay TRY AGAIN + feedback al
+   fallar, para TODAS las piezas** (rey y peón ya lo tienen; falta el resto) · decidir la **maestría**
+   perdida (Blockers).
+   ⛔ **Borrado de acá**: "afinar los 3 niveles de queens en `/dev/labyrinth-builder`, no hace falta
+   tocar código". **Era falso** y lo arrastraban dos handoffs — ver el punto 3.
 
 ## Blockers
 
