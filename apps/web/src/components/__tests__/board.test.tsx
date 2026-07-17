@@ -404,4 +404,29 @@ describe("<Board>", () => {
       expect(blocker?.getAttribute("aria-hidden")).toBe("true");
     });
   });
+
+  describe("move trail", () => {
+    it("draws a trail line from origin to destination after a move", () => {
+      const { container } = render(
+        <Board pieceType="rook" startPosition={{ file: 0, rank: 0 }} mode="practice" />,
+      );
+      expect(container.querySelector(".playhub-board-trail")).toBeNull();
+
+      // Select the rook (a1) then move it up the file to a8.
+      fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
+      fireEvent.click(screen.getByRole("gridcell", { name: "Square a8" }));
+
+      const line = container.querySelector(".playhub-board-trail line");
+      expect(line).not.toBeNull();
+      // The line runs from the a1 cell to the a8 cell (same file → same x,
+      // different y), so it traces the path the rook actually travelled.
+      expect(line?.getAttribute("x1")).toBe(line?.getAttribute("x2"));
+      expect(line?.getAttribute("y1")).not.toBe(line?.getAttribute("y2"));
+    });
+
+    it("shows no trail before any move", () => {
+      const { container } = render(<Board pieceType="rook" mode="practice" />);
+      expect(container.querySelector(".playhub-board-trail")).toBeNull();
+    });
+  });
 });

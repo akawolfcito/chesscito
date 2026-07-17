@@ -3116,6 +3116,46 @@
     backface-visibility: hidden;
   }
 
+  /* Move trail (founder 2026-07-17): a deliberate luminous trace from the
+     origin cell to the destination cell, fading as the piece lands. This is
+     NOT the old composited "dirt smear" the will-change above fixed — it is a
+     separate SVG line, so it reads as the TAUGHT path (rook straight, bishop
+     diagonal) instead of a rendering artifact. Sits under the moving piece
+     (z-index 10) and over the cells. */
+  .playhub-board-trail {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 8;
+    pointer-events: none;
+    overflow: visible;
+  }
+  .playhub-board-trail line {
+    stroke: rgba(255, 193, 74, 0.92);
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 3px rgba(255, 176, 46, 0.85));
+    animation: playhub-trail-fade 680ms ease-out forwards;
+  }
+  @keyframes playhub-trail-fade {
+    0% {
+      opacity: 0;
+      stroke-width: 2.2;
+    }
+    22% {
+      opacity: 0.95;
+    }
+    100% {
+      opacity: 0;
+      stroke-width: 0.9;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .playhub-board-trail line {
+      animation-duration: 1ms;
+    }
+  }
+
   /* Friendly blocker (practice exercises). It is the player's OWN piece — the
      lesson is that it cannot be jumped or captured — so it keeps the canonical
      piece art and reads as inert rather than as scenery: seated on the square,

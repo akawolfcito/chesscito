@@ -132,9 +132,22 @@ export function Board({
   const [isSnappingBack, setIsSnappingBack] = useState(false);
   const snapBackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Move trail (founder 2026-07-17): the from→to path the piece just travelled,
+  // drawn as a fading luminous line so the lesson (rook straight, bishop
+  // diagonal) reads on the board. `id` re-keys the SVG so the fade replays on
+  // every move, even when the same squares repeat. Cleared after the fade.
+  const [trail, setTrail] = useState<{
+    from: BoardPosition;
+    to: BoardPosition;
+    id: number;
+  } | null>(null);
+  const trailIdRef = useRef(0);
+  const trailTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => () => {
     if (selectHintTimerRef.current) clearTimeout(selectHintTimerRef.current);
     if (snapBackTimerRef.current) clearTimeout(snapBackTimerRef.current);
+    if (trailTimerRef.current) clearTimeout(trailTimerRef.current);
   }, []);
 
   /** Reverts an in-flight drag visual to the piece's home cell with
@@ -159,6 +172,9 @@ export function Board({
     setPiece(makePiece(pieceType, startPosition));
     setSelectedPosition(null);
     setMovesCount(0);
+    // A new exercise starts clean: no leftover trail from the previous run.
+    setTrail(null);
+    if (trailTimerRef.current) clearTimeout(trailTimerRef.current);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pieceType, startPosition.file, startPosition.rank, mode]);
 
@@ -218,6 +234,17 @@ export function Board({
 
     if (canMove) {
       const nextMoves = movesCount + 1;
+      // Trace the path the piece is about to travel — from its current cell to
+      // the destination — then fade it. Both tap and drag resolve through here,
+      // so the trail covers both input paths.
+      const trailFrom = piece.position;
+      trailIdRef.current += 1;
+      setTrail({ from: trailFrom, to: nextPosition, id: trailIdRef.current });
+      if (trailTimerRef.current) clearTimeout(trailTimerRef.current);
+      trailTimerRef.current = setTimeout(() => {
+        setTrail(null);
+        trailTimerRef.current = null;
+      }, 720);
       setMovesCount(nextMoves);
       setPiece((current) => movePiece(current, nextPosition));
       setSelectedPosition(null);
@@ -266,6 +293,26 @@ export function Board({
   // wraps it, so each board stays aligned to its own grid.
   const overlayLayer = (
     <>
+      {/* Move trail — a fading line from the origin cell to the destination,
+          drawn first so it sits UNDER every piece/marker. viewBox 0-100 with
+          preserveAspectRatio=none maps cellCenter's percentages straight to
+          SVG units on the square board. Re-keyed per move so the fade replays. */}
+      {trail && (() => {
+        const a = cellCenter(trail.from.file, trail.from.rank);
+        const b = cellCenter(trail.to.file, trail.to.rank);
+        return (
+          <svg
+            key={trail.id}
+            className="playhub-board-trail"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
+          </svg>
+        );
+      })()}
+
       {/* Target piece — visible enemy piece for capture exercises */}
       {isCapture && targetPosition && !(piece.position.file === targetPosition.file && piece.position.rank === targetPosition.rank) && (() => {
         const tc = cellCenter(targetPosition.file, targetPosition.rank);
