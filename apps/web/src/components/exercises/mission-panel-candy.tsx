@@ -158,11 +158,12 @@ const PHASE_FLASH: Record<MissionPanelProps['phase'], FlashConfig | null> = {
   },
 }
 
-function PhaseFlash({
+export function PhaseFlash({
   phase,
   failureRescueSlot,
   streakCount,
   lastEarnedStars,
+  lessonTitle,
 }: {
   phase: MissionPanelProps['phase']
   /** Optional failure-only overlay slot. When supplied AND phase ===
@@ -182,6 +183,10 @@ function PhaseFlash({
   /** Stars earned on this exercise for the WELL DONE "+N STAR"
    *  pill. Only shown when phase === 'success' AND > 0. */
   lastEarnedStars?: number
+  /** Curated title of the just-finished exercise — the lesson line under the
+   *  success banner ("You learned: {title}"). Success-only; absent on games
+   *  that carry no title. */
+  lessonTitle?: string
 }) {
   const tFlash = useTranslations('PHASE_FLASH_COPY')
   const [visible, setVisible] = useState(false)
@@ -191,6 +196,13 @@ function PhaseFlash({
   const flashText = flash ? tFlash(flash.textKey) : ''
   const hasRescue = phase === 'failure' && Boolean(failureRescueSlot)
 
+  /* The entry beat: the phase flips the instant the move resolves, but the
+     board is still animating the piece onto the star. Holding the banner back
+     ~600ms lets the player SEE the capture land before the celebration covers
+     it (founder 2026-07-17). Timers are offset by this beat so the total
+     on-screen time is unchanged. */
+  const entryBeat = isSuccess ? 600 : 450
+
   useEffect(() => {
     if (!flash) {
       setVisible(false)
@@ -198,59 +210,81 @@ function PhaseFlash({
       return
     }
 
-    setVisible(true)
+    setVisible(false)
     setFading(false)
+
+    const revealTimer = setTimeout(() => setVisible(true), entryBeat)
 
     if (hasRescue) {
       /* Failure-with-rescue: single coherent moment — the rescue
-         modal fades in immediately alongside the scrim instead of
+         modal fades in (after the beat) alongside the scrim instead of
          the legacy banner-then-modal 2-step (user feedback
          2026-05-31: the prior split felt disjointed). No autodismiss
          either: the flash holds until the parent transitions phase
          away from 'failure'. */
-      return
+      return () => clearTimeout(revealTimer)
     }
 
     /* Success holds longer so the radial burst + gentle gravity fall
        (~3s + delays) can play through. Failure-without-rescue (rare
        — host that doesn't wire failureRescueSlot) keeps the legacy
        short flash. 1.8/2.2s is enough to read "Try Again" + the
-       avatar without dragging on a 3-fail run. */
-    const fadeAt = isSuccess ? 2700 : 1800
-    const hideAt = isSuccess ? 3100 : 2200
+       avatar without dragging on a 3-fail run. All offset by the beat. */
+    const fadeAt = entryBeat + (isSuccess ? 2700 : 1800)
+    const hideAt = entryBeat + (isSuccess ? 3100 : 2200)
 
     const fadeTimer = setTimeout(() => setFading(true), fadeAt)
     const hideTimer = setTimeout(() => setVisible(false), hideAt)
 
     return () => {
+      clearTimeout(revealTimer)
       clearTimeout(fadeTimer)
       clearTimeout(hideTimer)
     }
-  }, [phase, flash, isSuccess, hasRescue])
+  }, [phase, flash, isSuccess, hasRescue, entryBeat])
 
   if (!visible || !flash) return null
 
-  const bannerBase = isSuccess ? 'welldone-sms' : 'try-again'
   const avatarBase = isSuccess ? 'avatar-fun' : 'avatar-try-again'
 
   /* Wolf block extracted so both layouts (rescue + non-rescue) can
-     render it without JSX duplication. Identical to the pre-cluster
-     markup. */
+     render it without JSX duplication. The headline is LIVE Rowdies text
+     (var(--font-game-action)) instead of the old baked-in welldone/try-again
+     art, so it translates (ES: "¡Bien hecho!" / "Reintenta") and the lesson
+     line can sit beneath it (founder 2026-07-17). The 4-corner text-shadow is
+     a cross-browser outline that keeps the glyphs crisp on any background. */
   const wolfBlock = (
     <div className="relative animate-in zoom-in-90 duration-300">
-      <picture className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2">
-        <source srcSet={`/art/${bannerBase}.avif`} type="image/avif" />
-        <source srcSet={`/art/${bannerBase}.webp`} type="image/webp" />
-        <img
-          src={`/art/${bannerBase}.png`}
-          alt={flashText}
-          className="h-auto w-[260px] max-w-[78vw] drop-shadow-[0_6px_14px_rgba(120,65,5,0.45)]"
+      <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 flex -translate-x-1/2 flex-col items-center gap-1">
+        <span
+          className="whitespace-nowrap"
           style={{
+            fontFamily: 'var(--font-game-action)',
+            fontSize: 'clamp(2.75rem, 13vw, 4.25rem)',
+            fontWeight: 700,
+            lineHeight: 1,
+            textTransform: 'uppercase',
+            color: '#fff6df',
+            textShadow: `-2px -2px 0 ${flash.stroke}, 2px -2px 0 ${flash.stroke}, -2px 2px 0 ${flash.stroke}, 2px 2px 0 ${flash.stroke}, 0 0 12px ${flash.accent}, 0 6px 14px rgba(120, 65, 5, 0.45)`,
             animation:
               'reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
           }}
-        />
-      </picture>
+        >
+          {flashText}
+        </span>
+        {isSuccess && lessonTitle ? (
+          <span
+            className="max-w-[78vw] truncate rounded-full bg-amber-950/85 px-3 py-1 text-center text-sm font-bold text-amber-50"
+            style={{
+              fontFamily: 'var(--font-game-action)',
+              animation:
+                'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 180ms both',
+            }}
+          >
+            {tFlash('lesson', { title: lessonTitle })}
+          </span>
+        ) : null}
+      </div>
       <div className="relative flex h-80 w-80 items-center justify-center">
         {isSuccess && <ConfettiBurst />}
         {isSuccess && (
@@ -650,6 +684,7 @@ export function MissionPanelCandy({
         failureRescueSlot={failureRescueSlot}
         streakCount={streakCount}
         lastEarnedStars={lastEarnedStars}
+        lessonTitle={exerciseTitle}
       />
     </section>
   )

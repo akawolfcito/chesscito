@@ -547,6 +547,9 @@ export const SHARE_MODAL_COPY = {
 export const PHASE_FLASH_COPY = {
   success: "Well done!",
   failure: "Try again",
+  /** The lesson line under the success banner — names what the player just
+   *  learned (the active exercise's curated title). Only shown on success. */
+  lesson: "You learned: {title}",
 } as const;
 
 export const SHOP_SHEET_COPY = {

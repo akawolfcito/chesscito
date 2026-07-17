@@ -1417,6 +1417,7 @@ const messages = {
   PHASE_FLASH_COPY: {
     success: "¡Bien hecho!",
     failure: "Reintenta",
+    lesson: "Aprendiste: {title}",
   },
   SHOP_SHEET_COPY: {
     title: "TIENDA",
