@@ -20,7 +20,8 @@ import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 export const runtime = "nodejs";
 
 type PromoteBody = {
-  kind?: ContentBucket;
+  /** Which file the record lives in — not the game it is. */
+  bucket?: ContentBucket;
   id?: string;
   from?: ContentStage;
   to?: ContentStage;
@@ -72,7 +73,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, errors: ["invalid JSON"] }, { status: 400 });
   }
 
-  const kind: ContentBucket = b.kind === "labyrinth" ? "labyrinth" : "exercise";
+  const bucket: ContentBucket = b.bucket === "labyrinth" ? "labyrinth" : "exercise";
   const { id, from, to } = b;
   if (!id || typeof id !== "string") {
     return NextResponse.json({ ok: false, errors: ["missing id"] }, { status: 400 });
@@ -97,7 +98,9 @@ export async function POST(req: Request) {
     const res = await fetch(`${origin}/api/admin/content/stage`, {
       method: "POST",
       headers: { "content-type": "application/json", "x-admin-token": token },
-      body: JSON.stringify({ kind, id, from, to }),
+      // `kind:` is the ADMIN wire's name for the bucket; the dev surfaces say
+      // `bucket`. The mapping lives at this seam only.
+      body: JSON.stringify({ kind: bucket, id, from, to }),
     });
     if (!res.ok) {
       return NextResponse.json({ ok: false, errors: [stageErrorForStatus(res.status)] });
@@ -119,7 +122,7 @@ export async function POST(req: Request) {
       ),
     );
 
-    console.info("[dev/promote]", { id, kind, from, to });
+    console.info("[dev/promote]", { id, bucket, from, to });
     return NextResponse.json({ ok: true, from: data.from ?? from, to: data.to ?? to });
   } catch {
     return NextResponse.json({

@@ -23,7 +23,10 @@ import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 export const runtime = "nodejs";
 
-type PublishBody = { kind?: ContentBucket; record?: LabyrinthRecord };
+/** `bucket` = which file. NOT the record's `kind` (which game), which rides
+ *  inside `record` and is forwarded untouched. The two used to share the name
+ *  `kind`, which put two different meanings in one payload. */
+type PublishBody = { bucket?: ContentBucket; record?: LabyrinthRecord };
 
 type OverlayResult = { ok: boolean; revalidated?: boolean; errors: string[] };
 
@@ -46,8 +49,12 @@ function overlayErrorForStatus(status: number): string {
   }
 }
 
+/** ⚠️ Boundary: the admin overlay contract still calls the bucket `kind` on the
+ *  wire (it is token-authed network input, out of scope to rename here), so the
+ *  mapping happens at this seam and nowhere else. Inside the dev surfaces the
+ *  axis is `bucket`. */
 async function publishToOverlay(
-  kind: ContentBucket,
+  bucket: ContentBucket,
   record: LabyrinthRecord,
   origin: string,
 ): Promise<OverlayResult> {
@@ -59,7 +66,8 @@ async function publishToOverlay(
     const res = await fetch(`${origin}/api/admin/content`, {
       method: "POST",
       headers: { "content-type": "application/json", "x-admin-token": token },
-      body: JSON.stringify({ kind, record }),
+      // `kind:` here is the ADMIN wire's name for the bucket — see the note above.
+      body: JSON.stringify({ kind: bucket, record }),
     });
     if (!res.ok) return { ok: false, errors: [overlayErrorForStatus(res.status)] };
     const data = (await res.json().catch(() => null)) as
@@ -92,7 +100,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const kind: ContentBucket = body.kind === "exercise" ? "exercise" : "labyrinth";
+  const bucket: ContentBucket = body.bucket === "exercise" ? "exercise" : "labyrinth";
   const record = body.record;
   if (!record || typeof record !== "object") {
     return NextResponse.json(
@@ -106,7 +114,7 @@ export async function POST(req: Request) {
   }
 
   // Step 1 — baseline (local, reliable). On failure, do NOT publish.
-  const baseline = writeBaselineRecord(kind, record);
+  const baseline = writeBaselineRecord(bucket, record);
   if (!baseline.ok) {
     return NextResponse.json(
       {
@@ -118,14 +126,15 @@ export async function POST(req: Request) {
     );
   }
 
-  // Step 2 — overlay (network). `record` now carries the resolved id.
+  // Step 2 — overlay (network). The id comes off the result (the writer does not
+  // mutate `record`), so pin it on explicitly.
   const origin = new URL(req.url).origin;
-  const overlay = await publishToOverlay(kind, { ...record, id: baseline.id }, origin);
+  const overlay = await publishToOverlay(bucket, { ...record, id: baseline.id }, origin);
 
   // Audit — never log the token.
   console.info("[dev/publish]", {
     id: baseline.id,
-    kind,
+    bucket,
     baseline: baseline.ok,
     overlay: overlay.ok,
   });
