@@ -41,3 +41,17 @@ export function cellCenter(file: number, rank: number): Point {
 export function pieceWidth(): number {
   return CELL_SIZE * 0.82;
 }
+
+export type HintPlacement = "top" | "bottom" | "left" | "right";
+
+/**
+ * Which side of the piece the "Tap your piece first" pill should sit on, so it
+ * never clips against the board edge. Geometry, not policy — which is why it
+ * lives here and not inside whichever board asked first.
+ */
+export function pickHintPlacement(file: number, rank: number): HintPlacement {
+  if (rank >= 6) return "bottom";
+  if (file <= 1) return "right";
+  if (file >= 6) return "left";
+  return "top";
+}

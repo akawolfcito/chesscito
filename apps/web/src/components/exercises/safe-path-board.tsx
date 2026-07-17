@@ -35,7 +35,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { GameBoard } from "@/lib/game/game-board";
-import { cellCenter, pieceWidth } from "@/lib/game/board-geometry";
+import { cellCenter, pickHintPlacement, pieceWidth } from "@/lib/game/board-geometry";
+import { BOARD_HINT_COPY } from "@/lib/content/editorial";
 import { attackedSquares } from "@/lib/game/attack-map";
 import { isCaught, legalKingSteps } from "@/lib/game/safe-path";
 import { labyrinthStars } from "@/lib/game/exercises";
@@ -45,6 +46,11 @@ import type { BoardPosition, Exercise, PieceId } from "@/lib/game/types";
 
 const KING_SRC = `${THEME_CONFIG.piecesBase}/w-king.png`;
 const enemySrc = (piece: PieceId) => `${THEME_CONFIG.piecesBase}/b-${piece}.png`;
+/** The refuge. A sanctuary, not a star: this game's goal is not "arrive", it is
+ *  "arrive UNSEEN", and the shielded doorway says shelter where a star would
+ *  just say prize. Sits in labyrinths/ next to wall — same board scenery. */
+const REFUGE_SRC = "/art/labyrinths/refuge.png";
+const SELECT_HINT_DURATION_MS = 2200;
 const LABEL = (p: BoardPosition) => `${"abcdefgh"[p.file]}${p.rank + 1}`;
 const parse = (s: string): BoardPosition => ({
   file: "abcdefgh".indexOf(s[0]),
@@ -104,7 +110,22 @@ export function SafePathBoard({
   const [phase, setPhase] = useState<Phase>("playing");
   /** The square the king died on, for the attack beat. */
   const [caughtOn, setCaughtOn] = useState<string | null>(null);
+  /** The king starts UNSELECTED and deselects after every move, exactly like
+   *  <Board> (board.tsx:231) — tap the piece, tap the square, every time.
+   *
+   *  ⚠️ Not the same call as N-Queens, which had this gate REMOVED (e3c67165).
+   *  There, every tap places a NEW queen: there is no piece to pick, so
+   *  "tap your piece first" was a toll that taught nothing. Here the player
+   *  moves THAT king — same shape as the tour's knight — so the gate is the
+   *  rule, not a toll (founder, 2026-07-16). */
+  const [selected, setSelected] = useState(false);
+  const [showSelectHint, setShowSelectHint] = useState(false);
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completedRef = useRef(false);
+
+  useEffect(() => () => {
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+  }, []);
 
   /** Constant for the level: the enemies are static and untouchable (D1), so the
    *  danger never moves and this is computed once rather than per step. */
@@ -120,6 +141,7 @@ export function SafePathBoard({
     setMoves(0);
     setPhase("playing");
     setCaughtOn(null);
+    setSelected(false);
     completedRef.current = false;
   }, [resetKey, START]);
 
@@ -127,14 +149,42 @@ export function SafePathBoard({
     (sq: string) => {
       if (phase !== "playing") return;
       const pos = parse(sq);
-      if (same(pos, king)) return;
+
+      // Tapped the king: pick him up. Already selected → ignore, so a fat-finger
+      // re-tap never silently drops the selection.
+      if (same(pos, king)) {
+        if (!selected) {
+          setSelected(true);
+          hapticTap();
+        }
+        if (hintTimer.current) clearTimeout(hintTimer.current);
+        setShowSelectHint(false);
+        return;
+      }
+
+      // Nothing is picked up yet. Say so next to the piece rather than doing
+      // nothing — a silent board is what made first-timers keep tapping the
+      // goal and give up (the field report behind board.tsx's own hint).
+      if (!selected) {
+        if (hintTimer.current) clearTimeout(hintTimer.current);
+        setShowSelectHint(true);
+        hintTimer.current = setTimeout(() => {
+          setShowSelectHint(false);
+          hintTimer.current = null;
+        }, SELECT_HINT_DURATION_MS);
+        return;
+      }
 
       // Not a king step, a wall, or an enemy: nothing happened. No scolding —
       // the geometry is not the lesson here.
       const legal = legalKingSteps(king, ENEMIES, WALLS);
-      if (!legal.some((p) => same(p, pos))) return;
+      if (!legal.some((p) => same(p, pos))) {
+        setSelected(false);
+        return;
+      }
 
       setKing(pos);
+      setSelected(false);
       const next = moves + 1;
       setMoves(next);
 
@@ -159,22 +209,46 @@ export function SafePathBoard({
 
       hapticTap();
     },
-    [phase, king, moves, ENEMIES, WALLS, REFUGE, level.optimalMoves, onComplete, onCaught],
+    [phase, king, selected, moves, ENEMIES, WALLS, REFUGE, level.optimalMoves, onComplete, onCaught],
   );
 
   const stars = phase === "done" ? labyrinthStars(moves, level.optimalMoves) : 0;
 
   /** While the beat is up: which enemies can actually see the square he died on.
-   *  Naming the killer is the lesson — a red flash teaches nothing. */
+   *  Naming the killer is the lesson — a red flash teaches nothing.
+   *
+   *  Kept as the enemies themselves rather than their labels, because the beam
+   *  below needs both endpoints: the shot has to come FROM the piece that took
+   *  it, or it is just decoration. */
   const killers = useMemo(() => {
-    if (!caughtOn) return new Set<string>();
+    if (!caughtOn) return [];
     const target = parse(caughtOn);
-    return new Set(
-      ENEMIES.filter((e) =>
-        attackedSquares([e], WALLS).has(LABEL(target)),
-      ).map((e) => LABEL(e.pos)),
-    );
+    return ENEMIES.filter((e) => attackedSquares([e], WALLS).has(LABEL(target)));
   }, [caughtOn, ENEMIES, WALLS]);
+
+  const killerLabels = new Set(killers.map((e) => LABEL(e.pos)));
+
+  /** One laser per killer, drawn from its centre to the square he died on
+   *  (founder, 2026-07-16). Cheap because the geometry is already here: the
+   *  canvas is square and `cellCenter` returns screen-oriented percentages, so
+   *  the length is a plain Euclidean distance in % and the angle is atan2 —
+   *  no layout measurement, no refs, no rAF. Pure CSS from there. */
+  const beams = useMemo(() => {
+    if (!caughtOn) return [];
+    const to = cellCenter(parse(caughtOn).file, parse(caughtOn).rank);
+    return killers.map((e) => {
+      const from = cellCenter(e.pos.file, e.pos.rank);
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      return {
+        key: LABEL(e.pos),
+        left: from.x,
+        top: from.y,
+        length: Math.hypot(dx, dy),
+        angle: (Math.atan2(dy, dx) * 180) / Math.PI,
+      };
+    });
+  }, [caughtOn, killers]);
 
   const bandText =
     phase === "done"
@@ -187,9 +261,12 @@ export function SafePathBoard({
     onBandChange?.({ message: bandText, phase, moves, optimal: level.optimalMoves });
   }, [bandText, phase, moves, level.optimalMoves, onBandChange]);
 
+  /** Only once he is picked up: the highlights are the answer to "where can
+   *  this piece go", and that question is only asked after you pick it up. */
   const legalNow = useMemo(
-    () => (phase === "playing" ? legalKingSteps(king, ENEMIES, WALLS) : []),
-    [phase, king, ENEMIES, WALLS],
+    () =>
+      phase === "playing" && selected ? legalKingSteps(king, ENEMIES, WALLS) : [],
+    [phase, selected, king, ENEMIES, WALLS],
   );
   const legalLabels = new Set(legalNow.map(LABEL));
   const enemyLabels = new Set(ENEMIES.map((e) => LABEL(e.pos)));
@@ -226,16 +303,33 @@ export function SafePathBoard({
           />
         ) : null}
         {isRefuge ? (
+          /* The green-yellow glow sits UNDER the sanctuary art: the light is
+             what reads as "safe" at 47px on a phone, and the doorway is what
+             says which safe. Art alone got lost against the green board. */
           <span
             data-testid={`sp-refuge-${sq}`}
             style={{
               position: "absolute",
-              inset: "22%",
-              borderRadius: "9999px",
-              border: "3px solid rgba(120,235,150,0.95)",
-              boxShadow: "0 0 12px 3px rgba(110,230,140,0.5)",
+              inset: 0,
+              display: "grid",
+              placeItems: "center",
             }}
-          />
+          >
+            <span
+              aria-hidden="true"
+              className="playhub-board-refuge-glow"
+              style={{ position: "absolute", inset: "-6%" }}
+            />
+            <img
+              src={REFUGE_SRC}
+              alt=""
+              style={{
+                position: "relative",
+                width: "88%",
+                filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.35))",
+              }}
+            />
+          </span>
         ) : null}
         {caughtOn === sq ? (
           <span
@@ -249,7 +343,7 @@ export function SafePathBoard({
             }}
           />
         ) : null}
-        {killers.has(sq) ? (
+        {killerLabels.has(sq) ? (
           <span
             data-testid={`sp-killer-${sq}`}
             style={{
@@ -266,6 +360,22 @@ export function SafePathBoard({
 
   const overlay = () => (
     <>
+      {/* The shot. Drawn before the pieces so it passes UNDER them — the beam
+          comes out of the enemy, not off the top of it. */}
+      {beams.map((beam) => (
+        <span
+          key={`beam-${beam.key}`}
+          aria-hidden="true"
+          data-testid={`sp-beam-${beam.key}`}
+          className="playhub-board-laser"
+          style={{
+            left: `${beam.left}%`,
+            top: `${beam.top}%`,
+            width: `${beam.length}%`,
+            transform: `rotate(${beam.angle}deg)`,
+          }}
+        />
+      ))}
       {ENEMIES.map((e) => {
         const c = cellCenter(e.pos.file, e.pos.rank);
         return (
@@ -290,9 +400,12 @@ export function SafePathBoard({
           </picture>
         );
       })}
+      {/* `.is-selected` carries the zoom + ring the other boards already use —
+          same gesture, same feedback, nothing new to learn. */}
       <picture
         data-testid={`sp-king-${LABEL(king)}`}
-        className="playhub-board-piece-float"
+        data-selected={selected ? "true" : "false"}
+        className={`playhub-board-piece-float${selected ? " is-selected" : ""}`}
         style={{
           left: `${cellCenter(king.file, king.rank).x}%`,
           top: `${cellCenter(king.file, king.rank).y}%`,
@@ -308,6 +421,21 @@ export function SafePathBoard({
           style={{ width: "100%" }}
         />
       </picture>
+      {showSelectHint ? (
+        <div
+          role="status"
+          aria-live="polite"
+          data-testid="sp-select-hint"
+          className="playhub-board-select-hint"
+          data-placement={pickHintPlacement(king.file, king.rank)}
+          style={{
+            left: `${cellCenter(king.file, king.rank).x}%`,
+            top: `${cellCenter(king.file, king.rank).y}%`,
+          }}
+        >
+          {BOARD_HINT_COPY.selectPieceFirst}
+        </div>
+      ) : null}
     </>
   );
 

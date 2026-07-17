@@ -3140,6 +3140,93 @@
     z-index: 11;
   }
 
+  /* Safe Path — the enemy's shot (founder, 2026-07-16).
+     Fires from the piece that actually saw the king, along the real line of
+     attack: the beam IS the lesson, drawn. `transform-origin: left center`
+     pins it to the enemy while `rotate()` aims it; the scaleX wipe makes it
+     travel outward instead of appearing whole. Height is fixed in px because
+     a % height would scale the beam's thickness with the board. */
+  .playhub-board-laser {
+    position: absolute;
+    height: 3px;
+    margin-top: -1.5px;
+    transform-origin: left center;
+    border-radius: 9999px;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 240, 200, 0.95) 0%,
+      rgba(255, 90, 70, 0.95) 35%,
+      rgba(255, 40, 40, 0.85) 100%
+    );
+    box-shadow:
+      0 0 6px 2px rgba(255, 70, 60, 0.75),
+      0 0 14px 4px rgba(255, 40, 40, 0.35);
+    pointer-events: none;
+    z-index: 9;
+    animation: playhub-laser-fire 460ms ease-out forwards;
+  }
+
+  @keyframes playhub-laser-fire {
+    0% {
+      opacity: 0;
+      scale: 0 1;
+    }
+    18% {
+      opacity: 1;
+      scale: 1 1;
+    }
+    70% {
+      opacity: 1;
+      scale: 1 1;
+    }
+    100% {
+      opacity: 0.55;
+      scale: 1 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .playhub-board-laser {
+      animation: none;
+      opacity: 0.75;
+    }
+  }
+
+  /* Safe Path — the refuge's green-yellow light (founder, 2026-07-16).
+     The sanctuary art alone got lost against a green board at 47px; the glow is
+     what carries "this is the safe place" at phone size, and the art says which
+     safe place. Breathes slowly so it reads as sanctuary, not as an alert —
+     this is the one square on the board that is NOT trying to kill you. */
+  .playhub-board-refuge-glow {
+    border-radius: 9999px;
+    background: radial-gradient(
+      circle,
+      rgba(214, 255, 120, 0.85) 0%,
+      rgba(150, 235, 110, 0.45) 45%,
+      rgba(120, 220, 100, 0) 72%
+    );
+    animation: playhub-refuge-breathe 2.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes playhub-refuge-breathe {
+    0%,
+    100% {
+      opacity: 0.75;
+      transform: scale(0.94);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.04);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .playhub-board-refuge-glow {
+      animation: none;
+    }
+  }
+
   /* Sprint 4 commit N — drag-to-move. The piece follows the pointer
      via --drag-dx / --drag-dy custom props set inline by the JS.
      Transition disabled during drag so the piece tracks the finger

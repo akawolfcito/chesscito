@@ -11,7 +11,7 @@ import {
   movePiece,
 } from "@/lib/game/board";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
-import { cellCenter, pieceWidth } from "@/lib/game/board-geometry";
+import { cellCenter, pickHintPlacement, pieceWidth } from "@/lib/game/board-geometry";
 import { GameBoard } from "@/lib/game/game-board";
 import { hapticTap, hapticReject, hapticSuccess } from "@/lib/haptics";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
@@ -29,19 +29,11 @@ const DRAG_START_THRESHOLD_PX = 6;
  *  returns to (0,0). */
 const SNAP_BACK_MS = 200;
 
-type HintPlacement = "top" | "bottom" | "left" | "right";
 
 /** Choose hint placement so the pill never clips against the board edge.
  *  Vertical edges (top of the board) bite first — the original "always
  *  above" placement clipped on rank 7-8. Horizontal edges matter for the
  *  a/h files where the centered pill would overflow the canvas. */
-function pickHintPlacement(file: number, rank: number): HintPlacement {
-  if (rank >= 6) return "bottom";
-  if (file <= 1) return "right";
-  if (file >= 6) return "left";
-  return "top";
-}
-
 const PIECE_BASE = THEME_CONFIG.piecesBase;
 
 const PIECE_IMG: Record<PieceId, string> = {
