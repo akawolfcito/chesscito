@@ -18,6 +18,12 @@ import type { LabyrinthRecord } from "@/lib/labyrinth-builder/store";
 import type { BucketedRecord } from "@/lib/content/baseline-write";
 import { validateBuilder } from "@/lib/labyrinth-builder/validate";
 import {
+  isKindEditable,
+  kindLabel,
+  isTargetlessKind,
+} from "@/lib/labyrinth-builder/authoring";
+import { PROMOTABLE_PIECES } from "@/lib/game/promotion-run";
+import {
   formatPublishResult,
   type PublishResultLike,
 } from "@/lib/labyrinth-builder/publish-toast";
@@ -300,6 +306,17 @@ export default function LabyrinthBuilderPage() {
   }
 
   function handleEditRecord(rec: LabyrinthRecord) {
+    const recKind = rec.kind ?? (bucket === "exercise" ? "exercise" : "labyrinth");
+    // Behavior 12 — a game the builder cannot safely edit yet stays closed. Today
+    // that is Safe Path: loading it would drop the typed threats that ARE the
+    // level. The list already blocks the Edit button; this refuses the call too.
+    if (!isKindEditable(recKind)) {
+      setToast({
+        kind: "warn",
+        text: `${kindLabel(recKind)} is not editable in the builder yet — loading it would drop its threats. Coming in a later stage.`,
+      });
+      return;
+    }
     const derived = deriveStateFromFen(rec.fen, rec.piece, rec.mover ?? "");
     if (!derived.ok) {
       setToast({ kind: "err", text: `Cannot edit ${rec.id ?? "record"}: ${derived.error}` });
@@ -307,9 +324,8 @@ export default function LabyrinthBuilderPage() {
     }
     setState({
       // The record's real kind rides the state now, so the live validator judges
-      // it as the game it is. Absent → the bucket's default (a plain labyrinth,
-      // or an exercise in the exercise bucket).
-      kind: rec.kind ?? (bucket === "exercise" ? "exercise" : "labyrinth"),
+      // it as the game it is (recKind above defaults an absent kind to the bucket).
+      kind: recKind,
       piece: rec.piece,
       start: derived.start,
       // A knight-tour record carries no target — it has no goal square to load.
@@ -366,14 +382,18 @@ export default function LabyrinthBuilderPage() {
         body: JSON.stringify({
           bucket,
           record: {
-            // Preserved exercise-only / unknown fields (tier, tags, …) first,
-            // so an edit never drops them; explicit fields below win. This is
-            // also what carries the record's `kind` through: the UI cannot
-            // express it, so editExtras is its only ride.
+            // Preserved exercise-only / unknown fields (pedagogy, `kind`, …)
+            // first, so an edit never drops them; explicit fields below win.
+            // `kind` still rides here — the UI holds it in state but does not
+            // re-author it, so editExtras stays its faithful carrier.
             ...editExtras,
             id: state.id || undefined,
             piece: state.piece,
             ...fenBlock,
+            // The UI now OWNS promoteTo (the promotion-run selector), so it wins
+            // over the loaded copy in editExtras. Undefined for every other kind
+            // → dropped by JSON, leaving their records untouched.
+            promoteTo: state.promoteTo,
             explanation: state.explanation || undefined,
             tier: state.tier || undefined,
             tags: state.tags && state.tags.length ? state.tags : undefined,
@@ -526,7 +546,11 @@ export default function LabyrinthBuilderPage() {
           {/* Brushes */}
           <div className="flex flex-wrap gap-2">
             {(["start", "goal", "wall", "capture", "trace"] as Brush[]).map((b) => {
-              const disabled = b === "capture" && state.piece !== "pawn";
+              const disabled =
+                (b === "capture" && state.piece !== "pawn") ||
+                // The targetless kinds (queens, knight-tour, promotion-run) have
+                // no goal square to paint — hide the brush so it can't be set.
+                (b === "goal" && isTargetlessKind(state.kind));
               if (disabled) return null;
               return (
                 <button
@@ -625,6 +649,27 @@ export default function LabyrinthBuilderPage() {
                 className="rounded bg-neutral-800 px-2 py-1"
               />
             </label>
+            {state.kind === "promotion-run" ? (
+              <label className="col-span-2 flex flex-col text-sm">
+                <span className="text-neutral-400">
+                  promote to (win condition — the pawn must crown this)
+                </span>
+                <select
+                  value={state.promoteTo ?? ""}
+                  onChange={(e) =>
+                    update({ promoteTo: (e.target.value || undefined) as PieceId | undefined })
+                  }
+                  className="rounded bg-neutral-800 px-2 py-1 capitalize"
+                >
+                  <option value="">— choose a piece —</option>
+                  {PROMOTABLE_PIECES.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
             <label className="col-span-2 flex flex-col text-sm">
               <span className="text-neutral-400">
                 description (shown in-game)
@@ -824,6 +869,8 @@ mover=${fenBlock.mover}`}
                 {pieceRecords.map((rec, i) => {
                   const active = !!rec.id && rec.id === state.id;
                   const isDisabled = !!rec.disabled;
+                  const recKind = rec.kind ?? (bucket === "exercise" ? "exercise" : "labyrinth");
+                  const editable = isKindEditable(recKind);
                   return (
                     <li
                       key={rec.id ?? `${rec.piece}-${rec.order}-${i}`}
@@ -832,6 +879,9 @@ mover=${fenBlock.mover}`}
                       } ${isDisabled ? "opacity-50" : ""}`}
                     >
                       <span className="truncate font-mono text-xs text-neutral-300">
+                        <span className="mr-1 rounded bg-neutral-700 px-1 not-italic text-neutral-200">
+                          {kindLabel(recKind)}
+                        </span>
                         {rec.id ?? "(no id)"} · target {rec.target} · order {rec.order}
                         {isDisabled ? (
                           <span className="ml-1 rounded bg-amber-900/70 px-1 text-amber-300">
@@ -856,13 +906,24 @@ mover=${fenBlock.mover}`}
                         >
                           {isDisabled ? "Enable" : "Disable"}
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleEditRecord(rec)}
-                          className="rounded border border-neutral-700 bg-neutral-800 px-2 py-0.5 text-xs font-semibold text-neutral-100 hover:bg-neutral-700"
-                        >
-                          Edit
-                        </button>
+                        {editable ? (
+                          <button
+                            type="button"
+                            onClick={() => handleEditRecord(rec)}
+                            className="rounded border border-neutral-700 bg-neutral-800 px-2 py-0.5 text-xs font-semibold text-neutral-100 hover:bg-neutral-700"
+                          >
+                            Edit
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled
+                            title={`${kindLabel(recKind)} editing lands in a later stage — loading it now would drop its threats.`}
+                            className="cursor-not-allowed rounded border border-neutral-800 bg-neutral-900 px-2 py-0.5 text-xs font-semibold text-neutral-600"
+                          >
+                            Locked
+                          </button>
+                        )}
                       </div>
                     </li>
                   );
