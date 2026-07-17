@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 import { WalletProvider } from "@/components/wallet-provider";
 import { PermitProbeClient } from "./permit-probe-client";
@@ -17,7 +18,7 @@ import { PermitProbeClient } from "./permit-probe-client";
 export const dynamic = "force-dynamic";
 
 export default function PermitProbeDevPage() {
-  if (process.env.VERCEL_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
   return (
     <WalletProvider>
       <PermitProbeClient />

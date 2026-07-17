@@ -6,11 +6,12 @@ import {
   writeBaselineRecord,
   type KindedRecord,
 } from "@/lib/content/baseline-write";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
-  if (process.env.NODE_ENV === "production") {
+  if (!isDevSurfaceEnabled()) {
     return new NextResponse("Not found", { status: 404 });
   }
   const filter = new URL(req.url).searchParams.get("kind");
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  if (process.env.NODE_ENV === "production") {
+  if (!isDevSurfaceEnabled()) {
     return new NextResponse("Not found", { status: 404 });
   }
   let body: KindedRecord;

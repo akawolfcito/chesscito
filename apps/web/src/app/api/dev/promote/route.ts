@@ -9,12 +9,13 @@
  * (www, learn, play, and legacy Lite) via /api/admin/content/revalidate so players
  * see the change without waiting for the 60s TTL.
  *
- * Fail-closed: 404 in production (NODE_ENV guard); 400 on a malformed move;
+ * Fail-closed: 404 in production (isDevSurfaceEnabled); 400 on a malformed move;
  * "not configured" when ADMIN_TOKEN is unset. Upstream errors are sanitized by
  * status — the raw body (which may carry DB detail) and the token are never echoed.
  */
 import { NextResponse } from "next/server";
 import type { ContentKind, ContentStage } from "@/lib/content/overlay-types";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 export const runtime = "nodejs";
 
@@ -60,7 +61,7 @@ const REMOTE_REVALIDATE_URLS = [
 ];
 
 export async function POST(req: Request) {
-  if (process.env.VERCEL_ENV === "production") {
+  if (!isDevSurfaceEnabled()) {
     return new NextResponse("Not found", { status: 404 });
   }
 

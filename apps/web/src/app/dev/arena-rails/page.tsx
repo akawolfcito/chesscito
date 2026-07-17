@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 import { ArenaRailsFixture, type ArenaRailsVariant } from "./fixture";
 
@@ -19,7 +20,7 @@ export default function ArenaRailsDevPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
 
   const raw = typeof searchParams.variant === "string" ? searchParams.variant : "rival-idle";
   const variant = VARIANTS.has(raw as ArenaRailsVariant)

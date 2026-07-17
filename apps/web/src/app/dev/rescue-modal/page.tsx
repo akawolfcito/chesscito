@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 import { RescueModalFixture } from "./fixture";
 import type { RescueModalVariant } from "@/lib/exercises/use-rescue-modal-state";
@@ -28,7 +29,7 @@ export default function RescueModalDevPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
 
   const variant = parseVariant(
     typeof searchParams.variant === "string" ? searchParams.variant : undefined,

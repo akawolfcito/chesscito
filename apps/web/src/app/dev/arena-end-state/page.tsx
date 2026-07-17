@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 import { ArenaEndStateFixture } from "./fixture";
 
@@ -30,7 +31,7 @@ export default function ArenaEndStateDevPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
 
   const raw = typeof searchParams.variant === "string" ? searchParams.variant : "resigned";
   const variant = VARIANTS.has(raw) ? raw : "resigned";

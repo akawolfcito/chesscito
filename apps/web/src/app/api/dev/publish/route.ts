@@ -19,6 +19,7 @@ import { NextResponse } from "next/server";
 import type { LabyrinthRecord } from "@/lib/labyrinth-builder/store";
 import type { ContentKind } from "@/lib/content/overlay-types";
 import { writeBaselineRecord } from "@/lib/content/baseline-write";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 export const runtime = "nodejs";
 
@@ -73,7 +74,7 @@ async function publishToOverlay(
 }
 
 export async function POST(req: Request) {
-  if (process.env.VERCEL_ENV === "production") {
+  if (!isDevSurfaceEnabled()) {
     return new NextResponse("Not found", { status: 404 });
   }
 

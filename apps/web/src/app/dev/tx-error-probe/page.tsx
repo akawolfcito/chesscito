@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 import { WalletProvider } from "@/components/wallet-provider";
 import { TxErrorProbeClient } from "./tx-error-probe-client";
@@ -21,7 +22,7 @@ import { TxErrorProbeClient } from "./tx-error-probe-client";
 export const dynamic = "force-dynamic";
 
 export default function TxErrorProbeDevPage() {
-  if (process.env.VERCEL_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
   return (
     <WalletProvider>
       <TxErrorProbeClient />

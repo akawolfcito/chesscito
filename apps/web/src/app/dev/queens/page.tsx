@@ -20,6 +20,7 @@
  */
 
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 import { useState } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { QueensBoard } from "@/components/exercises/queens-board";
@@ -30,7 +31,7 @@ import messages from "@/lib/content/messages/en";
 export const dynamic = "force-dynamic";
 
 export default function QueensPage() {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
   return (
     <NextIntlClientProvider locale="en" messages={messages}>
       <QueensProbe />

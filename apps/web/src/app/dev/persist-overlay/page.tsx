@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 import { PersistOverlayFixture } from "./fixture";
 import type { PersistState } from "@/components/arena/arena-end-state";
@@ -25,7 +26,7 @@ export default function PersistOverlayDevPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
 
   const state = parseState(
     typeof searchParams.state === "string" ? searchParams.state : undefined,

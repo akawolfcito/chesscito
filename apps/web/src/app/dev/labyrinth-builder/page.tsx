@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 import {
   buildFenBlock,
   emptyState,
@@ -200,7 +201,7 @@ function deriveStateFromFen(
 }
 
 export default function LabyrinthBuilderPage() {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
 
   const [kind, setKind] = useState<Kind>("exercise");
   const [state, setState] = useState<BuilderState>(() => emptyState("rook"));

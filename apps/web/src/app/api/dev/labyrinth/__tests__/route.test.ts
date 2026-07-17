@@ -68,10 +68,20 @@ describe("POST /api/dev/labyrinth", () => {
   });
 
   it("returns 404 in production and never writes", async () => {
-    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_ENV", "production");
     const res = await POST(postRequest(JSON.stringify(VALID_ROOK)));
     expect(res.status).toBe(404);
     expect(fsMocks.writeFileSync).not.toHaveBeenCalled();
+  });
+
+  /** The rule this route used to get wrong. A preview build runs with
+   *  NODE_ENV="production", so the old gate 404'd the tooling exactly where the
+   *  founder wants it alive (spec §Regla de entornos). Only VERCEL_ENV decides. */
+  it("stays alive on preview, where NODE_ENV reads production", async () => {
+    vi.stubEnv("VERCEL_ENV", "preview");
+    vi.stubEnv("NODE_ENV", "production");
+    const res = await POST(postRequest(JSON.stringify(VALID_ROOK)));
+    expect(res.status).not.toBe(404);
   });
 
   it("persists a valid solvable labyrinth record (writes json + generated module)", async () => {
@@ -224,10 +234,18 @@ describe("GET /api/dev/labyrinth", () => {
   });
 
   it("returns 404 in production and never reads", async () => {
-    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_ENV", "production");
     const res = await GET(getRequest());
     expect(res.status).toBe(404);
     expect(fsMocks.readFileSync).not.toHaveBeenCalled();
+  });
+
+  /** Same rule as POST: preview reads NODE_ENV="production" and must stay alive. */
+  it("stays alive on preview, where NODE_ENV reads production", async () => {
+    vi.stubEnv("VERCEL_ENV", "preview");
+    vi.stubEnv("NODE_ENV", "production");
+    const res = await GET(getRequest());
+    expect(res.status).not.toBe(404);
   });
 
   it("returns records from both labyrinths.json and exercises.json", async () => {
