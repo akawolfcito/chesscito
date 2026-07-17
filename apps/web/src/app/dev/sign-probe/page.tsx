@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 import { WalletProvider } from "@/components/wallet-provider";
 import { SignProbeClient } from "./sign-probe-client";
@@ -14,7 +15,7 @@ import { SignProbeClient } from "./sign-probe-client";
 export const dynamic = "force-dynamic";
 
 export default function SignProbeDevPage() {
-  if (process.env.VERCEL_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
   return (
     <WalletProvider>
       <SignProbeClient />

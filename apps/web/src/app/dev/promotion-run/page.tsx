@@ -25,6 +25,7 @@
  */
 
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 import { useState } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { PromotionRunBoard } from "@/components/exercises/promotion-run-board";
@@ -34,7 +35,7 @@ import messages from "@/lib/content/messages/en";
 export const dynamic = "force-dynamic";
 
 export default function PromotionRunPage() {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
   return (
     <NextIntlClientProvider locale="en" messages={messages}>
       <PromotionRunProbe />

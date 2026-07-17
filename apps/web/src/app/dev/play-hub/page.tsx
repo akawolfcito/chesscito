@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 import { PlayHubFixture, type PlayHubVariant } from "./fixture";
 
@@ -13,7 +14,7 @@ export default function PlayHubDevPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
 
   const raw = typeof searchParams.variant === "string" ? searchParams.variant : "guest";
   const variant = VARIANTS.has(raw as PlayHubVariant) ? (raw as PlayHubVariant) : "guest";

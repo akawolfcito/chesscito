@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 import { TxProgressFixture } from "./fixture";
 import type { TxStepCode, TxFlowName } from "@/components/redesign/tx-progress-steps";
@@ -51,7 +52,7 @@ export default function TxProgressDevPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
 
   const variant = parseVariant(
     typeof searchParams.variant === "string" ? searchParams.variant : undefined,

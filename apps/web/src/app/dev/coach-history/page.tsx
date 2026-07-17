@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 import { CoachHistoryFixture } from "./fixture";
 
@@ -11,7 +12,7 @@ export default function CoachHistoryDevPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
 
   const credits =
     typeof searchParams.credits === "string"

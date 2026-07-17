@@ -1,6 +1,7 @@
 "use client";
 
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 import { ArenaShieldsChip } from "@/components/arena/arena-hud";
 
@@ -19,7 +20,7 @@ import { ArenaShieldsChip } from "@/components/arena/arena-hud";
 export const dynamic = "force-dynamic";
 
 export default function ArenaShieldsChipDevPage() {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
 
   // Mirrors the wrapper arena renders around the chip
   // (`flex justify-end px-2`) so the framing matches the production HUD.

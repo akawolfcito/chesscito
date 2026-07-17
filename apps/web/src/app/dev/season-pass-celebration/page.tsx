@@ -1,5 +1,6 @@
 import { Fredoka, Rowdies } from "next/font/google";
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 import { SeasonPassCelebrationFixture, type CelebrationVariant } from "./fixture";
 
@@ -33,9 +34,9 @@ const VARIANTS = new Set<CelebrationVariant>(["credited", "pending"]);
  * spending a cent, so the flow can be validated on preview without a live
  * payment.
  *
- * Gated on VERCEL_ENV (not NODE_ENV) on purpose: preview builds also run with
- * NODE_ENV=production, and a probe that 404s on preview cannot be used for the
- * validation it exists for. Dead in production.
+ * Gated by isDevSurfaceEnabled() — alive on preview (which is the point: a probe
+ * that 404s there cannot do the validation it exists for), dead in production.
+ * This page found that rule first; it now lives in lib/dev/dev-surface.ts.
  *
  *   /dev/season-pass-celebration              → shields credited (+3)
  *   /dev/season-pass-celebration?variant=pending → shields not yet granted
@@ -45,7 +46,7 @@ export default function SeasonPassCelebrationDevPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (process.env.VERCEL_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
 
   const raw = typeof searchParams.variant === "string" ? searchParams.variant : "credited";
   const variant = VARIANTS.has(raw as CelebrationVariant)

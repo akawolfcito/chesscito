@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
 
@@ -16,7 +17,7 @@ export default function ProChipDevPage({
 }: {
   searchParams: { variant?: string };
 }) {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
 
   const variant = searchParams.variant === "inactive" ? "inactive" : "active";
   const active = variant === "active";

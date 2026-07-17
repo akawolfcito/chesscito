@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 import {
   buildFenBlock,
   emptyState,
@@ -200,7 +201,7 @@ function deriveStateFromFen(
 }
 
 export default function LabyrinthBuilderPage() {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
 
   const [kind, setKind] = useState<Kind>("exercise");
   const [state, setState] = useState<BuilderState>(() => emptyState("rook"));
@@ -223,12 +224,22 @@ export default function LabyrinthBuilderPage() {
   const [isSaving, setIsSaving] = useState(false);
   /** Target stage for the "Set stage" control (content-staging-model). */
   const [stageTarget, setStageTarget] = useState<ContentStage>("published");
+  /** Can the SERVER write content/*.json? Only it knows: this is a client
+   *  component, so process.env.VERCEL is invisible here. On a deploy the fs is
+   *  read-only → the builder loads and validates, but Save is off (behavior 15).
+   *  Starts true so local (the only place Save works) never flashes disabled. */
+  const [canWrite, setCanWrite] = useState(true);
 
   const refreshRecords = useCallback(async () => {
     try {
       const res = await fetch(`/api/dev/labyrinth?kind=${kind}`);
-      const data = (await res.json()) as { ok?: boolean; records?: LabyrinthRecord[] };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        records?: LabyrinthRecord[];
+        canWrite?: boolean;
+      };
       if (data?.ok && Array.isArray(data.records)) setRecords(data.records);
+      if (typeof data?.canWrite === "boolean") setCanWrite(data.canWrite);
     } catch {
       /* dev-only tool — silently ignore fetch failures */
     }
@@ -390,7 +401,7 @@ export default function LabyrinthBuilderPage() {
   }
 
   async function handleSave() {
-    if (!result.ok || !fenBlock || isSaving) return;
+    if (!result.ok || !fenBlock || isSaving || !canWrite) return;
     setIsSaving(true);
     try {
       // "Todo en 1": the publish proxy writes the baseline content/*.json AND
@@ -724,11 +735,23 @@ export default function LabyrinthBuilderPage() {
             <button
               type="button"
               onClick={handleSave}
-              disabled={!result.ok || isSaving}
+              disabled={!result.ok || isSaving || !canWrite}
+              title={
+                canWrite
+                  ? undefined
+                  : "Baseline write is local-only: this deploy's filesystem is read-only."
+              }
               className="rounded bg-emerald-600 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:text-neutral-500"
             >
               {isSaving ? "Saving draft…" : "Save draft"}
             </button>
+            {/* Says WHY, instead of letting the founder press a dead button. The
+                probes are useful on preview; Save can never be. */}
+            {!canWrite && (
+              <span className="text-xs text-amber-400" data-testid="lb-readonly-note">
+                Read-only here — baseline write is local-only.
+              </span>
+            )}
             {toast && (
               <span
                 className={

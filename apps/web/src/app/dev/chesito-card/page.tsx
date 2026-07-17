@@ -1,6 +1,7 @@
 "use client";
 
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 
 import { WalletProvider } from "@/components/wallet-provider";
 import { ChesitoCard } from "@/components/peones/chesito-card";
@@ -18,7 +19,7 @@ import { ChesitoCard } from "@/components/peones/chesito-card";
 export const dynamic = "force-dynamic";
 
 export default function ChesitoCardDevPage() {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
 
   return (
     <WalletProvider>

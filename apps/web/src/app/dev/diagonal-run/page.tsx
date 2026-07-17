@@ -7,12 +7,13 @@
  */
 
 import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 import { DiagonalRunSpike } from "@/components/dev/diagonal-run-spike";
 
 export const dynamic = "force-dynamic";
 
 export default function DiagonalRunPage() {
-  if (process.env.NODE_ENV === "production") notFound();
+  if (!isDevSurfaceEnabled()) notFound();
   return (
     <main className="min-h-screen bg-slate-950 py-4">
       <DiagonalRunSpike />
