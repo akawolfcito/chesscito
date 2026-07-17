@@ -5,7 +5,9 @@ import { notFound } from "next/navigation";
 import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 import {
   buildFenBlock,
+  deriveStateFromFen,
   emptyState,
+  type AuthoredEnemy,
   type BuilderState,
 } from "@/lib/labyrinth-builder/state";
 import type { LabyrinthRecord } from "@/lib/labyrinth-builder/store";
@@ -145,60 +147,10 @@ function posKey(p: BoardPosition): string {
   return posToSquare(p);
 }
 
-type FenLoadResult =
-  | { ok: true; start: string; walls: string[]; captures: string[]; notes: string[] }
-  | { ok: false; error: string };
-
-/**
- * Shared FEN → builder-state derivation used by both "Load from FEN" and
- * "Edit existing". Resolves the mover square (explicit or the sole white piece
- * of `piece` type), then maps remaining whites → walls and blacks → captures.
- */
-function deriveStateFromFen(
-  fen: string,
-  piece: PieceId,
-  mover: string,
-): FenLoadResult {
-  let board: ReturnType<typeof parseFenBoard>;
-  try {
-    board = parseFenBoard(fen);
-  } catch (e) {
-    return { ok: false, error: `FEN parse error: ${(e as Error).message}` };
-  }
-
-  let moverSq = mover.trim();
-  if (moverSq) {
-    const p = board.get(moverSq);
-    if (!p || p.color !== "w" || p.type !== piece) {
-      return { ok: false, error: `mover ${moverSq} is not a white ${piece} in this FEN.` };
-    }
-  } else {
-    const matches = [...board.entries()].filter(
-      ([, p]) => p.color === "w" && p.type === piece,
-    );
-    if (matches.length === 1) {
-      moverSq = matches[0][0];
-    } else if (matches.length === 0) {
-      return { ok: false, error: `No white ${piece} found — set mover or change piece.` };
-    } else {
-      return { ok: false, error: `Ambiguous: ${matches.length} white ${piece}s — set mover.` };
-    }
-  }
-
-  const walls: string[] = [];
-  const captures: string[] = [];
-  for (const [sq, p] of board) {
-    if (sq === moverSq) continue;
-    if (p.color === "w") walls.push(sq);
-    else captures.push(sq); // black squares → captures (pawn only downstream)
-  }
-
-  const notes: string[] = [];
-  if (piece !== "pawn" && captures.length)
-    notes.push(`${captures.length} black square(s) ignored (captures only for pawn)`);
-
-  return { ok: true, start: moverSq, walls, captures, notes };
-}
+// `deriveStateFromFen` used to live here, unexported — which is exactly why the
+// round-trip against `buildFenBlock` went untested, and why the enemy type could
+// be lost for this long without anyone noticing. It now lives next to its
+// inverse in lib/labyrinth-builder/state.ts, where the pair is tested as one.
 
 export default function LabyrinthBuilderPage() {
   if (!isDevSurfaceEnabled()) notFound();
@@ -292,13 +244,19 @@ export default function LabyrinthBuilderPage() {
     setState((prev) => ({
       ...prev,
       piece,
-      captures: piece === "pawn" ? prev.captures : [],
+      enemies: piece === "pawn" ? prev.enemies : [],
     }));
     if (brush === "capture" && piece !== "pawn") setBrush("start");
   }
 
   function toggleIn(list: string[], sq: string): string[] {
     return list.includes(sq) ? list.filter((x) => x !== sq) : [...list, sq];
+  }
+
+  function toggleEnemy(list: AuthoredEnemy[], sq: string, piece: PieceId): AuthoredEnemy[] {
+    return list.some((e) => e.square === sq)
+      ? list.filter((e) => e.square !== sq)
+      : [...list, { square: sq, piece }];
   }
 
   function handleCell(sq: string) {
@@ -313,7 +271,10 @@ export default function LabyrinthBuilderPage() {
         update({ walls: toggleIn(state.walls, sq) });
         break;
       case "capture":
-        if (state.piece === "pawn") update({ captures: toggleIn(state.captures, sq) });
+        // The capture brush still paints a black PAWN — the only enemy the
+        // builder can express today. A TYPED brush (safe-path's knights, rooks…)
+        // is etapa 7; what changed here is that the type now SURVIVES a save.
+        if (state.piece === "pawn") update({ enemies: toggleEnemy(state.enemies, sq, "pawn") });
         break;
       case "trace":
         setTracedPath((prev) =>
@@ -344,7 +305,7 @@ export default function LabyrinthBuilderPage() {
       start: derived.start,
       goal: target || prev.goal,
       walls: derived.walls,
-      captures: piece === "pawn" ? derived.captures : [],
+      enemies: piece === "pawn" ? derived.enemies : [],
     }));
     setTracedPath([]);
     const notes = [...derived.notes];
@@ -367,7 +328,10 @@ export default function LabyrinthBuilderPage() {
       // A knight-tour record carries no target — it has no goal square to load.
       goal: rec.target ?? null,
       walls: derived.walls,
-      captures: rec.piece === "pawn" ? derived.captures : [],
+      // ⚠️ Still drops a non-pawn's enemies, which DESTROYS a safe-path level on
+      // load (its knight is the game). Deliberately unchanged here: this stage
+      // only makes the type survive. The policy is kind-aware in etapa 2.
+      enemies: rec.piece === "pawn" ? derived.enemies : [],
       order: rec.order,
       explanation: rec.explanation,
       tier: rec.tier,
@@ -536,7 +500,7 @@ export default function LabyrinthBuilderPage() {
               const isStart = state.start === sq;
               const isGoal = state.goal === sq;
               const isWall = state.walls.includes(sq);
-              const isCapture = state.captures.includes(sq);
+              const isCapture = state.enemies.some((e) => e.square === sq);
               const inPath = pathSquares.has(sq);
               const traceOrder = traceIndex.get(sq);
               return (

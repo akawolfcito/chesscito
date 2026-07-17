@@ -18,7 +18,7 @@ describe("labyrinth-builder/state", () => {
         start: null,
         goal: null,
         walls: [],
-        captures: [],
+        enemies: [],
         order: 0,
       });
     });
@@ -35,7 +35,7 @@ describe("labyrinth-builder/state", () => {
         start: "a1",
         goal: "a8",
         walls: ["h1"],
-        captures: [],
+        enemies: [],
         order: 0,
       };
 
@@ -61,7 +61,7 @@ describe("labyrinth-builder/state", () => {
         start: "d4",
         goal: "d8",
         walls: ["a1", "h8"],
-        captures: [],
+        enemies: [],
         order: 0,
       };
       expect(buildFenBlock(s).mover).toBe("d4");
@@ -75,7 +75,7 @@ describe("labyrinth-builder/state", () => {
         start: "b1",
         goal: "f7",
         walls: ["c3", "e5"],
-        captures: [],
+        enemies: [],
         order: 0,
       };
 
@@ -109,7 +109,7 @@ describe("labyrinth-builder/state", () => {
         start: "d2",
         goal: "e3",
         walls: [],
-        captures: ["e3"],
+        enemies: [{ square: "e3", piece: "pawn" }],
         order: 0,
       };
 
