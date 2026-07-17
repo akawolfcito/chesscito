@@ -17,19 +17,27 @@ import { puzzleId } from "@/lib/game/fen-puzzle";
 import { parseCsv, buildCatalog, renderGeneratedModule } from "@/lib/content/catalog";
 import type { ContentBucket } from "@/lib/content/overlay-types";
 
-const ROOT = resolve(process.cwd());
-const LABS_PATH = resolve(ROOT, "content/labyrinths.json");
-const EXERCISES_PATH = resolve(ROOT, "content/exercises.json");
-const CSV_PATH = resolve(ROOT, "content/puzzles.csv");
-const GEN_PATH = resolve(ROOT, "src/lib/game/generated/puzzles.generated.ts");
+/** Paths are derived from an injectable root (default: the working tree) so a
+ *  test can point the whole read-modify-write at a tmpdir. With module-level
+ *  constants the round-trip test would have to either mock fs — and stop
+ *  proving anything about the real records — or write the working tree. */
+function paths(root: string) {
+  return {
+    labs: resolve(root, "content/labyrinths.json"),
+    exercises: resolve(root, "content/exercises.json"),
+    csv: resolve(root, "content/puzzles.csv"),
+    gen: resolve(root, "src/lib/game/generated/puzzles.generated.ts"),
+  };
+}
 
-/** A builder record tagged with the bucket it belongs to. The on-disk JSON
- *  files do NOT store `kind` (it is implied by the file). */
-// The dev builder's `kind` is the BUCKET selector (exercise vs labyrinth file),
-// which is a different axis from LabyrinthRecord's own routing `kind`
-// (labyrinth vs pivot). Omit the record's field so the builder's ContentBucket
-// wins here without the two unioning down to "labyrinth".
-export type KindedRecord = Omit<LabyrinthRecord, "kind"> & { kind?: ContentBucket };
+/** A record plus the bucket it was read from. Two axes, two fields: `bucket` is
+ *  WHICH FILE it lives in, `kind` (on the record, untouched) is WHAT GAME it is.
+ *
+ *  Replaces `KindedRecord`, which did `Omit<LabyrinthRecord, "kind">` and put
+ *  the bucket in `kind`'s place — so reading a record ERASED its game. That is
+ *  the root cause this type retires: a queens level came back saying
+ *  `kind:"labyrinth"`, and saving it wrote that lie to disk. */
+export type BucketedRecord = LabyrinthRecord & { bucket: ContentBucket };
 
 export type BaselineWriteResult =
   | { ok: true; id: string; warnings: string[] }
@@ -41,57 +49,77 @@ function readRecords(path: string): LabyrinthRecord[] {
     : [];
 }
 
-/** Read both buckets (kind-tagged), optionally filtered. Powers the dev GET. */
-export function readBaselineRecords(filter?: ContentBucket): KindedRecord[] {
+/** Read both buckets (bucket-tagged), optionally filtered. Powers the dev GET.
+ *  The record's own `kind` passes through untouched — including ABSENT, which is
+ *  what the 19 legit labyrinths carry and what `?? "labyrinth"` handles
+ *  downstream. It is never filled in here: an invented default is how a
+ *  record's game ends up decided by its reader instead of by the record. */
+export function readBaselineRecords(
+  filter?: ContentBucket,
+  root: string = process.cwd(),
+): BucketedRecord[] {
+  const p = paths(root);
   const wantLabs = filter !== "exercise";
   const wantExercises = filter !== "labyrinth";
-  const out: KindedRecord[] = [];
+  const out: BucketedRecord[] = [];
   if (wantLabs) {
-    for (const r of readRecords(LABS_PATH)) out.push({ ...r, kind: "labyrinth" });
+    for (const r of readRecords(p.labs)) out.push({ ...r, bucket: "labyrinth" });
   }
   if (wantExercises) {
-    for (const r of readRecords(EXERCISES_PATH)) out.push({ ...r, kind: "exercise" });
+    for (const r of readRecords(p.exercises)) out.push({ ...r, bucket: "exercise" });
   }
   return out;
 }
 
 /**
  * Validate (BFS, via buildCatalog) and persist one record to its bucket, then
- * regenerate the catalog module. The record is mutated in place to carry a
- * resolved id (auto-assigned with the build's content-addressed scheme when
- * absent), and that id is returned. On a validation failure NOTHING is written.
+ * regenerate the catalog module. The resolved id (auto-assigned with the build's
+ * content-addressed scheme when absent) comes back on the result — the caller's
+ * record is NOT mutated, so read it from there. On a validation failure NOTHING
+ * is written.
  */
 export function writeBaselineRecord(
-  kind: ContentBucket,
+  bucket: ContentBucket,
   record: LabyrinthRecord,
+  root: string = process.cwd(),
 ): BaselineWriteResult {
+  const p = paths(root);
+  // `bucket` is a read-time tag, not part of the record — a caller that read a
+  // BucketedRecord and passes it straight back would otherwise persist it (the
+  // intersection type allows the extra prop through assignment). Strip it here,
+  // where every write path converges, rather than trusting each caller.
+  const { bucket: _bucket, ...clean } = record as BucketedRecord;
+  record = clean;
+
   // Auto-assign a stable, content-addressed id so future saves overwrite the
   // same record (no duplicate "(no id)" rows). Same scheme as the build.
+  // ⚠️ Hashes the BUCKET, not the record's kind: that is what the build does,
+  // so changing it here would re-id existing content.
   if (!record.id) {
     record.id = puzzleId(
       record.piece,
-      `${kind}|${record.fen}|${record.target}|${record.mover ?? ""}`,
+      `${bucket}|${record.fen}|${record.target}|${record.mover ?? ""}`,
     );
   }
 
-  const targetPath = kind === "exercise" ? EXERCISES_PATH : LABS_PATH;
+  const targetPath = bucket === "exercise" ? p.exercises : p.labs;
   // Read-modify-write the active bucket; upsertRecord replaces a matching
   // record wholesale (caller sends a complete record on edit).
   const nextTarget = upsertRecord(readRecords(targetPath), record);
 
   // The generated catalog is built from BOTH buckets (+ the CSV), so re-read
   // the other bucket as-is and feed both to buildCatalog.
-  const labs = kind === "exercise" ? readRecords(LABS_PATH) : nextTarget;
-  const exercises = kind === "exercise" ? nextTarget : readRecords(EXERCISES_PATH);
+  const labs = bucket === "exercise" ? readRecords(p.labs) : nextTarget;
+  const exercises = bucket === "exercise" ? nextTarget : readRecords(p.exercises);
 
-  const csvRows = existsSync(CSV_PATH)
-    ? parseCsv(readFileSync(CSV_PATH, "utf8"))
+  const csvRows = existsSync(p.csv)
+    ? parseCsv(readFileSync(p.csv, "utf8"))
     : [["kind", "piece", "fen", "target", "mover", "tier", "tags", "explanation", "id"]];
   const cat = buildCatalog(csvRows, labs, exercises);
   if (cat.errors.length) return { ok: false, errors: cat.errors };
 
-  mkdirSync(dirname(GEN_PATH), { recursive: true });
+  mkdirSync(dirname(p.gen), { recursive: true });
   writeFileSync(targetPath, JSON.stringify(nextTarget, null, 2) + "\n");
-  writeFileSync(GEN_PATH, renderGeneratedModule(cat));
+  writeFileSync(p.gen, renderGeneratedModule(cat));
   return { ok: true, id: record.id, warnings: cat.warnings };
 }
