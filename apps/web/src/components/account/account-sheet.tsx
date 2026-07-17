@@ -10,6 +10,7 @@ import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LocaleSwitcher } from "@/components/i18n/locale-switcher";
 import { ChesitoCard } from "@/components/peones/chesito-card";
+import { useMiniPay } from "@/hooks/use-minipay";
 import { useShieldsCount } from "@/lib/shop/use-shields-count";
 import { useFounderStatus } from "@/lib/founder/use-founder-status";
 import { daysRemaining } from "@/lib/pro/days-remaining";
@@ -78,6 +79,12 @@ export function AccountSheet({
   // re-render on storage changes (shields) / fetch completion (founder).
   const shieldsCount = useShieldsCount();
   const founderOwned = useFounderStatus();
+  // 2026-07-17: inside MiniPay the app has exactly one address and no way to
+  // swap it — copying it and disconnecting are both dead controls there. The
+  // hook reports isMiniPay:false until its effect runs, so gate on isReady:
+  // deciding from the pre-hydration value would flash both controls in.
+  const { isMiniPay, isReady: walletEnvReady } = useMiniPay();
+  const walletIsInterchangeable = walletEnvReady && !isMiniPay;
 
   async function copyAddress() {
     try {
@@ -120,31 +127,51 @@ export function AccountSheet({
           <ChesitoCard />
 
           <div className="account-tiles-grid">
-            {/* Wallet — tile click copies the full address */}
-            <button
-              type="button"
-              onClick={() => void copyAddress()}
-              aria-label={copied ? t("copiedAddress") : t("copyAddress")}
-              className="account-tile"
-            >
-              <span className="account-tile-icon">
-                <picture>
-                  <source srcSet="/art/new-assets-chesscito/account/wallet-icon.avif" type="image/avif" />
-                  <source srcSet="/art/new-assets-chesscito/account/wallet-icon.webp" type="image/webp" />
-                  <img
-                    src="/art/new-assets-chesscito/account/wallet-icon.png"
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                  />
-                </picture>
-              </span>
-              <span className="account-tile-label">{t("walletLabel")}</span>
-              <span className="account-status-pill" data-tone="celo">
-                {copied ? <CandyIcon name="check" className="h-3 w-3" /> : null}
-                {copied ? t("copiedAddress") : walletShort}
-              </span>
-            </button>
+            {/* Wallet — tile click copies the full address; read-only in MiniPay */}
+            {(() => {
+              const walletIcon = (
+                <span className="account-tile-icon">
+                  <picture>
+                    <source srcSet="/art/new-assets-chesscito/account/wallet-icon.avif" type="image/avif" />
+                    <source srcSet="/art/new-assets-chesscito/account/wallet-icon.webp" type="image/webp" />
+                    <img
+                      src="/art/new-assets-chesscito/account/wallet-icon.png"
+                      alt=""
+                      aria-hidden="true"
+                      draggable={false}
+                    />
+                  </picture>
+                </span>
+              );
+
+              if (!walletIsInterchangeable) {
+                return (
+                  <div className="account-tile is-static" role="group" aria-label={t("walletLabel")}>
+                    {walletIcon}
+                    <span className="account-tile-label">{t("walletLabel")}</span>
+                    <span className="account-status-pill" data-tone="celo">
+                      {walletShort}
+                    </span>
+                  </div>
+                );
+              }
+
+              return (
+                <button
+                  type="button"
+                  onClick={() => void copyAddress()}
+                  aria-label={copied ? t("copiedAddress") : t("copyAddress")}
+                  className="account-tile"
+                >
+                  {walletIcon}
+                  <span className="account-tile-label">{t("walletLabel")}</span>
+                  <span className="account-status-pill" data-tone="celo">
+                    {copied ? <CandyIcon name="check" className="h-3 w-3" /> : null}
+                    {copied ? t("copiedAddress") : walletShort}
+                  </span>
+                </button>
+              );
+            })()}
 
             {/* Network — read-only */}
             <div className="account-tile is-static" role="group" aria-label={t("networkLabel")}>
@@ -325,15 +352,17 @@ export function AccountSheet({
             </div>
           </div>
 
-          {/* Disconnect — full-width secondary CTA */}
-          <button
-            type="button"
-            onClick={onDisconnect}
-            className="arena-result-secondary-action w-full"
-          >
-            <CandyIcon name="close" className="mr-2 h-4 w-4" />
-            {t("disconnect")}
-          </button>
+          {/* Disconnect — full-width secondary CTA; absent in MiniPay */}
+          {walletIsInterchangeable && (
+            <button
+              type="button"
+              onClick={onDisconnect}
+              className="arena-result-secondary-action w-full"
+            >
+              <CandyIcon name="close" className="mr-2 h-4 w-4" />
+              {t("disconnect")}
+            </button>
+          )}
 
           {/* About Chesscito — ghost link, secondary to Disconnect */}
           <Link
