@@ -134,9 +134,10 @@
 
 ## Current State
 
-- **Branch**: `main`. El trabajo de esta sesión es `a0ef796`; arriba va solo este handoff.
-  ⚠️ **`a0ef796` está SIN PUSHEAR** al momento de escribir esto. **Sin PRs abiertos** — todo fue
-  push directo a `main`.
+- **Branch**: `main`, árbol limpio. El trabajo de esta sesión es `a0ef796` (el tablero); arriba van
+  este handoff y `76b8e32` (inventario de probes).
+  ⚠️ **3 commits SIN PUSHEAR** al momento de escribir esto (`a0ef796`, `c930433`, `76b8e32`) —
+  `origin/main` sigue en `9a50f44`. **Sin PRs abiertos** — todo fue push directo a `main`.
   **Safe Path CERRADO** (el founder lo aprobó, "me gusta bastante"). **Promotion Run: 9 de 10.**
 - **Build**: passing **medido en este árbol** — vitest **5333/5333** (451 files), `tsc --noEmit` exit 0,
   VR **58/59** (`hub-shop-sheet-open` roja **también en `main`**, env sin treasury).
