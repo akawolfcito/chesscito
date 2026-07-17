@@ -25,7 +25,22 @@
   Todo gateado por `CHESSCITO_MODE`: el default sigue diciendo "chesscito". Verificado buscando "Lite"
   **en el árbol del merge**: no sobrevive ningún string visible; solo quedan identificadores internos
   (`CHESSCITO_LITE_MODE`, `isLite`, `lite-stats`), que es el alcance declarado del commit.
-- **SAFE PATH — la lógica pura está TERMINADA** (etapas 1-3 de 6). Plan aprobado por el founder:
+- **SAFE PATH — TERMINADO Y EN EL JUEGO** (6/6). El rey ya tiene su juego firma en `/exercises`
+  (carril Special Training) y en el probe `/dev/safe-path`. Suite **5281/5281** (448 files), `tsc`
+  limpio, **e2e 7/7**.
+  - `cb9cff0` **etapa 4 — contenido**. 3 niveles (`king-safe-1/2/3`), bucket propio, y el BFS genérico
+    se **saltea** (camina al rey con `getKingMoves`, que no sabe de amenazas). Nivel injugable = error
+    de import. **Warning nuevo**: si la ruta segura == la caminata libre, las amenazas son decorativas.
+    ⚠️ Dos trampas de autoría: el refugio es una **casilla vacía** (pieza blanca encima = muro = nunca
+    llega) y una torre negra en d8 vigila **toda la fila 8**, refugio incluido.
+  - `3b5311f` **etapa 5 — tablero + probe**. Pisar vigilado es **tappable y mata** (lo opuesto a queens,
+    que rechaza). Zonas invisibles al jugador; el toggle **Zones** del probe es la superficie de autoría.
+  - `701c6f2` **review del founder**: gate de selección (rey empieza sin levantar, zoom, "Tap your piece
+    first"), refugio con arte `refuge.png` + glow verde-amarillo, y **láser** desde el enemigo que lo vio.
+  - `b2b40ca` **etapa 6 — cableado**. Reemplaza el laberinto de relleno del rey. ⚠️ **Es el PRIMER juego
+    de Special Training que se puede PERDER** → toma prestada la máquina de fallo de ejercicios entera
+    (phase, modal, gate FTUX, auto-reset). Escudos: gratis, `use-fail-rescue` ya era genérico.
+- **Safe Path — lógica pura** (etapas 1-3). Plan aprobado por el founder:
   `docs/specs/2026-07-16-safe-path-promotion-run-plan.md` (**leerlo antes de seguir** — §3 son las 7
   decisiones D1-D7, §1 es lo que el código desmintió del spec padre).
   - `f3469bd` **etapa 1 — el modelo typed**. Hallazgo: **el FEN siempre supo el tipo**; `mapFenPuzzle`
@@ -42,21 +57,23 @@
 
 ## Current State
 
-- **Branch**: `main` = `b46ea46`. ⚠️ **ADELANTADA a `origin/main`**: pusheé hasta `8ade8d10`, así que
-  los 4 commits de Safe Path (`f3469bd`, `ed8e09a`, `3e66ba0`, `b46ea46`) **están sin pushear**.
-- **Build**: passing **medido en este árbol** — vitest **5252/5252** (446 files), `tsc --noEmit` exit 0.
-  El `Error: boom` del output es ruido intencional de `primitive-boundary.test.tsx`.
+- **Branch**: `main` = `b2b40ca` + este handoff.
+- **Build**: passing **medido en este árbol** — vitest **5281/5281** (448 files), `tsc --noEmit` exit 0,
+  e2e `safe-path-probe` **7/7** (`--project=minipay`). El `Error: boom` del output es ruido intencional
+  de `primitive-boundary.test.tsx`.
 - **Uncommitted work**: no.
 
 ## Next Tasks
 
-0. **Pushear `main`** (`b46ea46`) — 4 commits de Safe Path sin pushear.
-1. **EN CURSO — Safe Path, etapa 4 de 6: CONTENIDO.** Las etapas 1-3 (lógica pura) están hechas. Sigue:
-   dar de alta el kind `safe-path` en `content/labyrinths.json` + niveles placeholder, y que
-   `import-puzzles` los verifique con `safePathOptimalMoves` (null = injugable = rechazar).
-   **Los niveles son andamio a propósito** — el founder los pule en `/dev/labyrinth-builder`.
-   Después: etapa 5 (`safe-path-board.tsx` + probe `/dev/safe-path` que **sí** dibuja las zonas, D3) y
-   etapa 6 (host desde el catálogo runtime + `use-fail-rescue` + i18n + e2e). Tabla en el plan §4.
+1. **Afinar los 3 niveles del rey** (founder, no requiere código): `/dev/safe-path` con **Zones on** es
+   la superficie — el juego no dibuja las zonas, así que sin ese toggle no se puede diseñar. Los tres
+   son andamio a propósito. ⚠️ `/dev/labyrinth-builder` **NO conoce `safe-path`** todavía: no sabe
+   dibujar enemigos typed ni el mapa de amenaza. Si el founder quiere autorar ahí, es trabajo aparte.
+2. **PRÓXIMO JUEGO — Promotion Run (peón)**, etapa 7 del plan §4. 🛑 **Antes de escribir código,
+   contestar la §3.3 Q2**: ¿el peón usa el mapa de ataque, o solo un set de casillas letales? El spec
+   padre dice que comparte la capa con Safe Path y después lo describe como "stepping on one loses",
+   que es otra cosa. Y el peón **captura**, lo que mutaría un mapa compartido → dinámico, justo lo que
+   D1 evita. **El modelo typed ya está hecho**: `enemies` es aditivo y el FEN ya trae los tipos.
 2. **Triar 5 locales no-mergeadas** que el barrido no tocó (nunca estuvieron en la lista):
    `backup/main-before-author-rewrite` (huele a red de un rewrite de historia — **no borrar sin mirar**),
    `chore/minipay-gate`, `feat/board-renderer`, `feat/progression-unlocks-celebration-queue`,
@@ -93,9 +110,9 @@
   `compute-tier.ts`, `display-name.ts` están en `main`). Sobreviven al `--merged` porque sus tips no son
   ancestros, pero **`globals.css` pasó de ~5k a ~17.5k líneas desde entonces**: no se mergean, se
   reescriben. Único huérfano real: `hub-onboarding-card.tsx`, que nunca aterrizó. Borrables.
-- 📐 **El carril 2 hoy**: 3 de 6 piezas con juego firma (alfil → Diagonal Run, caballo → Knight's Tour,
-  dama → N-Queens). **Torre = 4 laberintos `rook-rail-*` curados** (su juego firma ES un laberinto).
-  Peón (4 labs) y rey (1 lab) siguen en relleno sin título.
+- 📐 **El carril 2 hoy**: **4 de 6** piezas con juego firma (alfil → Diagonal Run, caballo → Knight's
+  Tour, dama → N-Queens, **rey → Safe Path**). **Torre = 4 laberintos `rook-rail-*` curados** (su juego
+  firma ES un laberinto). **Solo el peón** sigue en relleno sin título (4 labs) → Promotion Run lo cierra.
 - ✅ **RESUELTO y era peor de lo que decía** — la nota de abajo culpaba a `getQueenMoves`. La verdad:
   **los 5 módulos de `rules/*` fallan**, cada uno distinto, y por eso `attack-map.ts` (`ed8e09a`) es
   módulo nuevo y no wrapper. **No volver a intentar reusar `rules/*` para amenazas.** Tabla completa
