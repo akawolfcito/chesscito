@@ -137,6 +137,12 @@ type MissionPanelProps = {
    *  mission band renders the line beside the target and adopts the
    *  `dr-band` / `dr-band-msg` / `data-phase` hooks the board used to own. */
   missionStatus?: { message: string; phase: string }
+  /** Tap-to-continue for the success/failure flash (founder 2026-07-17).
+   *  Forwarded to PhaseFlash: when true the overlay holds until the player
+   *  taps, and `onFlashContinue` runs the host's deferred advance/retry. The
+   *  host arms this only on the paths where it also defers the continuation. */
+  awaitTapToContinue?: boolean
+  onFlashContinue?: () => void
 }
 
 type FlashConfig = { textKey: 'success' | 'failure'; accent: string; stroke: string }
@@ -164,6 +170,8 @@ export function PhaseFlash({
   streakCount,
   lastEarnedStars,
   lessonTitle,
+  awaitTap,
+  onContinue,
 }: {
   phase: MissionPanelProps['phase']
   /** Optional failure-only overlay slot. When supplied AND phase ===
@@ -187,10 +195,22 @@ export function PhaseFlash({
    *  success banner ("You learned: {title}"). Success-only; absent on games
    *  that carry no title. */
   lessonTitle?: string
+  /** Tap-to-continue (founder 2026-07-17): when true the overlay does NOT
+   *  auto-dismiss — it holds until the player taps, so the celebration/lesson
+   *  is never missed. The host arms this on the paths where it also defers the
+   *  advance to the tap (success + plain failure); the rescue path ignores it
+   *  (its modal already owns the dwell). */
+  awaitTap?: boolean
+  /** Fired when the player taps a tap-to-continue overlay. The host runs the
+   *  deferred continuation (advance / retry) here. Ignored unless awaitTap. */
+  onContinue?: () => void
 }) {
   const tFlash = useTranslations('PHASE_FLASH_COPY')
   const [visible, setVisible] = useState(false)
   const [fading, setFading] = useState(false)
+  // Tap is armed a beat AFTER reveal so an eager tap can't skip the
+  // celebration the instant it appears. Only meaningful when awaitTap.
+  const [tapArmed, setTapArmed] = useState(false)
   const flash = PHASE_FLASH[phase]
   const isSuccess = phase === 'success'
   const flashText = flash ? tFlash(flash.textKey) : ''
@@ -207,11 +227,13 @@ export function PhaseFlash({
     if (!flash) {
       setVisible(false)
       setFading(false)
+      setTapArmed(false)
       return
     }
 
     setVisible(false)
     setFading(false)
+    setTapArmed(false)
 
     const revealTimer = setTimeout(() => setVisible(true), entryBeat)
 
@@ -223,6 +245,18 @@ export function PhaseFlash({
          either: the flash holds until the parent transitions phase
          away from 'failure'. */
       return () => clearTimeout(revealTimer)
+    }
+
+    if (awaitTap) {
+      /* Tap-to-continue: no auto-dismiss at all — the overlay holds until the
+         player taps (the host defers the advance to that same tap). Arm the tap
+         a beat after reveal so the celebration is seen and an eager tap can't
+         skip it the instant it appears. */
+      const armTimer = setTimeout(() => setTapArmed(true), entryBeat + 550)
+      return () => {
+        clearTimeout(revealTimer)
+        clearTimeout(armTimer)
+      }
     }
 
     /* Success holds longer so the radial burst + gentle gravity fall
@@ -241,7 +275,16 @@ export function PhaseFlash({
       clearTimeout(fadeTimer)
       clearTimeout(hideTimer)
     }
-  }, [phase, flash, isSuccess, hasRescue, entryBeat])
+  }, [phase, flash, isSuccess, hasRescue, entryBeat, awaitTap])
+
+  function handleTapContinue() {
+    if (!awaitTap || !tapArmed) return
+    setFading(true)
+    setTimeout(() => {
+      setVisible(false)
+      onContinue?.()
+    }, 260)
+  }
 
   if (!visible || !flash) return null
 
@@ -377,14 +420,32 @@ export function PhaseFlash({
 
   return (
     <div
-      className={`pointer-events-none fixed inset-0 z-[70] flex items-center justify-center candy-modal-scrim transition-opacity duration-400 ${
-        fading ? 'opacity-0' : 'opacity-100'
-      }`}
+      className={`fixed inset-0 z-[70] flex items-center justify-center candy-modal-scrim transition-opacity duration-400 ${
+        awaitTap ? 'pointer-events-auto cursor-pointer' : 'pointer-events-none'
+      } ${fading ? 'opacity-0' : 'opacity-100'}`}
+      onClick={awaitTap ? handleTapContinue : undefined}
+      onKeyDown={
+        awaitTap
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') handleTapContinue()
+            }
+          : undefined
+      }
+      role={awaitTap ? 'button' : undefined}
+      tabIndex={awaitTap ? 0 : undefined}
+      aria-label={awaitTap ? tFlash('tapToContinue') : undefined}
     >
       <div className="flex flex-col items-center gap-3 px-4">
         {wolfBlock}
         {rewardPills}
       </div>
+      {/* Tap-to-continue prompt — glowing Rowdies text near the bottom, armed a
+          beat after the flash appears (founder reference 2026-07-17). */}
+      {awaitTap && tapArmed ? (
+        <div className="playhub-phase-flash-tap" aria-hidden="true">
+          {tFlash('tapToContinue')}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -432,6 +493,8 @@ export function MissionPanelCandy({
   exerciseTitle,
   failureRescueSlot,
   missionStatus,
+  awaitTapToContinue,
+  onFlashContinue,
 }: MissionPanelProps) {
   const tMission = useTranslations('MISSION_BRIEFING_COPY')
   const tHud = useTranslations('HUD_COPY')
@@ -685,6 +748,8 @@ export function MissionPanelCandy({
         streakCount={streakCount}
         lastEarnedStars={lastEarnedStars}
         lessonTitle={exerciseTitle}
+        awaitTap={awaitTapToContinue}
+        onContinue={onFlashContinue}
       />
     </section>
   )

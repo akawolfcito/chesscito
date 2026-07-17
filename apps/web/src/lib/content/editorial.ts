@@ -550,6 +550,9 @@ export const PHASE_FLASH_COPY = {
   /** The lesson line under the success banner — names what the player just
    *  learned (the active exercise's curated title). Only shown on success. */
   lesson: "You learned: {title}",
+  /** The tap-to-continue prompt at the bottom of the flash. The overlay holds
+   *  until the player taps, so the celebration/lesson is never missed. */
+  tapToContinue: "Tap to Continue",
 } as const;
 
 export const SHOP_SHEET_COPY = {

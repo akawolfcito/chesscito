@@ -3156,6 +3156,60 @@
     }
   }
 
+  /* Tap-to-continue prompt on the WELL DONE / TRY AGAIN flash (founder
+     2026-07-17). Rowdies text with a soft outline sitting on a blurred amber
+     glow, so it reads as an inviting call to action near the bottom of the
+     overlay. Pulses gently to draw the eye; pointer-events stay off (the whole
+     scrim is the tap target). */
+  .playhub-phase-flash-tap {
+    position: absolute;
+    bottom: 16%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-game-action);
+    font-weight: 700;
+    font-size: clamp(1.15rem, 5.5vw, 1.7rem);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    color: #fff8ea;
+    text-shadow:
+      -1.5px -1.5px 0 rgba(63, 34, 8, 0.9),
+      1.5px -1.5px 0 rgba(63, 34, 8, 0.9),
+      -1.5px 1.5px 0 rgba(63, 34, 8, 0.9),
+      1.5px 1.5px 0 rgba(63, 34, 8, 0.9),
+      0 2px 5px rgba(0, 0, 0, 0.55);
+    animation: playhub-tap-pulse 1.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .playhub-phase-flash-tap::before {
+    content: "";
+    position: absolute;
+    inset: -35% -20%;
+    z-index: -1;
+    background: radial-gradient(
+      ellipse 55% 130% at center,
+      rgba(255, 205, 80, 0.8) 0%,
+      rgba(255, 180, 40, 0.28) 42%,
+      transparent 72%
+    );
+    filter: blur(7px);
+  }
+  @keyframes playhub-tap-pulse {
+    0%,
+    100% {
+      opacity: 0.82;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .playhub-phase-flash-tap {
+      animation: none;
+      opacity: 0.95;
+    }
+  }
+
   /* Friendly blocker (practice exercises). It is the player's OWN piece — the
      lesson is that it cannot be jumped or captured — so it keeps the canonical
      piece art and reads as inert rather than as scenery: seated on the square,

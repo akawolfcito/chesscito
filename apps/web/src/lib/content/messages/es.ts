@@ -1418,6 +1418,7 @@ const messages = {
     success: "¡Bien hecho!",
     failure: "Reintenta",
     lesson: "Aprendiste: {title}",
+    tapToContinue: "Toca para continuar",
   },
   SHOP_SHEET_COPY: {
     title: "TIENDA",

@@ -890,6 +890,26 @@ export function ExercisesScreen({
   // across ~8 sites with autoResetTimer.current + boardGeneration.
   const autoReset = useAutoResetTimer();
 
+  // Tap-to-continue (founder 2026-07-17): the WELL DONE / TRY AGAIN flash no
+  // longer auto-advances on a 1.5s timer. Instead the continuation (advance to
+  // the next exercise, or restart the failed one) is HELD here until the player
+  // taps the overlay — so the celebration and its lesson are never missed.
+  // `resetBoard`/navigation clears it, mirroring the generation guard that
+  // protected the old timer.
+  const flashContinueRef = useRef<(() => void) | null>(null);
+  const [awaitFlashTap, setAwaitFlashTap] = useState(false);
+  function holdForTap(continuation: () => void) {
+    flashContinueRef.current = continuation;
+    setAwaitFlashTap(true);
+  }
+  function handleFlashContinue() {
+    if (!flashContinueRef.current) return;
+    const run = flashContinueRef.current;
+    flashContinueRef.current = null;
+    setAwaitFlashTap(false);
+    run();
+  }
+
   const PIECE_ORDER: PieceKey[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
   const currentPieceIndex = PIECE_ORDER.indexOf(selectedPiece);
   const nextPiece = currentPieceIndex < PIECE_ORDER.length - 1
@@ -1382,6 +1402,10 @@ export function ExercisesScreen({
 
   function resetBoard() {
     autoReset.clear();
+    // Any pending tap-to-continue is void once the board resets — navigation or
+    // the continuation itself lands here, so a stale tap can never re-fire.
+    flashContinueRef.current = null;
+    setAwaitFlashTap(false);
     setBoardKey((previous) => previous + 1);
     setPhase("ready");
     setMoves(0);
@@ -1632,9 +1656,9 @@ export function ExercisesScreen({
       }
 
       const completedExerciseId = currentExercise.id;
-      autoReset.schedule(() => {
-        // Local-save feedback (spec P0-2/P0-3): fires here (t=1500ms)
-        // AFTER the WELL DONE phase-flash, not at completeExercise time.
+      holdForTap(() => {
+        // Local-save feedback (spec P0-2/P0-3): fires when the player taps to
+        // continue past the WELL DONE flash, not at completeExercise time.
         if (shouldFireLocalSavedToast({ labyrinthMode })) {
           showToast(tFooter("localSaved"), 1200);
         }
@@ -1661,7 +1685,7 @@ export function ExercisesScreen({
           // Last exercise — show completion guide instead of silent reset
           setShowPieceComplete(true);
         }
-      }, 1500);
+      });
       return;
     }
 
@@ -1698,7 +1722,7 @@ export function ExercisesScreen({
         // documented as a known gap. If the user beats the 1.5s
         // timer by tapping RETRY manually, the dedup ref ensures
         // the auto-reset fire is a no-op (same attemptSeq).
-        autoReset.schedule(() => handleRetryApplied("auto_reset"), 1500);
+        holdForTap(() => handleRetryApplied("auto_reset"));
       }
       // else: modal handles the dwell; no autoReset.
     }
@@ -2654,7 +2678,7 @@ export function ExercisesScreen({
       const hasRescueContext =
         streakCount >= 1 || shieldCount >= 1 || welcomePack.state === "claimed";
       if (!hasRescueContext) {
-        autoReset.schedule(() => handleRetryApplied("auto_reset"), 1500);
+        holdForTap(() => handleRetryApplied("auto_reset"));
       }
       // else: the modal owns the dwell, and its own handlers reset the board.
     }, SAFE_PATH_ATTACK_BEAT_MS);
@@ -2690,7 +2714,7 @@ export function ExercisesScreen({
       const hasRescueContext =
         streakCount >= 1 || shieldCount >= 1 || welcomePack.state === "claimed";
       if (!hasRescueContext) {
-        autoReset.schedule(() => handleRetryApplied("auto_reset"), 1500);
+        holdForTap(() => handleRetryApplied("auto_reset"));
       }
     }, SAFE_PATH_ATTACK_BEAT_MS);
   }
@@ -2729,7 +2753,7 @@ export function ExercisesScreen({
       const hasRescueContext =
         streakCount >= 1 || shieldCount >= 1 || welcomePack.state === "claimed";
       if (!hasRescueContext) {
-        autoReset.schedule(() => handleRetryApplied("auto_reset"), 1500);
+        holdForTap(() => handleRetryApplied("auto_reset"));
       }
       return;
     }
@@ -3174,6 +3198,8 @@ export function ExercisesScreen({
           selectedPiece={selectedPiece}
           onOpenPieceSheet={() => setBadgeSheetOpen(true)}
           phase={storeOpen ? "ready" : phase}
+          awaitTapToContinue={awaitFlashTap}
+          onFlashContinue={handleFlashContinue}
           targetLabel={targetLabel}
           pieceHint={pieceHint}
           exercisePrompt={runPrompt ?? currentExercise.playerPrompt}
