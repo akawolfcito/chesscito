@@ -2512,6 +2512,8 @@ export const ACCOUNT_SHEET_COPY = {
   title: "Account",
   description: "Wallet, network and PRO status",
   walletLabel: "Wallet",
+  /** Names the derived identity every other player sees on the leaderboard. */
+  chesscitoIdLabel: "Chesscito ID",
   networkLabel: "Network",
   proLabel: "PRO",
   copyAddress: "Copy address",

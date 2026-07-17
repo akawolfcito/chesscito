@@ -234,6 +234,7 @@ const messages = {
     title: "Cuenta",
     description: "Wallet, red y estado PRO",
     walletLabel: "Wallet",
+    chesscitoIdLabel: "Chesscito ID",
     networkLabel: "Red",
     proLabel: "PRO",
     copyAddress: "Copiar dirección",

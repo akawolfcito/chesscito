@@ -5468,6 +5468,49 @@ button.hud-resource-chip:active:not(:disabled) {
    Each tile composes the cream secondary-cta tokens so the cards
    read as siblings of `.arena-result-secondary-action`. Icon top,
    bold label center, status pill (or LocaleSwitcher) bottom. */
+/* ── Chesscito ID chip (Account sheet, 2026-07-17) ──
+   The derived identity, shown exactly as the leaderboard shows it to
+   everyone else. Same cream-amber shell as .account-tile so it reads as
+   part of the same surface, but laid out as a row: avatar, then the
+   nickname over its label. Read-only by design — the ID is derived from
+   the wallet, so there is nothing to tap. */
+.account-identity-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 10px 12px;
+  background: var(--cta-secondary-cream-grad);
+  border: 1px solid var(--cta-secondary-cream-border);
+  border-radius: 14px;
+  box-shadow: var(--cta-secondary-cream-bevel);
+  color: var(--cta-secondary-cream-color);
+  text-shadow: var(--cta-secondary-cream-text-shadow);
+}
+
+.account-identity-chip-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.account-identity-chip-name {
+  overflow: hidden;
+  font-family: var(--font-game-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-identity-chip-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.05;
+  opacity: 0.62;
+}
+
 .account-tiles-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

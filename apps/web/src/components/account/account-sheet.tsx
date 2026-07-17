@@ -10,6 +10,9 @@ import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LocaleSwitcher } from "@/components/i18n/locale-switcher";
 import { ChesitoCard } from "@/components/peones/chesito-card";
+import { PlayerAvatar } from "@/components/identity/player-avatar";
+import { deriveAvatarVariant, formatNickname } from "@/lib/identity/identity-lite";
+import { useNicknameTokens } from "@/lib/identity/use-nickname-tokens";
 import { useMiniPay } from "@/hooks/use-minipay";
 import { useShieldsCount } from "@/lib/shop/use-shields-count";
 import { useFounderStatus } from "@/lib/founder/use-founder-status";
@@ -85,6 +88,13 @@ export function AccountSheet({
   // deciding from the pre-hydration value would flash both controls in.
   const { isMiniPay, isReady: walletEnvReady } = useMiniPay();
   const walletIsInterchangeable = walletEnvReady && !isMiniPay;
+  // 2026-07-17: the Chesscito ID chip. Derives the SAME nickname the
+  // leaderboard renders for this wallet — deliberately not the resolved
+  // display name, whose custom override lives only in this device's
+  // localStorage and so names the player something no one else can see.
+  const nicknameTokens = useNicknameTokens();
+  const identityVariant = deriveAvatarVariant(walletAddress.toLowerCase());
+  const chesscitoId = formatNickname(identityVariant, nicknameTokens);
 
   async function copyAddress() {
     try {
@@ -120,6 +130,23 @@ export function AccountSheet({
 
         <div className="overflow-y-auto overscroll-contain flex-1 pb-[calc(env(safe-area-inset-bottom,0px)+6rem)]">
         <div className="mt-3 flex flex-col gap-3">
+          {/* Chesscito ID — the derived identity, shown exactly as the
+           *  leaderboard shows it to everyone else. Read-only: the ID is
+           *  derived from the wallet, not chosen. */}
+          <div
+            className="account-identity-chip"
+            role="group"
+            aria-label={t("chesscitoIdLabel")}
+          >
+            <PlayerAvatar variant={identityVariant} size="lg" alt="" />
+            <span className="account-identity-chip-text">
+              <span className="account-identity-chip-name">{chesscitoId}</span>
+              <span className="account-identity-chip-label">
+                {t("chesscitoIdLabel")}
+              </span>
+            </span>
+          </div>
+
           {/* Chesito Card — the rechargeable Peones "wallet" hero (balance +
            *  "+" recharge). Shown in every mode now: in Lite the header dropped
            *  its standalone Peones chip, so the Account sheet is the one wallet
