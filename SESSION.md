@@ -4,6 +4,33 @@
 
 ## Completed
 
+- **PROMOTION RUN — etapa 8 de 10: CONTENIDO** (`617bdb4`). Los tres niveles del peón están en el
+  catálogo (`pawn-promotion-1/2/3`), medidos por el solver. Suite **5316/5316** (450 files), `tsc`
+  limpio, `import-puzzles` sin errores (sus 12 warnings son todos preexistentes).
+  - ⚠️ **Promotion Run es la primera kind SIN casilla objetivo que NO se gradúa por cobertura.**
+    Corona en una **FILA**: el solver corona en a8 en un nivel dibujado sobre la columna c, así que
+    un `target` fijo miente. `isCoverageKind` significaba dos cosas a la vez (no-tiene-target Y
+    cobertura) → separado en `isTargetlessKind` (targeting) + `isCoverageKind` (grading). Un
+    predicado con dos significados es cómo un porcentaje termina donde va un contador de movidas.
+  - ⛔ **`optimalMoves` NO puede graduar este juego, y nunca va a poder.** Cada movida del peón sube
+    exactamente una fila → **toda corrida ganadora desde la fila r mide exactamente `7-r`**. La ruta
+    más fácil y la más difícil miden IGUAL. Lo que las separa son las **capturas** → el warning de
+    "nunca captura" cuenta **cambios de columna**, que es exacto (un peón no tiene otra forma de
+    dejar su columna). **Esto le llega a la etapa 10**: las estrellas por movidas darían 3★ siempre.
+  - **El lint mentía sobre los muros.** El peel decorativo declaró droppable el muro **b6** de
+    `pawn-promotion-2`, con "optimal 0" — y b6 es lo único que fuerza la **segunda** captura del
+    sketch del founder. No se equivocaba sobre el nivel, se equivocaba sobre el **juego**: rutea
+    peones en diagonal sobre casillas vacías. Las kinds con solver propio ahora están exentas por
+    nombre (**`OWN_SOLVER_KINDS`**), la misma decisión que las de cobertura ya tenían. Safe Path
+    entró a la exención también: hoy no dispara (ningún nivel del rey tiene muros), pero es la misma
+    pregunta equivocada esperando.
+  - **Nivel 3 está medido, no razonado**: sacá el caballo que vigila y el solver toma la columna b;
+    con él, se ve forzado a la d. La amenaza decide la ruta, no es decoración.
+  - ⚠️ **Abierto para el founder — la misión de `pawn-promotion-3` pide CABALLO y es andamio.** Sin
+    una razón *en el tablero* para querer un caballo (un mate, un tenedor), la misión enseña a
+    obedecer, no ajedrez. P4 (cadena de valores) es de la etapa 10: ahí se decide si el nivel gana
+    su pedido o si pasa a dama.
+
 - **Cluster closure de N-Queens** — los puntos que el handoff dejó abiertos (menos branches):
   - Milestone **M13 "Future Features" cerrado** (sus 9 issues ya estaban cerrados; el milestone no).
   - **M14** verificado: #104 (treasure hunt) sigue abierto en su milestone correcto, a propósito.
@@ -83,12 +110,10 @@
 
 ## Current State
 
-- **Branch**: `main` = `1a4a65e`, **sincronizada con `origin/main`** (verificado con `fetch`, no contra
-  la ref local — que estaba vieja y decía 1 commit sin pushear).
-  **Safe Path CERRADO** (el founder lo aprobó, "me gusta bastante"). **Promotion Run: 7 de 10.**
-- **Build**: passing **medido en este árbol** — vitest **5303/5303** (449 files), `tsc --noEmit` exit 0,
-  e2e `safe-path-probe` **7/7** (`--project=minipay`). El `Error: boom` del output es ruido intencional
-  de `primitive-boundary.test.tsx`.
+- **Branch**: `main` = `617bdb4`, pusheada a `origin/main`.
+  **Safe Path CERRADO** (el founder lo aprobó, "me gusta bastante"). **Promotion Run: 8 de 10.**
+- **Build**: passing **medido en este árbol** — vitest **5316/5316** (450 files), `tsc --noEmit` exit 0.
+  El `Error: boom` del output es ruido intencional de `primitive-boundary.test.tsx`.
 - **Uncommitted work**: no. Árbol limpio, **sin PRs abiertos** (todo fue push directo a `main`).
 
 ## Next Tasks
@@ -97,14 +122,19 @@
    la superficie — el juego no dibuja las zonas, así que sin ese toggle no se puede diseñar. Los tres
    son andamio a propósito. ⚠️ `/dev/labyrinth-builder` **NO conoce `safe-path`** todavía: no sabe
    dibujar enemigos typed ni el mapa de amenaza. Si el founder quiere autorar ahí, es trabajo aparte.
-2. **⬅️ ESTO SIGUE — Promotion Run, etapa 8 de 10: CONTENIDO.** La lógica pura (7) está hecha y las
-   decisiones del founder cerradas (plan §3.3): **no hay nada que preguntarle para arrancar**. Sigue:
-   `MissionSpec` + kind `promotion-run` en `labyrinths.json` + niveles, y que `import-puzzles` rechace
-   el nivel cuyo `promotionRunSolve` da `null`. **Diseñar a mano, filtrar con el solver** — el sketch
-   verificado ya vive en `promotion-run.test.ts` (`c3>b4>b5>c6>c7>c8`; víctimas = **torres**, muros en
-   c4+b6). Después: **9** (tablero + probe `/dev/promotion-run`) y **10** (host — **reusa la ruta de
+2. **⬅️ ESTO SIGUE — Promotion Run, etapa 9 de 10: TABLERO + PROBE.** `promotion-run-board.tsx` +
+   `/dev/promotion-run` que **dibuja el mapa de amenaza** (D3, el toggle Zones es la superficie de
+   autoría — igual que `/dev/safe-path`). El contenido (8) ya está en el catálogo, en
+   `GENERATED_PROMOTION_RUN`. Ojo con lo que el tablero tiene que hacer distinto a Safe Path: el mapa
+   es **VIVO** (P2 — el comido deja de vigilar, recalcular por posición) y las negras son **las dos
+   cosas a la vez**: víctimas para comer y ojos que matan. Después: **10** (host — **reusa la ruta de
    fallo de Safe Path tal cual** — + selector de promoción + cadena de valores + i18n + e2e). Plan §4.
    Cierra el carril 2 (**6/6**).
+   - ⚠️ **La etapa 10 hereda un problema de grading que la 8 destapó**: toda corrida ganadora mide lo
+     mismo (`7 - fila_inicial`), así que `labyrinthStars` por movidas le da **3★ a cualquiera que
+     gane**. Es el juego, no un bug: el peón no puede hacer una ruta más corta. Si las estrellas
+     tienen que significar algo acá, hay que decidir **qué miden** (¿capturas?, ¿intentos?, ¿el
+     escudo gastado?) — es decisión de producto, no de código.
 3. **Triar 5 locales no-mergeadas** que el barrido no tocó (nunca estuvieron en la lista):
    `backup/main-before-author-rewrite` (huele a red de un rewrite de historia — **no borrar sin mirar**),
    `chore/minipay-gate`, `feat/board-renderer`, `feat/progression-unlocks-celebration-queue`,
@@ -142,6 +172,9 @@
   `compute-tier.ts`, `display-name.ts` están en `main`). Sobreviven al `--merged` porque sus tips no son
   ancestros, pero **`globals.css` pasó de ~5k a ~17.5k líneas desde entonces**: no se mergean, se
   reescriben. Único huérfano real: `hub-onboarding-card.tsx`, que nunca aterrizó. Borrables.
+- 🧮 **Los muros del contenido son caballos BLANCOS (`N`)**, las negras son los enemigos typed. Es la
+  convención que ya usaban los `pawn-lab-*`, y `promotion-run` la hereda: el peel de obstáculos
+  decorativos exige que los blockers sean caballos porque **el tablero los dibuja como caballos**.
 - 📐 **El carril 2 hoy**: **4 de 6** piezas con juego firma (alfil → Diagonal Run, caballo → Knight's
   Tour, dama → N-Queens, **rey → Safe Path**). **Torre = 4 laberintos `rook-rail-*` curados** (su juego
   firma ES un laberinto). **Solo el peón** sigue en relleno sin título (4 labs) → Promotion Run lo cierra.
