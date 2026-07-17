@@ -110,11 +110,13 @@
 
 ## Current State
 
-- **Branch**: `main` = `617bdb4`, pusheada a `origin/main`.
+- **Branch**: `main` limpia y **sincronizada con `origin/main`** (verificado contra el remoto, no
+  contra la ref local). El trabajo de la sesión es `617bdb4`; arriba va solo este handoff.
+  **Sin PRs abiertos** — todo fue push directo a `main`.
   **Safe Path CERRADO** (el founder lo aprobó, "me gusta bastante"). **Promotion Run: 8 de 10.**
 - **Build**: passing **medido en este árbol** — vitest **5316/5316** (450 files), `tsc --noEmit` exit 0.
   El `Error: boom` del output es ruido intencional de `primitive-boundary.test.tsx`.
-- **Uncommitted work**: no. Árbol limpio, **sin PRs abiertos** (todo fue push directo a `main`).
+- **Uncommitted work**: no. Árbol limpio.
 
 ## Next Tasks
 
