@@ -160,7 +160,11 @@ export default async function ThemeBuilderDevPage({
                   {slots.map((slot) => (
                     <section
                       key={slot.key}
-                      className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4"
+                      className={
+                        slot.deprecated
+                          ? "rounded-xl border border-amber-600/60 bg-amber-950/20 p-4"
+                          : "rounded-xl border border-neutral-800 bg-neutral-900/60 p-4"
+                      }
                     >
                       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
                         <code className="text-sm font-bold text-emerald-300">
@@ -170,6 +174,11 @@ export default async function ThemeBuilderDevPage({
                           {slot.usedIn.length ? slot.usedIn.join(" · ") : "usedIn: —"}
                         </span>
                       </div>
+                      {slot.deprecated && (
+                        <div className="mb-3 rounded-md border border-amber-600/40 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-300">
+                          ⚠ deprecated — {slot.deprecated}
+                        </div>
+                      )}
                       <div className="flex gap-4">
                         <VariantCell
                           label="default"

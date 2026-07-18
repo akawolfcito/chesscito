@@ -8,9 +8,12 @@
 `/art/redesign/pieces/*` (theme `candy`). El founder confirmó: **el app no debería servir piezas
 distintas**; estas referencias deberían apuntar a `/art/redesign/pieces/*`.
 
-**Por eso NO se registran en el theme-builder:** actualizarlas desde el catálogo sería "actualización
-a ciegas" — cambiaría un asset que el componente **no debería estar usando**. La corrección correcta
-es en el código (apuntar al set vivo), no reemplazar el arte viejo.
+**Actualización (2026-07-18):** ahora **SÍ se registran** en el theme-builder, pero marcadas
+`deprecated` (badge ámbar "⚠ deprecated"). El founder decidió que ponerlas visibles en el catálogo
+ayuda a **distinguir qué debería y qué no** usarse, y a actualizarlas rápido si hiciera falta —
+mejor que esconderlas en un doc. Slots: `hub.mastery.piece.*` (y `board.legacy-bg` para el board
+flat viejo). La corrección de fondo sigue siendo de **código** (repuntar al set vivo), no reemplazar
+el arte; el badge es el recordatorio visible.
 
 ## Dónde se usa (a corregir)
 | Componente | Línea | Referencia actual | Debería ser |

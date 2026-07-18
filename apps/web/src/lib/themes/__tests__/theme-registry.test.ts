@@ -24,11 +24,18 @@ const REQUIRED_ASSET_KEYS: readonly ThemeAssetKey[] = [
   "hub.21-day-icon",
   "hub.avatar-lite",
   "hub.pro-chip",
+  "hub.mastery.piece.rook",
+  "hub.mastery.piece.bishop",
+  "hub.mastery.piece.knight",
+  "hub.mastery.piece.pawn",
+  "hub.mastery.piece.queen",
+  "hub.mastery.piece.king",
   "shared.avatar-small-account",
   "shared.lock",
   "shared.welcome-gift",
   "brand.title",
   "brand.ring-start-focus",
+  "board.legacy-bg",
   "exercises.avatar-fun",
   "exercises.avatar-try-again",
   "exercises.badge",
@@ -113,6 +120,13 @@ describe("theme-registry", () => {
     const entry = THEMES["candy-forest"].assets["hub.pro-chip"];
     expect(entry.default).toBe("/art/hub/pro-chip-inactive");
     expect(entry.pro).toBe("/art/hub/pro-chip-active");
+  });
+
+  it("marks stale references as deprecated with a reason", () => {
+    const mastery = THEMES["candy-forest"].assets["hub.mastery.piece.rook"];
+    expect(mastery.deprecated).toMatch(/redesign\/pieces/);
+    const legacyBg = THEMES["candy-forest"].assets["board.legacy-bg"];
+    expect(legacyBg.deprecated).toBeTruthy();
   });
 
   it("the default theme id resolves to a registered theme", () => {

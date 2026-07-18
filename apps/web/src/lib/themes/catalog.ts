@@ -45,6 +45,8 @@ export type SlotCatalogEntry = {
   /** null when the slot declares no PRO override (reuses default). */
   pro: ResolvedAsset | null;
   proReusesDefault: boolean;
+  /** Deprecation reason when the slot is stale, else null. */
+  deprecated: string | null;
 };
 
 export type ThemeCatalog = {
@@ -87,6 +89,7 @@ export async function buildThemeCatalog(
         default: def,
         pro,
         proReusesDefault: pro === null,
+        deprecated: entry.deprecated ?? null,
       };
     }),
   );

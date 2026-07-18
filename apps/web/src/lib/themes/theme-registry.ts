@@ -38,6 +38,12 @@ export type ThemeAssetEntry = {
    *  see, per slot, where the asset lands. Purely documentary — no
    *  runtime consumer reads it. Optional; defaults to empty. */
   usedIn?: string[];
+  /** When set, marks the slot as DEPRECATED in the catalog with this
+   *  reason — an asset/reference that theoretically shouldn't be used
+   *  anymore (e.g. a stale path a component still points at). Kept in
+   *  the catalog on purpose: visible to distinguish + still updatable.
+   *  Purely documentary. */
+  deprecated?: string;
 };
 
 /** Canonical slot ids. New slots get added here as surfaces migrate
@@ -64,6 +70,13 @@ export type ThemeAssetKey =
   | "hub.avatar-lite"
   // hub.pro-chip: the PRO status badge — default = inactive (upsell), pro = active
   | "hub.pro-chip"
+  // hub.mastery.* — DEPRECATED: mastery-tile still points at the old /art/pieces set
+  | "hub.mastery.piece.rook"
+  | "hub.mastery.piece.bishop"
+  | "hub.mastery.piece.knight"
+  | "hub.mastery.piece.pawn"
+  | "hub.mastery.piece.queen"
+  | "hub.mastery.piece.king"
   // shared — cross-cutting assets used by 3+ surfaces (one slot, not per-screen)
   | "shared.avatar-small-account"
   | "shared.lock"
@@ -99,6 +112,7 @@ export type ThemeAssetKey =
   // directly, see docs/superpowers/plans/2026-07-18-theme-builder-board-slots-plan.md)
   | "board.frame"
   | "board.thumbnail"
+  | "board.legacy-bg"
   | "board.tile.light"
   | "board.tile.dark"
   | "board.piece.white.rook"
@@ -213,6 +227,39 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/hub/pro-chip-inactive",
         pro: "/art/hub/pro-chip-active",
         usedIn: ["Hub — PRO status badge"],
+      },
+      // DEPRECATED: mastery-tile.tsx still renders the old /art/pieces set; it
+      // should point at /art/redesign/pieces (see the tech-debt audit). Kept in
+      // the catalog so it's visible + updatable until the reference is migrated.
+      "hub.mastery.piece.rook": {
+        default: "/art/pieces/w-rook",
+        usedIn: ["Hub — mastery tile (rook)"],
+        deprecated: "old piece set — mastery-tile should use /art/redesign/pieces",
+      },
+      "hub.mastery.piece.bishop": {
+        default: "/art/pieces/w-bishop",
+        usedIn: ["Hub — mastery tile (bishop)"],
+        deprecated: "old piece set — mastery-tile should use /art/redesign/pieces",
+      },
+      "hub.mastery.piece.knight": {
+        default: "/art/pieces/w-knight",
+        usedIn: ["Hub — mastery tile (knight)"],
+        deprecated: "old piece set — mastery-tile should use /art/redesign/pieces",
+      },
+      "hub.mastery.piece.pawn": {
+        default: "/art/pieces/w-pawn",
+        usedIn: ["Hub — mastery tile (pawn)"],
+        deprecated: "old piece set — mastery-tile should use /art/redesign/pieces",
+      },
+      "hub.mastery.piece.queen": {
+        default: "/art/pieces/w-queen",
+        usedIn: ["Hub — mastery tile (queen)"],
+        deprecated: "old piece set — mastery-tile should use /art/redesign/pieces",
+      },
+      "hub.mastery.piece.king": {
+        default: "/art/pieces/w-king",
+        usedIn: ["Hub — mastery tile (king)"],
+        deprecated: "old piece set — mastery-tile should use /art/redesign/pieces",
       },
       "shared.avatar-small-account": {
         default: "/art/avatar-small-account",
@@ -336,6 +383,14 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "board.thumbnail": {
         default: "/art/redesign/board/board-ch",
         usedIn: ["Hub — KingdomAnchor board", "Board thumbnail", "Splash preload"],
+      },
+      // DEPRECATED: the old flat board bg. The game canvas is background:none
+      // (tiles + board.frame render the board now); only the OG home card still
+      // references it. Kept visible so it can be retired deliberately.
+      "board.legacy-bg": {
+        default: "/art/chesscito-board",
+        usedIn: ["OG — home social card"],
+        deprecated: "legacy flat board — only OG home uses it; retire when possible",
       },
       "board.tile.light": {
         default: "/art/board/casilla-clara",
