@@ -46,6 +46,33 @@ export type ThemeAssetEntry = {
 export type ThemeAssetKey =
   | "hub.portal"
   | "hub.avatar"
+  // hub — the entry surface (buttons, icons, tour, guide)
+  | "hub.enter-arena"
+  | "hub.train-pieces"
+  | "hub.play-chess"
+  | "hub.training"
+  | "hub.training-icon"
+  | "hub.daily-icon"
+  | "hub.shop-icon"
+  | "hub.btn-battle"
+  | "hub.btn-play"
+  | "hub.principal-button"
+  | "hub.tour-hero"
+  | "hub.tour-title"
+  | "hub.guide"
+  | "hub.21-day-icon"
+  | "hub.avatar-lite"
+  // pro — PRO-only surfaces (default variant only)
+  | "pro.avatar"
+  | "pro.chip-active"
+  | "pro.chip-inactive"
+  // shared — cross-cutting assets used by 3+ surfaces (one slot, not per-screen)
+  | "shared.avatar-small-account"
+  | "shared.lock"
+  | "shared.welcome-gift"
+  // brand — identity assets (not game theme, but updatable)
+  | "brand.title"
+  | "brand.ring-start-focus"
   // board — batch #1 (catalog visibility; consumers still read these paths
   // directly, see docs/superpowers/plans/2026-07-18-theme-builder-board-slots-plan.md)
   | "board.frame"
@@ -94,6 +121,98 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/scene-rooted/avatar-chesscito",
         pro: "/art/hub/chesscito-avatar-new-light",
         usedIn: ["Hub — KingdomAnchor avatar", "Exercises — avatar"],
+      },
+      "hub.enter-arena": {
+        default: "/art/hub/enter-arena",
+        usedIn: ["Hub — enter arena button"],
+      },
+      "hub.train-pieces": {
+        default: "/art/hub/train-pieces",
+        usedIn: ["Hub — train pieces button"],
+      },
+      "hub.play-chess": {
+        default: "/art/new-icons-chesscito/play-chess",
+        usedIn: ["Hub — play chess icon"],
+      },
+      "hub.training": {
+        default: "/art/new-icons-chesscito/training",
+        usedIn: ["Hub — training icon"],
+      },
+      "hub.training-icon": {
+        default: "/art/new-icons-chesscito/training-icon-v1",
+        usedIn: ["Hub — training icon (v1)"],
+      },
+      "hub.daily-icon": {
+        default: "/art/new-icons-chesscito/daily-icon-v1",
+        usedIn: ["Hub — daily icon"],
+      },
+      "hub.shop-icon": {
+        default: "/art/redesign/icons/shop",
+        usedIn: ["Hub — shop icon"],
+      },
+      "hub.btn-battle": {
+        default: "/art/redesign/banners/btn-battle",
+        usedIn: ["Hub — battle button banner"],
+      },
+      "hub.btn-play": {
+        default: "/art/redesign/banners/btn-play",
+        usedIn: ["Hub — play button banner"],
+      },
+      "hub.principal-button": {
+        default: "/art/redesign/banners/principalbutton",
+        usedIn: ["Hub — principal CTA button"],
+      },
+      "hub.tour-hero": {
+        default: "/art/mini-tour/tour-challenge-hero",
+        usedIn: ["Hub — mini-tour challenge hero"],
+      },
+      "hub.tour-title": {
+        default: "/art/mini-tour/tour-challenge-title",
+        usedIn: ["Hub — mini-tour challenge title"],
+      },
+      "hub.guide": {
+        default: "/art/scene-rooted/guide-secuencia",
+        usedIn: ["Hub — guide sequence"],
+      },
+      "hub.21-day-icon": {
+        default: "/art/21-day-icon",
+        usedIn: ["Hub — 21-day challenge icon"],
+      },
+      "hub.avatar-lite": {
+        default: "/art/avatar-lite-hub",
+        usedIn: ["Hub — lite avatar"],
+      },
+      "pro.avatar": {
+        default: "/art/avatar-pro",
+        usedIn: ["PRO — subscriber avatar"],
+      },
+      "pro.chip-active": {
+        default: "/art/hub/pro-chip-active",
+        usedIn: ["PRO — active chip"],
+      },
+      "pro.chip-inactive": {
+        default: "/art/hub/pro-chip-inactive",
+        usedIn: ["PRO — inactive chip"],
+      },
+      "shared.avatar-small-account": {
+        default: "/art/avatar-small-account",
+        usedIn: ["Hub", "Arena", "Exercises"],
+      },
+      "shared.lock": {
+        default: "/art/redesign/icons/lock",
+        usedIn: ["Locked tiles / gated surfaces"],
+      },
+      "shared.welcome-gift": {
+        default: "/art/shop/welcome-gift",
+        usedIn: ["Hub", "Exercises"],
+      },
+      "brand.title": {
+        default: "/art/title-chesscito",
+        usedIn: ["Brand — Chesscito wordmark"],
+      },
+      "brand.ring-start-focus": {
+        default: "/art/ring-start-focus",
+        usedIn: ["Hub — start-focus ring", "Root"],
       },
       // The playable board's frame — the decorative border around the live
       // GameBoard (1040×1028, measured inner opening in game-board.tsx). The
