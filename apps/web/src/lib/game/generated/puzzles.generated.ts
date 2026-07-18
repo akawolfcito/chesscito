@@ -9,11 +9,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "optimalMoves": 1,
       "startPos": {
         "file": 1,
-        "rank": 0
+        "rank": 3
       },
       "targetPos": {
         "file": 7,
-        "rank": 0
+        "rank": 3
       },
       "tier": "easy",
       "tags": [
@@ -28,11 +28,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "id": "rook-2",
       "optimalMoves": 1,
       "startPos": {
-        "file": 0,
+        "file": 4,
         "rank": 1
       },
       "targetPos": {
-        "file": 0,
+        "file": 4,
         "rank": 7
       },
       "tier": "easy",
