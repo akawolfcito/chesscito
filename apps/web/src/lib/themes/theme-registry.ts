@@ -81,6 +81,17 @@ export type ThemeAssetKey =
   | "shared.avatar-small-account"
   | "shared.lock"
   | "shared.welcome-gift"
+  | "shared.feedback-happy"
+  | "shared.feedback-confident"
+  | "shared.feedback-scared"
+  | "shared.feedback-surprised"
+  | "shared.panel-bg"
+  | "shared.shield"
+  | "shared.star"
+  | "shared.mission-adorno"
+  | "shared.mission-avatar"
+  | "shared.close"
+  | "shared.mission-panel"
   // brand — identity assets (not game theme, but updatable)
   | "brand.title"
   | "brand.ring-start-focus"
@@ -272,6 +283,52 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "shared.welcome-gift": {
         default: "/art/shop/welcome-gift",
         usedIn: ["Hub", "Exercises"],
+      },
+      // feedback — reaction avatars (folded into shared per founder); each used
+      // across exercises result + arena victory states.
+      "shared.feedback-happy": {
+        default: "/art/new-assets-chesscito/fun/avatar-feliz",
+        usedIn: ["Exercises result", "Arena victory / claim-success"],
+      },
+      "shared.feedback-confident": {
+        default: "/art/new-assets-chesscito/fun/avatar-confiado",
+        usedIn: ["Arena — claiming"],
+      },
+      "shared.feedback-scared": {
+        default: "/art/new-assets-chesscito/fun/avatar-asustado",
+        usedIn: ["Arena — claim error"],
+      },
+      "shared.feedback-surprised": {
+        default: "/art/new-assets-chesscito/fun/avatar-asombrado",
+        usedIn: ["Exercises / payments"],
+      },
+      "shared.panel-bg": {
+        default: "/art/new-assets-chesscito/paneles/panel-bg1",
+        usedIn: ["Payments", "Victory", "Arena", "Exercises"],
+      },
+      "shared.shield": {
+        default: "/art/redesign/icons/shield",
+        usedIn: ["Arena", "Exercises"],
+      },
+      "shared.star": {
+        default: "/art/redesign/icons/star",
+        usedIn: ["Board target marker", "Exercises", "Daily"],
+      },
+      "shared.mission-adorno": {
+        default: "/art/screen-mission/adorno-icon",
+        usedIn: ["Arena", "Exercises"],
+      },
+      "shared.mission-avatar": {
+        default: "/art/screen-mission/avatar-icon",
+        usedIn: ["Arena", "Exercises"],
+      },
+      "shared.close": {
+        default: "/art/screen-mission/close-icon",
+        usedIn: ["Arena", "Exercises", "Daily", "Peones", "UI"],
+      },
+      "shared.mission-panel": {
+        default: "/art/screen-mission/panel-mision-icon",
+        usedIn: ["Arena", "Exercises"],
       },
       "brand.title": {
         default: "/art/title-chesscito",
