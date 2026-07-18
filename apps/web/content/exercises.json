@@ -853,21 +853,21 @@
     "learningObjective": "The player learns the king moves one square at a time, in any direction."
   },
   {
+    "title": "A step on the diagonal",
+    "playerPrompt": "The king also steps diagonally. Take the one-square hop.",
     "id": "king-2",
     "piece": "king",
-    "fen": "8/8/8/8/8/8/8/4K3 w - - 0 1",
-    "target": "f2",
-    "mover": "e1",
+    "fen": "8/8/8/8/3K4/8/8/8 w - - 0 1",
+    "target": "e5",
+    "mover": "d4",
     "tier": "easy",
     "tags": [
       "one-step",
       "diagonal-step"
     ],
-    "order": 1,
     "principle": "diagonal-step",
-    "title": "A step on the diagonal",
-    "playerPrompt": "The king also steps diagonally. Take the one-square hop.",
-    "learningObjective": "The player learns the king's single step works on diagonals too, not only straight."
+    "learningObjective": "The player learns the king's single step works on diagonals too, not only straight.",
+    "order": 1
   },
   {
     "id": "king-3",
@@ -887,27 +887,29 @@
     "learningObjective": "The player learns to cover ground with the king by chaining single steps."
   },
   {
+    "title": "The other diagonal step",
+    "playerPrompt": "Step diagonally the other way to the star.",
     "id": "king-4",
     "piece": "king",
-    "fen": "8/8/8/8/8/8/8/4K3 w - - 0 1",
-    "target": "d2",
-    "mover": "e1",
+    "fen": "8/6K1/8/8/8/8/8/8 w - - 0 1",
+    "target": "d4",
+    "mover": "g7",
     "tier": "easy",
     "tags": [
       "one-step",
       "diagonal-step"
     ],
-    "order": 3,
     "principle": "free-choice-step",
-    "title": "The other diagonal step",
-    "playerPrompt": "Step diagonally the other way to the star.",
-    "learningObjective": "The player reinforces that the king chooses freely among all its surrounding squares."
+    "learningObjective": "The player reinforces that the king chooses freely among all its surrounding squares.",
+    "order": 3
   },
   {
+    "title": "Walk to the corner",
+    "playerPrompt": "Head toward the corner, one step per move.",
     "id": "king-5",
     "piece": "king",
     "fen": "8/8/8/4K3/8/8/8/8 w - - 0 1",
-    "target": "h8",
+    "target": "a8",
     "mover": "e5",
     "tier": "medium",
     "tags": [
@@ -915,11 +917,9 @@
       "short-route",
       "edge-control"
     ],
-    "order": 4,
     "principle": "walk-to-edge",
-    "title": "Walk to the corner",
-    "playerPrompt": "Head toward the corner, one step per move.",
-    "learningObjective": "The player routes the king across several squares toward an edge."
+    "learningObjective": "The player routes the king across several squares toward an edge.",
+    "order": 4
   },
   {
     "id": "king-6",
@@ -974,28 +974,30 @@
     "learningObjective": "The player executes the king's longest journey, corner to corner."
   },
   {
+    "title": "Around the wall",
+    "playerPrompt": "A wall of your pieces blocks the way down. Step around to reach the star.",
     "id": "king-10",
     "piece": "king",
-    "fen": "8/8/8/8/4K3/4N3/3NNN2/8 w - - 0 1",
+    "fen": "8/1K6/8/8/8/1N2N3/1NNNNN2/8 w - - 0 1",
     "target": "e1",
-    "mover": "e4",
+    "mover": "b7",
     "tier": "medium",
     "tags": [
       "orthogonal-step",
       "detour",
       "blocked-square"
     ],
-    "order": 8,
     "principle": "boxed-detour",
-    "title": "Around the wall",
-    "playerPrompt": "A wall of your pieces blocks the way down. Step around to reach the star.",
-    "learningObjective": "The player plans a detour around a cluster of blockers with the king."
+    "learningObjective": "The player plans a detour around a cluster of blockers with the king.",
+    "order": 8
   },
   {
+    "title": "The blocked diagonal",
+    "playerPrompt": "The diagonal square is taken by your own piece. Find another way.",
     "id": "king-8",
     "piece": "king",
-    "fen": "8/8/8/8/8/8/1N6/K7 w - - 0 1",
-    "target": "c3",
+    "fen": "8/1NNN1NNN/1N1N1N2/1N6/1NNNNNN1/8/1N6/K7 w - - 0 1",
+    "target": "e5",
     "mover": "a1",
     "tier": "medium",
     "tags": [
@@ -1003,10 +1005,8 @@
       "detour",
       "blocked-square"
     ],
-    "order": 9,
     "principle": "blocked-diagonal-step",
-    "title": "The blocked diagonal",
-    "playerPrompt": "The diagonal square is taken by your own piece. Find another way.",
-    "learningObjective": "The player detours the king when its direct diagonal step is blocked."
+    "learningObjective": "The player detours the king when its direct diagonal step is blocked.",
+    "order": 9
   }
 ]

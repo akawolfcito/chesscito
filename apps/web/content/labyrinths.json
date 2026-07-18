@@ -262,7 +262,7 @@
   {
     "id": "king-lab-1",
     "piece": "king",
-    "fen": "8/8/8/8/8/8/8/2N1K3 w - - 0 1",
+    "fen": "4N2N/2N2N1N/2N1N2N/N1N2N1N/N1N1N3/N1N2N2/N1NNN3/2N1K3 w - - 0 1",
     "target": "a1",
     "mover": "e1",
     "order": 0
@@ -294,15 +294,15 @@
     "order": 1
   },
   {
+    "kind": "safe-path",
+    "title": "The Long Eye",
+    "playerPrompt": "The bishop watches a whole diagonal, not a square.",
     "id": "king-safe-3",
     "piece": "king",
-    "kind": "safe-path",
-    "fen": "8/8/2n5/8/8/8/6b1/K7 w - - 0 1",
+    "fen": "8/8/2n4p/8/8/8/5nb1/K7 w - - 0 1",
     "target": "h8",
     "mover": "a1",
-    "title": "The Long Eye",
     "principle": "rays-reach-far",
-    "playerPrompt": "The bishop watches a whole diagonal, not a square.",
     "learningObjective": "The player learns that a sliding piece controls a line all the way across the board, unlike the knight's fixed jumps.",
     "order": 2
   },
