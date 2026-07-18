@@ -8,6 +8,7 @@ import { DEFAULT_THEME_ID } from "@/lib/themes/theme-registry";
 
 import type { ResolvedAsset, SlotCatalogEntry } from "@/lib/themes/catalog";
 import { UploadControl } from "./upload-control";
+import { CopyPathButton } from "./copy-path-button";
 
 export const dynamic = "force-dynamic";
 
@@ -76,8 +77,11 @@ function VariantCell({
           no file
         </div>
       )}
-      <div className="mt-1 truncate text-[11px] text-neutral-500" title={asset?.basename}>
-        {asset?.basename ?? "—"}
+      <div className="mt-1 flex items-center gap-1.5">
+        <span className="truncate text-[11px] text-neutral-500" title={asset?.basename}>
+          {asset?.basename ?? "—"}
+        </span>
+        {asset?.basename && <CopyPathButton path={asset.basename} />}
       </div>
       <div className="text-[11px] font-medium text-neutral-300">
         {asset ? dims(asset) : "reuses default"}

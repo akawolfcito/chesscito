@@ -48,7 +48,7 @@ export type ThemeAssetKey =
   | "hub.avatar"
   // board — batch #1 (catalog visibility; consumers still read these paths
   // directly, see docs/superpowers/plans/2026-07-18-theme-builder-board-slots-plan.md)
-  | "board.background"
+  | "board.frame"
   | "board.tile.light"
   | "board.tile.dark"
   | "board.piece.rook"
@@ -88,9 +88,14 @@ export const THEMES: Record<string, ThemeDefinition> = {
         pro: "/art/hub/chesscito-avatar-new-light",
         usedIn: ["Hub — KingdomAnchor avatar", "Exercises — avatar"],
       },
-      "board.background": {
-        default: "/art/chesscito-board",
-        usedIn: ["Arena board", "Exercises board"],
+      // The framed board illustration (decorative border + a–h/1–8 labels).
+      // NOT the playable surface — that is procedural tiles (board.tile.*).
+      // (Legacy `/art/chesscito-board` is dead for the game board — canvas is
+      //  background:none — only the OG home card still uses it; left unregistered
+      //  pending a "where is it still used" validation.)
+      "board.frame": {
+        default: "/art/redesign/board/board-ch",
+        usedIn: ["Hub — KingdomAnchor board", "Board thumbnail", "Splash preload"],
       },
       "board.tile.light": {
         default: "/art/board/casilla-clara",

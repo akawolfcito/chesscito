@@ -8,7 +8,7 @@ import {
 const REQUIRED_ASSET_KEYS: readonly ThemeAssetKey[] = [
   "hub.portal",
   "hub.avatar",
-  "board.background",
+  "board.frame",
   "board.tile.light",
   "board.tile.dark",
   "board.piece.rook",
