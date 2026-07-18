@@ -1,5 +1,4 @@
 import type { PieceId } from "@/lib/game/types";
-import { BADGE_THRESHOLD } from "@/lib/game/exercises";
 import {
   LABYRINTH_MIN_EXERCISES,
   LABYRINTH_UNLOCK_THRESHOLD,
@@ -23,10 +22,13 @@ export type MilestoneInput = {
   lifetimeStars: number;
   /** Exercises solved at least once, across every piece. Cumulative. */
   completedExercises: number;
-  /** Best exercise stars for `piece`. Labyrinth stars NEVER count here. */
+  /** Best exercise stars for `piece`. Labyrinth stars NEVER count here.
+   *  Reward/tiebreak metric only — no longer gates the badge. */
   pieceStars: number;
   /** Exercises of `piece` solved at least once. */
   pieceCompletedExercises: number;
+  /** Exercises the piece must complete to earn its badge (80% of the pool). */
+  pieceRequiredExercises: number;
   /** Rook exercise stars — the Special Training gate. */
   rookStars: number;
   /** Net stars earned today, exercises AND labyrinths. */
@@ -77,7 +79,10 @@ export function deriveEarnedMilestones(input: MilestoneInput): EarnedMilestone[]
     earned.push({ id: "special-training" });
   }
 
-  if (input.pieceStars >= BADGE_THRESHOLD) {
+  if (
+    input.pieceRequiredExercises > 0 &&
+    input.pieceCompletedExercises >= input.pieceRequiredExercises
+  ) {
     // The RIGHT to claim does not survive the claim. Deriving it for an owned
     // badge kept `piece-badge-eligible` permanently earned, and the queue
     // drains EVERY pending event regardless of the piece on screen — so one

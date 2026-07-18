@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
-import { BADGE_THRESHOLD } from "@/lib/game/exercises";
+import {
+  badgeRequiredCount,
+  completedExerciseCount,
+  isBadgeEarned,
+} from "@/lib/game/exercises";
 import { useExerciseCatalog } from "@/lib/content/catalog-context";
 import { computeStars } from "@/lib/game/scoring";
 import {
@@ -255,7 +259,12 @@ export function useExerciseProgress(
   // helper makes the across-pool semantics explicit; sparse map → unset
   // ids contribute 0.
   const total = calculateTotalStarsFromIdMap(piece, progress.stars, catalog);
-  const badgeEarned = total >= BADGE_THRESHOLD;
+  // Badge gate is COMPLETION, not stars: 80% of the pool with ≥1★ each.
+  // `total` stays for reward/tiebreak display only.
+  const badgeEarned = isBadgeEarned(
+    completedExerciseCount(piece, progress.stars, catalog),
+    pool.length,
+  );
   const isReplay = (progress.stars[currentExercise.id] ?? 0) > 0;
 
   /** Rotation Engine (slice E) — the set of exerciseIds to surface today,
@@ -429,10 +438,14 @@ export function useExerciseProgress(
           });
         }
 
-        if (prevTotal < BADGE_THRESHOLD && newTotal >= BADGE_THRESHOLD) {
-          const exercisesCompleted = pool.filter(
-            (ex) => (newStars[ex.id] ?? 0) > 0,
-          ).length;
+        const required = badgeRequiredCount(pool.length);
+        const prevCompleted = pool.filter(
+          (ex) => (prev.stars[ex.id] ?? 0) > 0,
+        ).length;
+        const exercisesCompleted = pool.filter(
+          (ex) => (newStars[ex.id] ?? 0) > 0,
+        ).length;
+        if (prevCompleted < required && exercisesCompleted >= required) {
           track("training_piece_badge_threshold_reached", {
             piece,
             totalStars: newTotal,

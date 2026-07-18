@@ -69,7 +69,10 @@ describe("BadgeSheet — claim action presentation", () => {
   beforeEach(() => {
     localStorage.clear();
     pieces.forEach((piece) => setStars(piece, [0, 0, 0, 0, 0]));
-    setStars("rook", [3, 3, 3, 3, 0]);
+    // Badge gate is COMPLETION (80% of the 10-exercise pool → 8). Eight solves
+    // make rook claimable; bishop is owned via badgesClaimed, so exactly one
+    // "Claim Badge" renders.
+    setStars("rook", [3, 3, 3, 3, 3, 3, 3, 3]);
     setStars("bishop", [3, 3, 3, 3, 3]);
   });
 
@@ -97,16 +100,19 @@ describe("BadgeSheet — id-keyed progress (regression: Claim never rendered)", 
   });
 
   it("offers Claim for a piece whose id-keyed stars cross the threshold", () => {
-    // 18★ on rook — the founder's on-device progress. Read as a positional
-    // array this scored 0★ and the piece rendered locked, so the Claim CTA
-    // was unreachable for every player past the threshold.
+    // 8 id-keyed completions on rook — 80% of the pool, using real catalog ids
+    // (the pool is not rook-1..10: it has rook-distance-1 / rook-no-diagonal-1,
+    // and no rook-3 / rook-5). Read as a positional array this scored 0★ and the
+    // piece rendered locked, so the Claim CTA was unreachable past the gate.
     setStarsById("rook", {
       "rook-1": 3,
       "rook-2": 3,
-      "rook-3": 3,
+      "rook-distance-1": 3,
+      "rook-no-diagonal-1": 3,
       "rook-4": 3,
-      "rook-5": 3,
       "rook-6": 3,
+      "rook-7": 3,
+      "rook-8": 3,
     });
 
     renderBadgeSheet();
@@ -200,8 +206,8 @@ describe("BadgeSheet — unified Piece Sheet, cards ARE the switch (QA F4)", () 
     const { default: userEvent } = await import("@testing-library/user-event");
     const onSelectPiece = vi.fn();
     const user = userEvent.setup();
-    // rook is claimable (12★ fixture below) and bishop claimed (gate open).
-    setStars("rook", [3, 3, 3, 3, 0]);
+    // rook is claimable (8 completions below) and bishop claimed (gate open).
+    setStars("rook", [3, 3, 3, 3, 3, 3, 3, 3]);
     renderBadgeSheet({ selectedPiece: "rook", onSelectPiece });
 
     await user.click(screen.getByRole("button", { name: "Claim Badge" }));

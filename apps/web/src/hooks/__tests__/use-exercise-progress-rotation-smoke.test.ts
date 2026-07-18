@@ -124,16 +124,16 @@ describe("smoke — non-linear navigation + progress mapping", () => {
 });
 
 describe("smoke — badge mastery stays across-pool under rotation", () => {
-  it("badgeEarned crosses at 10★ regardless of which exercises hold the stars", async () => {
-    seed("rook", [3, 3, 3, 0, 0, 0, 0, 0, 0, 0]); // 9★ → not yet
+  // Gate is COMPLETION (80% of the 10-exercise pool → 8), counted across the
+  // whole pool, not just today's rotation slice. Stars do not gate it.
+  it("badgeEarned crosses at 80% completion regardless of which exercises hold it", async () => {
+    seed("rook", [1, 0, 1, 1, 0, 1, 1, 0, 1, 1]); // 7 completed → not yet
     const below = await mount("rook");
     expect(below.result.current.badgeEarned).toBe(false);
-    expect(below.result.current.totalStars).toBe(9);
 
     localStorage.clear();
-    seed("rook", [0, 0, 0, 0, 0, 1, 3, 3, 3, 0]); // 10★ spread across the pool
+    seed("rook", [3, 0, 1, 1, 0, 1, 1, 1, 1, 1]); // 8 completed spread across the pool
     const at = await mount("rook");
-    expect(at.result.current.totalStars).toBe(10);
     expect(at.result.current.badgeEarned).toBe(true);
   });
 });

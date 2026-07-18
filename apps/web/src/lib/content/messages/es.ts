@@ -1549,7 +1549,7 @@ const messages = {
   EXERCISE_DRAWER_COPY: {
     title: "Ejercicios",
     progressLabel: "{earned}/{max}",
-    badgeThresholdHint: "Insignia a las {threshold} estrellas",
+    badgeThresholdHint: "Insignia con {count} ejercicios",
     locked: "Bloqueado",
     ariaLabel: "Ejercicios",
     closeAriaLabel: "Cerrar ejercicios",

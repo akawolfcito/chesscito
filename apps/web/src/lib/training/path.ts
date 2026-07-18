@@ -9,8 +9,9 @@
 
 import type { Exercise, PieceId, PieceProgress } from "@/lib/game/types";
 import {
-  BADGE_THRESHOLD,
+  badgeRequiredCount,
   EXERCISES,
+  isBadgeEarned,
   LABYRINTHS,
   labyrinthStars,
 } from "@/lib/game/exercises";
@@ -31,6 +32,9 @@ export type UnlockRule =
   | { type: "always" }
   /** Piece totalStars (exercise stars ONLY — labyrinth stars never count). */
   | { type: "stars"; min: number }
+  /** Distinct exercises completed (≥1★) — the badge gate. `min` is 80% of the
+   *  pool from `badgeRequiredCount`. */
+  | { type: "completion"; min: number }
   /** That node must be complete first. */
   | { type: "node"; nodeId: string };
 
@@ -155,10 +159,13 @@ export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
     id: badgeId,
     kind: "badge",
     piece,
-    unlock: { type: "stars", min: BADGE_THRESHOLD },
+    unlock: {
+      type: "completion",
+      min: badgeRequiredCount(exercisesCatalog[piece].length),
+    },
     status: badgeClaimed
       ? "complete"
-      : totalStars >= BADGE_THRESHOLD
+      : isBadgeEarned(completedExercises, exercisesCatalog[piece].length)
         ? "available"
         : "locked",
     stars: null,

@@ -78,7 +78,7 @@ describe("derive-reward-tiles — injected catalog", () => {
   it("gates on the injected pool (empty pool → locked)", () => {
     const tiles = deriveRewardTiles({
       badgesClaimed: {},
-      starsPerPiece: { rook: 99 },
+      completedPerPiece: { rook: 99 },
       catalog: { ...INJECTED, rook: [] }, // rook now empty → cannot be claimable
     });
     expect(tiles.find((t) => t.id === "rook")?.state).toBe("locked");

@@ -145,7 +145,7 @@ m.LABYRINTH_COPY.movesLabel = "{n, plural, =1 {# move} other {# moves}}";
 m.LABYRINTH_COPY.completeStars = "{stars}/3 ★";
 m.PURCHASE_CONFIRM_COPY.approving = "Approving {token}...";
 m.EXERCISE_DRAWER_COPY.progressLabel = "{earned}/{max}";
-m.EXERCISE_DRAWER_COPY.badgeThresholdHint = "Badge at {threshold} stars";
+m.EXERCISE_DRAWER_COPY.badgeThresholdHint = "Badge at {count} exercises";
 m.EXERCISE_DRAWER_COPY.claimBadgeCta = "Claim Badge";
 m.BADGE_SHEET_COPY.claimSuccess = "{piece} Badge claimed!";
 m.SHOP_SHEET_COPY.successBannerFormat = "{item} secured!";

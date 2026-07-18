@@ -218,50 +218,52 @@ describe("useExerciseProgress — telemetry", () => {
   });
 
   describe("training_piece_badge_threshold_reached", () => {
-    it("fires exactly once when crossing 10★ for the first time", async () => {
+    // Gate is COMPLETION now: rook's 10-exercise pool needs 8 (80%).
+    it("fires exactly once when crossing the badge completion for the first time", async () => {
+      // 7 exercises done; the 8th solve crosses the 80% gate.
       localStorage.setItem(
         "chesscito:progress:rook",
-        seedProgress("rook", 3, [3, 3, 3, 0, 0]),
+        seedProgress("rook", 7, [3, 3, 3, 3, 3, 3, 3, 0, 0, 0]),
       );
 
       const { result } = renderHook(() => useExerciseProgress("rook"));
       await Promise.resolve();
 
       act(() => {
-        result.current.completeExercise(2); // rook-4 optimal 2 → 3★ → total 12
+        result.current.completeExercise(1); // rook-8 → 3★ → 8 completed, total 24
       });
 
       const threshold = callsOf("training_piece_badge_threshold_reached");
       expect(threshold).toHaveLength(1);
       expect(threshold[0]![1]).toMatchObject({
         piece: "rook",
-        totalStars: 12,
-        exercisesCompleted: 4,
+        totalStars: 24,
+        exercisesCompleted: 8,
       });
     });
 
-    it("does NOT fire when the user was already at or above the threshold", async () => {
+    it("does NOT fire when the user was already at or above the gate", async () => {
       localStorage.setItem(
         "chesscito:progress:rook",
-        seedProgress("rook", 4, [3, 3, 3, 3, 0]),
+        seedProgress("rook", 8, [3, 3, 3, 3, 3, 3, 3, 3, 0, 0]),
       );
 
       const { result } = renderHook(() => useExerciseProgress("rook"));
       await Promise.resolve();
 
       act(() => {
-        result.current.completeExercise(2); // pushes to 15 — but already past 10
+        result.current.completeExercise(1); // 9th completion — already past the gate
       });
 
       expect(callsOf("training_piece_badge_threshold_reached")).toHaveLength(0);
     });
 
-    it("does NOT fire when the completion doesn't cross 10★", async () => {
+    it("does NOT fire when the completion doesn't cross the gate", async () => {
       const { result } = renderHook(() => useExerciseProgress("rook"));
       await Promise.resolve();
 
       act(() => {
-        result.current.completeExercise(1); // 3★ from 0, total 3 — below 10
+        result.current.completeExercise(1); // 1 completed — below the 8 gate
       });
 
       expect(callsOf("training_piece_badge_threshold_reached")).toHaveLength(0);

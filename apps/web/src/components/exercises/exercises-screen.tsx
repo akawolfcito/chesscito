@@ -152,7 +152,12 @@ import { Button } from "@/components/ui/button";
 import { track } from "@/lib/telemetry";
 import { classifyTxError, classifyTxErrorKind, isTransactionTimeout, isUserCancellation, type TxErrorKind } from "@/lib/errors";
 import { getContextAction, getRewardActions } from "@/lib/game/context-action";
-import { BADGE_THRESHOLD, labyrinthStars } from "@/lib/game/exercises";
+import {
+  badgeRequiredCount,
+  completedExerciseCount,
+  isBadgeEarned,
+  labyrinthStars,
+} from "@/lib/game/exercises";
 import { promotionRunStars } from "@/lib/game/promotion-run";
 import { tourStars } from "@/lib/game/tour-score";
 import { getMaxPossibleStars } from "@/lib/game/progress-adapter";
@@ -1497,6 +1502,7 @@ export function ExercisesScreen({
         starsForPiece ??
           (piece === selectedPiece ? progress.stars : readPieceStars(piece)),
       ),
+      pieceRequiredExercises: badgeRequiredCount(catalog[piece].length),
       dailyStars: getDailyStars(),
       sessionQuotaExhausted: isSessionOver(getDailySession()),
       badgeClaimed: overrides?.badgeClaimed ?? badgesClaimed[piece] === true,
@@ -1626,15 +1632,18 @@ export function ExercisesScreen({
         isLite: CHESSCITO_LITE_MODE,
       });
 
-      // On last exercise: check if badge is earned (including this completion)
+      // On last exercise: check if badge is earned (including this completion).
+      // Gate is COMPLETION, not stars — `!isReplay` means this exercise was not
+      // completed before, so it adds exactly one to the completed count.
       if (isLastExercise && !isReplay) {
-        const exercise = currentExercise;
-        const newStars = computeStars(movesCount, exercise.optimalMoves);
-        const prevStarValue = progress.stars[exercise.id] ?? 0;
-        const starDelta = Math.max(0, newStars - prevStarValue);
-        const newTotal = totalStars + starDelta;
+        const newCompleted =
+          completedExerciseCount(selectedPiece, progress.stars, catalog) + 1;
+        const badgeEarnedNow = isBadgeEarned(
+          newCompleted,
+          catalog[selectedPiece].length,
+        );
 
-        if (newTotal >= BADGE_THRESHOLD && !hasClaimedBadge) {
+        if (badgeEarnedNow && !hasClaimedBadge) {
           // Only the loser of the ownership contest primes its prompt. The
           // timers below run either way, so the piece-complete hand-off keeps
           // its existing 1.5s + 13.5s shape.

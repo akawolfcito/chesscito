@@ -5,6 +5,10 @@ export type GatherArgs = {
   piece: PieceId;
   /** Every piece's persisted progress. Missing pieces read as zero. */
   progressByPiece: Partial<Record<PieceId, PieceProgress>>;
+  /** Exercises the piece must complete to earn its badge — 80% of the pool,
+   *  from `badgeRequiredCount(catalog[piece].length)`. The caller owns the
+   *  merged catalog, so the pool size flows in rather than being re-derived. */
+  pieceRequiredExercises: number;
   dailyStars: number;
   sessionQuotaExhausted: boolean;
   badgeClaimed: boolean;
@@ -41,6 +45,7 @@ export function gatherMilestoneInput(args: GatherArgs): MilestoneInput {
     ),
     pieceStars: sumStars(current),
     pieceCompletedExercises: countCompleted(current),
+    pieceRequiredExercises: args.pieceRequiredExercises,
     rookStars: sumStars(args.progressByPiece.rook),
     dailyStars: args.dailyStars,
     sessionQuotaExhausted: args.sessionQuotaExhausted,

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
-  BADGE_THRESHOLD,
+  badgeRequiredCount,
   EXERCISES,
   LABYRINTHS,
   labyrinthStars,
@@ -92,6 +92,12 @@ function starsTotaling(piece: PieceId, total: number): number[] {
     total -= take;
     return take;
   });
+}
+
+/** Star array completing exactly the first `count` exercises (1★ each), the
+ *  rest at 0. The badge gate counts completions, not stars. */
+function completing(piece: PieceId, count: number): number[] {
+  return EXERCISES[piece].map((_, i) => (i < count ? 1 : 0));
 }
 
 describe("buildTrainingPath — labyrinth unlocks", () => {
@@ -183,13 +189,14 @@ describe("the first labyrinth needs an exercise floor, not just stars", () => {
 });
 
 describe("buildTrainingPath — badge and mastery milestones", () => {
-  it("makes the badge available at 10★ even with labyrinths locked/incomplete", () => {
+  it("makes the badge available once 80% of exercises are completed, labyrinths aside", () => {
+    const required = badgeRequiredCount(EXERCISES.knight.length);
     const path = buildTrainingPath(
-      makeInput("knight", { progress: makeProgress("knight", starsTotaling("knight", BADGE_THRESHOLD)) }),
+      makeInput("knight", { progress: makeProgress("knight", completing("knight", required)) }),
     );
     const badge = byKind(path, "badge")[0];
     expect(badge.status).toBe("available");
-    expect(badge.unlock).toEqual({ type: "stars", min: BADGE_THRESHOLD });
+    expect(badge.unlock).toEqual({ type: "completion", min: required });
     const labs = byKind(path, "labyrinth");
     expect(labs[0].status).toBe("available");
     expect(labs.slice(1).every((n) => n.status === "locked")).toBe(true);
@@ -215,7 +222,12 @@ describe("getPieceMastery", () => {
 
   it("returns badge when threshold met but labyrinths incomplete", () => {
     const path = buildTrainingPath(
-      makeInput("knight", { progress: makeProgress("knight", starsTotaling("knight", BADGE_THRESHOLD)) }),
+      makeInput("knight", {
+        progress: makeProgress(
+          "knight",
+          completing("knight", badgeRequiredCount(EXERCISES.knight.length)),
+        ),
+      }),
     );
     expect(getPieceMastery(path)).toBe("badge");
   });

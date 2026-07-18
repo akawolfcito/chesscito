@@ -24,6 +24,7 @@ describe("gatherMilestoneInput", () => {
       badgeClaimed: false,
       allLabyrinthsComplete: false,
       hadGreatSessionBefore: false,
+      pieceRequiredExercises: 8,
     });
     expect(input.lifetimeStars).toBe(6);
   });
@@ -37,6 +38,7 @@ describe("gatherMilestoneInput", () => {
       badgeClaimed: false,
       allLabyrinthsComplete: false,
       hadGreatSessionBefore: false,
+      pieceRequiredExercises: 8,
     });
     expect(input.completedExercises).toBe(3);
     expect(input.pieceCompletedExercises).toBe(2);
@@ -51,8 +53,23 @@ describe("gatherMilestoneInput", () => {
       badgeClaimed: false,
       allLabyrinthsComplete: false,
       hadGreatSessionBefore: false,
+      pieceRequiredExercises: 8,
     });
     expect(input.pieceStars).toBe(1);
     expect(input.rookStars).toBe(5);
+  });
+
+  it("passes the badge requirement through to the pure core", () => {
+    const input = gatherMilestoneInput({
+      piece: "rook",
+      progressByPiece: { rook, bishop },
+      dailyStars: 0,
+      sessionQuotaExhausted: false,
+      badgeClaimed: false,
+      allLabyrinthsComplete: false,
+      hadGreatSessionBefore: false,
+      pieceRequiredExercises: 8,
+    });
+    expect(input.pieceRequiredExercises).toBe(8);
   });
 });

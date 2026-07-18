@@ -1,8 +1,28 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { useCelebrationQueue } from "@/lib/progression/use-celebration-queue";
-import { getMilestoneStore } from "@/lib/progression/milestone-storage";
+import {
+  getMilestoneStore,
+  markCelebrated,
+  recordEarned,
+} from "@/lib/progression/milestone-storage";
 import type { GatherArgs } from "@/lib/progression/gather-input";
+
+// The badge gate is COMPLETION (80% of the pool), so earning it necessarily
+// clears first-reward and first-labyrinth first — a single 10★ exercise can no
+// longer trigger it in isolation. Progress fixtures that expect the badge as
+// the closer complete eight exercises, and pre-celebrate the two earlier
+// milestones (their real solves happened on earlier days) so the queue holds
+// only the closer, matching the pre-completion tests' isolation intent.
+const eightCompleted: Record<string, number> = Object.fromEntries(
+  Array.from({ length: 8 }, (_, i) => [`rook-${i + 1}`, 1]),
+);
+
+function celebrateEarlyMilestones(): void {
+  recordEarned([{ id: "first-reward" }, { id: "first-labyrinth", piece: "rook" }]);
+  markCelebrated("first-reward");
+  markCelebrated("first-labyrinth", "rook");
+}
 
 const solveArgs: GatherArgs = {
   piece: "rook",
@@ -14,6 +34,7 @@ const solveArgs: GatherArgs = {
   badgeClaimed: false,
   allLabyrinthsComplete: false,
   hadGreatSessionBefore: false,
+  pieceRequiredExercises: 8,
 };
 
 describe("useCelebrationQueue", () => {
@@ -80,6 +101,7 @@ describe("useCelebrationQueue", () => {
       badgeClaimed: false,
       allLabyrinthsComplete: false,
       hadGreatSessionBefore: false,
+      pieceRequiredExercises: 8,
     };
 
     const { result } = renderHook(() => useCelebrationQueue());
@@ -128,6 +150,7 @@ describe("useCelebrationQueue", () => {
       badgeClaimed: true,
       allLabyrinthsComplete: true,
       hadGreatSessionBefore: true,
+      pieceRequiredExercises: 8,
     };
 
     const { result } = renderHook(() => useCelebrationQueue());
@@ -160,15 +183,17 @@ describe("useCelebrationQueue", () => {
     const badgeAndGreatSessionArgs: GatherArgs = {
       piece: "rook",
       progressByPiece: {
-        rook: { piece: "rook", currentId: null, stars: { "rook-1": 10 } },
+        rook: { piece: "rook", currentId: null, stars: eightCompleted },
       },
       dailyStars: 8, // → great-focus-session, a GLOBAL event
       sessionQuotaExhausted: false,
       badgeClaimed: false,
       allLabyrinthsComplete: false,
       hadGreatSessionBefore: false, // → first-great-session, also GLOBAL
+      pieceRequiredExercises: 8,
     };
 
+    celebrateEarlyMilestones();
     const { result } = renderHook(() => useCelebrationQueue());
 
     act(() => {
@@ -208,7 +233,7 @@ describe("useCelebrationQueue", () => {
         rook: {
           piece: "rook",
           currentId: null,
-          stars: { "rook-1": 10 },
+          stars: eightCompleted,
         },
       },
       dailyStars: 8,
@@ -216,8 +241,10 @@ describe("useCelebrationQueue", () => {
       badgeClaimed: false,
       allLabyrinthsComplete: false,
       hadGreatSessionBefore: true,
+      pieceRequiredExercises: 8,
     };
 
+    celebrateEarlyMilestones();
     const { result } = renderHook(() => useCelebrationQueue());
 
     act(() => {
@@ -252,6 +279,7 @@ describe("useCelebrationQueue", () => {
       badgeClaimed: false,
       allLabyrinthsComplete: false,
       hadGreatSessionBefore: true,
+      pieceRequiredExercises: 8,
     };
 
     const { result } = renderHook(() => useCelebrationQueue());

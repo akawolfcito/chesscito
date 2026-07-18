@@ -8,7 +8,7 @@ import { ContextualHeader } from '@/components/ui/contextual-header'
 import { TileIconSlot } from '@/components/ui/tile-icon-slot'
 import type { Exercise, PieceId, PieceProgress } from '@/lib/game/types'
 import {
-  BADGE_THRESHOLD,
+  badgeRequiredCount,
   resolveExerciseDescription,
 } from '@/lib/game/exercises'
 import { useExerciseDescriptions } from '@/lib/content/catalog-context'
@@ -96,6 +96,12 @@ export function ExerciseDrawer({
   const descriptions = useTranslations('EXERCISE_DESCRIPTIONS')
   const overlayDescriptions = useExerciseDescriptions()
   const maxStars = exercises.length * 3
+  // Badge progress bar tracks COMPLETION, not stars: fill = completed / pool,
+  // marker = 80% required. Stars stay visible on each node as a reward metric.
+  const completedCount = exercises.filter(
+    (ex) => (stars[ex.id] ?? 0) > 0,
+  ).length
+  const badgeRequired = badgeRequiredCount(exercises.length)
 
   const lastCompleted = exercises.reduce(
     (acc, exercise, i) => ((stars[exercise.id] ?? 0) > 0 ? i : acc),
@@ -622,7 +628,7 @@ export function ExerciseDrawer({
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
-                width: `${(totalStars / maxStars) * 100}%`,
+                width: `${exercises.length ? (completedCount / exercises.length) * 100 : 0}%`,
                 background:
                   'linear-gradient(90deg, rgba(245, 158, 11, 0.95), rgba(255, 220, 120, 0.95))',
               }}
@@ -630,7 +636,7 @@ export function ExerciseDrawer({
             <div
               className="absolute top-0 h-full w-1"
               style={{
-                left: `${(BADGE_THRESHOLD / maxStars) * 100}%`,
+                left: `${exercises.length ? (badgeRequired / exercises.length) * 100 : 0}%`,
                 background: 'rgba(120, 65, 5, 0.55)',
               }}
             />
@@ -658,7 +664,7 @@ export function ExerciseDrawer({
               className="text-center text-xs"
               style={{ color: 'rgba(110, 65, 15, 0.65)' }}
             >
-              {t('badgeThresholdHint', { threshold: BADGE_THRESHOLD })}
+              {t('badgeThresholdHint', { count: badgeRequired })}
             </p>
           )}
         </div>

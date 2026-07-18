@@ -5,12 +5,14 @@ import {
   deriveRewardTiles,
 } from "../derive-reward-tiles.js";
 
+// The badge gate is COMPLETION, not stars: 80% of the pool, rounded up.
+// Rook ships 10 exercises → 8 completions earn the badge.
 describe("deriveRewardTiles", () => {
   describe("ordering", () => {
     it("returns tiles in narrative unlock order", () => {
       const tiles = deriveRewardTiles({
         badgesClaimed: {},
-        starsPerPiece: {},
+        completedPerPiece: {},
       });
 
       expect(tiles.map((t) => t.id)).toEqual([...REWARD_TILE_ORDER]);
@@ -21,36 +23,35 @@ describe("deriveRewardTiles", () => {
     it("first piece with no progress is `progress` (gateway tier)", () => {
       const [first] = deriveRewardTiles({
         badgesClaimed: {},
-        starsPerPiece: { rook: 0 },
+        completedPerPiece: { rook: 0 },
       });
 
       expect(first.id).toBe("rook");
       expect(first.state).toBe("progress");
     });
 
-    it("first piece becomes `claimable` once stars meet threshold", () => {
+    it("first piece becomes `claimable` once 80% of exercises are completed", () => {
       const [first] = deriveRewardTiles({
         badgesClaimed: {},
-        starsPerPiece: { rook: 10 },
+        completedPerPiece: { rook: 8 },
       });
 
       expect(first.state).toBe("claimable");
     });
 
-    it("custom threshold drives claimable boundary", () => {
+    it("stays `progress` one completion short of the 80% gate", () => {
       const tiles = deriveRewardTiles({
         badgesClaimed: {},
-        starsPerPiece: { rook: 5 },
-        threshold: 5,
+        completedPerPiece: { rook: 7 },
       });
 
-      expect(tiles[0].state).toBe("claimable");
+      expect(tiles[0].state).toBe("progress");
     });
 
     it("subsequent piece is `locked` until prior tier is mastered", () => {
       const tiles = deriveRewardTiles({
         badgesClaimed: {},
-        starsPerPiece: { rook: 4 },
+        completedPerPiece: { rook: 4 },
       });
 
       const bishop = tiles.find((t) => t.id === "bishop");
@@ -60,17 +61,17 @@ describe("deriveRewardTiles", () => {
     it("unlocks next tier as `progress` once prior tier is claimed on-chain", () => {
       const tiles = deriveRewardTiles({
         badgesClaimed: { rook: true },
-        starsPerPiece: {},
+        completedPerPiece: {},
       });
 
       expect(tiles[0]).toMatchObject({ id: "rook", state: "claimed" });
       expect(tiles[1]).toMatchObject({ id: "bishop", state: "progress" });
     });
 
-    it("unlocks next tier as `progress` once prior tier meets threshold (badge not yet claimed)", () => {
+    it("unlocks next tier as `progress` once prior tier earns the badge (not yet claimed)", () => {
       const tiles = deriveRewardTiles({
         badgesClaimed: {},
-        starsPerPiece: { rook: 12 },
+        completedPerPiece: { rook: 10 },
       });
 
       const bishop = tiles.find((t) => t.id === "bishop");
@@ -82,7 +83,7 @@ describe("deriveRewardTiles", () => {
     it("keeps claimed pieces visible so the Hub always shows the full sequence", () => {
       const tiles = deriveRewardTiles({
         badgesClaimed: { rook: true, bishop: true },
-        starsPerPiece: {},
+        completedPerPiece: {},
       });
 
       const ids = tiles.map((t) => t.id);
@@ -101,7 +102,7 @@ describe("deriveRewardTiles", () => {
           king: true,
           pawn: true,
         },
-        starsPerPiece: {},
+        completedPerPiece: {},
       });
 
       expect(tiles.map((t) => t.id)).toEqual([...REWARD_TILE_ORDER]);
@@ -115,7 +116,7 @@ describe("deriveRewardTiles", () => {
 
       const tiles = deriveRewardTiles({
         badgesClaimed: {},
-        starsPerPiece: { rook: 10 },
+        completedPerPiece: { rook: 8 },
         onTileTap,
       });
 
@@ -128,7 +129,7 @@ describe("deriveRewardTiles", () => {
     it("omits onTap when no handler is provided", () => {
       const tiles = deriveRewardTiles({
         badgesClaimed: {},
-        starsPerPiece: {},
+        completedPerPiece: {},
       });
 
       expect(tiles[0].onTap).toBeUndefined();

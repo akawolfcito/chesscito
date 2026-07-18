@@ -1,5 +1,5 @@
 import type { RewardTile } from "@/components/kingdom/reward-column";
-import { EXERCISES } from "@/lib/game/exercises";
+import { EXERCISES, isBadgeEarned } from "@/lib/game/exercises";
 import type { ExerciseCatalog } from "@/lib/game/rotation";
 import type { PieceId } from "@/lib/game/types";
 
@@ -20,21 +20,17 @@ export type RewardDerivationInput = {
   /** On-chain claim state per piece. Undefined → treated as not claimed
    *  (loading state). */
   badgesClaimed: Partial<Record<PieceId, boolean>>;
-  /** Total stars (0–15) across the 5 exercises per piece. Missing keys
-   *  default to 0. */
-  starsPerPiece: Partial<Record<PieceId, number>>;
-  /** Stars needed to make a piece claimable. Defaults to `BADGE_THRESHOLD`
-   *  (10/15) — exposed for tests. */
-  threshold?: number;
+  /** Distinct exercises completed (≥1★) per piece. Missing keys default to 0.
+   *  The badge gate is COMPLETION, not stars (founder 2026-07-17). */
+  completedPerPiece: Partial<Record<PieceId, number>>;
   /** Tap handler forwarded onto each tile. The container decides routing
    *  per `(piece, state)`. */
   onTileTap?: (piece: PieceId) => void;
-  /** Injected catalog (default = baseline EXERCISES) — gates the `hasExercises`
-   *  check so a live overlay addition can flip a "soon" piece on. */
+  /** Injected catalog (default = baseline EXERCISES) — sizes the badge gate
+   *  (80% of the pool) and gates the `hasExercises` check so a live overlay
+   *  addition can flip a "soon" piece on. */
   catalog?: ExerciseCatalog;
 };
-
-const DEFAULT_THRESHOLD = 10;
 
 /** Pure derivation: reduces wallet+local state into the up-to-N reward
  *  tiles that should be rendered in the Hub.
@@ -43,17 +39,17 @@ const DEFAULT_THRESHOLD = 10;
  *  - A piece already claimed on-chain remains visible as `claimed` so the
  *    Hub keeps the full 6-piece visual sequence.
  *  - Otherwise the state follows the narrative chain:
- *      • `claimable` — stars meet threshold and prior tier is mastered.
- *      • `progress`  — prior tier mastered (or first tier) but threshold
- *        not yet met.
+ *      • `claimable` — badge earned (80% of the pool completed) and prior
+ *        tier is mastered.
+ *      • `progress`  — prior tier mastered (or first tier) but the badge
+ *        is not yet earned.
  *      • `locked`    — prior tier not mastered.
  *  - Tiles are returned in unlock order (no re-sort) so the player sees
  *    the same progression they read in `REWARD_COPY`. */
 export function deriveRewardTiles(input: RewardDerivationInput): RewardTile[] {
   const {
     badgesClaimed,
-    starsPerPiece,
-    threshold = DEFAULT_THRESHOLD,
+    completedPerPiece,
     onTileTap,
     catalog = EXERCISES,
   } = input;
@@ -63,8 +59,8 @@ export function deriveRewardTiles(input: RewardDerivationInput): RewardTile[] {
 
   for (const piece of REWARD_TILE_ORDER) {
     const claimed = badgesClaimed[piece] === true;
-    const stars = starsPerPiece[piece] ?? 0;
-    const meetsThreshold = stars >= threshold;
+    const completed = completedPerPiece[piece] ?? 0;
+    const meetsThreshold = isBadgeEarned(completed, catalog[piece].length);
     const mastered = claimed || meetsThreshold;
 
     if (claimed) {

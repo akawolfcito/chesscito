@@ -105,6 +105,38 @@ function loadStarsPerPiece(): Partial<Record<PieceId, number>> {
   return stars;
 }
 
+/** Distinct exercises completed (≥1★) per piece — the badge gate reads
+ *  COMPLETION, not stars (founder 2026-07-17). Same storage + shape tolerance
+ *  as `loadStarsPerPiece`; counts positive entries instead of summing them. */
+function loadCompletedPerPiece(): Partial<Record<PieceId, number>> {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  const completed: Partial<Record<PieceId, number>> = {};
+  for (const piece of REWARD_TILE_ORDER) {
+    try {
+      const raw = window.localStorage.getItem(pieceProgressStorageKey(piece));
+      if (!raw) continue;
+      const parsed = JSON.parse(raw) as { stars?: unknown };
+      const values = Array.isArray(parsed.stars)
+        ? parsed.stars
+        : parsed.stars && typeof parsed.stars === "object"
+          ? Object.values(parsed.stars)
+          : null;
+      if (values) {
+        completed[piece] = values.filter(
+          (s) => typeof s === "number" && Number.isFinite(s) && s > 0 && s <= 3,
+        ).length;
+      }
+    } catch {
+      // ignore corrupt entries; fall through to 0 (no progress).
+    }
+  }
+
+  return completed;
+}
+
 function formatUsd6(value: bigint): string {
   return `$${(Number(value) / 1_000_000).toFixed(2)}`;
 }
@@ -136,6 +168,8 @@ export type HubSharedData = {
   trophies: number;
   badgesClaimed: Partial<Record<PieceId, boolean>>;
   starsPerPiece: Partial<Record<PieceId, number>>;
+  /** Distinct exercises completed (≥1★) per piece — drives the badge gate. */
+  completedPerPiece: Partial<Record<PieceId, number>>;
   shieldCount: number;
   hero: ReturnType<typeof getHeroContextAction>;
 };
@@ -211,9 +245,13 @@ export function useHubData(): HubData {
   // localStorage is browser-only — defer to mount to keep SSR + first paint
   // identical (no hydration mismatch).
   const [starsPerPiece, setStarsPerPiece] = useState<Partial<Record<PieceId, number>>>({});
+  const [completedPerPiece, setCompletedPerPiece] = useState<
+    Partial<Record<PieceId, number>>
+  >({});
   const [shieldCount, setShieldCount] = useState<number>(0);
   useEffect(() => {
     setStarsPerPiece(loadStarsPerPiece());
+    setCompletedPerPiece(loadCompletedPerPiece());
     setShieldCount(loadShieldCount());
   }, []);
 
@@ -388,6 +426,7 @@ export function useHubData(): HubData {
       trophies,
       badgesClaimed,
       starsPerPiece,
+      completedPerPiece,
       shieldCount,
       hero,
     },

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
-import { BADGE_THRESHOLD } from "@/lib/game/exercises";
+import { isBadgeEarned } from "@/lib/game/exercises";
 import { parsePieceStars } from "@/lib/exercises/badge-progress";
 import { THEME_CONFIG } from "@/lib/theme";
 import type { PieceId } from "@/lib/game/types";
@@ -249,7 +249,10 @@ export function BadgeSheet({
     const totalStars = stars.reduce((sum, s) => sum + s, 0);
     const maxStars = stars.length * 3;
     const claimed = Boolean(badgesClaimed[piece]);
-    const earned = totalStars >= BADGE_THRESHOLD;
+    // Badge gate is COMPLETION, not stars: 80% of the pool with ≥1★ each.
+    // totalStars/maxStars stay for the reward-metric display below.
+    const completed = stars.filter((s) => s > 0).length;
+    const earned = isBadgeEarned(completed, stars.length);
 
     return {
       piece,

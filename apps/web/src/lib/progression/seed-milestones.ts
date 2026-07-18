@@ -1,5 +1,6 @@
 import type { PieceId, PieceProgress } from "@/lib/game/types";
 import { readPieceStars } from "@/lib/game/exercise-progress";
+import { badgeRequiredCount, EXERCISES } from "@/lib/game/exercises";
 import { areAllLabyrinthsSolved } from "@/lib/game/labyrinth-progress";
 import { milestoneSeedStorageKey } from "@/lib/lite-progress-storage";
 import { getWelcomePackageState } from "@/lib/welcome-package/storage";
@@ -68,6 +69,7 @@ export function computeSeededStore(
     const input = gatherMilestoneInput({
       piece,
       progressByPiece,
+      pieceRequiredExercises: badgeRequiredCount(EXERCISES[piece].length),
       // Today's session is NOT history. `great-focus-session` and
       // `first-great-session` are still up for grabs, and `seedExistingPlayer`
       // refuses to seed them anyway — these zeros just say the same thing

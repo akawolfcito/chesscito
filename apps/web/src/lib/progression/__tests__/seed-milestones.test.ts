@@ -33,8 +33,11 @@ function seedStars(piece: PieceId, stars: Record<string, number>) {
   );
 }
 
-/** Five 3★ exercises = 15★ — past every star gate in the ladder. */
-const VETERAN_STARS = { e1: 3, e2: 3, e3: 3, e4: 3, e5: 3 };
+/** Eight 3★ exercises — 80% of a 10-exercise pool, past the badge COMPLETION
+ *  gate and every star gate in the ladder. */
+const VETERAN_STARS = {
+  e1: 3, e2: 3, e3: 3, e4: 3, e5: 3, e6: 3, e7: 3, e8: 3,
+};
 
 beforeEach(() => {
   localStorage.clear();

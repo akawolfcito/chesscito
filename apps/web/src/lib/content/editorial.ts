@@ -1271,7 +1271,7 @@ export const ARENA_COPY = {
 export const EXERCISE_DRAWER_COPY = {
   title: "Exercises",
   progressLabel: (earned: number, max: number) => `${earned}/${max}`,
-  badgeThresholdHint: (threshold: number) => `Badge at ${threshold} stars`,
+  badgeThresholdHint: (count: number) => `Badge at ${count} exercises`,
   claimBadgeCta: "Claim Badge",
   locked: "Locked",
   ariaLabel: "Exercises",

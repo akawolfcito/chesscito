@@ -5,15 +5,11 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { EXERCISES, PLAYABLE_PIECES, BADGE_THRESHOLD } from "@/lib/game/exercises";
+import { EXERCISES, PLAYABLE_PIECES } from "@/lib/game/exercises";
 import { totalStars } from "@/lib/game/scoring";
 import { calculatePoolMasteryFromArray } from "@/lib/game/progress-adapter";
 
 describe("pool mastery equivalence (slice F)", () => {
-  it("BADGE_THRESHOLD is still 10", () => {
-    expect(BADGE_THRESHOLD).toBe(10);
-  });
-
   it("matches totalStars() for every piece across varied progress", () => {
     const samples = [
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

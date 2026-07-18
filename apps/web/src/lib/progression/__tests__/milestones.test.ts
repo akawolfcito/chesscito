@@ -11,6 +11,7 @@ function input(overrides: Partial<MilestoneInput> = {}): MilestoneInput {
     completedExercises: 0,
     pieceStars: 0,
     pieceCompletedExercises: 0,
+    pieceRequiredExercises: 8, // rook: 80% of a 10-exercise pool
     rookStars: 0,
     dailyStars: 0,
     sessionQuotaExhausted: false,
@@ -65,15 +66,27 @@ describe("first-labyrinth", () => {
 });
 
 describe("piece badge", () => {
-  it("is eligible at 10 piece stars but not claimed", () => {
-    const earned = deriveEarnedMilestones(input({ pieceStars: 10 }));
+  it("is eligible once 80% of exercises are completed but not claimed", () => {
+    const earned = deriveEarnedMilestones(input({ pieceCompletedExercises: 8 }));
     expect(ids(earned)).toContain("piece-badge-eligible");
     expect(ids(earned)).not.toContain("piece-badge-claimed");
   });
 
+  it("is NOT eligible one completion short of the gate", () => {
+    const earned = deriveEarnedMilestones(input({ pieceCompletedExercises: 7 }));
+    expect(ids(earned)).not.toContain("piece-badge-eligible");
+  });
+
+  it("is eligible on constancy alone — eight 1★ solves, low stars", () => {
+    const earned = deriveEarnedMilestones(
+      input({ pieceCompletedExercises: 8, pieceStars: 8 }),
+    );
+    expect(ids(earned)).toContain("piece-badge-eligible");
+  });
+
   it("is claimed once the transaction confirms", () => {
     const earned = deriveEarnedMilestones(
-      input({ pieceStars: 10, badgeClaimed: true }),
+      input({ pieceCompletedExercises: 8, badgeClaimed: true }),
     );
     expect(ids(earned)).toContain("piece-badge-claimed");
   });
@@ -87,7 +100,7 @@ describe("piece badge", () => {
    *  never celebrated and the loop fed itself. */
   it("is NOT eligible any more once the badge is on chain", () => {
     const earned = deriveEarnedMilestones(
-      input({ pieceStars: 10, badgeClaimed: true }),
+      input({ pieceCompletedExercises: 8, badgeClaimed: true }),
     );
     expect(ids(earned)).not.toContain("piece-badge-eligible");
   });
@@ -96,14 +109,14 @@ describe("piece badge", () => {
 describe("mastery", () => {
   it("stays locked when every labyrinth is done but the badge was never claimed", () => {
     const earned = deriveEarnedMilestones(
-      input({ pieceStars: 10, allLabyrinthsComplete: true, badgeClaimed: false }),
+      input({ pieceCompletedExercises: 8, allLabyrinthsComplete: true, badgeClaimed: false }),
     );
     expect(ids(earned)).not.toContain("mastery");
   });
 
   it("fires when the badge is claimed and every labyrinth is done", () => {
     const earned = deriveEarnedMilestones(
-      input({ pieceStars: 10, allLabyrinthsComplete: true, badgeClaimed: true }),
+      input({ pieceCompletedExercises: 8, allLabyrinthsComplete: true, badgeClaimed: true }),
     );
     expect(ids(earned)).toContain("mastery");
   });
@@ -152,7 +165,7 @@ describe("great-focus-session", () => {
 describe("per-piece scoping", () => {
   it("scopes piece milestones to the piece under play", () => {
     const earned = deriveEarnedMilestones(
-      input({ piece: "bishop", pieceStars: 10 }),
+      input({ piece: "bishop", pieceCompletedExercises: 8 }),
     );
     const badge = earned.find((event) => event.id === "piece-badge-eligible");
     expect(badge?.piece).toBe("bishop");

@@ -30,7 +30,38 @@ export const EXERCISES: Record<PieceId, Exercise[]> = {
   king:   GENERATED_EXERCISES.king,
 };
 
-export const BADGE_THRESHOLD = 10; // stars; pools vary (5-10 exercises → 15-30★ max per piece)
+/** Badge gate — a piece's badge is earned by COMPLETING a fraction of its
+ *  exercise pool (an exercise counts once it has ≥1★), NOT by accumulating
+ *  stars. Founder decision 2026-07-17: the badge proves constancy, not skill,
+ *  so a 1★ run and a 3★ run count the same and nobody is stranded below a
+ *  star ceiling they can't reach.
+ *
+ *  A ratio (not a fixed count) so growing the pool scales the bar instead of
+ *  leaving an 8/10 gate trivial at 8/40. Stars stay a reward/tiebreak metric
+ *  only. Mint-timing across a growing pool (who qualified on the smaller pool)
+ *  is a Seasons concern, not this gate's. */
+export const BADGE_COMPLETION_RATIO = 0.8;
+
+/** Exercises that must be completed to earn the badge from a pool of
+ *  `poolSize`. 80% rounded up: 10→8, 9→8, 5→4, 0→0. */
+export function badgeRequiredCount(poolSize: number): number {
+  return Math.ceil(poolSize * BADGE_COMPLETION_RATIO);
+}
+
+/** Whether `completedCount` distinct completed exercises out of `poolSize`
+ *  earns the badge. An empty pool is never earnable. */
+export function isBadgeEarned(completedCount: number, poolSize: number): boolean {
+  return poolSize > 0 && completedCount >= badgeRequiredCount(poolSize);
+}
+
+/** Distinct exercises of `piece` completed (≥1★) in an id-keyed stars map. */
+export function completedExerciseCount(
+  piece: PieceId,
+  starsById: Record<string, number>,
+  catalog: Record<PieceId, Exercise[]> = EXERCISES,
+): number {
+  return catalog[piece].filter((ex) => (starsById[ex.id] ?? 0) > 0).length;
+}
 
 /**
  * Returns the current pool count for a piece. Pools are per-piece and

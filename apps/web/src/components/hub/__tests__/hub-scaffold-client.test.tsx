@@ -405,7 +405,7 @@ describe("HubScaffoldClient — tap handlers", () => {
     const user = userEvent.setup();
     localStorage.setItem(
       "chesscito:progress:queen",
-      seedProgress("queen", 0, [3, 3, 3, 3, 0]),
+      seedProgress("queen", 0, [3, 3, 3, 3, 3, 3, 3, 3]),
     );
     useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
     setBadges([true, true, false, false, false, false]);
@@ -422,7 +422,7 @@ describe("HubScaffoldClient — tap handlers", () => {
     const user = userEvent.setup();
     localStorage.setItem(
       "chesscito:progress:rook",
-      seedProgress("rook", 0, [3, 3, 3, 3, 0]),
+      seedProgress("rook", 0, [3, 3, 3, 3, 3, 3, 3, 3]),
     );
     render(<HubScaffoldClient />);
 
@@ -608,7 +608,7 @@ describe("HubScaffoldClient — telemetry", () => {
     const user = userEvent.setup();
     localStorage.setItem(
       "chesscito:progress:rook",
-      seedProgress("rook", 0, [3, 3, 3, 3, 0]),
+      seedProgress("rook", 0, [3, 3, 3, 3, 3, 3, 3, 3]),
     );
     render(<HubScaffoldClient />);
 
@@ -789,7 +789,7 @@ describe("HubScaffoldClient — Lite Mode", () => {
   it("does not show MiniArena tile in Lite even when rook stars >= 12", async () => {
     localStorage.setItem(
       "chesscito:progress:rook",
-      seedProgress("rook", 0, [3, 3, 3, 3, 0]),
+      seedProgress("rook", 0, [3, 3, 3, 3, 3, 3, 3, 3]),
     );
     render(<HubScaffoldClientLite />);
     // Give the component a chance to hydrate localStorage
@@ -840,7 +840,7 @@ describe("HubScaffoldClient — MiniArena tile (Full Mode)", () => {
   it("shows MiniArena tile in Full when rook stars >= 12", async () => {
     localStorage.setItem(
       "chesscito:progress:rook",
-      seedProgress("rook", 0, [3, 3, 3, 3, 0]),
+      seedProgress("rook", 0, [3, 3, 3, 3, 3, 3, 3, 3]),
     );
     render(<HubScaffoldClient />);
     expect(await screen.findByTestId("mini-arena-trigger")).toBeInTheDocument();

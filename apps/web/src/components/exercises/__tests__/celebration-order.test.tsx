@@ -281,9 +281,11 @@ describe("one dialog per drain (composition)", () => {
    *  in JSX painting over the other. */
   it("renders exactly ONE dialog on the solve that crosses the badge threshold", () => {
     seedCelebrated("first-reward", "first-labyrinth:rook", "special-training");
-    // 12★ over four exercises; the fifth (last) solve makes it 15★ — the badge
-    // prompt's own `newTotal >= BADGE_THRESHOLD && isLastExercise` trigger AND
-    // the machine's `pieceStars >= BADGE_THRESHOLD`, on the same tap.
+    // Badge gate is COMPLETION: a 5-exercise pool needs 4 (80%). Four already
+    // done; the fifth (last) solve is the first resolve to recognize the badge,
+    // so the screen's own `isBadgeEarned(...) && isLastExercise` prompt AND the
+    // machine's `pieceCompletedExercises >= pieceRequiredExercises` land on the
+    // same tap — the composition hazard this test guards.
     seedRookProgress("t-rook-5", {
       "t-rook-1": 3,
       "t-rook-2": 3,

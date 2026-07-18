@@ -124,10 +124,11 @@ function seedPieceStars(piece: "rook" | "bishop", stars: Record<string, number>)
 }
 
 /**
- * A player from BEFORE the milestone machine existed: 14 rook stars over five
- * exercises, every labyrinth solved, the welcome gift claimed. Their profile
- * has raw progress on disk and an EMPTY milestone store — every gate in the
- * ladder is already behind them.
+ * A player from BEFORE the milestone machine existed: eight completed rook
+ * exercises (past the 80% badge COMPLETION gate on the baseline 10-pool the
+ * migration reads), every labyrinth solved, the welcome gift claimed. Their
+ * profile has raw progress on disk and an EMPTY milestone store — every gate
+ * in the ladder is already behind them.
  */
 function seedLegacyProgress() {
   seedPieceStars("rook", {
@@ -136,6 +137,9 @@ function seedLegacyProgress() {
     "t-rook-3": 3,
     "t-rook-4": 3,
     "t-rook-5": 2,
+    "t-rook-6": 3,
+    "t-rook-7": 3,
+    "t-rook-8": 3,
   });
   localStorage.setItem(
     labyrinthBestStorageKey("rook"),
