@@ -134,6 +134,11 @@ export type ThemeAssetKey =
   | "account.wallet-icon"
   | "account.founder"
   | "account.shield"
+  // pro-sheet — the PRO subscription/upsell surface (content shown to everyone
+  // who opens it; NOT the PRO variant layer)
+  | "pro-sheet.header-icon"
+  | "pro-sheet.subscription-panel"
+  | "pro-sheet.journal"
   // board — batch #1 (catalog visibility; consumers still read these paths
   // directly, see docs/superpowers/plans/2026-07-18-theme-builder-board-slots-plan.md)
   | "board.frame"
@@ -482,6 +487,20 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "account.shield": {
         default: "/art/shop/shield",
         usedIn: ["Account — shield"],
+      },
+      // pro-sheet content (pro-sheet.tsx renders these unconditionally — the
+      // subscription surface's own art, not a per-user PRO variant).
+      "pro-sheet.header-icon": {
+        default: "/art/chesscito-pro/chesscito-header-pro-icon",
+        usedIn: ["PRO sheet — header icon"],
+      },
+      "pro-sheet.subscription-panel": {
+        default: "/art/chesscito-pro/panel-suscription-pro",
+        usedIn: ["PRO sheet — subscription panel background"],
+      },
+      "pro-sheet.journal": {
+        default: "/art/chesscito-pro/journal-chesscito-pro",
+        usedIn: ["PRO sheet — journal illustration"],
       },
       // The playable board's frame — the decorative border around the live
       // GameBoard (1040×1028, measured inner opening in game-board.tsx). The
