@@ -268,30 +268,35 @@ describe("L2 labyrinth — seeded data integrity (all pieces)", () => {
 });
 
 describe("L2 labyrinth — knight path existence", () => {
-  const setups: { piece: PieceId; id: string; optimal: number }[] = [
-    { piece: "knight", id: "knight-lab-1", optimal: 3 },
-    { piece: "knight", id: "knight-lab-2", optimal: 4 },
-    { piece: "knight", id: "knight-lab-3", optimal: 6 },
-    { piece: "knight", id: "knight-lab-4", optimal: 4 },
-    { piece: "knight", id: "knight-lab-5", optimal: 5 },
+  // optimalMoves is DATA-DERIVED (read from the lab), never hardcoded here.
+  // The builder's Save recomputes it via BFS, so intentional difficulty edits
+  // never trip a stale expectation — the test just follows the catalog.
+  const setups: { piece: PieceId; id: string }[] = [
+    { piece: "knight", id: "knight-lab-1" },
+    { piece: "knight", id: "knight-lab-2" },
+    { piece: "knight", id: "knight-lab-3" },
+    { piece: "knight", id: "knight-lab-4" },
+    { piece: "knight", id: "knight-lab-5" },
   ];
 
-  it.each(setups)("$id: maximum depth to reach target is $optimal", ({ piece, id, optimal }) => {
+  it.each(setups)("$id: BFS reaches target in exactly lab.optimalMoves", ({ piece, id }) => {
     const lab = LABYRINTHS[piece].find((l) => l.id === id);
     expect(lab).toBeDefined();
     if (!lab) return;
 
+    const optimal = lab.optimalMoves;
     const minDepth = bfsKnightDepth(lab.startPos, lab.targetPos, optimal, lab.obstacles);
     expect(minDepth).toBe(optimal);
   });
 
   it.each(setups)(
-    "$id: target is NOT reachable in fewer than $optimal moves",
-    ({ piece, id, optimal }) => {
+    "$id: target is NOT reachable in fewer than lab.optimalMoves moves",
+    ({ piece, id }) => {
       const lab = LABYRINTHS[piece].find((l) => l.id === id);
       expect(lab).toBeDefined();
       if (!lab) return;
 
+      const optimal = lab.optimalMoves;
       if (optimal > 1) {
         const tooSoon = bfsKnightDepth(lab.startPos, lab.targetPos, optimal - 1, lab.obstacles);
         expect(tooSoon).toBeNull();
@@ -301,18 +306,20 @@ describe("L2 labyrinth — knight path existence", () => {
 });
 
 describe("L2 labyrinth — pawn path existence", () => {
-  const setups: { piece: PieceId; id: string; optimal: number }[] = [
-    { piece: "pawn", id: "pawn-lab-1", optimal: 3 },
-    { piece: "pawn", id: "pawn-lab-3", optimal: 5 },
-    { piece: "pawn", id: "pawn-lab-4", optimal: 4 },
-    { piece: "pawn", id: "pawn-lab-5", optimal: 5 },
+  // optimalMoves DATA-DERIVED (see the knight block) — no hardcoded copy.
+  const setups: { piece: PieceId; id: string }[] = [
+    { piece: "pawn", id: "pawn-lab-1" },
+    { piece: "pawn", id: "pawn-lab-3" },
+    { piece: "pawn", id: "pawn-lab-4" },
+    { piece: "pawn", id: "pawn-lab-5" },
   ];
 
-  it.each(setups)("$id: maximum depth to reach target is $optimal", ({ piece, id, optimal }) => {
+  it.each(setups)("$id: BFS reaches target in exactly lab.optimalMoves", ({ piece, id }) => {
     const lab = LABYRINTHS[piece].find((l) => l.id === id);
     expect(lab).toBeDefined();
     if (!lab) return;
 
+    const optimal = lab.optimalMoves;
     const captureSquares = lab.captureTargets
       ? [...lab.captureTargets, lab.targetPos]
       : undefined;
@@ -329,12 +336,13 @@ describe("L2 labyrinth — pawn path existence", () => {
   });
 
   it.each(setups)(
-    "$id: target is NOT reachable in fewer than $optimal moves",
-    ({ piece, id, optimal }) => {
+    "$id: target is NOT reachable in fewer than lab.optimalMoves moves",
+    ({ piece, id }) => {
       const lab = LABYRINTHS[piece].find((l) => l.id === id);
       expect(lab).toBeDefined();
       if (!lab) return;
 
+      const optimal = lab.optimalMoves;
       if (optimal > 1) {
         const captureSquares = lab.captureTargets
           ? [...lab.captureTargets, lab.targetPos]
@@ -425,17 +433,19 @@ describe("L2 labyrinth — pawn isCapture + captureTargets verification", () => 
 });
 
 describe("L2 labyrinth — queen path existence", () => {
-  const setups: { piece: PieceId; id: string; optimal: number }[] = [
-    { piece: "queen", id: "queen-lab-1", optimal: 3 },
-    { piece: "queen", id: "queen-lab-2", optimal: 3 },
-    { piece: "queen", id: "queen-lab-3", optimal: 3 },
+  // optimalMoves DATA-DERIVED (see the knight block) — no hardcoded copy.
+  const setups: { piece: PieceId; id: string }[] = [
+    { piece: "queen", id: "queen-lab-1" },
+    { piece: "queen", id: "queen-lab-2" },
+    { piece: "queen", id: "queen-lab-3" },
   ];
 
-  it.each(setups)("$id: maximum depth to reach target is $optimal", ({ piece, id, optimal }) => {
+  it.each(setups)("$id: BFS reaches target in exactly lab.optimalMoves", ({ piece, id }) => {
     const lab = LABYRINTHS[piece].find((l) => l.id === id);
     expect(lab).toBeDefined();
     if (!lab) return;
 
+    const optimal = lab.optimalMoves;
     const minDepth = bfsSlidingDepth(
       lab.startPos,
       lab.targetPos,
@@ -447,12 +457,13 @@ describe("L2 labyrinth — queen path existence", () => {
   });
 
   it.each(setups)(
-    "$id: target is NOT reachable in fewer than $optimal moves",
-    ({ piece, id, optimal }) => {
+    "$id: target is NOT reachable in fewer than lab.optimalMoves moves",
+    ({ piece, id }) => {
       const lab = LABYRINTHS[piece].find((l) => l.id === id);
       expect(lab).toBeDefined();
       if (!lab) return;
 
+      const optimal = lab.optimalMoves;
       if (optimal > 1) {
         const tooSoon = bfsSlidingDepth(
           lab.startPos,
@@ -514,16 +525,18 @@ describe("L2 labyrinth — rook path existence", () => {
 });
 
 describe("L2 labyrinth — bishop path existence", () => {
-  const setups: { piece: PieceId; id: string; optimal: number }[] = [
-    { piece: "bishop", id: "bishop-lab-3", optimal: 3 },
-    { piece: "bishop", id: "bishop-lab-4", optimal: 5 },
+  // optimalMoves DATA-DERIVED (see the knight block) — no hardcoded copy.
+  const setups: { piece: PieceId; id: string }[] = [
+    { piece: "bishop", id: "bishop-lab-3" },
+    { piece: "bishop", id: "bishop-lab-4" },
   ];
 
-  it.each(setups)("$id: maximum depth to reach target is $optimal", ({ piece, id, optimal }) => {
+  it.each(setups)("$id: BFS reaches target in exactly lab.optimalMoves", ({ piece, id }) => {
     const lab = LABYRINTHS[piece].find((l) => l.id === id);
     expect(lab).toBeDefined();
     if (!lab) return;
 
+    const optimal = lab.optimalMoves;
     const minDepth = bfsSlidingDepth(
       lab.startPos,
       lab.targetPos,
@@ -535,12 +548,13 @@ describe("L2 labyrinth — bishop path existence", () => {
   });
 
   it.each(setups)(
-    "$id: target is NOT reachable in fewer than $optimal moves",
-    ({ piece, id, optimal }) => {
+    "$id: target is NOT reachable in fewer than lab.optimalMoves moves",
+    ({ piece, id }) => {
       const lab = LABYRINTHS[piece].find((l) => l.id === id);
       expect(lab).toBeDefined();
       if (!lab) return;
 
+      const optimal = lab.optimalMoves;
       if (optimal > 1) {
         const tooSoon = bfsSlidingDepth(
           lab.startPos,

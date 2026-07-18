@@ -106,15 +106,10 @@ describe("LABYRINTHS catalog — per-piece counts (regression guards)", () => {
   });
 });
 
-describe("LABYRINTHS.king — King Shelter I shape", () => {
-  it("king-lab-1 is wired with the expected start/target/obstacles", () => {
-    const lab = LABYRINTHS.king[0];
-    expect(lab.id).toBe("king-lab-1");
-    // e1 → a1 (queenside shelter).
-    expect(lab.startPos).toEqual({ file: 4, rank: 0 });
-    expect(lab.targetPos).toEqual({ file: 0, rank: 0 });
-    // Single obstacle on c1 forces the diagonal sidestep.
-    expect(lab.obstacles).toEqual([{ file: 2, rank: 0 }]);
-    expect(lab.optimalMoves).toBe(4);
-  });
-});
+// NOTE: the old "king-lab-1 is wired with the expected start/target/obstacles"
+// snapshot was removed. It hardcoded one hand-authored layout (e1→a1, single c1
+// obstacle) and broke the moment that level was intentionally redesigned in the
+// builder. The invariants that actually matter — well-formed positions, present
+// obstacles, honest optimalMoves, solvability — are asserted generically for
+// EVERY lab above and in labyrinths-bfs-verifier.test.ts, so new/edited levels
+// are covered automatically without a per-id coordinate lock.

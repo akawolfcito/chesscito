@@ -62,24 +62,15 @@ describe("getBishopMoves", () => {
 });
 
 describe("bishop curriculum BFS", () => {
-  const EXPECTED_OPT: Record<string, number> = {
-    "bishop-1": 1,
-    "bishop-2": 1,
-    "bishop-3": 1,
-    "bishop-4": 2,
-    "bishop-5": 2,
-    "bishop-6": 3,
-    "bishop-7": 3,
-    "bishop-8": 4,
-    "bishop-10": 5,
-  };
-
-  it("every exercise is solvable with the stored optimalMoves", () => {
+  it("every exercise is solvable and its stored optimalMoves is the true BFS minimum", () => {
+    // The declared optimalMoves is validated AGAINST the real BFS, not a
+    // hardcoded parallel copy. Intentional position/difficulty edits (via the
+    // builder, which recomputes optimalMoves) stay green as long as the stored
+    // value is honest — the only property that actually matters.
     for (const ex of EXERCISES.bishop) {
       const bfs = computeExerciseBfs("bishop", ex);
       expect(bfs, `${ex.id} is unsolvable`).not.toBeNull();
       expect(bfs!.optimalMoves, `${ex.id} optimalMoves drift`).toBe(ex.optimalMoves);
-      expect(ex.optimalMoves).toBe(EXPECTED_OPT[ex.id]);
     }
   });
 

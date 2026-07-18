@@ -170,41 +170,29 @@ describe("Queen L1 exercises — data integrity", () => {
   });
 });
 
-describe("Queen L1 exercises — optimal path verification", () => {
-  it("queen-1: a1→h8 is reachable in 1 move (diagonal)", () => {
-    const lab = EXERCISES.queen.find((e) => e.id === "queen-1")!;
-    const depth = bfsQueenDepth(lab.startPos, lab.targetPos, [], 1);
-    expect(depth).toBe(1);
-  });
-
-  it("queen-2: a1→a8 is reachable in 1 move (vertical)", () => {
-    const lab = EXERCISES.queen.find((e) => e.id === "queen-2")!;
-    const depth = bfsQueenDepth(lab.startPos, lab.targetPos, [], 1);
-    expect(depth).toBe(1);
-  });
-
-  it("queen-3: d4→e5 is reachable in 1 move (short diagonal)", () => {
-    const lab = EXERCISES.queen.find((e) => e.id === "queen-3")!;
-    const depth = bfsQueenDepth(lab.startPos, lab.targetPos, [], 1);
-    expect(depth).toBe(1);
-  });
-
-  it("queen-4: a1→h1 is reachable in 1 move (horizontal)", () => {
-    const lab = EXERCISES.queen.find((e) => e.id === "queen-4")!;
-    const depth = bfsQueenDepth(lab.startPos, lab.targetPos, [], 1);
-    expect(depth).toBe(1);
-  });
-
-  it("queen-5: e4→b8 is NOT reachable in 1 move", () => {
-    const lab = EXERCISES.queen.find((e) => e.id === "queen-5")!;
-    expect(lab.optimalMoves).toBe(2);
-    const depth = bfsQueenDepth(lab.startPos, lab.targetPos, [], 1);
-    expect(depth).toBeNull();
-  });
-
-  it("queen-5: e4→b8 IS reachable in 2 moves", () => {
-    const lab = EXERCISES.queen.find((e) => e.id === "queen-5")!;
-    const depth = bfsQueenDepth(lab.startPos, lab.targetPos, [], 2);
-    expect(depth).toBe(2);
-  });
+describe("Queen L1 exercises — honest optimalMoves (data-derived)", () => {
+  // No hardcoded per-id coordinates: the builder recomputes optimalMoves on
+  // Save, so intentional position/difficulty edits stay green. We assert only
+  // the property that must ALWAYS hold — the stored optimum is the TRUE BFS
+  // minimum on the exercise's own board (reachable in exactly optimalMoves,
+  // and not in fewer). Solvability across all pieces is also covered generically
+  // by exercise-bfs.test.ts.
+  it.each(EXERCISES.queen.map((e) => e.id))(
+    "%s reaches target in exactly its stored optimalMoves, not fewer",
+    (id) => {
+      const ex = EXERCISES.queen.find((e) => e.id === id)!;
+      const optimal = ex.optimalMoves;
+      const obstacles = ex.obstacles ?? [];
+      expect(
+        bfsQueenDepth(ex.startPos, ex.targetPos, obstacles, optimal),
+        `${id} not reachable in ${optimal}`,
+      ).toBe(optimal);
+      if (optimal > 1) {
+        expect(
+          bfsQueenDepth(ex.startPos, ex.targetPos, obstacles, optimal - 1),
+          `${id} reachable faster than ${optimal}`,
+        ).toBeNull();
+      }
+    },
+  );
 });
