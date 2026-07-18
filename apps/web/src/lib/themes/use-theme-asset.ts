@@ -30,6 +30,8 @@ export function useThemeAsset(
   const themeId = useActiveTheme();
   const theme = THEMES[themeId] ?? THEMES["candy-forest"];
   const entry = theme.assets[key];
-  if (variant === "pro" && entry.pro) return entry.pro;
-  return entry.default;
+  // PRO viewer: prefer the pro asset, else fall back to default.
+  if (variant === "pro") return entry.pro ?? entry.default ?? "";
+  // Default viewer: the default asset, or "" for a PRO-only slot (no free art).
+  return entry.default ?? "";
 }

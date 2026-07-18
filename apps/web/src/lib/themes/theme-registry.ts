@@ -26,13 +26,26 @@
 export type ThemeAssetVariant = "default" | "pro";
 
 export type ThemeAssetEntry = {
-  /** Always present. Basename without extension — consumer composes
-   *  the AVIF/WebP/PNG triplet at render time. */
-  default: string;
-  /** Optional PRO-tier override. When absent, useThemeAsset falls back
-   *  to `default` for PRO viewers — preserves the no-broken-state
-   *  contract while future themes catch up. */
+  /** Basename without extension — consumer composes the AVIF/WebP/PNG
+   *  triplet at render time. Optional: when ABSENT the slot is a PRO-only
+   *  overlay/decoration (e.g. the gold avatar frame) — free users see
+   *  nothing, PRO users get `pro`. Every entry must have `default` or `pro`. */
+  default?: string;
+  /** PRO-tier value. For a normal slot it's an override of `default`;
+   *  for a PRO-only slot (no `default`) it's the whole asset. When absent,
+   *  useThemeAsset falls back to `default` for PRO viewers. */
   pro?: string;
+  /** Human-readable list of surfaces/screens that render this slot.
+   *  Powers the `/dev/theme-builder` art catalog so the founder can
+   *  see, per slot, where the asset lands. Purely documentary — no
+   *  runtime consumer reads it. Optional; defaults to empty. */
+  usedIn?: string[];
+  /** When set, marks the slot as DEPRECATED in the catalog with this
+   *  reason — an asset/reference that theoretically shouldn't be used
+   *  anymore (e.g. a stale path a component still points at). Kept in
+   *  the catalog on purpose: visible to distinguish + still updatable.
+   *  Purely documentary. */
+  deprecated?: string;
 };
 
 /** Canonical slot ids. New slots get added here as surfaces migrate
@@ -40,7 +53,183 @@ export type ThemeAssetEntry = {
  *  of `useThemeAsset` — typos become compile errors. */
 export type ThemeAssetKey =
   | "hub.portal"
-  | "hub.avatar";
+  | "hub.avatar"
+  // hub — the entry surface (buttons, icons, tour, guide)
+  | "hub.enter-arena"
+  | "hub.train-pieces"
+  | "hub.play-chess"
+  | "hub.training"
+  | "hub.training-icon"
+  | "hub.daily-icon"
+  | "hub.shop-icon"
+  | "hub.btn-battle"
+  | "hub.btn-play"
+  | "hub.principal-button"
+  | "hub.tour-hero"
+  | "hub.tour-title"
+  | "hub.guide"
+  | "hub.21-day-icon"
+  | "hub.avatar-lite"
+  // hub.pro-chip: the PRO status badge — default = inactive (upsell), pro = active
+  | "hub.pro-chip"
+  // hub.mastery.* — DEPRECATED: mastery-tile still points at the old /art/pieces set
+  | "hub.mastery.piece.rook"
+  | "hub.mastery.piece.bishop"
+  | "hub.mastery.piece.knight"
+  | "hub.mastery.piece.pawn"
+  | "hub.mastery.piece.queen"
+  | "hub.mastery.piece.king"
+  // shared — cross-cutting assets used by 3+ surfaces (one slot, not per-screen)
+  | "shared.avatar-small-account"
+  | "shared.lock"
+  | "shared.welcome-gift"
+  | "shared.feedback-happy"
+  | "shared.feedback-confident"
+  | "shared.feedback-scared"
+  | "shared.feedback-surprised"
+  | "shared.panel-bg"
+  | "shared.shield"
+  | "shared.star"
+  | "shared.mission-adorno"
+  | "shared.mission-avatar"
+  | "shared.close"
+  | "shared.mission-panel"
+  | "shared.trophy-epic"
+  | "shared.feedback-sad"
+  | "shared.feedback-thinking"
+  | "shared.feedback-questioning"
+  | "payments.celebration-bg"
+  // brand — identity assets (not game theme, but updatable)
+  | "brand.title"
+  | "brand.ring-start-focus"
+  // exercises — the PLAY / learn-exercises surface
+  | "exercises.avatar-fun"
+  | "exercises.avatar-try-again"
+  | "exercises.badge"
+  | "exercises.badge-menu"
+  | "exercises.refuge"
+  | "exercises.leaderboard-menu"
+  | "exercises.leaderboard-crown"
+  | "exercises.plant"
+  | "exercises.btn-nodo"
+  | "exercises.labyrinth-icon"
+  | "exercises.combo"
+  | "exercises.score"
+  | "exercises.shop-menu"
+  | "exercises.saved-seal"
+  // arena — the PLAY / arena surface (incl. rival avatars + frames)
+  | "arena.save"
+  | "arena.resign"
+  | "arena.undo"
+  | "arena.rival-kairo"
+  | "arena.rival-pipo"
+  | "arena.rival-frame-blue"
+  | "arena.rival-frame-gold"
+  | "arena.rival-frame-silver"
+  // PRO-only overlays: no default (free users see nothing), pro = gold frame
+  | "arena.avatar-frame-you"
+  | "arena.avatar-frame-bot"
+  // coach
+  | "coach.ask-icon"
+  | "coach.play-again"
+  // account
+  | "account.language-icon"
+  | "account.network-icon"
+  | "account.wallet-icon"
+  | "account.founder"
+  | "account.shield"
+  // pro-sheet — the PRO subscription/upsell surface (content shown to everyone
+  // who opens it; NOT the PRO variant layer)
+  | "pro-sheet.header-icon"
+  | "pro-sheet.subscription-panel"
+  | "pro-sheet.journal"
+  // long tail — small surfaces (1–2 assets each)
+  | "daily.bg-session"
+  | "daily.welldone"
+  | "peones.hint"
+  | "peones.piece"
+  | "welcome.achievement-1day"
+  | "landing.pre-chess"
+  | "tactics.daily-exercise"
+  | "hud.crown"
+  | "hud.trophy"
+  | "pro-mission.sms"
+  // closing pass — surfaces not covered by the per-surface sweep
+  | "scene.gem-pill"
+  | "scene.panel-pro"
+  | "scene.pedestal"
+  | "scene.stone-1"
+  | "scene.stone-2"
+  | "scene.stone-3"
+  | "scene.stone-4"
+  | "scene.stone-5"
+  | "scene.stone-6"
+  | "scene.stone-7"
+  | "scene.stone-8"
+  | "scene.stone-9"
+  | "scene.stone-10"
+  | "scene.chest-large"
+  | "scene.chest-small"
+  | "scene.banner-large"
+  | "scene.banner-medium"
+  | "scene.banner-short"
+  | "bg.splash-chesscito"
+  | "bg.wallpaper-lite"
+  | "bg.dock-4slots"
+  | "bg.menu-wall"
+  | "bg.path-map"
+  | "bg.path-map-base"
+  | "bg.splash-loading"
+  | "shop.coach-pack-20"
+  | "shop.slot-frame"
+  | "arena.bg-matchup"
+  | "arena.result-checkmate"
+  | "arena.result-draw"
+  | "arena.result-resign"
+  | "arena.result-stalemate"
+  | "arena.player-you"
+  | "arena.player-bot"
+  | "hub.cta-principal"
+  | "hub.mate-icon"
+  | "hub.invite-icon"
+  | "hub.bg"
+  | "hub.btn-stone-bg"
+  | "hub.focus-passport-streak"
+  | "exercises.wall"
+  | "exercises.laberinto"
+  | "exercises.badge-claim"
+  | "exercises.claim"
+  | "exercises.save-score"
+  | "exercises.wallpaper"
+  | "welcome.achievement-3day"
+  | "welcome.achievement-7day"
+  | "welcome.focus-stamp"
+  | "landing.hero"
+  | "landing.progress-trophies"
+  | "coach.play"
+  | "account.account-icon"
+  | "shared.panel-frame"
+  | "shared.time"
+  | "brand.favicon"
+  // board — batch #1 (catalog visibility; consumers still read these paths
+  // directly, see docs/superpowers/plans/2026-07-18-theme-builder-board-slots-plan.md)
+  | "board.frame"
+  | "board.thumbnail"
+  | "board.legacy-bg"
+  | "board.tile.light"
+  | "board.tile.dark"
+  | "board.piece.white.rook"
+  | "board.piece.white.bishop"
+  | "board.piece.white.knight"
+  | "board.piece.white.pawn"
+  | "board.piece.white.queen"
+  | "board.piece.white.king"
+  | "board.piece.black.rook"
+  | "board.piece.black.bishop"
+  | "board.piece.black.knight"
+  | "board.piece.black.pawn"
+  | "board.piece.black.queen"
+  | "board.piece.black.king";
 
 export type ThemeDefinition = {
   /** Stable theme id — used as Shop itemId once monetized + as the
@@ -65,10 +254,532 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "hub.portal": {
         default: "/art/hub/portal-chesscito-normal",
         pro: "/art/hub/portal-chesscito-pro",
+        usedIn: ["Hub — KingdomAnchor portal"],
       },
       "hub.avatar": {
         default: "/art/scene-rooted/avatar-chesscito",
         pro: "/art/hub/chesscito-avatar-new-light",
+        usedIn: ["Hub — KingdomAnchor avatar", "Exercises — avatar"],
+      },
+      "hub.enter-arena": {
+        default: "/art/hub/enter-arena",
+        usedIn: ["Hub — enter arena button"],
+      },
+      "hub.train-pieces": {
+        default: "/art/hub/train-pieces",
+        usedIn: ["Hub — train pieces button"],
+      },
+      "hub.play-chess": {
+        default: "/art/new-icons-chesscito/play-chess",
+        usedIn: ["Hub — play chess icon"],
+      },
+      "hub.training": {
+        default: "/art/new-icons-chesscito/training",
+        usedIn: ["Hub — training icon"],
+      },
+      "hub.training-icon": {
+        default: "/art/new-icons-chesscito/training-icon-v1",
+        usedIn: ["Hub — training icon (v1)"],
+      },
+      "hub.daily-icon": {
+        default: "/art/new-icons-chesscito/daily-icon-v1",
+        usedIn: ["Hub — daily icon"],
+      },
+      "hub.shop-icon": {
+        default: "/art/redesign/icons/shop",
+        usedIn: ["Hub — shop icon"],
+      },
+      "hub.btn-battle": {
+        default: "/art/redesign/banners/btn-battle",
+        usedIn: ["Hub — battle button banner"],
+      },
+      "hub.btn-play": {
+        default: "/art/redesign/banners/btn-play",
+        usedIn: ["Hub — play button banner"],
+      },
+      "hub.principal-button": {
+        default: "/art/redesign/banners/principalbutton",
+        usedIn: ["Hub — principal CTA button"],
+      },
+      "hub.tour-hero": {
+        default: "/art/mini-tour/tour-challenge-hero",
+        usedIn: ["Hub — mini-tour challenge hero"],
+      },
+      "hub.tour-title": {
+        default: "/art/mini-tour/tour-challenge-title",
+        usedIn: ["Hub — mini-tour challenge title"],
+      },
+      "hub.guide": {
+        default: "/art/scene-rooted/guide-secuencia",
+        usedIn: ["Hub — guide sequence"],
+      },
+      "hub.21-day-icon": {
+        default: "/art/21-day-icon",
+        usedIn: ["Hub — 21-day challenge icon"],
+      },
+      // default = free lite avatar; pro = the PRO-skinned avatar. hub-lite-scaffold
+      // swaps by isPro — this is a variant pair, not two separate slots.
+      "hub.avatar-lite": {
+        default: "/art/avatar-lite-hub",
+        pro: "/art/avatar-pro",
+        usedIn: ["Hub — lite avatar (isPro swaps to PRO skin)"],
+      },
+      // The PRO status badge. hub-pro-badge swaps by `active`: the purple
+      // upsell chip for free users (default) → the all-gold chip for PRO (pro).
+      "hub.pro-chip": {
+        default: "/art/hub/pro-chip-inactive",
+        pro: "/art/hub/pro-chip-active",
+        usedIn: ["Hub — PRO status badge"],
+      },
+      // DEPRECATED: mastery-tile.tsx still renders the old /art/pieces set; it
+      // should point at /art/redesign/pieces (see the tech-debt audit). Kept in
+      // the catalog so it's visible + updatable until the reference is migrated.
+      "hub.mastery.piece.rook": {
+        default: "/art/pieces/w-rook",
+        usedIn: ["Hub — mastery tile (rook)"],
+        deprecated: "old piece set — mastery-tile should use /art/redesign/pieces",
+      },
+      "hub.mastery.piece.bishop": {
+        default: "/art/pieces/w-bishop",
+        usedIn: ["Hub — mastery tile (bishop)"],
+        deprecated: "old piece set — mastery-tile should use /art/redesign/pieces",
+      },
+      "hub.mastery.piece.knight": {
+        default: "/art/pieces/w-knight",
+        usedIn: ["Hub — mastery tile (knight)"],
+        deprecated: "old piece set — mastery-tile should use /art/redesign/pieces",
+      },
+      "hub.mastery.piece.pawn": {
+        default: "/art/pieces/w-pawn",
+        usedIn: ["Hub — mastery tile (pawn)"],
+        deprecated: "old piece set — mastery-tile should use /art/redesign/pieces",
+      },
+      "hub.mastery.piece.queen": {
+        default: "/art/pieces/w-queen",
+        usedIn: ["Hub — mastery tile (queen)"],
+        deprecated: "old piece set — mastery-tile should use /art/redesign/pieces",
+      },
+      "hub.mastery.piece.king": {
+        default: "/art/pieces/w-king",
+        usedIn: ["Hub — mastery tile (king)"],
+        deprecated: "old piece set — mastery-tile should use /art/redesign/pieces",
+      },
+      "shared.avatar-small-account": {
+        default: "/art/avatar-small-account",
+        usedIn: ["Hub", "Arena", "Exercises"],
+      },
+      "shared.lock": {
+        default: "/art/redesign/icons/lock",
+        usedIn: ["Locked tiles / gated surfaces"],
+      },
+      "shared.welcome-gift": {
+        default: "/art/shop/welcome-gift",
+        usedIn: ["Hub", "Exercises"],
+      },
+      // feedback — reaction avatars (folded into shared per founder); each used
+      // across exercises result + arena victory states.
+      "shared.feedback-happy": {
+        default: "/art/new-assets-chesscito/fun/avatar-feliz",
+        usedIn: ["Exercises result", "Arena victory / claim-success"],
+      },
+      "shared.feedback-confident": {
+        default: "/art/new-assets-chesscito/fun/avatar-confiado",
+        usedIn: ["Arena — claiming"],
+      },
+      "shared.feedback-scared": {
+        default: "/art/new-assets-chesscito/fun/avatar-asustado",
+        usedIn: ["Arena — claim error"],
+      },
+      "shared.feedback-surprised": {
+        default: "/art/new-assets-chesscito/fun/avatar-asombrado",
+        usedIn: ["Exercises / payments"],
+      },
+      "shared.panel-bg": {
+        default: "/art/new-assets-chesscito/paneles/panel-bg1",
+        usedIn: ["Payments", "Victory", "Arena", "Exercises"],
+      },
+      "shared.shield": {
+        default: "/art/redesign/icons/shield",
+        usedIn: ["Arena", "Exercises"],
+      },
+      "shared.star": {
+        default: "/art/redesign/icons/star",
+        usedIn: ["Board target marker", "Exercises", "Daily"],
+      },
+      "shared.mission-adorno": {
+        default: "/art/screen-mission/adorno-icon",
+        usedIn: ["Arena", "Exercises"],
+      },
+      "shared.mission-avatar": {
+        default: "/art/screen-mission/avatar-icon",
+        usedIn: ["Arena", "Exercises"],
+      },
+      "shared.close": {
+        default: "/art/screen-mission/close-icon",
+        usedIn: ["Arena", "Exercises", "Daily", "Peones", "UI"],
+      },
+      "shared.mission-panel": {
+        default: "/art/screen-mission/panel-mision-icon",
+        usedIn: ["Arena", "Exercises"],
+      },
+      "shared.trophy-epic": {
+        default: "/art/action-row/trofeo-epico",
+        usedIn: ["Coach", "Trophies"],
+      },
+      // more reaction avatars — surfaced by overlays/modals (mood-driven).
+      "shared.feedback-sad": {
+        default: "/art/new-assets-chesscito/fun/avatar-triste",
+        usedIn: ["Overlays / modals — sad reaction"],
+      },
+      "shared.feedback-thinking": {
+        default: "/art/new-assets-chesscito/fun/avatar-pensativo",
+        usedIn: ["Overlays / modals — thinking reaction"],
+      },
+      "shared.feedback-questioning": {
+        default: "/art/new-assets-chesscito/fun/avatar-interrogativo",
+        usedIn: ["Overlays / modals — questioning reaction"],
+      },
+      "payments.celebration-bg": {
+        default: "/art/celebration/bg-celebration",
+        usedIn: ["Payments — celebration background"],
+      },
+      "brand.title": {
+        default: "/art/title-chesscito",
+        usedIn: ["Brand — Chesscito wordmark"],
+      },
+      "brand.ring-start-focus": {
+        default: "/art/ring-start-focus",
+        usedIn: ["Hub — start-focus ring", "Root"],
+      },
+      "exercises.avatar-fun": {
+        default: "/art/avatar-fun",
+        usedIn: ["Exercises — success avatar (mission panel)"],
+      },
+      "exercises.avatar-try-again": {
+        default: "/art/avatar-try-again",
+        usedIn: ["Exercises — try-again avatar"],
+      },
+      "exercises.badge": {
+        default: "/art/badge-chesscito",
+        usedIn: ["Exercises — badge"],
+      },
+      "exercises.badge-menu": {
+        default: "/art/badge-menu",
+        usedIn: ["Exercises — badge menu icon"],
+      },
+      "exercises.refuge": {
+        default: "/art/labyrinths/refuge",
+        usedIn: ["Exercises — safe-path refuge"],
+      },
+      "exercises.leaderboard-menu": {
+        default: "/art/leaderboard-menu",
+        usedIn: ["Exercises — leaderboard menu icon"],
+      },
+      "exercises.leaderboard-crown": {
+        default: "/art/screen-mission/corona-pro",
+        usedIn: ["Exercises — leaderboard decorative crown"],
+      },
+      "exercises.plant": {
+        default: "/art/new-assets-chesscito/plant1",
+        usedIn: ["Exercises — decorative plant"],
+      },
+      "exercises.btn-nodo": {
+        default: "/art/redesign/bg/btn-nodo",
+        usedIn: ["Exercises — node button"],
+      },
+      "exercises.labyrinth-icon": {
+        default: "/art/redesign/bg/labyrint-icon",
+        usedIn: ["Exercises — labyrinth icon"],
+      },
+      "exercises.combo": {
+        default: "/art/redesign/icons/combo",
+        usedIn: ["Exercises — combo icon"],
+      },
+      "exercises.score": {
+        default: "/art/score-chesscito",
+        usedIn: ["Exercises — score"],
+      },
+      "exercises.shop-menu": {
+        default: "/art/shop-menu",
+        usedIn: ["Exercises — shop menu icon"],
+      },
+      "exercises.saved-seal": {
+        default: "/art/new-icons-chesscito/score-saved",
+        usedIn: ["Exercises — score-saved seal"],
+      },
+      "arena.save": {
+        default: "/art/new-icons-chesscito/save",
+        usedIn: ["Arena — save icon"],
+      },
+      "arena.resign": {
+        default: "/art/new-assets-chesscito/arena/resign-game",
+        usedIn: ["Arena — resign action"],
+      },
+      "arena.undo": {
+        default: "/art/new-assets-chesscito/arena/undo-move",
+        usedIn: ["Arena — undo action"],
+      },
+      "arena.rival-kairo": {
+        default: "/art/rivals/kairo-avatar",
+        usedIn: ["Arena — rival Kairo avatar"],
+      },
+      "arena.rival-pipo": {
+        default: "/art/rivals/pipo-avatar",
+        usedIn: ["Arena — rival Pipo avatar"],
+      },
+      "arena.rival-frame-blue": {
+        default: "/art/rivals/frame-blue",
+        usedIn: ["Arena — rival frame (blue)"],
+      },
+      "arena.rival-frame-gold": {
+        default: "/art/rivals/frame-gold",
+        usedIn: ["Arena — rival frame (gold)"],
+      },
+      "arena.rival-frame-silver": {
+        default: "/art/rivals/frame-silver",
+        usedIn: ["Arena — rival frame (silver)"],
+      },
+      // PRO-only avatar frames (player-avatar.tsx renders `pro && <frame>`).
+      // No default → free users see no frame; PRO users get the gold ornament.
+      "arena.avatar-frame-you": {
+        pro: "/art/chesscito-pro/borde-dorado-avatar-azul",
+        usedIn: ["Arena — 'you' player card (PRO gold frame)"],
+      },
+      "arena.avatar-frame-bot": {
+        pro: "/art/chesscito-pro/borde-dorado-avatar-rojo",
+        usedIn: ["Arena — 'bot' player card (PRO gold frame)"],
+      },
+      "coach.ask-icon": {
+        default: "/art/new-assets-chesscito/btns/ask-coach-icon",
+        usedIn: ["Coach — ask button icon"],
+      },
+      "coach.play-again": {
+        default: "/art/new-assets-chesscito/btns/play-again-icon",
+        usedIn: ["Coach — play again icon"],
+      },
+      "account.language-icon": {
+        default: "/art/new-assets-chesscito/account/language-icon",
+        usedIn: ["Account — language row"],
+      },
+      "account.network-icon": {
+        default: "/art/new-assets-chesscito/account/network-icon",
+        usedIn: ["Account — network row"],
+      },
+      "account.wallet-icon": {
+        default: "/art/new-assets-chesscito/account/wallet-icon",
+        usedIn: ["Account — wallet row"],
+      },
+      "account.founder": {
+        default: "/art/shop/founder",
+        usedIn: ["Account — founder badge"],
+      },
+      "account.shield": {
+        default: "/art/shop/shield",
+        usedIn: ["Account — shield"],
+      },
+      // pro-sheet content (pro-sheet.tsx renders these unconditionally — the
+      // subscription surface's own art, not a per-user PRO variant).
+      "pro-sheet.header-icon": {
+        default: "/art/chesscito-pro/chesscito-header-pro-icon",
+        usedIn: ["PRO sheet — header icon"],
+      },
+      "pro-sheet.subscription-panel": {
+        default: "/art/chesscito-pro/panel-suscription-pro",
+        usedIn: ["PRO sheet — subscription panel background"],
+      },
+      "pro-sheet.journal": {
+        default: "/art/chesscito-pro/journal-chesscito-pro",
+        usedIn: ["PRO sheet — journal illustration"],
+      },
+      "daily.bg-session": {
+        default: "/art/bg-sesion-great",
+        usedIn: ["Daily — great session background"],
+      },
+      "daily.welldone": {
+        default: "/art/welldone-sms",
+        usedIn: ["Daily — well-done message"],
+      },
+      "peones.hint": {
+        default: "/art/new-icons-chesscito/hint-icon-v1",
+        usedIn: ["Peones — hint icon"],
+      },
+      "peones.piece": {
+        default: "/art/new-icons-chesscito/peon-piece-v1",
+        usedIn: ["Peones — pawn piece icon"],
+      },
+      "welcome.achievement-1day": {
+        default: "/art/achievements/1day-focus",
+        usedIn: ["Welcome package — 1-day focus achievement"],
+      },
+      "landing.pre-chess": {
+        default: "/art/landing/pre-chess-exercise",
+        usedIn: ["Landing — pre-chess exercise"],
+      },
+      "tactics.daily-exercise": {
+        default: "/art/new-icons-chesscito/ejercicio-diario-chess",
+        usedIn: ["Tactics — daily exercise icon"],
+      },
+      "hud.crown": {
+        default: "/art/redesign/icons/crown",
+        usedIn: ["HUD — crown icon"],
+      },
+      "hud.trophy": {
+        default: "/art/redesign/icons/trophy",
+        usedIn: ["HUD — trophy icon"],
+      },
+      "pro-mission.sms": {
+        default: "/art/scene-rooted/sms-chesscito",
+        usedIn: ["Pro mission — SMS illustration"],
+      },
+      // scene — kingdom/scene-rooted decorations
+      "scene.gem-pill": { default: "/art/scene-rooted/gem-pill-base", usedIn: ["Kingdom scene — gem pill"] },
+      "scene.panel-pro": { default: "/art/scene-rooted/panel-pro", usedIn: ["Kingdom scene — pro panel"] },
+      "scene.pedestal": { default: "/art/scene-rooted/pedestal-play", usedIn: ["Kingdom scene — play pedestal"] },
+      "scene.stone-1": { default: "/art/scene-rooted/piedra1", usedIn: ["Kingdom scene — stone 1"] },
+      "scene.stone-2": { default: "/art/scene-rooted/piedra2", usedIn: ["Kingdom scene — stone 2"] },
+      "scene.stone-3": { default: "/art/scene-rooted/piedra3", usedIn: ["Kingdom scene — stone 3"] },
+      "scene.stone-4": { default: "/art/scene-rooted/piedra4", usedIn: ["Kingdom scene — stone 4"] },
+      "scene.stone-5": { default: "/art/scene-rooted/piedra5", usedIn: ["Kingdom scene — stone 5"] },
+      "scene.stone-6": { default: "/art/scene-rooted/piedra6", usedIn: ["Kingdom scene — stone 6"] },
+      "scene.stone-7": { default: "/art/scene-rooted/piedra7", usedIn: ["Kingdom scene — stone 7"] },
+      "scene.stone-8": { default: "/art/scene-rooted/piedra8", usedIn: ["Kingdom scene — stone 8"] },
+      "scene.stone-9": { default: "/art/scene-rooted/piedra9", usedIn: ["Kingdom scene — stone 9"] },
+      "scene.stone-10": { default: "/art/scene-rooted/piedra10", usedIn: ["Kingdom scene — stone 10"] },
+      "scene.chest-large": { default: "/art/scene-rooted/treasure-chest-large", usedIn: ["Kingdom scene — large chest"] },
+      "scene.chest-small": { default: "/art/scene-rooted/treasure-chest-small", usedIn: ["Kingdom scene — small chest"] },
+      "scene.banner-large": { default: "/art/scene-rooted/wood-banner-blank-large", usedIn: ["Kingdom scene — wood banner (large)"] },
+      "scene.banner-medium": { default: "/art/scene-rooted/wood-banner-blank-medium", usedIn: ["Kingdom scene — wood banner (medium)"] },
+      "scene.banner-short": { default: "/art/scene-rooted/wood-banner-blank-short", usedIn: ["Kingdom scene — wood banner (short)"] },
+      // bg — screen backgrounds
+      "bg.splash-chesscito": { default: "/art/bg-splash-chesscito", usedIn: ["Splash background"] },
+      "bg.wallpaper-lite": { default: "/art/bg-wallpaper-lite", usedIn: ["Lite wallpaper background"] },
+      "bg.dock-4slots": { default: "/art/redesign/bg/dock-4slots", usedIn: ["Dock (4 slots) background"] },
+      "bg.menu-wall": { default: "/art/redesign/bg/menu-wall", usedIn: ["Menu wall background"] },
+      "bg.path-map": { default: "/art/redesign/bg/path-map", usedIn: ["Learn path map"] },
+      "bg.path-map-base": { default: "/art/redesign/bg/path-map-base", usedIn: ["Learn path map base"] },
+      "bg.splash-loading": { default: "/art/redesign/bg/splash-loading", usedIn: ["Splash loading background"] },
+      // shop
+      "shop.coach-pack-20": { default: "/art/shop/coach-pack-20", usedIn: ["Shop — coach pack (20)"] },
+      "shop.slot-frame": { default: "/art/shop-slot-frame", usedIn: ["Shop — slot frame"] },
+      // arena additions
+      "arena.bg-matchup": { default: "/art/arena/bg-matchup", usedIn: ["Arena — matchup background"] },
+      "arena.result-checkmate": { default: "/art/new-assets-chesscito/games/checkmate-game001", usedIn: ["Arena — checkmate end-state"] },
+      "arena.result-draw": { default: "/art/new-assets-chesscito/games/draw-game001", usedIn: ["Arena — draw end-state"] },
+      "arena.result-resign": { default: "/art/new-assets-chesscito/games/resign-game001", usedIn: ["Arena — resign end-state"] },
+      "arena.result-stalemate": { default: "/art/new-assets-chesscito/games/stalemate-game001", usedIn: ["Arena — stalemate end-state"] },
+      "arena.player-you": { default: "/art/new-icons-chesscito/avatar-blue", usedIn: ["Arena — 'you' player avatar"] },
+      "arena.player-bot": { default: "/art/new-icons-chesscito/avatar-red", usedIn: ["Arena — 'bot' player avatar"] },
+      // hub additions
+      "hub.cta-principal": { default: "/art/hub/cta-principal", usedIn: ["Hub — principal CTA"] },
+      "hub.mate-icon": { default: "/art/hub/mate-icon", usedIn: ["Hub — mate icon"] },
+      "hub.invite-icon": { default: "/art/hub-new/invite-icon", usedIn: ["Hub — invite icon"] },
+      "hub.bg": { default: "/art/redesign/bg/bg-new-hub", usedIn: ["Hub — background"] },
+      "hub.btn-stone-bg": { default: "/art/redesign/banners/btn-stone-bg", usedIn: ["Hub — stone button background"] },
+      "hub.focus-passport-streak": { default: "/art/focus-passport/panel-streak", usedIn: ["Hub — focus passport streak panel"] },
+      // exercises additions
+      "exercises.wall": { default: "/art/labyrinths/wall", usedIn: ["Exercises — labyrinth wall"] },
+      "exercises.laberinto": { default: "/art/new-icons-chesscito/laberinto", usedIn: ["Exercises — labyrinth icon"] },
+      "exercises.badge-claim": { default: "/art/new-icons-chesscito/badge-claim-icon", usedIn: ["Exercises — badge claim icon"] },
+      "exercises.claim": { default: "/art/new-icons-chesscito/claim-icon-v1", usedIn: ["Exercises — claim icon"] },
+      "exercises.save-score": { default: "/art/new-icons-chesscito/save-score-icon-v1", usedIn: ["Exercises — save score icon"] },
+      "exercises.wallpaper": { default: "/art/redesign/bg/wallpaper-exercises", usedIn: ["Exercises — wallpaper background"] },
+      // welcome additions
+      "welcome.achievement-3day": { default: "/art/achievements/3day-focus", usedIn: ["Welcome — 3-day focus achievement"] },
+      "welcome.achievement-7day": { default: "/art/achievements/7day-focus", usedIn: ["Welcome — 7-day focus achievement"] },
+      "welcome.focus-stamp": { default: "/art/welcome-package/focus-stamp-day1", usedIn: ["Welcome — focus stamp (day 1)"] },
+      // landing additions
+      "landing.hero": { default: "/art/landing/hero-play-hub", usedIn: ["Landing — play-hub hero"] },
+      "landing.progress-trophies": { default: "/art/landing/progress-trophies", usedIn: ["Landing — progress trophies"] },
+      // coach addition
+      "coach.play": { default: "/art/new-assets-chesscito/btns/play", usedIn: ["Coach — play button"] },
+      // account addition
+      "account.account-icon": { default: "/art/screen-mission/account-icon", usedIn: ["Account — account icon"] },
+      // shared additions
+      "shared.panel-frame": { default: "/art/panel-frame-rune", usedIn: ["Panel frame (rune)"] },
+      "shared.time": { default: "/art/redesign/icons/time", usedIn: ["Time icon"] },
+      // brand addition
+      "brand.favicon": { default: "/art/favicon-wolf", usedIn: ["Brand — favicon / wolf mark"] },
+      // The playable board's frame — the decorative border around the live
+      // GameBoard (1040×1028, measured inner opening in game-board.tsx). The
+      // squares inside are procedural tiles (board.tile.*).
+      "board.frame": {
+        default: "/art/board/borde-tablero-chesscito1",
+        usedIn: ["GameBoard — playable board frame"],
+      },
+      // The pre-composed framed-board illustration used ONLY for thumbnails /
+      // previews (avoids laying out a position in small scenarios). NOT the
+      // playable board. (Legacy `/art/chesscito-board` is dead — canvas is
+      //  background:none; only the OG home card still uses it, left unregistered.)
+      "board.thumbnail": {
+        default: "/art/redesign/board/board-ch",
+        usedIn: ["Hub — KingdomAnchor board", "Board thumbnail", "Splash preload"],
+      },
+      // DEPRECATED: the old flat board bg. The game canvas is background:none
+      // (tiles + board.frame render the board now); only the OG home card still
+      // references it. Kept visible so it can be retired deliberately.
+      "board.legacy-bg": {
+        default: "/art/chesscito-board",
+        usedIn: ["OG — home social card"],
+        deprecated: "legacy flat board — only OG home uses it; retire when possible",
+      },
+      "board.tile.light": {
+        default: "/art/board/casilla-clara",
+        usedIn: ["Board — light squares"],
+      },
+      "board.tile.dark": {
+        default: "/art/board/casilla-oscura",
+        usedIn: ["Board — dark squares"],
+      },
+      // White = player pieces (main board renders these; black is tinted there
+      // via pieceTintClass, but black ALSO ships as real b-* assets used for
+      // enemies in promotion-run / safe-path and the kingdom-anchor board).
+      "board.piece.white.rook": {
+        default: "/art/redesign/pieces/w-rook",
+        usedIn: ["Board — white rook"],
+      },
+      "board.piece.white.bishop": {
+        default: "/art/redesign/pieces/w-bishop",
+        usedIn: ["Board — white bishop"],
+      },
+      "board.piece.white.knight": {
+        default: "/art/redesign/pieces/w-knight",
+        usedIn: ["Board — white knight"],
+      },
+      "board.piece.white.pawn": {
+        default: "/art/redesign/pieces/w-pawn",
+        usedIn: ["Board — white pawn"],
+      },
+      "board.piece.white.queen": {
+        default: "/art/redesign/pieces/w-queen",
+        usedIn: ["Board — white queen"],
+      },
+      "board.piece.white.king": {
+        default: "/art/redesign/pieces/w-king",
+        usedIn: ["Board — white king"],
+      },
+      "board.piece.black.rook": {
+        default: "/art/redesign/pieces/b-rook",
+        usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board"],
+      },
+      "board.piece.black.bishop": {
+        default: "/art/redesign/pieces/b-bishop",
+        usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board"],
+      },
+      "board.piece.black.knight": {
+        default: "/art/redesign/pieces/b-knight",
+        usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board"],
+      },
+      "board.piece.black.pawn": {
+        default: "/art/redesign/pieces/b-pawn",
+        usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board"],
+      },
+      "board.piece.black.queen": {
+        default: "/art/redesign/pieces/b-queen",
+        usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board"],
+      },
+      "board.piece.black.king": {
+        default: "/art/redesign/pieces/b-king",
+        usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board"],
       },
     },
   },
