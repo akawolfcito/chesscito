@@ -62,10 +62,8 @@ export type ThemeAssetKey =
   | "hub.guide"
   | "hub.21-day-icon"
   | "hub.avatar-lite"
-  // pro — PRO-only surfaces (default variant only)
-  | "pro.avatar"
-  | "pro.chip-active"
-  | "pro.chip-inactive"
+  // hub.pro-chip: the PRO status badge — default = inactive (upsell), pro = active
+  | "hub.pro-chip"
   // shared — cross-cutting assets used by 3+ surfaces (one slot, not per-screen)
   | "shared.avatar-small-account"
   | "shared.lock"
@@ -178,21 +176,19 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/21-day-icon",
         usedIn: ["Hub — 21-day challenge icon"],
       },
+      // default = free lite avatar; pro = the PRO-skinned avatar. hub-lite-scaffold
+      // swaps by isPro — this is a variant pair, not two separate slots.
       "hub.avatar-lite": {
         default: "/art/avatar-lite-hub",
-        usedIn: ["Hub — lite avatar"],
+        pro: "/art/avatar-pro",
+        usedIn: ["Hub — lite avatar (isPro swaps to PRO skin)"],
       },
-      "pro.avatar": {
-        default: "/art/avatar-pro",
-        usedIn: ["PRO — subscriber avatar"],
-      },
-      "pro.chip-active": {
-        default: "/art/hub/pro-chip-active",
-        usedIn: ["PRO — active chip"],
-      },
-      "pro.chip-inactive": {
+      // The PRO status badge. hub-pro-badge swaps by `active`: the purple
+      // upsell chip for free users (default) → the all-gold chip for PRO (pro).
+      "hub.pro-chip": {
         default: "/art/hub/pro-chip-inactive",
-        usedIn: ["PRO — inactive chip"],
+        pro: "/art/hub/pro-chip-active",
+        usedIn: ["Hub — PRO status badge"],
       },
       "shared.avatar-small-account": {
         default: "/art/avatar-small-account",

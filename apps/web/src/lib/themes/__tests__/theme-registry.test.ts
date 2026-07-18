@@ -23,9 +23,7 @@ const REQUIRED_ASSET_KEYS: readonly ThemeAssetKey[] = [
   "hub.guide",
   "hub.21-day-icon",
   "hub.avatar-lite",
-  "pro.avatar",
-  "pro.chip-active",
-  "pro.chip-inactive",
+  "hub.pro-chip",
   "shared.avatar-small-account",
   "shared.lock",
   "shared.welcome-gift",
@@ -81,6 +79,18 @@ describe("theme-registry", () => {
     const entry = THEMES["candy-forest"].assets["hub.avatar"];
     expect(entry.default).toBe("/art/scene-rooted/avatar-chesscito");
     expect(entry.pro).toBe("/art/hub/chesscito-avatar-new-light");
+  });
+
+  it("models the lite avatar as a default/pro variant pair (not two slots)", () => {
+    const entry = THEMES["candy-forest"].assets["hub.avatar-lite"];
+    expect(entry.default).toBe("/art/avatar-lite-hub");
+    expect(entry.pro).toBe("/art/avatar-pro");
+  });
+
+  it("models the PRO chip as default=inactive / pro=active", () => {
+    const entry = THEMES["candy-forest"].assets["hub.pro-chip"];
+    expect(entry.default).toBe("/art/hub/pro-chip-inactive");
+    expect(entry.pro).toBe("/art/hub/pro-chip-active");
   });
 
   it("the default theme id resolves to a registered theme", () => {
