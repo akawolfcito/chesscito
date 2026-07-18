@@ -33,6 +33,11 @@ export type ThemeAssetEntry = {
    *  to `default` for PRO viewers — preserves the no-broken-state
    *  contract while future themes catch up. */
   pro?: string;
+  /** Human-readable list of surfaces/screens that render this slot.
+   *  Powers the `/dev/theme-builder` art catalog so the founder can
+   *  see, per slot, where the asset lands. Purely documentary — no
+   *  runtime consumer reads it. Optional; defaults to empty. */
+  usedIn?: string[];
 };
 
 /** Canonical slot ids. New slots get added here as surfaces migrate
@@ -65,10 +70,12 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "hub.portal": {
         default: "/art/hub/portal-chesscito-normal",
         pro: "/art/hub/portal-chesscito-pro",
+        usedIn: ["Hub — KingdomAnchor portal"],
       },
       "hub.avatar": {
         default: "/art/scene-rooted/avatar-chesscito",
         pro: "/art/hub/chesscito-avatar-new-light",
+        usedIn: ["Hub — KingdomAnchor avatar"],
       },
     },
   },
