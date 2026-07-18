@@ -2429,10 +2429,10 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "bishop-lab-4",
-      "optimalMoves": 5,
+      "optimalMoves": 13,
       "startPos": {
-        "file": 0,
-        "rank": 0
+        "file": 1,
+        "rank": 7
       },
       "targetPos": {
         "file": 7,
@@ -2440,12 +2440,100 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
       },
       "obstacles": [
         {
+          "file": 0,
+          "rank": 7
+        },
+        {
           "file": 4,
+          "rank": 7
+        },
+        {
+          "file": 2,
+          "rank": 6
+        },
+        {
+          "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 5,
+          "rank": 6
+        },
+        {
+          "file": 7,
+          "rank": 6
+        },
+        {
+          "file": 0,
+          "rank": 5
+        },
+        {
+          "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 5,
+          "rank": 5
+        },
+        {
+          "file": 2,
           "rank": 4
+        },
+        {
+          "file": 5,
+          "rank": 4
+        },
+        {
+          "file": 7,
+          "rank": 4
+        },
+        {
+          "file": 0,
+          "rank": 3
+        },
+        {
+          "file": 2,
+          "rank": 3
+        },
+        {
+          "file": 5,
+          "rank": 3
         },
         {
           "file": 2,
           "rank": 2
+        },
+        {
+          "file": 5,
+          "rank": 2
+        },
+        {
+          "file": 7,
+          "rank": 2
+        },
+        {
+          "file": 0,
+          "rank": 1
+        },
+        {
+          "file": 2,
+          "rank": 1
+        },
+        {
+          "file": 4,
+          "rank": 1
+        },
+        {
+          "file": 5,
+          "rank": 1
+        },
+        {
+          "file": 3,
+          "rank": 0
+        },
+        {
+          "file": 7,
+          "rank": 0
         }
       ],
       "tier": "medium"
@@ -2879,19 +2967,87 @@ export const GENERATED_DIAGONAL_RUN: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "bishop-run-2",
-      "optimalMoves": 2,
+      "optimalMoves": 6,
       "startPos": {
-        "file": 0,
+        "file": 7,
         "rank": 0
       },
       "targetPos": {
-        "file": 5,
-        "rank": 1
+        "file": 1,
+        "rank": 0
       },
       "obstacles": [
         {
+          "file": 0,
+          "rank": 7
+        },
+        {
+          "file": 5,
+          "rank": 7
+        },
+        {
+          "file": 7,
+          "rank": 7
+        },
+        {
+          "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 4,
+          "rank": 5
+        },
+        {
+          "file": 0,
+          "rank": 4
+        },
+        {
+          "file": 2,
+          "rank": 4
+        },
+        {
+          "file": 3,
+          "rank": 4
+        },
+        {
+          "file": 4,
+          "rank": 4
+        },
+        {
+          "file": 5,
+          "rank": 4
+        },
+        {
+          "file": 7,
+          "rank": 3
+        },
+        {
+          "file": 2,
+          "rank": 2
+        },
+        {
+          "file": 3,
+          "rank": 2
+        },
+        {
           "file": 4,
           "rank": 2
+        },
+        {
+          "file": 5,
+          "rank": 2
+        },
+        {
+          "file": 4,
+          "rank": 1
+        },
+        {
+          "file": 0,
+          "rank": 0
+        },
+        {
+          "file": 2,
+          "rank": 0
         }
       ],
       "tier": "medium",
@@ -2901,19 +3057,55 @@ export const GENERATED_DIAGONAL_RUN: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "bishop-run-3",
-      "optimalMoves": 2,
+      "optimalMoves": 3,
       "startPos": {
-        "file": 0,
+        "file": 1,
         "rank": 0
       },
       "targetPos": {
-        "file": 1,
+        "file": 2,
         "rank": 7
       },
       "obstacles": [
         {
           "file": 2,
           "rank": 6
+        },
+        {
+          "file": 4,
+          "rank": 6
+        },
+        {
+          "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 4,
+          "rank": 5
+        },
+        {
+          "file": 5,
+          "rank": 5
+        },
+        {
+          "file": 2,
+          "rank": 2
+        },
+        {
+          "file": 3,
+          "rank": 2
+        },
+        {
+          "file": 5,
+          "rank": 2
+        },
+        {
+          "file": 3,
+          "rank": 1
+        },
+        {
+          "file": 5,
+          "rank": 1
         }
       ],
       "tier": "medium",
