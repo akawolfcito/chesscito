@@ -49,6 +49,12 @@ const PIECE_IMG: Record<PieceId, string> = {
  *  enemy piece and avoids per-piece asset production. */
 const TARGET_MARKER_SRC = "/art/redesign/icons/star.png";
 
+/** Enemy piece drawn on a `captureTargets` square in practice mode. A pawn
+ *  captures diagonally ONTO a piece; if the square were empty, the diagonal
+ *  move dot would teach an illegal diagonal move. Black (enemy) art contrasts
+ *  with the white knight used for friendly blockers. */
+const CAPTURE_ENEMY_SRC = `${PIECE_BASE}/b-pawn.png`;
+
 const PIECE_IMG_CLASS = ASSET_THEME === "candy"
   ? "playhub-board-piece-img arena-treat-natural"
   : "playhub-board-piece-img";
@@ -373,6 +379,54 @@ export function Board({
               }}
             />
           </div>
+        );
+      })}
+
+      {/* Capturable enemy pieces (practice). An exercise whose capture square
+          is DISTINCT from the goal (captureTargets, e.g. pawn-7 "blocked ahead
+          → capture around") must show the enemy to capture. Without it the
+          pawn's diagonal move dot lands on an empty square and teaches an
+          illegal diagonal move. Labyrinth mode has its own capture rendering
+          (the amber pickup marker above), so this is practice-only. Skips the
+          goal square, which already carries the objective star. */}
+      {mode !== "labyrinth" && (captureTargets ?? []).map((ct) => {
+        // Goal square already carries the objective star — never overpaint it.
+        if (targetPosition && ct.file === targetPosition.file && ct.rank === targetPosition.rank) {
+          return null;
+        }
+        // Once the pawn has captured this square (it lands on the enemy's file
+        // and advances up it), the enemy is gone — don't re-draw a captured
+        // piece behind the pawn as it continues toward the goal.
+        const captured =
+          piece.position.file === ct.file && piece.position.rank >= ct.rank;
+        if (captured) return null;
+        const center = cellCenter(ct.file, ct.rank);
+        const pw = pieceWidth();
+        return (
+          <picture
+            key={`capture-enemy-${ct.file}-${ct.rank}`}
+            className="playhub-board-piece-float is-capture-enemy"
+            style={{
+              left: `${center.x}%`,
+              top: `${center.y}%`,
+              width: `${pw}%`,
+              pointerEvents: "none",
+            }}
+          >
+            {THEME_CONFIG.hasOptimizedFormats && (
+              <>
+                <source srcSet={CAPTURE_ENEMY_SRC.replace(".png", ".avif")} type="image/avif" />
+                <source srcSet={CAPTURE_ENEMY_SRC.replace(".png", ".webp")} type="image/webp" />
+              </>
+            )}
+            <img
+              src={CAPTURE_ENEMY_SRC}
+              alt=""
+              aria-hidden="true"
+              className={PIECE_IMG_CLASS}
+              style={{ width: "100%" }}
+            />
+          </picture>
         );
       })}
 

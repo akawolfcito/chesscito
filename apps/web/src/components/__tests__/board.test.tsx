@@ -39,6 +39,56 @@ describe("<Board>", () => {
     expect(target).toBeInTheDocument();
   });
 
+  it("renders an enemy piece on each captureTargets square in practice mode", () => {
+    // Regression: pawn-7 (blocked ahead → capture diagonally). The capture
+    // square is distinct from the goal, so nothing marked it in practice mode
+    // and the pawn's diagonal move dot landed on an EMPTY square — teaching
+    // that pawns can move diagonally without capturing. The capture square
+    // must show a capturable enemy piece.
+    const { container } = render(
+      <Board
+        pieceType="pawn"
+        startPosition={{ file: 4, rank: 1 }}
+        targetPosition={{ file: 5, rank: 4 }}
+        obstacles={[{ file: 4, rank: 2 }]}
+        captureTargets={[{ file: 5, rank: 2 }]}
+        isCapture
+      />
+    );
+    const enemies = container.querySelectorAll(".is-capture-enemy");
+    expect(enemies).toHaveLength(1);
+    expect(enemies[0].querySelector("img")?.getAttribute("src")).toContain("b-");
+  });
+
+  it("hides a captured enemy once the pawn has reached its square", () => {
+    // Pawn already sitting on the capture square (it captured and is advancing
+    // up that file): the enemy must be gone, not re-drawn behind the pawn.
+    const { container } = render(
+      <Board
+        pieceType="pawn"
+        startPosition={{ file: 5, rank: 2 }}
+        targetPosition={{ file: 5, rank: 4 }}
+        captureTargets={[{ file: 5, rank: 2 }]}
+        isCapture
+      />
+    );
+    expect(container.querySelectorAll(".is-capture-enemy")).toHaveLength(0);
+  });
+
+  it("paints the star (not an enemy) when a captureTarget is the goal square", () => {
+    // User rule: if a capture square coincides with the star, the star wins.
+    const { container } = render(
+      <Board
+        pieceType="pawn"
+        startPosition={{ file: 4, rank: 1 }}
+        targetPosition={{ file: 5, rank: 2 }}
+        captureTargets={[{ file: 5, rank: 2 }]}
+        isCapture
+      />
+    );
+    expect(container.querySelectorAll(".is-capture-enemy")).toHaveLength(0);
+  });
+
   // ─── Tap-hint (red-team P0-P3 — iPhone field report 2026-05-31) ──────────
 
   describe("tap-piece hint", () => {
