@@ -139,6 +139,17 @@ export type ThemeAssetKey =
   | "pro-sheet.header-icon"
   | "pro-sheet.subscription-panel"
   | "pro-sheet.journal"
+  // long tail — small surfaces (1–2 assets each)
+  | "daily.bg-session"
+  | "daily.welldone"
+  | "peones.hint"
+  | "peones.piece"
+  | "welcome.achievement-1day"
+  | "landing.pre-chess"
+  | "tactics.daily-exercise"
+  | "hud.crown"
+  | "hud.trophy"
+  | "pro-mission.sms"
   // board — batch #1 (catalog visibility; consumers still read these paths
   // directly, see docs/superpowers/plans/2026-07-18-theme-builder-board-slots-plan.md)
   | "board.frame"
@@ -501,6 +512,46 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "pro-sheet.journal": {
         default: "/art/chesscito-pro/journal-chesscito-pro",
         usedIn: ["PRO sheet — journal illustration"],
+      },
+      "daily.bg-session": {
+        default: "/art/bg-sesion-great",
+        usedIn: ["Daily — great session background"],
+      },
+      "daily.welldone": {
+        default: "/art/welldone-sms",
+        usedIn: ["Daily — well-done message"],
+      },
+      "peones.hint": {
+        default: "/art/new-icons-chesscito/hint-icon-v1",
+        usedIn: ["Peones — hint icon"],
+      },
+      "peones.piece": {
+        default: "/art/new-icons-chesscito/peon-piece-v1",
+        usedIn: ["Peones — pawn piece icon"],
+      },
+      "welcome.achievement-1day": {
+        default: "/art/achievements/1day-focus",
+        usedIn: ["Welcome package — 1-day focus achievement"],
+      },
+      "landing.pre-chess": {
+        default: "/art/landing/pre-chess-exercise",
+        usedIn: ["Landing — pre-chess exercise"],
+      },
+      "tactics.daily-exercise": {
+        default: "/art/new-icons-chesscito/ejercicio-diario-chess",
+        usedIn: ["Tactics — daily exercise icon"],
+      },
+      "hud.crown": {
+        default: "/art/redesign/icons/crown",
+        usedIn: ["HUD — crown icon"],
+      },
+      "hud.trophy": {
+        default: "/art/redesign/icons/trophy",
+        usedIn: ["HUD — trophy icon"],
+      },
+      "pro-mission.sms": {
+        default: "/art/scene-rooted/sms-chesscito",
+        usedIn: ["Pro mission — SMS illustration"],
       },
       // The playable board's frame — the decorative border around the live
       // GameBoard (1040×1028, measured inner opening in game-board.tsx). The
