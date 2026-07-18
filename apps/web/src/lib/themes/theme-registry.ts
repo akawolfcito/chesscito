@@ -45,7 +45,18 @@ export type ThemeAssetEntry = {
  *  of `useThemeAsset` — typos become compile errors. */
 export type ThemeAssetKey =
   | "hub.portal"
-  | "hub.avatar";
+  | "hub.avatar"
+  // board — batch #1 (catalog visibility; consumers still read these paths
+  // directly, see docs/superpowers/plans/2026-07-18-theme-builder-board-slots-plan.md)
+  | "board.background"
+  | "board.tile.light"
+  | "board.tile.dark"
+  | "board.piece.rook"
+  | "board.piece.bishop"
+  | "board.piece.knight"
+  | "board.piece.pawn"
+  | "board.piece.queen"
+  | "board.piece.king";
 
 export type ThemeDefinition = {
   /** Stable theme id — used as Shop itemId once monetized + as the
@@ -75,7 +86,43 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "hub.avatar": {
         default: "/art/scene-rooted/avatar-chesscito",
         pro: "/art/hub/chesscito-avatar-new-light",
-        usedIn: ["Hub — KingdomAnchor avatar"],
+        usedIn: ["Hub — KingdomAnchor avatar", "Exercises — avatar"],
+      },
+      "board.background": {
+        default: "/art/chesscito-board",
+        usedIn: ["Arena board", "Exercises board"],
+      },
+      "board.tile.light": {
+        default: "/art/board/casilla-clara",
+        usedIn: ["Board — light squares"],
+      },
+      "board.tile.dark": {
+        default: "/art/board/casilla-oscura",
+        usedIn: ["Board — dark squares"],
+      },
+      "board.piece.rook": {
+        default: "/art/redesign/pieces/w-rook",
+        usedIn: ["Board — rook"],
+      },
+      "board.piece.bishop": {
+        default: "/art/redesign/pieces/w-bishop",
+        usedIn: ["Board — bishop"],
+      },
+      "board.piece.knight": {
+        default: "/art/redesign/pieces/w-knight",
+        usedIn: ["Board — knight"],
+      },
+      "board.piece.pawn": {
+        default: "/art/redesign/pieces/w-pawn",
+        usedIn: ["Board — pawn"],
+      },
+      "board.piece.queen": {
+        default: "/art/redesign/pieces/w-queen",
+        usedIn: ["Board — queen"],
+      },
+      "board.piece.king": {
+        default: "/art/redesign/pieces/w-king",
+        usedIn: ["Board — king"],
       },
     },
   },

@@ -6,12 +6,25 @@ import { getThemeCatalog } from "@/lib/themes/catalog-server";
 import { listThemeIds } from "@/lib/themes/catalog";
 import { DEFAULT_THEME_ID } from "@/lib/themes/theme-registry";
 
-import type { ResolvedAsset } from "@/lib/themes/catalog";
+import type { ResolvedAsset, SlotCatalogEntry } from "@/lib/themes/catalog";
 import { UploadControl } from "./upload-control";
 
 export const dynamic = "force-dynamic";
 
 type SearchParams = { [key: string]: string | string[] | undefined };
+
+/** Group slots by their category — the key prefix before the first dot
+ *  (`board.piece.rook` → `board`). Preserves first-seen order. */
+function groupByCategory(slots: SlotCatalogEntry[]): [string, SlotCatalogEntry[]][] {
+  const groups = new Map<string, SlotCatalogEntry[]>();
+  for (const slot of slots) {
+    const category = slot.key.split(".")[0];
+    const bucket = groups.get(category);
+    if (bucket) bucket.push(slot);
+    else groups.set(category, [slot]);
+  }
+  return [...groups.entries()];
+}
 
 function dims(a: ResolvedAsset): string {
   if (a.width == null || a.height == null) return "— missing on disk —";
@@ -53,6 +66,11 @@ function VariantCell({
           alt={`${label} — ${asset.basename}`}
           className="h-40 w-full rounded-lg border border-neutral-700 bg-neutral-800 object-contain"
         />
+      ) : muted ? (
+        // Intentional: this variant reuses default — not an error.
+        <div className="flex h-40 w-full items-center justify-center rounded-lg border border-dashed border-neutral-700 bg-neutral-800/40 text-xs text-neutral-500">
+          ↳ reuses default
+        </div>
       ) : (
         <div className="flex h-40 w-full items-center justify-center rounded-lg border border-dashed border-red-500/50 bg-red-500/5 text-xs text-red-300">
           no file
@@ -125,42 +143,54 @@ export default async function ThemeBuilderDevPage({
             <span className="font-semibold text-neutral-200">{catalog.name}</span>{" "}
             · {catalog.slots.length} slot{catalog.slots.length === 1 ? "" : "s"}
           </div>
-          <div className="space-y-5">
-            {catalog.slots.map((slot) => (
-              <section
-                key={slot.key}
-                className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4"
-              >
-                <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-                  <code className="text-sm font-bold text-emerald-300">
-                    {slot.key}
-                  </code>
-                  <span className="text-xs text-neutral-500">
-                    {slot.usedIn.length ? slot.usedIn.join(" · ") : "usedIn: —"}
+          <div className="space-y-8">
+            {groupByCategory(catalog.slots).map(([category, slots]) => (
+              <div key={category}>
+                <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-emerald-400">
+                  {category}{" "}
+                  <span className="ml-1 font-normal text-neutral-600">
+                    {slots.length}
                   </span>
+                </h2>
+                <div className="space-y-5">
+                  {slots.map((slot) => (
+                    <section
+                      key={slot.key}
+                      className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4"
+                    >
+                      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+                        <code className="text-sm font-bold text-emerald-300">
+                          {slot.key}
+                        </code>
+                        <span className="text-xs text-neutral-500">
+                          {slot.usedIn.length ? slot.usedIn.join(" · ") : "usedIn: —"}
+                        </span>
+                      </div>
+                      <div className="flex gap-4">
+                        <VariantCell
+                          label="default"
+                          asset={slot.default}
+                          themeId={catalog.id}
+                          slotKey={slot.key}
+                          variant="default"
+                          canUpload
+                          hasBackup={slot.default.hasBackup}
+                        />
+                        <VariantCell
+                          label="pro"
+                          asset={slot.pro}
+                          muted={slot.proReusesDefault ? "reuses default" : undefined}
+                          themeId={catalog.id}
+                          slotKey={slot.key}
+                          variant="pro"
+                          canUpload={!slot.proReusesDefault}
+                          hasBackup={slot.pro?.hasBackup ?? false}
+                        />
+                      </div>
+                    </section>
+                  ))}
                 </div>
-                <div className="flex gap-4">
-                  <VariantCell
-                    label="default"
-                    asset={slot.default}
-                    themeId={catalog.id}
-                    slotKey={slot.key}
-                    variant="default"
-                    canUpload
-                    hasBackup={slot.default.hasBackup}
-                  />
-                  <VariantCell
-                    label="pro"
-                    asset={slot.pro}
-                    muted={slot.proReusesDefault ? "reuses default" : undefined}
-                    themeId={catalog.id}
-                    slotKey={slot.key}
-                    variant="pro"
-                    canUpload={!slot.proReusesDefault}
-                    hasBackup={slot.pro?.hasBackup ?? false}
-                  />
-                </div>
-              </section>
+              </div>
             ))}
           </div>
         </>

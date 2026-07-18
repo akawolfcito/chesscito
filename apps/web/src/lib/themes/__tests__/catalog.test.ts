@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { buildThemeCatalog, type AssetResolver } from "../catalog";
+import { THEMES } from "../theme-registry";
 
 /** A resolver stub that pretends every basename resolves to a .png at
  *  a fixed size, so the tests exercise orchestration, not the fs/sharp
@@ -38,7 +39,9 @@ describe("buildThemeCatalog", () => {
     const catalog = await buildThemeCatalog("candy-forest", okResolver);
     const keys = catalog?.slots.map((s) => s.key);
     expect(keys).toEqual(expect.arrayContaining(["hub.portal", "hub.avatar"]));
-    expect(catalog?.slots).toHaveLength(2);
+    // Derived from the registry so registering new slots never breaks this.
+    const registered = Object.keys(THEMES["candy-forest"].assets);
+    expect(catalog?.slots).toHaveLength(registered.length);
   });
 
   it("resolves the default variant and attaches its basename", async () => {

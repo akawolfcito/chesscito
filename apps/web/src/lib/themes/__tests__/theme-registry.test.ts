@@ -8,6 +8,15 @@ import {
 const REQUIRED_ASSET_KEYS: readonly ThemeAssetKey[] = [
   "hub.portal",
   "hub.avatar",
+  "board.background",
+  "board.tile.light",
+  "board.tile.dark",
+  "board.piece.rook",
+  "board.piece.bishop",
+  "board.piece.knight",
+  "board.piece.pawn",
+  "board.piece.queen",
+  "board.piece.king",
 ];
 
 describe("theme-registry", () => {
