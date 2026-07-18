@@ -337,89 +337,89 @@
     "learningObjective": "The player can recognise the knight's L-shaped jump — two squares one way, one across."
   },
   {
-    "id": "knight-2",
-    "piece": "knight",
-    "fen": "8/8/8/8/8/8/8/N7 w - - 0 1",
-    "target": "b3",
-    "mover": "a1",
-    "tier": "easy",
-    "tags": [
-      "knight-l-shape",
-      "corner-escape"
-    ],
-    "order": 1,
-    "principle": "corner-reach",
     "title": "Out of the corner",
     "playerPrompt": "In the corner the knight has just two jumps. Pick the one to the star.",
-    "learningObjective": "The player understands the knight's reach depends on where it stands, and shrinks near an edge."
-  },
-  {
-    "id": "knight-3",
+    "id": "knight-2",
     "piece": "knight",
-    "fen": "8/8/8/8/8/8/8/N7 w - - 0 1",
-    "target": "c2",
-    "mover": "a1",
+    "fen": "8/8/7N/8/8/8/8/8 w - - 0 1",
+    "target": "f5",
+    "mover": "h6",
     "tier": "easy",
     "tags": [
       "knight-l-shape",
       "corner-escape"
     ],
-    "order": 2,
-    "principle": "corner-both-jumps",
-    "title": "The other corner jump",
-    "playerPrompt": "Same corner, the knight's other jump. Take it.",
-    "learningObjective": "The player learns to see all of a knight's jumps from a square, not just the first one."
+    "principle": "corner-reach",
+    "learningObjective": "The player understands the knight's reach depends on where it stands, and shrinks near an edge.",
+    "order": 1
   },
   {
+    "title": "The other corner jump",
+    "playerPrompt": "Same corner, the knight's other jump. Take it.",
+    "id": "knight-3",
+    "piece": "knight",
+    "fen": "1N6/8/8/8/8/8/8/8 w - - 0 1",
+    "target": "f6",
+    "mover": "b8",
+    "tier": "easy",
+    "tags": [
+      "knight-l-shape",
+      "corner-escape"
+    ],
+    "principle": "corner-both-jumps",
+    "learningObjective": "The player learns to see all of a knight's jumps from a square, not just the first one.",
+    "order": 2
+  },
+  {
+    "title": "Two hops out",
+    "playerPrompt": "No single jump reaches it. Chain two.",
     "id": "knight-4",
     "piece": "knight",
-    "fen": "8/8/8/8/8/8/8/N7 w - - 0 1",
+    "fen": "3N4/8/8/8/8/8/8/8 w - - 0 1",
     "target": "d2",
-    "mover": "a1",
+    "mover": "d8",
     "tier": "easy",
     "tags": [
       "knight-l-shape"
     ],
-    "order": 3,
     "principle": "two-hop",
-    "title": "Two hops out",
-    "playerPrompt": "No single jump reaches it. Chain two.",
-    "learningObjective": "The player learns to build a knight route out of more than one hop."
+    "learningObjective": "The player learns to build a knight route out of more than one hop.",
+    "order": 3
   },
   {
+    "title": "Into the center",
+    "playerPrompt": "Head out of the corner toward the middle, hop by hop.",
     "id": "knight-5",
     "piece": "knight",
-    "fen": "8/8/8/8/8/8/8/N7 w - - 0 1",
-    "target": "e4",
-    "mover": "a1",
+    "fen": "N7/8/8/8/8/8/8/8 w - - 0 1",
+    "target": "g3",
+    "mover": "a8",
     "tier": "medium",
     "tags": [
       "corner-escape",
       "center-control",
       "knight-l-shape"
     ],
-    "order": 4,
     "principle": "reach-the-center",
-    "title": "Into the center",
-    "playerPrompt": "Head out of the corner toward the middle, hop by hop.",
-    "learningObjective": "The player learns to steer the knight toward the center, where it has the most jumps."
+    "learningObjective": "The player learns to steer the knight toward the center, where it has the most jumps.",
+    "order": 4
   },
   {
+    "title": "The long way by leaps",
+    "playerPrompt": "The star is far. Link the jumps to reach it.",
     "id": "knight-6",
     "piece": "knight",
-    "fen": "8/8/8/8/8/8/8/N7 w - - 0 1",
-    "target": "g4",
-    "mover": "a1",
+    "fen": "8/8/8/8/8/8/8/6N1 w - - 0 1",
+    "target": "a6",
+    "mover": "g1",
     "tier": "medium",
     "tags": [
       "knight-l-shape",
       "long-route"
     ],
-    "order": 5,
     "principle": "long-route",
-    "title": "The long way by leaps",
-    "playerPrompt": "The star is far. Link the jumps to reach it.",
-    "learningObjective": "The player learns to cover distance by chaining several knight hops."
+    "learningObjective": "The player learns to cover distance by chaining several knight hops.",
+    "order": 5
   },
   {
     "id": "knight-7",
@@ -439,37 +439,37 @@
     "learningObjective": "The player learns to look ahead and plan a knight route instead of hopping one move at a time."
   },
   {
+    "title": "The knight jumps over",
+    "playerPrompt": "Other pieces get blocked — the knight doesn't. Leap right over them.",
     "id": "knight-8",
     "piece": "knight",
-    "fen": "8/8/8/8/1NN5/3N4/1N1N4/8 w - - 0 1",
-    "target": "d4",
-    "mover": "b2",
+    "fen": "8/3N4/NNNNN3/3N4/5NN1/5NN1/5N2/8 w - - 0 1",
+    "target": "c7",
+    "mover": "g3",
     "tier": "medium",
     "tags": [
       "jump-over",
       "center-control"
     ],
-    "order": 7,
     "principle": "jump-over",
-    "title": "The knight jumps over",
-    "playerPrompt": "Other pieces get blocked — the knight doesn't. Leap right over them.",
-    "learningObjective": "The player learns the knight's signature power: it is the only piece that jumps over others, so blockers never stop it."
+    "learningObjective": "The player learns the knight's signature power: it is the only piece that jumps over others, so blockers never stop it.",
+    "order": 7
   },
   {
+    "title": "Across the board",
+    "playerPrompt": "From the corner, reach deep into the far side. Chain the hops.",
     "id": "knight-9",
     "piece": "knight",
-    "fen": "8/8/8/8/8/8/8/N7 w - - 0 1",
-    "target": "f6",
-    "mover": "a1",
+    "fen": "8/8/8/8/3N4/8/8/8 w - - 0 1",
+    "target": "b6",
+    "mover": "d4",
     "tier": "medium",
     "tags": [
       "long-route"
     ],
-    "order": 8,
     "principle": "long-route-advanced",
-    "title": "Across the board",
-    "playerPrompt": "From the corner, reach deep into the far side. Chain the hops.",
-    "learningObjective": "The player gains confidence planning a long knight journey across open space."
+    "learningObjective": "The player gains confidence planning a long knight journey across open space.",
+    "order": 8
   },
   {
     "id": "knight-10",

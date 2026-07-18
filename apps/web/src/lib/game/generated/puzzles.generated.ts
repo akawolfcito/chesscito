@@ -891,12 +891,12 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "id": "knight-2",
       "optimalMoves": 1,
       "startPos": {
-        "file": 0,
-        "rank": 0
+        "file": 7,
+        "rank": 5
       },
       "targetPos": {
-        "file": 1,
-        "rank": 2
+        "file": 5,
+        "rank": 4
       },
       "tier": "easy",
       "tags": [
@@ -910,14 +910,14 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "knight-3",
-      "optimalMoves": 1,
+      "optimalMoves": 2,
       "startPos": {
-        "file": 0,
-        "rank": 0
+        "file": 1,
+        "rank": 7
       },
       "targetPos": {
-        "file": 2,
-        "rank": 1
+        "file": 5,
+        "rank": 5
       },
       "tier": "easy",
       "tags": [
@@ -931,10 +931,10 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "knight-4",
-      "optimalMoves": 2,
+      "optimalMoves": 4,
       "startPos": {
-        "file": 0,
-        "rank": 0
+        "file": 3,
+        "rank": 7
       },
       "targetPos": {
         "file": 3,
@@ -951,14 +951,14 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "knight-5",
-      "optimalMoves": 3,
+      "optimalMoves": 5,
       "startPos": {
         "file": 0,
-        "rank": 0
+        "rank": 7
       },
       "targetPos": {
-        "file": 4,
-        "rank": 3
+        "file": 6,
+        "rank": 2
       },
       "tier": "medium",
       "tags": [
@@ -973,14 +973,14 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "knight-6",
-      "optimalMoves": 3,
+      "optimalMoves": 5,
       "startPos": {
-        "file": 0,
+        "file": 6,
         "rank": 0
       },
       "targetPos": {
-        "file": 6,
-        "rank": 3
+        "file": 0,
+        "rank": 5
       },
       "tier": "medium",
       "tags": [
@@ -1017,28 +1017,56 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "id": "knight-8",
       "optimalMoves": 4,
       "startPos": {
-        "file": 1,
-        "rank": 1
+        "file": 6,
+        "rank": 2
       },
       "targetPos": {
-        "file": 3,
-        "rank": 3
+        "file": 2,
+        "rank": 6
       },
       "obstacles": [
         {
+          "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 0,
+          "rank": 5
+        },
+        {
           "file": 1,
-          "rank": 3
+          "rank": 5
         },
         {
           "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 3,
+          "rank": 5
+        },
+        {
+          "file": 4,
+          "rank": 5
+        },
+        {
+          "file": 3,
+          "rank": 4
+        },
+        {
+          "file": 5,
           "rank": 3
         },
         {
-          "file": 3,
+          "file": 6,
+          "rank": 3
+        },
+        {
+          "file": 5,
           "rank": 2
         },
         {
-          "file": 3,
+          "file": 5,
           "rank": 1
         }
       ],
@@ -1056,11 +1084,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "id": "knight-9",
       "optimalMoves": 4,
       "startPos": {
-        "file": 0,
-        "rank": 0
+        "file": 3,
+        "rank": 3
       },
       "targetPos": {
-        "file": 5,
+        "file": 1,
         "rank": 5
       },
       "tier": "medium",
@@ -2542,13 +2570,13 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
   "knight": [
     {
       "id": "knight-lab-1",
-      "optimalMoves": 3,
+      "optimalMoves": 4,
       "startPos": {
-        "file": 0,
+        "file": 7,
         "rank": 0
       },
       "targetPos": {
-        "file": 4,
+        "file": 2,
         "rank": 3
       },
       "obstacles": [
@@ -2594,6 +2622,37 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
       "id": "knight-lab-3",
       "optimalMoves": 6,
       "startPos": {
+        "file": 7,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 0,
+        "rank": 7
+      },
+      "obstacles": [
+        {
+          "file": 5,
+          "rank": 6
+        },
+        {
+          "file": 4,
+          "rank": 5
+        },
+        {
+          "file": 3,
+          "rank": 4
+        },
+        {
+          "file": 1,
+          "rank": 2
+        }
+      ],
+      "tier": "medium"
+    },
+    {
+      "id": "knight-lab-4",
+      "optimalMoves": 6,
+      "startPos": {
         "file": 0,
         "rank": 0
       },
@@ -2603,42 +2662,23 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
       },
       "obstacles": [
         {
-          "file": 6,
+          "file": 4,
           "rank": 5
         },
         {
-          "file": 2,
+          "file": 5,
           "rank": 4
         },
         {
-          "file": 3,
-          "rank": 0
-        }
-      ],
-      "tier": "medium"
-    },
-    {
-      "id": "knight-lab-4",
-      "optimalMoves": 4,
-      "startPos": {
-        "file": 0,
-        "rank": 0
-      },
-      "targetPos": {
-        "file": 5,
-        "rank": 5
-      },
-      "obstacles": [
-        {
-          "file": 3,
+          "file": 1,
           "rank": 3
         },
         {
-          "file": 4,
+          "file": 2,
           "rank": 2
         },
         {
-          "file": 2,
+          "file": 3,
           "rank": 1
         }
       ],
@@ -2657,16 +2697,44 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
       },
       "obstacles": [
         {
+          "file": 3,
+          "rank": 5
+        },
+        {
           "file": 4,
           "rank": 5
         },
         {
-          "file": 6,
+          "file": 2,
           "rank": 4
         },
         {
-          "file": 2,
+          "file": 5,
+          "rank": 4
+        },
+        {
+          "file": 1,
           "rank": 3
+        },
+        {
+          "file": 6,
+          "rank": 3
+        },
+        {
+          "file": 2,
+          "rank": 2
+        },
+        {
+          "file": 5,
+          "rank": 2
+        },
+        {
+          "file": 3,
+          "rank": 1
+        },
+        {
+          "file": 4,
+          "rank": 1
         }
       ],
       "tier": "medium"
@@ -3126,79 +3194,95 @@ export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = {
   "knight": [
     {
       "id": "knight-tour-1",
-      "optimalMoves": 23,
+      "optimalMoves": 22,
       "startPos": {
-        "file": 0,
-        "rank": 0
+        "file": 6,
+        "rank": 1
       },
       "targetPos": {
-        "file": 0,
-        "rank": 0
+        "file": 6,
+        "rank": 1
       },
       "obstacles": [
         {
+          "file": 5,
+          "rank": 6
+        },
+        {
           "file": 0,
-          "rank": 4
+          "rank": 5
         },
         {
           "file": 1,
-          "rank": 4
+          "rank": 5
+        },
+        {
+          "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 3,
+          "rank": 5
+        },
+        {
+          "file": 4,
+          "rank": 5
+        },
+        {
+          "file": 5,
+          "rank": 5
+        },
+        {
+          "file": 6,
+          "rank": 5
+        },
+        {
+          "file": 7,
+          "rank": 5
         },
         {
           "file": 2,
           "rank": 4
         },
         {
-          "file": 3,
-          "rank": 4
-        },
-        {
-          "file": 4,
-          "rank": 4
-        },
-        {
           "file": 5,
-          "rank": 4
-        },
-        {
-          "file": 6,
-          "rank": 4
-        },
-        {
-          "file": 7,
-          "rank": 4
+          "rank": 3
         },
         {
           "file": 0,
-          "rank": 3
+          "rank": 2
         },
         {
           "file": 1,
-          "rank": 3
+          "rank": 2
         },
         {
           "file": 2,
-          "rank": 3
+          "rank": 2
         },
         {
           "file": 3,
-          "rank": 3
+          "rank": 2
         },
         {
           "file": 4,
-          "rank": 3
+          "rank": 2
         },
         {
           "file": 5,
-          "rank": 3
+          "rank": 2
         },
         {
           "file": 6,
-          "rank": 3
+          "rank": 2
         },
         {
           "file": 7,
-          "rank": 3
+          "rank": 2
+        },
+        {
+          "file": 1,
+          "rank": 1
         }
       ],
       "tier": "easy",
@@ -3208,26 +3292,18 @@ export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "knight-tour-2",
-      "optimalMoves": 39,
+      "optimalMoves": 15,
       "startPos": {
-        "file": 0,
-        "rank": 0
+        "file": 7,
+        "rank": 3
       },
       "targetPos": {
-        "file": 0,
-        "rank": 0
+        "file": 7,
+        "rank": 3
       },
       "obstacles": [
         {
-          "file": 0,
-          "rank": 6
-        },
-        {
           "file": 1,
-          "rank": 6
-        },
-        {
-          "file": 2,
           "rank": 6
         },
         {
@@ -3235,15 +3311,7 @@ export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = {
           "rank": 6
         },
         {
-          "file": 4,
-          "rank": 6
-        },
-        {
           "file": 5,
-          "rank": 6
-        },
-        {
-          "file": 6,
           "rank": 6
         },
         {
@@ -3281,6 +3349,54 @@ export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = {
         {
           "file": 7,
           "rank": 5
+        },
+        {
+          "file": 0,
+          "rank": 2
+        },
+        {
+          "file": 1,
+          "rank": 2
+        },
+        {
+          "file": 2,
+          "rank": 2
+        },
+        {
+          "file": 3,
+          "rank": 2
+        },
+        {
+          "file": 4,
+          "rank": 2
+        },
+        {
+          "file": 5,
+          "rank": 2
+        },
+        {
+          "file": 6,
+          "rank": 2
+        },
+        {
+          "file": 7,
+          "rank": 2
+        },
+        {
+          "file": 0,
+          "rank": 1
+        },
+        {
+          "file": 2,
+          "rank": 1
+        },
+        {
+          "file": 4,
+          "rank": 1
+        },
+        {
+          "file": 6,
+          "rank": 1
         }
       ],
       "tier": "medium",
@@ -3290,7 +3406,7 @@ export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "knight-tour-3",
-      "optimalMoves": 47,
+      "optimalMoves": 25,
       "startPos": {
         "file": 0,
         "rank": 0
@@ -3337,32 +3453,108 @@ export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = {
           "rank": 6
         },
         {
-          "file": 1,
+          "file": 7,
           "rank": 6
+        },
+        {
+          "file": 0,
+          "rank": 5
         },
         {
           "file": 2,
-          "rank": 6
+          "rank": 5
         },
         {
           "file": 3,
-          "rank": 6
+          "rank": 5
         },
         {
           "file": 4,
-          "rank": 6
+          "rank": 5
         },
         {
           "file": 5,
-          "rank": 6
-        },
-        {
-          "file": 6,
-          "rank": 6
+          "rank": 5
         },
         {
           "file": 7,
-          "rank": 6
+          "rank": 5
+        },
+        {
+          "file": 0,
+          "rank": 4
+        },
+        {
+          "file": 2,
+          "rank": 4
+        },
+        {
+          "file": 5,
+          "rank": 4
+        },
+        {
+          "file": 7,
+          "rank": 4
+        },
+        {
+          "file": 0,
+          "rank": 3
+        },
+        {
+          "file": 2,
+          "rank": 3
+        },
+        {
+          "file": 4,
+          "rank": 3
+        },
+        {
+          "file": 5,
+          "rank": 3
+        },
+        {
+          "file": 7,
+          "rank": 3
+        },
+        {
+          "file": 0,
+          "rank": 2
+        },
+        {
+          "file": 2,
+          "rank": 2
+        },
+        {
+          "file": 7,
+          "rank": 2
+        },
+        {
+          "file": 0,
+          "rank": 1
+        },
+        {
+          "file": 2,
+          "rank": 1
+        },
+        {
+          "file": 3,
+          "rank": 1
+        },
+        {
+          "file": 4,
+          "rank": 1
+        },
+        {
+          "file": 5,
+          "rank": 1
+        },
+        {
+          "file": 6,
+          "rank": 1
+        },
+        {
+          "file": 7,
+          "rank": 1
         }
       ],
       "tier": "hard",
