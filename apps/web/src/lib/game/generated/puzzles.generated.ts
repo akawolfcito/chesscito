@@ -522,12 +522,12 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "id": "bishop-2",
       "optimalMoves": 1,
       "startPos": {
-        "file": 7,
-        "rank": 0
-      },
-      "targetPos": {
         "file": 0,
         "rank": 7
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 0
       },
       "tier": "easy",
       "tags": [
@@ -564,8 +564,8 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "id": "bishop-4",
       "optimalMoves": 2,
       "startPos": {
-        "file": 0,
-        "rank": 0
+        "file": 5,
+        "rank": 7
       },
       "targetPos": {
         "file": 6,
@@ -585,11 +585,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "id": "bishop-5",
       "optimalMoves": 2,
       "startPos": {
-        "file": 2,
-        "rank": 2
+        "file": 6,
+        "rank": 1
       },
       "targetPos": {
-        "file": 6,
+        "file": 1,
         "rank": 2
       },
       "tier": "easy",
@@ -603,14 +603,14 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "bishop-6",
-      "optimalMoves": 3,
+      "optimalMoves": 5,
       "startPos": {
-        "file": 1,
-        "rank": 1
+        "file": 0,
+        "rank": 0
       },
       "targetPos": {
-        "file": 5,
-        "rank": 1
+        "file": 7,
+        "rank": 7
       },
       "obstacles": [
         {
@@ -630,10 +630,10 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "bishop-7",
-      "optimalMoves": 3,
+      "optimalMoves": 4,
       "startPos": {
-        "file": 2,
-        "rank": 2
+        "file": 1,
+        "rank": 7
       },
       "targetPos": {
         "file": 6,
@@ -642,10 +642,62 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "obstacles": [
         {
           "file": 4,
+          "rank": 6
+        },
+        {
+          "file": 0,
+          "rank": 5
+        },
+        {
+          "file": 4,
+          "rank": 5
+        },
+        {
+          "file": 7,
+          "rank": 5
+        },
+        {
+          "file": 0,
           "rank": 4
         },
         {
           "file": 4,
+          "rank": 4
+        },
+        {
+          "file": 7,
+          "rank": 4
+        },
+        {
+          "file": 0,
+          "rank": 3
+        },
+        {
+          "file": 2,
+          "rank": 3
+        },
+        {
+          "file": 7,
+          "rank": 3
+        },
+        {
+          "file": 2,
+          "rank": 2
+        },
+        {
+          "file": 5,
+          "rank": 2
+        },
+        {
+          "file": 2,
+          "rank": 1
+        },
+        {
+          "file": 5,
+          "rank": 1
+        },
+        {
+          "file": 5,
           "rank": 0
         }
       ],
@@ -661,7 +713,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "bishop-8",
-      "optimalMoves": 4,
+      "optimalMoves": 8,
       "startPos": {
         "file": 0,
         "rank": 0
@@ -673,7 +725,43 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "obstacles": [
         {
           "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 5,
+          "rank": 5
+        },
+        {
+          "file": 2,
+          "rank": 4
+        },
+        {
+          "file": 5,
+          "rank": 4
+        },
+        {
+          "file": 2,
           "rank": 3
+        },
+        {
+          "file": 5,
+          "rank": 3
+        },
+        {
+          "file": 2,
+          "rank": 2
+        },
+        {
+          "file": 5,
+          "rank": 2
+        },
+        {
+          "file": 4,
+          "rank": 1
         }
       ],
       "tier": "medium",
@@ -689,19 +777,79 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "bishop-10",
-      "optimalMoves": 5,
+      "optimalMoves": 7,
       "startPos": {
-        "file": 0,
-        "rank": 0
+        "file": 6,
+        "rank": 1
       },
       "targetPos": {
-        "file": 7,
-        "rank": 7
+        "file": 1,
+        "rank": 6
       },
       "obstacles": [
         {
+          "file": 2,
+          "rank": 6
+        },
+        {
           "file": 4,
-          "rank": 4
+          "rank": 6
+        },
+        {
+          "file": 6,
+          "rank": 6
+        },
+        {
+          "file": 1,
+          "rank": 5
+        },
+        {
+          "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 3,
+          "rank": 5
+        },
+        {
+          "file": 4,
+          "rank": 5
+        },
+        {
+          "file": 5,
+          "rank": 5
+        },
+        {
+          "file": 2,
+          "rank": 2
+        },
+        {
+          "file": 3,
+          "rank": 2
+        },
+        {
+          "file": 4,
+          "rank": 2
+        },
+        {
+          "file": 5,
+          "rank": 2
+        },
+        {
+          "file": 6,
+          "rank": 2
+        },
+        {
+          "file": 1,
+          "rank": 1
+        },
+        {
+          "file": 3,
+          "rank": 1
+        },
+        {
+          "file": 5,
+          "rank": 1
         }
       ],
       "tier": "medium",
@@ -2218,23 +2366,63 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
   "bishop": [
     {
       "id": "bishop-lab-3",
-      "optimalMoves": 3,
+      "optimalMoves": 5,
       "startPos": {
-        "file": 2,
-        "rank": 0
+        "file": 1,
+        "rank": 7
       },
       "targetPos": {
         "file": 7,
-        "rank": 5
+        "rank": 7
       },
       "obstacles": [
         {
-          "file": 6,
-          "rank": 4
+          "file": 1,
+          "rank": 6
+        },
+        {
+          "file": 2,
+          "rank": 6
         },
         {
           "file": 4,
+          "rank": 5
+        },
+        {
+          "file": 5,
+          "rank": 5
+        },
+        {
+          "file": 5,
+          "rank": 4
+        },
+        {
+          "file": 2,
+          "rank": 3
+        },
+        {
+          "file": 2,
           "rank": 2
+        },
+        {
+          "file": 3,
+          "rank": 2
+        },
+        {
+          "file": 5,
+          "rank": 1
+        },
+        {
+          "file": 6,
+          "rank": 1
+        },
+        {
+          "file": 0,
+          "rank": 0
+        },
+        {
+          "file": 6,
+          "rank": 0
         }
       ],
       "tier": "medium"
@@ -2655,8 +2843,8 @@ export const GENERATED_DIAGONAL_RUN: Record<PieceId, Exercise[]> = {
       "id": "bishop-run-1",
       "optimalMoves": 1,
       "startPos": {
-        "file": 0,
-        "rank": 0
+        "file": 2,
+        "rank": 6
       },
       "targetPos": {
         "file": 6,
@@ -2664,8 +2852,24 @@ export const GENERATED_DIAGONAL_RUN: Record<PieceId, Exercise[]> = {
       },
       "obstacles": [
         {
+          "file": 2,
+          "rank": 5
+        },
+        {
           "file": 4,
+          "rank": 5
+        },
+        {
+          "file": 3,
           "rank": 4
+        },
+        {
+          "file": 2,
+          "rank": 3
+        },
+        {
+          "file": 4,
+          "rank": 3
         }
       ],
       "tier": "medium",

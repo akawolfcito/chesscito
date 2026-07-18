@@ -182,20 +182,20 @@
     "order": 0
   },
   {
+    "title": "The other diagonal",
+    "playerPrompt": "This bishop lives on light squares and always will. Take its diagonal to the star.",
     "id": "bishop-2",
     "piece": "bishop",
-    "fen": "8/8/8/8/8/8/8/7B w - - 0 1",
-    "target": "a8",
-    "mover": "h1",
+    "fen": "B7/8/8/8/8/8/8/8 w - - 0 1",
+    "target": "h1",
+    "mover": "a8",
     "tier": "easy",
     "tags": [
       "long-diagonal",
       "same-color"
     ],
-    "title": "The other diagonal",
     "principle": "both-diagonals",
     "learningObjective": "The bishop uses both diagonal directions. This one starts on a light square and, like every bishop, never leaves its colour.",
-    "playerPrompt": "This bishop lives on light squares and always will. Take its diagonal to the star.",
     "order": 1
   },
   {
@@ -216,76 +216,78 @@
     "order": 2
   },
   {
+    "title": "The bishop is not a rook",
+    "playerPrompt": "The bishop cannot slide straight along the row. Turn on a diagonal to reach the star.",
     "id": "bishop-4",
     "piece": "bishop",
-    "fen": "8/8/8/8/8/8/8/B7 w - - 0 1",
+    "fen": "5B2/8/8/8/8/8/8/8 w - - 0 1",
     "target": "g1",
-    "mover": "a1",
+    "mover": "f8",
     "tier": "easy",
     "tags": [
       "pivot",
       "no-straight-line"
     ],
-    "title": "The bishop is not a rook",
     "principle": "no-straight-line",
     "learningObjective": "The bishop can never move along a rank or file: to reach a square on its own row it must turn on a diagonal, two moves instead of one.",
-    "playerPrompt": "The bishop cannot slide straight along the row. Turn on a diagonal to reach the star.",
     "order": 3
   },
   {
+    "title": "Choose the turn",
+    "playerPrompt": "There are two squares where you can turn toward the star. Pick either one.",
     "id": "bishop-5",
     "piece": "bishop",
-    "fen": "8/8/8/8/8/2B5/8/8 w - - 0 1",
-    "target": "g3",
-    "mover": "c3",
+    "fen": "8/8/8/8/8/8/6B1/8 w - - 0 1",
+    "target": "b3",
+    "mover": "g2",
     "tier": "easy",
     "tags": [
       "pivot"
     ],
-    "title": "Choose the turn",
     "principle": "pivot-choice",
     "learningObjective": "Two different squares let the bishop turn and reach the star; the turning point is a choice, not a fixed spot.",
-    "playerPrompt": "There are two squares where you can turn toward the star. Pick either one.",
     "order": 4
   },
   {
+    "title": "Your own piece blocks the turn",
+    "playerPrompt": "Your own knight blocks the turn. You cannot jump it, so find the way around.",
     "id": "bishop-6",
     "piece": "bishop",
-    "fen": "8/8/8/8/3N4/8/1B6/8 w - - 0 1",
-    "target": "f2",
-    "mover": "b2",
+    "fen": "8/8/8/8/3N4/8/8/B7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
     "tier": "medium",
     "tags": [
       "friendly-blocker",
       "detour"
     ],
-    "title": "Your own piece blocks the turn",
     "principle": "friendly-blocker",
     "learningObjective": "A friendly piece on the natural turning square stops the bishop; it cannot jump over or capture its own piece, so it routes around.",
-    "playerPrompt": "Your own knight blocks the turn. You cannot jump it, so find the way around.",
     "order": 5
   },
   {
+    "title": "Both turns blocked",
+    "playerPrompt": "Both turning squares are blocked. Plan a longer route to the star.",
     "id": "bishop-7",
     "piece": "bishop",
-    "fen": "8/8/8/4N3/8/2B5/8/4N3 w - - 0 1",
+    "fen": "1B6/4N3/N3N2N/N3N2N/N1N4N/2N2N2/2N2N2/5N2 w - - 0 1",
     "target": "g3",
-    "mover": "c3",
+    "mover": "b8",
     "tier": "medium",
     "tags": [
       "friendly-blocker",
       "detour"
     ],
-    "title": "Both turns blocked",
     "principle": "friendly-blocker-advanced",
     "learningObjective": "With both natural turning squares blocked, the player has to find the longer third route.",
-    "playerPrompt": "Both turning squares are blocked. Plan a longer route to the star.",
     "order": 6
   },
   {
+    "title": "Blocked on the long diagonal",
+    "playerPrompt": "A knight sits on your diagonal. Step off, go around, and rejoin the diagonal past it.",
     "id": "bishop-8",
     "piece": "bishop",
-    "fen": "8/8/8/8/3N4/8/8/B7 w - - 0 1",
+    "fen": "8/3N4/2N2N2/2N2N2/2N2N2/2N2N2/4N3/B7 w - - 0 1",
     "target": "g7",
     "mover": "a1",
     "tier": "medium",
@@ -294,18 +296,18 @@
       "detour",
       "long-diagonal"
     ],
-    "title": "Blocked on the long diagonal",
     "principle": "blocked-diagonal",
     "learningObjective": "A piece sitting on the bishop's diagonal stops the ray; the player leaves the diagonal and rejoins it beyond the blocker.",
-    "playerPrompt": "A knight sits on your diagonal. Step off, go around, and rejoin the diagonal past it.",
     "order": 7
   },
   {
+    "title": "The long way around",
+    "playerPrompt": "Plan the whole route around the knight before you move.",
     "id": "bishop-10",
     "piece": "bishop",
-    "fen": "8/8/8/4N3/8/8/8/B7 w - - 0 1",
-    "target": "h8",
-    "mover": "a1",
+    "fen": "8/2N1N1N1/1NNNNN2/8/8/2NNNNN1/1N1N1NB1/8 w - - 0 1",
+    "target": "b7",
+    "mover": "g2",
     "tier": "medium",
     "tags": [
       "blocked-diagonal",
@@ -313,10 +315,8 @@
       "long-diagonal",
       "route-planning"
     ],
-    "title": "The long way around",
     "principle": "route-planning",
     "learningObjective": "The full-board detour: the player plans the whole multi-leg route around a blocker on the long diagonal before moving.",
-    "playerPrompt": "Plan the whole route around the knight before you move.",
     "order": 8
   },
   {
