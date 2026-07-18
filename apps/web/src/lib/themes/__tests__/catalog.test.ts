@@ -72,7 +72,9 @@ describe("buildThemeCatalog", () => {
   it("surfaces usedIn metadata from the registry", async () => {
     const catalog = await buildThemeCatalog("candy-forest", okResolver);
     const portal = catalog?.slots.find((s) => s.key === "hub.portal");
-    expect(portal?.usedIn).toEqual(["Hub — KingdomAnchor portal"]);
+    // Human label stays first; precise consumer locators (↳ …) are appended.
+    expect(portal?.usedIn[0]).toBe("Hub — KingdomAnchor portal");
+    expect(portal?.usedIn.some((u) => u.startsWith("↳ "))).toBe(true);
   });
 
   it("propagates missing files as null dimensions (no throw)", async () => {
