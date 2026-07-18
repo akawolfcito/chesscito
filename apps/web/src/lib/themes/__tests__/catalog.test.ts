@@ -9,6 +9,8 @@ const okResolver: AssetResolver = vi.fn(async (basename: string) => ({
   width: 1024,
   height: 1024,
   format: "png" as const,
+  mtime: 1_700_000_000_000,
+  hasBackup: false,
 }));
 
 /** A resolver that reports every asset as missing on disk. */
@@ -17,6 +19,8 @@ const missingResolver: AssetResolver = vi.fn(async () => ({
   width: null,
   height: null,
   format: null,
+  mtime: null,
+  hasBackup: false,
 }));
 
 describe("buildThemeCatalog", () => {

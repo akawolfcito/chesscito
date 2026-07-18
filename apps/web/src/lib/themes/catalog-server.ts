@@ -9,6 +9,7 @@ import {
   type ResolvedFile,
   type ThemeCatalog,
 } from "./catalog";
+import { hasBackup } from "./asset-triplet";
 
 /** Root of statically served assets — basenames are relative to it. */
 const PUBLIC_DIR = path.join(process.cwd(), "public");
@@ -23,13 +24,16 @@ export const fsAssetResolver: AssetResolver = async (
   basename: string,
 ): Promise<ResolvedFile> => {
   const relative = basename.replace(/^\//, "");
+  const backup = await hasBackup(basename);
   for (const format of TRIPLET_EXTENSIONS) {
     const abs = path.join(PUBLIC_DIR, `${relative}.${format}`);
+    let stat: Awaited<ReturnType<typeof fs.stat>>;
     try {
-      await fs.access(abs);
+      stat = await fs.stat(abs);
     } catch {
       continue;
     }
+    const mtime = stat.mtimeMs;
     try {
       const meta = await sharp(abs).metadata();
       return {
@@ -37,13 +41,22 @@ export const fsAssetResolver: AssetResolver = async (
         width: meta.width ?? null,
         height: meta.height ?? null,
         format,
+        mtime,
+        hasBackup: backup,
       };
     } catch {
       // File exists but sharp can't read it — report the file, no dims.
-      return { file: `${basename}.${format}`, width: null, height: null, format };
+      return {
+        file: `${basename}.${format}`,
+        width: null,
+        height: null,
+        format,
+        mtime,
+        hasBackup: backup,
+      };
     }
   }
-  return { file: null, width: null, height: null, format: null };
+  return { file: null, width: null, height: null, format: null, mtime: null, hasBackup: backup };
 };
 
 /** Build a theme's catalog against the real filesystem. Server-only. */

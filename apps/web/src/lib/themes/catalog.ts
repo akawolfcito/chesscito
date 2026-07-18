@@ -23,6 +23,13 @@ export type ResolvedFile = {
   width: number | null;
   height: number | null;
   format: AssetFormat | null;
+  /** Last-modified epoch ms of the resolved file — used as a cache-buster
+   *  (`?v=<mtime>`) so a replaced image actually reloads in the browser.
+   *  null when nothing is on disk. */
+  mtime: number | null;
+  /** True when a one-level undo backup exists for this basename, so the
+   *  catalog can enable the "Undo" control. */
+  hasBackup: boolean;
 };
 
 /** Resolves a basename (no extension) to its on-disk file + dimensions. */

@@ -155,3 +155,6 @@ lh-*.json
 
 # Graphify knowledge-graph output (per-session, regenerated from source)
 graphify-out/
+
+# Theme-builder one-level undo store (dev tool; pre-overwrite triplet backups)
+apps/web/.theme-builder-trash/

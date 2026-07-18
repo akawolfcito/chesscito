@@ -26,6 +26,7 @@ function VariantCell({
   slotKey,
   variant,
   canUpload,
+  hasBackup,
 }: {
   label: string;
   asset: ResolvedAsset | null;
@@ -34,6 +35,7 @@ function VariantCell({
   slotKey: string;
   variant: "default" | "pro";
   canUpload: boolean;
+  hasBackup: boolean;
 }) {
   return (
     <div className="flex-1 min-w-0">
@@ -47,7 +49,7 @@ function VariantCell({
       </div>
       {asset && asset.file ? (
         <img
-          src={asset.file}
+          src={asset.mtime ? `${asset.file}?v=${asset.mtime}` : asset.file}
           alt={`${label} — ${asset.basename}`}
           className="h-40 w-full rounded-lg border border-neutral-700 bg-neutral-800 object-contain"
         />
@@ -67,6 +69,7 @@ function VariantCell({
         slotKey={slotKey}
         variant={variant}
         canUpload={canUpload}
+        hasBackup={hasBackup}
       />
     </div>
   );
@@ -144,6 +147,7 @@ export default async function ThemeBuilderDevPage({
                     slotKey={slot.key}
                     variant="default"
                     canUpload
+                    hasBackup={slot.default.hasBackup}
                   />
                   <VariantCell
                     label="pro"
@@ -153,6 +157,7 @@ export default async function ThemeBuilderDevPage({
                     slotKey={slot.key}
                     variant="pro"
                     canUpload={!slot.proReusesDefault}
+                    hasBackup={slot.pro?.hasBackup ?? false}
                   />
                 </div>
               </section>

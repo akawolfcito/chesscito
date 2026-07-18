@@ -14,7 +14,7 @@
 import { NextResponse } from "next/server";
 import { isDevSurfaceEnabled, canWriteBaseline } from "@/lib/dev/dev-surface";
 import { resolveUploadTarget } from "@/lib/themes/upload-target";
-import { writeAssetTriplet } from "@/lib/themes/asset-triplet";
+import { writeAssetTriplet, restorePreviousTriplet } from "@/lib/themes/asset-triplet";
 
 export const runtime = "nodejs";
 
@@ -42,11 +42,22 @@ export async function POST(req: Request) {
   const themeId = String(form.get("themeId") ?? "");
   const key = String(form.get("key") ?? "");
   const variant = String(form.get("variant") ?? "");
+  const action = String(form.get("action") ?? "upload");
   const file = form.get("file");
 
   const target = resolveUploadTarget(themeId, key, variant);
   if (!target.ok) {
     return NextResponse.json({ ok: false, error: target.reason }, { status: 400 });
+  }
+
+  // Undo — restore the one-level backup, no file involved.
+  if (action === "undo") {
+    const result = await restorePreviousTriplet(target.basename);
+    if (!result.ok) {
+      return NextResponse.json({ ok: false, error: "nothing to undo" }, { status: 409 });
+    }
+    console.info("[dev/theme-asset] undo", { themeId, key, variant, basename: target.basename });
+    return NextResponse.json({ ok: true, basename: target.basename, restored: result.restored });
   }
 
   if (!(file instanceof File)) {
