@@ -4,6 +4,19 @@
 **Objetivo:** enumerar TODOS los assets en uso, agrupados por categoría (derivada del provenance),
 para registrarlos por lotes en el theme `candy-forest` (variantes `default`/`pro`) sin hacerlo a mano.
 
+## ⚠️ CORRECCIÓN (2026-07-18, post-review del founder)
+
+Este audit se hizo por **grep de `/art/...` literal** y **SUBCUENTA**. Dos puntos ciegos:
+1. Rutas compuestas `` `${BASE}/nombre.ext` `` (el `/art/` vive en una const, p. ej.
+   `ASSET="/art/board"` en `game-board.tsx`) — **nunca aparecen literales**. Así se escapó
+   `/art/board/borde-tablero-chesscito1` (el borde del tablero jugable, en casi todos los tableros).
+2. Bases sin extensión (`const X = "/art/..."`) — descartadas por exigir `.png/.webp/.avif`.
+
+Recontar sin extensión dio **161 tokens** (vs 106), y ni eso capta los compuestos.
+**→ No confiar en las cifras/listas de abajo como completas.** El método correcto es **validar por
+superficie leyendo los asset consts del componente** (resolviendo cada `${BASE}/...`). Ver
+`[[feedback_grep_audit_misses_composed_paths]]`. El board ya se corrigió así (3 fixes).
+
 ## El universo real
 - **~123 assets distintos** están efectivamente referenciados (106 en código TS/TSX + 17 en CSS).
   **NO son 730** — el resto de `public/art/**` son variantes, no usados, u OG cards.
