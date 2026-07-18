@@ -154,6 +154,63 @@ export type ThemeAssetKey =
   | "hud.crown"
   | "hud.trophy"
   | "pro-mission.sms"
+  // closing pass — surfaces not covered by the per-surface sweep
+  | "scene.gem-pill"
+  | "scene.panel-pro"
+  | "scene.pedestal"
+  | "scene.stone-1"
+  | "scene.stone-2"
+  | "scene.stone-3"
+  | "scene.stone-4"
+  | "scene.stone-5"
+  | "scene.stone-6"
+  | "scene.stone-7"
+  | "scene.stone-8"
+  | "scene.stone-9"
+  | "scene.stone-10"
+  | "scene.chest-large"
+  | "scene.chest-small"
+  | "scene.banner-large"
+  | "scene.banner-medium"
+  | "scene.banner-short"
+  | "bg.splash-chesscito"
+  | "bg.wallpaper-lite"
+  | "bg.dock-4slots"
+  | "bg.menu-wall"
+  | "bg.path-map"
+  | "bg.path-map-base"
+  | "bg.splash-loading"
+  | "shop.coach-pack-20"
+  | "shop.slot-frame"
+  | "arena.bg-matchup"
+  | "arena.result-checkmate"
+  | "arena.result-draw"
+  | "arena.result-resign"
+  | "arena.result-stalemate"
+  | "arena.player-you"
+  | "arena.player-bot"
+  | "hub.cta-principal"
+  | "hub.mate-icon"
+  | "hub.invite-icon"
+  | "hub.bg"
+  | "hub.btn-stone-bg"
+  | "hub.focus-passport-streak"
+  | "exercises.wall"
+  | "exercises.laberinto"
+  | "exercises.badge-claim"
+  | "exercises.claim"
+  | "exercises.save-score"
+  | "exercises.wallpaper"
+  | "welcome.achievement-3day"
+  | "welcome.achievement-7day"
+  | "welcome.focus-stamp"
+  | "landing.hero"
+  | "landing.progress-trophies"
+  | "coach.play"
+  | "account.account-icon"
+  | "shared.panel-frame"
+  | "shared.time"
+  | "brand.favicon"
   // board — batch #1 (catalog visibility; consumers still read these paths
   // directly, see docs/superpowers/plans/2026-07-18-theme-builder-board-slots-plan.md)
   | "board.frame"
@@ -574,6 +631,74 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/scene-rooted/sms-chesscito",
         usedIn: ["Pro mission — SMS illustration"],
       },
+      // scene — kingdom/scene-rooted decorations
+      "scene.gem-pill": { default: "/art/scene-rooted/gem-pill-base", usedIn: ["Kingdom scene — gem pill"] },
+      "scene.panel-pro": { default: "/art/scene-rooted/panel-pro", usedIn: ["Kingdom scene — pro panel"] },
+      "scene.pedestal": { default: "/art/scene-rooted/pedestal-play", usedIn: ["Kingdom scene — play pedestal"] },
+      "scene.stone-1": { default: "/art/scene-rooted/piedra1", usedIn: ["Kingdom scene — stone 1"] },
+      "scene.stone-2": { default: "/art/scene-rooted/piedra2", usedIn: ["Kingdom scene — stone 2"] },
+      "scene.stone-3": { default: "/art/scene-rooted/piedra3", usedIn: ["Kingdom scene — stone 3"] },
+      "scene.stone-4": { default: "/art/scene-rooted/piedra4", usedIn: ["Kingdom scene — stone 4"] },
+      "scene.stone-5": { default: "/art/scene-rooted/piedra5", usedIn: ["Kingdom scene — stone 5"] },
+      "scene.stone-6": { default: "/art/scene-rooted/piedra6", usedIn: ["Kingdom scene — stone 6"] },
+      "scene.stone-7": { default: "/art/scene-rooted/piedra7", usedIn: ["Kingdom scene — stone 7"] },
+      "scene.stone-8": { default: "/art/scene-rooted/piedra8", usedIn: ["Kingdom scene — stone 8"] },
+      "scene.stone-9": { default: "/art/scene-rooted/piedra9", usedIn: ["Kingdom scene — stone 9"] },
+      "scene.stone-10": { default: "/art/scene-rooted/piedra10", usedIn: ["Kingdom scene — stone 10"] },
+      "scene.chest-large": { default: "/art/scene-rooted/treasure-chest-large", usedIn: ["Kingdom scene — large chest"] },
+      "scene.chest-small": { default: "/art/scene-rooted/treasure-chest-small", usedIn: ["Kingdom scene — small chest"] },
+      "scene.banner-large": { default: "/art/scene-rooted/wood-banner-blank-large", usedIn: ["Kingdom scene — wood banner (large)"] },
+      "scene.banner-medium": { default: "/art/scene-rooted/wood-banner-blank-medium", usedIn: ["Kingdom scene — wood banner (medium)"] },
+      "scene.banner-short": { default: "/art/scene-rooted/wood-banner-blank-short", usedIn: ["Kingdom scene — wood banner (short)"] },
+      // bg — screen backgrounds
+      "bg.splash-chesscito": { default: "/art/bg-splash-chesscito", usedIn: ["Splash background"] },
+      "bg.wallpaper-lite": { default: "/art/bg-wallpaper-lite", usedIn: ["Lite wallpaper background"] },
+      "bg.dock-4slots": { default: "/art/redesign/bg/dock-4slots", usedIn: ["Dock (4 slots) background"] },
+      "bg.menu-wall": { default: "/art/redesign/bg/menu-wall", usedIn: ["Menu wall background"] },
+      "bg.path-map": { default: "/art/redesign/bg/path-map", usedIn: ["Learn path map"] },
+      "bg.path-map-base": { default: "/art/redesign/bg/path-map-base", usedIn: ["Learn path map base"] },
+      "bg.splash-loading": { default: "/art/redesign/bg/splash-loading", usedIn: ["Splash loading background"] },
+      // shop
+      "shop.coach-pack-20": { default: "/art/shop/coach-pack-20", usedIn: ["Shop — coach pack (20)"] },
+      "shop.slot-frame": { default: "/art/shop-slot-frame", usedIn: ["Shop — slot frame"] },
+      // arena additions
+      "arena.bg-matchup": { default: "/art/arena/bg-matchup", usedIn: ["Arena — matchup background"] },
+      "arena.result-checkmate": { default: "/art/new-assets-chesscito/games/checkmate-game001", usedIn: ["Arena — checkmate end-state"] },
+      "arena.result-draw": { default: "/art/new-assets-chesscito/games/draw-game001", usedIn: ["Arena — draw end-state"] },
+      "arena.result-resign": { default: "/art/new-assets-chesscito/games/resign-game001", usedIn: ["Arena — resign end-state"] },
+      "arena.result-stalemate": { default: "/art/new-assets-chesscito/games/stalemate-game001", usedIn: ["Arena — stalemate end-state"] },
+      "arena.player-you": { default: "/art/new-icons-chesscito/avatar-blue", usedIn: ["Arena — 'you' player avatar"] },
+      "arena.player-bot": { default: "/art/new-icons-chesscito/avatar-red", usedIn: ["Arena — 'bot' player avatar"] },
+      // hub additions
+      "hub.cta-principal": { default: "/art/hub/cta-principal", usedIn: ["Hub — principal CTA"] },
+      "hub.mate-icon": { default: "/art/hub/mate-icon", usedIn: ["Hub — mate icon"] },
+      "hub.invite-icon": { default: "/art/hub-new/invite-icon", usedIn: ["Hub — invite icon"] },
+      "hub.bg": { default: "/art/redesign/bg/bg-new-hub", usedIn: ["Hub — background"] },
+      "hub.btn-stone-bg": { default: "/art/redesign/banners/btn-stone-bg", usedIn: ["Hub — stone button background"] },
+      "hub.focus-passport-streak": { default: "/art/focus-passport/panel-streak", usedIn: ["Hub — focus passport streak panel"] },
+      // exercises additions
+      "exercises.wall": { default: "/art/labyrinths/wall", usedIn: ["Exercises — labyrinth wall"] },
+      "exercises.laberinto": { default: "/art/new-icons-chesscito/laberinto", usedIn: ["Exercises — labyrinth icon"] },
+      "exercises.badge-claim": { default: "/art/new-icons-chesscito/badge-claim-icon", usedIn: ["Exercises — badge claim icon"] },
+      "exercises.claim": { default: "/art/new-icons-chesscito/claim-icon-v1", usedIn: ["Exercises — claim icon"] },
+      "exercises.save-score": { default: "/art/new-icons-chesscito/save-score-icon-v1", usedIn: ["Exercises — save score icon"] },
+      "exercises.wallpaper": { default: "/art/redesign/bg/wallpaper-exercises", usedIn: ["Exercises — wallpaper background"] },
+      // welcome additions
+      "welcome.achievement-3day": { default: "/art/achievements/3day-focus", usedIn: ["Welcome — 3-day focus achievement"] },
+      "welcome.achievement-7day": { default: "/art/achievements/7day-focus", usedIn: ["Welcome — 7-day focus achievement"] },
+      "welcome.focus-stamp": { default: "/art/welcome-package/focus-stamp-day1", usedIn: ["Welcome — focus stamp (day 1)"] },
+      // landing additions
+      "landing.hero": { default: "/art/landing/hero-play-hub", usedIn: ["Landing — play-hub hero"] },
+      "landing.progress-trophies": { default: "/art/landing/progress-trophies", usedIn: ["Landing — progress trophies"] },
+      // coach addition
+      "coach.play": { default: "/art/new-assets-chesscito/btns/play", usedIn: ["Coach — play button"] },
+      // account addition
+      "account.account-icon": { default: "/art/screen-mission/account-icon", usedIn: ["Account — account icon"] },
+      // shared additions
+      "shared.panel-frame": { default: "/art/panel-frame-rune", usedIn: ["Panel frame (rune)"] },
+      "shared.time": { default: "/art/redesign/icons/time", usedIn: ["Time icon"] },
+      // brand addition
+      "brand.favicon": { default: "/art/favicon-wolf", usedIn: ["Brand — favicon / wolf mark"] },
       // The playable board's frame — the decorative border around the live
       // GameBoard (1040×1028, measured inner opening in game-board.tsx). The
       // squares inside are procedural tiles (board.tile.*).
