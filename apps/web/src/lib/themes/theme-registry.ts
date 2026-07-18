@@ -51,12 +51,18 @@ export type ThemeAssetKey =
   | "board.frame"
   | "board.tile.light"
   | "board.tile.dark"
-  | "board.piece.rook"
-  | "board.piece.bishop"
-  | "board.piece.knight"
-  | "board.piece.pawn"
-  | "board.piece.queen"
-  | "board.piece.king";
+  | "board.piece.white.rook"
+  | "board.piece.white.bishop"
+  | "board.piece.white.knight"
+  | "board.piece.white.pawn"
+  | "board.piece.white.queen"
+  | "board.piece.white.king"
+  | "board.piece.black.rook"
+  | "board.piece.black.bishop"
+  | "board.piece.black.knight"
+  | "board.piece.black.pawn"
+  | "board.piece.black.queen"
+  | "board.piece.black.king";
 
 export type ThemeDefinition = {
   /** Stable theme id — used as Shop itemId once monetized + as the
@@ -105,29 +111,56 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/board/casilla-oscura",
         usedIn: ["Board — dark squares"],
       },
-      "board.piece.rook": {
+      // White = player pieces (main board renders these; black is tinted there
+      // via pieceTintClass, but black ALSO ships as real b-* assets used for
+      // enemies in promotion-run / safe-path and the kingdom-anchor board).
+      "board.piece.white.rook": {
         default: "/art/redesign/pieces/w-rook",
-        usedIn: ["Board — rook"],
+        usedIn: ["Board — white rook"],
       },
-      "board.piece.bishop": {
+      "board.piece.white.bishop": {
         default: "/art/redesign/pieces/w-bishop",
-        usedIn: ["Board — bishop"],
+        usedIn: ["Board — white bishop"],
       },
-      "board.piece.knight": {
+      "board.piece.white.knight": {
         default: "/art/redesign/pieces/w-knight",
-        usedIn: ["Board — knight"],
+        usedIn: ["Board — white knight"],
       },
-      "board.piece.pawn": {
+      "board.piece.white.pawn": {
         default: "/art/redesign/pieces/w-pawn",
-        usedIn: ["Board — pawn"],
+        usedIn: ["Board — white pawn"],
       },
-      "board.piece.queen": {
+      "board.piece.white.queen": {
         default: "/art/redesign/pieces/w-queen",
-        usedIn: ["Board — queen"],
+        usedIn: ["Board — white queen"],
       },
-      "board.piece.king": {
+      "board.piece.white.king": {
         default: "/art/redesign/pieces/w-king",
-        usedIn: ["Board — king"],
+        usedIn: ["Board — white king"],
+      },
+      "board.piece.black.rook": {
+        default: "/art/redesign/pieces/b-rook",
+        usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board"],
+      },
+      "board.piece.black.bishop": {
+        default: "/art/redesign/pieces/b-bishop",
+        usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board"],
+      },
+      "board.piece.black.knight": {
+        default: "/art/redesign/pieces/b-knight",
+        usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board"],
+      },
+      "board.piece.black.pawn": {
+        default: "/art/redesign/pieces/b-pawn",
+        usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board"],
+      },
+      "board.piece.black.queen": {
+        default: "/art/redesign/pieces/b-queen",
+        usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board"],
+      },
+      "board.piece.black.king": {
+        default: "/art/redesign/pieces/b-king",
+        usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board"],
       },
     },
   },
