@@ -1146,14 +1146,14 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "pawn-2",
-      "optimalMoves": 2,
+      "optimalMoves": 1,
       "startPos": {
         "file": 3,
         "rank": 1
       },
       "targetPos": {
         "file": 3,
-        "rank": 4
+        "rank": 3
       },
       "tier": "easy",
       "tags": [
@@ -1167,22 +1167,15 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "pawn-3",
-      "optimalMoves": 1,
+      "optimalMoves": 2,
       "startPos": {
-        "file": 2,
-        "rank": 4
+        "file": 4,
+        "rank": 1
       },
       "targetPos": {
-        "file": 3,
-        "rank": 5
+        "file": 4,
+        "rank": 4
       },
-      "captureTargets": [
-        {
-          "file": 3,
-          "rank": 5
-        }
-      ],
-      "isCapture": true,
       "tier": "easy",
       "tags": [
         "diagonal-capture"
@@ -1196,17 +1189,17 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "id": "pawn-4",
       "optimalMoves": 1,
       "startPos": {
-        "file": 5,
-        "rank": 3
+        "file": 4,
+        "rank": 5
       },
       "targetPos": {
-        "file": 6,
-        "rank": 4
+        "file": 5,
+        "rank": 6
       },
       "captureTargets": [
         {
-          "file": 6,
-          "rank": 4
+          "file": 5,
+          "rank": 6
         }
       ],
       "isCapture": true,

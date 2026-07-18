@@ -506,54 +506,54 @@
     "learningObjective": "The player learns the pawn advances straight forward, never sideways or back."
   },
   {
+    "title": "One rank at a time",
+    "playerPrompt": "Keep marching straight up the file to the star.",
     "id": "pawn-2",
     "piece": "pawn",
     "fen": "8/8/8/8/8/8/3P4/8 w - - 0 1",
-    "target": "d5",
+    "target": "d4",
     "mover": "d2",
     "tier": "easy",
     "tags": [
       "forward-move",
       "slow-advance"
     ],
-    "order": 1,
     "principle": "slow-advance",
-    "title": "One rank at a time",
-    "playerPrompt": "Keep marching straight up the file to the star.",
-    "learningObjective": "The player learns the pawn only moves forward, climbing the board push by push."
+    "learningObjective": "The player learns the pawn only moves forward, climbing the board push by push.",
+    "order": 1
   },
   {
+    "title": "Capture on the diagonal",
+    "playerPrompt": "The pawn steps diagonally only to capture. Take the piece on the star.",
     "id": "pawn-3",
     "piece": "pawn",
-    "fen": "8/8/3p4/2P5/8/8/8/8 w - - 0 1",
-    "target": "d6",
-    "mover": "c5",
+    "fen": "8/8/8/8/8/8/4P3/8 w - - 0 1",
+    "target": "e5",
+    "mover": "e2",
     "tier": "easy",
     "tags": [
       "diagonal-capture"
     ],
-    "order": 2,
     "principle": "diagonal-capture",
-    "title": "Capture on the diagonal",
-    "playerPrompt": "The pawn steps diagonally only to capture. Take the piece on the star.",
-    "learningObjective": "The player learns the pawn captures diagonally — a different move from its straight advance."
+    "learningObjective": "The player learns the pawn captures diagonally — a different move from its straight advance.",
+    "order": 2
   },
   {
+    "title": "Take to the side",
+    "playerPrompt": "An enemy waits one diagonal step away. Capture it.",
     "id": "pawn-4",
     "piece": "pawn",
-    "fen": "8/8/8/6p1/5P2/8/8/8 w - - 0 1",
-    "target": "g5",
-    "mover": "f4",
+    "fen": "8/5p2/4P3/8/8/8/8/8 w - - 0 1",
+    "target": "f7",
+    "mover": "e6",
     "tier": "easy",
     "tags": [
       "diagonal-capture",
       "directional-move"
     ],
-    "order": 3,
     "principle": "capture-side",
-    "title": "Take to the side",
-    "playerPrompt": "An enemy waits one diagonal step away. Capture it.",
-    "learningObjective": "The player learns a pawn only leaves its file by capturing diagonally, to either side."
+    "learningObjective": "The player learns a pawn only leaves its file by capturing diagonally, to either side.",
+    "order": 3
   },
   {
     "id": "pawn-5",
