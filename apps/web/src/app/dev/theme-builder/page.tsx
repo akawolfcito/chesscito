@@ -7,6 +7,7 @@ import { listThemeIds } from "@/lib/themes/catalog";
 import { DEFAULT_THEME_ID } from "@/lib/themes/theme-registry";
 
 import type { ResolvedAsset } from "@/lib/themes/catalog";
+import { UploadControl } from "./upload-control";
 
 export const dynamic = "force-dynamic";
 
@@ -21,10 +22,18 @@ function VariantCell({
   label,
   asset,
   muted,
+  themeId,
+  slotKey,
+  variant,
+  canUpload,
 }: {
   label: string;
   asset: ResolvedAsset | null;
   muted?: string;
+  themeId: string;
+  slotKey: string;
+  variant: "default" | "pro";
+  canUpload: boolean;
 }) {
   return (
     <div className="flex-1 min-w-0">
@@ -53,6 +62,12 @@ function VariantCell({
       <div className="text-[11px] font-medium text-neutral-300">
         {asset ? dims(asset) : "reuses default"}
       </div>
+      <UploadControl
+        themeId={themeId}
+        slotKey={slotKey}
+        variant={variant}
+        canUpload={canUpload}
+      />
     </div>
   );
 }
@@ -122,11 +137,22 @@ export default async function ThemeBuilderDevPage({
                   </span>
                 </div>
                 <div className="flex gap-4">
-                  <VariantCell label="default" asset={slot.default} />
+                  <VariantCell
+                    label="default"
+                    asset={slot.default}
+                    themeId={catalog.id}
+                    slotKey={slot.key}
+                    variant="default"
+                    canUpload
+                  />
                   <VariantCell
                     label="pro"
                     asset={slot.pro}
                     muted={slot.proReusesDefault ? "reuses default" : undefined}
+                    themeId={catalog.id}
+                    slotKey={slot.key}
+                    variant="pro"
+                    canUpload={!slot.proReusesDefault}
                   />
                 </div>
               </section>
