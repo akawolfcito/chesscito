@@ -32,20 +32,20 @@
     "order": 1
   },
   {
+    "title": "One square is a move too",
+    "playerPrompt": "A rook may move just one square. Take it.",
     "id": "rook-distance-1",
     "piece": "rook",
-    "fen": "8/3R4/8/8/8/8/8/8 w - - 0 1",
-    "target": "d6",
-    "mover": "d7",
+    "fen": "8/8/1R6/8/8/8/8/8 w - - 0 1",
+    "target": "b3",
+    "mover": "b6",
     "tier": "easy",
     "tags": [
       "variable-distance"
     ],
-    "order": 2,
     "principle": "variable-distance",
-    "title": "One square is a move too",
-    "playerPrompt": "A rook may move just one square. Take it.",
-    "learningObjective": "The player learns the rook chooses its distance: one square is as legal as seven. Replaces rook-3 (d7 to d2), which only repeated rook-2's file movement."
+    "learningObjective": "The player learns the rook chooses its distance: one square is as legal as seven. Replaces rook-3 (d7 to d2), which only repeated rook-2's file movement.",
+    "order": 2
   },
   {
     "id": "rook-4",
@@ -80,90 +80,90 @@
     "learningObjective": "The player learns the rook never moves diagonally: the nearest-looking square is not the cheapest. Replaces rook-5, which was rook-4's corner turn a second time."
   },
   {
-    "id": "rook-6",
-    "piece": "rook",
-    "fen": "3N4/8/3R4/3N4/2N1N1N1/8/N6N/8 w - - 0 1",
-    "target": "d2",
-    "mover": "d6",
-    "tier": "medium",
-    "tags": [
-      "detour",
-      "blocked-file"
-    ],
-    "order": 8,
-    "principle": "route-planning",
     "title": "Find the shortest route",
     "playerPrompt": "The file is shut. Many roads work — find the shortest.",
-    "learningObjective": "The player plans around a blocked file instead of pushing into it."
-  },
-  {
-    "id": "rook-7",
+    "id": "rook-6",
     "piece": "rook",
-    "fen": "8/2NN4/1N3N2/1N3N2/1N6/2NNNN2/8/R7 w - - 0 1",
-    "target": "d5",
-    "mover": "a1",
+    "fen": "N6N/1RN2N2/1NN2NN1/3N4/4N3/1NN2NN1/2N2N2/N6N w - - 0 1",
+    "target": "g2",
+    "mover": "b7",
     "tier": "medium",
     "tags": [
       "detour",
       "blocked-file"
     ],
-    "order": 9,
-    "principle": "route-planning-advanced",
-    "title": "Plan the whole route",
-    "playerPrompt": "Look before you move. Plan all four.",
-    "learningObjective": "The player plans a multi-leg route ahead of the first move rather than improvising."
+    "principle": "route-planning",
+    "learningObjective": "The player plans around a blocked file instead of pushing into it.",
+    "order": 8
   },
   {
+    "title": "Plan the whole route",
+    "playerPrompt": "Look before you move. Plan all four.",
+    "id": "rook-7",
+    "piece": "rook",
+    "fen": "3R4/2NNN3/3N2NN/NN3NN1/1NN3N1/1N2N3/3NNN2/8 w - - 0 1",
+    "target": "e1",
+    "mover": "d8",
+    "tier": "medium",
+    "tags": [
+      "detour",
+      "blocked-file"
+    ],
+    "principle": "route-planning-advanced",
+    "learningObjective": "The player plans a multi-leg route ahead of the first move rather than improvising.",
+    "order": 9
+  },
+  {
+    "title": "The boxed star",
+    "playerPrompt": "One diagonal step away, and four moves of work. Box it out.",
     "id": "rook-8",
     "piece": "rook",
-    "fen": "8/8/8/3N4/3RN3/8/8/8 w - - 0 1",
-    "target": "e5",
-    "mover": "d4",
+    "fen": "8/1N1N1N2/1RN2NN1/2N1N3/2N1N1NN/1N6/2N2NN1/5N2 w - - 0 1",
+    "target": "h3",
+    "mover": "b6",
     "tier": "medium",
     "tags": [
       "detour",
       "boxed-target"
     ],
-    "order": 7,
     "principle": "no-diagonal-advanced",
-    "title": "The boxed star",
-    "playerPrompt": "One diagonal step away, and four moves of work. Box it out.",
-    "learningObjective": "The advanced form of no-diagonal: with the two adjacent squares blocked, the one-step diagonal costs four moves. Follows rook-no-diagonal-1, which teaches the clean case in two."
+    "learningObjective": "The advanced form of no-diagonal: with the two adjacent squares blocked, the one-step diagonal costs four moves. Follows rook-no-diagonal-1, which teaches the clean case in two.",
+    "order": 7
   },
   {
+    "title": "Your own piece blocks the way",
+    "playerPrompt": "You cannot jump over your own piece. Go around it.",
     "id": "rook-9",
     "piece": "rook",
-    "fen": "8/8/8/8/8/N7/8/R1N5 w - - 0 1",
-    "target": "c3",
+    "fen": "5N2/1N6/7N/8/8/N7/6N1/R1N5 w - - 0 1",
+    "target": "h8",
     "mover": "a1",
     "tier": "medium",
     "tags": [
       "friendly-blocker",
       "detour"
     ],
-    "order": 5,
     "principle": "friendly-blocker",
-    "title": "Your own piece blocks the way",
-    "playerPrompt": "You cannot jump over your own piece. Go around it.",
-    "learningObjective": "The player learns a friendly piece stops the rook's ray and cannot be captured."
+    "learningObjective": "The player learns a friendly piece stops the rook's ray and cannot be captured.",
+    "order": 5
   },
   {
+    "title": "The file is closed",
+    "playerPrompt": "The file is shut. Step out, climb, and come back.",
     "id": "rook-10",
     "piece": "rook",
-    "fen": "8/8/8/2N1N3/3N4/8/3N4/3R4 w - - 0 1",
-    "target": "d5",
-    "mover": "d1",
+    "fen": "8/3N2N1/2N5/1N1NR3/4N1N1/5N2/1N2N3/8 w - - 0 1",
+    "target": "d4",
+    "mover": "e5",
     "tier": "medium",
     "tags": [
       "detour",
       "blocked-file",
       "rook-lift"
     ],
-    "order": 6,
     "principle": "blocked-file",
-    "title": "The file is closed",
-    "playerPrompt": "The file is shut. Step out, climb, and come back.",
-    "learningObjective": "The player learns to leave a blocked file, travel on a free one, and re-enter above the blocker."
+    "learningObjective": "The player learns to leave a blocked file, travel on a free one, and re-enter above the blocker.",
+    "order": 6
   },
   {
     "id": "bishop-1",

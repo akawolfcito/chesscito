@@ -48,12 +48,12 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "id": "rook-distance-1",
       "optimalMoves": 1,
       "startPos": {
-        "file": 3,
-        "rank": 6
+        "file": 1,
+        "rank": 5
       },
       "targetPos": {
-        "file": 3,
-        "rank": 5
+        "file": 1,
+        "rank": 2
       },
       "tier": "easy",
       "tags": [
@@ -106,19 +106,35 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "rook-9",
-      "optimalMoves": 3,
+      "optimalMoves": 5,
       "startPos": {
         "file": 0,
         "rank": 0
       },
       "targetPos": {
-        "file": 2,
-        "rank": 2
+        "file": 7,
+        "rank": 7
       },
       "obstacles": [
         {
+          "file": 5,
+          "rank": 7
+        },
+        {
+          "file": 1,
+          "rank": 6
+        },
+        {
+          "file": 7,
+          "rank": 5
+        },
+        {
           "file": 0,
           "rank": 2
+        },
+        {
+          "file": 6,
+          "rank": 1
         },
         {
           "file": 2,
@@ -139,28 +155,52 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "id": "rook-10",
       "optimalMoves": 4,
       "startPos": {
-        "file": 3,
-        "rank": 0
+        "file": 4,
+        "rank": 4
       },
       "targetPos": {
         "file": 3,
-        "rank": 4
+        "rank": 3
       },
       "obstacles": [
         {
+          "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 6,
+          "rank": 6
+        },
+        {
           "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 1,
+          "rank": 4
+        },
+        {
+          "file": 3,
           "rank": 4
         },
         {
           "file": 4,
-          "rank": 4
-        },
-        {
-          "file": 3,
           "rank": 3
         },
         {
-          "file": 3,
+          "file": 6,
+          "rank": 3
+        },
+        {
+          "file": 5,
+          "rank": 2
+        },
+        {
+          "file": 1,
+          "rank": 1
+        },
+        {
+          "file": 4,
           "rank": 1
         }
       ],
@@ -177,53 +217,46 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "rook-8",
-      "optimalMoves": 4,
+      "optimalMoves": 5,
       "startPos": {
-        "file": 3,
-        "rank": 3
+        "file": 1,
+        "rank": 5
       },
       "targetPos": {
-        "file": 4,
-        "rank": 4
+        "file": 7,
+        "rank": 2
       },
       "obstacles": [
         {
+          "file": 1,
+          "rank": 6
+        },
+        {
           "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 5,
+          "rank": 6
+        },
+        {
+          "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 5,
+          "rank": 5
+        },
+        {
+          "file": 6,
+          "rank": 5
+        },
+        {
+          "file": 2,
           "rank": 4
         },
         {
           "file": 4,
-          "rank": 3
-        }
-      ],
-      "tier": "medium",
-      "tags": [
-        "detour",
-        "boxed-target"
-      ],
-      "principle": "no-diagonal-advanced",
-      "title": "The boxed star",
-      "playerPrompt": "One diagonal step away, and four moves of work. Box it out.",
-      "learningObjective": "The advanced form of no-diagonal: with the two adjacent squares blocked, the one-step diagonal costs four moves. Follows rook-no-diagonal-1, which teaches the clean case in two."
-    },
-    {
-      "id": "rook-6",
-      "optimalMoves": 3,
-      "startPos": {
-        "file": 3,
-        "rank": 5
-      },
-      "targetPos": {
-        "file": 3,
-        "rank": 1
-      },
-      "obstacles": [
-        {
-          "file": 3,
-          "rank": 7
-        },
-        {
-          "file": 3,
           "rank": 4
         },
         {
@@ -239,12 +272,123 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
           "rank": 3
         },
         {
-          "file": 0,
+          "file": 7,
+          "rank": 3
+        },
+        {
+          "file": 1,
+          "rank": 2
+        },
+        {
+          "file": 2,
           "rank": 1
         },
         {
-          "file": 7,
+          "file": 5,
           "rank": 1
+        },
+        {
+          "file": 6,
+          "rank": 1
+        },
+        {
+          "file": 5,
+          "rank": 0
+        }
+      ],
+      "tier": "medium",
+      "tags": [
+        "detour",
+        "boxed-target"
+      ],
+      "principle": "no-diagonal-advanced",
+      "title": "The boxed star",
+      "playerPrompt": "One diagonal step away, and four moves of work. Box it out.",
+      "learningObjective": "The advanced form of no-diagonal: with the two adjacent squares blocked, the one-step diagonal costs four moves. Follows rook-no-diagonal-1, which teaches the clean case in two."
+    },
+    {
+      "id": "rook-6",
+      "optimalMoves": 6,
+      "startPos": {
+        "file": 1,
+        "rank": 6
+      },
+      "targetPos": {
+        "file": 6,
+        "rank": 1
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 7
+        },
+        {
+          "file": 7,
+          "rank": 7
+        },
+        {
+          "file": 2,
+          "rank": 6
+        },
+        {
+          "file": 5,
+          "rank": 6
+        },
+        {
+          "file": 1,
+          "rank": 5
+        },
+        {
+          "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 5,
+          "rank": 5
+        },
+        {
+          "file": 6,
+          "rank": 5
+        },
+        {
+          "file": 3,
+          "rank": 4
+        },
+        {
+          "file": 4,
+          "rank": 3
+        },
+        {
+          "file": 1,
+          "rank": 2
+        },
+        {
+          "file": 2,
+          "rank": 2
+        },
+        {
+          "file": 5,
+          "rank": 2
+        },
+        {
+          "file": 6,
+          "rank": 2
+        },
+        {
+          "file": 2,
+          "rank": 1
+        },
+        {
+          "file": 5,
+          "rank": 1
+        },
+        {
+          "file": 0,
+          "rank": 0
+        },
+        {
+          "file": 7,
+          "rank": 0
         }
       ],
       "tier": "medium",
@@ -259,14 +403,14 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "rook-7",
-      "optimalMoves": 4,
+      "optimalMoves": 9,
       "startPos": {
-        "file": 0,
-        "rank": 0
+        "file": 3,
+        "rank": 7
       },
       "targetPos": {
-        "file": 3,
-        "rank": 4
+        "file": 4,
+        "rank": 0
       },
       "obstacles": [
         {
@@ -278,12 +422,24 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
           "rank": 6
         },
         {
-          "file": 1,
+          "file": 4,
+          "rank": 6
+        },
+        {
+          "file": 3,
           "rank": 5
         },
         {
-          "file": 5,
+          "file": 6,
           "rank": 5
+        },
+        {
+          "file": 7,
+          "rank": 5
+        },
+        {
+          "file": 0,
+          "rank": 4
         },
         {
           "file": 1,
@@ -291,6 +447,10 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         },
         {
           "file": 5,
+          "rank": 4
+        },
+        {
+          "file": 6,
           "rank": 4
         },
         {
@@ -299,10 +459,14 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         },
         {
           "file": 2,
-          "rank": 2
+          "rank": 3
         },
         {
-          "file": 3,
+          "file": 6,
+          "rank": 3
+        },
+        {
+          "file": 1,
           "rank": 2
         },
         {
@@ -310,8 +474,16 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
           "rank": 2
         },
         {
+          "file": 3,
+          "rank": 1
+        },
+        {
+          "file": 4,
+          "rank": 1
+        },
+        {
           "file": 5,
-          "rank": 2
+          "rank": 1
         }
       ],
       "tier": "medium",
