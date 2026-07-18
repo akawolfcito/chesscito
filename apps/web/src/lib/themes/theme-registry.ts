@@ -71,6 +71,30 @@ export type ThemeAssetKey =
   // brand — identity assets (not game theme, but updatable)
   | "brand.title"
   | "brand.ring-start-focus"
+  // exercises — the PLAY / learn-exercises surface
+  | "exercises.avatar-fun"
+  | "exercises.avatar-try-again"
+  | "exercises.badge"
+  | "exercises.badge-menu"
+  | "exercises.refuge"
+  | "exercises.leaderboard-menu"
+  | "exercises.leaderboard-crown"
+  | "exercises.plant"
+  | "exercises.btn-nodo"
+  | "exercises.labyrinth-icon"
+  | "exercises.combo"
+  | "exercises.score"
+  | "exercises.shop-menu"
+  | "exercises.saved-seal"
+  // arena — the PLAY / arena surface (incl. rival avatars + frames)
+  | "arena.save"
+  | "arena.resign"
+  | "arena.undo"
+  | "arena.rival-kairo"
+  | "arena.rival-pipo"
+  | "arena.rival-frame-blue"
+  | "arena.rival-frame-gold"
+  | "arena.rival-frame-silver"
   // board — batch #1 (catalog visibility; consumers still read these paths
   // directly, see docs/superpowers/plans/2026-07-18-theme-builder-board-slots-plan.md)
   | "board.frame"
@@ -209,6 +233,94 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "brand.ring-start-focus": {
         default: "/art/ring-start-focus",
         usedIn: ["Hub — start-focus ring", "Root"],
+      },
+      "exercises.avatar-fun": {
+        default: "/art/avatar-fun",
+        usedIn: ["Exercises — success avatar (mission panel)"],
+      },
+      "exercises.avatar-try-again": {
+        default: "/art/avatar-try-again",
+        usedIn: ["Exercises — try-again avatar"],
+      },
+      "exercises.badge": {
+        default: "/art/badge-chesscito",
+        usedIn: ["Exercises — badge"],
+      },
+      "exercises.badge-menu": {
+        default: "/art/badge-menu",
+        usedIn: ["Exercises — badge menu icon"],
+      },
+      "exercises.refuge": {
+        default: "/art/labyrinths/refuge",
+        usedIn: ["Exercises — safe-path refuge"],
+      },
+      "exercises.leaderboard-menu": {
+        default: "/art/leaderboard-menu",
+        usedIn: ["Exercises — leaderboard menu icon"],
+      },
+      "exercises.leaderboard-crown": {
+        default: "/art/screen-mission/corona-pro",
+        usedIn: ["Exercises — leaderboard decorative crown"],
+      },
+      "exercises.plant": {
+        default: "/art/new-assets-chesscito/plant1",
+        usedIn: ["Exercises — decorative plant"],
+      },
+      "exercises.btn-nodo": {
+        default: "/art/redesign/bg/btn-nodo",
+        usedIn: ["Exercises — node button"],
+      },
+      "exercises.labyrinth-icon": {
+        default: "/art/redesign/bg/labyrint-icon",
+        usedIn: ["Exercises — labyrinth icon"],
+      },
+      "exercises.combo": {
+        default: "/art/redesign/icons/combo",
+        usedIn: ["Exercises — combo icon"],
+      },
+      "exercises.score": {
+        default: "/art/score-chesscito",
+        usedIn: ["Exercises — score"],
+      },
+      "exercises.shop-menu": {
+        default: "/art/shop-menu",
+        usedIn: ["Exercises — shop menu icon"],
+      },
+      "exercises.saved-seal": {
+        default: "/art/new-icons-chesscito/score-saved",
+        usedIn: ["Exercises — score-saved seal"],
+      },
+      "arena.save": {
+        default: "/art/new-icons-chesscito/save",
+        usedIn: ["Arena — save icon"],
+      },
+      "arena.resign": {
+        default: "/art/new-assets-chesscito/arena/resign-game",
+        usedIn: ["Arena — resign action"],
+      },
+      "arena.undo": {
+        default: "/art/new-assets-chesscito/arena/undo-move",
+        usedIn: ["Arena — undo action"],
+      },
+      "arena.rival-kairo": {
+        default: "/art/rivals/kairo-avatar",
+        usedIn: ["Arena — rival Kairo avatar"],
+      },
+      "arena.rival-pipo": {
+        default: "/art/rivals/pipo-avatar",
+        usedIn: ["Arena — rival Pipo avatar"],
+      },
+      "arena.rival-frame-blue": {
+        default: "/art/rivals/frame-blue",
+        usedIn: ["Arena — rival frame (blue)"],
+      },
+      "arena.rival-frame-gold": {
+        default: "/art/rivals/frame-gold",
+        usedIn: ["Arena — rival frame (gold)"],
+      },
+      "arena.rival-frame-silver": {
+        default: "/art/rivals/frame-silver",
+        usedIn: ["Arena — rival frame (silver)"],
       },
       // The playable board's frame — the decorative border around the live
       // GameBoard (1040×1028, measured inner opening in game-board.tsx). The
