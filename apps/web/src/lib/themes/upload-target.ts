@@ -42,6 +42,12 @@ export function resolveVariantBasename(
     }
     return { ok: true, basename: entry.pro };
   }
+  if (!entry.default) {
+    return {
+      ok: false,
+      reason: "slot has no default asset (PRO-only) — nothing to upload here",
+    };
+  }
   return { ok: true, basename: entry.default };
 }
 

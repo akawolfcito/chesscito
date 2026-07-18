@@ -68,9 +68,9 @@ function VariantCell({
           className="h-40 w-full rounded-lg border border-neutral-700 bg-neutral-800 object-contain"
         />
       ) : muted ? (
-        // Intentional: this variant reuses default — not an error.
+        // Intentional empty state (reuses default, or PRO-only "free: none").
         <div className="flex h-40 w-full items-center justify-center rounded-lg border border-dashed border-neutral-700 bg-neutral-800/40 text-xs text-neutral-500">
-          ↳ reuses default
+          ↳ {muted}
         </div>
       ) : (
         <div className="flex h-40 w-full items-center justify-center rounded-lg border border-dashed border-red-500/50 bg-red-500/5 text-xs text-red-300">
@@ -84,7 +84,7 @@ function VariantCell({
         {asset?.basename && <CopyPathButton path={asset.basename} />}
       </div>
       <div className="text-[11px] font-medium text-neutral-300">
-        {asset ? dims(asset) : "reuses default"}
+        {asset ? dims(asset) : (muted ?? "reuses default")}
       </div>
       <UploadControl
         themeId={themeId}
@@ -183,11 +183,12 @@ export default async function ThemeBuilderDevPage({
                         <VariantCell
                           label="default"
                           asset={slot.default}
+                          muted={slot.proOnly ? "free: none" : undefined}
                           themeId={catalog.id}
                           slotKey={slot.key}
                           variant="default"
-                          canUpload
-                          hasBackup={slot.default.hasBackup}
+                          canUpload={!slot.proOnly}
+                          hasBackup={slot.default?.hasBackup ?? false}
                         />
                         <VariantCell
                           label="pro"

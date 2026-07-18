@@ -47,9 +47,9 @@ describe("buildThemeCatalog", () => {
   it("resolves the default variant and attaches its basename", async () => {
     const catalog = await buildThemeCatalog("candy-forest", okResolver);
     const portal = catalog?.slots.find((s) => s.key === "hub.portal");
-    expect(portal?.default.basename).toBe("/art/hub/portal-chesscito-normal");
-    expect(portal?.default.file).toBe("/art/hub/portal-chesscito-normal.png");
-    expect(portal?.default.width).toBe(1024);
+    expect(portal?.default?.basename).toBe("/art/hub/portal-chesscito-normal");
+    expect(portal?.default?.file).toBe("/art/hub/portal-chesscito-normal.png");
+    expect(portal?.default?.width).toBe(1024);
   });
 
   it("resolves the pro variant when the slot declares one", async () => {
@@ -78,7 +78,7 @@ describe("buildThemeCatalog", () => {
   it("propagates missing files as null dimensions (no throw)", async () => {
     const catalog = await buildThemeCatalog("candy-forest", missingResolver);
     const portal = catalog?.slots.find((s) => s.key === "hub.portal");
-    expect(portal?.default.file).toBeNull();
-    expect(portal?.default.width).toBeNull();
+    expect(portal?.default?.file).toBeNull();
+    expect(portal?.default?.width).toBeNull();
   });
 });

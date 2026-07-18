@@ -26,12 +26,14 @@
 export type ThemeAssetVariant = "default" | "pro";
 
 export type ThemeAssetEntry = {
-  /** Always present. Basename without extension — consumer composes
-   *  the AVIF/WebP/PNG triplet at render time. */
-  default: string;
-  /** Optional PRO-tier override. When absent, useThemeAsset falls back
-   *  to `default` for PRO viewers — preserves the no-broken-state
-   *  contract while future themes catch up. */
+  /** Basename without extension — consumer composes the AVIF/WebP/PNG
+   *  triplet at render time. Optional: when ABSENT the slot is a PRO-only
+   *  overlay/decoration (e.g. the gold avatar frame) — free users see
+   *  nothing, PRO users get `pro`. Every entry must have `default` or `pro`. */
+  default?: string;
+  /** PRO-tier value. For a normal slot it's an override of `default`;
+   *  for a PRO-only slot (no `default`) it's the whole asset. When absent,
+   *  useThemeAsset falls back to `default` for PRO viewers. */
   pro?: string;
   /** Human-readable list of surfaces/screens that render this slot.
    *  Powers the `/dev/theme-builder` art catalog so the founder can
@@ -119,6 +121,9 @@ export type ThemeAssetKey =
   | "arena.rival-frame-blue"
   | "arena.rival-frame-gold"
   | "arena.rival-frame-silver"
+  // PRO-only overlays: no default (free users see nothing), pro = gold frame
+  | "arena.avatar-frame-you"
+  | "arena.avatar-frame-bot"
   // board — batch #1 (catalog visibility; consumers still read these paths
   // directly, see docs/superpowers/plans/2026-07-18-theme-builder-board-slots-plan.md)
   | "board.frame"
@@ -425,6 +430,16 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "arena.rival-frame-silver": {
         default: "/art/rivals/frame-silver",
         usedIn: ["Arena — rival frame (silver)"],
+      },
+      // PRO-only avatar frames (player-avatar.tsx renders `pro && <frame>`).
+      // No default → free users see no frame; PRO users get the gold ornament.
+      "arena.avatar-frame-you": {
+        pro: "/art/chesscito-pro/borde-dorado-avatar-azul",
+        usedIn: ["Arena — 'you' player card (PRO gold frame)"],
+      },
+      "arena.avatar-frame-bot": {
+        pro: "/art/chesscito-pro/borde-dorado-avatar-rojo",
+        usedIn: ["Arena — 'bot' player card (PRO gold frame)"],
       },
       // The playable board's frame — the decorative border around the live
       // GameBoard (1040×1028, measured inner opening in game-board.tsx). The

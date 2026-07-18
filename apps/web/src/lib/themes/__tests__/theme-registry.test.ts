@@ -69,6 +69,8 @@ const REQUIRED_ASSET_KEYS: readonly ThemeAssetKey[] = [
   "arena.rival-frame-blue",
   "arena.rival-frame-gold",
   "arena.rival-frame-silver",
+  "arena.avatar-frame-you",
+  "arena.avatar-frame-bot",
   "board.frame",
   "board.thumbnail",
   "board.tile.light",
@@ -104,7 +106,18 @@ describe("theme-registry", () => {
       for (const key of REQUIRED_ASSET_KEYS) {
         const entry = theme.assets[key];
         expect(entry, `theme=${id} key=${key}`).toBeDefined();
-        expect(entry.default, `theme=${id} key=${key}.default`).toMatch(/^\//);
+        // A slot must carry at least one asset (default, pro, or both — a
+        // PRO-only slot has no default). Any present path is /art-rooted.
+        expect(
+          Boolean(entry.default) || Boolean(entry.pro),
+          `theme=${id} key=${key} has no asset`,
+        ).toBe(true);
+        if (entry.default) {
+          expect(entry.default, `theme=${id} key=${key}.default`).toMatch(/^\//);
+        }
+        if (entry.pro) {
+          expect(entry.pro, `theme=${id} key=${key}.pro`).toMatch(/^\//);
+        }
       }
     }
   });
@@ -131,6 +144,12 @@ describe("theme-registry", () => {
     const entry = THEMES["candy-forest"].assets["hub.pro-chip"];
     expect(entry.default).toBe("/art/hub/pro-chip-inactive");
     expect(entry.pro).toBe("/art/hub/pro-chip-active");
+  });
+
+  it("models a PRO-only overlay as pro with no default", () => {
+    const frame = THEMES["candy-forest"].assets["arena.avatar-frame-you"];
+    expect(frame.default).toBeUndefined();
+    expect(frame.pro).toBe("/art/chesscito-pro/borde-dorado-avatar-azul");
   });
 
   it("marks stale references as deprecated with a reason", () => {

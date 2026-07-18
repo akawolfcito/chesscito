@@ -41,10 +41,14 @@ export type ResolvedAsset = ResolvedFile & { basename: string };
 export type SlotCatalogEntry = {
   key: ThemeAssetKey;
   usedIn: string[];
-  default: ResolvedAsset;
+  /** null when the slot is PRO-only (no free asset — see `proOnly`). */
+  default: ResolvedAsset | null;
   /** null when the slot declares no PRO override (reuses default). */
   pro: ResolvedAsset | null;
   proReusesDefault: boolean;
+  /** True when the slot has NO default — a PRO-only overlay (gold frame, crown):
+   *  free users see nothing, PRO users get `pro`. */
+  proOnly: boolean;
   /** Deprecation reason when the slot is stale, else null. */
   deprecated: string | null;
 };
@@ -79,7 +83,9 @@ export async function buildThemeCatalog(
   const slots = await Promise.all(
     keys.map(async (key): Promise<SlotCatalogEntry> => {
       const entry = theme.assets[key];
-      const def = await resolveVariant(entry.default, resolve);
+      const def = entry.default
+        ? await resolveVariant(entry.default, resolve)
+        : null;
       const pro = entry.pro
         ? await resolveVariant(entry.pro, resolve)
         : null;
@@ -88,7 +94,9 @@ export async function buildThemeCatalog(
         usedIn: entry.usedIn ?? [],
         default: def,
         pro,
-        proReusesDefault: pro === null,
+        // A slot reuses default only when it HAS a default and no pro override.
+        proReusesDefault: def !== null && pro === null,
+        proOnly: def === null,
         deprecated: entry.deprecated ?? null,
       };
     }),
