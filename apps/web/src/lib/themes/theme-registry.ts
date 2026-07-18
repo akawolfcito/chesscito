@@ -94,6 +94,7 @@ export type ThemeAssetKey =
   | "shared.mission-avatar"
   | "shared.close"
   | "shared.mission-panel"
+  | "shared.trophy-epic"
   // brand — identity assets (not game theme, but updatable)
   | "brand.title"
   | "brand.ring-start-focus"
@@ -124,6 +125,15 @@ export type ThemeAssetKey =
   // PRO-only overlays: no default (free users see nothing), pro = gold frame
   | "arena.avatar-frame-you"
   | "arena.avatar-frame-bot"
+  // coach
+  | "coach.ask-icon"
+  | "coach.play-again"
+  // account
+  | "account.language-icon"
+  | "account.network-icon"
+  | "account.wallet-icon"
+  | "account.founder"
+  | "account.shield"
   // board — batch #1 (catalog visibility; consumers still read these paths
   // directly, see docs/superpowers/plans/2026-07-18-theme-builder-board-slots-plan.md)
   | "board.frame"
@@ -335,6 +345,10 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/screen-mission/panel-mision-icon",
         usedIn: ["Arena", "Exercises"],
       },
+      "shared.trophy-epic": {
+        default: "/art/action-row/trofeo-epico",
+        usedIn: ["Coach", "Trophies"],
+      },
       "brand.title": {
         default: "/art/title-chesscito",
         usedIn: ["Brand — Chesscito wordmark"],
@@ -440,6 +454,34 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "arena.avatar-frame-bot": {
         pro: "/art/chesscito-pro/borde-dorado-avatar-rojo",
         usedIn: ["Arena — 'bot' player card (PRO gold frame)"],
+      },
+      "coach.ask-icon": {
+        default: "/art/new-assets-chesscito/btns/ask-coach-icon",
+        usedIn: ["Coach — ask button icon"],
+      },
+      "coach.play-again": {
+        default: "/art/new-assets-chesscito/btns/play-again-icon",
+        usedIn: ["Coach — play again icon"],
+      },
+      "account.language-icon": {
+        default: "/art/new-assets-chesscito/account/language-icon",
+        usedIn: ["Account — language row"],
+      },
+      "account.network-icon": {
+        default: "/art/new-assets-chesscito/account/network-icon",
+        usedIn: ["Account — network row"],
+      },
+      "account.wallet-icon": {
+        default: "/art/new-assets-chesscito/account/wallet-icon",
+        usedIn: ["Account — wallet row"],
+      },
+      "account.founder": {
+        default: "/art/shop/founder",
+        usedIn: ["Account — founder badge"],
+      },
+      "account.shield": {
+        default: "/art/shop/shield",
+        usedIn: ["Account — shield"],
       },
       // The playable board's frame — the decorative border around the live
       // GameBoard (1040×1028, measured inner opening in game-board.tsx). The
