@@ -9,6 +9,7 @@ const REQUIRED_ASSET_KEYS: readonly ThemeAssetKey[] = [
   "hub.portal",
   "hub.avatar",
   "board.frame",
+  "board.thumbnail",
   "board.tile.light",
   "board.tile.dark",
   "board.piece.white.rook",

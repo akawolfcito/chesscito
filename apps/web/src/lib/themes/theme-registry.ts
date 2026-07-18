@@ -49,6 +49,7 @@ export type ThemeAssetKey =
   // board — batch #1 (catalog visibility; consumers still read these paths
   // directly, see docs/superpowers/plans/2026-07-18-theme-builder-board-slots-plan.md)
   | "board.frame"
+  | "board.thumbnail"
   | "board.tile.light"
   | "board.tile.dark"
   | "board.piece.white.rook"
@@ -94,12 +95,18 @@ export const THEMES: Record<string, ThemeDefinition> = {
         pro: "/art/hub/chesscito-avatar-new-light",
         usedIn: ["Hub — KingdomAnchor avatar", "Exercises — avatar"],
       },
-      // The framed board illustration (decorative border + a–h/1–8 labels).
-      // NOT the playable surface — that is procedural tiles (board.tile.*).
-      // (Legacy `/art/chesscito-board` is dead for the game board — canvas is
-      //  background:none — only the OG home card still uses it; left unregistered
-      //  pending a "where is it still used" validation.)
+      // The playable board's frame — the decorative border around the live
+      // GameBoard (1040×1028, measured inner opening in game-board.tsx). The
+      // squares inside are procedural tiles (board.tile.*).
       "board.frame": {
+        default: "/art/board/borde-tablero-chesscito1",
+        usedIn: ["GameBoard — playable board frame"],
+      },
+      // The pre-composed framed-board illustration used ONLY for thumbnails /
+      // previews (avoids laying out a position in small scenarios). NOT the
+      // playable board. (Legacy `/art/chesscito-board` is dead — canvas is
+      //  background:none; only the OG home card still uses it, left unregistered.)
+      "board.thumbnail": {
         default: "/art/redesign/board/board-ch",
         usedIn: ["Hub — KingdomAnchor board", "Board thumbnail", "Splash preload"],
       },
