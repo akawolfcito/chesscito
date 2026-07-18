@@ -681,20 +681,20 @@
     "learningObjective": "The player learns the queen moves like a rook and a bishop combined, in any straight direction."
   },
   {
+    "title": "Straight up the file",
+    "playerPrompt": "Like a rook, the queen races up the file. Go.",
     "id": "queen-2",
     "piece": "queen",
-    "fen": "8/8/8/8/8/8/8/Q7 w - - 0 1",
+    "fen": "8/8/8/8/8/8/8/6Q1 w - - 0 1",
     "target": "a8",
-    "mover": "a1",
+    "mover": "g1",
     "tier": "easy",
     "tags": [
       "straight-line"
     ],
-    "order": 1,
     "principle": "rook-lines",
-    "title": "Straight up the file",
-    "playerPrompt": "Like a rook, the queen races up the file. Go.",
-    "learningObjective": "The player learns the queen moves along ranks and files, just like a rook."
+    "learningObjective": "The player learns the queen moves along ranks and files, just like a rook.",
+    "order": 1
   },
   {
     "id": "queen-3",
@@ -713,20 +713,20 @@
     "learningObjective": "The player learns the queen also moves along diagonals, just like a bishop."
   },
   {
+    "title": "Across the rank",
+    "playerPrompt": "Slide straight along the rank to the star.",
     "id": "queen-4",
     "piece": "queen",
-    "fen": "8/8/8/8/8/8/8/Q7 w - - 0 1",
-    "target": "h1",
-    "mover": "a1",
+    "fen": "1Q6/8/8/8/8/8/8/8 w - - 0 1",
+    "target": "h7",
+    "mover": "b8",
     "tier": "easy",
     "tags": [
       "straight-line"
     ],
-    "order": 3,
     "principle": "rank-line",
-    "title": "Across the rank",
-    "playerPrompt": "Slide straight along the rank to the star.",
-    "learningObjective": "The player reinforces that the queen sweeps a whole rank in a single move."
+    "learningObjective": "The player reinforces that the queen sweeps a whole rank in a single move.",
+    "order": 3
   },
   {
     "id": "queen-5",
@@ -782,58 +782,58 @@
     "learningObjective": "The player plans a detour when the direct queen line is blocked."
   },
   {
+    "title": "The long way to the center",
+    "playerPrompt": "The diagonal is blocked partway. Route around to reach the star.",
     "id": "queen-8",
     "piece": "queen",
-    "fen": "8/8/8/3N4/3NN3/8/8/Q7 w - - 0 1",
+    "fen": "8/8/5N2/5N2/3NN3/8/8/3Q4 w - - 0 1",
     "target": "e5",
-    "mover": "a1",
+    "mover": "d1",
     "tier": "medium",
     "tags": [
       "rook-bishop-combo",
       "long-range",
       "detour"
     ],
-    "order": 7,
     "principle": "long-detour",
-    "title": "The long way to the center",
-    "playerPrompt": "The diagonal is blocked partway. Route around to reach the star.",
-    "learningObjective": "The player combines the queen's lines to route around a blocker over long range."
+    "learningObjective": "The player combines the queen's lines to route around a blocker over long range.",
+    "order": 7
   },
   {
+    "title": "Leave and re-enter the rank",
+    "playerPrompt": "The rank is shut just ahead. Step off, go around, and come back.",
     "id": "queen-9",
     "piece": "queen",
-    "fen": "8/8/8/8/8/8/1NN5/QN6 w - - 0 1",
-    "target": "d1",
-    "mover": "a1",
+    "fen": "7Q/8/4N3/4NN2/1NN5/2N5/8/8 w - - 0 1",
+    "target": "b3",
+    "mover": "h8",
     "tier": "medium",
     "tags": [
       "straight-line",
       "detour",
       "blocked-line"
     ],
-    "order": 8,
     "principle": "reopen-the-line",
-    "title": "Leave and re-enter the rank",
-    "playerPrompt": "The rank is shut just ahead. Step off, go around, and come back.",
-    "learningObjective": "The player learns to leave a blocked line and rejoin it beyond the blocker."
+    "learningObjective": "The player learns to leave a blocked line and rejoin it beyond the blocker.",
+    "order": 8
   },
   {
+    "title": "Around your own piece",
+    "playerPrompt": "Your own piece blocks the rank. Loop around it to the star.",
     "id": "queen-10",
     "piece": "queen",
-    "fen": "QN6/1N6/8/8/8/8/8/8 w - - 0 1",
-    "target": "c8",
-    "mover": "a8",
+    "fen": "1N6/1N6/2NNNN2/2N5/2N2NN1/6N1/2NNN1N1/6NQ w - - 0 1",
+    "target": "b5",
+    "mover": "h1",
     "tier": "medium",
     "tags": [
       "friendly-blocker",
       "detour",
       "blocked-line"
     ],
-    "order": 9,
     "principle": "friendly-blocker",
-    "title": "Around your own piece",
-    "playerPrompt": "Your own piece blocks the rank. Loop around it to the star.",
-    "learningObjective": "The player confirms the queen must route around a friendly piece it cannot pass through."
+    "learningObjective": "The player confirms the queen must route around a friendly piece it cannot pass through.",
+    "order": 9
   },
   {
     "id": "king-1",

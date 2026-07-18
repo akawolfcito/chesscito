@@ -202,9 +202,9 @@
   {
     "id": "queen-lab-1",
     "piece": "queen",
-    "fen": "8/8/8/N7/7N/8/1N6/Q7 w - - 0 1",
-    "target": "h8",
-    "mover": "a1",
+    "fen": "8/8/8/7N/N7/8/6N1/7Q w - - 0 1",
+    "target": "a8",
+    "mover": "h1",
     "order": 0
   },
   {
@@ -218,45 +218,45 @@
   {
     "id": "queen-lab-3",
     "piece": "queen",
-    "fen": "8/3N4/8/3N4/8/3N4/8/3Q4 w - - 0 1",
+    "fen": "7N/N2N2N1/1N1N1N2/2NNN3/2NNN3/1N1Q1N2/N2N2N1/3N3N w - - 0 1",
     "target": "d8",
-    "mover": "d1",
+    "mover": "d3",
     "order": 2
   },
   {
+    "kind": "queens",
+    "title": "The Quiet Room",
+    "playerPrompt": "No queen may see another. Fill the room.",
     "id": "queens-1",
     "piece": "queen",
-    "kind": "queens",
-    "fen": "NNNNNNNN/NNNNNNNN/NNNNNNNN/5NNN/5NNN/5NNN/5NNN/Q4NNN w - - 0 1",
-    "mover": "a1",
+    "fen": "NNNN1NNN/N6N/N1N2N1N/7N/N2Q4/N1N2N1N/N6N/NNN1NNNN w - - 0 1",
+    "mover": "d4",
     "tier": "easy",
-    "title": "The Quiet Room",
     "principle": "queens-intro",
-    "playerPrompt": "No queen may see another. Fill the room.",
     "order": 3
   },
   {
+    "kind": "queens",
+    "title": "Wider Court",
+    "playerPrompt": "More room, same rule. Every queen you place closes lines for the next.",
     "id": "queens-2",
     "piece": "queen",
-    "kind": "queens",
-    "fen": "NNNNNNNN/NNNNNNNN/6NN/6NN/6NN/6NN/Q5NN/6NN w - - 0 1",
+    "fen": "2N5/2N4N/1NN3N1/5N2/3NN3/2N3N1/QN4N1/N5N1 w - - 0 1",
     "mover": "a2",
     "tier": "medium",
-    "title": "Wider Court",
     "principle": "queens-planning",
-    "playerPrompt": "More room, same rule. Every queen you place closes lines for the next.",
     "order": 4
   },
   {
+    "kind": "queens",
+    "title": "Nine on Eight",
+    "playerPrompt": "A block cuts a queen's line. Two of them fit a ninth queen on a board that holds eight.",
     "id": "queens-3",
     "piece": "queen",
-    "kind": "queens",
-    "fen": "8/8/8/8/8/N7/8/Q1N5 w - - 0 1",
+    "fen": "2N2N2/8/N6N/8/8/N6N/8/Q1N2N2 w - - 0 1",
     "mover": "a1",
     "tier": "hard",
-    "title": "Nine on Eight",
     "principle": "queens-blocks",
-    "playerPrompt": "A block cuts a queen's line. Two of them fit a ninth queen on a board that holds eight.",
     "order": 5
   },
   {
