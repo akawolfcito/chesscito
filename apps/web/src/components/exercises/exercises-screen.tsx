@@ -41,7 +41,7 @@ import { PeonesHintButton } from "@/components/peones/peones-hint-button";
 // unmounted the paid Retry chip pending differential-value
 // calibration. The component + tests + spend endpoint support stay
 // as dormant infrastructure (see Sprint 5 handoff §1).
-import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
+import { canReachFrom, computeExerciseBfs } from "@/lib/game/exercise-bfs";
 import { useRetryGuard } from "@/lib/exercises/use-retry-guard";
 import { ENABLE_EXERCISE_ROTATION } from "@/lib/exercises/rotation-flag";
 import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
@@ -1698,9 +1698,9 @@ export function ExercisesScreen({
       return;
     }
 
-    // Solo ejercicios de 1 movimiento: el primer click incorrecto = auto-reset
-    // Ejercicios multi-movimiento: el jugador sigue navegando libremente
-    if (currentExercise.optimalMoves === 1) {
+    // Shared failure treatment — identical rescue/shield flow whether the loss
+    // came from a wrong single move or from stranding the piece.
+    const triggerFailure = () => {
       hapticReject();
       setPhase("failure");
       shieldRescueAttemptIdRef.current += 1;
@@ -1734,6 +1734,21 @@ export function ExercisesScreen({
         holdForTap(() => handleRetryApplied("auto_reset"));
       }
       // else: modal handles the dwell; no autoReset.
+    };
+
+    // Solo ejercicios de 1 movimiento: el primer click incorrecto = auto-reset
+    if (currentExercise.optimalMoves === 1) {
+      triggerFailure();
+      return;
+    }
+
+    // Multi-movimiento: el jugador navega libremente MIENTRAS el objetivo siga
+    // siendo alcanzable. El peón nunca retrocede: si avanza recto y abandona su
+    // captura, la estrella queda inalcanzable para siempre — quedarse callado le
+    // enseña que "no pasa nada". `canReachFrom` corre el mismo BFS que el juego,
+    // así que otras piezas (que sí retroceden) nunca dan falso positivo.
+    if (!canReachFrom(selectedPiece, currentExercise, position)) {
+      triggerFailure();
     }
   }
 

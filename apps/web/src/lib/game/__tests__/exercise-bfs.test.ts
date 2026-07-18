@@ -13,8 +13,9 @@
 
 import { describe, expect, it } from "vitest";
 
-import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
+import { canReachFrom, computeExerciseBfs } from "@/lib/game/exercise-bfs";
 import { EXERCISES, PLAYABLE_PIECES } from "@/lib/game/exercises";
+import type { Exercise } from "@/lib/game/types";
 
 describe("computeExerciseBfs — optimalMoves regression net", () => {
   for (const piece of PLAYABLE_PIECES) {
@@ -65,5 +66,41 @@ describe("computeExerciseBfs — firstStep correctness", () => {
       ],
     });
     expect(result).toBeNull();
+  });
+});
+
+describe("canReachFrom — pawn dead-end detection", () => {
+  // A pawn must zig-zag: capture d3, then e4, then reach f5 (diagonally onto
+  // the star). It never retreats, so marching straight up strands it. Mirrors
+  // the founder's field report (pawn walked to c8, star never captured).
+  const ex: Exercise = {
+    id: "synthetic-pawn-zigzag",
+    startPos: { file: 2, rank: 1 }, // c2
+    targetPos: { file: 5, rank: 4 }, // f5
+    optimalMoves: 3,
+    isCapture: true,
+    captureTargets: [
+      { file: 3, rank: 2 }, // d3
+      { file: 4, rank: 3 }, // e4
+    ],
+  };
+
+  it("start square can still reach the target", () => {
+    expect(canReachFrom("pawn", ex, ex.startPos)).toBe(true);
+  });
+
+  it("capturing d3 keeps the target reachable", () => {
+    expect(canReachFrom("pawn", ex, { file: 3, rank: 2 })).toBe(true);
+  });
+
+  it("marching straight forward strands the pawn (dead-end)", () => {
+    // c2 → c3 (a legal forward move) abandons the only capture route.
+    expect(canReachFrom("pawn", ex, { file: 2, rank: 2 })).toBe(false);
+  });
+
+  it("a rook is never stranded — it can always navigate back", () => {
+    const rookEx = EXERCISES.rook[0]!;
+    // Move the rook somewhere off the optimal lane; it can still reach target.
+    expect(canReachFrom("rook", rookEx, { file: 4, rank: 4 })).toBe(true);
   });
 });

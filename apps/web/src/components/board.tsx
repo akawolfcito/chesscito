@@ -108,6 +108,12 @@ export function Board({
     null
   );
   const [movesCount, setMovesCount] = useState(0);
+  // Capture squares the piece has already landed on. Tracks the REAL captures
+  // (not a position heuristic) so a captured enemy vanishes for good even when
+  // the pawn zig-zags across files, and an un-captured enemy stays visible.
+  const [capturedSquares, setCapturedSquares] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [isRejecting, setIsRejecting] = useState(false);
   // Surfaced when the user taps an empty cell with no piece selected — the
   // exact dead-end pattern reported on iPhone 17 Pro Max (2026-05-31).
@@ -178,6 +184,8 @@ export function Board({
     setPiece(makePiece(pieceType, startPosition));
     setSelectedPosition(null);
     setMovesCount(0);
+    // A new exercise starts clean: every enemy present, no captures yet.
+    setCapturedSquares(new Set());
     // A new exercise starts clean: no leftover trail from the previous run.
     setTrail(null);
     if (trailTimerRef.current) clearTimeout(trailTimerRef.current);
@@ -254,6 +262,16 @@ export function Board({
       setMovesCount(nextMoves);
       setPiece((current) => movePiece(current, nextPosition));
       setSelectedPosition(null);
+
+      // Landing on a capture square consumes that enemy — mark it captured so
+      // it never re-renders behind the piece as it moves on.
+      if ((captureTargets ?? []).some((c) => c.file === nextPosition.file && c.rank === nextPosition.rank)) {
+        setCapturedSquares((prev) => {
+          const next = new Set(prev);
+          next.add(`${nextPosition.file},${nextPosition.rank}`);
+          return next;
+        });
+      }
 
       const isTargetReached =
         targetPosition !== null &&
@@ -394,12 +412,9 @@ export function Board({
         if (targetPosition && ct.file === targetPosition.file && ct.rank === targetPosition.rank) {
           return null;
         }
-        // Once the pawn has captured this square (it lands on the enemy's file
-        // and advances up it), the enemy is gone — don't re-draw a captured
-        // piece behind the pawn as it continues toward the goal.
-        const captured =
-          piece.position.file === ct.file && piece.position.rank >= ct.rank;
-        if (captured) return null;
+        // Enemy already captured (the piece landed on it) — gone for good, even
+        // across a zig-zag capture chain. Un-captured enemies stay visible.
+        if (capturedSquares.has(`${ct.file},${ct.rank}`)) return null;
         const center = cellCenter(ct.file, ct.rank);
         const pw = pieceWidth();
         return (

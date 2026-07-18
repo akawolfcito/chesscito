@@ -60,18 +60,31 @@ describe("<Board>", () => {
     expect(enemies[0].querySelector("img")?.getAttribute("src")).toContain("b-");
   });
 
-  it("hides a captured enemy once the pawn has reached its square", () => {
-    // Pawn already sitting on the capture square (it captured and is advancing
-    // up that file): the enemy must be gone, not re-drawn behind the pawn.
+  it("removes a captured enemy for good once the pawn lands on it", () => {
+    // Regression: captured black pieces reappeared behind the pawn. The enemy
+    // must vanish when the pawn actually lands on its square — and stay gone as
+    // the pawn zig-zags on across files toward the goal.
     const { container } = render(
       <Board
         pieceType="pawn"
-        startPosition={{ file: 5, rank: 2 }}
-        targetPosition={{ file: 5, rank: 4 }}
-        captureTargets={[{ file: 5, rank: 2 }]}
+        startPosition={{ file: 2, rank: 1 }} // c2
+        targetPosition={{ file: 5, rank: 4 }} // f5
+        captureTargets={[
+          { file: 3, rank: 2 }, // d3
+          { file: 4, rank: 3 }, // e4
+        ]}
         isCapture
       />
     );
+    expect(container.querySelectorAll(".is-capture-enemy")).toHaveLength(2);
+
+    // c2 → d3 (capture), then d3 → e4 (capture): both enemies gone, none redraw.
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square c2" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square d3" }));
+    expect(container.querySelectorAll(".is-capture-enemy")).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square d3" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square e4" }));
     expect(container.querySelectorAll(".is-capture-enemy")).toHaveLength(0);
   });
 

@@ -90,6 +90,23 @@ export function computeExerciseBfs(
   return null;
 }
 
+/**
+ * Can the piece still reach the target if it were standing on `from`?
+ * Same BFS/getValidTargets expansion as gameplay, so it agrees with the
+ * moves actually offered. Decisive for the pawn: it never retreats, so once
+ * it advances past its capture the target is unreachable forever and the
+ * exercise must fail. Retreat-capable pieces can navigate back, so they
+ * effectively never strand (BFS keeps finding a path). Returns false only
+ * when NO legal path to the target remains — a genuine dead-end.
+ */
+export function canReachFrom(
+  piece: PieceId,
+  exercise: Exercise,
+  from: BoardPosition,
+): boolean {
+  return computeExerciseBfs(piece, { ...exercise, startPos: from }) !== null;
+}
+
 export type ExerciseBfsPathResult = { optimalMoves: number; path: BoardPosition[] } | null;
 
 /** Like computeExerciseBfs but reconstructs the full optimal path
