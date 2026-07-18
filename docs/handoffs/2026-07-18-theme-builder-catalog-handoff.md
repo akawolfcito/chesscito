@@ -25,6 +25,21 @@ código y los basenames registrados, filtrado a los que existen en disco. El bar
 categoriza pero NO mide cobertura (se le escapan carpetas no visitadas + selección dinámica). Correr
 el literal-diff antes de dar el catálogo por completo. Ver `[[feedback_grep_audit_misses_composed_paths]]`.
 
+## ⭐ SIGUIENTE SESIÓN — arrancar por el Quick Win #1
+El founder pidió continuar la próxima sesión con **#1 (localizador preciso de uso)**: enriquecer
+`usedIn` con el **componente exacto** que consume cada slot (derivable por grep), para los assets
+"misteriosos" que solo se ven en CSS y no se sabe en qué pantalla renderizan (ej. `shop.slot-frame`,
+`scene.pedestal`, `scene.stone-*`). Acotado, una tanda. NO arrancar #4 (multi-theme) sin sesión fresca.
+
+## Capacidad HOY vs. B2 (aclaración clave, confirmada con el founder)
+- **Replace image → SÍ actualiza el app, en los 162 slots, hoy.** El catálogo escribe el archivo REAL
+  (`/art/…`) que el componente ya renderiza (hardcoded) — mismo archivo físico. Commit → deploy → live.
+  NO depende de estar "cableado". El founder ya tiene el control de actualizar cualquier asset.
+- **B2 (cablear consumidores a `useThemeAsset`)** hace falta SOLO para: (a) **switchear themes** enteros
+  (candy→halloween) sin reemplazar archivos, y (b) que **editar la RUTA** de un slot afecte al app.
+  Hoy solo `hub.portal` y `hub.avatar` están cableados.
+- Editar la ruta de un slot (apuntarlo a otro archivo) hoy es **cosmético** (solo cambia el catálogo).
+
 ## Próximos pasos pedidos por el founder (NO hechos)
 
 1. **Localizador preciso de uso** — hoy `usedIn` es descriptivo ("Kingdom scene"). El founder necesita

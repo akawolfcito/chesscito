@@ -1,87 +1,35 @@
-# Next session prompt — Frente 1: pulir ejercicios y primera sesión
+# Next session prompt — Theme-builder Quick Win #1
 
 Decí **"continuemos"** y el agente lee este archivo y lo sigue.
 
----
-
-**Estado al arrancar:** `main` limpio y sincronizado con `origin/main`. Sin PRs abiertos. La sesión
-anterior **no escribió código de producto: corrigió el rumbo.**
-
-## 📍 Leer PRIMERO, antes de tocar nada
-
-1. **`docs/product/2026-07-13-direction-where-we-are.md`** — **la directriz vigente.** Modelo de
-   **frentes → capas → gates**. La tabla de §2 es el índice: **toda idea nueva se ubica ahí antes de
-   diseñarla.**
-2. `SESSION.md` — el handoff de la sesión (e).
-
-**El principio que gobierna todo:**
-
-> Construir la capa mínima que demuestre valor, medirla, y dejar que el resultado desbloquee la
-> siguiente.
+> Nota: el track anterior de este archivo (Frente 1 — pulir ejercicios) sigue vigente como prioridad
+> aparte; su contexto vive en `docs/product/2026-07-13-direction-where-we-are.md`. El founder pidió
+> explícitamente que la próxima sesión arranque por el Quick Win #1 del theme-builder.
 
 ---
 
-## ▶️ La tarea: Frente 1 — pulir el aprendizaje actual
+## Contexto
+El theme-builder (`/dev/theme-builder`) está **mergeado a `main`** — catálogo de arte con **162 slots**
+en ~18 categorías. Handoff completo: `docs/handoffs/2026-07-18-theme-builder-catalog-handoff.md`
+(leer PRIMERO — tiene los modelos, el método de gap, y la aclaración "qué funciona hoy vs B2").
 
-**Es el frente principal.** Directriz §6.
+## La tarea: Quick Win #1 — localizador preciso de uso
+Enriquecer `usedIn` de cada slot con el **componente/pantalla exacto** que lo consume, para poder ir
+al app y validar visualmente. Hoy `usedIn` es descriptivo ("Kingdom scene"); el founder necesita saber
+el archivo/pantalla real — sobre todo los "misteriosos" que solo se ven en CSS y no se sabe dónde
+renderizan (ej. `shop.slot-frame`, `scene.pedestal`, `scene.stone-*`, `bg.*`).
 
-**NO es construir contenido nuevo. Es pulir lo que el usuario ya ve.**
+**Enfoque:** por cada basename registrado, `grep -rl` el consumidor en `src/` → poblar `usedIn` con
+el path del componente. Acotado, una tanda + smoke test. NO es #4 (multi-theme) — eso es sesión aparte.
 
-1. **Definir qué aborda el usuario primero en cada sesión** y simplificar el primer recorrido.
-2. **Revisar ejercicios**: instrucciones y dificultad.
-3. **Ocultar el contenido que no esté a la altura** — incluye **mejorar o esconder temporalmente el
-   laberinto de peones** si daña la percepción.
-4. Aprovechar que muchos usuarios **tardan** en desbloquear contenido avanzado: es tiempo regalado
-   para pulirlo antes de que lleguen.
+## Reglas heredadas (de esta línea)
+- **Higiene de comandos**: `git -C`/`pnpm -C`, un comando por tool, sin `cd`, sin heredocs (commit con
+  `-F archivo`). `find` sin predicados compuestos (rtk los rechaza).
+- **Verificar cada lote**: typecheck + `vitest run src/lib/themes` + smoke test (curl `/dev/theme-builder`,
+  contar `>no file<` = 0). Limpiar `.next/cache/webpack` si el dev server tira 404 (caché corrupta).
+- **Commit por iteración.** Firma `Wolfcito 🐾 @akawolfcito`.
+- **NO verificar deploys** — el founder lo ve visualmente.
 
-**Empezá preguntándole al founder qué le molesta HOY del primer recorrido.** No auditar a ciegas: él
-tiene el juicio de producto, y este frente es de percepción, no de corrección técnica.
-
-**Gate:** comprensión y finalización aceptables.
-⚠️ **Los umbrales concretos se definen ANTES del experimento, no ahora** (directriz §14). Un número
-inventado sin instrumentación es falsa precisión, y es peor que la ambigüedad porque parece medido.
-
----
-
-## Reglas del roadmap que NO se re-litigan
-
-- **El duelo NO está congelado** — se construye por capas. **D1 = abrir un enlace y jugar, SIN
-  wallet**, en cualquier navegador móvil o PWA. **No depende de MiniPay.**
-- **El spec v3 del duelo NO es el plan de D1** (es wallet-first, marcado ARTEFACTO HISTÓRICO).
-- **MiniPay está EN REVISIÓN, sin pedidos oficiales abiertos.** Es un **canal**, no un bloqueo.
-- **Las cifras de Peones son HIPÓTESIS.** Inventariar fuentes y sinks **antes** de tocar precios.
-- **Cuando una iniciativa parezca menor, preguntar por su TECHO antes de descartarla.** Ya pasó dos
-  veces en una sesión (themes → marketplace; duelo → economía de espectadores).
-
-## Paralelo barato (NO desplaza al Frente 1)
-
-- **Peones**: inventariar fuentes y sinks. No existe y es la primera tarea del frente.
-- **Themes / catálogo de arte**: página `/dev` que lista cada slot con sus dimensiones. Destraba el
-  cuello de botella real, que es **el arte**, no el código.
-
-## Flujo de trabajo
-
-**Merge local a `main` + UN push.** NO pushear ramas, NO abrir PRs con auto-merge.
-
-```
-git -C <ruta> checkout -b <rama>      # trabajar, commits atómicos
-git -C <ruta> checkout main
-git -C <ruta> merge --no-ff <rama>
-git -C <ruta> push origin main        # UNA vez
-git -C <ruta> branch -d <rama>
-```
-
-El gate de calidad es **suite verde + `tsc` limpio ANTES del merge local**, no CI después.
-
-## Higiene de comandos
-
-- **Nunca prefijes con `cd`.** Usá `git -C <ruta>` y `pnpm -C <ruta>`.
-- Un comando por llamada. Sin pipes, sin heredocs.
-- Typecheck: `pnpm exec tsc --noEmit` pelado.
-- `lsof -ti:3000` vacío antes de VR/E2E.
-
-## Si el usuario dice…
-
-- **"continuemos"** → preguntar qué le molesta hoy del primer recorrido, y arrancar el Frente 1.
-- **"qué falta"** → la directriz, §12 (activo / en preparación / diferido).
-- **"y el duelo?"** → no está congelado; la próxima capa es D1 y **no depende de MiniPay**.
+## Memoria relevante
+[[project_theme_catalog_decisions]] · [[project_theme_system_foundation]] ·
+[[feedback_grep_audit_misses_composed_paths]] (el gap se mide con literal-diff, NO por-superficie).
