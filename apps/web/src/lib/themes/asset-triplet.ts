@@ -34,8 +34,15 @@ export async function writeAssetTriplet(
   const base = sharp(input);
   const meta = await base.metadata();
 
-  const png = await sharp(input).png().toBuffer();
-  const webp = await sharp(input).webp({ quality: 85, effort: 6 }).toBuffer();
+  // Half-A optimization — matches scripts/optimize-assets.sh, in-process:
+  //  • PNG: palette quantization (libimagequant, bundled in sharp) ≈ pngquant,
+  //    metadata stripped by default. Lossy but visually near-identical for the
+  //    game's illustration art. Dimensions are NOT touched (that is Half B).
+  //  • WebP/AVIF: tuned quality siblings the browser picks over the PNG.
+  const png = await sharp(input)
+    .png({ palette: true, quality: 80, effort: 10, compressionLevel: 9 })
+    .toBuffer();
+  const webp = await sharp(input).webp({ quality: 80, effort: 6 }).toBuffer();
   const avif = await sharp(input).avif({ quality: 50, effort: 4 }).toBuffer();
 
   await Promise.all([
