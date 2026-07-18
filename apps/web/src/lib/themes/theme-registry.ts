@@ -95,6 +95,10 @@ export type ThemeAssetKey =
   | "shared.close"
   | "shared.mission-panel"
   | "shared.trophy-epic"
+  | "shared.feedback-sad"
+  | "shared.feedback-thinking"
+  | "shared.feedback-questioning"
+  | "payments.celebration-bg"
   // brand — identity assets (not game theme, but updatable)
   | "brand.title"
   | "brand.ring-start-focus"
@@ -364,6 +368,23 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "shared.trophy-epic": {
         default: "/art/action-row/trofeo-epico",
         usedIn: ["Coach", "Trophies"],
+      },
+      // more reaction avatars — surfaced by overlays/modals (mood-driven).
+      "shared.feedback-sad": {
+        default: "/art/new-assets-chesscito/fun/avatar-triste",
+        usedIn: ["Overlays / modals — sad reaction"],
+      },
+      "shared.feedback-thinking": {
+        default: "/art/new-assets-chesscito/fun/avatar-pensativo",
+        usedIn: ["Overlays / modals — thinking reaction"],
+      },
+      "shared.feedback-questioning": {
+        default: "/art/new-assets-chesscito/fun/avatar-interrogativo",
+        usedIn: ["Overlays / modals — questioning reaction"],
+      },
+      "payments.celebration-bg": {
+        default: "/art/celebration/bg-celebration",
+        usedIn: ["Payments — celebration background"],
       },
       "brand.title": {
         default: "/art/title-chesscito",
