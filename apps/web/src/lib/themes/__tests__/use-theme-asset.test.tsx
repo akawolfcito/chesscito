@@ -47,4 +47,32 @@ describe("useThemeAsset", () => {
       THEMES["candy-forest"].assets["hub.portal"] = original;
     }
   });
+
+  it("returns an empty path when PRO explicitly disables an inherited asset", () => {
+    const original = THEMES["candy-forest"].assets["hub.portal"];
+    THEMES["candy-forest"].assets["hub.portal"] = {
+      default: "/art/x",
+      pro: { mode: "none" },
+    };
+    try {
+      const { result } = renderHook(() => useThemeAsset("hub.portal", "pro"));
+      expect(result.current).toBe("");
+    } finally {
+      THEMES["candy-forest"].assets["hub.portal"] = original;
+    }
+  });
+
+  it("resolves an explicit object-form asset", () => {
+    const original = THEMES["candy-forest"].assets["hub.portal"];
+    THEMES["candy-forest"].assets["hub.portal"] = {
+      default: { mode: "asset", path: "/art/object-path" },
+      pro: { mode: "inherit" },
+    };
+    try {
+      const { result } = renderHook(() => useThemeAsset("hub.portal", "pro"));
+      expect(result.current).toBe("/art/object-path");
+    } finally {
+      THEMES["candy-forest"].assets["hub.portal"] = original;
+    }
+  });
 });

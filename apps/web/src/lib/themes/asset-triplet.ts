@@ -13,6 +13,7 @@ const TRASH_DIR = path.join(process.cwd(), ".theme-builder-trash");
 
 /** The three sibling extensions that make up an asset. */
 const EXTENSIONS = ["png", "webp", "avif"] as const;
+const BACKUP_META_SUFFIX = ".theme-builder-backup.json";
 
 export type TripletResult = {
   files: string[];
@@ -36,6 +37,7 @@ async function exists(p: string): Promise<boolean> {
 /** True when a one-level undo backup exists for this basename (any sibling). */
 export async function hasBackup(basename: string): Promise<boolean> {
   const rel = relOf(basename);
+  if (await exists(path.join(TRASH_DIR, `${rel}${BACKUP_META_SUFFIX}`))) return true;
   for (const ext of EXTENSIONS) {
     if (await exists(path.join(TRASH_DIR, `${rel}.${ext}`))) return true;
   }
@@ -48,13 +50,22 @@ export async function hasBackup(basename: string): Promise<boolean> {
 async function backupCurrentTriplet(basename: string): Promise<void> {
   const rel = relOf(basename);
   await fs.mkdir(path.dirname(path.join(TRASH_DIR, rel)), { recursive: true });
+  const existing: string[] = [];
   await Promise.all(
     EXTENSIONS.map(async (ext) => {
       const src = path.join(PUBLIC_DIR, `${rel}.${ext}`);
+      const backup = path.join(TRASH_DIR, `${rel}.${ext}`);
+      await fs.rm(backup, { force: true });
       if (await exists(src)) {
-        await fs.copyFile(src, path.join(TRASH_DIR, `${rel}.${ext}`));
+        existing.push(ext);
+        await fs.copyFile(src, backup);
       }
     }),
+  );
+  await fs.writeFile(
+    path.join(TRASH_DIR, `${rel}${BACKUP_META_SUFFIX}`),
+    JSON.stringify({ existing }),
+    "utf8",
   );
 }
 
@@ -65,14 +76,27 @@ export async function restorePreviousTriplet(
 ): Promise<{ ok: boolean; restored: string[] }> {
   const rel = relOf(basename);
   const restored: string[] = [];
+  let priorFormats: string[] | null = null;
+  try {
+    const meta = JSON.parse(
+      await fs.readFile(path.join(TRASH_DIR, `${rel}${BACKUP_META_SUFFIX}`), "utf8"),
+    ) as { existing?: string[] };
+    priorFormats = Array.isArray(meta.existing) ? meta.existing : [];
+  } catch {
+    // Backups created before absence tracking only contain copied siblings.
+  }
   for (const ext of EXTENSIONS) {
     const bak = path.join(TRASH_DIR, `${rel}.${ext}`);
-    if (await exists(bak)) {
-      await fs.copyFile(bak, path.join(PUBLIC_DIR, `${rel}.${ext}`));
+    const destination = path.join(PUBLIC_DIR, `${rel}.${ext}`);
+    if (priorFormats && !priorFormats.includes(ext)) {
+      await fs.rm(destination, { force: true });
+      restored.push(`${basename}.${ext}`);
+    } else if (await exists(bak)) {
+      await fs.copyFile(bak, destination);
       restored.push(`${basename}.${ext}`);
     }
   }
-  return { ok: restored.length > 0, restored };
+  return { ok: priorFormats !== null || restored.length > 0, restored };
 }
 
 /**

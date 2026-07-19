@@ -11,6 +11,7 @@
  * is only imported from server components. Dev-tool only.
  */
 import { THEMES, type ThemeAssetKey, type ThemeAssetVariant } from "./theme-registry";
+import { resolveAssetVariant, type ResolvedVariant } from "./asset-variant";
 
 /** Image formats that make up a static asset triplet, in probe order. */
 const TRIPLET_EXTENSIONS = ["png", "webp", "avif"] as const;
@@ -41,10 +42,14 @@ export type ResolvedAsset = ResolvedFile & { basename: string };
 export type SlotCatalogEntry = {
   key: ThemeAssetKey;
   usedIn: string[];
-  /** null when the slot is PRO-only (no free asset — see `proOnly`). */
+  /** null when DEFAULT is in none mode. */
   default: ResolvedAsset | null;
-  /** null when the slot declares no PRO override (reuses default). */
+  /** null when PRO is in inherit or none mode. */
   pro: ResolvedAsset | null;
+  defaultMode: ResolvedVariant["mode"];
+  proMode: ResolvedVariant["mode"];
+  defaultHasBackup: boolean;
+  proHasBackup: boolean;
   proReusesDefault: boolean;
   /** True when the slot has NO default — a PRO-only overlay (gold frame, crown):
    *  free users see nothing, PRO users get `pro`. */
@@ -83,20 +88,25 @@ export async function buildThemeCatalog(
   const slots = await Promise.all(
     keys.map(async (key): Promise<SlotCatalogEntry> => {
       const entry = theme.assets[key];
-      const def = entry.default
-        ? await resolveVariant(entry.default, resolve)
+      const defaultVariant = resolveAssetVariant(entry, "default");
+      const proVariant = resolveAssetVariant(entry, "pro");
+      const def = defaultVariant.mode === "asset"
+        ? await resolveVariant(defaultVariant.path, resolve)
         : null;
-      const pro = entry.pro
-        ? await resolveVariant(entry.pro, resolve)
+      const pro = proVariant.mode === "asset"
+        ? await resolveVariant(proVariant.path, resolve)
         : null;
       return {
         key,
         usedIn: entry.usedIn ?? [],
         default: def,
         pro,
-        // A slot reuses default only when it HAS a default and no pro override.
-        proReusesDefault: def !== null && pro === null,
-        proOnly: def === null,
+        defaultMode: defaultVariant.mode,
+        proMode: proVariant.mode,
+        defaultHasBackup: def?.hasBackup ?? false,
+        proHasBackup: pro?.hasBackup ?? false,
+        proReusesDefault: proVariant.mode === "inherit",
+        proOnly: defaultVariant.mode === "none" && proVariant.mode === "asset",
         deprecated: entry.deprecated ?? null,
       };
     }),

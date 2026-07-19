@@ -20,21 +20,21 @@
  * ╚═══════════════════════════════════════════════════════════════════╝
  */
 
-/** Asset variant within a single theme. `default` is mandatory; `pro`
- *  is an opt-in second tier surfaced to PRO subscribers — themes that
- *  don't ship a `pro` variant gracefully fall back to `default`. */
+import type {
+  DefaultThemeAssetValue,
+  ProThemeAssetValue,
+} from "./asset-variant";
+
+/** Asset variant within a single theme. */
 export type ThemeAssetVariant = "default" | "pro";
 
 export type ThemeAssetEntry = {
-  /** Basename without extension — consumer composes the AVIF/WebP/PNG
-   *  triplet at render time. Optional: when ABSENT the slot is a PRO-only
-   *  overlay/decoration (e.g. the gold avatar frame) — free users see
-   *  nothing, PRO users get `pro`. Every entry must have `default` or `pro`. */
-  default?: string;
-  /** PRO-tier value. For a normal slot it's an override of `default`;
-   *  for a PRO-only slot (no `default`) it's the whole asset. When absent,
-   *  useThemeAsset falls back to `default` for PRO viewers. */
-  pro?: string;
+  /** Legacy string basenames remain valid. An explicit object can select an
+   *  asset or disable the DEFAULT image. Absence is backward-compatible none. */
+  default?: DefaultThemeAssetValue;
+  /** PRO-tier override. Absence is backward-compatible inherit; explicit
+   *  states can select an asset, inherit DEFAULT, or render no image. */
+  pro?: ProThemeAssetValue;
   /** Human-readable list of surfaces/screens that render this slot.
    *  Powers the `/dev/theme-builder` art catalog so the founder can
    *  see, per slot, where the asset lands. Purely documentary — no

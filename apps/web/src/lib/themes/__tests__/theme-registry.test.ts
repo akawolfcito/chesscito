@@ -4,6 +4,7 @@ import {
   THEMES,
   type ThemeAssetKey,
 } from "../theme-registry";
+import { resolveAssetVariant } from "../asset-variant";
 
 const REQUIRED_ASSET_KEYS: readonly ThemeAssetKey[] = [
   "hub.portal",
@@ -187,17 +188,14 @@ describe("theme-registry", () => {
       for (const key of REQUIRED_ASSET_KEYS) {
         const entry = theme.assets[key];
         expect(entry, `theme=${id} key=${key}`).toBeDefined();
-        // A slot must carry at least one asset (default, pro, or both — a
-        // PRO-only slot has no default). Any present path is /art-rooted.
-        expect(
-          Boolean(entry.default) || Boolean(entry.pro),
-          `theme=${id} key=${key} has no asset`,
-        ).toBe(true);
-        if (entry.default) {
-          expect(entry.default, `theme=${id} key=${key}.default`).toMatch(/^\//);
+        const defaultVariant = resolveAssetVariant(entry, "default");
+        const proVariant = resolveAssetVariant(entry, "pro");
+        expect(defaultVariant.mode).not.toBe("inherit");
+        if (defaultVariant.mode === "asset") {
+          expect(defaultVariant.path, `theme=${id} key=${key}.default`).toMatch(/^\/art\//);
         }
-        if (entry.pro) {
-          expect(entry.pro, `theme=${id} key=${key}.pro`).toMatch(/^\//);
+        if (proVariant.mode === "asset") {
+          expect(proVariant.path, `theme=${id} key=${key}.pro`).toMatch(/^\/art\//);
         }
       }
     }

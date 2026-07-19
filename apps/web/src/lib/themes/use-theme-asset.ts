@@ -6,6 +6,7 @@ import {
   type ThemeAssetKey,
   type ThemeAssetVariant,
 } from "./theme-registry";
+import { resolveAssetPath } from "./asset-variant";
 
 /** Resolves a themed asset basename for the active theme.
  *
@@ -13,9 +14,8 @@ import {
  *  AVIF/WebP/PNG triplet locally — same pattern the rest of the app
  *  uses for static assets.
  *
- *  Variant fallback: if `pro` is requested but the active theme only
- *  ships `default`, the default basename is returned. No undefined,
- *  no broken state.
+ *  Variant fallback: an absent/explicit-inherit PRO value resolves DEFAULT;
+ *  an explicit none resolves to an empty path so consumers can omit <img>.
  *
  *  Example:
  *  ```ts
@@ -30,8 +30,5 @@ export function useThemeAsset(
   const themeId = useActiveTheme();
   const theme = THEMES[themeId] ?? THEMES["candy-forest"];
   const entry = theme.assets[key];
-  // PRO viewer: prefer the pro asset, else fall back to default.
-  if (variant === "pro") return entry.pro ?? entry.default ?? "";
-  // Default viewer: the default asset, or "" for a PRO-only slot (no free art).
-  return entry.default ?? "";
+  return resolveAssetPath(entry, variant) ?? "";
 }

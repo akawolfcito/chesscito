@@ -26,13 +26,19 @@ describe("resolveUploadTarget", () => {
   it("resolves the default basename from the registry", () => {
     const r = resolveUploadTarget("candy-forest", "hub.portal", "default");
     expect(r.ok).toBe(true);
-    if (r.ok) expect(r.basename).toBe("/art/hub/portal-chesscito-normal");
+    if (r.ok) {
+      expect(r.basename).toBe("/art/hub/portal-chesscito-normal");
+      expect(r.declaresAsset).toBe(true);
+    }
   });
 
   it("resolves the pro basename when the slot declares one", () => {
     const r = resolveUploadTarget("candy-forest", "hub.portal", "pro");
     expect(r.ok).toBe(true);
-    if (r.ok) expect(r.basename).toBe("/art/hub/portal-chesscito-pro");
+    if (r.ok) {
+      expect(r.basename).toBe("/art/hub/portal-chesscito-pro");
+      expect(r.declaresAsset).toBe(true);
+    }
   });
 
   it("never returns a basename outside /art", () => {
@@ -44,21 +50,36 @@ describe("resolveUploadTarget", () => {
 describe("resolveVariantBasename", () => {
   it("returns the default basename for variant=default", () => {
     const r = resolveVariantBasename({ default: "/art/x" }, "default");
-    expect(r).toEqual({ ok: true, basename: "/art/x" });
+    expect(r).toEqual({ ok: true, basename: "/art/x", declaresAsset: true });
   });
 
   it("returns the pro basename when present", () => {
     const r = resolveVariantBasename({ default: "/art/x", pro: "/art/x-pro" }, "pro");
-    expect(r).toEqual({ ok: true, basename: "/art/x-pro" });
+    expect(r).toEqual({ ok: true, basename: "/art/x-pro", declaresAsset: true });
   });
 
-  it("refuses a pro upload when the slot ships no pro override", () => {
-    // You cannot mint a new variant by upload — that needs a registry
-    // edit first. Uploading to an undeclared pro would write a file no
-    // slot points at.
-    const r = resolveVariantBasename({ default: "/art/x" }, "pro");
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.reason).toMatch(/pro/i);
+  it("derives a deterministic pro target when the slot inherits", () => {
+    const r = resolveVariantBasename({ default: "/art/x" }, "pro", {
+      themeId: "candy-forest",
+      key: "hub.example",
+    });
+    expect(r).toEqual({
+      ok: true,
+      basename: "/art/theme-builder/candy-forest/hub/example/pro",
+      declaresAsset: false,
+    });
+  });
+
+  it("derives a deterministic default target when the slot has none", () => {
+    const r = resolveVariantBasename({ pro: "/art/x-pro" }, "default", {
+      themeId: "candy-forest",
+      key: "arena.frame",
+    });
+    expect(r).toEqual({
+      ok: true,
+      basename: "/art/theme-builder/candy-forest/arena/frame/default",
+      declaresAsset: false,
+    });
   });
 
   it("refuses an invalid variant", () => {

@@ -5,18 +5,22 @@
  * never from user input. The uploader only picks a (theme, slot, variant);
  * this resolver maps that to the basename the registry already declares.
  * There is no way for a caller to steer the write to an arbitrary path —
- * unknown theme/slot/variant are refused, and a `pro` upload to a slot that
- * declares no pro override is refused (you cannot mint a new variant by
- * upload; that needs a registry edit first).
+ * unknown theme/slot/variant are refused. Missing variant paths are created
+ * under a deterministic server-owned namespace; the client never supplies a
+ * destination.
  */
 import {
   THEMES,
   type ThemeAssetEntry,
   type ThemeAssetVariant,
 } from "./theme-registry";
+import {
+  deterministicVariantPath,
+  resolveAssetVariant,
+} from "./asset-variant";
 
 export type UploadTarget =
-  | { ok: true; basename: string }
+  | { ok: true; basename: string; declaresAsset: boolean }
   | { ok: false; reason: string };
 
 const VALID_VARIANTS: readonly string[] = ["default", "pro"];
@@ -29,26 +33,26 @@ function isVariant(v: string): v is ThemeAssetVariant {
 export function resolveVariantBasename(
   entry: ThemeAssetEntry,
   variant: string,
+  fallback?: { themeId: string; key: string },
 ): UploadTarget {
   if (!isVariant(variant)) {
     return { ok: false, reason: `invalid variant: ${variant}` };
   }
-  if (variant === "pro") {
-    if (!entry.pro) {
-      return {
-        ok: false,
-        reason: "slot ships no pro override — declare it in the registry first",
-      };
-    }
-    return { ok: true, basename: entry.pro };
+  const resolved = resolveAssetVariant(entry, variant);
+  if (resolved.mode === "asset") {
+    return { ok: true, basename: resolved.path, declaresAsset: true };
   }
-  if (!entry.default) {
+  if (!fallback) {
     return {
       ok: false,
-      reason: "slot has no default asset (PRO-only) — nothing to upload here",
+      reason: "variant has no asset path and no deterministic target context",
     };
   }
-  return { ok: true, basename: entry.default };
+  return {
+    ok: true,
+    basename: deterministicVariantPath(fallback.themeId, fallback.key, variant),
+    declaresAsset: false,
+  };
 }
 
 /** Resolve (theme, slot key, variant) to the registry-declared basename. */
@@ -63,5 +67,5 @@ export function resolveUploadTarget(
   const entry = (theme.assets as Record<string, ThemeAssetEntry>)[key];
   if (!entry) return { ok: false, reason: `unknown slot: ${key}` };
 
-  return resolveVariantBasename(entry, variant);
+  return resolveVariantBasename(entry, variant, { themeId, key });
 }

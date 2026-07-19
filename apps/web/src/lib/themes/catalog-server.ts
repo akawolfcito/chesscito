@@ -10,6 +10,7 @@ import {
   type ThemeCatalog,
 } from "./catalog";
 import { hasBackup } from "./asset-triplet";
+import { hasVariantUndo } from "./variant-undo";
 
 /** Root of statically served assets — basenames are relative to it. */
 const PUBLIC_DIR = path.join(process.cwd(), "public");
@@ -61,5 +62,18 @@ export const fsAssetResolver: AssetResolver = async (
 
 /** Build a theme's catalog against the real filesystem. Server-only. */
 export function getThemeCatalog(themeId: string): Promise<ThemeCatalog | null> {
-  return buildThemeCatalog(themeId, fsAssetResolver);
+  return buildThemeCatalog(themeId, fsAssetResolver).then(async (catalog) => {
+    if (!catalog) return null;
+    await Promise.all(
+      catalog.slots.map(async (slot) => {
+        const [defaultUndo, proUndo] = await Promise.all([
+          hasVariantUndo(themeId, slot.key, "default"),
+          hasVariantUndo(themeId, slot.key, "pro"),
+        ]);
+        slot.defaultHasBackup ||= defaultUndo;
+        slot.proHasBackup ||= proUndo;
+      }),
+    );
+    return catalog;
+  });
 }

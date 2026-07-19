@@ -142,23 +142,25 @@ export function KingdomAnchor({
         </div>
       ) : (
         <>
-          <picture className="kingdom-anchor-picture">
-            <source srcSet={`${portalAssetBase}.avif`} type="image/avif" />
-            <source srcSet={`${portalAssetBase}.webp`} type="image/webp" />
-            <img
-              src={`${portalAssetBase}.png`}
-              alt=""
-              aria-hidden="true"
-              className="kingdom-anchor-img"
-              // 2026-06-12: the portal IS the /hub LCP element since the
-              // q35 bg-new-hub re-encode dropped the background out of
-              // LCP candidacy (prod LH: LCP = kingdom-anchor-picture).
-              // High priority belongs to the LCP image — this is now it.
-              fetchPriority="high"
-              decoding="async"
-            />
-          </picture>
-          {variant === "playhub" && (
+          {portalAssetBase && (
+            <picture className="kingdom-anchor-picture">
+              <source srcSet={`${portalAssetBase}.avif`} type="image/avif" />
+              <source srcSet={`${portalAssetBase}.webp`} type="image/webp" />
+              <img
+                src={`${portalAssetBase}.png`}
+                alt=""
+                aria-hidden="true"
+                className="kingdom-anchor-img"
+                // 2026-06-12: the portal IS the /hub LCP element since the
+                // q35 bg-new-hub re-encode dropped the background out of
+                // LCP candidacy (prod LH: LCP = kingdom-anchor-picture).
+                // High priority belongs to the LCP image — this is now it.
+                fetchPriority="high"
+                decoding="async"
+              />
+            </picture>
+          )}
+          {variant === "playhub" && avatarAssetBase && (
             <picture className="kingdom-anchor-avatar">
               <source srcSet={`${avatarAssetBase}.avif`} type="image/avif" />
               <source srcSet={`${avatarAssetBase}.webp`} type="image/webp" />

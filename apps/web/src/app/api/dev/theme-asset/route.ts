@@ -15,6 +15,10 @@ import { NextResponse } from "next/server";
 import { isDevSurfaceEnabled, canWriteBaseline } from "@/lib/dev/dev-surface";
 import { resolveUploadTarget } from "@/lib/themes/upload-target";
 import { writeAssetTriplet, restorePreviousTriplet } from "@/lib/themes/asset-triplet";
+import { THEMES, type ThemeAssetEntry } from "@/lib/themes/theme-registry";
+import { resolveAssetVariant, type AssetVariant } from "@/lib/themes/asset-variant";
+import { setRegistryVariant } from "@/lib/themes/registry-editor";
+import { readVariantUndo, saveVariantUndo } from "@/lib/themes/variant-undo";
 
 export const runtime = "nodejs";
 
@@ -49,15 +53,60 @@ export async function POST(req: Request) {
   if (!target.ok) {
     return NextResponse.json({ ok: false, error: target.reason }, { status: 400 });
   }
+  const typedVariant = variant as "default" | "pro";
+  const entry = (THEMES[themeId].assets as Record<string, ThemeAssetEntry>)[key];
+  const current = resolveAssetVariant(entry, typedVariant);
 
-  // Undo — restore the one-level backup, no file involved.
+  // Undo restores both the registry state and the triplet when the last action
+  // was an upload. Old triplet-only backups remain supported.
   if (action === "undo") {
-    const result = await restorePreviousTriplet(target.basename);
-    if (!result.ok) {
+    const stateUndo = await readVariantUndo(themeId, key, typedVariant);
+    let restored: string[] = [];
+    if (stateUndo) {
+      if (stateUndo.restoreRegistry) {
+        await setRegistryVariant(themeId, key, typedVariant, stateUndo.previous);
+      }
+      if (stateUndo.restoreTriplet && stateUndo.basename) {
+        const triplet = await restorePreviousTriplet(stateUndo.basename);
+        restored = triplet.restored;
+      }
+    } else {
+      const triplet = await restorePreviousTriplet(target.basename);
+      if (triplet.ok) restored = triplet.restored;
+    }
+    if (!stateUndo && restored.length === 0) {
       return NextResponse.json({ ok: false, error: "nothing to undo" }, { status: 409 });
     }
     console.info("[dev/theme-asset] undo", { themeId, key, variant, basename: target.basename });
-    return NextResponse.json({ ok: true, basename: target.basename, restored: result.restored });
+    return NextResponse.json({ ok: true, basename: target.basename, restored });
+  }
+
+  if (action === "set-mode") {
+    const requestedMode = String(form.get("mode") ?? "");
+    const allowed = typedVariant === "default"
+      ? requestedMode === "none"
+      : requestedMode === "inherit" || requestedMode === "none";
+    if (!allowed) {
+      return NextResponse.json(
+        { ok: false, error: `invalid ${typedVariant} mode: ${requestedMode}` },
+        { status: 400 },
+      );
+    }
+
+    const next: AssetVariant = requestedMode === "inherit"
+      ? { mode: "inherit" }
+      : { mode: "none" };
+    if (current.mode === next.mode) {
+      return NextResponse.json({ ok: true, changed: false, mode: next.mode });
+    }
+    await saveVariantUndo(themeId, key, typedVariant, {
+      previous: current,
+      restoreTriplet: false,
+      restoreRegistry: true,
+    });
+    await setRegistryVariant(themeId, key, typedVariant, next);
+    console.info("[dev/theme-asset] mode", { themeId, key, variant, mode: next.mode });
+    return NextResponse.json({ ok: true, changed: true, mode: next.mode });
   }
 
   if (!(file instanceof File)) {
@@ -68,10 +117,15 @@ export async function POST(req: Request) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
+  await saveVariantUndo(themeId, key, typedVariant, {
+    previous: current,
+    basename: target.basename,
+    restoreTriplet: true,
+    restoreRegistry: !target.declaresAsset,
+  });
+  let result: Awaited<ReturnType<typeof writeAssetTriplet>>;
   try {
-    const result = await writeAssetTriplet(target.basename, buffer);
-    console.info("[dev/theme-asset]", { themeId, key, variant, basename: target.basename });
-    return NextResponse.json({ ok: true, basename: target.basename, ...result });
+    result = await writeAssetTriplet(target.basename, buffer);
   } catch {
     // sharp throws on an undecodable image — never echo the raw error.
     return NextResponse.json(
@@ -79,4 +133,21 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
+
+  if (!target.declaresAsset) {
+    try {
+      await setRegistryVariant(themeId, key, typedVariant, {
+        mode: "asset",
+        path: target.basename,
+      });
+    } catch {
+      await restorePreviousTriplet(target.basename);
+      return NextResponse.json(
+        { ok: false, error: "image was valid, but the theme registry could not be updated" },
+        { status: 500 },
+      );
+    }
+  }
+  console.info("[dev/theme-asset]", { themeId, key, variant, basename: target.basename });
+  return NextResponse.json({ ok: true, basename: target.basename, ...result });
 }

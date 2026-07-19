@@ -35,29 +35,27 @@ function dims(a: ResolvedAsset): string {
 function VariantCell({
   label,
   asset,
-  muted,
+  mode,
   themeId,
   slotKey,
   variant,
-  canUpload,
   hasBackup,
 }: {
   label: string;
   asset: ResolvedAsset | null;
-  muted?: string;
+  mode: "asset" | "inherit" | "none";
   themeId: string;
   slotKey: string;
   variant: "default" | "pro";
-  canUpload: boolean;
   hasBackup: boolean;
 }) {
   return (
     <div className="flex-1 min-w-0">
       <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">
         {label}
-        {muted && (
+        {mode !== "asset" && (
           <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium normal-case text-amber-300">
-            {muted}
+            {mode}
           </span>
         )}
       </div>
@@ -67,10 +65,9 @@ function VariantCell({
           alt={`${label} — ${asset.basename}`}
           className="h-40 w-full rounded-lg border border-neutral-700 bg-neutral-800 object-contain"
         />
-      ) : muted ? (
-        // Intentional empty state (reuses default, or PRO-only "free: none").
+      ) : mode !== "asset" ? (
         <div className="flex h-40 w-full items-center justify-center rounded-lg border border-dashed border-neutral-700 bg-neutral-800/40 text-xs text-neutral-500">
-          ↳ {muted}
+          {mode === "inherit" ? "reuses default" : "no image"}
         </div>
       ) : (
         <div className="flex h-40 w-full items-center justify-center rounded-lg border border-dashed border-red-500/50 bg-red-500/5 text-xs text-red-300">
@@ -84,13 +81,13 @@ function VariantCell({
         {asset?.basename && <CopyPathButton path={asset.basename} />}
       </div>
       <div className="text-[11px] font-medium text-neutral-300">
-        {asset ? dims(asset) : (muted ?? "reuses default")}
+        {asset ? dims(asset) : mode}
       </div>
       <UploadControl
         themeId={themeId}
         slotKey={slotKey}
         variant={variant}
-        canUpload={canUpload}
+        mode={mode}
         hasBackup={hasBackup}
       />
     </div>
@@ -183,22 +180,20 @@ export default async function ThemeBuilderDevPage({
                         <VariantCell
                           label="default"
                           asset={slot.default}
-                          muted={slot.proOnly ? "free: none" : undefined}
+                          mode={slot.defaultMode}
                           themeId={catalog.id}
                           slotKey={slot.key}
                           variant="default"
-                          canUpload={!slot.proOnly}
-                          hasBackup={slot.default?.hasBackup ?? false}
+                          hasBackup={slot.defaultHasBackup}
                         />
                         <VariantCell
                           label="pro"
                           asset={slot.pro}
-                          muted={slot.proReusesDefault ? "reuses default" : undefined}
+                          mode={slot.proMode}
                           themeId={catalog.id}
                           slotKey={slot.key}
                           variant="pro"
-                          canUpload={!slot.proReusesDefault}
-                          hasBackup={slot.pro?.hasBackup ?? false}
+                          hasBackup={slot.proHasBackup}
                         />
                       </div>
                     </section>
