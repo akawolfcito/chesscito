@@ -64,8 +64,7 @@ describe("buildThemeCatalog", () => {
     // entry via a resolver-agnostic assertion on the contract instead.
     const catalog = await buildThemeCatalog("candy-forest", okResolver);
     for (const slot of catalog?.slots ?? []) {
-      if (slot.pro === null) expect(slot.proReusesDefault).toBe(true);
-      else expect(slot.proReusesDefault).toBe(false);
+      expect(slot.proReusesDefault).toBe(slot.proMode === "inherit");
     }
   });
 
