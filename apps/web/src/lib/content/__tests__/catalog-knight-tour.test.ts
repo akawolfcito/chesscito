@@ -40,6 +40,17 @@ describe("buildCatalog — knight-tour routing", () => {
     expect(cat.errors).toEqual([]);
   });
 
+  it("round-trips additive access metadata without inventing a default", () => {
+    const premium = buildCatalog(
+      [],
+      [tourRecord({ access: "training_pass" })],
+      [],
+    );
+    const legacy = buildCatalog([], [tourRecord()], []);
+    expect(premium.knightTour.knight[0].access).toBe("training_pass");
+    expect(legacy.knightTour.knight[0].access).toBeUndefined();
+  });
+
   it("stores the reachable ceiling as optimalMoves: covering N squares is N-1 moves", () => {
     // Open board from a1: the knight reaches all 64 squares → 63 moves.
     const cat = buildCatalog([], [tourRecord()], []);

@@ -3,6 +3,7 @@ import {
   dailyProgressStorageKey,
   labyrinthBestStorageKey,
   pieceProgressStorageKey,
+  trainingContentSelectionStorageKey,
 } from "@/lib/lite-progress-storage";
 
 afterEach(() => {
@@ -16,6 +17,9 @@ describe("Lite progress storage namespace", () => {
     expect(pieceProgressStorageKey("rook")).toBe("chesscito:progress:rook");
     expect(dailyProgressStorageKey()).toBe("chesscito:daily-progress");
     expect(labyrinthBestStorageKey("rook")).toBe("chesscito:labyrinth-best:rook");
+    expect(trainingContentSelectionStorageKey("rook")).toBe(
+      "chesscito:training-content:rook",
+    );
   });
 
   it("isolates all Lite progress key families when a QA version is configured", () => {
@@ -29,6 +33,9 @@ describe("Lite progress storage namespace", () => {
     );
     expect(labyrinthBestStorageKey("rook")).toBe(
       "chesscito:lite:qa-2026-06-21:labyrinth-best:rook",
+    );
+    expect(trainingContentSelectionStorageKey("rook")).toBe(
+      "chesscito:lite:qa-2026-06-21:training-content:rook",
     );
   });
 });

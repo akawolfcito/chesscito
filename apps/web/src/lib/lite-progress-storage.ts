@@ -27,6 +27,10 @@ export function labyrinthBestStorageKey(piece: PieceId): string {
   return `${progressPrefix()}labyrinth-best:${piece}`;
 }
 
+export function trainingContentSelectionStorageKey(piece: PieceId): string {
+  return `${progressPrefix()}training-content:${piece}`;
+}
+
 export function dailySessionStorageKey(): string {
   return `${progressPrefix()}daily-session`;
 }

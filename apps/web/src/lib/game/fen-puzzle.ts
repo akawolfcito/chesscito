@@ -2,6 +2,7 @@ import type {
   BoardPosition,
   PieceId,
   ExerciseTier,
+  ContentAccess,
   TypedEnemy,
   MissionSpec,
 } from "@/lib/game/types";
@@ -150,6 +151,7 @@ export type PuzzleInput = {
    *  untouched — the FEN cannot express it, because it is not a position. */
   mission?: MissionSpec;
   tier: ExerciseTier;
+  access?: ContentAccess;
   tags?: string[];
   explanation?: string;
   /* Pedagogy (A1) — curated, carried through the FEN round-trip untouched. */
@@ -188,6 +190,7 @@ export type MappedPuzzle = {
   mission?: MissionSpec;
   isCapture?: boolean;
   tier: ExerciseTier;
+  access?: ContentAccess;
   tags?: string[];
   objective?: string;
   principle?: string;
@@ -257,6 +260,7 @@ export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
     mission: input.mission,
     isCapture: isCapture || undefined,
     tier: input.tier,
+    access: input.access,
     tags: input.tags && input.tags.length ? input.tags : undefined,
     objective: input.explanation && input.explanation.trim() ? input.explanation.trim() : undefined,
     principle: trimmed(input.principle),

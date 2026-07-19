@@ -9,7 +9,7 @@
  * One turn = one tap on a legal jump. The square the knight LEAVES is X-ed out
  * and can never be entered again, so the run ends when every jump is closed.
  * `onComplete` reports (visited, reachable) — NOT moves: a tour is scored on
- * coverage, so the host grades it with tourStars, never labyrinthStars.
+ * coverage, while the host persists the best without awarding stars.
  *
  * Walls render as stone tiles (`.is-wall`), the way a labyrinth draws them: a
  * wall here is a level boundary, not a chess rule. It must never be drawn as a
@@ -26,7 +26,6 @@ import {
   legalTourMoves,
   reachableSquares,
 } from "@/lib/game/knight-tour";
-import { tourStars } from "@/lib/game/tour-score";
 import { hapticReject, hapticSuccess, hapticTap } from "@/lib/haptics";
 import { useThemePieceAssets } from "@/lib/themes/piece-theme-assets";
 import type { BoardPosition, Exercise } from "@/lib/game/types";
@@ -146,7 +145,6 @@ export function KnightTourBoard({
 
   const covered = visited.length;
   const pct = REACHABLE > 0 ? Math.round((covered / REACHABLE) * 100) : 0;
-  const stars = phase === "done" ? tourStars(covered, REACHABLE) : 0;
   const moves = phase === "selected" ? legalTourMoves(knight, visited, WALLS) : [];
   const moveLabels = new Set(moves.map(LABEL));
   const knightLabel = LABEL(knight);
@@ -164,8 +162,7 @@ export function KnightTourBoard({
      at the end. Composed once so the local and hoisted bands cannot drift. */
   const bandLine =
     (transient ?? bandMessage) +
-    ` · ${covered}/${REACHABLE} · ${pct}%` +
-    (phase === "done" ? ` · ${"★".repeat(stars)}` : "");
+    ` · ${covered}/${REACHABLE} · ${pct}%`;
 
   useEffect(() => {
     onBandChange?.({ message: bandLine, phase });

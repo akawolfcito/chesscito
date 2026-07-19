@@ -47,6 +47,8 @@ export type TrainingNode = {
   status: TrainingNodeStatus;
   /** Best stars for exercise/labyrinth nodes; null for milestone nodes. */
   stars: number | null;
+  /** False for ludic content whose result is preserved without feeding stars. */
+  awardsStars?: boolean;
 };
 
 export type TrainingPathInput = {
@@ -73,6 +75,8 @@ export type TrainingPathInput = {
    *  every run scores 3 stars, dead ends included. Absent/empty = none, and the
    *  labyrinth lane is untouched. */
   coverageIds?: ReadonlySet<string>;
+  /** Completion remains best-backed, but these nodes always expose zero stars. */
+  starlessIds?: ReadonlySet<string>;
 };
 
 export type PieceMastery = "none" | "badge" | "mastered";
@@ -87,7 +91,14 @@ export const LABYRINTH_UNLOCK_THRESHOLD = 6;
 export const LABYRINTH_MIN_EXERCISES = 3;
 
 export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
-  const { piece, progress, labyrinthBests, badgeClaimed, coverageIds } = input;
+  const {
+    piece,
+    progress,
+    labyrinthBests,
+    badgeClaimed,
+    coverageIds,
+    starlessIds,
+  } = input;
   const exercisesCatalog = input.catalog?.exercises ?? EXERCISES;
   const labyrinthsCatalog = input.catalog?.labyrinths ?? LABYRINTHS;
   // Across-pool exercise mastery: sum the best stars in the id-map. Sparse
@@ -146,11 +157,12 @@ export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
       // moves against an optimum. `optimalMoves` holds ceiling-1 for both the
       // tour (squares) and queens (queens the player places), so the total it
       // was measured against is optimalMoves + 1 either way.
-      stars: !complete
+      stars: !complete || starlessIds?.has(labyrinth.id)
         ? 0
         : coverageIds?.has(labyrinth.id)
           ? tourStars(best, labyrinth.optimalMoves + 1)
           : labyrinthStars(best, labyrinth.optimalMoves),
+      awardsStars: !starlessIds?.has(labyrinth.id),
     });
   }
 

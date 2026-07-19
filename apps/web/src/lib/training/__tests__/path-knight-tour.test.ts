@@ -30,7 +30,11 @@ const progress: PieceProgress = {
   stars: { "knight-1": 3, "knight-2": 3, "knight-3": 3 },
 };
 
-function pathWith(best: number, coverageIds?: ReadonlySet<string>) {
+function pathWith(
+  best: number,
+  coverageIds?: ReadonlySet<string>,
+  starlessIds?: ReadonlySet<string>,
+) {
   const labyrinths = emptyByPiece();
   // Ceiling 23 = the 24-square placeholder level (knight-tour-1).
   labyrinths.knight = [tour("knight-tour-1", 23)];
@@ -41,6 +45,7 @@ function pathWith(best: number, coverageIds?: ReadonlySet<string>) {
     badgeClaimed: false,
     catalog: { exercises: emptyByPiece(), labyrinths },
     coverageIds,
+    starlessIds,
   });
 }
 
@@ -72,5 +77,14 @@ describe("buildTrainingPath — knight-tour grading", () => {
   it("still grades a real labyrinth by move count", () => {
     // Regression guard: routing tours must not touch the labyrinth lane.
     expect(starsOf(3, new Set())).toBe(3); // 3 moves vs optimal 23 → fast → 3 stars
+  });
+
+  it.each([3, 20, 24])("keeps a completed Tour at zero stars (best %i)", (best) => {
+    const node = pathWith(best, TOURS, TOURS).find(
+      (entry) => entry.id === "knight-tour-1",
+    )!;
+    expect(node.status).toBe("complete");
+    expect(node.stars).toBe(0);
+    expect(node.awardsStars).toBe(false);
   });
 });

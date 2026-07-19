@@ -19,6 +19,10 @@ import {
   LABYRINTH_MIN_EXERCISES,
   type TrainingNode,
 } from '@/lib/training/path'
+import {
+  isContentAccessPending,
+  type ContentAccessState,
+} from '@/lib/training/content-access'
 import { buildContentId } from '@/lib/daily/session-quota'
 import {
   BASE_PIXEL_OFFSET,
@@ -53,6 +57,8 @@ type ExerciseDrawerProps = {
    *  for COPY only; the drawer never branches behaviour on it (B4.2.3). */
   labyrinthLabels?: Record<string, string>
   onLabyrinthSelect?: (labyrinthId: string) => void
+  labyrinthAccess?: Readonly<Record<string, ContentAccessState>>
+  onTrainingPassUnlock?: () => void
   quotaState?: QuotaState | null
   badgeClaimable?: boolean
   onClaimBadge?: () => void
@@ -87,6 +93,8 @@ export function ExerciseDrawer({
   labyrinthNodes,
   labyrinthLabels,
   onLabyrinthSelect,
+  labyrinthAccess,
+  onTrainingPassUnlock,
   quotaState,
   badgeClaimable,
   onClaimBadge,
@@ -312,9 +320,15 @@ export function ExerciseDrawer({
                 const isLocked = node.status === 'locked'
                 const isQuotaLocked = !isLocked && !isLabReplayable(node)
                 const isDone = node.status === 'complete'
+                const access = labyrinthAccess?.[node.id] ?? { allowed: true as const }
+                const isAccessPending = isContentAccessPending(access)
+                const isAccessLocked = !isAccessPending && !access.allowed
                 const effectiveLocked =
-                  isLocked || isQuotaLocked || !onLabyrinthSelect
-                const tooltipText = isLocked
+                  isLocked || isQuotaLocked || isAccessLocked ||
+                  isAccessPending || !onLabyrinthSelect
+                const tooltipText = isAccessLocked
+                  ? tPath('trainingPassRequired')
+                  : isLocked
                   ? node.unlock.type === 'stars'
                     ? tPath('labyrinthLockedStarsFormat', {
                         stars: node.unlock.min,
@@ -358,7 +372,7 @@ export function ExerciseDrawer({
                         <span
                           className="absolute -top-2 left-1/2 z-10 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full text-[10px] font-bold text-white shadow"
                           style={{
-                            background: isLocked
+                            background: effectiveLocked && !isAccessPending
                               ? 'rgba(63,34,8,0.80)'
                               : 'rgba(245,158,11,0.95)',
                           }}
@@ -370,10 +384,24 @@ export function ExerciseDrawer({
                       {/* Labyrint icon node */}
                       <button
                         type="button"
-                        aria-label={nodeLabel}
-                        data-locked={effectiveLocked ? 'true' : undefined}
+                        aria-label={
+                          isAccessLocked
+                            ? `${nodeLabel}. ${tPath('trainingPassRequired')}. ${tPath('unlockChallengesCta')}`
+                            : nodeLabel
+                        }
+                        data-locked={effectiveLocked && !isAccessPending ? 'true' : undefined}
                         data-quota-locked={isQuotaLocked ? 'true' : undefined}
+                        data-access-locked={isAccessLocked ? 'true' : undefined}
+                        data-access-pending={isAccessPending ? 'true' : undefined}
+                        aria-busy={isAccessPending || undefined}
+                        disabled={isAccessPending}
                         onClick={() => {
+                          if (isAccessPending) return
+                          if (isAccessLocked) {
+                            onOpenChange(false)
+                            onTrainingPassUnlock?.()
+                            return
+                          }
                           if (effectiveLocked) {
                             showLockedTooltip(tooltipText)
                             return
@@ -383,7 +411,7 @@ export function ExerciseDrawer({
                         }}
                         className="relative"
                         style={{
-                          filter: effectiveLocked
+                          filter: effectiveLocked && !isAccessPending
                             ? 'grayscale(1) brightness(0.85)'
                             : !isDone
                             ? 'drop-shadow(0 0 6px rgba(255,213,74,0.85)) drop-shadow(0 0 14px rgba(255,200,40,0.55))'
@@ -391,7 +419,7 @@ export function ExerciseDrawer({
                         }}
                       >
                         <ThemeAssetPicture slot="exercises.labyrinth-icon" pictureClassName="block h-auto w-20 drop-shadow-md" alt="" aria-hidden={true} draggable={false} className="h-full w-full object-contain" />
-                        {effectiveLocked && (
+                        {effectiveLocked && !isAccessPending && (
                           <span className="absolute inset-0 flex items-center justify-center">
                             <CandyIcon
                               name="lock"
@@ -411,10 +439,18 @@ export function ExerciseDrawer({
                               : tPath('labyrinthLockedChain')}
                           </span>
                         ) : null}
+                        {isAccessLocked ? (
+                          <span className="absolute left-1/2 top-full mt-1 flex w-32 -translate-x-1/2 flex-col items-center text-center text-[0.62rem] font-bold leading-tight text-white drop-shadow">
+                            <span>{tPath('trainingPassRequired')}</span>
+                            <span className="mt-0.5 rounded-full bg-amber-950/85 px-2 py-1 text-[0.66rem]">
+                              {tPath('unlockChallengesCta')}
+                            </span>
+                          </span>
+                        ) : null}
                       </button>
 
                       {/* Stars */}
-                      {isDone ? (
+                      {isDone && node.awardsStars !== false ? (
                         <div className="absolute left-1/2 top-full -translate-x-1/2 pt-0.5">
                           <StarDisplay count={node.stars ?? 0} />
                         </div>

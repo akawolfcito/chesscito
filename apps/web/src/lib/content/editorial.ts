@@ -114,6 +114,8 @@ export const TRAINING_PATH_COPY = {
    *  (B4.2.3). Named entries — Rook Rails, Pivot Challenge — use their own title
    *  instead; only untitled labs fall through to this. */
   specialTrainingLabelFormat: "Special Training {number}",
+  trainingPassRequired: "Challenge Pass / PRO",
+  unlockChallengesCta: "Unlock Challenges",
   labyrinthOpenAriaFormat: "Open Labyrinth {number}",
   /** The first labyrinth's unlock is a compound gate: stars AND an
    *  exercise floor (LABYRINTH_MIN_EXERCISES). A stars-only message lets
@@ -3434,7 +3436,7 @@ export const CHALLENGE_CARD_COPY = {
   // direct-purchase bonus ONLY; PRO holders see proIncludedTitle with no bonus.
   offerTitle: "Join the 21-Day Mind Challenge",
   offerHabit: "Build a daily chess habit and keep your Focus Passport active.",
-  offerPractice: "Unlimited challenge practice for {days} days",
+  offerPractice: "Access advanced challenges during your {days}-day journey",
   offerShieldsBonus: "Includes the direct-purchase +{count} Shields bonus",
   offerPriceNote: "One-time payment · No subscription",
   proIncludedTitle: "Included with PRO",

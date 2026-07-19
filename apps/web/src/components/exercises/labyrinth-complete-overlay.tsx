@@ -16,6 +16,8 @@ type Props = {
   optimalMoves: number;
   /** Stars earned (0–3) — caller computes via labyrinthStars(). */
   stars: number;
+  /** False for ludic variants that preserve a result but never award stars. */
+  awardsStars?: boolean;
   /** Personal record before this attempt — null on first completion. */
   previousBest?: number | null;
   /** True when this attempt set a new personal record. */
@@ -24,7 +26,7 @@ type Props = {
    *  advance to the next pending step of the path. The shell X shares
    *  this intent so closing never strands the player in the lab. */
   onContinue: () => void;
-  /** Replay for a better star count — demoted to the secondary slot. */
+  /** Replay the completed challenge — demoted to the secondary slot. */
   onRetry: () => void;
   /** When defined, replaces the "Continue" primary CTA with "Enter
    *  Arena" and routes the user into the full match flow. Wired by
@@ -48,6 +50,7 @@ export function LabyrinthCompleteOverlay({
   moves,
   optimalMoves,
   stars,
+  awardsStars = true,
   previousBest = null,
   isNewBest = false,
   onContinue,
@@ -97,14 +100,16 @@ export function LabyrinthCompleteOverlay({
           <h1 className="arena-result-title">{t("completeTitle")}</h1>
         </div>
 
-        {/* Stats — stars / moves / best (3 candy pills, mirrors arena win). */}
+        {/* Stats — optional stars plus moves / best candy pills. */}
         <div className="arena-result-stats-row arena-result-stats-row--missionpills">
-          <span className="candy-stat-pill">
-            <span className="candy-stat-pill-icon">
-              <CandyIcon name="star" className="h-4 w-4" />
+          {awardsStars ? (
+            <span className="candy-stat-pill">
+              <span className="candy-stat-pill-icon">
+                <CandyIcon name="star" className="h-4 w-4" />
+              </span>
+              {starsLabel}
             </span>
-            {starsLabel}
-          </span>
+          ) : null}
           <span className="candy-stat-pill">
             <span className="candy-stat-pill-icon">
 <ThemeAssetPicture slot="board.piece.white.pawn" alt="" aria-hidden="true" draggable={false} className="block h-full w-full object-contain" />

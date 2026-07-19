@@ -28,6 +28,7 @@ import ExercisesPage from "../page";
 
 type SearchParamsLike = {
   piece?: string | string[];
+  content?: string | string[];
 };
 
 type RenderedElement = {
@@ -86,6 +87,27 @@ describe("/exercises page (server) — CONTENT_STAGE unset (baseline)", () => {
     expect(el.props).toMatchObject({ initialPiece: "knight" });
   });
 
+  it("infers Knight from a known direct content id and forwards it to the client gate", async () => {
+    const el = await renderPage({ content: "knight-tour-2" });
+    expect(el.props).toMatchObject({
+      initialPiece: "knight",
+      initialContentId: "knight-tour-2",
+    });
+  });
+
+  it("drops an unknown manual content id", async () => {
+    const el = await renderPage({ content: "knight-tour-retired" });
+    expect(el.props.initialContentId).toBeUndefined();
+  });
+
+  it("keeps an explicit mismatched piece so the client gate rejects the content", async () => {
+    const el = await renderPage({ piece: "rook", content: "knight-tour-2" });
+    expect(el.props).toMatchObject({
+      initialPiece: "rook",
+      initialContentId: "knight-tour-2",
+    });
+  });
+
   it("does NOT mount a provider and never reads the merged catalog", async () => {
     const el = await renderPage({ piece: "rook" });
     expect((el.type as { name: string }).name).toBe("ExercisesScreen");
@@ -104,6 +126,7 @@ describe("/exercises page (server) — CONTENT_STAGE set (overlay)", () => {
       king: [],
     },
     labyrinths: {},
+    knightTour: {},
     descriptions: {},
     source: "baseline+overlay" as const,
     overlayCount: 1,
@@ -120,10 +143,12 @@ describe("/exercises page (server) — CONTENT_STAGE set (overlay)", () => {
     const value = el.props.value as {
       exercises: unknown;
       labyrinths: unknown;
+      knightTour: unknown;
       descriptions: unknown;
     };
     expect(value.exercises).toBe(mergedPools.exercises);
     expect(value.labyrinths).toBe(mergedPools.labyrinths);
+    expect(value.knightTour).toBe(mergedPools.knightTour);
     expect(value.descriptions).toBe(mergedPools.descriptions);
     expect(getMergedCatalog).toHaveBeenCalledTimes(1);
   });

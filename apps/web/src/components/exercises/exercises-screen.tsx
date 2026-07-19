@@ -15,10 +15,12 @@ import {
   useWriteContract,
 } from "wagmi";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
+import { useSeasonPassStatus } from "@/lib/season-pass/use-season-pass-status";
 
 import { Board } from "@/components/board";
 import { DiagonalRunBoard } from "@/components/exercises/diagonal-run-board";
 import { KnightTourBoard } from "@/components/exercises/knight-tour-board";
+import { TrainingContentGate } from "@/components/exercises/training-content-gate";
 import { QueensBoard } from "@/components/exercises/queens-board";
 import { SafePathBoard } from "@/components/exercises/safe-path-board";
 import { PromotionRunBoard } from "@/components/exercises/promotion-run-board";
@@ -161,7 +163,6 @@ import {
   labyrinthStars,
 } from "@/lib/game/exercises";
 import { promotionRunStars } from "@/lib/game/promotion-run";
-import { tourStars } from "@/lib/game/tour-score";
 import { getMaxPossibleStars } from "@/lib/game/progress-adapter";
 import { POINTS_PER_STAR } from "@/lib/game/score";
 import {
@@ -199,6 +200,18 @@ import {
 } from "@/lib/daily/session-quota";
 import { subscribeToDailySessionChanges } from "@/lib/daily/session-events";
 import { DailyLimitBanner } from "@/components/daily/daily-limit-banner";
+import {
+  canMountTrainingContent,
+  isContentAccessPending,
+  readLastTrainingContentId,
+  resolveContentAccess,
+  resolveTrainingContentRequest,
+  writeLastTrainingContentId,
+  type ContentAccessState,
+  type EffectiveTrainingPassSnapshot,
+  type TrainingContentRequestSource,
+} from "@/lib/training/content-access";
+import { resolveCoverageStars } from "@/lib/training/content-stars";
 
 // SHOP_ITEMS lives in lib/contracts/shop-catalog.ts so it's testable
 // in isolation. The import is below with the other contract helpers.
@@ -317,6 +330,9 @@ export type ExercisesScreenProps = {
   /** B2.3b: content slot discriminator. "daily" and "challenge" bypass
    *  the Lite daily quota banner. Absent/other values → gated in Lite mode. */
   slot?: string;
+  /** Known Special Training id from `?content=`. The client gate still owns
+   *  authorization because the effective pass is wallet-bound. */
+  initialContentId?: string;
 };
 
 /**
@@ -333,6 +349,7 @@ export function ExercisesScreen({
   initialAction,
   initialSheet,
   slot,
+  initialContentId,
 }: ExercisesScreenProps = {}) {
   const isFreeSlot = slot === "daily" || slot === "challenge";
   const tShopItem = useTranslations("SHOP_ITEM_COPY");
@@ -358,6 +375,28 @@ export function ExercisesScreen({
   const tResult = useTranslations("RESULT_OVERLAY_COPY");
   const router = useRouter();
   const { address, isConnected, status: accountStatus } = useAccount();
+  const trainingPassStatus = useSeasonPassStatus(address);
+  const trainingPass: EffectiveTrainingPassSnapshot = useMemo(
+    () => ({
+      // Full/internal keeps its historical catalog access. LEARN consumes the
+      // effective wallet entitlement; PLAY never mounts this surface.
+      active: CHESSCITO_LITE_MODE ? trainingPassStatus.active : true,
+      source: trainingPassStatus.source,
+      loading: CHESSCITO_LITE_MODE
+        ? trainingPassStatus.loading ||
+          accountStatus === "connecting" ||
+          accountStatus === "reconnecting"
+        : false,
+    }),
+    [
+      accountStatus,
+      trainingPassStatus.active,
+      trainingPassStatus.source,
+      trainingPassStatus.loading,
+    ],
+  );
+  const trainingPassRef = useRef(trainingPass);
+  trainingPassRef.current = trainingPass;
   const starsConnectPrompt = useConnectPrompt("stars");
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
@@ -631,6 +670,7 @@ export function ExercisesScreen({
    *  state does not survive across pieces. */
   const [labyrinthMode, setLabyrinthMode] = useState(false);
   const [selectedLabyrinthId, setSelectedLabyrinthId] = useState<string | null>(null);
+  const [trainingAttemptGrantId, setTrainingAttemptGrantId] = useState<string | null>(null);
 
   // SSR hydration guard for WP CTA (spec P0-4)
   useEffect(() => { setWpMounted(true); }, []);
@@ -666,6 +706,7 @@ export function ExercisesScreen({
   useEffect(() => {
     setLabyrinthMode(false);
     setSelectedLabyrinthId(null);
+    setTrainingAttemptGrantId(null);
     setLabyrinthCompleted(null);
     setLabyrinthMoves(0);
   }, [selectedPiece]);
@@ -681,6 +722,7 @@ export function ExercisesScreen({
     previousBest: number | null;
     /** True when this attempt set a new personal record. */
     isNewBest: boolean;
+    awardsStars: boolean;
   } | null>(null);
   /** Bumps the labyrinth board key on retry so internal Board state
    *  (piece position, selection, internal move counter) resets. */
@@ -779,6 +821,10 @@ export function ExercisesScreen({
         ...(queensCatalog[selectedPiece] ?? []).map((q) => q.id),
       ]),
     [knightTourCatalog, queensCatalog, selectedPiece],
+  );
+  const starlessIds = useMemo(
+    () => new Set((knightTourCatalog[selectedPiece] ?? []).map((tour) => tour.id)),
+    [knightTourCatalog, selectedPiece],
   );
 
   // Progress is keyed by exerciseId (currentId). Derive the pool index for
@@ -1688,7 +1734,7 @@ export function ExercisesScreen({
           completedExerciseId,
         );
         if (pendingLab) {
-          handleLabyrinthSelect(pendingLab.id);
+          requestTrainingContent(pendingLab.id, "automatic");
           resetBoard();
           return;
         }
@@ -2055,7 +2101,7 @@ export function ExercisesScreen({
     if (step.id === "first-labyrinth") {
       const lab = getNextChallenge(trainingPathRef.current);
       if (lab) {
-        handleLabyrinthSelect(lab.id);
+        requestTrainingContent(lab.id, "automatic");
         resetBoard();
       }
       return;
@@ -2509,7 +2555,20 @@ export function ExercisesScreen({
    *  taps (the old `labyrinthList[0]` hardcode and the 10★
    *  labyrinthAvailable gate are gone — unlock now lives in the path
    *  node statuses: first lab at 6★, then chain by completion). */
-  const labyrinthList = specialTrainingCatalog[selectedPiece] ?? [];
+  const labyrinthList = useMemo(
+    () => specialTrainingCatalog[selectedPiece] ?? [],
+    [specialTrainingCatalog, selectedPiece],
+  );
+  const labyrinthAccess = useMemo<Readonly<Record<string, ContentAccessState>>>(
+    () =>
+      Object.fromEntries(
+        labyrinthList.map((content) => [
+          content.id,
+          resolveContentAccess(content, trainingPass),
+        ]),
+      ),
+    [labyrinthList, trainingPass],
+  );
   // Drawer node labels: a Special Training entry's authored title, keyed by id
   // for COPY only. Untitled labs are omitted so the drawer falls back to the
   // generic "Special Training N" (B4.2.3).
@@ -2537,9 +2596,18 @@ export function ExercisesScreen({
       ]),
     [specialTrainingCatalog, diagonalRunCatalog, knightTourCatalog, queensCatalog, selectedPiece, tRun, tTour, tQueens],
   );
-  const activeLabyrinth =
+  const selectedLabyrinth =
     labyrinthMode && selectedLabyrinthId
       ? labyrinthList.find((lab) => lab.id === selectedLabyrinthId) ?? null
+      : null;
+  const activeLabyrinth =
+    selectedLabyrinth &&
+    canMountTrainingContent({
+      content: selectedLabyrinth,
+      trainingPass,
+      attemptGrantId: trainingAttemptGrantId,
+    })
+      ? selectedLabyrinth
       : null;
   const effectiveLabyrinthMode = activeLabyrinth !== null;
   const activeExercise = activeLabyrinth ?? currentExercise;
@@ -2822,6 +2890,7 @@ export function ExercisesScreen({
       badgeClaimed: badgesClaimed[selectedPiece] === true,
       catalog: { exercises: catalog, labyrinths: specialTrainingCatalog },
       coverageIds,
+      starlessIds,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPiece, progress, badgesClaimed, labyrinthCompleted, catalog, specialTrainingCatalog]);
@@ -2835,33 +2904,114 @@ export function ExercisesScreen({
     trainingPathRef.current = trainingPath;
   }, [trainingPath]);
 
-  /** Slice 3C: enter the labyrinth layer with a specific lab. Defense
-   *  in depth — locked nodes are not tappable in the rail, but the
-   *  handler validates against the path anyway so a stale tap can
-   *  never open a locked lab. Validation reads the ref so timer-fired
-   *  callers (QA G1 auto-advance) see post-completion unlocks.
-   *  labyrinthKey bump remounts the board so switching labs always
-   *  starts clean. */
-  const handleLabyrinthSelect = useCallback((labyrinthId: string) => {
-    const node = trainingPathRef.current.find(
-      (n) => n.kind === "labyrinth" && n.id === labyrinthId,
-    );
-    if (!node || node.status === "locked") return;
-    setSelectedLabyrinthId(labyrinthId);
-    setLabyrinthMode(true);
-    setLabyrinthCompleted(null);
-    setLabyrinthMoves(0);
-    setLabyrinthKey((k) => k + 1);
-  }, []);
+  const implicitContentRequestRef = useRef<string | null>(null);
+  const initialContentRequestRef = useRef(initialContentId);
+  const pendingAutomaticContentRef = useRef<string | null>(null);
+
+  /** One request boundary for Path taps, automatic continuation, URLs and
+   *  restoration. It resolves commercial access first, then the existing
+   *  curricular node status. Only `explicit_tap` may open checkout. */
+  const requestTrainingContent = useCallback(
+    (contentId: string, source: TrainingContentRequestSource) => {
+      const result = resolveTrainingContentRequest({
+        contentId,
+        catalog: labyrinthList,
+        trainingPass: trainingPassRef.current,
+        source,
+      });
+
+      if (result.action === "pending") {
+        if (source === "automatic") pendingAutomaticContentRef.current = contentId;
+        return result;
+      }
+      if (pendingAutomaticContentRef.current === contentId) {
+        pendingAutomaticContentRef.current = null;
+      }
+
+      if (result.action === "missing" || result.action === "locked") {
+        setLabyrinthMode(false);
+        setSelectedLabyrinthId(null);
+        setTrainingAttemptGrantId(null);
+        setLabyrinthCompleted(null);
+        if (result.action === "locked" && result.openCheckout) {
+          setExerciseDrawerOpen(false);
+          setActiveDockTab("shop");
+        } else {
+          setExerciseDrawerOpen(true);
+        }
+        return result;
+      }
+
+      const node = trainingPathRef.current.find(
+        (entry) => entry.kind === "labyrinth" && entry.id === contentId,
+      );
+      if (!node || node.status === "locked") {
+        setLabyrinthMode(false);
+        setSelectedLabyrinthId(null);
+        setTrainingAttemptGrantId(null);
+        setExerciseDrawerOpen(true);
+        return { action: "missing" as const };
+      }
+
+      implicitContentRequestRef.current = `${selectedPiece}:${contentId}`;
+      setSelectedLabyrinthId(contentId);
+      setTrainingAttemptGrantId(result.attemptGrantId);
+      setLabyrinthMode(true);
+      setLabyrinthCompleted(null);
+      setLabyrinthMoves(0);
+      setLabyrinthKey((key) => key + 1);
+      writeLastTrainingContentId(selectedPiece, contentId);
+      return result;
+    },
+    [labyrinthList, selectedPiece],
+  );
+
+  const handleLabyrinthSelect = useCallback(
+    (labyrinthId: string) => {
+      requestTrainingContent(labyrinthId, "explicit_tap");
+    },
+    [requestTrainingContent],
+  );
+
+  /** Direct/restored ids wait through entitlement hydration, then either start
+   *  once or return to the locked Path. They never open checkout. */
+  useEffect(() => {
+    const directContentId = initialContentRequestRef.current;
+    const contentId = directContentId ?? readLastTrainingContentId(selectedPiece);
+    if (!contentId) return;
+    const requestKey = `${selectedPiece}:${contentId}`;
+    if (implicitContentRequestRef.current === requestKey) return;
+    const source: TrainingContentRequestSource = directContentId ? "direct" : "restore";
+    const result = requestTrainingContent(contentId, source);
+    if (result.action !== "pending") {
+      if (directContentId) initialContentRequestRef.current = undefined;
+      implicitContentRequestRef.current = requestKey;
+    }
+  }, [requestTrainingContent, selectedPiece, trainingPass]);
+
+  useEffect(() => {
+    if (trainingPass.loading) return;
+    const contentId = pendingAutomaticContentRef.current;
+    if (!contentId) return;
+    pendingAutomaticContentRef.current = null;
+    requestTrainingContent(contentId, "automatic");
+  }, [requestTrainingContent, trainingPass]);
 
   /** Slice 3D: the path's recommended next challenge (first unlocked,
    *  uncompleted labyrinth). Drives the contextual "Enter Labyrinth"
    *  pin and nothing else — exercise flow is untouched when null. */
-  const nextChallenge = getNextChallenge(trainingPath);
+  const nextChallenge = getNextChallenge(
+    trainingPath.filter((node) => {
+      if (node.kind !== "labyrinth") return true;
+      const access = labyrinthAccess[node.id];
+      return Boolean(access && !isContentAccessPending(access) && access.allowed);
+    }),
+  );
 
   const handleExitLabyrinth = useCallback(() => {
     setLabyrinthMode(false);
     setSelectedLabyrinthId(null);
+    setTrainingAttemptGrantId(null);
     setLabyrinthCompleted(null);
     setLabyrinthMoves(0);
   }, []);
@@ -2883,7 +3033,7 @@ export function ExercisesScreen({
     if (route.action === "next-exercise") {
       handleExerciseNavigate(nextIdx);
     } else if (route.action === "next-labyrinth") {
-      handleLabyrinthSelect(route.labyrinthId);
+      requestTrainingContent(route.labyrinthId, "automatic");
     } else {
       setShowPieceComplete(true);
     }
@@ -2943,6 +3093,7 @@ export function ExercisesScreen({
         stars,
         previousBest,
         isNewBest,
+        awardsStars: true,
       });
 
       // The daily star ledger is fed by exercises AND labyrinths, always as
@@ -2997,8 +3148,14 @@ export function ExercisesScreen({
   const handleCoverageComplete = useCallback(
     (covered: number, ceiling: number) => {
       if (!activeCoverage) return;
-      const stars = tourStars(covered, ceiling);
       const previousBest = getLabyrinthBest(selectedPiece, activeCoverage.id);
+      const starResult = resolveCoverageStars({
+        covered,
+        ceiling,
+        previousBest,
+        starless: activeKnightTour !== null,
+      });
+      const stars = starResult.stars;
       const isNewBest = recordTourBest(selectedPiece, activeCoverage.id, covered);
       setLabyrinthCompleted({
         moves: covered,
@@ -3006,14 +3163,18 @@ export function ExercisesScreen({
         stars,
         previousBest,
         isNewBest,
+        awardsStars: starResult.awardsStars,
       });
 
       // Net improvement into the daily ledger, same rule as the labyrinths:
       // replaying a level you already aced must not farm stars.
-      const previousCoverageStars =
-        previousBest === null ? 0 : tourStars(previousBest, ceiling);
-      addNetStars(previousCoverageStars, stars);
+      if (starResult.awardsStars) {
+        addNetStars(starResult.previousStars, stars);
+      }
       resolveMilestonesRef.current();
+      // Premium authorization is attempt-scoped. The result overlay may stay,
+      // but any retry/replay must pass through a fresh entitlement decision.
+      setTrainingAttemptGrantId(null);
 
       track("labyrinth_complete", {
         labyrinth_id: activeCoverage.id,
@@ -3034,7 +3195,7 @@ export function ExercisesScreen({
         });
       }
     },
-    [activeCoverage, selectedPiece, isConnected, address],
+    [activeCoverage, activeKnightTour, selectedPiece, isConnected, address],
   );
 
   // Pivot Challenge copy, resolved from the i18n layer (EN/ES) by id.
@@ -3251,7 +3412,9 @@ export function ExercisesScreen({
           labyrinthOptimalMoves={activeLabyrinth?.optimalMoves}
           labyrinthId={activeLabyrinth?.id}
           labyrinthTitle={runTitle ?? tourTitle ?? queensTitle ?? safePathTitle ?? promotionRunTitle ?? activeLabyrinth?.title}
-          onLabyrinthSelect={handleLabyrinthSelect}
+          onLabyrinthSelect={(contentId) =>
+            requestTrainingContent(contentId, "automatic")
+          }
           score={score.toString()}
           totalStars={totalStars}
           maxPossibleStars={maxPossibleStars}
@@ -3421,7 +3584,7 @@ export function ExercisesScreen({
                   tone="default"
                   label={tPath("nextChallengeCta")}
                   ariaLabel={tPath("nextChallengeCta")}
-                  onPress={() => handleLabyrinthSelect(nextChallenge.id)}
+                  onPress={() => requestTrainingContent(nextChallenge.id, "automatic")}
                 />
               </div>
             ) : (
@@ -3457,14 +3620,20 @@ export function ExercisesScreen({
                 onBandChange={setDiagonalRunBand}
               />
             ) : activeKnightTour ? (
-              <KnightTourBoard
-                key={`kt-${activeKnightTour.id}-${labyrinthKey}`}
-                level={activeKnightTour}
-                // NOT handleLabyrinthMove: a tour reports coverage, and that
-                // handler grades move counts. See handleCoverageComplete.
-                onComplete={handleCoverageComplete}
-                onBandChange={setKnightTourBand}
-              />
+              <TrainingContentGate
+                content={activeKnightTour}
+                trainingPass={trainingPass}
+                attemptGrantId={trainingAttemptGrantId}
+              >
+                <KnightTourBoard
+                  key={`kt-${activeKnightTour.id}-${labyrinthKey}`}
+                  level={activeKnightTour}
+                  // NOT handleLabyrinthMove: a tour reports coverage, and that
+                  // handler grades move counts. See handleCoverageComplete.
+                  onComplete={handleCoverageComplete}
+                  onBandChange={setKnightTourBand}
+                />
+              </TrainingContentGate>
             ) : activeQueens ? (
               <QueensBoard
                 key={`q-${activeQueens.id}-${labyrinthKey}`}
@@ -3536,6 +3705,8 @@ export function ExercisesScreen({
               labyrinthNodes={trainingPath.filter((n) => n.kind === "labyrinth")}
               labyrinthLabels={specialTrainingLabels}
               onLabyrinthSelect={handleLabyrinthSelect}
+              labyrinthAccess={labyrinthAccess}
+              onTrainingPassUnlock={() => setActiveDockTab("shop")}
               quotaState={
                 quotaDisplayState?.isAtLimit
                   ? {
@@ -3706,7 +3877,7 @@ export function ExercisesScreen({
               nextChallenge
                 ? () => {
                     setShowPieceComplete(false);
-                    handleLabyrinthSelect(nextChallenge.id);
+                    requestTrainingContent(nextChallenge.id, "automatic");
                     resetBoard();
                   }
                 : undefined
@@ -3728,13 +3899,17 @@ export function ExercisesScreen({
             moves={labyrinthCompleted.moves}
             optimalMoves={labyrinthCompleted.optimal}
             stars={labyrinthCompleted.stars}
+            awardsStars={labyrinthCompleted.awardsStars}
             previousBest={labyrinthCompleted.previousBest}
             isNewBest={labyrinthCompleted.isNewBest}
             onContinue={handleLabyrinthContinue}
             onRetry={() => {
-              setLabyrinthCompleted(null);
-              setLabyrinthKey((k) => k + 1);
-              setLabyrinthMoves(0);
+              if (selectedLabyrinthId) {
+                requestTrainingContent(selectedLabyrinthId, "automatic");
+              } else {
+                handleExitLabyrinth();
+                setExerciseDrawerOpen(true);
+              }
             }}
             onEnterArena={
               selectedPiece === "king" &&
@@ -3911,7 +4086,11 @@ export function ExercisesScreen({
           }}
         />
         {CHESSCITO_LITE_MODE ? (
-          <LearnShopSheet open={storeOpen} onOpenChange={setStoreOpen} />
+          <LearnShopSheet
+            open={storeOpen}
+            onOpenChange={setStoreOpen}
+            onSuccess={() => void trainingPassStatus.refresh()}
+          />
         ) : (
           <ShopSheet
             open={storeOpen}

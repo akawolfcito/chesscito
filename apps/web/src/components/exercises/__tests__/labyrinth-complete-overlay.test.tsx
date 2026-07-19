@@ -76,4 +76,18 @@ describe("LabyrinthCompleteOverlay — continue-first (QA F3 2026-06-11)", () =>
     vi.runAllTimers();
     expect(onEnterArena).toHaveBeenCalledTimes(1);
   });
+
+  it("keeps ludic results visible without rendering a star award", () => {
+    renderOverlay({
+      awardsStars: false,
+      stars: 0,
+      moves: 20,
+      optimalMoves: 20,
+      previousBest: 24,
+    });
+
+    expect(screen.queryByText("0/3")).not.toBeInTheDocument();
+    expect(screen.getByText("20")).toBeInTheDocument();
+    expect(screen.getByText("24")).toBeInTheDocument();
+  });
 });

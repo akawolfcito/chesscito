@@ -45,6 +45,11 @@ export type SquareState = {
  *  the catalog in `exercises.ts` (TIER CRITERIA block). */
 export type ExerciseTier = "easy" | "medium" | "hard";
 
+/** Commercial access metadata for authored content. Missing metadata is
+ *  intentionally resolved as `base` by the shared Training Content gate so
+ *  every existing catalog row remains available under its current rules. */
+export type ContentAccess = "base" | "training_pass";
+
 export type Exercise = {
   id: string;
   startPos: BoardPosition;   // posición inicial de la pieza
@@ -55,6 +60,9 @@ export type Exercise = {
    *  the content-authoring rollout; consumed by the future rotation
    *  engine, NOT by current UI. See `ExerciseTier`. */
   tier?: ExerciseTier;
+  /** Additive entitlement requirement. Absent means `base` for backwards
+   *  compatibility; consumers must resolve it through content-access.ts. */
+  access?: ContentAccess;
   /** Authoring-only pedagogical objective, EN. NOT user-facing copy yet
    *  — if surfaced later it gets EN/ES i18n in a separate commit. Plain
    *  guidance for content reviewers on what the exercise teaches. */

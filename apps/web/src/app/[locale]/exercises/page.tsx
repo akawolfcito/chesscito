@@ -5,7 +5,7 @@ import {
 import { ContentCatalogProvider } from "@/lib/content/catalog-context";
 import { getMergedCatalog } from "@/lib/content/merged-catalog";
 import { envStageFloor } from "@/lib/content/stage";
-import { EXERCISES } from "@/lib/game/exercises";
+import { EXERCISES, KNIGHT_TOUR } from "@/lib/game/exercises";
 import type { ExerciseCatalog } from "@/lib/game/rotation";
 import type { PieceId } from "@/lib/game/types";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
@@ -22,6 +22,9 @@ type SearchParams = {
   /** Content slot discriminator. "daily" and "challenge" bypass the Lite
    *  daily quota banner. Unknown/absent values → gated in Lite mode. */
   slot?: string | string[];
+  /** Direct Special Training selection. Known ids are forwarded to the client
+   *  gate; unknown ids are dropped at the route boundary. */
+  content?: string | string[];
 };
 
 const SUPPORTED_SHEETS = new Set<ExercisesInitialSheet>([
@@ -42,6 +45,16 @@ function pieceHasExercises(
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function pieceForContent(
+  contentId: string | undefined,
+  catalog: typeof KNIGHT_TOUR,
+): PieceId | undefined {
+  if (!contentId) return undefined;
+  return (Object.keys(catalog) as PieceId[]).find((piece) =>
+    catalog[piece].some((content) => content.id === contentId),
+  );
 }
 
 const LITE_BLOCKED_SHEETS = new Set<ExercisesInitialSheet>(["shop", "pro"]);
@@ -94,12 +107,24 @@ export default async function ExercisesPage({
 
   const piece = firstParam(searchParams.piece);
   const slot = firstParam(searchParams.slot);
+  const content = firstParam(searchParams.content);
+  const contentCatalog = merged?.knightTour ?? KNIGHT_TOUR;
+  const contentPiece = pieceForContent(content, contentCatalog);
   const initialPiece =
-    piece && pieceHasExercises(piece, catalog) ? piece : undefined;
+    piece && pieceHasExercises(piece, catalog)
+      ? piece
+      : contentPiece && pieceHasExercises(contentPiece, catalog)
+        ? contentPiece
+        : undefined;
   const initialSheet = parseInitialSheet(firstParam(searchParams.sheet));
 
   const screen = (
-    <ExercisesScreen initialPiece={initialPiece} initialSheet={initialSheet} slot={slot} />
+    <ExercisesScreen
+      initialPiece={initialPiece}
+      initialSheet={initialSheet}
+      slot={slot}
+      initialContentId={contentPiece ? content : undefined}
+    />
   );
 
   if (!merged) return screen;
@@ -110,6 +135,7 @@ export default async function ExercisesPage({
         exercises: merged.exercises,
         labyrinths: merged.labyrinths,
         diagonalRun: merged.diagonalRun,
+        knightTour: merged.knightTour,
         descriptions: merged.descriptions,
       }}
     >

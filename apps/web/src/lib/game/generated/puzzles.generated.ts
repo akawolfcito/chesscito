@@ -3583,6 +3583,7 @@ export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = {
         }
       ],
       "tier": "easy",
+      "access": "base",
       "principle": "tour-intro",
       "title": "The Short Tour",
       "playerPrompt": "Every square you leave is closed behind you. Cover as much as you can."
@@ -3697,6 +3698,7 @@ export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = {
         }
       ],
       "tier": "medium",
+      "access": "training_pass",
       "principle": "tour-planning",
       "title": "Wider Ground",
       "playerPrompt": "More room, same rule. Do not strand yourself in a corner."
@@ -3855,6 +3857,7 @@ export const GENERATED_KNIGHT_TOUR: Record<PieceId, Exercise[]> = {
         }
       ],
       "tier": "hard",
+      "access": "training_pass",
       "principle": "tour-route",
       "title": "The Long Tour",
       "playerPrompt": "Save the hard squares for early. The edges run out of exits first."

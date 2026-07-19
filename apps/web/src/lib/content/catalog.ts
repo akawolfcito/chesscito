@@ -6,7 +6,7 @@
  * prod bundle. Pure: no node:fs, no process side-effects. The CLI (`main()` +
  * the argv guard) stays in scripts/import-puzzles.ts, which re-exports these.
  */
-import type { BoardPosition, Exercise, ExerciseTier, PieceId } from "@/lib/game/types";
+import type { BoardPosition, ContentAccess, Exercise, ExerciseTier, PieceId } from "@/lib/game/types";
 import { mapFenPuzzle, parseFenBoard, puzzleId, posToSquare, isCoverageKind, usesOwnSolver, type PuzzleInput, type MappedPuzzle } from "@/lib/game/fen-puzzle";
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
 import { pivotBfs } from "@/lib/game/diagonal-run";
@@ -58,6 +58,8 @@ export type LabyrinthRecord = {
    *  no destination, and `promotion-run`, whose destination is a rank). */
   target?: string;
   tier?: ExerciseTier; tags?: string[]; explanation?: string; order: number;
+  /** Additive content entitlement. Missing stays backwards-compatible base. */
+  access?: ContentAccess;
   /** `promotion-run` only, and REQUIRED there: the piece the level asks the pawn
    *  to crown (P3). Flat in the JSON because that is what an author types; it
    *  becomes the typed `mission` on the way into the catalog. */
@@ -458,6 +460,7 @@ export function buildCatalog(
     addPuzzle({
       kind: rec.kind ?? "labyrinth", piece: rec.piece, tier: rec.tier ?? "medium", fen: rec.fen,
       target: rec.target, mover: rec.mover, tags: rec.tags, explanation: rec.explanation,
+      access: rec.access,
       // Flat in the JSON, typed from here on. A missing one is not defaulted to a
       // queen: promotion-run REQUIRES a mission, and a silent default would make
       // the level's win condition depend on a forgotten field.
@@ -473,6 +476,7 @@ export function buildCatalog(
     addPuzzle({
       kind: "exercise", piece: rec.piece, tier: rec.tier ?? "medium", fen: rec.fen,
       target: rec.target, mover: rec.mover, tags: rec.tags, explanation: rec.explanation,
+      access: rec.access,
       principle: rec.principle, title: rec.title,
       playerPrompt: rec.playerPrompt, learningObjective: rec.learningObjective,
     }, `exercises.json '${rec.id ?? rec.fen}'`, rec.id, rec.order);
