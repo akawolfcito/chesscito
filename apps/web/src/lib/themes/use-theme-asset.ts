@@ -2,11 +2,10 @@
 
 import { useActiveTheme } from "./use-active-theme";
 import {
-  THEMES,
   type ThemeAssetKey,
   type ThemeAssetVariant,
 } from "./theme-registry";
-import { resolveAssetPath } from "./asset-variant";
+import { resolveThemeAsset } from "./resolve-theme-asset";
 
 /** Resolves a themed asset basename for the active theme.
  *
@@ -28,7 +27,5 @@ export function useThemeAsset(
   variant: ThemeAssetVariant = "default",
 ): string {
   const themeId = useActiveTheme();
-  const theme = THEMES[themeId] ?? THEMES["candy-forest"];
-  const entry = theme.assets[key];
-  return resolveAssetPath(entry, variant) ?? "";
+  return resolveThemeAsset(key, variant, themeId) ?? "";
 }

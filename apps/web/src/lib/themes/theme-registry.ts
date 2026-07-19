@@ -448,7 +448,8 @@ export const THEMES: Record<string, ThemeDefinition> = {
         usedIn: ["Brand — Chesscito wordmark", "↳ components/hub/hub-lite-scaffold.tsx", "↳ components/hub/play-hub-scaffold.tsx"],
       },
       "brand.ring-start-focus": {
-        default: "/art/ring-start-focus",
+        default: { mode: "none" },
+        pro: "/art/ring-start-focus",
         usedIn: ["Hub — start-focus ring", "Root", "↳ components/hub/hub-lite-scaffold.tsx", "↳ app/[locale]/page.tsx"],
       },
       "exercises.avatar-fun": {

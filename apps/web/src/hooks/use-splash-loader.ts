@@ -3,16 +3,14 @@
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { isMiniPayEnv } from "@/lib/minipay";
+import { useCurrentThemeAssets } from "@/lib/themes/use-current-theme-asset";
 
 const ONBOARDED_KEY = "chesscito:onboarded";
 
 /** Critical images to preload before revealing the game. Uses AVIF since
  *  that's what the modern-browser image-set() picks up; PNG fallback is
  *  only ever served to legacy browsers and would waste bandwidth here. */
-const PRELOAD_ASSETS = [
-  "/art/redesign/board/board-ch.avif",
-  "/art/redesign/bg/wallpaper-exercises.avif",
-];
+const PRELOAD_SLOTS = ["board.thumbnail", "exercises.wallpaper"] as const;
 
 /** Max time (ms) to wait before revealing anyway. */
 const WALLET_TIMEOUT = 5_000;
@@ -55,6 +53,9 @@ type SplashState = {
 };
 
 export function useSplashLoader(): SplashState {
+  const themeAssets = useCurrentThemeAssets(PRELOAD_SLOTS);
+  const boardThumbnail = themeAssets["board.thumbnail"];
+  const exercisesWallpaper = themeAssets["exercises.wallpaper"];
   const { isConnected } = useAccount();
   const [isFirstVisit, setIsFirstVisit] = useState(() => !readOnboarded());
   const [assetsReady, setAssetsReady] = useState(false);
@@ -62,10 +63,11 @@ export function useSplashLoader(): SplashState {
 
   // Preload critical images
   useEffect(() => {
-    Promise.all(PRELOAD_ASSETS.map(preloadImage)).then(() => {
+    const assets = [boardThumbnail, exercisesWallpaper].filter(Boolean);
+    Promise.all(assets.map((asset) => preloadImage(`${asset}.avif`))).then(() => {
       setAssetsReady(true);
     });
-  }, []);
+  }, [boardThumbnail, exercisesWallpaper]);
 
   // Track wallet readiness
   useEffect(() => {

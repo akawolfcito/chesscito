@@ -7,6 +7,7 @@ import { celo, celoSepolia } from "wagmi/chains";
 import { injected } from "wagmi/connectors";
 
 import { getInjectedProvider, isMiniPayEnv } from "@/lib/minipay";
+import { ThemeVariantProvider } from "@/lib/themes/theme-variant-provider";
 
 /** Plain wagmi `injected()` connector (id: "injected") — the only wallet
  *  this app ever offered. RainbowKit was removed in the P2 JS cluster
@@ -62,7 +63,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <WalletProviderInner>{children}</WalletProviderInner>
+        <WalletProviderInner>
+          <ThemeVariantProvider>{children}</ThemeVariantProvider>
+        </WalletProviderInner>
       </QueryClientProvider>
     </WagmiProvider>
   );

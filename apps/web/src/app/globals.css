@@ -333,18 +333,18 @@
      * Diegetic primitives reference assets via these vars per Asset
      * Versioning Policy (spec 2026-05-09). Swap = CSS-var change only;
      * no primitive contract churn. */
-    --stone-pedestal-bg-1: url("/art/scene-rooted/piedra1.webp");
-    --stone-pedestal-bg-2: url("/art/scene-rooted/piedra2.webp");
-    --stone-pedestal-bg-3: url("/art/scene-rooted/piedra3.webp");
-    --stone-pedestal-bg-4: url("/art/scene-rooted/piedra4.webp");
-    --stone-pedestal-bg-5: url("/art/scene-rooted/piedra5.webp");
-    --stone-pedestal-bg-6: url("/art/scene-rooted/piedra6.webp");
-    --stone-pedestal-bg-7: url("/art/scene-rooted/piedra7.webp");
-    --stone-pedestal-bg-8: url("/art/scene-rooted/piedra8.webp");
-    --stone-pedestal-bg-9: url("/art/scene-rooted/piedra9.webp");
-    --stone-pedestal-bg-10: url("/art/scene-rooted/piedra10.webp");
-    --treasure-chest-bg-small: url("/art/scene-rooted/treasure-chest-small.webp");
-    --treasure-chest-bg-large: url("/art/scene-rooted/treasure-chest-large.webp");
+    --stone-pedestal-bg-1: var(--theme-scene-stone-1);
+    --stone-pedestal-bg-2: var(--theme-scene-stone-2);
+    --stone-pedestal-bg-3: var(--theme-scene-stone-3);
+    --stone-pedestal-bg-4: var(--theme-scene-stone-4);
+    --stone-pedestal-bg-5: var(--theme-scene-stone-5);
+    --stone-pedestal-bg-6: var(--theme-scene-stone-6);
+    --stone-pedestal-bg-7: var(--theme-scene-stone-7);
+    --stone-pedestal-bg-8: var(--theme-scene-stone-8);
+    --stone-pedestal-bg-9: var(--theme-scene-stone-9);
+    --stone-pedestal-bg-10: var(--theme-scene-stone-10);
+    --treasure-chest-bg-small: var(--theme-scene-chest-small);
+    --treasure-chest-bg-large: var(--theme-scene-chest-large);
     --cta-primary-green-grad: linear-gradient(180deg, #87db28, #4aaa16);
     --cta-primary-green-border: rgba(70, 130, 30, 0.85);
     --cta-primary-green-bevel:
@@ -398,10 +398,10 @@
     --popup-title-text-shadow:
       0 1px 0 rgba(255, 245, 215, 0.88),
       0 3px 10px rgba(245, 158, 11, 0.25);
-    --wood-banner-bg-short: url("/art/scene-rooted/wood-banner-blank-short.webp");
-    --wood-banner-bg-medium: url("/art/scene-rooted/wood-banner-blank-medium.webp");
-    --wood-banner-bg-large: url("/art/scene-rooted/wood-banner-blank-large.webp");
-    --gem-pill-bg: url("/art/scene-rooted/gem-pill-base.webp");
+    --wood-banner-bg-short: var(--theme-scene-banner-short);
+    --wood-banner-bg-medium: var(--theme-scene-banner-medium);
+    --wood-banner-bg-large: var(--theme-scene-banner-large);
+    --gem-pill-bg: var(--theme-scene-gem-pill);
 
     /* ── E3 Display Font ── */
     --font-game-display: var(--font-fredoka), "Fredoka One", sans-serif;
@@ -410,26 +410,16 @@
      *  `app/layout.tsx`. Kept distinct from `--font-game-display` so we
      *  can tune body-display vs. action separately if needed. */
     --font-game-action: var(--font-rowdies), "Rowdies", system-ui, sans-serif;
-    --intro-bg-mobile: image-set(url("/art/bg-splash-chesscito.avif") type("image/avif"),
-        url("/art/bg-splash-chesscito.webp") type("image/webp"),
-        url("/art/bg-splash-chesscito.png") type("image/png"));
-    --playhub-rune-frame: image-set(url("/art/panel-frame-rune.avif") type("image/avif"),
-        url("/art/panel-frame-rune.webp") type("image/webp"),
-        url("/art/panel-frame-rune.png") type("image/png"));
-    --playhub-slot-frame: image-set(url("/art/shop-slot-frame.avif") type("image/avif"),
-        url("/art/shop-slot-frame.webp") type("image/webp"),
-        url("/art/shop-slot-frame.png") type("image/png"));
-    --playhub-game-bg: image-set(url("/art/redesign/bg/wallpaper-exercises.avif") type("image/avif"),
-        url("/art/redesign/bg/wallpaper-exercises.webp") type("image/webp"),
-        url("/art/redesign/bg/wallpaper-exercises.png") type("image/png"));
+    --intro-bg-mobile: var(--theme-bg-splash-chesscito);
+    --playhub-rune-frame: var(--theme-shared-panel-frame);
+    --playhub-slot-frame: var(--theme-shop-slot-frame);
+    --playhub-game-bg: var(--theme-exercises-wallpaper);
     --playhub-board-bg: image-set(url("/art/chesscito-board.avif") type("image/avif"),
         url("/art/chesscito-board.webp") type("image/webp"),
         url("/art/chesscito-board.png") type("image/png"));
     /* Matchup transition (PLAY → board). The art already carries the VS crest
        and the pawn divider — nothing draws them in CSS. */
-    --arena-matchup-bg: image-set(url("/art/arena/bg-matchup.avif") type("image/avif"),
-        url("/art/arena/bg-matchup.webp") type("image/webp"),
-        url("/art/arena/bg-matchup.png") type("image/png"));
+    --arena-matchup-bg: var(--theme-arena-bg-matchup);
   }
 
   .dark {
@@ -853,9 +843,7 @@
     position: absolute;
     inset: -12px;
     z-index: 0;
-    background-image: image-set(url("/art/redesign/bg/wallpaper-exercises.avif") type("image/avif"),
-        url("/art/redesign/bg/wallpaper-exercises.webp") type("image/webp"),
-        url("/art/redesign/bg/wallpaper-exercises.png") type("image/png"));
+    background-image: var(--theme-exercises-wallpaper);
     background-size: cover;
     background-position: top center;
     background-repeat: no-repeat;
@@ -2004,9 +1992,7 @@
     background-size: cover;
     background-position: top center;
     background-repeat: no-repeat;
-    background-image: image-set(url("/art/redesign/bg/wallpaper-exercises.avif") type("image/avif"),
-        url("/art/redesign/bg/wallpaper-exercises.webp") type("image/webp"),
-        url("/art/redesign/bg/wallpaper-exercises.png") type("image/png"));
+    background-image: var(--theme-exercises-wallpaper);
     z-index: 0;
   }
 
@@ -2051,9 +2037,7 @@
     top: 0;
     background-repeat: repeat-y;
     background-position: top center;
-    background-image: image-set(url("/art/redesign/bg/path-map.avif") type("image/avif"),
-        url("/art/redesign/bg/path-map.webp") type("image/webp"),
-        url("/art/redesign/bg/path-map.png") type("image/png"));
+    background-image: var(--theme-bg-path-map);
   }
 
   .path-base {
@@ -2064,9 +2048,7 @@
     background-repeat: no-repeat;
     background-position: bottom center;
     background-size: 100% 100%;
-    background-image: image-set(url("/art/redesign/bg/path-map-base.avif") type("image/avif"),
-        url("/art/redesign/bg/path-map-base.webp") type("image/webp"),
-        url("/art/redesign/bg/path-map-base.png") type("image/png"));
+    background-image: var(--theme-bg-path-map-base);
   }
 
   /* Inner tray: a slightly darker cream rectangle for rows/lists. */
@@ -2737,31 +2719,11 @@
   }
 
   .game-board-tile-light {
-    background-image: url("/art/board/casilla-clara.png");
-    background-image: -webkit-image-set(
-      url("/art/board/casilla-clara.avif") type("image/avif"),
-      url("/art/board/casilla-clara.webp") type("image/webp"),
-      url("/art/board/casilla-clara.png") type("image/png")
-    );
-    background-image: image-set(
-      url("/art/board/casilla-clara.avif") type("image/avif"),
-      url("/art/board/casilla-clara.webp") type("image/webp"),
-      url("/art/board/casilla-clara.png") type("image/png")
-    );
+    background-image: var(--theme-board-tile-light);
   }
 
   .game-board-tile-dark {
-    background-image: url("/art/board/casilla-oscura.png");
-    background-image: -webkit-image-set(
-      url("/art/board/casilla-oscura.avif") type("image/avif"),
-      url("/art/board/casilla-oscura.webp") type("image/webp"),
-      url("/art/board/casilla-oscura.png") type("image/png")
-    );
-    background-image: image-set(
-      url("/art/board/casilla-oscura.avif") type("image/avif"),
-      url("/art/board/casilla-oscura.webp") type("image/webp"),
-      url("/art/board/casilla-oscura.png") type("image/png")
-    );
+    background-image: var(--theme-board-tile-dark);
   }
 
   .playhub-board-cell {
@@ -2794,17 +2756,7 @@
      Non-target by the rules layer; cursor signals it's not a move. */
   .playhub-board-cell.is-wall {
     background-color: #6b7178; /* tint while the image loads */
-    background-image: url("/art/labyrinths/wall.png");
-    background-image: -webkit-image-set(
-      url("/art/labyrinths/wall.avif") type("image/avif"),
-      url("/art/labyrinths/wall.webp") type("image/webp"),
-      url("/art/labyrinths/wall.png") type("image/png")
-    );
-    background-image: image-set(
-      url("/art/labyrinths/wall.avif") type("image/avif"),
-      url("/art/labyrinths/wall.webp") type("image/webp"),
-      url("/art/labyrinths/wall.png") type("image/png")
-    );
+    background-image: var(--theme-exercises-wall);
     background-size: cover;
     background-position: center;
     border-radius: 12%;
@@ -2937,9 +2889,7 @@
     width: 90%;
     height: 90%;
     transform: translate(-50%, -50%);
-    background-image: image-set(url("/art/redesign/icons/star.avif") type("image/avif"),
-        url("/art/redesign/icons/star.webp") type("image/webp"),
-        url("/art/redesign/icons/star.png") type("image/png"));
+    background-image: var(--theme-shared-star);
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -4004,9 +3954,7 @@
        stripe under the dock. With the fallback, any alpha falls back
        to the dock's own palette. */
     background-color: rgb(43, 56, 84);
-    background-image: image-set(url("/art/redesign/bg/menu-wall.avif") type("image/avif"),
-        url("/art/redesign/bg/menu-wall.webp") type("image/webp"),
-        url("/art/redesign/bg/menu-wall.png") type("image/png"));
+    background-image: var(--theme-bg-menu-wall);
     /* `100% 100%` stretches the image to fully fill the dock edge-to-
        edge so any bottom-alpha region is covered by the image pixels
        themselves rather than relying on the fallback color. The 68px
@@ -4030,9 +3978,7 @@
      art whose dividers were baked for 4 slots. Same stretch/fallback as the
      base so only the image differs. */
   .chesscito-dock--four {
-    background-image: image-set(url("/art/redesign/bg/dock-4slots.avif") type("image/avif"),
-        url("/art/redesign/bg/dock-4slots.webp") type("image/webp"),
-        url("/art/redesign/bg/dock-4slots.png") type("image/png"));
+    background-image: var(--theme-bg-dock-4slots);
   }
 
   .chesscito-dock-item {
@@ -4668,9 +4614,7 @@
      paper instead of dark slate, so a slow connection never flashes
      dark between navigation and splash image (#103 sweep). */
   background-color: var(--paper-bg, #f6e6b8);
-  background-image: image-set(url("/art/redesign/bg/splash-loading.avif") type("image/avif"),
-      url("/art/redesign/bg/splash-loading.webp") type("image/webp"),
-      url("/art/redesign/bg/splash-loading.png") type("image/png"));
+  background-image: var(--theme-bg-splash-loading);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -5024,9 +4968,7 @@
   height: 3rem;
   aspect-ratio: 1 / 1;
   color: var(--redesign-stone-text);
-  background-image: image-set(url("/art/redesign/banners/btn-stone-bg.avif") type("image/avif"),
-      url("/art/redesign/banners/btn-stone-bg.webp") type("image/webp"),
-      url("/art/redesign/banners/btn-stone-bg.png") type("image/png"));
+  background-image: var(--theme-hub-btn-stone-bg);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -6156,7 +6098,7 @@ button.hud-resource-chip:active:not(:disabled) {
   border: 0;
   border-radius: 16px;
   background:
-    url("/art/scene-rooted/panel-pro.png") center / 100% 100% no-repeat,
+    var(--theme-scene-panel-pro) center / 100% 100% no-repeat,
     linear-gradient(180deg, #7d47b5 0%, #4f268a 100%);
   box-shadow:
     0 8px 12px rgba(25, 28, 50, 0.24);
@@ -6214,7 +6156,7 @@ button.hud-resource-chip:active:not(:disabled) {
 /* State: inactive — desaturated amber to read as "muted entry-point". */
 .premium-slot.is-inactive {
   background:
-    url("/art/scene-rooted/panel-pro.png") center / 100% 100% no-repeat,
+    var(--theme-scene-panel-pro) center / 100% 100% no-repeat,
     linear-gradient(180deg, #7d47b5 0%, #4f268a 100%);
   color: #ffe66e;
 }
@@ -6837,7 +6779,7 @@ button.hud-resource-chip:active:not(:disabled) {
   border-radius: 24px;
   font-size: 0.95rem;
   letter-spacing: 0;
-  background: url("/art/scene-rooted/pedestal-play.png") center / 100% 100% no-repeat;
+  background: var(--theme-scene-pedestal) center / 100% 100% no-repeat;
   filter:
     drop-shadow(0 8px 0 rgba(71, 40, 8, 0.32)) drop-shadow(0 12px 18px rgba(18, 53, 28, 0.22));
 }
@@ -7052,9 +6994,7 @@ button.hud-resource-chip:active:not(:disabled) {
   /* Forest-path adventure scene introduced 2026-05-05. AVIF/WebP triplet
      mirrors bg-app pipeline (5f1a162). Source asset ships at 852x1846
      in design/new-assets-chesscito/bg-new-hub.png. */
-  background-image: image-set(url("/art/redesign/bg/bg-new-hub.avif") type("image/avif"),
-      url("/art/redesign/bg/bg-new-hub.webp") type("image/webp"),
-      url("/art/redesign/bg/bg-new-hub.png") type("image/png"));
+  background-image: var(--theme-hub-bg);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -8275,13 +8215,7 @@ button.hud-resource-chip:active:not(:disabled) {
   min-height: 100dvh;
   padding: calc(env(safe-area-inset-top, 0px) + 6px) 14px
     calc(env(safe-area-inset-bottom, 0px) + 16px);
-  background: #7cc5f0 url("/art/bg-wallpaper-lite.png") center top / cover
-    no-repeat;
-  background-image: image-set(
-    url("/art/bg-wallpaper-lite.avif") type("image/avif"),
-    url("/art/bg-wallpaper-lite.webp") type("image/webp"),
-    url("/art/bg-wallpaper-lite.png") type("image/png")
-  );
+  background: #7cc5f0 var(--theme-bg-wallpaper-lite) center top / cover no-repeat;
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
@@ -9197,9 +9131,7 @@ button.hud-resource-chip:active:not(:disabled) {
   overflow: hidden;
   color: #3f2208;
   background-color: #126bd8;
-  background-image: image-set(url("/art/redesign/bg/bg-new-hub.avif") type("image/avif"),
-      url("/art/redesign/bg/bg-new-hub.webp") type("image/webp"),
-      url("/art/redesign/bg/bg-new-hub.png") type("image/png"));
+  background-image: var(--theme-hub-bg);
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
@@ -9244,9 +9176,7 @@ button.hud-resource-chip:active:not(:disabled) {
   background-color: #0b62cf;
   background-image:
     linear-gradient(180deg, rgba(0, 59, 159, 0.12) 0%, rgba(16, 91, 37, 0.28) 100%),
-    image-set(url("/art/redesign/bg/bg-new-hub.avif") type("image/avif"),
-      url("/art/redesign/bg/bg-new-hub.webp") type("image/webp"),
-      url("/art/redesign/bg/bg-new-hub.png") type("image/png"));
+    var(--theme-hub-bg);
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
@@ -9264,7 +9194,7 @@ button.hud-resource-chip:active:not(:disabled) {
   transform: translateX(-50%);
   background:
     radial-gradient(circle at 50% 58%, rgba(255, 231, 120, 0.34) 0%, rgba(255, 231, 120, 0.12) 38%, transparent 68%),
-    url("/art/badge-chesscito.webp");
+    var(--theme-exercises-badge);
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
@@ -14386,12 +14316,7 @@ button.hud-resource-chip:active:not(:disabled) {
   background-repeat: no-repeat;
   background-position: center;
   background-size: 100% 100%;
-  background-image: url("/art/focus-passport/panel-streak.png");
-  background-image: image-set(
-    url("/art/focus-passport/panel-streak.avif") type("image/avif"),
-    url("/art/focus-passport/panel-streak.webp") type("image/webp"),
-    url("/art/focus-passport/panel-streak.png") type("image/png")
-  );
+  background-image: var(--theme-hub-focus-passport-streak);
 }
 
 .focus-passport-kicker {
@@ -14763,11 +14688,7 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-image: image-set(
-    url("/art/new-assets-chesscito/paneles/panel-bg1.avif") type("image/avif"),
-    url("/art/new-assets-chesscito/paneles/panel-bg1.webp") type("image/webp"),
-    url("/art/new-assets-chesscito/paneles/panel-bg1.png") type("image/png")
-  );
+  background-image: var(--theme-shared-panel-bg);
   background-size: 100% 100%;
   background-repeat: no-repeat;
 }
