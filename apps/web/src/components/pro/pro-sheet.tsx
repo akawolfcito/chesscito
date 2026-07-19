@@ -9,7 +9,10 @@ import {
   Sheet,
   SheetContent,
 } from "@/components/ui/sheet";
-import type { ProStatus } from "@/lib/pro/use-pro-status";
+import type {
+  ProRemoteState,
+  ProStatus,
+} from "@/lib/pro/use-pro-status";
 import { daysRemaining } from "@/lib/pro/days-remaining";
 import { track } from "@/lib/telemetry";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
@@ -22,6 +25,8 @@ export type ProSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   status: ProStatus | null;
+  statusState?: ProRemoteState;
+  staleStatus?: ProStatus | null;
   isConnected: boolean;
   isCorrectChain: boolean;
   isPurchasing: boolean;
@@ -57,6 +62,7 @@ type ResolveCtaInput = Omit<ProSheetProps, "open" | "onOpenChange" | "errorMessa
 
 function resolveCta({
   status,
+  statusState,
   isConnected,
   isCorrectChain,
   isPurchasing,
@@ -66,6 +72,12 @@ function resolveCta({
   onPurchase,
   t,
 }: ResolveCtaInput): CtaConfig {
+  // Older fixture/caller shapes may omit statusState. A missing status is
+  // uncertainty, never proof of inactivity and therefore never a purchase
+  // authorization. A concrete status remains backwards-compatible.
+  const resolvedStatusState =
+    statusState ??
+    (status === null ? "unknown" : status.active ? "active" : "inactive");
   if (isPurchasing) {
     return { label: t("processingLabel"), loading: true, disabled: false, onClick: undefined };
   }
@@ -86,6 +98,22 @@ function resolveCta({
       loading: false,
       disabled: false,
       onClick: onSwitchNetwork,
+    };
+  }
+  if (resolvedStatusState === "loading") {
+    return {
+      label: t("statusCheckingLabel"),
+      loading: true,
+      disabled: true,
+      onClick: undefined,
+    };
+  }
+  if (resolvedStatusState === "error" || resolvedStatusState === "unknown") {
+    return {
+      label: t("statusUnavailableLabel"),
+      loading: false,
+      disabled: true,
+      onClick: undefined,
     };
   }
   if (status?.active) {
@@ -121,6 +149,8 @@ export function ProSheet(props: ProSheetProps) {
     open,
     onOpenChange,
     status,
+    statusState,
+    staleStatus,
     errorMessage,
     isConnected,
     isCorrectChain,
@@ -133,6 +163,20 @@ export function ProSheet(props: ProSheetProps) {
   const cta = resolveCta({ ...props, t });
   const router = useRouter();
   const showVerifyRetry = Boolean(errorMessage && verifyFailedTxHash && onRetryVerify);
+  const resolvedStatusState =
+    statusState ??
+    (status === null ? "unknown" : status.active ? "active" : "inactive");
+  const unresolvedStatus =
+    isConnected &&
+    isCorrectChain &&
+      (resolvedStatusState === "loading" ||
+      resolvedStatusState === "error" ||
+      resolvedStatusState === "unknown");
+  // Presentation may retain the last confirmed active panel during a
+  // transport failure, but resolveCta() still receives the unresolved state
+  // and therefore cannot authorize a new purchase/renewal from stale data.
+  const presentationStatus =
+    status ?? (unresolvedStatus ? staleStatus ?? null : null);
 
   // Capture the surface that opened the sheet exactly once. Frozen for
   // the sheet's lifetime so a route change mid-sheet doesn't reshape
@@ -162,9 +206,11 @@ export function ProSheet(props: ProSheetProps) {
   }, [open, status]);
 
   const showActiveBanner = Boolean(
-    status?.active && status.expiresAt && status.expiresAt > Date.now(),
+    presentationStatus?.active &&
+      presentationStatus.expiresAt &&
+      presentationStatus.expiresAt > Date.now(),
   );
-  const days = daysRemaining(status?.expiresAt, Date.now());
+  const days = daysRemaining(presentationStatus?.expiresAt, Date.now());
 
   function handleCtaClick() {
     if (!cta.onClick) return;
@@ -345,7 +391,7 @@ export function ProSheet(props: ProSheetProps) {
                *  single test red. `noAutoBillingLine` stays: it says something
                *  the price cannot.
                *  Active: ProActiveBadge + the extend/renew sub-line. */}
-              {showActiveBanner && days !== null && status?.expiresAt ? (
+              {showActiveBanner && days !== null && presentationStatus?.expiresAt ? (
                 <div
                   data-testid="pro-active-banner"
                   className="mt-4 rounded-2xl border px-3 py-2"
@@ -355,8 +401,20 @@ export function ProSheet(props: ProSheetProps) {
                   }}
                 >
                   <div className="flex justify-center">
-                    <ProActiveBadge expiresAtMs={status.expiresAt} />
+                    <ProActiveBadge expiresAtMs={presentationStatus.expiresAt} />
                   </div>
+                  {unresolvedStatus ? (
+                    <p
+                      role="status"
+                      data-testid="pro-status-unavailable"
+                      className="mt-2 text-center text-xs font-semibold"
+                      style={{ color: "rgb(91, 33, 182)" }}
+                    >
+                      {statusState === "loading"
+                        ? t("statusCheckingLabel")
+                        : t("statusUnavailableLabel")}
+                    </p>
+                  ) : null}
                   {/* Always available while active — not gated by days
                    *  remaining. Regression fix 2026-07-02: the Shop's
                    *  old approve+buyItem PRO tile let a user top up at
@@ -391,6 +449,31 @@ export function ProSheet(props: ProSheetProps) {
                       {t("ctaRenew")}
                     </button>
                   </div>
+                </div>
+              ) : unresolvedStatus ? (
+                <div
+                  role="status"
+                  data-testid="pro-status-unavailable"
+                  className="mt-4 rounded-2xl border px-3 py-3 text-center"
+                  style={{
+                    background: "rgba(255, 245, 205, 0.55)",
+                    borderColor: "rgba(110, 65, 15, 0.18)",
+                  }}
+                >
+                  <p
+                    className="text-sm font-extrabold"
+                    style={{ color: "rgb(91, 33, 182)" }}
+                  >
+                    {statusState === "loading"
+                      ? t("statusCheckingLabel")
+                      : t("statusUnavailableLabel")}
+                  </p>
+                  <p
+                    className="mt-1 text-xs leading-snug"
+                    style={{ color: "rgba(110, 65, 15, 0.75)" }}
+                  >
+                    {t("statusUnavailableMessage")}
+                  </p>
                 </div>
               ) : (
                 <div

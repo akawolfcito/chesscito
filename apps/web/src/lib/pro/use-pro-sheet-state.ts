@@ -11,7 +11,11 @@ import { useStablecoinTokenSelection } from "@/lib/payments/use-get-peones-token
 import { hapticSuccess } from "@/lib/haptics";
 import { classifyProRailError } from "@/lib/pro/pro-rail-error";
 import { useProRail, type ProRailResult } from "@/lib/pro/use-pro-rail";
-import { useProStatus, type ProStatus } from "@/lib/pro/use-pro-status";
+import {
+  useProStatus,
+  type ProRemoteState,
+  type ProStatus,
+} from "@/lib/pro/use-pro-status";
 import { track } from "@/lib/telemetry";
 
 import type { ProSheetProps } from "@/components/pro/pro-sheet";
@@ -61,6 +65,7 @@ export type UseProSheetStateReturn = {
   /** Surfaced for the parent's PRO chip rendering so the page never
    *  fires a second `useProStatus(address)` fetch in parallel. */
   proStatus: ProStatus | null;
+  proState: ProRemoteState;
 };
 
 /** PRO sheet orchestration extracted from `<ExercisesScreen>` so the redesigned
@@ -90,7 +95,13 @@ export function useProSheetState(
   const isCorrectChain =
     configuredChainId != null && chainId === configuredChainId;
 
-  const { status: proStatus, refetch: refetchProStatus } = useProStatus(address);
+  const proQuery = useProStatus(address);
+  const {
+    status: proStatus,
+    state: proState,
+    staleStatus,
+    refetch: refetchProStatus,
+  } = proQuery;
   const pack = useMemo(() => getProPack(PRO_RAIL_SKU), []);
 
   // Capture the success callback in a ref so onVerified's identity stays
@@ -281,6 +292,8 @@ export function useProSheetState(
       else closeSheet();
     },
     status: proStatus,
+    statusState: proState,
+    staleStatus,
     isConnected,
     isCorrectChain,
     isPurchasing: purchaseState === "purchasing",
@@ -295,5 +308,5 @@ export function useProSheetState(
     onPurchase: handlePurchase,
   };
 
-  return { open, openSheet, closeSheet, sheetProps, proStatus };
+  return { open, openSheet, closeSheet, sheetProps, proStatus, proState };
 }

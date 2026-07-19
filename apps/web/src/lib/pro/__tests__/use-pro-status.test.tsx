@@ -32,6 +32,9 @@ describe("useProStatus", () => {
     const { result } = renderHook(() => useProStatus(undefined), { wrapper });
 
     expect(result.current.status).toBeNull();
+    expect(result.current.state).toBe("unknown");
+    expect(result.current.error).toBeNull();
+    expect(result.current.staleStatus).toBeNull();
     expect(result.current.isLoading).toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -51,6 +54,7 @@ describe("useProStatus", () => {
 
     await waitFor(() => {
       expect(result.current.status).toEqual({ active: true, expiresAt: 1_700_000_000_000 });
+      expect(result.current.state).toBe("active");
       expect(result.current.isLoading).toBe(false);
     });
   });
@@ -82,10 +86,10 @@ describe("useProStatus", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("leaves status null on a first-load non-ok response (cache layer decides)", async () => {
+  it.each([403, 429, 500])("represents HTTP %i as error, never inactive", async (httpStatus) => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
-      status: 403,
+      status: httpStatus,
       json: async () => ({ error: "Forbidden" }),
     });
 
@@ -95,9 +99,16 @@ describe("useProStatus", () => {
       expect(result.current.isLoading).toBe(false);
     });
     expect(result.current.status).toBeNull();
+    expect(result.current.state).toBe("error");
+    expect(result.current.error).toEqual({
+      kind: "http",
+      httpStatus,
+      message: `PRO status request failed (${httpStatus})`,
+    });
+    expect(result.current.staleStatus).toBeNull();
   });
 
-  it("leaves status null on a first-load network error (cache layer decides)", async () => {
+  it("represents a first-load network failure as unknown", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("network down"));
 
     const { result } = renderHook(() => useProStatus(VALID_WALLET), { wrapper });
@@ -106,9 +117,14 @@ describe("useProStatus", () => {
       expect(result.current.isLoading).toBe(false);
     });
     expect(result.current.status).toBeNull();
+    expect(result.current.state).toBe("unknown");
+    expect(result.current.error).toMatchObject({
+      kind: "network",
+      httpStatus: null,
+    });
   });
 
-  it("preserves an active status when a refetch hits a non-ok response (no false PRO demotion)", async () => {
+  it("moves active to error and exposes the previous response only as stale", async () => {
     fetchMock
       .mockResolvedValueOnce({
         ok: true,
@@ -133,21 +149,26 @@ describe("useProStatus", () => {
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
-    expect(result.current.status).toEqual({ active: true, expiresAt: 9_999_999_999_999 });
+    expect(result.current.status).toBeNull();
+    expect(result.current.state).toBe("error");
+    expect(result.current.staleStatus).toEqual({
+      active: true,
+      expiresAt: 9_999_999_999_999,
+    });
   });
 
-  it("preserves an active status when a refetch throws a network error", async () => {
+  it("moves inactive to unknown on network failure and keeps stale inactive metadata", async () => {
     fetchMock
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ active: true, expiresAt: 9_999_999_999_999 }),
+        json: async () => ({ active: false, expiresAt: null }),
       })
       .mockRejectedValueOnce(new TypeError("network down"));
 
     const { result } = renderHook(() => useProStatus(VALID_WALLET), { wrapper });
 
     await waitFor(() => {
-      expect(result.current.status).toEqual({ active: true, expiresAt: 9_999_999_999_999 });
+      expect(result.current.status).toEqual({ active: false, expiresAt: null });
     });
 
     act(() => {
@@ -157,7 +178,9 @@ describe("useProStatus", () => {
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
-    expect(result.current.status).toEqual({ active: true, expiresAt: 9_999_999_999_999 });
+    expect(result.current.status).toBeNull();
+    expect(result.current.state).toBe("unknown");
+    expect(result.current.staleStatus).toEqual({ active: false, expiresAt: null });
   });
 
   it("downgrades to inactive when an OK response reports active:false (real lapse)", async () => {
@@ -183,6 +206,7 @@ describe("useProStatus", () => {
 
     await waitFor(() => {
       expect(result.current.status).toEqual({ active: false, expiresAt: null });
+      expect(result.current.state).toBe("inactive");
     });
   });
 

@@ -6,6 +6,7 @@ import { WagmiProvider, createConfig, http, useConnect } from "wagmi";
 import { celo, celoSepolia } from "wagmi/chains";
 import { injected } from "wagmi/connectors";
 
+import { ProOriginWarning } from "@/components/dev/pro-origin-warning";
 import { getInjectedProvider, isMiniPayEnv } from "@/lib/minipay";
 import { ThemeVariantProvider } from "@/lib/themes/theme-variant-provider";
 
@@ -64,7 +65,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <WalletProviderInner>
-          <ThemeVariantProvider>{children}</ThemeVariantProvider>
+          <ThemeVariantProvider>
+            <ProOriginWarning />
+            {children}
+          </ThemeVariantProvider>
         </WalletProviderInner>
       </QueryClientProvider>
     </WagmiProvider>

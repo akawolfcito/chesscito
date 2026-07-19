@@ -19,6 +19,7 @@ import { AppModeSwitch } from "@/components/hub/app-mode-switch";
 import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ProDisplayState } from "@/lib/pro/use-is-pro-active";
 
 /** Contextual Hero CTA — replaces the legacy PrimaryPlayCta when wired.
  *  `color` drives the visual tint (amber = default/onboarding, blue =
@@ -38,7 +39,7 @@ type HubScaffoldProps = {
   /** PRO state. When active, the chip renders the days-remaining value;
    *  when inactive the chip collapses (parent decides to show a secondary
    *  PRO entry — e.g. <PremiumSlot inactive>). */
-  pro: { active: true; daysRemaining: number } | { active: false };
+  pro: ProDisplayState;
   /** Optional secondary HUD row content. Each field is independently
    *  optional and the row collapses when all are null. */
   streak?: number | null;
@@ -162,9 +163,16 @@ export function HubScaffold({
   const tSecondary = useTranslations("SECONDARY_CTA_COPY");
   const tScaffold = useTranslations("HUB_SCAFFOLD_COPY");
   const tRailLabels = useTranslations("HUB_RAIL_COPY");
+  const proStatus = pro.status ?? "inactive";
   const proAriaLabel = pro.active
     ? tHud("proAriaLabel", { days: pro.daysRemaining })
-    : tHud("proInactiveAriaLabel");
+    : proStatus === "inactive"
+      ? tHud("proInactiveAriaLabel")
+      : proStatus === "loading"
+        ? tHud("proLoadingAriaLabel")
+        : tHud("proUnavailableAriaLabel");
+  const staleVisualActive =
+    !pro.active && "staleVisualActive" in pro && pro.staleVisualActive;
 
   const wrap = (primitiveName: string, children: React.ReactNode) => (
     <PrimitiveBoundary
@@ -219,6 +227,8 @@ export function HubScaffold({
               "HubProBadge",
               <HubProBadge
                 active={pro.active}
+                status={proStatus}
+                visualActive={pro.active || staleVisualActive}
                 daysRemaining={pro.active ? pro.daysRemaining : undefined}
                 daysLabel={
                   pro.active
@@ -226,6 +236,11 @@ export function HubScaffold({
                     : undefined
                 }
                 sublineInactive={tRail("proDiscoverySubtitle")}
+                sublinePending={
+                  proStatus === "loading"
+                    ? tRail("proCheckingSubtitle")
+                    : tRail("proUnavailableSubtitle")
+                }
                 ariaLabel={proAriaLabel}
                 onClick={onProTap}
               />,

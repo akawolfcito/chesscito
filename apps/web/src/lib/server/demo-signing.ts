@@ -1,6 +1,7 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { ethers } from "ethers";
+import { classifyProOriginHost } from "@/lib/pro/pro-origin";
 import { decryptSignerKey } from "./crypto";
 import { createLogger } from "./logger";
 
@@ -147,32 +148,20 @@ export function enforceOrigin(request: Request) {
     return;
   }
 
-  let sourceHost: string;
-  try {
-    sourceHost = new URL(source).host;
-  } catch {
-    throw new Error("Forbidden");
-  }
-
-  // Collect all allowed hosts: explicit app URL, optional preview alias,
-  // Vercel deployment URL, Vercel branch alias, and production alias.
-  const allowedHosts = new Set<string>();
-  for (const envVar of [
+  // The DEV warning uses this exact classifier. Keep the acceptance boundary
+  // host-based (hostname + port, no protocol) unless separately approved.
+  const classification = classifyProOriginHost(source, [
     process.env.NEXT_PUBLIC_APP_URL,
     process.env.NEXT_PUBLIC_PREVIEW_URL,
     process.env.VERCEL_URL,
     process.env.VERCEL_BRANCH_URL,
     process.env.VERCEL_PROJECT_PRODUCTION_URL,
-  ]) {
-    if (envVar) {
-      allowedHosts.add(envVar.replace(/^https?:\/\//, ""));
-    }
-  }
+  ]);
 
   // No allowed hosts configured — skip check (dev environment)
-  if (allowedHosts.size === 0) return;
+  if (classification.status === "unconfigured") return;
 
-  if (!allowedHosts.has(sourceHost)) {
+  if (classification.status !== "allowed") {
     throw new Error("Forbidden");
   }
 }

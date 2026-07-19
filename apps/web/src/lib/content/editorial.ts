@@ -2338,6 +2338,10 @@ export const PRO_COPY = {
    *  batch so the strings ship per-locale via PRO_COPY. */
   processingLabel: "Processing…",
   verifyingLabel: "Verifying…",
+  statusCheckingLabel: "Checking PRO status…",
+  statusUnavailableLabel: "PRO status unavailable",
+  statusUnavailableMessage:
+    "We could not confirm your subscription. Try again shortly; nothing was changed.",
   /** CTA label shown when the wallet is on the wrong chain (Celo). */
   switchNetworkLabel: "Switch Network",
   /** ARIA label for the close button inside <ProSheet>. */
@@ -3073,6 +3077,8 @@ export const HUD_COPY = {
       ? "PRO active, 1 day remaining"
       : `PRO active, ${days} days remaining`,
   proInactiveAriaLabel: "PRO inactive: tap to learn more",
+  proLoadingAriaLabel: "PRO status is being checked",
+  proUnavailableAriaLabel: "PRO status unavailable: try again shortly",
 
   /** Connect-wallet chip (top row, conditional — visible only when no
    *  wallet is connected and a connect handler is wired). Acts as a
@@ -3370,6 +3376,8 @@ export const HUB_ACTION_RAIL_COPY = {
   /* One word by design: it rides as a floating label on the PRO chip's foot,
    * where a sentence would wrap over the art (founder 2026-07-13). */
   proDiscoverySubtitle: "Unlock",
+  proCheckingSubtitle: "Checking",
+  proUnavailableSubtitle: "Unavailable",
   proDiscoveryAriaLabel:
     "Unlock PRO: full experience.",
   /** Arena tile aria labels — composed from MiniArenaSetup.name. */

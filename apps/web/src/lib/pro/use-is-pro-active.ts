@@ -3,7 +3,12 @@
 import { useEffect } from "react";
 import { useAccount } from "wagmi";
 
-import { useProStatus } from "@/lib/pro/use-pro-status";
+import {
+  useProStatus,
+  type ProRemoteState,
+  type ProStatus,
+  type ProStatusError,
+} from "@/lib/pro/use-pro-status";
 import { daysRemaining } from "@/lib/pro/days-remaining";
 
 const STORAGE_PREFIX = "chesscito:pro-active:";
@@ -33,45 +38,66 @@ function readCachedEntitlement(wallet: string | undefined): CachedProEntitlement
   }
 }
 
-export type ProEntitlementState =
-  | {
-      status: "loading";
-      active: boolean;
-      loading: true;
-      cachedPro: boolean;
-      expiresAt: number | null;
-    }
-  | {
-      status: "active";
-      active: true;
-      loading: false;
-      cachedPro: true;
-      expiresAt: number;
-    }
-  | {
-      status: "inactive";
-      active: false;
-      loading: false;
-      cachedPro: false;
-      expiresAt: null;
-    };
+export type StaleProEntitlement = {
+  source: "local-cache" | "server";
+  active: boolean;
+  expiresAt: number | null;
+};
+
+export type ProEntitlementState = {
+  status: ProRemoteState;
+  /** Authorization for a NEW PRO action. True only from a current successful
+   * server response; stale server/local data can never set this flag. */
+  active: boolean;
+  loading: boolean;
+  expiresAt: number | null;
+  stale: StaleProEntitlement | null;
+  error: ProStatusError | null;
+};
 
 export type ProDisplayState =
-  | { active: true; daysRemaining: number }
-  | { active: false };
+  | { status?: "active"; active: true; daysRemaining: number }
+  | { status?: "inactive"; active: false }
+  | {
+      status: "loading" | "error" | "unknown";
+      active: false;
+      staleVisualActive: boolean;
+    };
 
 /** Maps the effective entitlement to the shared Hub presentation contract. */
 export function proDisplayState(
   entitlement: ProEntitlementState,
   now = Date.now(),
 ): ProDisplayState {
-  if (!entitlement.active) return { active: false };
+  if (entitlement.status === "active" && entitlement.active) {
+    return {
+      status: "active",
+      active: true,
+      daysRemaining: daysRemaining(entitlement.expiresAt, now) ?? 1,
+    };
+  }
+  if (entitlement.status === "inactive") {
+    return { status: "inactive", active: false };
+  }
   return {
-    active: true,
-    // Legacy caches stored only `"1"`. Treat that short loading window as
-    // active without showing the unlock CTA; the server soon replaces it with
-    // the exact expiry and future cache writes retain that value.
-    daysRemaining: daysRemaining(entitlement.expiresAt, now) ?? 1,
+    status:
+      entitlement.status === "active" ? "unknown" : entitlement.status,
+    active: false,
+    staleVisualActive:
+      entitlement.stale?.source === "server" &&
+      entitlement.stale.active === true,
+  };
+}
+
+function staleServerEntitlement(status: ProStatus | null): StaleProEntitlement | null {
+  if (!status) return null;
+  return {
+    source: "server",
+    active:
+      status.active &&
+      status.expiresAt !== null &&
+      status.expiresAt > Date.now(),
+    expiresAt: status.expiresAt,
   };
 }
 
@@ -104,7 +130,8 @@ export function proDisplayState(
 export function useProEntitlement(): ProEntitlementState {
   const { address } = useAccount();
   const wallet = address?.toLowerCase();
-  const { status } = useProStatus(wallet);
+  const remote = useProStatus(wallet);
+  const { status } = remote;
 
   // MiniPay injects and connects its wallet after the provider mounts. Read
   // the cache for the CURRENT wallet on every render instead of capturing the
@@ -138,21 +165,40 @@ export function useProEntitlement(): ProEntitlementState {
   // brief window before the first fetch resolves.
   if (!wallet) {
     return {
-      status: "inactive",
+      status: "unknown",
       active: false,
       loading: false,
-      cachedPro: false,
       expiresAt: null,
+      stale: null,
+      error: null,
     };
   }
 
-  if (status === null) {
+  if (remote.state === "loading") {
     return {
       status: "loading",
-      active: cached.active,
+      active: false,
       loading: true,
-      cachedPro: cached.active,
-      expiresAt: cached.expiresAt,
+      expiresAt: null,
+      stale: cached.active
+        ? { source: "local-cache", active: true, expiresAt: cached.expiresAt }
+        : null,
+      error: null,
+    };
+  }
+
+  if (remote.state === "error" || remote.state === "unknown") {
+    return {
+      status: remote.state,
+      active: false,
+      loading: false,
+      expiresAt: null,
+      stale:
+        staleServerEntitlement(remote.staleStatus) ??
+        (cached.active
+          ? { source: "local-cache", active: true, expiresAt: cached.expiresAt }
+          : null),
+      error: remote.error,
     };
   }
 
@@ -161,8 +207,9 @@ export function useProEntitlement(): ProEntitlementState {
       status: "active",
       active: true,
       loading: false,
-      cachedPro: true,
       expiresAt: status.expiresAt,
+      stale: null,
+      error: null,
     };
   }
 
@@ -170,8 +217,9 @@ export function useProEntitlement(): ProEntitlementState {
     status: "inactive",
     active: false,
     loading: false,
-    cachedPro: false,
     expiresAt: null,
+    stale: null,
+    error: null,
   };
 }
 

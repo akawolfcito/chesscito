@@ -105,6 +105,64 @@ describe("ProSheet", () => {
     expect(handlers.onPurchase).toHaveBeenCalledTimes(1);
   });
 
+  it.each(["error", "unknown"] as const)(
+    "does not show a false purchase state when PRO status is %s",
+    (statusState) => {
+      const handlers = renderSheet({
+        status: null,
+        statusState,
+        staleStatus: null,
+      });
+
+      expect(screen.queryByText(PRO_COPY.priceLabel)).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: PRO_COPY.ctaBuy })).not.toBeInTheDocument();
+      expect(screen.getByTestId("pro-status-unavailable")).toHaveTextContent(
+        PRO_COPY.statusUnavailableLabel,
+      );
+      const unavailable = screen.getByRole("button", {
+        name: PRO_COPY.statusUnavailableLabel,
+      });
+      expect(unavailable).toBeDisabled();
+      fireEvent.click(unavailable);
+      expect(handlers.onPurchase).not.toHaveBeenCalled();
+    },
+  );
+
+  it("keeps an already-mounted active panel while a refresh errors", () => {
+    const expiresAt = Date.now() + 86_400_000;
+    const handlers = renderSheet({
+      status: null,
+      statusState: "error",
+      staleStatus: { active: true, expiresAt },
+    });
+
+    expect(screen.getByTestId("pro-active-banner")).toBeInTheDocument();
+    expect(screen.getByTestId("pro-status-unavailable")).toHaveTextContent(
+      PRO_COPY.statusUnavailableLabel,
+    );
+    expect(handlers.onPurchase).not.toHaveBeenCalled();
+  });
+
+  it("treats a missing status without an explicit state as unknown", () => {
+    const handlers = renderSheet({ status: null });
+
+    expect(screen.getByTestId("pro-status-unavailable")).toHaveTextContent(
+      PRO_COPY.statusUnavailableLabel,
+    );
+    expect(screen.queryByRole("button", { name: PRO_COPY.ctaBuy })).not.toBeInTheDocument();
+    expect(handlers.onPurchase).not.toHaveBeenCalled();
+  });
+
+  it("shows a checking state instead of inactive purchase while loading", () => {
+    renderSheet({ status: null, statusState: "loading" });
+
+    expect(screen.queryByText(PRO_COPY.priceLabel)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: PRO_COPY.ctaBuy })).not.toBeInTheDocument();
+    expect(screen.getByTestId("pro-status-unavailable")).toHaveTextContent(
+      PRO_COPY.statusCheckingLabel,
+    );
+  });
+
   // The bottom Renew CTA was removed when PRO is active (the principal
   // button is gated on !showActiveBanner). The active state now renders
   // 3 contextual actions: pro-open-journal (primary), pro-active-cta

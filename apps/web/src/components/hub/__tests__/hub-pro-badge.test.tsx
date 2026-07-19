@@ -71,6 +71,24 @@ describe("<HubProBadge>", () => {
     expect(img?.getAttribute("src")).toContain("/art/hub/pro-chip-active.png");
   });
 
+  it("retains PRO art as explicitly stale while status is unavailable", () => {
+    const { container } = render(
+      <HubProBadge
+        active={false}
+        status="error"
+        visualActive
+        sublinePending="Unavailable"
+        ariaLabel="PRO status unavailable"
+      />,
+    );
+    const root = screen.getByLabelText("PRO status unavailable");
+    expect(root).toHaveAttribute("data-pro-status", "error");
+    expect(root).toHaveAttribute("data-pro-visual-stale", "true");
+    expect(root).toHaveTextContent("Unavailable");
+    expect(container.querySelector(".hub-pro-badge-bg img")?.getAttribute("src"))
+      .toContain("/art/hub/pro-chip-active.png");
+  });
+
   it("renders as a <button> when onClick is provided", () => {
     render(<HubProBadge active={false} sublineInactive="x" ariaLabel="x" onClick={vi.fn()} />);
     expect(screen.getByLabelText("x").tagName).toBe("BUTTON");

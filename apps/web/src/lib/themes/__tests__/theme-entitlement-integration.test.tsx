@@ -58,13 +58,16 @@ describe("PRO entitlement to runtime theme integration", () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        active: true,
-        expiresAt: Date.now() + 86_400_000,
-      }),
-    });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          active: true,
+          expiresAt: Date.now() + 86_400_000,
+        }),
+      })
+      .mockRejectedValueOnce(new TypeError("network down"));
     vi.stubGlobal("fetch", fetchMock);
 
     const view = render(<Subject queryClient={queryClient} />);
@@ -85,6 +88,18 @@ describe("PRO entitlement to runtime theme integration", () => {
       expect(view.getByTestId("coach-surface")).toHaveAttribute("data-pro", "true");
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await queryClient.refetchQueries({ queryKey: proStatusQueryKey(WALLET) });
+    });
+    await waitFor(() => {
+      for (const image of images) {
+        expect(image).toHaveAttribute("src", "/art/pro-training.png");
+      }
+      expect(view.getByTestId("learn-hub-surface")).toHaveAttribute("data-pro", "false");
+      expect(view.getByTestId("play-hub-surface")).toHaveAttribute("data-pro", "false");
+      expect(view.getByTestId("coach-surface")).toHaveAttribute("data-pro", "false");
+    });
 
     act(() => {
       queryClient.setQueryData(proStatusQueryKey(WALLET), {

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 
 const useAccountMock = vi.fn();
@@ -17,168 +17,188 @@ import {
   useIsProActive,
   useProEntitlement,
 } from "../use-is-pro-active";
+import type {
+  ProRemoteState,
+  ProStatus,
+  ProStatusError,
+} from "../use-pro-status";
 
 const WALLET = "0x1234567890abcdef1234567890abcdef12345678";
 const FUTURE = Date.now() + 30 * 86_400_000;
 const PAST = Date.now() - 60 * 60 * 1000;
 
-function setStatus(value: {
-  status: { active: boolean; expiresAt: number | null } | null;
-  isLoading?: boolean;
+function setRemote(value: {
+  state: ProRemoteState;
+  status?: ProStatus | null;
+  staleStatus?: ProStatus | null;
+  error?: ProStatusError | null;
 }) {
   useProStatusMock.mockReturnValue({
-    status: value.status,
-    isLoading: value.isLoading ?? false,
+    state: value.state,
+    status: value.status ?? null,
+    staleStatus: value.staleStatus ?? null,
+    error: value.error ?? null,
+    isLoading: value.state === "loading",
     refetch: vi.fn(),
   });
 }
 
-describe("useIsProActive", () => {
+describe("useIsProActive hardening", () => {
   beforeEach(() => {
     useAccountMock.mockReset();
     useProStatusMock.mockReset();
     window.localStorage.clear();
   });
 
-  it("returns false when no wallet is connected", () => {
+  it("makes no inactive claim when no wallet is connected", () => {
     useAccountMock.mockReturnValue({ address: undefined });
-    setStatus({ status: null });
-    const { result } = renderHook(() => useIsProActive());
-    expect(result.current).toBe(false);
-  });
-
-  it("returns false when the server reports active=false", () => {
-    useAccountMock.mockReturnValue({ address: WALLET });
-    setStatus({ status: { active: false, expiresAt: null } });
-    const { result } = renderHook(() => useIsProActive());
-    expect(result.current).toBe(false);
-  });
-
-  it("returns true when the server reports active=true with a future expiry", () => {
-    useAccountMock.mockReturnValue({ address: WALLET });
-    setStatus({ status: { active: true, expiresAt: FUTURE } });
-    const { result } = renderHook(() => useIsProActive());
-    expect(result.current).toBe(true);
-  });
-
-  it("returns false when the server reports active=true but expiresAt is already in the past", () => {
-    // Defense-in-depth — the API caches status briefly; the client must
-    // re-check expiry against the current clock so a "just-lapsed" pass
-    // doesn't paint as active.
-    useAccountMock.mockReturnValue({ address: WALLET });
-    setStatus({ status: { active: true, expiresAt: PAST } });
-    const { result } = renderHook(() => useIsProActive());
-    expect(result.current).toBe(false);
-  });
-
-  it("returns the cached active value while the server is still loading", () => {
-    window.localStorage.setItem(`chesscito:pro-active:${WALLET}`, "1");
-    useAccountMock.mockReturnValue({ address: WALLET });
-    setStatus({ status: null });
-    const { result } = renderHook(() => useIsProActive());
-    expect(result.current).toBe(true);
-  });
-
-  it("reports loading and keeps DEFAULT when no cached entitlement exists", () => {
-    useAccountMock.mockReturnValue({ address: WALLET });
-    setStatus({ status: null, isLoading: true });
+    setRemote({ state: "unknown" });
 
     const { result } = renderHook(() => useProEntitlement());
 
     expect(result.current).toEqual({
-      status: "loading",
-      active: false,
-      loading: true,
-      cachedPro: false,
-      expiresAt: null,
-    });
-  });
-
-  it("re-reads the connected wallet cache after MiniPay hydrates", () => {
-    useAccountMock.mockReturnValue({ address: undefined });
-    setStatus({ status: null });
-    window.localStorage.setItem(`chesscito:pro-active:${WALLET}`, "1");
-
-    const { result, rerender } = renderHook(() => useProEntitlement());
-    expect(result.current).toEqual({
-      status: "inactive",
+      status: "unknown",
       active: false,
       loading: false,
-      cachedPro: false,
       expiresAt: null,
-    });
-
-    useAccountMock.mockReturnValue({ address: WALLET });
-    setStatus({ status: null, isLoading: true });
-    rerender();
-
-    expect(result.current).toEqual({
-      status: "loading",
-      active: true,
-      loading: true,
-      cachedPro: true,
-      expiresAt: null,
+      stale: null,
+      error: null,
     });
   });
 
-  it("updates from DEFAULT loading state to PRO after hydration", () => {
+  it("authorizes only a successful active response with a future expiry", () => {
     useAccountMock.mockReturnValue({ address: WALLET });
-    setStatus({ status: null, isLoading: true });
+    setRemote({
+      state: "active",
+      status: { active: true, expiresAt: FUTURE },
+    });
 
-    const { result, rerender } = renderHook(() => useProEntitlement());
-    expect(result.current.active).toBe(false);
+    const { result } = renderHook(() => useProEntitlement());
 
-    setStatus({ status: { active: true, expiresAt: FUTURE } });
-    rerender();
-
-    expect(result.current).toEqual({
+    expect(result.current).toMatchObject({
       status: "active",
       active: true,
-      loading: false,
-      cachedPro: true,
       expiresAt: FUTURE,
+      stale: null,
     });
+    expect(useIsProActive).toBeTypeOf("function");
   });
 
-  it("writes through to localStorage when the server answer says active", () => {
+  it("maps a successful inactive response to confirmed inactive", () => {
     useAccountMock.mockReturnValue({ address: WALLET });
-    setStatus({ status: { active: true, expiresAt: FUTURE } });
-    renderHook(() => useIsProActive());
-    expect(
-      window.localStorage.getItem(`chesscito:pro-active:${WALLET}`),
-    ).toBe(String(FUTURE));
-  });
-
-  it("clears the cache when the server answer says inactive", () => {
-    window.localStorage.setItem(`chesscito:pro-active:${WALLET}`, "1");
-    useAccountMock.mockReturnValue({ address: WALLET });
-    setStatus({ status: { active: false, expiresAt: null } });
-    renderHook(() => useIsProActive());
-    expect(
-      window.localStorage.getItem(`chesscito:pro-active:${WALLET}`),
-    ).toBeNull();
-  });
-
-  it("normalizes the wallet to lowercase for the cache key", () => {
-    const upper = WALLET.toUpperCase();
-    useAccountMock.mockReturnValue({ address: upper });
-    setStatus({ status: { active: true, expiresAt: FUTURE } });
-    renderHook(() => useIsProActive());
-    expect(
-      window.localStorage.getItem(`chesscito:pro-active:${WALLET}`),
-    ).toBe(String(FUTURE));
-  });
-
-  it("uses the same effective decision for Hub presentation while loading", () => {
-    window.localStorage.setItem(`chesscito:pro-active:${WALLET}`, "1");
-    useAccountMock.mockReturnValue({ address: WALLET });
-    setStatus({ status: null, isLoading: true });
+    setRemote({
+      state: "inactive",
+      status: { active: false, expiresAt: null },
+    });
 
     const { result } = renderHook(() => useProEntitlement());
 
-    expect(proDisplayState(result.current)).toEqual({
-      active: true,
-      daysRemaining: 1,
+    expect(result.current.status).toBe("inactive");
+    expect(result.current.active).toBe(false);
+  });
+
+  it("does not authorize an already-expired active response", () => {
+    useAccountMock.mockReturnValue({ address: WALLET });
+    setRemote({
+      state: "active",
+      status: { active: true, expiresAt: PAST },
     });
+
+    const { result } = renderHook(() => useIsProActive());
+
+    expect(result.current).toBe(false);
+  });
+
+  it("keeps a legacy cache as stale metadata while loading, never authorization", () => {
+    window.localStorage.setItem(`chesscito:pro-active:${WALLET}`, "1");
+    useAccountMock.mockReturnValue({ address: WALLET });
+    setRemote({ state: "loading" });
+
+    const { result } = renderHook(() => useProEntitlement());
+
+    expect(result.current).toEqual({
+      status: "loading",
+      active: false,
+      loading: true,
+      expiresAt: null,
+      stale: { source: "local-cache", active: true, expiresAt: null },
+      error: null,
+    });
+    expect(proDisplayState(result.current)).toEqual({
+      status: "loading",
+      active: false,
+      staleVisualActive: false,
+    });
+  });
+
+  it("active to HTTP error removes authorization but exposes stale visual metadata", () => {
+    useAccountMock.mockReturnValue({ address: WALLET });
+    setRemote({
+      state: "error",
+      staleStatus: { active: true, expiresAt: FUTURE },
+      error: {
+        kind: "http",
+        httpStatus: 403,
+        message: "PRO status request failed (403)",
+      },
+    });
+
+    const { result } = renderHook(() => useProEntitlement());
+
+    expect(result.current.active).toBe(false);
+    expect(result.current.status).toBe("error");
+    expect(result.current.stale).toEqual({
+      source: "server",
+      active: true,
+      expiresAt: FUTURE,
+    });
+    expect(proDisplayState(result.current)).toEqual({
+      status: "error",
+      active: false,
+      staleVisualActive: true,
+    });
+  });
+
+  it("inactive to network error stays non-authorizing without a false inactive claim", () => {
+    useAccountMock.mockReturnValue({ address: WALLET });
+    setRemote({
+      state: "unknown",
+      staleStatus: { active: false, expiresAt: null },
+      error: {
+        kind: "network",
+        httpStatus: null,
+        message: "PRO status network request failed",
+      },
+    });
+
+    const { result } = renderHook(() => useProEntitlement());
+
+    expect(result.current.status).toBe("unknown");
+    expect(result.current.active).toBe(false);
+    expect(result.current.stale).toEqual({
+      source: "server",
+      active: false,
+      expiresAt: null,
+    });
+    expect(proDisplayState(result.current).status).toBe("unknown");
+  });
+
+  it("writes successful active truth and clears only after successful inactive truth", () => {
+    useAccountMock.mockReturnValue({ address: WALLET });
+    setRemote({
+      state: "active",
+      status: { active: true, expiresAt: FUTURE },
+    });
+    const { rerender } = renderHook(() => useProEntitlement());
+    expect(localStorage.getItem(`chesscito:pro-active:${WALLET}`)).toBe(
+      String(FUTURE),
+    );
+
+    setRemote({
+      state: "inactive",
+      status: { active: false, expiresAt: null },
+    });
+    rerender();
+    expect(localStorage.getItem(`chesscito:pro-active:${WALLET}`)).toBeNull();
   });
 });

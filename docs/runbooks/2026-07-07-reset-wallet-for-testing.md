@@ -1,5 +1,11 @@
 # Runbook — Reset de una wallet para testing (LEARN / PLAY / todo)
 
+> Route clarification (2026-07-19): `/dev/reset` is still the valid
+> local/Preview DEV utility that removes `chesscito*` localStorage keys. It is
+> not an obsolete alias. `/lite-debug/reset` is a separate LEARN-only QA route
+> gated by `ENABLE_LITE_QA_RESET=true`; do not substitute it in the recipes
+> below unless that broader gated reset is explicitly intended.
+
 > ⚠️ **DESTRUCTIVO · PRODUCCIÓN.** Borra estado off-chain real en Upstash Redis +
 > Supabase de PROD. **Irreversible.** PRO y Season Pass se pagaron con dinero real:
 > borrarlos NO refunda; re-probar la compra = otra tx real. Los **badges y Victory

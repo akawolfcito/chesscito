@@ -10,6 +10,10 @@ type Props = {
    *      `sublineInactive`).
    *    - active:   the days-remaining value ("7d"). */
   active: boolean;
+  status?: "active" | "inactive" | "loading" | "error" | "unknown";
+  /** Presentation only. May retain the last successful PRO art while the
+   * transport is unavailable; never used as authorization. */
+  visualActive?: boolean;
   daysRemaining?: number;
   /** Accessible name — supplied by the parent so the copy stays in
    *  editorial.ts (HUD_COPY.proAriaLabel / proInactiveAriaLabel). */
@@ -21,6 +25,7 @@ type Props = {
    *  `HUB_ACTION_RAIL_COPY.proDiscoverySubtitle` so the copy stays in
    *  editorial. */
   sublineInactive?: string;
+  sublinePending?: string;
   onClick?: () => void;
 };
 
@@ -44,21 +49,26 @@ type Props = {
  */
 export function HubProBadge({
   active,
+  status = active ? "active" : "inactive",
+  visualActive = active,
   daysRemaining,
   ariaLabel,
   daysLabel,
   sublineInactive,
+  sublinePending,
   onClick,
 }: Props) {
   const className = [
     "hub-pro-badge",
-    active ? "hub-pro-badge--active" : "hub-pro-badge--inactive",
+    visualActive ? "hub-pro-badge--active" : "hub-pro-badge--inactive",
   ].join(" ");
 
   const subline =
     active && daysRemaining !== undefined && daysLabel
       ? daysLabel
-      : sublineInactive;
+      : status === "inactive"
+        ? sublineInactive
+        : sublinePending;
 
   // Chip art (founder 2026-07-13): the crowned "PRO" wordmark is baked into
   // the sprite — purple `pro-chip-inactive` for the upsell, all-gold
@@ -68,7 +78,7 @@ export function HubProBadge({
     <>
       <ThemeAssetPicture
         slot="hub.pro-chip"
-        variant={active ? "pro" : "default"}
+        variant={visualActive ? "pro" : "default"}
         pictureClassName="hub-pro-badge-bg"
         alt=""
         width={600}
@@ -89,6 +99,8 @@ export function HubProBadge({
         onClick={onClick}
         aria-label={ariaLabel}
         className={className}
+        data-pro-status={status}
+        data-pro-visual-stale={!active && visualActive ? "true" : undefined}
       >
         {content}
       </button>
@@ -96,7 +108,13 @@ export function HubProBadge({
   }
 
   return (
-    <span role="status" aria-label={ariaLabel} className={className}>
+    <span
+      role="status"
+      aria-label={ariaLabel}
+      className={className}
+      data-pro-status={status}
+      data-pro-visual-stale={!active && visualActive ? "true" : undefined}
+    >
       {content}
     </span>
   );

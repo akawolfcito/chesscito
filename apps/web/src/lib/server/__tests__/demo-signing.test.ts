@@ -84,6 +84,20 @@ describe("enforceOrigin", () => {
     });
   });
 
+  it("preserves host-only semantics when protocols differ", () => {
+    withEnv({ NEXT_PUBLIC_APP_URL: "https://localhost:3002" }, () => {
+      expect(() =>
+        enforceOrigin(fakeRequest({ origin: "http://localhost:3002" }))).not.toThrow();
+    });
+  });
+
+  it("rejects a matching hostname on a different port", () => {
+    withEnv({ NEXT_PUBLIC_APP_URL: "https://localhost:3002" }, () => {
+      expect(() =>
+        enforceOrigin(fakeRequest({ origin: "http://localhost:3000" }))).toThrow("Forbidden");
+    });
+  });
+
   it("allows matching origin with VERCEL_URL (deployment URL)", () => {
     withEnv({ VERCEL_URL: "chesscito-abc123.vercel.app" }, () => {
       expect(() =>

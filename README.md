@@ -132,9 +132,20 @@ pnpm contracts:deploy:celo        # deploy to Celo Mainnet
 
 1. Start the dev server: `pnpm --filter web dev`
 2. Expose it via ngrok: `ngrok http 3000`
-3. In MiniPay → Settings → About → tap **Version** repeatedly to enable Developer Mode
-4. Open **Developer Settings** → **Load Test Page**
-5. Paste the HTTPS ngrok URL and launch
+3. Set both public origin variables to the exact HTTPS ngrok URL:
+   `NEXT_PUBLIC_APP_URL=https://<subdomain>.ngrok-free.app` and
+   `NEXT_PUBLIC_PREVIEW_URL=https://<subdomain>.ngrok-free.app`.
+4. Restart the Next.js dev server. `NEXT_PUBLIC_*` values are captured at
+   startup; changing them without restarting leaves `/api/pro/status` on the
+   previous origin allowlist.
+5. In MiniPay → Settings → About → tap **Version** repeatedly to enable Developer Mode.
+6. Open **Developer Settings** → **Load Test Page**.
+7. Paste the same HTTPS ngrok URL and launch.
+
+In local development, Chesscito shows a non-destructive warning when the
+mobile host does not match either configured host. The comparison mirrors the
+server exactly: hostname plus port, excluding protocol. See
+[`docs/runbooks/2026-07-19-local-minipay-ngrok.md`](docs/runbooks/2026-07-19-local-minipay-ngrok.md).
 
 > MiniPay uses legacy transactions. `feeCurrency` is optional and validated at runtime.
 

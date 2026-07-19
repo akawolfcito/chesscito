@@ -12,11 +12,12 @@ import { PlayTacticsTile } from "@/components/tactics/play-tactics-tile";
 import { hapticTap } from "@/lib/haptics";
 import type { PeonesBalanceState } from "@/lib/peones/use-peones-balance";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ProDisplayState } from "@/lib/pro/use-is-pro-active";
 
 type PlayHubScaffoldProps = {
   mintedVictoryCount: number;
   isWalletConnected: boolean;
-  pro: { active: true; daysRemaining: number } | { active: false };
+  pro: ProDisplayState;
   /** Peones balance, READ BY THE CALLER. The chip used to fetch it itself, which
    *  put a wagmi hook inside this tree and made the scaffold impossible to mount
    *  in a `/dev` probe — so the PLAY hub had zero visual coverage. */
@@ -52,9 +53,16 @@ export function PlayHubScaffold({
   const tHud = useTranslations("HUD_COPY");
   const tRail = useTranslations("HUB_ACTION_RAIL_COPY");
   const tPlay = useTranslations("PLAY_HUB_COPY");
+  const proStatus = pro.status ?? "inactive";
   const proAriaLabel = pro.active
     ? tHud("proAriaLabel", { days: pro.daysRemaining })
-    : tHud("proInactiveAriaLabel");
+    : proStatus === "inactive"
+      ? tHud("proInactiveAriaLabel")
+      : proStatus === "loading"
+        ? tHud("proLoadingAriaLabel")
+        : tHud("proUnavailableAriaLabel");
+  const staleVisualActive =
+    !pro.active && "staleVisualActive" in pro && pro.staleVisualActive;
 
   return (
     <main className="hub-scaffold play-hub-scaffold" aria-label={tPlay("rootAriaLabel")}>
@@ -102,6 +110,8 @@ export function PlayHubScaffold({
             ) : null}
             <HubProBadge
               active={pro.active}
+              status={proStatus}
+              visualActive={pro.active || staleVisualActive}
               daysRemaining={pro.active ? pro.daysRemaining : undefined}
               daysLabel={
                 pro.active
@@ -109,6 +119,11 @@ export function PlayHubScaffold({
                   : undefined
               }
               sublineInactive={tRail("proDiscoverySubtitle")}
+              sublinePending={
+                proStatus === "loading"
+                  ? tRail("proCheckingSubtitle")
+                  : tRail("proUnavailableSubtitle")
+              }
               ariaLabel={proAriaLabel}
               onClick={onProTap}
             />

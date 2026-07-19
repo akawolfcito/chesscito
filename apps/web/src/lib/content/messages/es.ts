@@ -284,6 +284,10 @@ const messages = {
     ctaRenew: "Renovar tu entrenamiento",
     processingLabel: "Procesando…",
     verifyingLabel: "Verificando…",
+    statusCheckingLabel: "Comprobando estado PRO…",
+    statusUnavailableLabel: "Estado PRO no disponible",
+    statusUnavailableMessage:
+      "No pudimos confirmar tu suscripción. Inténtalo pronto; no se cambió nada.",
     switchNetworkLabel: "Cambiar red",
     closeLabel: "Cerrar PRO",
     noAutoBillingLine: "({duration} · sin cobros automáticos)",
@@ -1811,6 +1815,8 @@ const messages = {
     coachLabel: "Coach",
     proDiscoveryTitle: "PRO",
     proDiscoverySubtitle: "Desbloquear",
+    proCheckingSubtitle: "Comprobando",
+    proUnavailableSubtitle: "No disponible",
     proDiscoveryAriaLabel:
       "Desbloquea PRO: experiencia completa.",
     arenaUnlockedAriaFormat: "Entrenamiento especial: {name}",
@@ -1974,6 +1980,8 @@ const messages = {
     proAriaLabel:
       "{days, plural, =1 {PRO activo, 1 día restante} other {PRO activo, # días restantes}}",
     proInactiveAriaLabel: "PRO inactivo: toca para saber más",
+    proLoadingAriaLabel: "Comprobando el estado PRO",
+    proUnavailableAriaLabel: "Estado PRO no disponible: inténtalo pronto",
     connectLabel: "Conectar",
     connectAriaLabel: "Conecta tu wallet para ver tus stats",
     coachLabel: "Coach",
