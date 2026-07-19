@@ -10,6 +10,8 @@ import {
   sanitizeFen,
   readSearchParams,
 } from "@/lib/og/validators";
+import { resolveOgThemeAsset } from "@/lib/og/theme-assets";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 export const runtime = "nodejs";
 
@@ -30,10 +32,10 @@ const TITLE_LABEL = {
  *  event IS a checkmate (just from the other side); the title +
  *  avatar emotion carry the loss framing. */
 const RESULT_ICON = {
-  win: "/art/new-assets-chesscito/games/checkmate-game001.png",
-  draw: "/art/new-assets-chesscito/games/stalemate-game001.png",
-  loss: "/art/new-assets-chesscito/games/checkmate-game001.png",
-} as const;
+  win: "arena.result-checkmate",
+  draw: "arena.result-stalemate",
+  loss: "arena.result-checkmate",
+} as const satisfies Record<string, ThemeAssetKey>;
 
 /** Per-result avatar emotion (see feedback_avatar_emotion_selection).
  *  Picked by who the surface addresses post-game:
@@ -41,10 +43,10 @@ const RESULT_ICON = {
  *  draw → reflection → pensativo
  *  loss → loss processing → triste */
 const RESULT_AVATAR = {
-  win: "/art/new-assets-chesscito/fun/avatar-feliz.png",
-  draw: "/art/new-assets-chesscito/fun/avatar-pensativo.png",
-  loss: "/art/new-assets-chesscito/fun/avatar-triste.png",
-} as const;
+  win: "shared.feedback-happy",
+  draw: "shared.feedback-thinking",
+  loss: "shared.feedback-sad",
+} as const satisfies Record<string, ThemeAssetKey>;
 
 const SUCCESS_HEADERS = {
   "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
@@ -63,9 +65,9 @@ export async function GET(req: Request) {
 
   // PNG (RGBA). WebP rendered empty in Satori on @vercel/og preview
   // runtime; PNGs work after the colormap → RGBA re-encode in adb19ae4.
-  const mascotUrl = new URL(RESULT_AVATAR[result], req.url).toString();
-  const resultIconUrl = new URL(RESULT_ICON[result], req.url).toString();
-  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
+  const mascotUrl = resolveOgThemeAsset(req.url, RESULT_AVATAR[result]);
+  const resultIconUrl = resolveOgThemeAsset(req.url, RESULT_ICON[result]);
+  const panelBgUrl = resolveOgThemeAsset(req.url, "shared.mission-panel");
   const origin = new URL(req.url).origin;
 
   const cinzelData = await loadCinzelFont(req.url);
@@ -133,7 +135,7 @@ export async function GET(req: Request) {
                 the hero emblem when no fen is supplied; shrinks to a
                 small overlay when the board takes the focus. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            {resultIconUrl ? <img
               src={resultIconUrl}
               alt=""
               width={fen ? 200 : 460}
@@ -142,7 +144,7 @@ export async function GET(req: Request) {
                 marginBottom: 22,
                 filter: "drop-shadow(0 10px 22px rgba(120, 65, 5, 0.35))",
               }}
-            />
+            /> : null}
 
             {/* Board snapshot — compact but readable */}
             {fen ? (

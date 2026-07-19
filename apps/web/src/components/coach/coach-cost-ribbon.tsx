@@ -1,5 +1,7 @@
 "use client";
 
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+
 type Props = {
   /** PRO subscribers see a crown "PRO" ribbon (covered/included). Free
    *  users see the Peón cost "♟ 1". Guests render no ribbon — the caller
@@ -36,11 +38,7 @@ export function CoachCostRibbon({ proActive = false, variant = "cta" }: Props) {
       aria-hidden="true"
     >
       {!proActive && (
-        <picture className="coach-cost-ribbon__icon">
-          <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-          <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
-          <img src="/art/redesign/pieces/w-pawn.png" alt="" draggable={false} />
-        </picture>
+        <ThemeAssetPicture slot="board.piece.white.pawn" pictureClassName="coach-cost-ribbon__icon" alt="" draggable={false} />
       )}
       <span className="coach-cost-ribbon__label">{proActive ? "PRO" : "1"}</span>
     </span>

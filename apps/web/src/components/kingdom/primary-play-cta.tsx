@@ -1,6 +1,8 @@
 "use client";
 
 import { hapticTap } from "@/lib/haptics";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 export type PrimaryPlayCtaSurface =
   | "playhub"
@@ -27,6 +29,7 @@ type Props = {
   className?: string;
   pieceIcon?: "pawn" | "king";
   pieceIconSrc?: string;
+  pieceIconSlot?: ThemeAssetKey;
   "data-testid"?: string;
 };
 
@@ -42,21 +45,26 @@ const GREEN_CSS_SURFACES = new Set<PrimaryPlayCtaSurface>([
   "arena-entry",
 ]);
 
-const SURFACE_BACKPLATE_BASE: Record<PrimaryPlayCtaSurface, string | null> = {
+const SURFACE_BACKPLATE_SLOT: Record<PrimaryPlayCtaSurface, ThemeAssetKey | null> = {
   playhub: null,
-  arena: "/art/redesign/banners/btn-stone-bg",
+  arena: "hub.btn-stone-bg",
   "arena-entry": null,
-  "landing-hero": "/art/redesign/banners/btn-stone-bg",
-  "landing-final-cta": "/art/redesign/banners/btn-stone-bg",
+  "landing-hero": "hub.btn-stone-bg",
+  "landing-final-cta": "hub.btn-stone-bg",
 };
 
-const SURFACE_ICON_BASE: Record<PrimaryPlayCtaSurface, string> = {
-  playhub: "/art/redesign/banners/btn-battle",
-  arena: "/art/redesign/banners/btn-play",
-  "arena-entry": "/art/redesign/banners/btn-play",
-  "landing-hero": "/art/redesign/banners/btn-play",
-  "landing-final-cta": "/art/redesign/banners/btn-play",
+const SURFACE_ICON_SLOT: Record<PrimaryPlayCtaSurface, ThemeAssetKey> = {
+  playhub: "hub.btn-battle",
+  arena: "hub.btn-play",
+  "arena-entry": "hub.btn-play",
+  "landing-hero": "hub.btn-play",
+  "landing-final-cta": "hub.btn-play",
 };
+
+const PIECE_ICON_SLOTS = {
+  pawn: "board.piece.white.pawn",
+  king: "board.piece.white.king",
+} as const satisfies Record<"pawn" | "king", ThemeAssetKey>;
 
 /** Dominant primary action button for kingdom-anchored surfaces. Adventure
  *  primitive — stone backplate + battle/play icon overlay + warm-amber
@@ -74,11 +82,12 @@ export function PrimaryPlayCta({
   className = "",
   pieceIcon,
   pieceIconSrc,
+  pieceIconSlot,
   "data-testid": dataTestId,
 }: Props) {
   const inert = loading || disabled;
-  const iconBase = SURFACE_ICON_BASE[surface];
-  const backplateBase = SURFACE_BACKPLATE_BASE[surface];
+  const iconSlot = SURFACE_ICON_SLOT[surface];
+  const backplateSlot = SURFACE_BACKPLATE_SLOT[surface];
 
   const handleClick = () => {
     if (inert) {
@@ -97,7 +106,7 @@ export function PrimaryPlayCta({
     `is-atmosphere-${atmosphere}`,
     loading ? "is-loading" : "",
     disabled ? "is-disabled" : "",
-    pieceIcon || pieceIconSrc ? "primary-play-cta--with-piece" : "",
+    pieceIcon || pieceIconSrc || pieceIconSlot ? "primary-play-cta--with-piece" : "",
     className,
   ]
     .filter(Boolean)
@@ -113,29 +122,33 @@ export function PrimaryPlayCta({
       className={classes}
       data-testid={dataTestId}
     >
-      {backplateBase ? (
-        <picture className="primary-play-cta-backplate">
-          <source srcSet={`${backplateBase}.avif`} type="image/avif" />
-          <source srcSet={`${backplateBase}.webp`} type="image/webp" />
-          <img
-            src={`${backplateBase}.png`}
-            alt=""
-            aria-hidden="true"
-            className="primary-play-cta-backplate-img"
-          />
-        </picture>
-      ) : null}
-      <picture className="primary-play-cta-icon">
-        <source srcSet={`${iconBase}.avif`} type="image/avif" />
-        <source srcSet={`${iconBase}.webp`} type="image/webp" />
-        <img
-          src={`${iconBase}.png`}
+      {backplateSlot ? (
+        <ThemeAssetPicture
+          slot={backplateSlot}
+          pictureClassName="primary-play-cta-backplate"
           alt=""
           aria-hidden="true"
-          className="primary-play-cta-icon-img"
+          className="primary-play-cta-backplate-img"
         />
-      </picture>
-      {pieceIconSrc ? (
+      ) : null}
+      <ThemeAssetPicture
+        slot={iconSlot}
+        pictureClassName="primary-play-cta-icon"
+        alt=""
+        aria-hidden="true"
+        className="primary-play-cta-icon-img"
+      />
+      {pieceIconSlot ? (
+        <span className="primary-play-cta-piece-icon">
+          <ThemeAssetPicture
+            slot={pieceIconSlot}
+            alt=""
+            aria-hidden="true"
+            className="primary-play-cta-piece-icon-img"
+            draggable={false}
+          />
+        </span>
+      ) : pieceIconSrc ? (
         <span className="primary-play-cta-piece-icon">
           {pieceIconSrc.endsWith(".png") ? (
             /* Callers pass the .png path; its avif/webp siblings are ~10x
@@ -169,15 +182,12 @@ export function PrimaryPlayCta({
           )}
         </span>
       ) : pieceIcon ? (
-        <picture className="primary-play-cta-piece-icon">
-          <source srcSet={`/art/redesign/pieces/w-${pieceIcon}.avif`} type="image/avif" />
-          <source srcSet={`/art/redesign/pieces/w-${pieceIcon}.webp`} type="image/webp" />
-          <img
-            src={`/art/redesign/pieces/w-${pieceIcon}.png`}
-            alt=""
-            className="primary-play-cta-piece-icon-img"
-          />
-        </picture>
+        <ThemeAssetPicture
+          slot={PIECE_ICON_SLOTS[pieceIcon]}
+          pictureClassName="primary-play-cta-piece-icon"
+          alt=""
+          className="primary-play-cta-piece-icon-img"
+        />
       ) : null}
       <span className="primary-play-cta-label">{label}</span>
     </button>

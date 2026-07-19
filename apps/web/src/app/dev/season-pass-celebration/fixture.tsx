@@ -3,11 +3,9 @@
 import { useState } from "react";
 
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
-import {
-  CELEBRATION_PANEL_BG,
-  SeasonPassCelebration,
-} from "@/components/payments/season-pass-celebration";
+import { SeasonPassCelebration } from "@/components/payments/season-pass-celebration";
 import { getSeasonPass } from "@/lib/payments/rail-config";
+import { useThemeBackground } from "@/lib/themes/use-theme-background";
 
 export type CelebrationVariant = "credited" | "pending";
 
@@ -27,6 +25,7 @@ export function SeasonPassCelebrationFixture({
 }) {
   const pass = getSeasonPass("lite_season_pass_21");
   const [replay, setReplay] = useState(0);
+  const celebrationPanelBackground = useThemeBackground("payments.celebration-bg");
 
   return (
     <div className="min-h-dvh">
@@ -45,7 +44,7 @@ export function SeasonPassCelebrationFixture({
         onClose={() => {}}
         ariaLabel="21-Day Mind Challenge Pass"
         closeLabel="Close"
-        panelBackgroundImage={CELEBRATION_PANEL_BG}
+        panelBackgroundImage={celebrationPanelBackground}
       >
         <SeasonPassCelebration
           durationDays={pass.durationDays}

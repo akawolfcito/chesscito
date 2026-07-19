@@ -11,6 +11,8 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PlayTacticsTile } from "@/components/tactics/play-tactics-tile";
 import { hapticTap } from "@/lib/haptics";
 import type { PeonesBalanceState } from "@/lib/peones/use-peones-balance";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { ThemeVariantOverride } from "@/lib/themes/theme-variant-provider";
 
 type PlayHubScaffoldProps = {
   mintedVictoryCount: number;
@@ -56,6 +58,7 @@ export function PlayHubScaffold({
     : tHud("proInactiveAriaLabel");
 
   return (
+    <ThemeVariantOverride variant={pro.active ? "pro" : "default"}>
     <main className="hub-scaffold play-hub-scaffold" aria-label={tPlay("rootAriaLabel")}>
       <header className="hub-scaffold-hud">
         <div className="hub-scaffold-hud-top">
@@ -124,54 +127,9 @@ export function PlayHubScaffold({
           Avatar flips to the PRO variant in lockstep with `pro.active`. */}
       <div className="hub-lite-mascot play-hub-mascot">
         {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-        <picture className="hub-lite-title">
-          <source
-            srcSet="/art/title-chesscito-288w.avif 288w, /art/title-chesscito-384w.avif 384w, /art/title-chesscito.avif 512w"
-            sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px"
-            type="image/avif"
-          />
-          <source
-            srcSet="/art/title-chesscito-288w.webp 288w, /art/title-chesscito-384w.webp 384w, /art/title-chesscito.webp 512w"
-            sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px"
-            type="image/webp"
-          />
-          <img
-            src="/art/title-chesscito.png"
-            alt="Chesscito"
-            width={512}
-            height={249}
-            draggable={false}
-          />
-        </picture>
+        <ThemeAssetPicture slot="brand.title" pictureClassName="hub-lite-title" alt="Chesscito" width={512} height={249} responsiveWidths={[288, 384]} sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px" draggable={false} />
         {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-        <picture className="hub-lite-avatar">
-          <source
-            srcSet={
-              pro.active
-                ? "/art/avatar-pro-224w.avif 224w, /art/avatar-pro-340w.avif 340w, /art/avatar-pro.avif 499w"
-                : "/art/avatar-lite-hub-224w.avif 224w, /art/avatar-lite-hub-340w.avif 340w, /art/avatar-lite-hub.avif 499w"
-            }
-            sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
-            type="image/avif"
-          />
-          <source
-            srcSet={
-              pro.active
-                ? "/art/avatar-pro-224w.webp 224w, /art/avatar-pro-340w.webp 340w, /art/avatar-pro.webp 499w"
-                : "/art/avatar-lite-hub-224w.webp 224w, /art/avatar-lite-hub-340w.webp 340w, /art/avatar-lite-hub.webp 499w"
-            }
-            sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
-            type="image/webp"
-          />
-          <img
-            src={pro.active ? "/art/avatar-pro.png" : "/art/avatar-lite-hub.png"}
-            alt=""
-            aria-hidden="true"
-            width={499}
-            height={560}
-            draggable={false}
-          />
-        </picture>
+        <ThemeAssetPicture slot="hub.avatar-lite" pictureClassName="hub-lite-avatar" alt="" aria-hidden="true" width={499} height={560} responsiveWidths={[224, 340]} sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px" draggable={false} />
         <AppModeSwitch activeMode="play" />
       </div>
 
@@ -194,11 +152,13 @@ export function PlayHubScaffold({
           }}
         >
           {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-          <picture className="play-chess-cta-icon" aria-hidden="true">
-            <source srcSet="/art/hub/enter-arena.avif" type="image/avif" />
-            <source srcSet="/art/hub/enter-arena.webp" type="image/webp" />
-            <img src="/art/hub/enter-arena.png" alt="" draggable={false} />
-          </picture>
+          <ThemeAssetPicture
+            slot="hub.enter-arena"
+            pictureClassName="play-chess-cta-icon"
+            pictureProps={{ "aria-hidden": true }}
+            alt=""
+            draggable={false}
+          />
           <span>{tPlay("arenaLabel")}</span>
         </button>
       </div>
@@ -215,13 +175,13 @@ export function PlayHubScaffold({
               Journal, which any connected wallet can read. The badge would be
               announcing a wall that isn't there. */}
           <HubActionTile
-            iconSrc="/art/new-icons-chesscito/training.png"
+            iconSlot="hub.training"
             label={tPlay("coachLabel")}
             ariaLabel={tHud("coachAriaLabel")}
             onClick={onCoachTap}
           />
           <HubActionTile
-            iconSrc="/art/redesign/icons/shop.png"
+            iconSlot="hub.shop-icon"
             label={tPlay("shopLabel")}
             ariaLabel={tPlay("shopAriaLabel")}
             onClick={onShopTap}
@@ -229,5 +189,6 @@ export function PlayHubScaffold({
         </div>
       </section>
     </main>
+    </ThemeVariantOverride>
   );
 }

@@ -15,22 +15,14 @@ import {
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { isBadgeEarned } from "@/lib/game/exercises";
 import { parsePieceStars } from "@/lib/exercises/badge-progress";
-import { THEME_CONFIG } from "@/lib/theme";
+import { pieceThemeSlot } from "@/lib/themes/piece-theme-assets";
 import type { PieceId } from "@/lib/game/types";
 import { pieceProgressStorageKey } from "@/lib/lite-progress-storage";
 
 const PIECES: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
-
-const BADGE_ART: Record<PieceId, string> = {
-  rook: `${THEME_CONFIG.piecesBase}/w-rook.png`,
-  bishop: `${THEME_CONFIG.piecesBase}/w-bishop.png`,
-  knight: `${THEME_CONFIG.piecesBase}/w-knight.png`,
-  pawn: `${THEME_CONFIG.piecesBase}/w-pawn.png`,
-  queen: `${THEME_CONFIG.piecesBase}/w-queen.png`,
-  king: `${THEME_CONFIG.piecesBase}/w-king.png`,
-};
 
 type BadgeState = "claimed" | "claimable" | "locked";
 
@@ -108,19 +100,7 @@ function BadgeCard({
     >
       {/* Horizontal icon wrap */}
       <div className="badge-card-icon-wrap">
-        <picture className="block h-full w-full">
-          {THEME_CONFIG.hasOptimizedFormats && (
-            <>
-              <source srcSet={BADGE_ART[badge.piece].replace(".png", ".avif")} type="image/avif" />
-              <source srcSet={BADGE_ART[badge.piece].replace(".png", ".webp")} type="image/webp" />
-            </>
-          )}
-          <img
-            src={BADGE_ART[badge.piece]}
-            alt={title}
-            className="badge-card-icon-img"
-          />
-        </picture>
+        <ThemeAssetPicture slot={pieceThemeSlot("w", badge.piece)} pictureClassName="block h-full w-full" alt={title} className="badge-card-icon-img" />
       </div>
 
       {/* Identity column */}
@@ -309,16 +289,7 @@ export function BadgeSheet({
             aria-label={t("ariaLabel")}
             className="relative flex shrink-0 items-center justify-center"
           >
-            <picture>
-              <source srcSet="/art/badge-menu.avif" type="image/avif" />
-              <source srcSet="/art/badge-menu.webp" type="image/webp" />
-              <img
-                src="/art/badge-menu.png"
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full object-contain"
-              />
-            </picture>
+            <ThemeAssetPicture slot="exercises.badge-menu" alt="" aria-hidden="true" className="h-full w-full object-contain" />
             {showNotification ? (
               <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
@@ -341,7 +312,7 @@ export function BadgeSheet({
         <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <ContextualHeader
             variant="close-control"
-            iconSlot={<TileIconSlot src="/art/badge-menu" />}
+            iconSlot={<TileIconSlot slot="exercises.badge-menu" />}
             title={t("title")}
             subtitle={t("subtitle")}
             close={{ onClick: () => onOpenChange(false), label: t("closeAriaLabel") }}
@@ -369,16 +340,7 @@ export function BadgeSheet({
          *  bar) which read as a flat utility row. The hero is the
          *  first thing a visual-first user sees after the header. */}
         <div className="badge-vitrine-hero shrink-0 mt-3">
-          <picture className="badge-vitrine-hero-wolf">
-            <source srcSet="/art/scene-rooted/avatar-chesscito.avif" type="image/avif" />
-            <source srcSet="/art/scene-rooted/avatar-chesscito.webp" type="image/webp" />
-            <img
-              src="/art/scene-rooted/avatar-chesscito.png"
-              alt=""
-              aria-hidden="true"
-              draggable={false}
-            />
-          </picture>
+          <ThemeAssetPicture slot="hub.avatar" pictureClassName="badge-vitrine-hero-wolf" alt="" aria-hidden="true" draggable={false} />
           <div className="badge-vitrine-hero-content">
             <p className="badge-vitrine-hero-eyebrow">{t("title")}</p>
             <div className="badge-vitrine-hero-pieces" role="list">
@@ -391,11 +353,7 @@ export function BadgeSheet({
                     className={`badge-vitrine-hero-piece${claimed ? " is-claimed" : ""}`}
                     aria-label={tPiece(piece)}
                   >
-                    <picture>
-                      <source srcSet={`${THEME_CONFIG.piecesBase}/w-${piece}.avif`} type="image/avif" />
-                      <source srcSet={`${THEME_CONFIG.piecesBase}/w-${piece}.webp`} type="image/webp" />
-                      <img src={`${THEME_CONFIG.piecesBase}/w-${piece}.png`} alt="" aria-hidden="true" draggable={false} />
-                    </picture>
+                    <ThemeAssetPicture slot={pieceThemeSlot("w", piece)} alt="" aria-hidden="true" draggable={false} />
                   </span>
                 );
               })}

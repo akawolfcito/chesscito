@@ -1,27 +1,30 @@
 "use client";
 
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
+
 export type PlayerAvatarVariant = "you" | "bot";
 
 type Variant = {
-  src: string;
+  slot: ThemeAssetKey;
   defaultAlt: string;
   /** PRO ornament frame layered behind the avatar — color-matched to
    *  the avatar art so blue=you, red=bot reads as a single visual. */
-  proFrameSrc: string;
+  proFrameSlot: ThemeAssetKey;
 };
 
 const VARIANTS: Record<PlayerAvatarVariant, Variant> = {
   you: {
-    src: "/art/new-icons-chesscito/avatar-blue.png",
+    slot: "arena.player-you",
     defaultAlt: "You",
     /* Refreshed 2026-05-31: golden ornamental border matched to the
      * blue avatar (user feedback — design/chesscito-pro source). */
-    proFrameSrc: "/art/chesscito-pro/borde-dorado-avatar-azul.png",
+    proFrameSlot: "arena.avatar-frame-you",
   },
   bot: {
-    src: "/art/new-icons-chesscito/avatar-red.png",
+    slot: "arena.player-bot",
     defaultAlt: "Bot",
-    proFrameSrc: "/art/chesscito-pro/borde-dorado-avatar-rojo.png",
+    proFrameSlot: "arena.avatar-frame-bot",
   },
 };
 
@@ -38,6 +41,7 @@ type Props = {
    *  (Pipo/Mara/Kairo) instead of the generic red avatar. Triplet
    *  avif/webp/png siblings are derived from the `.png` path. */
   customSrc?: string;
+  customSlot?: ThemeAssetKey;
 };
 
 export function PlayerAvatar({
@@ -46,38 +50,41 @@ export function PlayerAvatar({
   className = "",
   pro = false,
   customSrc,
+  customSlot,
 }: Props) {
-  const { src, defaultAlt, proFrameSrc } = VARIANTS[variant];
-  const avatarSrc = customSrc ?? src;
+  const { slot, defaultAlt, proFrameSlot } = VARIANTS[variant];
   return (
     <span
       className={`player-card player-card--new-icon player-card-${variant}${
         pro ? " player-card--pro" : ""
       } ${className}`.trim()}
     >
-      {pro && (
+      <ThemeAssetPicture
+        slot={proFrameSlot}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className="player-card-pro-frame"
+      />
+      {customSrc && !customSlot ? (
         <picture>
-          <source srcSet={proFrameSrc.replace(/\.png$/, ".avif")} type="image/avif" />
-          <source srcSet={proFrameSrc.replace(/\.png$/, ".webp")} type="image/webp" />
+          <source srcSet={customSrc.replace(/\.png$/, ".avif")} type="image/avif" />
+          <source srcSet={customSrc.replace(/\.png$/, ".webp")} type="image/webp" />
           <img
-            src={proFrameSrc}
-            alt=""
-            aria-hidden="true"
+            src={customSrc}
+            alt={alt ?? defaultAlt}
+            className="player-card-img"
             draggable={false}
-            className="player-card-pro-frame"
           />
         </picture>
-      )}
-      <picture>
-        <source srcSet={avatarSrc.replace(/\.png$/, ".avif")} type="image/avif" />
-        <source srcSet={avatarSrc.replace(/\.png$/, ".webp")} type="image/webp" />
-        <img
-          src={avatarSrc}
+      ) : (
+        <ThemeAssetPicture
+          slot={customSlot ?? slot}
           alt={alt ?? defaultAlt}
           className="player-card-img"
           draggable={false}
         />
-      </picture>
+      )}
     </span>
   );
 }

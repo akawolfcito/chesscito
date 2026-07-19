@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import type { LeaderboardRow } from "@/lib/server/leaderboard";
 import { PlayerIdentityPill } from "@/components/identity/player-identity-pill";
 import { useNicknameTokens } from "@/lib/identity/use-nickname-tokens";
@@ -162,16 +163,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
             aria-label={tDock("leaderboard")}
             className="relative flex shrink-0 items-center justify-center"
           >
-            <picture>
-              <source srcSet="/art/leaderboard-menu.avif" type="image/avif" />
-              <source srcSet="/art/leaderboard-menu.webp" type="image/webp" />
-              <img
-                src="/art/leaderboard-menu.png"
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full object-contain"
-              />
-            </picture>
+            <ThemeAssetPicture slot="exercises.leaderboard-menu" alt="" aria-hidden="true" className="h-full w-full object-contain" />
           </button>
         </SheetTrigger>
       ) : null}
@@ -185,7 +177,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
         <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <ContextualHeader
             variant="close-control"
-            iconSlot={<TileIconSlot src="/art/leaderboard-menu" />}
+            iconSlot={<TileIconSlot slot="exercises.leaderboard-menu" />}
             title={t("title")}
             subtitle={t("description")}
             close={{ onClick: () => onOpenChange(false), label: t("closeAriaLabel") }}
@@ -205,16 +197,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
          *  scroll off with the competitors list. */}
         <div className="shrink-0 mt-4">
           <div className="leaderboard-vitrine-hero">
-            <picture className="leaderboard-vitrine-hero-anchor">
-              <source srcSet="/art/screen-mission/corona-pro.avif" type="image/avif" />
-              <source srcSet="/art/screen-mission/corona-pro.webp" type="image/webp" />
-              <img
-                src="/art/screen-mission/corona-pro.png"
-                alt=""
-                aria-hidden="true"
-                draggable={false}
-              />
-            </picture>
+            <ThemeAssetPicture slot="exercises.leaderboard-crown" pictureClassName="leaderboard-vitrine-hero-anchor" alt="" aria-hidden="true" draggable={false} />
             <div className="leaderboard-vitrine-hero-content">
               <p className="leaderboard-vitrine-hero-eyebrow">{t("heroEyebrow")}</p>
               {champion ? (

@@ -28,6 +28,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { ChesitoCard } from "@/components/peones/chesito-card";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { CHESITO_CARD_COPY } from "@/lib/content/editorial";
 import {
   emitPeonesBalanceViewed,
@@ -162,19 +163,7 @@ export function PeonesBalanceChipView({
         data-state={state.kind}
         style={{ cursor: "pointer" }}
       >
-        <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
-          <source srcSet="/art/new-icons-chesscito/peon-piece-v1.avif" type="image/avif" />
-          <source srcSet="/art/new-icons-chesscito/peon-piece-v1.webp" type="image/webp" />
-          <img
-            src="/art/new-icons-chesscito/peon-piece-v1.png"
-            alt=""
-            aria-hidden="true"
-            // p-1 visually matches the trophy sprite: peon-piece-v1 is a
-            // tight crop (no canvas air) so unpadded it dwarfs its
-            // neighbor chip icon (founder size pass 2026-06-11).
-            className="block h-full w-full object-contain p-1"
-          />
-        </picture>
+        <ThemeAssetPicture slot="peones.piece" pictureClassName="candy-tray-pill-icon candy-tray-pill-icon--floating" alt="" aria-hidden="true" className="block h-full w-full object-contain p-1" />
         {/* Fixed-width value slot — reserves room for a ~3-digit balance
          *  so the chip keeps a stable width across loading ("…") →
          *  success ("116") → error ("--") and never visually jumps as
@@ -214,17 +203,7 @@ export function PeonesBalanceChipView({
               aria-label="Close"
               className="candy-close-asset-button absolute -right-2 -top-4 z-10"
             >
-              <picture>
-                <source srcSet="/art/screen-mission/close-icon.avif" type="image/avif" />
-                <source srcSet="/art/screen-mission/close-icon.webp" type="image/webp" />
-                <img
-                  src="/art/screen-mission/close-icon.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="h-9 w-9 object-contain"
-                  draggable={false}
-                />
-              </picture>
+              <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-9 w-9 object-contain" draggable={false} />
             </button>
             {/* Card modal is z-[70]; push its Top up sheet above it (default
              *  z-[55] would render behind the card). */}

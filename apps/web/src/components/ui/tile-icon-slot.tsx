@@ -1,13 +1,16 @@
 "use client";
 
 import { THEME_CONFIG } from "@/lib/theme";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 type Props = {
   /** Asset base path without extension, e.g.
    *  `"/art/new-icons-chesscito/play-chess"`. The helper emits the
    *  `<picture>` with avif/webp/png fallbacks when the active theme
    *  declares `hasOptimizedFormats`; otherwise it falls back to png. */
-  src: string;
+  src?: string;
+  slot?: ThemeAssetKey;
   /** Override the optimized-format probe — set `false` for assets that
    *  only ship as png (e.g. the close-icon raster). */
   optimized?: boolean;
@@ -29,10 +32,24 @@ type Props = {
  */
 export function TileIconSlot({
   src,
+  slot,
   optimized = true,
   className = "h-10 w-10 object-contain",
 }: Props): React.JSX.Element {
   const useOptimized = optimized && THEME_CONFIG.hasOptimizedFormats;
+  if (slot) {
+    return (
+      <ThemeAssetPicture
+        slot={slot}
+        optimized={useOptimized}
+        alt=""
+        aria-hidden="true"
+        className={className}
+        draggable={false}
+      />
+    );
+  }
+  if (!src) return <></>;
   return (
     <picture>
       {useOptimized ? (

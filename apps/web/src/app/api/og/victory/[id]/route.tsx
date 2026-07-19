@@ -6,6 +6,7 @@ import { victoryAbi } from "@/lib/contracts/victory";
 import { clampMoves, clampTime, formatPlayer, truncateId } from "@/lib/og/og-utils";
 import { CardShell, CARD_WIDTH as W, CARD_HEIGHT as H } from "@/lib/og/card-shell";
 import { loadCinzelFont } from "@/lib/og/font-loader";
+import { resolveOgThemeAsset } from "@/lib/og/theme-assets";
 
 export const runtime = "nodejs";
 
@@ -29,7 +30,7 @@ const client = contractAddress
   : null;
 
 // R3: error card — candy-light branded "Victory not found"
-function errorCard(useCinzel: boolean, bgUrl: string, mascotUrl: string) {
+function errorCard(useCinzel: boolean, bgUrl: string | null, mascotUrl: string | null) {
   return new ImageResponse(
     (
       <CardShell
@@ -59,14 +60,14 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   // block with avatar-confiado peek). Mascot is rendered INSIDE the
   // heroSlot (matches the in-app coach-section avatar), not by
   // CardShell — see mascotMode="none".
-  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
-  const avatarUrl = new URL("/art/new-assets-chesscito/fun/avatar-confiado.png", req.url).toString();
+  const panelBgUrl = resolveOgThemeAsset(req.url, "shared.mission-panel");
+  const avatarUrl = resolveOgThemeAsset(req.url, "shared.feedback-confident");
   // Stat-pill icons reuse the same triplet basenames as the in-app
   // <CandyIcon name="star" /> and <CandyIcon name="time" />. Pawn
   // sprite mirrors the page's w-pawn pill.
-  const starIconUrl = new URL("/art/redesign/icons/star.png", req.url).toString();
-  const timeIconUrl = new URL("/art/redesign/icons/time.png", req.url).toString();
-  const pawnIconUrl = new URL("/art/redesign/pieces/w-pawn.png", req.url).toString();
+  const starIconUrl = resolveOgThemeAsset(req.url, "shared.star");
+  const timeIconUrl = resolveOgThemeAsset(req.url, "shared.time");
+  const pawnIconUrl = resolveOgThemeAsset(req.url, "board.piece.white.pawn");
   const cinzelData = await loadCinzelFont(req.url);
   const useCinzel = Boolean(cinzelData);
 
@@ -110,7 +111,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   // Stat-pill atom — solid cream background, amber border, picture
   // triplet for the icon (Satori falls through AVIF/WebP → PNG).
   // Mirrors `.candy-stat-pill` from globals.css.
-  function StatPill({ iconUrl, label }: { iconUrl: string; label: string }) {
+  function StatPill({ iconUrl, label }: { iconUrl: string | null; label: string }) {
     return (
       <div
         style={{
@@ -125,7 +126,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={iconUrl} alt="" width={44} height={44} style={{ objectFit: "contain" }} />
+        {iconUrl ? <img src={iconUrl} alt="" width={44} height={44} style={{ objectFit: "contain" }} /> : null}
         <span
           style={{
             fontSize: 38,
@@ -228,7 +229,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
                 {CHALLENGE_LINE}
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              {avatarUrl ? <img
                 src={avatarUrl}
                 alt=""
                 width={420}
@@ -236,7 +237,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
                 style={{
                   filter: "drop-shadow(0 12px 24px rgba(120, 65, 5, 0.40))",
                 }}
-              />
+              /> : null}
             </div>
           </div>
         }

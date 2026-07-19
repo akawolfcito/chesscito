@@ -12,6 +12,8 @@ import {
 import type { ProStatus } from "@/lib/pro/use-pro-status";
 import { daysRemaining } from "@/lib/pro/days-remaining";
 import { track } from "@/lib/telemetry";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { useThemeBackground } from "@/lib/themes/use-theme-background";
 
 import { ProActiveBadge } from "./pro-active-badge";
 import { ProActiveCTA } from "./pro-active-cta";
@@ -127,6 +129,7 @@ export function ProSheet(props: ProSheetProps) {
     onRetryVerify,
   } = props;
   const t = useTranslations("PRO_COPY");
+  const subscriptionPanelBackground = useThemeBackground("pro-sheet.subscription-panel");
   const cta = resolveCta({ ...props, t });
   const router = useRouter();
   const showVerifyRetry = Boolean(errorMessage && verifyFailedTxHash && onRetryVerify);
@@ -220,23 +223,7 @@ export function ProSheet(props: ProSheetProps) {
          *  `showActiveBanner`. */}
         <div className="relative mx-auto flex w-full max-w-[var(--app-max-width)] flex-col overflow-y-auto overflow-x-visible overscroll-contain pt-[12%]">
           {/* Floating banner */}
-          <picture className="pointer-events-none absolute left-1/2 top-0 z-20 w-[62%] -translate-x-1/2">
-            <source
-              srcSet="/art/chesscito-pro/chesscito-header-pro-icon.avif"
-              type="image/avif"
-            />
-            <source
-              srcSet="/art/chesscito-pro/chesscito-header-pro-icon.webp"
-              type="image/webp"
-            />
-            <img
-              src="/art/chesscito-pro/chesscito-header-pro-icon.png"
-              alt=""
-              aria-hidden="true"
-              className="w-full"
-              draggable={false}
-            />
-          </picture>
+          <ThemeAssetPicture slot="pro-sheet.header-icon" pictureClassName="pointer-events-none absolute left-1/2 top-0 z-20 w-[62%] -translate-x-1/2" alt="" aria-hidden="true" className="w-full" draggable={false} />
 
           {/* Close button */}
           <button
@@ -247,31 +234,14 @@ export function ProSheet(props: ProSheetProps) {
             style={{ top: "8%" }}
             data-testid="pro-close"
           >
-            <picture>
-              <source
-                srcSet="/art/screen-mission/close-icon.avif"
-                type="image/avif"
-              />
-              <source
-                srcSet="/art/screen-mission/close-icon.webp"
-                type="image/webp"
-              />
-              <img
-                src="/art/screen-mission/close-icon.png"
-                alt=""
-                aria-hidden="true"
-                className="h-10 w-10 object-contain"
-                draggable={false}
-              />
-            </picture>
+            <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-10 w-10 object-contain" draggable={false} />
           </button>
 
           {/* Panel asset */}
           <div
             className="relative w-full"
             style={{
-              backgroundImage:
-                'image-set(url("/art/chesscito-pro/panel-suscription-pro.avif") type("image/avif"), url("/art/chesscito-pro/panel-suscription-pro.webp") type("image/webp"), url("/art/chesscito-pro/panel-suscription-pro.png") type("image/png"))',
+              backgroundImage: subscriptionPanelBackground,
               backgroundSize: "100% 100%",
               backgroundRepeat: "no-repeat",
             }}
@@ -498,23 +468,7 @@ export function ProSheet(props: ProSheetProps) {
                       boxShadow: "0 2px 6px rgba(63, 34, 8, 0.10)",
                     }}
                   >
-                    <picture className="shrink-0">
-                      <source
-                        srcSet="/art/chesscito-pro/journal-chesscito-pro.avif"
-                        type="image/avif"
-                      />
-                      <source
-                        srcSet="/art/chesscito-pro/journal-chesscito-pro.webp"
-                        type="image/webp"
-                      />
-                      <img
-                        src="/art/chesscito-pro/journal-chesscito-pro.png"
-                        alt=""
-                        aria-hidden="true"
-                        className="h-14 w-14 object-contain"
-                        draggable={false}
-                      />
-                    </picture>
+                    <ThemeAssetPicture slot="pro-sheet.journal" pictureClassName="shrink-0" alt="" aria-hidden="true" className="h-14 w-14 object-contain" draggable={false} />
                     <div className="min-w-0 flex-1">
                       <p
                         className="text-base font-extrabold leading-tight"

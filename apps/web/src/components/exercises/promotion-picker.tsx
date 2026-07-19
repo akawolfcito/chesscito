@@ -26,11 +26,10 @@
 
 import { useTranslations } from "next-intl";
 import { PROMOTABLE_PIECES } from "@/lib/game/promotion-run";
-import { THEME_CONFIG } from "@/lib/theme";
 import { hapticTap } from "@/lib/haptics";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { pieceThemeSlot } from "@/lib/themes/piece-theme-assets";
 import type { PieceId } from "@/lib/game/types";
-
-const pieceSrc = (piece: PieceId) => `${THEME_CONFIG.piecesBase}/w-${piece}.png`;
 
 export function PromotionPicker({
   promoteTo,
@@ -82,7 +81,7 @@ export function PromotionPicker({
               }}
               className="flex flex-col items-center gap-1 rounded-xl border border-amber-400/60 bg-amber-50 px-1 py-2 active:scale-95"
             >
-              <img src={pieceSrc(piece)} alt="" className="w-full max-w-[44px]" />
+              <ThemeAssetPicture slot={pieceThemeSlot("w", piece)} alt="" className="w-full max-w-[44px]" />
               <span className="text-[10px] font-semibold leading-none">
                 {tPiece(piece)}
               </span>

@@ -3,13 +3,17 @@
 import type { ReactNode } from "react";
 
 import { HubActionTile } from "@/components/hub/hub-action-tile";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 export type HubDailyTriggerVariant = "tile" | "corner-icon";
 
 export type HubDailyTriggerProps = {
   variant: HubDailyTriggerVariant;
   /** Daily tile icon (tile variant only; corner-icon uses the gift glyph). */
-  iconSrc: string;
+  iconSlot?: ThemeAssetKey;
+  /** Legacy escape hatch for non-catalog fixtures. Runtime callers use iconSlot. */
+  iconSrc?: string;
   label: string;
   ariaLabel: string;
   onClick: () => void;
@@ -30,6 +34,7 @@ export type HubDailyTriggerProps = {
  *  stay in `HubDailyTile`, so no logic forks. */
 export function HubDailyTrigger({
   variant,
+  iconSlot,
   iconSrc,
   label,
   ariaLabel,
@@ -48,26 +53,17 @@ export function HubDailyTrigger({
         onClick={onClick}
       >
         {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-        <picture className="hub-daily-corner-icon">
-          <source
-            srcSet="/art/shop/welcome-gift-96w.avif 96w, /art/shop/welcome-gift-128w.avif 128w, /art/shop/welcome-gift-160w.avif 160w, /art/shop/welcome-gift.avif 512w"
-            sizes="52px"
-            type="image/avif"
-          />
-          <source
-            srcSet="/art/shop/welcome-gift-96w.webp 96w, /art/shop/welcome-gift-128w.webp 128w, /art/shop/welcome-gift-160w.webp 160w, /art/shop/welcome-gift.webp 512w"
-            sizes="52px"
-            type="image/webp"
-          />
-          <img
-            src="/art/shop/welcome-gift.png"
-            alt=""
-            aria-hidden="true"
-            width={512}
-            height={520}
-            draggable={false}
-          />
-        </picture>
+        <ThemeAssetPicture
+          slot="shared.welcome-gift"
+          pictureClassName="hub-daily-corner-icon"
+          alt=""
+          aria-hidden="true"
+          width={512}
+          height={520}
+          responsiveWidths={[96, 128, 160]}
+          sizes="52px"
+          draggable={false}
+        />
         {badge}
       </button>
     );
@@ -75,6 +71,7 @@ export function HubDailyTrigger({
 
   return (
     <HubActionTile
+      iconSlot={iconSlot}
       iconSrc={iconSrc}
       label={label}
       ariaLabel={ariaLabel}

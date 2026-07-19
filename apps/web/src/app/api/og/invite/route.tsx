@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { CardShell, CARD_WIDTH as W, CARD_HEIGHT as H } from "@/lib/og/card-shell";
 import { loadCinzelFont } from "@/lib/og/font-loader";
 import { sanitizeName, readSearchParams } from "@/lib/og/validators";
+import { resolveOgThemeAsset } from "@/lib/og/theme-assets";
 
 export const runtime = "nodejs";
 
@@ -19,12 +20,12 @@ export async function GET(req: Request) {
   // colormap → RGBA re-encode in adb19ae4.
   // avatar-confiado (smirk challenger) addresses the visitor being
   // invited to play — see feedback_avatar_emotion_selection.
-  const mascotUrl = new URL("/art/new-assets-chesscito/fun/avatar-confiado.png", req.url).toString();
-  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
+  const mascotUrl = resolveOgThemeAsset(req.url, "shared.feedback-confident");
+  const panelBgUrl = resolveOgThemeAsset(req.url, "shared.mission-panel");
   // Hero — the candy-forest invite icon (envelope + knight card +
   // pawn). On-brand 3D scene that reads as "invitation to play".
   // Triplet at /art/hub-new/invite-icon.{avif,webp,png}.
-  const heroUrl = new URL("/art/hub-new/invite-icon.png", req.url).toString();
+  const heroUrl = resolveOgThemeAsset(req.url, "hub.invite-icon");
 
   const cinzelData = await loadCinzelFont(req.url);
   const useCinzel = Boolean(cinzelData);
@@ -48,7 +49,7 @@ export async function GET(req: Request) {
       }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      {heroUrl ? <img
         src={heroUrl}
         alt=""
         width={620}
@@ -56,7 +57,7 @@ export async function GET(req: Request) {
         style={{
           filter: "drop-shadow(0 16px 30px rgba(120, 65, 5, 0.45))",
         }}
-      />
+      /> : null}
     </div>
   );
 

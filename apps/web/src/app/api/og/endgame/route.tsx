@@ -9,6 +9,7 @@ import {
   sanitizeName,
   parseSquare,
 } from "@/lib/og/validators";
+import { resolveOgThemeAsset } from "@/lib/og/theme-assets";
 
 export const runtime = "nodejs";
 
@@ -71,8 +72,8 @@ export async function GET(req: Request) {
   // challenged to solve the endgame — see feedback_avatar_emotion_selection.
   // Same emotion as the invite + victory share cards (visitor-facing
   // challenge surfaces).
-  const mascotUrl = new URL("/art/new-assets-chesscito/fun/avatar-confiado.png", req.url).toString();
-  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
+  const mascotUrl = resolveOgThemeAsset(req.url, "shared.feedback-confident");
+  const panelBgUrl = resolveOgThemeAsset(req.url, "shared.mission-panel");
   const cinzelData = await loadCinzelFont(req.url);
   const useCinzel = Boolean(cinzelData);
 

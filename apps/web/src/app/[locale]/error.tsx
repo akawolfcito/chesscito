@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { ERROR_PAGE_COPY } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 export default function PlayHubError({
   error,
@@ -23,16 +24,7 @@ export default function PlayHubError({
           "linear-gradient(180deg, rgba(255,250,235,1) 0%, rgba(250,240,210,1) 55%, rgba(240,225,185,1) 100%)",
       }}
     >
-      <picture>
-        <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
-        <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
-        <img
-          src="/art/favicon-wolf.png"
-          alt=""
-          aria-hidden="true"
-          className="h-16 w-16 rounded-full opacity-80 drop-shadow-[0_4px_12px_rgba(120,65,5,0.35)]"
-        />
-      </picture>
+      <ThemeAssetPicture slot="brand.favicon" alt="" aria-hidden="true" className="h-16 w-16 rounded-full opacity-80 drop-shadow-[0_4px_12px_rgba(120,65,5,0.35)]" />
       <h2
         className="fantasy-title text-xl font-bold"
         style={{

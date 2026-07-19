@@ -2,7 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { REWARD_COPY } from "@/lib/content/editorial";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 export type RewardTileId = keyof typeof REWARD_COPY;
 export type RewardTileState = "claimed" | "claimable" | "progress" | "locked";
@@ -25,6 +27,9 @@ type Props = {
 };
 
 const PIECE_TILE_IDS = ["rook", "bishop", "knight", "pawn", "queen", "king"] as const;
+const PIECE_TILE_SLOTS = Object.fromEntries(
+  PIECE_TILE_IDS.map((piece) => [piece, `board.piece.white.${piece}`]),
+) as Record<(typeof PIECE_TILE_IDS)[number], ThemeAssetKey>;
 
 function isPieceTile(id: RewardTileId): id is (typeof PIECE_TILE_IDS)[number] {
   return (PIECE_TILE_IDS as readonly string[]).includes(id);
@@ -89,11 +94,11 @@ function RewardTileButton({
     >
       <span className="reward-tile-label">{label}</span>
       {isPieceTile(tile.id) ? (
-        <picture className="reward-tile-piece">
-          <source srcSet={`/art/redesign/pieces/w-${tile.id}.avif`} type="image/avif" />
-          <source srcSet={`/art/redesign/pieces/w-${tile.id}.webp`} type="image/webp" />
-          <img src={`/art/redesign/pieces/w-${tile.id}.png`} alt="" />
-        </picture>
+        <ThemeAssetPicture
+          slot={PIECE_TILE_SLOTS[tile.id]}
+          pictureClassName="reward-tile-piece"
+          alt=""
+        />
       ) : (
         <CandyIcon name="trophy" className="reward-tile-piece reward-tile-piece--icon" />
       )}

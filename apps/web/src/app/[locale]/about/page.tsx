@@ -5,6 +5,7 @@ import { AboutMethodology } from "@/components/about/about-methodology";
 import { CognitiveDisclaimer } from "@/components/legal/cognitive-disclaimer";
 import { Compass, FileText, LifeBuoy, Shield } from "lucide-react";
 import { InviteLink } from "./invite-link";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 export const metadata = {
   title: "About — Chesscito",
@@ -26,15 +27,7 @@ export default async function AboutPage() {
     <LegalPageShell title={tShell("aboutTitle")} backHref="/">
       {/* Identity */}
       <div className="flex flex-col items-center gap-2 pb-2 text-center">
-        <picture>
-          <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
-          <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
-          <img
-            src="/art/favicon-wolf.png"
-            alt="Chesscito logo"
-            className="h-16 w-16 drop-shadow-[0_0_24px_rgba(245,158,11,0.35)]"
-          />
-        </picture>
+        <ThemeAssetPicture slot="brand.favicon" alt="Chesscito logo" className="h-16 w-16 drop-shadow-[0_0_24px_rgba(245,158,11,0.35)]" />
         <h2
           className="fantasy-title text-xl font-bold"
           style={{

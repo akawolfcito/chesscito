@@ -12,6 +12,8 @@ import { SoftGateSheet } from '@/components/arena/soft-gate-sheet'
 import type { ArenaDifficulty } from '@/lib/game/types'
 import type { PlayerColor } from '@/lib/game/use-chess-game'
 import { rivalFor, eloRangeLabel } from '@/lib/game/rivals'
+import { ThemeAssetPicture } from '@/components/themes/theme-asset-picture'
+import { pieceThemeSlot } from '@/lib/themes/piece-theme-assets'
 
 /* Green check pill — clones the PRO sheet perk badge styling
    (pro-sheet.tsx:389-399) so selection feedback across PRO and the
@@ -34,11 +36,6 @@ function SelectedCheck() {
 
 const DIFFICULTY_ORDER: ArenaDifficulty[] = ['easy', 'medium', 'hard']
 const COLOR_ORDER: PlayerColor[] = ['w', 'b']
-const COLOR_PIECE: Record<PlayerColor, 'w-pawn' | 'b-pawn'> = {
-  w: 'w-pawn',
-  b: 'b-pawn',
-}
-
 const SURFACE = 'arena-select'
 const ATMOSPHERE = 'adventure'
 
@@ -147,16 +144,7 @@ export function ArenaSelectScaffold({
             }`}
           >
             {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-            <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
-              <source srcSet="/art/avatar-small-account.avif" type="image/avif" />
-              <source srcSet="/art/avatar-small-account.webp" type="image/webp" />
-              <img
-                src="/art/avatar-small-account.png"
-                alt=""
-                aria-hidden="true"
-                draggable={false}
-              />
-            </picture>
+            <ThemeAssetPicture slot="shared.avatar-small-account" pictureClassName="candy-tray-pill-icon candy-tray-pill-icon--floating" alt="" aria-hidden="true" draggable={false} />
             <span>{tStatus('accountChipLabel')}</span>
             {account.isPro && account.daysRemaining != null ? (
               <span className="hub-hud-pill-pro-days">
@@ -185,20 +173,11 @@ export function ArenaSelectScaffold({
               className="arena-scaffold-color-pill"
             >
               {playerColor === c ? <SelectedCheck /> : null}
-              <picture className="arena-scaffold-color-piece">
-                <source
-                  srcSet={`/art/redesign/pieces/${COLOR_PIECE[c]}.avif`}
-                  type="image/avif"
-                />
-                <source
-                  srcSet={`/art/redesign/pieces/${COLOR_PIECE[c]}.webp`}
-                  type="image/webp"
-                />
-                <img
-                  src={`/art/redesign/pieces/${COLOR_PIECE[c]}.png`}
-                  alt=""
-                />
-              </picture>
+              <ThemeAssetPicture
+                slot={pieceThemeSlot(c, "pawn")}
+                pictureClassName="arena-scaffold-color-piece"
+                alt=""
+              />
               <span className="arena-scaffold-color-copy">
                 <span>{t('playAsPrefix')}</span>
                 <span>{colorNames[c]}</span>
@@ -226,31 +205,24 @@ export function ArenaSelectScaffold({
                 >
                   {difficulty === key ? <SelectedCheck /> : null}
                   <span className="arena-scaffold-difficulty-piece">
-                    <picture className="arena-scaffold-difficulty-avatar">
-                      <source
-                        srcSet={`/art/rivals/${rival.avatar}-avatar.avif`}
-                        type="image/avif"
-                      />
-                      <source
-                        srcSet={`/art/rivals/${rival.avatar}-avatar.webp`}
-                        type="image/webp"
-                      />
-                      <img
-                        src={`/art/rivals/${rival.avatar}-avatar.png`}
+                    {rival.avatarSlot ? (
+                      <ThemeAssetPicture
+                        slot={rival.avatarSlot}
+                        pictureClassName="arena-scaffold-difficulty-avatar"
                         alt=""
                       />
-                    </picture>
-                    <picture className="arena-scaffold-difficulty-frame">
-                      <source
-                        srcSet={`/art/rivals/frame-${rival.frame}.avif`}
-                        type="image/avif"
-                      />
-                      <source
-                        srcSet={`/art/rivals/frame-${rival.frame}.webp`}
-                        type="image/webp"
-                      />
-                      <img src={`/art/rivals/frame-${rival.frame}.png`} alt="" />
-                    </picture>
+                    ) : (
+                      <picture className="arena-scaffold-difficulty-avatar">
+                        <source srcSet="/art/rivals/mara-avatar.avif" type="image/avif" />
+                        <source srcSet="/art/rivals/mara-avatar.webp" type="image/webp" />
+                        <img src="/art/rivals/mara-avatar.png" alt="" />
+                      </picture>
+                    )}
+                    <ThemeAssetPicture
+                      slot={rival.frameSlot}
+                      pictureClassName="arena-scaffold-difficulty-frame"
+                      alt=""
+                    />
                   </span>
                   <span className="arena-scaffold-difficulty-text">
                     <span className="arena-scaffold-rival-name">

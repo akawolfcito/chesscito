@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { CandyIcon } from '@/components/redesign/candy-icon'
+import { ThemeAssetPicture } from '@/components/themes/theme-asset-picture'
 import { ConfettiBurst } from '@/components/redesign/confetti-burst'
 import { HudResourceChip } from '@/components/hud/hud-resource-chip'
 import type { PIECE_LABELS } from '@/lib/content/editorial'
@@ -377,21 +378,7 @@ export function PhaseFlash({
       <div className="fail-rescue-reward-row" aria-hidden="true">
         {showStarPill ? (
           <span className="fail-rescue-reward-pill fail-rescue-reward-pill--star">
-            <picture>
-              <source
-                srcSet="/art/redesign/icons/star.avif"
-                type="image/avif"
-              />
-              <source
-                srcSet="/art/redesign/icons/star.webp"
-                type="image/webp"
-              />
-              <img
-                src="/art/redesign/icons/star.png"
-                alt=""
-                aria-hidden="true"
-              />
-            </picture>
+            <ThemeAssetPicture slot="shared.star" alt="" aria-hidden="true" />
             <span>+{lastEarnedStars} STAR</span>
           </span>
         ) : null}

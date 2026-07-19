@@ -22,6 +22,7 @@
 import { useState } from "react";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { GetPeonesSheet } from "@/components/payments/get-peones-sheet";
 import { CHESITO_CARD_COPY } from "@/lib/content/editorial";
 import { usePeonesBalance } from "@/lib/peones/use-peones-balance";
@@ -84,15 +85,7 @@ export function ChesitoCard({ className = "", rechargeScrimZClassName }: Props) 
           </button>
         </div>
 
-        <picture className="chesito-card-art">
-          <source srcSet="/art/new-icons-chesscito/peon-piece-v1.avif" type="image/avif" />
-          <source srcSet="/art/new-icons-chesscito/peon-piece-v1.webp" type="image/webp" />
-          <img
-            src="/art/new-icons-chesscito/peon-piece-v1.png"
-            alt=""
-            draggable={false}
-          />
-        </picture>
+        <ThemeAssetPicture slot="peones.piece" pictureClassName="chesito-card-art" alt="" draggable={false} />
       </section>
 
       {rechargeOpen ? (

@@ -59,7 +59,7 @@ export function TrophiesSheet({ open, onOpenChange, showTrigger = true }: Trophi
         <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <ContextualHeader
             variant="close-control"
-            iconSlot={<TileIconSlot src="/art/action-row/trofeo-epico" />}
+            iconSlot={<TileIconSlot slot="shared.trophy-epic" />}
             title={t("pageTitle")}
             subtitle={t(CHESSCITO_LITE_MODE ? "pageDescriptionLite" : "pageDescription")}
             close={{ onClick: () => onOpenChange(false), label: t("closeSheetLabel") }}

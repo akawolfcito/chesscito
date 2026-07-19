@@ -12,6 +12,7 @@ vi.mock("@/lib/pro/use-is-pro-active", () => ({
 
 import { KingdomAnchor } from "../kingdom-anchor";
 import { HOME_ANCHOR_COPY } from "@/lib/content/editorial";
+import { ThemeVariantOverride } from "@/lib/themes/theme-variant-provider";
 
 describe("KingdomAnchor", () => {
   it("renders the inactive hero asset via <picture> with AVIF/WebP/PNG fallback chain", () => {
@@ -207,16 +208,12 @@ describe("KingdomAnchor", () => {
 });
 
 describe("KingdomAnchor — PRO variant swap", () => {
-  it("swaps to the PRO portal asset when useIsProActive returns true", async () => {
-    // Re-mock for this describe to flip the hook to true.
-    vi.resetModules();
-    vi.doMock("@/lib/pro/use-is-pro-active", () => ({
-      useIsProActive: () => true,
-    }));
-    const { KingdomAnchor: KingdomAnchorPro } = await import(
-      "../kingdom-anchor"
+  it("swaps to the PRO portal asset when the runtime variant is PRO", () => {
+    const { container } = render(
+      <ThemeVariantOverride variant="pro">
+        <KingdomAnchor />
+      </ThemeVariantOverride>,
     );
-    const { container } = render(<KingdomAnchorPro />);
     const img = container.querySelector(".kingdom-anchor-img");
     expect(img).toHaveAttribute(
       "src",
@@ -227,6 +224,5 @@ describe("KingdomAnchor — PRO variant swap", () => {
       "src",
       "/art/hub/chesscito-avatar-new-light.png",
     );
-    vi.doUnmock("@/lib/pro/use-is-pro-active");
   });
 });

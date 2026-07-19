@@ -296,7 +296,7 @@ export function HubDailyTile({
     <>
       <HubDailyTrigger
         variant={variant}
-        iconSrc="/art/new-icons-chesscito/daily-icon-v1.png"
+        iconSlot="hub.daily-icon"
         label={t("dailyLabel")}
         ariaLabel={ariaLabel}
         onClick={() => setOpen(true)}

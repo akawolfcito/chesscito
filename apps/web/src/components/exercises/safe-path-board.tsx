@@ -41,15 +41,13 @@ import { attackedSquares } from "@/lib/game/attack-map";
 import { isCaught, legalKingSteps } from "@/lib/game/safe-path";
 import { labyrinthStars } from "@/lib/game/exercises";
 import { hapticReject, hapticSuccess, hapticTap } from "@/lib/haptics";
-import { THEME_CONFIG } from "@/lib/theme";
+import { useThemePieceAssets } from "@/lib/themes/piece-theme-assets";
+import { useCurrentThemeAsset } from "@/lib/themes/use-current-theme-asset";
 import type { BoardPosition, Exercise, PieceId } from "@/lib/game/types";
 
-const KING_SRC = `${THEME_CONFIG.piecesBase}/w-king.png`;
-const enemySrc = (piece: PieceId) => `${THEME_CONFIG.piecesBase}/b-${piece}.png`;
 /** The refuge. A sanctuary, not a star: this game's goal is not "arrive", it is
  *  "arrive UNSEEN", and the shielded doorway says shelter where a star would
  *  just say prize. Sits in labyrinths/ next to wall — same board scenery. */
-const REFUGE_SRC = "/art/labyrinths/refuge.png";
 const SELECT_HINT_DURATION_MS = 2200;
 const LABEL = (p: BoardPosition) => `${"abcdefgh"[p.file]}${p.rank + 1}`;
 const parse = (s: string): BoardPosition => ({
@@ -97,6 +95,8 @@ export function SafePathBoard({
   resetKey?: number;
 }) {
   const t = useTranslations("SAFE_PATH_COPY.band");
+  const pieceAssets = useThemePieceAssets();
+  const refugeBase = useCurrentThemeAsset("exercises.refuge");
   const START = level.startPos;
   const REFUGE = level.targetPos;
   // Memoised on the level's own array identity: `level.enemies ?? []` would mint
@@ -320,15 +320,15 @@ export function SafePathBoard({
               className="playhub-board-refuge-glow"
               style={{ position: "absolute", inset: "-6%" }}
             />
-            <img
-              src={REFUGE_SRC}
+            {refugeBase ? <img
+              src={`${refugeBase}.png`}
               alt=""
               style={{
                 position: "relative",
                 width: "88%",
                 filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.35))",
               }}
-            />
+            /> : null}
           </span>
         ) : null}
         {caughtOn === sq ? (
@@ -377,6 +377,7 @@ export function SafePathBoard({
         />
       ))}
       {ENEMIES.map((e) => {
+        if (!pieceAssets.b[e.piece]) return null;
         const c = cellCenter(e.pos.file, e.pos.rank);
         return (
           <picture
@@ -392,7 +393,7 @@ export function SafePathBoard({
             }}
           >
             <img
-              src={enemySrc(e.piece)}
+              src={`${pieceAssets.b[e.piece]}.png`}
               alt=""
               className="playhub-board-piece-img"
               style={{ width: "100%" }}
@@ -402,7 +403,7 @@ export function SafePathBoard({
       })}
       {/* `.is-selected` carries the zoom + ring the other boards already use —
           same gesture, same feedback, nothing new to learn. */}
-      <picture
+      {pieceAssets.w.king ? <picture
         data-testid={`sp-king-${LABEL(king)}`}
         data-selected={selected ? "true" : "false"}
         className={`playhub-board-piece-float${selected ? " is-selected" : ""}`}
@@ -415,12 +416,12 @@ export function SafePathBoard({
         }}
       >
         <img
-          src={KING_SRC}
+          src={`${pieceAssets.w.king}.png`}
           alt=""
           className="playhub-board-piece-img"
           style={{ width: "100%" }}
         />
-      </picture>
+      </picture> : null}
       {showSelectHint ? (
         <div
           role="status"

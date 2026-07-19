@@ -1,4 +1,5 @@
 import type { ArenaDifficulty } from "@/lib/game/types";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 export type RivalPiece = "pawn" | "knight" | "bishop";
 
@@ -12,9 +13,11 @@ export type Rival = {
   /** Character avatar slug → `/art/rivals/<avatar>-avatar.{avif,webp,png}`
    *  (custom rival art shipped 2026-06-15). */
   avatar: string;
+  avatarSlot?: ThemeAssetKey;
   /** Difficulty frame color → `/art/rivals/frame-<frame>.{avif,webp,png}`.
    *  blue = easy, silver = medium, gold = hard. */
   frame: "blue" | "silver" | "gold";
+  frameSlot: ThemeAssetKey;
   eloMin: number;
   eloMax: number;
 };
@@ -23,9 +26,9 @@ export type Rival = {
  *  arena reads as "challenge a rival", not "play the AI". Names are
  *  founder-approved placeholders (Sally pass 2026-06-15). */
 export const RIVALS: Record<ArenaDifficulty, Rival> = {
-  easy: { difficulty: "easy", name: "Pipo", piece: "pawn", avatar: "pipo", frame: "blue", eloMin: 0, eloMax: 800 },
-  medium: { difficulty: "medium", name: "Mara", piece: "knight", avatar: "mara", frame: "silver", eloMin: 801, eloMax: 1500 },
-  hard: { difficulty: "hard", name: "Kairo", piece: "bishop", avatar: "kairo", frame: "gold", eloMin: 1501, eloMax: 2200 },
+  easy: { difficulty: "easy", name: "Pipo", piece: "pawn", avatar: "pipo", avatarSlot: "arena.rival-pipo", frame: "blue", frameSlot: "arena.rival-frame-blue", eloMin: 0, eloMax: 800 },
+  medium: { difficulty: "medium", name: "Mara", piece: "knight", avatar: "mara", frame: "silver", frameSlot: "arena.rival-frame-silver", eloMin: 801, eloMax: 1500 },
+  hard: { difficulty: "hard", name: "Kairo", piece: "bishop", avatar: "kairo", avatarSlot: "arena.rival-kairo", frame: "gold", frameSlot: "arena.rival-frame-gold", eloMin: 1501, eloMax: 2200 },
 };
 
 export function rivalFor(difficulty: ArenaDifficulty): Rival {

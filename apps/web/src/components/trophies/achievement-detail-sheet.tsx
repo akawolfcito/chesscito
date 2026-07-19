@@ -56,7 +56,7 @@ export function AchievementDetailSheet({ open, onOpenChange, achievement }: Prop
           </p>
           <ContextualHeader
             variant="close-control"
-            iconSlot={<TileIconSlot src="/art/action-row/trofeo-epico" />}
+            iconSlot={<TileIconSlot slot="shared.trophy-epic" />}
             title={copy.title}
             close={{ onClick: () => onOpenChange(false), label: t("closeAchievementLabel") }}
           />

@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
-import { THEME_CONFIG } from "@/lib/theme";
+import type { ChessPieceId } from "@/lib/game/types";
+import { pieceThemeSlot } from "@/lib/themes/piece-theme-assets";
+import { resolveThemeAsset } from "@/lib/themes/resolve-theme-asset";
 
 type ParsedPiece = { piece: string; color: "w" | "b"; rank: number; file: number };
 
@@ -32,7 +34,7 @@ export function parseFenBoard(fen: string): ParsedPiece[] {
   return pieces;
 }
 
-const PIECE_FILENAME: Record<string, string> = {
+const PIECE_FILENAME: Record<string, ChessPieceId> = {
   p: "pawn",
   r: "rook",
   n: "knight",
@@ -81,7 +83,6 @@ export function BoardRender({
 }: BoardRenderProps): ReactNode {
   const pieces = parseFenBoard(fen);
   const pct = 100 / 8;
-  const piecesBase = origin + THEME_CONFIG.piecesBase;
 
   return (
     <div
@@ -127,8 +128,12 @@ export function BoardRender({
         // PNG (RGBA, no 8-bit colormap). WebP rendered empty in Satori
         // on @vercel/og preview runtime; PNGs work consistently as long
         // as they're RGBA (re-encoded in adb19ae4).
-        const pieceFile = p.color + "-" + PIECE_FILENAME[p.piece] + ".png";
-        const src = piecesBase + "/" + pieceFile;
+        const assetBase = resolveThemeAsset(
+          pieceThemeSlot(p.color, PIECE_FILENAME[p.piece]),
+          "default",
+        );
+        if (!assetBase) return null;
+        const src = origin + assetBase + ".png";
         return (
           <div
             key={"p-" + i}

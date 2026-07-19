@@ -40,6 +40,7 @@ import {
   emitPeonesSpent,
 } from "@/lib/peones/telemetry";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 /** How long the board glow stays after a successful reveal before the
  *  parent is told to clear it. Matches the candy-style consumable
@@ -57,29 +58,11 @@ const FEEDBACK_TTL_MS = 2500;
  *  loading, revealed, feedback) so the morphing chip never jumps
  *  between icon+text and text-only layouts. Guest chip stays
  *  text-only: it advertises connecting, not spending. */
-const HINT_ICON_SRC = "/art/new-icons-chesscito/hint-icon-v1.png";
-
 /** Format-negotiated hint sprite — the raw PNG is 52KB while the avif
  *  sibling is 8KB, and /exercises is the slowest route of the app. */
 function HintIcon() {
   return (
-    <picture>
-      <source
-        srcSet={HINT_ICON_SRC.replace(/\.png$/, ".avif")}
-        type="image/avif"
-      />
-      <source
-        srcSet={HINT_ICON_SRC.replace(/\.png$/, ".webp")}
-        type="image/webp"
-      />
-      <img
-        src={HINT_ICON_SRC}
-        alt=""
-        aria-hidden="true"
-        className="object-contain"
-        draggable={false}
-      />
-    </picture>
+    <ThemeAssetPicture slot="peones.hint" alt="" aria-hidden="true" className="object-contain" draggable={false} />
   );
 }
 

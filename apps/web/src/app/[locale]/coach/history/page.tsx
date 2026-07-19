@@ -40,7 +40,7 @@ function PageHeader({ onBack }: { onBack: () => void }) {
     <header className="border-b border-[rgba(110,65,15,0.30)]">
       <ContextualHeader
         variant="back-control"
-        iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
+        iconSlot={<TileIconSlot slot="hub.training" />}
         title={t("yourSessions")}
         subtitle={t("historyBannerSubtitle")}
         back={{ onClick: onBack, label: t("backLabel") }}

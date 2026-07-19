@@ -8,6 +8,8 @@ import { appRootTitle } from "@/lib/content/app-branding";
 import { CHESSCITO_MODE, isLiteModeServer } from "@/lib/feature-flags";
 import { EXERCISES } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
+import { resolveThemeAsset } from "@/lib/themes/resolve-theme-asset";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 type SearchParams = {
   legacy?: string | string[];
@@ -114,28 +116,15 @@ export default function HomePage({
   const initialSheet = parseInitialSheet(firstParam(searchParams.sheet));
 
   if (isLiteModeServer()) {
-    preload("/art/ring-start-focus.avif", {
-      as: "image",
-      type: "image/avif",
-      fetchPriority: "high",
-    });
+    const ring = resolveThemeAsset("brand.ring-start-focus", "pro");
+    if (ring) preload(`${ring}.avif`, { as: "image", type: "image/avif", fetchPriority: "high" });
   } else {
     // These three AVIFs are the established Full root-Hub LCP candidates.
     // Explicit preloads keep discovery ahead of CSS parsing and hydration.
-    preload("/art/redesign/bg/bg-new-hub.avif", {
-      as: "image",
-      type: "image/avif",
-      fetchPriority: "high",
-    });
-    preload("/art/new-icons-chesscito/daily-icon-v1.avif", {
-      as: "image",
-      type: "image/avif",
-      fetchPriority: "high",
-    });
-    preload("/art/hub/portal-chesscito-normal.avif", {
-      as: "image",
-      type: "image/avif",
-      fetchPriority: "high",
+    const lcpSlots: ThemeAssetKey[] = ["hub.bg", "hub.daily-icon", "hub.portal"];
+    lcpSlots.forEach((slot) => {
+      const asset = resolveThemeAsset(slot, "default");
+      if (asset) preload(`${asset}.avif`, { as: "image", type: "image/avif", fetchPriority: "high" });
     });
   }
 

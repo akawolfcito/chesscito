@@ -1,5 +1,7 @@
 "use client";
 
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+
 type Props = {
   /** PRO subscription state. The chip art swaps with the state (purple
    *  `pro-chip-inactive` when inactive, all-gold `pro-chip-active` when
@@ -62,15 +64,16 @@ export function HubProBadge({
   // the sprite — purple `pro-chip-inactive` for the upsell, all-gold
   // `pro-chip-active` once the subscription is live. The DOM carries no "PRO"
   // text of its own; the accessible name comes from `ariaLabel`.
-  const bgAsset = active ? "pro-chip-active" : "pro-chip-inactive";
-
   const content = (
     <>
-      <picture className="hub-pro-badge-bg">
-        <source srcSet={`/art/hub/${bgAsset}.avif`} type="image/avif" />
-        <source srcSet={`/art/hub/${bgAsset}.webp`} type="image/webp" />
-        <img src={`/art/hub/${bgAsset}.png`} alt="" width={600} height={351} />
-      </picture>
+      <ThemeAssetPicture
+        slot="hub.pro-chip"
+        variant={active ? "pro" : "default"}
+        pictureClassName="hub-pro-badge-bg"
+        alt=""
+        width={600}
+        height={351}
+      />
       {subline && (
         <span className="hub-pro-badge-label" aria-hidden="true">
           {subline}

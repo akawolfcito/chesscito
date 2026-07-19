@@ -12,6 +12,7 @@ import {
   useWriteContract,
 } from "wagmi";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 import { useMiniPay } from "@/hooks/use-minipay";
 import {
@@ -51,7 +52,8 @@ type CatalogItem = {
   itemId: bigint;
   label: string;
   subtitle: string;
-  icon: string;
+  icon?: string;
+  iconSlot?: ThemeAssetKey;
   configured: boolean;
   enabled: boolean;
   onChainPrice: bigint;
@@ -259,7 +261,7 @@ export function useShopSheetState(
       SHOP_ITEMS.map((item, index) => {
         const label = tShopItem(`${item.copyKey}.label` as const);
         const subtitle = tShopItem(`${item.copyKey}.subtitle` as const);
-        const icon = SHOP_TILE_ASSETS[item.copyKey].icon;
+        const { icon, iconSlot } = SHOP_TILE_ASSETS[item.copyKey];
         const onChain = onChainItems?.[index];
         if (onChain?.status === "success" && Array.isArray(onChain.result)) {
           const price = onChain.result[0] as bigint;
@@ -269,6 +271,7 @@ export function useShopSheetState(
             label,
             subtitle,
             icon,
+            iconSlot,
             configured: price > 0n,
             enabled: price > 0n && enabled,
             onChainPrice: price,
@@ -279,6 +282,7 @@ export function useShopSheetState(
           label,
           subtitle,
           icon,
+          iconSlot,
           configured: false,
           enabled: false,
           onChainPrice: 0n,

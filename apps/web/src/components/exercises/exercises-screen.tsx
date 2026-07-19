@@ -46,7 +46,10 @@ import { useRetryGuard } from "@/lib/exercises/use-retry-guard";
 import { ENABLE_EXERCISE_ROTATION } from "@/lib/exercises/rotation-flag";
 import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
-import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
+import { ASSET_THEME } from "@/lib/theme";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { pieceThemeSlot } from "@/lib/themes/piece-theme-assets";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 import { ContextualActionSlot } from "@/components/exercises/contextual-action-slot";
 import {
   buildProgressByPiece,
@@ -137,7 +140,6 @@ import { useOnChainWrite } from "@/lib/exercises/use-onchain-write";
 import { useDoneHold } from "@/lib/exercises/use-done-hold";
 import { applyScoreSaveSuccess } from "@/lib/exercises/apply-score-save-success";
 import { applyBadgeClaimSuccess } from "@/lib/exercises/apply-badge-claim-success";
-import { PIECE_IMAGES } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
@@ -236,7 +238,8 @@ type CatalogItem = {
    *  PurchaseConfirmSheet renders the AVIF/WebP/PNG triplet from this
    *  base so the modal header carries the same per-SKU icon the
    *  shop tile already shows. */
-  icon: string;
+  icon?: string;
+  iconSlot?: ThemeAssetKey;
   configured: boolean;
   enabled: boolean;
   onChainPrice: bigint;
@@ -994,7 +997,7 @@ export function ExercisesScreen({
       SHOP_ITEMS.map((item, index) => {
         const label = tShopItem(`${item.copyKey}.label` as const);
         const subtitle = tShopItem(`${item.copyKey}.subtitle` as const);
-        const icon = SHOP_TILE_ASSETS[item.copyKey].icon;
+        const { icon, iconSlot } = SHOP_TILE_ASSETS[item.copyKey];
         const onChain = onChainItems?.[index];
         if (onChain?.status === "success" && Array.isArray(onChain.result)) {
           const price = onChain.result[0] as bigint;
@@ -1004,6 +1007,7 @@ export function ExercisesScreen({
             label,
             subtitle,
             icon,
+            iconSlot,
             configured: price > 0n,
             enabled: price > 0n && enabled,
             onChainPrice: price,
@@ -1015,6 +1019,7 @@ export function ExercisesScreen({
           label,
           subtitle,
           icon,
+          iconSlot,
           configured: false,
           enabled: false,
           onChainPrice: 0n,
@@ -3179,16 +3184,7 @@ export function ExercisesScreen({
                   data-testid="account-trigger"
                   className={`candy-tray-pill hub-hud-pill${proStatus?.active ? " hub-hud-pill--pro-text" : ""}`}
                 >
-                  <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
-                    <source srcSet="/art/avatar-small-account.avif" type="image/avif" />
-                    <source srcSet="/art/avatar-small-account.webp" type="image/webp" />
-                    <img
-                      src="/art/avatar-small-account.png"
-                      alt=""
-                      aria-hidden="true"
-                      draggable={false}
-                    />
-                  </picture>
+                  <ThemeAssetPicture slot="shared.avatar-small-account" pictureClassName="candy-tray-pill-icon candy-tray-pill-icon--floating" alt="" aria-hidden="true" draggable={false} />
                   <span>{tStatus("accountChipLabel")}</span>
                   {proStatus?.active ? (
                     (() => {
@@ -3813,6 +3809,7 @@ export function ExercisesScreen({
             pieceType={selectedPiece}
             itemLabel={selectedItem?.label}
             itemAsset={selectedItem?.icon}
+            itemAssetSlot={selectedItem?.iconSlot}
             txHash={resultOverlay.txHash}
             celoscanHref={resultOverlay.txHash ? txLink(chainId, resultOverlay.txHash) : undefined}
             errorMessage={resultOverlay.errorMessage}
@@ -3850,15 +3847,7 @@ export function ExercisesScreen({
                 <LottieAnimation src="/animations/sparkle-burst.lottie" loop={false} className="h-full w-full" />
               </div>
               <div className="absolute h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.28)_0%,rgba(217,180,74,0.12)_50%,transparent_75%)]" />
-              <picture className="relative z-10 h-20 w-20">
-                {THEME_CONFIG.hasOptimizedFormats && (
-                  <>
-                    <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.avif`} type="image/avif" />
-                    <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.webp`} type="image/webp" />
-                  </>
-                )}
-                <img src={`${PIECE_IMAGES[unlockedPiece]}.png`} alt={tPiece(unlockedPiece)} className="h-full w-full object-contain drop-shadow-[0_4px_12px_rgba(120,65,5,0.35)]" />
-              </picture>
+              <ThemeAssetPicture slot={pieceThemeSlot("w", unlockedPiece)} pictureClassName="relative z-10 h-20 w-20" alt={tPiece(unlockedPiece)} className="h-full w-full object-contain drop-shadow-[0_4px_12px_rgba(120,65,5,0.35)]" />
             </div>
 
             <h2 className="language-modal-title">

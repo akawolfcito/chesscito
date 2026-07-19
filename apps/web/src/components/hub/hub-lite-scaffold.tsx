@@ -18,6 +18,8 @@ import type {
   HubFocusPassport,
   SeasonChallengeMeta,
 } from "@/components/hub/use-hub-data";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { ThemeVariantOverride } from "@/lib/themes/theme-variant-provider";
 
 export type HubLiteScaffoldProps = {
   // ── HUD ──
@@ -87,6 +89,7 @@ export function HubLiteScaffold({
   const startFocusLabel = t("startFocus");
 
   return (
+    <ThemeVariantOverride variant={isPro ? "pro" : "default"}>
     <main className="hub-lite-scaffold" aria-label={t("rootAriaLabel")}>
       <header className="hub-lite-hud">
         <div className="hub-lite-hud-left">
@@ -133,16 +136,13 @@ export function HubLiteScaffold({
               }`}
             >
               {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-              <picture className="hub-account-circle-avatar">
-                <source srcSet="/art/avatar-small-account.avif" type="image/avif" />
-                <source srcSet="/art/avatar-small-account.webp" type="image/webp" />
-                <img
-                  src="/art/avatar-small-account.png"
-                  alt=""
-                  aria-hidden="true"
-                  draggable={false}
-                />
-              </picture>
+              <ThemeAssetPicture
+                slot="shared.avatar-small-account"
+                pictureClassName="hub-account-circle-avatar"
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+              />
             </button>
           ) : null}
           {!isWalletConnected && onConnectTap ? (
@@ -183,54 +183,28 @@ export function HubLiteScaffold({
 
       <div className="hub-lite-mascot">
         {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-        <picture className="hub-lite-title">
-          <source
-            srcSet="/art/title-chesscito-288w.avif 288w, /art/title-chesscito-384w.avif 384w, /art/title-chesscito.avif 512w"
-            sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px"
-            type="image/avif"
-          />
-          <source
-            srcSet="/art/title-chesscito-288w.webp 288w, /art/title-chesscito-384w.webp 384w, /art/title-chesscito.webp 512w"
-            sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px"
-            type="image/webp"
-          />
-          <img
-            src="/art/title-chesscito.png"
-            alt="Chesscito"
-            width={512}
-            height={249}
-            draggable={false}
-          />
-        </picture>
+        <ThemeAssetPicture
+          slot="brand.title"
+          pictureClassName="hub-lite-title"
+          alt="Chesscito"
+          width={512}
+          height={249}
+          responsiveWidths={[288, 384]}
+          sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px"
+          draggable={false}
+        />
         {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-        <picture className="hub-lite-avatar">
-          <source
-            srcSet={
-              isPro
-                ? "/art/avatar-pro-224w.avif 224w, /art/avatar-pro-340w.avif 340w, /art/avatar-pro.avif 499w"
-                : "/art/avatar-lite-hub-224w.avif 224w, /art/avatar-lite-hub-340w.avif 340w, /art/avatar-lite-hub.avif 499w"
-            }
-            sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
-            type="image/avif"
-          />
-          <source
-            srcSet={
-              isPro
-                ? "/art/avatar-pro-224w.webp 224w, /art/avatar-pro-340w.webp 340w, /art/avatar-pro.webp 499w"
-                : "/art/avatar-lite-hub-224w.webp 224w, /art/avatar-lite-hub-340w.webp 340w, /art/avatar-lite-hub.webp 499w"
-            }
-            sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
-            type="image/webp"
-          />
-          <img
-            src={isPro ? "/art/avatar-pro.png" : "/art/avatar-lite-hub.png"}
-            alt=""
-            aria-hidden="true"
-            width={499}
-            height={560}
-            draggable={false}
-          />
-        </picture>
+        <ThemeAssetPicture
+          slot="hub.avatar-lite"
+          pictureClassName="hub-lite-avatar"
+          alt=""
+          aria-hidden="true"
+          width={499}
+          height={560}
+          responsiveWidths={[224, 340]}
+          sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
+          draggable={false}
+        />
         <AppModeSwitch activeMode="learn" />
       </div>
 
@@ -255,30 +229,27 @@ export function HubLiteScaffold({
           onClick={primaryFocus.onPress}
         >
           {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-          <picture className="hub-lite-start-focus-icon" aria-hidden="true">
-            <source srcSet="/art/hub/train-pieces.avif" type="image/avif" />
-            <source srcSet="/art/hub/train-pieces.webp" type="image/webp" />
-            <img src="/art/hub/train-pieces.png" alt="" width={64} height={64} draggable={false} />
-          </picture>
+          <ThemeAssetPicture
+            slot="hub.train-pieces"
+            pictureClassName="hub-lite-start-focus-icon"
+            pictureProps={{ "aria-hidden": true }}
+            alt=""
+            width={64}
+            height={64}
+            draggable={false}
+          />
           {startFocusLabel}
         </button>
-        {/* Decorative gold ring overlaid on top of the (unchanged) button —
-            PRO-only benefit; non-PRO viewers see the CTA without the ring. */}
-        {isPro ? (
-          // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
-          <picture className="hub-lite-start-focus-ring" aria-hidden="true">
-            <source srcSet="/art/ring-start-focus.avif" type="image/avif" />
-            <source srcSet="/art/ring-start-focus.webp" type="image/webp" />
-            <img
-              src="/art/ring-start-focus.png"
-              alt=""
-              width={512}
-              height={260}
-              fetchPriority="high"
-              draggable={false}
-            />
-          </picture>
-        ) : null}
+        <ThemeAssetPicture
+          slot="brand.ring-start-focus"
+          pictureClassName="hub-lite-start-focus-ring"
+          pictureProps={{ "aria-hidden": true }}
+          alt=""
+          width={512}
+          height={260}
+          fetchPriority="high"
+          draggable={false}
+        />
       </div>
 
       <section className="hub-lite-training-path" aria-label={t("trainingPathLabel")}>
@@ -290,5 +261,6 @@ export function HubLiteScaffold({
         />
       </section>
     </main>
+    </ThemeVariantOverride>
   );
 }

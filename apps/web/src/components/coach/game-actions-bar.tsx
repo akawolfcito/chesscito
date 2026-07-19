@@ -3,6 +3,8 @@
 import { useTranslations } from "next-intl";
 
 import { CoachCostRibbon } from "@/components/coach/coach-cost-ribbon";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 import { saveCtaLabelKey } from "@/lib/coach/save-cta-label";
 
 type Props = {
@@ -64,27 +66,11 @@ type Tile = {
   pending?: boolean;
 };
 
-const TILE_ICON: Record<TileKind, { avif: string; webp: string; png: string }> = {
-  "play-again": {
-    avif: "/art/new-assets-chesscito/btns/play-again-icon.avif",
-    webp: "/art/new-assets-chesscito/btns/play-again-icon.webp",
-    png: "/art/new-assets-chesscito/btns/play-again-icon.png",
-  },
-  "save-victory": {
-    avif: "/art/new-icons-chesscito/save.avif",
-    webp: "/art/new-icons-chesscito/save.webp",
-    png: "/art/new-icons-chesscito/save.png",
-  },
-  "ask-coach": {
-    avif: "/art/new-assets-chesscito/btns/ask-coach-icon.avif",
-    webp: "/art/new-assets-chesscito/btns/ask-coach-icon.webp",
-    png: "/art/new-assets-chesscito/btns/ask-coach-icon.png",
-  },
-  share: {
-    avif: "/art/action-row/trofeo-epico.avif",
-    webp: "/art/action-row/trofeo-epico.webp",
-    png: "/art/action-row/trofeo-epico.png",
-  },
+const TILE_ICON: Record<TileKind, ThemeAssetKey> = {
+  "play-again": "coach.play-again",
+  "save-victory": "arena.save",
+  "ask-coach": "coach.ask-icon",
+  share: "shared.trophy-epic",
 };
 
 /**
@@ -274,11 +260,7 @@ export function GameActionsBar({
               {tile.costRibbon && (
                 <CoachCostRibbon variant="tile" proActive={!!proActive} />
               )}
-              <picture className="coach-viewer__tile-icon">
-                <source srcSet={icon.avif} type="image/avif" />
-                <source srcSet={icon.webp} type="image/webp" />
-                <img src={icon.png} alt="" draggable={false} />
-              </picture>
+              <ThemeAssetPicture slot={icon} pictureClassName="coach-viewer__tile-icon" alt="" draggable={false} />
               {tile.pending && (
                 <span
                   className="coach-viewer__tile-spinner"

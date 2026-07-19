@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 /**
  * Welcome Pack tile — pinned at the TOP of the Shop sheet.
@@ -119,18 +120,7 @@ export function WelcomePackTile({
        *  design/version1-new/welcome-gift-icon.png. Overhangs the
        *  tile via the existing slot reserved earlier in the cluster.
        *  Triplet under /art/shop/welcome-gift. */}
-      <picture
-        className="welcome-pack-tile-sticker-slot welcome-pack-tile-sticker"
-      >
-        <source srcSet="/art/shop/welcome-gift.avif" type="image/avif" />
-        <source srcSet="/art/shop/welcome-gift.webp" type="image/webp" />
-        <img
-          src="/art/shop/welcome-gift.png"
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-        />
-      </picture>
+      <ThemeAssetPicture slot="shared.welcome-gift" pictureClassName="welcome-pack-tile-sticker-slot welcome-pack-tile-sticker" alt="" aria-hidden="true" draggable={false} />
 
       <div className="shop-item-tile-identity welcome-pack-tile-identity">
         <p className="shop-item-tile-name">{t("tile.title")}</p>

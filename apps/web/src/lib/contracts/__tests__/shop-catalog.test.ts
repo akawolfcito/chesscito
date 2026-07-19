@@ -10,6 +10,7 @@ import {
   SHOP_ITEMS,
   SHOP_TILE_ASSETS,
 } from "../shop-catalog";
+import { resolveThemeAsset } from "@/lib/themes/resolve-theme-asset";
 
 function findWebRoot(): string {
   let dir = __dirname;
@@ -68,16 +69,19 @@ describe("SHOP_TILE_ASSETS path resolution", () => {
   });
 
   it("uses extensionless basenames so the consumer can build image-set() per format", () => {
-    for (const [, { icon }] of entries) {
-      expect(icon).not.toMatch(/\.(png|webp|avif|jpg|jpeg|svg)$/i);
-      expect(icon.startsWith("/art/")).toBe(true);
+    for (const [, { icon, iconSlot }] of entries) {
+      const basename = icon ?? (iconSlot ? resolveThemeAsset(iconSlot, "default") : null);
+      expect(basename).toBeTruthy();
+      expect(basename).not.toMatch(/\.(png|webp|avif|jpg|jpeg|svg)$/i);
+      expect(basename?.startsWith("/art/")).toBe(true);
     }
   });
 
-  for (const [copyKey, { icon }] of entries) {
+  for (const [copyKey, { icon, iconSlot }] of entries) {
+    const basename = icon ?? (iconSlot ? resolveThemeAsset(iconSlot, "default") : null);
     for (const ext of FORMATS) {
-      it(`${copyKey} icon resolves to ${icon}${ext}`, () => {
-        const full = join(PUBLIC, `${icon}${ext}`);
+      it(`${copyKey} icon resolves to ${basename}${ext}`, () => {
+        const full = join(PUBLIC, `${basename}${ext}`);
         expect(existsSync(full)).toBe(true);
       });
     }

@@ -5,13 +5,17 @@ import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { CHAIN_NAMES } from "@/lib/content/editorial";
+import { useThemeBackground } from "@/lib/themes/use-theme-background";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 type SelectedItem = {
   label: string;
   subtitle: string;
-  icon: string;
+  icon?: string;
+  iconSlot?: ThemeAssetKey;
   configured: boolean;
   enabled: boolean;
   onChainPrice: bigint;
@@ -72,6 +76,7 @@ export function PurchaseConfirmSheet({
   const t = useTranslations("PURCHASE_CONFIRM_COPY");
   const tField = useTranslations("PURCHASE_FIELD_LABELS");
   const tShop = useTranslations("SHOP_SHEET_COPY");
+  const panelBackground = useThemeBackground("shared.mission-panel");
 
   const [mounted, setMounted] = useState(open);
   const [exiting, setExiting] = useState(false);
@@ -179,8 +184,7 @@ export function PurchaseConfirmSheet({
         <div
           className="relative w-full"
           style={{
-            backgroundImage:
-              'image-set(url("/art/screen-mission/panel-mision-icon.avif") type("image/avif"), url("/art/screen-mission/panel-mision-icon.webp") type("image/webp"), url("/art/screen-mission/panel-mision-icon.png") type("image/png"))',
+            backgroundImage: panelBackground,
             backgroundSize: "100% 100%",
             backgroundRepeat: "no-repeat",
           }}
@@ -194,33 +198,21 @@ export function PurchaseConfirmSheet({
             disabled={purchasePhase !== "idle"}
             className="candy-close-asset-button absolute right-[4%] top-[4%] z-10 disabled:opacity-50"
           >
-            <picture>
-              <source srcSet="/art/screen-mission/close-icon.avif" type="image/avif" />
-              <source srcSet="/art/screen-mission/close-icon.webp" type="image/webp" />
-              <img
-                src="/art/screen-mission/close-icon.png"
-                alt=""
-                aria-hidden="true"
-                className="h-10 w-10 object-contain"
-                draggable={false}
-              />
-            </picture>
+            <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-10 w-10 object-contain" draggable={false} />
           </button>
 
           {/* SKU icon — floats at top-left as a separate decorative
            *  element so the centered title doesn't compete with the
            *  close ⊗ for horizontal space. */}
-          <picture className="pointer-events-none absolute left-[6%] top-[5%] z-[1]">
-            <source srcSet={`${selectedItem.icon}.avif`} type="image/avif" />
-            <source srcSet={`${selectedItem.icon}.webp`} type="image/webp" />
-            <img
-              src={`${selectedItem.icon}.png`}
-              alt=""
-              aria-hidden="true"
-              className="h-14 w-14 object-contain drop-shadow-[0_3px_6px_rgba(120,65,5,0.35)]"
-              draggable={false}
-            />
-          </picture>
+          {selectedItem.iconSlot ? (
+            <ThemeAssetPicture slot={selectedItem.iconSlot} pictureClassName="pointer-events-none absolute left-[6%] top-[5%] z-[1]" alt="" aria-hidden="true" className="h-14 w-14 object-contain drop-shadow-[0_3px_6px_rgba(120,65,5,0.35)]" draggable={false} />
+          ) : selectedItem.icon ? (
+            <picture className="pointer-events-none absolute left-[6%] top-[5%] z-[1]">
+              <source srcSet={`${selectedItem.icon}.avif`} type="image/avif" />
+              <source srcSet={`${selectedItem.icon}.webp`} type="image/webp" />
+              <img src={`${selectedItem.icon}.png`} alt="" aria-hidden="true" className="h-14 w-14 object-contain drop-shadow-[0_3px_6px_rgba(120,65,5,0.35)]" draggable={false} />
+            </picture>
+          ) : null}
 
           <div className="flex flex-col items-center px-[8%] pt-[6%] pb-[5%]">
             {/* Centered small-caps title between adorno flanks. The
@@ -258,45 +250,15 @@ export function PurchaseConfirmSheet({
             </p>
 
             {/* Adorno divider. */}
-            <picture>
-              <source srcSet="/art/screen-mission/adorno-icon.avif" type="image/avif" />
-              <source srcSet="/art/screen-mission/adorno-icon.webp" type="image/webp" />
-              <img
-                src="/art/screen-mission/adorno-icon.png"
-                alt=""
-                aria-hidden="true"
-                className="mt-3 h-3 w-32 object-contain"
-                draggable={false}
-              />
-            </picture>
+            <ThemeAssetPicture slot="shared.mission-adorno" alt="" aria-hidden="true" className="mt-3 h-3 w-32 object-contain" draggable={false} />
 
             {/* Price pill — cream with plant flanks. */}
             <div className="purchase-confirm-price-pill mt-3">
-              <picture>
-                <source srcSet="/art/new-assets-chesscito/plant1.avif" type="image/avif" />
-                <source srcSet="/art/new-assets-chesscito/plant1.webp" type="image/webp" />
-                <img
-                  src="/art/new-assets-chesscito/plant1.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="purchase-confirm-price-flank"
-                  draggable={false}
-                />
-              </picture>
+              <ThemeAssetPicture slot="exercises.plant" alt="" aria-hidden="true" className="purchase-confirm-price-flank" draggable={false} />
               <span className="purchase-confirm-price-value">
                 {formatUsd(selectedItem.onChainPrice)}
               </span>
-              <picture>
-                <source srcSet="/art/new-assets-chesscito/plant1.avif" type="image/avif" />
-                <source srcSet="/art/new-assets-chesscito/plant1.webp" type="image/webp" />
-                <img
-                  src="/art/new-assets-chesscito/plant1.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="purchase-confirm-price-flank purchase-confirm-price-flank--mirror"
-                  draggable={false}
-                />
-              </picture>
+              <ThemeAssetPicture slot="exercises.plant" alt="" aria-hidden="true" className="purchase-confirm-price-flank purchase-confirm-price-flank--mirror" draggable={false} />
             </div>
 
             {/* Status + Network info block. */}

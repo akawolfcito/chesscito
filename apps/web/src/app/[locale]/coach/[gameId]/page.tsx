@@ -27,7 +27,7 @@ export default async function CoachGamePage({ params, searchParams }: PageProps)
       <main className="arena-bg arena-scroll-screen h-[100dvh]">
         <ContextualHeader
           variant="back-control"
-          iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
+          iconSlot={<TileIconSlot slot="hub.training" />}
           title={t("reconnectTitle")}
           subtitle={t("reconnectSubtitle")}
         />
@@ -43,7 +43,7 @@ export default async function CoachGamePage({ params, searchParams }: PageProps)
       <main className="arena-bg arena-scroll-screen h-[100dvh]">
         <ContextualHeader
           variant="back-control"
-          iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
+          iconSlot={<TileIconSlot slot="hub.training" />}
           title={t("notFoundMessage")}
         />
         <CoachGameClient gameRecord={null} walletAddress={wallet as `0x${string}`} />
@@ -69,7 +69,7 @@ export default async function CoachGamePage({ params, searchParams }: PageProps)
       <main className="arena-bg arena-scroll-screen h-[100dvh]">
         <ContextualHeader
           variant="back-control"
-          iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
+          iconSlot={<TileIconSlot slot="hub.training" />}
           title={t("loadErrorTitle")}
           subtitle={t("loadErrorSubtitle")}
         />
@@ -83,7 +83,7 @@ export default async function CoachGamePage({ params, searchParams }: PageProps)
       <main className="arena-bg arena-scroll-screen h-[100dvh]">
         <ContextualHeader
           variant="back-control"
-          iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
+          iconSlot={<TileIconSlot slot="hub.training" />}
           title={t("notFoundMessage")}
         />
         <CoachGameClient gameRecord={null} walletAddress={wallet as `0x${string}`} />

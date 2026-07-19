@@ -16,6 +16,8 @@ import { GameBoard } from "@/lib/game/game-board";
 import { hapticTap, hapticReject, hapticSuccess } from "@/lib/haptics";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
 import { BOARD_HINT_COPY } from "@/lib/content/editorial";
+import { useThemePieceAssets } from "@/lib/themes/piece-theme-assets";
+import { useCurrentThemeAsset } from "@/lib/themes/use-current-theme-asset";
 
 const SELECT_HINT_DURATION_MS = 2200;
 
@@ -34,27 +36,6 @@ const SNAP_BACK_MS = 200;
  *  Vertical edges (top of the board) bite first — the original "always
  *  above" placement clipped on rank 7-8. Horizontal edges matter for the
  *  a/h files where the centered pill would overflow the canvas. */
-const PIECE_BASE = THEME_CONFIG.piecesBase;
-
-const PIECE_IMG: Record<PieceId, string> = {
-  rook:   `${PIECE_BASE}/w-rook.png`,
-  bishop: `${PIECE_BASE}/w-bishop.png`,
-  knight: `${PIECE_BASE}/w-knight.png`,
-  pawn:   `${PIECE_BASE}/w-pawn.png`,
-  queen:  `${PIECE_BASE}/w-queen.png`,
-  king:   `${PIECE_BASE}/w-king.png`,
-};
-
-/** Capture-objective marker. Universal star sprite — clearer than a chained
- *  enemy piece and avoids per-piece asset production. */
-const TARGET_MARKER_SRC = "/art/redesign/icons/star.png";
-
-/** Enemy piece drawn on a `captureTargets` square in practice mode. A pawn
- *  captures diagonally ONTO a piece; if the square were empty, the diagonal
- *  move dot would teach an illegal diagonal move. Black (enemy) art contrasts
- *  with the white knight used for friendly blockers. */
-const CAPTURE_ENEMY_SRC = `${PIECE_BASE}/b-pawn.png`;
-
 const PIECE_IMG_CLASS = ASSET_THEME === "candy"
   ? "playhub-board-piece-img arena-treat-natural"
   : "playhub-board-piece-img";
@@ -103,6 +84,8 @@ export function Board({
   tutorialHints,
   peonesHint = null,
 }: BoardProps) {
+  const pieceAssets = useThemePieceAssets();
+  const targetMarkerSrc = useCurrentThemeAsset("shared.star");
   const [piece, setPiece] = useState(() => makePiece(pieceType, startPosition));
   const [selectedPosition, setSelectedPosition] = useState<BoardPosition | null>(
     null
@@ -341,7 +324,8 @@ export function Board({
       {isCapture && targetPosition && !(piece.position.file === targetPosition.file && piece.position.rank === targetPosition.rank) && (() => {
         const tc = cellCenter(targetPosition.file, targetPosition.rank);
         const tw = pieceWidth();
-        const targetImg = TARGET_MARKER_SRC;
+        const targetImg = targetMarkerSrc;
+        if (!targetImg) return null;
         return (
           <picture
             className="playhub-board-target-piece"
@@ -353,12 +337,12 @@ export function Board({
           >
             {THEME_CONFIG.hasOptimizedFormats && (
               <>
-                <source srcSet={targetImg.replace(".png", ".avif")} type="image/avif" />
-                <source srcSet={targetImg.replace(".png", ".webp")} type="image/webp" />
+                <source srcSet={`${targetImg}.avif`} type="image/avif" />
+                <source srcSet={`${targetImg}.webp`} type="image/webp" />
               </>
             )}
             <img
-              src={targetImg}
+              src={`${targetImg}.png`}
               alt="Capture target"
               className="playhub-board-target-piece-img"
               style={{ width: "100%" }}
@@ -417,6 +401,8 @@ export function Board({
         if (capturedSquares.has(`${ct.file},${ct.rank}`)) return null;
         const center = cellCenter(ct.file, ct.rank);
         const pw = pieceWidth();
+        const captureEnemySrc = pieceAssets.b.pawn;
+        if (!captureEnemySrc) return null;
         return (
           <picture
             key={`capture-enemy-${ct.file}-${ct.rank}`}
@@ -430,12 +416,12 @@ export function Board({
           >
             {THEME_CONFIG.hasOptimizedFormats && (
               <>
-                <source srcSet={CAPTURE_ENEMY_SRC.replace(".png", ".avif")} type="image/avif" />
-                <source srcSet={CAPTURE_ENEMY_SRC.replace(".png", ".webp")} type="image/webp" />
+                <source srcSet={`${captureEnemySrc}.avif`} type="image/avif" />
+                <source srcSet={`${captureEnemySrc}.webp`} type="image/webp" />
               </>
             )}
             <img
-              src={CAPTURE_ENEMY_SRC}
+              src={`${captureEnemySrc}.png`}
               alt=""
               aria-hidden="true"
               className={PIECE_IMG_CLASS}
@@ -482,6 +468,8 @@ export function Board({
       {mode !== "labyrinth" && (obstacles ?? []).map((o) => {
         const center = cellCenter(o.file, o.rank);
         const pw = pieceWidth();
+        const blockerSrc = pieceAssets.w.knight;
+        if (!blockerSrc) return null;
         return (
           <picture
             key={`blocker-${o.file}-${o.rank}`}
@@ -495,12 +483,12 @@ export function Board({
           >
             {THEME_CONFIG.hasOptimizedFormats && (
               <>
-                <source srcSet={PIECE_IMG.knight.replace(".png", ".avif")} type="image/avif" />
-                <source srcSet={PIECE_IMG.knight.replace(".png", ".webp")} type="image/webp" />
+                <source srcSet={`${blockerSrc}.avif`} type="image/avif" />
+                <source srcSet={`${blockerSrc}.webp`} type="image/webp" />
               </>
             )}
             <img
-              src={PIECE_IMG.knight}
+              src={`${blockerSrc}.png`}
               alt=""
               aria-hidden="true"
               className={PIECE_IMG_CLASS}
@@ -522,6 +510,8 @@ export function Board({
           selectedPosition !== null &&
           arePositionsEqual(selectedPosition, piece.position);
         const isDragging = dragOffset !== null;
+        const activePieceSrc = pieceAssets.w[piece.type];
+        if (!activePieceSrc) return null;
         const dragStyle = isDragging
           ? ({
               ["--drag-dx" as string]: `${dragOffset.dx}px`,
@@ -664,12 +654,12 @@ export function Board({
           >
             {THEME_CONFIG.hasOptimizedFormats && (
               <>
-                <source srcSet={PIECE_IMG[piece.type].replace(".png", ".avif")} type="image/avif" />
-                <source srcSet={PIECE_IMG[piece.type].replace(".png", ".webp")} type="image/webp" />
+                <source srcSet={`${activePieceSrc}.avif`} type="image/avif" />
+                <source srcSet={`${activePieceSrc}.webp`} type="image/webp" />
               </>
             )}
             <img
-              src={PIECE_IMG[piece.type]}
+              src={`${activePieceSrc}.png`}
               alt={`White ${piece.type}`}
               className={PIECE_IMG_CLASS}
               style={{ width: "100%" }}

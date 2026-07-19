@@ -4,7 +4,9 @@ import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { formatTime } from "@/lib/game/arena-utils";
+import { useThemeBackground } from "@/lib/themes/use-theme-background";
 
 import { AcceptChallengeButton } from "@/app/[locale]/victory/[id]/accept-challenge-button";
 
@@ -28,6 +30,7 @@ export type VictoryLandingInfo = {
 export function VictoryLandingCard({ v }: { v: VictoryLandingInfo }) {
   const t = useTranslations("VICTORY_PAGE_COPY");
   const isCheckmate = ARENA_DIFFICULTIES.has(v.difficultyRaw);
+  const panelBackground = useThemeBackground("shared.panel-bg");
   const headline = isCheckmate
     ? t("metaCheckmate", { moves: v.moves })
     : t("metaComplete", { moves: v.moves });
@@ -39,8 +42,7 @@ export function VictoryLandingCard({ v }: { v: VictoryLandingInfo }) {
       <div
         className="relative w-full max-w-[340px] max-h-[92dvh] overflow-y-auto overscroll-contain"
         style={{
-          backgroundImage:
-            'image-set(url("/art/new-assets-chesscito/paneles/panel-bg1.avif") type("image/avif"), url("/art/new-assets-chesscito/paneles/panel-bg1.webp") type("image/webp"), url("/art/new-assets-chesscito/paneles/panel-bg1.png") type("image/png"))',
+          backgroundImage: panelBackground,
           backgroundSize: "100% 100%",
           backgroundRepeat: "no-repeat",
         }}
@@ -65,17 +67,13 @@ export function VictoryLandingCard({ v }: { v: VictoryLandingInfo }) {
             </span>
             <span className="candy-stat-pill">
               <span className="candy-stat-pill-icon">
-                <picture>
-                  <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-                  <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
-                  <img
-                    src="/art/redesign/pieces/w-pawn.png"
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                    className="block h-full w-full object-contain"
-                  />
-                </picture>
+                <ThemeAssetPicture
+                  slot="board.piece.white.pawn"
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  className="block h-full w-full object-contain"
+                />
               </span>
               {String(v.moves)}
             </span>
@@ -95,16 +93,7 @@ export function VictoryLandingCard({ v }: { v: VictoryLandingInfo }) {
                 </h2>
                 <p className="arena-result-coach-body-text">{t("tagline")}</p>
               </div>
-              <picture className="arena-result-coach-avatar">
-                <source srcSet="/art/new-assets-chesscito/fun/avatar-confiado.avif" type="image/avif" />
-                <source srcSet="/art/new-assets-chesscito/fun/avatar-confiado.webp" type="image/webp" />
-                <img
-                  src="/art/new-assets-chesscito/fun/avatar-confiado.png"
-                  alt=""
-                  aria-hidden="true"
-                  draggable={false}
-                />
-              </picture>
+              <ThemeAssetPicture slot="shared.feedback-confident" pictureClassName="arena-result-coach-avatar" alt="" aria-hidden="true" draggable={false} />
             </div>
           </div>
 

@@ -7,6 +7,7 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { formatTime } from "@/lib/game/arena-utils";
 import sparklesData from "@/../public/animations/sparkles.json";
 import { VictoryPopupShell } from "./victory-popup-shell";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 type Props = {
   moves: number;
@@ -19,7 +20,6 @@ type Props = {
   onClose?: () => void;
 };
 
-const AVATAR_BASE = "/art/new-assets-chesscito/fun/avatar-confiado";
 const STEP_KEYS = ["signing", "confirming", "done"] as const;
 
 /**
@@ -81,17 +81,7 @@ export function VictoryClaiming({
         </span>
         <span className="candy-stat-pill">
           <span className="candy-stat-pill-icon">
-            <picture>
-              <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-              <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
-              <img
-                src="/art/redesign/pieces/w-pawn.png"
-                alt=""
-                aria-hidden="true"
-                draggable={false}
-                className="block h-full w-full object-contain"
-              />
-            </picture>
+<ThemeAssetPicture slot="board.piece.white.pawn" alt="" aria-hidden="true" draggable={false} className="block h-full w-full object-contain" />
           </span>
           {String(moves)}
         </span>
@@ -130,11 +120,7 @@ export function VictoryClaiming({
           </div>
           <p className="victory-popup-progress-hint">{tClaim("progressTimeHint")}</p>
         </div>
-        <picture className="arena-result-coach-avatar victory-popup-avatar">
-          <source srcSet={`${AVATAR_BASE}.avif`} type="image/avif" />
-          <source srcSet={`${AVATAR_BASE}.webp`} type="image/webp" />
-          <img src={`${AVATAR_BASE}.png`} alt="" aria-hidden="true" draggable={false} />
-        </picture>
+        <ThemeAssetPicture slot="shared.feedback-confident" pictureClassName="arena-result-coach-avatar victory-popup-avatar" alt="" aria-hidden="true" draggable={false} />
       </div>
     </VictoryPopupShell>
   );

@@ -1,11 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 /** Cofre-check seal art (triplet). Static asset (not theme-swappable), so
  *  the optimized sources always render. */
-const SAVED_SEAL_ICON = "/art/new-icons-chesscito/score-saved";
-
 type SavedChipProps = {
   /** Stars currently saved for the active piece (denominator is total
    *  exercises per piece, fixed at 15 per the existing scoring rule). */
@@ -25,17 +24,7 @@ type SavedChipProps = {
 function SavedSeal() {
   return (
     <span className="action-pin-submit-pedestal relative flex shrink-0 items-center justify-center">
-      <picture>
-        <source srcSet={`${SAVED_SEAL_ICON}.avif`} type="image/avif" />
-        <source srcSet={`${SAVED_SEAL_ICON}.webp`} type="image/webp" />
-        <img
-          src={`${SAVED_SEAL_ICON}.png`}
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-          className="object-contain"
-        />
-      </picture>
+      <ThemeAssetPicture slot="exercises.saved-seal" alt="" aria-hidden="true" draggable={false} className="object-contain" />
       <span
         aria-hidden="true"
         className="action-pin-status action-pin-status--done"

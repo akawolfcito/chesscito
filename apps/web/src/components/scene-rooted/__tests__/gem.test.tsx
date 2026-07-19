@@ -122,7 +122,7 @@ describe("Gem (Badge + Button) — globals.css contract", () => {
     const path = await import("node:path");
     const cssPath = path.resolve(__dirname, "../../../app/globals.css");
     const css = fs.readFileSync(cssPath, "utf8");
-    expect(css).toMatch(/--gem-pill-bg\s*:\s*url\(/);
+    expect(css).toMatch(/--gem-pill-bg\s*:\s*var\(--theme-scene-gem-pill\)/);
   });
 
   it("globals.css defines press feedback rule for .gem-button:active", async () => {

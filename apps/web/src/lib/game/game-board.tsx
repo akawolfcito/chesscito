@@ -21,6 +21,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { cellCenter, pieceWidth } from "@/lib/game/board-geometry";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 export const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 export const RANKS = [8, 7, 6, 5, 4, 3, 2, 1]; // top → bottom
@@ -29,8 +30,6 @@ export const RANKS = [8, 7, 6, 5, 4, 3, 2, 1]; // top → bottom
 export const BOARD_INSET = { top: 3.4, right: 3.56, bottom: 3.99, left: 3.65 };
 export const BOARD_INNER_W = 100 - BOARD_INSET.left - BOARD_INSET.right; // 92.79
 export const BOARD_INNER_H = 100 - BOARD_INSET.top - BOARD_INSET.bottom; // 92.61
-
-const ASSET = "/art/board";
 
 const LABEL_STYLE: CSSProperties = {
   position: "absolute",
@@ -203,23 +202,18 @@ export function GameBoard({
           (z1) but BELOW the overlay pieces (z4), mirroring the old image board
           where pieces painted on top of the (baked-in) frame — so a piece on an
           edge rank/file overhangs the border instead of being clipped by it. */}
-      <picture>
-        <source srcSet={`${ASSET}/borde-tablero-chesscito1.avif`} type="image/avif" />
-        <source srcSet={`${ASSET}/borde-tablero-chesscito1.webp`} type="image/webp" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={`${ASSET}/borde-tablero-chesscito1.png`}
-          alt=""
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            zIndex: 2,
-            pointerEvents: "none",
-          }}
-        />
-      </picture>
+      <ThemeAssetPicture
+        slot="board.frame"
+        alt=""
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          zIndex: 2,
+          pointerEvents: "none",
+        }}
+      />
 
       {/* Absolute overlay layer (pieces, capture floats, select hints) — inset
           to the same frame opening as the grid so cellCenter percentages

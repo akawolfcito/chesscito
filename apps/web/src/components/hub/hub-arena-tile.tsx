@@ -81,7 +81,7 @@ export function HubArenaTile({ setup, unlocked }: Props) {
     <>
       <div data-testid="mini-arena-trigger" className="contents">
         <HubActionTile
-          iconSrc="/art/new-icons-chesscito/training-icon-v1.png"
+          iconSlot="hub.training-icon"
           label={t("mateLabel")}
           ariaLabel={t("arenaUnlockedAriaFormat", { name: setup.name })}
           onClick={() => {

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { useThemeBackground } from "@/lib/themes/use-theme-background";
 
 type SoftGate = {
   onLearn: () => void;
@@ -35,6 +37,7 @@ const FADE_MS = 300;
  */
 export function SoftGateSheet({ softGate }: Props) {
   const t = useTranslations("ARENA_COPY");
+  const panelBackground = useThemeBackground("shared.mission-panel");
   const open = Boolean(softGate);
 
   const [mounted, setMounted] = useState(open);
@@ -87,8 +90,7 @@ export function SoftGateSheet({ softGate }: Props) {
         <div
           className="relative w-full"
           style={{
-            backgroundImage:
-              'image-set(url("/art/screen-mission/panel-mision-icon.avif") type("image/avif"), url("/art/screen-mission/panel-mision-icon.webp") type("image/webp"), url("/art/screen-mission/panel-mision-icon.png") type("image/png"))',
+            backgroundImage: panelBackground,
             backgroundSize: "100% 100%",
             backgroundRepeat: "no-repeat",
           }}
@@ -99,17 +101,7 @@ export function SoftGateSheet({ softGate }: Props) {
             aria-label={t("softGateRegionLabel")}
             className="candy-close-asset-button absolute right-[4%] top-[4%] z-10"
           >
-            <picture>
-              <source srcSet="/art/screen-mission/close-icon.avif" type="image/avif" />
-              <source srcSet="/art/screen-mission/close-icon.webp" type="image/webp" />
-              <img
-                src="/art/screen-mission/close-icon.png"
-                alt=""
-                aria-hidden="true"
-                className="h-10 w-10 object-contain"
-                draggable={false}
-              />
-            </picture>
+            <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-10 w-10 object-contain" draggable={false} />
           </button>
 
           <div className="flex flex-col items-center px-[10%] pt-[6%] pb-[5%]">
@@ -127,23 +119,7 @@ export function SoftGateSheet({ softGate }: Props) {
             </div>
 
             <div className="mt-3 flex w-full items-center gap-3">
-              <picture className="shrink-0">
-                <source
-                  srcSet="/art/screen-mission/avatar-icon.avif"
-                  type="image/avif"
-                />
-                <source
-                  srcSet="/art/screen-mission/avatar-icon.webp"
-                  type="image/webp"
-                />
-                <img
-                  src="/art/screen-mission/avatar-icon.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="h-20 w-20 object-contain drop-shadow-[0_3px_10px_rgba(120,65,5,0.45)]"
-                  draggable={false}
-                />
-              </picture>
+              <ThemeAssetPicture slot="shared.mission-avatar" pictureClassName="shrink-0" alt="" aria-hidden="true" className="h-20 w-20 object-contain drop-shadow-[0_3px_10px_rgba(120,65,5,0.45)]" draggable={false} />
               <div className="min-w-0 flex-1">
                 <p
                   className="text-left text-base font-extrabold leading-tight"
@@ -166,23 +142,7 @@ export function SoftGateSheet({ softGate }: Props) {
               </div>
             </div>
 
-            <picture>
-              <source
-                srcSet="/art/screen-mission/adorno-icon.avif"
-                type="image/avif"
-              />
-              <source
-                srcSet="/art/screen-mission/adorno-icon.webp"
-                type="image/webp"
-              />
-              <img
-                src="/art/screen-mission/adorno-icon.png"
-                alt=""
-                aria-hidden="true"
-                className="mt-4 h-4 w-44 object-contain"
-                draggable={false}
-              />
-            </picture>
+            <ThemeAssetPicture slot="shared.mission-adorno" alt="" aria-hidden="true" className="mt-4 h-4 w-44 object-contain" draggable={false} />
 
             <div
               role="region"

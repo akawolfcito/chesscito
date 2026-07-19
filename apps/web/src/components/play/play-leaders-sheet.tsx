@@ -94,7 +94,7 @@ export function PlayLeadersSheet({ open, onOpenChange }: PlayLeadersSheetProps) 
         <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <ContextualHeader
             variant="close-control"
-            iconSlot={<TileIconSlot src="/art/leaderboard-menu" />}
+            iconSlot={<TileIconSlot slot="exercises.leaderboard-menu" />}
             title={t("pageTitle")}
             subtitle={t("pageDescription")}
             close={{ onClick: () => onOpenChange(false), label: t("closeSheetLabel") }}

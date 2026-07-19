@@ -18,6 +18,7 @@ import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { AppModeSwitch } from "@/components/hub/app-mode-switch";
 import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 /** Contextual Hero CTA — replaces the legacy PrimaryPlayCta when wired.
  *  `color` drives the visual tint (amber = default/onboarding, blue =
@@ -263,29 +264,15 @@ export function HubScaffold({
             {/* Full hub: decorative pawn + guide + king strip. (The Lite hub
                 renders its own HubLiteScaffold; this scaffold is Full-only.) */}
             <div className="hub-scaffold-guide" aria-hidden="true">
-              <picture className="hub-scaffold-guide-piece">
-                <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-                <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
-                <img src="/art/redesign/pieces/w-pawn.png" alt="" />
-              </picture>
-              <picture className="hub-scaffold-guide-sequence">
-                <source srcSet="/art/scene-rooted/guide-secuencia.avif" type="image/avif" />
-                <source srcSet="/art/scene-rooted/guide-secuencia.webp" type="image/webp" />
-                {/* Intrinsic dims so the browser reserves layout space
-                    pre-load (PSI CLS audit 2026-06-12); CSS still owns
-                    the rendered size. */}
-                <img
-                  src="/art/scene-rooted/guide-secuencia.png"
-                  alt=""
-                  width={289}
-                  height={121}
-                />
-              </picture>
-              <picture className="hub-scaffold-guide-piece">
-                <source srcSet="/art/redesign/pieces/w-king.avif" type="image/avif" />
-                <source srcSet="/art/redesign/pieces/w-king.webp" type="image/webp" />
-                <img src="/art/redesign/pieces/w-king.png" alt="" />
-              </picture>
+              <ThemeAssetPicture slot="board.piece.white.pawn" pictureClassName="hub-scaffold-guide-piece" alt="" />
+              <ThemeAssetPicture
+                slot="hub.guide"
+                pictureClassName="hub-scaffold-guide-sequence"
+                alt=""
+                width={289}
+                height={121}
+              />
+              <ThemeAssetPicture slot="board.piece.white.king" pictureClassName="hub-scaffold-guide-piece" alt="" />
             </div>
             {heroCta ? (
               wrap(
@@ -307,7 +294,7 @@ export function HubScaffold({
                   label={playLabel}
                   ariaLabel={playAriaLabel}
                   onPress={onPlayPress}
-                  pieceIconSrc="/art/new-icons-chesscito/play-chess.png"
+                  pieceIconSlot="hub.play-chess"
                 />,
               )
             ) : null}
@@ -348,7 +335,7 @@ export function HubScaffold({
               />
               {onCoachTap ? (
                 <HubActionTile
-                  iconSrc="/art/new-icons-chesscito/training.png"
+                  iconSlot="hub.training"
                   label={tRail("coachLabel")}
                   ariaLabel={tHud("coachAriaLabel")}
                   onClick={onCoachTap}
@@ -382,7 +369,7 @@ export function HubScaffold({
                       ariaLabel={secondaryAction.ariaLabel}
                       onPress={secondaryAction.onPress}
                       className="hub-scaffold-practice-cta"
-                      pieceIconSrc="/art/hub/train-pieces.png"
+                      pieceIconSlot="hub.train-pieces"
                     />
                   </div>,
                 )
@@ -413,7 +400,7 @@ export function HubScaffold({
                     ariaLabel={tSecondary("arena.ariaLabel")}
                     onPress={onArenaPress}
                     className="hub-scaffold-arena-cta"
-                    pieceIconSrc="/art/hub/enter-arena.png"
+                    pieceIconSlot="hub.enter-arena"
                   />,
                 )
               : null}

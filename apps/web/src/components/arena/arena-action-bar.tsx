@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { ArenaConfirmModal } from "@/components/arena/arena-confirm-modal";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 type Props = {
   onResign: () => void;
@@ -12,15 +14,12 @@ type Props = {
   isEndState: boolean;
 };
 
-const RESIGN_ICON_BASE = "/art/new-assets-chesscito/arena/resign-game";
-const UNDO_ICON_BASE = "/art/new-assets-chesscito/arena/undo-move";
-
 type ArenaActionButtonProps = {
   onClick?: () => void;
   disabled?: boolean;
   ariaLabel: string;
   ariaPressed?: boolean;
-  iconBase: string;
+  iconSlot: ThemeAssetKey;
   label: string;
 };
 
@@ -33,7 +32,7 @@ function ArenaActionButton({
   disabled = false,
   ariaLabel,
   ariaPressed,
-  iconBase,
+  iconSlot,
   label,
 }: ArenaActionButtonProps) {
   return (
@@ -45,11 +44,7 @@ function ArenaActionButton({
       aria-pressed={ariaPressed}
       className="arena-action-button"
     >
-      <picture className="arena-action-button-icon">
-        <source srcSet={`${iconBase}.avif`} type="image/avif" />
-        <source srcSet={`${iconBase}.webp`} type="image/webp" />
-        <img src={`${iconBase}.png`} alt="" aria-hidden="true" />
-      </picture>
+      <ThemeAssetPicture slot={iconSlot} pictureClassName="arena-action-button-icon" alt="" aria-hidden="true" />
       <span className="arena-action-button-label">{label}</span>
     </button>
   );
@@ -85,7 +80,7 @@ export function ArenaActionBar({
         onClick={isHidden ? undefined : () => setResignModalOpen(true)}
         disabled={isHidden}
         ariaLabel={resignLabel}
-        iconBase={RESIGN_ICON_BASE}
+        iconSlot="arena.resign"
         label={resignLabel}
       />
 
@@ -93,7 +88,7 @@ export function ArenaActionBar({
         onClick={isHidden ? undefined : onUndo}
         disabled={isHidden || !canUndo || !onUndo}
         ariaLabel={t("undo")}
-        iconBase={UNDO_ICON_BASE}
+        iconSlot="arena.undo"
         label={t("undo")}
       />
 

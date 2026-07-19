@@ -2,8 +2,9 @@
 
 import { useTranslations } from 'next-intl'
 
-import { PIECE_IMAGES, PIECE_LABELS } from '@/lib/content/editorial'
-import { THEME_CONFIG } from '@/lib/theme'
+import { PIECE_LABELS } from '@/lib/content/editorial'
+import { ThemeAssetPicture } from '@/components/themes/theme-asset-picture'
+import { pieceThemeSlot } from '@/lib/themes/piece-theme-assets'
 
 type PieceKey = keyof typeof PIECE_LABELS
 
@@ -30,7 +31,6 @@ export function PiecePickerTrigger({
 }: Props) {
   const tPiece = useTranslations('PIECE_LABELS')
   const tRail = useTranslations('PIECE_RAIL_COPY')
-  const src = PIECE_IMAGES[selectedPiece]
   const pieceLabel = tPiece(selectedPiece)
   return (
     <button
@@ -54,26 +54,17 @@ export function PiecePickerTrigger({
             }
       }
     >
-      <picture
-        className={
+      <ThemeAssetPicture
+        slot={pieceThemeSlot('w', selectedPiece)}
+        pictureClassName={
           showLabel
             ? 'candy-tray-pill-icon candy-tray-pill-icon--floating'
             : 'h-5 w-5 shrink-0'
         }
-      >
-        {THEME_CONFIG.hasOptimizedFormats && (
-          <>
-            <source srcSet={`${src}.avif`} type="image/avif" />
-            <source srcSet={`${src}.webp`} type="image/webp" />
-          </>
-        )}
-        <img
-          src={`${src}.png`}
-          alt=""
-          aria-hidden="true"
-          className="h-full w-full object-contain"
-        />
-      </picture>
+        alt=""
+        aria-hidden="true"
+        className="h-full w-full object-contain"
+      />
       {showLabel && (
         <span
           className="min-w-0 truncate text-sm font-extrabold"

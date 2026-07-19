@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 type Props = {
   onContinue: () => void;
@@ -17,16 +18,7 @@ export function FirstFocusDayOverlay({ onContinue }: Props) {
         ariaLabel={t("title")}
       >
         {/* Achievement badge image */}
-        <picture className="mx-auto block">
-          <source srcSet="/art/achievements/1day-focus.avif" type="image/avif" />
-          <source srcSet="/art/achievements/1day-focus.webp" type="image/webp" />
-          <img
-            src="/art/achievements/1day-focus.png"
-            alt={t("title")}
-            className="mx-auto h-28 w-28 object-contain"
-            draggable={false}
-          />
-        </picture>
+        <ThemeAssetPicture slot="welcome.achievement-1day" pictureClassName="mx-auto block" alt={t("title")} className="mx-auto h-28 w-28 object-contain" draggable={false} />
 
         <div className="flex w-full flex-col items-center gap-1 text-center">
           <p

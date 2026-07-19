@@ -1,5 +1,4 @@
 import { Chess } from "chess.js";
-import { THEME_CONFIG } from "@/lib/theme";
 import type { ChessBoardPiece, ChessPieceId, PieceColor } from "./types";
 
 /** Map chess.js single-char piece types to our ChessPieceId */
@@ -10,28 +9,6 @@ const PIECE_MAP: Record<string, ChessPieceId> = {
   r: "rook",
   q: "queen",
   k: "king",
-};
-
-const BASE = THEME_CONFIG.piecesBase;
-
-/** All piece image paths keyed by color and ChessPieceId (theme-aware) */
-export const ARENA_PIECE_IMG: Record<PieceColor, Record<ChessPieceId, string>> = {
-  w: {
-    pawn: `${BASE}/w-pawn.png`,
-    knight: `${BASE}/w-knight.png`,
-    bishop: `${BASE}/w-bishop.png`,
-    rook: `${BASE}/w-rook.png`,
-    queen: `${BASE}/w-queen.png`,
-    king: `${BASE}/w-king.png`,
-  },
-  b: {
-    pawn: `${BASE}/b-pawn.png`,
-    knight: `${BASE}/b-knight.png`,
-    bishop: `${BASE}/b-bishop.png`,
-    rook: `${BASE}/b-rook.png`,
-    queen: `${BASE}/b-queen.png`,
-    king: `${BASE}/b-king.png`,
-  },
 };
 
 /** Raw piece data from FEN — identity (`id`) is attached later by the hook

@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 import { PhoneFrame } from "./phone-frame";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 type ScreenSlot = {
-  src: string;
+  slot: ThemeAssetKey;
   alt: string;
   label?: string;
 };
@@ -55,15 +57,7 @@ export function PhoneStack({
         }}
       >
         <PhoneFrame label={secondary.label}>
-          <picture>
-            <source srcSet={`${secondary.src}.avif`} type="image/avif" />
-            <source srcSet={`${secondary.src}.webp`} type="image/webp" />
-            <img
-              src={`${secondary.src}.png`}
-              alt={secondary.alt}
-              className="h-full w-full object-cover"
-            />
-          </picture>
+          <ThemeAssetPicture slot={secondary.slot} alt={secondary.alt} className="h-full w-full object-cover" />
         </PhoneFrame>
       </div>
 
@@ -72,15 +66,7 @@ export function PhoneStack({
           rather than over the stack container. */}
       <div className="relative z-10 mx-auto md:mt-0">
         <PhoneFrame label={primary.label}>
-          <picture>
-            <source srcSet={`${primary.src}.avif`} type="image/avif" />
-            <source srcSet={`${primary.src}.webp`} type="image/webp" />
-            <img
-              src={`${primary.src}.png`}
-              alt={primary.alt}
-              className="h-full w-full object-cover"
-            />
-          </picture>
+          <ThemeAssetPicture slot={primary.slot} alt={primary.alt} className="h-full w-full object-cover" />
         </PhoneFrame>
         {floatingNode && (
           <div className="pointer-events-none absolute right-[-8%] top-[18%] z-20 hidden md:block">

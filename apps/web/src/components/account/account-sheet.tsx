@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LocaleSwitcher } from "@/components/i18n/locale-switcher";
 import { ChesitoCard } from "@/components/peones/chesito-card";
@@ -121,7 +122,7 @@ export function AccountSheet({
         <div className="-mx-6 -mt-6 shrink-0 border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
-            iconSlot={<TileIconSlot src="/art/screen-mission/account-icon" />}
+            iconSlot={<TileIconSlot slot="account.account-icon" />}
             title={t("title")}
             subtitle={t("description")}
             close={{ onClick: () => onOpenChange(false), label: t("closeAriaLabel") }}
@@ -158,16 +159,7 @@ export function AccountSheet({
             {(() => {
               const walletIcon = (
                 <span className="account-tile-icon">
-                  <picture>
-                    <source srcSet="/art/new-assets-chesscito/account/wallet-icon.avif" type="image/avif" />
-                    <source srcSet="/art/new-assets-chesscito/account/wallet-icon.webp" type="image/webp" />
-                    <img
-                      src="/art/new-assets-chesscito/account/wallet-icon.png"
-                      alt=""
-                      aria-hidden="true"
-                      draggable={false}
-                    />
-                  </picture>
+                  <ThemeAssetPicture slot="account.wallet-icon" alt="" aria-hidden="true" draggable={false} />
                 </span>
               );
 
@@ -203,16 +195,7 @@ export function AccountSheet({
             {/* Network — read-only */}
             <div className="account-tile is-static" role="group" aria-label={t("networkLabel")}>
               <span className="account-tile-icon">
-                <picture>
-                  <source srcSet="/art/new-assets-chesscito/account/network-icon.avif" type="image/avif" />
-                  <source srcSet="/art/new-assets-chesscito/account/network-icon.webp" type="image/webp" />
-                  <img
-                    src="/art/new-assets-chesscito/account/network-icon.png"
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                  />
-                </picture>
+                <ThemeAssetPicture slot="account.network-icon" alt="" aria-hidden="true" draggable={false} />
               </span>
               <span className="account-tile-label">{t("networkLabel")}</span>
               <span className="account-status-pill" data-tone="celo">
@@ -229,16 +212,7 @@ export function AccountSheet({
               className="account-tile"
             >
               <span className="account-tile-icon">
-                <picture>
-                  <source srcSet="/art/screen-mission/corona-pro.avif" type="image/avif" />
-                  <source srcSet="/art/screen-mission/corona-pro.webp" type="image/webp" />
-                  <img
-                    src="/art/screen-mission/corona-pro.png"
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                  />
-                </picture>
+                <ThemeAssetPicture slot="exercises.leaderboard-crown" alt="" aria-hidden="true" draggable={false} />
               </span>
               <span className="account-tile-label">
                 {proActive ? t("managePro") : t("viewPro")}
@@ -281,16 +255,7 @@ export function AccountSheet({
                   className="account-tile"
                 >
                   <span className="account-tile-icon">
-                    <picture>
-                      <source srcSet="/art/new-icons-chesscito/training.avif" type="image/avif" />
-                      <source srcSet="/art/new-icons-chesscito/training.webp" type="image/webp" />
-                      <img
-                        src="/art/new-icons-chesscito/training.png"
-                        alt=""
-                        aria-hidden="true"
-                        draggable={false}
-                      />
-                    </picture>
+                    <ThemeAssetPicture slot="hub.training" alt="" aria-hidden="true" draggable={false} />
                   </span>
                   <span className="account-tile-label">{t("coachRowLabel")}</span>
                   <span className="account-status-pill" data-tone={coachTone}>
@@ -308,16 +273,7 @@ export function AccountSheet({
               className="account-tile"
             >
               <span className="account-tile-icon">
-                <picture>
-                  <source srcSet="/art/shop/shield.avif" type="image/avif" />
-                  <source srcSet="/art/shop/shield.webp" type="image/webp" />
-                  <img
-                    src="/art/shop/shield.png"
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                  />
-                </picture>
+                <ThemeAssetPicture slot="account.shield" alt="" aria-hidden="true" draggable={false} />
               </span>
               <span className="account-tile-label">{t("shieldsRowLabel")}</span>
               <span
@@ -339,16 +295,7 @@ export function AccountSheet({
               className="account-tile"
             >
               <span className="account-tile-icon">
-                <picture>
-                  <source srcSet="/art/shop/founder.avif" type="image/avif" />
-                  <source srcSet="/art/shop/founder.webp" type="image/webp" />
-                  <img
-                    src="/art/shop/founder.png"
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                  />
-                </picture>
+                <ThemeAssetPicture slot="account.founder" alt="" aria-hidden="true" draggable={false} />
               </span>
               <span className="account-tile-label">{t("founderRowLabel")}</span>
               <span
@@ -363,16 +310,7 @@ export function AccountSheet({
             {/* Language — segmented switcher inline at tile base */}
             <div className="account-tile is-static" role="group" aria-label={t("languageLabel")}>
               <span className="account-tile-icon">
-                <picture>
-                  <source srcSet="/art/new-assets-chesscito/account/language-icon.avif" type="image/avif" />
-                  <source srcSet="/art/new-assets-chesscito/account/language-icon.webp" type="image/webp" />
-                  <img
-                    src="/art/new-assets-chesscito/account/language-icon.png"
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                  />
-                </picture>
+                <ThemeAssetPicture slot="account.language-icon" alt="" aria-hidden="true" draggable={false} />
               </span>
               <span className="account-tile-label">{t("languageLabel")}</span>
               <LocaleSwitcher />

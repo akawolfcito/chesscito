@@ -1,4 +1,5 @@
 import { preload } from "react-dom";
+import { resolveThemeAsset } from "@/lib/themes/resolve-theme-asset";
 
 /**
  * Server layout for /arena. The page itself is a (fragile) client
@@ -16,11 +17,8 @@ export default function ArenaLayout({
 }: {
   children: React.ReactNode;
 }) {
-  preload("/art/redesign/bg/wallpaper-exercises.avif", {
-    as: "image",
-    type: "image/avif",
-    fetchPriority: "high",
-  });
+  const wallpaper = resolveThemeAsset("exercises.wallpaper", "default");
+  if (wallpaper) preload(`${wallpaper}.avif`, { as: "image", type: "image/avif", fetchPriority: "high" });
 
   return children;
 }

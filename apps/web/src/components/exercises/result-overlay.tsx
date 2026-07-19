@@ -13,9 +13,10 @@ import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { ShareModal } from "@/components/share/share-modal";
 import { clampMaxStars, shareUrlForBadge, shareUrlForScore } from "@/lib/og/share-urls";
-import { THEME_CONFIG } from "@/lib/theme";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { pieceThemeSlot } from "@/lib/themes/piece-theme-assets";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
-const PIECE_COMPLETE_AVATAR_BASE = "/art/new-assets-chesscito/fun/avatar-feliz";
 
 type PieceKey = "rook" | "bishop" | "knight" | "pawn" | "queen" | "king";
 type SuccessVariant = "badge" | "score" | "shop";
@@ -37,6 +38,7 @@ type ResultOverlayProps = {
    *  via `selectedItem.icon`. Optional fallback to a generic shop
    *  badge so legacy callers don't break. */
   itemAsset?: string;
+  itemAssetSlot?: ThemeAssetKey;
   txHash?: string;
   celoscanHref?: string;
   errorMessage?: string;
@@ -63,25 +65,6 @@ type ResultOverlayProps = {
   recoveryCta?: { label: string; onPress: () => void };
 };
 
-const VARIANT_IMG: Record<SuccessVariant, string> = {
-  badge: `${THEME_CONFIG.piecesBase}/w-rook.png`, // overridden by pieceType
-  score: "/art/score-chesscito.png",
-  shop: "/art/badge-chesscito.png",
-};
-
-function getBadgeImg(pieceType?: PieceKey): string {
-  const base = THEME_CONFIG.piecesBase;
-  const map: Record<PieceKey, string> = {
-    rook: `${base}/w-rook.png`,
-    bishop: `${base}/w-bishop.png`,
-    knight: `${base}/w-knight.png`,
-    pawn: `${base}/w-pawn.png`,
-    queen: `${base}/w-queen.png`,
-    king: `${base}/w-king.png`,
-  };
-  return map[pieceType ?? "rook"];
-}
-
 function SuccessImage({
   variant,
   pieceType,
@@ -93,23 +76,15 @@ function SuccessImage({
   glowClass?: string;
   size?: "sm" | "lg";
 }) {
-  const src = variant === "badge" || variant === "score" ? getBadgeImg(pieceType) : VARIANT_IMG[variant];
-  const hasOptimized = variant === "badge" ? THEME_CONFIG.hasOptimizedFormats : true;
+  const slot = variant === "badge"
+    ? pieceThemeSlot("w", pieceType ?? "rook")
+    : variant === "score"
+      ? "exercises.score"
+      : "exercises.badge";
   const sizeClass = size === "sm" ? "h-20 w-20" : "h-32 w-32";
   return (
     <div className={`relative flex items-center justify-center ${glowClass ?? "reward-glow-progress"}`}>
-      <picture
-        className="reward-icon-showcase reward-ceremony-icon relative z-10"
-        style={{ animation: "reward-icon-enter 250ms ease-out 200ms both" }}
-      >
-        {hasOptimized && (
-          <>
-            <source srcSet={src.replace(".png", ".avif")} type="image/avif" />
-            <source srcSet={src.replace(".png", ".webp")} type="image/webp" />
-          </>
-        )}
-        <img src={src} alt="" className={`${sizeClass} object-contain drop-shadow-lg`} />
-      </picture>
+      <ThemeAssetPicture slot={slot} pictureClassName="reward-icon-showcase reward-ceremony-icon relative z-10" pictureStyle={{ animation: "reward-icon-enter 250ms ease-out 200ms both" }} alt="" className={`${sizeClass} object-contain drop-shadow-lg`} />
     </div>
   );
 }
@@ -264,6 +239,7 @@ export function ResultOverlay({
   pieceType,
   itemLabel,
   itemAsset,
+  itemAssetSlot,
   txHash,
   celoscanHref,
   errorMessage,
@@ -328,8 +304,6 @@ export function ResultOverlay({
   // arena-result-primary-cta). CeloScan receipt chip inlined below
   // the secondary action since VictoryPopupShell has no meta band.
   if (variant === "score") {
-    const pieceImg = getBadgeImg(pieceType);
-    const pieceHasOptimized = THEME_CONFIG.hasOptimizedFormats;
     const starsLabel = totalStars != null ? `${totalStars}/${clampMaxStars(maxPossibleStars)}` : null;
     return (
       <>
@@ -340,15 +314,7 @@ export function ResultOverlay({
             closeLabel={tResult("cta.dismiss")}
           >
             <div className="arena-result-hero-row">
-              <picture className="arena-result-hero-icon">
-                {pieceHasOptimized && (
-                  <>
-                    <source srcSet={pieceImg.replace(".png", ".avif")} type="image/avif" />
-                    <source srcSet={pieceImg.replace(".png", ".webp")} type="image/webp" />
-                  </>
-                )}
-                <img src={pieceImg} alt="" aria-hidden="true" draggable={false} />
-              </picture>
+              <ThemeAssetPicture slot={pieceThemeSlot("w", pieceType ?? "rook")} pictureClassName="arena-result-hero-icon" alt="" aria-hidden="true" draggable={false} />
               <div className="arena-result-hero-text">
                 <h1 className="arena-result-title">{title}</h1>
               </div>
@@ -454,7 +420,9 @@ export function ResultOverlay({
               Error variant has NO hero (founder 2026-06-11: the warning
               triangle read as system-alert, off the candy vocabulary);
               the avatar carries the emotion inline next to the text. */}
-          {isError ? null : variant === "shop" && itemAsset ? (
+          {isError ? null : variant === "shop" && itemAssetSlot ? (
+            <ThemeAssetPicture slot={itemAssetSlot} pictureClassName="reward-icon-showcase relative z-10" alt="" aria-hidden="true" className="h-32 w-32 object-contain drop-shadow-lg" />
+          ) : variant === "shop" && itemAsset ? (
             <picture className="mx-auto block h-24 w-24">
               <source srcSet={`${itemAsset}.avif`} type="image/avif" />
               <source srcSet={`${itemAsset}.webp`} type="image/webp" />
@@ -502,16 +470,7 @@ export function ResultOverlay({
               >
                 {subtitle}
               </p>
-              <picture className="w-20 shrink-0">
-                <source srcSet="/art/new-assets-chesscito/fun/avatar-asombrado.avif" type="image/avif" />
-                <source srcSet="/art/new-assets-chesscito/fun/avatar-asombrado.webp" type="image/webp" />
-                <img
-                  src="/art/new-assets-chesscito/fun/avatar-asombrado.png"
-                  alt=""
-                  aria-hidden="true"
-                  draggable={false}
-                />
-              </picture>
+              <ThemeAssetPicture slot="shared.feedback-surprised" pictureClassName="w-20 shrink-0" alt="" aria-hidden="true" draggable={false} />
             </div>
           ) : (
             <p
@@ -825,8 +784,6 @@ export function PieceCompletePrompt({
   const showNextPieceSecondary = Boolean(onTryLabyrinth && nextPiece);
   const showCoachHint = nextPiece != null;
 
-  const pieceImg = getBadgeImg(pieceType);
-  const pieceHasOptimized = THEME_CONFIG.hasOptimizedFormats;
   const starsLabel = `${totalStars}/${maxPossibleStars}`;
 
   return (
@@ -844,21 +801,7 @@ export function PieceCompletePrompt({
         </div>
 
         {/* IMAGE — piece icon centered below the title. */}
-        <picture className="mx-auto block h-24 w-24">
-          {pieceHasOptimized && (
-            <>
-              <source srcSet={pieceImg.replace(".png", ".avif")} type="image/avif" />
-              <source srcSet={pieceImg.replace(".png", ".webp")} type="image/webp" />
-            </>
-          )}
-          <img
-            src={pieceImg}
-            alt=""
-            aria-hidden="true"
-            draggable={false}
-            className="h-full w-full object-contain drop-shadow-md"
-          />
-        </picture>
+        <ThemeAssetPicture slot={pieceThemeSlot("w", pieceType ?? "rook")} pictureClassName="mx-auto block h-24 w-24" alt="" aria-hidden="true" draggable={false} className="h-full w-full object-contain drop-shadow-md" />
 
         {/* STARS — single ★ pill. */}
         <div className="arena-result-stats-row arena-result-stats-row--missionpills">
@@ -917,17 +860,7 @@ export function PieceCompletePrompt({
         {/* AVATAR — Sally placement: bottom-right "peek" inside the panel so
             the celebration character is present without competing with the
             primary CTA or the title. Transparent half-body crop. */}
-        <picture className="pointer-events-none absolute -right-2 bottom-12 h-24 w-24">
-          <source srcSet={`${PIECE_COMPLETE_AVATAR_BASE}.avif`} type="image/avif" />
-          <source srcSet={`${PIECE_COMPLETE_AVATAR_BASE}.webp`} type="image/webp" />
-          <img
-            src={`${PIECE_COMPLETE_AVATAR_BASE}.png`}
-            alt=""
-            aria-hidden="true"
-            draggable={false}
-            className="h-full w-full object-contain"
-          />
-        </picture>
+        <ThemeAssetPicture slot="shared.feedback-happy" pictureClassName="pointer-events-none absolute -right-2 bottom-12 h-24 w-24" alt="" aria-hidden="true" draggable={false} className="h-full w-full object-contain" />
       </VictoryPopupShell>
     </div>
   );

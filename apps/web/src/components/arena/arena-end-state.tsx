@@ -2,6 +2,9 @@
 
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
+import { useThemeBackground } from "@/lib/themes/use-theme-background";
 
 import type { ArenaStatus } from "@/lib/game/types";
 import { mapArenaResult } from "@/lib/coach/game-result";
@@ -108,11 +111,11 @@ function getLoseText(status: ArenaStatus, t: ArenaTranslator): string {
  * outcome (checkmate flash, stalemate red Xs, draw equals sign,
  * resignation white flag). All in /art/new-assets-chesscito/games/. */
 type LossStatus = "checkmate" | "stalemate" | "draw" | "resigned";
-const HERO_ICON_BY_STATUS: Record<LossStatus, string> = {
-  checkmate: "/art/new-assets-chesscito/games/checkmate-game001",
-  stalemate: "/art/new-assets-chesscito/games/stalemate-game001",
-  draw: "/art/new-assets-chesscito/games/draw-game001",
-  resigned: "/art/new-assets-chesscito/games/resign-game001",
+const HERO_ICON_BY_STATUS: Record<LossStatus, ThemeAssetKey> = {
+  checkmate: "arena.result-checkmate",
+  stalemate: "arena.result-stalemate",
+  draw: "arena.result-draw",
+  resigned: "arena.result-resign",
 };
 
 /* Per-status coach avatar — emotional register matching the outcome:
@@ -120,11 +123,11 @@ const HERO_ICON_BY_STATUS: Record<LossStatus, string> = {
  *   stalemate → interrogativo (unusual outcome, "what just happened?")
  *   draw → confiado (neutral, no loser)
  *   resigned → triste (player gave up) */
-const AVATAR_BY_STATUS: Record<LossStatus, string> = {
-  checkmate: "/art/new-assets-chesscito/fun/avatar-asombrado",
-  stalemate: "/art/new-assets-chesscito/fun/avatar-interrogativo",
-  draw: "/art/new-assets-chesscito/fun/avatar-confiado",
-  resigned: "/art/new-assets-chesscito/fun/avatar-triste",
+const AVATAR_BY_STATUS: Record<LossStatus, ThemeAssetKey> = {
+  checkmate: "shared.feedback-surprised",
+  stalemate: "shared.feedback-questioning",
+  draw: "shared.feedback-confident",
+  resigned: "shared.feedback-sad",
 };
 
 function isLossStatus(s: ArenaStatus): s is LossStatus {
@@ -163,6 +166,7 @@ export function ArenaEndState({
   const tArena = useTranslations("ARENA_COPY");
   const tCelebration = useTranslations("VICTORY_CELEBRATION_COPY");
   const tEntry = useTranslations("COACH_ENTRY_COPY");
+  const panelBackground = useThemeBackground("shared.panel-bg");
   // Cluster E §0.1 — CTA gating + 0-move guard.
   // Fail-closed default: an unwired consumer renders CTAs disabled so a
   // forgotten prop never silently re-introduces the original race.
@@ -372,8 +376,8 @@ export function ArenaEndState({
   // Per-status asset paths — fall back to the resigned variant if
   // somehow status arrives outside the LossStatus union.
   const lossKey: LossStatus = isLossStatus(status) ? status : "resigned";
-  const heroIconBase = HERO_ICON_BY_STATUS[lossKey];
-  const avatarBase = AVATAR_BY_STATUS[lossKey];
+  const heroIconSlot = HERO_ICON_BY_STATUS[lossKey];
+  const avatarSlot = AVATAR_BY_STATUS[lossKey];
 
   // Close handler: Sally's retention-loop guidance — X + backdrop tap
   // dismiss the popup without navigating away from /arena. When the
@@ -419,8 +423,7 @@ export function ArenaEndState({
           /* panel-bg1 has a taller native aspect (4:5) than the square
              panel-mision-icon, so the popup foliage corners stretch
              less vertically when the content is tall. */
-          backgroundImage:
-            'image-set(url("/art/new-assets-chesscito/paneles/panel-bg1.avif") type("image/avif"), url("/art/new-assets-chesscito/paneles/panel-bg1.webp") type("image/webp"), url("/art/new-assets-chesscito/paneles/panel-bg1.png") type("image/png"))',
+          backgroundImage: panelBackground,
           backgroundSize: "100% 100%",
           backgroundRepeat: "no-repeat",
         }}
@@ -433,17 +436,7 @@ export function ArenaEndState({
           aria-label={tArena("closeResultAria")}
           className="candy-close-asset-button absolute right-[4%] top-[4%] z-10"
         >
-          <picture>
-            <source srcSet="/art/screen-mission/close-icon.avif" type="image/avif" />
-            <source srcSet="/art/screen-mission/close-icon.webp" type="image/webp" />
-            <img
-              src="/art/screen-mission/close-icon.png"
-              alt=""
-              aria-hidden="true"
-              className="h-10 w-10 object-contain"
-              draggable={false}
-            />
-          </picture>
+          <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-10 w-10 object-contain" draggable={false} />
         </button>
 
         <div className="flex flex-col arena-result-popup-content">
@@ -464,16 +457,7 @@ export function ArenaEndState({
               below, creating a zig-zag diagonal of visual weight that
               keeps the popup balanced instead of all-heavy on one side. */}
           <div className="arena-result-hero-row">
-            <picture className="arena-result-hero-icon">
-              <source srcSet={`${heroIconBase}.avif`} type="image/avif" />
-              <source srcSet={`${heroIconBase}.webp`} type="image/webp" />
-              <img
-                src={`${heroIconBase}.png`}
-                alt=""
-                aria-hidden="true"
-                draggable={false}
-              />
-            </picture>
+            <ThemeAssetPicture slot={heroIconSlot} pictureClassName="arena-result-hero-icon" alt="" aria-hidden="true" draggable={false} />
             <div className="arena-result-hero-text">
               <h1 className="arena-result-title">{text}</h1>
               {isCoachPrimaryVariant && (
@@ -536,16 +520,7 @@ export function ArenaEndState({
                       }
                     />
                   </div>
-                  <picture className="arena-result-coach-avatar">
-                    <source srcSet={`${avatarBase}.avif`} type="image/avif" />
-                    <source srcSet={`${avatarBase}.webp`} type="image/webp" />
-                    <img
-                      src={`${avatarBase}.png`}
-                      alt=""
-                      aria-hidden="true"
-                      draggable={false}
-                    />
-                  </picture>
+                  <ThemeAssetPicture slot={avatarSlot} pictureClassName="arena-result-coach-avatar" alt="" aria-hidden="true" draggable={false} />
                 </div>
             </div>
           )}
@@ -562,17 +537,7 @@ export function ArenaEndState({
             </span>
             <span className="candy-stat-pill">
               <span className="candy-stat-pill-icon">
-                <picture>
-                  <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-                  <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
-                  <img
-                    src="/art/redesign/pieces/w-pawn.png"
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                    className="block h-full w-full object-contain"
-                  />
-                </picture>
+                <ThemeAssetPicture slot="board.piece.white.pawn" alt="" aria-hidden="true" draggable={false} className="block h-full w-full object-contain" />
               </span>
               {String(moves)}
             </span>
@@ -654,11 +619,7 @@ export function ArenaEndState({
                   {isSaveBusy ? (
                     <span className="arena-result-save-cta-spinner" aria-hidden="true" />
                   ) : (
-                    <picture className="arena-result-save-cta-icon">
-                      <source srcSet="/art/new-icons-chesscito/save.avif" type="image/avif" />
-                      <source srcSet="/art/new-icons-chesscito/save.webp" type="image/webp" />
-                      <img src="/art/new-icons-chesscito/save.png" alt="" draggable={false} />
-                    </picture>
+                    <ThemeAssetPicture slot="arena.save" pictureClassName="arena-result-save-cta-icon" alt="" draggable={false} />
                   )}
                   <span className="arena-result-primary-cta-label">
                     {isSaveBusy ? tEntry("savingMatch") : saveLabel}

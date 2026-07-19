@@ -2,6 +2,9 @@
 
 import type { ImgHTMLAttributes } from "react";
 
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
+
 export type CandyIconName =
   | "check"
   | "chevron-down"
@@ -29,11 +32,36 @@ type Props = Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "alt"> & {
   label?: string;
 };
 
+const THEME_SLOTS: Partial<Record<CandyIconName, ThemeAssetKey>> = {
+  crown: "hud.crown",
+  lock: "shared.lock",
+  shield: "shared.shield",
+  shop: "hub.shop-icon",
+  star: "shared.star",
+  time: "shared.time",
+  trophy: "hud.trophy",
+};
+
 /** Renders the candy sprite with AVIF/WebP/PNG fallback chain. The user's
  *  className (sizing, color filters, etc.) goes on the <picture> wrapper;
  *  the <img> always fills its parent so sizing stays predictable. */
 export function CandyIcon({ name, label, className = "", style, ...rest }: Props) {
   const decorative = label == null;
+  const slot = THEME_SLOTS[name];
+  if (slot) {
+    return (
+      <ThemeAssetPicture
+        {...rest}
+        slot={slot}
+        pictureClassName={`candy-icon inline-block ${className}`.trim()}
+        pictureStyle={style}
+        alt={label ?? ""}
+        aria-hidden={decorative ? true : undefined}
+        className="block h-full w-full object-contain"
+      />
+    );
+  }
+
   const base = `/art/redesign/icons/${name}`;
   return (
     <picture

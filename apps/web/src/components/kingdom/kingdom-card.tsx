@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 export type KingdomCardPro =
   | { active: true; daysRemaining: number }
@@ -73,11 +74,7 @@ export function KingdomCard({ pro, onProDiscover }: KingdomCardProps) {
     >
       <div className="kingdom-card-top">
         {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-        <picture className="kingdom-card-crest">
-          <source srcSet="/art/redesign/banners/btn-battle.avif" type="image/avif" />
-          <source srcSet="/art/redesign/banners/btn-battle.webp" type="image/webp" />
-          <img src="/art/redesign/banners/btn-battle.png" alt="" aria-hidden="true" draggable={false} />
-        </picture>
+        <ThemeAssetPicture slot="hub.btn-battle" pictureClassName="kingdom-card-crest" alt="" aria-hidden="true" draggable={false} />
         <div className="kingdom-card-top-main">
           <header className="kingdom-card-head">
             <h2 className="kingdom-card-title">{t("kingdomPanelTitle")}</h2>

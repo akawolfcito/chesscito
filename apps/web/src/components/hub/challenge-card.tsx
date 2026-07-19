@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 import { type PassportSlotKind, passportSlots } from "@/lib/daily/passport";
 import type { HubFocusPassport, SeasonChallengeMeta } from "@/components/hub/use-hub-data";
@@ -154,11 +155,13 @@ export function ChallengeCard({
     >
       <div className="challenge-card-top">
         {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-        <picture className="challenge-card-icon">
-          <source srcSet="/art/21-day-icon.avif" type="image/avif" />
-          <source srcSet="/art/21-day-icon.webp" type="image/webp" />
-          <img src="/art/21-day-icon.png" alt="" aria-hidden="true" draggable={false} />
-        </picture>
+        <ThemeAssetPicture
+          slot="hub.21-day-icon"
+          pictureClassName="challenge-card-icon"
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+        />
         <div className="challenge-card-top-main">
           <header className="challenge-card-head">
             <h2 className="challenge-card-title">

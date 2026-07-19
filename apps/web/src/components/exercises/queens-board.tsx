@@ -29,10 +29,9 @@ import { isQueensStuck, maxQueens, safeSquares } from "@/lib/game/queens";
 import { getQueenMoves } from "@/lib/game/rules/queen";
 import { tourStars } from "@/lib/game/tour-score";
 import { hapticReject, hapticSuccess, hapticTap } from "@/lib/haptics";
-import { THEME_CONFIG } from "@/lib/theme";
+import { useThemePieceAssets } from "@/lib/themes/piece-theme-assets";
 import type { BoardPosition, Exercise } from "@/lib/game/types";
 
-const QUEEN_SRC = `${THEME_CONFIG.piecesBase}/w-queen.png`;
 const LABEL = (p: BoardPosition) => `${"abcdefgh"[p.file]}${p.rank + 1}`;
 const parse = (s: string): BoardPosition => ({
   file: "abcdefgh".indexOf(s[0]),
@@ -86,6 +85,7 @@ export function QueensBoard({
   showSafeSquares?: boolean;
 }) {
   const t = useTranslations("QUEENS_COPY.band");
+  const queenBase = useThemePieceAssets().w.queen;
   const START = level.startPos;
   // Memoised on the level's own array identity: everything below depends on
   // BLOCKS, and `level.obstacles ?? []` would mint a new [] on every render and
@@ -264,6 +264,7 @@ export function QueensBoard({
   const overlay = () => (
     <>
       {queens.map((q) => {
+        if (!queenBase) return null;
         const c = cellCenter(q.file, q.rank);
         return (
           <picture
@@ -278,7 +279,7 @@ export function QueensBoard({
             }}
           >
             <img
-              src={QUEEN_SRC}
+              src={`${queenBase}.png`}
               alt=""
               className="playhub-board-piece-img"
               style={{ width: "100%" }}

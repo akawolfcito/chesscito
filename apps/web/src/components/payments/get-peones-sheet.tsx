@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { AddCashCta } from "@/components/minipay/add-cash-cta";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { getPeonesPack } from "@/lib/payments/rail-config";
@@ -56,16 +57,7 @@ function RewardGlow() {
  *  the reward reads as "Peones" everywhere. */
 function PawnSprite({ className }: { className: string }) {
   return (
-    <picture className={className}>
-      <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-      <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
-      <img
-        src="/art/redesign/pieces/w-pawn.png"
-        alt=""
-        aria-hidden="true"
-        className="block h-full w-full object-contain drop-shadow-md"
-      />
-    </picture>
+    <ThemeAssetPicture slot="board.piece.white.pawn" pictureClassName={className} alt="" aria-hidden="true" className="block h-full w-full object-contain drop-shadow-md" />
   );
 }
 
@@ -216,22 +208,7 @@ export function GetPeonesSheet({
                         {t("insufficientBody")}
                       </p>
                     </div>
-                    <picture className="h-16 w-16 shrink-0 opacity-90">
-                      <source
-                        srcSet="/art/new-assets-chesscito/fun/avatar-asombrado.avif"
-                        type="image/avif"
-                      />
-                      <source
-                        srcSet="/art/new-assets-chesscito/fun/avatar-asombrado.webp"
-                        type="image/webp"
-                      />
-                      <img
-                        src="/art/new-assets-chesscito/fun/avatar-asombrado.png"
-                        alt=""
-                        aria-hidden="true"
-                        className="block h-full w-full object-contain"
-                      />
-                    </picture>
+                    <ThemeAssetPicture slot="shared.feedback-surprised" pictureClassName="h-16 w-16 shrink-0 opacity-90" alt="" aria-hidden="true" className="block h-full w-full object-contain" />
                   </div>
                   {/* MiniPay-only deeplink to add cash (renders null on web). */}
                   <AddCashCta source="get-peones" className="mt-1" />
@@ -245,17 +222,7 @@ export function GetPeonesSheet({
                     <span className="text-sm font-bold uppercase tracking-wide text-amber-800/80">
                       {t("payWith")}
                     </span>
-                    <picture>
-                      <source srcSet="/art/screen-mission/adorno-icon.avif" type="image/avif" />
-                      <source srcSet="/art/screen-mission/adorno-icon.webp" type="image/webp" />
-                      <img
-                        src="/art/screen-mission/adorno-icon.png"
-                        alt=""
-                        aria-hidden="true"
-                        className="h-2.5 w-24 object-contain"
-                        draggable={false}
-                      />
-                    </picture>
+                    <ThemeAssetPicture slot="shared.mission-adorno" alt="" aria-hidden="true" className="h-2.5 w-24 object-contain" draggable={false} />
                   </div>
 
                   {/* Token selector — collapsible candy dropdown. Collapsed:

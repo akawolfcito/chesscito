@@ -16,7 +16,8 @@ import {
   ogExerciseCardCopy,
   type OgExerciseAchievementType,
 } from "@/lib/og/exercise-card-copy";
-import { THEME_CONFIG } from "@/lib/theme";
+import { pieceThemeSlot } from "@/lib/themes/piece-theme-assets";
+import { resolveOgThemeAsset } from "@/lib/og/theme-assets";
 
 export const runtime = "nodejs";
 
@@ -65,10 +66,9 @@ export async function GET(req: Request) {
   // mascot matches the in-app Hub / popup avatar family. PRO version
   // lives at /art/hub/chesscito-avatar-new-light but the share card
   // is anonymous (no auth context at render time) → use the default.
-  const mascotUrl = new URL("/art/scene-rooted/avatar-chesscito.png", req.url).toString();
-  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
-  const pieceFile = "w-" + piece + ".png";
-  const pieceUrl = new URL(THEME_CONFIG.piecesBase + "/" + pieceFile, req.url).toString();
+  const mascotUrl = resolveOgThemeAsset(req.url, "hub.avatar");
+  const panelBgUrl = resolveOgThemeAsset(req.url, "shared.mission-panel");
+  const pieceUrl = resolveOgThemeAsset(req.url, pieceThemeSlot("w", piece));
 
   const cinzelData = await loadCinzelFont(req.url);
   const useCinzel = Boolean(cinzelData);
@@ -88,8 +88,8 @@ export async function GET(req: Request) {
   let dailyFen: string | null = null;
   if (type === "daily" && startPos && targetPos) {
     dailyFen = buildExerciseFen(piece, startPos);
-    const starUrl = new URL("/art/redesign/icons/star.png", req.url).toString();
-    dailyOverlays = [{ rank: 7 - targetPos.rank, file: targetPos.file, iconUrl: starUrl }];
+    const starUrl = resolveOgThemeAsset(req.url, "shared.star");
+    dailyOverlays = starUrl ? [{ rank: 7 - targetPos.rank, file: targetPos.file, iconUrl: starUrl }] : [];
   }
 
   /* Score badge — golden pill with inline SVG star + "X / Y STARS".
@@ -333,7 +333,7 @@ export async function GET(req: Request) {
                   }}
                 />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                {pieceUrl ? <img
                   src={pieceUrl}
                   alt=""
                   width={280}
@@ -342,7 +342,7 @@ export async function GET(req: Request) {
                     position: "relative",
                     filter: "drop-shadow(0 12px 24px rgba(120, 65, 5, 0.38))",
                   }}
-                />
+                /> : null}
               </div>
 
               {scoreBadge}

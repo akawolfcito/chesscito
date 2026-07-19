@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { THEME_CONFIG } from "@/lib/theme";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 
@@ -27,8 +27,6 @@ function starLabel(stars: number): string {
   if (stars === 2) return "Target reached";
   return "Completed over target";
 }
-
-const ROOK_SRC = `${THEME_CONFIG.piecesBase}/w-rook.png`;
 
 export function MiniArenaResultCeremony({
   terminalResult,
@@ -56,18 +54,13 @@ export function MiniArenaResultCeremony({
           <h1 className="arena-result-title">{title}</h1>
         </div>
           <div className="flex flex-col items-center gap-2 text-center">
-            <picture
-              className="reward-icon-showcase relative z-10"
-              style={{ animation: "reward-icon-enter 250ms ease-out 200ms both" }}
-            >
-              <source srcSet={ROOK_SRC.replace(".png", ".avif")} type="image/avif" />
-              <source srcSet={ROOK_SRC.replace(".png", ".webp")} type="image/webp" />
-              <img
-                src={ROOK_SRC}
-                alt=""
-                className="h-32 w-32 object-contain drop-shadow-lg"
-              />
-            </picture>
+            <ThemeAssetPicture
+              slot="board.piece.white.rook"
+              pictureClassName="reward-icon-showcase relative z-10"
+              pictureStyle={{ animation: "reward-icon-enter 250ms ease-out 200ms both" }}
+              alt=""
+              className="h-32 w-32 object-contain drop-shadow-lg"
+            />
 
             <div className="flex items-center gap-1.5">
               {[0, 1, 2].map((i) => {

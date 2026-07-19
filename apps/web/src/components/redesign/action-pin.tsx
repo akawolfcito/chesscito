@@ -10,6 +10,8 @@ import {
 } from "@/components/action-row/action-row-icon";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { hapticTap } from "@/lib/haptics";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 export type ActionPinAction =
   | "submitScore"
@@ -152,7 +154,7 @@ const ACTION_ROW_ICON: Record<ActionPinAction, ActionRowIconName> = {
   exitLabyrinth: "practice-pieces",
 };
 
-const ACTION_CUSTOM_ICON_SRC: Partial<Record<ActionPinAction, string>> = {
+const ACTION_CUSTOM_ICON_SLOT: Partial<Record<ActionPinAction, ThemeAssetKey>> = {
   // v1 icon set (Sally iconography brief 2026-06-11): universal
   // action metaphors, no chess-context tax at 56px.
   //   SAVE SCORE → open chest receiving a star (storing value).
@@ -160,9 +162,9 @@ const ACTION_CUSTOM_ICON_SRC: Partial<Record<ActionPinAction, string>> = {
   // Both render WITHOUT the gold candy-frame tile in pin size (see
   // isPedestalPin). Coach (game-actions-bar) + Victory
   // (victory-celebration) keep save.png.
-  submitScore: "/art/new-icons-chesscito/save-score-icon-v1.png",
-  claimBadge: "/art/new-icons-chesscito/badge-claim-icon.png",
-  claimWelcomePack: "/art/new-icons-chesscito/claim-icon-v1.png",
+  submitScore: "exercises.save-score",
+  claimBadge: "exercises.badge-claim",
+  claimWelcomePack: "exercises.claim",
 };
 
 const PIN_BADGE_CLASSES =
@@ -275,15 +277,15 @@ export function ActionPin({
     .filter(Boolean)
     .join(" ");
 
-  const customIconSrc = ACTION_CUSTOM_ICON_SRC[action];
+  const customIconSlot = ACTION_CUSTOM_ICON_SLOT[action];
   const iconNode = isBusy ? (
     <span
       aria-hidden="true"
       className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
     />
-  ) : customIconSrc ? (
-    <img
-      src={customIconSrc}
+  ) : customIconSlot ? (
+    <ThemeAssetPicture
+      slot={customIconSlot}
       alt=""
       aria-hidden="true"
       // Pedestal pins: no Tailwind size — `.action-pin-submit-pedestal
@@ -326,9 +328,9 @@ export function ActionPin({
           size="large"
           leadingIcon={
             isBusy ? undefined : (
-              customIconSrc ? (
-                <img
-                  src={customIconSrc}
+              customIconSlot ? (
+                <ThemeAssetPicture
+                  slot={customIconSlot}
                   alt=""
                   aria-hidden="true"
                   className="h-5 w-5 object-contain"

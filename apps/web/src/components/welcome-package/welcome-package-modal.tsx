@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { WELCOME_PACKAGE_REWARD } from "@/lib/welcome-package/types";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
@@ -20,17 +20,7 @@ type Props = {
 function StampImage({ size }: { size: "sm" | "lg" }) {
   const cls = size === "lg" ? "h-36 w-36" : "h-28 w-28";
   return (
-    <picture>
-      <source srcSet={`${WELCOME_PACKAGE_REWARD.assetBase}.avif`} type="image/avif" />
-      <source srcSet={`${WELCOME_PACKAGE_REWARD.assetBase}.webp`} type="image/webp" />
-      <img
-        src={`${WELCOME_PACKAGE_REWARD.assetBase}.png`}
-        alt=""
-        aria-hidden="true"
-        className={`${cls} object-contain`}
-        draggable={false}
-      />
-    </picture>
+    <ThemeAssetPicture slot="welcome.focus-stamp" alt="" aria-hidden="true" className={`${cls} object-contain`} draggable={false} />
   );
 }
 

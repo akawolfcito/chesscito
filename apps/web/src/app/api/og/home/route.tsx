@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import sharp from "sharp";
 import { CardShell, CARD_WIDTH as W, CARD_HEIGHT as H } from "@/lib/og/card-shell";
 import { loadCinzelFont } from "@/lib/og/font-loader";
+import { resolveOgThemeAsset } from "@/lib/og/theme-assets";
 
 export const runtime = "nodejs";
 
@@ -24,11 +25,8 @@ export async function GET(req: Request) {
   // PNG assets only — WebP renders empty in the Satori runtime (see
   // board-render perf notes). Board is the canonical candy board; mascot is
   // the confident Wolfcito reused from the victory OG.
-  const boardUrl = new URL("/art/chesscito-board.png", req.url).toString();
-  const mascotUrl = new URL(
-    "/art/new-assets-chesscito/fun/avatar-confiado.png",
-    req.url,
-  ).toString();
+  const boardUrl = resolveOgThemeAsset(req.url, "board.legacy-bg");
+  const mascotUrl = resolveOgThemeAsset(req.url, "shared.feedback-confident");
   const cinzelData = await loadCinzelFont(req.url);
   const useCinzel = Boolean(cinzelData);
 
@@ -42,7 +40,7 @@ export async function GET(req: Request) {
         useCinzel={useCinzel}
         heroSlot={
           // eslint-disable-next-line @next/next/no-img-element
-          <img
+          boardUrl ? <img
             src={boardUrl}
             alt=""
             width={760}
@@ -51,7 +49,7 @@ export async function GET(req: Request) {
               objectFit: "contain",
               filter: "drop-shadow(0 16px 30px rgba(120, 65, 5, 0.35))",
             }}
-          />
+          /> : null
         }
       />
     ),

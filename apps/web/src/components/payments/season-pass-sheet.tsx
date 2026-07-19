@@ -7,10 +7,7 @@ import { useAccount } from "wagmi";
 
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { AddCashCta } from "@/components/minipay/add-cash-cta";
-import {
-  CELEBRATION_PANEL_BG,
-  SeasonPassCelebration,
-} from "@/components/payments/season-pass-celebration";
+import { SeasonPassCelebration } from "@/components/payments/season-pass-celebration";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
@@ -26,6 +23,7 @@ import {
 } from "@/lib/season-pass/use-season-pass-rail";
 import { mapSeasonPassError } from "@/lib/season-pass/map-season-pass-error";
 import { useSeasonPassStatus } from "@/lib/season-pass/use-season-pass-status";
+import { useThemeBackground } from "@/lib/themes/use-theme-background";
 
 const SKU = "lite_season_pass_21" as const;
 const FALLBACK_TOKEN = "USDC";
@@ -71,6 +69,7 @@ function SeasonPassSheetInner({
   const pathname = usePathname();
   const { address } = useAccount();
   const trainingPass = useSeasonPassStatus(address);
+  const celebrationPanelBackground = useThemeBackground("payments.celebration-bg");
   const pass = getSeasonPass(SKU);
   const priceLabel = formatUsd(pass.priceUsd6);
 
@@ -121,7 +120,7 @@ function SeasonPassSheetInner({
       disableBackdropClose={busy}
       ariaLabel="21-Day Mind Challenge Pass"
       closeLabel="Close"
-      panelBackgroundImage={isSuccess ? CELEBRATION_PANEL_BG : undefined}
+      panelBackgroundImage={isSuccess ? celebrationPanelBackground : undefined}
     >
       <div
         className="flex flex-col items-center gap-4 text-center"

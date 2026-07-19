@@ -25,11 +25,9 @@ import {
 } from "@/lib/game/diagonal-run";
 import { labyrinthStars } from "@/lib/game/exercises";
 import { hapticReject, hapticSuccess, hapticTap } from "@/lib/haptics";
-import { THEME_CONFIG } from "@/lib/theme";
+import { useThemePieceAssets } from "@/lib/themes/piece-theme-assets";
 import type { BoardPosition, Exercise } from "@/lib/game/types";
 
-const BISHOP_SRC = `${THEME_CONFIG.piecesBase}/w-bishop.png`;
-const KNIGHT_SRC = `${THEME_CONFIG.piecesBase}/w-knight.png`;
 const LABEL = (p: BoardPosition) => `${"abcdefgh"[p.file]}${p.rank + 1}`;
 const parse = (s: string): BoardPosition => ({
   file: "abcdefgh".indexOf(s[0]),
@@ -66,6 +64,9 @@ export function DiagonalRunBoard({
   onBandChange?: (band: { message: string; phase: string }) => void;
 }) {
   const t = useTranslations("DIAGONAL_RUN_COPY.band");
+  const pieceAssets = useThemePieceAssets();
+  const bishopSrc = pieceAssets.w.bishop ? `${pieceAssets.w.bishop}.png` : null;
+  const knightSrc = pieceAssets.w.knight ? `${pieceAssets.w.knight}.png` : null;
   const START = level.startPos;
   const TARGET = level.targetPos;
   const BLOCKERS = useMemo(() => level.obstacles ?? [], [level.obstacles]);
@@ -257,6 +258,7 @@ export function DiagonalRunBoard({
     return (
       <>
         {BLOCKERS.map((b) => {
+          if (!knightSrc) return null;
           const c = cellCenter(b.file, b.rank);
           return (
             <picture
@@ -264,11 +266,11 @@ export function DiagonalRunBoard({
               className="playhub-board-piece-float is-friendly-blocker"
               style={{ left: `${c.x}%`, top: `${c.y}%`, width: `${pw}%`, pointerEvents: "none" }}
             >
-              <img src={KNIGHT_SRC} alt="" aria-hidden="true" className="playhub-board-piece-img" style={{ width: "100%" }} />
+              <img src={knightSrc} alt="" aria-hidden="true" className="playhub-board-piece-img" style={{ width: "100%" }} />
             </picture>
           );
         })}
-        <picture
+        {bishopSrc ? <picture
           data-testid="dr-bishop"
           data-bishop-square={bishopLabel}
           className={["playhub-board-piece-float", selected ? "is-selected" : ""].join(" ")}
@@ -281,8 +283,8 @@ export function DiagonalRunBoard({
             opacity: phase === "lost" ? 0 : 1,
           }}
         >
-          <img src={BISHOP_SRC} alt="" className="playhub-board-piece-img" style={{ width: "100%" }} />
-        </picture>
+          <img src={bishopSrc} alt="" className="playhub-board-piece-img" style={{ width: "100%" }} />
+        </picture> : null}
         {pieceHint ? (
           <div
             role="status"

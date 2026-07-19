@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { hoursUntilNextUtcDay } from "@/lib/hub/tile-availability";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 type Props = {
   isHardMax: boolean;
@@ -92,17 +93,7 @@ export function DailyLimitBanner({ isHardMax, onBack }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Wolf-mage wallpaper carries the green frame + cream copy zone. */}
-        <picture>
-          <source srcSet="/art/bg-sesion-great.avif" type="image/avif" />
-          <source srcSet="/art/bg-sesion-great.webp" type="image/webp" />
-          <img
-            src="/art/bg-sesion-great.png"
-            alt=""
-            aria-hidden="true"
-            draggable={false}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        </picture>
+        <ThemeAssetPicture slot="daily.bg-session" alt="" aria-hidden="true" draggable={false} className="absolute inset-0 h-full w-full object-cover" />
 
         {/* Reused red close asset — closes only, you can keep practicing
             completed exercises behind it. */}
@@ -112,23 +103,7 @@ export function DailyLimitBanner({ isHardMax, onBack }: Props) {
           aria-label="Close"
           className="candy-close-asset-button absolute right-[3%] top-[5%] z-10"
         >
-          <picture>
-            <source
-              srcSet="/art/screen-mission/close-icon.avif"
-              type="image/avif"
-            />
-            <source
-              srcSet="/art/screen-mission/close-icon.webp"
-              type="image/webp"
-            />
-            <img
-              src="/art/screen-mission/close-icon.png"
-              alt=""
-              aria-hidden="true"
-              className="h-9 w-9 object-contain"
-              draggable={false}
-            />
-          </picture>
+          <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-9 w-9 object-contain" draggable={false} />
         </button>
 
         {/* Copy + CTA centered over the card. Title sits below the CTA so it

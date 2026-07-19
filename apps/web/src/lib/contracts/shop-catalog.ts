@@ -77,7 +77,8 @@ export const SHOP_ITEMS: readonly ShopCatalogEntry[] = [
  *  `image-set()` URL list per format. New tiles MUST ship the
  *  triplet (`scripts/optimize-art-assets.sh` / cwebp / avifenc) —
  *  the `image-three-formats` memory rule. */
-export const SHOP_TILE_ASSETS: Record<ShopCopyKey, { icon: string }> = {
+export const SHOP_TILE_ASSETS: Record<ShopCopyKey, { icon?: string; iconSlot?: ThemeAssetKey }> = {
   pro: { icon: "/art/shop/pro" },
-  founderBadge: { icon: "/art/shop/founder" },
+  founderBadge: { iconSlot: "account.founder" },
 };
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";

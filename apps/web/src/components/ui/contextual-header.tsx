@@ -3,6 +3,7 @@
 import * as React from "react";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -524,23 +525,7 @@ function CloseControlHeader(
         className="candy-close-asset-button"
         data-slot="close-control"
       >
-        <picture>
-          <source
-            srcSet="/art/screen-mission/close-icon.avif"
-            type="image/avif"
-          />
-          <source
-            srcSet="/art/screen-mission/close-icon.webp"
-            type="image/webp"
-          />
-          <img
-            src="/art/screen-mission/close-icon.png"
-            alt=""
-            aria-hidden="true"
-            className="h-10 w-10 object-contain"
-            draggable={false}
-          />
-        </picture>
+        <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-10 w-10 object-contain" draggable={false} />
       </button>
     </header>
   );

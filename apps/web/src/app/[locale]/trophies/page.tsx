@@ -28,7 +28,7 @@ export default function TrophiesPage() {
         <header className="border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="back-control"
-            iconSlot={<TileIconSlot src="/art/action-row/trofeo-epico" />}
+            iconSlot={<TileIconSlot slot="shared.trophy-epic" />}
             title={t("pageTitle")}
             subtitle={t(CHESSCITO_LITE_MODE ? "pageDescriptionLite" : "pageDescription")}
             back={{ onClick: () => router.push("/"), label: t("backLabel") }}

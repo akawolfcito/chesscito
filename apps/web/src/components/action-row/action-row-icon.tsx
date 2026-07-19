@@ -1,5 +1,8 @@
 "use client";
 
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
+
 export type ActionRowIconName =
   | "battle-espadas"
   | "daily-icon-v1"
@@ -23,6 +26,16 @@ type Props = {
   alt?: string;
 };
 
+const THEME_SLOTS: Partial<Record<ActionRowIconName, ThemeAssetKey>> = {
+  "daily-icon-v1": "hub.daily-icon",
+  "ejercicio-diario-chess": "tactics.daily-exercise",
+  "mate-icon": "hub.mate-icon",
+  "play-chess": "hub.play-chess",
+  save: "arena.save",
+  "training-icon-v1": "hub.training-icon",
+  "trofeo-epico": "shared.trophy-epic",
+};
+
 function resolveIconBase(name: ActionRowIconName): string {
   if (name === "mate-icon") return "/art/hub";
   if (
@@ -42,6 +55,18 @@ function resolveIconBase(name: ActionRowIconName): string {
 }
 
 export function ActionRowIcon({ name, className = "", alt = "" }: Props) {
+  const slot = THEME_SLOTS[name];
+  if (slot) {
+    return (
+      <ThemeAssetPicture
+        slot={slot}
+        pictureClassName={className}
+        alt={alt}
+        aria-hidden={alt ? undefined : "true"}
+        draggable={false}
+      />
+    );
+  }
   const base = `${resolveIconBase(name)}/${name}`;
 
   return (

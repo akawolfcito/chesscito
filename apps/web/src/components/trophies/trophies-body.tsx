@@ -9,6 +9,7 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyChip } from "@/components/redesign/candy-chip";
 import { PageSection } from "@/components/redesign/page-section";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { TrophyList } from "@/components/trophies/trophy-list";
 import { AchievementsGrid } from "@/components/trophies/achievements-grid";
 import { getVictoryAddress } from "@/lib/game/victory-events";
@@ -95,16 +96,7 @@ export function TrophiesHeroBand({ showAchievements = true }: { showAchievements
 
   return (
     <div className="trophy-vitrine-hero">
-      <picture className="trophy-vitrine-hero-anchor">
-        <source srcSet="/art/action-row/trofeo-epico.avif" type="image/avif" />
-        <source srcSet="/art/action-row/trofeo-epico.webp" type="image/webp" />
-        <img
-          src="/art/action-row/trofeo-epico.png"
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-        />
-      </picture>
+      <ThemeAssetPicture slot="shared.trophy-epic" pictureClassName="trophy-vitrine-hero-anchor" alt="" aria-hidden="true" draggable={false} />
       <div className="trophy-vitrine-hero-content">
         <p className="trophy-vitrine-hero-eyebrow">{t(CHESSCITO_LITE_MODE ? "heroEyebrowLite" : "heroEyebrow")}</p>
         <p className="trophy-vitrine-hero-stats">
@@ -437,16 +429,7 @@ export function TrophiesBody({
        *  block entirely in that case to avoid duplicate render. */}
       {!hideHero && (
       <div className="trophy-vitrine-hero">
-        <picture className="trophy-vitrine-hero-anchor">
-          <source srcSet="/art/action-row/trofeo-epico.avif" type="image/avif" />
-          <source srcSet="/art/action-row/trofeo-epico.webp" type="image/webp" />
-          <img
-            src="/art/action-row/trofeo-epico.png"
-            alt=""
-            aria-hidden="true"
-            draggable={false}
-          />
-        </picture>
+        <ThemeAssetPicture slot="shared.trophy-epic" pictureClassName="trophy-vitrine-hero-anchor" alt="" aria-hidden="true" draggable={false} />
         <div className="trophy-vitrine-hero-content">
           <p className="trophy-vitrine-hero-eyebrow">{t(CHESSCITO_LITE_MODE ? "heroEyebrowLite" : "heroEyebrow")}</p>
           <p className="trophy-vitrine-hero-stats">

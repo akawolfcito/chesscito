@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 
 import type { PieceId } from "@/lib/game/types";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { track } from "@/lib/telemetry";
+import { useThemeBackground } from "@/lib/themes/use-theme-background";
 
 type MissionBriefingProps = {
   pieceType: PieceId;
@@ -48,6 +50,7 @@ export function MissionBriefing({
 }: MissionBriefingProps) {
   const t = useTranslations("MISSION_BRIEFING_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
+  const panelBackground = useThemeBackground("shared.mission-panel");
   const [exiting, setExiting] = useState(false);
   const playButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -103,8 +106,7 @@ export function MissionBriefing({
         <div
           className="relative w-full"
           style={{
-            backgroundImage:
-              'image-set(url("/art/screen-mission/panel-mision-icon.avif") type("image/avif"), url("/art/screen-mission/panel-mision-icon.webp") type("image/webp"), url("/art/screen-mission/panel-mision-icon.png") type("image/png"))',
+            backgroundImage: panelBackground,
             backgroundSize: "100% 100%",
             backgroundRepeat: "no-repeat",
             minHeight: "280px",
@@ -120,23 +122,7 @@ export function MissionBriefing({
             aria-label={t("closeLabel")}
             className="candy-close-asset-button absolute right-[4%] top-[4%] z-10"
           >
-            <picture>
-              <source
-                srcSet="/art/screen-mission/close-icon.avif"
-                type="image/avif"
-              />
-              <source
-                srcSet="/art/screen-mission/close-icon.webp"
-                type="image/webp"
-              />
-              <img
-                src="/art/screen-mission/close-icon.png"
-                alt=""
-                aria-hidden="true"
-                className="h-10 w-10 object-contain"
-                draggable={false}
-              />
-            </picture>
+            <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-10 w-10 object-contain" draggable={false} />
           </button>
           {/* Inner safe-area inset so content doesn't crash into the
               decorative grass border. Vertical % padding resolves
@@ -159,23 +145,7 @@ export function MissionBriefing({
 
             {/* Avatar — the gold ring is baked into the asset. */}
             <div className="mt-4 flex items-center justify-center">
-              <picture>
-                <source
-                  srcSet="/art/screen-mission/avatar-icon.avif"
-                  type="image/avif"
-                />
-                <source
-                  srcSet="/art/screen-mission/avatar-icon.webp"
-                  type="image/webp"
-                />
-                <img
-                  src="/art/screen-mission/avatar-icon.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="h-32 w-32 object-contain drop-shadow-[0_3px_10px_rgba(120,65,5,0.45)]"
-                  draggable={false}
-                />
-              </picture>
+              <ThemeAssetPicture slot="shared.mission-avatar" alt="" aria-hidden="true" className="h-32 w-32 object-contain drop-shadow-[0_3px_10px_rgba(120,65,5,0.45)]" draggable={false} />
             </div>
 
             {/* Objective — large bold, anchors the eye. */}

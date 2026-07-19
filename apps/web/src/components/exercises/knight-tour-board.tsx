@@ -28,10 +28,9 @@ import {
 } from "@/lib/game/knight-tour";
 import { tourStars } from "@/lib/game/tour-score";
 import { hapticReject, hapticSuccess, hapticTap } from "@/lib/haptics";
-import { THEME_CONFIG } from "@/lib/theme";
+import { useThemePieceAssets } from "@/lib/themes/piece-theme-assets";
 import type { BoardPosition, Exercise } from "@/lib/game/types";
 
-const KNIGHT_SRC = `${THEME_CONFIG.piecesBase}/w-knight.png`;
 const LABEL = (p: BoardPosition) => `${"abcdefgh"[p.file]}${p.rank + 1}`;
 const parse = (s: string): BoardPosition => ({
   file: "abcdefgh".indexOf(s[0]),
@@ -63,6 +62,7 @@ export function KnightTourBoard({
   onBandChange?: (band: { message: string; phase: string }) => void;
 }) {
   const t = useTranslations("KNIGHT_TOUR_COPY.band");
+  const pieceBase = useThemePieceAssets().w.knight;
   const START = level.startPos;
   const WALLS = useMemo(() => level.obstacles ?? [], [level.obstacles]);
   // The ceiling the score is measured against. The catalog already stored it as
@@ -230,7 +230,7 @@ export function KnightTourBoard({
     const pw = pieceWidth();
     return (
       <>
-        <picture
+        {pieceBase ? <picture
           data-testid="kt-knight"
           data-knight-square={knightLabel}
           className={["playhub-board-piece-float", selected ? "is-selected" : ""].join(" ")}
@@ -242,8 +242,8 @@ export function KnightTourBoard({
             transition: "left 320ms ease, top 320ms ease",
           }}
         >
-          <img src={KNIGHT_SRC} alt="" className="playhub-board-piece-img" style={{ width: "100%" }} />
-        </picture>
+          <img src={`${pieceBase}.png`} alt="" className="playhub-board-piece-img" style={{ width: "100%" }} />
+        </picture> : null}
         {pieceHint ? (
           <div
             role="status"

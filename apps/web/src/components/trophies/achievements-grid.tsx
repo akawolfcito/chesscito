@@ -6,6 +6,8 @@ import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon"
 import { CandyChip } from "@/components/redesign/candy-chip";
 import type { Achievement } from "@/lib/achievements/compute";
 import { AchievementDetailSheet } from "./achievement-detail-sheet";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 type AchievementCopy = { title: string; description: string };
 
@@ -25,11 +27,11 @@ const ACHIEVEMENT_ICONS: Record<string, CandyIconName> = {
 };
 
 /** Real badge art assets — used when available, falling back to ACHIEVEMENT_ICONS. */
-const ACHIEVEMENT_ASSETS: Partial<Record<string, string>> = {
-  "first-focus-day": "/art/achievements/1day-focus",
-  "first-great-session": "/art/achievements/1day-focus",
-  "three-day-rhythm": "/art/achievements/3day-focus",
-  "seven-day-focus": "/art/achievements/7day-focus",
+const ACHIEVEMENT_ASSETS: Partial<Record<string, ThemeAssetKey>> = {
+  "first-focus-day": "welcome.achievement-1day",
+  "first-great-session": "welcome.achievement-1day",
+  "three-day-rhythm": "welcome.achievement-3day",
+  "seven-day-focus": "welcome.achievement-7day",
 };
 
 type Props = {
@@ -118,7 +120,7 @@ function AchievementTile({
 
   const { earned, progress } = achievement;
   const icon = ACHIEVEMENT_ICONS[achievement.id] ?? "trophy";
-  const assetBase = ACHIEVEMENT_ASSETS[achievement.id];
+  const assetSlot = ACHIEVEMENT_ASSETS[achievement.id];
 
   return (
     <button
@@ -128,18 +130,8 @@ function AchievementTile({
     >
       {/* Badge visual — image asset when available, SVG icon fallback for Full */}
       <div className="achievement-tile-badge-wrap">
-        {assetBase ? (
-          <picture>
-            <source srcSet={`${assetBase}.avif`} type="image/avif" />
-            <source srcSet={`${assetBase}.webp`} type="image/webp" />
-            <img
-              src={`${assetBase}.png`}
-              alt=""
-              aria-hidden="true"
-              draggable={false}
-              className={`achievement-tile-badge-img${!earned ? " achievement-tile-badge-img--locked" : ""}`}
-            />
-          </picture>
+        {assetSlot ? (
+          <ThemeAssetPicture slot={assetSlot} alt="" aria-hidden="true" draggable={false} className={`achievement-tile-badge-img${!earned ? " achievement-tile-badge-img--locked" : ""}`} />
         ) : (
           <div className="achievement-tile-icon-wrap">
             <CandyIcon

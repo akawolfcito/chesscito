@@ -228,8 +228,8 @@ describe("TreasureTile — globals.css contract", () => {
     const path = await import("node:path");
     const cssPath = path.resolve(__dirname, "../../../app/globals.css");
     const css = fs.readFileSync(cssPath, "utf8");
-    expect(css).toMatch(/--treasure-chest-bg-small\s*:\s*url\(/);
-    expect(css).toMatch(/--treasure-chest-bg-large\s*:\s*url\(/);
+    expect(css).toMatch(/--treasure-chest-bg-small\s*:\s*var\(--theme-scene-chest-small\)/);
+    expect(css).toMatch(/--treasure-chest-bg-large\s*:\s*var\(--theme-scene-chest-large\)/);
   });
 
   it("globals.css defines press feedback rule for .treasure-tile:active", async () => {

@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useThemeBackground } from "@/lib/themes/use-theme-background";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 type Props = {
   /** Optional close handler. When provided, X tap calls this to dismiss
@@ -47,9 +49,6 @@ type Props = {
   children: ReactNode;
 };
 
-const DEFAULT_PANEL_BG =
-  'image-set(url("/art/new-assets-chesscito/paneles/panel-bg1.avif") type("image/avif"), url("/art/new-assets-chesscito/paneles/panel-bg1.webp") type("image/webp"), url("/art/new-assets-chesscito/paneles/panel-bg1.png") type("image/png"))';
-
 /**
  * Shared shell for all 4 victory popup states (celebration, claiming,
  * success, error). Same vocabulary as the loss popup:
@@ -70,10 +69,11 @@ export function VictoryPopupShell({
   closeLabel = "Close",
   portal = false,
   scrimZClassName = "z-[70]",
-  panelBackgroundImage = DEFAULT_PANEL_BG,
+  panelBackgroundImage,
   panelClassName = "",
   children,
 }: Props) {
+  const defaultPanelBackground = useThemeBackground("shared.panel-bg");
   const handleBackdropClick = disableBackdropClose ? undefined : () => onClose?.();
   const scrim = (
     /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
@@ -96,7 +96,7 @@ export function VictoryPopupShell({
         className={`relative mx-4 w-full max-w-[340px] max-h-[92dvh] overflow-y-auto overscroll-contain ${panelClassName}`}
         onClick={(e) => e.stopPropagation()}
         style={{
-          backgroundImage: panelBackgroundImage,
+          backgroundImage: panelBackgroundImage ?? defaultPanelBackground,
           backgroundSize: "100% 100%",
           backgroundRepeat: "no-repeat",
         }}
@@ -108,17 +108,7 @@ export function VictoryPopupShell({
             aria-label={closeLabel}
             className="candy-close-asset-button absolute right-[4%] top-[4%] z-10"
           >
-            <picture>
-              <source srcSet="/art/screen-mission/close-icon.avif" type="image/avif" />
-              <source srcSet="/art/screen-mission/close-icon.webp" type="image/webp" />
-              <img
-                src="/art/screen-mission/close-icon.png"
-                alt=""
-                aria-hidden="true"
-                className="h-10 w-10 object-contain"
-                draggable={false}
-              />
-            </picture>
+            <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-10 w-10 object-contain" draggable={false} />
           </button>
         )}
 

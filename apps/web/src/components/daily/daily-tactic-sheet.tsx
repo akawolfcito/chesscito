@@ -13,6 +13,7 @@ import { Board } from "@/components/board";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { MissionHeaderCandy } from "@/components/exercises/mission-header-candy";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { ShareModal } from "@/components/share/share-modal";
 import {
   hapticImpact,
@@ -152,7 +153,7 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, onFa
         <MissionHeaderCandy
           title={sheetTitle}
           subtitle={puzzleData.name}
-          iconSlot={<TileIconSlot src="/art/new-icons-chesscito/ejercicio-diario-chess" />}
+          iconSlot={<TileIconSlot slot="tactics.daily-exercise" />}
           objective={
             isPlayExperience
               ? tPlay("objective", { piece: puzzleData.piece })
@@ -313,32 +314,13 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, onFa
           >
             <div className="flex flex-col items-center gap-3 px-4">
               <div className="relative animate-in zoom-in-90 duration-300">
-                <picture className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2">
-                  <source srcSet="/art/welldone-sms.avif" type="image/avif" />
-                  <source srcSet="/art/welldone-sms.webp" type="image/webp" />
-                  <img
-                    src="/art/welldone-sms.png"
-                    alt="WELL DONE"
-                    className="h-auto w-[260px] max-w-[78vw] drop-shadow-[0_6px_14px_rgba(120,65,5,0.45)]"
-                    style={{ animation: "reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both" }}
-                  />
-                </picture>
+                <ThemeAssetPicture slot="daily.welldone" pictureClassName="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2" alt="WELL DONE" className="h-auto w-[260px] max-w-[78vw] drop-shadow-[0_6px_14px_rgba(120,65,5,0.45)]" style={{ animation: "reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both" }} />
                 <div className="relative flex h-80 w-80 items-center justify-center">
                   <div
                     className="pointer-events-none absolute h-72 w-72 rounded-full"
                     style={{ background: "radial-gradient(circle, rgba(245,158,11,0.32) 0%, rgba(245,158,11,0.10) 55%, transparent 80%)" }}
                   />
-                  <picture className="relative z-10">
-                    <source srcSet="/art/avatar-fun.avif" type="image/avif" />
-                    <source srcSet="/art/avatar-fun.webp" type="image/webp" />
-                    <img
-                      src="/art/avatar-fun.png"
-                      alt=""
-                      aria-hidden="true"
-                      className="h-80 w-80 object-contain drop-shadow-[0_6px_22px_rgba(255,245,215,0.95)]"
-                      style={{ animation: "reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both" }}
-                    />
-                  </picture>
+                  <ThemeAssetPicture slot="exercises.avatar-fun" pictureClassName="relative z-10" alt="" aria-hidden="true" className="h-80 w-80 object-contain drop-shadow-[0_6px_22px_rgba(255,245,215,0.95)]" style={{ animation: "reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both" }} />
                 </div>
               </div>
               {/* Reward pills — same pattern as PhaseFlash(success) */}
@@ -350,11 +332,7 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, onFa
                   </span>
                 )}
                 <span className="fail-rescue-reward-pill">
-                  <picture>
-                    <source srcSet="/art/redesign/icons/star.avif" type="image/avif" />
-                    <source srcSet="/art/redesign/icons/star.webp" type="image/webp" />
-                    <img src="/art/redesign/icons/star.png" alt="" aria-hidden="true" />
-                  </picture>
+                  <ThemeAssetPicture slot="shared.star" alt="" aria-hidden="true" />
                   <span>FOCUS</span>
                 </span>
               </div>

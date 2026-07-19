@@ -2,6 +2,7 @@
 
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PlayerAvatar } from "@/components/redesign/player-avatar";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 /** Which side of the board this rail belongs to. The rival sits above the
  *  board, the player below it — matching where their own pieces are, since
@@ -28,6 +29,7 @@ type Props = {
   /** Rival persona sprite (full `.png` path); the avif/webp siblings are
    *  derived by PlayerAvatar. */
   avatarSrc?: string;
+  avatarSlot?: ThemeAssetKey;
   /** Is the player a PRO subscriber? Draws the ornamental frame behind BOTH
    *  avatars (spec §4). Arrives as a prop — the rail must stay presentational.
    *  It used to call `useIsProActive()` itself, which reaches into wagmi, so
@@ -51,6 +53,7 @@ export function ArenaPlayerRail({
   isActive = false,
   isThinking = false,
   avatarSrc,
+  avatarSlot,
   pro = false,
 }: Props) {
   return (
@@ -62,6 +65,7 @@ export function ArenaPlayerRail({
           variant={side === "rival" ? "bot" : "you"}
           pro={pro}
           customSrc={avatarSrc}
+          customSlot={avatarSlot}
           alt={name}
           className="h-14 w-14"
         />

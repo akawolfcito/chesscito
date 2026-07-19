@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 import {
   FOUNDER_BADGE_ITEM_ID,
   PRO_ITEM_ID,
@@ -43,7 +45,8 @@ type CatalogItem = {
   itemId: bigint;
   label: string;
   subtitle: string;
-  icon: string;
+  icon?: string;
+  iconSlot?: ThemeAssetKey;
   configured: boolean;
   enabled: boolean;
   onChainPrice: bigint;
@@ -185,17 +188,15 @@ function ShopItemCard({
        *  overflow:visible on the picture). Text identity sits on the
        *  right row 1, footer pills on row 2 right. The bespoke art
        *  reads at card scale without leaving empty space below it. */}
-      <picture className="shop-item-tile-icon-figure">
-        <source srcSet={`${assets.icon}.avif`} type="image/avif" />
-        <source srcSet={`${assets.icon}.webp`} type="image/webp" />
-        <img
-          src={`${assets.icon}.png`}
-          alt=""
-          aria-hidden="true"
-          className="shop-item-tile-icon-img"
-          draggable={false}
-        />
-      </picture>
+      {assets.iconSlot ? (
+        <ThemeAssetPicture slot={assets.iconSlot} pictureClassName="shop-item-tile-icon-figure" alt="" aria-hidden="true" className="shop-item-tile-icon-img" draggable={false} />
+      ) : assets.icon ? (
+        <picture className="shop-item-tile-icon-figure">
+          <source srcSet={`${assets.icon}.avif`} type="image/avif" />
+          <source srcSet={`${assets.icon}.webp`} type="image/webp" />
+          <img src={`${assets.icon}.png`} alt="" aria-hidden="true" className="shop-item-tile-icon-img" draggable={false} />
+        </picture>
+      ) : null}
 
       {/* Featured ribbon — absolute-positioned over the top-right
        *  corner of the tile so it reads as an honest badge instead
@@ -268,16 +269,7 @@ export function ShopSheet({
             aria-label={t("ariaLabel")}
             className="relative flex shrink-0 items-center justify-center"
           >
-            <picture>
-              <source srcSet="/art/shop-menu.avif" type="image/avif" />
-              <source srcSet="/art/shop-menu.webp" type="image/webp" />
-              <img
-                src="/art/shop-menu.png"
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full object-contain"
-              />
-            </picture>
+            <ThemeAssetPicture slot="exercises.shop-menu" alt="" aria-hidden="true" className="h-full w-full object-contain" />
             <span className="sr-only">{t("ariaLabel")}</span>
           </button>
         </SheetTrigger>
@@ -298,7 +290,7 @@ export function ShopSheet({
         >
           <ContextualHeader
             variant="close-control"
-            iconSlot={<TileIconSlot src="/art/shop-menu" />}
+            iconSlot={<TileIconSlot slot="exercises.shop-menu" />}
             title={t("title")}
             subtitle={t("description")}
             close={{ onClick: () => onOpenChange(false), label: t("closeAriaLabel") }}

@@ -1,6 +1,8 @@
 "use client";
 
 import { appModeUrl, type ChesscitoAppMode } from "@/lib/hub/app-mode";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 type AppModeSwitchProps = {
   activeMode: ChesscitoAppMode;
@@ -9,21 +11,21 @@ type AppModeSwitchProps = {
 const MODES: Array<{
   mode: ChesscitoAppMode;
   label: string;
-  asset: string;
+  slot: ThemeAssetKey;
   width: number;
   height: number;
 }> = [
   {
     mode: "learn",
     label: "Training",
-    asset: "/art/hub/train-pieces",
+    slot: "hub.train-pieces",
     width: 200,
     height: 196,
   },
   {
     mode: "play",
     label: "Play",
-    asset: "/art/redesign/banners/btn-battle",
+    slot: "hub.btn-battle",
     width: 512,
     height: 510,
   },
@@ -41,7 +43,7 @@ export function AppModeSwitch({ activeMode }: AppModeSwitchProps) {
       aria-label="Choose app mode"
       className="hub-app-mode-switch"
     >
-      {MODES.map(({ mode, label, asset, width, height }) => (
+      {MODES.map(({ mode, label, slot, width, height }) => (
         <button
           key={mode}
           type="button"
@@ -50,18 +52,15 @@ export function AppModeSwitch({ activeMode }: AppModeSwitchProps) {
           onClick={() => selectMode(mode)}
           className="hub-app-mode-switch-pill"
         >
-          <picture className="hub-app-mode-switch-icon">
-            <source srcSet={`${asset}.avif`} type="image/avif" />
-            <source srcSet={`${asset}.webp`} type="image/webp" />
-            <img
-              src={`${asset}.png`}
-              alt=""
-              aria-hidden="true"
-              width={width}
-              height={height}
-              draggable={false}
-            />
-          </picture>
+          <ThemeAssetPicture
+            slot={slot}
+            pictureClassName="hub-app-mode-switch-icon"
+            alt=""
+            aria-hidden="true"
+            width={width}
+            height={height}
+            draggable={false}
+          />
           <span>{label}</span>
         </button>
       ))}

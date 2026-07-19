@@ -10,6 +10,8 @@ import {
   useDockSheet,
 } from "@/lib/ui/dock-sheet-store";
 import { CHESSCITO_LITE_MODE, isPlayMode } from "@/lib/feature-flags";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 /**
  * Locale-aware navigation primitives. Critical for the i18n migration:
@@ -34,7 +36,7 @@ type Item = {
    *  dock renders a `<picture>` triplet (AVIF/WebP/PNG) instead of the
    *  abstract `<CandyIcon>` — gives the dock its rich game-art look
    *  for the slots that have dedicated artwork. */
-  iconSrc?: string;
+  iconSlot?: ThemeAssetKey;
   /** Sheet key forwarded as `?sheet=<slug>` when the destination is an
    *  in-place sheet on /arena or /exercises. */
   sheet: string;
@@ -51,19 +53,20 @@ type Item = {
  *  abstract `<CandyIcon>`. Centralized so every dock slot uses the same
  *  sizing class without duplicating the conditional. */
 function DockIcon({
-  iconSrc,
+  iconSlot,
   icon,
 }: {
-  iconSrc?: string;
+  iconSlot?: ThemeAssetKey;
   icon: CandyIconName;
 }) {
-  if (iconSrc) {
+  if (iconSlot) {
     return (
-      <picture className="chesscito-dock-item-art">
-        <source srcSet={`${iconSrc}.avif`} type="image/avif" />
-        <source srcSet={`${iconSrc}.webp`} type="image/webp" />
-        <img src={`${iconSrc}.png`} alt="" aria-hidden="true" />
-      </picture>
+      <ThemeAssetPicture
+        slot={iconSlot}
+        pictureClassName="chesscito-dock-item-art"
+        alt=""
+        aria-hidden="true"
+      />
     );
   }
   return <CandyIcon name={icon} className="h-full w-full p-1" />;
@@ -83,7 +86,7 @@ type ModeDescriptor = {
   href: string;
   labelKey: DockLabelKey;
   icon: CandyIconName;
-  iconSrc: string;
+  iconSlot: ThemeAssetKey;
   trackItem: string;
 };
 
@@ -96,14 +99,14 @@ const MODE_DESCRIPTORS: Record<"exercises" | "arena", ModeDescriptor> = {
     href: "/exercises",
     labelKey: "pieces",
     icon: "move",
-    iconSrc: "/art/hub/train-pieces",
+    iconSlot: "hub.train-pieces",
     trackItem: "pieces",
   },
   arena: {
     href: "/arena?fresh=1",
     labelKey: "arena",
     icon: "crosshair",
-    iconSrc: "/art/hub/enter-arena",
+    iconSlot: "hub.enter-arena",
     trackItem: "arena",
   },
 };
@@ -130,17 +133,17 @@ function resolveBase(pathname: string): ModeDescriptor {
 }
 
 const SIDE_LEFT: ReadonlyArray<Item> = [
-  { id: "badge", labelKey: "badge", icon: "shield", iconSrc: "/art/badge-menu", sheet: "badges", fallback: "/?sheet=badges" },
-  { id: "shop", labelKey: "shop", icon: "shop", iconSrc: "/art/shop-menu", sheet: "shop", fallback: "/?sheet=shop" },
+  { id: "badge", labelKey: "badge", icon: "shield", iconSlot: "exercises.badge-menu", sheet: "badges", fallback: "/?sheet=badges" },
+  { id: "shop", labelKey: "shop", icon: "shop", iconSlot: "exercises.shop-menu", sheet: "shop", fallback: "/?sheet=shop" },
 ];
 
 const SIDE_RIGHT: ReadonlyArray<Item> = [
-  { id: "trophies", labelKey: "trophies", icon: "trophy", iconSrc: "/art/action-row/trofeo-epico", sheet: "trophies", fallback: "/trophies", activeWhen: "/trophies" },
+  { id: "trophies", labelKey: "trophies", icon: "trophy", iconSlot: "shared.trophy-epic", sheet: "trophies", fallback: "/trophies", activeWhen: "/trophies" },
   {
     id: "leaderboard",
     labelKey: "leaderboard",
     icon: "star",
-    iconSrc: "/art/leaderboard-menu",
+    iconSlot: "exercises.leaderboard-menu",
     sheet: "leaderboard",
     // Play never has a reachable /exercises (PR2 redirects it to Learn) —
     // its cross-route fallback must land on /arena instead.
@@ -192,7 +195,7 @@ function SideItem({
           router.push(href);
         }}
       >
-        <DockIcon iconSrc={item.iconSrc} icon={item.icon} />
+        <DockIcon iconSlot={item.iconSlot} icon={item.icon} />
       </button>
       <span className="chesscito-dock-item-label game-label text-nano font-bold uppercase tracking-[0.12em]">
         {label}
@@ -270,7 +273,7 @@ export function PersistentDock() {
             router.push(center.href);
           }}
         >
-          <DockIcon iconSrc={display.iconSrc} icon={display.icon} />
+          <DockIcon iconSlot={display.iconSlot} icon={display.icon} />
         </button>
         <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
           {displayLabel}

@@ -186,7 +186,7 @@ describe("StonePedestal — globals.css contract (spec check)", () => {
     const css = fs.readFileSync(cssPath, "utf8");
     for (let n = 1; n <= 10; n += 1) {
       expect(css).toMatch(
-        new RegExp(`--stone-pedestal-bg-${n}\\s*:\\s*url\\(`),
+        new RegExp(`--stone-pedestal-bg-${n}\\s*:\\s*var\\(--theme-scene-stone-${n}\\)`),
       );
     }
   });

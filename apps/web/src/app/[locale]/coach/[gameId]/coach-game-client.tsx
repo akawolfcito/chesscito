@@ -23,6 +23,7 @@ import { formatVictoryPriceForDifficulty } from "@/lib/coach/format-price";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { useIsProActive } from "@/lib/pro/use-is-pro-active";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 type Props = {
   gameRecord: GameRecord | null;
@@ -474,7 +475,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     <>
       <ContextualHeader
         variant="back-control"
-        iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
+        iconSlot={<TileIconSlot slot="hub.training" />}
         title={t("title")}
         subtitle={headerSubtitle}
         back={{ onClick: handleBack, label: t("backLabel") }}
@@ -490,11 +491,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
         </div>
 
         <div className="coach-viewer__chapter-break" aria-hidden="true">
-          <picture className="coach-viewer__chapter-break-glyph">
-            <source srcSet="/art/screen-mission/adorno-icon.avif" type="image/avif" />
-            <source srcSet="/art/screen-mission/adorno-icon.webp" type="image/webp" />
-            <img src="/art/screen-mission/adorno-icon.png" alt="" draggable={false} />
-          </picture>
+          <ThemeAssetPicture slot="shared.mission-adorno" pictureClassName="coach-viewer__chapter-break-glyph" alt="" draggable={false} />
         </div>
 
         {/* MOVES section keeps its own badge-vitrine panel — it's a
@@ -535,11 +532,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
               aria-label={t("previousMove")}
               className="coach-viewer__replay-arrow coach-viewer__replay-arrow--prev"
             >
-              <picture>
-                <source srcSet="/art/new-assets-chesscito/btns/play.avif" type="image/avif" />
-                <source srcSet="/art/new-assets-chesscito/btns/play.webp" type="image/webp" />
-                <img src="/art/new-assets-chesscito/btns/play.png" alt="" draggable={false} />
-              </picture>
+              <ThemeAssetPicture slot="coach.play" alt="" draggable={false} />
             </button>
             <input
               type="range"
@@ -571,11 +564,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
               aria-label={t("nextMove")}
               className="coach-viewer__replay-arrow coach-viewer__replay-arrow--next"
             >
-              <picture>
-                <source srcSet="/art/new-assets-chesscito/btns/play.avif" type="image/avif" />
-                <source srcSet="/art/new-assets-chesscito/btns/play.webp" type="image/webp" />
-                <img src="/art/new-assets-chesscito/btns/play.png" alt="" draggable={false} />
-              </picture>
+              <ThemeAssetPicture slot="coach.play" alt="" draggable={false} />
             </button>
           </div>
 

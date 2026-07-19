@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { track } from "@/lib/telemetry";
@@ -34,7 +35,6 @@ type Props = {
   onEnterArena?: () => void;
 };
 
-const AVATAR_BASE = "/art/new-assets-chesscito/fun/avatar-feliz";
 
 /**
  * LabyrinthCompleteOverlay — L2 completion ceremony.
@@ -107,17 +107,7 @@ export function LabyrinthCompleteOverlay({
           </span>
           <span className="candy-stat-pill">
             <span className="candy-stat-pill-icon">
-              <picture>
-                <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-                <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
-                <img
-                  src="/art/redesign/pieces/w-pawn.png"
-                  alt=""
-                  aria-hidden="true"
-                  draggable={false}
-                  className="block h-full w-full object-contain"
-                />
-              </picture>
+<ThemeAssetPicture slot="board.piece.white.pawn" alt="" aria-hidden="true" draggable={false} className="block h-full w-full object-contain" />
             </span>
             {movesLabel}
           </span>
@@ -193,11 +183,7 @@ export function LabyrinthCompleteOverlay({
 
         {/* AVATAR — Sally placement: bottom-right peek inside the panel's
             foliage zone, no longer competing with the CTA stack. */}
-        <picture className="pointer-events-none absolute -right-2 bottom-12 h-24 w-24">
-          <source srcSet={`${AVATAR_BASE}.avif`} type="image/avif" />
-          <source srcSet={`${AVATAR_BASE}.webp`} type="image/webp" />
-          <img src={`${AVATAR_BASE}.png`} alt="" aria-hidden="true" draggable={false} className="h-full w-full object-contain" />
-        </picture>
+        <ThemeAssetPicture slot="shared.feedback-happy" pictureClassName="pointer-events-none absolute -right-2 bottom-12 h-24 w-24" alt="" aria-hidden="true" draggable={false} className="h-full w-full object-contain" />
       </VictoryPopupShell>
     </div>
   );

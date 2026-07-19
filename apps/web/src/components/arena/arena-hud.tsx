@@ -1,5 +1,7 @@
 "use client";
 
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
@@ -124,18 +126,7 @@ function ArenaTimerChip({
            *  on top of the time icon. The arena-timer-chip-inline-
            *  icon class below renders inline at 1.4rem so the chip
            *  reads "clock 0:25 | shield 7" left-to-right. */}
-          <picture
-            className="arena-timer-chip-inline-icon"
-          >
-            <source srcSet="/art/redesign/icons/shield.avif" type="image/avif" />
-            <source srcSet="/art/redesign/icons/shield.webp" type="image/webp" />
-            <img
-              src="/art/redesign/icons/shield.png"
-              alt=""
-              aria-hidden="true"
-              draggable={false}
-            />
-          </picture>
+          <ThemeAssetPicture slot="shared.shield" pictureClassName="arena-timer-chip-inline-icon" alt="" aria-hidden="true" draggable={false} />
           <span className="tabular-nums text-sm font-extrabold">
             {shieldsCount}
           </span>

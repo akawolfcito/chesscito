@@ -19,9 +19,9 @@ export type CardShellProps = {
    *  the cream wash is skipped and the asset is stretched to fill the
    *  full 1080×1350 card. Used by share cards that want the cream wood +
    *  grass border baked into the asset instead of the flat gradient. */
-  panelBgUrl?: string;
+  panelBgUrl?: string | null;
   /** Absolute URL to the wolf mascot. */
-  mascotUrl: string;
+  mascotUrl: string | null;
   /** Hero content occupying the 860×860 slot at the top — board render,
    *  piece art, trophy illustration, etc. */
   heroSlot?: ReactNode;
@@ -194,7 +194,7 @@ export function CardShell({
           avatar (legacy wolf treatment). "half-body" anchors a wider
           frame at the same corner and clips the bottom half so only
           head + torso show — the in-app avatar pattern. */}
-      {mascotMode === "none" ? null : mascotMode === "half-body" ? (
+      {!mascotUrl || mascotMode === "none" ? null : mascotMode === "half-body" ? (
         // Full-body avatar peek anchored from the top so the character
         // rises up from below the achievement cluster. Natural aspect
         // (avatar PNG is 1012x1228 ≈ 0.82). Sized so feet stay inside

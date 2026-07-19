@@ -14,5 +14,5 @@ export const WELCOME_PACKAGE_REWARD = {
   id: "focus-stamp-day1",
   kind: "cosmetic",
   label: "Focus Stamp: Day 1",
-  assetBase: "/art/welcome-package/focus-stamp-day1",
+  assetSlot: "welcome.focus-stamp",
 } as const;

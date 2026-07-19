@@ -48,7 +48,7 @@ export function PlayTacticsTile({
     <>
       <HubActionTile
         className={className}
-        iconSrc="/art/new-icons-chesscito/ejercicio-diario-chess.png"
+        iconSlot="tactics.daily-exercise"
         label={t("tileLabel")}
         ariaLabel={
           completedToday ? t("completedAriaLabel") : t("tileAriaLabel")

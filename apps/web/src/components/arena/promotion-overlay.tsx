@@ -2,8 +2,10 @@
 
 import { useTranslations } from "next-intl";
 
-import { ARENA_PIECE_IMG } from "@/lib/game/arena-utils";
 import { THEME_CONFIG } from "@/lib/theme";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { useThemePieceAssets } from "@/lib/themes/piece-theme-assets";
+import { useThemeBackground } from "@/lib/themes/use-theme-background";
 
 type PromotionChoice = "q" | "r" | "b" | "n";
 
@@ -14,12 +16,12 @@ type Props = {
 
 const CHOICES_ORDER: PromotionChoice[] = ["q", "r", "b", "n"];
 
-const PIECE_KEY_MAP: Record<PromotionChoice, keyof typeof ARENA_PIECE_IMG.w> = {
+const PIECE_KEY_MAP = {
   q: "queen",
   r: "rook",
   b: "bishop",
   n: "knight",
-};
+} as const;
 
 /**
  * Promotion picker. Adopts the same panel-bg1 visual family used by
@@ -34,6 +36,8 @@ const PIECE_KEY_MAP: Record<PromotionChoice, keyof typeof ARENA_PIECE_IMG.w> = {
 export function PromotionOverlay({ onSelect, onCancel }: Props) {
   const t = useTranslations("ARENA_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
+  const pieceAssets = useThemePieceAssets();
+  const panelBackground = useThemeBackground("shared.panel-bg");
   const choices = CHOICES_ORDER.map((key) => ({
     key,
     label: tPiece(PIECE_KEY_MAP[key]),
@@ -53,8 +57,7 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
         className="promotion-overlay-panel relative mx-4 w-full max-w-[480px]"
         onClick={(e) => e.stopPropagation()}
         style={{
-          backgroundImage:
-            'image-set(url("/art/new-assets-chesscito/paneles/panel-bg1.avif") type("image/avif"), url("/art/new-assets-chesscito/paneles/panel-bg1.webp") type("image/webp"), url("/art/new-assets-chesscito/paneles/panel-bg1.png") type("image/png"))',
+          backgroundImage: panelBackground,
           backgroundSize: "100% 100%",
           backgroundRepeat: "no-repeat",
         }}
@@ -65,23 +68,7 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
           aria-label={t("promotionCancelAriaLabel")}
           className="candy-close-asset-button absolute right-[4%] top-[4%] z-10"
         >
-          <picture>
-            <source
-              srcSet="/art/screen-mission/close-icon.avif"
-              type="image/avif"
-            />
-            <source
-              srcSet="/art/screen-mission/close-icon.webp"
-              type="image/webp"
-            />
-            <img
-              src="/art/screen-mission/close-icon.png"
-              alt=""
-              aria-hidden="true"
-              className="h-10 w-10 object-contain"
-              draggable={false}
-            />
-          </picture>
+          <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-10 w-10 object-contain" draggable={false} />
         </button>
 
         <div className="promotion-overlay-content">
@@ -91,27 +78,16 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
               that already exists in the brand asset library. Replaces
               the earlier line + crown composite. User feedback
               2026-06-01. */}
-          <picture
-            className="promotion-overlay-adorno"
-          >
-            <source
-              srcSet="/art/screen-mission/adorno-icon.avif"
-              type="image/avif"
-            />
-            <source
-              srcSet="/art/screen-mission/adorno-icon.webp"
-              type="image/webp"
-            />
-            <img
-              src="/art/screen-mission/adorno-icon.png"
-              alt=""
-              aria-hidden="true"
-            />
-          </picture>
+          <ThemeAssetPicture
+            slot="shared.mission-adorno"
+            pictureClassName="promotion-overlay-adorno"
+            alt=""
+            aria-hidden="true"
+          />
 
           <div className="promotion-overlay-grid">
             {choices.map(({ key, label }) => {
-              const imgBase = ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]];
+              const imgBase = pieceAssets.w[PIECE_KEY_MAP[key]];
               return (
                 <button
                   key={key}
@@ -120,21 +96,21 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
                   aria-label={label}
                   className="promotion-card"
                 >
-                  <picture className="promotion-card-piece">
+                  {imgBase ? <picture className="promotion-card-piece">
                     {THEME_CONFIG.hasOptimizedFormats && (
                       <>
                         <source
-                          srcSet={imgBase.replace(".png", ".avif")}
+                          srcSet={`${imgBase}.avif`}
                           type="image/avif"
                         />
                         <source
-                          srcSet={imgBase.replace(".png", ".webp")}
+                          srcSet={`${imgBase}.webp`}
                           type="image/webp"
                         />
                       </>
                     )}
-                    <img src={imgBase} alt="" aria-hidden="true" />
-                  </picture>
+                    <img src={`${imgBase}.png`} alt="" aria-hidden="true" />
+                  </picture> : null}
                   <span className="promotion-card-label">{label}</span>
                 </button>
               );

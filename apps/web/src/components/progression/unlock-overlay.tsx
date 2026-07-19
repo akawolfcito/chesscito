@@ -5,18 +5,20 @@ import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import type { CelebrationStep } from "@/lib/progression/celebration-queue";
 import type { MilestoneId } from "@/lib/progression/types";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 /** Canonical existing assets that best represent each earned artifact.
  *  The earned thing replaces the wolf mascot as the central icon so the
  *  player sees WHAT they won, not a generic mascot. Verified against
  *  apps/web/public/art/** before wiring — no new art was created. */
-const ICONS: Partial<Record<MilestoneId, string>> = {
-  "first-reward": "/art/welcome-package/focus-stamp-day1",
-  "first-labyrinth": "/art/new-icons-chesscito/laberinto",
-  "special-training": "/art/new-icons-chesscito/training-icon-v1",
-  "piece-badge-eligible": "/art/new-icons-chesscito/badge-claim-icon",
-  mastery: "/art/redesign/icons/crown",
-  "great-focus-session": "/art/achievements/1day-focus",
+const ICONS: Partial<Record<MilestoneId, ThemeAssetKey>> = {
+  "first-reward": "welcome.focus-stamp",
+  "first-labyrinth": "exercises.laberinto",
+  "special-training": "hub.training-icon",
+  "piece-badge-eligible": "exercises.badge-claim",
+  mastery: "hud.crown",
+  "great-focus-session": "welcome.achievement-1day",
 };
 
 type Props = {
@@ -60,17 +62,7 @@ export function UnlockOverlay({ step, onPrimary, onDismiss }: Props) {
     >
       {icon ? (
         <div className="progression-overlay-icon">
-          <picture>
-            <source srcSet={`${icon}.avif`} type="image/avif" />
-            <source srcSet={`${icon}.webp`} type="image/webp" />
-            <img
-              src={`${icon}.png`}
-              alt=""
-              aria-hidden="true"
-              className="h-20 w-20 object-contain"
-              draggable={false}
-            />
-          </picture>
+          <ThemeAssetPicture slot={icon} alt="" aria-hidden="true" className="h-20 w-20 object-contain" draggable={false} />
         </div>
       ) : null}
 

@@ -346,15 +346,15 @@ function ArenaPageInner() {
   const playerNickname = playerIsVisitor ? undefined : playerDisplayName;
   // Same art the board HUD gives the "you" slot (PlayerAvatar variant="you"),
   // so the player does not change face between the transition and the board.
-  const playerAvatarSrc = "/art/new-icons-chesscito/avatar-blue.png";
-
   const matchupProps = {
     rivalName: rival.name,
     rivalAvatarSrc: `/art/rivals/${rival.avatar}-avatar.png`,
+    rivalAvatarSlot: rival.avatarSlot,
     rivalFrame: rival.frame,
     playerLabel: tArena("you"),
     playerNickname,
-    playerAvatarSrc,
+    playerAvatarSrc: "",
+    playerAvatarSlot: "arena.player-you" as const,
     getReadyLabel: tArena("getReady"),
   };
 
@@ -1457,6 +1457,7 @@ function ArenaPageInner() {
             name={rival.name}
             meta={`${difficultyLabel(game.difficulty)} · ${rivalElo} ELO`}
             avatarSrc={`/art/rivals/${rival.avatar}-avatar.png`}
+            avatarSlot={rival.avatarSlot}
             isThinking={game.isThinking && !isEndState}
             isActive={game.isThinking && !isEndState}
             pro={isProActive}

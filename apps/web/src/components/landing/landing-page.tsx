@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PhoneFrame } from "@/components/landing/phone-frame";
 import { PhoneStack } from "@/components/landing/phone-stack";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 import { useMiniPay } from "@/hooks/use-minipay";
 import {
   LANDING_COPY as LANDING_COPY_EN,
@@ -174,12 +176,12 @@ export function LandingPage() {
           <PhoneStack
             variant="right"
             primary={{
-              src: "/art/landing/hero-play-hub",
+              slot: "landing.hero",
               alt: "Chesscito play hub — Rook on the board",
               label: "Chesscito play hub",
             }}
             secondary={{
-              src: "/art/landing/pre-chess-exercise",
+              slot: "landing.pre-chess",
               alt: "Tablero con dots de movimiento del Rook",
               label: "Pre-chess exercise board",
             }}
@@ -271,7 +273,7 @@ export function LandingPage() {
         title={WHY_PAGE_COPY.preChess.title}
         body={WHY_PAGE_COPY.preChess.body}
         bullets={[...WHY_PAGE_COPY.preChess.bullets]}
-        imageSrc="/art/landing/pre-chess-exercise"
+        imageSlot="landing.pre-chess"
         imageAlt="Reto pre-ajedrez — pieza, tablero y objetivo"
         imageOnLeft={true}
       />
@@ -339,15 +341,7 @@ export function LandingPage() {
           </div>
           <div className="flex justify-center md:justify-end">
             <PhoneFrame label="Mecánica del Rook con dots de movimiento">
-              <picture>
-                <source srcSet="/art/landing/pre-chess-exercise.avif" type="image/avif" />
-                <source srcSet="/art/landing/pre-chess-exercise.webp" type="image/webp" />
-                <img
-                  src="/art/landing/pre-chess-exercise.png"
-                  alt="Tablero con dots de movimiento del Rook"
-                  className="h-full w-full object-cover"
-                />
-              </picture>
+              <ThemeAssetPicture slot="landing.pre-chess" alt="Tablero con dots de movimiento del Rook" className="h-full w-full object-cover" />
             </PhoneFrame>
           </div>
         </div>
@@ -425,7 +419,7 @@ export function LandingPage() {
         title={WHY_PAGE_COPY.progress.title}
         body={WHY_PAGE_COPY.progress.body}
         bullets={[...WHY_PAGE_COPY.progress.bullets]}
-        imageSrc="/art/landing/progress-trophies"
+        imageSlot="landing.progress-trophies"
         imageAlt="Trofeos y badges — progreso del jugador"
         imageOnLeft={true}
       />
@@ -990,7 +984,7 @@ function SectionRow({
   title,
   body,
   bullets,
-  imageSrc,
+  imageSlot,
   imageAlt,
   imageOnLeft,
 }: {
@@ -998,22 +992,14 @@ function SectionRow({
   title: string;
   body: string;
   bullets: string[];
-  imageSrc: string;
+  imageSlot: ThemeAssetKey;
   imageAlt: string;
   imageOnLeft: boolean;
 }) {
   const visual = (
     <div className="flex justify-center md:justify-start">
       <PhoneFrame label={imageAlt}>
-        <picture>
-          <source srcSet={`${imageSrc}.avif`} type="image/avif" />
-          <source srcSet={`${imageSrc}.webp`} type="image/webp" />
-          <img
-            src={`${imageSrc}.png`}
-            alt={imageAlt}
-            className="h-full w-full object-cover"
-          />
-        </picture>
+        <ThemeAssetPicture slot={imageSlot} alt={imageAlt} className="h-full w-full object-cover" />
       </PhoneFrame>
     </div>
   );

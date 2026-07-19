@@ -6,13 +6,14 @@ import { CandyIcon } from '@/components/redesign/candy-icon'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { ContextualHeader } from '@/components/ui/contextual-header'
 import { TileIconSlot } from '@/components/ui/tile-icon-slot'
+import { ThemeAssetPicture } from '@/components/themes/theme-asset-picture'
 import type { Exercise, PieceId, PieceProgress } from '@/lib/game/types'
 import {
   badgeRequiredCount,
   resolveExerciseDescription,
 } from '@/lib/game/exercises'
 import { useExerciseDescriptions } from '@/lib/content/catalog-context'
-import { PIECE_IMAGES } from '@/lib/content/editorial'
+import { pieceThemeSlot } from '@/lib/themes/piece-theme-assets'
 import {
   interleaveTrainingRows,
   LABYRINTH_MIN_EXERCISES,
@@ -210,22 +211,7 @@ export function ExerciseDrawer({
           {typeof shieldCount === 'number' && shieldCount > 0 ? (
             <>
               <span aria-hidden="true" className="candy-tray-pill-divider" />
-              <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
-                <source
-                  srcSet="/art/redesign/icons/shield.avif"
-                  type="image/avif"
-                />
-                <source
-                  srcSet="/art/redesign/icons/shield.webp"
-                  type="image/webp"
-                />
-                <img
-                  src="/art/redesign/icons/shield.png"
-                  alt=""
-                  aria-hidden={true}
-                  draggable={false}
-                />
-              </picture>
+              <ThemeAssetPicture slot="shared.shield" pictureClassName="candy-tray-pill-icon candy-tray-pill-icon--floating" alt="" aria-hidden={true} draggable={false} />
               <span className="tabular-nums text-sm font-extrabold">
                 {shieldCount}
               </span>
@@ -234,22 +220,7 @@ export function ExerciseDrawer({
           {typeof streakCount === 'number' && streakCount >= 2 ? (
             <>
               <span aria-hidden="true" className="candy-tray-pill-divider" />
-              <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating candy-tray-pill-icon--streak">
-                <source
-                  srcSet="/art/redesign/icons/combo.avif"
-                  type="image/avif"
-                />
-                <source
-                  srcSet="/art/redesign/icons/combo.webp"
-                  type="image/webp"
-                />
-                <img
-                  src="/art/redesign/icons/combo.png"
-                  alt=""
-                  aria-hidden={true}
-                  draggable={false}
-                />
-              </picture>
+              <ThemeAssetPicture slot="exercises.combo" pictureClassName="candy-tray-pill-icon candy-tray-pill-icon--floating candy-tray-pill-icon--streak" alt="" aria-hidden={true} draggable={false} />
               <span className="tabular-nums text-sm font-extrabold">
                 {streakCount}
               </span>
@@ -287,7 +258,7 @@ export function ExerciseDrawer({
         >
           <ContextualHeader
             variant="close-control"
-            iconSlot={<TileIconSlot src={PIECE_IMAGES[piece]} />}
+            iconSlot={<TileIconSlot slot={pieceThemeSlot('w', piece)} />}
             title={t('title')}
             subtitle={tPiece(piece)}
             close={{
@@ -419,23 +390,7 @@ export function ExerciseDrawer({
                             : undefined,
                         }}
                       >
-                        <picture className="block h-20 w-20 drop-shadow-md">
-                          <source
-                            srcSet="/art/redesign/bg/labyrint-icon.avif"
-                            type="image/avif"
-                          />
-                          <source
-                            srcSet="/art/redesign/bg/labyrint-icon.webp"
-                            type="image/webp"
-                          />
-                          <img
-                            src="/art/redesign/bg/labyrint-icon.png"
-                            alt=""
-                            aria-hidden={true}
-                            draggable={false}
-                            className="h-full w-full object-contain"
-                          />
-                        </picture>
+                        <ThemeAssetPicture slot="exercises.labyrinth-icon" pictureClassName="block h-20 w-20 drop-shadow-md" alt="" aria-hidden={true} draggable={false} className="h-full w-full object-contain" />
                         {effectiveLocked && (
                           <span className="absolute inset-0 flex items-center justify-center">
                             <CandyIcon
@@ -560,28 +515,12 @@ export function ExerciseDrawer({
                       }}
                     >
                       {/* Node button image */}
-                      <picture className="block h-20 w-20 drop-shadow-md">
-                        <source
-                          srcSet="/art/redesign/bg/btn-nodo.avif"
-                          type="image/avif"
-                        />
-                        <source
-                          srcSet="/art/redesign/bg/btn-nodo.webp"
-                          type="image/webp"
-                        />
-                        <img
-                          src="/art/redesign/bg/btn-nodo.png"
-                          alt=""
-                          aria-hidden={true}
-                          draggable={false}
-                          className="h-full w-full object-contain"
-                        />
-                      </picture>
+                      <ThemeAssetPicture slot="exercises.btn-nodo" pictureClassName="block h-20 w-20 drop-shadow-md" alt="" aria-hidden={true} draggable={false} className="h-full w-full object-contain" />
 
                       {/* Chess piece centered on the button */}
                       <span className="absolute inset-0 flex items-center justify-center pb-8">
                         <TileIconSlot
-                          src={PIECE_IMAGES[piece]}
+                          slot={pieceThemeSlot('w', piece)}
                           className="h-11 w-11"
                         />
                       </span>

@@ -3,8 +3,9 @@
 import type { CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 
-import { useIsProActive } from "@/lib/pro/use-is-pro-active";
-import { useThemeAsset } from "@/lib/themes/use-theme-asset";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { useCurrentThemeAsset } from "@/lib/themes/use-current-theme-asset";
+import { pieceThemeSlot } from "@/lib/themes/piece-theme-assets";
 
 export type KingdomAnchorVariant =
   | "playhub"
@@ -35,9 +36,6 @@ const ASPECT_RATIO: Record<KingdomAnchorVariant, string> = {
  *  audited into the theme system. When the arena-preview variant gets
  *  reskinned, migrate these to `useThemeAsset("board.background")` +
  *  `useThemeAsset("board.pieces")` per the audit doc playbook. */
-const BOARD_ASSET_BASE = "/art/redesign/board/board-ch";
-const PIECES_ASSET_BASE = "/art/redesign/pieces";
-
 type ArenaPreviewPiece = {
   file: number;
   rank: number;
@@ -73,7 +71,6 @@ export function KingdomAnchor({
   showTagline = true,
 }: Props) {
   const t = useTranslations("HOME_ANCHOR_COPY");
-  const isProActive = useIsProActive();
   /** Hub portal — first surface adopted into the theme system. Theme
    *  manifest serves both variants (default + pro) so a future
    *  Halloween / Christmas theme can ship its own portal art without
@@ -81,14 +78,8 @@ export function KingdomAnchor({
    *  variant within whichever theme is active; themes that don't ship
    *  a PRO variant fall back to default automatically (see
    *  `useThemeAsset` graceful-fallback contract). */
-  const portalAssetBase = useThemeAsset(
-    "hub.portal",
-    isProActive ? "pro" : "default",
-  );
-  const avatarAssetBase = useThemeAsset(
-    "hub.avatar",
-    isProActive ? "pro" : "default",
-  );
+  const portalAssetBase = useCurrentThemeAsset("hub.portal");
+  const avatarAssetBase = useCurrentThemeAsset("hub.avatar");
   const classes = [
     "kingdom-anchor",
     `kingdom-anchor--${variant}`,
@@ -107,19 +98,9 @@ export function KingdomAnchor({
       {variant === "arena-preview" ? (
         <div className="kingdom-anchor-board-frame">
           <div className="kingdom-anchor-board-inner">
-            <picture className="kingdom-anchor-picture">
-              <source srcSet={`${BOARD_ASSET_BASE}.avif`} type="image/avif" />
-              <source srcSet={`${BOARD_ASSET_BASE}.webp`} type="image/webp" />
-              <img
-                src={`${BOARD_ASSET_BASE}.png`}
-                alt=""
-                aria-hidden="true"
-                className="kingdom-anchor-img"
-              />
-            </picture>
+            <ThemeAssetPicture slot="board.thumbnail" pictureClassName="kingdom-anchor-picture" alt="" aria-hidden="true" className="kingdom-anchor-img" />
             <ul className="kingdom-anchor-board-pieces" aria-hidden="true">
               {STARTING_POSITION.map(({ file, rank, type, color }) => {
-                const base = `${PIECES_ASSET_BASE}/${color}-${type}`;
                 return (
                   <li
                     key={`${color}-${type}-${file}-${rank}`}
@@ -129,11 +110,7 @@ export function KingdomAnchor({
                       top: `${(7 - rank) * 12.5}%`,
                     }}
                   >
-                    <picture>
-                      <source srcSet={`${base}.avif`} type="image/avif" />
-                      <source srcSet={`${base}.webp`} type="image/webp" />
-                      <img src={`${base}.png`} alt="" />
-                    </picture>
+                    <ThemeAssetPicture slot={pieceThemeSlot(color, type)} alt="" />
                   </li>
                 );
               })}

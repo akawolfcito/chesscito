@@ -50,12 +50,10 @@ import { BOARD_HINT_COPY } from "@/lib/content/editorial";
 import { attackedSquares } from "@/lib/game/attack-map";
 import { isPawnCaught, legalPawnMoves } from "@/lib/game/promotion-run";
 import { hapticReject, hapticSuccess, hapticTap } from "@/lib/haptics";
-import { THEME_CONFIG } from "@/lib/theme";
+import { useThemePieceAssets } from "@/lib/themes/piece-theme-assets";
 import type { TypedEnemy } from "@/lib/game/fen-puzzle";
 import type { BoardPosition, Exercise, PieceId } from "@/lib/game/types";
 
-const PAWN_SRC = `${THEME_CONFIG.piecesBase}/w-pawn.png`;
-const enemySrc = (piece: PieceId) => `${THEME_CONFIG.piecesBase}/b-${piece}.png`;
 /** White pawn: the last rank is the crown. Mirrors `promotion-run.ts`. */
 const PROMOTION_RANK = 7;
 const SELECT_HINT_DURATION_MS = 2200;
@@ -106,6 +104,7 @@ export function PromotionRunBoard({
   resetKey?: number;
 }) {
   const t = useTranslations("PROMOTION_RUN_COPY.band");
+  const pieceAssets = useThemePieceAssets();
   const START = level.startPos;
   // Memoised on the level's own array identity: `level.enemies ?? []` would mint
   // a new [] every render.
@@ -350,6 +349,7 @@ export function PromotionRunBoard({
         />
       ))}
       {enemies.map((e) => {
+        if (!pieceAssets.b[e.piece]) return null;
         const c = cellCenter(e.pos.file, e.pos.rank);
         return (
           <picture
@@ -365,7 +365,7 @@ export function PromotionRunBoard({
             }}
           >
             <img
-              src={enemySrc(e.piece)}
+              src={`${pieceAssets.b[e.piece]}.png`}
               alt=""
               className="playhub-board-piece-img"
               style={{ width: "100%" }}
@@ -373,7 +373,7 @@ export function PromotionRunBoard({
           </picture>
         );
       })}
-      <picture
+      {pieceAssets.w.pawn ? <picture
         data-testid={`pr-pawn-${LABEL(pawn)}`}
         data-selected={selected ? "true" : "false"}
         className={`playhub-board-piece-float${selected ? " is-selected" : ""}`}
@@ -386,12 +386,12 @@ export function PromotionRunBoard({
         }}
       >
         <img
-          src={PAWN_SRC}
+          src={`${pieceAssets.w.pawn}.png`}
           alt=""
           className="playhub-board-piece-img"
           style={{ width: "100%" }}
         />
-      </picture>
+      </picture> : null}
       {showSelectHint ? (
         <div
           role="status"

@@ -292,7 +292,7 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
         <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <ContextualHeader
             variant="close-control"
-            iconSlot={<TileIconSlot src="/art/new-icons-chesscito/avatar-blue" />}
+            iconSlot={<TileIconSlot slot="arena.player-you" />}
             title={t("pageTitle")}
             close={{ onClick: () => onOpenChange(false), label: t("closeLabel") }}
           />

@@ -149,7 +149,7 @@ describe("WoodBanner — globals.css contract", () => {
     const css = fs.readFileSync(cssPath, "utf8");
     for (const variant of ["short", "medium", "large"]) {
       expect(css).toMatch(
-        new RegExp(`--wood-banner-bg-${variant}\\s*:\\s*url\\(`),
+        new RegExp(`--wood-banner-bg-${variant}\\s*:\\s*var\\(--theme-scene-banner-${variant}\\)`),
       );
     }
   });

@@ -8,6 +8,7 @@ import {
   type CSSProperties,
 } from "react";
 import { useTranslations } from "next-intl";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import type {
@@ -235,23 +236,14 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
           // text is what a screen reader — and any non-EN locale — actually
           // receives. It is not decorative.
           // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
-          <picture className="hub-tour-title-art">
-            <source
-              srcSet="/art/mini-tour/tour-challenge-title.avif"
-              type="image/avif"
-            />
-            <source
-              srcSet="/art/mini-tour/tour-challenge-title.webp"
-              type="image/webp"
-            />
-            <img
-              src="/art/mini-tour/tour-challenge-title.png"
-              alt={t("challengeTitleAlt")}
-              width={780}
-              height={89}
-              draggable={false}
-            />
-          </picture>
+          <ThemeAssetPicture
+            slot="hub.tour-title"
+            pictureClassName="hub-tour-title-art"
+            alt={t("challengeTitleAlt")}
+            width={780}
+            height={89}
+            draggable={false}
+          />
         ) : (
           <h2 className="hub-tour-title">{t(TITLE_KEY[step.bodyKey])}</h2>
         )}
@@ -266,23 +258,14 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
 
         {isChallenge && showHero ? (
           // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
-          <picture className="hub-tour-hero">
-            <source
-              srcSet="/art/mini-tour/tour-challenge-hero.avif"
-              type="image/avif"
-            />
-            <source
-              srcSet="/art/mini-tour/tour-challenge-hero.webp"
-              type="image/webp"
-            />
-            <img
-              src="/art/mini-tour/tour-challenge-hero.png"
-              alt={t("challengeHeroAlt")}
-              width={840}
-              height={370}
-              draggable={false}
-            />
-          </picture>
+          <ThemeAssetPicture
+            slot="hub.tour-hero"
+            pictureClassName="hub-tour-hero"
+            alt={t("challengeHeroAlt")}
+            width={840}
+            height={370}
+            draggable={false}
+          />
         ) : null}
 
         {/* The terms stay VISIBLE, but as one line instead of a paragraph — the

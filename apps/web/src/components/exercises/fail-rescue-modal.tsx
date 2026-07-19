@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import type { RescueModalVariant } from "@/lib/exercises/use-rescue-modal-state";
 import { SHIELD_RESCUE_PEONES_COST } from "@/lib/peones/shield-spend-fallback";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { useThemeBackground } from "@/lib/themes/use-theme-background";
 
 /**
  * FailRescueModal — decision panel shown when the player fails an
@@ -92,6 +94,7 @@ export function FailRescueModal({
 }: FailRescueModalProps) {
   const tRescue = useTranslations("RESCUE_MODAL_COPY");
   const tFooter = useTranslations("FOOTER_CTA_COPY");
+  const panelBackground = useThemeBackground("shared.panel-bg");
 
   // Persist the primer-shown flag the moment variant A actually
   // surfaces. Future rescues with shields then render variant B.
@@ -176,8 +179,7 @@ export function FailRescueModal({
         className="fail-rescue-modal-panel relative mx-4 w-full max-w-[340px] max-h-[92dvh] overflow-y-auto overscroll-contain"
         onClick={(e) => e.stopPropagation()}
         style={{
-          backgroundImage:
-            'image-set(url("/art/new-assets-chesscito/paneles/panel-bg1.avif") type("image/avif"), url("/art/new-assets-chesscito/paneles/panel-bg1.webp") type("image/webp"), url("/art/new-assets-chesscito/paneles/panel-bg1.png") type("image/png"))',
+          backgroundImage: panelBackground,
           backgroundSize: "100% 100%",
           backgroundRepeat: "no-repeat",
         }}
@@ -188,23 +190,7 @@ export function FailRescueModal({
           aria-label={tRescue("closeLabel")}
           className="candy-close-asset-button absolute right-[4%] top-[4%] z-10"
         >
-          <picture>
-            <source
-              srcSet="/art/screen-mission/close-icon.avif"
-              type="image/avif"
-            />
-            <source
-              srcSet="/art/screen-mission/close-icon.webp"
-              type="image/webp"
-            />
-            <img
-              src="/art/screen-mission/close-icon.png"
-              alt=""
-              aria-hidden="true"
-              className="h-10 w-10 object-contain"
-              draggable={false}
-            />
-          </picture>
+          <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-10 w-10 object-contain" draggable={false} />
         </button>
 
         <div className="fail-rescue-modal-content">
@@ -224,43 +210,13 @@ export function FailRescueModal({
             aria-hidden="true"
           >
             <span className="fail-rescue-modal-stat-pill">
-              <picture className="fail-rescue-modal-stat-icon">
-                <source
-                  srcSet="/art/redesign/icons/shield.avif"
-                  type="image/avif"
-                />
-                <source
-                  srcSet="/art/redesign/icons/shield.webp"
-                  type="image/webp"
-                />
-                <img
-                  src="/art/redesign/icons/shield.png"
-                  alt=""
-                  aria-hidden="true"
-                  draggable={false}
-                />
-              </picture>
+              <ThemeAssetPicture slot="shared.shield" pictureClassName="fail-rescue-modal-stat-icon" alt="" aria-hidden="true" draggable={false} />
               <span>{shieldPillText}</span>
             </span>
             {companionPillText ? (
               <span className="fail-rescue-modal-stat-pill">
                 {hasShields ? (
-                  <picture className="fail-rescue-modal-stat-icon">
-                    <source
-                      srcSet="/art/redesign/icons/star.avif"
-                      type="image/avif"
-                    />
-                    <source
-                      srcSet="/art/redesign/icons/star.webp"
-                      type="image/webp"
-                    />
-                    <img
-                      src="/art/redesign/icons/star.png"
-                      alt=""
-                      aria-hidden="true"
-                      draggable={false}
-                    />
-                  </picture>
+                  <ThemeAssetPicture slot="shared.star" pictureClassName="fail-rescue-modal-stat-icon" alt="" aria-hidden="true" draggable={false} />
                 ) : variant === "C" ? (
                   <span
                     className="fail-rescue-modal-stat-icon-glyph"
@@ -278,22 +234,13 @@ export function FailRescueModal({
               prior PhaseFlash used. Positioned absolute so it
               overhangs the stats row without affecting the CTA's
               full-width layout. */}
-          <picture className="fail-rescue-modal-wolf">
-            <source
-              srcSet="/art/avatar-try-again.avif"
-              type="image/avif"
-            />
-            <source
-              srcSet="/art/avatar-try-again.webp"
-              type="image/webp"
-            />
-            <img
-              src="/art/avatar-try-again.png"
-              alt=""
-              aria-hidden="true"
-              draggable={false}
-            />
-          </picture>
+          <ThemeAssetPicture
+            slot="exercises.avatar-try-again"
+            pictureClassName="fail-rescue-modal-wolf"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+          />
 
           <div className="fail-rescue-modal-cta-stack">
             <button

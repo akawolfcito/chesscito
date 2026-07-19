@@ -2,8 +2,12 @@
 
 import type { ReactNode } from "react";
 
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
+
 type Props = {
-  iconSrc: string;
+  iconSrc?: string;
+  iconSlot?: ThemeAssetKey;
   label: string;
   ariaLabel: string;
   onClick: () => void;
@@ -32,6 +36,7 @@ type Props = {
  *  `object-fit: contain` exactly like the LEARN piece images. */
 export function HubActionTile({
   iconSrc,
+  iconSlot,
   label,
   ariaLabel,
   onClick,
@@ -57,17 +62,28 @@ export function HubActionTile({
       className={["reward-tile", "is-locked", className].filter(Boolean).join(" ")}
     >
       <span className="reward-tile-label">{label}</span>
-      <picture className="reward-tile-piece">
-        <source srcSet={iconSrc.replace(/\.png$/, ".avif")} type="image/avif" />
-        <source srcSet={iconSrc.replace(/\.png$/, ".webp")} type="image/webp" />
-        <img
-          src={iconSrc}
+      {iconSlot ? (
+        <ThemeAssetPicture
+          slot={iconSlot}
+          pictureClassName="reward-tile-piece"
           alt=""
           aria-hidden="true"
           {...dimAttrs}
           {...priorityAttrs}
         />
-      </picture>
+      ) : iconSrc ? (
+        <picture className="reward-tile-piece">
+          <source srcSet={iconSrc.replace(/\.png$/, ".avif")} type="image/avif" />
+          <source srcSet={iconSrc.replace(/\.png$/, ".webp")} type="image/webp" />
+          <img
+            src={iconSrc}
+            alt=""
+            aria-hidden="true"
+            {...dimAttrs}
+            {...priorityAttrs}
+          />
+        </picture>
+      ) : null}
       {badge}
     </button>
   );

@@ -1,10 +1,13 @@
 "use client";
 
 import type { Rival } from "@/lib/game/rivals";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 export type ArenaMatchupTransitionProps = {
   rivalName: string;
   rivalAvatarSrc: string;
+  rivalAvatarSlot?: ThemeAssetKey;
   rivalFrame: Rival["frame"];
   /** Primary line on the player's ribbon — "You" / "Tú". */
   playerLabel: string;
@@ -12,6 +15,7 @@ export type ArenaMatchupTransitionProps = {
    *  guest identity hydrates; the slot still reserves its height. */
   playerNickname?: string;
   playerAvatarSrc: string;
+  playerAvatarSlot?: ThemeAssetKey;
   getReadyLabel: string;
 };
 
@@ -27,21 +31,23 @@ export type ArenaMatchupTransitionProps = {
 export function ArenaMatchupTransition({
   rivalName,
   rivalAvatarSrc,
+  rivalAvatarSlot,
   rivalFrame,
   playerLabel,
   playerNickname,
   playerAvatarSrc,
+  playerAvatarSlot,
   getReadyLabel,
 }: ArenaMatchupTransitionProps) {
   return (
     <div className="arena-matchup" data-testid="arena-matchup-transition">
       <div className="arena-matchup-side arena-matchup-side--rival">
         <div className={`arena-matchup-ribbon arena-matchup-ribbon--${rivalFrame}`}>
-          <img
-            className="arena-matchup-avatar"
-            src={rivalAvatarSrc}
-            alt={rivalName}
-          />
+          {rivalAvatarSlot ? (
+            <ThemeAssetPicture slot={rivalAvatarSlot} className="arena-matchup-avatar" alt={rivalName} />
+          ) : (
+            <img className="arena-matchup-avatar" src={rivalAvatarSrc} alt={rivalName} />
+          )}
           <div className="arena-matchup-text">
             <p className="arena-matchup-name">{rivalName}</p>
           </div>
@@ -50,11 +56,11 @@ export function ArenaMatchupTransition({
 
       <div className="arena-matchup-side arena-matchup-side--player">
         <div className="arena-matchup-ribbon arena-matchup-ribbon--player">
-          <img
-            className="arena-matchup-avatar"
-            src={playerAvatarSrc}
-            alt={playerNickname ?? playerLabel}
-          />
+          {playerAvatarSlot ? (
+            <ThemeAssetPicture slot={playerAvatarSlot} className="arena-matchup-avatar" alt={playerNickname ?? playerLabel} />
+          ) : (
+            <img className="arena-matchup-avatar" src={playerAvatarSrc} alt={playerNickname ?? playerLabel} />
+          )}
           <div className="arena-matchup-text">
             <p className="arena-matchup-name">{playerLabel}</p>
             {/* Height is reserved even while empty so a late-hydrating

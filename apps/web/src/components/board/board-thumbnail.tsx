@@ -3,8 +3,10 @@
 import { useMemo } from "react";
 
 import { cellCenter, pieceWidth } from "@/lib/game/board-geometry";
-import { ARENA_PIECE_IMG, fenToPieces, squareToFileRank } from "@/lib/game/arena-utils";
+import { fenToPieces, squareToFileRank } from "@/lib/game/arena-utils";
 import { THEME_CONFIG } from "@/lib/theme";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { useThemePieceAssets } from "@/lib/themes/piece-theme-assets";
 
 type Props = {
   /** Standard FEN string describing the position to render. Anything
@@ -46,6 +48,7 @@ export function BoardThumbnail({
   ariaLabel = "Chess position",
 }: Props) {
   const pieces = useMemo(() => fenToPieces(fen), [fen]);
+  const pieceAssets = useThemePieceAssets();
   const flipped = perspective === "b";
   const cssSize = typeof size === "number" ? `${size}px` : size;
 
@@ -61,32 +64,27 @@ export function BoardThumbnail({
       aria-label={ariaLabel}
       role="img"
     >
-      <picture
-        style={{
+      <ThemeAssetPicture
+        slot="board.thumbnail"
+        pictureStyle={{
           position: "absolute",
           inset: 0,
           width: "100%",
           height: "100%",
           pointerEvents: "none",
         }}
-      >
-        <source srcSet="/art/redesign/board/board-ch.avif" type="image/avif" />
-        <source srcSet="/art/redesign/board/board-ch.webp" type="image/webp" />
-        <img
-          src="/art/redesign/board/board-ch.png"
-          alt=""
-          style={{
-            width: "100%",
-            height: "100%",
-            // `fill` (not `contain`) — matches the ArenaBoard contract.
-            // The board image is intentionally distorted into the
-            // square canvas; `cellCenter()` percentages are calibrated
-            // against the filled box, not the natural aspect ratio.
-            objectFit: "fill",
-            display: "block",
-          }}
-        />
-      </picture>
+        alt=""
+        style={{
+          width: "100%",
+          height: "100%",
+          // `fill` (not `contain`) — matches the ArenaBoard contract.
+          // The board image is intentionally distorted into the
+          // square canvas; `cellCenter()` percentages are calibrated
+          // against the filled box, not the natural aspect ratio.
+          objectFit: "fill",
+          display: "block",
+        }}
+      />
 
       {/* Pieces live INSIDE the playable-area inset, mirroring the
        *  `.playhub-board-hitgrid` shape used by ArenaBoard. Without
@@ -110,7 +108,8 @@ export function BoardThumbnail({
           const vr = flipped ? 7 - rank : rank;
           const center = cellCenter(vf, vr);
           const pw = pieceWidth();
-          const src = ARENA_PIECE_IMG[p.color][p.type];
+          const src = pieceAssets[p.color][p.type];
+          if (!src) return null;
           // The FEN -> RawPiece array has no `id`. `square` is unique
           // per render (no two pieces occupy the same square in a valid
           // position) so it's a stable React key for this read-only thumb.
@@ -128,12 +127,12 @@ export function BoardThumbnail({
             >
               {THEME_CONFIG.hasOptimizedFormats && (
                 <>
-                  <source srcSet={src.replace(".png", ".avif")} type="image/avif" />
-                  <source srcSet={src.replace(".png", ".webp")} type="image/webp" />
+                  <source srcSet={`${src}.avif`} type="image/avif" />
+                  <source srcSet={`${src}.webp`} type="image/webp" />
                 </>
               )}
               <img
-                src={src}
+                src={`${src}.png`}
                 alt=""
                 className={THEME_CONFIG.pieceTintClass[p.color]}
                 style={{ width: "100%", display: "block" }}

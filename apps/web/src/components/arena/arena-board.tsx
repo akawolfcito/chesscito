@@ -4,11 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { cellCenter, pieceWidth } from "@/lib/game/board-geometry";
-import { ARENA_PIECE_IMG, squareToFileRank } from "@/lib/game/arena-utils";
+import { squareToFileRank } from "@/lib/game/arena-utils";
 import { GameBoard } from "@/lib/game/game-board";
 import { THEME_CONFIG } from "@/lib/theme";
 import type { ChessBoardPiece } from "@/lib/game/types";
 import type { PlayerColor } from "@/lib/game/use-chess-game";
+import { useThemePieceAssets } from "@/lib/themes/piece-theme-assets";
 
 const CAPTURE_FADE_MS = 200;
 
@@ -89,6 +90,7 @@ export function ArenaBoard({
   playerColor = "w",
 }: ArenaBoardProps) {
   const t = useTranslations("ARENA_COPY");
+  const pieceAssets = useThemePieceAssets();
   const flipped = playerColor === "b";
   const squares = useMemo(
     () => buildArenaSquares(selectedSquare, legalMoves, lastMove, checkSquare),
@@ -154,7 +156,8 @@ export function ArenaBoard({
         const { file, rank } = squareToFileRank(p.square);
         const center = pos(file, rank);
         const pw = pieceWidth();
-        const src = ARENA_PIECE_IMG[p.color][p.type];
+        const src = pieceAssets[p.color][p.type];
+        if (!src) return null;
         const isPieceSelected = p.square === selectedSquare;
         const isPieceInCheck = p.square === checkSquare;
         const isPieceRejecting = p.square === rejectingSquare;
@@ -170,12 +173,12 @@ export function ArenaBoard({
           >
             {THEME_CONFIG.hasOptimizedFormats && (
               <>
-                <source srcSet={src.replace(".png", ".avif")} type="image/avif" />
-                <source srcSet={src.replace(".png", ".webp")} type="image/webp" />
+                <source srcSet={`${src}.avif`} type="image/avif" />
+                <source srcSet={`${src}.webp`} type="image/webp" />
               </>
             )}
             <img
-              src={src}
+              src={`${src}.png`}
               alt={`${p.color === "w" ? "White" : "Black"} ${p.type}`}
               className={`arena-piece-img ${THEME_CONFIG.pieceTintClass[p.color]}`}
               style={{ width: "100%" }}
@@ -190,7 +193,8 @@ export function ArenaBoard({
         const { file, rank } = squareToFileRank(p.square);
         const center = pos(file, rank);
         const pw = pieceWidth();
-        const src = ARENA_PIECE_IMG[p.color][p.type];
+        const src = pieceAssets[p.color][p.type];
+        if (!src) return null;
         return (
           <picture
             key={`dying-${p.id}`}
@@ -203,12 +207,12 @@ export function ArenaBoard({
           >
             {THEME_CONFIG.hasOptimizedFormats && (
               <>
-                <source srcSet={src.replace(".png", ".avif")} type="image/avif" />
-                <source srcSet={src.replace(".png", ".webp")} type="image/webp" />
+                <source srcSet={`${src}.avif`} type="image/avif" />
+                <source srcSet={`${src}.webp`} type="image/webp" />
               </>
             )}
             <img
-              src={src}
+              src={`${src}.png`}
               alt=""
               className={`arena-piece-img ${THEME_CONFIG.pieceTintClass[p.color]}`}
               style={{ width: "100%" }}
