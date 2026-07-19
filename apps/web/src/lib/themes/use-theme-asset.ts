@@ -24,7 +24,7 @@ import { resolveThemeAsset } from "./resolve-theme-asset";
  */
 export function useThemeAsset(
   key: ThemeAssetKey,
-  variant: ThemeAssetVariant = "default",
+  variant: ThemeAssetVariant,
 ): string {
   const themeId = useActiveTheme();
   return resolveThemeAsset(key, variant, themeId) ?? "";

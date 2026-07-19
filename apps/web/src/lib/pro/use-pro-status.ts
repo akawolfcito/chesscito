@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 export type ProStatus = {
   active: boolean;
@@ -12,6 +12,9 @@ export type UseProStatusReturn = {
   isLoading: boolean;
   refetch: () => void;
 };
+
+export const proStatusQueryKey = (wallet: string | undefined) =>
+  ["pro-status", wallet ?? null] as const;
 
 /** Read-only fetch hook for /api/pro/status. Used by the PRO chip and
  *  sheet to decide whether to render "Get PRO" vs "PRO active".
@@ -28,53 +31,22 @@ export type UseProStatusReturn = {
  *    first-load failure status stays null so useIsProActive can fall
  *    back to its localStorage cache. */
 export function useProStatus(wallet?: string): UseProStatusReturn {
-  const [status, setStatus] = useState<ProStatus | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [version, setVersion] = useState(0);
-  const abortRef = useRef<AbortController | null>(null);
+  const query = useQuery({
+    queryKey: proStatusQueryKey(wallet),
+    enabled: Boolean(wallet),
+    retry: false,
+    queryFn: async ({ signal }) => {
+      const res = await fetch(`/api/pro/status?wallet=${wallet}`, { signal });
+      if (!res.ok) throw new Error(`PRO status ${res.status}`);
+      return await res.json() as ProStatus;
+    },
+  });
 
-  useEffect(() => {
-    if (!wallet) {
-      setStatus(null);
-      setIsLoading(false);
-      return;
-    }
-
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    setIsLoading(true);
-
-    fetch(`/api/pro/status?wallet=${wallet}`, { signal: controller.signal })
-      .then(async (res) => {
-        if (controller.signal.aborted) return;
-        // Only an authoritative OK body mutates status. A transient
-        // non-ok (403 rate-limit, 500, cold function) must NOT demote a
-        // PRO user: we PRESERVE the last-known status so a single blip
-        // while navigating the hub never flips the PRO chip to inactive.
-        // The status self-heals on the next successful fetch. On a
-        // first-load failure status stays null, letting useIsProActive
-        // fall back to its localStorage cache.
-        if (res.ok) {
-          const data: ProStatus = await res.json();
-          if (controller.signal.aborted) return;
-          setStatus(data);
-        }
-        setIsLoading(false);
-      })
-      .catch((err: unknown) => {
-        if (err instanceof Error && err.name === "AbortError") return;
-        // Network error / malformed body — preserve last-known status
-        // for the same reason as a non-ok response above.
-        setIsLoading(false);
-      });
-
-    return () => controller.abort();
-  }, [wallet, version]);
-
-  const refetch = useCallback(() => {
-    setVersion((v) => v + 1);
-  }, []);
-
-  return { status, isLoading, refetch };
+  return {
+    status: wallet ? query.data ?? null : null,
+    isLoading: Boolean(wallet) && query.isFetching,
+    refetch: () => {
+      void query.refetch();
+    },
+  };
 }

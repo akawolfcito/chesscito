@@ -2,16 +2,15 @@
 
 import { createContext, useContext } from "react";
 
-import { useIsProActive } from "@/lib/pro/use-is-pro-active";
-
 import type { ThemeAssetVariant } from "./theme-registry";
+import { useEffectiveThemeTier } from "./use-effective-theme-tier";
 
 const ThemeVariantContext = createContext<ThemeAssetVariant>("default");
 
 export function ThemeVariantProvider({ children }: { children: React.ReactNode }) {
-  const isProActive = useIsProActive();
+  const tier = useEffectiveThemeTier();
   return (
-    <ThemeVariantContext.Provider value={isProActive ? "pro" : "default"}>
+    <ThemeVariantContext.Provider value={tier}>
       {children}
     </ThemeVariantContext.Provider>
   );

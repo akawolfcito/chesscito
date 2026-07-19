@@ -7,7 +7,7 @@ import {
 
 export function resolveThemeAsset(
   key: ThemeAssetKey,
-  variant: ThemeAssetVariant = "default",
+  variant: ThemeAssetVariant,
   themeId = "candy-forest",
 ): string | null {
   const theme = THEMES[themeId] ?? THEMES["candy-forest"];

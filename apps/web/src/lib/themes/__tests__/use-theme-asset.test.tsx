@@ -22,7 +22,7 @@ describe("useOwnedThemes", () => {
 
 describe("useThemeAsset", () => {
   it("returns the default variant basename for a known key", () => {
-    const { result } = renderHook(() => useThemeAsset("hub.portal"));
+    const { result } = renderHook(() => useThemeAsset("hub.portal", "default"));
     expect(result.current).toBe(
       THEMES["candy-forest"].assets["hub.portal"].default,
     );

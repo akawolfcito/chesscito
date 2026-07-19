@@ -1,5 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import { render, type RenderOptions, type RenderResult } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
 
 import enMessages from "@/lib/content/messages/en";
@@ -36,18 +37,23 @@ export function renderWithIntl(
   options: Options = {},
 ): RenderResult {
   const { locale = routing.defaultLocale, ...rest } = options;
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(ui, {
     wrapper: ({ children }: { children: ReactNode }) => (
-      <NextIntlClientProvider
-        locale={locale}
-        messages={BUNDLES[locale]}
-        onError={() => {}}
-        getMessageFallback={({ key, namespace }) =>
-          namespace ? `${namespace}.${key}` : key
-        }
-      >
-        {children}
-      </NextIntlClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <NextIntlClientProvider
+          locale={locale}
+          messages={BUNDLES[locale]}
+          onError={() => {}}
+          getMessageFallback={({ key, namespace }) =>
+            namespace ? `${namespace}.${key}` : key
+          }
+        >
+          {children}
+        </NextIntlClientProvider>
+      </QueryClientProvider>
     ),
     ...rest,
   });

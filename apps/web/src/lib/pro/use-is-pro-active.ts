@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAccount } from "wagmi";
 
 import { useProStatus } from "@/lib/pro/use-pro-status";
@@ -10,6 +10,20 @@ const STORAGE_PREFIX = "chesscito:pro-active:";
 function storageKey(wallet: string): string {
   return `${STORAGE_PREFIX}${wallet.toLowerCase()}`;
 }
+
+function readCachedActive(wallet: string | undefined): boolean {
+  if (typeof window === "undefined" || !wallet) return false;
+  try {
+    return window.localStorage.getItem(storageKey(wallet)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export type ProEntitlementState = {
+  active: boolean;
+  loading: boolean;
+};
 
 /**
  * Boolean flag for "is the connected wallet currently a PRO subscriber?"
@@ -37,22 +51,15 @@ function storageKey(wallet: string): string {
  *
  * No wallet connected → returns `false` (no claim to PRO state exists).
  */
-export function useIsProActive(): boolean {
+export function useProEntitlement(): ProEntitlementState {
   const { address } = useAccount();
   const wallet = address?.toLowerCase();
-  const { status } = useProStatus(wallet);
+  const { status, isLoading } = useProStatus(wallet);
 
-  // Sync read on first render — avoids the inactive→active flicker for
-  // returning PRO users. Safe inside `useState` initializer (runs once
-  // per mount); guarded for SSR (`window` undefined).
-  const [cachedActive, setCachedActive] = useState<boolean>(() => {
-    if (typeof window === "undefined" || !wallet) return false;
-    try {
-      return window.localStorage.getItem(storageKey(wallet)) === "1";
-    } catch {
-      return false;
-    }
-  });
+  // MiniPay injects and connects its wallet after the provider mounts. Read
+  // the cache for the CURRENT wallet on every render instead of capturing the
+  // pre-connect `undefined` wallet in a one-shot state initializer.
+  const cachedActive = readCachedActive(wallet);
 
   // Compute the server-truth value with the live expiry check baked in.
   const serverActive =
@@ -75,10 +82,16 @@ export function useIsProActive(): boolean {
       // Quota-exceeded / disabled storage — fall through; the in-memory
       // `serverActive` value still drives the current render.
     }
-    setCachedActive(serverActive);
   }, [wallet, status, serverActive]);
 
   // Server answer wins once it lands. Cache only matters during the
   // brief window before the first fetch resolves.
-  return status === null ? cachedActive : serverActive;
+  return {
+    active: Boolean(wallet) && (status === null ? cachedActive : serverActive),
+    loading: Boolean(wallet) && isLoading,
+  };
+}
+
+export function useIsProActive(): boolean {
+  return useProEntitlement().active;
 }

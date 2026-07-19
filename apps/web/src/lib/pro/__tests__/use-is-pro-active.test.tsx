@@ -12,7 +12,7 @@ vi.mock("../use-pro-status", () => ({
   useProStatus: (wallet?: string) => useProStatusMock(wallet),
 }));
 
-import { useIsProActive } from "../use-is-pro-active";
+import { useIsProActive, useProEntitlement } from "../use-is-pro-active";
 
 const WALLET = "0x1234567890abcdef1234567890abcdef12345678";
 const FUTURE = Date.now() + 30 * 86_400_000;
@@ -20,10 +20,11 @@ const PAST = Date.now() - 60 * 60 * 1000;
 
 function setStatus(value: {
   status: { active: boolean; expiresAt: number | null } | null;
+  isLoading?: boolean;
 }) {
   useProStatusMock.mockReturnValue({
-    ...value,
-    isLoading: false,
+    status: value.status,
+    isLoading: value.isLoading ?? false,
     refetch: vi.fn(),
   });
 }
@@ -72,6 +73,43 @@ describe("useIsProActive", () => {
     setStatus({ status: null });
     const { result } = renderHook(() => useIsProActive());
     expect(result.current).toBe(true);
+  });
+
+  it("reports loading and keeps DEFAULT when no cached entitlement exists", () => {
+    useAccountMock.mockReturnValue({ address: WALLET });
+    setStatus({ status: null, isLoading: true });
+
+    const { result } = renderHook(() => useProEntitlement());
+
+    expect(result.current).toEqual({ active: false, loading: true });
+  });
+
+  it("re-reads the connected wallet cache after MiniPay hydrates", () => {
+    useAccountMock.mockReturnValue({ address: undefined });
+    setStatus({ status: null });
+    window.localStorage.setItem(`chesscito:pro-active:${WALLET}`, "1");
+
+    const { result, rerender } = renderHook(() => useProEntitlement());
+    expect(result.current).toEqual({ active: false, loading: false });
+
+    useAccountMock.mockReturnValue({ address: WALLET });
+    setStatus({ status: null, isLoading: true });
+    rerender();
+
+    expect(result.current).toEqual({ active: true, loading: true });
+  });
+
+  it("updates from DEFAULT loading state to PRO after hydration", () => {
+    useAccountMock.mockReturnValue({ address: WALLET });
+    setStatus({ status: null, isLoading: true });
+
+    const { result, rerender } = renderHook(() => useProEntitlement());
+    expect(result.current.active).toBe(false);
+
+    setStatus({ status: { active: true, expiresAt: FUTURE } });
+    rerender();
+
+    expect(result.current).toEqual({ active: true, loading: false });
   });
 
   it("writes through to localStorage when the server answer says active", () => {

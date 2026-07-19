@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 
 import { useProStatus } from "../use-pro-status";
 
@@ -7,10 +9,18 @@ const VALID_WALLET = "0xcc4179a22b473ea2eb2b9b9b210458d0f60fc2dd";
 
 describe("useProStatus", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
+  let queryClient: QueryClient;
+  let wrapper: ({ children }: { children: ReactNode }) => React.JSX.Element;
 
   beforeEach(() => {
     fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
+    wrapper = ({ children }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
   });
 
   afterEach(() => {
@@ -19,7 +29,7 @@ describe("useProStatus", () => {
   });
 
   it("returns null status without fetching when wallet is undefined", () => {
-    const { result } = renderHook(() => useProStatus(undefined));
+    const { result } = renderHook(() => useProStatus(undefined), { wrapper });
 
     expect(result.current.status).toBeNull();
     expect(result.current.isLoading).toBe(false);
@@ -32,7 +42,7 @@ describe("useProStatus", () => {
       json: async () => ({ active: true, expiresAt: 1_700_000_000_000 }),
     });
 
-    const { result } = renderHook(() => useProStatus(VALID_WALLET));
+    const { result } = renderHook(() => useProStatus(VALID_WALLET), { wrapper });
 
     expect(fetchMock).toHaveBeenCalledWith(
       `/api/pro/status?wallet=${VALID_WALLET}`,
@@ -56,7 +66,7 @@ describe("useProStatus", () => {
         json: async () => ({ active: true, expiresAt: 9_999_999_999_999 }),
       });
 
-    const { result } = renderHook(() => useProStatus(VALID_WALLET));
+    const { result } = renderHook(() => useProStatus(VALID_WALLET), { wrapper });
 
     await waitFor(() => {
       expect(result.current.status).toEqual({ active: false, expiresAt: null });
@@ -79,7 +89,7 @@ describe("useProStatus", () => {
       json: async () => ({ error: "Forbidden" }),
     });
 
-    const { result } = renderHook(() => useProStatus(VALID_WALLET));
+    const { result } = renderHook(() => useProStatus(VALID_WALLET), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -90,7 +100,7 @@ describe("useProStatus", () => {
   it("leaves status null on a first-load network error (cache layer decides)", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("network down"));
 
-    const { result } = renderHook(() => useProStatus(VALID_WALLET));
+    const { result } = renderHook(() => useProStatus(VALID_WALLET), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -110,7 +120,7 @@ describe("useProStatus", () => {
         json: async () => ({ error: "Forbidden" }),
       });
 
-    const { result } = renderHook(() => useProStatus(VALID_WALLET));
+    const { result } = renderHook(() => useProStatus(VALID_WALLET), { wrapper });
 
     await waitFor(() => {
       expect(result.current.status).toEqual({ active: true, expiresAt: 9_999_999_999_999 });
@@ -134,7 +144,7 @@ describe("useProStatus", () => {
       })
       .mockRejectedValueOnce(new TypeError("network down"));
 
-    const { result } = renderHook(() => useProStatus(VALID_WALLET));
+    const { result } = renderHook(() => useProStatus(VALID_WALLET), { wrapper });
 
     await waitFor(() => {
       expect(result.current.status).toEqual({ active: true, expiresAt: 9_999_999_999_999 });
@@ -161,7 +171,7 @@ describe("useProStatus", () => {
         json: async () => ({ active: false, expiresAt: null }),
       });
 
-    const { result } = renderHook(() => useProStatus(VALID_WALLET));
+    const { result } = renderHook(() => useProStatus(VALID_WALLET), { wrapper });
 
     await waitFor(() => {
       expect(result.current.status).toEqual({ active: true, expiresAt: 9_999_999_999_999 });
@@ -185,9 +195,37 @@ describe("useProStatus", () => {
       });
     });
 
-    const { unmount } = renderHook(() => useProStatus(VALID_WALLET));
+    const { unmount } = renderHook(() => useProStatus(VALID_WALLET), { wrapper });
     expect(captured.signal?.aborted).toBe(false);
     unmount();
     expect(captured.signal?.aborted).toBe(true);
+  });
+
+  it("shares one authoritative status across observers and refetches", async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ active: false, expiresAt: null }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ active: true, expiresAt: 9_999_999_999_999 }),
+      });
+
+    const { result } = renderHook(
+      () => ({
+        provider: useProStatus(VALID_WALLET),
+        purchaseFlow: useProStatus(VALID_WALLET),
+      }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.provider.status?.active).toBe(false));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    act(() => result.current.purchaseFlow.refetch());
+
+    await waitFor(() => expect(result.current.provider.status?.active).toBe(true));
+    expect(result.current.purchaseFlow.status?.active).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
