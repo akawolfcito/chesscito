@@ -193,7 +193,7 @@ export function ExerciseDrawer({
         <button
           type="button"
           aria-label={t('ariaLabel')}
-          className="candy-tray-pill"
+          className="candy-tray-pill min-h-[36px]"
         >
           <CandyIcon
             name="star"
@@ -390,7 +390,7 @@ export function ExerciseDrawer({
                             : undefined,
                         }}
                       >
-                        <ThemeAssetPicture slot="exercises.labyrinth-icon" pictureClassName="block h-20 w-20 drop-shadow-md" alt="" aria-hidden={true} draggable={false} className="h-full w-full object-contain" />
+                        <ThemeAssetPicture slot="exercises.labyrinth-icon" pictureClassName="block h-auto w-20 drop-shadow-md" alt="" aria-hidden={true} draggable={false} className="h-full w-full object-contain" />
                         {effectiveLocked && (
                           <span className="absolute inset-0 flex items-center justify-center">
                             <CandyIcon
@@ -515,13 +515,13 @@ export function ExerciseDrawer({
                       }}
                     >
                       {/* Node button image */}
-                      <ThemeAssetPicture slot="exercises.btn-nodo" pictureClassName="block h-20 w-20 drop-shadow-md" alt="" aria-hidden={true} draggable={false} className="h-full w-full object-contain" />
+                      <ThemeAssetPicture slot="exercises.btn-nodo" pictureClassName="block h-auto w-20 drop-shadow-md" alt="" aria-hidden={true} draggable={false} className="h-full w-full object-contain" />
 
                       {/* Chess piece centered on the button */}
-                      <span className="absolute inset-0 flex items-center justify-center pb-8">
+                      <span className="absolute inset-0 flex items-center justify-center pb-14">
                         <TileIconSlot
                           slot={pieceThemeSlot('w', piece)}
-                          className="h-11 w-11"
+                          className="h-auto w-11"
                         />
                       </span>
 

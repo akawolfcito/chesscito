@@ -261,11 +261,11 @@ export const THEMES: Record<string, ThemeDefinition> = {
         pro: "/art/hub/chesscito-avatar-new-light",
         usedIn: ["Hub — KingdomAnchor avatar", "Exercises — avatar", "↳ components/exercises/badge-sheet.tsx"],
       },
-      "hub.enter-arena": {
+      "hub.enter-arena": { pro: { mode: "inherit" },
         default: "/art/hub/enter-arena",
         usedIn: ["Hub — enter arena button", "↳ components/exercises/persistent-dock.tsx", "↳ components/hub/hub-scaffold.tsx", "↳ components/hub/play-hub-scaffold.tsx"],
       },
-      "hub.train-pieces": {
+      "hub.train-pieces": { pro: { mode: "inherit" },
         default: "/art/hub/train-pieces",
         usedIn: ["Learn Hub — START FOCUS icon · HubLiteScaffold · route: /", "Learn/Play Hub — Training side of mode selector · AppModeSwitch · route: /", "Full Hub — primary training CTA · HubScaffold · route: /", "Arena/Exercises — Pieces center dock action · PersistentDock", "↳ components/hub/hub-lite-scaffold.tsx", "↳ components/hub/app-mode-switch.tsx", "↳ components/hub/hub-scaffold.tsx", "↳ components/exercises/persistent-dock.tsx"],
       },
@@ -273,7 +273,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/new-icons-chesscito/play-chess",
         usedIn: ["Hub — play chess icon", "↳ components/hub/hub-scaffold.tsx", "↳ components/ui/tile-icon-slot.tsx"],
       },
-      "hub.training": {
+      "hub.training": { pro: { mode: "inherit" },
         default: "/art/new-icons-chesscito/training",
         usedIn: ["Play Hub — Coach tile · PlayHubScaffold · route: /", "Full Hub — Coach action rail · HubScaffold · route: /", "Coach/Journal — Training Journal header · CoachHistoryPage · route: /coach/history", "Coach review — match-review header and error states · CoachGamePage/CoachGameClient · route: /coach/[gameId]", "Account — Coach row icon · AccountSheet · route: /exercises?sheet=account", "↳ components/hub/play-hub-scaffold.tsx", "↳ components/hub/hub-scaffold.tsx", "↳ app/[locale]/coach/history/page.tsx", "↳ app/[locale]/coach/[gameId]/page.tsx", "↳ app/[locale]/coach/[gameId]/coach-game-client.tsx", "↳ components/account/account-sheet.tsx"],
       },
@@ -309,7 +309,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/mini-tour/tour-challenge-title",
         usedIn: ["Hub — mini-tour challenge title", "↳ components/hub/hub-tour.tsx"],
       },
-      "hub.guide": {
+      "hub.guide": { pro: { mode: "none" },
         default: "/art/scene-rooted/guide-secuencia",
         usedIn: ["Hub — guide sequence", "↳ components/hub/hub-scaffold.tsx"],
       },

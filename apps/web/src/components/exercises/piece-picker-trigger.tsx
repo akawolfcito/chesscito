@@ -40,7 +40,7 @@ export function PiecePickerTrigger({
       aria-haspopup="dialog"
       className={
         showLabel
-          ? 'candy-tray-pill'
+          ? 'candy-tray-pill min-h-[36px]'
           : 'flex h-11 w-11 items-center justify-center rounded-full border transition-all active:scale-[0.97]'
       }
       style={

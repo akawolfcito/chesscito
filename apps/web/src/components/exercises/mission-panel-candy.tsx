@@ -557,7 +557,7 @@ export function MissionPanelCandy({
       type="button"
       data-testid={missionStatus ? 'dr-band' : 'mission-band'}
       data-phase={missionStatus?.phase}
-      className="flex min-h-[30px] w-full items-center justify-center gap-1.5 rounded-lg border border-amber-300/40 bg-amber-100/95 px-3 py-1 text-[#3f2208]"
+      className="w-full candy-tray-pill min-h-[36px]"
       aria-label={missionAriaLabel}
     >
       <CandyIcon name="crosshair" className="candy-tray-pill-icon" />

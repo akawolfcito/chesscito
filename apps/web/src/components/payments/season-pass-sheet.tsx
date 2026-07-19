@@ -155,7 +155,7 @@ function SeasonPassSheetInner({
           </div>
         ) : trainingPass.active && trainingPass.source === "season_pass" ? (
           <div data-testid="season-pass-already-active" className="flex flex-col items-center gap-3">
-            <ShieldIcon />
+            {/* <ShieldIcon /> */}
             <p className="arena-result-title">Pass Active</p>
             <p className="text-sm opacity-80">
               +{trainingPass.shieldsCredited} shields included with your direct pass
@@ -166,7 +166,7 @@ function SeasonPassSheetInner({
           </div>
         ) : (
           <>
-            <ShieldIcon />
+            {/* <ShieldIcon /> */}
             <p className="arena-result-title">{t("offerTitle")}</p>
             <p className="text-sm opacity-80 max-w-[240px]">{t("offerHabit")}</p>
             <ul className="flex flex-col items-center gap-1 text-sm opacity-80">
