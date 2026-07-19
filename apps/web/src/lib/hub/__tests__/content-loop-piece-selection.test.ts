@@ -5,6 +5,7 @@ import {
   selectNextAvailablePiece,
   selectPrimaryPiece,
   startFocusDestination,
+  startFocusExerciseDestination,
 } from "@/lib/hub/content-loop";
 import type { TrainingNode } from "@/lib/training/path";
 import type { PieceId } from "@/lib/game/types";
@@ -249,5 +250,17 @@ describe("startFocusDestination", () => {
 
   it("falls back to bare /exercises when no piece is known yet", () => {
     expect(startFocusDestination(null, null)).toBe("/exercises");
+  });
+});
+
+describe("startFocusExerciseDestination", () => {
+  it("always targets Exercises and names the active piece", () => {
+    expect(startFocusExerciseDestination("bishop")).toBe(
+      "/exercises?piece=bishop",
+    );
+  });
+
+  it("falls back to Exercises before the content loop hydrates", () => {
+    expect(startFocusExerciseDestination(null)).toBe("/exercises");
   });
 });

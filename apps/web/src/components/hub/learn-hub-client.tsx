@@ -45,7 +45,7 @@ import { useAccount } from "wagmi";
 import type { PieceId } from "@/lib/game/types";
 import { useLabyrinthCatalog } from "@/lib/content/catalog-context";
 import { SPECIAL_TRAINING_ROOK_STARS } from "@/lib/progression/milestones";
-import { startFocusDestination } from "@/lib/hub/content-loop";
+import { startFocusExerciseDestination } from "@/lib/hub/content-loop";
 import {
   isMilestoneSeedReady,
   useMilestoneSeeding,
@@ -423,33 +423,11 @@ export function LearnHubClient({
               : null
           }
           primaryFocus={{
-            // Go where the loop says. Start Focus used to push a bare
-            // `/exercises` and THROW AWAY the destination the Content Loop had
-            // just derived — so `initialPiece` fell back to its `"rook"`
-            // default and the player landed on the rook's `currentId`: the last
-            // exercise they had already solved, with nowhere to advance to.
-            // They replayed it forever. The loop exists to answer exactly this
-            // question; the CTA now asks it.
-            //
-            // `destination` is null only for the come-back-tomorrow variants,
-            // which have nothing to open. Falling back to `/exercises` there
-            // keeps the button alive rather than inert.
             onPress: () => {
               track("hub_start_focus_tap", {
                 variant: contentLoopAction?.variant ?? null,
               });
-              // NAME THE PIECE. `daily-pending` (`?slot=daily`) and the
-              // null-destination variants carry none, and a bare `/exercises`
-              // falls back to `initialPiece`'s "rook" default — which opens the
-              // rook's `currentId`, the last exercise already solved. That was
-              // the third door back into the loop, and it outlived the piece
-              // selector on device.
-              router.push(
-                startFocusDestination(
-                  contentLoopAction?.destination ?? null,
-                  contentLoopPrimaryPiece,
-                ),
-              );
+              router.push(startFocusExerciseDestination(contentLoopPrimaryPiece));
             },
             contentLoop: contentLoopAction,
             isHydrated: isContentLoopHydrated,

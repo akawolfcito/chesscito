@@ -307,6 +307,13 @@ export function startFocusDestination(
   return `${target}${target.includes("?") ? "&" : "?"}piece=${primaryPiece}`;
 }
 
+/** START FOCUS is an Exercises entry point, independent of the next-best-action card. */
+export function startFocusExerciseDestination(
+  primaryPiece: string | null,
+): string {
+  return startFocusDestination("/exercises", primaryPiece);
+}
+
 // ─── Main derivation ──────────────────────────────────────────────────────────
 
 /**

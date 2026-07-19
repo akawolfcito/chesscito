@@ -1,7 +1,8 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 
 import { HubLiteScaffold, type HubLiteScaffoldProps } from "../hub-lite-scaffold";
@@ -181,6 +182,44 @@ describe("<HubLiteScaffold>", () => {
     expect(cta.textContent).not.toMatch(/Practice|Continue/i);
     fireEvent.click(cta);
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it("Start Focus: Enter and Space activate the same native button action", async () => {
+    const user = userEvent.setup();
+    const onPress = vi.fn();
+    render(
+      <HubLiteScaffold
+        {...baseProps({
+          primaryFocus: {
+            onPress,
+            contentLoop: action("view-progress"),
+            isHydrated: true,
+          },
+        })}
+      />,
+    );
+    const cta = screen.getByTestId("start-focus-cta");
+
+    cta.focus();
+    await user.keyboard("{Enter}");
+    await user.keyboard(" ");
+
+    expect(onPress).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps decorative art outside the CTA hit area", () => {
+    const { container } = render(<HubLiteScaffold {...baseProps()} />);
+    const cta = screen.getByTestId("start-focus-cta");
+    const ring = container.querySelector(".hub-lite-start-focus-ring");
+    const css = readFileSync(
+      resolve(process.cwd(), "src/app/globals.css"),
+      "utf8",
+    );
+
+    expect(cta.contains(ring)).toBe(false);
+    expect(css).toMatch(
+      /\.hub-lite-start-focus-ring\s*\{[^}]*pointer-events:\s*none/s,
+    );
   });
 
   it("Start Focus: pre-hydration (null content loop) → safe default label", () => {

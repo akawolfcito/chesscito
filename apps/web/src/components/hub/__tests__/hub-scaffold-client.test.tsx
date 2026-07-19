@@ -778,6 +778,20 @@ describe("HubScaffoldClient — Lite Mode", () => {
     expect(monEvents).toHaveLength(0);
   });
 
+  it("routes START FOCUS to Exercises while Trophies keeps its own destination", async () => {
+    const user = userEvent.setup();
+    render(<HubScaffoldClientLite />);
+
+    await user.click(await screen.findByTestId("start-focus-cta"));
+    expect(pushMock).toHaveBeenLastCalledWith(
+      expect.stringMatching(/^\/exercises(?:\?|$)/),
+    );
+    expect(pushMock).not.toHaveBeenLastCalledWith("/trophies");
+
+    await user.click(screen.getByLabelText("Trophies: 0"));
+    expect(pushMock).toHaveBeenLastCalledWith("/trophies");
+  });
+
   // Lite layout (PR B): the standalone Focus Passport + NextStepCard are merged
   // into the 21-Day Challenge card (passport dots inside) + the Start Focus CTA.
   it("renders the 21-Day Challenge card with passport dots in Lite Mode", async () => {
