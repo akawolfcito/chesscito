@@ -3,6 +3,7 @@ import { act, render, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 
 let accountAddress: string | undefined;
 
@@ -17,11 +18,22 @@ import { THEMES } from "../theme-registry";
 const WALLET = "0x1234567890abcdef1234567890abcdef12345678";
 const originalTraining = THEMES["candy-forest"].assets["hub.training"];
 
+function RouteSurface({ name }: { name: string }) {
+  const isPro = useIsProActive();
+  return (
+    <section data-testid={`${name}-surface`} data-pro={isPro}>
+      <ThemeAssetPicture slot="hub.training" alt={`${name} Training`} />
+    </section>
+  );
+}
+
 function Subject({ queryClient }: { queryClient: QueryClient }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeVariantProvider>
-        <ThemeAssetPicture slot="hub.training" alt="Training" />
+        <RouteSurface name="learn-hub" />
+        <RouteSurface name="play-hub" />
+        <RouteSurface name="coach" />
       </ThemeVariantProvider>
     </QueryClientProvider>
   );
@@ -56,13 +68,21 @@ describe("PRO entitlement to runtime theme integration", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const view = render(<Subject queryClient={queryClient} />);
-    const image = view.getByRole("img");
-    expect(image).toHaveAttribute("src", "/art/default-training.png");
+    const images = view.getAllByRole("img");
+    expect(images).toHaveLength(3);
+    for (const image of images) {
+      expect(image).toHaveAttribute("src", "/art/default-training.png");
+    }
 
     accountAddress = WALLET;
     view.rerender(<Subject queryClient={queryClient} />);
     await waitFor(() => {
-      expect(image).toHaveAttribute("src", "/art/pro-training.png");
+      for (const image of images) {
+        expect(image).toHaveAttribute("src", "/art/pro-training.png");
+      }
+      expect(view.getByTestId("learn-hub-surface")).toHaveAttribute("data-pro", "true");
+      expect(view.getByTestId("play-hub-surface")).toHaveAttribute("data-pro", "true");
+      expect(view.getByTestId("coach-surface")).toHaveAttribute("data-pro", "true");
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
@@ -73,7 +93,12 @@ describe("PRO entitlement to runtime theme integration", () => {
       });
     });
     await waitFor(() => {
-      expect(image).toHaveAttribute("src", "/art/default-training.png");
+      for (const image of images) {
+        expect(image).toHaveAttribute("src", "/art/default-training.png");
+      }
+      expect(view.getByTestId("learn-hub-surface")).toHaveAttribute("data-pro", "false");
+      expect(view.getByTestId("play-hub-surface")).toHaveAttribute("data-pro", "false");
+      expect(view.getByTestId("coach-surface")).toHaveAttribute("data-pro", "false");
     });
   });
 });

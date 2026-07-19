@@ -10,6 +10,7 @@ const connectMock = vi.hoisted(() => vi.fn());
 const trackMock = vi.hoisted(() => vi.fn());
 const playDataMock = vi.hoisted(() => vi.fn());
 const proStateMock = vi.hoisted(() => vi.fn());
+const entitlementMock = vi.hoisted(() => vi.fn());
 
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
 vi.mock("@/i18n/navigation", () => ({ useRouter: () => ({ push: pushMock }) }));
@@ -27,6 +28,13 @@ vi.mock("@/lib/peones/use-peones-balance", () => ({
 vi.mock("@/lib/pro/use-pro-sheet-state", () => ({
   useProSheetState: () => proStateMock(),
 }));
+vi.mock("@/lib/pro/use-is-pro-active", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/pro/use-is-pro-active")>();
+  return {
+    ...actual,
+    useProEntitlement: () => entitlementMock(),
+  };
+});
 vi.mock("@/lib/shop/use-shop-sheet-state", () => ({
   useShopSheetState: () => ({
     openSheet: openShopMock,
@@ -38,11 +46,12 @@ vi.mock("@/lib/telemetry", () => ({ track: (...args: unknown[]) => trackMock(...
 vi.mock("@/components/hub/play-hub-scaffold", () => ({
   PlayHubScaffold: (props: {
     mintedVictoryCount: number;
+    pro: { active: boolean };
     onArenaPress: () => void;
     onCoachTap: () => void;
     onShopTap: () => void;
   }) => (
-    <div>
+    <div data-testid="play-hub" data-pro={props.pro.active}>
       <span>victories:{props.mintedVictoryCount}</span>
       <button onClick={props.onArenaPress}>arena</button>
       <button onClick={props.onCoachTap}>coach</button>
@@ -70,11 +79,34 @@ describe("PlayHubClient", () => {
       openSheet: openProMock,
       sheetProps: {},
     });
+    entitlementMock.mockReturnValue({
+      status: "inactive",
+      active: false,
+      loading: false,
+      cachedPro: false,
+      expiresAt: null,
+    });
   });
 
   it("passes the minted Victory NFT count to the Play scaffold", () => {
     render(<PlayHubClient />);
     expect(screen.getByText("victories:3")).toBeInTheDocument();
+  });
+
+  it("updates the Hub CTA state when the shared entitlement hydrates", () => {
+    const view = render(<PlayHubClient />);
+    expect(screen.getByTestId("play-hub")).toHaveAttribute("data-pro", "false");
+
+    entitlementMock.mockReturnValue({
+      status: "active",
+      active: true,
+      loading: false,
+      cachedPro: true,
+      expiresAt: Date.now() + 7 * 86_400_000,
+    });
+    view.rerender(<PlayHubClient />);
+
+    expect(screen.getByTestId("play-hub")).toHaveAttribute("data-pro", "true");
   });
 
   it("uses Arena as its navigation CTA and never routes to exercises", async () => {
@@ -96,10 +128,18 @@ describe("PlayHubClient", () => {
   });
 
   it("routes an active PRO player to the same journal", async () => {
+    const expiresAt = Date.now() + 7 * 86_400_000;
     proStateMock.mockReturnValue({
-      proStatus: { active: true, expiresAt: Date.now() + 7 * 86_400_000 },
+      proStatus: { active: true, expiresAt },
       openSheet: openProMock,
       sheetProps: {},
+    });
+    entitlementMock.mockReturnValue({
+      status: "active",
+      active: true,
+      loading: false,
+      cachedPro: true,
+      expiresAt,
     });
     render(<PlayHubClient />);
     await userEvent.click(screen.getByText("coach"));

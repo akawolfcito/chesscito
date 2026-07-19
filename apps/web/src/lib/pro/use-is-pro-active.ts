@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useAccount } from "wagmi";
 
 import { useProStatus } from "@/lib/pro/use-pro-status";
+import { daysRemaining } from "@/lib/pro/days-remaining";
 
 const STORAGE_PREFIX = "chesscito:pro-active:";
 
@@ -11,19 +12,68 @@ function storageKey(wallet: string): string {
   return `${STORAGE_PREFIX}${wallet.toLowerCase()}`;
 }
 
-function readCachedActive(wallet: string | undefined): boolean {
-  if (typeof window === "undefined" || !wallet) return false;
+type CachedProEntitlement = {
+  active: boolean;
+  expiresAt: number | null;
+};
+
+function readCachedEntitlement(wallet: string | undefined): CachedProEntitlement {
+  if (typeof window === "undefined" || !wallet) {
+    return { active: false, expiresAt: null };
+  }
   try {
-    return window.localStorage.getItem(storageKey(wallet)) === "1";
+    const stored = window.localStorage.getItem(storageKey(wallet));
+    if (stored === "1") return { active: true, expiresAt: null };
+    const expiresAt = stored === null ? Number.NaN : Number(stored);
+    return Number.isFinite(expiresAt) && expiresAt > Date.now()
+      ? { active: true, expiresAt }
+      : { active: false, expiresAt: null };
   } catch {
-    return false;
+    return { active: false, expiresAt: null };
   }
 }
 
-export type ProEntitlementState = {
-  active: boolean;
-  loading: boolean;
-};
+export type ProEntitlementState =
+  | {
+      status: "loading";
+      active: boolean;
+      loading: true;
+      cachedPro: boolean;
+      expiresAt: number | null;
+    }
+  | {
+      status: "active";
+      active: true;
+      loading: false;
+      cachedPro: true;
+      expiresAt: number;
+    }
+  | {
+      status: "inactive";
+      active: false;
+      loading: false;
+      cachedPro: false;
+      expiresAt: null;
+    };
+
+export type ProDisplayState =
+  | { active: true; daysRemaining: number }
+  | { active: false };
+
+/** Maps the effective entitlement to the shared Hub presentation contract. */
+export function proDisplayState(
+  entitlement: ProEntitlementState,
+  now = Date.now(),
+): ProDisplayState {
+  if (!entitlement.active) return { active: false };
+  return {
+    active: true,
+    // Legacy caches stored only `"1"`. Treat that short loading window as
+    // active without showing the unlock CTA; the server soon replaces it with
+    // the exact expiry and future cache writes retain that value.
+    daysRemaining: daysRemaining(entitlement.expiresAt, now) ?? 1,
+  };
+}
 
 /**
  * Boolean flag for "is the connected wallet currently a PRO subscriber?"
@@ -54,12 +104,12 @@ export type ProEntitlementState = {
 export function useProEntitlement(): ProEntitlementState {
   const { address } = useAccount();
   const wallet = address?.toLowerCase();
-  const { status, isLoading } = useProStatus(wallet);
+  const { status } = useProStatus(wallet);
 
   // MiniPay injects and connects its wallet after the provider mounts. Read
   // the cache for the CURRENT wallet on every render instead of capturing the
   // pre-connect `undefined` wallet in a one-shot state initializer.
-  const cachedActive = readCachedActive(wallet);
+  const cached = readCachedEntitlement(wallet);
 
   // Compute the server-truth value with the live expiry check baked in.
   const serverActive =
@@ -74,7 +124,7 @@ export function useProEntitlement(): ProEntitlementState {
     if (!wallet || status === null) return;
     try {
       if (serverActive) {
-        window.localStorage.setItem(storageKey(wallet), "1");
+        window.localStorage.setItem(storageKey(wallet), String(status.expiresAt));
       } else {
         window.localStorage.removeItem(storageKey(wallet));
       }
@@ -86,9 +136,42 @@ export function useProEntitlement(): ProEntitlementState {
 
   // Server answer wins once it lands. Cache only matters during the
   // brief window before the first fetch resolves.
+  if (!wallet) {
+    return {
+      status: "inactive",
+      active: false,
+      loading: false,
+      cachedPro: false,
+      expiresAt: null,
+    };
+  }
+
+  if (status === null) {
+    return {
+      status: "loading",
+      active: cached.active,
+      loading: true,
+      cachedPro: cached.active,
+      expiresAt: cached.expiresAt,
+    };
+  }
+
+  if (serverActive && status.expiresAt !== null) {
+    return {
+      status: "active",
+      active: true,
+      loading: false,
+      cachedPro: true,
+      expiresAt: status.expiresAt,
+    };
+  }
+
   return {
-    active: Boolean(wallet) && (status === null ? cachedActive : serverActive),
-    loading: Boolean(wallet) && isLoading,
+    status: "inactive",
+    active: false,
+    loading: false,
+    cachedPro: false,
+    expiresAt: null,
   };
 }
 

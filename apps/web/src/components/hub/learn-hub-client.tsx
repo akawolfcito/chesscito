@@ -35,7 +35,10 @@ import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
 import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
 import { useClaimQueue } from "@/hooks/use-claim-queue";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
-import { daysRemaining } from "@/lib/pro/days-remaining";
+import {
+  proDisplayState,
+  useProEntitlement,
+} from "@/lib/pro/use-is-pro-active";
 import { applyDevUnlock } from "@/lib/daily/session-quota";
 import { useShieldSync } from "@/lib/shop/use-shield-sync";
 import { useAccount } from "wagmi";
@@ -93,20 +96,6 @@ function premiumAriaLabel(
   });
 }
 
-type ProShape =
-  | { active: true; daysRemaining: number }
-  | { active: false };
-
-function deriveProShape(
-  status: { active: boolean; expiresAt: number | null } | null,
-  now: number,
-): ProShape {
-  if (!status?.active) return { active: false };
-  const days = daysRemaining(status.expiresAt, now);
-  if (days == null) return { active: false };
-  return { active: true, daysRemaining: days };
-}
-
 /** The LEARN hub, mounted at `/` whenever `CHESSCITO_MODE !== "play"`.
  *  (Was `LegacyHubClient`: the name predated the LEARN/PLAY split and read
  *  as a dead surface. PLAY's hub is `PlayHubClient`.)
@@ -154,6 +143,7 @@ export function LearnHubClient({
   // we don't double-fetch /api/pro/status from this surface.
   const proSheet = useProSheetState();
   const proStatus = proSheet.proStatus;
+  const entitlement = useProEntitlement();
 
   // BadgeSheet orchestration — claim flow + on-chain reads. Reward tile
   // taps open this sheet in-place (port 2026-05-07) instead of bouncing
@@ -254,7 +244,7 @@ export function LearnHubClient({
     giftAvailable: CHESSCITO_LITE_MODE,
   });
 
-  const pro = useMemo(() => deriveProShape(proStatus, Date.now()), [proStatus]);
+  const pro = proDisplayState(entitlement);
 
   // Lite B1.2 — one-per-tab session start event for grant dashboard.
   // sessionStorage dedupe ensures refresh doesn't double-count.
@@ -465,10 +455,7 @@ export function LearnHubClient({
             isHydrated: isContentLoopHydrated,
           }}
           rewardTiles={rewardTiles}
-          // Same PRO signal that drives the ChallengeCard, so the PRO mascot +
-          // gold ring flip in lockstep with the card on first load (no second
-          // /api/pro/status fetch racing behind it).
-          isPro={seasonPassStatus.source === "pro"}
+          isPro={entitlement.active}
           onAccountTap={() => {
             track("hub_account_chip_tap");
             router.push("/exercises?sheet=account");

@@ -12,7 +12,11 @@ vi.mock("../use-pro-status", () => ({
   useProStatus: (wallet?: string) => useProStatusMock(wallet),
 }));
 
-import { useIsProActive, useProEntitlement } from "../use-is-pro-active";
+import {
+  proDisplayState,
+  useIsProActive,
+  useProEntitlement,
+} from "../use-is-pro-active";
 
 const WALLET = "0x1234567890abcdef1234567890abcdef12345678";
 const FUTURE = Date.now() + 30 * 86_400_000;
@@ -81,7 +85,13 @@ describe("useIsProActive", () => {
 
     const { result } = renderHook(() => useProEntitlement());
 
-    expect(result.current).toEqual({ active: false, loading: true });
+    expect(result.current).toEqual({
+      status: "loading",
+      active: false,
+      loading: true,
+      cachedPro: false,
+      expiresAt: null,
+    });
   });
 
   it("re-reads the connected wallet cache after MiniPay hydrates", () => {
@@ -90,13 +100,25 @@ describe("useIsProActive", () => {
     window.localStorage.setItem(`chesscito:pro-active:${WALLET}`, "1");
 
     const { result, rerender } = renderHook(() => useProEntitlement());
-    expect(result.current).toEqual({ active: false, loading: false });
+    expect(result.current).toEqual({
+      status: "inactive",
+      active: false,
+      loading: false,
+      cachedPro: false,
+      expiresAt: null,
+    });
 
     useAccountMock.mockReturnValue({ address: WALLET });
     setStatus({ status: null, isLoading: true });
     rerender();
 
-    expect(result.current).toEqual({ active: true, loading: true });
+    expect(result.current).toEqual({
+      status: "loading",
+      active: true,
+      loading: true,
+      cachedPro: true,
+      expiresAt: null,
+    });
   });
 
   it("updates from DEFAULT loading state to PRO after hydration", () => {
@@ -109,7 +131,13 @@ describe("useIsProActive", () => {
     setStatus({ status: { active: true, expiresAt: FUTURE } });
     rerender();
 
-    expect(result.current).toEqual({ active: true, loading: false });
+    expect(result.current).toEqual({
+      status: "active",
+      active: true,
+      loading: false,
+      cachedPro: true,
+      expiresAt: FUTURE,
+    });
   });
 
   it("writes through to localStorage when the server answer says active", () => {
@@ -118,7 +146,7 @@ describe("useIsProActive", () => {
     renderHook(() => useIsProActive());
     expect(
       window.localStorage.getItem(`chesscito:pro-active:${WALLET}`),
-    ).toBe("1");
+    ).toBe(String(FUTURE));
   });
 
   it("clears the cache when the server answer says inactive", () => {
@@ -138,6 +166,19 @@ describe("useIsProActive", () => {
     renderHook(() => useIsProActive());
     expect(
       window.localStorage.getItem(`chesscito:pro-active:${WALLET}`),
-    ).toBe("1");
+    ).toBe(String(FUTURE));
+  });
+
+  it("uses the same effective decision for Hub presentation while loading", () => {
+    window.localStorage.setItem(`chesscito:pro-active:${WALLET}`, "1");
+    useAccountMock.mockReturnValue({ address: WALLET });
+    setStatus({ status: null, isLoading: true });
+
+    const { result } = renderHook(() => useProEntitlement());
+
+    expect(proDisplayState(result.current)).toEqual({
+      active: true,
+      daysRemaining: 1,
+    });
   });
 });

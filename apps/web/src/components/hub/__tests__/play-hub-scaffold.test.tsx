@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { renderWithIntl as render } from "@/test-utils/render-with-intl";
 import { screen, within } from "@testing-library/react";
 import { PlayHubScaffold } from "../play-hub-scaffold";
+import { ThemeVariantOverride } from "@/lib/themes/theme-variant-provider";
 
 vi.mock("@/components/kingdom/kingdom-card", () => ({
   KingdomCard: ({ pro }: { pro: { active: boolean } }) => (
@@ -95,7 +96,11 @@ describe("PlayHubScaffold", () => {
   });
 
   it("swaps to the PRO avatar when pro is active", () => {
-    render(<PlayHubScaffold {...props} pro={{ active: true, daysRemaining: 200 }} />);
+    render(
+      <ThemeVariantOverride variant="pro">
+        <PlayHubScaffold {...props} pro={{ active: true, daysRemaining: 200 }} />
+      </ThemeVariantOverride>,
+    );
     expect(screen.getByAltText("Chesscito")).toBeInTheDocument();
     const avatar = document.querySelector(".hub-lite-avatar img") as HTMLImageElement;
     expect(avatar.getAttribute("src")).toContain("avatar-pro");

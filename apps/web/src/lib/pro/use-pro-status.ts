@@ -13,8 +13,11 @@ export type UseProStatusReturn = {
   refetch: () => void;
 };
 
+export const normalizeProWallet = (wallet: string | undefined) =>
+  wallet?.toLowerCase();
+
 export const proStatusQueryKey = (wallet: string | undefined) =>
-  ["pro-status", wallet ?? null] as const;
+  ["pro-status", normalizeProWallet(wallet) ?? null] as const;
 
 /** Read-only fetch hook for /api/pro/status. Used by the PRO chip and
  *  sheet to decide whether to render "Get PRO" vs "PRO active".
@@ -31,20 +34,23 @@ export const proStatusQueryKey = (wallet: string | undefined) =>
  *    first-load failure status stays null so useIsProActive can fall
  *    back to its localStorage cache. */
 export function useProStatus(wallet?: string): UseProStatusReturn {
+  const normalizedWallet = normalizeProWallet(wallet);
   const query = useQuery({
-    queryKey: proStatusQueryKey(wallet),
-    enabled: Boolean(wallet),
+    queryKey: proStatusQueryKey(normalizedWallet),
+    enabled: Boolean(normalizedWallet),
     retry: false,
     queryFn: async ({ signal }) => {
-      const res = await fetch(`/api/pro/status?wallet=${wallet}`, { signal });
+      const res = await fetch(`/api/pro/status?wallet=${normalizedWallet}`, {
+        signal,
+      });
       if (!res.ok) throw new Error(`PRO status ${res.status}`);
       return await res.json() as ProStatus;
     },
   });
 
   return {
-    status: wallet ? query.data ?? null : null,
-    isLoading: Boolean(wallet) && query.isFetching,
+    status: normalizedWallet ? query.data ?? null : null,
+    isLoading: Boolean(normalizedWallet) && query.isFetching,
     refetch: () => {
       void query.refetch();
     },

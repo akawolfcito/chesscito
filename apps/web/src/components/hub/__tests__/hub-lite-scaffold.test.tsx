@@ -7,6 +7,7 @@ import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl"
 import { HubLiteScaffold, type HubLiteScaffoldProps } from "../hub-lite-scaffold";
 import type { RewardTile } from "@/components/kingdom/reward-column";
 import type { ContentLoopAction, ContentLoopVariant } from "@/lib/hub/content-loop";
+import { ThemeVariantOverride } from "@/lib/themes/theme-variant-provider";
 
 // Heavy leaves (wagmi / theme / routing) are exercised in their own suites;
 // stub them so this test stays a pure composition assertion.
@@ -208,7 +209,11 @@ describe("<HubLiteScaffold>", () => {
   });
 
   it("Start Focus (PRO): prioritizes the AVIF ring with intrinsic dimensions", () => {
-    const { container } = render(<HubLiteScaffold {...baseProps({ isPro: true })} />);
+    const { container } = render(
+      <ThemeVariantOverride variant="pro">
+        <HubLiteScaffold {...baseProps({ isPro: true })} />
+      </ThemeVariantOverride>,
+    );
     const picture = container.querySelector(".hub-lite-start-focus-ring");
     const sources = picture?.querySelectorAll("source");
     const image = picture?.querySelector("img");
@@ -260,7 +265,11 @@ describe("<HubLiteScaffold>", () => {
   });
 
   it("Mascot (PRO): swaps to the avatar-pro derivatives", () => {
-    const { container } = render(<HubLiteScaffold {...baseProps({ isPro: true })} />);
+    const { container } = render(
+      <ThemeVariantOverride variant="pro">
+        <HubLiteScaffold {...baseProps({ isPro: true })} />
+      </ThemeVariantOverride>,
+    );
     const avatar = container.querySelector(".hub-lite-avatar");
 
     expect(avatar?.querySelector('source[type="image/avif"]')).toHaveAttribute(

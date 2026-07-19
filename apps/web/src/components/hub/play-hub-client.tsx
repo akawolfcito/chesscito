@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "@/i18n/navigation";
 import { PlayHubScaffold } from "@/components/hub/play-hub-scaffold";
@@ -8,7 +8,10 @@ import { usePlayHubData } from "@/components/hub/use-play-hub-data";
 import type { HubInitialSheet } from "@/components/hub/hub-scaffold-client";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
-import { daysRemaining } from "@/lib/pro/days-remaining";
+import {
+  proDisplayState,
+  useProEntitlement,
+} from "@/lib/pro/use-is-pro-active";
 import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
 import { usePeonesBalance } from "@/lib/peones/use-peones-balance";
 import { track } from "@/lib/telemetry";
@@ -29,20 +32,6 @@ const PurchaseConfirmSheet = dynamic(
   { ssr: false },
 );
 
-type ProShape =
-  | { active: true; daysRemaining: number }
-  | { active: false };
-
-function deriveProShape(
-  status: { active: boolean; expiresAt: number | null } | null,
-): ProShape {
-  if (!status?.active) return { active: false };
-  const remaining = daysRemaining(status.expiresAt, Date.now());
-  return remaining == null
-    ? { active: false }
-    : { active: true, daysRemaining: remaining };
-}
-
 export function PlayHubClient({
   initialSheet,
 }: {
@@ -55,11 +44,12 @@ export function PlayHubClient({
   // scaffold stays mountable in a /dev probe (and photographable).
   const peones = usePeonesBalance();
   const proSheet = useProSheetState();
+  const entitlement = useProEntitlement();
   const shopSheet = useShopSheetState({
     onSelectProItem: proSheet.openSheet,
   });
   const initialSheetOpenedRef = useRef(false);
-  const pro = useMemo(() => deriveProShape(proSheet.proStatus), [proSheet.proStatus]);
+  const pro = proDisplayState(entitlement);
 
   useEffect(() => {
     if (!initialSheet || initialSheetOpenedRef.current) return;

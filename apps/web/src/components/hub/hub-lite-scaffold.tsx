@@ -19,7 +19,6 @@ import type {
   SeasonChallengeMeta,
 } from "@/components/hub/use-hub-data";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
-import { ThemeVariantOverride } from "@/lib/themes/theme-variant-provider";
 
 export type HubLiteScaffoldProps = {
   // ── HUD ──
@@ -48,10 +47,7 @@ export type HubLiteScaffoldProps = {
   };
   // ── Training Path (horizontal piece roster) ──
   rewardTiles: RewardTile[];
-  /** PRO subscriber flag. Derived by the container from the SAME season-pass
-   *  status that drives the ChallengeCard (`source === "pro"`) so the PRO
-   *  mascot + gold ring flip in lockstep with the card — not from a second,
-   *  independently-lagging `/api/pro/status` fetch inside this leaf. */
+  /** Effective PRO subscriber flag from the global entitlement decision. */
   isPro: boolean;
   /** Opens the account surface. Routes to /exercises?sheet=account (the
    *  account sheet lives there) — the hub has no account sheet of its own. */
@@ -89,7 +85,6 @@ export function HubLiteScaffold({
   const startFocusLabel = t("startFocus");
 
   return (
-    <ThemeVariantOverride variant={isPro ? "pro" : "default"}>
     <main className="hub-lite-scaffold" aria-label={t("rootAriaLabel")}>
       <header className="hub-lite-hud">
         <div className="hub-lite-hud-left">
@@ -261,6 +256,5 @@ export function HubLiteScaffold({
         />
       </section>
     </main>
-    </ThemeVariantOverride>
   );
 }

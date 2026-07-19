@@ -12,7 +12,6 @@ import { PlayTacticsTile } from "@/components/tactics/play-tactics-tile";
 import { hapticTap } from "@/lib/haptics";
 import type { PeonesBalanceState } from "@/lib/peones/use-peones-balance";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
-import { ThemeVariantOverride } from "@/lib/themes/theme-variant-provider";
 
 type PlayHubScaffoldProps = {
   mintedVictoryCount: number;
@@ -58,7 +57,6 @@ export function PlayHubScaffold({
     : tHud("proInactiveAriaLabel");
 
   return (
-    <ThemeVariantOverride variant={pro.active ? "pro" : "default"}>
     <main className="hub-scaffold play-hub-scaffold" aria-label={tPlay("rootAriaLabel")}>
       <header className="hub-scaffold-hud">
         <div className="hub-scaffold-hud-top">
@@ -189,6 +187,5 @@ export function PlayHubScaffold({
         </div>
       </section>
     </main>
-    </ThemeVariantOverride>
   );
 }

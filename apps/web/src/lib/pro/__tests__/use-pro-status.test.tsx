@@ -228,4 +228,28 @@ describe("useProStatus", () => {
     expect(result.current.purchaseFlow.status?.active).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it("normalizes checksum casing so every route observes one query", async () => {
+    const checksumWallet = "0xCc4179A22B473EA2EB2B9B9B210458D0F60FC2DD";
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ active: true, expiresAt: 9_999_999_999_999 }),
+    });
+
+    const { result } = renderHook(
+      () => ({
+        provider: useProStatus(VALID_WALLET),
+        hub: useProStatus(checksumWallet),
+      }),
+      { wrapper },
+    );
+
+    await waitFor(() => expect(result.current.provider.status?.active).toBe(true));
+    expect(result.current.hub.status?.active).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/pro/status?wallet=${VALID_WALLET}`,
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
 });
