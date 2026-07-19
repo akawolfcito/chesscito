@@ -76,6 +76,30 @@ describe("buildThemeCatalog", () => {
     expect(portal?.usedIn.some((u) => u.startsWith("↳ "))).toBe(true);
   });
 
+  it("distinguishes the three visible training surfaces", async () => {
+    const catalog = await buildThemeCatalog("candy-forest", okResolver);
+    const slots = new Map(catalog?.slots.map((slot) => [slot.key, slot.usedIn]));
+
+    expect(slots.get("hub.training")).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("Coach/Journal"),
+        "↳ app/[locale]/coach/history/page.tsx",
+      ]),
+    );
+    expect(slots.get("hub.train-pieces")).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("START FOCUS"),
+        expect.stringContaining("Training side of mode selector"),
+      ]),
+    );
+    expect(slots.get("hub.training-icon")).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("Special Training/Mate tile"),
+        "↳ components/hub/hub-arena-tile.tsx",
+      ]),
+    );
+  });
+
   it("propagates missing files as null dimensions (no throw)", async () => {
     const catalog = await buildThemeCatalog("candy-forest", missingResolver);
     const portal = catalog?.slots.find((s) => s.key === "hub.portal");

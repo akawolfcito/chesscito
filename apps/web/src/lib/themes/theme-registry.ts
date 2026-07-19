@@ -267,7 +267,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
       },
       "hub.train-pieces": {
         default: "/art/hub/train-pieces",
-        usedIn: ["Hub — train pieces button", "↳ components/exercises/persistent-dock.tsx", "↳ components/hub/app-mode-switch.tsx", "↳ components/hub/hub-lite-scaffold.tsx", "↳ components/hub/hub-scaffold.tsx"],
+        usedIn: ["Learn Hub — START FOCUS icon · HubLiteScaffold · route: /", "Learn/Play Hub — Training side of mode selector · AppModeSwitch · route: /", "Full Hub — primary training CTA · HubScaffold · route: /", "Arena/Exercises — Pieces center dock action · PersistentDock", "↳ components/hub/hub-lite-scaffold.tsx", "↳ components/hub/app-mode-switch.tsx", "↳ components/hub/hub-scaffold.tsx", "↳ components/exercises/persistent-dock.tsx"],
       },
       "hub.play-chess": {
         default: "/art/new-icons-chesscito/play-chess",
@@ -275,11 +275,11 @@ export const THEMES: Record<string, ThemeDefinition> = {
       },
       "hub.training": {
         default: "/art/new-icons-chesscito/training",
-        usedIn: ["Hub — training icon", "↳ components/account/account-sheet.tsx", "↳ components/hub/hub-arena-tile.tsx", "↳ components/hub/hub-scaffold.tsx", "↳ components/hub/play-hub-scaffold.tsx", "↳ +4 more"],
+        usedIn: ["Play Hub — Coach tile · PlayHubScaffold · route: /", "Full Hub — Coach action rail · HubScaffold · route: /", "Coach/Journal — Training Journal header · CoachHistoryPage · route: /coach/history", "Coach review — match-review header and error states · CoachGamePage/CoachGameClient · route: /coach/[gameId]", "Account — Coach row icon · AccountSheet · route: /exercises?sheet=account", "↳ components/hub/play-hub-scaffold.tsx", "↳ components/hub/hub-scaffold.tsx", "↳ app/[locale]/coach/history/page.tsx", "↳ app/[locale]/coach/[gameId]/page.tsx", "↳ app/[locale]/coach/[gameId]/coach-game-client.tsx", "↳ components/account/account-sheet.tsx"],
       },
       "hub.training-icon": {
         default: "/art/new-icons-chesscito/training-icon-v1",
-        usedIn: ["Hub — training icon (v1)", "↳ components/hub/hub-arena-tile.tsx", "↳ components/progression/unlock-overlay.tsx"],
+        usedIn: ["Full Hub — Special Training/Mate tile · HubArenaTile · route: /", "Exercises action row — Special Training bridge pedestal · MiniArenaBridgeSlot · route: /exercises", "Progression — Special Training unlock celebration · UnlockOverlay · exercise completion overlay", "Shared map — training-icon-v1 resolves through ActionRowIcon", "↳ components/hub/hub-arena-tile.tsx", "↳ components/mini-arena/mini-arena-bridge-slot.tsx", "↳ components/progression/unlock-overlay.tsx", "↳ components/action-row/action-row-icon.tsx"],
       },
       "hub.daily-icon": {
         default: "/art/new-icons-chesscito/daily-icon-v1",

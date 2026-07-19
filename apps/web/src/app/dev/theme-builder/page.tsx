@@ -163,13 +163,19 @@ export default async function ThemeBuilderDevPage({
                           : "rounded-xl border border-neutral-800 bg-neutral-900/60 p-4"
                       }
                     >
-                      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+                      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                         <code className="text-sm font-bold text-emerald-300">
                           {slot.key}
                         </code>
-                        <span className="text-xs text-neutral-500">
-                          {slot.usedIn.length ? slot.usedIn.join(" · ") : "usedIn: —"}
-                        </span>
+                        <div className="max-w-xl text-right text-xs text-neutral-500">
+                          {slot.usedIn.length ? (
+                            slot.usedIn.map((location) => (
+                              <div key={location}>{location}</div>
+                            ))
+                          ) : (
+                            <div>usedIn: —</div>
+                          )}
+                        </div>
                       </div>
                       {slot.deprecated && (
                         <div className="mb-3 rounded-md border border-amber-600/40 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-300">
