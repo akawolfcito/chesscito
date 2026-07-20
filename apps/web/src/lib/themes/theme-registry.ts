@@ -388,19 +388,19 @@ export const THEMES: Record<string, ThemeDefinition> = {
       },
       // feedback — reaction avatars (folded into shared per founder); each used
       // across exercises result + arena victory states.
-      "shared.feedback-happy": {
+      "shared.feedback-happy": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/shared/feedback-happy/pro" },
         default: "/art/new-assets-chesscito/fun/avatar-feliz",
         usedIn: ["Exercises result", "Arena victory / claim-success", "↳ components/arena/victory-celebration.tsx", "↳ components/arena/victory-claim-success.tsx", "↳ components/exercises/labyrinth-complete-overlay.tsx", "↳ components/exercises/result-overlay.tsx", "↳ +1 more"],
       },
-      "shared.feedback-confident": {
+      "shared.feedback-confident": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/shared/feedback-confident/pro" },
         default: "/art/new-assets-chesscito/fun/avatar-confiado",
         usedIn: ["Arena — claiming", "↳ components/arena/arena-end-state.tsx", "↳ components/arena/victory-claiming.tsx", "↳ components/victory/victory-landing-card.tsx"],
       },
-      "shared.feedback-scared": {
+      "shared.feedback-scared": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/shared/feedback-scared/pro" },
         default: "/art/new-assets-chesscito/fun/avatar-asustado",
         usedIn: ["Arena — claim error", "↳ components/arena/victory-claim-error.tsx"],
       },
-      "shared.feedback-surprised": {
+      "shared.feedback-surprised": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/shared/feedback-surprised/pro" },
         default: "/art/new-assets-chesscito/fun/avatar-asombrado",
         usedIn: ["Exercises / payments", "↳ components/arena/arena-end-state.tsx", "↳ components/exercises/result-overlay.tsx", "↳ components/payments/get-peones-sheet.tsx"],
       },
@@ -437,15 +437,15 @@ export const THEMES: Record<string, ThemeDefinition> = {
         usedIn: ["Coach", "Trophies", "↳ components/coach/game-actions-bar.tsx", "↳ components/exercises/persistent-dock.tsx", "↳ components/exercises/trophies-sheet.tsx", "↳ components/trophies/achievement-detail-sheet.tsx", "↳ +2 more"],
       },
       // more reaction avatars — surfaced by overlays/modals (mood-driven).
-      "shared.feedback-sad": {
+      "shared.feedback-sad": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/shared/feedback-sad/pro" },
         default: "/art/new-assets-chesscito/fun/avatar-triste",
         usedIn: ["Overlays / modals — sad reaction", "↳ components/arena/arena-end-state.tsx"],
       },
-      "shared.feedback-thinking": {
+      "shared.feedback-thinking": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/shared/feedback-thinking/pro" },
         default: "/art/new-assets-chesscito/fun/avatar-pensativo",
         usedIn: ["Overlays / modals — thinking reaction"],
       },
-      "shared.feedback-questioning": {
+      "shared.feedback-questioning": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/shared/feedback-questioning/pro" },
         default: "/art/new-assets-chesscito/fun/avatar-interrogativo",
         usedIn: ["Overlays / modals — questioning reaction", "↳ components/arena/arena-end-state.tsx"],
       },
@@ -453,7 +453,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/celebration/bg-celebration",
         usedIn: ["Payments — celebration background", "↳ components/payments/season-pass-celebration.tsx"],
       },
-      "brand.title": {
+      "brand.title": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/brand/title/pro" },
         default: "/art/title-chesscito",
         usedIn: ["Brand — Chesscito wordmark", "↳ components/hub/hub-lite-scaffold.tsx", "↳ components/hub/play-hub-scaffold.tsx"],
       },
@@ -462,11 +462,11 @@ export const THEMES: Record<string, ThemeDefinition> = {
         pro: "/art/ring-start-focus",
         usedIn: ["Hub — start-focus ring", "Root", "↳ components/hub/hub-lite-scaffold.tsx", "↳ app/[locale]/page.tsx"],
       },
-      "exercises.avatar-fun": {
+      "exercises.avatar-fun": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/exercises/avatar-fun/pro" },
         default: "/art/avatar-fun",
         usedIn: ["Exercises — success avatar (mission panel)", "↳ components/daily/daily-tactic-sheet.tsx"],
       },
-      "exercises.avatar-try-again": {
+      "exercises.avatar-try-again": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/exercises/avatar-try-again/pro" },
         default: "/art/avatar-try-again",
         usedIn: ["Exercises — try-again avatar", "↳ components/exercises/fail-rescue-modal.tsx"],
       },
@@ -668,7 +668,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "bg.menu-wall": { default: "/art/redesign/bg/menu-wall", usedIn: ["Menu wall background", "↳ components/exercises/persistent-dock.tsx (.chesscito-dock)"] },
       "bg.path-map": { default: "/art/redesign/bg/path-map", usedIn: ["Learn path map", "↳ lib/exercises/path-layout.ts"] },
       "bg.path-map-base": { default: "/art/redesign/bg/path-map-base", usedIn: ["Learn path map base", "↳ lib/exercises/path-layout.ts"] },
-      "bg.splash-loading": { default: "/art/redesign/bg/splash-loading", usedIn: ["Splash loading background", "↳ components/exercises/exercises-screen.tsx (.playhub-intro-overlay)"] },
+      "bg.splash-loading": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/bg/splash-loading/pro" }, default: "/art/redesign/bg/splash-loading", usedIn: ["Splash loading background", "↳ components/exercises/exercises-screen.tsx (.playhub-intro-overlay)"] },
       // shop
       "shop.coach-pack-20": { default: "/art/shop/coach-pack-20", usedIn: ["Shop — coach pack (20)", "↳ components/exercises/exercises-screen.tsx"] },
       "shop.slot-frame": { default: "/art/shop-slot-frame", usedIn: ["Shop — slot frame", "↳ globals.css .shop-slot-frame / --playhub-slot-frame (CSS-only)"] },
