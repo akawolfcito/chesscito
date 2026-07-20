@@ -68,6 +68,42 @@ describe("Get Peones Treasury canary persistence", () => {
     expect(lifecycleMigration).toMatch(
       /PRE_MIGRATION_STATE_UNKNOWN[\s\S]*retry_safe = false[\s\S]*not exists/i,
     );
+    expect(lifecycleMigration).toMatch(/PRE_MIGRATION_HASH_UNVERIFIED/i);
+    expect(lifecycleMigration).toMatch(/Historical warning logs are not stored/i);
+  });
+
+  it("serializes creation on the commercial identity across processes", () => {
+    const creationMigration = fs.readFileSync(
+      path.resolve(process.cwd(), "supabase/migrations/20260720010000_get_peones_intent_creation_lock.sql"),
+      "utf8",
+    );
+    expect(creationMigration).toMatch(/pg_advisory_xact_lock/i);
+    expect(creationMigration).toMatch(/wallet[\s\S]*sku[\s\S]*chain_id[\s\S]*config_version/i);
+    expect(creationMigration).toMatch(/before insert/i);
+    expect(creationMigration).toMatch(/active_get_peones_intent_exists/i);
+    expect(creationMigration).toMatch(/create_get_peones_intent/i);
+  });
+
+  it("ships representative legacy backfill and concurrent-request fixtures", () => {
+    const backfillFixture = fs.readFileSync(
+      path.resolve(process.cwd(), "supabase/tests/get_peones_intent_lifecycle_backfill.sql"),
+      "utf8",
+    );
+    const concurrencyFixture = fs.readFileSync(
+      path.resolve(process.cwd(), "supabase/tests/get_peones_intent_creation_concurrency.sql"),
+      "utf8",
+    );
+    const legacyFixture = fs.readFileSync(
+      path.resolve(process.cwd(), "supabase/tests/get_peones_intent_legacy_insert_concurrency.sql"),
+      "utf8",
+    );
+    expect(backfillFixture).toMatch(/consumed fixture/i);
+    expect(backfillFixture).toMatch(/tx_hash is null/i);
+    expect(backfillFixture).toMatch(/PRE_MIGRATION_HASH_UNVERIFIED/i);
+    expect(concurrencyFixture).toMatch(/pgbench/i);
+    expect(concurrencyFixture).toMatch(/create_get_peones_intent/i);
+    expect(legacyFixture).toMatch(/insert into public\.treasury_payment_intents/i);
+    expect(legacyFixture).toMatch(/:client_id/i);
   });
 
   it("lets canonical verifier evidence replace only unresolved candidate hashes", () => {

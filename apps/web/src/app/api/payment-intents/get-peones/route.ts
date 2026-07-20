@@ -175,41 +175,86 @@ export async function POST(req: Request) {
     retrySafe: true,
   };
 
-  const { error: insertError } = await supabase.from("treasury_payment_intents").insert({
-    id: intent.id,
-    wallet: intent.wallet,
-    sku: intent.sku,
-    token_address: intent.token.toLowerCase(),
-    token_symbol: intent.tokenSymbol,
-    token_decimals: intent.tokenDecimals,
-    expected_amount: intent.expectedAmount,
-    chain_id: intent.chainId,
-    treasury_address: intent.treasury.toLowerCase(),
-    config_version: intent.configVersion,
-    price_version: intent.priceVersion,
-    required_confirmations: intent.requiredConfirmations,
-    auth_binding: intent.authBinding,
-    expires_at: intent.expiresAt,
-    lifecycle_status: intent.lifecycle,
-    tx_hash: intent.txHash,
-    provider_result_kind: intent.providerResultKind,
-    last_error_code: intent.lastErrorCode,
-    recoverable: intent.recoverable,
-    retry_safe: intent.retrySafe,
-  });
-  if (insertError) {
-    log.error("intent_store_failed", { code: insertError.code });
+  const { data: createdRows, error: createError } = await supabase.rpc(
+    "create_get_peones_intent",
+    {
+      p_id: intent.id,
+      p_wallet: intent.wallet,
+      p_sku: intent.sku,
+      p_token_address: intent.token.toLowerCase(),
+      p_token_symbol: intent.tokenSymbol,
+      p_token_decimals: intent.tokenDecimals,
+      p_expected_amount: intent.expectedAmount,
+      p_chain_id: intent.chainId,
+      p_treasury_address: intent.treasury.toLowerCase(),
+      p_config_version: intent.configVersion,
+      p_price_version: intent.priceVersion,
+      p_required_confirmations: intent.requiredConfirmations,
+      p_auth_binding: intent.authBinding,
+      p_expires_at: intent.expiresAt,
+    },
+  );
+  if (createError || !Array.isArray(createdRows) || createdRows.length !== 1) {
+    log.error("intent_store_failed", { code: createError?.code ?? "INVALID_RPC_RESULT" });
     return error("intent_store_unavailable", 503);
   }
 
+  const createdRow = createdRows[0] as {
+    intent?: Record<string, unknown>;
+    created?: boolean;
+  };
+  const stored = createdRow.intent;
+  if (!stored || typeof stored.id !== "string") {
+    log.error("intent_store_failed", { code: "INVALID_RPC_INTENT" });
+    return error("intent_store_unavailable", 503);
+  }
+  const storedLifecycle = stored.lifecycle_status as GetPeonesIntentLifecycle;
+  if (storedLifecycle === "SUBMITTING" || storedLifecycle === "SUBMITTED") {
+    return NextResponse.json({
+      ok: false,
+      error: "unresolved_submission_state",
+      intentId: stored.id,
+      lifecycle: storedLifecycle,
+      txHash: stored.tx_hash ?? null,
+      recoverable: true,
+      retrySafe: false,
+    }, { status: 409 });
+  }
+  if (storedLifecycle !== "CREATED") {
+    return error("intent_store_unavailable", 503);
+  }
+  const returnedIntent: GetPeonesCanaryIntent = {
+    id: stored.id,
+    wallet: stored.wallet as `0x${string}`,
+    sku: stored.sku as typeof GET_PEONES_CANARY_SKU,
+    token: stored.token_address as `0x${string}`,
+    tokenSymbol: String(stored.token_symbol),
+    tokenDecimals: Number(stored.token_decimals),
+    expectedAmount: String(stored.expected_amount),
+    chainId: Number(stored.chain_id) as 42220,
+    treasury: stored.treasury_address as `0x${string}`,
+    configVersion: String(stored.config_version),
+    priceVersion: String(stored.price_version),
+    requiredConfirmations: Number(stored.required_confirmations),
+    expiresAt: String(stored.expires_at),
+    authBinding: String(stored.auth_binding) as "client_asserted_wallet",
+    lifecycle: storedLifecycle,
+    txHash: (stored.tx_hash as `0x${string}` | null) ?? null,
+    providerResultKind: (stored.provider_result_kind as GetPeonesProviderResultKind | null) ?? null,
+    lastErrorCode: (stored.last_error_code as string | null) ?? null,
+    recoverable: Boolean(stored.recoverable),
+    retrySafe: Boolean(stored.retry_safe),
+  };
+
   log.info("intent_created", {
-    intent_id: intent.id,
+    intent_id: returnedIntent.id,
     wallet_hash: hashWallet(wallet),
-    sku: intent.sku,
-    chain_id: intent.chainId,
-    config_version: intent.configVersion,
+    sku: returnedIntent.sku,
+    chain_id: returnedIntent.chainId,
+    config_version: returnedIntent.configVersion,
+    reused: createdRow.created === false,
   });
-  return NextResponse.json({ ok: true, intent });
+  return NextResponse.json({ ok: true, intent: returnedIntent });
 }
 
 type SubmissionIntentRow = {

@@ -95,10 +95,35 @@ function intentCreationStore(unresolved: Record<string, unknown> | null = null) 
   query.in.mockReturnValue(query);
   query.order.mockReturnValue(query);
   query.limit.mockReturnValue(query);
+  const createdIntent = {
+    id: INTENT_ID,
+    wallet: WALLET,
+    sku: "peones_pack_50",
+    token_address: USDT.toLowerCase(),
+    token_symbol: "USDT",
+    token_decimals: 6,
+    expected_amount: "500000",
+    chain_id: 42220,
+    treasury_address: TREASURY.toLowerCase(),
+    config_version: "canary-v1",
+    price_version: "peones-50-v1",
+    required_confirmations: 2,
+    auth_binding: "client_asserted_wallet",
+    expires_at: new Date(Date.now() + 600_000).toISOString(),
+    lifecycle_status: "CREATED",
+    tx_hash: null,
+    provider_result_kind: null,
+    last_error_code: null,
+    recoverable: true,
+    retry_safe: true,
+  };
   return {
     from: () => ({
       select: () => query,
-      insert: vi.fn().mockResolvedValue({ error: null }),
+    }),
+    rpc: vi.fn().mockResolvedValue({
+      data: [{ intent: createdIntent, created: true }],
+      error: null,
     }),
   };
 }
@@ -162,7 +187,7 @@ describe("Get Peones canary intent endpoint", () => {
     expect(json.intent).toMatchObject({
       wallet: WALLET,
       sku: "peones_pack_50",
-      token: USDT,
+      token: USDT.toLowerCase(),
       expectedAmount: "500000",
       chainId: 42220,
       configVersion: "canary-v1",
@@ -174,6 +199,45 @@ describe("Get Peones canary intent endpoint", () => {
       recoverable: true,
       retrySafe: true,
     });
+  });
+
+  it("reuses a transactionally returned CREATED intent instead of creating another", async () => {
+    configure();
+    const store = intentCreationStore();
+    const rpc = vi.fn().mockResolvedValueOnce({
+      data: [{
+        intent: {
+          id: INTENT_ID,
+          wallet: WALLET,
+          sku: "peones_pack_50",
+          token_address: USDT.toLowerCase(),
+          token_symbol: "USDT",
+          token_decimals: 6,
+          expected_amount: "500000",
+          chain_id: 42220,
+          treasury_address: TREASURY.toLowerCase(),
+          config_version: "canary-v1",
+          price_version: "peones-50-v1",
+          required_confirmations: 2,
+          auth_binding: "client_asserted_wallet",
+          expires_at: new Date(Date.now() + 600_000).toISOString(),
+          lifecycle_status: "CREATED",
+          tx_hash: null,
+          provider_result_kind: null,
+          last_error_code: null,
+          recoverable: true,
+          retry_safe: true,
+        },
+        created: false,
+      }],
+      error: null,
+    });
+    store.rpc = rpc;
+    getSupabaseServer.mockReturnValue(store);
+    const response = await POST(request());
+    expect(response.status).toBe(200);
+    expect((await response.json()).intent.id).toBe(INTENT_ID);
+    expect(rpc).toHaveBeenCalledTimes(1);
   });
 
   it("blocks a fresh intent when reload finds an unresolved persisted submission", async () => {

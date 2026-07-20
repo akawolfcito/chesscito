@@ -35,14 +35,18 @@ update public.treasury_payment_intents as intent
   from public.treasury_payment_consumptions as consumption
  where consumption.intent_id = intent.id;
 
--- Pre-migration rows have no durable submission evidence. An unconsumed row
--- may be abandoned or may represent a broadcast whose provider lost the hash;
--- choosing retry-safe would risk a second charge. Preserve it as ambiguous for
--- operator/on-chain reconciliation instead of guessing a terminal outcome.
+-- Pre-migration rows have no durable lifecycle evidence. Rows that already
+-- contain a hash have submission evidence but still require canonical verifier
+-- validation; rows without a hash remain ambiguous because the old client did
+-- not persist the provider result. Neither class becomes retry-safe here.
+-- Historical warning logs are not stored in this table, so an exact count of
+-- legacy `unknown_submission_state` events requires the log archive.
 update public.treasury_payment_intents as intent
    set lifecycle_status = 'SUBMITTING',
-       provider_result_kind = 'AMBIGUOUS_ERROR',
-       last_error_code = 'PRE_MIGRATION_STATE_UNKNOWN',
+       provider_result_kind = case when intent.tx_hash is null
+         then 'AMBIGUOUS_ERROR' else 'TRANSACTION_HASH' end,
+       last_error_code = case when intent.tx_hash is null
+         then 'PRE_MIGRATION_STATE_UNKNOWN' else 'PRE_MIGRATION_HASH_UNVERIFIED' end,
        recoverable = true,
        retry_safe = false,
        lifecycle_updated_at = greatest(intent.lifecycle_updated_at, now())
@@ -51,6 +55,13 @@ update public.treasury_payment_intents as intent
      from public.treasury_payment_consumptions as consumption
     where consumption.intent_id = intent.id
  );
+
+-- Operational policy: do not auto-expire these rows based only on age. Support
+-- first checks the current chain/config/SKU, then searches for a canonical
+-- transaction hash and submits it to the verifier. Only after an on-chain
+-- search finds no matching transaction may support transition the row to
+-- EXPIRED (or CANCELLED when cancellation evidence exists). This preserves
+-- fail-closed behavior without an indefinite unowned lock.
 
 alter table public.treasury_payment_intents
   alter column lifecycle_status set default 'CREATED',
