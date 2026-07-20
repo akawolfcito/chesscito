@@ -8,6 +8,7 @@ import type {
 
 import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 import type { ThemeAssetVariant } from "@/lib/themes/theme-registry";
+import { getResponsiveAssetProfile } from "@/lib/themes/responsive-asset-profiles";
 import { useThemeAsset } from "@/lib/themes/use-theme-asset";
 import { useThemeVariant } from "@/lib/themes/theme-variant-provider";
 
@@ -16,7 +17,6 @@ type Props = Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "srcSet" | "alt">
   alt: string;
   variant?: ThemeAssetVariant;
   optimized?: boolean;
-  responsiveWidths?: readonly number[];
   pictureClassName?: string;
   pictureStyle?: CSSProperties;
   pictureProps?: Omit<HTMLAttributes<HTMLPictureElement>, "className" | "style">;
@@ -26,7 +26,6 @@ export function ThemeAssetPicture({
   slot,
   variant,
   optimized = true,
-  responsiveWidths,
   alt,
   pictureClassName,
   pictureStyle,
@@ -37,10 +36,17 @@ export function ThemeAssetPicture({
   const assetBase = useThemeAsset(slot, variant ?? currentVariant);
   if (!assetBase) return null;
 
-  const widths = assetBase.startsWith("/art/theme-builder/")
-    ? []
-    : responsiveWidths ?? [];
-  const fallbackWidth = Number(imageProps.width);
+  const responsiveProfile = getResponsiveAssetProfile(slot);
+  const widths = responsiveProfile?.widths ?? [];
+  const fallbackWidth = responsiveProfile?.canonical.width
+    ?? Number(imageProps.width);
+  const intrinsicProps = responsiveProfile
+    ? {
+        ...imageProps,
+        width: responsiveProfile.canonical.width,
+        height: responsiveProfile.canonical.height,
+      }
+    : imageProps;
   const srcSet = (extension: "avif" | "webp") => widths.length
     ? [
         ...widths.map((width) => `${assetBase}-${width}w.${extension} ${width}w`),
@@ -63,7 +69,7 @@ export function ThemeAssetPicture({
           <source srcSet={srcSet("webp")} sizes={widths.length ? imageProps.sizes : undefined} type="image/webp" />
         </>
       ) : null}
-      <img {...imageProps} src={`${assetBase}.png`} alt={alt} />
+      <img {...intrinsicProps} src={`${assetBase}.png`} alt={alt} />
     </picture>
   );
 }

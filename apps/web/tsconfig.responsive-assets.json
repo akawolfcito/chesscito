@@ -1,0 +1,34 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "vitest.setup.ts",
+    "src/lib/themes/responsive-asset-profiles.ts",
+    "src/lib/themes/asset-family-visual.ts",
+    "src/lib/themes/asset-triplet.ts",
+    "src/lib/themes/responsive-asset-audit.ts",
+    "src/lib/themes/responsive-family-bindings.ts",
+    "src/lib/themes/upload-target.ts",
+    "src/lib/themes/variant-undo.ts",
+    "src/lib/themes/catalog.ts",
+    "src/lib/themes/catalog-server.ts",
+    "src/components/themes/theme-asset-picture.tsx",
+    "src/app/api/dev/theme-asset/route.ts",
+    "src/app/dev/theme-builder/page.tsx",
+    "src/lib/themes/__tests__/responsive-asset-profiles.test.ts",
+    "src/lib/themes/__tests__/asset-triplet.test.ts",
+    "src/lib/themes/__tests__/responsive-asset-audit.test.ts",
+    "src/lib/themes/__tests__/upload-target.test.ts",
+    "src/lib/themes/__tests__/catalog.test.ts",
+    "src/lib/themes/__tests__/runtime-assets.test.tsx",
+    "src/app/api/dev/theme-asset/__tests__/route.test.ts",
+    "scripts/audit-responsive-asset-families.ts",
+    "scripts/regenerate-responsive-avatar-families.ts"
+  ],
+  "exclude": [
+    "src/lib/coach/__tests__/use-coach-analysis.test.ts"
+  ]
+}

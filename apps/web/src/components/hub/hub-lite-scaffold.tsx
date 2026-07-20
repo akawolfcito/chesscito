@@ -182,9 +182,6 @@ export function HubLiteScaffold({
           slot="brand.title"
           pictureClassName="hub-lite-title"
           alt="Chesscito"
-          width={512}
-          height={249}
-          responsiveWidths={[288, 384]}
           sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px"
           draggable={false}
         />
@@ -194,9 +191,6 @@ export function HubLiteScaffold({
           pictureClassName="hub-lite-avatar"
           alt=""
           aria-hidden="true"
-          width={499}
-          height={560}
-          responsiveWidths={[224, 340]}
           sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
           draggable={false}
         />

@@ -18,9 +18,18 @@ import {
   deterministicVariantPath,
   resolveAssetVariant,
 } from "./asset-variant";
+import {
+  getResponsiveAssetProfile,
+  type ResponsiveAssetProfile,
+} from "./responsive-asset-profiles";
 
 export type UploadTarget =
-  | { ok: true; basename: string; declaresAsset: boolean }
+  | {
+      ok: true;
+      basename: string;
+      declaresAsset: boolean;
+      responsiveProfile: ResponsiveAssetProfile | null;
+    }
   | { ok: false; reason: string };
 
 const VALID_VARIANTS: readonly string[] = ["default", "pro"];
@@ -34,13 +43,19 @@ export function resolveVariantBasename(
   entry: ThemeAssetEntry,
   variant: string,
   fallback?: { themeId: string; key: string },
+  responsiveProfile: ResponsiveAssetProfile | null = null,
 ): UploadTarget {
   if (!isVariant(variant)) {
     return { ok: false, reason: `invalid variant: ${variant}` };
   }
   const resolved = resolveAssetVariant(entry, variant);
   if (resolved.mode === "asset") {
-    return { ok: true, basename: resolved.path, declaresAsset: true };
+    return {
+      ok: true,
+      basename: resolved.path,
+      declaresAsset: true,
+      responsiveProfile,
+    };
   }
   if (!fallback) {
     return {
@@ -52,6 +67,7 @@ export function resolveVariantBasename(
     ok: true,
     basename: deterministicVariantPath(fallback.themeId, fallback.key, variant),
     declaresAsset: false,
+    responsiveProfile,
   };
 }
 
@@ -67,5 +83,10 @@ export function resolveUploadTarget(
   const entry = (theme.assets as Record<string, ThemeAssetEntry>)[key];
   if (!entry) return { ok: false, reason: `unknown slot: ${key}` };
 
-  return resolveVariantBasename(entry, variant, { themeId, key });
+  return resolveVariantBasename(
+    entry,
+    variant,
+    { themeId, key },
+    getResponsiveAssetProfile(key as keyof typeof theme.assets),
+  );
 }

@@ -83,6 +83,19 @@ function VariantCell({
       <div className="text-[11px] font-medium text-neutral-300">
         {asset ? dims(asset) : mode}
       </div>
+      {asset?.familyState && (
+        <div
+          className={
+            asset.familyState === "healthy"
+              ? "mt-1 text-[11px] font-medium text-emerald-300"
+              : "mt-1 text-[11px] font-medium text-amber-300"
+          }
+          data-testid={`responsive-family-state-${slotKey}-${variant}`}
+          title={asset.familyIssues?.join(", ")}
+        >
+          responsive family · {asset.familyState}
+        </div>
+      )}
       <UploadControl
         themeId={themeId}
         slotKey={slotKey}

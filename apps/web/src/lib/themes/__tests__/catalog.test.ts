@@ -59,6 +59,19 @@ describe("buildThemeCatalog", () => {
     expect(portal?.proReusesDefault).toBe(false);
   });
 
+  it("passes slot and variant context to responsive-family resolution", async () => {
+    const resolver = vi.fn(okResolver);
+    await buildThemeCatalog("candy-forest", resolver);
+    expect(resolver).toHaveBeenCalledWith(
+      "/art/avatar-lite-hub",
+      { key: "hub.avatar-lite", variant: "default" },
+    );
+    expect(resolver).toHaveBeenCalledWith(
+      "/art/avatar-pro",
+      { key: "hub.avatar-lite", variant: "pro" },
+    );
+  });
+
   it("flags pro-reuses-default when the slot ships no pro override", async () => {
     // Neither slot omits pro today; force the case with a fake registry
     // entry via a resolver-agnostic assertion on the contract instead.

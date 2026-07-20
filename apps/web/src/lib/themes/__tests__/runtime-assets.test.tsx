@@ -111,6 +111,32 @@ describe("ThemeAssetPicture", () => {
     );
     expect(view.getByRole("img")).toHaveAttribute("src", "/art/active-chip.png");
   });
+
+  it("keeps responsive srcsets for deterministic Theme Builder paths", () => {
+    setEntry("hub.avatar-lite", {
+      default: "/art/avatar-default",
+      pro: "/art/theme-builder/candy-forest/hub/avatar-lite/pro",
+    });
+    const view = render(
+      <ThemeVariantOverride variant="pro">
+        <ThemeAssetPicture
+          slot="hub.avatar-lite"
+          alt="Avatar"
+          sizes="113px"
+        />
+      </ThemeVariantOverride>,
+    );
+    expect(view.container.querySelector('source[type="image/avif"]')).toHaveAttribute(
+      "srcset",
+      "/art/theme-builder/candy-forest/hub/avatar-lite/pro-224w.avif 224w, /art/theme-builder/candy-forest/hub/avatar-lite/pro-340w.avif 340w, /art/theme-builder/candy-forest/hub/avatar-lite/pro.avif 499w",
+    );
+    expect(view.container.querySelector('source[type="image/webp"]')).toHaveAttribute(
+      "srcset",
+      "/art/theme-builder/candy-forest/hub/avatar-lite/pro-224w.webp 224w, /art/theme-builder/candy-forest/hub/avatar-lite/pro-340w.webp 340w, /art/theme-builder/candy-forest/hub/avatar-lite/pro.webp 499w",
+    );
+    expect(view.getByRole("img")).toHaveAttribute("width", "499");
+    expect(view.getByRole("img")).toHaveAttribute("height", "560");
+  });
 });
 
 describe("theme CSS adapter", () => {

@@ -14,7 +14,11 @@
 import { NextResponse } from "next/server";
 import { isDevSurfaceEnabled, canWriteBaseline } from "@/lib/dev/dev-surface";
 import { resolveUploadTarget } from "@/lib/themes/upload-target";
-import { writeAssetTriplet, restorePreviousTriplet } from "@/lib/themes/asset-triplet";
+import {
+  AssetFamilyError,
+  replaceAssetFamilyAtomic,
+  restorePreviousAssetFamilyAtomic,
+} from "@/lib/themes/asset-triplet";
 import { THEMES, type ThemeAssetEntry } from "@/lib/themes/theme-registry";
 import { resolveAssetVariant, type AssetVariant } from "@/lib/themes/asset-variant";
 import { setRegistryVariant } from "@/lib/themes/registry-editor";
@@ -24,6 +28,32 @@ export const runtime = "nodejs";
 
 /** Reject uploads larger than this — a theme asset is never this big. */
 const MAX_BYTES = 15 * 1024 * 1024;
+
+function assetFamilyError(error: unknown): NextResponse {
+  if (!(error instanceof AssetFamilyError)) {
+    return NextResponse.json(
+      { ok: false, error: "asset family update failed" },
+      { status: 500 },
+    );
+  }
+  const messages: Record<AssetFamilyError["code"], string> = {
+    "invalid-image": "could not decode image — upload a valid PNG/JPG/WebP",
+    "source-too-small": "source image is too small for this responsive slot",
+    "generation-failed": "one or more optimized image variants could not be generated",
+    "validation-failed": "generated image family failed final validation",
+    "registry-failed": "theme registry could not be updated",
+    "metadata-failed": "asset family metadata could not be persisted",
+    "write-failed": "image family could not be written atomically",
+    "rollback-failed": "image family update failed and rollback needs attention",
+    "undo-missing": "nothing to undo",
+    "undo-failed": "previous image family could not be restored atomically",
+  };
+  const clientError = error.code === "invalid-image" || error.code === "source-too-small";
+  return NextResponse.json(
+    { ok: false, error: messages[error.code], code: error.code },
+    { status: clientError ? 400 : 500 },
+  );
+}
 
 export async function POST(req: Request) {
   if (!isDevSurfaceEnabled()) {
@@ -62,17 +92,35 @@ export async function POST(req: Request) {
   if (action === "undo") {
     const stateUndo = await readVariantUndo(themeId, key, typedVariant);
     let restored: string[] = [];
-    if (stateUndo) {
-      if (stateUndo.restoreRegistry) {
-        await setRegistryVariant(themeId, key, typedVariant, stateUndo.previous);
+    try {
+      if (stateUndo) {
+        const restoresFamily = stateUndo.restoreFamily ?? stateUndo.restoreTriplet ?? false;
+        if (restoresFamily && stateUndo.basename) {
+          const family = await restorePreviousAssetFamilyAtomic({
+            basename: stateUndo.basename,
+            afterRestore: stateUndo.restoreRegistry
+              ? () => setRegistryVariant(themeId, key, typedVariant, stateUndo.previous)
+              : undefined,
+            rollbackAfterRestore: stateUndo.restoreRegistry
+              ? () => setRegistryVariant(themeId, key, typedVariant, current)
+              : undefined,
+          });
+          if (!family.ok) {
+            return NextResponse.json(
+              { ok: false, error: "nothing to undo" },
+              { status: 409 },
+            );
+          }
+          restored = family.restored;
+        } else if (stateUndo.restoreRegistry) {
+          await setRegistryVariant(themeId, key, typedVariant, stateUndo.previous);
+        }
+      } else {
+        const family = await restorePreviousAssetFamilyAtomic({ basename: target.basename });
+        if (family.ok) restored = family.restored;
       }
-      if (stateUndo.restoreTriplet && stateUndo.basename) {
-        const triplet = await restorePreviousTriplet(stateUndo.basename);
-        restored = triplet.restored;
-      }
-    } else {
-      const triplet = await restorePreviousTriplet(target.basename);
-      if (triplet.ok) restored = triplet.restored;
+    } catch (error) {
+      return assetFamilyError(error);
     }
     if (!stateUndo && restored.length === 0) {
       return NextResponse.json({ ok: false, error: "nothing to undo" }, { status: 409 });
@@ -99,12 +147,27 @@ export async function POST(req: Request) {
     if (current.mode === next.mode) {
       return NextResponse.json({ ok: true, changed: false, mode: next.mode });
     }
-    await saveVariantUndo(themeId, key, typedVariant, {
-      previous: current,
-      restoreTriplet: false,
-      restoreRegistry: true,
-    });
-    await setRegistryVariant(themeId, key, typedVariant, next);
+    try {
+      await setRegistryVariant(themeId, key, typedVariant, next);
+      try {
+        await saveVariantUndo(themeId, key, typedVariant, {
+          previous: current,
+          restoreFamily: false,
+          restoreRegistry: true,
+        });
+      } catch {
+        await setRegistryVariant(themeId, key, typedVariant, current);
+        return NextResponse.json(
+          { ok: false, error: "variant mode could not be saved atomically" },
+          { status: 500 },
+        );
+      }
+    } catch {
+      return NextResponse.json(
+        { ok: false, error: "theme registry could not be updated" },
+        { status: 500 },
+      );
+    }
     console.info("[dev/theme-asset] mode", { themeId, key, variant, mode: next.mode });
     return NextResponse.json({ ok: true, changed: true, mode: next.mode });
   }
@@ -117,36 +180,30 @@ export async function POST(req: Request) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  await saveVariantUndo(themeId, key, typedVariant, {
-    previous: current,
-    basename: target.basename,
-    restoreTriplet: true,
-    restoreRegistry: !target.declaresAsset,
-  });
-  let result: Awaited<ReturnType<typeof writeAssetTriplet>>;
+  let result: Awaited<ReturnType<typeof replaceAssetFamilyAtomic>>;
   try {
-    result = await writeAssetTriplet(target.basename, buffer);
-  } catch {
-    // sharp throws on an undecodable image — never echo the raw error.
-    return NextResponse.json(
-      { ok: false, error: "could not decode image — upload a valid PNG/JPG/WebP" },
-      { status: 400 },
-    );
-  }
-
-  if (!target.declaresAsset) {
-    try {
-      await setRegistryVariant(themeId, key, typedVariant, {
-        mode: "asset",
-        path: target.basename,
-      });
-    } catch {
-      await restorePreviousTriplet(target.basename);
-      return NextResponse.json(
-        { ok: false, error: "image was valid, but the theme registry could not be updated" },
-        { status: 500 },
-      );
-    }
+    result = await replaceAssetFamilyAtomic({
+      basename: target.basename,
+      input: buffer,
+      profile: target.responsiveProfile,
+      afterPromote: target.declaresAsset
+        ? undefined
+        : () => setRegistryVariant(themeId, key, typedVariant, {
+            mode: "asset",
+            path: target.basename,
+          }),
+      rollbackAfterPromote: target.declaresAsset
+        ? undefined
+        : () => setRegistryVariant(themeId, key, typedVariant, current),
+      persistUndoState: () => saveVariantUndo(themeId, key, typedVariant, {
+        previous: current,
+        basename: target.basename,
+        restoreFamily: true,
+        restoreRegistry: !target.declaresAsset,
+      }),
+    });
+  } catch (error) {
+    return assetFamilyError(error);
   }
   console.info("[dev/theme-asset]", { themeId, key, variant, basename: target.basename });
   return NextResponse.json({ ok: true, basename: target.basename, ...result });

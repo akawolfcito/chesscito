@@ -21,6 +21,8 @@
     "test:e2e:headed": "playwright test --headed",
     "type-check": "rm -rf .next && next build >/dev/null && tsc --noEmit",
     "art:optimize": "bash scripts/optimize-art-assets.sh",
+    "theme:responsive-audit": "tsx scripts/audit-responsive-asset-families.ts",
+    "theme:responsive-regenerate-avatars": "tsx scripts/regenerate-responsive-avatar-families.ts",
     "theme:coverage": "node scripts/audit-theme-runtime-coverage.mjs --check",
     "encrypt-key": "tsx scripts/encrypt-key.ts",
     "grant-pro": "tsx scripts/grant-pro.ts",

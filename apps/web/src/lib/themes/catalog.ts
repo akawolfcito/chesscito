@@ -18,6 +18,7 @@ import {
   type ThemeSlotSurface,
 } from "./theme-registry";
 import { resolveAssetVariant, type ResolvedVariant } from "./asset-variant";
+import type { ResponsiveFamilyState } from "./responsive-asset-audit";
 
 /** Image formats that make up a static asset triplet, in probe order. */
 const TRIPLET_EXTENSIONS = ["png", "webp", "avif"] as const;
@@ -37,10 +38,16 @@ export type ResolvedFile = {
   /** True when a one-level undo backup exists for this basename, so the
    *  catalog can enable the "Undo" control. */
   hasBackup: boolean;
+  /** Complete responsive-family health when this slot has a profile. */
+  familyState?: ResponsiveFamilyState;
+  familyIssues?: ResponsiveFamilyState[];
 };
 
 /** Resolves a basename (no extension) to its on-disk file + dimensions. */
-export type AssetResolver = (basename: string) => Promise<ResolvedFile>;
+export type AssetResolver = (
+  basename: string,
+  context?: { key: ThemeAssetKey; variant: ThemeAssetVariant },
+) => Promise<ResolvedFile>;
 
 /** A resolved asset for one variant, carrying its declared basename. */
 export type ResolvedAsset = ResolvedFile & { basename: string };
@@ -74,8 +81,9 @@ export type ThemeCatalog = {
 async function resolveVariant(
   basename: string,
   resolve: AssetResolver,
+  context: { key: ThemeAssetKey; variant: ThemeAssetVariant },
 ): Promise<ResolvedAsset> {
-  const resolved = await resolve(basename);
+  const resolved = await resolve(basename, context);
   return { basename, ...resolved };
 }
 
@@ -98,10 +106,10 @@ export async function buildThemeCatalog(
       const defaultVariant = resolveAssetVariant(entry, "default");
       const proVariant = resolveAssetVariant(entry, "pro");
       const def = defaultVariant.mode === "asset"
-        ? await resolveVariant(defaultVariant.path, resolve)
+        ? await resolveVariant(defaultVariant.path, resolve, { key, variant: "default" })
         : null;
       const pro = proVariant.mode === "asset"
-        ? await resolveVariant(proVariant.path, resolve)
+        ? await resolveVariant(proVariant.path, resolve, { key, variant: "pro" })
         : null;
       return {
         key,

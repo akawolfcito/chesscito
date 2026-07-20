@@ -58,9 +58,6 @@ export function HubDailyTrigger({
           pictureClassName="hub-daily-corner-icon"
           alt=""
           aria-hidden="true"
-          width={512}
-          height={520}
-          responsiveWidths={[96, 128, 160]}
           sizes="52px"
           draggable={false}
         />

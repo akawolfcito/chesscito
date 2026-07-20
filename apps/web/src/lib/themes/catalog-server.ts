@@ -11,6 +11,8 @@ import {
 } from "./catalog";
 import { hasBackup } from "./asset-triplet";
 import { hasVariantUndo } from "./variant-undo";
+import { auditResponsiveFamily } from "./responsive-asset-audit";
+import { getResponsiveAssetProfile } from "./responsive-asset-profiles";
 
 /** Root of statically served assets — basenames are relative to it. */
 const PUBLIC_DIR = path.join(process.cwd(), "public");
@@ -23,9 +25,17 @@ const PUBLIC_DIR = path.join(process.cwd(), "public");
  */
 export const fsAssetResolver: AssetResolver = async (
   basename: string,
+  context,
 ): Promise<ResolvedFile> => {
   const relative = basename.replace(/^\//, "");
   const backup = await hasBackup(basename);
+  const profile = context ? getResponsiveAssetProfile(context.key) : null;
+  const family = profile
+    ? await auditResponsiveFamily(
+        { basename, slots: [context!.key], profile },
+        PUBLIC_DIR,
+      )
+    : null;
   for (const format of TRIPLET_EXTENSIONS) {
     const abs = path.join(PUBLIC_DIR, `${relative}.${format}`);
     let stat: Awaited<ReturnType<typeof fs.stat>>;
@@ -44,6 +54,8 @@ export const fsAssetResolver: AssetResolver = async (
         format,
         mtime,
         hasBackup: backup,
+        familyState: family?.state,
+        familyIssues: family?.states,
       };
     } catch {
       // File exists but sharp can't read it — report the file, no dims.
@@ -54,10 +66,21 @@ export const fsAssetResolver: AssetResolver = async (
         format,
         mtime,
         hasBackup: backup,
+        familyState: family?.state,
+        familyIssues: family?.states,
       };
     }
   }
-  return { file: null, width: null, height: null, format: null, mtime: null, hasBackup: backup };
+  return {
+    file: null,
+    width: null,
+    height: null,
+    format: null,
+    mtime: null,
+    hasBackup: backup,
+    familyState: family?.state,
+    familyIssues: family?.states,
+  };
 };
 
 /** Build a theme's catalog against the real filesystem. Server-only. */

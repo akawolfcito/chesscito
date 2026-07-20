@@ -29,6 +29,7 @@ describe("resolveUploadTarget", () => {
     if (r.ok) {
       expect(r.basename).toBe("/art/hub/portal-chesscito-normal");
       expect(r.declaresAsset).toBe(true);
+      expect(r.responsiveProfile).toBeNull();
     }
   });
 
@@ -45,17 +46,40 @@ describe("resolveUploadTarget", () => {
     const r = resolveUploadTarget("candy-forest", "hub.portal", "default");
     if (r.ok) expect(r.basename.startsWith("/art/")).toBe(true);
   });
+
+  it("carries authoritative responsive metadata for every avatar variant", () => {
+    for (const variant of ["default", "pro"] as const) {
+      const r = resolveUploadTarget("candy-forest", "hub.avatar-lite", variant);
+      expect(r.ok).toBe(true);
+      if (r.ok) {
+        expect(r.responsiveProfile).toEqual({
+          widths: [224, 340],
+          canonical: { width: 499, height: 560 },
+        });
+      }
+    }
+  });
 });
 
 describe("resolveVariantBasename", () => {
   it("returns the default basename for variant=default", () => {
     const r = resolveVariantBasename({ default: "/art/x" }, "default");
-    expect(r).toEqual({ ok: true, basename: "/art/x", declaresAsset: true });
+    expect(r).toEqual({
+      ok: true,
+      basename: "/art/x",
+      declaresAsset: true,
+      responsiveProfile: null,
+    });
   });
 
   it("returns the pro basename when present", () => {
     const r = resolveVariantBasename({ default: "/art/x", pro: "/art/x-pro" }, "pro");
-    expect(r).toEqual({ ok: true, basename: "/art/x-pro", declaresAsset: true });
+    expect(r).toEqual({
+      ok: true,
+      basename: "/art/x-pro",
+      declaresAsset: true,
+      responsiveProfile: null,
+    });
   });
 
   it("derives a deterministic pro target when the slot inherits", () => {
@@ -67,6 +91,7 @@ describe("resolveVariantBasename", () => {
       ok: true,
       basename: "/art/theme-builder/candy-forest/hub/example/pro",
       declaresAsset: false,
+      responsiveProfile: null,
     });
   });
 
@@ -79,6 +104,7 @@ describe("resolveVariantBasename", () => {
       ok: true,
       basename: "/art/theme-builder/candy-forest/arena/frame/default",
       declaresAsset: false,
+      responsiveProfile: null,
     });
   });
 
