@@ -374,7 +374,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
         usedIn: ["Hub — mastery tile (king)", "↳ components/hub/mastery-tile.tsx"],
         deprecated: "old piece set — mastery-tile should use /art/redesign/pieces",
       },
-      "shared.avatar-small-account": {
+      "shared.avatar-small-account": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/shared/avatar-small-account/pro" },
         default: "/art/avatar-small-account",
         usedIn: ["Hub", "Arena", "Exercises", "↳ components/arena/arena-select-scaffold.tsx", "↳ components/exercises/exercises-screen.tsx", "↳ components/hub/hub-lite-scaffold.tsx"],
       },
@@ -420,7 +420,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/screen-mission/adorno-icon",
         usedIn: ["Arena", "Exercises", "↳ components/arena/promotion-overlay.tsx", "↳ components/arena/soft-gate-sheet.tsx", "↳ components/exercises/mission-detail-sheet.tsx", "↳ components/exercises/purchase-confirm-sheet.tsx", "↳ +2 more"],
       },
-      "shared.mission-avatar": {
+      "shared.mission-avatar": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/shared/mission-avatar/pro" },
         default: "/art/screen-mission/avatar-icon",
         usedIn: ["Arena", "Exercises", "↳ components/arena/soft-gate-sheet.tsx", "↳ components/exercises/mission-briefing.tsx", "↳ components/exercises/mission-detail-sheet.tsx"],
       },
@@ -709,7 +709,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "shared.panel-frame": { default: "/art/panel-frame-rune", usedIn: ["Panel frame (rune)", "↳ globals.css .rune-frame / --playhub-rune-frame (CSS-only)"] },
       "shared.time": { default: "/art/redesign/icons/time", usedIn: ["Time icon", "↳ components/account/account-sheet.tsx", "↳ components/arena/arena-board.tsx", "↳ components/arena/arena-end-state.tsx", "↳ components/arena/arena-hud.tsx", "↳ +154 more"] },
       // brand addition
-      "brand.favicon": { default: "/art/favicon-wolf", usedIn: ["Brand — favicon / wolf mark", "↳ app/[locale]/about/page.tsx", "↳ app/[locale]/error.tsx", "↳ app/[locale]/not-found.tsx", "↳ app/[locale]/victory/[id]/error.tsx"] },
+      "brand.favicon": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/brand/favicon/pro" }, default: "/art/favicon-wolf", usedIn: ["Brand — favicon / wolf mark", "↳ app/[locale]/about/page.tsx", "↳ app/[locale]/error.tsx", "↳ app/[locale]/not-found.tsx", "↳ app/[locale]/victory/[id]/error.tsx"] },
       // The playable board's frame — the decorative border around the live
       // GameBoard (1040×1028, measured inner opening in game-board.tsx). The
       // squares inside are procedural tiles (board.tile.*).

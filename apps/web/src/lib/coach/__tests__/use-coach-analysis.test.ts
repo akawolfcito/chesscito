@@ -104,6 +104,69 @@ describe("useCoachAnalysis (skeleton)", () => {
     vi.unstubAllGlobals();
   });
 
+  it("does not interrupt an already-mounted authorized analysis when live PRO state becomes unavailable", async () => {
+    let resolveAnalysis: ((value: unknown) => void) | undefined;
+    const analysisResponse = new Promise((resolve) => {
+      resolveAnalysis = resolve;
+    });
+    vi.stubGlobal("fetch", vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/api/coach/credits")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ credits: 3 }),
+        });
+      }
+      return analysisResponse;
+    }));
+
+    const makeInput = (proActive: boolean) => ({
+      surface: "coach_viewer" as const,
+      gameId: "550e8400-e29b-41d4-a716-446655440010",
+      walletAddress: "0x1111111111111111111111111111111111111111",
+      result: "win" as const,
+      difficulty: "easy" as const,
+      moves: ["e4"],
+      elapsedMs: 5000,
+      isConnected: true,
+      injected: {
+        address: "0x1111111111111111111111111111111111111111",
+        proActive,
+        activeLocale: "en" as const,
+      },
+    });
+    const { result, rerender } = renderHook(
+      ({ proActive }) => useCoachAnalysis(makeInput(proActive)),
+      { initialProps: { proActive: true } },
+    );
+
+    act(() => { result.current.askCoach("immediate"); });
+    await waitFor(() => expect(result.current.phase).toBe("loading"));
+
+    rerender({ proActive: false });
+    expect(result.current.phase).toBe("loading");
+
+    resolveAnalysis?.({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        status: "ready",
+        response: {
+          kind: "full",
+          summary: "still running",
+          mistakes: [],
+          lessons: [],
+          praise: [],
+        },
+        proActive: true,
+        idempotent: false,
+      }),
+    });
+    await waitFor(() => expect(result.current.phase).toBe("result"));
+
+    vi.unstubAllGlobals();
+  });
+
   it("abort() clears in-flight request without crashing", () => {
     const { result } = renderHook(() => useCoachAnalysis({ surface: "coach_viewer" }));
     expect(() => result.current.abort()).not.toThrow();

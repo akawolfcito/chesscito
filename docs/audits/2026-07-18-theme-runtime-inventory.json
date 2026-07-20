@@ -47,8 +47,8 @@
     }
   ],
   "literalDiff": {
-    "registeredBasenames": 166,
-    "discoveredBasenames": 20,
+    "registeredBasenames": 168,
+    "discoveredBasenames": 19,
     "unregisteredExistingAssets": [
       {
         "basename": "/art/rivals/mara-avatar",
@@ -291,20 +291,23 @@
         "mode": "inherit"
       },
       "usedIn": [
-        "Hub — train pieces button",
-        "↳ components/exercises/persistent-dock.tsx",
-        "↳ components/hub/app-mode-switch.tsx",
+        "Learn Hub — START FOCUS icon · HubLiteScaffold · route: /",
+        "Learn/Play Hub — Training side of mode selector · AppModeSwitch · route: /",
+        "Full Hub — primary training CTA · HubScaffold · route: /",
+        "Arena/Exercises — Pieces center dock action · PersistentDock",
         "↳ components/hub/hub-lite-scaffold.tsx",
-        "↳ components/hub/hub-scaffold.tsx"
+        "↳ components/hub/app-mode-switch.tsx",
+        "↳ components/hub/hub-scaffold.tsx",
+        "↳ components/exercises/persistent-dock.tsx"
       ],
       "deprecated": null,
       "initialCategory": "C",
       "category": "A",
       "documentedFiles": [
-        "src/components/exercises/persistent-dock.tsx",
-        "src/components/hub/app-mode-switch.tsx",
         "src/components/hub/hub-lite-scaffold.tsx",
-        "src/components/hub/hub-scaffold.tsx"
+        "src/components/hub/app-mode-switch.tsx",
+        "src/components/hub/hub-scaffold.tsx",
+        "src/components/exercises/persistent-dock.tsx"
       ],
       "currentConsumerState": "resolver",
       "consumerCount": 4,
@@ -431,21 +434,28 @@
         "mode": "inherit"
       },
       "usedIn": [
-        "Hub — training icon",
-        "↳ components/account/account-sheet.tsx",
-        "↳ components/hub/hub-arena-tile.tsx",
-        "↳ components/hub/hub-scaffold.tsx",
+        "Play Hub — Coach tile · PlayHubScaffold · route: /",
+        "Full Hub — Coach action rail · HubScaffold · route: /",
+        "Coach/Journal — Training Journal header · CoachHistoryPage · route: /coach/history",
+        "Coach review — match-review header and error states · CoachGamePage/CoachGameClient · route: /coach/[gameId]",
+        "Account — Coach row icon · AccountSheet · route: /exercises?sheet=account",
         "↳ components/hub/play-hub-scaffold.tsx",
-        "↳ +4 more"
+        "↳ components/hub/hub-scaffold.tsx",
+        "↳ app/[locale]/coach/history/page.tsx",
+        "↳ app/[locale]/coach/[gameId]/page.tsx",
+        "↳ app/[locale]/coach/[gameId]/coach-game-client.tsx",
+        "↳ components/account/account-sheet.tsx"
       ],
       "deprecated": null,
       "initialCategory": "C",
       "category": "A",
       "documentedFiles": [
-        "src/components/account/account-sheet.tsx",
-        "src/components/hub/hub-arena-tile.tsx",
+        "src/components/hub/play-hub-scaffold.tsx",
         "src/components/hub/hub-scaffold.tsx",
-        "src/components/hub/play-hub-scaffold.tsx"
+        "src/app/[locale]/coach/history/page.tsx",
+        "src/app/[locale]/coach/[gameId]/page.tsx",
+        "src/app/[locale]/coach/[gameId]/coach-game-client.tsx",
+        "src/components/account/account-sheet.tsx"
       ],
       "currentConsumerState": "resolver",
       "consumerCount": 6,
@@ -537,16 +547,23 @@
         "mode": "inherit"
       },
       "usedIn": [
-        "Hub — training icon (v1)",
+        "Full Hub — Special Training/Mate tile · HubArenaTile · route: /",
+        "Exercises action row — Special Training bridge pedestal · MiniArenaBridgeSlot · route: /exercises",
+        "Progression — Special Training unlock celebration · UnlockOverlay · exercise completion overlay",
+        "Shared map — training-icon-v1 resolves through ActionRowIcon",
         "↳ components/hub/hub-arena-tile.tsx",
-        "↳ components/progression/unlock-overlay.tsx"
+        "↳ components/mini-arena/mini-arena-bridge-slot.tsx",
+        "↳ components/progression/unlock-overlay.tsx",
+        "↳ components/action-row/action-row-icon.tsx"
       ],
       "deprecated": null,
       "initialCategory": "C",
       "category": "A",
       "documentedFiles": [
         "src/components/hub/hub-arena-tile.tsx",
-        "src/components/progression/unlock-overlay.tsx"
+        "src/components/mini-arena/mini-arena-bridge-slot.tsx",
+        "src/components/progression/unlock-overlay.tsx",
+        "src/components/action-row/action-row-icon.tsx"
       ],
       "currentConsumerState": "resolver",
       "consumerCount": 3,
@@ -1446,7 +1463,8 @@
         "path": "/art/avatar-small-account"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/shared/avatar-small-account/pro"
       },
       "usedIn": [
         "Hub",
@@ -8195,7 +8213,8 @@
         "path": "/art/favicon-wolf"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/brand/favicon/pro"
       },
       "usedIn": [
         "Brand — favicon / wolf mark",
