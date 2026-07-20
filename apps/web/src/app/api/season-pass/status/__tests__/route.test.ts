@@ -112,6 +112,35 @@ describe("supabase fallback", () => {
     const res = await GET(makeRequest(WALLET));
     expect(res.status).toBe(503);
   });
+
+  it("db failure stays unresolved instead of claiming the pass is inactive", async () => {
+    mockedSupabase.mockReturnValue(
+      buildDbMock(null, { code: "database_unavailable" }).supabase,
+    );
+
+    const res = await GET(makeRequest(WALLET));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toMatchObject({
+      active: false,
+      source: null,
+      error: "ledger_unavailable",
+    });
+  });
+
+  it("unexpected ledger failure stays unresolved", async () => {
+    const from = vi.fn(() => {
+      throw new Error("database unavailable");
+    });
+    mockedSupabase.mockReturnValue({ from } as never);
+
+    const res = await GET(makeRequest(WALLET));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toMatchObject({
+      active: false,
+      source: null,
+      error: "ledger_unavailable",
+    });
+  });
 });
 
 describe("effective Training Pass", () => {
@@ -156,5 +185,21 @@ describe("effective Training Pass", () => {
       error: "entitlement_unavailable",
     });
     expect(mockedSupabase).not.toHaveBeenCalled();
+  });
+
+  it("preserves confirmed PRO coverage when the Season Pass ledger fails", async () => {
+    const proExpiresAt = Date.now() + 7 * 86_400_000;
+    mockIsProActive.mockResolvedValue({ active: true, expiresAt: proExpiresAt });
+    mockedSupabase.mockReturnValue(
+      buildDbMock(null, { code: "database_unavailable" }).supabase,
+    );
+
+    const res = await GET(makeRequest(WALLET));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      active: true,
+      source: "pro",
+      proExpiresAt,
+    });
   });
 });

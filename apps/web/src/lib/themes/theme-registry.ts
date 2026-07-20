@@ -25,8 +25,18 @@ import type {
   ProThemeAssetValue,
 } from "./asset-variant";
 
-/** Asset variant within a single theme. */
+/** Asset variant within a single theme. `pro` is the established second
+ * technical visual slot. In LEARN it may be selected by effective Training
+ * Pass presentation and does not assert that the wallet owns commercial PRO. */
 export type ThemeAssetVariant = "default" | "pro";
+
+export type ThemeSlotSurface =
+  | "learn"
+  | "play"
+  | "shared"
+  | "full-legacy"
+  | "dev-only"
+  | "unknown";
 
 export type ThemeAssetEntry = {
   /** Legacy string basenames remain valid. An explicit object can select an
@@ -789,3 +799,221 @@ export const THEMES: Record<string, ThemeDefinition> = {
 /** Theme served when no per-user setting is present + the only theme
  *  every wallet owns by default. */
 export const DEFAULT_THEME_ID = "candy-forest";
+
+const LEARN_SLOT_KEYS: readonly ThemeAssetKey[] = [
+  "hub.tour-hero",
+  "hub.tour-title",
+  "hub.21-day-icon",
+  "payments.celebration-bg",
+  "brand.ring-start-focus",
+  "daily.bg-session",
+  "daily.welldone",
+  "hub.mate-icon",
+  "hub.focus-passport-streak",
+  "bg.wallpaper-lite",
+  "bg.path-map",
+  "bg.path-map-base",
+  "exercises.avatar-fun",
+  "exercises.avatar-try-again",
+  "exercises.badge",
+  "exercises.refuge",
+  "exercises.plant",
+  "exercises.btn-nodo",
+  "exercises.labyrinth-icon",
+  "exercises.combo",
+  "exercises.score",
+  "exercises.saved-seal",
+  "exercises.wall",
+  "exercises.laberinto",
+  "exercises.badge-claim",
+  "exercises.claim",
+  "exercises.save-score",
+  "welcome.achievement-1day",
+  "welcome.achievement-3day",
+  "welcome.achievement-7day",
+  "welcome.focus-stamp",
+];
+
+const PLAY_SLOT_KEYS: readonly ThemeAssetKey[] = [
+  "hub.shop-icon",
+  "arena.save",
+  "arena.resign",
+  "arena.undo",
+  "arena.rival-kairo",
+  "arena.rival-pipo",
+  "arena.rival-frame-blue",
+  "arena.rival-frame-gold",
+  "arena.rival-frame-silver",
+  "arena.avatar-frame-you",
+  "arena.avatar-frame-bot",
+  "arena.bg-matchup",
+  "arena.result-checkmate",
+  "arena.result-draw",
+  "arena.result-resign",
+  "arena.result-stalemate",
+  "arena.player-you",
+  "arena.player-bot",
+  "coach.ask-icon",
+  "coach.play-again",
+  "coach.play",
+];
+
+const SHARED_SLOT_KEYS: readonly ThemeAssetKey[] = [
+  "hub.avatar",
+  "hub.enter-arena",
+  "hub.train-pieces",
+  "hub.play-chess",
+  "hub.training",
+  "hub.training-icon",
+  "hub.daily-icon",
+  "hub.btn-battle",
+  "hub.avatar-lite",
+  "hub.pro-chip",
+  "shared.avatar-small-account",
+  "shared.lock",
+  "shared.welcome-gift",
+  "shared.feedback-happy",
+  "shared.feedback-confident",
+  "shared.feedback-scared",
+  "shared.feedback-surprised",
+  "shared.panel-bg",
+  "shared.shield",
+  "shared.star",
+  "shared.mission-adorno",
+  "shared.mission-avatar",
+  "shared.close",
+  "shared.mission-panel",
+  "shared.trophy-epic",
+  "shared.feedback-sad",
+  "shared.feedback-thinking",
+  "shared.feedback-questioning",
+  "brand.title",
+  "exercises.badge-menu",
+  "exercises.leaderboard-menu",
+  "exercises.leaderboard-crown",
+  "exercises.shop-menu",
+  "account.language-icon",
+  "account.network-icon",
+  "account.wallet-icon",
+  "account.founder",
+  "account.shield",
+  "pro-sheet.header-icon",
+  "pro-sheet.subscription-panel",
+  "pro-sheet.journal",
+  "peones.hint",
+  "peones.piece",
+  "tactics.daily-exercise",
+  "hud.crown",
+  "hud.trophy",
+  "bg.splash-chesscito",
+  "bg.dock-4slots",
+  "bg.menu-wall",
+  "bg.splash-loading",
+  "shop.slot-frame",
+  "hub.invite-icon",
+  "exercises.wallpaper",
+  "account.account-icon",
+  "shared.panel-frame",
+  "shared.time",
+  "brand.favicon",
+  "board.frame",
+  "board.thumbnail",
+  "board.legacy-bg",
+  "board.tile.light",
+  "board.tile.dark",
+  "board.piece.white.rook",
+  "board.piece.white.bishop",
+  "board.piece.white.knight",
+  "board.piece.white.pawn",
+  "board.piece.white.queen",
+  "board.piece.white.king",
+  "board.piece.black.rook",
+  "board.piece.black.bishop",
+  "board.piece.black.knight",
+  "board.piece.black.pawn",
+  "board.piece.black.queen",
+  "board.piece.black.king",
+];
+
+const FULL_LEGACY_SLOT_KEYS: readonly ThemeAssetKey[] = [
+  "hub.portal",
+  "hub.btn-play",
+  "hub.guide",
+  "hub.bg",
+  "hub.btn-stone-bg",
+  "hub.mastery.piece.rook",
+  "hub.mastery.piece.bishop",
+  "hub.mastery.piece.knight",
+  "hub.mastery.piece.pawn",
+  "hub.mastery.piece.queen",
+  "hub.mastery.piece.king",
+  "scene.gem-pill",
+  "scene.panel-pro",
+  "scene.pedestal",
+  "scene.stone-1",
+  "scene.stone-2",
+  "scene.stone-3",
+  "scene.stone-4",
+  "scene.stone-5",
+  "scene.stone-6",
+  "scene.stone-7",
+  "scene.stone-8",
+  "scene.stone-9",
+  "scene.stone-10",
+  "scene.chest-large",
+  "scene.chest-small",
+  "scene.banner-large",
+  "scene.banner-medium",
+  "scene.banner-short",
+];
+
+/** No active runtime consumer could establish a current surface. These stay
+ * visible for review and must not be treated as candidates for automatic asset
+ * replacement. */
+export const UNKNOWN_THEME_SLOT_KEYS = [
+  "hub.principal-button",
+  "pro-mission.sms",
+  "shop.coach-pack-20",
+  "hub.cta-principal",
+  "landing.pre-chess",
+  "landing.hero",
+  "landing.progress-trophies",
+] as const satisfies readonly ThemeAssetKey[];
+
+const SLOT_KEYS_BY_SURFACE = {
+  learn: LEARN_SLOT_KEYS,
+  play: PLAY_SLOT_KEYS,
+  shared: SHARED_SLOT_KEYS,
+  "full-legacy": FULL_LEGACY_SLOT_KEYS,
+  "dev-only": [],
+  unknown: UNKNOWN_THEME_SLOT_KEYS,
+} as const satisfies Record<ThemeSlotSurface, readonly ThemeAssetKey[]>;
+
+/** Exhaustive runtime-surface classification for the current 162-slot
+ * registry. Every current category is explicit and duplicate membership
+ * throws during module initialization. A future unclassified slot defaults to
+ * `unknown`, never `shared`, until consumer and route evidence is audited. */
+function buildThemeSlotSurfaces(): Record<ThemeAssetKey, ThemeSlotSurface> {
+  const classifications: Partial<Record<ThemeAssetKey, ThemeSlotSurface>> = {};
+  for (const [surface, keys] of Object.entries(SLOT_KEYS_BY_SURFACE) as Array<
+    [ThemeSlotSurface, readonly ThemeAssetKey[]]
+  >) {
+    for (const key of keys) {
+      if (classifications[key]) {
+        throw new Error(`Theme slot ${key} has multiple surface classifications`);
+      }
+      classifications[key] = surface;
+    }
+  }
+  for (const key of Object.keys(
+    THEMES[DEFAULT_THEME_ID].assets,
+  ) as ThemeAssetKey[]) {
+    classifications[key] ??= "unknown";
+  }
+  return Object.freeze(classifications) as Record<
+    ThemeAssetKey,
+    ThemeSlotSurface
+  >;
+}
+
+export const THEME_SLOT_SURFACES = buildThemeSlotSurfaces();

@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
   DEFAULT_THEME_ID,
+  THEME_SLOT_SURFACES,
   THEMES,
+  UNKNOWN_THEME_SLOT_KEYS,
   type ThemeAssetKey,
 } from "../theme-registry";
 import { resolveAssetVariant } from "../asset-variant";
@@ -240,5 +242,53 @@ describe("theme-registry", () => {
 
   it("the default theme id resolves to a registered theme", () => {
     expect(THEMES[DEFAULT_THEME_ID]).toBeDefined();
+  });
+
+  it("classifies all 162 slots from runtime-consumer evidence", () => {
+    const registered = Object.keys(THEMES[DEFAULT_THEME_ID].assets).sort();
+    expect(Object.keys(THEME_SLOT_SURFACES).sort()).toEqual(registered);
+
+    const counts = Object.values(THEME_SLOT_SURFACES).reduce<
+      Record<(typeof THEME_SLOT_SURFACES)[ThemeAssetKey], number>
+    >(
+      (totals, surface) => ({
+        ...totals,
+        [surface]: totals[surface] + 1,
+      }),
+      {
+        learn: 0,
+        play: 0,
+        shared: 0,
+        "full-legacy": 0,
+        "dev-only": 0,
+        unknown: 0,
+      },
+    );
+    expect(counts).toEqual({
+      learn: 31,
+      play: 21,
+      shared: 74,
+      "full-legacy": 29,
+      "dev-only": 0,
+      unknown: 7,
+    });
+  });
+
+  it("pins current Hub evidence instead of inferring surface from hub.*", () => {
+    expect(THEME_SLOT_SURFACES["hub.avatar-lite"]).toBe("shared");
+    expect(THEME_SLOT_SURFACES["hub.portal"]).toBe("full-legacy");
+    expect(THEME_SLOT_SURFACES["hub.guide"]).toBe("full-legacy");
+    expect(THEME_SLOT_SURFACES["hub.21-day-icon"]).toBe("learn");
+    expect(THEME_SLOT_SURFACES["hub.shop-icon"]).toBe("play");
+    expect(UNKNOWN_THEME_SLOT_KEYS).toEqual([
+      "hub.principal-button",
+      "pro-mission.sms",
+      "shop.coach-pack-20",
+      "hub.cta-principal",
+      "landing.pre-chess",
+      "landing.hero",
+      "landing.progress-trophies",
+    ]);
+    expect(THEME_SLOT_SURFACES["board.legacy-bg"]).toBe("shared");
   });
 });

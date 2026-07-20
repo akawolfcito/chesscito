@@ -76,6 +76,19 @@ describe("buildThemeCatalog", () => {
     expect(portal?.usedIn.some((u) => u.startsWith("↳ "))).toBe(true);
   });
 
+  it("exposes the evidence-backed surface classification to the builder", async () => {
+    const catalog = await buildThemeCatalog("candy-forest", okResolver);
+    const slots = new Map(catalog?.slots.map((slot) => [slot.key, slot]));
+
+    expect(slots.get("hub.avatar-lite")?.surface).toBe("shared");
+    expect(slots.get("hub.portal")?.surface).toBe("full-legacy");
+    expect(slots.get("hub.21-day-icon")?.surface).toBe("learn");
+    expect(slots.get("arena.bg-matchup")?.surface).toBe("play");
+    expect(slots.get("hub.principal-button")?.surface).toBe("unknown");
+    expect(slots.get("landing.hero")?.surface).toBe("unknown");
+    expect(slots.get("board.legacy-bg")?.surface).toBe("shared");
+  });
+
   it("distinguishes the three visible training surfaces", async () => {
     const catalog = await buildThemeCatalog("candy-forest", okResolver);
     const slots = new Map(catalog?.slots.map((slot) => [slot.key, slot.usedIn]));

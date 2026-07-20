@@ -167,6 +167,12 @@ export default async function ThemeBuilderDevPage({
                         <code className="text-sm font-bold text-emerald-300">
                           {slot.key}
                         </code>
+                        <span
+                          data-testid={`theme-slot-surface-${slot.key}`}
+                          className="rounded-full border border-sky-700/60 bg-sky-950/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-300"
+                        >
+                          {slot.surface}
+                        </span>
                         <div className="max-w-xl text-right text-xs text-neutral-500">
                           {slot.usedIn.length ? (
                             slot.usedIn.map((location) => (

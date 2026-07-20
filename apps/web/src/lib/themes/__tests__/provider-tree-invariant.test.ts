@@ -12,7 +12,14 @@ describe("runtime entitlement provider tree", () => {
     const localeLayout = source("src/app/[locale]/layout.tsx");
 
     expect(walletProvider.match(/<QueryClientProvider\b/g)).toHaveLength(1);
+    expect(walletProvider.match(/<EffectiveTrainingPassProvider\b/g)).toHaveLength(1);
     expect(walletProvider.match(/<ThemeVariantProvider\b/g)).toHaveLength(1);
+    expect(walletProvider.indexOf("<EffectiveTrainingPassProvider")).toBeLessThan(
+      walletProvider.indexOf("<ThemeVariantProvider"),
+    );
+    expect(walletProvider.indexOf("</ThemeVariantProvider>")).toBeLessThan(
+      walletProvider.indexOf("</EffectiveTrainingPassProvider>"),
+    );
     expect(localeLayout.match(/<WalletProvider\b/g)).toHaveLength(1);
   });
 
@@ -22,5 +29,11 @@ describe("runtime entitlement provider tree", () => {
 
     expect(learn).not.toContain("ThemeVariantOverride");
     expect(play).not.toContain("ThemeVariantOverride");
+  });
+
+  it("shows registry surface classification in the Theme Builder", () => {
+    const builder = source("src/app/dev/theme-builder/page.tsx");
+    expect(builder).toContain("slot.surface");
+    expect(builder).toContain("theme-slot-surface-");
   });
 });

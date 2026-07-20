@@ -99,7 +99,16 @@ export async function GET(req: Request) {
 
     if (error) {
       log.error("db_query_failed", { wallet, code: error.code });
-      return NextResponse.json(response({ active: false, expiresAt: null }), { status: 200 });
+      if (pro.active) {
+        return NextResponse.json(response({ active: false, expiresAt: null }));
+      }
+      return NextResponse.json(
+        {
+          ...response({ active: false, expiresAt: null }),
+          error: "ledger_unavailable",
+        },
+        { status: 503 },
+      );
     }
 
     if (!data) {
@@ -118,6 +127,15 @@ export async function GET(req: Request) {
     ));
   } catch (e) {
     log.error("unexpected_error", { wallet, err: String(e) });
-    return NextResponse.json(response({ active: false, expiresAt: null }));
+    if (pro.active) {
+      return NextResponse.json(response({ active: false, expiresAt: null }));
+    }
+    return NextResponse.json(
+      {
+        ...response({ active: false, expiresAt: null }),
+        error: "ledger_unavailable",
+      },
+      { status: 503 },
+    );
   }
 }

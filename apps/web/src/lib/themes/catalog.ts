@@ -10,7 +10,13 @@
  * The production resolver (`fsAssetResolver`) does the fs + sharp IO and
  * is only imported from server components. Dev-tool only.
  */
-import { THEMES, type ThemeAssetKey, type ThemeAssetVariant } from "./theme-registry";
+import {
+  THEMES,
+  THEME_SLOT_SURFACES,
+  type ThemeAssetKey,
+  type ThemeAssetVariant,
+  type ThemeSlotSurface,
+} from "./theme-registry";
 import { resolveAssetVariant, type ResolvedVariant } from "./asset-variant";
 
 /** Image formats that make up a static asset triplet, in probe order. */
@@ -41,6 +47,7 @@ export type ResolvedAsset = ResolvedFile & { basename: string };
 
 export type SlotCatalogEntry = {
   key: ThemeAssetKey;
+  surface: ThemeSlotSurface;
   usedIn: string[];
   /** null when DEFAULT is in none mode. */
   default: ResolvedAsset | null;
@@ -98,6 +105,7 @@ export async function buildThemeCatalog(
         : null;
       return {
         key,
+        surface: THEME_SLOT_SURFACES[key],
         usedIn: entry.usedIn ?? [],
         default: def,
         pro,

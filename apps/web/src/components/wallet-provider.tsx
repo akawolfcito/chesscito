@@ -8,6 +8,7 @@ import { injected } from "wagmi/connectors";
 
 import { ProOriginWarning } from "@/components/dev/pro-origin-warning";
 import { getInjectedProvider, isMiniPayEnv } from "@/lib/minipay";
+import { EffectiveTrainingPassProvider } from "@/lib/season-pass/use-season-pass-status";
 import { ThemeVariantProvider } from "@/lib/themes/theme-variant-provider";
 
 /** Plain wagmi `injected()` connector (id: "injected") — the only wallet
@@ -65,10 +66,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <WalletProviderInner>
-          <ThemeVariantProvider>
-            <ProOriginWarning />
-            {children}
-          </ThemeVariantProvider>
+          <EffectiveTrainingPassProvider>
+            <ThemeVariantProvider>
+              <ProOriginWarning />
+              {children}
+            </ThemeVariantProvider>
+          </EffectiveTrainingPassProvider>
         </WalletProviderInner>
       </QueryClientProvider>
     </WagmiProvider>
