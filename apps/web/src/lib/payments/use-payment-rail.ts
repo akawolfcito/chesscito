@@ -15,7 +15,7 @@
  * chain isn't Celo mainnet, or the token isn't supported.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useAccount, useChainId, usePublicClient, useWriteContract } from "wagmi";
 
 import { erc20Abi } from "@/lib/contracts/tokens";
@@ -24,8 +24,13 @@ import { isUserCancellation } from "@/lib/errors";
 import {
   GET_PEONES_CANARY_CHAIN_ID,
   GET_PEONES_CANARY_SKU,
+  classifyProviderSubmissionError,
   isGetPeonesCanaryClientRequested,
+  normalizeProviderTransactionHash,
+  recoverProviderTransactionHashFromError,
   type GetPeonesCanaryIntent,
+  type GetPeonesSubmissionReport,
+  type GetPeonesSubmissionReportResponse,
 } from "@/lib/payments/get-peones-canary";
 import {
   getTreasuryAddressClient,
@@ -103,6 +108,8 @@ export function usePaymentRail({
   const [result, setResult] = useState<PaymentRailResult | null>(null);
   const [errorReason, setErrorReason] = useState<string | null>(null);
   const [canaryIntentId, setCanaryIntentId] = useState<string | null>(null);
+  const payInFlightRef = useRef(false);
+  const retryBlockedRef = useRef(false);
 
   const canaryRequested = isGetPeonesCanaryClientRequested() && sku === GET_PEONES_CANARY_SKU;
   const treasury = getTreasuryAddressClient();
@@ -119,6 +126,10 @@ export function usePaymentRail({
   const available = unavailableReason === null;
 
   const reset = useCallback(() => {
+    // An in-flight or ambiguous broadcast cannot be made safe by resetting UI
+    // state. The owning payment finishes its own mutex; ambiguous state needs
+    // server-side reconciliation before another transfer may start.
+    if (payInFlightRef.current || retryBlockedRef.current) return;
     setPhase("idle");
     setTxHash(null);
     setResult(null);
@@ -210,7 +221,23 @@ export function usePaymentRail({
     [address, sku, tokenEntry, onVerified, retryDelaysMs],
   );
 
+  const reportSubmission = useCallback(async (report: GetPeonesSubmissionReport) => {
+    try {
+      const response = await fetch("/api/payment-intents/get-peones", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(report),
+      });
+      return await response.json() as GetPeonesSubmissionReportResponse;
+    } catch {
+      return null;
+    }
+  }, []);
+
   const pay = useCallback(async () => {
+    if (payInFlightRef.current || retryBlockedRef.current) return;
+    payInFlightRef.current = true;
+    try {
     if (!available || (!canaryRequested && !treasury) || !tokenEntry) {
       setErrorReason(unavailableReason ?? "unavailable");
       setPhase("error");
@@ -244,8 +271,23 @@ export function usePaymentRail({
           ok?: boolean;
           error?: string;
           intent?: GetPeonesCanaryIntent;
+          intentId?: string;
+          txHash?: string | null;
         };
         if (!payload.ok || !payload.intent) {
+          if (payload.error === "unresolved_submission_state" && payload.intentId) {
+            setCanaryIntentId(payload.intentId);
+            retryBlockedRef.current = true;
+            const recovered = normalizeProviderTransactionHash(payload.txHash);
+            if (recovered.ok) {
+              setTxHash(recovered.txHash);
+              setErrorReason("verification_pending");
+            } else {
+              setErrorReason("unknown_submission_state");
+            }
+            setPhase("error");
+            return;
+          }
           setErrorReason(payload.error ?? "intent_creation_failed");
           setPhase("error");
           return;
@@ -263,6 +305,16 @@ export function usePaymentRail({
           return;
         }
         setCanaryIntentId(intent.id);
+        const submitting = await reportSubmission({
+          intentId: intent.id,
+          submissionState: "SUBMITTING",
+          providerResultKind: "WALLET_REQUESTED",
+        });
+        if (!submitting?.ok) {
+          setErrorReason(submitting?.error?.toLowerCase() ?? "submission_report_failed");
+          setPhase("error");
+          return;
+        }
       } catch {
         setErrorReason("intent_creation_failed");
         setPhase("error");
@@ -288,18 +340,19 @@ export function usePaymentRail({
     };
 
     let submittedHash: `0x${string}` | null = null;
+    let providerOutcome: ReturnType<typeof classifyProviderSubmissionError> | null = null;
     try {
       setPhase("awaiting_signature");
-      let hash: `0x${string}`;
+      let rawProviderResult: unknown;
       if (intent) {
-        hash = await writeContractAsync(
+        rawProviderResult = await writeContractAsync(
           (feeCurrency ? { ...base, feeCurrency } : base) as Parameters<
             typeof writeContractAsync
           >[0],
         );
       } else {
         try {
-          hash = await writeContractAsync(
+          rawProviderResult = await writeContractAsync(
             (feeCurrency ? { ...base, feeCurrency } : base) as Parameters<
               typeof writeContractAsync
             >[0],
@@ -308,33 +361,81 @@ export function usePaymentRail({
           // User rejected → real error, do NOT re-prompt. Otherwise the
           // feeCurrency field may be unsupported (MetaMask) → retry without.
           if (isUserCancellation(e) || !feeCurrency) throw e;
-          hash = await writeContractAsync(base as Parameters<typeof writeContractAsync>[0]);
+          rawProviderResult = await writeContractAsync(
+            base as Parameters<typeof writeContractAsync>[0],
+          );
         }
       }
+      const normalized = normalizeProviderTransactionHash(rawProviderResult);
+      if (!normalized.ok) {
+        providerOutcome = normalized.outcome;
+        throw new Error(normalized.outcome.errorCode);
+      }
+      const hash = normalized.txHash;
       submittedHash = hash;
       setTxHash(hash);
       setPhase("pending_tx");
+      if (intent) {
+        await reportSubmission({
+          intentId: intent.id,
+          submissionState: "SUBMITTED",
+          txHash: hash,
+          providerResultKind: normalized.providerResultKind,
+        });
+      }
       await publicClient?.waitForTransactionReceipt({ hash });
       await verify(hash, intent?.id);
     } catch (e) {
+      if (intent && !submittedHash) {
+        const recoveredHash = recoverProviderTransactionHashFromError(e);
+        if (recoveredHash) {
+          submittedHash = recoveredHash;
+          setTxHash(recoveredHash);
+          setPhase("pending_tx");
+          await reportSubmission({
+            intentId: intent.id,
+            submissionState: "SUBMITTED",
+            txHash: recoveredHash,
+            providerResultKind: "TRANSACTION_HASH",
+          });
+          try {
+            await publicClient?.waitForTransactionReceipt({ hash: recoveredHash });
+            await verify(recoveredHash, intent.id);
+          } catch {
+            setErrorReason("verification_pending");
+            setPhase("error");
+          }
+          return;
+        }
+        const outcome = providerOutcome ?? classifyProviderSubmissionError(e);
+        await reportSubmission({
+          intentId: intent.id,
+          submissionState: outcome.submissionState,
+          providerResultKind: outcome.providerResultKind,
+          errorCode: outcome.errorCode,
+        });
+        const reason = outcome.submissionState === "CANCELLED"
+          ? "user_rejected"
+          : outcome.submissionState === "FAILED"
+            ? "tx_failed"
+            : "unknown_submission_state";
+        if (!outcome.retrySafe) retryBlockedRef.current = true;
+        setErrorReason(reason);
+        setPhase("error");
+        return;
+      }
       const reason = isUserCancellation(e)
         ? "user_rejected"
-        : intent && !submittedHash
-          ? "unknown_submission_state"
-          : submittedHash
-            ? "verification_pending"
-            : e instanceof Error
-              ? e.message
-              : "tx_failed";
+        : submittedHash
+          ? "verification_pending"
+          : e instanceof Error
+            ? e.message
+            : "tx_failed";
       setErrorReason(reason);
-      if (reason === "unknown_submission_state" && intent) {
-        void fetch("/api/payment-intents/get-peones", {
-          method: "PATCH",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ intentId: intent.id, event: reason }),
-        }).catch(() => undefined);
-      }
       setPhase("error");
+    }
+    } finally {
+      payInFlightRef.current = false;
     }
   }, [
     available,
@@ -349,6 +450,7 @@ export function usePaymentRail({
     writeContractAsync,
     publicClient,
     verify,
+    reportSubmission,
   ]);
 
   const verifyAgain = useCallback(async () => {
