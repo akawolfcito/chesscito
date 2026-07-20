@@ -590,7 +590,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
       },
       // pro-sheet content (pro-sheet.tsx renders these unconditionally — the
       // subscription surface's own art, not a per-user PRO variant).
-      "pro-sheet.header-icon": {
+      "pro-sheet.header-icon": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/pro-sheet/header-icon/pro" },
         default: "/art/chesscito-pro/chesscito-header-pro-icon",
         usedIn: ["PRO sheet — header icon", "↳ components/pro/pro-sheet.tsx"],
       },
@@ -602,7 +602,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/chesscito-pro/journal-chesscito-pro",
         usedIn: ["PRO sheet — journal illustration", "↳ components/pro/pro-sheet.tsx"],
       },
-      "daily.bg-session": {
+      "daily.bg-session": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/daily/bg-session/pro" },
         default: "/art/bg-sesion-great",
         usedIn: ["Daily — great session background", "↳ components/daily/daily-limit-banner.tsx"],
       },
@@ -678,7 +678,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "arena.result-draw": { default: "/art/new-assets-chesscito/games/draw-game001", usedIn: ["Arena — draw end-state", "↳ components/arena/arena-end-state.tsx"] },
       "arena.result-resign": { default: "/art/new-assets-chesscito/games/resign-game001", usedIn: ["Arena — resign end-state", "↳ components/arena/arena-end-state.tsx"] },
       "arena.result-stalemate": { default: "/art/new-assets-chesscito/games/stalemate-game001", usedIn: ["Arena — stalemate end-state", "↳ components/arena/arena-end-state.tsx"] },
-      "arena.player-you": { default: "/art/new-icons-chesscito/avatar-blue", usedIn: ["Arena — 'you' player avatar", "↳ components/profile/profile-sheet.tsx", "↳ components/redesign/player-avatar.tsx", "↳ app/[locale]/arena/page.tsx"] },
+      "arena.player-you": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/arena/player-you/pro" }, default: "/art/new-icons-chesscito/avatar-blue", usedIn: ["Arena — 'you' player avatar", "↳ components/profile/profile-sheet.tsx", "↳ components/redesign/player-avatar.tsx", "↳ app/[locale]/arena/page.tsx"] },
       "arena.player-bot": { default: "/art/new-icons-chesscito/avatar-red", usedIn: ["Arena — 'bot' player avatar", "↳ components/redesign/player-avatar.tsx"] },
       // hub additions
       "hub.cta-principal": { default: "/art/hub/cta-principal", usedIn: ["Hub — principal CTA"] },
