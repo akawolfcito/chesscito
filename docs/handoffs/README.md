@@ -10,10 +10,11 @@ Un handoff por línea, del más nuevo al más viejo. El detalle vive en cada arc
 y `MEMORY.md` es un índice que apunta acá para el detalle. Purgarlos deja la memoria
 apuntando al vacío — que es justo lo que este índice evita tener que hacer.
 
-**Total:** 183 handoffs.
+**Total:** 184 handoffs.
 
-## Julio 2026 · 37
+## Julio 2026 · 38
 
+- `2026-07-21` [Get Peones desbloqueado; el minteo sigue abierto](2026-07-21-get-peones-deadlock-handoff.md)
 - `2026-07-20` [Get Peones payment recovery handoff](2026-07-20-get-peones-payment-recovery.md)
 - `2026-07-19` [Theme Builder + Runtime PRO Assets](2026-07-19-theme-builder-runtime-pro-complete.md)
 - `2026-07-18` [Theme-builder art catalog (feat/theme-builder → main)](2026-07-18-theme-builder-catalog-handoff.md)
