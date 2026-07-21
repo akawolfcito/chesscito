@@ -265,6 +265,44 @@ describe("Get Peones canary intent endpoint", () => {
     });
   });
 
+  // An unresolved intent locks the wallet out of buying again — that lock is
+  // what stops a double charge. But it MUST expire: an intent that timed out
+  // without ever broadcasting has no transfer to reconcile, so keeping the
+  // lock turns one transient failure into a permanent denial of service.
+  // Five such rows deadlocked the founder's wallet on 2026-07-21; two other
+  // wallets sat locked since 2026-07-01. See
+  // docs/audits/2026-07-20-payments-rail-gas-regression-diagnosis.md §2.
+  it("lets a fresh intent through when the unresolved submission expired without a transaction hash", async () => {
+    configure();
+    getSupabaseServer.mockReturnValue(intentCreationStore({
+      id: INTENT_ID,
+      lifecycle_status: "SUBMITTING",
+      tx_hash: null,
+      expires_at: new Date(Date.now() - 600_000).toISOString(),
+    }));
+    const response = await POST(request());
+    expect(response.status).toBe(200);
+  });
+
+  // The other half of the rule: expiry alone must never release the lock. A
+  // hash means a transfer may be on-chain, so that intent keeps blocking until
+  // the verifier resolves it — no matter how old it is.
+  it("keeps blocking an expired submission that carries a transaction hash", async () => {
+    configure();
+    getSupabaseServer.mockReturnValue(intentCreationStore({
+      id: INTENT_ID,
+      lifecycle_status: "SUBMITTED",
+      tx_hash: TX_HASH,
+      expires_at: new Date(Date.now() - 600_000).toISOString(),
+    }));
+    const response = await POST(request());
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      error: "unresolved_submission_state",
+      txHash: TX_HASH,
+    });
+  });
+
   it("rejects SUBMITTED without a transaction hash as recoverable invalid input", async () => {
     const store = submissionStore({ id: INTENT_ID, lifecycle_status: "SUBMITTING", tx_hash: null });
     getSupabaseServer.mockReturnValue(store.client);

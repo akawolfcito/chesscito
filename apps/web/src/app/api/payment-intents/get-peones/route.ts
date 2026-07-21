@@ -132,7 +132,7 @@ export async function POST(req: Request) {
   // prompt a second transfer for the same wallet/SKU/token.
   const { data: unresolvedIntent, error: unresolvedLookupError } = await supabase
     .from("treasury_payment_intents")
-    .select("id,lifecycle_status,tx_hash")
+    .select("id,lifecycle_status,tx_hash,expires_at")
     .eq("wallet", wallet)
     .eq("sku", GET_PEONES_CANARY_SKU)
     .in("lifecycle_status", ["SUBMITTING", "SUBMITTED"])
@@ -141,7 +141,20 @@ export async function POST(req: Request) {
     .limit(1)
     .maybeSingle();
   if (unresolvedLookupError) return error("intent_store_unavailable", 503);
-  if (unresolvedIntent) {
+  // The lock exists to stop a double charge, so it must outlive expiry ONLY
+  // while there is something to reconcile. With a `tx_hash` a transfer may be
+  // on-chain → keep blocking at any age, until the verifier resolves it.
+  // Without one, nothing was ever broadcast, and an expired lock would deny
+  // the purchase forever rather than protect it (5 rows deadlocked this wallet
+  // on 2026-07-21; two others sat locked since 2026-07-01 — see
+  // docs/audits/2026-07-20-payments-rail-gas-regression-diagnosis.md §2).
+  // An unreadable `expires_at` fails CLOSED: an intent whose window we cannot
+  // prove closed may still have a wallet prompt open.
+  const expiresAtMs = unresolvedIntent
+    ? Date.parse(unresolvedIntent.expires_at ?? "")
+    : Number.NaN;
+  const withinWindow = !Number.isFinite(expiresAtMs) || expiresAtMs > Date.now();
+  if (unresolvedIntent && (unresolvedIntent.tx_hash != null || withinWindow)) {
     return NextResponse.json({
       ok: false,
       error: "unresolved_submission_state",
