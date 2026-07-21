@@ -315,7 +315,7 @@ describe("assertLocalTarget", () => {
   it("rejects a Supabase-hosted host", () => {
     expect(() =>
       assertLocalTarget(
-        "postgresql://postgres:pw@db.brsbdzpuvotxsadmcxyj.supabase.co:5432/postgres",
+        "postgresql://postgres:pw@db.example-ref.supabase.co:5432/postgres",
         "supabase_db_web",
       ),
     ).toThrow(/refusing/i);
