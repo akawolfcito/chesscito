@@ -73,6 +73,44 @@ export function formatBackupStamp(date: Date): string {
 }
 
 /**
+ * The guard. `restore-local` DROPs the database it is pointed at, so this runs
+ * before any destructive statement is emitted and fails closed on anything it
+ * cannot positively identify as the local Supabase stack.
+ *
+ * It never echoes the connection string: that string contains the password, and
+ * a guard that leaks a secret into a stack trace has traded one hazard for
+ * another. Errors describe the rule that was broken, not the input.
+ */
+export function assertLocalTarget(dbUrl: string, containerName: string): void {
+  const refuse = (why: string): never => {
+    throw new Error(
+      `Refusing to restore: ${why}.\n` +
+        `Target must be host ${LOCAL_DB_HOSTS.join(" or ")}, port ${LOCAL_DB_PORT}, ` +
+        `container ${LOCAL_CONTAINER_PREFIX}*. Connection string withheld on purpose.`,
+    );
+  };
+
+  let url: URL;
+  try {
+    url = new URL(dbUrl);
+  } catch {
+    return refuse("the database URL could not be parsed");
+  }
+
+  if (!LOCAL_DB_HOSTS.includes(url.hostname as (typeof LOCAL_DB_HOSTS)[number])) {
+    return refuse("the host is not loopback");
+  }
+  // An absent port is refused rather than defaulted: assuming 5432 here is how
+  // a guard silently starts pointing at somebody's real local Postgres.
+  if (url.port !== String(LOCAL_DB_PORT)) {
+    return refuse(`the port is not ${LOCAL_DB_PORT}`);
+  }
+  if (!containerName.startsWith(LOCAL_CONTAINER_PREFIX)) {
+    return refuse("the container is not a local Supabase container");
+  }
+}
+
+/**
  * Read one key out of a dotenv file's contents. Deliberately minimal: this is
  * only ever used for SUPABASE_DB_PASSWORD, and the value must never be logged.
  * Returns null when absent so callers can tell "missing" from "empty".

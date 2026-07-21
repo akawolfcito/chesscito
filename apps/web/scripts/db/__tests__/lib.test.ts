@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   CRITICAL_TABLES,
   DUMP_FILES,
+  assertLocalTarget,
   formatBackupStamp,
   parseEnvValue,
   resolveBackupRoot,
@@ -81,6 +82,72 @@ describe("parseEnvValue", () => {
 
   it("does not match a key that merely ends with the requested name", () => {
     expect(parseEnvValue("MY_SUPABASE_DB_PASSWORD=nope", "SUPABASE_DB_PASSWORD")).toBeNull();
+  });
+});
+
+describe("assertLocalTarget", () => {
+  const LOCAL = "postgresql://postgres:postgres@127.0.0.1:55322/postgres";
+
+  it("accepts the local stack on 127.0.0.1 and on localhost", () => {
+    expect(() => assertLocalTarget(LOCAL, "supabase_db_web")).not.toThrow();
+    expect(() =>
+      assertLocalTarget(
+        "postgresql://postgres:postgres@localhost:55322/postgres",
+        "supabase_db_web",
+      ),
+    ).not.toThrow();
+  });
+
+  // Everything below is the point of the function. restore-local DROPs the
+  // database it is handed; each of these, if allowed through, destroys data
+  // that has no backup other than the one being restored.
+
+  it("rejects a Supabase-hosted host", () => {
+    expect(() =>
+      assertLocalTarget(
+        "postgresql://postgres:pw@db.example-ref.supabase.co:5432/postgres",
+        "supabase_db_web",
+      ),
+    ).toThrow(/refusing/i);
+  });
+
+  it("rejects any non-loopback host, even on the right port", () => {
+    expect(() =>
+      assertLocalTarget("postgresql://postgres:pw@10.0.0.7:55322/postgres", "supabase_db_web"),
+    ).toThrow(/refusing/i);
+  });
+
+  it("rejects the right host on the wrong port", () => {
+    // 5432 on loopback could be a real local Postgres holding real work.
+    expect(() =>
+      assertLocalTarget("postgresql://postgres:pw@127.0.0.1:5432/postgres", "supabase_db_web"),
+    ).toThrow(/refusing/i);
+  });
+
+  it("rejects a URL with no port at all rather than assuming the default", () => {
+    expect(() =>
+      assertLocalTarget("postgresql://postgres:pw@127.0.0.1/postgres", "supabase_db_web"),
+    ).toThrow(/refusing/i);
+  });
+
+  it("rejects a container that is not a Supabase local container", () => {
+    expect(() => assertLocalTarget(LOCAL, "postgres")).toThrow(/refusing/i);
+    expect(() => assertLocalTarget(LOCAL, "")).toThrow(/refusing/i);
+  });
+
+  it("rejects empty and malformed input instead of failing open", () => {
+    expect(() => assertLocalTarget("", "supabase_db_web")).toThrow(/refusing/i);
+    expect(() => assertLocalTarget("not a url", "supabase_db_web")).toThrow(/refusing/i);
+    expect(() => assertLocalTarget("127.0.0.1:55322", "supabase_db_web")).toThrow(/refusing/i);
+  });
+
+  it("never puts the connection string in the error it throws", () => {
+    // The URL carries the password. A guard that leaks it into a stack trace
+    // or CI log trades one hazard for another.
+    const secret = "postgresql://postgres:hunter2@db.example.supabase.co:5432/postgres";
+    expect(() => assertLocalTarget(secret, "supabase_db_web")).toThrow(
+      expect.objectContaining({ message: expect.not.stringContaining("hunter2") }),
+    );
   });
 });
 
