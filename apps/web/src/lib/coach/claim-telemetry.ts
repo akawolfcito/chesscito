@@ -28,3 +28,24 @@ export function truncateClaimError(
   if (raw.length <= CLAIM_ERROR_MAX_LEN) return raw;
   return `${raw.slice(0, CLAIM_ERROR_MAX_LEN - 1)}…`;
 }
+
+/** viem's `BaseError` splits what it knows: `shortMessage` is the verdict and
+ *  `details` is what the provider actually said. `message` concatenates both
+ *  AFTER a dump of the request arguments — chain, from, to, and the full
+ *  calldata — so clipping `message` to fit telemetry keeps the filler and
+ *  drops the answer. That is exactly what happened to the first captured mint
+ *  failure on 2026-07-21: 300 chars of argument dump, zero information. */
+type ViemLikeError = { shortMessage?: unknown; details?: unknown };
+
+/** The most informative short description of a claim failure, ready to send. */
+export function describeClaimError(err: unknown): string | undefined {
+  if (err == null) return undefined;
+
+  const { shortMessage, details } = (err ?? {}) as ViemLikeError;
+  const parts = [shortMessage, details].filter(
+    (p): p is string => typeof p === "string" && p.length > 0,
+  );
+
+  if (parts.length > 0) return truncateClaimError(parts.join(" · "));
+  return truncateClaimError(err instanceof Error ? err.message : String(err));
+}

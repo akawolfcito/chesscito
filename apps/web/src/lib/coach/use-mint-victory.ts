@@ -20,6 +20,7 @@ import type { TransactionReceipt } from "viem";
 import { useTranslations } from "next-intl";
 import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
 import { VICTORY_CLAIM_COPY } from "@/lib/content/editorial";
+import { describeClaimError } from "@/lib/coach/claim-telemetry";
 import { victoryAbi } from "@/lib/contracts/victory";
 import {
   ACCEPTED_TOKENS,
@@ -756,7 +757,9 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
       inp.onClaimTelemetry?.({
         stage: "error",
         gameId: inp.gameId,
-        error: raw,
+        // NOT `raw`: viem buries the provider's actual words behind a dump of
+        // the request arguments, so the truncated `message` reports nothing.
+        error: describeClaimError(err),
         error_kind: errorKind,
       });
     } finally {

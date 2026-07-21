@@ -1,6 +1,48 @@
 import { describe, expect, it } from "vitest";
 
-import { CLAIM_ERROR_MAX_LEN, truncateClaimError } from "../claim-telemetry";
+import {
+  CLAIM_ERROR_MAX_LEN,
+  describeClaimError,
+  truncateClaimError,
+} from "../claim-telemetry";
+
+describe("describeClaimError", () => {
+  // The first capture (2026-07-21 06:10) truncated to
+  //   "An unknown RPC error occurred.\n\nRequest Arguments:\n  chain: ... data: 0xb31e32cc…"
+  // and told us nothing: viem puts the request arguments FIRST and the actual
+  // provider message LAST, under "Details:". Clipping the head keeps the
+  // filler and drops the answer. Prefer the fields viem parsed out for us.
+  it("prefers the provider detail over the argument dump", () => {
+    const err = Object.assign(new Error("An unknown RPC error occurred.\n\nRequest Arguments:\n  chain: undefined"), {
+      shortMessage: "An unknown RPC error occurred.",
+      details: "MiniPay: permission denied (code -1)",
+    });
+    const described = describeClaimError(err);
+    expect(described).toContain("MiniPay: permission denied (code -1)");
+    expect(described).not.toContain("Request Arguments");
+  });
+
+  it("keeps the short message when there is no detail", () => {
+    const err = Object.assign(new Error("long\n\nRequest Arguments:\n  chain: x"), {
+      shortMessage: "User rejected the request.",
+    });
+    expect(describeClaimError(err)).toBe("User rejected the request.");
+  });
+
+  it("falls back to the plain message for a non-viem error", () => {
+    expect(describeClaimError(new Error("boom"))).toBe("boom");
+  });
+
+  it("is truncated like any other forwarded message", () => {
+    const err = Object.assign(new Error("x"), { details: "y".repeat(9_000) });
+    expect(describeClaimError(err)!.length).toBeLessThanOrEqual(CLAIM_ERROR_MAX_LEN);
+  });
+
+  it("returns undefined when there is nothing to describe", () => {
+    expect(describeClaimError(undefined)).toBeUndefined();
+    expect(describeClaimError(null)).toBeUndefined();
+  });
+});
 
 describe("truncateClaimError", () => {
   // The whole point: `use-mint-victory` emits the raw provider message but
