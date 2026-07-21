@@ -37,6 +37,9 @@ import {
   type PromoteResultLike,
 } from "@/lib/labyrinth-builder/promote-toast";
 import type { ContentStage } from "@/lib/content/overlay-types";
+// The constant only — importing lint.ts here would drag the BFS solver and the
+// FEN mapper toward the client bundle just to print a number.
+import { MAX_DIFFICULTY_STEP } from "@/lib/content/pacing";
 import {
   parseFenBoard,
   posToSquare,
@@ -987,9 +990,16 @@ export default function LabyrinthBuilderPage() {
                   </li>
                 ))}
               </ul>
+              {/* Names the knob so the panel is closed over itself. Every
+                  warning already carries what it found and what to do about
+                  it; the one thing it could not say without repeating itself
+                  on every line is that the threshold is yours to move. Without
+                  this the author has to remember where it lives, which is the
+                  failure this whole panel exists to prevent. */}
               <p className="mt-2 text-xs text-neutral-400">
                 These never block a save — they are advice, and you are the one
-                who decides.
+                who decides. Pacing warns past a {MAX_DIFFICULTY_STEP}-move step
+                (<code>MAX_DIFFICULTY_STEP</code>, <code>lib/content/pacing.ts</code>).
               </p>
             </div>
           )}

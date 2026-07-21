@@ -22,6 +22,7 @@ import type { BoardPosition, Exercise, PieceId } from "@/lib/game/types";
 import { posToSquare, usesOwnSolver, type MappedPuzzle } from "@/lib/game/fen-puzzle";
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
 import { getValidTargets } from "@/lib/game/board";
+import { MAX_DIFFICULTY_STEP } from "@/lib/content/pacing";
 
 export type LintResult = { errors: string[]; warnings: string[] };
 
@@ -286,11 +287,6 @@ function decisionProfile(
     firstMoveChoices: targets(mapped.startPos).length,
   };
 }
-
-/** The largest jump in `optimalMoves` a single step may make without comment.
- *  Two is a lesson; three is where a beginner stops seeing the connection to
- *  the board they just solved. */
-const MAX_DIFFICULTY_STEP = 2;
 
 export type SequenceLintInput = {
   piece: PieceId;
