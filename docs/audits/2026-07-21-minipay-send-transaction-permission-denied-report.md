@@ -9,6 +9,27 @@
 
 ---
 
+## The decisive fact: it is scoped to the domain, not the app
+
+**The identical build works on `*.vercel.app` and fails on `*.chesscito.com`.**
+
+| Host | Same build? | Get Peones | Victory mint |
+|---|---|---|---|
+| `chesscito-dcdbivh4i-goodwolf.vercel.app` | yes, current | ✅ works | ✅ works |
+| `preview.chesscito.com` | yes, current | ❌ `-32604` | ❌ `-32604` |
+| `play.chesscito.com` | yes, current | ❌ `-32604` | ❌ `-32604` |
+| `learn-preview.chesscito.com` | yes, current | ❌ `-32604` | — |
+
+Response headers are byte-identical across all of these hosts (`permissions-policy`,
+`x-frame-options`, CSP, HSTS — all the same). Nothing we serve varies by hostname, so no
+change on our side can produce this. The decision is made by MiniPay from the origin.
+
+**This rules our code out entirely** and reframes the question: what policy makes MiniPay
+refuse `eth_sendTransaction` for `chesscito.com` while allowing it for an unlisted
+`vercel.app` origin?
+
+---
+
 ## Summary
 
 MiniPay grants this app **every** provider method we use **except** `eth_sendTransaction`,
@@ -105,6 +126,10 @@ fee currency and gasless sending all work — just not for this app.
 
 ## 5. Questions for MiniPay
 
+0. **Why is `eth_sendTransaction` refused for `chesscito.com` but allowed for the same build
+   on `*.vercel.app`?** Is `chesscito.com` registered, pending review, or flagged in a way
+   that blocks sends when the domain is opened via **Load Test Page** instead of the official
+   listing? If so, what is the supported way to test a registered domain?
 1. What does `-32604 Permission denied` mean, and which policy emits it?
 2. Does `eth_sendTransaction` require a mini app to be **registered/approved**, while
    read methods and signing do not? Did that requirement change on or after 2026-07-17?
