@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   CRITICAL_TABLES,
   DUMP_FILES,
+  MANIFEST_VERSION,
+  type BackupManifest,
+  parseManifest,
   assertLocalTarget,
   countCopyRows,
   formatBackupStamp,
@@ -243,6 +246,48 @@ describe("parseAppliedMigrationVersions", () => {
   it("returns an empty array when the ledger block is missing", () => {
     // Callers treat this as a failed backup, not as a virgin database.
     expect(parseAppliedMigrationVersions("SET statement_timeout = 0;")).toEqual([]);
+  });
+});
+
+describe("parseManifest", () => {
+  const valid: BackupManifest = {
+    version: MANIFEST_VERSION,
+    createdAt: "2026-07-21T18:04:11Z",
+    gitSha: "b084f9fc",
+    latestMigration: "20260721020000",
+    cliVersion: "2.98.2",
+    files: [{ name: "data.sql", bytes: 39122, sha256: "a".repeat(64) }],
+    criticalTableRows: { "public.peones_ledger": 1420 },
+  };
+
+  it("accepts a well-formed manifest", () => {
+    expect(parseManifest(JSON.stringify(valid))).toEqual(valid);
+  });
+
+  it("rejects a manifest written by a future version of these scripts", () => {
+    // Restoring against a manifest whose meaning has changed is worse than
+    // refusing: the post-restore check would compare the wrong fields.
+    const raw = JSON.stringify({ ...valid, version: MANIFEST_VERSION + 1 });
+    expect(() => parseManifest(raw)).toThrow(/version/i);
+  });
+
+  it("rejects a manifest with no files list", () => {
+    const { files: _files, ...rest } = valid;
+    expect(() => parseManifest(JSON.stringify(rest))).toThrow(/files/i);
+  });
+
+  it("rejects a manifest with no criticalTableRows", () => {
+    const { criticalTableRows: _rows, ...rest } = valid;
+    expect(() => parseManifest(JSON.stringify(rest))).toThrow(/criticalTableRows/i);
+  });
+
+  it("rejects a file entry missing its checksum", () => {
+    const raw = JSON.stringify({ ...valid, files: [{ name: "data.sql", bytes: 1 }] });
+    expect(() => parseManifest(raw)).toThrow(/sha256/i);
+  });
+
+  it("rejects input that is not JSON at all", () => {
+    expect(() => parseManifest("<html>")).toThrow(/manifest/i);
   });
 });
 

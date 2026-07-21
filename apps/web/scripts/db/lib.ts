@@ -110,6 +110,56 @@ export function assertLocalTarget(dbUrl: string, containerName: string): void {
   }
 }
 
+/** Bump when the manifest's meaning changes. parseManifest refuses anything
+ *  newer, because a post-restore check comparing the wrong fields is worse
+ *  than a restore that refuses to start. */
+export const MANIFEST_VERSION = 1;
+
+export interface BackupFileEntry {
+  name: string;
+  bytes: number;
+  sha256: string;
+}
+
+export interface BackupManifest {
+  version: number;
+  createdAt: string;
+  gitSha: string;
+  latestMigration: string;
+  cliVersion: string;
+  files: BackupFileEntry[];
+  /** Only the CRITICAL_TABLES. Deliberately not the whole schema. */
+  criticalTableRows: Record<string, number>;
+}
+
+export function parseManifest(raw: string): BackupManifest {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error("manifest.json is not valid JSON");
+  }
+  const m = parsed as Partial<BackupManifest>;
+
+  if (m.version !== MANIFEST_VERSION) {
+    throw new Error(
+      `manifest.json version ${String(m.version)} is not supported (expected ${MANIFEST_VERSION})`,
+    );
+  }
+  if (!Array.isArray(m.files) || m.files.length === 0) {
+    throw new Error("manifest.json has no files list");
+  }
+  for (const file of m.files) {
+    if (typeof file?.sha256 !== "string" || file.sha256.length !== 64) {
+      throw new Error(`manifest.json entry ${String(file?.name)} has no valid sha256`);
+    }
+  }
+  if (!m.criticalTableRows || typeof m.criticalTableRows !== "object") {
+    throw new Error("manifest.json has no criticalTableRows");
+  }
+  return m as BackupManifest;
+}
+
 /** Matches the COPY header for one exact qualified table, quoted or not. */
 function copyHeaderPattern(qualifiedTable: string): RegExp {
   const [schema, table] = qualifiedTable.split(".");
