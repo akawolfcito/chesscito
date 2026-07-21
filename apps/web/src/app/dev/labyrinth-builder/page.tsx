@@ -30,6 +30,7 @@ import { BuilderPreview, isPreviewable } from "@/components/dev/builder-preview"
 import {
   formatPublishResult,
   type PublishResultLike,
+  type PublishToast,
 } from "@/lib/labyrinth-builder/publish-toast";
 import {
   formatPromoteResult,
@@ -186,10 +187,16 @@ export default function LabyrinthBuilderPage() {
   const [moverInput, setMoverInput] = useState("");
   const [loadNote, setLoadNote] = useState<string | null>(null);
   const [records, setRecords] = useState<BucketedRecord[]>([]);
-  const [toast, setToast] = useState<{
-    kind: "ok" | "warn" | "err";
-    text: string;
-  } | null>(null);
+  // The shared PublishToast rather than a structural copy of it: the local
+  // duplicate silently dropped `warnings` when the mapper started carrying
+  // them, which is exactly how they went unread in the first place.
+  const [toast, setToast] = useState<PublishToast | null>(null);
+  /** Ad-hoc status line (loaded a record, bad id, network threw…). Only the
+   *  catalog linter produces warnings, and it only runs on Save, so everything
+   *  else reports an empty list rather than leaving the field undefined —
+   *  which is what let these go unrendered before. */
+  const say = (kind: PublishToast["kind"], text: string) =>
+    setToast({ kind, text, warnings: [] });
   /** Debounce: block re-entrant Save while a publish round-trip is in flight
    *  (a double-click would otherwise race two read-modify-write passes). */
   const [isSaving, setIsSaving] = useState(false);
@@ -355,15 +362,15 @@ export default function LabyrinthBuilderPage() {
     // that is Safe Path: loading it would drop the typed threats that ARE the
     // level. The list already blocks the Edit button; this refuses the call too.
     if (!isKindEditable(recKind)) {
-      setToast({
-        kind: "warn",
-        text: `${kindLabel(recKind)} is not editable in the builder yet — loading it would drop its threats. Coming in a later stage.`,
-      });
+      say(
+        "warn",
+        `${kindLabel(recKind)} is not editable in the builder yet — loading it would drop its threats. Coming in a later stage.`,
+      );
       return;
     }
     const derived = deriveStateFromFen(rec.fen, rec.piece, rec.mover ?? "");
     if (!derived.ok) {
-      setToast({ kind: "err", text: `Cannot edit ${rec.id ?? "record"}: ${derived.error}` });
+      say("err", `Cannot edit ${rec.id ?? "record"}: ${derived.error}`);
       return;
     }
     setState({
@@ -393,7 +400,7 @@ export default function LabyrinthBuilderPage() {
     setEditExtras(extraFields(rec));
     setTracedPath([]);
     setLoadNote(null);
-    setToast({ kind: "ok", text: `Editing ${rec.id ?? "(no id)"}` });
+    say("ok", `Editing ${rec.id ?? "(no id)"}`);
   }
 
   function handleNew() {
@@ -457,7 +464,7 @@ export default function LabyrinthBuilderPage() {
       setToast(formatPublishResult(data));
       if (data?.baseline?.ok) void refreshRecords();
     } catch (e) {
-      setToast({ kind: "err", text: (e as Error).message });
+      say("err", (e as Error).message);
     } finally {
       setIsSaving(false);
     }
@@ -471,7 +478,7 @@ export default function LabyrinthBuilderPage() {
   async function handleSetStage(to: ContentStage) {
     const id = state.id?.trim();
     if (!id) {
-      setToast({ kind: "err", text: "Load or enter a record id first." });
+      say("err", "Load or enter a record id first.");
       return;
     }
     try {
@@ -484,7 +491,7 @@ export default function LabyrinthBuilderPage() {
       setToast(formatPromoteResult(data, id));
       void refreshRecords();
     } catch (e) {
-      setToast({ kind: "err", text: (e as Error).message });
+      say("err", (e as Error).message);
     }
   }
 
@@ -513,15 +520,16 @@ export default function LabyrinthBuilderPage() {
       const id = rec.id ?? "record";
       setToast(
         data.overlay?.ok
-          ? { kind: "ok", text: `${id} ${verb} as draft. Promote to publish. Remember to commit content/*.json.` }
+          ? { kind: "ok", text: `${id} ${verb} as draft. Promote to publish. Remember to commit content/*.json.`, warnings: data.baseline.warnings ?? [] }
           : {
               kind: "warn",
               text: `${id} ${verb} in baseline; draft overlay update failed: ${(data.overlay?.errors ?? ["unknown"]).join("; ")}. Remember to commit content/*.json.`,
+              warnings: data.baseline.warnings ?? [],
             },
       );
       void refreshRecords();
     } catch (e) {
-      setToast({ kind: "err", text: (e as Error).message });
+      say("err", (e as Error).message);
     }
   }
 
@@ -940,6 +948,51 @@ export default function LabyrinthBuilderPage() {
               </span>
             )}
           </div>
+
+          {/* Save-time linter warnings — deliberately NOT part of the toast.
+              These arrive from the catalog linter on Save (curve pacing,
+              duplicate positions, decorative obstacles…), and the founder
+              could never read them: the save triggers refreshRecords() and
+              the line was gone before it registered. Worse, the mapper used
+              to drop them entirely, so the ones that mattered most never
+              rendered at all.
+
+              This panel is durable on purpose: it holds the LAST save's
+              warnings until the next Save replaces them, or until dismissed
+              by hand. A warning nobody can finish reading is the same as no
+              warning, and the whole point of choosing WARNING over ERROR for
+              the difficulty curve was that the author would actually see it. */}
+          {toast && toast.warnings.length > 0 && (
+            <div
+              data-testid="lb-save-warnings"
+              className="rounded border border-amber-500/40 bg-amber-950/30 p-3 text-sm"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className="font-semibold text-amber-300">
+                  {toast.warnings.length} warning
+                  {toast.warnings.length === 1 ? "" : "s"} from the last save
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setToast({ ...toast, warnings: [] })}
+                  className="shrink-0 text-xs text-neutral-400 underline hover:text-neutral-200"
+                >
+                  dismiss
+                </button>
+              </div>
+              <ul className="mt-2 space-y-1">
+                {toast.warnings.map((w, i) => (
+                  <li key={`sw-${i}`} className="text-amber-400">
+                    ⚠ {w}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs text-neutral-400">
+                These never block a save — they are advice, and you are the one
+                who decides.
+              </p>
+            </div>
+          )}
 
           {/* Set the current record's stage. Save lands it at draft; pick where
               it should live and "Set stage" moves it there (the route detects the
