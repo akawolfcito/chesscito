@@ -1,5 +1,23 @@
 # MiniPay denies `eth_sendTransaction` with `-32604 Permission denied`
 
+> ## ✅ EXPLAINED — most likely not a bug
+>
+> `chesscito.com` was **under Mini App review by MiniPay on 2026-07-17**, the same day the
+> last transaction succeeded (06:21:16 UTC), and MiniPay confirmed on 2026-07-21 that they
+> would list the app that day.
+>
+> The domain is claimed by a registered Mini App. Opening that same claimed domain through
+> **Load Test Page** is what gets `eth_sendTransaction` refused — an unclaimed origin
+> (`*.vercel.app`) sends fine with the identical build.
+>
+> **Real users were never affected.** They open the app from the MiniPay listing, where the
+> permission is granted. What broke was our *testing method*, not the product. There is no
+> regression in the code: everything in §4 was ruled out because there was nothing to find.
+>
+> **Still to confirm with MiniPay** (one line): is Load Test Page expected to refuse sends on
+> a claimed domain, and what is the supported way to test one? Keep the evidence below for
+> that reply.
+
 **Report for MiniPay / Celo developer support**
 **Date:** 2026-07-21
 **App:** Chesscito — `preview.chesscito.com`, `play.chesscito.com`, `learn.chesscito.com`
