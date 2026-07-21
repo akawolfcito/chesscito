@@ -6,8 +6,10 @@ import {
   MANIFEST_VERSION,
   type BackupManifest,
   parseManifest,
+  type RestoreObservation,
   assertLocalTarget,
   countCopyRows,
+  evaluatePostRestore,
   formatBackupStamp,
   parseAppliedMigrationVersions,
   parseEnvValue,
@@ -288,6 +290,69 @@ describe("parseManifest", () => {
 
   it("rejects input that is not JSON at all", () => {
     expect(() => parseManifest("<html>")).toThrow(/manifest/i);
+  });
+});
+
+describe("evaluatePostRestore", () => {
+  const manifest: BackupManifest = {
+    version: MANIFEST_VERSION,
+    createdAt: "2026-07-21T18:04:11Z",
+    gitSha: "b084f9fc",
+    latestMigration: "20260721020000",
+    cliVersion: "2.98.2",
+    files: [{ name: "data.sql", bytes: 1, sha256: "a".repeat(64) }],
+    criticalTableRows: { "public.peones_ledger": 1420 },
+  };
+
+  const good: RestoreObservation = {
+    existingTables: [...CRITICAL_TABLES],
+    migrationCount: 29,
+    latestMigration: "20260721020000",
+    peonesLedgerRows: 1420,
+  };
+
+  it("passes when the replica matches the manifest", () => {
+    expect(evaluatePostRestore(good, manifest)).toEqual({ ok: true, failures: [] });
+  });
+
+  it("fails when a critical table is missing, naming it", () => {
+    const observed = {
+      ...good,
+      existingTables: ["public.peones_ledger", "public.treasury_payment_intents"],
+    };
+    const result = evaluatePostRestore(observed, manifest);
+    expect(result.ok).toBe(false);
+    expect(result.failures.join("\n")).toMatch(/treasury_payment_consumptions/);
+  });
+
+  it("fails when the migration ledger is empty", () => {
+    // An empty ledger means `supabase migration up` would replay all 29
+    // migrations instead of the one pending — the rehearsal would be worthless.
+    const result = evaluatePostRestore({ ...good, migrationCount: 0 }, manifest);
+    expect(result.ok).toBe(false);
+    expect(result.failures.join("\n")).toMatch(/migration/i);
+  });
+
+  it("fails when the newest restored migration is not the one the manifest recorded", () => {
+    const result = evaluatePostRestore({ ...good, latestMigration: "20260406000000" }, manifest);
+    expect(result.ok).toBe(false);
+    expect(result.failures.join("\n")).toMatch(/20260721020000/);
+  });
+
+  it("fails on a ledger row-count mismatch, showing both numbers", () => {
+    const result = evaluatePostRestore({ ...good, peonesLedgerRows: 1419 }, manifest);
+    expect(result.ok).toBe(false);
+    expect(result.failures.join("\n")).toMatch(/1420/);
+    expect(result.failures.join("\n")).toMatch(/1419/);
+  });
+
+  it("reports every failure at once, not just the first", () => {
+    // One round trip per problem turns a five-minute check into an afternoon.
+    const result = evaluatePostRestore(
+      { existingTables: [], migrationCount: 0, latestMigration: null, peonesLedgerRows: 0 },
+      manifest,
+    );
+    expect(result.failures.length).toBeGreaterThanOrEqual(4);
   });
 });
 

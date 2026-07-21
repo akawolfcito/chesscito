@@ -215,6 +215,52 @@ export function parseAppliedMigrationVersions(sql: string): string[] {
   return versions.sort();
 }
 
+export interface RestoreObservation {
+  existingTables: string[];
+  migrationCount: number;
+  latestMigration: string | null;
+  peonesLedgerRows: number;
+}
+
+/**
+ * The minimum that has to be true for the restored copy to be worth rehearsing
+ * a migration against. Not a full-schema comparison — three tables and the
+ * migration ledger answer the question this v1 was built to answer.
+ *
+ * Collects every failure instead of stopping at the first: one round trip per
+ * problem turns a five-minute check into an afternoon.
+ */
+export function evaluatePostRestore(
+  observed: RestoreObservation,
+  manifest: BackupManifest,
+): { ok: boolean; failures: string[] } {
+  const failures: string[] = [];
+
+  for (const table of CRITICAL_TABLES) {
+    if (!observed.existingTables.includes(table)) {
+      failures.push(`missing table: ${table}`);
+    }
+  }
+  if (observed.migrationCount === 0) {
+    failures.push(
+      "supabase_migrations.schema_migrations is empty — migration up would replay everything",
+    );
+  }
+  if (observed.latestMigration !== manifest.latestMigration) {
+    failures.push(
+      `latest migration is ${observed.latestMigration ?? "none"}, manifest recorded ${manifest.latestMigration}`,
+    );
+  }
+  const expectedRows = manifest.criticalTableRows["public.peones_ledger"];
+  if (observed.peonesLedgerRows !== expectedRows) {
+    failures.push(
+      `public.peones_ledger has ${observed.peonesLedgerRows} rows, manifest recorded ${expectedRows}`,
+    );
+  }
+
+  return { ok: failures.length === 0, failures };
+}
+
 /**
  * Read one key out of a dotenv file's contents. Deliberately minimal: this is
  * only ever used for SUPABASE_DB_PASSWORD, and the value must never be logged.
