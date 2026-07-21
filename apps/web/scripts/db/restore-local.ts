@@ -12,6 +12,7 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 import {
@@ -22,10 +23,13 @@ import {
   REQUIRED_MANAGED_SCHEMAS,
   RESTORE_ROLE,
   type RestoreObservation,
+  assertCriticalTablesPresent,
   assertLocalTarget,
   assertManagedSchemas,
   assertSuperuserSession,
+  countCopyRows,
   evaluatePostRestore,
+  filterPublicCopyBlocks,
   parseManifest,
 } from "./lib";
 
@@ -161,10 +165,33 @@ function main(): void {
   // migration_history.sql refills it with exactly what production had applied.
   psql("TRUNCATE TABLE supabase_migrations.schema_migrations;");
 
-  for (const name of DUMP_FILES) {
-    process.stdout.write(`  applying ${name} … `);
-    psqlFile(fs.readFileSync(path.join(dir, name), "utf8"));
-    process.stdout.write("ok\n");
+  // data.sql is never modified. A derived artifact carrying only the public
+  // COPY blocks is written next to it, used, and removed — in a finally, so a
+  // failure downstream does not leave a stray copy of production data on disk.
+  const derived = path.join(os.tmpdir(), `chesscito-data-public-${process.pid}.sql`);
+  try {
+    const publicOnly = filterPublicCopyBlocks(fs.readFileSync(path.join(dir, "data.sql"), "utf8"));
+    assertCriticalTablesPresent(publicOnly);
+    for (const table of CRITICAL_TABLES) {
+      const rows = countCopyRows(publicOnly, table);
+      const expected = manifest.criticalTableRows[table];
+      if (rows !== expected) {
+        throw new Error(
+          `Refusing to restore: filtering changed ${table} from ${expected} rows to ${rows}.`,
+        );
+      }
+    }
+    fs.writeFileSync(derived, publicOnly);
+    console.log(`Filtered data.sql to public-only (${CRITICAL_TABLES.length} critical tables intact)`);
+
+    for (const name of DUMP_FILES) {
+      process.stdout.write(`  applying ${name} … `);
+      const source = name === "data.sql" ? derived : path.join(dir, name);
+      psqlFile(fs.readFileSync(source, "utf8"));
+      process.stdout.write("ok\n");
+    }
+  } finally {
+    fs.rmSync(derived, { force: true });
   }
 
   // ── Phase D: post-restore check ──────────────────────────────────────────

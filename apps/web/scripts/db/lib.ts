@@ -284,6 +284,60 @@ export function countCopyRows(sql: string, qualifiedTable: string): number | nul
   return rows;
 }
 
+/** Any COPY header, capturing its qualified table name. */
+const ANY_COPY_HEADER = /^COPY\s+"?([a-z_]+)"?\.\s*"?([a-z_]+)"?\s*\(.*\)\s+FROM\s+stdin;/i;
+
+/**
+ * Keep only the COPY blocks belonging to the `public` schema.
+ *
+ * data.sql carries blocks for `auth` and `storage` too, and production's auth
+ * schema is newer than the one the local CLI ships — its
+ * auth.custom_oauth_providers header lists a column the local table does not
+ * have. psql validates a COPY column list before reading any rows, so those
+ * blocks fail even carrying zero rows. Counting rows could never have shown
+ * this: the failure is in the header.
+ *
+ * Everything outside a COPY block is preserved, including the preamble that
+ * sets search_path. The original data.sql is never modified; this produces a
+ * derived artifact used only to feed psql.
+ */
+export function filterPublicCopyBlocks(sql: string): string {
+  const out: string[] = [];
+  const lines = sql.split("\n");
+  let skipping = false;
+
+  for (const line of lines) {
+    if (skipping) {
+      // Consume through this block's terminator and no further, or a skipped
+      // block would swallow the public table that follows it.
+      if (line === "\\.") skipping = false;
+      continue;
+    }
+    const header = ANY_COPY_HEADER.exec(line.trim());
+    if (header && header[1].toLowerCase() !== "public") {
+      skipping = true;
+      continue;
+    }
+    out.push(line);
+  }
+  return out.join("\n");
+}
+
+/**
+ * Refuse a data artifact that lost a table the rehearsal depends on.
+ *
+ * Guards against a filter that is too aggressive: silently dropping
+ * peones_ledger would produce a restore that looks clean and proves nothing.
+ */
+export function assertCriticalTablesPresent(sql: string): void {
+  const missing = CRITICAL_TABLES.filter((t) => countCopyRows(sql, t) === null);
+  if (missing.length > 0) {
+    throw new Error(
+      `Refusing to restore: the filtered data dump has no COPY block for ${missing.join(", ")}.`,
+    );
+  }
+}
+
 /**
  * Versions from the supabase_migrations ledger dump, ascending.
  *

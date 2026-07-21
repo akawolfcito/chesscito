@@ -12,8 +12,10 @@ import {
   REQUIRED_MANAGED_SCHEMAS,
   RESTORE_ROLE,
   assertLocalTarget,
+  assertCriticalTablesPresent,
   assertManagedSchemas,
   assertSuperuserSession,
+  filterPublicCopyBlocks,
   countCopyRows,
   evaluatePostRestore,
   formatBackupStamp,
@@ -284,6 +286,107 @@ describe("assertSuperuserSession", () => {
 
   it("tolerates the whitespace psql leaves around values", () => {
     expect(() => assertSuperuserSession(` ${RESTORE_ROLE} `, " on ")).not.toThrow();
+  });
+});
+
+describe("filterPublicCopyBlocks", () => {
+  /**
+   * Why this exists: production's auth schema is newer than the one the local
+   * CLI ships. data.sql carries a COPY header for auth.custom_oauth_providers
+   * listing 25 columns; the local table has 24. psql validates that column list
+   * before reading any rows, so the block fails even though it carries none —
+   * which is exactly what counting rows failed to predict.
+   */
+
+  const MIXED = [
+    "SET statement_timeout = 0;",
+    "SELECT pg_catalog.set_config('search_path', '', false);",
+    'COPY "auth"."custom_oauth_providers" ("id", "custom_claims_allowlist") FROM stdin;',
+    "\\.",
+    "",
+    'COPY "public"."peones_ledger" ("id", "wallet") FROM stdin;',
+    "1\t0xaaa",
+    "2\t0xbbb",
+    "\\.",
+    "",
+    'COPY "storage"."buckets" ("id") FROM stdin;',
+    "\\.",
+    "",
+    'COPY "public"."scores" ("id", "value") FROM stdin;',
+    "7\t42",
+    "\\.",
+    "",
+  ].join("\n");
+
+  const filtered = filterPublicCopyBlocks(MIXED);
+
+  it("drops non-public blocks even when they are empty", () => {
+    // Empty is not harmless: the header alone is what fails.
+    expect(filtered).not.toContain("custom_oauth_providers");
+    expect(filtered).not.toContain("storage");
+  });
+
+  it("keeps every public block", () => {
+    expect(filtered).toContain('COPY "public"."peones_ledger"');
+    expect(filtered).toContain('COPY "public"."scores"');
+  });
+
+  it("preserves the rows of each public block exactly", () => {
+    expect(filtered).toContain("1\t0xaaa");
+    expect(filtered).toContain("2\t0xbbb");
+    expect(filtered).toContain("7\t42");
+    expect(countCopyRows(filtered, "public.peones_ledger")).toBe(2);
+    expect(countCopyRows(filtered, "public.scores")).toBe(1);
+  });
+
+  it("keeps each block's terminator so psql can parse it", () => {
+    const terminators = filtered.split("\n").filter((l) => l === "\\.");
+    expect(terminators).toHaveLength(2); // one per surviving public block
+  });
+
+  it("keeps the preamble that sets search_path", () => {
+    // Dropping it would let unqualified names resolve against whatever the
+    // session's search_path happens to be.
+    expect(filtered).toContain("SET statement_timeout = 0;");
+    expect(filtered).toContain("set_config('search_path'");
+  });
+
+  it("keeps an empty public table as an empty block, not as an absence", () => {
+    const sql = [
+      'COPY "public"."welcome_pack_claims" ("id") FROM stdin;',
+      "\\.",
+    ].join("\n");
+    expect(countCopyRows(filterPublicCopyBlocks(sql), "public.welcome_pack_claims")).toBe(0);
+  });
+
+  it("is deterministic — same input, same output", () => {
+    expect(filterPublicCopyBlocks(MIXED)).toBe(filtered);
+  });
+
+  it("does not let a non-public block swallow the block after it", () => {
+    // A skip that overshoots its terminator would eat the next public table.
+    expect(countCopyRows(filtered, "public.peones_ledger")).toBe(2);
+    expect(countCopyRows(filtered, "public.scores")).toBe(1);
+  });
+});
+
+describe("assertCriticalTablesPresent", () => {
+  const complete = CRITICAL_TABLES.map(
+    (t) => `COPY "public"."${t.split(".")[1]}" ("id") FROM stdin;\n1\n\\.`,
+  ).join("\n");
+
+  it("accepts a dump carrying all three critical tables", () => {
+    expect(() => assertCriticalTablesPresent(complete)).not.toThrow();
+  });
+
+  it("refuses a dump that lost a critical table to the filter", () => {
+    const missing = complete.replace(/COPY "public"\."peones_ledger".*\n1\n\\\./, "");
+    expect(() => assertCriticalTablesPresent(missing)).toThrow(/peones_ledger/);
+  });
+
+  it("names every missing critical table at once", () => {
+    expect(() => assertCriticalTablesPresent("")).toThrow(/peones_ledger/);
+    expect(() => assertCriticalTablesPresent("")).toThrow(/treasury_payment_consumptions/);
   });
 });
 
