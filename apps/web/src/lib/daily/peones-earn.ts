@@ -168,7 +168,7 @@ export async function submitDailyTacticEarn(
   // NOT dispatched on the `cap_exhausted` branch above (credited === 0,
   // no row written) nor on any error branch: the chip must only move
   // when Peones actually arrived.
-  dispatchPeonesChange();
+  dispatchPeonesChange("daily");
 
   return {
     kind: "success",

@@ -19,20 +19,41 @@
 
 const EVENT_NAME = "chesscito:peones-changed";
 
+/** What moved the balance. Carried so the chip can label its delta
+ *  ("−2 · Hint") instead of showing a bare number the player has to
+ *  attribute themselves.
+ *
+ *  This is NOT the amount and NOT the new balance — those stay derived
+ *  from the server read. A reason cannot disagree with the ledger. */
+export type PeonesChangeReason =
+  | "hint"
+  | "shield"
+  | "coach"
+  | "daily"
+  | "milestone"
+  | "pack";
+
 /** Fire after a confirmed earn or spend — never optimistically. Callers
  *  must dispatch only on the success branch, once the server has
  *  acknowledged the write, so a failed transaction can never move the
  *  displayed balance. */
-export function dispatchPeonesChange(): void {
+export function dispatchPeonesChange(reason?: PeonesChangeReason): void {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent(EVENT_NAME));
+  window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: { reason } }));
 }
 
 /** Subscribes to balance changes. Returns an unsubscribe fn — call it
  *  inside `useEffect`'s cleanup. The handler runs synchronously after
  *  `dispatchPeonesChange()`; callers typically kick off a refetch. */
-export function subscribeToPeonesChanges(handler: () => void): () => void {
+export function subscribeToPeonesChanges(
+  handler: (reason?: PeonesChangeReason) => void,
+): () => void {
   if (typeof window === "undefined") return () => {};
-  window.addEventListener(EVENT_NAME, handler);
-  return () => window.removeEventListener(EVENT_NAME, handler);
+  const listener = (event: Event) => {
+    const detail = (event as CustomEvent<{ reason?: PeonesChangeReason }>)
+      .detail;
+    handler(detail?.reason);
+  };
+  window.addEventListener(EVENT_NAME, listener);
+  return () => window.removeEventListener(EVENT_NAME, listener);
 }

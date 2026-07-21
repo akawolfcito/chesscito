@@ -186,7 +186,7 @@ export async function submitPeonesSpend(
   // left the wallet, but re-reading the server is always correct; it is
   // the VISUAL delta that must stay silent on duplicates, and that
   // decision belongs to the caller, which has `duplicate` in the result.
-  dispatchPeonesChange();
+  dispatchPeonesChange(target);
 
   return {
     kind: "success",

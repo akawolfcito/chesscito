@@ -17,7 +17,9 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
+
+import { dispatchPeonesChange } from "@/lib/peones/peones-events";
 
 vi.mock("@/lib/peones/telemetry", () => ({
   emitPeonesBalanceViewed: vi.fn(),
@@ -105,5 +107,99 @@ describe("Peones balance on /exercises", () => {
     const chip = screen.getByTestId("peones-balance-chip");
     expect(chip).toHaveTextContent("--");
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
+describe("Peones transaction feedback", () => {
+  function balance(n: number) {
+    return {
+      kind: "success" as const,
+      balance: n,
+      dailyEarnedCapped: 0,
+      dailyCap: 10,
+      lastEventAt: null,
+    };
+  }
+
+  function renderAt(n: number) {
+    return render(
+      <PeonesBalanceChipView
+        surface="exercises"
+        state={balance(n)}
+        onRefetch={() => {}}
+      />,
+    );
+  }
+
+  it("labels a spend with its reason", async () => {
+    const { rerender } = renderAt(12);
+
+    // The sink dispatches, then the refetch resolves to the new balance.
+    act(() => dispatchPeonesChange("hint"));
+    rerender(
+      <PeonesBalanceChipView
+        surface="exercises"
+        state={balance(10)}
+        onRefetch={() => {}}
+      />,
+    );
+
+    const delta = await screen.findByTestId("peones-balance-delta");
+    expect(delta).toHaveTextContent("−2 Peones · Hint");
+    expect(delta.className).toContain("is-spend");
+  });
+
+  it("uses the singular unit for a one-Peon earn", async () => {
+    const { rerender } = renderAt(11);
+
+    act(() => dispatchPeonesChange("daily"));
+    rerender(
+      <PeonesBalanceChipView
+        surface="exercises"
+        state={balance(12)}
+        onRefetch={() => {}}
+      />,
+    );
+
+    const delta = await screen.findByTestId("peones-balance-delta");
+    expect(delta).toHaveTextContent("+1 Peón · Daily");
+    expect(delta.className).toContain("is-earn");
+  });
+
+  it("shows NOTHING on an idempotent duplicate — the balance did not move", () => {
+    const { rerender } = renderAt(12);
+
+    // A duplicate spend dispatches (re-reading is always safe) but the
+    // server returns the same balance, because nothing fresh was debited.
+    act(() => dispatchPeonesChange("hint"));
+    rerender(
+      <PeonesBalanceChipView
+        surface="exercises"
+        state={balance(12)}
+        onRefetch={() => {}}
+      />,
+    );
+
+    expect(screen.queryByTestId("peones-balance-delta")).toBeNull();
+  });
+
+  it("shows NOTHING when the balance cannot be read", () => {
+    const { rerender } = renderAt(12);
+
+    act(() => dispatchPeonesChange("hint"));
+    rerender(
+      <PeonesBalanceChipView
+        surface="exercises"
+        state={{ kind: "error" }}
+        onRefetch={() => {}}
+      />,
+    );
+
+    expect(screen.queryByTestId("peones-balance-delta")).toBeNull();
+  });
+
+  it("does not flash on first paint — a fresh mount is a baseline, not an earn", () => {
+    renderAt(12);
+    expect(screen.queryByTestId("peones-balance-delta")).toBeNull();
   });
 });

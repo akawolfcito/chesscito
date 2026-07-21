@@ -3708,6 +3708,27 @@ export const LANGUAGE_CHIP_COPY = {
   es: "Español",
 } as const;
 
+/** Transaction feedback on the balance chip (2026-07-21). The AMOUNT is
+ *  never authored here — it is derived from the balance actually moving,
+ *  so these strings can never advertise a debit that did not happen.
+ *  Only the reason label and the currency word live in copy. */
+export const PEONES_DELTA_COPY = {
+  /** Singular / plural of the currency itself. */
+  unitOne: "Peón",
+  unitMany: "Peones",
+  /** Why the balance moved. Omitted when a change arrives without a
+   *  reason (e.g. a top-up completed in another tab) — the signed number
+   *  alone is still honest. */
+  reasons: {
+    hint: "Hint",
+    shield: "Shield",
+    coach: "Coach",
+    daily: "Daily",
+    milestone: "Milestone",
+    pack: "Pack",
+  } as const,
+} as const;
+
 export const PEONES_HINT_COPY = {
   button: "Hint \u00b7 2 Peones",
   /** Nano label under the action-row pin (founder 2026-06-11: HINT

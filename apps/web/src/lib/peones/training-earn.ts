@@ -161,7 +161,7 @@ export async function submitExerciseMilestoneEarn(
   // cap-exhausted case (200 with no row written) — the chip must not
   // flicker a refetch for a milestone that paid nothing.
   if (credited > 0) {
-    dispatchPeonesChange();
+    dispatchPeonesChange("milestone");
   }
 
   return {
