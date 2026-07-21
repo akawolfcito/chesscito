@@ -45,6 +45,7 @@ import {
 } from "@/lib/peones/telemetry";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { CoachCostRibbon } from "@/components/coach/coach-cost-ribbon";
 
 /** Peones price of one hint. Read from the canonical table so the chip
  *  copy (PEONES_HINT_COPY, which spells the number out) and the debit
@@ -344,6 +345,17 @@ export function PeonesHintButton({
         ) : (
           <HintIcon />
         )}
+        {/* Price, visible BEFORE paying (2026-07-21). Until now the cost
+         *  lived only in `button` — the aria-label — so a sighted player
+         *  could not learn what a hint cost until one had already been
+         *  bought. Same ribbon the Coach CTA uses, reading the same
+         *  canonical table, so the two prices cannot drift apart or look
+         *  like unrelated currencies. Hidden once the pin morphs into a
+         *  transient state: mid-flight or post-reveal the number would
+         *  read as a result rather than a price. */}
+        {state.kind === "idle" ? (
+          <CoachCostRibbon target="hint" variant="tile" />
+        ) : null}
         {isRevealed ? (
           <span
             aria-hidden="true"

@@ -2482,7 +2482,6 @@ const messages = {
     guest: "Conecta tu wallet para usar pistas con Peones",
     insufficient: "Te faltan 2 Peones",
     unavailable: "Sin pista",
-    cost: "2",
     error: "Pista no disponible",
     rateLimited: "Un momento, intenta de nuevo",
   },

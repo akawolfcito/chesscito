@@ -36,7 +36,6 @@ const messages = {
     error: "Hint unavailable",
     rateLimited: "One sec, try again",
     unavailable: "No hint",
-    cost: "2",
   },
 };
 
@@ -57,6 +56,7 @@ import {
 } from "@/lib/peones/telemetry";
 import { PeonesHintButton } from "@/components/peones/peones-hint-button";
 import type { PeonesSpendResult } from "@/lib/peones/spend-client";
+import { SPEND_COST_BY_TARGET } from "@/lib/peones/spend-service";
 
 const mockedAccount = vi.mocked(useAccount);
 const mockedSpent = vi.mocked(emitPeonesSpent);
@@ -763,5 +763,64 @@ describe("PeonesHintButton — rate-limited gets its own transient copy (hint ra
       ),
     );
     expect(screen.getByText("Need 2 Peones")).toBeInTheDocument();
+  });
+});
+
+describe("PeonesHintButton — the price is visible before paying", () => {
+  function connectWallet() {
+    mockedAccount.mockReturnValue({
+      isConnected: true,
+      address: W,
+    } as never);
+  }
+
+  it("renders the cost on the pin, read from the canonical spend table", () => {
+    connectWallet();
+    render(
+      <PeonesHintButton
+        piece="rook"
+        exerciseId="r-1"
+        firstStep={STEP}
+        submitImpl={vi.fn()}
+      />,
+    );
+
+    // Derived, never pinned: if the economy repriced hints the pin must
+    // follow the table, and a test asserting a literal "2" would happily
+    // stay green while the UI advertised the wrong price.
+    expect(
+      screen.getByTestId("peones-hint-button"),
+    ).toHaveTextContent(String(SPEND_COST_BY_TARGET.hint));
+  });
+
+  it("guests do not see a price — the pin advertises connecting, not spending", () => {
+    render(
+      <PeonesHintButton
+        piece="rook"
+        exerciseId="r-1"
+        firstStep={STEP}
+        submitImpl={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByTestId("peones-hint-button"),
+    ).not.toHaveTextContent(String(SPEND_COST_BY_TARGET.hint));
+  });
+
+  it("an unavailable hint shows no price — there is nothing to buy", () => {
+    connectWallet();
+    render(
+      <PeonesHintButton
+        piece="rook"
+        exerciseId="r-1"
+        firstStep={null}
+        submitImpl={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByTestId("peones-hint-button"),
+    ).not.toHaveTextContent(String(SPEND_COST_BY_TARGET.hint));
   });
 });

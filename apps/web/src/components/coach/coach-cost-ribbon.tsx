@@ -1,7 +1,10 @@
 "use client";
 
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
-import { SPEND_COST_BY_TARGET } from "@/lib/peones/spend-service";
+import {
+  SPEND_COST_BY_TARGET,
+  type PeonesSpendTarget,
+} from "@/lib/peones/spend-service";
 
 type Props = {
   /** PRO subscribers see a crown "PRO" ribbon (covered/included). Free
@@ -13,6 +16,11 @@ type Props = {
    *   - "tile" → centered above the icon on the coach-viewer action tile
    *  (mirrors the Save Victory price ribbon's two placements). */
   variant?: "cta" | "tile";
+  /** Which sink's price to show. Defaults to `coach` — this shipped as a
+   *  coach-only ribbon and every existing caller relies on that default.
+   *  Opened up 2026-07-21 so the Hint pin can advertise its own price in
+   *  the same visual language instead of inventing a second one. */
+  target?: PeonesSpendTarget;
 };
 
 /**
@@ -28,7 +36,11 @@ type Props = {
  * the existing credits hint / button labels, matching the Save Victory
  * price ribbon (also aria-hidden).
  */
-export function CoachCostRibbon({ proActive = false, variant = "cta" }: Props) {
+export function CoachCostRibbon({
+  proActive = false,
+  variant = "cta",
+  target = "coach",
+}: Props) {
   return (
     <span
       className={[
@@ -42,7 +54,7 @@ export function CoachCostRibbon({ proActive = false, variant = "cta" }: Props) {
         <ThemeAssetPicture slot="board.piece.white.pawn" pictureClassName="coach-cost-ribbon__icon" alt="" draggable={false} />
       )}
       <span className="coach-cost-ribbon__label">
-        {proActive ? "PRO" : String(SPEND_COST_BY_TARGET.coach)}
+        {proActive ? "PRO" : String(SPEND_COST_BY_TARGET[target])}
       </span>
     </span>
   );

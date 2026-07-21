@@ -3725,10 +3725,6 @@ export const PEONES_HINT_COPY = {
    *  and no spend is issued. Distinct from `error` (which means the
    *  spend was attempted and failed): here nothing was ever charged. */
   unavailable: "No hint",
-  /** Cost shown ON the pin. Until 2026-07-21 the price lived only in
-   *  `button` (the aria-label), so a sighted player could not see what a
-   *  hint cost until after paying for one. */
-  cost: "2",
   error: "Hint unavailable",
   /** Transient 429 from the spend endpoint. Distinct from `error`
    *  because the condition self-heals in seconds; the generic
