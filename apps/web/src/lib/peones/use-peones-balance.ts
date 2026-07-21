@@ -16,13 +16,17 @@
  *               wallet. Chip renders the discrete "--" fallback;
  *               NEVER an aggressive error banner.
  *
- * Polling: no aggressive interval. Sprint 3 commit G ships ONLY
- * - the initial fetch on mount,
- * - a refetch when isConnected + address change.
- * The Daily Tactic + Training earn flows DO NOT call refetch
- * directly — they rely on the server-side write + the next mount of
- * the chip to read the fresh balance. Commit H (telemetry) and
- * Sprint 4 (spend) decide whether to add an interval.
+ * Polling: still NO interval. The hook fetches on
+ * - the initial mount,
+ * - a change of isConnected + address,
+ * - a `chesscito:peones-changed` event (see `peones-events.ts`).
+ *
+ * That third trigger is edge-driven, not polling (Peones V1 UX,
+ * 2026-07-21). Every confirmed earn/spend dispatches it, so a debit in
+ * the /exercises action row moves the chip in the tray above the board
+ * without waiting for a remount. Superseded the original Sprint 3 rule
+ * ("earn flows rely on the next mount of the chip"), which is exactly
+ * why a player never saw the balance move.
  *
  * NO localStorage write. The endpoint response IS the source of
  * truth. If callers want optimism after a write, they can manage
@@ -33,6 +37,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 
 import { normalizeWallet } from "./ledger-service";
+import { subscribeToPeonesChanges } from "./peones-events";
 import { PEONES_DAILY_CAP } from "./types";
 
 export type PeonesBalanceState =
@@ -132,6 +137,20 @@ export function usePeonesBalance(
   // (lenient IP bucket).
   useEffect(() => {
     void refetch();
+  }, [refetch]);
+
+  // Balance-change bus (Peones V1 UX, 2026-07-21). Still no interval —
+  // this is edge-triggered, not polling. A confirmed earn/spend anywhere
+  // in the tree dispatches, and every mounted reader re-reads the server.
+  // Without this, a spend in the /exercises action row leaves the chip in
+  // the tray above the board showing the pre-spend number until remount.
+  //
+  // Guests short-circuit inside `refetch` (no wallet → no request), so a
+  // stray dispatch cannot make a disconnected chip hit the endpoint.
+  useEffect(() => {
+    return subscribeToPeonesChanges(() => {
+      void refetch();
+    });
   }, [refetch]);
 
   return { state, refetch };
