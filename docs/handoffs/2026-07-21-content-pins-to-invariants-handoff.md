@@ -2,7 +2,7 @@
 
 ## Estado
 
-**CI verde.** `main` estuvo rojo desde el **2026-07-19** (≥24 runs seguidos).
+**CI verde, confirmado en el run del último commit** (`8c623585`). `main` estuvo rojo desde el **2026-07-19** (≥24 runs seguidos).
 Suite: **5459 passing / 491 files**, `tsc --noEmit` limpio.
 
 > El baseline viejo en memoria (5003 / 420 files) quedó obsoleto — actualizar.
@@ -14,6 +14,32 @@ Suite: **5459 passing / 491 files**, `tsc --noEmit` limpio.
 | `e8b2dc4` | `fix(ci)` — type-check + 3 pins viejos + 1 test lento |
 | `5fa3453` | `feat(lint)` — la curva de dificultad vive en `lint.ts` como warning |
 | `1194750` | `fix(builder)` — los warnings del Save dejan de tirarse a la basura |
+| `785aaac` | `feat(builder)` — el panel nombra el knob (`MAX_DIFFICULTY_STEP` → `lib/content/pacing.ts`) |
+| `8c62358` | `fix(test)` — stub de `scrollIntoView`; **esto es lo que finalmente puso el CI en verde** |
+
+### ⚠️ La suite verde no era el veredicto
+
+Después de pushear `785aaac` el job **siguió rojo** con **491 files / 5459 tests
+passing** — los mismos números que local. Vitest sale con código ≠ 0 ante un
+**unhandled error**, y había uno solo, al pie del log:
+
+```
+TypeError: activeNodeRef.current?.scrollIntoView is not a function
+  at Timeout._onTimeout  exercise-drawer.tsx:127
+```
+
+jsdom no hace layout, así que **no implementa `scrollIntoView`**. El componente
+no tiene la culpa: limpia su timer de 250ms en el unmount, y por eso jamás
+reproduce local — la máquina rápida termina el test antes de que dispare. El
+runner lento llegó a los 250ms, la llamada explotó desde la cola de timers donde
+ningún test la alcanza, y un error tumbó una corrida donde **todo** pasó.
+
+Stub en `vitest.setup.ts`, no en el componente: guardar el call site sería editar
+código de producto para tapar un agujero del entorno, y dejaría al próximo
+componente que scrollee redescubrirlo igual — con un fallo CI-only y un reporte
+verde.
+
+**CI verde confirmado en `8c623585`.**
 
 ---
 
