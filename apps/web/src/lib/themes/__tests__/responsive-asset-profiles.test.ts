@@ -4,7 +4,7 @@ import {
   getResponsiveAssetProfile,
   responsiveDerivativeHeight,
 } from "../responsive-asset-profiles";
-import { resolveAssetPath } from "../asset-variant";
+import { deterministicVariantPath, resolveAssetPath } from "../asset-variant";
 import { THEMES, THEME_SLOT_SURFACES } from "../theme-registry";
 
 describe("responsive asset profiles", () => {
@@ -26,22 +26,47 @@ describe("responsive asset profiles", () => {
     expect(responsiveDerivativeHeight(profile!, 340)).toBe(382);
   });
 
-  it("does not change registry paths, variants, or slot classification", () => {
+  /**
+   * This used to pin the literal paths ("/art/title-chesscito", …) under the
+   * name "does not change registry paths". That guarantee was about a single
+   * PR — proving the responsive profiles landed without disturbing the
+   * registry — and it stopped being true the moment the theme-builder started
+   * repointing slots, which is its job (b6a6e507 moved brand.title/pro to a
+   * builder path and turned CI red for two days).
+   *
+   * The durable contract is not WHICH path a slot holds. It is that every
+   * responsive slot resolves to SOME real asset in both variants — either a
+   * hand-authored path or the builder's deterministic one — and that the slot
+   * classification stays put. A slot that resolves to null is the actual bug:
+   * a responsive profile pointing at nothing renders a broken <picture>.
+   */
+  it("keeps every responsive slot resolvable in both variants", () => {
     const assets = THEMES["candy-forest"].assets;
-    expect(resolveAssetPath(assets["hub.avatar-lite"], "default")).toBe(
-      "/art/avatar-lite-hub",
-    );
-    expect(resolveAssetPath(assets["hub.avatar-lite"], "pro")).toBe(
-      "/art/avatar-pro",
-    );
-    expect(resolveAssetPath(assets["brand.title"], "pro")).toBe(
-      "/art/title-chesscito",
-    );
-    expect(resolveAssetPath(assets["shared.welcome-gift"], "pro")).toBe(
-      "/art/shop/welcome-gift",
-    );
-    expect(THEME_SLOT_SURFACES["hub.avatar-lite"]).toBe("shared");
-    expect(THEME_SLOT_SURFACES["brand.title"]).toBe("shared");
-    expect(THEME_SLOT_SURFACES["shared.welcome-gift"]).toBe("shared");
+    const RESPONSIVE_SLOTS = [
+      "hub.avatar-lite",
+      "brand.title",
+      "shared.welcome-gift",
+    ] as const;
+
+    for (const slot of RESPONSIVE_SLOTS) {
+      expect(getResponsiveAssetProfile(slot), `${slot} lost its profile`).not.toBeNull();
+      // Classification drives which surface may override the slot; a silent
+      // move between surfaces changes who can edit it.
+      expect(THEME_SLOT_SURFACES[slot], `${slot} changed surface`).toBe("shared");
+
+      for (const variant of ["default", "pro"] as const) {
+        const path = resolveAssetPath(assets[slot], variant);
+        expect(path, `${slot}/${variant} resolves to nothing`).toBeTruthy();
+        // Either the founder authored it by hand, or the builder wrote it at
+        // its deterministic location. Anything else is a malformed entry.
+        const authored = path!.startsWith("/art/");
+        const fromBuilder =
+          path === deterministicVariantPath("candy-forest", slot, variant);
+        expect(
+          authored || fromBuilder,
+          `${slot}/${variant} has a malformed path: ${path}`,
+        ).toBe(true);
+      }
+    }
   });
 });

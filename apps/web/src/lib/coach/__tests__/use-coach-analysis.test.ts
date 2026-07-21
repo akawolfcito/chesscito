@@ -123,14 +123,14 @@ describe("useCoachAnalysis (skeleton)", () => {
     const makeInput = (proActive: boolean) => ({
       surface: "coach_viewer" as const,
       gameId: "550e8400-e29b-41d4-a716-446655440010",
-      walletAddress: "0x1111111111111111111111111111111111111111",
+      walletAddress: "0x1111111111111111111111111111111111111111" as `0x${string}`,
       result: "win" as const,
       difficulty: "easy" as const,
       moves: ["e4"],
       elapsedMs: 5000,
       isConnected: true,
       injected: {
-        address: "0x1111111111111111111111111111111111111111",
+        address: "0x1111111111111111111111111111111111111111" as `0x${string}`,
         proActive,
         activeLocale: "en" as const,
       },

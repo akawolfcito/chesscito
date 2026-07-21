@@ -271,19 +271,42 @@ describe("HubScaffoldClient — PRO chip", () => {
   });
 });
 
+/**
+ * These tests used to assert "inactive" for a guest. That was never what the
+ * hook returns: `useIsProActive` bails at `if (!wallet)` with
+ * `status: "unknown"` (lib/pro/use-is-pro-active.ts:166-175), because with no
+ * account connected there is nothing to ask about. "inactive" would be an
+ * assertion the app cannot back, and the badge is presentation only — never
+ * authorization. So the guest and the connected-non-PRO cases are two
+ * different states, and each one is pinned here on its own.
+ */
 describe("HubScaffoldClient — PRO badge (top-right corner)", () => {
-  it("renders the inactive PRO badge in the top-right HUD on first paint", () => {
+  it("renders the PRO badge as unknown for a guest, in the top-right HUD", () => {
+    // Default mocks: no wallet (see beforeEach).
     render(<HubScaffoldClient />);
 
-    // Inactive aria copy lives at HUD_COPY.proInactiveAriaLabel.
-    const badge = screen.getByLabelText(/PRO inactive: tap to learn more/);
+    // Guest aria copy lives at HUD_COPY.proUnavailableAriaLabel.
+    const badge = screen.getByLabelText(/PRO status unavailable/);
     expect(badge).toBeInTheDocument();
+    expect(badge).toHaveAttribute("data-pro-status", "unknown");
     // Badge IS the entry point now (the wide discovery panel was
     // retired 2026-05-24); it sits in the right HUD cluster.
     expect(badge.closest(".hub-scaffold-hud-right")).not.toBeNull();
   });
 
+  it("renders the badge as inactive once a wallet is connected without PRO", () => {
+    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
+
+    render(<HubScaffoldClient />);
+
+    // Inactive aria copy lives at HUD_COPY.proInactiveAriaLabel.
+    const badge = screen.getByLabelText(/PRO inactive: tap to learn more/);
+    expect(badge).toHaveAttribute("data-pro-status", "inactive");
+    expect(badge.closest(".hub-scaffold-hud-right")).not.toBeNull();
+  });
+
   it("opens ProSheet when the inactive badge is tapped", async () => {
+    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
@@ -294,6 +317,20 @@ describe("HubScaffoldClient — PRO badge (top-right corner)", () => {
     // The tap fires the canonical hub_pro_chip_tap event — the PRO
     // badge replaces both the legacy HudResourceChip "pro" and the
     // wide discovery panel, so we keep the single chip-tap dimension.
+    expect(trackMock).toHaveBeenCalledWith("hub_pro_chip_tap", {
+      pro_active: false,
+    });
+  });
+
+  it("stays tappable for a guest — the upsell is the point of the badge", async () => {
+    // A guest is exactly who the upsell is for. Whatever the status copy
+    // says, the badge must still open ProSheet rather than dead-end.
+    const user = userEvent.setup();
+    render(<HubScaffoldClient />);
+
+    await user.click(screen.getByLabelText(/PRO status unavailable/));
+
+    expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
     expect(trackMock).toHaveBeenCalledWith("hub_pro_chip_tap", {
       pro_active: false,
     });

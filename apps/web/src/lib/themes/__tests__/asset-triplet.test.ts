@@ -50,7 +50,18 @@ afterEach(async () => {
   await fs.rm(rootDir, { recursive: true, force: true });
 });
 
-describe("responsive asset-family transaction", () => {
+/**
+ * Timeout, declared rather than defaulted (2026-07-21): these cases are not unit
+ * tests of logic — each one drives `sharp` through real PNG/WebP/AVIF encodes and
+ * writes the whole seven-file family to a temp dir. The rollback case is the
+ * heaviest (two full replacements plus a restore) and measures ~3.2s on the
+ * founder's Mac, i.e. 64% of vitest's 5s default. The GitHub runner is slower and
+ * crossed it, so the suite failed on a test that was never wrong — only slow.
+ *
+ * 20s is the honest budget for real image I/O, not a mask: a genuine hang still
+ * fails the run, and a regression that quadruples encode time still surfaces.
+ */
+describe("responsive asset-family transaction", { timeout: 20_000 }, () => {
   it("generates canonical PNG/WebP/AVIF plus exact 224w/340w derivatives", async () => {
     const profile = getResponsiveAssetProfile("hub.avatar-lite");
     const result = await replaceAssetFamilyAtomic({
