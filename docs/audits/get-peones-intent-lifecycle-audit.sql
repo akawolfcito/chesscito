@@ -107,18 +107,64 @@ select count(*) as total_consumptions,
 -- OPERATIONAL REVIEW: source/product/metadata shape without metadata values.
 -- Consumption rows have no metadata column; linked ledger metadata is shown
 -- only through its keys, and orphan consumptions are reported separately.
-select c.source,
-       c.product,
-       count(*) as consumptions,
-       count(*) filter (where c.intent_id is null) as orphan_consumptions,
-       count(*) filter (where c.ledger_id is null) as unlinked_ledger,
-       count(*) filter (where l.metadata is null) as without_ledger_metadata,
-       array_agg(distinct key order by key) filter (where key is not null) as ledger_metadata_keys
-  from public.treasury_payment_consumptions as c
-  left join public.peones_ledger as l on l.id = c.ledger_id
-  left join lateral jsonb_object_keys(coalesce(l.metadata, '{}'::jsonb)) as keys(key) on true
- group by c.source, c.product
- order by c.source, c.product;
+with consumption_metadata as (
+  select c.id as consumption_id,
+         c.source,
+         c.product,
+         c.intent_id,
+         c.ledger_id,
+         l.metadata,
+         coalesce(
+           array_agg(distinct keys.key order by keys.key)
+             filter (where keys.key is not null),
+           '{}'::text[]
+         ) as ledger_metadata_keys
+    from public.treasury_payment_consumptions as c
+    left join public.peones_ledger as l on l.id = c.ledger_id
+    left join lateral jsonb_object_keys(coalesce(l.metadata, '{}'::jsonb)) as keys(key) on true
+   group by c.id, c.source, c.product, c.intent_id, c.ledger_id, l.metadata
+), consumption_summary as (
+  select cm.source,
+         cm.product,
+         count(*) as consumptions,
+         count(*) filter (where cm.intent_id is null) as orphan_consumptions,
+         count(*) filter (where cm.ledger_id is null) as unlinked_ledger,
+         count(*) filter (where cm.metadata is null) as without_ledger_metadata
+    from consumption_metadata as cm
+   group by cm.source, cm.product
+), metadata_summary as (
+  select cm.source,
+         cm.product,
+         array_agg(distinct metadata_keys.key order by metadata_keys.key)
+           filter (where metadata_keys.key is not null) as ledger_metadata_keys
+    from consumption_metadata as cm
+    left join lateral unnest(cm.ledger_metadata_keys) as metadata_keys(key) on true
+   group by cm.source, cm.product
+)
+select summary.source,
+       summary.product,
+       summary.consumptions,
+       summary.orphan_consumptions,
+       summary.unlinked_ledger,
+       summary.without_ledger_metadata,
+       metadata.ledger_metadata_keys
+  from consumption_summary as summary
+  left join metadata_summary as metadata
+    on metadata.source = summary.source
+   and metadata.product = summary.product
+ order by summary.source, summary.product;
+
+-- OPERATIONAL REVIEW: grouped counts must remain one row per consumption.
+with grouped_consumptions as (
+  select c.source, c.product, count(*) as consumption_count
+    from public.treasury_payment_consumptions as c
+   group by c.source, c.product
+)
+select (select count(*) from public.treasury_payment_consumptions) as base_count,
+       coalesce(sum(grouped.consumption_count), 0) as grouped_count,
+       coalesce(sum(grouped.consumption_count), 0) =
+         (select count(*) from public.treasury_payment_consumptions) as counts_match
+  from grouped_consumptions as grouped;
 
 -- OPERATIONAL REVIEW: orphan consumption identity, grouped safely.
 select md5(lower(c.wallet)) as wallet_hash,

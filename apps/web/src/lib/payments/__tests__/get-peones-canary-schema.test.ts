@@ -134,5 +134,8 @@ describe("Get Peones Treasury canary persistence", () => {
     expect(audit).toMatch(/date_trunc\('day', i\.created_at\)/i);
     expect(runbook).toMatch(/treasury_payment_intent_resolutions/i);
     expect(audit).not.toMatch(/select date_trunc\('day', created_at\)/i);
+    expect(audit).toMatch(/with consumption_metadata as/i);
+    expect(audit).toMatch(/base_count[\s\S]*grouped_count[\s\S]*counts_match/i);
+    expect(audit).not.toMatch(/left join lateral jsonb_object_keys[^;]*group by c\.source, c\.product/i);
   });
 });
