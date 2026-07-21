@@ -28,15 +28,44 @@ Segunda copia verificada:
 Ambas copias viven en el **mismo disco físico**. No es un respaldo off-site: si la máquina
 falla, se pierden las dos. Es una limitación conocida y aceptada para este lanzamiento.
 
-## 2. Baseline conocido (producción, al momento del backup)
+## 2. Baseline
+
+### 2.1 Referencia histórica (al momento del backup, 2026-07-21T16:14Z)
 
 | Objeto | Valor |
 |---|---:|
-| `public.peones_ledger` | **208** |
-| `public.treasury_payment_intents` | **24** |
-| `public.treasury_payment_consumptions` | **9** |
-| `supabase_migrations.schema_migrations` | **28** |
+| `public.peones_ledger` | 208 |
+| `public.treasury_payment_intents` | 24 |
+| `public.treasury_payment_consumptions` | 9 |
+| `supabase_migrations.schema_migrations` | 28 |
 | Última migración aplicada | `20260721020000` |
+
+> ⚠️ **Estos números NO son el criterio de aceptación.** Son el estado en que se tomó el
+> backup. Producción sigue recibiendo escrituras: para cuando se aplique la migración,
+> `peones_ledger` casi con certeza será > 208. Compararlo contra 208 produciría una falsa
+> alarma en el peor momento posible.
+
+### 2.2 Baseline real: capturarlo justo antes de aplicar
+
+**Correr esto contra producción inmediatamente antes del push**, y guardar la salida:
+
+```sql
+select
+  now()                                                        as captured_at,
+  (select count(*) from public.peones_ledger)                  as ledger,
+  (select count(*) from public.treasury_payment_intents)        as intents,
+  (select count(*) from public.treasury_payment_consumptions)   as consumptions,
+  (select count(*) from supabase_migrations.schema_migrations)  as migrations,
+  (select max(version) from supabase_migrations.schema_migrations) as latest;
+```
+
+**Verificar antes de seguir:** `migrations` = 28 y `latest` = `20260721020000`. Si no, el
+historial remoto no es el que este runbook asume — **abortar** (sección 8).
+
+Los tres conteos de datos son el baseline contra el que se compara después. La migración es
+un `CREATE OR REPLACE` de una función: **no debe mover ninguno de los tres**. Un aumento
+pequeño entre las dos capturas es tráfico normal, no daño — lo que importa es que ninguno
+**baje**.
 
 La migración a aplicar es **exactamente una**: `20260721030000`.
 
@@ -51,11 +80,13 @@ Sin `DROP`, sin `ALTER`, sin mutación de datos. Ninguna fila del ledger se toca
 ## 4. Orden de despliegue
 
 1. Confirmar que el backup de la sección 1 existe y sus checksums coinciden.
-2. `supabase db push --dry-run` — leer la lista y confirmar que dice **una sola** migración.
-3. Aplicar (sección 5).
-4. Consultas post-migración (sección 6).
-5. Smoke funcional (sección 7).
-6. Desplegar la app solo después de que 4 y 5 estén en verde.
+2. **Capturar el baseline remoto (2.2) y guardarlo.** Sin esto no hay comparación válida
+   después.
+3. `supabase db push --dry-run` — leer la lista y confirmar que dice **una sola** migración.
+4. Aplicar (sección 5).
+5. Consultas post-migración (sección 6), comparando contra la captura del paso 2.
+6. Smoke funcional (sección 7), incluido el chequeo de `leftovers`.
+7. Desplegar la app solo después de que 5 y 6 estén en verde.
 
 ## 5. Comando exacto
 
@@ -85,12 +116,15 @@ supabase db push --workdir /Users/wolfcito/development/BLCKCHN/GOOD_WOLF_LABS/ak
 select count(*), max(version) from supabase_migrations.schema_migrations;
 -- esperado: 29 | 20260721030000
 
--- (b) los datos no se movieron
+-- (b) los datos no se movieron — misma consulta que 2.2, para comparar
 select
+  now()                                                        as captured_at,
   (select count(*) from public.peones_ledger)                  as ledger,
   (select count(*) from public.treasury_payment_intents)        as intents,
   (select count(*) from public.treasury_payment_consumptions)   as consumptions;
--- esperado: 208 | 24 | 9
+-- Comparar contra la captura de 2.2, NO contra 208/24/9.
+-- Aceptable: igual, o levemente mayor (escrituras en vuelo).
+-- Aborta: cualquiera de los tres MENOR que en 2.2.
 
 -- (c) el cap quedó en 3
 select daily_cap
@@ -105,15 +139,22 @@ from public.peones_balance_with_caps(
 Verifica el fix por **contraste**: el mismo gasto, con y sin `pro_bypass`. Se corre dentro
 de una transacción que se revierte, así que no deja rastro.
 
+`idempotency_key` lleva un sufijo único por corrida (`:run_id`). La columna tiene índice
+único: reutilizar claves fijas haría fallar cualquier segunda ejecución, y —peor— podría
+chocar con una clave real. Sustituir `:run_id` por algo irrepetible antes de correr, por
+ejemplo la salida de `date -u +%Y%m%dT%H%M%SZ`.
+
 ```sql
+\set run_id 'smoke-20260721T181500Z'   -- reemplazar por la corrida actual
+
 begin;
 insert into public.peones_ledger
   (wallet, event_type, amount, source, day_utc, pro_bypass, idempotency_key, attestation_hash)
 values
-  ('0x000000000000000000000000000000000000dead','earn', 10,'daily_tactic',current_date,false,'rb-earn-1','h1'),
-  ('0x000000000000000000000000000000000000dead','spend', 4,'hint',        current_date,true, 'rb-spend-bypass','h2'),
-  ('0x000000000000000000000000000000000000beef','earn', 10,'daily_tactic',current_date,false,'rb-earn-2','h3'),
-  ('0x000000000000000000000000000000000000beef','spend', 4,'hint',        current_date,false,'rb-spend-normal','h4');
+  ('0x000000000000000000000000000000000000dead','earn', 10,'daily_tactic',current_date,false,:'run_id'||'-earn-bypass', 'h1'),
+  ('0x000000000000000000000000000000000000dead','spend', 4,'hint',        current_date,true, :'run_id'||'-spend-bypass','h2'),
+  ('0x000000000000000000000000000000000000beef','earn', 10,'daily_tactic',current_date,false,:'run_id'||'-earn-normal', 'h3'),
+  ('0x000000000000000000000000000000000000beef','spend', 4,'hint',        current_date,false,:'run_id'||'-spend-normal','h4');
 
 select 'bypass' as case, balance, daily_cap
   from public.peones_balance_with_caps('0x000000000000000000000000000000000000dead', current_date)
@@ -130,11 +171,26 @@ bypass | 10 | 3     ← el spend con pro_bypass NO resta
 normal |  6 | 3     ← el spend normal SÍ resta
 ```
 
-Si `bypass` devuelve 6, el fix no está activo. Confirmar el `rollback` con:
+Si `bypass` devuelve 6, el fix no está activo → abortar (sección 8).
+
+### Confirmar que el ROLLBACK no dejó nada
+
+Buscar **las filas sintéticas por su propia clave**, no un total:
 
 ```sql
-select count(*) from public.peones_ledger;  -- debe seguir en 208
+select count(*) as leftovers
+from public.peones_ledger
+where idempotency_key like 'smoke-%';   -- el :run_id de arriba
+-- esperado: 0
 ```
+
+> Contar `peones_ledger` y esperar un número fijo **no sirve** en producción: hay
+> escrituras concurrentes, así que el total puede cambiar entre el `begin` y la
+> verificación por razones que no tienen nada que ver con este smoke. Lo único que prueba
+> que la transacción se revirtió es que **sus propias filas no estén**.
+
+Si `leftovers` > 0, la transacción no se revirtió. Borrar esas filas por su
+`idempotency_key` —y solo esas— antes de continuar.
 
 ## 8. Criterios de aborto
 
@@ -142,13 +198,15 @@ Abortar **antes** de aplicar si:
 
 - El `--dry-run` lista más de una migración.
 - Los checksums del backup no coinciden con `manifest.json`.
-- `schema_migrations` en producción no tiene 28 filas, o su máximo no es `20260721020000`.
+- La captura de 2.2 no da `migrations` = 28 y `latest` = `20260721020000`.
+- No se pudo capturar el baseline de 2.2 (sin baseline no hay con qué comparar después).
 
 Abortar **después** de aplicar (e ir a la sección 9) si:
 
-- Los conteos de la consulta (b) difieren de 208 / 24 / 9.
+- Cualquiera de los tres conteos de la consulta (b) es **menor** que en la captura de 2.2.
 - `daily_cap` no devuelve 3.
 - El smoke devuelve `bypass = 6` en lugar de 10.
+- El chequeo de `leftovers` devuelve > 0 y no se puede limpiar.
 - Cualquier error de la CLI durante el push.
 
 ## 9. Recuperación
