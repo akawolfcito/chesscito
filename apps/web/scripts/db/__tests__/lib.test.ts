@@ -4,7 +4,9 @@ import {
   CRITICAL_TABLES,
   DUMP_FILES,
   assertLocalTarget,
+  countCopyRows,
   formatBackupStamp,
+  parseAppliedMigrationVersions,
   parseEnvValue,
   resolveBackupRoot,
 } from "../lib";
@@ -148,6 +150,99 @@ describe("assertLocalTarget", () => {
     expect(() => assertLocalTarget(secret, "supabase_db_web")).toThrow(
       expect.objectContaining({ message: expect.not.stringContaining("hunter2") }),
     );
+  });
+});
+
+/** Shape of a real `supabase db dump --data-only --use-copy` file: quoted
+ *  identifiers, a column list, tab-separated rows, a lone backslash-dot. */
+const DATA_SQL = [
+  "SET statement_timeout = 0;",
+  "--",
+  "-- Data for Name: peones_ledger; Type: TABLE DATA; Schema: public",
+  "--",
+  'COPY "public"."peones_ledger" ("id", "wallet", "amount") FROM stdin;',
+  "1\t0xaaa\t10",
+  "2\t0xbbb\t-5",
+  "3\t0xccc\t7",
+  "\\.",
+  "",
+  'COPY "public"."treasury_payment_intents" ("id", "state") FROM stdin;',
+  "\\.",
+  "",
+].join("\n");
+
+describe("countCopyRows", () => {
+  it("counts the rows of a table's COPY block", () => {
+    expect(countCopyRows(DATA_SQL, "public.peones_ledger")).toBe(3);
+  });
+
+  it("returns 0 for a table that is present but empty", () => {
+    expect(countCopyRows(DATA_SQL, "public.treasury_payment_intents")).toBe(0);
+  });
+
+  it("returns null for a table with no COPY block — absent is not empty", () => {
+    // The manifest reports these differently, and so must this: a table missing
+    // from the dump is a broken backup, an empty table is a fact about prod.
+    expect(countCopyRows(DATA_SQL, "public.treasury_payment_consumptions")).toBeNull();
+  });
+
+  it("accepts unquoted identifiers", () => {
+    const sql = ["COPY public.scores (id) FROM stdin;", "1", "2", "\\."].join("\n");
+    expect(countCopyRows(sql, "public.scores")).toBe(2);
+  });
+
+  it("does not stop at a backslash-dot that appears inside a value", () => {
+    // pg_dump escapes backslashes in COPY output, so a data line can never be
+    // exactly \. — but it CAN contain the two characters. Count must not trip.
+    const sql = [
+      "COPY public.notes (id, body) FROM stdin;",
+      "1\tends with \\\\. inside",
+      "2\tplain",
+      "\\.",
+    ].join("\n");
+    expect(countCopyRows(sql, "public.notes")).toBe(2);
+  });
+
+  it("does not confuse a table whose name is a suffix of another", () => {
+    const sql = [
+      "COPY public.peones_ledger_archive (id) FROM stdin;",
+      "1",
+      "\\.",
+      "COPY public.peones_ledger (id) FROM stdin;",
+      "1",
+      "2",
+      "\\.",
+    ].join("\n");
+    expect(countCopyRows(sql, "public.peones_ledger")).toBe(2);
+  });
+});
+
+describe("parseAppliedMigrationVersions", () => {
+  const HISTORY_SQL = [
+    'COPY "supabase_migrations"."schema_migrations" ("version", "statements", "name") FROM stdin;',
+    "20260406000000\t\\N\tinitial_remote_schema",
+    "20260721020000\t\\N\tget_peones_intent_expiry_reuse",
+    "20260607000000\t\\N\tpeones_ledger_init",
+    "\\.",
+  ].join("\n");
+
+  it("reads the version column of every applied migration", () => {
+    expect(parseAppliedMigrationVersions(HISTORY_SQL)).toEqual([
+      "20260406000000",
+      "20260607000000",
+      "20260721020000",
+    ]);
+  });
+
+  it("sorts ascending so the last element is the newest applied migration", () => {
+    // The dump's row order is not guaranteed; the manifest's latestMigration is.
+    const versions = parseAppliedMigrationVersions(HISTORY_SQL);
+    expect(versions.at(-1)).toBe("20260721020000");
+  });
+
+  it("returns an empty array when the ledger block is missing", () => {
+    // Callers treat this as a failed backup, not as a virgin database.
+    expect(parseAppliedMigrationVersions("SET statement_timeout = 0;")).toEqual([]);
   });
 });
 

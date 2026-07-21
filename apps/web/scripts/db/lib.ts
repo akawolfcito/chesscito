@@ -110,6 +110,61 @@ export function assertLocalTarget(dbUrl: string, containerName: string): void {
   }
 }
 
+/** Matches the COPY header for one exact qualified table, quoted or not. */
+function copyHeaderPattern(qualifiedTable: string): RegExp {
+  const [schema, table] = qualifiedTable.split(".");
+  const q = (s: string) => `"?${s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"?`;
+  return new RegExp(`^COPY\\s+${q(schema)}\\.${q(table)}\\s*\\(.*\\)\\s+FROM\\s+stdin;`, "i");
+}
+
+/**
+ * Count the rows of one table inside a `--data-only --use-copy` dump.
+ *
+ * Reading the dump beats querying production a second time: the number then
+ * describes the artifact we actually hold, and cannot drift from it between
+ * the dump and the count.
+ *
+ * Returns null when the table has no COPY block at all. Absent and empty are
+ * different findings — one is a broken backup, the other is a fact about prod.
+ */
+export function countCopyRows(sql: string, qualifiedTable: string): number | null {
+  const header = copyHeaderPattern(qualifiedTable);
+  const lines = sql.split("\n");
+  const start = lines.findIndex((line) => header.test(line.trim()));
+  if (start === -1) return null;
+
+  let rows = 0;
+  for (let i = start + 1; i < lines.length; i += 1) {
+    // pg_dump escapes backslashes in COPY output, so the terminator is the only
+    // line that is exactly \. — a value containing those characters is not.
+    if (lines[i] === "\\.") return rows;
+    rows += 1;
+  }
+  return rows;
+}
+
+/**
+ * Versions from the supabase_migrations ledger dump, ascending.
+ *
+ * This is what tells the restored copy which migrations production had already
+ * run — without it, `supabase migration up` would try all 29 instead of the one
+ * that is actually pending.
+ */
+export function parseAppliedMigrationVersions(sql: string): string[] {
+  const header = copyHeaderPattern("supabase_migrations.schema_migrations");
+  const lines = sql.split("\n");
+  const start = lines.findIndex((line) => header.test(line.trim()));
+  if (start === -1) return [];
+
+  const versions: string[] = [];
+  for (let i = start + 1; i < lines.length; i += 1) {
+    if (lines[i] === "\\.") break;
+    const version = lines[i].split("\t")[0]?.trim();
+    if (version) versions.push(version);
+  }
+  return versions.sort();
+}
+
 /**
  * Read one key out of a dotenv file's contents. Deliberately minimal: this is
  * only ever used for SUPABASE_DB_PASSWORD, and the value must never be logged.
