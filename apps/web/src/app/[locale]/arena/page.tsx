@@ -11,6 +11,7 @@ import {
 import { AccountSheet } from "@/components/account/account-sheet";
 import { daysRemaining } from "@/lib/pro/days-remaining";
 import { useCoachCredits } from "@/lib/coach/use-coach-credits";
+import { truncateClaimError } from "@/lib/coach/claim-telemetry";
 import { formatWalletShort } from "@/lib/wallet/format";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
@@ -391,6 +392,9 @@ function ArenaPageInner() {
         elapsed_ms: game.elapsedMs,
         has_token_id: event.has_token_id,
         error_kind: event.error_kind,
+        // Without the raw message an "unknown" kind is unactionable — it says
+        // only that no classifier matched, not what the provider said.
+        error: truncateClaimError(event.error),
       });
     },
   });
