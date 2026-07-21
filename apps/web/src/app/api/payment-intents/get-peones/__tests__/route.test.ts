@@ -246,6 +246,79 @@ describe("Get Peones canary intent endpoint", () => {
     expect(rpc).toHaveBeenCalledTimes(1);
   });
 
+  // The lock has TWO doors: the pre-flight lookup, and the row the creation RPC
+  // hands back for idempotency. Fixing only the first left the deadlock fully
+  // intact behind the second — production still returned 409 on 2026-07-21
+  // 06:56 UTC, after the RPC had already run. One rule, both doors.
+  function rpcReturning(intent: Record<string, unknown>) {
+    const store = intentCreationStore();
+    store.rpc = vi.fn().mockResolvedValueOnce({
+      data: [{
+        intent: {
+          id: INTENT_ID,
+          wallet: WALLET,
+          sku: "peones_pack_50",
+          token_address: USDT.toLowerCase(),
+          token_symbol: "USDT",
+          token_decimals: 6,
+          expected_amount: "500000",
+          chain_id: 42220,
+          treasury_address: TREASURY.toLowerCase(),
+          config_version: "canary-v1",
+          price_version: "peones-50-v1",
+          required_confirmations: 2,
+          auth_binding: "client_asserted_wallet",
+          provider_result_kind: null,
+          last_error_code: null,
+          recoverable: true,
+          retry_safe: false,
+          ...intent,
+        },
+        created: false,
+      }],
+      error: null,
+    });
+    return store;
+  }
+
+  // Scoped to what the route alone can promise: it must not report the caller
+  // as payment-locked. It cannot return a usable intent here, because the RPC
+  // handed back a dead row instead of minting a fresh one — that half lives in
+  // create_get_peones_intent, which selects CREATED/SUBMITTING/SUBMITTED with
+  // no expiry filter of its own.
+  it("does not report a payment lock when the RPC returns a submission that expired without a hash", async () => {
+    configure();
+    getSupabaseServer.mockReturnValue(rpcReturning({
+      lifecycle_status: "SUBMITTING",
+      tx_hash: null,
+      expires_at: new Date(Date.now() - 600_000).toISOString(),
+    }));
+    const response = await POST(request());
+    expect(response.status).not.toBe(409);
+  });
+
+  it("still blocks when the RPC returns an expired submission that carries a hash", async () => {
+    configure();
+    getSupabaseServer.mockReturnValue(rpcReturning({
+      lifecycle_status: "SUBMITTED",
+      tx_hash: TX_HASH,
+      expires_at: new Date(Date.now() - 600_000).toISOString(),
+    }));
+    const response = await POST(request());
+    expect(response.status).toBe(409);
+  });
+
+  it("still blocks when the RPC returns a submission whose window is open", async () => {
+    configure();
+    getSupabaseServer.mockReturnValue(rpcReturning({
+      lifecycle_status: "SUBMITTING",
+      tx_hash: null,
+      expires_at: new Date(Date.now() + 600_000).toISOString(),
+    }));
+    const response = await POST(request());
+    expect(response.status).toBe(409);
+  });
+
   it("blocks a fresh intent when reload finds an unresolved persisted submission", async () => {
     configure();
     getSupabaseServer.mockReturnValue(intentCreationStore({

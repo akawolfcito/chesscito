@@ -39,6 +39,31 @@ function error(reason: string, status: number) {
   return NextResponse.json({ ok: false, error: reason }, { status });
 }
 
+/**
+ * Whether an unresolved intent must keep blocking a new one.
+ *
+ * The lock stops a double charge, so it outlives expiry ONLY while there is
+ * something to reconcile. With a `tx_hash` a transfer may be on-chain → keep
+ * blocking at any age until the verifier resolves it. Without one nothing was
+ * ever broadcast, and an expired lock denies the purchase forever instead of
+ * protecting it. An unreadable `expires_at` fails CLOSED: a window we cannot
+ * prove closed may still have a wallet prompt open.
+ *
+ * ⚠️ The lock has TWO doors — the pre-flight lookup and the row the creation
+ * RPC returns for idempotency. This predicate is shared BECAUSE fixing only
+ * the first left the deadlock fully intact behind the second, and production
+ * kept 409ing (2026-07-21). Any new door must call this, not re-derive it.
+ * See docs/audits/2026-07-20-payments-rail-gas-regression-diagnosis.md §2.
+ */
+function blocksNewIntent<T extends { tx_hash?: string | null; expires_at?: string | null }>(
+  row: T | null | undefined,
+): row is T {
+  if (!row) return false;
+  if (row.tx_hash != null) return true;
+  const expiresAtMs = Date.parse(row.expires_at ?? "");
+  return !Number.isFinite(expiresAtMs) || expiresAtMs > Date.now();
+}
+
 function submissionError(args: {
   error: "INVALID_SUBMISSION_STATE" | "UNKNOWN_SUBMISSION_STATE";
   status: number;
@@ -141,20 +166,7 @@ export async function POST(req: Request) {
     .limit(1)
     .maybeSingle();
   if (unresolvedLookupError) return error("intent_store_unavailable", 503);
-  // The lock exists to stop a double charge, so it must outlive expiry ONLY
-  // while there is something to reconcile. With a `tx_hash` a transfer may be
-  // on-chain → keep blocking at any age, until the verifier resolves it.
-  // Without one, nothing was ever broadcast, and an expired lock would deny
-  // the purchase forever rather than protect it (5 rows deadlocked this wallet
-  // on 2026-07-21; two others sat locked since 2026-07-01 — see
-  // docs/audits/2026-07-20-payments-rail-gas-regression-diagnosis.md §2).
-  // An unreadable `expires_at` fails CLOSED: an intent whose window we cannot
-  // prove closed may still have a wallet prompt open.
-  const expiresAtMs = unresolvedIntent
-    ? Date.parse(unresolvedIntent.expires_at ?? "")
-    : Number.NaN;
-  const withinWindow = !Number.isFinite(expiresAtMs) || expiresAtMs > Date.now();
-  if (unresolvedIntent && (unresolvedIntent.tx_hash != null || withinWindow)) {
+  if (blocksNewIntent(unresolvedIntent)) {
     return NextResponse.json({
       ok: false,
       error: "unresolved_submission_state",
@@ -226,7 +238,14 @@ export async function POST(req: Request) {
     return error("intent_store_unavailable", 503);
   }
   const storedLifecycle = stored.lifecycle_status as GetPeonesIntentLifecycle;
-  if (storedLifecycle === "SUBMITTING" || storedLifecycle === "SUBMITTED") {
+  const storedIsUnresolved =
+    storedLifecycle === "SUBMITTING" || storedLifecycle === "SUBMITTED";
+  // Same rule as the pre-flight door: an unresolved row only blocks while it
+  // still has something to reconcile.
+  if (storedIsUnresolved && blocksNewIntent(stored as {
+    tx_hash?: string | null;
+    expires_at?: string | null;
+  })) {
     return NextResponse.json({
       ok: false,
       error: "unresolved_submission_state",
