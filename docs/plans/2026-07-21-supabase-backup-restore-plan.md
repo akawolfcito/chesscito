@@ -938,10 +938,20 @@ In `apps/web/package.json`, add after the `"migrate-exercises"` entry (line 32) 
 Run: `pnpm -C /Users/wolfcito/development/BLCKCHN/GOOD_WOLF_LABS/akawolfcito/celo/chesscito/apps/web exec tsc --noEmit`
 Expected: no errors. (`db:restore-local` points at a file that does not exist yet — that is fine, `tsc` does not resolve npm scripts.)
 
-- [ ] **Step 4: Verify the script refuses without a password**
+- [ ] **Step 4: Verify the module loads without executing a dump**
 
-Run: `CHESSCITO_BACKUP_DIR=/tmp/does-not-matter SUPABASE_DB_PASSWORD= pnpm -C /Users/wolfcito/development/BLCKCHN/GOOD_WOLF_LABS/akawolfcito/celo/chesscito/apps/web db:backup`
-Expected: this only proves the happy path is reachable if `.env` has the key. Do **not** treat a real dump here as the verification — that is Task 8. If it starts dumping, let it finish and delete the directory.
+**Do NOT run `pnpm db:backup` in this task.** `backup.ts` reads the password from
+`apps/web/.env`, not from `process.env` — prefixing the command with
+`SUPABASE_DB_PASSWORD=` does **not** neutralise it. The script would find the real value
+in the file and start dumping production. Every real run of `db:backup` belongs to Task 8.
+
+Verification here is static only:
+
+Run: `pnpm -C /Users/wolfcito/development/BLCKCHN/GOOD_WOLF_LABS/akawolfcito/celo/chesscito/apps/web exec tsc --noEmit`
+Expected: no errors — the script compiles and its imports from `./lib` resolve.
+
+Run: `pnpm -C /Users/wolfcito/development/BLCKCHN/GOOD_WOLF_LABS/akawolfcito/celo/chesscito/apps/web vitest run scripts/db`
+Expected: PASS — the pure functions `backup.ts` composes are already covered by Tasks 1–4.
 
 - [ ] **Step 5: Commit**
 
@@ -1281,12 +1291,17 @@ main();
 Run: `pnpm -C /Users/wolfcito/development/BLCKCHN/GOOD_WOLF_LABS/akawolfcito/celo/chesscito/apps/web exec tsc --noEmit`
 Expected: no errors.
 
-- [ ] **Step 3: Prove the guard refuses a bad target, end to end**
+- [ ] **Step 3: Prove the script aborts before it can start Docker**
 
-Confirm the script aborts before any destructive statement when the target is wrong. Temporarily point it at a fake status by running with the stack stopped:
+This is the only invocation of `restore-local.ts` permitted before Task 8, and it is safe
+because Phase A reads `manifest.json` off the filesystem before Phase B runs
+`supabase start`. Pointing it at a directory that does not exist proves the ordering.
 
 Run: `pnpm -C /Users/wolfcito/development/BLCKCHN/GOOD_WOLF_LABS/akawolfcito/celo/chesscito/apps/web db:restore-local /tmp/nonexistent-backup`
-Expected: fails at Phase A (`ENOENT … manifest.json`) — **before** `supabase start`, before any DROP.
+Expected: fails with `ENOENT … manifest.json` — **before** `supabase start`, before any DROP.
+
+If it instead starts Docker or reaches Phase B, the phase ordering is wrong: stop, fix the
+ordering, and do not proceed to Task 8.
 
 - [ ] **Step 4: Run the full script test suite**
 
