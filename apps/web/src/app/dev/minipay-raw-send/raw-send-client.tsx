@@ -30,9 +30,30 @@ type Step = { label: string; value: unknown };
 export function MiniPayRawSendClient() {
   const [steps, setSteps] = useState<Step[]>([]);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const push = (label: string, value: unknown) =>
     setSteps((prev) => [...prev, { label, value }]);
+
+  // A phone screenshot truncates long JSON, and MiniPay has no console — so
+  // the report has to leave the device as text, in one piece.
+  async function copyAll() {
+    const report = steps.map((s) => `## ${s.label}\n${safeJson(s.value)}`).join("\n\n");
+    try {
+      await navigator.clipboard.writeText(report);
+    } catch {
+      // MiniPay's webview can refuse the async clipboard API; select-all on a
+      // textarea still works there.
+      const ta = document.createElement("textarea");
+      ta.value = report;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   async function run(withFeeCurrency: boolean) {
     setSteps([]);
@@ -50,7 +71,10 @@ export function MiniPayRawSendClient() {
       ]);
       const treasury = getTreasuryAddressClient();
       const token = ACCEPTED_TOKENS.find((t) => t.symbol === "USDT")!;
-      const feeCurrency = getMiniPayFeeCurrency(Number(chainId));
+      // requestChainId returns {chainIdHex, chainId} — Number() on the object
+      // yields NaN, which made getMiniPayFeeCurrency bail and report a
+      // configured fee currency as missing. Read the numeric field.
+      const feeCurrency = getMiniPayFeeCurrency(chainId.chainId ?? undefined);
 
       push("context", {
         account,
@@ -126,6 +150,14 @@ export function MiniPayRawSendClient() {
         </button>
         <button type="button" disabled={busy} onClick={() => run(true)} style={btn}>
           Send WITH feeCurrency
+        </button>
+        <button
+          type="button"
+          disabled={busy || steps.length === 0}
+          onClick={copyAll}
+          style={{ ...btn, background: copied ? "#14532d" : "#111" }}
+        >
+          {copied ? "Copied ✓" : "Copy report"}
         </button>
       </div>
 
