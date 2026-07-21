@@ -6,16 +6,34 @@
 
 ---
 
+## 0. Placeholders
+
+Sustituir en todos los comandos de este documento:
+
+| Placeholder | Qué es |
+|---|---|
+| `<REPO_ROOT>` | Raíz del checkout de chesscito |
+| `<BACKUP_DIR>` | Carpeta del backup validado (sección 1) |
+| `<BACKUP_COPY_DIR>` | Carpeta de la segunda copia verificada (sección 1) |
+
+Cómodo para exportarlos una vez por sesión:
+
+```bash
+export REPO_ROOT="$(git rev-parse --show-toplevel)"
+export BACKUP_DIR="$HOME/backups/chesscito/db/2026-07-21T16-14-25Z"
+export BACKUP_COPY_DIR="$HOME/backups/chesscito-verified-copies/2026-07-21T16-14-25Z"
+```
+
 ## 1. Backup validado
 
 ```
-/Users/wolfcito/backups/chesscito/db/2026-07-21T16-14-25Z/
+<BACKUP_DIR>/
 ```
 
 Segunda copia verificada:
 
 ```
-/Users/wolfcito/backups/chesscito-verified-copies/2026-07-21T16-14-25Z/
+<BACKUP_COPY_DIR>/
 ```
 
 | Archivo | Bytes | SHA-256 (16) |
@@ -93,7 +111,7 @@ Sin `DROP`, sin `ALTER`, sin mutación de datos. Ninguna fila del ledger se toca
 **Primero, en seco:**
 
 ```bash
-supabase db push --dry-run --workdir /Users/wolfcito/development/BLCKCHN/GOOD_WOLF_LABS/akawolfcito/celo/chesscito/apps/web
+supabase db push --dry-run --workdir <REPO_ROOT>/apps/web
 ```
 
 Debe listar **únicamente** `20260721030000_peones_v1_economy.sql`. Si lista más de una,
@@ -102,7 +120,7 @@ Debe listar **únicamente** `20260721030000_peones_v1_economy.sql`. Si lista má
 **Luego, de verdad:**
 
 ```bash
-supabase db push --workdir /Users/wolfcito/development/BLCKCHN/GOOD_WOLF_LABS/akawolfcito/celo/chesscito/apps/web
+supabase db push --workdir <REPO_ROOT>/apps/web
 ```
 
 > ⚠️ **`--linked` es el default de `db push`.** El comando sin flags apunta a
@@ -230,7 +248,7 @@ peor que el bug conocido.
 sección 1 se restaura en un stack local con
 
 ```bash
-pnpm --dir apps/web db:restore-local /Users/wolfcito/backups/chesscito/db/2026-07-21T16-14-25Z
+pnpm --dir apps/web db:restore-local <BACKUP_DIR>
 ```
 
 Ese script **solo restaura en local** — su guarda rechaza cualquier destino que no sea
