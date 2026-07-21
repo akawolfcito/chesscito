@@ -225,16 +225,60 @@ script **no adivina** — aborta.
 `assertLocalTarget` vive en `lib.ts` como función pura sobre un string: se testea sin
 Docker, sin red y sin base.
 
-### Fase C — restaurar
+### Fase B bis — precondiciones sobre la base
 
-`supabase start --workdir apps/web` (idempotente), luego aplicar los dumps en orden:
+Tres comprobaciones más, todas antes de cualquier sentencia destructiva:
+
+1. **Sesión superusuario.** `current_user = supabase_admin` y `is_superuser = on`,
+   preguntado a la sesión viva, no inferido de los argumentos de conexión. `postgres` no
+   es superusuario en la imagen de Supabase ni miembro de `supabase_admin`.
+2. **Schemas gestionados presentes:** `auth`, `storage`, `extensions`, `vault`, `graphql`,
+   `realtime`. Si falta alguno, la base no está inicializada y el restore aborta nombrando
+   **todos** los faltantes.
+3. **`supabase_migrations.schema_migrations` existe** como tabla — se trunca, no se dropea.
+
+### Fase C — restaurar (rediseñada)
+
+**`DROP DATABASE` está eliminado del diseño.** El primer intento dropeaba la base y la
+recreaba desde `template1`; eso borra los schemas gestionados que el propio dump da por
+existentes, y dejó el stack local inutilizable. La limpieza correcta es mínima y acotada.
+
+**Las tres únicas sentencias destructivas:**
+
+```sql
+DROP SCHEMA IF EXISTS public CASCADE;
+CREATE SCHEMA public AUTHORIZATION pg_database_owner;
+TRUNCATE TABLE supabase_migrations.schema_migrations;
+```
+
+`public` se reemplaza entero porque `schema.sql` solo **agrega** (`CREATE TABLE IF NOT
+EXISTS`, `CREATE OR REPLACE FUNCTION`, cero `DROP`): sin borrarlo, cualquier objeto local
+obsoleto sobreviviría al restore sin que nada lo señale. `AUTHORIZATION pg_database_owner`
+conserva la propiedad que tiene una base Supabase recién creada.
+
+El ledger se **trunca**, no se dropea: la tabla y su primary key sobreviven, y
+`migration_history.sql` la rellena con exactamente lo que producción tenía aplicado.
+
+Luego los dumps, en orden:
 
 ```
 roles.sql → schema.sql → data.sql → migration_history.sql
 ```
 
-Se ejecutan con `docker exec -i supabase_db_web psql -U postgres`. El host no tiene `psql`;
-el contenedor sí.
+Se ejecutan con `docker exec -i supabase_db_web psql -U supabase_admin`. El host no tiene
+`psql`; el contenedor sí. La contraseña del stack local sale del `DB_URL` que la guarda ya
+validó y viaja por entorno, nunca por argv.
+
+### Lo que se borra y lo que se conserva
+
+| Se borra en local | Se conserva |
+|---|---|
+| Todo el schema `public` (13 tablas + índices, políticas, funciones, vistas, secuencias, triggers) | `auth`, `storage`, `extensions`, `vault`, `graphql`, `graphql_public`, `realtime`, `_realtime`, `net`, `pgbouncer`, `supabase_functions` — schemas **y** datos |
+| Las filas de `supabase_migrations.schema_migrations` | La tabla `schema_migrations` y su primary key |
+| — | Todos los roles del cluster |
+
+**Efecto colateral verificado:** `schema.sql` instala `pg_cron` en local (crea el schema
+`cron`), algo que `supabase start` no puede hacer. Probado como `supabase_admin`: funciona.
 
 ### Fase D — chequeo post-restore (mínimo, integrado)
 

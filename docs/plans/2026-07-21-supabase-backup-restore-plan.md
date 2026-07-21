@@ -1384,3 +1384,48 @@ Wolfcito 🐾 @akawolfcito"
 | No merge, no prod migration, no remote mutation | No task performs any |
 
 **Open risk carried into execution:** Task 7 Phase C drops and recreates the local `postgres` database via `template1` with `WITH (FORCE)`. If the Supabase stack's services hold connections that block it, the fallback is `supabase stop && supabase start` before re-running. This is verified for real in Task 8 Step 2 — it is the one step of the plan that cannot be proven by unit tests.
+
+---
+
+## Execution log — what the live run changed (2026-07-21)
+
+The plan above is kept as written. Everything in this section was learned by running it,
+and supersedes the corresponding parts of Tasks 5, 7 and 8.
+
+**1. `migration_history.sql` needed `--use-copy`** (commit `e06b1f27`). Without it the CLI
+passes `--column-inserts` and the file arrives as INSERT statements, which the COPY parsers
+cannot read. The unit tests could not catch it: their fixtures were hand-written COPY blocks
+describing a format the script never requested. `DUMP_ARGS` now lives in `lib.ts` and is
+pinned by test.
+
+**2. The restore connects as `supabase_admin`, not `postgres`** (commit `8a7a249d`).
+`postgres` is not a superuser in the Supabase image and is not a member of `supabase_admin`,
+so it cannot terminate the stack's own connections. Measured, not assumed. The privilege is
+now asked of the live session and checked before anything destructive runs.
+
+**3. `pg_cron` blocked `supabase start` on any clean machine** (commit `4756a7cb`). Not
+damage from this work — a fresh volume reproduces it. `pg_cron` is enabled on the production
+project through the Supabase dashboard and cannot be created by a migration, for the same
+privilege reason as (2). The analytics migration now guards on the exact signature it calls,
+`cron.schedule(text,text,text)`, via `to_regprocedure`.
+
+**4. `DROP DATABASE` is removed from the design.** The plan's Phase C recreated the database
+from `template1`, which destroys the Supabase-managed schemas that `schema.sql` assumes —
+it contains no `CREATE SCHEMA` at all. The replacement is three scoped statements:
+
+```sql
+DROP SCHEMA IF EXISTS public CASCADE;
+CREATE SCHEMA public AUTHORIZATION pg_database_owner;
+TRUNCATE TABLE supabase_migrations.schema_migrations;
+```
+
+plus a precondition (`assertManagedSchemas`) that refuses a database missing `auth`,
+`storage`, `extensions`, `vault`, `graphql` or `realtime`.
+
+**Verified against the real dump before redesigning:** `schema.sql` has 0 `CREATE SCHEMA`,
+0 `DROP`, 0 `ALTER SCHEMA`; it references only `public` (358), `extensions` (3) and `vault`
+(1), and only roles that exist locally. `roles.sql` is four `ALTER ROLE ... statement_timeout`
+statements with no `CREATE ROLE`. `data.sql` carries COPY blocks for `auth` (22) and
+`storage` (7) as well as `public` (15) — but every one of those 29 auth/storage blocks has
+**zero rows**, and all 29 tables are empty locally, so they are no-ops. The volume is
+`public.analytics_events` at 46 898 rows.

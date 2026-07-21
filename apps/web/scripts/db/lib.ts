@@ -26,6 +26,42 @@ export const LOCAL_CONTAINER_PREFIX = "supabase_db_";
 export const RESTORE_ROLE = "supabase_admin";
 
 /**
+ * The Supabase-managed schemas the restore requires to already exist.
+ *
+ * schema.sql contains no CREATE SCHEMA at all — verified against the real dump.
+ * It assumes these, because `supabase db dump` deliberately omits schemas the
+ * platform maintains. `extensions` and `vault` are CREATE EXTENSION targets;
+ * `auth` and `storage` own tables that data.sql carries COPY blocks for.
+ */
+export const REQUIRED_MANAGED_SCHEMAS = [
+  "auth",
+  "storage",
+  "extensions",
+  "vault",
+  "graphql",
+  "realtime",
+] as const;
+
+/**
+ * Precondition: the target is an initialised Supabase database, not a bare one.
+ *
+ * Restoring into a bare database is what produced `schema "extensions" does not
+ * exist` and left the local stack unusable. Checked before anything is dropped,
+ * and reports every missing schema at once — discovering them one at a time
+ * would cost one destructive rehearsal each.
+ */
+export function assertManagedSchemas(present: string[]): void {
+  const missing = REQUIRED_MANAGED_SCHEMAS.filter((s) => !present.includes(s));
+  if (missing.length > 0) {
+    throw new Error(
+      `Refusing to restore: the target is not an initialised Supabase database.\n` +
+        `Missing managed schemas: ${missing.join(", ")}.\n` +
+        `Run supabase start (or stop --no-backup then start) and try again.`,
+    );
+  }
+}
+
+/**
  * Precondition for every destructive statement in the restore.
  *
  * Checked inside the container against the live session rather than assumed

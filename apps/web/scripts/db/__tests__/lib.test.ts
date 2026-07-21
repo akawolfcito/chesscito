@@ -9,8 +9,10 @@ import {
   type BackupManifest,
   parseManifest,
   type RestoreObservation,
+  REQUIRED_MANAGED_SCHEMAS,
   RESTORE_ROLE,
   assertLocalTarget,
+  assertManagedSchemas,
   assertSuperuserSession,
   countCopyRows,
   evaluatePostRestore,
@@ -282,6 +284,43 @@ describe("assertSuperuserSession", () => {
 
   it("tolerates the whitespace psql leaves around values", () => {
     expect(() => assertSuperuserSession(` ${RESTORE_ROLE} `, " on ")).not.toThrow();
+  });
+});
+
+describe("assertManagedSchemas", () => {
+  // schema.sql contains no CREATE SCHEMA — it assumes the Supabase-managed
+  // schemas already exist. Restoring into a database that lacks them is what
+  // produced `schema "extensions" does not exist` and left the stack in pieces.
+  // This turns that into a refusal before anything is dropped.
+
+  const present = [...REQUIRED_MANAGED_SCHEMAS, "public", "supabase_migrations"];
+
+  it("accepts a properly initialised Supabase database", () => {
+    expect(() => assertManagedSchemas(present)).not.toThrow();
+  });
+
+  it("names every missing schema, not just the first", () => {
+    // Finding out one at a time means one destructive rehearsal per schema.
+    const stripped = present.filter((s) => s !== "auth" && s !== "storage");
+    expect(() => assertManagedSchemas(stripped)).toThrow(/auth/);
+    expect(() => assertManagedSchemas(stripped)).toThrow(/storage/);
+  });
+
+  it("refuses a bare database that only has public", () => {
+    expect(() => assertManagedSchemas(["public"])).toThrow(/extensions/);
+  });
+
+  it("refuses an empty listing rather than treating it as nothing to check", () => {
+    expect(() => assertManagedSchemas([])).toThrow();
+  });
+
+  it("requires the schemas schema.sql actually references", () => {
+    // extensions and vault appear in its CREATE EXTENSION targets; auth and
+    // storage own tables that data.sql carries COPY blocks for.
+    expect(REQUIRED_MANAGED_SCHEMAS).toContain("extensions");
+    expect(REQUIRED_MANAGED_SCHEMAS).toContain("vault");
+    expect(REQUIRED_MANAGED_SCHEMAS).toContain("auth");
+    expect(REQUIRED_MANAGED_SCHEMAS).toContain("storage");
   });
 });
 

@@ -19,9 +19,11 @@ import {
   DUMP_FILES,
   LOCAL_CONTAINER_PREFIX,
   MANIFEST_NAME,
+  REQUIRED_MANAGED_SCHEMAS,
   RESTORE_ROLE,
   type RestoreObservation,
   assertLocalTarget,
+  assertManagedSchemas,
   assertSuperuserSession,
   evaluatePostRestore,
   parseManifest,
@@ -132,16 +134,32 @@ function main(): void {
   // this container and so could not terminate the stack's own connections.
   const [sessionUser, sessionSuperuser] = psql(
     "select current_user, current_setting('is_superuser')",
-    "template1",
   ).split("|");
   assertSuperuserSession(sessionUser ?? "", sessionSuperuser ?? "");
   console.log(`Session verified: ${RESTORE_ROLE}, superuser on`);
 
-  // Connect to template1 to drop `postgres`; FORCE evicts the stack's own
-  // pooled connections, which reconnect on their own afterwards.
-  console.log("Recreating the local database …");
-  psql("DROP DATABASE IF EXISTS postgres WITH (FORCE);", "template1");
-  psql("CREATE DATABASE postgres;", "template1");
+  // The database must already be an initialised Supabase one. schema.sql has no
+  // CREATE SCHEMA and assumes the managed schemas exist; an earlier design
+  // dropped the whole database and discovered that the hard way.
+  assertManagedSchemas(psql("select nspname from pg_namespace").split("\n"));
+  console.log(`Managed schemas verified: ${REQUIRED_MANAGED_SCHEMAS.join(", ")}`);
+
+  // The migration ledger must exist as a table, since it is truncated rather
+  // than dropped — the schema and its primary key survive the restore.
+  if (psql("select to_regclass('supabase_migrations.schema_migrations')") === "") {
+    throw new Error("Refusing to restore: supabase_migrations.schema_migrations is missing");
+  }
+
+  // ── Destructive from here. Exactly three statements, all scoped. ─────────
+  // The application schema is replaced wholesale: schema.sql only adds, so
+  // anything local and stale would otherwise survive the restore unnoticed.
+  // AUTHORIZATION keeps the ownership a fresh Supabase database has.
+  console.log("Replacing the public schema …");
+  psql("DROP SCHEMA IF EXISTS public CASCADE;");
+  psql("CREATE SCHEMA public AUTHORIZATION pg_database_owner;");
+  // Truncated, not dropped: the local table and its primary key stay, and
+  // migration_history.sql refills it with exactly what production had applied.
+  psql("TRUNCATE TABLE supabase_migrations.schema_migrations;");
 
   for (const name of DUMP_FILES) {
     process.stdout.write(`  applying ${name} … `);
