@@ -117,9 +117,13 @@ error **preexistente** en `use-coach-analysis.test.ts:139`.
       ya reclamado? ¿Cuál es la forma soportada de testear el dominio oficial?
 - [ ] **Probar desde el listado** cuando publiquen la app.
 - [ ] **Testear siempre en la URL `*.vercel.app`** del deploy, no en `chesscito.com`.
-- [ ] **Auditoría faltante:** desbloqueé 5 intents con un `PATCH` directo, sin pasar por
-      `resolve_get_peones_legacy_intent` — el RPC append-only que existe justo para eso.
-      Falta registrar esas 5 filas para tener el rastro.
+- [x] **Auditoría del desbloqueo** — registrada. Los 5 intents que expiré con un `PATCH` directo
+      quedaron en `treasury_payment_intent_resolutions` (#7–#11) como
+      `RETROACTIVE_DIRECT_PATCH_UNBLOCK`, con actor y evidencia. El RPC
+      `resolve_get_peones_legacy_intent` **no servía**: exige `CREATED`/`SUBMITTING` y las filas
+      ya estaban `EXPIRED` — registra transiciones, no las rellena hacia atrás. Por eso la
+      inserción es directa y el código lo dice, para que el rastro no finja un proceso que no
+      ocurrió.
 - [ ] Defecto secundario sin arreglar: `use-payment-rail.ts:371-392`, la rama `intent` manda
       `feeCurrency` sin el fallback que sí tiene la legacy.
 - [ ] El permit cae al approve **en silencio** (`use-mint-victory.ts:503-509`): el `catch`
