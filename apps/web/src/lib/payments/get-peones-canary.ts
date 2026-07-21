@@ -40,12 +40,43 @@ export const GET_PEONES_PROVIDER_RESULT_KINDS = [
 export type GetPeonesProviderResultKind =
   (typeof GET_PEONES_PROVIDER_RESULT_KINDS)[number];
 
+export const GET_PEONES_SUBMISSION_STAGES = [
+  "PREPARE",
+  "SIMULATE",
+  "WALLET_REQUEST",
+  "BROADCAST",
+  "HASH_RETURN",
+] as const;
+
+export type GetPeonesSubmissionStage =
+  (typeof GET_PEONES_SUBMISSION_STAGES)[number];
+
+export type GetPeonesProviderErrorDiagnostics = {
+  name?: string;
+  code?: string;
+  shortMessage?: string;
+  details?: string;
+  causeName?: string;
+  causeCode?: string;
+  causeShortMessage?: string;
+};
+
+export type GetPeonesSubmissionDiagnostics = {
+  stage: GetPeonesSubmissionStage;
+  error?: GetPeonesProviderErrorDiagnostics;
+  connectorId: string;
+  walletClientKind: string;
+  chainId: number;
+  isMiniPay: boolean;
+};
+
 export type GetPeonesSubmissionReport = {
   intentId: string;
   submissionState: "SUBMITTING" | "SUBMITTED" | "CANCELLED" | "FAILED";
   txHash?: `0x${string}`;
   providerResultKind: GetPeonesProviderResultKind;
   errorCode?: string;
+  diagnostics?: GetPeonesSubmissionDiagnostics;
 };
 
 export type GetPeonesSubmissionReportResponse =
@@ -113,6 +144,8 @@ export type GetPeonesCanaryIntent = {
 
 const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
 const SAFE_ERROR_CODE_RE = /^[A-Za-z0-9_.:-]{1,64}$/;
+const LONG_HEX_RE = /0x[0-9a-fA-F]{10,}/g;
+const DIAGNOSTIC_TEXT_LIMIT = 240;
 
 function asObject(value: unknown): Record<string, unknown> | null {
   return typeof value === "object" && value !== null
@@ -142,6 +175,46 @@ function readProviderErrorCode(error: unknown): unknown {
   return undefined;
 }
 
+function sanitizeProviderDiagnosticText(value: unknown): string | undefined {
+  if (typeof value !== "string" || value.length === 0) return undefined;
+  return value
+    .replace(/\{\s*["']?jsonrpc[\s\S]*/i, "[redacted_provider_payload]")
+    .replace(LONG_HEX_RE, "[redacted_hex]")
+    .slice(0, DIAGNOSTIC_TEXT_LIMIT);
+}
+
+/** Keep only the explicitly allowlisted provider fields. Never serializes the
+ * full error, calldata, wallet, signature, stack or raw provider payload. */
+export function getProviderErrorDiagnostics(
+  error: unknown,
+): GetPeonesProviderErrorDiagnostics {
+  const record = asObject(error);
+  const cause = asObject(record?.cause);
+  const code = readProviderErrorCode(error);
+  return {
+    name: sanitizeProviderDiagnosticText(record?.name),
+    code: sanitizeProviderDiagnosticText(
+      typeof code === "number" || typeof code === "string" ? String(code) : undefined,
+    ),
+    shortMessage: sanitizeProviderDiagnosticText(record?.shortMessage),
+    details: sanitizeProviderDiagnosticText(record?.details),
+    causeName: sanitizeProviderDiagnosticText(cause?.name),
+    causeCode: sanitizeProviderDiagnosticText(
+      typeof cause?.code === "number" || typeof cause?.code === "string"
+        ? String(cause.code)
+        : undefined,
+    ),
+    causeShortMessage: sanitizeProviderDiagnosticText(cause?.shortMessage),
+  };
+}
+
+function providerErrorText(error: unknown): string {
+  return walkProviderError(error)
+    .flatMap((record) => [record.message, record.shortMessage, record.details])
+    .filter((value): value is string => typeof value === "string")
+    .join("\n");
+}
+
 export function normalizeProviderErrorCode(error: unknown, fallback: string): string {
   const raw = readProviderErrorCode(error);
   const candidate = typeof raw === "number" || typeof raw === "string"
@@ -164,7 +237,18 @@ export function isEip1193UserRejection(error: unknown): boolean {
 
 export function classifyProviderSubmissionError(
   error: unknown,
+  stage: GetPeonesSubmissionStage = "WALLET_REQUEST",
 ): GetPeonesProviderSubmissionOutcome {
+  if (stage === "PREPARE" || stage === "SIMULATE") {
+    return {
+      submissionState: "FAILED",
+      providerResultKind: "PRE_BROADCAST_FAILURE",
+      errorCode: stage === "PREPARE" ? "PREPARE_FAILED" : "SIMULATE_FAILED",
+      recoverable: true,
+      retrySafe: true,
+    };
+  }
+
   if (isEip1193UserRejection(error)) {
     return {
       submissionState: "CANCELLED",
@@ -175,7 +259,7 @@ export function classifyProviderSubmissionError(
     };
   }
 
-  const message = error instanceof Error ? error.message : String(error);
+  const message = providerErrorText(error);
   if (/(?:Remote method ['"]eth_estimateGas['"]|Request eth_estimateGas) failed/i.test(message)) {
     return {
       submissionState: "FAILED",

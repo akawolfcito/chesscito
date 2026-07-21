@@ -9,11 +9,13 @@ import {
   GET_PEONES_CANARY_AUTH_BINDING,
   GET_PEONES_CANARY_SKU,
   GET_PEONES_PROVIDER_RESULT_KINDS,
+  GET_PEONES_SUBMISSION_STAGES,
   getCanaryExpectedAmount,
   getCanaryTokenByAddress,
   type GetPeonesCanaryIntent,
   type GetPeonesIntentLifecycle,
   type GetPeonesProviderResultKind,
+  type GetPeonesSubmissionDiagnostics,
   type GetPeonesSubmissionReport,
 } from "@/lib/payments/get-peones-canary";
 import {
@@ -30,6 +32,8 @@ const client = createPublicClient({ chain: celo, transport: http(process.env.CEL
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
 const SAFE_ERROR_CODE_RE = /^[A-Za-z0-9_.:-]{1,64}$/;
+const SAFE_DIAGNOSTIC_ID_RE = /^[A-Za-z0-9_.:-]{1,64}$/;
+const LONG_HEX_RE = /0x[0-9a-fA-F]{10,}/g;
 
 function error(reason: string, status: number) {
   return NextResponse.json({ ok: false, error: reason }, { status });
@@ -320,6 +324,70 @@ function parseSubmissionReport(body: unknown): GetPeonesSubmissionReport | null 
   return null;
 }
 
+function sanitizeDiagnosticText(value: unknown): string | undefined {
+  if (typeof value !== "string" || value.length === 0) return undefined;
+  return value
+    .replace(/\{\s*["']?jsonrpc[\s\S]*/i, "[redacted_provider_payload]")
+    .replace(LONG_HEX_RE, "[redacted_hex]")
+    .slice(0, 240);
+}
+
+function parseSubmissionDiagnostics(body: unknown): GetPeonesSubmissionDiagnostics | undefined {
+  if (!isObject(body) || !isObject(body.diagnostics)) return undefined;
+  const diagnostics = body.diagnostics;
+  if (
+    typeof diagnostics.stage !== "string" ||
+    !GET_PEONES_SUBMISSION_STAGES.includes(
+      diagnostics.stage as GetPeonesSubmissionDiagnostics["stage"],
+    ) ||
+    typeof diagnostics.connectorId !== "string" ||
+    !SAFE_DIAGNOSTIC_ID_RE.test(diagnostics.connectorId) ||
+    typeof diagnostics.walletClientKind !== "string" ||
+    !SAFE_DIAGNOSTIC_ID_RE.test(diagnostics.walletClientKind) ||
+    typeof diagnostics.chainId !== "number" ||
+    !Number.isInteger(diagnostics.chainId) ||
+    typeof diagnostics.isMiniPay !== "boolean"
+  ) return undefined;
+
+  const sourceError = isObject(diagnostics.error) ? diagnostics.error : null;
+  const error = sourceError ? {
+    name: sanitizeDiagnosticText(sourceError.name),
+    code: sanitizeDiagnosticText(sourceError.code),
+    shortMessage: sanitizeDiagnosticText(sourceError.shortMessage),
+    details: sanitizeDiagnosticText(sourceError.details),
+    causeName: sanitizeDiagnosticText(sourceError.causeName),
+    causeCode: sanitizeDiagnosticText(sourceError.causeCode),
+    causeShortMessage: sanitizeDiagnosticText(sourceError.causeShortMessage),
+  } : undefined;
+
+  return {
+    stage: diagnostics.stage as GetPeonesSubmissionDiagnostics["stage"],
+    ...(error ? { error } : {}),
+    connectorId: diagnostics.connectorId,
+    walletClientKind: diagnostics.walletClientKind,
+    chainId: diagnostics.chainId,
+    isMiniPay: diagnostics.isMiniPay,
+  };
+}
+
+function diagnosticLogFields(diagnostics: GetPeonesSubmissionDiagnostics | undefined) {
+  if (!diagnostics) return {};
+  return {
+    submission_stage: diagnostics.stage,
+    error_name: diagnostics.error?.name ?? null,
+    provider_error_code: diagnostics.error?.code ?? null,
+    error_short_message: diagnostics.error?.shortMessage ?? null,
+    error_details: diagnostics.error?.details ?? null,
+    cause_name: diagnostics.error?.causeName ?? null,
+    cause_code: diagnostics.error?.causeCode ?? null,
+    cause_short_message: diagnostics.error?.causeShortMessage ?? null,
+    connector_id: diagnostics.connectorId,
+    wallet_client_kind: diagnostics.walletClientKind,
+    observed_chain_id: diagnostics.chainId,
+    is_minipay: diagnostics.isMiniPay,
+  };
+}
+
 const CLIENT_TRANSITIONS: Record<
   GetPeonesIntentLifecycle,
   ReadonlySet<GetPeonesSubmissionReport["submissionState"]>
@@ -341,6 +409,7 @@ export async function PATCH(req: Request) {
     await enforceReadRateLimit(getRequestIp(req));
     const body = await req.json();
     const report = parseSubmissionReport(body);
+    const diagnostics = parseSubmissionDiagnostics(body);
     if (!report) {
       const intentId = isObject(body) && typeof body.intentId === "string"
         ? body.intentId
@@ -425,6 +494,7 @@ export async function PATCH(req: Request) {
       error_code: report.errorCode ?? null,
       recoverable,
       retry_safe: retrySafe,
+      ...diagnosticLogFields(diagnostics),
     };
     if (ambiguous) {
       log.warn("unknown_submission_state", fields);

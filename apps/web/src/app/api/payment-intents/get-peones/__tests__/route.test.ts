@@ -2,6 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const getBytecode = vi.hoisted(() => vi.fn());
 const readContract = vi.hoisted(() => vi.fn());
+const logInfo = vi.hoisted(() => vi.fn());
+const logWarn = vi.hoisted(() => vi.fn());
+const logError = vi.hoisted(() => vi.fn());
 vi.mock("viem", async (importOriginal) => {
   const actual = await importOriginal<typeof import("viem")>();
   return {
@@ -15,7 +18,7 @@ vi.mock("@/lib/server/demo-signing", () => ({
   getRequestIp: () => "127.0.0.1",
 }));
 vi.mock("@/lib/server/logger", () => ({
-  createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  createLogger: () => ({ info: logInfo, warn: logWarn, error: logError }),
   hashWallet: () => "wallet-hash",
 }));
 const getSupabaseServer = vi.hoisted(() => vi.fn());
@@ -133,6 +136,9 @@ beforeEach(() => {
   getBytecode.mockResolvedValue("0x6000");
   readContract.mockResolvedValueOnce(true).mockResolvedValueOnce(6);
   getSupabaseServer.mockReturnValue(intentCreationStore());
+  logInfo.mockReset();
+  logWarn.mockReset();
+  logError.mockReset();
 });
 afterEach(() => {
   for (const key of ENV_KEYS) delete process.env[key];
@@ -311,6 +317,53 @@ describe("Get Peones canary intent endpoint", () => {
       provider_result_kind: "AMBIGUOUS_ERROR",
       retry_safe: false,
     });
+  });
+
+  it("logs only allowlisted, server-redacted provider diagnostics", async () => {
+    const store = submissionStore({ id: INTENT_ID, lifecycle_status: "SUBMITTING", tx_hash: null });
+    getSupabaseServer.mockReturnValue(store.client);
+    const calldata = `0x${"ab".repeat(80)}`;
+    const response = await PATCH(patchRequest({
+      intentId: INTENT_ID,
+      submissionState: "SUBMITTING",
+      providerResultKind: "AMBIGUOUS_ERROR",
+      errorCode: "-1",
+      diagnostics: {
+        stage: "WALLET_REQUEST",
+        connectorId: "injected",
+        walletClientKind: "json-rpc",
+        chainId: 42220,
+        isMiniPay: true,
+        error: {
+          name: "ContractFunctionExecutionError",
+          code: "-1",
+          shortMessage: `rejected ${calldata}`,
+          details: `raw request ${calldata}`,
+          causeName: "UnknownRpcError",
+          causeCode: "-1",
+          causeShortMessage: "unknown provider failure",
+          stack: "must never be logged",
+        },
+      },
+    }));
+
+    expect(response.status).toBe(409);
+    expect(logWarn).toHaveBeenCalledWith("unknown_submission_state", expect.objectContaining({
+      submission_stage: "WALLET_REQUEST",
+      error_name: "ContractFunctionExecutionError",
+      provider_error_code: "-1",
+      error_short_message: "rejected [redacted_hex]",
+      error_details: "raw request [redacted_hex]",
+      cause_name: "UnknownRpcError",
+      cause_code: "-1",
+      connector_id: "injected",
+      wallet_client_kind: "json-rpc",
+      observed_chain_id: 42220,
+      is_minipay: true,
+    }));
+    const logged = JSON.stringify(logWarn.mock.calls[0]);
+    expect(logged).not.toContain(calldata);
+    expect(logged).not.toContain("must never be logged");
   });
 
   it("normalizes the legacy unknown event into the recoverable lifecycle", async () => {

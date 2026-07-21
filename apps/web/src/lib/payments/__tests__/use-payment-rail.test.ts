@@ -28,7 +28,7 @@ function mockFetch(body: Record<string, unknown>) {
 
 beforeEach(() => {
   process.env.NEXT_PUBLIC_CHESSCITO_TREASURY_ADDRESS = "0x1234567890abcdef1234567890abcdef12345678";
-  useAccountMock.mockReturnValue({ address: WALLET });
+  useAccountMock.mockReturnValue({ address: WALLET, connector: { id: "injected" } });
   useChainIdMock.mockReturnValue(42220);
   writeMock.mockReset();
   writeMock.mockResolvedValue(HASH);
@@ -162,7 +162,14 @@ describe("usePaymentRail — disabled Treasury canary foundation", () => {
       address: USDC,
       functionName: "transfer",
       args: [TREASURY, 500_000n],
+      chainId: 42220,
+      account: WALLET,
     });
+    const request = writeMock.mock.calls[0][0];
+    expect(typeof request.args[1]).toBe("bigint");
+    expect(request).not.toHaveProperty("value");
+    expect([request.functionName]).not.toContain("approve");
+    expect([request.functionName]).not.toContain("transferFrom");
     expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toMatchObject({
       submissionState: "SUBMITTING",
       providerResultKind: "WALLET_REQUESTED",
@@ -199,6 +206,50 @@ describe("usePaymentRail — disabled Treasury canary foundation", () => {
     expect(fetchMock.mock.calls.filter(([url, init]) =>
       url === "/api/payment-intents/get-peones" && init?.method === "POST"
     )).toHaveLength(1);
+  });
+
+  it("reports only safe MiniPay wallet-request diagnostics and preserves code -1", async () => {
+    process.env.NEXT_PUBLIC_GET_PEONES_TREASURY_CANARY_ENABLED = "true";
+    const fetchMock = canaryFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    const sensitiveHex = `0x${"ab".repeat(80)}`;
+    writeMock.mockRejectedValueOnce({
+      name: "ContractFunctionExecutionError",
+      code: -1,
+      shortMessage: `provider rejected ${sensitiveHex}`,
+      details: `raw request ${sensitiveHex}`,
+      cause: {
+        name: "UnknownRpcError",
+        code: -1,
+        shortMessage: "An unknown RPC error occurred.",
+      },
+    });
+
+    const { result } = renderHook(() => usePaymentRail(args));
+    await act(async () => { await result.current.pay(); });
+
+    const ambiguous = fetchMock.mock.calls
+      .filter(([, init]) => init?.method === "PATCH")
+      .map(([, init]) => JSON.parse(String(init?.body)))
+      .find((body) => body.providerResultKind === "AMBIGUOUS_ERROR");
+    expect(ambiguous).toMatchObject({
+      errorCode: "-1",
+      diagnostics: {
+        stage: "WALLET_REQUEST",
+        connectorId: "injected",
+        walletClientKind: "json-rpc",
+        chainId: 42220,
+        isMiniPay: false,
+        error: {
+          name: "ContractFunctionExecutionError",
+          code: "-1",
+          causeName: "UnknownRpcError",
+          causeCode: "-1",
+        },
+      },
+    });
+    expect(JSON.stringify(ambiguous)).not.toContain(sensitiveHex);
+    expect(result.current.paymentRetryBlocked).toBe(true);
   });
 
   it("classifies EIP-1193 code 4001 as CANCELLED and permits a fresh explicit action", async () => {

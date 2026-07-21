@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   classifyProviderSubmissionError,
+  getProviderErrorDiagnostics,
   normalizeProviderTransactionHash,
   recoverProviderTransactionHashFromError,
 } from "@/lib/payments/get-peones-canary";
@@ -30,6 +31,37 @@ describe("Get Peones provider submission classifier", () => {
     });
   });
 
+  it("classifies prepare and simulate failures as retry-safe pre-broadcast", () => {
+    expect(classifyProviderSubmissionError(new Error("bad request"), "PREPARE"))
+      .toMatchObject({
+        submissionState: "FAILED",
+        providerResultKind: "PRE_BROADCAST_FAILURE",
+        errorCode: "PREPARE_FAILED",
+        retrySafe: true,
+      });
+    expect(classifyProviderSubmissionError(new Error("simulation reverted"), "SIMULATE"))
+      .toMatchObject({
+        submissionState: "FAILED",
+        providerResultKind: "PRE_BROADCAST_FAILURE",
+        errorCode: "SIMULATE_FAILED",
+        retrySafe: true,
+      });
+  });
+
+  it("finds MiniPay estimate failures nested under viem while preserving code -1", () => {
+    expect(classifyProviderSubmissionError({
+      code: -1,
+      cause: {
+        details: "Remote method 'eth_estimateGas' failed with an error",
+      },
+    })).toMatchObject({
+      submissionState: "FAILED",
+      providerResultKind: "PRE_BROADCAST_FAILURE",
+      errorCode: "ESTIMATE_GAS_FAILED",
+      retrySafe: true,
+    });
+  });
+
   it("keeps an unclassified provider rejection ambiguous and retry-blocked", () => {
     expect(classifyProviderSubmissionError(new Error("provider timeout"))).toMatchObject({
       submissionState: "SUBMITTING",
@@ -38,6 +70,34 @@ describe("Get Peones provider submission classifier", () => {
       recoverable: true,
       retrySafe: false,
     });
+  });
+
+  it("allowlists diagnostic fields and redacts calldata-like hex", () => {
+    const calldata = `0x${"ab".repeat(80)}`;
+    const diagnostics = getProviderErrorDiagnostics({
+      name: "ContractFunctionExecutionError",
+      code: -1,
+      shortMessage: `rejected ${calldata}`,
+      details: `request ${calldata}`,
+      stack: "must not be copied",
+      cause: {
+        name: "UnknownRpcError",
+        code: -1,
+        shortMessage: "unknown provider failure",
+        data: { calldata },
+      },
+    });
+    expect(diagnostics).toMatchObject({
+      name: "ContractFunctionExecutionError",
+      code: "-1",
+      shortMessage: "rejected [redacted_hex]",
+      details: "request [redacted_hex]",
+      causeName: "UnknownRpcError",
+      causeCode: "-1",
+      causeShortMessage: "unknown provider failure",
+    });
+    expect(JSON.stringify(diagnostics)).not.toContain(calldata);
+    expect(diagnostics).not.toHaveProperty("stack");
   });
 
   it("normalizes direct, transactionHash, and hash provider results", () => {

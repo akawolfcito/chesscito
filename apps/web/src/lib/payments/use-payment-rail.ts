@@ -16,21 +16,29 @@
  */
 
 import { useCallback, useRef, useState } from "react";
-import { useAccount, useChainId, usePublicClient, useWriteContract } from "wagmi";
+import {
+  useAccount,
+  useChainId,
+  usePublicClient,
+  useWriteContract,
+} from "wagmi";
 
 import { erc20Abi } from "@/lib/contracts/tokens";
 import { getMiniPayFeeCurrency } from "@/lib/contracts/chains";
 import { isUserCancellation } from "@/lib/errors";
+import { isMiniPayEnv } from "@/lib/minipay";
 import {
   GET_PEONES_CANARY_CHAIN_ID,
   GET_PEONES_CANARY_SKU,
   classifyProviderSubmissionError,
+  getProviderErrorDiagnostics,
   isGetPeonesCanaryClientRequested,
   normalizeProviderTransactionHash,
   recoverProviderTransactionHashFromError,
   type GetPeonesCanaryIntent,
   type GetPeonesSubmissionReport,
   type GetPeonesSubmissionReportResponse,
+  type GetPeonesSubmissionStage,
 } from "@/lib/payments/get-peones-canary";
 import {
   getTreasuryAddressClient,
@@ -98,7 +106,7 @@ export function usePaymentRail({
   onVerified,
   retryDelaysMs = DEFAULT_VERIFY_RETRY_DELAYS_MS,
 }: UsePaymentRailArgs) {
-  const { address } = useAccount();
+  const { address, connector } = useAccount();
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
   const { writeContractAsync } = useWriteContract();
@@ -234,6 +242,20 @@ export function usePaymentRail({
     }
   }, []);
 
+  const submissionDiagnostics = useCallback((
+    stage: GetPeonesSubmissionStage,
+    error?: unknown,
+  ) => ({
+    stage,
+    ...(error === undefined ? {} : { error: getProviderErrorDiagnostics(error) }),
+    connectorId: connector?.id ?? "unavailable",
+    // `account` is passed as an address, so viem parses it as a JSON-RPC
+    // account and resolves the wallet client from wagmi's active connector.
+    walletClientKind: "json-rpc",
+    chainId,
+    isMiniPay: isMiniPayEnv(),
+  }), [chainId, connector?.id]);
+
   const pay = useCallback(async () => {
     if (payInFlightRef.current || retryBlockedRef.current) return;
     payInFlightRef.current = true;
@@ -341,8 +363,10 @@ export function usePaymentRail({
 
     let submittedHash: `0x${string}` | null = null;
     let providerOutcome: ReturnType<typeof classifyProviderSubmissionError> | null = null;
+    let providerStage: GetPeonesSubmissionStage = "PREPARE";
     try {
       setPhase("awaiting_signature");
+      providerStage = "WALLET_REQUEST";
       let rawProviderResult: unknown;
       if (intent) {
         rawProviderResult = await writeContractAsync(
@@ -366,6 +390,7 @@ export function usePaymentRail({
           );
         }
       }
+      providerStage = "HASH_RETURN";
       const normalized = normalizeProviderTransactionHash(rawProviderResult);
       if (!normalized.ok) {
         providerOutcome = normalized.outcome;
@@ -381,6 +406,7 @@ export function usePaymentRail({
           submissionState: "SUBMITTED",
           txHash: hash,
           providerResultKind: normalized.providerResultKind,
+          diagnostics: submissionDiagnostics("HASH_RETURN"),
         });
       }
       await publicClient?.waitForTransactionReceipt({ hash });
@@ -397,6 +423,7 @@ export function usePaymentRail({
             submissionState: "SUBMITTED",
             txHash: recoveredHash,
             providerResultKind: "TRANSACTION_HASH",
+            diagnostics: submissionDiagnostics("BROADCAST", e),
           });
           try {
             await publicClient?.waitForTransactionReceipt({ hash: recoveredHash });
@@ -407,12 +434,13 @@ export function usePaymentRail({
           }
           return;
         }
-        const outcome = providerOutcome ?? classifyProviderSubmissionError(e);
+        const outcome = providerOutcome ?? classifyProviderSubmissionError(e, providerStage);
         await reportSubmission({
           intentId: intent.id,
           submissionState: outcome.submissionState,
           providerResultKind: outcome.providerResultKind,
           errorCode: outcome.errorCode,
+          diagnostics: submissionDiagnostics(providerStage, e),
         });
         const reason = outcome.submissionState === "CANCELLED"
           ? "user_rejected"
@@ -451,6 +479,7 @@ export function usePaymentRail({
     publicClient,
     verify,
     reportSubmission,
+    submissionDiagnostics,
   ]);
 
   const verifyAgain = useCallback(async () => {
