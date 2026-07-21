@@ -111,6 +111,19 @@ export function MiniPayRawSendClient() {
         push("eth_gasPrice(feeCurrency)", await requestLegacyGasPrice(provider, feeCurrency));
       }
 
+      // EIP-2255: several wallets treat eth_sendTransaction as a RESTRICTED
+      // method that needs an explicit grant. MiniPay documents its connection
+      // as implicit, so dapps read eth_accounts and never ask — which is
+      // exactly what we do. If that changed, "Permission denied" is what a
+      // missing grant would look like. Ask for it, then retry the send.
+      for (const method of ["wallet_getPermissions", "eth_requestAccounts"] as const) {
+        try {
+          push(method, await provider.request({ method }));
+        } catch (err) {
+          push(`${method} (failed)`, err);
+        }
+      }
+
       // The whole point: a bare eth_sendTransaction with NO gas fields, so
       // nothing viem adds can be blamed. MiniPay fills gas itself.
       push(
