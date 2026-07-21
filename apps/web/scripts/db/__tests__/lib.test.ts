@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  COPY_PARSED_DUMPS,
   CRITICAL_TABLES,
+  DUMP_ARGS,
   DUMP_FILES,
   MANIFEST_VERSION,
   type BackupManifest,
@@ -363,6 +365,28 @@ describe("constants", () => {
       "public.treasury_payment_intents",
       "public.treasury_payment_consumptions",
     ]);
+  });
+
+  it("asks for COPY on every dump whose contents get parsed back", () => {
+    // The bug this pins: migration_history.sql was dumped without --use-copy,
+    // so the CLI passed --column-inserts and the file came back as INSERTs.
+    // parseAppliedMigrationVersions reads COPY blocks only, found none, and the
+    // backup aborted. The fixtures could not catch it — they were hand-written
+    // COPY blocks describing a format the script never requested.
+    for (const name of COPY_PARSED_DUMPS) {
+      expect(DUMP_ARGS[name]).toContain("--use-copy");
+    }
+  });
+
+  it("does not ask for COPY on dumps that carry no table data", () => {
+    // --use-copy is meaningless without --data-only, and passing it here would
+    // only obscure which dumps the parsers actually depend on.
+    expect(DUMP_ARGS["roles.sql"]).not.toContain("--use-copy");
+    expect(DUMP_ARGS["schema.sql"]).not.toContain("--use-copy");
+  });
+
+  it("scopes the migration history dump to the supabase_migrations schema", () => {
+    expect(DUMP_ARGS["migration_history.sql"]).toContain("supabase_migrations");
   });
 
   it("lists the four dumps, migration history included", () => {

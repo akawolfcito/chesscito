@@ -14,6 +14,7 @@ import path from "node:path";
 
 import {
   CRITICAL_TABLES,
+  DUMP_ARGS,
   DUMP_FILES,
   MANIFEST_NAME,
   MANIFEST_VERSION,
@@ -27,14 +28,6 @@ import {
 
 const REPO_ROOT = path.resolve(__dirname, "../../../..");
 const WEB_DIR = path.join(REPO_ROOT, "apps/web");
-
-/** Per-file dump arguments. --workdir keeps us off `cd` (CLAUDE.md hygiene). */
-const DUMP_ARGS: Record<(typeof DUMP_FILES)[number], string[]> = {
-  "roles.sql": ["--role-only"],
-  "schema.sql": [],
-  "data.sql": ["--data-only", "--use-copy"],
-  "migration_history.sql": ["--data-only", "--schema", "supabase_migrations"],
-};
 
 function sh(cmd: string, args: string[], env?: NodeJS.ProcessEnv): string {
   return execFileSync(cmd, args, {

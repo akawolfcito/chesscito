@@ -32,6 +32,26 @@ export const DUMP_FILES = [
 
 export const MANIFEST_NAME = "manifest.json";
 
+/**
+ * Per-dump CLI arguments.
+ *
+ * `--use-copy` is not cosmetic on the two data dumps: without it the CLI passes
+ * `--column-inserts` to pg_dump and the file comes back as INSERT statements,
+ * which countCopyRows and parseAppliedMigrationVersions cannot read. That is a
+ * real failure this project hit — the unit tests could not catch it, because
+ * their fixtures were hand-written COPY blocks describing a format the script
+ * was never actually asking for.
+ */
+export const DUMP_ARGS: Record<(typeof DUMP_FILES)[number], readonly string[]> = {
+  "roles.sql": ["--role-only"],
+  "schema.sql": [],
+  "data.sql": ["--data-only", "--use-copy"],
+  "migration_history.sql": ["--data-only", "--use-copy", "--schema", "supabase_migrations"],
+};
+
+/** The dumps whose contents the COPY parsers have to read back. */
+export const COPY_PARSED_DUMPS = ["data.sql", "migration_history.sql"] as const;
+
 const DEFAULT_ROOT_SEGMENTS = ["backups", "chesscito", "db"];
 
 /** True when `child` is at or under `parent`, by path segment — not by string
