@@ -286,3 +286,68 @@ function decisionProfile(
     firstMoveChoices: targets(mapped.startPos).length,
   };
 }
+
+/** The largest jump in `optimalMoves` a single step may make without comment.
+ *  Two is a lesson; three is where a beginner stops seeing the connection to
+ *  the board they just solved. */
+const MAX_DIFFICULTY_STEP = 2;
+
+export type SequenceLintInput = {
+  piece: PieceId;
+  exercises: readonly { id: string; optimalMoves: number }[];
+};
+
+/**
+ * Lints a piece's curriculum as a SEQUENCE.
+ *
+ * `lintPuzzle` judges a board against itself and is therefore blind to pacing:
+ * ten individually perfect exercises can still ramp 1 → 1 → 5 → 2. That pacing
+ * lived instead as a frozen array in the pedagogy tests, which made every save
+ * of the game builder a red CI — content the founder changed on purpose,
+ * reported as breakage.
+ *
+ * WARNINGS ONLY, by decision (founder, 2026-07-21). A curve is a judgement
+ * about teaching, not a fact decidable from a board, and this file's own rule
+ * is that a heuristic which breaks the build gets switched off and then
+ * protects nothing. The author sees the advice while authoring and overrules
+ * it whenever the lesson calls for it.
+ *
+ * The accepted cost: a broken curve can reach production unblocked. That is
+ * the trade — a difficulty spike is playable, and the person who can judge it
+ * is the one reading this warning at save time.
+ */
+export function lintPieceSequence(input: SequenceLintInput): LintResult {
+  const warnings: string[] = [];
+  const { piece, exercises } = input;
+
+  for (let i = 1; i < exercises.length; i += 1) {
+    const prev = exercises[i - 1];
+    const curr = exercises[i];
+    const delta = curr.optimalMoves - prev.optimalMoves;
+
+    if (delta < 0) {
+      warnings.push(
+        `${piece}: the curve goes backwards at step ${i + 1} — ${prev.id} needs ` +
+          `${prev.optimalMoves} moves but ${curr.id} needs only ${curr.optimalMoves}. ` +
+          `A player who just solved the harder board reads the easier one as filler. ` +
+          `Either swap their order or raise ${curr.id}.`,
+      );
+      continue;
+    }
+
+    if (delta > MAX_DIFFICULTY_STEP) {
+      warnings.push(
+        `${piece}: the curve jumps ${delta} moves at step ${i + 1} — ${prev.id} needs ` +
+          `${prev.optimalMoves} and ${curr.id} needs ${curr.optimalMoves}. Past a ` +
+          `${MAX_DIFFICULTY_STEP}-move step the new board stops looking like the one ` +
+          `just solved, and a beginner reads the wall as their own failure. Consider a ` +
+          `board in between.`,
+      );
+    }
+  }
+
+  // Never errors: see the doc comment. The empty array is the contract, not an
+  // oversight — a caller that pushes these into a build-failing channel is
+  // reintroducing exactly the problem this function was written to remove.
+  return { errors: [], warnings };
+}

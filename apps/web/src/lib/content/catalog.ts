@@ -18,7 +18,7 @@ import {
   isPromotable,
   PROMOTABLE_PIECES,
 } from "@/lib/game/promotion-run";
-import { lintPuzzle } from "@/lib/content/lint";
+import { CURATED_PIECES, lintPieceSequence, lintPuzzle } from "@/lib/content/lint";
 
 /** Floor for a shippable Knight's Tour level, in reachable squares. Below this
  *  the "puzzle" is a knight boxed into a corner with a jump or two — the founder
@@ -504,6 +504,21 @@ export function buildCatalog(
     for (const e of queens[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of safePath[p] as (Exercise & { __order?: number })[]) delete e.__order;
     for (const e of promotionRun[p] as (Exercise & { __order?: number })[]) delete e.__order;
+
+    // Pacing is a property of the sequence, so it can only be judged once the
+    // bucket is in its final training-path order — hence here, after the sort,
+    // not inside the per-puzzle loop where `lintPuzzle` runs.
+    //
+    // Only the `exercises` bucket, and only for curated pieces: the other
+    // buckets are one signature game per piece rather than a graded ladder,
+    // and an uncurated piece has no curriculum to pace yet.
+    //
+    // Warnings only, by design (lib/content/lint.ts). Pushing these into
+    // `errors` would put the game builder back to breaking the build on every
+    // save, which is the exact failure this replaced.
+    if (CURATED_PIECES.includes(p)) {
+      warnings.push(...lintPieceSequence({ piece: p, exercises: exercises[p] }).warnings);
+    }
   }
   return { exercises, labyrinths, diagonalRun, knightTour, queens, safePath, promotionRun, descriptions, errors, warnings };
 }
