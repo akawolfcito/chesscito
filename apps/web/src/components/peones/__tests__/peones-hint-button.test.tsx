@@ -35,6 +35,8 @@ const messages = {
     insufficient: "Need 2 Peones",
     error: "Hint unavailable",
     rateLimited: "One sec, try again",
+    unavailable: "No hint",
+    cost: "2",
   },
 };
 
@@ -64,6 +66,12 @@ const mockedFailed = vi.mocked(emitPeonesSpendFailed);
 
 const W = "0xabcdef0123456789abcdef0123456789abcdef01";
 
+/** A computable first step. Required for the button to be spendable at
+ *  all (2026-07-21): with no step to glow there is nothing to sell, so
+ *  the pin renders dead instead of charging. Tests that exercise the
+ *  spend path must pass one. */
+const STEP = { file: 0, rank: 7 } as const;
+
 beforeEach(() => {
   mockedAccount.mockReturnValue({
     isConnected: false,
@@ -91,6 +99,7 @@ describe("PeonesHintButton — guest", () => {
       <PeonesHintButton
         piece="rook"
         exerciseId="r-1"
+        firstStep={STEP}
         submitImpl={submitImpl}
       />,
     );
@@ -114,6 +123,7 @@ describe("PeonesHintButton — disabled", () => {
       <PeonesHintButton
         piece="rook"
         exerciseId="r-1"
+        firstStep={STEP}
         disabled
         submitImpl={submitImpl}
       />,
@@ -153,6 +163,7 @@ describe("PeonesHintButton — connected happy path", () => {
       <PeonesHintButton
         piece="rook"
         exerciseId="r-1"
+        firstStep={STEP}
         attemptSeq={1}
         submitImpl={submitImpl}
       />,
@@ -198,6 +209,7 @@ describe("PeonesHintButton — connected happy path", () => {
       <PeonesHintButton
         piece="rook"
         exerciseId="r-1"
+        firstStep={STEP}
         attemptSeq={3}
         submitImpl={submitImpl}
       />,
@@ -247,6 +259,7 @@ describe("PeonesHintButton — connected happy path", () => {
       <PeonesHintButton
         piece="rook"
         exerciseId="r-1"
+        firstStep={STEP}
         submitImpl={submitImpl}
       />,
     );
@@ -399,44 +412,36 @@ describe("PeonesHintButton — connected happy path", () => {
     expect(mockedFailed).not.toHaveBeenCalled();
   });
 
-  it("success without firstStep prop: still reveals + onReveal called with null", async () => {
+  /** Behaviour INVERTED 2026-07-21 (Peones V1 UX). This used to assert
+   *  that a hint with no computable first step still charged and still
+   *  reported `revealed` — i.e. the player paid 2 Peones and got nothing
+   *  on the board. There is no refund path, so the only correct fix is
+   *  to never take the money: no submit, no debit, visible dead state. */
+  it("without a firstStep: never submits a spend and shows the unavailable state", async () => {
     connectWallet();
-    const submitImpl = vi.fn().mockResolvedValue({
-      kind: "success",
-      wallet: W,
-      target: "hint",
-      targetId: "rook:r-1:1",
-      requested: 2,
-      debited: 1,
-      newBalance: 9,
-      attestationHash: "sha256:abc",
-      ledgerId: 42,
-      duplicate: false,
-      proBypassApplied: false,
-      quotaUsed: null,
-      quotaLimit: null,
-    } satisfies PeonesSpendResult);
-
+    const submitImpl = vi.fn();
     const onReveal = vi.fn();
 
     render(
       <PeonesHintButton
         piece="rook"
         exerciseId="r-1"
+        firstStep={null}
         onReveal={onReveal}
         submitImpl={submitImpl}
       />,
     );
 
-    fireEvent.click(screen.getByRole("button"));
+    const root = screen.getByTestId("peones-hint-button");
+    expect(root).toHaveAttribute("data-state", "unavailable");
 
-    await waitFor(() =>
-      expect(screen.getByTestId("peones-hint-button")).toHaveAttribute(
-        "data-state",
-        "revealed",
-      ),
-    );
-    expect(onReveal).toHaveBeenCalledWith(null);
+    // Non-interactive by construction: there is no button to press, so
+    // the spend cannot be triggered by a tap, a double-tap, or a race.
+    expect(root.querySelector("button")).toBeNull();
+
+    // The debit endpoint is never reached, so there is nothing to refund.
+    expect(submitImpl).not.toHaveBeenCalled();
+    expect(onReveal).not.toHaveBeenCalled();
   });
 });
 
@@ -458,6 +463,7 @@ describe("PeonesHintButton — connected failure paths", () => {
       <PeonesHintButton
         piece="rook"
         exerciseId="r-1"
+        firstStep={STEP}
         submitImpl={submitImpl}
       />,
     );
@@ -490,6 +496,7 @@ describe("PeonesHintButton — connected failure paths", () => {
       <PeonesHintButton
         piece="rook"
         exerciseId="r-1"
+        firstStep={STEP}
         submitImpl={submitImpl}
       />,
     );
@@ -515,7 +522,7 @@ describe("PeonesHintButton — connected failure paths", () => {
 describe("PeonesHintButton — side-effect tripwires", () => {
   it("guest path does NOT call global fetch", () => {
     const fetchSpy = fetchTripwire();
-    render(<PeonesHintButton piece="rook" exerciseId="r-1" />);
+    render(<PeonesHintButton piece="rook" exerciseId="r-1" firstStep={STEP} />);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -525,7 +532,7 @@ describe("PeonesHintButton — side-effect tripwires", () => {
       address: W,
     } as never);
     const fetchSpy = fetchTripwire();
-    render(<PeonesHintButton piece="rook" exerciseId="r-1" />);
+    render(<PeonesHintButton piece="rook" exerciseId="r-1" firstStep={STEP} />);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -556,6 +563,7 @@ describe("PeonesHintButton — side-effect tripwires", () => {
       <PeonesHintButton
         piece="rook"
         exerciseId="r-1"
+        firstStep={STEP}
         submitImpl={submitImpl}
       />,
     );
@@ -595,6 +603,7 @@ describe("PeonesHintButton — PRO bypass (Sprint 4 commit G)", () => {
       <PeonesHintButton
         piece="rook"
         exerciseId="r-1"
+        firstStep={STEP}
         submitImpl={submitImpl}
       />,
     );
@@ -629,7 +638,7 @@ describe("PeonesHintButton — icon+label (founder D3 follow-up)", () => {
       address: W,
     } as never);
     render(
-      <PeonesHintButton piece="rook" exerciseId="r-1" submitImpl={vi.fn()} />,
+      <PeonesHintButton piece="rook" exerciseId="r-1" firstStep={STEP} submitImpl={vi.fn()} />,
     );
     const button = screen.getByRole("button");
     const icon = button.querySelector("img");
@@ -662,7 +671,7 @@ describe("PeonesHintButton — icon+label (founder D3 follow-up)", () => {
       error: "insufficient_balance",
     });
     render(
-      <PeonesHintButton piece="rook" exerciseId="r-1" submitImpl={submitImpl} />,
+      <PeonesHintButton piece="rook" exerciseId="r-1" firstStep={STEP} submitImpl={submitImpl} />,
     );
     fireEvent.click(screen.getByRole("button"));
     await waitFor(() =>
@@ -677,7 +686,7 @@ describe("PeonesHintButton — icon+label (founder D3 follow-up)", () => {
   });
 
   it("guest pin keeps the sprite (uniform action row) but is non-interactive", () => {
-    render(<PeonesHintButton piece="rook" exerciseId="r-1" />);
+    render(<PeonesHintButton piece="rook" exerciseId="r-1" firstStep={STEP} />);
     const root = screen.getByTestId("peones-hint-button");
     expect(root.querySelector("img")).not.toBeNull();
     expect(root.querySelector("button")).toBeNull();
@@ -727,7 +736,7 @@ describe("PeonesHintButton — rate-limited gets its own transient copy (hint ra
       error: "ledger_unavailable",
     } satisfies PeonesSpendResult);
     render(
-      <PeonesHintButton piece="rook" exerciseId="r-1" submitImpl={submitImpl} />,
+      <PeonesHintButton piece="rook" exerciseId="r-1" firstStep={STEP} submitImpl={submitImpl} />,
     );
     fireEvent.click(screen.getByRole("button"));
     await waitFor(() =>
@@ -744,7 +753,7 @@ describe("PeonesHintButton — rate-limited gets its own transient copy (hint ra
       kind: "insufficient_balance",
     } satisfies PeonesSpendResult);
     render(
-      <PeonesHintButton piece="rook" exerciseId="r-1" submitImpl={submitImpl} />,
+      <PeonesHintButton piece="rook" exerciseId="r-1" firstStep={STEP} submitImpl={submitImpl} />,
     );
     fireEvent.click(screen.getByRole("button"));
     await waitFor(() =>
