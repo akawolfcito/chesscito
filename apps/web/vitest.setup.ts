@@ -3,6 +3,24 @@ import { cleanup } from "@testing-library/react";
 import { createElement, type AnchorHTMLAttributes, type ReactNode } from "react";
 import { afterEach, vi } from "vitest";
 
+// jsdom ships no `Element.prototype.scrollIntoView` at all — it is a layout
+// method, and jsdom does no layout. Any component that scrolls something into
+// view throws the moment it runs.
+//
+// This surfaced as a CI-only failure with every test passing: the drawer
+// schedules the scroll on a 250ms timer (exercise-drawer.tsx:126) and cleans it
+// up correctly on unmount, so on a fast machine the test finishes first and the
+// timer never fires. The slower runner got there, the call threw from the timer
+// queue outside any test's reach, and vitest failed the run on one unhandled
+// error while reporting 491 files and 5459 tests green.
+//
+// A no-op rather than a spy: nothing asserts that a scroll happened, and a
+// shared spy in setup would leak call counts between files. Tests that ever
+// need to assert it should install their own.
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = function scrollIntoView() {};
+}
+
 const testRouter = {
   back: vi.fn(),
   forward: vi.fn(),
