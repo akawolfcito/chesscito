@@ -111,4 +111,28 @@ describe("Get Peones Treasury canary persistence", () => {
       /old\.lifecycle_status in \('CREATED', 'SUBMITTING', 'SUBMITTED', 'CANCELLED', 'FAILED'\)[\s\S]*new\.lifecycle_status in \('SUBMITTED', 'REVERTED'\)/i,
     );
   });
+
+  it("ships a service-role-only, append-only legacy resolution path", () => {
+    const resolutionMigration = fs.readFileSync(
+      path.resolve(process.cwd(), "supabase/migrations/20260721000000_get_peones_legacy_resolution.sql"),
+      "utf8",
+    );
+    const audit = fs.readFileSync(
+      path.resolve(process.cwd(), "../../docs/audits/get-peones-intent-lifecycle-audit.sql"),
+      "utf8",
+    );
+    const runbook = fs.readFileSync(
+      path.resolve(process.cwd(), "../../docs/audits/get-peones-legacy-resolution.sql"),
+      "utf8",
+    );
+    expect(resolutionMigration).toMatch(/treasury_payment_intent_resolutions/i);
+    expect(resolutionMigration).toMatch(/target.lifecycle_status not in \('CREATED', 'SUBMITTING'\)/i);
+    expect(resolutionMigration).toMatch(/target.tx_hash is not null/i);
+    expect(resolutionMigration).toMatch(/treasury_payment_consumptions c where c.intent_id = target.id/i);
+    expect(resolutionMigration).toMatch(/revoke all on function public.resolve_get_peones_legacy_intent/i);
+    expect(resolutionMigration).toMatch(/grant execute on function public.resolve_get_peones_legacy_intent[\s\S]*to service_role/i);
+    expect(audit).toMatch(/date_trunc\('day', i\.created_at\)/i);
+    expect(runbook).toMatch(/treasury_payment_intent_resolutions/i);
+    expect(audit).not.toMatch(/select date_trunc\('day', created_at\)/i);
+  });
 });
