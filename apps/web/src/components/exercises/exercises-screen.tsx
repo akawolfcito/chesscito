@@ -39,6 +39,7 @@ import { bumpStreak, resetStreak, useStreak } from "@/lib/exercises/use-streak";
 import { useWelcomePackClaim } from "@/lib/shop/use-welcome-pack-claim";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { PeonesHintButton } from "@/components/peones/peones-hint-button";
+import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 // PeonesRetryButton intentionally NOT imported — Sprint 5 commit G
 // unmounted the paid Retry chip pending differential-value
 // calibration. The component + tests + spend endpoint support stay
@@ -3704,6 +3705,16 @@ export function ExercisesScreen({
               badgeClaimable={badgeEarned && !hasClaimedBadge && !justClaimed[selectedPiece]}
               onClaimBadge={() => void handleClaimBadge()}
             />
+          }
+          balanceChip={
+            // Peones V1 UX (2026-07-21): the balance must be visible on
+            // the surface where it is spent, not only on the Hub. Sits in
+            // the quest tray next to stars/shields/combo and stays up for
+            // the whole exercise, so a Hint debit is seen where it
+            // happens. Lite ships no Peones surfaces, so it gets none.
+            CHESSCITO_LITE_MODE ? null : (
+              <PeonesBalanceChip surface="exercises" />
+            )
           }
           isReplay={isReplay}
         />
