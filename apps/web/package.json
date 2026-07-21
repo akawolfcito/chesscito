@@ -29,7 +29,9 @@
     "rail:smoke": "tsx scripts/rail-smoke.ts",
     "import-puzzles": "tsx scripts/import-puzzles.ts",
     "migrate-labyrinths": "tsx scripts/migrate-labyrinths.ts",
-    "migrate-exercises": "tsx scripts/migrate-exercises.ts"
+    "migrate-exercises": "tsx scripts/migrate-exercises.ts",
+    "db:backup": "tsx scripts/db/backup.ts",
+    "db:restore-local": "tsx scripts/db/restore-local.ts"
   },
   "comments": {
     "versions": "Team convention — exact pins (no ^ or ~) for every dependency to harden against malicious version-range hijacks. See feedback_exact_version_pins memory."
