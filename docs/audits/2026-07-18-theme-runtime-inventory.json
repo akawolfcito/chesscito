@@ -47,7 +47,7 @@
     }
   ],
   "literalDiff": {
-    "registeredBasenames": 168,
+    "registeredBasenames": 183,
     "discoveredBasenames": 19,
     "unregisteredExistingAssets": [
       {
@@ -1713,7 +1713,8 @@
         "path": "/art/new-assets-chesscito/fun/avatar-feliz"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/shared/feedback-happy/pro"
       },
       "usedIn": [
         "Exercises result",
@@ -1820,7 +1821,8 @@
         "path": "/art/new-assets-chesscito/fun/avatar-confiado"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/shared/feedback-confident/pro"
       },
       "usedIn": [
         "Arena — claiming",
@@ -1934,7 +1936,8 @@
         "path": "/art/new-assets-chesscito/fun/avatar-asustado"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/shared/feedback-scared/pro"
       },
       "usedIn": [
         "Arena — claim error",
@@ -1978,7 +1981,8 @@
         "path": "/art/new-assets-chesscito/fun/avatar-asombrado"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/shared/feedback-surprised/pro"
       },
       "usedIn": [
         "Exercises / payments",
@@ -2475,7 +2479,8 @@
         "path": "/art/screen-mission/avatar-icon"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/shared/mission-avatar/pro"
       },
       "usedIn": [
         "Arena",
@@ -2979,7 +2984,8 @@
         "path": "/art/new-assets-chesscito/fun/avatar-triste"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/shared/feedback-sad/pro"
       },
       "usedIn": [
         "Overlays / modals — sad reaction",
@@ -3034,7 +3040,8 @@
         "path": "/art/new-assets-chesscito/fun/avatar-pensativo"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/shared/feedback-thinking/pro"
       },
       "usedIn": [
         "Overlays / modals — thinking reaction"
@@ -3075,7 +3082,8 @@
         "path": "/art/new-assets-chesscito/fun/avatar-interrogativo"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/shared/feedback-questioning/pro"
       },
       "usedIn": [
         "Overlays / modals — questioning reaction",
@@ -3163,7 +3171,8 @@
         "path": "/art/title-chesscito"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/brand/title/pro"
       },
       "usedIn": [
         "Brand — Chesscito wordmark",
@@ -3278,7 +3287,8 @@
         "path": "/art/avatar-fun"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/exercises/avatar-fun/pro"
       },
       "usedIn": [
         "Exercises — success avatar (mission panel)",
@@ -3322,7 +3332,8 @@
         "path": "/art/avatar-try-again"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/exercises/avatar-try-again/pro"
       },
       "usedIn": [
         "Exercises — try-again avatar",
@@ -4848,7 +4859,8 @@
         "path": "/art/chesscito-pro/chesscito-header-pro-icon"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/pro-sheet/header-icon/pro"
       },
       "usedIn": [
         "PRO sheet — header icon",
@@ -4980,7 +4992,8 @@
         "path": "/art/bg-sesion-great"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/daily/bg-session/pro"
       },
       "usedIn": [
         "Daily — great session background",
@@ -6670,7 +6683,8 @@
         "path": "/art/redesign/bg/splash-loading"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/bg/splash-loading/pro"
       },
       "usedIn": [
         "Splash loading background",
@@ -7045,7 +7059,8 @@
         "path": "/art/new-icons-chesscito/avatar-blue"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/arena/player-you/pro"
       },
       "usedIn": [
         "Arena — 'you' player avatar",
