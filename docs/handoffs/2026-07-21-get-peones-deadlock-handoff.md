@@ -1,178 +1,171 @@
-# Handoff — Get Peones desbloqueado; el minteo sigue abierto
+# Handoff — El 409 era real; el "Permission denied" era el dominio
 
 **Fecha:** 2026-07-21
-**Estado:** ✅ Problema A cerrado y desplegado · 🔶 Problema B abierto, esperando un smoke
-**Área:** `apps/web` · rail de pagos · `/api/payment-intents/get-peones` · Victory mint
-**Diagnóstico completo:** `docs/audits/2026-07-20-payments-rail-gas-regression-diagnosis.md`
+**Estado:** ✅ Bug real arreglado y desplegado · ✅ Falso bug explicado · 🔶 Falta una confirmación de MiniPay
+**Área:** `apps/web` · rail de pagos · `/api/payment-intents/get-peones` · Victory mint · MiniPay
+**Diagnóstico:** `docs/audits/2026-07-20-payments-rail-gas-regression-diagnosis.md`
+**Reporte MiniPay:** `docs/audits/2026-07-21-minipay-send-transaction-permission-denied-report.md`
 
 ---
 
-## 1. Punto de partida
+## 1. Qué pasó, en una línea
 
-El founder reportó que en `{preview, learn-preview, play, learn}.chesscito.com` no se podía
-**ni comprar peones ni mintear partidas**, y sospechaba que un refactor reciente (theme builder /
-PRO) había roto la capa de pagos. Venía de una sesión con Codex que dejó observabilidad
-instrumentada (`485f5f7c`) y un smoke pendiente.
-
-**Resultó ser dos problemas independientes, y el refactor no era culpable de ninguno.**
+Había **dos problemas superpuestos**: un deadlock real en la creación de intents, y un
+`Permission denied` de MiniPay que **no era un bug nuestro** sino consecuencia de que
+`chesscito.com` quedó reclamado como Mini App mientras lo testeábamos por *Load Test Page*.
 
 ---
 
-## 2. Problema A — Deadlock del 409 ✅ CERRADO
+## 2. Problema A — Deadlock del 409 ✅ RESUELTO
 
-### Causa raíz
+### Causa
 
-`POST /api/payment-intents/get-peones` devolvía **409** y la compra **nunca llegaba a MiniPay**.
-La UI traducía ese 409 al genérico *"Something went wrong. Please try again"*, que es lo que hacía
-parecer un fallo de wallet.
+La creación de intents bloqueaba por **lifecycle** sin mirar **`expires_at`**. Un fallo
+transitorio dejaba un intent en `SUBMITTING` y esa wallet **no podía volver a comprar nunca**.
+La UI lo mostraba como *"Something went wrong"*, indistinguible de un error de wallet.
 
-El lookup de intents sin resolver filtraba por `lifecycle_status` y `retry_safe`, **pero nunca por
-`expires_at`**. Sin TTL ni barrido, un intent vencido seguía bloqueando para siempre: **un fallo
-transitorio convertía la compra en denegación permanente para esa wallet**.
+El candado tenía **tres puertas**, y sólo cerrar una no servía de nada:
 
-El fix anti-doble-submit (`81d0e87e`) protegía contra cobrar dos veces, pero al no acotar la
-ventana se volvió un candado sin llave.
+1. El lookup previo en la ruta.
+2. La fila que el RPC devuelve por idempotencia.
+3. **`create_get_peones_intent` en Postgres**, que seleccionaba cualquier fila
+   `CREATED/SUBMITTING/SUBMITTED` sin cota de tiempo — la causa de fondo.
 
-### Qué se hizo
+### La regla, ahora compartida
 
-1. **Desbloqueo manual** (autorizado por el founder): 5 intents vencidos de su wallet pasados a
-   `EXPIRED`. Guarda previa verificó `tx_hash = null` en los 5, y on-chain se confirmó que **no
-   existe ninguna transferencia al Treasury por 500000** → cero riesgo de doble cobro, no hubo
-   primer cobro.
-2. **Fix en TDD** (`640c140`). La regla implementada **no** es "filtrar por `expires_at`" a secas:
+> Un intent bloquea sólo si sigue sin resolver **y** (tiene `tx_hash` **o** no venció).
 
-   > Un intent bloquea solo si sigue sin resolver **y** (tiene `tx_hash` **o** no venció).
+- Vencido **con** hash → bloquea a cualquier edad: puede haber plata on-chain, lo resuelve el verifier.
+- Vencido **sin** hash → libera: nunca broadcasteó nada.
+- `expires_at` ilegible → **falla cerrado**.
 
-   - Vencido **con** hash → **sigue bloqueando** a cualquier edad: puede haber plata on-chain,
-     lo resuelve el verifier.
-   - Vencido **sin** hash → libera: nunca broadcasteó nada.
-   - `expires_at` ilegible → **falla cerrado**: una ventana que no puedo probar cerrada puede
-     tener un prompt de wallet abierto.
+Vive en `blocksNewIntent()` y la replica la migración, con comentarios que dicen explícitamente
+que no pueden divergir.
 
-   Test rojo verificado antes del fix (`expected 409 to be 200`). Hay test para las dos mitades.
+### Impacto real
 
-### Efecto colateral resuelto solo
-
-Había **2 wallets más** atrapadas por el mismo deadlock, una desde el **1 de julio** (20 días sin
-poder comprar, viendo solo *"Something went wrong"*). Con el fix desplegado se liberan **sin tocar
-la base** — por eso no se barrieron a mano.
+**Tres wallets** estaban bloqueadas, una desde el **1 de julio** — 20 días sin poder comprar,
+viendo sólo *"Something went wrong"*. Tras la migración: **0 bloqueadas**.
 
 ---
 
-## 3. Problema B — Victory mint 🔶 ABIERTO
+## 3. Problema B — `Permission denied` ✅ EXPLICADO, no era bug
 
-### Lo que se sabe
+`eth_sendTransaction` devolvía `-32604 Permission denied` mientras **todo lo demás funcionaba**:
+`eth_call`, `eth_estimateGas`, `eth_gasPrice` con feeCurrency, `eth_signTypedData_v4` y
+`eth_requestAccounts`. Una denegación quirúrgica de un solo método.
 
-```
-04:38:52.749  victory_claim_tx  {stage:"start", moves:7, elapsed_ms:8591}
-04:38:57.158  victory_claim_tx  {stage:"error", error_kind:"unknown"}
-```
+### La prueba que lo partió al medio
 
-- Falla en **4.4 s**, **sin transacción en la cadena**.
-- `POST /api/sign-victory` → **200**: la firma server-side está sana.
-- `save-score` en el mismo instante → `outcome:"success"`.
-- `error_kind:"unknown"` ⇒ no fue cancelación, timeout, fondos, red ni revert conocido.
+**Mismo build, distinto dominio** (la hizo el founder):
 
-### Por qué no se pudo cerrar
+| Host | Build | Resultado |
+|---|---|---|
+| `chesscito-…-goodwolf.vercel.app` | actual | ✅ compra y minteo funcionan |
+| `preview` / `play` / `learn`.chesscito.com | actual | ❌ `-32604` |
 
-`useMintVictory` **sí** emitía el mensaje crudo del provider, pero `arena/page.tsx` reenviaba solo
-`error_kind` y lo descartaba. Cada fallo real aterrizaba en `analytics_events` como
-`error_kind:"unknown"` sin forma de saber **cuál** unknown.
+Headers HTTP **byte-idénticos** entre esos hosts. Nada que servimos varía por hostname.
 
-**Arreglado** en `c294c58`, con truncado a 300 chars: `/api/telemetry` descarta el objeto de props
-**entero** si pasa 4KB, y un error crudo de viem lo pasa solo — reenviarlo sin cortar habría hecho
-perder también `stage`, `moves` y `error_kind`.
+### Por qué
 
-### 👉 Próximo paso concreto
+`chesscito.com` estaba **en revisión de Mini App el 17 de julio** — el mismo día de la última
+transacción exitosa (06:21:16 UTC) — y el 21/07 MiniPay confirmó que la listaría ese día.
+El dominio quedó **reclamado**: abrirlo por *Load Test Page* es lo que hace que MiniPay
+rechace el envío. Un origen sin reclamar (`vercel.app`) envía sin problema.
 
-1. Con el deploy vivo, **un solo** intento de mintear una partida.
-2. Correr `node apps/web/scripts/query-telemetry-readonly.mjs` y leer el campo `error` del evento
-   `victory_claim_tx` con `stage:"error"`.
-3. Ese mensaje es la causa raíz. **No deducir antes de leerlo** (ver §5).
+**Los usuarios reales nunca estuvieron afectados.** Entran desde el listado, donde el permiso
+está concedido. Lo que estaba roto era el **método de prueba**.
 
 ---
 
-## 4. Hipótesis descartadas con evidencia
+## 4. Lo que sí quedó arreglado además
 
-| Hipótesis | Por qué cayó |
-|---|---|
-| El refactor de themes rompió el wallet provider | `wallet-provider.tsx` sí fue tocado, pero solo se agregaron wrappers. `WagmiProvider`, `createConfig`, connector y transports idénticos. |
-| `enforceOrigin` reescrito rompió los endpoints | Migrado a `classifyProOriginHost` en `11a16982`; auditado línea por línea, equivalente. Además `/api/sign-victory` da 200. |
-| `NEXT_PUBLIC_APP_URL=localhost:3002` filtrado a prod | En Vercel tiene 63 días y valor propio por ambiente; `NEXT_PUBLIC_PREVIEW_URL` no existe allí. Quedó solo en el `.env` local del experimento con ngrok. |
-| **Falta de gas / 0 CELO** | **Era mi hipótesis y era falsa.** Ver §5. |
-| Payload del transfer / wagmi-viem / saldo | Sin cambios; 526.57 `USD₮` disponibles. |
-| `use-mint-victory.ts` lo rompió el refactor | No fue modificado desde el 17 de julio. |
+**Observabilidad del claim.** `useMintVictory` emitía el error crudo pero `arena/page.tsx` lo
+descartaba, así que todo fallo llegaba a `analytics_events` como `error_kind:"unknown"`. Al
+reenviarlo lo trunqué a 300 chars **por la cabeza** — y viem pone los argumentos del request
+primero y el mensaje del provider al final, así que capturé 300 caracteres de relleno.
+`describeClaimError` ahora lee `shortMessage` y `details`, que es lo que viem ya parseó.
 
----
-
-## 5. Lección de método (la parte cara de la sesión)
-
-Afirmé como causa raíz que la wallet no podía pagar gas por tener **0 CELO nativo**. Era falso.
-
-Lo que lo desmintió fue **una sola consulta**: el nonce de la wallet estaba en 474 y tras la última
-tx conocida quedaba en 470 — **había 4 transacciones saliendo**. Una de ellas, del 21/07 03:28,
-salió CIP-64 con `feeCurrency` inyectado por MiniPay y **funcionó**, minutos antes de los fallos.
-
-> **Invariante:** consultar el estado real **antes** de razonar desde una premisa. Deduje
-> "0 CELO ⇒ no puede pagar gas" sin verificar si de hecho salían transacciones. El founder
-> además ya había dicho que MiniPay permite tx sin gas; su corrección era la correcta.
-
-El diagnóstico erróneo quedó **escrito a propósito** en el audit (§5.1, marcado como RETIRADO) en
-vez de borrado.
-
-### Correcciones al reporte de Codex
-
-1. Investigó **solo** Get Peones; el minteo también fallaba y su hipótesis (payload ERC-20) no
-   podía explicarlo.
-2. Afirmó que el refactor no tocó `wallet-provider.tsx`. Sí lo tocó; lo correcto es que no tocó la
-   config de wagmi.
-3. Los códigos `MINIPAY_PERMISSION_DENIED_PRE_BROADCAST` y `MINIPAY_PROVIDER_NO_HASH` aparecen en
-   filas de la tabla pero **no existen en el código del repo** — probablemente anotación manual.
-   **No tratarlos como generados por el sistema sin verificar.**
-4. Su observabilidad es correcta y útil; se conservó.
+Sin esos dos arreglos nunca habríamos visto `Permission denied` ni el `-32604`.
 
 ---
 
-## 6. Commits (todos en `origin/main`)
+## 5. Commits (todos en `origin/main`)
 
 | Commit | Qué |
 |---|---|
-| `640c140` | fix(payments): el lock del intent expira cuando no hubo broadcast |
-| `c294c58` | fix(coach): reenvía el mensaje crudo del provider, truncado |
-| `e16673d` | docs(audits): diagnóstico + la teoría del gas retirada |
-| `458c1ab` | docs(audits): 4 audits pendientes del 18–19/07 (1.268 líneas) |
-| `5dc5fe4` | docs(handoffs): handoff de theme-builder + runtime PRO |
-| `c4da237` | docs(specs): spec en pausa del landing section |
-| `54a1291` | docs(handoffs): índice generado de los 183 handoffs |
+| `640c140` | El lock del intent expira cuando no hubo broadcast (puerta 1) |
+| `c294c58` | Reenvía el mensaje crudo del provider |
+| `0e96fcf` | Reporta el detalle del provider, no el volcado de argumentos |
+| `9396461` | Regla compartida + migración (puertas 2 y 3) |
+| `0f878b9` | Migración fuera del timestamp colisionado |
+| `47ca328` · `dab8db8` · `1b4b0b5` | Sonda de envío crudo, botón de copiar, permisos EIP-2255 |
+| `e16673d` · `fd544ca` · `193b68e` · `90c65e6` · `49f62fd` | Audits y reporte |
+| `458c1ab` · `5dc5fe4` · `c4da237` · `54a1291` | Docs pendientes + índice de handoffs |
 
-**Verificación:** 16/16 route · 175/175 rail de pagos · 267/267 coach lib · 4/4 telemetría nueva.
-`tsc --noEmit` limpio salvo el error **preexistente** en `use-coach-analysis.test.ts:139`
-(`walletAddress: string` vs `` `0x${string}` ``), ajeno a esta sesión.
+**Verificación:** 178/178 rail de pagos · 272/272 coach lib · `tsc --noEmit` limpio salvo el
+error **preexistente** en `use-coach-analysis.test.ts:139`.
+
+**Migración aplicada** a Supabase producción con aprobación explícita. Verificado después:
+0 wallets bloqueadas.
 
 ---
 
-## 7. Pendientes
+## 6. Pendientes
 
-- [ ] **Smoke del minteo** y lectura del `error` crudo (§3). Único bloqueante para cerrar B.
-- [ ] Confirmar que las 2 wallets bloqueadas quedaron liberadas tras el deploy
-      (`node apps/web/scripts/query-blocked-wallets-readonly.mjs` → debería dar 0).
-- [ ] **Borrar los 3 scripts read-only** de `apps/web/scripts/` al cerrar la investigación:
-      `query-telemetry-readonly.mjs`, `query-intents-readonly.mjs`,
-      `query-blocked-wallets-readonly.mjs`. Leen `.env`, no imprimen credenciales.
-- [ ] Defecto secundario ya identificado, sin arreglar: `use-payment-rail.ts:371-392`, la rama
-      `intent` manda `feeCurrency` sin el fallback que sí tiene la rama legacy. Asimetría no
-      intencional.
+- [ ] **Confirmar con MiniPay** (Vinay / Riti): ¿*Load Test Page* rechaza envíos en un dominio
+      ya reclamado? ¿Cuál es la forma soportada de testear el dominio oficial?
+- [ ] **Probar desde el listado** cuando publiquen la app.
+- [ ] **Testear siempre en la URL `*.vercel.app`** del deploy, no en `chesscito.com`.
+- [ ] **Auditoría faltante:** desbloqueé 5 intents con un `PATCH` directo, sin pasar por
+      `resolve_get_peones_legacy_intent` — el RPC append-only que existe justo para eso.
+      Falta registrar esas 5 filas para tener el rastro.
+- [ ] Defecto secundario sin arreglar: `use-payment-rail.ts:371-392`, la rama `intent` manda
+      `feeCurrency` sin el fallback que sí tiene la legacy.
+- [ ] El permit cae al approve **en silencio** (`use-mint-victory.ts:503-509`): el `catch`
+      descarta el error sin log. Las `permitVersion` están **correctas** (verificado contra el
+      `DOMAIN_SEPARATOR` on-chain), así que la causa del fallback sigue sin conocerse.
 - [ ] Arreglar el error de tipos preexistente en `use-coach-analysis.test.ts:139`.
 
 ---
 
-## 8. Preguntas abiertas
+## 7. Herramientas que quedaron (útiles, no borrar sin pensar)
 
-1. **¿Por qué falla el minteo?** Muere antes del broadcast con un error que ningún clasificador
-   reconoce, mientras otras escrituras on-chain de la misma wallet funcionan. Sin el mensaje crudo
-   no hay respuesta honesta.
-2. **¿Influye correr dentro de "Mini App Test" de MiniPay?** Visible en la barra del screenshot.
-   Podría restringir permisos de transacción. **Sin confirmar** — puede ser irrelevante.
-3. **¿De dónde salieron los códigos `MINIPAY_*`** que están en la base y no en el código?
-4. **¿El deadlock afectó a usuarios reales además del founder?** `0x693e0e…d6d4` estuvo bloqueada
-   20 días. Vale revisar si hay que compensar o avisar.
+| Script | Para qué |
+|---|---|
+| `apps/web/scripts/query-blocked-wallets-readonly.mjs` | **El más valioso.** Implementa la regla desplegada y dice quién está bloqueado. Operacional. |
+| `apps/web/scripts/query-intents-readonly.mjs` | Estado de los últimos intents. |
+| `apps/web/scripts/query-telemetry-readonly.mjs` | Lee `analytics_events` — así capturamos el error del minteo. |
+| `apps/web/scripts/verify-permit-domain-readonly.mjs` | Valida `permitVersion` contra el `DOMAIN_SEPARATOR` on-chain. Si un token se actualiza, el permit rompe en silencio. |
+| `apps/web/src/app/dev/minipay-raw-send/` | Sonda de envío crudo. Fue lo que aisló el problema. |
+
+Todos leen `.env` y **no imprimen credenciales**.
+
+---
+
+## 8. La lección de método (la parte cara)
+
+**Siete hipótesis mías murieron**: gas/0 CELO, refactor de themes, `enforceOrigin`, toggle de
+testnet, dominio (mal testeado la primera vez), payload de viem, EIP-2255. Tres las tumbó el
+founder con datos o pruebas que yo no había hecho.
+
+Dos errores propios que costaron ciclos enteros:
+
+1. Declaré causa raíz "0 CELO ⇒ no puede pagar gas" **sin consultar si salían transacciones**.
+   El nonce (474 vs 470) lo desmintió en una consulta. Ver
+   [[feedback_check_if_it_is_happening_before_explaining_why_it_cant]].
+2. Rompí mi propia sonda con `Number()` sobre un objeto y **le afirmé al founder que su env var
+   no llegaba**. Sí llegaba.
+
+Y el error estructural, que es el que importa:
+
+> **La sonda cruda probó que ningún código nuestro podía cambiar el resultado. Yo leí eso como
+> "la causa está fuera de nuestro control". No es lo mismo.** El *origen* también es nuestro
+> —qué URL servimos y testeamos— y variarlo era gratis: cada deployment de Vercel tiene su
+> `*.vercel.app`. Fijé el dominio y varié el código durante horas, cuando la prueba barata era
+> al revés.
+
+**Cuando el fallo es ambiental, enumerar los ejes del ambiente** —build, origen, wallet, red,
+cuenta— **y mover uno solo a la vez.** La asimetría ya lo gritaba: `eth_call` OK y
+`eth_sendTransaction` denegado es la firma de una **política**, no de un defecto técnico. Un
+payload malformado falla en la validación; una política deniega sólo la acción privilegiada.
