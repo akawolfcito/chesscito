@@ -15,6 +15,41 @@ export const LOCAL_DB_HOSTS = ["127.0.0.1", "localhost"] as const;
 /** project_id = "web" ⇒ container supabase_db_web. */
 export const LOCAL_CONTAINER_PREFIX = "supabase_db_";
 
+/**
+ * The role the restore connects as.
+ *
+ * Not `postgres`: in the Supabase container that role lacks SUPERUSER, so
+ * `DROP DATABASE ... WITH (FORCE)` cannot terminate the stack's own
+ * supabase_admin connections — measured, nine of them. It is also the role that
+ * can recreate objects owned by others, which roles.sql and schema.sql need.
+ */
+export const RESTORE_ROLE = "supabase_admin";
+
+/**
+ * Precondition for every destructive statement in the restore.
+ *
+ * Checked inside the container against the live session rather than assumed
+ * from the connection arguments: what matters is the privilege psql actually
+ * has, not the one we asked for. Fails closed on anything unreadable — an empty
+ * answer means the query did not run, and reading that as a pass is how a
+ * precondition quietly stops being one.
+ */
+export function assertSuperuserSession(currentUser: string, isSuperuser: string): void {
+  const user = currentUser.trim();
+  const superuser = isSuperuser.trim();
+
+  if (user !== RESTORE_ROLE) {
+    throw new Error(
+      `Refusing to restore: session is ${user || "(unknown)"}, expected ${RESTORE_ROLE}.`,
+    );
+  }
+  if (superuser !== "on") {
+    throw new Error(
+      `Refusing to restore: session is not superuser (is_superuser=${superuser || "(unreadable)"}).`,
+    );
+  }
+}
+
 /** The tables the post-restore check verifies. Not the whole schema — these are
  *  the ones whose loss would make the migration rehearsal meaningless. */
 export const CRITICAL_TABLES = [

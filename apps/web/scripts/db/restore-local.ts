@@ -19,8 +19,10 @@ import {
   DUMP_FILES,
   LOCAL_CONTAINER_PREFIX,
   MANIFEST_NAME,
+  RESTORE_ROLE,
   type RestoreObservation,
   assertLocalTarget,
+  assertSuperuserSession,
   evaluatePostRestore,
   parseManifest,
 } from "./lib";
@@ -29,11 +31,21 @@ const REPO_ROOT = path.resolve(__dirname, "../../../..");
 const WEB_DIR = path.join(REPO_ROOT, "apps/web");
 const CONTAINER = `${LOCAL_CONTAINER_PREFIX}web`; // project_id = "web"
 
+/**
+ * The local stack's own password, taken from the DB_URL the guard already
+ * validated. Not a constant in this file: it belongs to whatever local stack is
+ * running. Never logged, and never passed in argv — `docker exec -e PGPASSWORD`
+ * with no value forwards it from this process's environment instead, keeping it
+ * out of `ps`, the same way backup.ts handles the production password.
+ */
+let localPassword = "";
+
 function run(cmd: string, args: string[], input?: string): string {
   return execFileSync(cmd, args, {
     encoding: "utf8",
     input,
     maxBuffer: 512 * 1024 * 1024,
+    env: { ...process.env, PGPASSWORD: localPassword },
   });
 }
 
@@ -42,10 +54,12 @@ function psql(sql: string, database = "postgres"): string {
   return run("docker", [
     "exec",
     "-i",
+    "-e",
+    "PGPASSWORD",
     CONTAINER,
     "psql",
     "-U",
-    "postgres",
+    RESTORE_ROLE,
     "-d",
     database,
     "-v",
@@ -65,10 +79,12 @@ function psqlFile(sqlText: string): void {
     [
       "exec",
       "-i",
+      "-e",
+      "PGPASSWORD",
       CONTAINER,
       "psql",
       "-U",
-      "postgres",
+      RESTORE_ROLE,
       "-d",
       "postgres",
       "-v",
@@ -104,7 +120,23 @@ function main(): void {
   assertLocalTarget(dbUrl, CONTAINER);
   console.log(`Target verified: ${CONTAINER} on loopback:55322`);
 
+  // Only read after the guard has confirmed this URL is the local stack.
+  localPassword = new URL(dbUrl).password;
+  if (!localPassword) {
+    throw new Error("Refusing to restore: the local stack reported no database password");
+  }
+
   // ── Phase C: restore ─────────────────────────────────────────────────────
+  // The privilege the session actually holds, asked of the session itself.
+  // The first attempt failed here as `postgres`, which is not a superuser in
+  // this container and so could not terminate the stack's own connections.
+  const [sessionUser, sessionSuperuser] = psql(
+    "select current_user, current_setting('is_superuser')",
+    "template1",
+  ).split("|");
+  assertSuperuserSession(sessionUser ?? "", sessionSuperuser ?? "");
+  console.log(`Session verified: ${RESTORE_ROLE}, superuser on`);
+
   // Connect to template1 to drop `postgres`; FORCE evicts the stack's own
   // pooled connections, which reconnect on their own afterwards.
   console.log("Recreating the local database …");

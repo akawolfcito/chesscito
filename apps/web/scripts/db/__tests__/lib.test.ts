@@ -9,7 +9,9 @@ import {
   type BackupManifest,
   parseManifest,
   type RestoreObservation,
+  RESTORE_ROLE,
   assertLocalTarget,
+  assertSuperuserSession,
   countCopyRows,
   evaluatePostRestore,
   formatBackupStamp,
@@ -250,6 +252,36 @@ describe("parseAppliedMigrationVersions", () => {
   it("returns an empty array when the ledger block is missing", () => {
     // Callers treat this as a failed backup, not as a virgin database.
     expect(parseAppliedMigrationVersions("SET statement_timeout = 0;")).toEqual([]);
+  });
+});
+
+describe("assertSuperuserSession", () => {
+  // The first restore attempt died here: `postgres` is not a superuser in the
+  // Supabase container, so DROP DATABASE ... WITH (FORCE) could not terminate
+  // the nine supabase_admin connections. This turns that discovery into a
+  // precondition checked before any destructive statement is emitted.
+
+  it("accepts a superuser session as supabase_admin", () => {
+    expect(() => assertSuperuserSession(RESTORE_ROLE, "on")).not.toThrow();
+  });
+
+  it("rejects postgres, the role that could not terminate superuser processes", () => {
+    expect(() => assertSuperuserSession("postgres", "on")).toThrow(/supabase_admin/);
+  });
+
+  it("rejects the right role without the superuser attribute", () => {
+    expect(() => assertSuperuserSession(RESTORE_ROLE, "off")).toThrow(/superuser/i);
+  });
+
+  it("rejects empty or unreadable psql output instead of assuming success", () => {
+    // An empty answer means the query did not run. Treating that as a pass is
+    // how a precondition check silently stops checking anything.
+    expect(() => assertSuperuserSession("", "")).toThrow();
+    expect(() => assertSuperuserSession(RESTORE_ROLE, "")).toThrow(/superuser/i);
+  });
+
+  it("tolerates the whitespace psql leaves around values", () => {
+    expect(() => assertSuperuserSession(` ${RESTORE_ROLE} `, " on ")).not.toThrow();
   });
 });
 
