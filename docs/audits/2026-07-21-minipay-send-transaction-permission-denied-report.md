@@ -38,6 +38,19 @@
 | `play.chesscito.com` | yes, current | ❌ `-32604` | ❌ `-32604` |
 | `learn-preview.chesscito.com` | yes, current | ❌ `-32604` | — |
 
+### Positive control — the same probe, same wallet, minutes apart
+
+Run from the `vercel.app` origin, `eth_sendTransaction` **succeeds**, both with and without an
+explicit `feeCurrency`:
+
+| Tx | `feeCurrency` sent | Status | Type |
+|---|---|---|---|
+| `0x8d737a379ba7d1c175ea3c820e531466932e4990cff383896b6bdcbe5a4b4685` | yes | ✅ `0x1` | `0x7b` (CIP-64) |
+| `0x425c360b5fdef789212481f559908ed15eb8f7d0172af6e26fc8024f2f85167d` | **no** | ✅ `0x1` | `0x7b` (CIP-64) |
+
+Note the second one: sent with **no** `feeCurrency`, it still lands as CIP-64 — MiniPay injects
+the fee currency itself. Gas is not, and never was, the issue.
+
 Response headers are byte-identical across all of these hosts (`permissions-policy`,
 `x-frame-options`, CSP, HSTS — all the same). Nothing we serve varies by hostname, so no
 change on our side can produce this. The decision is made by MiniPay from the origin.
