@@ -38,7 +38,13 @@ Called directly on `window.ethereum`, bypassing wagmi and viem entirely. Payload
 | `eth_call` | ✅ returns `0x…01` — the transfer would succeed |
 | `eth_gasPrice` with `feeCurrency` param | ✅ `0x353dd900b`, mode `feeCurrencyParam` |
 | `eth_signTypedData_v4` | ✅ (EIP-2612 permit signs fine) |
+| `eth_requestAccounts` | ✅ returns `["0xcc4179…c2dd"]` — the account **is** authorized on request |
+| `wallet_getPermissions` | ❌ `-32601 Method not found` — EIP-2255 is not implemented |
 | **`eth_sendTransaction`** | ❌ **`-32604 Permission denied`** |
+
+So the denial is not a missing account grant: calling `eth_requestAccounts` immediately
+before the send returns the account, and the send is still refused. And it cannot be resolved
+through EIP-2255, because MiniPay does not expose that permission system at all.
 
 The exact request that is refused:
 
@@ -94,6 +100,8 @@ fee currency and gasless sending all work — just not for this app.
 | Domain | `preview`, `play` and `learn` subdomains all fail identically. |
 | Insufficient balance | 526.57 USD₮ available; the transfer is 0.000001. |
 | Our app being unreachable | Every other provider method succeeds. |
+| Missing account authorization | `eth_requestAccounts` succeeds immediately before the send; the send is still refused. |
+| A revocable EIP-2255 permission | `wallet_getPermissions` returns `-32601 Method not found`. |
 
 ## 5. Questions for MiniPay
 
@@ -101,7 +109,9 @@ fee currency and gasless sending all work — just not for this app.
 2. Does `eth_sendTransaction` require a mini app to be **registered/approved**, while
    read methods and signing do not? Did that requirement change on or after 2026-07-17?
 3. Does **Load Test Page** grant send permission at all, or must the app be published?
-4. Is there a permission a user can grant to unblock it, and where in the UI?
+4. Is there a permission a user can grant to unblock it, and where in the UI? `eth_requestAccounts`
+   already succeeds and `wallet_getPermissions` is not implemented, so we have no way to
+   discover or request whatever is missing.
 
 ## 6. Reproduction
 
