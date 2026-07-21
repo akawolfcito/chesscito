@@ -61,7 +61,7 @@ function makeRequest(body: unknown | string): Request {
 function baseBody(over: Partial<Record<string, unknown>> = {}) {
   return {
     wallet: W,
-    amount: 1,
+    amount: 2,
     target: "hint",
     targetId: "rook:r-1:3",
     idempotencyKey: `spend:hint:${W}:rook:r-1:3`,
@@ -127,13 +127,82 @@ describe("POST /api/peones/spend — validation", () => {
     expect(await res.json()).toEqual({ error: "invalid_wallet" });
   });
 
-  it("400 unknown_target when target is not in Sprint 4 allow-list", async () => {
+  it("400 unknown_target when target is not in the allow-list", async () => {
     const res = await POST(
       makeRequest(baseBody({ target: "labyrinth_key" })),
     );
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "unknown_target" });
   });
+
+  // Economy V1 retired both sinks. Retry and basic save are FREE
+  // actions in the product, so accepting these targets meant the
+  // endpoint would happily burn a balance for something nobody bought.
+  // A well-formed request — right price, right key prefix — must still
+  // be refused; the rejection has to come from the allow-list, not from
+  // a price or prefix mismatch that a client could fix.
+  it("400 unknown_target for retry, even with a well-formed body", async () => {
+    const { client, captured } = buildSupabaseMock({});
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(
+        baseBody({
+          amount: 2,
+          target: "retry",
+          targetId: "queen:q-2:7",
+          idempotencyKey: `spend:retry:${W}:queen:q-2:7`,
+        }),
+      ),
+    );
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "unknown_target" });
+    // No debit was even attempted.
+    expect(captured.length).toBe(0);
+  });
+
+  it("400 unknown_target for save_game, even with a well-formed body", async () => {
+    const { client, captured } = buildSupabaseMock({});
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(
+        baseBody({
+          amount: 1,
+          target: "save_game",
+          targetId: "g-99",
+          idempotencyKey: `spend:save_game:${W}:g-99`,
+        }),
+      ),
+    );
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "unknown_target" });
+    expect(captured.length).toBe(0);
+  });
+
+  // The server is the sole source of truth for price. A client that
+  // remembers yesterday's cheaper prices must be refused rather than
+  // charged the old amount.
+  it.each([
+    { target: "hint", stale: 1, key: `spend:hint:${W}:rook:r-1:3`, id: "rook:r-1:3" },
+    { target: "coach", stale: 1, key: `spend:coach:${W}:g-1`, id: "g-1" },
+    { target: "shield", stale: 2, key: `spend:shield:${W}:7`, id: "7" },
+  ])(
+    "400 invalid_amount when $target is requested at its pre-V1 price of $stale",
+    async ({ target, stale, key, id }) => {
+      const { client, captured } = buildSupabaseMock({});
+      mockedSupabase.mockReturnValue(client);
+
+      const res = await POST(
+        makeRequest(
+          baseBody({ target, amount: stale, targetId: id, idempotencyKey: key }),
+        ),
+      );
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: "invalid_amount" });
+      expect(captured.length).toBe(0);
+    },
+  );
 
   it("400 invalid_amount when client sends amount != server cost", async () => {
     const res = await POST(makeRequest(baseBody({ amount: 99 })));
@@ -165,7 +234,7 @@ describe("POST /api/peones/spend — infra", () => {
 });
 
 describe("POST /api/peones/spend — happy paths", () => {
-  it("hint: calls RPC with amount=1 and p_apply_pro_bypass=false", async () => {
+  it("hint: calls RPC with amount=2 (Economy V1 price) and p_apply_pro_bypass=false", async () => {
     const { client, captured } = buildSupabaseMock({});
     mockedSupabase.mockReturnValue(client);
 
@@ -175,7 +244,7 @@ describe("POST /api/peones/spend — happy paths", () => {
     expect(captured.length).toBe(1);
     expect(captured[0]).toMatchObject({
       p_wallet: W,
-      p_amount: 1,
+      p_amount: 2,
       p_target: "hint",
       p_target_id: "rook:r-1:3",
       p_apply_pro_bypass: false,
@@ -186,7 +255,7 @@ describe("POST /api/peones/spend — happy paths", () => {
       wallet: W,
       target: "hint",
       targetId: "rook:r-1:3",
-      requested: 1,
+      requested: 2,
       debited: 1,
       newBalance: 9,
       ledgerId: 42,
@@ -196,13 +265,13 @@ describe("POST /api/peones/spend — happy paths", () => {
     expect(body.attestationHash).toMatch(/^sha256:[0-9a-f]{64}$/);
   });
 
-  it("retry: calls RPC with amount=2", async () => {
+  it("shield: calls RPC with amount=5", async () => {
     const { client, captured } = buildSupabaseMock({
       rpcResult: {
         data: [
           {
             ledger_id: 51,
-            debited: 2,
+            debited: 5,
             new_balance: 8,
             duplicate: false,
             pro_bypass_applied: false,
@@ -216,17 +285,49 @@ describe("POST /api/peones/spend — happy paths", () => {
     const res = await POST(
       makeRequest(
         baseBody({
-          amount: 2,
-          target: "retry",
-          targetId: "queen:q-2:7",
-          idempotencyKey: `spend:retry:${W}:queen:q-2:7`,
+          amount: 5,
+          target: "shield",
+          targetId: "7",
+          idempotencyKey: `spend:shield:${W}:7`,
         }),
       ),
     );
     expect(res.status).toBe(200);
-    expect(captured[0]?.p_amount).toBe(2);
-    expect(captured[0]?.p_target).toBe("retry");
+    expect(captured[0]?.p_amount).toBe(5);
+    expect(captured[0]?.p_target).toBe("shield");
     expect(captured[0]?.p_apply_pro_bypass).toBe(false);
+  });
+
+  it("coach: calls RPC with amount=10", async () => {
+    const { client, captured } = buildSupabaseMock({
+      rpcResult: {
+        data: [
+          {
+            ledger_id: 52,
+            debited: 10,
+            new_balance: 3,
+            duplicate: false,
+            pro_bypass_applied: false,
+          },
+        ],
+        error: null,
+      },
+    });
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(
+        baseBody({
+          amount: 10,
+          target: "coach",
+          targetId: "game-1",
+          idempotencyKey: `spend:coach:${W}:game-1`,
+        }),
+      ),
+    );
+    expect(res.status).toBe(200);
+    expect(captured[0]?.p_amount).toBe(10);
+    expect(captured[0]?.p_target).toBe("coach");
   });
 
   it("metadata whitelist: drops unknown keys before reaching RPC", async () => {
@@ -401,7 +502,7 @@ describe("POST /api/peones/spend — PRO bypass (Sprint 4 commit G)", () => {
     expect(body.quotaLimit).toBe(5);
   });
 
-  it("PRO unlimited target (save_game): p_apply_pro_bypass=true, quotaLimit=null in response", async () => {
+  it("PRO unlimited quota: p_apply_pro_bypass=true, quotaLimit=null in response", async () => {
     mockedResolveBypass.mockResolvedValueOnce({
       apply: true,
       proActive: true,
@@ -425,15 +526,10 @@ describe("POST /api/peones/spend — PRO bypass (Sprint 4 commit G)", () => {
     });
     mockedSupabase.mockReturnValue(client);
 
-    const res = await POST(
-      makeRequest(
-        baseBody({
-          target: "save_game",
-          targetId: "game-99",
-          idempotencyKey: `spend:save_game:${W}:game-99`,
-        }),
-      ),
-    );
+    // No shipped target carries an unlimited quota today, so this
+    // exercises the response mapping (Infinity → null) via the resolver
+    // mock rather than via a specific target.
+    const res = await POST(makeRequest(baseBody()));
     expect(res.status).toBe(200);
     expect(captured[0]?.p_apply_pro_bypass).toBe(true);
 

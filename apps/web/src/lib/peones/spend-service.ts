@@ -8,9 +8,9 @@
  * handler — the helpers themselves know nothing about the transport.
  *
  * Three contracts anchored here:
- *   1. The Sprint 4 spend allow-list (`coach | hint | retry |
- *      save_game`). Labyrinth key is reserved in the ledger taxonomy
- *      but ships in Sprint 5.
+ *   1. The spend allow-list (`coach | hint | shield`). Labyrinth key is
+ *      reserved in the ledger taxonomy but never shipped; `retry` and
+ *      `save_game` were retired in Economy V1 (see below).
  *   2. The server-trusted per-target cost. Clients send `amount` for
  *      symmetry but the endpoint VALIDATES against this table — a
  *      client passing `amount = 99` for `hint` gets a 400.
@@ -24,48 +24,43 @@ import type { PeonesLedgerSource } from "./types";
 // Spend targets + costs
 // ─────────────────────────────────────────────────────────────────
 
-/** Sprint 4 allow-list. Labyrinth key intentionally excluded
- *  (Sprint 5). Keep in lockstep with `SPEND_COST_BY_TARGET` and
+/** Economy V1 allow-list (2026-07-21). `retry` and `save_game` are
+ *  RETIRED: both actions are free in the product today, so leaving them
+ *  spendable meant the public endpoint could burn a balance for
+ *  something the user never bought. `labyrinth_key` never shipped.
+ *  Historical rows keep their source — only the endpoint narrowed.
+ *  Keep in lockstep with `SPEND_COST_BY_TARGET` and
  *  `SPEND_IDEMPOTENCY_PREFIX_BY_TARGET` below. */
-export const PEONES_SPEND_TARGETS = [
-  "coach",
-  "hint",
-  "retry",
-  "save_game",
-  "shield",
-] as const;
+export const PEONES_SPEND_TARGETS = ["coach", "hint", "shield"] as const;
 
 export type PeonesSpendTarget = Extract<
   PeonesLedgerSource,
   (typeof PEONES_SPEND_TARGETS)[number]
 >;
 
-/** M1 default costs per calibration §5. Server is the SOLE source of
- *  truth; clients echo `amount` for symmetry but the endpoint
- *  validates against this table.
+/** Economy V1 canonical prices (2026-07-21, docs/economy/peones-v1-
+ *  policy.md). Server is the SOLE source of truth; clients echo
+ *  `amount` for symmetry but the endpoint validates against this table,
+ *  and every surface that DISPLAYS a price reads it from here so the
+ *  shown number can never drift from the charged one.
  *
- *  Economy v2 (2026-06-10): `retry` is DEPRECATED as an active sink. The
- *  paid `PeonesRetryButton` is not mounted anywhere; the live retry path
- *  (`handleRetryApplied` / useRetryGuard) is FREE and never charges. An
- *  automatic/invisible charge is not a real consumable and feels punitive
- *  in a learning product. The cost stays here only to keep the
- *  target/enum/SQL-CHECK lockstep intact; it is NOT charged. Retry may
- *  return later as a manual, visible "Second Chance"-style consumable. */
+ *  Reference value: 50 Peones = USD 0.50, so 1 Peón ≈ USD 0.01. The
+ *  hierarchy hint < shield < coach is deliberate and load-bearing —
+ *  a full LLM analysis must never be the cheapest thing in the game,
+ *  which is exactly what the previous flat 1/1/2 table made it. */
 export const SPEND_COST_BY_TARGET: Readonly<Record<PeonesSpendTarget, number>> = {
-  coach: 1,
-  hint: 1,
-  retry: 2, // DEPRECATED sink — never charged (see note above)
-  save_game: 1,
-  /** Shield rescue — 2 Peones. PROVISIONAL: carried over from the
-   *  2026-06-05 Sprint 4 decision to unblock this cluster; operator
-   *  has flagged this needs a real economic-model pass across all
-   *  consumables (Coach's 1 Peón for a full LLM analysis is already
-   *  suspect next to this). Do not treat as final. */
-  shield: 2,
+  /** Coach analysis — 10 Peones (~USD 0.10). The most expensive sink:
+   *  it is the only one backed by real per-call LLM cost. */
+  coach: 10,
+  /** Hint — 2 Peones. The cheapest sink; taken many times per session. */
+  hint: 2,
+  /** Shield rescue — 5 Peones. Saves one exercise, not a whole day. */
+  shield: 5,
 };
 
-/** Returns true for any of the four Sprint 4 targets. Used by the
- *  endpoint to reject typos / future targets that aren't yet shipped. */
+/** Returns true for any of the three active spend targets. Used by the
+ *  endpoint to reject typos, retired sinks, and future targets that
+ *  aren't yet shipped. */
 export function isPeonesSpendTarget(value: string): value is PeonesSpendTarget {
   return (PEONES_SPEND_TARGETS as readonly string[]).includes(value);
 }
@@ -84,8 +79,6 @@ export const SPEND_IDEMPOTENCY_PREFIX_BY_TARGET: Readonly<
 > = {
   coach: "spend:coach:",
   hint: "spend:hint:",
-  retry: "spend:retry:",
-  save_game: "spend:save_game:",
   shield: "spend:shield:",
 };
 

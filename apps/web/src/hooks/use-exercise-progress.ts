@@ -18,7 +18,12 @@ import {
   getOrCreateGuestSessionId,
   isGuestGraduated,
 } from "@/lib/exercises/guest-session";
-import { submitTrainingExerciseEarn } from "@/lib/peones/training-earn";
+import { getExercisesCompletedCount } from "@/lib/game/exercise-progress";
+import { exerciseMilestoneTier } from "@/lib/peones/ledger-service";
+import {
+  EXERCISE_MILESTONE_EARN_AMOUNT,
+  submitExerciseMilestoneEarn,
+} from "@/lib/peones/training-earn";
 import { emitPeonesEarned } from "@/lib/peones/telemetry";
 import { track } from "@/lib/telemetry";
 import { pieceProgressStorageKey } from "@/lib/lite-progress-storage";
@@ -472,36 +477,58 @@ export function useExerciseProgress(
           });
         }
 
-        // Sprint 3 commit F — Peones earn for the Senda exercise. Fire
-        // and forget. Local progress + persistence + telemetry already
-        // happened above; the earn POST is the LAST step and never
-        // blocks or reverts anything. Gates:
+        // Economy V1 (2026-07-21) — Peones are earned per MILESTONE of
+        // five newly completed exercises, not per exercise. The count
+        // is read from durable cross-piece progress, so the milestone
+        // spans the whole training path rather than restarting per
+        // piece. Read BEFORE the save so it reflects the pre-completion
+        // state; the post-completion read happens right after.
+        const isFirstCompletion = bestStarsBefore === 0 && bestStarsAfter > 0;
+        const completedBefore =
+          isConnected && address && isFirstCompletion
+            ? getExercisesCompletedCount()
+            : 0;
+
+        const next: PieceProgress = { ...prev, stars: newStars };
+        saveProgress(next);
+
+        // Fire and forget, AFTER the save: local progress, persistence
+        // and telemetry already happened; the earn POST is the LAST
+        // step and never blocks or reverts anything. Gates:
         //   - connected wallet (guest path skipped)
-        //   - delta of best stars strictly positive (replay without
-        //     improvement, worse score, or untouched slot all skip)
-        // The helper itself short-circuits delta<=0 defensively too.
-        const deltaBestStars = bestStarsAfter - bestStarsBefore;
-        if (isConnected && address && deltaBestStars > 0) {
-          // Sprint 3 commit H — capture the result so we can emit
-          // `peones_earned`. Errors stay swallowed (fire-and-forget);
-          // exercise_completion is NOT a daily-family source so
-          // capReached is always false and peones_cap_reached
-          // never fires from this surface.
-          submitTrainingExerciseEarn({
+        //   - first completion of this exercise (a replay or a star
+        //     improvement cannot move the unique count, so it cannot
+        //     cross a milestone)
+        //   - the completion actually crossed a tier, decided by the
+        //     same pure helper the submitter uses. The submitter
+        //     re-checks and would short-circuit anyway; gating here
+        //     keeps four out of every five completions from creating a
+        //     promise nobody awaits.
+        // The tier-keyed idempotency key makes a duplicate crossing a
+        // server-side no-op regardless.
+        const completedAfter =
+          isConnected && address && isFirstCompletion
+            ? getExercisesCompletedCount()
+            : 0;
+        const crossedMilestone =
+          exerciseMilestoneTier(completedAfter) >
+          exerciseMilestoneTier(completedBefore);
+
+        if (isConnected && address && isFirstCompletion && crossedMilestone) {
+          submitExerciseMilestoneEarn({
             wallet: address,
-            piece,
-            exerciseId: exercise.id,
-            bestStarsBefore,
-            bestStarsAfter,
+            completedBefore,
+            completedAfter,
           })
             .then((result) => {
               if (result.kind === "success" && result.credited > 0) {
                 emitPeonesEarned({
                   source: "exercise_completion",
-                  sourceId: `${piece}:${exercise.id}`,
-                  requested: deltaBestStars,
+                  sourceId: `milestone:${result.tier}`,
+                  requested: EXERCISE_MILESTONE_EARN_AMOUNT,
                   credited: result.credited,
-                  capReached: false,
+                  capReached:
+                    result.dailyEarnedCapped >= result.dailyCap,
                   newBalance: result.newBalance,
                   dailyEarnedCapped: result.dailyEarnedCapped,
                   dailyCap: result.dailyCap,
@@ -516,8 +543,6 @@ export function useExerciseProgress(
             });
         }
 
-        const next: PieceProgress = { ...prev, stars: newStars };
-        saveProgress(next);
         return next;
       });
     },

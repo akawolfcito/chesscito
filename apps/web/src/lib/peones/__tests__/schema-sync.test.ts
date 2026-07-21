@@ -75,6 +75,18 @@ const SHIELD_MIGRATION_PATH = join(
   "20260701150000_peones_shield_source.sql",
 );
 
+/** Economy V1 (2026-07-21) CREATE OR REPLACEs `peones_balance_with_caps`
+ *  one more time: cap 6→3 AND the restored `pro_bypass = false` clause.
+ *  This is now the EFFECTIVE definition, so every helper assertion below
+ *  reads THIS file. Pointing them at an older migration is exactly how
+ *  the pro_bypass regression survived two replacements unnoticed. */
+const V1_ECONOMY_MIGRATION_PATH = join(
+  process.cwd(),
+  "supabase",
+  "migrations",
+  "20260721030000_peones_v1_economy.sql",
+);
+
 const migration = readFileSync(MIGRATION_PATH, "utf-8");
 const welcomePackMigration = readFileSync(
   WELCOME_PACK_MIGRATION_PATH,
@@ -86,7 +98,13 @@ const capRecalibrationMigration = readFileSync(
 );
 const labyrinthMigration = readFileSync(LABYRINTH_MIGRATION_PATH, "utf-8");
 const shieldMigration = readFileSync(SHIELD_MIGRATION_PATH, "utf-8");
-void capRecalibrationMigration; // superseded by labyrinthMigration's CREATE OR REPLACE
+const v1EconomyMigration = readFileSync(V1_ECONOMY_MIGRATION_PATH, "utf-8");
+
+/** The V1 migration's header EXPLAINS the regressing SQL by quoting it,
+ *  so any assertion about what the function body does must read the
+ *  executable statements only. Strips `-- …` line comments. */
+const v1EconomySql = v1EconomyMigration.replace(/^\s*--.*$/gm, "");
+void capRecalibrationMigration; // superseded by v1EconomyMigration's CREATE OR REPLACE
 
 /**
  * Extracts the values inside `check (column in (...))` for the given
@@ -194,8 +212,8 @@ describe("peones_ledger — schema ↔ types sync", () => {
   it("the cap-aware SQL helper uses the same set of daily sources as PEONES_DAILY_CAP_SOURCES", () => {
     // The helper hard-codes the daily-family list in its filter. Pull
     // it back out and assert it matches the TS constant. Reads the
-    // recalibration migration (the effective CREATE OR REPLACE).
-    const helperMatch = labyrinthMigration.match(
+    // Economy V1 migration (the effective CREATE OR REPLACE).
+    const helperMatch = v1EconomyMigration.match(
       /and\s+source\s+in\s*\(\s*([\s\S]*?)\)\s*\n\s*and\s+day_utc\s+=\s+p_day_utc/i,
     );
     expect(
@@ -215,11 +233,40 @@ describe("peones_ledger — schema ↔ types sync", () => {
   it("PEONES_DAILY_CAP matches the magic number in peones_balance_with_caps", () => {
     // The helper hard-codes `N::integer as daily_cap`. If product changes
     // the cap, both this constant AND the SQL helper must move together.
-    // Reads the recalibration migration (the effective CREATE OR REPLACE).
-    const capMatch = labyrinthMigration.match(
+    // Reads the Economy V1 migration (the effective CREATE OR REPLACE).
+    const capMatch = v1EconomyMigration.match(
       /(\d+)\s*::\s*integer\s+as\s+daily_cap/i,
     );
     expect(capMatch, "Could not find daily_cap value in SQL helper").not.toBeNull();
     expect(Number(capMatch![1])).toBe(PEONES_DAILY_CAP);
+  });
+
+  // ── PRO bypass regression guard ────────────────────────────────
+  //
+  // The 2026-06-10 and 2026-06-11 migrations both re-created
+  // `peones_balance_with_caps` from a pre-Sprint-4 body and dropped the
+  // `pro_bypass = false` clause, so a forgiven spend silently reduced
+  // the balance the HUD shows. Nothing caught it: this file only ever
+  // asserted the cap number and the source list. These two tests fail
+  // if any future CREATE OR REPLACE loses the clause again.
+  it("the effective peones_balance_with_caps excludes pro_bypass spend rows from balance", () => {
+    expect(
+      /when\s+event_type\s*=\s*'spend'\s+and\s+pro_bypass\s*=\s*false\s+then\s+-amount/i.test(
+        v1EconomySql,
+      ),
+      "peones_balance_with_caps must subtract ONLY non-bypassed spends",
+    ).toBe(true);
+  });
+
+  it("the effective peones_balance_with_caps never subtracts spend unconditionally", () => {
+    // The shape the two regressing migrations shipped. Catching the
+    // pattern itself (not just the absence of the fix) means a body
+    // that somehow contains both clauses still fails.
+    expect(
+      /when\s+event_type\s+in\s*\(\s*'spend'\s*,\s*'rollback'\s*\)\s*then\s+-amount/i.test(
+        v1EconomySql,
+      ),
+      "a blanket spend subtraction re-introduces the PRO-bypass balance divergence",
+    ).toBe(false);
   });
 });

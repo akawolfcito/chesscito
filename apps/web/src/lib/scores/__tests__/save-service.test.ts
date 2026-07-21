@@ -3,14 +3,14 @@
  *
  * No IO, no DB, no fetch, no localStorage. Mirrors the contract in
  * docs/specs/savescore-offchain-peones.md (Contracts SDD). The lockstep
- * test pins SCORE_SAVE_COST_PEONES to the server-trusted save_game cost
- * so the two constants can never drift.
+ * test used to pin SCORE_SAVE_COST_PEONES to the server-trusted
+ * save_game cost; Economy V1 retired that sink, so it now pins the
+ * stronger claim that no save sink exists at all.
  */
 
 import { describe, expect, it } from "vitest";
 import {
   FREE_SCORE_SAVE_LIMIT,
-  SCORE_SAVE_COST_PEONES,
   computeScoreSaveQuota,
   deriveScoreSaveId,
 } from "../save-service";
@@ -112,8 +112,13 @@ describe("deriveScoreSaveId", () => {
 });
 
 describe("constant lockstep", () => {
-  it("SCORE_SAVE_COST_PEONES === SPEND_COST_BY_TARGET.save_game", () => {
-    expect(SCORE_SAVE_COST_PEONES).toBe(SPEND_COST_BY_TARGET.save_game);
+  // The old lockstep (SCORE_SAVE_COST_PEONES === SPEND_COST_BY_TARGET
+  // .save_game) died with the target. Saving has been unconditionally
+  // free since 2026-07-08, so the invariant worth guarding is the
+  // opposite one: nothing can charge for a save, because there is no
+  // save sink to charge through.
+  it("save_game is no longer a spendable target", () => {
+    expect(SPEND_COST_BY_TARGET).not.toHaveProperty("save_game");
   });
 
   it("FREE_SCORE_SAVE_LIMIT is 3", () => {

@@ -15,7 +15,7 @@
  * Visibility states:
  *  - guest        : muted chip "Connect to use Peones hints".
  *  - disabled     : returns null (labyrinth / non-playing phase).
- *  - idle         : pill "Hint · 1 Peón".
+ *  - idle         : pill "Hint · 2 Peones".
  *  - loading      : same pill, aria-busy + disabled.
  *  - revealed     : same pill at slightly muted opacity for ~4s
  *                   while the board glow is up. Hint is on the
@@ -33,6 +33,7 @@ import { useTranslations } from "next-intl";
 import { useAccount } from "wagmi";
 
 import { submitPeonesSpend } from "@/lib/peones/spend-client";
+import { SPEND_COST_BY_TARGET } from "@/lib/peones/spend-service";
 import {
   emitPeonesSpendBlocked,
   emitPeonesSpendBypassed,
@@ -41,6 +42,11 @@ import {
 } from "@/lib/peones/telemetry";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+
+/** Peones price of one hint. Read from the canonical table so the chip
+ *  copy (PEONES_HINT_COPY, which spells the number out) and the debit
+ *  move together. */
+const HINT_PEONES_COST = SPEND_COST_BY_TARGET.hint;
 
 /** How long the board glow stays after a successful reveal before the
  *  parent is told to clear it. Matches the candy-style consumable
@@ -176,7 +182,7 @@ export function PeonesHintButton({
 
     const result = await submit({
       wallet,
-      amount: 1,
+      amount: HINT_PEONES_COST,
       target: "hint",
       targetId,
       idempotencyKey,
@@ -201,7 +207,7 @@ export function PeonesHintButton({
         emitPeonesSpendBypassed({
           target: "hint",
           targetId,
-          requested: 1,
+          requested: HINT_PEONES_COST,
           debited: 0,
           newBalance: result.newBalance,
           attestationHash: result.attestationHash,
@@ -220,7 +226,7 @@ export function PeonesHintButton({
         emitPeonesSpent({
           target: "hint",
           targetId,
-          requested: 1,
+          requested: HINT_PEONES_COST,
           debited: result.debited,
           newBalance: result.newBalance,
           attestationHash: result.attestationHash,
@@ -242,7 +248,7 @@ export function PeonesHintButton({
       emitPeonesSpendBlocked({
         target: "hint",
         targetId,
-        requested: 1,
+        requested: HINT_PEONES_COST,
         reason: "insufficient_balance",
       });
       setState({ kind: "insufficient" });
@@ -253,7 +259,7 @@ export function PeonesHintButton({
     emitPeonesSpendFailed({
       target: "hint",
       targetId,
-      requested: 1,
+      requested: HINT_PEONES_COST,
       reason: result.error,
     });
     setState(

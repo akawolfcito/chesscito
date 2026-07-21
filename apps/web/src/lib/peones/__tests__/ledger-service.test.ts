@@ -15,7 +15,9 @@ import {
   applyDailyCap,
   buildDailyStreakBonusIdempotencyKey,
   buildDailyTacticIdempotencyKey,
-  buildTrainingExerciseIdempotencyKey,
+  buildExerciseMilestoneIdempotencyKey,
+  exerciseMilestoneTier,
+  EXERCISE_MILESTONE_SIZE,
   computeLedgerBalance,
   isDailyCapSource,
   normalizeWallet,
@@ -105,6 +107,89 @@ describe("computeLedgerBalance", () => {
       { event_type: "spend", amount: 5 },
     ];
     expect(computeLedgerBalance(entries)).toBe(-5);
+  });
+
+  // ── PRO bypass ────────────────────────────────────────────────
+  //
+  // A PRO-bypassed spend is recorded for audit + quota tracking with
+  // debited=0. `peones_balances`, `peones_spend` and (since migration
+  // 20260721030000) `peones_balance_with_caps` all exclude it. This
+  // helper is the TS twin of that rule; subtracting it here is the
+  // same divergence, just in a different language.
+  it("does NOT subtract a spend row flagged pro_bypass", () => {
+    const entries: BalanceContributingEntry[] = [
+      { event_type: "earn", amount: 10 },
+      { event_type: "spend", amount: 5, pro_bypass: true },
+    ];
+    expect(computeLedgerBalance(entries)).toBe(10);
+  });
+
+  it("matches the migration's regression scenario: earn 10, spend 2, bypass 5 → 8", () => {
+    const entries: BalanceContributingEntry[] = [
+      { event_type: "earn", amount: 10 },
+      { event_type: "spend", amount: 2, pro_bypass: false },
+      { event_type: "spend", amount: 5, pro_bypass: true },
+    ];
+    // The shown balance and the spendable balance are the same number.
+    // Before the fix this returned 3 while the spend RPC would still
+    // let the wallet spend 8.
+    expect(computeLedgerBalance(entries)).toBe(8);
+  });
+
+  it("treats an absent or null pro_bypass as a normal debit", () => {
+    expect(
+      computeLedgerBalance([
+        { event_type: "earn", amount: 10 },
+        { event_type: "spend", amount: 4 },
+      ]),
+    ).toBe(6);
+    expect(
+      computeLedgerBalance([
+        { event_type: "earn", amount: 10 },
+        { event_type: "spend", amount: 4, pro_bypass: null },
+      ]),
+    ).toBe(6);
+  });
+
+  it("never lets a bypassed spend push the balance negative", () => {
+    const entries: BalanceContributingEntry[] = [
+      { event_type: "spend", amount: 9, pro_bypass: true },
+    ];
+    expect(computeLedgerBalance(entries)).toBe(0);
+  });
+});
+
+describe("exerciseMilestoneTier", () => {
+  it("groups exercises in fives", () => {
+    expect(EXERCISE_MILESTONE_SIZE).toBe(5);
+  });
+
+  it("pays nothing for the first four exercises", () => {
+    for (const n of [0, 1, 2, 3, 4]) {
+      expect(exerciseMilestoneTier(n)).toBe(0);
+    }
+  });
+
+  it("reaches tier 1 exactly at the 5th", () => {
+    expect(exerciseMilestoneTier(5)).toBe(1);
+  });
+
+  it("holds tier 1 through the 9th, then reaches tier 2 at the 10th", () => {
+    expect(exerciseMilestoneTier(6)).toBe(1);
+    expect(exerciseMilestoneTier(9)).toBe(1);
+    expect(exerciseMilestoneTier(10)).toBe(2);
+  });
+
+  it("keeps stepping one tier per five thereafter", () => {
+    expect(exerciseMilestoneTier(15)).toBe(3);
+    expect(exerciseMilestoneTier(20)).toBe(4);
+    expect(exerciseMilestoneTier(137)).toBe(27);
+  });
+
+  it("floors garbage input to tier 0 instead of throwing", () => {
+    expect(exerciseMilestoneTier(-3)).toBe(0);
+    expect(exerciseMilestoneTier(Number.NaN)).toBe(0);
+    expect(exerciseMilestoneTier(Number.POSITIVE_INFINITY)).toBe(0);
   });
 });
 
@@ -255,15 +340,24 @@ describe("idempotency key builders", () => {
     ).toBe(`daily_streak_bonus:${W_LOWER}:2026-06-07:7`);
   });
 
-  it("buildTrainingExerciseIdempotencyKey produces the documented format", () => {
-    expect(
-      buildTrainingExerciseIdempotencyKey(W_LOWER, "rook", "rook-4", 1, 3),
-    ).toBe(`training:${W_LOWER}:rook:rook-4:1->3`);
+  it("buildExerciseMilestoneIdempotencyKey produces the documented format", () => {
+    expect(buildExerciseMilestoneIdempotencyKey(W_LOWER, 3)).toBe(
+      `exercise_milestone:${W_LOWER}:3`,
+    );
+  });
+
+  it("the milestone key is keyed on the TIER, not the exercise", () => {
+    // This is what makes the reward safe without a counter table: two
+    // different exercises that both land on the 10th completion produce
+    // the same key, so the global unique index pays the tier once.
+    expect(buildExerciseMilestoneIdempotencyKey(W_LOWER, 2)).toBe(
+      buildExerciseMilestoneIdempotencyKey(W_UPPER, 2),
+    );
   });
 
   it("idempotency keys are pure functions — same input, same output", () => {
-    const a = buildTrainingExerciseIdempotencyKey(W_LOWER, "king", "king-7", 0, 2);
-    const b = buildTrainingExerciseIdempotencyKey(W_LOWER, "king", "king-7", 0, 2);
+    const a = buildExerciseMilestoneIdempotencyKey(W_LOWER, 4);
+    const b = buildExerciseMilestoneIdempotencyKey(W_LOWER, 4);
     expect(a).toBe(b);
   });
 

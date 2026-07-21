@@ -14,18 +14,24 @@ import {
 } from "@/lib/peones/spend-service";
 
 describe("isPeonesSpendTarget", () => {
-  it("accepts the four Sprint 4 targets", () => {
+  it("accepts the three active Economy V1 targets", () => {
     expect(isPeonesSpendTarget("coach")).toBe(true);
     expect(isPeonesSpendTarget("hint")).toBe(true);
-    expect(isPeonesSpendTarget("retry")).toBe(true);
-    expect(isPeonesSpendTarget("save_game")).toBe(true);
-  });
-
-  it("accepts shield", () => {
     expect(isPeonesSpendTarget("shield")).toBe(true);
   });
 
-  it("rejects labyrinth_key (Sprint 5)", () => {
+  // Both were spendable targets whose product action became FREE. A
+  // retired sink that stays in the allow-list is a way to burn a
+  // balance for something the player never bought.
+  it("rejects retry — retired sink, retry is free", () => {
+    expect(isPeonesSpendTarget("retry")).toBe(false);
+  });
+
+  it("rejects save_game — retired sink, saving is always free", () => {
+    expect(isPeonesSpendTarget("save_game")).toBe(false);
+  });
+
+  it("rejects labyrinth_key (never shipped)", () => {
     expect(isPeonesSpendTarget("labyrinth_key")).toBe(false);
   });
 
@@ -37,14 +43,21 @@ describe("isPeonesSpendTarget", () => {
 });
 
 describe("SPEND_COST_BY_TARGET", () => {
-  it("matches calibration §5 defaults", () => {
+  it("matches the Economy V1 price list", () => {
     expect(SPEND_COST_BY_TARGET).toEqual({
-      coach: 1,
-      hint: 1,
-      retry: 2,
-      save_game: 1,
-      shield: 2,
+      coach: 10,
+      hint: 2,
+      shield: 5,
     });
+  });
+
+  // The ordering is the policy, not an accident of the numbers: a full
+  // LLM analysis must cost more than a hint, and a rescue must sit
+  // between them. Any future repricing that inverts this is a product
+  // decision that has to change this test on purpose.
+  it("preserves the hint < shield < coach hierarchy", () => {
+    expect(SPEND_COST_BY_TARGET.hint).toBeLessThan(SPEND_COST_BY_TARGET.shield);
+    expect(SPEND_COST_BY_TARGET.shield).toBeLessThan(SPEND_COST_BY_TARGET.coach);
   });
 });
 
@@ -55,12 +68,6 @@ describe("hasSpendIdempotencyPrefix", () => {
     ).toBe(true);
     expect(
       hasSpendIdempotencyPrefix("hint", "spend:hint:0xabc:rook:r-1:3"),
-    ).toBe(true);
-    expect(
-      hasSpendIdempotencyPrefix("retry", "spend:retry:0xabc:queen:q-2:7"),
-    ).toBe(true);
-    expect(
-      hasSpendIdempotencyPrefix("save_game", "spend:save_game:0xabc:g-99"),
     ).toBe(true);
     expect(
       hasSpendIdempotencyPrefix("shield", "spend:shield:0xabc:5"),
@@ -88,8 +95,6 @@ describe("hasSpendIdempotencyPrefix", () => {
     expect(SPEND_IDEMPOTENCY_PREFIX_BY_TARGET).toEqual({
       coach: "spend:coach:",
       hint: "spend:hint:",
-      retry: "spend:retry:",
-      save_game: "spend:save_game:",
       shield: "spend:shield:",
     });
   });

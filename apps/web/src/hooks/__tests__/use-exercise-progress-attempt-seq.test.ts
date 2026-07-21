@@ -24,7 +24,8 @@ vi.mock("@/lib/telemetry", () => ({
 }));
 
 vi.mock("@/lib/peones/training-earn", () => ({
-  submitTrainingExerciseEarn: vi.fn().mockResolvedValue({
+  EXERCISE_MILESTONE_EARN_AMOUNT: 1,
+  submitExerciseMilestoneEarn: vi.fn().mockResolvedValue({
     kind: "success",
     credited: 0,
     attestationHash: null,

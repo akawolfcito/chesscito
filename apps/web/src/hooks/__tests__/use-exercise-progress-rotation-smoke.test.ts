@@ -17,7 +17,8 @@ vi.mock("@/lib/telemetry", () => ({ track: trackMock }));
 
 const submitMock = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/peones/training-earn", () => ({
-  submitTrainingExerciseEarn: submitMock,
+  EXERCISE_MILESTONE_EARN_AMOUNT: 1,
+  submitExerciseMilestoneEarn: submitMock,
 }));
 
 const useAccountMock = vi.hoisted(() => vi.fn());

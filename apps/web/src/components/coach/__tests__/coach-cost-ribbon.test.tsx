@@ -5,7 +5,7 @@ import { CoachCostRibbon } from "../coach-cost-ribbon";
 describe("CoachCostRibbon", () => {
   it("renders the Peón cost (♟ 1) for free users", () => {
     const { container } = render(<CoachCostRibbon proActive={false} />);
-    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(screen.getByText("10")).toBeInTheDocument();
     // Peón sprite, not the crown.
     const img = container.querySelector("img");
     expect(img).toHaveAttribute("src", "/art/redesign/pieces/w-pawn.png");

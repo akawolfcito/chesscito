@@ -107,7 +107,7 @@ export function emitPeonesBalanceViewed(
 // in commit E, Coach integration in commit F). The submit helper
 // itself is pure — it returns the result and the consumer decides
 // which event to fire. This mirrors the earn-side pattern where
-// `submitTrainingExerciseEarn` / `submitDailyTacticEarn` do not emit.
+// `submitExerciseMilestoneEarn` / `submitDailyTacticEarn` do not emit.
 //
 // Why three events, not one with a status enum: dashboards prefer
 // non-conditional event names. Filtering by status in a single

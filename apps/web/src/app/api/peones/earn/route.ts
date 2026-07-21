@@ -52,31 +52,41 @@ const log = createLogger({ route: "/api/peones/earn" });
  *  absurd amounts before they touch the DB. */
 const MAX_SINGLE_EVENT_AMOUNT = 50;
 
-/** Sprint 3 allow-list of earn sources reachable through this
- *  endpoint. Earn-only by definition; spend sources are Sprint 4.
- *  `senda_milestone` and `pack_purchase` are deliberately excluded
- *  per calibration §6 — parked until product activates them. */
-const SPRINT_3_EARN_SOURCES = new Set<PeonesLedgerSource>([
+/**
+ * Economy V1 allow-list (2026-07-21, docs/economy/peones-v1-policy.md).
+ * These are the ONLY sources this public, unauthenticated endpoint will
+ * credit. Everything else answers `invalid_source`.
+ *
+ * What was removed and why — the rule is "no source without a live,
+ * legitimate caller", because an accepted source with no caller is a
+ * free mint for anyone who can POST:
+ *   admin_grant          — ops-only concept that was reachable from the
+ *                          public route AND exempt from the prefix
+ *                          check. An ops console must write it
+ *                          server-side, never through here.
+ *   labyrinth_completion — labyrinths stopped paying Peones entirely.
+ *   daily_lab            — dormant since Sprint 3; no caller ever shipped.
+ *   daily_streak_bonus   — same.
+ *
+ * `welcome_pack` is absent by design: it is seeded server-side by
+ * /api/peones/balance and was never reachable from here.
+ */
+const PUBLIC_EARN_SOURCES = new Set<PeonesLedgerSource>([
   "daily_tactic",
-  "daily_streak_bonus",
-  "daily_lab",
   "exercise_completion",
-  // Training Path Slice 4 (2026-06-11): +1 flat on first labyrinth
-  // completion. Daily-capped; supply bounded by the catalog.
-  "labyrinth_completion",
-  "admin_grant",
 ]);
 
 /** Each source's idempotency_key MUST start with the documented
- *  prefix from calibration §9 so a misrouted client request can't
- *  silently land on the wrong economic loop. `admin_grant` is left
- *  open — ops tooling builds keys by hand. */
+ *  prefix so a misrouted client request can't silently land on the
+ *  wrong economic loop. Every allowed source has a prefix — there is
+ *  no longer any escape hatch. */
 const IDEMPOTENCY_PREFIX_BY_SOURCE: Partial<Record<PeonesLedgerSource, string>> = {
   daily_tactic: "daily_tactic:",
-  daily_streak_bonus: "daily_streak_bonus:",
-  daily_lab: "daily_lab:",
-  exercise_completion: "training:",
-  labyrinth_completion: "labyrinth_completion:",
+  // Economy V1: the reward is a milestone of five NEW exercises, so the
+  // key is tier-scoped (`exercise_milestone:{wallet}:{tier}`). The old
+  // per-exercise `training:…` keys stay valid as historical rows; they
+  // are simply no longer accepted as new writes.
+  exercise_completion: "exercise_milestone:",
 };
 
 function todayUtcDate(): string {
@@ -125,7 +135,7 @@ function parseAndValidate(body: unknown): ParseResult {
   const source = body.source;
   if (
     typeof source !== "string" ||
-    !SPRINT_3_EARN_SOURCES.has(source as PeonesLedgerSource)
+    !PUBLIC_EARN_SOURCES.has(source as PeonesLedgerSource)
   ) {
     return { ok: false, error: "invalid_source" };
   }

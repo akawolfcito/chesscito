@@ -17,8 +17,6 @@
  *      shared by the table UNIQUE and the `spend:save_game:` key.
  */
 
-import type { PeonesSpendTarget } from "../peones/spend-service";
-
 // ─────────────────────────────────────────────────────────────────
 // Calibration constants
 // ─────────────────────────────────────────────────────────────────
@@ -29,9 +27,12 @@ import type { PeonesSpendTarget } from "../peones/spend-service";
  *  `save_basic_score` (20260610020000_savescore_quota_recalibration.sql). */
 export const FREE_SCORE_SAVE_LIMIT = 3;
 
-/** Peones cost per basic save beyond the free quota. Pinned to the
- *  server-trusted `save_game` cost by a lockstep test so the two can
- *  never drift. Mirrors the SQL constant `c_cost`. */
+/** Historical Peones cost per basic save beyond the free quota.
+ *  NEVER CHARGED since 2026-07-08: basic saves are unconditionally free
+ *  (migration 20260708120000_savescore_always_free.sql) and Economy V1
+ *  retired the `save_game` spend target entirely. Kept because the
+ *  quota arithmetic below still reports a `costPeones` field to old
+ *  callers; the value it reports is 0. */
 export const SCORE_SAVE_COST_PEONES: number = 1;
 
 // ─────────────────────────────────────────────────────────────────
@@ -158,7 +159,10 @@ export type LeaderboardProofRequestFuture = {
   kind: LeaderboardProofKindFuture;
 };
 
-// Compile-time guard: `save_game` must remain a valid spend target so the
-// idempotency key `spend:save_game:{saveId}` keeps routing correctly.
-const _SAVE_GAME_TARGET: PeonesSpendTarget = "save_game";
-void _SAVE_GAME_TARGET;
+// The compile-time guard pinning `save_game` as a valid spend target was
+// removed in Economy V1 (2026-07-21). It guarded an idempotency key that
+// nothing builds any more: basic saves became unconditionally free on
+// 2026-07-08 (migration 20260708120000_savescore_always_free.sql), and
+// the sink was retired from PEONES_SPEND_TARGETS in the same commit that
+// deleted this guard. Re-adding the target is what a paid save would
+// need — not this line.

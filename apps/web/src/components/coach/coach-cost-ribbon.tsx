@@ -1,10 +1,11 @@
 "use client";
 
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { SPEND_COST_BY_TARGET } from "@/lib/peones/spend-service";
 
 type Props = {
   /** PRO subscribers see a crown "PRO" ribbon (covered/included). Free
-   *  users see the Peón cost "♟ 1". Guests render no ribbon — the caller
+   *  users see the Peón cost "♟ 10". Guests render no ribbon — the caller
    *  decides whether to mount this component at all. */
   proActive?: boolean;
   /** Positioning variant:
@@ -40,7 +41,9 @@ export function CoachCostRibbon({ proActive = false, variant = "cta" }: Props) {
       {!proActive && (
         <ThemeAssetPicture slot="board.piece.white.pawn" pictureClassName="coach-cost-ribbon__icon" alt="" draggable={false} />
       )}
-      <span className="coach-cost-ribbon__label">{proActive ? "PRO" : "1"}</span>
+      <span className="coach-cost-ribbon__label">
+        {proActive ? "PRO" : String(SPEND_COST_BY_TARGET.coach)}
+      </span>
     </span>
   );
 }

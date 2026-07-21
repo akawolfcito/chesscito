@@ -177,7 +177,6 @@ import {
   getNextChallenge,
   resolvePostLabContinue,
 } from "@/lib/training/path";
-import { submitLabyrinthCompletionEarn } from "@/lib/peones/labyrinth-earn";
 import { attemptShieldSpendWithPeones } from "@/lib/peones/shield-spend-fallback";
 import { ActionPin } from "@/components/redesign/action-pin";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
@@ -3113,20 +3112,13 @@ export function ExercisesScreen({
         is_new_best: isNewBest,
         previous_best: previousBest ?? null,
       });
-      // Slice 4: flat +1 Peón on the FIRST completion only
-      // (previousBest === null), wallet-connected only. Fire-and-forget
-      // like training-earn: the local best + overlay never wait on (or
-      // fail with) the ledger write. Guests skip the call entirely.
-      if (isConnected && address && previousBest === null) {
-        void submitLabyrinthCompletionEarn({
-          wallet: address,
-          piece: selectedPiece,
-          labyrinthId: activeLabyrinth.id,
-          bestBefore: previousBest,
-        });
-      }
+      // Economy V1 (2026-07-21): labyrinths pay NO Peones. Completing
+      // one still awards its stars, its best, its net-stars ledger
+      // entry and any unlock behind it — only the +1 Peón is gone.
+      // Ludic games and labyrinths must not be automatic faucets;
+      // the training milestone and the Daily are the free sources.
     },
-    [activeLabyrinth, selectedPiece, isConnected, address],
+    [activeLabyrinth, selectedPiece],
   );
 
   /** Coverage completion — the twin of handleLabyrinthMove, shared by the
@@ -3186,16 +3178,9 @@ export function ExercisesScreen({
         previous_best: previousBest ?? null,
       });
 
-      if (isConnected && address && previousBest === null) {
-        void submitLabyrinthCompletionEarn({
-          wallet: address,
-          piece: selectedPiece,
-          labyrinthId: activeCoverage.id,
-          bestBefore: previousBest,
-        });
-      }
+      // No Peones earn here either — see handleLabyrinthMove.
     },
-    [activeCoverage, activeKnightTour, selectedPiece, isConnected, address],
+    [activeCoverage, activeKnightTour, selectedPiece],
   );
 
   // Pivot Challenge copy, resolved from the i18n layer (EN/ES) by id.

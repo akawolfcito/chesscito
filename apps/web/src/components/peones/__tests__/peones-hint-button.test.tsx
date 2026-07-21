@@ -29,10 +29,10 @@ vi.mock("@/lib/peones/telemetry", () => ({
 
 const messages = {
   PEONES_HINT_COPY: {
-    button: "Hint \u00b7 1 Peón",
+    button: "Hint \u00b7 2 Peones",
     pinLabel: "Hint",
     guest: "Connect to use Peones hints",
-    insufficient: "Need 1 Peón",
+    insufficient: "Need 2 Peones",
     error: "Hint unavailable",
     rateLimited: "One sec, try again",
   },
@@ -138,7 +138,7 @@ describe("PeonesHintButton — connected happy path", () => {
       wallet: W,
       target: "hint",
       targetId: "rook:r-1:1",
-      requested: 1,
+      requested: 2,
       debited: 1,
       newBalance: 9,
       attestationHash: "sha256:abc",
@@ -163,7 +163,7 @@ describe("PeonesHintButton — connected happy path", () => {
     await waitFor(() => expect(submitImpl).toHaveBeenCalledTimes(1));
     expect(submitImpl).toHaveBeenCalledWith({
       wallet: W,
-      amount: 1,
+      amount: 2,
       target: "hint",
       targetId: "rook:r-1:1",
       idempotencyKey: `spend:hint:${W}:rook:r-1:1`,
@@ -183,7 +183,7 @@ describe("PeonesHintButton — connected happy path", () => {
       wallet: W,
       target: "hint",
       targetId: "rook:r-1:3",
-      requested: 1,
+      requested: 2,
       debited: 1,
       newBalance: 9,
       attestationHash: "sha256:abc",
@@ -208,7 +208,7 @@ describe("PeonesHintButton — connected happy path", () => {
     await waitFor(() => expect(submitImpl).toHaveBeenCalledTimes(1));
     expect(submitImpl).toHaveBeenCalledWith({
       wallet: W,
-      amount: 1,
+      amount: 2,
       target: "hint",
       // attemptSeq=3 must appear in BOTH the targetId tail and the
       // idempotency-key tail, otherwise two attempts on the same
@@ -232,7 +232,7 @@ describe("PeonesHintButton — connected happy path", () => {
       wallet: W,
       target: "hint",
       targetId: "rook:r-1:1",
-      requested: 1,
+      requested: 2,
       debited: 1,
       newBalance: 9,
       attestationHash: "sha256:abc",
@@ -269,7 +269,7 @@ describe("PeonesHintButton — connected happy path", () => {
       wallet: W,
       target: "hint",
       targetId: "rook:r-1:1",
-      requested: 1,
+      requested: 2,
       debited: 1,
       newBalance: 9,
       attestationHash: "sha256:abc",
@@ -314,7 +314,7 @@ describe("PeonesHintButton — connected happy path", () => {
       wallet: W,
       target: "hint",
       targetId: "rook:r-1:1",
-      requested: 1,
+      requested: 2,
       debited: 0,
       newBalance: 9,
       attestationHash: "sha256:abc",
@@ -362,7 +362,7 @@ describe("PeonesHintButton — connected happy path", () => {
       wallet: W,
       target: "hint",
       targetId: "rook:r-1:1",
-      requested: 1,
+      requested: 2,
       debited: 1,
       newBalance: 0,
       attestationHash: "sha256:abc",
@@ -406,7 +406,7 @@ describe("PeonesHintButton — connected happy path", () => {
       wallet: W,
       target: "hint",
       targetId: "rook:r-1:1",
-      requested: 1,
+      requested: 2,
       debited: 1,
       newBalance: 9,
       attestationHash: "sha256:abc",
@@ -465,14 +465,14 @@ describe("PeonesHintButton — connected failure paths", () => {
     fireEvent.click(screen.getByRole("button"));
 
     await waitFor(() =>
-      expect(screen.getByText("Need 1 Peón")).toBeInTheDocument(),
+      expect(screen.getByText("Need 2 Peones")).toBeInTheDocument(),
     );
     expect(screen.queryByText("Hint unlocked")).not.toBeInTheDocument();
     expect(mockedBlocked).toHaveBeenCalledTimes(1);
     expect(mockedBlocked).toHaveBeenCalledWith({
       target: "hint",
       targetId: "rook:r-1:1",
-      requested: 1,
+      requested: 2,
       reason: "insufficient_balance",
     });
     expect(mockedSpent).not.toHaveBeenCalled();
@@ -504,7 +504,7 @@ describe("PeonesHintButton — connected failure paths", () => {
     expect(mockedFailed).toHaveBeenCalledWith({
       target: "hint",
       targetId: "rook:r-1:1",
-      requested: 1,
+      requested: 2,
       reason: "network",
     });
     expect(mockedSpent).not.toHaveBeenCalled();
@@ -541,7 +541,7 @@ describe("PeonesHintButton — side-effect tripwires", () => {
       wallet: W,
       target: "hint",
       targetId: "rook:r-1:1",
-      requested: 1,
+      requested: 2,
       debited: 1,
       newBalance: 9,
       attestationHash: "sha256:abc",
@@ -580,7 +580,7 @@ describe("PeonesHintButton — PRO bypass (Sprint 4 commit G)", () => {
       wallet: W,
       target: "hint",
       targetId: "rook:r-1:1",
-      requested: 1,
+      requested: 2,
       debited: 0,
       newBalance: 7,
       attestationHash: "sha256:bypass-x",
@@ -611,7 +611,7 @@ describe("PeonesHintButton — PRO bypass (Sprint 4 commit G)", () => {
     expect(mockedBypassed).toHaveBeenCalledWith({
       target: "hint",
       targetId: "rook:r-1:1",
-      requested: 1,
+      requested: 2,
       debited: 0,
       newBalance: 7,
       attestationHash: "sha256:bypass-x",
@@ -648,7 +648,7 @@ describe("PeonesHintButton — icon+label (founder D3 follow-up)", () => {
     expect(srcsets).toContain("/art/new-icons-chesscito/hint-icon-v1.webp");
     // Pin form: cost detail is the aria-label; the nano label below
     // shows the pin name.
-    expect(button).toHaveAttribute("aria-label", "Hint · 1 Peón");
+    expect(button).toHaveAttribute("aria-label", "Hint \u00b7 2 Peones");
     expect(screen.getByText("Hint")).toBeInTheDocument();
   });
 
@@ -739,7 +739,7 @@ describe("PeonesHintButton — rate-limited gets its own transient copy (hint ra
     expect(screen.getByText("Hint unavailable")).toBeInTheDocument();
   });
 
-  it("insufficient copy states the cost (D1 alignment): Need 1 Peón", async () => {
+  it("insufficient copy states the cost (D1 alignment): Need 2 Peones", async () => {
     const submitImpl = vi.fn().mockResolvedValue({
       kind: "insufficient_balance",
     } satisfies PeonesSpendResult);
@@ -753,6 +753,6 @@ describe("PeonesHintButton — rate-limited gets its own transient copy (hint ra
         "insufficient",
       ),
     );
-    expect(screen.getByText("Need 1 Peón")).toBeInTheDocument();
+    expect(screen.getByText("Need 2 Peones")).toBeInTheDocument();
   });
 });

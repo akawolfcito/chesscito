@@ -24,6 +24,7 @@ vi.mock("@/lib/peones/telemetry", () => ({
 import {
   attemptCoachSpendWithPeones,
   buildCoachIdempotencyKey,
+  COACH_ANALYSIS_PEONES_COST,
 } from "@/lib/peones/coach-spend-fallback";
 import {
   emitPeonesSpendBlocked,
@@ -69,8 +70,8 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
       wallet: W,
       target: "coach",
       targetId: G,
-      requested: 1,
-      debited: 1,
+      requested: COACH_ANALYSIS_PEONES_COST,
+      debited: COACH_ANALYSIS_PEONES_COST,
       newBalance: 4,
       attestationHash: "sha256:abc",
       ledgerId: 99,
@@ -89,7 +90,7 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
     expect(result).toEqual({
       kind: "paid",
       peonesIdempotencyKey: `spend:coach:${W}:${G}`,
-      debited: 1,
+      debited: COACH_ANALYSIS_PEONES_COST,
       duplicate: false,
       proBypassApplied: false,
       newBalance: 4,
@@ -97,7 +98,7 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
     });
     expect(submitImpl).toHaveBeenCalledWith({
       wallet: W,
-      amount: 1,
+      amount: COACH_ANALYSIS_PEONES_COST,
       target: "coach",
       targetId: G,
       idempotencyKey: `spend:coach:${W}:${G}`,
@@ -111,8 +112,8 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
       wallet: W,
       target: "coach",
       targetId: G,
-      requested: 1,
-      debited: 1,
+      requested: COACH_ANALYSIS_PEONES_COST,
+      debited: COACH_ANALYSIS_PEONES_COST,
       newBalance: 4,
       attestationHash: "sha256:abc",
       ledgerId: 99,
@@ -133,7 +134,7 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
       expect.objectContaining({
         target: "coach",
         targetId: G,
-        debited: 1,
+        debited: COACH_ANALYSIS_PEONES_COST,
       }),
     );
   });
@@ -147,8 +148,8 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
       wallet: W,
       target: "coach",
       targetId: G,
-      requested: 1,
-      debited: 1,
+      requested: COACH_ANALYSIS_PEONES_COST,
+      debited: COACH_ANALYSIS_PEONES_COST,
       newBalance: 0,
       attestationHash: "sha256:original",
       ledgerId: 99,
@@ -180,7 +181,7 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
       wallet: W,
       target: "coach",
       targetId: G,
-      requested: 1,
+      requested: COACH_ANALYSIS_PEONES_COST,
       debited: 0,
       newBalance: 4,
       attestationHash: "sha256:abc",
@@ -224,7 +225,7 @@ describe("attemptCoachSpendWithPeones — failure paths", () => {
     expect(mockedBlocked).toHaveBeenCalledWith({
       target: "coach",
       targetId: G,
-      requested: 1,
+      requested: COACH_ANALYSIS_PEONES_COST,
       reason: "insufficient_balance",
     });
     expect(mockedSpent).not.toHaveBeenCalled();
@@ -248,7 +249,7 @@ describe("attemptCoachSpendWithPeones — failure paths", () => {
     expect(mockedFailed).toHaveBeenCalledWith({
       target: "coach",
       targetId: G,
-      requested: 1,
+      requested: COACH_ANALYSIS_PEONES_COST,
       reason: "network",
     });
     expect(mockedSpent).not.toHaveBeenCalled();
@@ -263,7 +264,7 @@ describe("attemptCoachSpendWithPeones — PRO bypass (Sprint 4 commit G)", () =>
       wallet: W,
       target: "coach",
       targetId: G,
-      requested: 1,
+      requested: COACH_ANALYSIS_PEONES_COST,
       debited: 0,
       newBalance: 4,
       attestationHash: "sha256:bypass-1",
@@ -289,7 +290,7 @@ describe("attemptCoachSpendWithPeones — PRO bypass (Sprint 4 commit G)", () =>
     expect(mockedBypassed).toHaveBeenCalledWith({
       target: "coach",
       targetId: G,
-      requested: 1,
+      requested: COACH_ANALYSIS_PEONES_COST,
       debited: 0,
       newBalance: 4,
       attestationHash: "sha256:bypass-1",
@@ -305,7 +306,7 @@ describe("attemptCoachSpendWithPeones — PRO bypass (Sprint 4 commit G)", () =>
       wallet: W,
       target: "coach",
       targetId: G,
-      requested: 1,
+      requested: COACH_ANALYSIS_PEONES_COST,
       debited: 0,
       newBalance: 4,
       attestationHash: "sha256:bypass-1",

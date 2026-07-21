@@ -52,17 +52,27 @@ export function normalizeWallet(wallet: string): string {
 
 /** Minimal shape consumed by `computeLedgerBalance`. Accepts any
  *  superset of these fields so callers can pass full rows or just
- *  the columns they have. */
+ *  the columns they have. `pro_bypass` is optional because callers
+ *  that only ever hold earn rows have no such column to pass; absent
+ *  is read as `false` (a normal, balance-reducing spend). */
 export type BalanceContributingEntry = Pick<
   PeonesLedgerRow,
   "event_type" | "amount"
->;
+> & { pro_bypass?: boolean | null };
 
 /**
  * Computes the wallet balance from append-only entries. Mirrors the
  * `peones_balances` SQL view exactly:
  *  - `earn` and `adjustment` add `amount`.
- *  - `spend` and `rollback` subtract `amount`.
+ *  - `rollback` subtracts `amount`.
+ *  - `spend` subtracts `amount` ONLY when `pro_bypass` is falsy.
+ *
+ * That last clause is not a detail. A PRO-bypassed spend is recorded
+ * for audit + quota tracking with `debited = 0`; the SQL view, the
+ * `peones_spend` RPC and `peones_balance_with_caps` all exclude it.
+ * A helper that subtracted it anyway would report a balance lower
+ * than the one the user can actually spend — the exact divergence
+ * migration 20260721030000 was written to close.
  *
  * Unknown `event_type` values are ignored (the SQL CHECK constraint
  * makes them impossible in practice; this helper stays defensive).
@@ -74,8 +84,10 @@ export function computeLedgerBalance(
   for (const e of entries) {
     if (e.event_type === "earn" || e.event_type === "adjustment") {
       balance += e.amount;
-    } else if (e.event_type === "spend" || e.event_type === "rollback") {
+    } else if (e.event_type === "rollback") {
       balance -= e.amount;
+    } else if (e.event_type === "spend") {
+      if (!e.pro_bypass) balance -= e.amount;
     }
   }
   return balance;
@@ -178,14 +190,40 @@ export function buildDailyStreakBonusIdempotencyKey(
   return `daily_streak_bonus:${normalizeWallet(wallet)}:${dayUtc}:${streak}`;
 }
 
-export function buildTrainingExerciseIdempotencyKey(
+// ─────────────────────────────────────────────────────────────────
+// Exercise milestones (Economy V1, 2026-07-21)
+// ─────────────────────────────────────────────────────────────────
+//
+// Training no longer pays per exercise. It pays once per group of five
+// NEW exercises: the 5th, 10th, 15th… completion each credit +1 Peón.
+// Repetitions, star improvements and re-completions pay nothing.
+
+/** How many NEW exercises buy one Peón. */
+export const EXERCISE_MILESTONE_SIZE = 5;
+
+/** Reward tier for a lifetime count of uniquely completed exercises.
+ *  Tier 0 = nothing earned yet; tier N = N milestones crossed. */
+export function exerciseMilestoneTier(uniqueCompleted: number): number {
+  if (!Number.isFinite(uniqueCompleted) || uniqueCompleted <= 0) return 0;
+  return Math.floor(uniqueCompleted / EXERCISE_MILESTONE_SIZE);
+}
+
+/**
+ * Idempotency key for one exercise milestone.
+ *
+ * The tier — NOT the exercise — is the economic identity, and that is
+ * what makes the reward safe without a new counter table: the global
+ * unique index on `idempotency_key` means tier N can be credited at
+ * most once per wallet, forever. A retry, a double-tap, a re-completed
+ * exercise, or a player who clears local progress and crosses the same
+ * threshold again all collapse onto the same key and the endpoint
+ * answers `duplicate: true` with no second row.
+ */
+export function buildExerciseMilestoneIdempotencyKey(
   wallet: string,
-  piece: string,
-  exerciseId: string,
-  bestStarsBefore: number,
-  bestStarsAfter: number,
+  tier: number,
 ): string {
-  return `training:${normalizeWallet(wallet)}:${piece}:${exerciseId}:${bestStarsBefore}->${bestStarsAfter}`;
+  return `exercise_milestone:${normalizeWallet(wallet)}:${tier}`;
 }
 
 // ─────────────────────────────────────────────────────────────────

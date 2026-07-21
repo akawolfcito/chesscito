@@ -2477,18 +2477,12 @@ const messages = {
     es: "Español",
   },
   PEONES_HINT_COPY: {
-    button: "Pista \u00b7 1 Peón",
+    button: "Pista \u00b7 2 Peones",
     pinLabel: "Pista",
     guest: "Conecta tu wallet para usar pistas con Peones",
-    insufficient: "Te falta 1 Peón",
+    insufficient: "Te faltan 2 Peones",
     error: "Pista no disponible",
     rateLimited: "Un momento, intenta de nuevo",
-  },
-  PEONES_RETRY_COPY: {
-    button: "Reintentar \u00b7 2 Peones",
-    guest: "Conecta tu wallet para usar reintentos con Peones",
-    insufficient: "Sin Peones suficientes",
-    error: "Reintento no disponible",
   },
   FIRST_FOCUS_DAY_OVERLAY_COPY: {
     eyebrow: "Logro Desbloqueado",

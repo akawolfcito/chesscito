@@ -35,7 +35,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // These tests don't exercise either, but the mocks keep the renderHook calls
 // from blowing up on missing providers.
 vi.mock("@/lib/peones/training-earn", () => ({
-  submitTrainingExerciseEarn: vi.fn().mockResolvedValue({
+  EXERCISE_MILESTONE_EARN_AMOUNT: 1,
+  submitExerciseMilestoneEarn: vi.fn().mockResolvedValue({
     kind: "success",
     credited: 0,
     attestationHash: null,

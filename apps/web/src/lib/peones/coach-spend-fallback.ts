@@ -24,12 +24,18 @@
  */
 
 import { submitPeonesSpend } from "@/lib/peones/spend-client";
+import { SPEND_COST_BY_TARGET } from "@/lib/peones/spend-service";
 import {
   emitPeonesSpendBlocked,
   emitPeonesSpendBypassed,
   emitPeonesSpendFailed,
   emitPeonesSpent,
 } from "@/lib/peones/telemetry";
+
+/** Peones price of one Coach analysis. DERIVED from the canonical
+ *  price table — the CoachCostRibbon reads the same source, so the
+ *  ribbon and the debit cannot drift apart. */
+export const COACH_ANALYSIS_PEONES_COST = SPEND_COST_BY_TARGET.coach;
 
 export type CoachPeonesAttemptArgs = {
   wallet: string;
@@ -71,7 +77,8 @@ export function buildCoachIdempotencyKey(
 }
 
 /**
- * Attempts to debit 1 Peón for Coach analysis. Emits the relevant
+ * Attempts to debit `COACH_ANALYSIS_PEONES_COST` Peones for a Coach
+ * analysis — the most expensive sink in the game. Emits the relevant
  * telemetry event for the outcome (consumer-emit pattern from commit
  * D). Caller decides what to render — this helper just reports.
  */
@@ -85,7 +92,7 @@ export async function attemptCoachSpendWithPeones(
 
   const result = await submit({
     wallet,
-    amount: 1,
+    amount: COACH_ANALYSIS_PEONES_COST,
     target: "coach",
     targetId,
     idempotencyKey,
@@ -105,7 +112,7 @@ export async function attemptCoachSpendWithPeones(
       emitPeonesSpendBypassed({
         target: "coach",
         targetId,
-        requested: 1,
+        requested: COACH_ANALYSIS_PEONES_COST,
         debited: 0,
         newBalance: result.newBalance,
         attestationHash: result.attestationHash,
@@ -121,7 +128,7 @@ export async function attemptCoachSpendWithPeones(
       emitPeonesSpent({
         target: "coach",
         targetId,
-        requested: 1,
+        requested: COACH_ANALYSIS_PEONES_COST,
         debited: result.debited,
         newBalance: result.newBalance,
         attestationHash: result.attestationHash,
@@ -144,7 +151,7 @@ export async function attemptCoachSpendWithPeones(
     emitPeonesSpendBlocked({
       target: "coach",
       targetId,
-      requested: 1,
+      requested: COACH_ANALYSIS_PEONES_COST,
       reason: "insufficient_balance",
     });
     return { kind: "insufficient" };
@@ -153,7 +160,7 @@ export async function attemptCoachSpendWithPeones(
   emitPeonesSpendFailed({
     target: "coach",
     targetId,
-    requested: 1,
+    requested: COACH_ANALYSIS_PEONES_COST,
     reason: result.error,
   });
   return { kind: "error", reason: result.error };

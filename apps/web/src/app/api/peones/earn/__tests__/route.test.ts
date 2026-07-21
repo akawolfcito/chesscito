@@ -242,31 +242,39 @@ describe("POST /api/peones/earn — input validation", () => {
     expect(await res.json()).toEqual({ error: "invalid_idempotency_key" });
   });
 
-  it("accepts labyrinth_completion with its documented key prefix (Slice 4)", async () => {
-    mockedSupabase.mockReturnValue(
-      buildSupabaseMock({ insertResult: { data: { id: 77 }, error: null } }).supabase,
-    );
+  it("accepts exercise_completion with the milestone key prefix", async () => {
+    const { supabase, insertSpy } = buildSupabaseMock({
+      insertResult: { data: { id: 77 }, error: null },
+    });
+    mockedSupabase.mockReturnValue(supabase);
     const res = await POST(
       makeRequest(
         baseBody({
-          source: "labyrinth_completion",
-          idempotencyKey: `labyrinth_completion:${W}:knight:knight-lab-3`,
-          sourceId: "knight:knight-lab-3",
+          source: "exercise_completion",
+          idempotencyKey: `exercise_milestone:${W}:3`,
+          sourceId: "milestone:3",
           amount: 1,
         }),
       ),
     );
     expect(res.status).toBe(200);
+    expect(insertSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ source: "exercise_completion", amount: 1 }),
+    );
   });
 
-  it("rejects labyrinth_completion with a foreign key prefix", async () => {
+  it("rejects exercise_completion carrying the retired per-exercise key", async () => {
+    // The `training:{wallet}:{piece}:{id}:{a}->{b}` format WAS the
+    // exercise_completion key until Economy V1. Historical rows keep
+    // it; new writes must not, or a client could mint one Peón per
+    // exercise again just by keeping the old key shape.
     mockedSupabase.mockReturnValue(buildSupabaseMock({}).supabase);
     const res = await POST(
       makeRequest(
         baseBody({
-          source: "labyrinth_completion",
-          idempotencyKey: `training:${W}:knight:knight-lab-3`,
-          sourceId: "knight:knight-lab-3",
+          source: "exercise_completion",
+          idempotencyKey: `training:${W}:rook:rook-4:0->3`,
+          sourceId: "rook:rook-4",
           amount: 1,
         }),
       ),
@@ -275,21 +283,59 @@ describe("POST /api/peones/earn — input validation", () => {
     expect(await res.json()).toEqual({ error: "invalid_idempotency_key" });
   });
 
-  it("accepts admin_grant with any idempotency key prefix", async () => {
-    mockedSupabase.mockReturnValue(
-      buildSupabaseMock({ insertResult: { data: { id: 42 }, error: null } }).supabase,
-    );
-    const res = await POST(
-      makeRequest(
-        baseBody({
-          source: "admin_grant",
-          idempotencyKey: "grant-2026-q3-batch-1",
-          sourceId: "ops-ticket-123",
-          amount: 5,
-        }),
-      ),
-    );
-    expect(res.status).toBe(200);
+  // ── Retired earn sources ───────────────────────────────────────
+  //
+  // Each of these was reachable from this public, unauthenticated
+  // endpoint. `admin_grant` was the worst of them: it skipped the
+  // prefix check entirely and accepted up to 50 Peones per call, so
+  // anyone who could POST could mint. The rest simply had no live
+  // caller, which is the same hole with a smaller hat.
+  //
+  // The requests below are otherwise VALID — right shape, right key
+  // prefix, sane amount. The rejection has to come from the source
+  // allow-list itself.
+  it.each([
+    {
+      source: "admin_grant",
+      idempotencyKey: "grant-2026-q3-batch-1",
+      sourceId: "ops-ticket-123",
+      amount: 5,
+      why: "ops-only mint reachable from the public route",
+    },
+    {
+      source: "labyrinth_completion",
+      idempotencyKey: `labyrinth_completion:${W}:knight:knight-lab-3`,
+      sourceId: "knight:knight-lab-3",
+      amount: 1,
+      why: "labyrinths no longer pay Peones",
+    },
+    {
+      source: "daily_lab",
+      idempotencyKey: `daily_lab:${W}:2026-07-21`,
+      sourceId: "lab-1",
+      amount: 1,
+      why: "dormant, never had a caller",
+    },
+    {
+      source: "daily_streak_bonus",
+      idempotencyKey: `daily_streak_bonus:${W}:2026-07-21:7`,
+      sourceId: "streak-7",
+      amount: 1,
+      why: "dormant, never had a caller",
+    },
+  ])("returns 400 invalid_source for $source ($why)", async (over) => {
+    const { supabase, insertSpy } = buildSupabaseMock({
+      insertResult: { data: { id: 42 }, error: null },
+    });
+    mockedSupabase.mockReturnValue(supabase);
+
+    const { why: _why, ...body } = over;
+    const res = await POST(makeRequest(baseBody(body)));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "invalid_source" });
+    // Nothing was written — the rejection happens before the ledger.
+    expect(insertSpy).not.toHaveBeenCalled();
   });
 
   it("returns 400 invalid_input on non-serialisable metadata (BigInt)", async () => {
@@ -383,13 +429,13 @@ describe("POST /api/peones/earn — daily cap", () => {
   });
 
   // Economy recalibration 2026-06-10: every accepted earn source is now
-  // capped (the 3 daily-family + exercise_completion), so the endpoint no
+  // capped (the daily-family + exercise_completion), so the endpoint no
   // longer has an accepted non-capped source to exercise the passthrough
   // branch — the former "ignores the cap for exercise_completion" test was
-  // removed. exercise_completion now respects the cap (truncates).
-  it("truncates exercise_completion to the daily cap (now capped)", async () => {
+  // removed. exercise_completion respects the cap (truncates).
+  it("truncates an exercise milestone to the daily cap", async () => {
     const mock = buildSupabaseMock({
-      capRow: { balance: 5, daily_earned_capped: 5, daily_cap: 6 },
+      capRow: { balance: 5, daily_earned_capped: 2, daily_cap: 3 },
       insertResult: { data: { id: 34 }, error: null },
     });
     mockedSupabase.mockReturnValue(mock.supabase);
@@ -398,8 +444,8 @@ describe("POST /api/peones/earn — daily cap", () => {
       makeRequest(
         baseBody({
           source: "exercise_completion",
-          idempotencyKey: `training:${W}:rook:rook-4:0->3`,
-          sourceId: "rook-4:0->3",
+          idempotencyKey: `exercise_milestone:${W}:2`,
+          sourceId: "milestone:2",
           amount: 2,
         }),
       ),
@@ -407,10 +453,30 @@ describe("POST /api/peones/earn — daily cap", () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toMatchObject({
-      credited: 1, // 6 cap - 5 already earned = 1 headroom
+      credited: 1, // 3 cap - 2 already earned = 1 headroom
       capReached: true,
     });
     expect(mock.insertSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("credits the Daily Tactic's +1 and shares the cap with milestones", async () => {
+    // Economy V1: the Daily pays 1, and the free ceiling is 3 for the
+    // whole day across every capped source. A wallet that already
+    // earned 3 today gets nothing more, whatever it solves.
+    const mock = buildSupabaseMock({
+      capRow: { balance: 12, daily_earned_capped: 3, daily_cap: 3 },
+    });
+    mockedSupabase.mockReturnValue(mock.supabase);
+
+    const res = await POST(makeRequest(baseBody({ amount: 1 })));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      credited: 0,
+      capReached: true,
+      newBalance: 12,
+    });
+    // A zero credit never writes a row.
+    expect(mock.insertSpy).not.toHaveBeenCalled();
   });
 });
 

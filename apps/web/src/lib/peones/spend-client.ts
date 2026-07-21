@@ -3,7 +3,7 @@
  *
  * Sprint 4 commit D of Training Economy Alpha 2026-06-08. Pure async
  * wrapper around `POST /api/peones/spend`. Mirrors the shape of
- * `submitTrainingExerciseEarn` / `submitDailyTacticEarn` — helper is
+ * `submitExerciseMilestoneEarn` / `submitDailyTacticEarn` — helper is
  * NOT a telemetry emitter; the future consumer (Hint button, Coach
  * integration, etc.) decides which event fires based on the result.
  *

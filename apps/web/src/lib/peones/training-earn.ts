@@ -1,30 +1,34 @@
 /**
- * Training exercise completion → Peones earn submission.
+ * Training progress → Peones earn submission.
  *
- * Sprint 3 commit F of Training Economy Alpha 2026-06-07. Mirror of
- * `lib/daily/peones-earn.ts` for the Senda training surface.
+ * Economy V1 (2026-07-21, docs/economy/peones-v1-policy.md): training
+ * pays +1 Peón per MILESTONE of five newly completed exercises — the
+ * 5th, 10th, 15th… — not per exercise.
  *
- * Economy recalibration 2026-06-10: the reward is now a flat +1 Peón on
- * the FIRST completion of an exercise (bestStarsBefore === 0 &&
- * bestStarsAfter > 0), NOT the star delta. Re-completing or improving
- * stars never earns again (no farming). Stars stay the progress/mastery
- * signal; Peones are a controlled currency. The source
- * (`exercise_completion`) is now in the daily cap (PEONES_DAILY_CAP_SOURCES),
- * so the endpoint can truncate the +1 to remaining headroom and the
- * response CAN carry the cap semantics.
+ * What that replaces: a flat +1 on every first completion, which made
+ * the training path the fastest Peón faucet in the app and scaled
+ * linearly with a catalog that keeps growing. Stars stay the mastery
+ * signal; Peones stay a currency you earn slowly.
+ *
+ * What still pays nothing: repeating an exercise, improving its stars,
+ * and re-completing content already counted. The tier is derived from a
+ * lifetime count of UNIQUE completions, so none of those move it.
  *
  * Pure async wrapper around `POST /api/peones/earn`. NEVER throws —
  * every error path collapses to `{kind:"error"}`. Returns a
- * success-with-zero short-circuit (no network call) when the completion
- * is not a fresh first completion.
+ * success-with-zero short-circuit (no network call) when this
+ * completion did not cross a milestone.
  */
 
 import {
-  buildTrainingExerciseIdempotencyKey,
+  buildExerciseMilestoneIdempotencyKey,
+  exerciseMilestoneTier,
   normalizeWallet,
 } from "@/lib/peones/ledger-service";
 import { PEONES_DAILY_CAP } from "@/lib/peones/types";
-import type { PieceId } from "@/lib/game/types";
+
+/** One milestone is worth exactly one Peón. */
+export const EXERCISE_MILESTONE_EARN_AMOUNT = 1;
 
 export type TrainingExerciseRewardState =
   | { kind: "pending" }
@@ -40,15 +44,19 @@ export type TrainingExerciseRewardState =
       attestationHash: string | null;
       ledgerId: number | null;
       duplicate: boolean;
+      /** Milestone tier this call settled. 0 when nothing was crossed. */
+      tier: number;
     }
   | { kind: "error" };
 
-export type SubmitTrainingExerciseEarnArgs = {
+export type SubmitExerciseMilestoneEarnArgs = {
   wallet: string;
-  piece: PieceId;
-  exerciseId: string;
-  bestStarsBefore: number;
-  bestStarsAfter: number;
+  /** Lifetime count of uniquely completed exercises BEFORE this
+   *  completion landed. */
+  completedBefore: number;
+  /** …and AFTER. The pair is what decides whether a milestone was
+   *  crossed; the absolute numbers never reach the server. */
+  completedAfter: number;
   /** Override for testing. Defaults to the global `fetch`. */
   fetchImpl?: typeof fetch;
 };
@@ -63,54 +71,51 @@ type EarnResponse = {
   duplicate?: boolean;
 };
 
+function noopSuccess(tier: number): TrainingExerciseRewardState {
+  return {
+    kind: "success",
+    credited: 0,
+    newBalance: 0,
+    dailyEarnedCapped: 0,
+    dailyCap: PEONES_DAILY_CAP,
+    attestationHash: null,
+    ledgerId: null,
+    duplicate: false,
+    tier,
+  };
+}
+
 /**
- * POST /api/peones/earn for a Senda exercise completion.
+ * POST /api/peones/earn when a completion crosses an exercise milestone.
  *
- *  - Amount = flat 1 (economy recalibration 2026-06-10). NOT the star
- *    delta. Earns only on the FIRST completion (bestStarsBefore === 0 &&
- *    bestStarsAfter > 0); any later improvement / re-completion is a no-op.
- *  - Source = `exercise_completion`. Now a daily-cap source, so the
- *    endpoint may truncate the +1 to the remaining daily headroom.
- *  - sourceId = `${piece}:${exerciseId}` so the audit / dashboard
- *    can pivot by piece without parsing the idempotency key.
- *  - idempotencyKey = buildTrainingExerciseIdempotencyKey(...)
- *    from commit B. Same wallet + piece + exerciseId + same
- *    before→after pair always collapse to ONE ledger row.
+ *  - Amount = flat 1 per milestone.
+ *  - Source = `exercise_completion` (unchanged — the ledger taxonomy is
+ *    historical and a new literal would cost a schema migration for no
+ *    economic gain). The MEANING of the row changed, not its label; the
+ *    idempotency key is what tells the two eras apart (`training:…` for
+ *    the old per-exercise rows, `exercise_milestone:…` for these).
+ *  - sourceId = `milestone:{tier}` so an audit query can pivot on the
+ *    tier without parsing the key.
+ *  - Daily-capped, so the endpoint may truncate the +1 to the remaining
+ *    headroom — a player who crosses two milestones in one sitting on a
+ *    day they also solved the Daily still cannot exceed the cap.
  */
-export async function submitTrainingExerciseEarn(
-  args: SubmitTrainingExerciseEarnArgs,
+export async function submitExerciseMilestoneEarn(
+  args: SubmitExerciseMilestoneEarnArgs,
 ): Promise<TrainingExerciseRewardState> {
-  const {
-    wallet: rawWallet,
-    piece,
-    exerciseId,
-    bestStarsBefore,
-    bestStarsAfter,
-    fetchImpl,
-  } = args;
+  const { wallet: rawWallet, completedBefore, completedAfter, fetchImpl } = args;
   const doFetch = fetchImpl ?? fetch;
 
-  // Flat reward, first-completion only. bestStarsBefore > 0 means the
-  // exercise was already completed → no second earn (anti-farm). A
-  // non-positive after also short-circuits defensively.
-  const isFreshCompletion = bestStarsBefore === 0 && bestStarsAfter > 0;
-  if (!isFreshCompletion) {
-    // No-op success (no network call). Cap fields zeroed because we never
-    // spoke to the server. Keeps the caller's happy path symmetric.
-    return {
-      kind: "success",
-      credited: 0,
-      newBalance: 0,
-      dailyEarnedCapped: 0,
-      dailyCap: PEONES_DAILY_CAP,
-      attestationHash: null,
-      ledgerId: null,
-      duplicate: false,
-    };
-  }
+  const tierBefore = exerciseMilestoneTier(completedBefore);
+  const tier = exerciseMilestoneTier(completedAfter);
 
-  // Flat +1 (not the star delta).
-  const amount = 1;
+  // No new tier → no network call. Crossing several tiers at once is
+  // not reachable (one completion moves the count by one) but if it
+  // ever were, we credit the highest tier only: the key is the tier,
+  // so lower ones stay claimable later and can never double-pay.
+  if (tier <= tierBefore || tier < 1) {
+    return noopSuccess(tierBefore);
+  }
 
   let wallet: string;
   try {
@@ -119,13 +124,7 @@ export async function submitTrainingExerciseEarn(
     return { kind: "error" };
   }
 
-  const idempotencyKey = buildTrainingExerciseIdempotencyKey(
-    wallet,
-    piece,
-    exerciseId,
-    bestStarsBefore,
-    bestStarsAfter,
-  );
+  const idempotencyKey = buildExerciseMilestoneIdempotencyKey(wallet, tier);
 
   let res: Response;
   try {
@@ -134,9 +133,9 @@ export async function submitTrainingExerciseEarn(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         wallet,
-        amount,
+        amount: EXERCISE_MILESTONE_EARN_AMOUNT,
         source: "exercise_completion",
-        sourceId: `${piece}:${exerciseId}`,
+        sourceId: `milestone:${tier}`,
         idempotencyKey,
       }),
     });
@@ -164,5 +163,6 @@ export async function submitTrainingExerciseEarn(
     attestationHash: json.attestationHash ?? null,
     ledgerId: json.ledgerId ?? null,
     duplicate: Boolean(json.duplicate),
+    tier,
   };
 }

@@ -18,8 +18,14 @@ import type { DailyTacticData } from "./daily-puzzles";
 
 /** Single source of truth for the per-Daily Tactic earn amount. The
  *  endpoint cap-truncates this server-side when daily-family sources
- *  exhaust the daily cap, so we only need a single literal here. */
-export const DAILY_TACTIC_EARN_AMOUNT = 3;
+ *  exhaust the daily cap, so we only need a single literal here.
+ *
+ *  Economy V1 (2026-07-21): 3 → 1. At 3/day the Daily alone paid for a
+ *  Hint every day and a Coach analysis every four, which is the whole
+ *  sink budget handed out for one puzzle. One per day keeps the habit
+ *  loop intact and leaves the purchase rail meaningful. Idempotency is
+ *  unchanged — still one credit per wallet/day/puzzle. */
+export const DAILY_TACTIC_EARN_AMOUNT = 1;
 
 /**
  * Result of the earn submission as the sheet should render it.

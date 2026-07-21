@@ -24,7 +24,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/telemetry", () => ({ track: vi.fn() }));
 vi.mock("@/lib/peones/training-earn", () => ({
-  submitTrainingExerciseEarn: vi.fn().mockResolvedValue({
+  EXERCISE_MILESTONE_EARN_AMOUNT: 1,
+  submitExerciseMilestoneEarn: vi.fn().mockResolvedValue({
     kind: "success",
     credited: 0,
     attestationHash: null,

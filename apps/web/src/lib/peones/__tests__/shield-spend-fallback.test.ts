@@ -19,6 +19,7 @@ vi.mock("@/lib/peones/telemetry", () => ({
 import {
   attemptShieldSpendWithPeones,
   buildShieldIdempotencyKey,
+  SHIELD_RESCUE_PEONES_COST,
 } from "@/lib/peones/shield-spend-fallback";
 import {
   emitPeonesSpendBlocked,
@@ -72,8 +73,8 @@ describe("attemptShieldSpendWithPeones — paid path", () => {
       wallet: W,
       target: "shield",
       targetId: String(SEQ),
-      requested: 2,
-      debited: 2,
+      requested: SHIELD_RESCUE_PEONES_COST,
+      debited: SHIELD_RESCUE_PEONES_COST,
       newBalance: 10,
       attestationHash: "sha256:abc",
       ledgerId: 55,
@@ -92,7 +93,7 @@ describe("attemptShieldSpendWithPeones — paid path", () => {
     expect(result).toEqual({
       kind: "paid",
       peonesIdempotencyKey: `spend:shield:${W}:${SEQ}`,
-      debited: 2,
+      debited: SHIELD_RESCUE_PEONES_COST,
       duplicate: false,
       proBypassApplied: false,
       newBalance: 10,
@@ -100,7 +101,7 @@ describe("attemptShieldSpendWithPeones — paid path", () => {
     });
     expect(submitImpl).toHaveBeenCalledWith({
       wallet: W,
-      amount: 2,
+      amount: SHIELD_RESCUE_PEONES_COST,
       target: "shield",
       targetId: String(SEQ),
       idempotencyKey: `spend:shield:${W}:${SEQ}`,
@@ -115,7 +116,7 @@ describe("attemptShieldSpendWithPeones — paid path", () => {
       wallet: W,
       target: "shield",
       targetId: String(SEQ),
-      requested: 2,
+      requested: SHIELD_RESCUE_PEONES_COST,
       debited: 0,
       newBalance: 10,
       attestationHash: "sha256:abc",
@@ -154,7 +155,7 @@ describe("attemptShieldSpendWithPeones — failure paths", () => {
     expect(mockedBlocked).toHaveBeenCalledWith({
       target: "shield",
       targetId: String(SEQ),
-      requested: 2,
+      requested: SHIELD_RESCUE_PEONES_COST,
       reason: "insufficient_balance",
     });
   });
@@ -175,7 +176,7 @@ describe("attemptShieldSpendWithPeones — failure paths", () => {
     expect(mockedFailed).toHaveBeenCalledWith({
       target: "shield",
       targetId: String(SEQ),
-      requested: 2,
+      requested: SHIELD_RESCUE_PEONES_COST,
       reason: "network",
     });
   });

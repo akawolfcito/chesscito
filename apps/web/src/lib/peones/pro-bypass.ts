@@ -27,20 +27,18 @@ import { isProActive } from "@/lib/pro/is-active";
 import type { PeonesSpendTarget } from "@/lib/peones/spend-service";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
-/** M1 daily PRO bypass quotas per calibration §6. Save game is
- *  unlimited (low-explotation acción). Sprint 4 surfaces ship:
- *  coach (E in F), hint (E), retry (later), save_game (later). */
+/** M1 daily PRO bypass quotas per calibration §6. Economy V1
+ *  (2026-07-21) did NOT touch these numbers — it only dropped the
+ *  `retry` and `save_game` rows because those targets stopped being
+ *  spendable at all, and this record is keyed by PeonesSpendTarget. */
 export const PRO_BYPASS_DAILY_QUOTA: Readonly<
   Record<PeonesSpendTarget, number>
 > = {
   coach: 5,
   hint: 20,
-  retry: 10,
-  // Shield: no PRO entitlement decided yet. 0 = PRO pays same 2 Peones as anyone else
-  // via fallback. Easy to raise later (change one number) if operator decides otherwise.
+  // Shield: no PRO entitlement decided yet. 0 = PRO pays the same price as anyone
+  // else via fallback. Easy to raise later (change one number) if operator decides otherwise.
   shield: 0,
-  // Save game has no PRO cost in the first place; PRO sees ilimitado.
-  save_game: Number.POSITIVE_INFINITY,
 };
 
 export type ProBypassEvaluation =

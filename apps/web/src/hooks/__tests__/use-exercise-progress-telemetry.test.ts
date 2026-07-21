@@ -33,7 +33,8 @@ vi.mock("@/lib/telemetry", () => ({
 // is mocked to a no-op success. wagmi mock defaults to guest so
 // the earn path is skipped entirely in this file.
 vi.mock("@/lib/peones/training-earn", () => ({
-  submitTrainingExerciseEarn: vi.fn().mockResolvedValue({
+  EXERCISE_MILESTONE_EARN_AMOUNT: 1,
+  submitExerciseMilestoneEarn: vi.fn().mockResolvedValue({
     kind: "success",
     credited: 0,
     attestationHash: null,

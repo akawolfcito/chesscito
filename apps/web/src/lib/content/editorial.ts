@@ -3709,7 +3709,7 @@ export const LANGUAGE_CHIP_COPY = {
 } as const;
 
 export const PEONES_HINT_COPY = {
-  button: "Hint \u00b7 1 Peón",
+  button: "Hint \u00b7 2 Peones",
   /** Nano label under the action-row pin (founder 2026-06-11: HINT
    *  sits in the dock action row like SAVE/CLAIM). Cost detail stays
    *  in `button`, which becomes the aria-label. */
@@ -3720,7 +3720,7 @@ export const PEONES_HINT_COPY = {
    *  line in roughly the same width as the idle button.
    *  Cost-explicit per the D1 quota-comms direction (2026-06-11):
    *  tells the player WHAT is missing, not just that something is. */
-  insufficient: "Need 1 Peón",
+  insufficient: "Need 2 Peones",
   error: "Hint unavailable",
   /** Transient 429 from the spend endpoint. Distinct from `error`
    *  because the condition self-heals in seconds; the generic
@@ -3729,18 +3729,12 @@ export const PEONES_HINT_COPY = {
   rateLimited: "One sec, try again",
 } as const;
 
-/**
- * Sprint 5 commit C — PeonesRetryButton (result overlay) i18n.
- * Mirrors PEONES_HINT_COPY shape so the morphing-chip pattern stays
- * consistent across surfaces. Copy fits one line in roughly the
- * idle-button width — no stacked sublabel.
- */
-export const PEONES_RETRY_COPY = {
-  button: "Retry \u00b7 2 Peones",
-  guest: "Connect to use Peones retries",
-  insufficient: "Not enough Peones",
-  error: "Retry unavailable",
-} as const;
+// PEONES_RETRY_COPY (Sprint 5 commit C) was removed in Economy V1
+// (2026-07-21) together with the `retry` spend target and
+// PeonesRetryButton. Retry is FREE in the shipped product and the paid
+// button was never mounted anywhere, so this copy advertised a price
+// nothing charged. Bringing a paid retry back means bringing all three
+// back together.
 
 /**
  * GetPeonesSheet (buy-Peones surface) i18n. Migrated out of the component

@@ -7,6 +7,7 @@ import {
 } from "@/test-utils/render-with-intl";
 
 import { FailRescueModal, type FailRescueModalProps } from "../fail-rescue-modal";
+import { SHIELD_RESCUE_PEONES_COST } from "@/lib/peones/shield-spend-fallback";
 
 afterEach(() => {
   cleanup();
@@ -43,10 +44,14 @@ describe("FailRescueModal — variant D (0 shields, Peones fallback)", () => {
     expect(handlers.onUseShield).toHaveBeenCalledTimes(1);
   });
 
-  it("shows the 2 Peones cost as a companion pill", () => {
+  it("shows the shield rescue price as a companion pill", () => {
     renderModal();
 
-    expect(screen.getByText("2 Peones")).toBeInTheDocument();
+    // Reads the canonical price so the pill can never advertise a
+    // number the spend call does not charge.
+    expect(
+      screen.getByText(`${SHIELD_RESCUE_PEONES_COST} Peones`),
+    ).toBeInTheDocument();
   });
 });
 

@@ -20,6 +20,7 @@
  */
 
 import { submitPeonesSpend } from "@/lib/peones/spend-client";
+import { SPEND_COST_BY_TARGET } from "@/lib/peones/spend-service";
 import {
   emitPeonesSpendBlocked,
   emitPeonesSpendBypassed,
@@ -27,10 +28,12 @@ import {
   emitPeonesSpent,
 } from "@/lib/peones/telemetry";
 
-/** Peones cost of a shield rescue. Single source of truth — reused by
- *  the spend call below and by the FailRescueModal variant D copy so
- *  the displayed price can never drift from what's actually charged. */
-export const SHIELD_RESCUE_PEONES_COST = 2;
+/** Peones cost of a shield rescue. DERIVED from the canonical price
+ *  table so the FailRescueModal copy, this spend call and the server's
+ *  `amount` validation can never disagree — a divergence here is a 400
+ *  the user reads as "rescue broken". Re-exported (rather than inlined
+ *  at the call sites) because the modal imports it by this name. */
+export const SHIELD_RESCUE_PEONES_COST = SPEND_COST_BY_TARGET.shield;
 
 export type ShieldPeonesAttemptArgs = {
   wallet: string;
@@ -72,8 +75,9 @@ export function buildShieldIdempotencyKey(
 }
 
 /**
- * Attempts to debit 2 Peones for a Shield rescue. Emits the relevant
- * telemetry event for the outcome. Caller decides what to render.
+ * Attempts to debit `SHIELD_RESCUE_PEONES_COST` Peones for a Shield
+ * rescue. Emits the relevant telemetry event for the outcome. Caller
+ * decides what to render.
  */
 export async function attemptShieldSpendWithPeones(
   args: ShieldPeonesAttemptArgs,
@@ -134,7 +138,7 @@ export async function attemptShieldSpendWithPeones(
     emitPeonesSpendBlocked({
       target: "shield",
       targetId,
-      requested: 2,
+      requested: SHIELD_RESCUE_PEONES_COST,
       reason: "insufficient_balance",
     });
     return { kind: "insufficient" };
@@ -143,7 +147,7 @@ export async function attemptShieldSpendWithPeones(
   emitPeonesSpendFailed({
     target: "shield",
     targetId,
-    requested: 2,
+    requested: SHIELD_RESCUE_PEONES_COST,
     reason: result.error,
   });
   return { kind: "error", reason: result.error };

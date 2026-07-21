@@ -37,6 +37,7 @@ vi.mock("@/lib/peones/welcome-pack-server", () => ({
 }));
 
 import { GET } from "../route";
+import { PEONES_DAILY_CAP } from "@/lib/peones/types";
 import {
   enforceOrigin,
   enforceReadRateLimit,
@@ -204,7 +205,7 @@ describe("GET /api/peones/balance — success path", () => {
     });
   });
 
-  it("falls back to dailyCap=6 + balance=0 when rpc returns no rows", async () => {
+  it("falls back to dailyCap=PEONES_DAILY_CAP + balance=0 when rpc returns no rows", async () => {
     const { supabase } = buildSupabaseMock({
       rpcResult: { data: [], error: null },
       maybeSingleResult: { data: null, error: null },
@@ -217,7 +218,7 @@ describe("GET /api/peones/balance — success path", () => {
       wallet: VALID_WALLET,
       balance: 0,
       dailyEarnedCapped: 0,
-      dailyCap: 6,
+      dailyCap: PEONES_DAILY_CAP,
       lastEventAt: null,
     });
   });

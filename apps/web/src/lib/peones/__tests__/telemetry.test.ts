@@ -214,9 +214,9 @@ describe("emitPeonesSpent — Sprint 4 commit D", () => {
 
   it("carries proBypassApplied through (commit G will set true)", () => {
     emitPeonesSpent({
-      target: "retry",
-      targetId: "queen:q-2:7",
-      requested: 2,
+      target: "shield",
+      targetId: "5",
+      requested: 5,
       debited: 0,
       newBalance: 8,
       attestationHash: "sha256:ghi",
@@ -315,7 +315,7 @@ describe("emitPeonesSpendBypassed — Sprint 4 commit G", () => {
   it.each([
     ["coach", 5],
     ["hint", 20],
-    ["retry", 10],
+    ["shield", 0],
   ] as const)(
     "forwards target=%s with quotaLimit=%i",
     (target, quotaLimit) => {

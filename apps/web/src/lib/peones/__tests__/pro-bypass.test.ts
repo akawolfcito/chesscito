@@ -63,15 +63,22 @@ afterEach(() => {
 });
 
 describe("PRO_BYPASS_DAILY_QUOTA", () => {
-  it("matches calibration §6 defaults", () => {
+  // Economy V1 (2026-07-21) left every PRO quota untouched. It only
+  // dropped the `retry` / `save_game` entries, because those targets
+  // stopped being spendable and this record is keyed by spend target.
+  it("matches calibration §6 defaults, unchanged by Economy V1", () => {
     expect(PRO_BYPASS_DAILY_QUOTA.coach).toBe(5);
     expect(PRO_BYPASS_DAILY_QUOTA.hint).toBe(20);
-    expect(PRO_BYPASS_DAILY_QUOTA.retry).toBe(10);
     // Shield: conservative default (no PRO entitlement decided yet)
     expect(PRO_BYPASS_DAILY_QUOTA.shield).toBe(0);
-    expect(PRO_BYPASS_DAILY_QUOTA.save_game).toBe(
-      Number.POSITIVE_INFINITY,
-    );
+  });
+
+  it("covers exactly the active spend targets", () => {
+    expect(Object.keys(PRO_BYPASS_DAILY_QUOTA).sort()).toEqual([
+      "coach",
+      "hint",
+      "shield",
+    ]);
   });
 });
 
@@ -114,8 +121,8 @@ describe("resolveProBypass — PRO user under quota", () => {
     mockedSupabase.mockReturnValue(supabaseWith(0));
     const hint = await resolveProBypass(W, "hint", DAY);
     if (hint.apply) expect(hint.quotaLimit).toBe(20);
-    const retry = await resolveProBypass(W, "retry", DAY);
-    if (retry.apply) expect(retry.quotaLimit).toBe(10);
+    const coach = await resolveProBypass(W, "coach", DAY);
+    if (coach.apply) expect(coach.quotaLimit).toBe(5);
   });
 
   it("lowercases the wallet before isProActive", async () => {
@@ -183,14 +190,9 @@ describe("resolveProBypass — supabase lookup failure", () => {
   });
 });
 
-describe("resolveProBypass — unlimited target (save_game)", () => {
-  it("returns apply=true WITHOUT touching supabase", async () => {
-    mockedIsProActive.mockResolvedValue({ active: true, expiresAt: 1e15 });
-    const result = await resolveProBypass(W, "save_game", DAY);
-    expect(result.apply).toBe(true);
-    if (result.apply) {
-      expect(result.quotaLimit).toBe(Number.POSITIVE_INFINITY);
-    }
-    expect(mockedSupabase).not.toHaveBeenCalled();
-  });
-});
+// The "unlimited target" case (a non-finite quota, which short-circuits
+// the Supabase count) lost its only subject when `save_game` stopped
+// being a spend target in Economy V1. The defensive branch stays in
+// resolveProBypass for a future unlimited entitlement; there is no
+// target to exercise it with today, and casting a retired string past
+// the type just to keep a green test would assert nothing real.

@@ -15,6 +15,7 @@ vi.mock("wagmi", () => ({
 import { act, renderHook, waitFor } from "@testing-library/react";
 
 import { usePeonesBalance } from "@/lib/peones/use-peones-balance";
+import { PEONES_DAILY_CAP } from "@/lib/peones/types";
 
 const W = "0xabcdef0123456789abcdef0123456789abcdef01";
 const W_UPPER = "0xABCDEF0123456789ABCDEF0123456789ABCDEF01";
@@ -88,7 +89,7 @@ describe("usePeonesBalance — connected success", () => {
     });
   });
 
-  it("falls back to dailyCap=6 when the response omits it", async () => {
+  it("falls back to dailyCap=PEONES_DAILY_CAP when the response omits it", async () => {
     useAccountMock.mockReturnValue({ isConnected: true, address: W });
     const fetchImpl = vi.fn().mockResolvedValue(
       jsonResponse({ balance: 0, dailyEarnedCapped: 0 }),
@@ -100,7 +101,7 @@ describe("usePeonesBalance — connected success", () => {
     expect(result.current.state).toMatchObject({
       kind: "success",
       balance: 0,
-      dailyCap: 6,
+      dailyCap: PEONES_DAILY_CAP,
       lastEventAt: null,
     });
   });

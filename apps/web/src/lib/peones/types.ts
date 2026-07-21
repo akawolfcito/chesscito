@@ -39,19 +39,31 @@ export type PeonesLedgerEventType =
 /**
  * Logical source of the ledger entry. Mirrors the SQL CHECK list.
  *
- * Sprint 3 actively writes:
- *   daily_tactic, daily_streak_bonus, exercise_completion
+ * The union is the HISTORICAL taxonomy — every literal here has rows
+ * (or could have rows) in `peones_ledger` and removing one would need
+ * a destructive migration. What a source can do TODAY is decided by
+ * the endpoints, not by this list:
  *
- * Sprint 3 reserves but does NOT write:
- *   daily_lab           — requires Sprint 2.1 visual UI consumer.
- *   senda_milestone     — parked per Wolfcito 2026-06-07; reserved
- *                         to avoid a future schema migration when
- *                         the +5 bonus per piece activates.
- *   pack_purchase       — Shop integration (post-Sprint 4).
- *   admin_grant         — ops console (post-Sprint 4).
+ * Economy V1 (2026-07-21, docs/economy/peones-v1-policy.md) — the ONLY
+ * sources the public earn API accepts:
+ *   daily_tactic         — +1 per UTC day.
+ *   exercise_completion   — +1 per milestone of 5 NEW exercises.
+ * plus `welcome_pack` (+1 once), written server-side by the balance
+ * route, never through the public endpoint.
  *
- * Spend sources (Sprint 4 implementation; Sprint 3 declares types):
- *   coach, hint, retry, save_game, labyrinth_key, shield
+ * Retired / never publicly earnable (rows stay valid, new ones are
+ * rejected with `invalid_source`):
+ *   labyrinth_completion — labyrinths award progress, not Peones.
+ *   daily_lab            — dormant, no caller ever shipped.
+ *   daily_streak_bonus   — dormant, no caller ever shipped.
+ *   senda_milestone      — parked 2026-06-07, never activated.
+ *   pack_purchase        — credited by the payment verifier, not here.
+ *   admin_grant          — removed from the public surface; an ops
+ *                          console would write it server-side.
+ *
+ * Active spend sources: coach, hint, shield.
+ * Retired spend sources: retry, save_game (both are FREE actions now),
+ * labyrinth_key (never shipped).
  */
 export type PeonesLedgerSource =
   // Earn — daily-family (the cap applies)
@@ -80,7 +92,14 @@ export type PeonesLedgerSource =
  *  without limit. Used by the pure capper in Sprint 3 commit B.
  *  Economy recalibration 2026-06-10: `exercise_completion` joins the cap
  *  so training earn no longer scales uncapped with content. Keep in
- *  lockstep with the SQL helper `peones_balance_with_caps`. */
+ *  lockstep with the SQL helper `peones_balance_with_caps`.
+ *
+ *  Economy V1 (2026-07-21) keeps the full historical list even though
+ *  three of them can no longer be earned: a source that is retired at
+ *  the endpoint but still capped here is strictly conservative, and
+ *  narrowing the set would silently un-cap any legacy row written the
+ *  same UTC day. Only `daily_tactic` and `exercise_completion` produce
+ *  new rows. */
 export const PEONES_DAILY_CAP_SOURCES: readonly PeonesLedgerSource[] = [
   "daily_tactic",
   "daily_streak_bonus",
@@ -92,8 +111,11 @@ export const PEONES_DAILY_CAP_SOURCES: readonly PeonesLedgerSource[] = [
 /** Daily earn cap — same magic number as the SQL helper
  *  `peones_balance_with_caps`. Co-located here so the TypeScript callers
  *  don't have to roundtrip to the DB just to know the cap.
- *  Economy recalibration 2026-06-10: 10 → 6 (tighter sink pressure). */
-export const PEONES_DAILY_CAP = 6;
+ *  Economy recalibration 2026-06-10: 10 → 6 (tighter sink pressure).
+ *  Economy V1 2026-07-21: 6 → 3. The recurring free sources now total
+ *  1/day (Daily Tactic); exercise milestones share the same ceiling,
+ *  and labyrinths pay nothing at all. */
+export const PEONES_DAILY_CAP = 3;
 
 /**
  * A row in `public.peones_ledger`. `id` is server-assigned; metadata
