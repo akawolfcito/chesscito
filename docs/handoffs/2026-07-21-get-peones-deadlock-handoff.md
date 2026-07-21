@@ -113,8 +113,12 @@ error **preexistente** en `use-coach-analysis.test.ts:139`.
 
 ## 6. Pendientes
 
-- [ ] **Confirmar con MiniPay** (Vinay / Riti): ¿*Load Test Page* rechaza envíos en un dominio
-      ya reclamado? ¿Cuál es la forma soportada de testear el dominio oficial?
+> **Próxima sesión:** errores en el CI/CD de GitHub.
+
+- [x] **Avisado a MiniPay** — mensaje enviado a Vinay antes del listing, con el código `-32604`,
+      la asimetría (todo funciona menos enviar) y los dos hashes como control positivo.
+      Falta su respuesta sobre si *Load Test Page* rechaza envíos en un dominio ya reclamado y
+      cuál es la forma soportada de testear el dominio oficial.
 - [ ] **Probar desde el listado** cuando publiquen la app.
 - [ ] **Testear siempre en la URL `*.vercel.app`** del deploy, no en `chesscito.com`.
 - [x] **Auditoría del desbloqueo** — registrada. Los 5 intents que expiré con un `PATCH` directo
@@ -130,6 +134,25 @@ error **preexistente** en `use-coach-analysis.test.ts:139`.
       descarta el error sin log. Las `permitVersion` están **correctas** (verificado contra el
       `DOMAIN_SEPARATOR` on-chain), así que la causa del fallback sigue sin conocerse.
 - [ ] Arreglar el error de tipos preexistente en `use-coach-analysis.test.ts:139`.
+
+---
+
+## 6b. ¿Puede volver a pasar? — runbook
+
+**Estado al cierre (verificado):** `STILL BLOCKING: 0 (0 wallets)`.
+
+| Caso | ¿Se auto-resuelve? | Qué hacer |
+|---|---|---|
+| Intent vencido **sin** `tx_hash` | ✅ **Sí.** El barrido de `create_get_peones_intent` lo pasa a `EXPIRED` en la siguiente creación y la ruta no lo mira. | Nada. |
+| Intent con `tx_hash` en `SUBMITTING`/`SUBMITTED` | ❌ **No, y es deliberado.** Puede haber una transferencia real en la cadena. | Revisión humana → `resolve_get_peones_legacy_intent`. |
+
+**No escribir un script genérico de desbloqueo.** El RPC ya es la herramienta correcta: valida
+que no haya hash ni consumo asociado y deja el rastro en `treasury_payment_intent_resolutions`.
+Un script que saltee eso repite el `PATCH` directo que hubo que auditar a posteriori (§6).
+
+**Para monitorear:** `node apps/web/scripts/query-blocked-wallets-readonly.mjs` — implementa la
+regla desplegada y responde quién está bloqueado. Correrlo si alguien reporta
+*"Something went wrong"* al comprar.
 
 ---
 
