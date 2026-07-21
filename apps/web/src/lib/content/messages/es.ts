@@ -1477,6 +1477,8 @@ const messages = {
     payWith: "Pagar con",
     reward: "{count} Peones",
     credited: "+{count} Peones acreditados",
+    newBalance: "Nuevo saldo: {balance}",
+    usage: "Úsalos en Pistas, Escudos y Coach.",
     duplicate: "Ya acreditado (sin cobro doble)",
     done: "Listo",
     pay: "Pagar {price}",

@@ -3774,6 +3774,11 @@ export const GET_PEONES_COPY = {
   payWith: "Pay with",
   reward: "{count} Peones",
   credited: "+{count} Peones credited",
+  /** Post-purchase balance, read from the verified receipt. */
+  newBalance: "New balance: {balance}",
+  /** Names the three sinks. A first-time buyer has no model of where
+   *  Peones go, and the purchase reads as abstract without it. */
+  usage: "Spend them on Hints, Shields and Coach.",
   duplicate: "Already credited (no double charge)",
   done: "Done",
   pay: "Pay {price}",

@@ -149,6 +149,31 @@ export function GetPeonesSheet({
               <p className="arena-result-title">
                 {t("credited", { count: rail.result.peonesCredited })}
               </p>
+              {/* New balance — closes the loop the credit line opens.
+               *  "50 Peones received" answers what arrived; without this
+               *  the player still has to leave and hunt for what they now
+               *  hold. Read from the verified receipt, so it is the
+               *  server's number, not a local sum. Omitted when the
+               *  receipt does not carry one rather than computing a
+               *  plausible-looking total. */}
+              {typeof rail.result.newBalance === "number" ? (
+                <span
+                  className="candy-stat-pill text-[0.85rem] font-extrabold"
+                  data-testid="get-peones-new-balance"
+                >
+                  {t("newBalance", { balance: rail.result.newBalance })}
+                </span>
+              ) : null}
+              {/* What the currency is FOR. A player who just bought their
+               *  first pack has no model of where Peones go; naming the
+               *  three sinks is the cheapest way to make the purchase
+               *  legible. Static copy — no new infrastructure. */}
+              <p
+                className="text-[0.78rem] opacity-80"
+                data-testid="get-peones-usage"
+              >
+                {t("usage")}
+              </p>
               {rail.result.duplicate ? (
                 <span className="candy-stat-pill text-[0.78rem]">
                   {t("duplicate")}
