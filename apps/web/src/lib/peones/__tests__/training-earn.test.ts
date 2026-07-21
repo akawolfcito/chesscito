@@ -13,6 +13,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { PEONES_DAILY_CAP } from "@/lib/peones/types";
+import { subscribeToPeonesChanges } from "@/lib/peones/peones-events";
+import { EXERCISE_MILESTONE_SIZE } from "@/lib/peones/ledger-service";
 import {
   submitExerciseMilestoneEarn,
   type TrainingExerciseRewardState,
@@ -248,5 +250,87 @@ describe("submitExerciseMilestoneEarn — error branches", () => {
     });
     expect(result).toEqual<TrainingExerciseRewardState>({ kind: "error" });
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+describe("submitExerciseMilestoneEarn — balance-change bus", () => {
+  it("dispatches when Peones were actually credited", async () => {
+    const handler = vi.fn();
+    const unsubscribe = subscribeToPeonesChanges(handler);
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          credited: 2,
+          newBalance: 12,
+          dailyEarnedCapped: 2,
+          dailyCap: 10,
+          attestationHash: "sha256:abc",
+          ledgerId: 7,
+          duplicate: false,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+
+    await submitExerciseMilestoneEarn({
+      wallet: "0xabcdef0123456789abcdef0123456789abcdef01",
+      // Derived, not pinned: any change to the milestone size keeps this
+      // a genuine tier crossing instead of silently becoming a no-op.
+      completedBefore: EXERCISE_MILESTONE_SIZE - 1,
+      completedAfter: EXERCISE_MILESTONE_SIZE,
+      fetchImpl,
+    });
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    unsubscribe();
+  });
+
+  it("does NOT dispatch when the cap credited nothing", async () => {
+    const handler = vi.fn();
+    const unsubscribe = subscribeToPeonesChanges(handler);
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          credited: 0,
+          newBalance: 10,
+          dailyEarnedCapped: 10,
+          dailyCap: 10,
+          attestationHash: null,
+          ledgerId: null,
+          duplicate: false,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+
+    await submitExerciseMilestoneEarn({
+      wallet: "0xabcdef0123456789abcdef0123456789abcdef01",
+      // Derived, not pinned: any change to the milestone size keeps this
+      // a genuine tier crossing instead of silently becoming a no-op.
+      completedBefore: EXERCISE_MILESTONE_SIZE - 1,
+      completedAfter: EXERCISE_MILESTONE_SIZE,
+      fetchImpl,
+    });
+
+    expect(handler).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it("does NOT dispatch on a failed earn", async () => {
+    const handler = vi.fn();
+    const unsubscribe = subscribeToPeonesChanges(handler);
+    const fetchImpl = vi.fn().mockRejectedValue(new Error("offline"));
+
+    await submitExerciseMilestoneEarn({
+      wallet: "0xabcdef0123456789abcdef0123456789abcdef01",
+      // Derived, not pinned: any change to the milestone size keeps this
+      // a genuine tier crossing instead of silently becoming a no-op.
+      completedBefore: EXERCISE_MILESTONE_SIZE - 1,
+      completedAfter: EXERCISE_MILESTONE_SIZE,
+      fetchImpl,
+    });
+
+    expect(handler).not.toHaveBeenCalled();
+    unsubscribe();
   });
 });

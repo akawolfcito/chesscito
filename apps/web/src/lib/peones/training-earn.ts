@@ -25,6 +25,7 @@ import {
   exerciseMilestoneTier,
   normalizeWallet,
 } from "@/lib/peones/ledger-service";
+import { dispatchPeonesChange } from "@/lib/peones/peones-events";
 import { PEONES_DAILY_CAP } from "@/lib/peones/types";
 
 /** One milestone is worth exactly one Peón. */
@@ -154,9 +155,18 @@ export async function submitExerciseMilestoneEarn(
     return { kind: "error" };
   }
 
+  const credited = Number(json.credited ?? 0);
+
+  // Only a real credit moves the balance. `credited === 0` is the
+  // cap-exhausted case (200 with no row written) — the chip must not
+  // flicker a refetch for a milestone that paid nothing.
+  if (credited > 0) {
+    dispatchPeonesChange();
+  }
+
   return {
     kind: "success",
-    credited: Number(json.credited ?? 0),
+    credited,
     newBalance: Number(json.newBalance ?? 0),
     dailyEarnedCapped: Number(json.dailyEarnedCapped ?? 0),
     dailyCap: Number(json.dailyCap ?? PEONES_DAILY_CAP),

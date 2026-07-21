@@ -8,10 +8,13 @@
  * integration, etc.) decides which event fires based on the result.
  *
  * NEVER throws — every error path collapses to a result branch the
- * UI can render symmetrically. The helper does NOT touch
- * localStorage and does NOT mutate any global balance cache; the
- * future HUD chip refetch lives in its own React hook (Sprint 4
- * commit E will wire it).
+ * UI can render symmetrically. The helper does NOT touch localStorage
+ * and holds NO balance state of its own.
+ *
+ * It does dispatch `chesscito:peones-changed` after a confirmed debit
+ * (Peones V1 UX, 2026-07-21) — a signal, not a cache write. Being the
+ * one place all three sinks funnel through, it guarantees no spend can
+ * ship without the HUD hearing about it.
  *
  * Sprint 4 commit C ships the endpoint with `p_apply_pro_bypass`
  * hard-coded to false; this helper carries the `proBypassApplied`
@@ -20,6 +23,7 @@
  */
 
 import { normalizeWallet } from "@/lib/peones/ledger-service";
+import { dispatchPeonesChange } from "@/lib/peones/peones-events";
 import type { PeonesSpendTarget } from "@/lib/peones/spend-service";
 
 export type PeonesSpendResult =
@@ -170,6 +174,19 @@ export async function submitPeonesSpend(
   ) {
     return { kind: "error", error: "bad_response" };
   }
+
+  // Confirmed write — tell every mounted balance reader to re-read.
+  // This is the single choke point for all three sinks (hint, coach,
+  // shield), so no sink can forget to signal. Placed AFTER every
+  // validation branch: a 409, a 5xx, a network throw, or a malformed
+  // body all return above and never reach here, so the displayed
+  // balance can never move on a spend that did not happen.
+  //
+  // Fires on idempotent duplicates too — deliberately. Nothing fresh
+  // left the wallet, but re-reading the server is always correct; it is
+  // the VISUAL delta that must stay silent on duplicates, and that
+  // decision belongs to the caller, which has `duplicate` in the result.
+  dispatchPeonesChange();
 
   return {
     kind: "success",
