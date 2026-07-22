@@ -11,7 +11,11 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { THEMES, DEFAULT_THEME_ID } from "../theme-registry";
+import {
+  THEMES,
+  DEFAULT_THEME_ID,
+  type SingleFileFormat,
+} from "../theme-registry";
 import { resolveAppRoot } from "../asset-roots";
 import { SHARED_LANDING_ASSETS } from "../shared-landing-assets";
 import { resolveAssetVariant } from "../asset-variant";
@@ -60,8 +64,16 @@ function basenamesOf(entry: (typeof assets)[keyof typeof assets]): string[] {
     .flatMap((resolved) => (resolved.mode === "asset" ? [resolved.path] : []));
 }
 
-function hasTriplet(root: string, basename: string): boolean {
-  return ["png", "webp", "avif"].every((extension) =>
+/** Every file a slot must ship. A slot that declares `format` is ONE file with
+ *  that extension (an .ico, an Open Graph .jpg); everything else is the
+ *  PNG/WebP/AVIF triplet. */
+function hasAllFiles(
+  root: string,
+  basename: string,
+  format?: SingleFileFormat,
+): boolean {
+  const extensions = format ? [format] : ["png", "webp", "avif"];
+  return extensions.every((extension) =>
     existsSync(path.join(root, `${basename.replace(/^\//, "")}.${extension}`)),
   );
 }
@@ -100,10 +112,10 @@ describe("landing art coverage", () => {
     );
   });
 
-  it("ships every landing slot's triplet inside apps/landing/public", () => {
+  it("ships every landing slot's files inside apps/landing/public", () => {
     const missing = landingSlots.flatMap(([key, entry]) =>
       basenamesOf(entry)
-        .filter((basename) => !hasTriplet(LANDING_PUBLIC, basename))
+        .filter((basename) => !hasAllFiles(LANDING_PUBLIC, basename, entry.format))
         .map((basename) => `${key} → ${basename}`),
     );
     expect(missing).toEqual([]);
@@ -133,7 +145,7 @@ describe("landing art coverage", () => {
 
   it("keeps every shared asset resolvable from the web app it is copied from", () => {
     const missing = SHARED_LANDING_ASSETS.filter(
-      (basename) => !hasTriplet(WEB_PUBLIC, basename),
+      (basename) => !hasAllFiles(WEB_PUBLIC, basename),
     );
     expect(missing).toEqual([]);
   });

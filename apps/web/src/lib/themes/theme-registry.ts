@@ -79,6 +79,10 @@ export type ThemeAssetEntry = {
   /** This slot is generated from another slot and is not editable on its own.
    *  The catalog renders it read-only and the upload API refuses it. */
   derivedFrom?: ThemeAssetKey;
+  /** Reject an upload that is not exactly these dimensions. For slots where a
+   *  wrong aspect ratio breaks a consumer that cannot report it — an Open
+   *  Graph card silently letterboxes in every social preview. */
+  exactSize?: { width: number; height: number };
 };
 
 /** Canonical slot ids. New slots get added here as surfaces migrate
@@ -262,6 +266,9 @@ export type ThemeAssetKey =
   | "shared.panel-frame"
   | "shared.time"
   | "brand.favicon"
+  | "brand.apple-icon"
+  | "brand.favicon-ico"
+  | "landing.og-image"
   // board — batch #1 (catalog visibility; consumers still read these paths
   // directly, see docs/superpowers/plans/2026-07-18-theme-builder-board-slots-plan.md)
   | "board.frame"
@@ -779,6 +786,32 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "landing.slide-web-2": { root: "landing", default: "/art/landing-slides/chesscito-slide-web-2", deprecated: "no consumer — desktop slide art nothing imports", usedIn: [] },
       "landing.slide-web-3": { root: "landing", default: "/art/landing-slides/chesscito-slide-web-3", deprecated: "no consumer — desktop slide art nothing imports", usedIn: [] },
       "landing.slide-web-4": { root: "landing", default: "/art/landing-slides/chesscito-slide-web-4", deprecated: "no consumer — desktop slide art nothing imports", usedIn: [] },
+      // Brand icons — apps/landing/public, single files rather than triplets.
+      // The two below are DERIVED from brand.favicon: replacing that slot
+      // regenerates them and the upload API refuses a direct write, so they
+      // cannot drift from the wolf master. See lib/themes/icon-derivation.ts.
+      "brand.favicon-ico": {
+        root: "landing", format: "ico", derivedFrom: "brand.favicon",
+        default: "/favicon",
+        usedIn: ["Landing — browser favicon", "↳ apps/landing · src/app/layout.tsx (icons.icon)"],
+      },
+      "brand.apple-icon": {
+        root: "landing", format: "png", derivedFrom: "brand.favicon",
+        default: "/apple-icon",
+        usedIn: ["Landing — apple touch icon", "↳ apps/landing · src/app/layout.tsx (icons.apple)"],
+      },
+      // The social card. Editable on its own — it is composed art, not a crop
+      // of the mark. 1200x630 is enforced: every social preview letterboxes a
+      // wrong ratio silently, so a bad upload reports nothing on its own.
+      "landing.og-image": {
+        root: "landing", format: "jpg",
+        default: "/og/chesscito-landing",
+        exactSize: { width: 1200, height: 630 },
+        usedIn: [
+          "Landing — Open Graph / Twitter card",
+          "↳ apps/landing · src/app/layout.tsx (openGraph.images, twitter.images)",
+        ],
+      },
       // coach addition
       "coach.play": { default: "/art/new-assets-chesscito/btns/play", usedIn: ["Coach — play button", "↳ components/coach/game-actions-bar.tsx", "↳ app/[locale]/coach/[gameId]/coach-game-client.tsx"] },
       // account addition
@@ -1080,6 +1113,11 @@ export const LANDING_SLOT_KEYS = [
   "landing.slide-web-2",
   "landing.slide-web-3",
   "landing.slide-web-4",
+  // Brand/social files owned by apps/landing. Their consumer is that app's
+  // layout metadata, which is invisible from inside apps/web.
+  "landing.og-image",
+  "brand.apple-icon",
+  "brand.favicon-ico",
 ] as const satisfies readonly ThemeAssetKey[];
 
 const SLOT_KEYS_BY_SURFACE = {

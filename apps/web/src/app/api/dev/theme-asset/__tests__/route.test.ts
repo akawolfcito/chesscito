@@ -252,4 +252,56 @@ describe("GET /api/dev/theme-asset", () => {
     const response = await GET(previewRequest("landing.slide1-avatar", "ultra"));
     expect(response.status).toBe(400);
   });
+
+  it("serves a single-file slot with its own content type", async () => {
+    const response = await GET(previewRequest("landing.og-image"));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("image/jpeg");
+    expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(0);
+  });
+
+  it("serves an .ico slot as an icon, not as a png", async () => {
+    const response = await GET(previewRequest("brand.favicon-ico"));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("image/x-icon");
+  });
+});
+
+describe("derived slots", () => {
+  function uploadTo(key: string, variant = "default"): Request {
+    const form = new FormData();
+    form.set("themeId", "candy-forest");
+    form.set("key", key);
+    form.set("variant", variant);
+    form.set("file", new File(["image"], "icon.png", { type: "image/png" }));
+    return { formData: async () => form } as unknown as Request;
+  }
+
+  it("refuses an upload to a derived slot with 400", async () => {
+    const response = await POST(uploadTo("brand.favicon-ico"));
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.ok).toBe(false);
+    expect(body.code).toBe("derived-slot");
+    expect(body.error).toMatch(/brand\.favicon/);
+  });
+
+  it("does not write anything when it refuses a derived slot", async () => {
+    await POST(uploadTo("brand.apple-icon"));
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it("refuses a mode change on a derived slot too", async () => {
+    const form = new FormData();
+    form.set("themeId", "candy-forest");
+    form.set("key", "brand.apple-icon");
+    form.set("variant", "default");
+    form.set("action", "set-mode");
+    form.set("mode", "none");
+
+    const response = await POST({ formData: async () => form } as unknown as Request);
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe("derived-slot");
+    expect(mocks.setRegistry).not.toHaveBeenCalled();
+  });
 });

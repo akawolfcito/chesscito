@@ -271,8 +271,10 @@ describe("theme-registry", () => {
       // formerly uncataloged "exceptions".
       play: 23,
       // 3 reclassified off `unknown` (they always had a consumer — in the
-      // sibling app) + 15 newly cataloged carousel slots.
-      landing: 18,
+      // sibling app) + 15 newly cataloged carousel slots + 3 brand/social
+      // files the landing layout declares as metadata (OG card, apple-icon,
+      // favicon.ico), whose consumer is likewise invisible from apps/web.
+      landing: 21,
       // +1: shared.close-candy, the CandyIcon close art.
       shared: 75,
       "full-legacy": 29,

@@ -60,11 +60,14 @@ function assetFamilyError(error: unknown): NextResponse {
 }
 
 /** Probe order matches the catalog's, so the preview shows the same file the
- *  catalog reports dimensions for. */
+ *  catalog reports dimensions for. A single-file slot narrows this to its own
+ *  container — see the `format` filter in GET. */
 const PREVIEW_FORMATS = [
   { extension: "png", type: "image/png" },
   { extension: "webp", type: "image/webp" },
   { extension: "avif", type: "image/avif" },
+  { extension: "jpg", type: "image/jpeg" },
+  { extension: "ico", type: "image/x-icon" },
 ] as const;
 
 /**
@@ -93,7 +96,12 @@ export async function GET(req: Request) {
 
   const publicDir = path.join(resolveAppRoot(target.root), "public");
   const relative = target.basename.replace(/^\//, "");
-  for (const { extension, type } of PREVIEW_FORMATS) {
+  // A single-file slot has exactly one legal container; probing the rest would
+  // stream a stale sibling that nothing renders.
+  const formats = target.format
+    ? PREVIEW_FORMATS.filter((candidate) => candidate.extension === target.format)
+    : PREVIEW_FORMATS;
+  for (const { extension, type } of formats) {
     let bytes: Buffer;
     try {
       bytes = await fs.readFile(path.join(publicDir, `${relative}.${extension}`));
@@ -141,6 +149,19 @@ export async function POST(req: Request) {
   const target = resolveUploadTarget(themeId, key, variant);
   if (!target.ok) {
     return NextResponse.json({ ok: false, error: target.reason }, { status: 400 });
+  }
+  // A derived slot has no independent source of truth — writing it, changing
+  // its mode or undoing it would all be erased by the next regeneration.
+  // Refused here, for every action, not just hidden in the UI.
+  if (target.derivedFrom) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `${key} is derived from ${target.derivedFrom} — replace that slot instead`,
+        code: "derived-slot",
+      },
+      { status: 400 },
+    );
   }
   const typedVariant = variant as "default" | "pro";
   const entry = (THEMES[themeId].assets as Record<string, ThemeAssetEntry>)[key];
