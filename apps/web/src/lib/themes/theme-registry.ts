@@ -46,6 +46,10 @@ export type ThemeSlotSurface =
  *  to a directory lives in `asset-roots.ts` (server-only). */
 export type AppRoot = "web" | "landing";
 
+/** Extensions a single-file slot may declare. A slot without `format` is a
+ *  PNG/WebP/AVIF triplet — the shape ~165 slots have. */
+export type SingleFileFormat = "jpg" | "ico" | "png";
+
 export type ThemeAssetEntry = {
   /** Legacy string basenames remain valid. An explicit object can select an
    *  asset or disable the DEFAULT image. Absence is backward-compatible none. */
@@ -68,6 +72,13 @@ export type ThemeAssetEntry = {
    *  the catalog on purpose: visible to distinguish + still updatable.
    *  Purely documentary. */
   deprecated?: string;
+  /** This slot is ONE file with this fixed extension, not a triplet. Set it
+   *  for assets that must keep a specific container: an Open Graph .jpg, a
+   *  browser .ico. Absent = the historic triplet. */
+  format?: SingleFileFormat;
+  /** This slot is generated from another slot and is not editable on its own.
+   *  The catalog renders it read-only and the upload API refuses it. */
+  derivedFrom?: ThemeAssetKey;
 };
 
 /** Canonical slot ids. New slots get added here as surfaces migrate

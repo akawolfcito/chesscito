@@ -40,7 +40,10 @@ export const fsAssetResolver: AssetResolver = async (
         publicDir,
       )
     : null;
-  for (const format of TRIPLET_EXTENSIONS) {
+  // A single-file slot has exactly one legal container; probing the triplet
+  // would resolve a stale sibling that nothing renders.
+  const extensions = context?.format ? [context.format] : TRIPLET_EXTENSIONS;
+  for (const format of extensions) {
     const abs = path.join(publicDir, `${relative}.${format}`);
     let stat: Awaited<ReturnType<typeof fs.stat>>;
     try {

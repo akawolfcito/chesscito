@@ -87,6 +87,8 @@ describe("resolveVariantBasename", () => {
       declaresAsset: true,
       responsiveProfile: null,
       root: "web",
+      format: null,
+      derivedFrom: null,
     });
   });
 
@@ -98,6 +100,8 @@ describe("resolveVariantBasename", () => {
       declaresAsset: true,
       responsiveProfile: null,
       root: "web",
+      format: null,
+      derivedFrom: null,
     });
   });
 
@@ -112,6 +116,8 @@ describe("resolveVariantBasename", () => {
       declaresAsset: false,
       responsiveProfile: null,
       root: "web",
+      format: null,
+      derivedFrom: null,
     });
   });
 
@@ -126,6 +132,8 @@ describe("resolveVariantBasename", () => {
       declaresAsset: false,
       responsiveProfile: null,
       root: "web",
+      format: null,
+      derivedFrom: null,
     });
   });
 

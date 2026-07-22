@@ -14,6 +14,7 @@ import {
   THEMES,
   THEME_SLOT_SURFACES,
   type AppRoot,
+  type SingleFileFormat,
   type ThemeAssetKey,
   type ThemeAssetVariant,
   type ThemeSlotSurface,
@@ -23,7 +24,9 @@ import type { ResponsiveFamilyState } from "./responsive-asset-audit";
 
 /** Image formats that make up a static asset triplet, in probe order. */
 const TRIPLET_EXTENSIONS = ["png", "webp", "avif"] as const;
-export type AssetFormat = (typeof TRIPLET_EXTENSIONS)[number];
+/** Every container the catalog can report — the triplet plus the fixed
+ *  extensions a single-file slot may declare. */
+export type AssetFormat = (typeof TRIPLET_EXTENSIONS)[number] | SingleFileFormat;
 
 /** What a resolver reports for a single basename. */
 export type ResolvedFile = {
@@ -53,6 +56,8 @@ export type AssetResolver = (
     key: ThemeAssetKey;
     variant: ThemeAssetVariant;
     root: AppRoot;
+    /** Present when the slot is a single file — probe only this extension. */
+    format?: SingleFileFormat;
   },
 ) => Promise<ResolvedFile>;
 
@@ -79,6 +84,10 @@ export type SlotCatalogEntry = {
   proOnly: boolean;
   /** Deprecation reason when the slot is stale, else null. */
   deprecated: string | null;
+  /** Fixed extension when this slot is one file; null for a triplet. */
+  format: SingleFileFormat | null;
+  /** Slot this one is generated from; null when independently editable. */
+  derivedFrom: ThemeAssetKey | null;
 };
 
 export type ThemeCatalog = {
@@ -90,7 +99,12 @@ export type ThemeCatalog = {
 async function resolveVariant(
   basename: string,
   resolve: AssetResolver,
-  context: { key: ThemeAssetKey; variant: ThemeAssetVariant; root: AppRoot },
+  context: {
+    key: ThemeAssetKey;
+    variant: ThemeAssetVariant;
+    root: AppRoot;
+    format?: SingleFileFormat;
+  },
 ): Promise<ResolvedAsset> {
   const resolved = await resolve(basename, context);
   return { basename, ...resolved };
@@ -113,13 +127,24 @@ export async function buildThemeCatalog(
     keys.map(async (key): Promise<SlotCatalogEntry> => {
       const entry = theme.assets[key];
       const root: AppRoot = entry.root ?? "web";
+      const format = entry.format ?? null;
       const defaultVariant = resolveAssetVariant(entry, "default");
       const proVariant = resolveAssetVariant(entry, "pro");
       const def = defaultVariant.mode === "asset"
-        ? await resolveVariant(defaultVariant.path, resolve, { key, variant: "default", root })
+        ? await resolveVariant(defaultVariant.path, resolve, {
+            key,
+            variant: "default",
+            root,
+            ...(format ? { format } : {}),
+          })
         : null;
       const pro = proVariant.mode === "asset"
-        ? await resolveVariant(proVariant.path, resolve, { key, variant: "pro", root })
+        ? await resolveVariant(proVariant.path, resolve, {
+            key,
+            variant: "pro",
+            root,
+            ...(format ? { format } : {}),
+          })
         : null;
       return {
         key,
@@ -135,6 +160,8 @@ export async function buildThemeCatalog(
         proReusesDefault: proVariant.mode === "inherit",
         proOnly: defaultVariant.mode === "none" && proVariant.mode === "asset",
         deprecated: entry.deprecated ?? null,
+        format,
+        derivedFrom: entry.derivedFrom ?? null,
       };
     }),
   );
@@ -147,5 +174,5 @@ export function listThemeIds(): string[] {
   return Object.keys(THEMES);
 }
 
-export type { AppRoot, ThemeAssetKey, ThemeAssetVariant };
+export type { AppRoot, SingleFileFormat, ThemeAssetKey, ThemeAssetVariant };
 export { TRIPLET_EXTENSIONS };

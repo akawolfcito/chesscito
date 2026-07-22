@@ -153,3 +153,39 @@ describe("buildThemeCatalog", () => {
     expect(portal?.default?.width).toBeNull();
   });
 });
+
+describe("single-file and derived slots", () => {
+  // The slot-specific cases live in single-file-slots.test.ts — they name keys
+  // that only exist once the slots are registered, and a string literal that
+  // is not in ThemeAssetKey is a compile error, not just a failing assertion.
+
+  it("leaves format null for a normal triplet slot", async () => {
+    const catalog = await buildThemeCatalog("candy-forest", okResolver);
+    const portal = catalog?.slots.find((s) => s.key === "hub.portal");
+    expect(portal?.format).toBeNull();
+  });
+
+  it("leaves derivedFrom null for a normal editable slot", async () => {
+    const catalog = await buildThemeCatalog("candy-forest", okResolver);
+    const portal = catalog?.slots.find((s) => s.key === "hub.portal");
+    expect(portal?.derivedFrom).toBeNull();
+  });
+
+  it("omits format from the resolver context for a triplet slot", async () => {
+    const seen: { basename: string; format?: string }[] = [];
+    const spy: AssetResolver = async (basename, context) => {
+      seen.push({ basename, format: context?.format });
+      return {
+        file: `${basename}.png`,
+        width: 1024,
+        height: 1024,
+        format: "png" as const,
+        mtime: 1,
+        hasBackup: false,
+      };
+    };
+    await buildThemeCatalog("candy-forest", spy);
+    const portal = seen.find((s) => s.basename === "/art/hub/portal-chesscito-normal");
+    expect(portal?.format).toBeUndefined();
+  });
+});

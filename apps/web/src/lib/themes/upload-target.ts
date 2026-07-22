@@ -12,7 +12,9 @@
 import {
   THEMES,
   type AppRoot,
+  type SingleFileFormat,
   type ThemeAssetEntry,
+  type ThemeAssetKey,
   type ThemeAssetVariant,
 } from "./theme-registry";
 import {
@@ -33,6 +35,10 @@ export type UploadTarget =
       /** App whose `public/` receives the write. A basename alone is
        *  ambiguous: the same `/art/...` path exists in both apps. */
       root: AppRoot;
+      /** Fixed extension for a single-file slot; null for a triplet. */
+      format: SingleFileFormat | null;
+      /** Set when the slot is generated from another — uploads are refused. */
+      derivedFrom: ThemeAssetKey | null;
     }
   | { ok: false; reason: string };
 
@@ -53,6 +59,8 @@ export function resolveVariantBasename(
     return { ok: false, reason: `invalid variant: ${variant}` };
   }
   const root: AppRoot = entry.root ?? "web";
+  const format = entry.format ?? null;
+  const derivedFrom = entry.derivedFrom ?? null;
   const resolved = resolveAssetVariant(entry, variant);
   if (resolved.mode === "asset") {
     return {
@@ -61,6 +69,8 @@ export function resolveVariantBasename(
       declaresAsset: true,
       responsiveProfile,
       root,
+      format,
+      derivedFrom,
     };
   }
   if (!fallback) {
@@ -75,6 +85,8 @@ export function resolveVariantBasename(
     declaresAsset: false,
     responsiveProfile,
     root,
+    format,
+    derivedFrom,
   };
 }
 
