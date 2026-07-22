@@ -145,6 +145,7 @@ export type ThemeAssetKey =
   | "arena.undo"
   | "arena.rival-kairo"
   | "arena.rival-pipo"
+  | "arena.rival-mara"
   | "arena.rival-frame-blue"
   | "arena.rival-frame-gold"
   | "arena.rival-frame-silver"
@@ -565,6 +566,10 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/rivals/pipo-avatar",
         usedIn: ["Arena — rival Pipo avatar", "↳ components/arena/arena-select-scaffold.tsx (rivals.ts data)"],
       },
+      "arena.rival-mara": {
+        default: "/art/rivals/mara-avatar",
+        usedIn: ["Arena — rival Mara avatar (medium)", "↳ components/arena/arena-select-scaffold.tsx (rivals.ts data)", "↳ components/arena/arena-player-rail.tsx"],
+      },
       "arena.rival-frame-blue": {
         default: "/art/rivals/frame-blue",
         usedIn: ["Arena — rival frame (blue)", "↳ components/arena/arena-select-scaffold.tsx"],
@@ -894,6 +899,7 @@ const PLAY_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "arena.undo",
   "arena.rival-kairo",
   "arena.rival-pipo",
+  "arena.rival-mara",
   "arena.rival-frame-blue",
   "arena.rival-frame-gold",
   "arena.rival-frame-silver",

@@ -1,9 +1,9 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 159,
+  "totalSlots": 160,
   "categoryCounts": {
-    "A": 148,
+    "A": 149,
     "B": 0,
     "C": 0,
     "D": 0,
@@ -13,21 +13,21 @@
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 63,
+    "B": 64,
     "C": 26,
     "D": 38,
     "E": 19,
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 149,
-  "fullyConnectedSlots": 148,
+  "resolverSlots": 150,
+  "fullyConnectedSlots": 149,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
   "noActiveConsumerSlots": 4,
-  "connectedSlots": 148,
+  "connectedSlots": 149,
   "excludedSlots": 11,
   "exceptions": [
     {
@@ -36,43 +36,15 @@
       "detected": false
     },
     {
-      "basename": "/art/rivals/mara-avatar",
-      "reason": "Active rival fallback that is not one of the 162 catalog slots.",
-      "detected": true
-    },
-    {
       "basename": "/art/shop/pro",
       "reason": "Shop product art outside the theme-builder catalog.",
       "detected": true
     }
   ],
   "literalDiff": {
-    "registeredBasenames": 180,
-    "discoveredBasenames": 19,
+    "registeredBasenames": 181,
+    "discoveredBasenames": 18,
     "unregisteredExistingAssets": [
-      {
-        "basename": "/art/rivals/mara-avatar",
-        "occurrences": [
-          {
-            "file": "src/components/arena/arena-select-scaffold.tsx",
-            "line": 216,
-            "raw": "/art/rivals/mara-avatar.avif",
-            "sourceLine": "<source srcSet=\"/art/rivals/mara-avatar.avif\" type=\"image/avif\" />"
-          },
-          {
-            "file": "src/components/arena/arena-select-scaffold.tsx",
-            "line": 217,
-            "raw": "/art/rivals/mara-avatar.webp",
-            "sourceLine": "<source srcSet=\"/art/rivals/mara-avatar.webp\" type=\"image/webp\" />"
-          },
-          {
-            "file": "src/components/arena/arena-select-scaffold.tsx",
-            "line": 218,
-            "raw": "/art/rivals/mara-avatar.png",
-            "sourceLine": "<img src=\"/art/rivals/mara-avatar.png\" alt=\"\" />"
-          }
-        ]
-      },
       {
         "basename": "/art/shop/pro",
         "occurrences": [
@@ -4334,6 +4306,53 @@
       "usesCssBackground": false,
       "usesSharedMap": false,
       "buildsPathDynamically": true,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "arena.rival-mara",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/rivals/mara-avatar"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Arena — rival Mara avatar (medium)",
+        "↳ components/arena/arena-select-scaffold.tsx (rivals.ts data)",
+        "↳ components/arena/arena-player-rail.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/arena/arena-select-scaffold.tsx",
+        "src/components/arena/arena-player-rail.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/lib/game/rivals.ts",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
       "noActiveConsumer": false
     },
     {

@@ -14,7 +14,6 @@ const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".css"]);
 const CHECK_MODE = process.argv.includes("--check");
 const ALLOWED_UNREGISTERED_LITERALS = new Map([
   ["/art/redesign/icons/close", "Generic CandyIcon close art; distinct from the cataloged mission close button."],
-  ["/art/rivals/mara-avatar", "Active rival fallback that is not one of the 162 catalog slots."],
   ["/art/shop/pro", "Shop product art outside the theme-builder catalog."],
 ]);
 const ART_LITERAL_RE = /["'`](\/art\/[^"'`\s),;]+)/g;
@@ -494,18 +493,18 @@ if (CHECK_MODE) {
   const unexpectedLiterals = unregisteredLiterals.filter(
     ({ basename }) => !ALLOWED_UNREGISTERED_LITERALS.has(basename),
   );
-  const requiredLiteralExceptions = ["/art/rivals/mara-avatar", "/art/shop/pro"];
+  const requiredLiteralExceptions = ["/art/shop/pro"];
   const missingExceptions = requiredLiteralExceptions.filter(
     (basename) => !unregisteredLiterals.some((literal) => literal.basename === basename),
   );
-  // 159 = the 162 cataloged slots minus the 3 landing.* ones, whose consumer
-  // lives in apps/landing and is therefore out of this audit's scope.
-  const expectedInitial = { A: 2, B: 63, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  // 160 = the 162 cataloged slots, minus the 3 landing.* ones (whose consumer
+  // lives in apps/landing, out of this audit's scope), plus arena.rival-mara.
+  const expectedInitial = { A: 2, B: 64, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 159 ||
+    inventory.length !== 160 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

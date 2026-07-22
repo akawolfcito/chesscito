@@ -205,19 +205,11 @@ export function ArenaSelectScaffold({
                 >
                   {difficulty === key ? <SelectedCheck /> : null}
                   <span className="arena-scaffold-difficulty-piece">
-                    {rival.avatarSlot ? (
-                      <ThemeAssetPicture
-                        slot={rival.avatarSlot}
-                        pictureClassName="arena-scaffold-difficulty-avatar"
-                        alt=""
-                      />
-                    ) : (
-                      <picture className="arena-scaffold-difficulty-avatar">
-                        <source srcSet="/art/rivals/mara-avatar.avif" type="image/avif" />
-                        <source srcSet="/art/rivals/mara-avatar.webp" type="image/webp" />
-                        <img src="/art/rivals/mara-avatar.png" alt="" />
-                      </picture>
-                    )}
+                    <ThemeAssetPicture
+                      slot={rival.avatarSlot}
+                      pictureClassName="arena-scaffold-difficulty-avatar"
+                      alt=""
+                    />
                     <ThemeAssetPicture
                       slot={rival.frameSlot}
                       pictureClassName="arena-scaffold-difficulty-frame"

@@ -267,7 +267,8 @@ describe("theme-registry", () => {
     );
     expect(counts).toEqual({
       learn: 31,
-      play: 21,
+      // 22 = 21 + arena.rival-mara, the last uncataloged arena image.
+      play: 22,
       // 3 reclassified off `unknown` (they always had a consumer — in the
       // sibling app) + 15 newly cataloged carousel slots.
       landing: 18,
