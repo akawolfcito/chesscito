@@ -274,6 +274,8 @@ export async function POST(req: Request) {
       input: buffer,
       rootDir,
       profile: target.responsiveProfile,
+      format: target.format ?? undefined,
+      exactSize: target.exactSize,
       afterPromote: target.declaresAsset
         ? undefined
         : () => setRegistryVariant(themeId, key, typedVariant, {

@@ -244,3 +244,82 @@ describe("responsive asset-family transaction", { timeout: 20_000 }, () => {
     expect(result.responsiveWidths).toEqual([]);
   });
 });
+
+describe("single-file jpg slots", { timeout: 20_000 }, () => {
+  it("writes exactly one .jpg and no triplet siblings", async () => {
+    const result = await replaceAssetFamilyAtomic({
+      basename: "/og/test-card",
+      input: await source(1200, 630),
+      rootDir,
+      format: "jpg",
+      exactSize: { width: 1200, height: 630 },
+    });
+
+    expect(result.files).toEqual(["/og/test-card.jpg"]);
+    const names = await fs.readdir(path.join(rootDir, "public/og"));
+    expect(names).toEqual(["test-card.jpg"]);
+  });
+
+  it("produces a decodable jpeg at the declared size", async () => {
+    await replaceAssetFamilyAtomic({
+      basename: "/og/test-card",
+      input: await source(1200, 630),
+      rootDir,
+      format: "jpg",
+      exactSize: { width: 1200, height: 630 },
+    });
+    const metadata = await sharp(publicFile("/og/test-card", ".jpg")).metadata();
+    expect(metadata.format).toBe("jpeg");
+    expect(metadata.width).toBe(1200);
+    expect(metadata.height).toBe(630);
+  });
+
+  it("rejects a source whose dimensions are not the declared exact size", async () => {
+    await expect(
+      replaceAssetFamilyAtomic({
+        basename: "/og/test-card",
+        input: await source(800, 600),
+        rootDir,
+        format: "jpg",
+        exactSize: { width: 1200, height: 630 },
+      }),
+    ).rejects.toMatchObject({ code: "invalid-image" });
+  });
+
+  it("writes nothing when the exact-size gate rejects the source", async () => {
+    await replaceAssetFamilyAtomic({
+      basename: "/og/test-card",
+      input: await source(1200, 630),
+      rootDir,
+      format: "jpg",
+      exactSize: { width: 1200, height: 630 },
+    });
+    const before = await fs.readFile(publicFile("/og/test-card", ".jpg"));
+
+    await expect(
+      replaceAssetFamilyAtomic({
+        basename: "/og/test-card",
+        input: await source(800, 600, "#facc15"),
+        rootDir,
+        format: "jpg",
+        exactSize: { width: 1200, height: 630 },
+      }),
+    ).rejects.toThrow();
+
+    const after = await fs.readFile(publicFile("/og/test-card", ".jpg"));
+    expect(after.equals(before)).toBe(true);
+  });
+
+  it("still writes the full triplet when no format is declared", async () => {
+    const result = await replaceAssetFamilyAtomic({
+      basename: "/art/plain-check",
+      input: await source(64, 64),
+      rootDir,
+    });
+    expect(result.files).toEqual([
+      "/art/plain-check.png",
+      "/art/plain-check.webp",
+      "/art/plain-check.avif",
+    ]);
+  });
+});

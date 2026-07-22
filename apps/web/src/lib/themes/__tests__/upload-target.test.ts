@@ -89,6 +89,7 @@ describe("resolveVariantBasename", () => {
       root: "web",
       format: null,
       derivedFrom: null,
+      exactSize: null,
     });
   });
 
@@ -102,6 +103,7 @@ describe("resolveVariantBasename", () => {
       root: "web",
       format: null,
       derivedFrom: null,
+      exactSize: null,
     });
   });
 
@@ -118,6 +120,7 @@ describe("resolveVariantBasename", () => {
       root: "web",
       format: null,
       derivedFrom: null,
+      exactSize: null,
     });
   });
 
@@ -134,6 +137,7 @@ describe("resolveVariantBasename", () => {
       root: "web",
       format: null,
       derivedFrom: null,
+      exactSize: null,
     });
   });
 

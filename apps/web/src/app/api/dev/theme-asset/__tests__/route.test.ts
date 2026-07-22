@@ -291,6 +291,33 @@ describe("derived slots", () => {
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 
+  it("hands the writer the slot's declared format and exact size", async () => {
+    // The gate itself is enforced in asset-triplet; what this pins is that the
+    // registry's declaration actually reaches it. Without this, exactSize is
+    // configured on the slot and quietly ignored on every upload.
+    const form = new FormData();
+    form.set("themeId", "candy-forest");
+    form.set("key", "landing.og-image");
+    form.set("variant", "default");
+    form.set("file", new File(["image"], "card.jpg", { type: "image/jpeg" }));
+
+    await POST({ formData: async () => form } as unknown as Request);
+    expect(mocks.replace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        basename: "/og/chesscito-landing",
+        format: "jpg",
+        exactSize: { width: 1200, height: 630 },
+      }),
+    );
+  });
+
+  it("leaves format and exact size unset for an ordinary triplet slot", async () => {
+    await POST(uploadRequest());
+    expect(mocks.replace).toHaveBeenCalledWith(
+      expect.objectContaining({ format: undefined, exactSize: null }),
+    );
+  });
+
   it("refuses a mode change on a derived slot too", async () => {
     const form = new FormData();
     form.set("themeId", "candy-forest");

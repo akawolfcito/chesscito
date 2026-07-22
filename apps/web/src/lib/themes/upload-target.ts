@@ -39,6 +39,8 @@ export type UploadTarget =
       format: SingleFileFormat | null;
       /** Set when the slot is generated from another — uploads are refused. */
       derivedFrom: ThemeAssetKey | null;
+      /** Exact dimensions the upload must have, when the slot demands them. */
+      exactSize: { width: number; height: number } | null;
     }
   | { ok: false; reason: string };
 
@@ -61,6 +63,7 @@ export function resolveVariantBasename(
   const root: AppRoot = entry.root ?? "web";
   const format = entry.format ?? null;
   const derivedFrom = entry.derivedFrom ?? null;
+  const exactSize = entry.exactSize ?? null;
   const resolved = resolveAssetVariant(entry, variant);
   if (resolved.mode === "asset") {
     return {
@@ -71,6 +74,7 @@ export function resolveVariantBasename(
       root,
       format,
       derivedFrom,
+      exactSize,
     };
   }
   if (!fallback) {
@@ -87,6 +91,7 @@ export function resolveVariantBasename(
     root,
     format,
     derivedFrom,
+    exactSize,
   };
 }
 

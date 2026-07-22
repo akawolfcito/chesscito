@@ -7,6 +7,7 @@ import {
   responsiveDerivativeHeight,
   type ResponsiveAssetProfile,
 } from "./responsive-asset-profiles";
+import type { SingleFileFormat } from "./theme-registry";
 import {
   normalizedVisualDistance,
   normalizedVisualSignature,
@@ -69,7 +70,7 @@ export type AssetFamilyTransactionHooks = {
 type FamilyMember = {
   suffix: string;
   url: string;
-  extension: "png" | "webp" | "avif";
+  extension: "png" | "webp" | "avif" | "jpg";
   width: number;
   height: number;
   buffer: Buffer;
@@ -92,6 +93,10 @@ type ReplaceOptions = {
   input: Buffer;
   profile?: ResponsiveAssetProfile | null;
   rootDir?: string;
+  /** Write ONE file with this extension instead of the triplet. */
+  format?: SingleFileFormat;
+  /** Reject a source that is not exactly this size. */
+  exactSize?: { width: number; height: number } | null;
   afterPromote?: () => Promise<void>;
   rollbackAfterPromote?: () => Promise<void>;
   persistUndoState?: () => Promise<void>;
@@ -153,12 +158,14 @@ async function exists(file: string): Promise<boolean> {
 }
 
 function expectedSharpFormat(extension: FamilyMember["extension"]): string {
-  return extension === "avif" ? "heif" : extension;
+  if (extension === "avif") return "heif";
+  if (extension === "jpg") return "jpeg";
+  return extension;
 }
 
 function isSafeFamilySuffix(value: unknown): value is string {
   return typeof value === "string"
-    && /^(?:\.(?:png|webp|avif)|-\d+w\.(?:webp|avif))$/.test(value);
+    && /^(?:\.(?:png|webp|avif|jpg)|-\d+w\.(?:webp|avif))$/.test(value);
 }
 
 function stubMember(basename: string, suffix: string): FamilyMember {
@@ -166,7 +173,9 @@ function stubMember(basename: string, suffix: string): FamilyMember {
     ? "avif"
     : suffix.endsWith(".webp")
       ? "webp"
-      : "png";
+      : suffix.endsWith(".jpg")
+        ? "jpg"
+        : "png";
   return {
     suffix,
     url: `${basename}${suffix}`,
@@ -190,7 +199,7 @@ async function discoverExistingFamilyMembers(
   } catch {
     return [];
   }
-  const pattern = new RegExp(`^${stem}((?:\\.(?:png|webp|avif))|(?:-\\d+w\\.(?:webp|avif)))$`);
+  const pattern = new RegExp(`^${stem}((?:\\.(?:png|webp|avif|jpg))|(?:-\\d+w\\.(?:webp|avif)))$`);
   return names.flatMap((name) => {
     const match = name.match(pattern);
     return match ? [stubMember(basename, match[1])] : [];
@@ -315,8 +324,61 @@ async function buildFamily(
   basename: string,
   input: Buffer,
   profile: ResponsiveAssetProfile | null,
+  options?: {
+    format?: SingleFileFormat;
+    exactSize?: { width: number; height: number } | null;
+  },
 ): Promise<{ members: FamilyMember[]; result: AssetFamilyResult }> {
   const canonical = await canonicalize(input, profile);
+
+  if (options?.exactSize) {
+    const { width, height } = options.exactSize;
+    if (canonical.width !== width || canonical.height !== height) {
+      throw new AssetFamilyError(
+        "invalid-image",
+        `this slot requires exactly ${width}x${height}px, got ${canonical.width}x${canonical.height}px`,
+      );
+    }
+  }
+
+  if (options?.format === "jpg") {
+    // Flattened onto white: JPEG carries no alpha, and letting sharp pick the
+    // matte turns transparent pixels black.
+    let jpg: Buffer;
+    try {
+      jpg = await sharp(canonical.png)
+        .flatten({ background: { r: 255, g: 255, b: 255 } })
+        .jpeg({ quality: 88, mozjpeg: true })
+        .toBuffer();
+    } catch (error) {
+      throw new AssetFamilyError(
+        "generation-failed",
+        "the jpeg could not be generated",
+        { cause: error },
+      );
+    }
+    const member: FamilyMember = {
+      suffix: ".jpg",
+      url: `${basename}.jpg`,
+      extension: "jpg",
+      width: canonical.width,
+      height: canonical.height,
+      buffer: jpg,
+    };
+    // No alpha to require — the flatten above just removed it on purpose.
+    await validateMember(member, canonical.png, false);
+    return {
+      members: [member],
+      result: {
+        files: [member.url],
+        width: canonical.width,
+        height: canonical.height,
+        responsiveWidths: [],
+        sourceSignature: await normalizedVisualSignature(canonical.png),
+      },
+    };
+  }
+
   const members: FamilyMember[] = [];
 
   try {
@@ -475,7 +537,10 @@ async function replaceAssetFamilyAtomicUnlocked(
   options: ReplaceOptions,
 ): Promise<AssetFamilyResult> {
   const profile = options.profile ?? null;
-  const generated = await buildFamily(options.basename, options.input, profile);
+  const generated = await buildFamily(options.basename, options.input, profile, {
+    format: options.format,
+    exactSize: options.exactSize ?? null,
+  });
   const resolvedRoots = roots(options.rootDir);
   const transactionDir = path.join(resolvedRoots.transactionRoot, randomUUID());
   const stagedNewDir = path.join(transactionDir, "new");
