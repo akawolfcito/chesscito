@@ -170,6 +170,7 @@ function parseRegistry() {
       const entry = assignment.initializer;
       return {
         slotId: key,
+        root: stringValue(property(entry, "root")?.initializer) ?? "web",
         default: variantValue(entry, "default"),
         pro: variantValue(entry, "pro"),
         usedIn: stringArray(entry, "usedIn"),
@@ -349,7 +350,12 @@ function classify(slot, consumers) {
   return "G";
 }
 
-const slots = parseRegistry();
+// This audit answers one question: does every cataloged slot reach a runtime
+// consumer *in apps/web*? Slots owned by a sibling app (root !== "web") have
+// their consumers outside SRC_DIR by construction, so scanning for them here
+// would report a hole that isn't one. They are covered by their own
+// disk-presence test instead.
+const slots = parseRegistry().filter((slot) => slot.root === "web");
 const registeredPaths = new Set(
   slots.flatMap((slot) => [slot.default.path, slot.pro.path]).filter(Boolean),
 );
@@ -492,12 +498,14 @@ if (CHECK_MODE) {
   const missingExceptions = requiredLiteralExceptions.filter(
     (basename) => !unregisteredLiterals.some((literal) => literal.basename === basename),
   );
-  const expectedInitial = { A: 2, B: 66, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  // 159 = the 162 cataloged slots minus the 3 landing.* ones, whose consumer
+  // lives in apps/landing and is therefore out of this audit's scope.
+  const expectedInitial = { A: 2, B: 63, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 162 ||
+    inventory.length !== 159 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

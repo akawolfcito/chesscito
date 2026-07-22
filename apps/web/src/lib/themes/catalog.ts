@@ -13,6 +13,7 @@
 import {
   THEMES,
   THEME_SLOT_SURFACES,
+  type AppRoot,
   type ThemeAssetKey,
   type ThemeAssetVariant,
   type ThemeSlotSurface,
@@ -43,10 +44,16 @@ export type ResolvedFile = {
   familyIssues?: ResponsiveFamilyState[];
 };
 
-/** Resolves a basename (no extension) to its on-disk file + dimensions. */
+/** Resolves a basename (no extension) to its on-disk file + dimensions.
+ *  `root` says which app's `public/` to probe — a basename alone is ambiguous
+ *  now that some slots live in `apps/landing`. */
 export type AssetResolver = (
   basename: string,
-  context?: { key: ThemeAssetKey; variant: ThemeAssetVariant },
+  context?: {
+    key: ThemeAssetKey;
+    variant: ThemeAssetVariant;
+    root: AppRoot;
+  },
 ) => Promise<ResolvedFile>;
 
 /** A resolved asset for one variant, carrying its declared basename. */
@@ -55,6 +62,8 @@ export type ResolvedAsset = ResolvedFile & { basename: string };
 export type SlotCatalogEntry = {
   key: ThemeAssetKey;
   surface: ThemeSlotSurface;
+  /** App that owns the file — always resolved, `web` when undeclared. */
+  root: AppRoot;
   usedIn: string[];
   /** null when DEFAULT is in none mode. */
   default: ResolvedAsset | null;
@@ -81,7 +90,7 @@ export type ThemeCatalog = {
 async function resolveVariant(
   basename: string,
   resolve: AssetResolver,
-  context: { key: ThemeAssetKey; variant: ThemeAssetVariant },
+  context: { key: ThemeAssetKey; variant: ThemeAssetVariant; root: AppRoot },
 ): Promise<ResolvedAsset> {
   const resolved = await resolve(basename, context);
   return { basename, ...resolved };
@@ -103,17 +112,19 @@ export async function buildThemeCatalog(
   const slots = await Promise.all(
     keys.map(async (key): Promise<SlotCatalogEntry> => {
       const entry = theme.assets[key];
+      const root: AppRoot = entry.root ?? "web";
       const defaultVariant = resolveAssetVariant(entry, "default");
       const proVariant = resolveAssetVariant(entry, "pro");
       const def = defaultVariant.mode === "asset"
-        ? await resolveVariant(defaultVariant.path, resolve, { key, variant: "default" })
+        ? await resolveVariant(defaultVariant.path, resolve, { key, variant: "default", root })
         : null;
       const pro = proVariant.mode === "asset"
-        ? await resolveVariant(proVariant.path, resolve, { key, variant: "pro" })
+        ? await resolveVariant(proVariant.path, resolve, { key, variant: "pro", root })
         : null;
       return {
         key,
         surface: THEME_SLOT_SURFACES[key],
+        root,
         usedIn: entry.usedIn ?? [],
         default: def,
         pro,
@@ -136,5 +147,5 @@ export function listThemeIds(): string[] {
   return Object.keys(THEMES);
 }
 
-export type { ThemeAssetKey, ThemeAssetVariant };
+export type { AppRoot, ThemeAssetKey, ThemeAssetVariant };
 export { TRIPLET_EXTENSIONS };

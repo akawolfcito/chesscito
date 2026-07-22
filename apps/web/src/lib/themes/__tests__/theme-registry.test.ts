@@ -244,7 +244,7 @@ describe("theme-registry", () => {
     expect(THEMES[DEFAULT_THEME_ID]).toBeDefined();
   });
 
-  it("classifies all 162 slots from runtime-consumer evidence", () => {
+  it("classifies every slot from runtime-consumer evidence", () => {
     const registered = Object.keys(THEMES[DEFAULT_THEME_ID].assets).sort();
     expect(Object.keys(THEME_SLOT_SURFACES).sort()).toEqual(registered);
 
@@ -258,6 +258,7 @@ describe("theme-registry", () => {
       {
         learn: 0,
         play: 0,
+        landing: 0,
         shared: 0,
         "full-legacy": 0,
         "dev-only": 0,
@@ -267,10 +268,13 @@ describe("theme-registry", () => {
     expect(counts).toEqual({
       learn: 31,
       play: 21,
+      // 3 reclassified off `unknown` (they always had a consumer — in the
+      // sibling app) + 15 newly cataloged carousel slots.
+      landing: 18,
       shared: 74,
       "full-legacy": 29,
       "dev-only": 0,
-      unknown: 7,
+      unknown: 4,
     });
   });
 
@@ -285,9 +289,6 @@ describe("theme-registry", () => {
       "pro-mission.sms",
       "shop.coach-pack-20",
       "hub.cta-principal",
-      "landing.pre-chess",
-      "landing.hero",
-      "landing.progress-trophies",
     ]);
     expect(THEME_SLOT_SURFACES["board.legacy-bg"]).toBe("shared");
   });

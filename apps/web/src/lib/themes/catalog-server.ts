@@ -13,31 +13,35 @@ import { hasBackup } from "./asset-triplet";
 import { hasVariantUndo } from "./variant-undo";
 import { auditResponsiveFamily } from "./responsive-asset-audit";
 import { getResponsiveAssetProfile } from "./responsive-asset-profiles";
-
-/** Root of statically served assets — basenames are relative to it. */
-const PUBLIC_DIR = path.join(process.cwd(), "public");
+import { resolveAppRoot } from "./asset-roots";
 
 /**
  * Production resolver: probes the PNG/WebP/AVIF triplet for a basename
  * and reads the real dimensions of the first file found via sharp.
  * Missing on disk → all-null (the catalog renders a "missing" state
  * rather than throwing).
+ *
+ * A basename is only meaningful together with its owning app: the same
+ * `/art/...` path can exist in both `apps/web/public` and
+ * `apps/landing/public`, so the slot's root decides which file is probed.
  */
 export const fsAssetResolver: AssetResolver = async (
   basename: string,
   context,
 ): Promise<ResolvedFile> => {
   const relative = basename.replace(/^\//, "");
-  const backup = await hasBackup(basename);
+  const rootDir = resolveAppRoot(context?.root);
+  const publicDir = path.join(rootDir, "public");
+  const backup = await hasBackup(basename, rootDir);
   const profile = context ? getResponsiveAssetProfile(context.key) : null;
   const family = profile
     ? await auditResponsiveFamily(
         { basename, slots: [context!.key], profile },
-        PUBLIC_DIR,
+        publicDir,
       )
     : null;
   for (const format of TRIPLET_EXTENSIONS) {
-    const abs = path.join(PUBLIC_DIR, `${relative}.${format}`);
+    const abs = path.join(publicDir, `${relative}.${format}`);
     let stat: Awaited<ReturnType<typeof fs.stat>>;
     try {
       stat = await fs.stat(abs);

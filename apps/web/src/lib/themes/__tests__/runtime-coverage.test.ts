@@ -18,17 +18,20 @@ describe("theme runtime catalog coverage", () => {
         "utf8",
       ),
     );
-    expect(report.totalSlots).toBe(162);
+    // The audit scopes itself to slots the web app owns. The landing.* slots
+    // render in apps/landing, so they are excluded here and covered by
+    // landing-assets.test.ts instead.
+    expect(report.totalSlots).toBe(159);
     expect(report.initialCategoryCounts).toEqual({
       A: 2,
-      B: 66,
+      B: 63,
       C: 26,
       D: 38,
       E: 19,
       F: 11,
       G: 0,
     });
-    expect(report.connectedSlots).toBe(151);
+    expect(report.connectedSlots).toBe(148);
     expect(report.excludedSlots).toBe(11);
     expect(
       report.slots.filter(
