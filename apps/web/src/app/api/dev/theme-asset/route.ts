@@ -45,9 +45,19 @@ function assetFamilyError(error: unknown): NextResponse {
       { status: 500 },
     );
   }
+  // wrong-dimensions carries the only message worth showing — the required
+  // and actual sizes. A static string here would tell the founder to check
+  // the file format when the file was fine and only its size was wrong.
+  if (error.code === "wrong-dimensions") {
+    return NextResponse.json(
+      { ok: false, error: error.message, code: error.code },
+      { status: 400 },
+    );
+  }
   const messages: Record<AssetFamilyError["code"], string> = {
     "invalid-image": "could not decode image — upload a valid PNG/JPG/WebP",
     "source-too-small": "source image is too small for this responsive slot",
+    "wrong-dimensions": "image does not have the exact size this slot requires",
     "generation-failed": "one or more optimized image variants could not be generated",
     "validation-failed": "generated image family failed final validation",
     "registry-failed": "theme registry could not be updated",

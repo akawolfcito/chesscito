@@ -79,6 +79,7 @@ function VariantCell({
   slotKey,
   variant,
   hasBackup,
+  derivedFrom,
 }: {
   label: string;
   asset: ResolvedAsset | null;
@@ -89,6 +90,8 @@ function VariantCell({
   slotKey: string;
   variant: "default" | "pro";
   hasBackup: boolean;
+  /** Slot this art is generated from; makes the cell read-only. */
+  derivedFrom?: string | null;
 }) {
   return (
     <div className="flex-1 min-w-0">
@@ -143,6 +146,7 @@ function VariantCell({
         variant={variant}
         mode={mode}
         hasBackup={hasBackup}
+        derivedFrom={derivedFrom ?? undefined}
       />
     </div>
   );
@@ -236,6 +240,24 @@ export default async function ThemeBuilderDevPage({
                             apps/{slot.root}
                           </span>
                         )}
+                        {slot.format && (
+                          <span
+                            data-testid={`theme-slot-format-${slot.key}`}
+                            className="rounded-full border border-neutral-600 bg-neutral-800/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-neutral-300"
+                            title="Single file with a fixed extension — not a PNG/WebP/AVIF triplet"
+                          >
+                            {slot.format}
+                          </span>
+                        )}
+                        {slot.derivedFrom && (
+                          <span
+                            data-testid={`theme-slot-derived-${slot.key}`}
+                            className="rounded-full border border-sky-700/60 bg-sky-950/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-300"
+                            title={`Generated from ${slot.derivedFrom}`}
+                          >
+                            derived
+                          </span>
+                        )}
                         <div className="max-w-xl text-right text-xs text-neutral-500">
                           {slot.usedIn.length ? (
                             slot.usedIn.map((location) => (
@@ -261,6 +283,7 @@ export default async function ThemeBuilderDevPage({
                           slotKey={slot.key}
                           variant="default"
                           hasBackup={slot.defaultHasBackup}
+                          derivedFrom={slot.derivedFrom}
                         />
                         <VariantCell
                           label="pro"
@@ -271,6 +294,7 @@ export default async function ThemeBuilderDevPage({
                           slotKey={slot.key}
                           variant="pro"
                           hasBackup={slot.proHasBackup}
+                          derivedFrom={slot.derivedFrom}
                         />
                       </div>
                     </section>

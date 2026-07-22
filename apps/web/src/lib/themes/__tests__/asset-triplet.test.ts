@@ -283,7 +283,21 @@ describe("single-file jpg slots", { timeout: 20_000 }, () => {
         format: "jpg",
         exactSize: { width: 1200, height: 630 },
       }),
-    ).rejects.toMatchObject({ code: "invalid-image" });
+      // Its own code, not invalid-image: the file decoded fine and only its
+      // size was wrong, so the message must not send anyone hunting formats.
+    ).rejects.toMatchObject({ code: "wrong-dimensions" });
+  });
+
+  it("names both the required and the actual size when it rejects", async () => {
+    await expect(
+      replaceAssetFamilyAtomic({
+        basename: "/og/test-card",
+        input: await source(800, 600),
+        rootDir,
+        format: "jpg",
+        exactSize: { width: 1200, height: 630 },
+      }),
+    ).rejects.toThrow(/1200×630.*800×600/);
   });
 
   it("writes nothing when the exact-size gate rejects the source", async () => {

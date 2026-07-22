@@ -371,6 +371,26 @@ describe("derived slots", () => {
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 
+  it("passes the wrong-size message through instead of a format complaint", async () => {
+    mocks.replace.mockRejectedValueOnce(
+      new mocks.MockAssetFamilyError(
+        "wrong-dimensions",
+        "this slot requires exactly 1200×630px — got 1254×1254px",
+      ),
+    );
+    const form = new FormData();
+    form.set("themeId", "candy-forest");
+    form.set("key", "landing.og-image");
+    form.set("variant", "default");
+    form.set("file", new File(["image"], "card.jpg", { type: "image/jpeg" }));
+
+    const response = await POST({ formData: async () => form } as unknown as Request);
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toMatch(/1200×630.*1254×1254/);
+    expect(body.error).not.toMatch(/decode/i);
+  });
+
   it("hands the writer the slot's declared format and exact size", async () => {
     // The gate itself is enforced in asset-triplet; what this pins is that the
     // registry's declaration actually reaches it. Without this, exactSize is

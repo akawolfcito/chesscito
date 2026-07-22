@@ -6,11 +6,20 @@ import { RotateCcw, Upload } from "lucide-react";
 
 type Status = "idle" | "uploading" | "done" | "error";
 
+/** What the API reports about brand icons regenerated alongside a replace. */
+type DerivedReport =
+  | { ok: true; files: string[] }
+  | { ok: false; error: string };
+
 /**
  * Per-variant uploader for the theme-builder catalog. Posts the chosen
  * image to /api/dev/theme-asset, which writes the PNG/WebP/AVIF triplet
  * to the registry-declared path, then refreshes the server component so
  * the new art + dimensions render. Dev/local only.
+ *
+ * A slot with `derivedFrom` renders no controls at all: the API refuses
+ * every write to it, so offering a button that always 400s is worse than
+ * saying where the art comes from.
  */
 export function UploadControl({
   themeId,
@@ -18,17 +27,21 @@ export function UploadControl({
   variant,
   mode,
   hasBackup,
+  derivedFrom,
 }: {
   themeId: string;
   slotKey: string;
   variant: "default" | "pro";
   mode: "asset" | "inherit" | "none";
   hasBackup: boolean;
+  /** Slot this one is generated from — makes this control read-only. */
+  derivedFrom?: string;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState<string>("");
+  const [derived, setDerived] = useState<DerivedReport | null>(null);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -36,6 +49,7 @@ export function UploadControl({
 
     setStatus("uploading");
     setMessage("uploading…");
+    setDerived(null);
 
     const form = new FormData();
     form.set("themeId", themeId);
@@ -46,11 +60,18 @@ export function UploadControl({
     try {
       const res = await fetch("/api/dev/theme-asset", { method: "POST", body: form });
       const data = (await res.json().catch(() => null)) as
-        | { ok?: boolean; width?: number; height?: number; error?: string }
+        | {
+            ok?: boolean;
+            width?: number;
+            height?: number;
+            error?: string;
+            derived?: DerivedReport;
+          }
         | null;
       if (res.ok && data?.ok) {
         setStatus("done");
         setMessage(`saved · ${data.width}×${data.height}`);
+        setDerived(data.derived ?? null);
         router.refresh();
       } else {
         setStatus("error");
@@ -119,6 +140,17 @@ export function UploadControl({
     }
   }
 
+  if (derivedFrom) {
+    return (
+      <div
+        data-testid={`derived-slot-${slotKey}`}
+        className="mt-2 rounded-md border border-sky-700/40 bg-sky-950/30 px-2 py-1 text-[11px] text-sky-300"
+      >
+        derived from {derivedFrom} — replace that slot to regenerate
+      </div>
+    );
+  }
+
   return (
     <div className="mt-2 flex flex-wrap items-center gap-2">
       <button
@@ -162,6 +194,7 @@ export function UploadControl({
       <input
         ref={inputRef}
         type="file"
+        aria-label={`Replacement image for ${slotKey} ${variant}`}
         accept="image/png,image/jpeg,image/webp"
         onChange={onFile}
         className="hidden"
@@ -175,6 +208,17 @@ export function UploadControl({
           }
         >
           {message}
+        </span>
+      )}
+      {derived?.ok === true && (
+        <span className="w-full text-[11px] text-emerald-300">
+          {derived.files.length} brand icons regenerated
+        </span>
+      )}
+      {derived?.ok === false && (
+        <span className="w-full rounded-md border border-amber-600/40 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-300">
+          ⚠ saved, but icons not regenerated — {derived.error}. Run{" "}
+          <code>pnpm icons:generate</code>
         </span>
       )}
     </div>

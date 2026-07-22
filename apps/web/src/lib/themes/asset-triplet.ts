@@ -27,6 +27,7 @@ const VISUAL_DISTANCE_LIMIT = 18;
 export type AssetFamilyErrorCode =
   | "invalid-image"
   | "source-too-small"
+  | "wrong-dimensions"
   | "generation-failed"
   | "validation-failed"
   | "registry-failed"
@@ -335,8 +336,8 @@ async function buildFamily(
     const { width, height } = options.exactSize;
     if (canonical.width !== width || canonical.height !== height) {
       throw new AssetFamilyError(
-        "invalid-image",
-        `this slot requires exactly ${width}x${height}px, got ${canonical.width}x${canonical.height}px`,
+        "wrong-dimensions",
+        `this slot requires exactly ${width}×${height}px — got ${canonical.width}×${canonical.height}px`,
       );
     }
   }

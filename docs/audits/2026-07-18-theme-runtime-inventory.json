@@ -8332,7 +8332,7 @@
         "src/app/[locale]/victory/[id]/error.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 4,
+      "consumerCount": 5,
       "consumers": [
         {
           "file": "src/app/[locale]/about/page.tsx",
@@ -8369,6 +8369,17 @@
         },
         {
           "file": "src/app/[locale]/victory/[id]/error.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/app/api/dev/theme-asset/route.ts",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
