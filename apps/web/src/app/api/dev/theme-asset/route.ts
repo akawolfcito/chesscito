@@ -27,6 +27,11 @@ import { resolveAssetVariant, type AssetVariant } from "@/lib/themes/asset-varia
 import { setRegistryVariant } from "@/lib/themes/registry-editor";
 import { readVariantUndo, saveVariantUndo } from "@/lib/themes/variant-undo";
 import { resolveAppRoot } from "@/lib/themes/asset-roots";
+import { deriveBrandIcons } from "@/lib/themes/icon-derivation";
+import {
+  writeDerivedIcons,
+  type DerivedIconWriteResult,
+} from "@/lib/themes/derived-icons-writer";
 
 export const runtime = "nodejs";
 
@@ -120,6 +125,22 @@ export async function GET(req: Request) {
     { ok: false, error: "no file on disk for this slot" },
     { status: 404 },
   );
+}
+
+/**
+ * Regenerate the brand icons from a freshly replaced master.
+ *
+ * Write-then-derive: the master is already on disk when this runs, and a
+ * failure here is reported rather than rolled back. The icons are recoverable
+ * with `pnpm icons:generate`; silently reverting a successful replace is the
+ * worse failure.
+ */
+async function deriveBrandIconsFrom(source: Buffer): Promise<DerivedIconWriteResult> {
+  try {
+    return await writeDerivedIcons(await deriveBrandIcons(source));
+  } catch (error) {
+    return { ok: false, error: `derivation failed: ${String(error)}` };
+  }
 }
 
 export async function POST(req: Request) {
@@ -296,5 +317,20 @@ export async function POST(req: Request) {
     return assetFamilyError(error);
   }
   console.info("[dev/theme-asset]", { themeId, key, variant, root: target.root, basename: target.basename });
-  return NextResponse.json({ ok: true, basename: target.basename, ...result });
+
+  // Only the wolf master's DEFAULT drives the brand icons. A theme's PRO art
+  // must never change the browser favicon: these icons are brand, not theme.
+  const derived = key === "brand.favicon" && typedVariant === "default"
+    ? await deriveBrandIconsFrom(buffer)
+    : undefined;
+  if (derived && !derived.ok) {
+    console.warn("[dev/theme-asset] brand icon derivation failed", derived.error);
+  }
+
+  return NextResponse.json({
+    ok: true,
+    basename: target.basename,
+    ...result,
+    ...(derived ? { derived } : {}),
+  });
 }

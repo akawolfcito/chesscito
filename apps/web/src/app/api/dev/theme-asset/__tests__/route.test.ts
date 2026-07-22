@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => {
     setRegistry: vi.fn(),
     readUndo: vi.fn(),
     saveUndo: vi.fn(),
+    deriveBrandIcons: vi.fn(),
+    writeDerivedIcons: vi.fn(),
   };
 });
 
@@ -39,6 +41,14 @@ vi.mock("@/lib/themes/registry-editor", () => ({
 vi.mock("@/lib/themes/variant-undo", () => ({
   readVariantUndo: mocks.readUndo,
   saveVariantUndo: mocks.saveUndo,
+}));
+
+vi.mock("@/lib/themes/icon-derivation", () => ({
+  deriveBrandIcons: mocks.deriveBrandIcons,
+}));
+
+vi.mock("@/lib/themes/derived-icons-writer", () => ({
+  writeDerivedIcons: mocks.writeDerivedIcons,
 }));
 
 import { GET, POST } from "../route";
@@ -78,6 +88,8 @@ beforeEach(() => {
   mocks.readUndo.mockResolvedValue(null);
   mocks.saveUndo.mockResolvedValue(undefined);
   mocks.setRegistry.mockResolvedValue(undefined);
+  mocks.deriveBrandIcons.mockResolvedValue([]);
+  mocks.writeDerivedIcons.mockResolvedValue({ ok: true, files: [] });
 });
 
 describe("POST /api/dev/theme-asset", () => {
@@ -224,6 +236,74 @@ describe("POST /api/dev/theme-asset", () => {
       "default",
       { mode: "asset", path: "/art/avatar-lite-hub" },
     );
+  });
+});
+
+describe("brand icon derivation on replace", () => {
+  function replaceWolf(variant = "default"): Request {
+    const form = new FormData();
+    form.set("themeId", "candy-forest");
+    form.set("key", "brand.favicon");
+    form.set("variant", variant);
+    form.set("file", new File(["wolf"], "wolf.png", { type: "image/png" }));
+    return { formData: async () => form } as unknown as Request;
+  }
+
+  it("derives and reports the files after replacing the wolf master", async () => {
+    mocks.writeDerivedIcons.mockResolvedValueOnce({
+      ok: true,
+      files: ["landing/public/favicon.ico", "web/src/app/icon.png"],
+    });
+    const response = await POST(replaceWolf());
+    const body = await response.json();
+    expect(body.ok).toBe(true);
+    expect(body.derived).toEqual({
+      ok: true,
+      files: ["landing/public/favicon.ico", "web/src/app/icon.png"],
+    });
+  });
+
+  it("derives from the uploaded bytes, not from what is on disk", async () => {
+    await POST(replaceWolf());
+    expect(mocks.deriveBrandIcons).toHaveBeenCalledWith(
+      expect.objectContaining({ length: expect.any(Number) }),
+    );
+  });
+
+  it("keeps the replace successful when derivation fails", async () => {
+    mocks.writeDerivedIcons.mockResolvedValueOnce({ ok: false, error: "disk on fire" });
+    const response = await POST(replaceWolf());
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    // The master IS written — reverting a good replace over a bad icon is
+    // the worse failure, and icons:generate recovers the icons.
+    expect(body.ok).toBe(true);
+    expect(body.basename).toBe("/art/favicon-wolf");
+    expect(body.derived).toEqual({ ok: false, error: "disk on fire" });
+  });
+
+  it("reports a thrown derivation as a failure instead of a 500", async () => {
+    mocks.deriveBrandIcons.mockRejectedValueOnce(new Error("sharp exploded"));
+    const response = await POST(replaceWolf());
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.ok).toBe(true);
+    expect(body.derived.ok).toBe(false);
+    expect(body.derived.error).toMatch(/sharp exploded/);
+  });
+
+  it("does not derive when the pro variant is replaced", async () => {
+    // A theme's PRO art must not change the browser favicon: these icons are
+    // brand, not theme.
+    const response = await POST(replaceWolf("pro"));
+    expect((await response.json()).derived).toBeUndefined();
+    expect(mocks.writeDerivedIcons).not.toHaveBeenCalled();
+  });
+
+  it("does not derive for an unrelated slot", async () => {
+    const response = await POST(uploadRequest());
+    expect((await response.json()).derived).toBeUndefined();
+    expect(mocks.writeDerivedIcons).not.toHaveBeenCalled();
   });
 });
 
