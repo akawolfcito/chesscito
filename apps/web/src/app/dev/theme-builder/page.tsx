@@ -40,9 +40,23 @@ function shortPath(basename: string): string {
   return parts.length <= 2 ? basename : `…/${parts.slice(-2).join("/")}`;
 }
 
+/**
+ * What the cell prints under the preview.
+ *
+ * Missing dimensions do NOT mean a missing file: sharp cannot decode an .ico,
+ * so a favicon that is right there on disk resolves with null width/height.
+ * Reporting that as "missing on disk" sent you looking for a file that was
+ * never gone — so the file itself decides, and size stands in for dimensions
+ * when they are unreadable.
+ */
 function dims(a: ResolvedAsset): string {
-  if (a.width == null || a.height == null) return "— missing on disk —";
-  return `${a.width}×${a.height} · ${a.format?.toUpperCase() ?? ""}`;
+  if (a.file == null) return "— missing on disk —";
+  const kind = a.format?.toUpperCase() ?? "";
+  if (a.width == null || a.height == null) {
+    const size = a.bytes == null ? "on disk" : `${Math.round(a.bytes / 1024)} KB`;
+    return `${size} · ${kind}`;
+  }
+  return `${a.width}×${a.height} · ${kind}`;
 }
 
 /**
@@ -256,6 +270,15 @@ export default async function ThemeBuilderDevPage({
                             title={`Generated from ${slot.derivedFrom}`}
                           >
                             derived
+                          </span>
+                        )}
+                        {slot.derivedBy.length > 0 && (
+                          <span
+                            data-testid={`theme-slot-master-${slot.key}`}
+                            className="rounded-full border border-emerald-600/60 bg-emerald-950/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-300"
+                            title={`Replacing this regenerates: ${slot.derivedBy.join(", ")}`}
+                          >
+                            master · regenerates {slot.derivedBy.length}
                           </span>
                         )}
                         <div className="max-w-xl text-right text-xs text-neutral-500">

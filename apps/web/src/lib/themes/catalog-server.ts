@@ -52,6 +52,7 @@ export const fsAssetResolver: AssetResolver = async (
       continue;
     }
     const mtime = stat.mtimeMs;
+    const bytes = stat.size;
     try {
       const meta = await sharp(abs).metadata();
       return {
@@ -60,6 +61,7 @@ export const fsAssetResolver: AssetResolver = async (
         height: meta.height ?? null,
         format,
         mtime,
+        bytes,
         hasBackup: backup,
         familyState: family?.state,
         familyIssues: family?.states,
@@ -72,6 +74,7 @@ export const fsAssetResolver: AssetResolver = async (
         height: null,
         format,
         mtime,
+        bytes,
         hasBackup: backup,
         familyState: family?.state,
         familyIssues: family?.states,
@@ -84,6 +87,7 @@ export const fsAssetResolver: AssetResolver = async (
     height: null,
     format: null,
     mtime: null,
+    bytes: null,
     hasBackup: backup,
     familyState: family?.state,
     familyIssues: family?.states,

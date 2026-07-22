@@ -39,6 +39,10 @@ export type ResolvedFile = {
    *  (`?v=<mtime>`) so a replaced image actually reloads in the browser.
    *  null when nothing is on disk. */
   mtime: number | null;
+  /** Size on disk. The only evidence a file exists for a container sharp
+   *  cannot decode: an .ico resolves with null dimensions, and without this
+   *  the catalog cannot tell "no dimensions" from "no file". */
+  bytes: number | null;
   /** True when a one-level undo backup exists for this basename, so the
    *  catalog can enable the "Undo" control. */
   hasBackup: boolean;
@@ -88,6 +92,10 @@ export type SlotCatalogEntry = {
   format: SingleFileFormat | null;
   /** Slot this one is generated from; null when independently editable. */
   derivedFrom: ThemeAssetKey | null;
+  /** Slots generated FROM this one — the inverse of `derivedFrom`, computed
+   *  from those links rather than declared, so a new derived slot appears on
+   *  its master without a second list to keep in sync. Empty for most slots. */
+  derivedBy: ThemeAssetKey[];
 };
 
 export type ThemeCatalog = {
@@ -123,6 +131,15 @@ export async function buildThemeCatalog(
   if (!theme) return null;
 
   const keys = Object.keys(theme.assets) as ThemeAssetKey[];
+  // Inverse index of the derivedFrom links, built once: which slots does each
+  // master regenerate. Sorted so the catalog renders them deterministically.
+  const derivedByMaster = new Map<ThemeAssetKey, ThemeAssetKey[]>();
+  for (const key of [...keys].sort()) {
+    const source = theme.assets[key].derivedFrom;
+    if (!source) continue;
+    derivedByMaster.set(source, [...(derivedByMaster.get(source) ?? []), key]);
+  }
+
   const slots = await Promise.all(
     keys.map(async (key): Promise<SlotCatalogEntry> => {
       const entry = theme.assets[key];
@@ -162,6 +179,7 @@ export async function buildThemeCatalog(
         deprecated: entry.deprecated ?? null,
         format,
         derivedFrom: entry.derivedFrom ?? null,
+        derivedBy: derivedByMaster.get(key) ?? [],
       };
     }),
   );

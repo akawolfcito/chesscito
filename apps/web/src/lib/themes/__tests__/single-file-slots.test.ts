@@ -8,8 +8,31 @@ const okResolver: AssetResolver = vi.fn(async (basename: string) => ({
   height: 1024,
   format: "png" as const,
   mtime: 1_700_000_000_000,
+  bytes: 4096,
   hasBackup: false,
 }));
+
+/** What the production resolver reports for an .ico: the file is there, but
+ *  sharp cannot decode that container, so there are no dimensions to show. */
+const undecodableResolver: AssetResolver = vi.fn(async (basename: string) => ({
+  file: `${basename}.ico`,
+  width: null,
+  height: null,
+  format: "ico" as const,
+  mtime: 1_700_000_000_000,
+  bytes: 12_289,
+  hasBackup: false,
+}));
+
+describe("a file sharp cannot decode", () => {
+  it("still reports its size on disk, so the UI need not call it missing", async () => {
+    const catalog = await buildThemeCatalog("candy-forest", undecodableResolver);
+    const favicon = catalog?.slots.find((s) => s.key === "brand.favicon-ico");
+    expect(favicon?.default?.file).toBe("/favicon.ico");
+    expect(favicon?.default?.width).toBeNull();
+    expect(favicon?.default?.bytes).toBe(12_289);
+  });
+});
 
 describe("the three brand/social slots", () => {
   it("reports the declared format for a single-file slot", async () => {
@@ -28,6 +51,7 @@ describe("the three brand/social slots", () => {
         height: 630,
         format: "jpg" as const,
         mtime: 1,
+        bytes: 125_277,
         hasBackup: false,
       };
     };
@@ -55,6 +79,20 @@ describe("the three brand/social slots", () => {
     for (const key of ["landing.og-image", "brand.apple-icon", "brand.favicon-ico"] as const) {
       expect(catalog?.slots.find((s) => s.key === key)?.root).toBe("landing");
     }
+  });
+
+  it("tells the master which slots it regenerates", async () => {
+    const catalog = await buildThemeCatalog("candy-forest", okResolver);
+    const wolf = catalog?.slots.find((s) => s.key === "brand.favicon");
+    // Derived from the derivedFrom links themselves, so a new derived slot
+    // shows up on its master without anyone maintaining a second list.
+    expect(wolf?.derivedBy).toEqual(["brand.apple-icon", "brand.favicon-ico"]);
+  });
+
+  it("leaves derivedBy empty for a slot nothing is generated from", async () => {
+    const catalog = await buildThemeCatalog("candy-forest", okResolver);
+    expect(catalog?.slots.find((s) => s.key === "hub.portal")?.derivedBy).toEqual([]);
+    expect(catalog?.slots.find((s) => s.key === "landing.og-image")?.derivedBy).toEqual([]);
   });
 
   it("points the derived icons at what the landing layout actually reads", async () => {

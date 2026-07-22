@@ -11,6 +11,7 @@ const okResolver: AssetResolver = vi.fn(async (basename: string) => ({
   height: 1024,
   format: "png" as const,
   mtime: 1_700_000_000_000,
+  bytes: 4096,
   hasBackup: false,
 }));
 
@@ -21,6 +22,7 @@ const missingResolver: AssetResolver = vi.fn(async () => ({
   height: null,
   format: null,
   mtime: null,
+  bytes: null,
   hasBackup: false,
 }));
 
@@ -181,6 +183,7 @@ describe("single-file and derived slots", () => {
         height: 1024,
         format: "png" as const,
         mtime: 1,
+        bytes: 2048,
         hasBackup: false,
       };
     };
