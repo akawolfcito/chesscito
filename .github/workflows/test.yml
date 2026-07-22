@@ -44,6 +44,36 @@ jobs:
       - name: Type-check
         run: pnpm type-check
 
+  # Three guards against art that drifts silently. Each one caught a real
+  # divergence before it existed as a check: derived icons rebuilt by hand,
+  # shared art updated in one app only, slots with no consumer left.
+  asset-drift:
+    name: Asset drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Brand icons match the wolf master
+        working-directory: apps/web
+        run: pnpm icons:generate:check
+
+      - name: Shared art is in sync across apps
+        working-directory: apps/web
+        run: pnpm art:sync-landing:check
+
+      - name: Every theme slot reaches a consumer
+        working-directory: apps/web
+        run: pnpm theme:coverage
+
   contract-tests:
     name: Contract tests
     runs-on: ubuntu-latest
