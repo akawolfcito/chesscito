@@ -35,7 +35,7 @@ const messages = {
     insufficient: "Need 2 Peones",
     error: "Hint unavailable",
     rateLimited: "One sec, try again",
-    unavailable: "No hint",
+    unavailable: "Hint unavailable",
   },
 };
 

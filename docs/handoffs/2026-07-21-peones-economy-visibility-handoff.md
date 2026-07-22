@@ -1,6 +1,10 @@
 # Handoff — Visibilidad de la economía de Peones
 
-**Fecha:** 2026-07-21 · **Rama:** `feat/peones-economy-visibility` (8 commits, sin mergear)
+**Fecha:** 2026-07-21 · **Rama:** `feat/peones-economy-visibility` (sin mergear)
+
+La tabla de abajo lista los **8 commits de implementación**. La rama tiene **9**: el noveno
+(`2c97e02`) es el commit de docs que trae este handoff y la auditoría, y no puede listarse a
+sí mismo. Un décimo (`copy`) ajusta el estado sin pista a "Hint unavailable".
 **Auditoría previa:** `docs/audits/2026-07-21-peones-ux-visibility-audit.md`
 
 ---

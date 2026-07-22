@@ -3745,7 +3745,12 @@ export const PEONES_HINT_COPY = {
   /** No computable first step for this exercise — the pin renders dead
    *  and no spend is issued. Distinct from `error` (which means the
    *  spend was attempted and failed): here nothing was ever charged. */
-  unavailable: "No hint",
+  /** Same wording as `error` on purpose: to the player both mean "you
+   *  cannot get a hint right now". They differ in mechanics, not in
+   *  meaning — `error` is transient and stays tappable, `unavailable` is
+   *  permanent for this exercise and renders dead — and inventing a
+   *  second phrasing would only make the pin look inconsistent. */
+  unavailable: "Hint unavailable",
   error: "Hint unavailable",
   /** Transient 429 from the spend endpoint. Distinct from `error`
    *  because the condition self-heals in seconds; the generic
