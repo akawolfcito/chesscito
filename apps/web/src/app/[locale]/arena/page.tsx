@@ -33,6 +33,7 @@ import { PlayBadgesSheet } from "@/components/play/play-badges-sheet";
 import { PlayLeadersSheet } from "@/components/play/play-leaders-sheet";
 import { isPlayMode } from "@/lib/feature-flags";
 import { ArenaHud } from "@/components/arena/arena-hud";
+import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 import { ArenaPlayerRail } from "@/components/arena/arena-player-rail";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
@@ -1439,6 +1440,10 @@ function ArenaPageInner() {
           isEndState={isEndState}
           elapsedMs={game.elapsedMs}
           showCoachHint={ENABLE_COACH}
+          // Mounted here, not inside ArenaHud: this page sits under the
+          // WagmiProvider, and the HUD stays wallet-free so its tests and
+          // probes keep rendering without one (2026-07-22).
+          balanceChip={<PeonesBalanceChip surface="arena" />}
         />
 
         {/* Board group — the rails and the board are ONE unit, centred

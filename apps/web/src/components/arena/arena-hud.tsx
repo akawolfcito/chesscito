@@ -2,7 +2,7 @@
 
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 
 import { ArenaConfirmModal } from "@/components/arena/arena-confirm-modal";
@@ -27,6 +27,12 @@ type Props = {
    *  in-match Coach signpost beneath the matchup row. Gated by
    *  NEXT_PUBLIC_ENABLE_COACH at the call site (arena/page.tsx). */
   showCoachHint?: boolean;
+  /** Peones balance chip, rendered beside the match timer (2026-07-22).
+   *  Passed in rather than mounted here because it reads the wallet via
+   *  wagmi, and this component stays wallet-free so its tests and /dev
+   *  probes can render it with no WagmiProvider. Optional: callers that
+   *  have no provider in scope simply omit it. */
+  balanceChip?: ReactNode;
 };
 
 /** Back chip in the canonical `candy-nav-button` envelope. During an
@@ -166,7 +172,7 @@ export function ArenaShieldsChip() {
   );
 }
 
-export function ArenaHud({ onBack, isEndState, elapsedMs }: Props) {
+export function ArenaHud({ onBack, isEndState, elapsedMs, balanceChip }: Props) {
   const t = useTranslations("ARENA_COPY");
   const needsBackConfirm = !isEndState;
 
@@ -188,7 +194,28 @@ export function ArenaHud({ onBack, isEndState, elapsedMs }: Props) {
             <ArenaBackChip onBack={onBack} needsConfirm={needsBackConfirm} />
           }
           trailingControl={
-            <ArenaTimerChip elapsedMs={elapsedMs} isEndState={isEndState} />
+            // Peones ride alongside the timer during a PLAY match
+            // (2026-07-22). Coach analysis is bought from the end-state of
+            // this very screen, and PLAY is where consumables land next, so
+            // the balance has to be in view while playing — a currency the
+            // player cannot see is one they never think to spend, and never
+            // think to top up.
+            //
+            // A sibling chip rather than a third segment inside the timer
+            // pill: at 390px "clock | shield | pawn" in one pill is where
+            // that pill stops being readable.
+            //
+            // Passed in as a slot, never mounted here: the chip reads the
+            // wallet through wagmi, and this component is deliberately
+            // wallet-free so its tests and probes can render it without a
+            // WagmiProvider. Mounting it directly threw in 13 of them.
+            //
+            // NOT gated on mode. The last two bugs here were exactly that
+            // (see the balance chip and the Hint on /exercises).
+            <div className="flex items-center gap-2">
+              {balanceChip}
+              <ArenaTimerChip elapsedMs={elapsedMs} isEndState={isEndState} />
+            </div>
           }
         />
       </div>
