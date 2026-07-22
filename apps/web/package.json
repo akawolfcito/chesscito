@@ -26,6 +26,8 @@
     "theme:coverage": "node scripts/audit-theme-runtime-coverage.mjs --check",
     "art:sync-landing": "tsx scripts/sync-landing-shared-art.ts",
     "art:sync-landing:check": "tsx scripts/sync-landing-shared-art.ts --check",
+    "icons:generate": "tsx scripts/generate-brand-icons.ts",
+    "icons:generate:check": "tsx scripts/generate-brand-icons.ts --check",
     "encrypt-key": "tsx scripts/encrypt-key.ts",
     "grant-pro": "tsx scripts/grant-pro.ts",
     "rail:smoke": "tsx scripts/rail-smoke.ts",
