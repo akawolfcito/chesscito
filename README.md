@@ -24,6 +24,19 @@ Chesscito is an educational MiniApp on **Celo**, designed to be used with MiniPa
 - **Battle** full chess vs AI in Arena and save any finished match as an on-chain NFT
 - **Improve** with the AI Coach analyzing your games (LLM-powered)
 
+### Two surfaces, one codebase
+
+Chesscito ships as two focused apps built from the same repo, selected at build time via
+`NEXT_PUBLIC_CHESSCITO_MODE`:
+
+| Mode    | Host                    | What it is                                                                     |
+| ------- | ----------------------- | ------------------------------------------------------------------------------ |
+| `learn` | `learn.chesscito.com`   | Pre-chess training: puzzles, signature games, daily loop, Season Pass, badges, leaderboard |
+| `play`  | `play.chesscito.com`    | Full chess: Arena vs AI, Victory NFT, AI Coach                                  |
+
+`full` mode (everything on one host) exists for local development; it is not a shipped
+surface. Cross-mode links redirect to the right host automatically.
+
 ## Gameplay
 
 All six pieces. 59 exercises plus a second lane of longer challenges. Stars awarded by precision.
@@ -54,6 +67,17 @@ Stars are awarded based on move efficiency:
 
 Complete 80% of a piece's exercises to unlock its on-chain badge — the badge rewards constancy, not perfection, so a 1-star run and a 3-star run both count and no one is stranded below a star ceiling. Stars are a reward and tiebreak metric, not the gate. Completing exercises and labyrinths also earns **Peones**, the in-game soft currency, which can additionally be purchased with stablecoins (cUSD / USDT / USDC) via a direct payment — no token approvals.
 
+### Progression & Economy
+
+- **Daily loop** — a daily tactic keeps a streak alive; **Shields** rescue a failed exercise so a
+  slip does not cost the run
+- **Peones** — the soft currency earned by completing exercises and signature games, spendable on
+  retries, Coach credits and shop items
+- **Season Pass** — the long-arc progression product of Learn mode, with milestone celebrations
+  queued so rewards never collide on screen
+- **Badges & Trophies** — on-chain ERC-1155 badges per piece plus an in-app achievements vitrine
+- **Stats** — personal on-chain metrics (scores, mints, badges) read back from Celo
+
 ### Arena — Full Chess vs AI
 
 Play a complete chess game vs AI and save the result as an on-chain NFT — any outcome (win, loss, draw, or resign), not just victories.
@@ -78,6 +102,11 @@ DB-backed global leaderboard (Supabase read layer) with an optional on-chain sco
 | Scoreboard          | [`0x1681aAA1...`](https://celoscan.io/address/0x1681aAA176d5f46e45789A8b18C8E990f663959a) |
 | Shop (proxy)        | [`0x24846C77...`](https://celoscan.io/address/0x24846C772af7233ADfD98b9A96273120f3a1f74b) |
 | Victory NFT (proxy) | [`0x0eE22F83...`](https://celoscan.io/address/0x0eE22F830a99e7a67079018670711C0F94Abeeb0) |
+| Treasury            | [`0xcD3837DD...`](https://celoscan.io/address/0xcD3837DD017dFA5E31A2e3Cf390721E16Ac8Fbf0) |
+| Prize Pool          | [`0x63DEfFD3...`](https://celoscan.io/address/0x63DEfFD397B6470521f84Da621f47e1727424a51) |
+
+Victory NFT mints go through a **permit** path — a single signed transaction, no ERC-20 approval
+step — with proceeds routed to the Treasury.
 
 > LabyrinthBadges (ERC-1155 soulbound) is live on Celo Sepolia; mainnet deploy is queued.
 
@@ -95,6 +124,8 @@ DB-backed global leaderboard (Supabase read layer) with an optional on-chain sco
 | AI Engine   | `js-chess-engine` (pure JS, no WASM)                               |
 | Cache layer | Supabase (read layer + cron sync)                                  |
 | AI Coach    | OpenAI-compatible LLM provider                                     |
+| i18n        | next-intl (locale-prefixed routes)                                 |
+| Content     | CSV/JSON authored catalog compiled into a typed generated module    |
 
 ## Project Structure
 
@@ -153,7 +184,7 @@ server exactly: hostname plus port, excluding protocol. See
 
 |                   |                                                                                                                                                                                          |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live demo         | [chesscito.com](https://chesscito.com/)                                                                                                                                                  |
+| Live demo         | [chesscito.com](https://chesscito.com/) · [learn.chesscito.com](https://learn.chesscito.com/) · [play.chesscito.com](https://play.chesscito.com/)                                        |
 | Demo video        | [youtube.com/watch?v=h-DGIxbEoms](https://www.youtube.com/watch?v=h-DGIxbEoms)                                                                                                           |
 | Presentation deck | [Google Slides](https://docs.google.com/presentation/d/e/2PACX-1vQpOSWoGHS1hKB5H9uHAHmWVVKfuOUADdVL0NV2jHzr3ZeQxelNS8tNjNKlxHRdm0ae5VYBWSpI3gLF/pub?start=false&loop=false&delayms=3000) |
 | Karma GAP project | [karmahq.xyz/project/chesscito](https://www.karmahq.xyz/project/chesscito)                                                                                                               |
