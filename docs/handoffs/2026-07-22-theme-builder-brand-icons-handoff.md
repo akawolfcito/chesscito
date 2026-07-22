@@ -2,10 +2,25 @@
 
 **Fecha:** 2026-07-22
 **Estado:** cluster COMPLETO en `main`. 10/10 tareas del plan.
-**Suite:** 5670 passing / 502 files · typecheck limpio · `theme:coverage` exit 0
+**Suite:** 5673 passing / 502 files · typecheck limpio · `theme:coverage` exit 0
+**Sin pushear:** 23 commits en `main` local.
 
 Spec: `docs/superpowers/specs/2026-07-22-theme-builder-brand-icons-design.md`
 Plan: `docs/superpowers/plans/2026-07-22-theme-builder-brand-icons.md`
+
+## Cómo se actualiza el favicon (lo único que hay que recordar)
+
+| Cómo | Qué pasa |
+|---|---|
+| Replace en `brand.favicon` desde `/dev/theme-builder` | master + los 5 iconos, en un paso. Listo. |
+| Reemplazar `art/favicon-wolf.png` a mano | **solo el master** → hay que correr `pnpm icons:generate` |
+
+Olvidarse del segundo caso ya no es silencioso: el job `Asset drift` lo reporta.
+
+En el builder, `brand.favicon` lleva un chip verde `MASTER · REGENERATES 2` (el
+único slot con chip verde entre los 168) y los derivados uno azul `DERIVED`. La
+lista del chip es la inversa de los links `derivedFrom`, no una segunda lista:
+un cuarto icono derivado hace que el contador pase a 3 solo.
 
 ## Qué se puede hacer ahora que antes no
 
@@ -84,6 +99,13 @@ slots. Es la razón por la que el builder cataloga solo 2 de los 5.
    ~8s y tenía el default de 5s: fallaba de forma intermitente bajo la suite
    completa, culpando a un timeout en vez de al audit. Verificado contra
    baseline con `git stash` antes de tocarlo. Timeout a 30s.
+3. **El `.ico` se reportaba como "missing on disk"** teniendo el archivo ahí.
+   sharp no decodifica ICO → dimensiones null → la UI leía eso como "no hay
+   archivo". Lo vio el founder en la pantalla, no los tests: todos miraban el
+   resolver, ninguno el texto renderizado. Ahora la presencia la decide el
+   archivo y el peso reemplaza a las dimensiones cuando no son legibles
+   (`12 KB · ICO`). **Los dos bugs de esta lista son de mensajes que acusan un
+   problema inexistente — y ambos aparecieron manejando la superficie real.**
 
 ## Errores del plan, para la próxima
 
