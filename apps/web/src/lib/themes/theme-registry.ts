@@ -1064,8 +1064,9 @@ const SLOT_KEYS_BY_SURFACE = {
   unknown: UNKNOWN_THEME_SLOT_KEYS,
 } as const satisfies Record<ThemeSlotSurface, readonly ThemeAssetKey[]>;
 
-/** Exhaustive runtime-surface classification for the current 162-slot
- * registry. Every current category is explicit and duplicate membership
+/** Exhaustive runtime-surface classification for the registry (159 web-owned
+ * slots + 18 landing-owned ones).
+ * Every current category is explicit and duplicate membership
  * throws during module initialization. A future unclassified slot defaults to
  * `unknown`, never `shared`, until consumer and route evidence is audited. */
 function buildThemeSlotSurfaces(): Record<ThemeAssetKey, ThemeSlotSurface> {
