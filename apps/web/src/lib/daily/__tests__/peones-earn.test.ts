@@ -16,6 +16,7 @@ import {
   type DailyTacticRewardState,
 } from "@/lib/daily/peones-earn";
 import type { DailyTacticData } from "@/lib/daily/daily-puzzles";
+import { subscribeToPeonesChanges } from "@/lib/peones/peones-events";
 
 const W = "0xabcdef0123456789abcdef0123456789abcdef01";
 const W_UPPER = "0xABCDEF0123456789ABCDEF0123456789ABCDEF01";
@@ -224,5 +225,59 @@ describe("submitDailyTacticEarn — error branches", () => {
     });
     expect(result).toEqual<DailyTacticRewardState>({ kind: "error" });
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+describe("submitDailyTacticEarn — balance-change bus", () => {
+  it("dispatches when the Daily credited a Peon", async () => {
+    const handler = vi.fn();
+    const unsubscribe = subscribeToPeonesChanges(handler);
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({
+        credited: DAILY_TACTIC_EARN_AMOUNT,
+        capReached: false,
+        newBalance: 11,
+        dailyEarnedCapped: 1,
+        dailyCap: 10,
+        attestationHash: "sha256:abc",
+        ledgerId: 3,
+        duplicate: false,
+      }),
+    );
+
+    await submitDailyTacticEarn({ wallet: W, dayUtc: DAY, puzzle: PUZZLE, fetchImpl });
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    unsubscribe();
+  });
+
+  it("does NOT dispatch when the cap was already exhausted", async () => {
+    const handler = vi.fn();
+    const unsubscribe = subscribeToPeonesChanges(handler);
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({
+        credited: 0,
+        capReached: true,
+        newBalance: 10,
+        dailyEarnedCapped: 10,
+        dailyCap: 10,
+      }),
+    );
+
+    await submitDailyTacticEarn({ wallet: W, dayUtc: DAY, puzzle: PUZZLE, fetchImpl });
+
+    expect(handler).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it("does NOT dispatch when the earn failed", async () => {
+    const handler = vi.fn();
+    const unsubscribe = subscribeToPeonesChanges(handler);
+    const fetchImpl = vi.fn().mockRejectedValue(new Error("offline"));
+
+    await submitDailyTacticEarn({ wallet: W, dayUtc: DAY, puzzle: PUZZLE, fetchImpl });
+
+    expect(handler).not.toHaveBeenCalled();
+    unsubscribe();
   });
 });

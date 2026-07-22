@@ -15,6 +15,7 @@ vi.mock("wagmi", () => ({
 import { act, renderHook, waitFor } from "@testing-library/react";
 
 import { usePeonesBalance } from "@/lib/peones/use-peones-balance";
+import { dispatchPeonesChange } from "@/lib/peones/peones-events";
 import { PEONES_DAILY_CAP } from "@/lib/peones/types";
 
 const W = "0xabcdef0123456789abcdef0123456789abcdef01";
@@ -170,6 +171,66 @@ describe("usePeonesBalance — refetch behaviour", () => {
 
     // Wait a beat — there's no interval, so the count stays at 1.
     await new Promise((r) => setTimeout(r, 60));
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("usePeonesBalance — reacts to the balance-change bus", () => {
+  it("refetches and shows the new balance when a change is dispatched", async () => {
+    useAccountMock.mockReturnValue({ isConnected: true, address: W });
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({ balance: 12, dailyEarnedCapped: 0, dailyCap: 10 }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ balance: 10, dailyEarnedCapped: 0, dailyCap: 10 }),
+      );
+
+    const { result } = renderHook(() => usePeonesBalance({ fetchImpl }));
+    await waitFor(() =>
+      expect(result.current.state).toMatchObject({ kind: "success", balance: 12 }),
+    );
+
+    // A hint spend elsewhere in the tree debits 2 and signals the change.
+    await act(async () => {
+      dispatchPeonesChange();
+    });
+
+    await waitFor(() =>
+      expect(result.current.state).toMatchObject({ kind: "success", balance: 10 }),
+    );
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it("guests stay guests — a dispatch issues no fetch", async () => {
+    useAccountMock.mockReturnValue({ isConnected: false, address: undefined });
+    const fetchImpl = vi.fn();
+
+    const { result } = renderHook(() => usePeonesBalance({ fetchImpl }));
+    expect(result.current.state).toEqual({ kind: "guest" });
+
+    await act(async () => {
+      dispatchPeonesChange();
+    });
+
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(result.current.state).toEqual({ kind: "guest" });
+  });
+
+  it("unsubscribes on unmount — a later dispatch does not refetch", async () => {
+    useAccountMock.mockReturnValue({ isConnected: true, address: W });
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({ balance: 5, dailyEarnedCapped: 0, dailyCap: 10 }),
+    );
+
+    const { unmount } = renderHook(() => usePeonesBalance({ fetchImpl }));
+    await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(1));
+
+    unmount();
+    dispatchPeonesChange();
+    await new Promise((r) => setTimeout(r, 20));
+
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });

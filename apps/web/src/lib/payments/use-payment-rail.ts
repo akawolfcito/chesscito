@@ -46,6 +46,7 @@ import {
   type PeonesPackSku,
 } from "@/lib/payments/rail-config";
 import { buildPeonesPackTransfer } from "@/lib/payments/transfer-builder";
+import { dispatchPeonesChange } from "@/lib/peones/peones-events";
 
 const CELO_MAINNET_CHAIN_ID = 42220;
 
@@ -197,6 +198,14 @@ export function usePaymentRail({
             };
             setResult(railResult);
             setPhase("success");
+            // A verified purchase is the third way Peones enter a wallet
+            // (2026-07-21). Without this, a player could buy a pack and
+            // watch the balance chip keep showing the pre-purchase number.
+            // Gated on a real credit so an idempotent re-verify of an
+            // already-settled payment does not flash a phantom delta.
+            if (railResult.peonesCredited > 0) {
+              dispatchPeonesChange("pack");
+            }
             onVerified?.(railResult);
             return;
           }

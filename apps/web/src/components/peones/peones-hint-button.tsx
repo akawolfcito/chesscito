@@ -15,6 +15,9 @@
  * Visibility states:
  *  - guest        : muted chip "Connect to use Peones hints".
  *  - disabled     : returns null (labyrinth / non-playing phase).
+ *  - unavailable  : no computable `firstStep` → dead pin, NO spend.
+ *                   There is nothing to reveal, so there is nothing to
+ *                   charge for (2026-07-21).
  *  - idle         : pill "Hint · 2 Peones".
  *  - loading      : same pill, aria-busy + disabled.
  *  - revealed     : same pill at slightly muted opacity for ~4s
@@ -42,6 +45,7 @@ import {
 } from "@/lib/peones/telemetry";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { CoachCostRibbon } from "@/components/coach/coach-cost-ribbon";
 
 /** Peones price of one hint. Read from the canonical table so the chip
  *  copy (PEONES_HINT_COPY, which spells the number out) and the debit
@@ -154,6 +158,34 @@ export function PeonesHintButton({
     );
   }
 
+  // Nothing to sell → nothing to charge (Peones V1 UX, 2026-07-21).
+  //
+  // The hint IS the board glow on `firstStep`. When the BFS cannot
+  // produce one, the previous build still debited 2 Peones and still
+  // reported "revealed", so the player paid and saw nothing. There is no
+  // refund path in the ledger, and adding one to cover a bug we can
+  // simply not commit would be backwards: the fix is to never reach the
+  // endpoint. Rendered as a visibly dead pin so the affordance does not
+  // silently vanish either.
+  if (firstStep == null) {
+    return (
+      <div
+        className="action-pin action-pin--pin flex flex-col items-center gap-1 opacity-50"
+        role="status"
+        aria-label={t("unavailable")}
+        data-testid="peones-hint-button"
+        data-state="unavailable"
+      >
+        <span className="action-pin-submit-pedestal relative flex shrink-0 items-center justify-center">
+          <HintIcon />
+        </span>
+        <span className="action-pin-label game-label text-nano font-bold uppercase tracking-[0.12em] text-[rgba(63,34,8,0.85)]">
+          {t("unavailable")}
+        </span>
+      </div>
+    );
+  }
+
   const wallet = address.toLowerCase();
   const idempotencyKey = `spend:hint:${wallet}:${piece}:${exerciseId}:${attemptSeq}`;
   const targetId = `${piece}:${exerciseId}:${attemptSeq}`;
@@ -234,11 +266,10 @@ export function PeonesHintButton({
           proBypassApplied: result.proBypassApplied,
         });
       }
-      // Glow the board cell + schedule the clear. If firstStep is
-      // null (BFS failed / unsolvable) we still credit the spend and
-      // surface the revealed state — the player just doesn't get a
-      // visual cue, which is rare enough to not warrant a refund flow.
-      onReveal?.(firstStep ?? null);
+      // Glow the board cell + schedule the clear. `firstStep` is
+      // guaranteed non-null here: the unavailable branch above returns
+      // before any spend can be issued.
+      onReveal?.(firstStep);
       setState({ kind: "revealed" });
       scheduleClear();
       return;
@@ -314,6 +345,17 @@ export function PeonesHintButton({
         ) : (
           <HintIcon />
         )}
+        {/* Price, visible BEFORE paying (2026-07-21). Until now the cost
+         *  lived only in `button` — the aria-label — so a sighted player
+         *  could not learn what a hint cost until one had already been
+         *  bought. Same ribbon the Coach CTA uses, reading the same
+         *  canonical table, so the two prices cannot drift apart or look
+         *  like unrelated currencies. Hidden once the pin morphs into a
+         *  transient state: mid-flight or post-reveal the number would
+         *  read as a result rather than a price. */}
+        {state.kind === "idle" ? (
+          <CoachCostRibbon target="hint" variant="tile" />
+        ) : null}
         {isRevealed ? (
           <span
             aria-hidden="true"

@@ -27,9 +27,33 @@
 
 import { useEffect, useRef, useState } from "react";
 
+/** How long the delta badge stays up. Long enough to read mid-exercise,
+ *  short enough that it never sits over the tray while playing. */
+const FLASH_TTL_MS = 1800;
+
+/** "+1 Peón" · "−2 Peones · Hint". Uses a real minus sign (U+2212), not
+ *  a hyphen, so the number reads as arithmetic at nano size. */
+function formatPeonesDelta(
+  delta: number,
+  reason?: PeonesChangeReason,
+): string {
+  const magnitude = Math.abs(delta);
+  const unit =
+    magnitude === 1
+      ? PEONES_DELTA_COPY.unitOne
+      : PEONES_DELTA_COPY.unitMany;
+  const signed = `${delta < 0 ? "−" : "+"}${magnitude} ${unit}`;
+  const label = reason ? PEONES_DELTA_COPY.reasons[reason] : null;
+  return label ? `${signed} · ${label}` : signed;
+}
+
 import { ChesitoCard } from "@/components/peones/chesito-card";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
-import { CHESITO_CARD_COPY } from "@/lib/content/editorial";
+import { CHESITO_CARD_COPY, PEONES_DELTA_COPY } from "@/lib/content/editorial";
+import {
+  subscribeToPeonesChanges,
+  type PeonesChangeReason,
+} from "@/lib/peones/peones-events";
 import {
   emitPeonesBalanceViewed,
   type PeonesBalanceViewSurface,
@@ -90,6 +114,52 @@ export function PeonesBalanceChipView({
    *  unmounts. */
   const lastEmittedBalanceRef = useRef<number | null>(null);
 
+  /** Transaction feedback (Peones V1 UX, 2026-07-21).
+   *
+   *  The delta is DERIVED from the balance actually moving, never from
+   *  what a caller claims it spent. That is what makes the two negative
+   *  rules hold by construction rather than by discipline:
+   *   - an idempotent duplicate re-debits nothing, so the balance is
+   *     unchanged and no feedback appears;
+   *   - a failed spend never dispatches, so there is no refetch, no
+   *     change, and again no feedback.
+   *  A "−2" can only ever render because two Peones really left.
+   *
+   *  The bus supplies only the REASON label; the number is the ledger's. */
+  const [flash, setFlash] = useState<{
+    delta: number;
+    reason?: PeonesChangeReason;
+  } | null>(null);
+  const previousBalanceRef = useRef<number | null>(null);
+  const pendingReasonRef = useRef<PeonesChangeReason | undefined>(undefined);
+
+  // The dispatch lands before the refetch resolves, so park the reason
+  // and pair it with the balance change when it arrives.
+  useEffect(() => {
+    return subscribeToPeonesChanges((reason) => {
+      pendingReasonRef.current = reason;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (state.kind !== "success") return;
+    const previous = previousBalanceRef.current;
+    previousBalanceRef.current = state.balance;
+
+    // First resolved read is a baseline, not a change — otherwise every
+    // mount would flash the whole balance as if it had just been earned.
+    if (previous === null || previous === state.balance) return;
+
+    setFlash({
+      delta: state.balance - previous,
+      reason: pendingReasonRef.current,
+    });
+    pendingReasonRef.current = undefined;
+
+    const id = window.setTimeout(() => setFlash(null), FLASH_TTL_MS);
+    return () => window.clearTimeout(id);
+  }, [state]);
+
   useEffect(() => {
     if (state.kind !== "success") return;
     if (lastEmittedBalanceRef.current === state.balance) return;
@@ -148,7 +218,12 @@ export function PeonesBalanceChipView({
        *  no VR baseline drifts. Balance changes still announce via the
        *  inner span's aria-live. */}
       <div
-        className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
+        className={[
+          "candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left",
+          flash ? (flash.delta < 0 ? "is-pulse-damage" : "is-pulse") : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         role="button"
         tabIndex={0}
         onClick={openSheet}
@@ -177,6 +252,21 @@ export function PeonesBalanceChipView({
         {showRecharge ? (
           <span className="peones-chip-plus" aria-hidden="true">
             +
+          </span>
+        ) : null}
+        {/* Floating delta. Non-blocking by construction: it is a sibling
+         *  span inside the chip, so it cannot cover the board or swallow
+         *  a tap the way a modal would. Announced politely rather than
+         *  assertively — a spend the player just initiated is not an
+         *  alert. */}
+        {flash ? (
+          <span
+            className={`peones-chip-delta ${flash.delta < 0 ? "is-spend" : "is-earn"}`}
+            role="status"
+            aria-live="polite"
+            data-testid="peones-balance-delta"
+          >
+            {formatPeonesDelta(flash.delta, flash.reason)}
           </span>
         ) : null}
       </div>

@@ -26,6 +26,14 @@ type MissionPanelProps = {
   score: string
   board: ReactNode
   exerciseDrawer: ReactNode
+  /** Peones balance chip, third slot of the quest tray (2026-07-21).
+   *  Passed in rather than mounted here for the same reason as
+   *  `exerciseDrawer`: the chip reads the wallet through wagmi, which
+   *  throws with no WagmiProvider above it, and this panel is rendered
+   *  by /dev probes that deliberately mount none. Optional so those
+   *  probes — and Chesscito Lite, which has no Peones surfaces — simply
+   *  omit it. */
+  balanceChip?: ReactNode
   isReplay: boolean
   contextualAction: ReactNode
   persistentDock: ReactNode
@@ -445,6 +453,7 @@ export function MissionPanelCandy({
   score,
   board,
   exerciseDrawer,
+  balanceChip,
   contextualAction,
   persistentDock,
   isCapture = false,
@@ -622,6 +631,22 @@ export function MissionPanelCandy({
           <div className="shrink-0 min-w-[4.5rem]">
             {exerciseDrawer}
           </div>
+          {/* Peones balance — third slot, so the tray reads
+           *  [piece] [stars|shields|combo] [peones] (2026-07-21).
+           *
+           *  Deliberately joins the EXISTING row instead of adding one:
+           *  a second row would cost vertical space the board owns, and
+           *  at 390px the board is already the scarce resource. The
+           *  compression lands on the piece picker (flex-1, its label is
+           *  the reducible part), never on the board.
+           *
+           *  Z2 by design: the header (Z1) stays Account-only per UX
+           *  spec §6. A balance you earn and spend by playing is game
+           *  context, not identity chrome — same zone as stars and
+           *  shields, which is exactly where a player looks for it. */}
+          {balanceChip ? (
+            <div className="shrink-0">{balanceChip}</div>
+          ) : null}
         </div>
 
         {/* Mission band — full-width, attached right under the chip row

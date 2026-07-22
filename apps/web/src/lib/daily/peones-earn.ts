@@ -14,6 +14,7 @@
  */
 
 import { buildDailyTacticIdempotencyKey, normalizeWallet } from "@/lib/peones/ledger-service";
+import { dispatchPeonesChange } from "@/lib/peones/peones-events";
 import type { DailyTacticData } from "./daily-puzzles";
 
 /** Single source of truth for the per-Daily Tactic earn amount. The
@@ -162,6 +163,12 @@ export async function submitDailyTacticEarn(
     // telemetry without a second round-trip.
     return { kind: "cap_exhausted", newBalance, dailyEarnedCapped, dailyCap };
   }
+
+  // Credited > 0 — the balance moved, so every mounted reader re-reads.
+  // NOT dispatched on the `cap_exhausted` branch above (credited === 0,
+  // no row written) nor on any error branch: the chip must only move
+  // when Peones actually arrived.
+  dispatchPeonesChange("daily");
 
   return {
     kind: "success",

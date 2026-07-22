@@ -16,6 +16,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { submitPeonesSpend } from "@/lib/peones/spend-client";
+import { subscribeToPeonesChanges } from "@/lib/peones/peones-events";
 
 const W = "0xabcdef0123456789abcdef0123456789abcdef01";
 
@@ -246,5 +247,55 @@ describe("submitPeonesSpend — no side effects", () => {
     await submitPeonesSpend({ ...baseArgs(), fetchImpl });
     expect(localStorageSpy).not.toHaveBeenCalled();
     expect(localStorageSetSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("submitPeonesSpend — balance-change bus", () => {
+  it("dispatches a change after a confirmed debit", async () => {
+    const handler = vi.fn();
+    const unsubscribe = subscribeToPeonesChanges(handler);
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, happyBody()));
+
+    await submitPeonesSpend(baseArgs({ fetchImpl }));
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    unsubscribe();
+  });
+
+  it("does NOT dispatch on insufficient balance — nothing was debited", async () => {
+    const handler = vi.fn();
+    const unsubscribe = subscribeToPeonesChanges(handler);
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(jsonResponse(409, { error: "insufficient_balance" }));
+
+    await submitPeonesSpend(baseArgs({ fetchImpl }));
+
+    expect(handler).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it("does NOT dispatch on a server error", async () => {
+    const handler = vi.fn();
+    const unsubscribe = subscribeToPeonesChanges(handler);
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(jsonResponse(500, { error: "ledger_unavailable" }));
+
+    await submitPeonesSpend(baseArgs({ fetchImpl }));
+
+    expect(handler).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it("does NOT dispatch when the network throws", async () => {
+    const handler = vi.fn();
+    const unsubscribe = subscribeToPeonesChanges(handler);
+    const fetchImpl = vi.fn().mockRejectedValue(new Error("offline"));
+
+    await submitPeonesSpend(baseArgs({ fetchImpl }));
+
+    expect(handler).not.toHaveBeenCalled();
+    unsubscribe();
   });
 });
