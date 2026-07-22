@@ -33,10 +33,18 @@ export type ThemeAssetVariant = "default" | "pro";
 export type ThemeSlotSurface =
   | "learn"
   | "play"
+  | "landing"
   | "shared"
   | "full-legacy"
   | "dev-only"
   | "unknown";
+
+/** Which Next app's `public/` owns a slot's file. The monorepo ships two:
+ *  `web` (the game) and `landing` (the marketing carousel). Absence means
+ *  `web` — the backward-compatible default for every pre-existing slot.
+ *  Type-only here so client bundles never pull the fs resolver; the mapping
+ *  to a directory lives in `asset-roots.ts` (server-only). */
+export type AppRoot = "web" | "landing";
 
 export type ThemeAssetEntry = {
   /** Legacy string basenames remain valid. An explicit object can select an
@@ -45,6 +53,10 @@ export type ThemeAssetEntry = {
   /** PRO-tier override. Absence is backward-compatible inherit; explicit
    *  states can select an asset, inherit DEFAULT, or render no image. */
   pro?: ProThemeAssetValue;
+  /** App whose `public/` holds this slot's file. Omit for `web`. Only the
+   *  catalog/uploader reads it — no runtime consumer does, so adding it to a
+   *  slot never changes what the app renders. */
+  root?: AppRoot;
   /** Human-readable list of surfaces/screens that render this slot.
    *  Powers the `/dev/theme-builder` art catalog so the founder can
    *  see, per slot, where the asset lands. Purely documentary — no
@@ -103,6 +115,7 @@ export type ThemeAssetKey =
   | "shared.mission-adorno"
   | "shared.mission-avatar"
   | "shared.close"
+  | "shared.close-candy"
   | "shared.mission-panel"
   | "shared.trophy-epic"
   | "shared.feedback-sad"
@@ -133,6 +146,7 @@ export type ThemeAssetKey =
   | "arena.undo"
   | "arena.rival-kairo"
   | "arena.rival-pipo"
+  | "arena.rival-mara"
   | "arena.rival-frame-blue"
   | "arena.rival-frame-gold"
   | "arena.rival-frame-silver"
@@ -191,6 +205,7 @@ export type ThemeAssetKey =
   | "bg.path-map-base"
   | "bg.splash-loading"
   | "shop.coach-pack-20"
+  | "shop.pro"
   | "shop.slot-frame"
   | "arena.bg-matchup"
   | "arena.result-checkmate"
@@ -216,6 +231,21 @@ export type ThemeAssetKey =
   | "welcome.focus-stamp"
   | "landing.hero"
   | "landing.progress-trophies"
+  | "landing.slides-frame"
+  | "landing.slides-scene-desktop"
+  | "landing.slide1-avatar"
+  | "landing.slide1-title"
+  | "landing.slide2-avatar"
+  | "landing.slide2-title"
+  | "landing.slide3-avatar"
+  | "landing.slide3-title"
+  | "landing.slide4-avatar"
+  | "landing.season-pass-icon"
+  | "landing.pro-icon"
+  | "landing.slide-web-1"
+  | "landing.slide-web-2"
+  | "landing.slide-web-3"
+  | "landing.slide-web-4"
   | "coach.play"
   | "account.account-icon"
   | "shared.panel-frame"
@@ -424,6 +454,12 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/screen-mission/avatar-icon",
         usedIn: ["Arena", "Exercises", "↳ components/arena/soft-gate-sheet.tsx", "↳ components/exercises/mission-briefing.tsx", "↳ components/exercises/mission-detail-sheet.tsx"],
       },
+      // Distinct art from shared.close: that one is the mission panel's
+      // ornate close button, this is the flat icon CandyIcon renders.
+      "shared.close-candy": {
+        default: "/art/redesign/icons/close",
+        usedIn: ["UI — CandyIcon close", "↳ components/redesign/candy-icon.tsx (composed path, name=\"close\")"],
+      },
       "shared.close": {
         default: "/art/screen-mission/close-icon",
         usedIn: ["Arena", "Exercises", "Daily", "Peones", "UI", "↳ components/arena/arena-end-state.tsx", "↳ components/arena/promotion-overlay.tsx", "↳ components/arena/soft-gate-sheet.tsx", "↳ components/arena/victory-popup-shell.tsx", "↳ +8 more"],
@@ -538,6 +574,10 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/rivals/pipo-avatar",
         usedIn: ["Arena — rival Pipo avatar", "↳ components/arena/arena-select-scaffold.tsx (rivals.ts data)"],
       },
+      "arena.rival-mara": {
+        default: "/art/rivals/mara-avatar",
+        usedIn: ["Arena — rival Mara avatar (medium)", "↳ components/arena/arena-select-scaffold.tsx (rivals.ts data)", "↳ components/arena/arena-player-rail.tsx"],
+      },
       "arena.rival-frame-blue": {
         default: "/art/rivals/frame-blue",
         usedIn: ["Arena — rival frame (blue)", "↳ components/arena/arena-select-scaffold.tsx"],
@@ -623,8 +663,9 @@ export const THEMES: Record<string, ThemeDefinition> = {
         usedIn: ["Welcome package — 1-day focus achievement", "↳ components/progression/unlock-overlay.tsx", "↳ components/trophies/achievements-grid.tsx", "↳ components/welcome-package/first-focus-day-overlay.tsx"],
       },
       "landing.pre-chess": {
+        root: "landing",
         default: "/art/landing/pre-chess-exercise",
-        usedIn: ["Landing — pre-chess exercise", "↳ components/landing/landing-page.tsx"],
+        usedIn: ["Landing — pre-chess exercise", "↳ apps/landing · components/landing/landing-page.tsx"],
       },
       "tactics.daily-exercise": {
         default: "/art/new-icons-chesscito/ejercicio-diario-chess",
@@ -671,6 +712,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "bg.splash-loading": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/bg/splash-loading/pro" }, default: "/art/redesign/bg/splash-loading", usedIn: ["Splash loading background", "↳ components/exercises/exercises-screen.tsx (.playhub-intro-overlay)"] },
       // shop
       "shop.coach-pack-20": { default: "/art/shop/coach-pack-20", usedIn: ["Shop — coach pack (20)", "↳ components/exercises/exercises-screen.tsx"] },
+      "shop.pro": { default: "/art/shop/pro", usedIn: ["Shop — PRO subscription tile icon", "↳ components/exercises/shop-sheet.tsx (SHOP_TILE_ASSETS)"] },
       "shop.slot-frame": { default: "/art/shop-slot-frame", usedIn: ["Shop — slot frame", "↳ globals.css .shop-slot-frame / --playhub-slot-frame (CSS-only)"] },
       // arena additions
       "arena.bg-matchup": { default: "/art/arena/bg-matchup", usedIn: ["Arena — matchup background", "↳ components/arena/arena-matchup-transition.tsx"] },
@@ -698,9 +740,34 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "welcome.achievement-3day": { default: "/art/achievements/3day-focus", usedIn: ["Welcome — 3-day focus achievement", "↳ components/trophies/achievements-grid.tsx"] },
       "welcome.achievement-7day": { default: "/art/achievements/7day-focus", usedIn: ["Welcome — 7-day focus achievement", "↳ components/trophies/achievements-grid.tsx"] },
       "welcome.focus-stamp": { default: "/art/welcome-package/focus-stamp-day1", usedIn: ["Welcome — focus stamp (day 1)", "↳ components/progression/unlock-overlay.tsx", "↳ lib/welcome-package/types.ts"] },
-      // landing additions
-      "landing.hero": { default: "/art/landing/hero-play-hub", usedIn: ["Landing — play-hub hero", "↳ components/landing/landing-page.tsx"] },
-      "landing.progress-trophies": { default: "/art/landing/progress-trophies", usedIn: ["Landing — progress trophies", "↳ components/landing/landing-page.tsx"] },
+      // landing additions — every slot below lives in apps/landing/public,
+      // NOT apps/web/public. Before `root`, these three pointed at orphan
+      // copies inside the web app that nothing renders, so replacing them
+      // here never reached the live landing.
+      "landing.hero": { root: "landing", default: "/art/landing/hero-play-hub", usedIn: ["Landing — play-hub hero", "↳ apps/landing · components/landing/landing-page.tsx"] },
+      "landing.progress-trophies": { root: "landing", default: "/art/landing/progress-trophies", usedIn: ["Landing — progress trophies", "↳ apps/landing · components/landing/landing-page.tsx"] },
+      // landing onboarding carousel — the 4 slides (avatar + title art),
+      // their backdrops, and the two plan icons. Source of truth for the
+      // paths: apps/landing/src/lib/onboarding/slides.ts.
+      "landing.slides-frame": { root: "landing", default: "/art/landing-slides/bg-slides", usedIn: ["Landing — carousel phone frame", "↳ apps/landing · components/onboarding/slide-shell.tsx"] },
+      "landing.slides-scene-desktop": { root: "landing", default: "/art/landing-slides/bg-slides-web", usedIn: ["Landing — carousel desktop backdrop", "↳ apps/landing · components/onboarding/onboarding-carousel.tsx"] },
+      "landing.slide1-avatar": { root: "landing", default: "/art/landing-slides/avatar-chesscito-welcome", usedIn: ["Landing — slide 1 avatar (welcome)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide1-title": { root: "landing", default: "/art/landing-slides/chesscito-title", usedIn: ["Landing — slide 1 title art", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide2-avatar": { root: "landing", default: "/art/landing-slides/avatar-21-day-challenge", usedIn: ["Landing — slide 2 avatar (21-day challenge)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide2-title": { root: "landing", default: "/art/landing-slides/21-day-challente-title", usedIn: ["Landing — slide 2 title art", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide3-avatar": { root: "landing", default: "/art/landing-slides/avatar-play-chess", usedIn: ["Landing — slide 3 avatar (play chess)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide3-title": { root: "landing", default: "/art/landing-slides/play-chess-title", usedIn: ["Landing — slide 3 title art", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      // Slide 4 ships no title art — the slide leads with copy, not a wordmark.
+      "landing.slide4-avatar": { root: "landing", default: "/art/landing-slides/avatar-learn-path", usedIn: ["Landing — slide 4 avatar (learn path)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.season-pass-icon": { root: "landing", default: "/art/landing-slides/season-pass-icon", usedIn: ["Landing — Season Pass plan icon", "↳ apps/landing · lib/onboarding/slides.ts (ICONS.seasonPass)"] },
+      "landing.pro-icon": { root: "landing", default: "/art/landing-slides/pro-suscription-icon", usedIn: ["Landing — PRO subscription plan icon", "↳ apps/landing · lib/onboarding/slides.ts (ICONS.pro)"] },
+      // On disk in apps/landing/public but referenced by nothing in the
+      // monorepo — cataloged so the stale art is visible and replaceable
+      // rather than silently rotting.
+      "landing.slide-web-1": { root: "landing", default: "/art/landing-slides/chesscito-slide-web-1", deprecated: "no consumer — desktop slide art nothing imports", usedIn: [] },
+      "landing.slide-web-2": { root: "landing", default: "/art/landing-slides/chesscito-slide-web-2", deprecated: "no consumer — desktop slide art nothing imports", usedIn: [] },
+      "landing.slide-web-3": { root: "landing", default: "/art/landing-slides/chesscito-slide-web-3", deprecated: "no consumer — desktop slide art nothing imports", usedIn: [] },
+      "landing.slide-web-4": { root: "landing", default: "/art/landing-slides/chesscito-slide-web-4", deprecated: "no consumer — desktop slide art nothing imports", usedIn: [] },
       // coach addition
       "coach.play": { default: "/art/new-assets-chesscito/btns/play", usedIn: ["Coach — play button", "↳ components/coach/game-actions-bar.tsx", "↳ app/[locale]/coach/[gameId]/coach-game-client.tsx"] },
       // account addition
@@ -836,11 +903,13 @@ const LEARN_SLOT_KEYS: readonly ThemeAssetKey[] = [
 
 const PLAY_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "hub.shop-icon",
+  "shop.pro",
   "arena.save",
   "arena.resign",
   "arena.undo",
   "arena.rival-kairo",
   "arena.rival-pipo",
+  "arena.rival-mara",
   "arena.rival-frame-blue",
   "arena.rival-frame-gold",
   "arena.rival-frame-silver",
@@ -879,6 +948,7 @@ const SHARED_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "shared.panel-bg",
   "shared.shield",
   "shared.star",
+  "shared.close-candy",
   "shared.mission-adorno",
   "shared.mission-avatar",
   "shared.close",
@@ -975,22 +1045,45 @@ export const UNKNOWN_THEME_SLOT_KEYS = [
   "pro-mission.sms",
   "shop.coach-pack-20",
   "hub.cta-principal",
+] as const satisfies readonly ThemeAssetKey[];
+
+/** Rendered by `apps/landing`, never by the game app. These read as
+ * consumer-less from inside `apps/web` — the consumer lives in the sibling
+ * app — so they get their own surface instead of falling to `unknown`. */
+export const LANDING_SLOT_KEYS = [
   "landing.pre-chess",
   "landing.hero",
   "landing.progress-trophies",
+  "landing.slides-frame",
+  "landing.slides-scene-desktop",
+  "landing.slide1-avatar",
+  "landing.slide1-title",
+  "landing.slide2-avatar",
+  "landing.slide2-title",
+  "landing.slide3-avatar",
+  "landing.slide3-title",
+  "landing.slide4-avatar",
+  "landing.season-pass-icon",
+  "landing.pro-icon",
+  "landing.slide-web-1",
+  "landing.slide-web-2",
+  "landing.slide-web-3",
+  "landing.slide-web-4",
 ] as const satisfies readonly ThemeAssetKey[];
 
 const SLOT_KEYS_BY_SURFACE = {
   learn: LEARN_SLOT_KEYS,
   play: PLAY_SLOT_KEYS,
+  landing: LANDING_SLOT_KEYS,
   shared: SHARED_SLOT_KEYS,
   "full-legacy": FULL_LEGACY_SLOT_KEYS,
   "dev-only": [],
   unknown: UNKNOWN_THEME_SLOT_KEYS,
 } as const satisfies Record<ThemeSlotSurface, readonly ThemeAssetKey[]>;
 
-/** Exhaustive runtime-surface classification for the current 162-slot
- * registry. Every current category is explicit and duplicate membership
+/** Exhaustive runtime-surface classification for the registry (159 web-owned
+ * slots + 18 landing-owned ones).
+ * Every current category is explicit and duplicate membership
  * throws during module initialization. A future unclassified slot defaults to
  * `unknown`, never `shared`, until consumer and route evidence is audited. */
 function buildThemeSlotSurfaces(): Record<ThemeAssetKey, ThemeSlotSurface> {

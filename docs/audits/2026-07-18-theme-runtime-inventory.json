@@ -3,12 +3,12 @@
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
   "totalSlots": 162,
   "categoryCounts": {
-    "A": 151,
+    "A": 150,
     "B": 0,
     "C": 0,
     "D": 0,
     "E": 0,
-    "F": 11,
+    "F": 12,
     "G": 0
   },
   "initialCategoryCounts": {
@@ -20,75 +20,25 @@
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 152,
-  "fullyConnectedSlots": 151,
+  "resolverSlots": 151,
+  "fullyConnectedSlots": 150,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
-  "noActiveConsumerSlots": 4,
-  "connectedSlots": 151,
-  "excludedSlots": 11,
-  "exceptions": [
-    {
-      "basename": "/art/redesign/icons/close",
-      "reason": "Generic CandyIcon close art; distinct from the cataloged mission close button.",
-      "detected": false
-    },
-    {
-      "basename": "/art/rivals/mara-avatar",
-      "reason": "Active rival fallback that is not one of the 162 catalog slots.",
-      "detected": true
-    },
-    {
-      "basename": "/art/shop/pro",
-      "reason": "Shop product art outside the theme-builder catalog.",
-      "detected": true
-    }
-  ],
+  "noActiveConsumerSlots": 5,
+  "connectedSlots": 150,
+  "excludedSlots": 12,
+  "exceptions": [],
   "literalDiff": {
     "registeredBasenames": 183,
-    "discoveredBasenames": 19,
-    "unregisteredExistingAssets": [
-      {
-        "basename": "/art/rivals/mara-avatar",
-        "occurrences": [
-          {
-            "file": "src/components/arena/arena-select-scaffold.tsx",
-            "line": 216,
-            "raw": "/art/rivals/mara-avatar.avif",
-            "sourceLine": "<source srcSet=\"/art/rivals/mara-avatar.avif\" type=\"image/avif\" />"
-          },
-          {
-            "file": "src/components/arena/arena-select-scaffold.tsx",
-            "line": 217,
-            "raw": "/art/rivals/mara-avatar.webp",
-            "sourceLine": "<source srcSet=\"/art/rivals/mara-avatar.webp\" type=\"image/webp\" />"
-          },
-          {
-            "file": "src/components/arena/arena-select-scaffold.tsx",
-            "line": 218,
-            "raw": "/art/rivals/mara-avatar.png",
-            "sourceLine": "<img src=\"/art/rivals/mara-avatar.png\" alt=\"\" />"
-          }
-        ]
-      },
-      {
-        "basename": "/art/shop/pro",
-        "occurrences": [
-          {
-            "file": "src/lib/contracts/shop-catalog.ts",
-            "line": 81,
-            "raw": "/art/shop/pro",
-            "sourceLine": "pro: { icon: \"/art/shop/pro\" },"
-          }
-        ]
-      }
-    ]
+    "discoveredBasenames": 17,
+    "unregisteredExistingAssets": []
   },
   "slots": [
     {
       "slotId": "hub.portal",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/hub/portal-chesscito-normal"
@@ -145,6 +95,7 @@
     },
     {
       "slotId": "hub.avatar",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/avatar-chesscito"
@@ -213,6 +164,7 @@
     },
     {
       "slotId": "hub.enter-arena",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/hub/enter-arena"
@@ -283,6 +235,7 @@
     },
     {
       "slotId": "hub.train-pieces",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/hub/train-pieces"
@@ -369,6 +322,7 @@
     },
     {
       "slotId": "hub.play-chess",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/play-chess"
@@ -426,6 +380,7 @@
     },
     {
       "slotId": "hub.training",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/training"
@@ -539,6 +494,7 @@
     },
     {
       "slotId": "hub.training-icon",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/training-icon-v1"
@@ -614,6 +570,7 @@
     },
     {
       "slotId": "hub.daily-icon",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/daily-icon-v1"
@@ -682,6 +639,7 @@
     },
     {
       "slotId": "hub.shop-icon",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/icons/shop"
@@ -737,6 +695,7 @@
     },
     {
       "slotId": "hub.btn-battle",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/banners/btn-battle"
@@ -807,6 +766,7 @@
     },
     {
       "slotId": "hub.btn-play",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/banners/btn-play"
@@ -851,6 +811,7 @@
     },
     {
       "slotId": "hub.principal-button",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/banners/principalbutton"
@@ -883,6 +844,7 @@
     },
     {
       "slotId": "hub.tour-hero",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/mini-tour/tour-challenge-hero"
@@ -927,6 +889,7 @@
     },
     {
       "slotId": "hub.tour-title",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/mini-tour/tour-challenge-title"
@@ -971,6 +934,7 @@
     },
     {
       "slotId": "hub.guide",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/guide-secuencia"
@@ -1015,6 +979,7 @@
     },
     {
       "slotId": "hub.21-day-icon",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/21-day-icon"
@@ -1059,6 +1024,7 @@
     },
     {
       "slotId": "hub.avatar-lite",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/avatar-lite-hub"
@@ -1117,6 +1083,7 @@
     },
     {
       "slotId": "hub.pro-chip",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/hub/pro-chip-inactive"
@@ -1164,6 +1131,7 @@
     },
     {
       "slotId": "hub.mastery.piece.rook",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/pieces/w-rook"
@@ -1213,6 +1181,7 @@
     },
     {
       "slotId": "hub.mastery.piece.bishop",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/pieces/w-bishop"
@@ -1262,6 +1231,7 @@
     },
     {
       "slotId": "hub.mastery.piece.knight",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/pieces/w-knight"
@@ -1311,6 +1281,7 @@
     },
     {
       "slotId": "hub.mastery.piece.pawn",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/pieces/w-pawn"
@@ -1360,6 +1331,7 @@
     },
     {
       "slotId": "hub.mastery.piece.queen",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/pieces/w-queen"
@@ -1409,6 +1381,7 @@
     },
     {
       "slotId": "hub.mastery.piece.king",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/pieces/w-king"
@@ -1458,6 +1431,7 @@
     },
     {
       "slotId": "shared.avatar-small-account",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/avatar-small-account"
@@ -1531,6 +1505,7 @@
     },
     {
       "slotId": "shared.lock",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/icons/lock"
@@ -1650,6 +1625,7 @@
     },
     {
       "slotId": "shared.welcome-gift",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/shop/welcome-gift"
@@ -1708,6 +1684,7 @@
     },
     {
       "slotId": "shared.feedback-happy",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/fun/avatar-feliz"
@@ -1816,6 +1793,7 @@
     },
     {
       "slotId": "shared.feedback-confident",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/fun/avatar-confiado"
@@ -1931,6 +1909,7 @@
     },
     {
       "slotId": "shared.feedback-scared",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/fun/avatar-asustado"
@@ -1976,6 +1955,7 @@
     },
     {
       "slotId": "shared.feedback-surprised",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/fun/avatar-asombrado"
@@ -2047,6 +2027,7 @@
     },
     {
       "slotId": "shared.panel-bg",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/paneles/panel-bg1"
@@ -2156,6 +2137,7 @@
     },
     {
       "slotId": "shared.shield",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/icons/shield"
@@ -2238,6 +2220,7 @@
     },
     {
       "slotId": "shared.star",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/icons/star"
@@ -2367,6 +2350,7 @@
     },
     {
       "slotId": "shared.mission-adorno",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/screen-mission/adorno-icon"
@@ -2474,6 +2458,7 @@
     },
     {
       "slotId": "shared.mission-avatar",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/screen-mission/avatar-icon"
@@ -2545,7 +2530,41 @@
       "noActiveConsumer": false
     },
     {
+      "slotId": "shared.close-candy",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/redesign/icons/close"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "UI — CandyIcon close",
+        "↳ components/redesign/candy-icon.tsx (composed path, name=\"close\")"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "F",
+      "documentedFiles": [
+        "src/components/redesign/candy-icon.tsx"
+      ],
+      "currentConsumerState": "none",
+      "consumerCount": 0,
+      "consumers": [],
+      "patterns": [],
+      "usesResolver": false,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": true
+    },
+    {
       "slotId": "shared.close",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/screen-mission/close-icon"
@@ -2722,6 +2741,7 @@
     },
     {
       "slotId": "shared.mission-panel",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/screen-mission/panel-mision-icon"
@@ -2861,6 +2881,7 @@
     },
     {
       "slotId": "shared.trophy-epic",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/action-row/trofeo-epico"
@@ -2979,6 +3000,7 @@
     },
     {
       "slotId": "shared.feedback-sad",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/fun/avatar-triste"
@@ -3035,6 +3057,7 @@
     },
     {
       "slotId": "shared.feedback-thinking",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/fun/avatar-pensativo"
@@ -3077,6 +3100,7 @@
     },
     {
       "slotId": "shared.feedback-questioning",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/fun/avatar-interrogativo"
@@ -3122,6 +3146,7 @@
     },
     {
       "slotId": "payments.celebration-bg",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/celebration/bg-celebration"
@@ -3166,6 +3191,7 @@
     },
     {
       "slotId": "brand.title",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/title-chesscito"
@@ -3224,6 +3250,7 @@
     },
     {
       "slotId": "brand.ring-start-focus",
+      "root": "web",
       "default": {
         "mode": "none"
       },
@@ -3282,6 +3309,7 @@
     },
     {
       "slotId": "exercises.avatar-fun",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/avatar-fun"
@@ -3327,6 +3355,7 @@
     },
     {
       "slotId": "exercises.avatar-try-again",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/avatar-try-again"
@@ -3372,6 +3401,7 @@
     },
     {
       "slotId": "exercises.badge",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/badge-chesscito"
@@ -3427,6 +3457,7 @@
     },
     {
       "slotId": "exercises.badge-menu",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/badge-menu"
@@ -3497,6 +3528,7 @@
     },
     {
       "slotId": "exercises.refuge",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/labyrinths/refuge"
@@ -3541,6 +3573,7 @@
     },
     {
       "slotId": "exercises.leaderboard-menu",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/leaderboard-menu"
@@ -3611,6 +3644,7 @@
     },
     {
       "slotId": "exercises.leaderboard-crown",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/screen-mission/corona-pro"
@@ -3668,6 +3702,7 @@
     },
     {
       "slotId": "exercises.plant",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/plant1"
@@ -3712,6 +3747,7 @@
     },
     {
       "slotId": "exercises.btn-nodo",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/bg/btn-nodo"
@@ -3756,6 +3792,7 @@
     },
     {
       "slotId": "exercises.labyrinth-icon",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/bg/labyrint-icon"
@@ -3800,6 +3837,7 @@
     },
     {
       "slotId": "exercises.combo",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/icons/combo"
@@ -3844,6 +3882,7 @@
     },
     {
       "slotId": "exercises.score",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/score-chesscito"
@@ -3888,6 +3927,7 @@
     },
     {
       "slotId": "exercises.shop-menu",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/shop-menu"
@@ -3945,6 +3985,7 @@
     },
     {
       "slotId": "exercises.saved-seal",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/score-saved"
@@ -3989,6 +4030,7 @@
     },
     {
       "slotId": "arena.save",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/save"
@@ -4072,6 +4114,7 @@
     },
     {
       "slotId": "arena.resign",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/arena/resign-game"
@@ -4116,6 +4159,7 @@
     },
     {
       "slotId": "arena.undo",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/arena/undo-move"
@@ -4160,6 +4204,7 @@
     },
     {
       "slotId": "arena.rival-kairo",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/rivals/kairo-avatar"
@@ -4217,6 +4262,7 @@
     },
     {
       "slotId": "arena.rival-pipo",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/rivals/pipo-avatar"
@@ -4273,7 +4319,55 @@
       "noActiveConsumer": false
     },
     {
+      "slotId": "arena.rival-mara",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/rivals/mara-avatar"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Arena — rival Mara avatar (medium)",
+        "↳ components/arena/arena-select-scaffold.tsx (rivals.ts data)",
+        "↳ components/arena/arena-player-rail.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/arena/arena-select-scaffold.tsx",
+        "src/components/arena/arena-player-rail.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/lib/game/rivals.ts",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
       "slotId": "arena.rival-frame-blue",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/rivals/frame-blue"
@@ -4331,6 +4425,7 @@
     },
     {
       "slotId": "arena.rival-frame-gold",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/rivals/frame-gold"
@@ -4388,6 +4483,7 @@
     },
     {
       "slotId": "arena.rival-frame-silver",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/rivals/frame-silver"
@@ -4445,6 +4541,7 @@
     },
     {
       "slotId": "arena.avatar-frame-you",
+      "root": "web",
       "default": {
         "mode": "none"
       },
@@ -4489,6 +4586,7 @@
     },
     {
       "slotId": "arena.avatar-frame-bot",
+      "root": "web",
       "default": {
         "mode": "none"
       },
@@ -4533,6 +4631,7 @@
     },
     {
       "slotId": "coach.ask-icon",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/btns/ask-coach-icon"
@@ -4577,6 +4676,7 @@
     },
     {
       "slotId": "coach.play-again",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/btns/play-again-icon"
@@ -4621,6 +4721,7 @@
     },
     {
       "slotId": "account.language-icon",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/account/language-icon"
@@ -4665,6 +4766,7 @@
     },
     {
       "slotId": "account.network-icon",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/account/network-icon"
@@ -4709,6 +4811,7 @@
     },
     {
       "slotId": "account.wallet-icon",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/account/wallet-icon"
@@ -4753,6 +4856,7 @@
     },
     {
       "slotId": "account.founder",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/shop/founder"
@@ -4810,6 +4914,7 @@
     },
     {
       "slotId": "account.shield",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/shop/shield"
@@ -4854,6 +4959,7 @@
     },
     {
       "slotId": "pro-sheet.header-icon",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/chesscito-pro/chesscito-header-pro-icon"
@@ -4899,6 +5005,7 @@
     },
     {
       "slotId": "pro-sheet.subscription-panel",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/chesscito-pro/panel-suscription-pro"
@@ -4943,6 +5050,7 @@
     },
     {
       "slotId": "pro-sheet.journal",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/chesscito-pro/journal-chesscito-pro"
@@ -4987,6 +5095,7 @@
     },
     {
       "slotId": "daily.bg-session",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/bg-sesion-great"
@@ -5032,6 +5141,7 @@
     },
     {
       "slotId": "daily.welldone",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/welldone-sms"
@@ -5076,6 +5186,7 @@
     },
     {
       "slotId": "peones.hint",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/hint-icon-v1"
@@ -5120,6 +5231,7 @@
     },
     {
       "slotId": "peones.piece",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/peon-piece-v1"
@@ -5177,6 +5289,7 @@
     },
     {
       "slotId": "welcome.achievement-1day",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/achievements/1day-focus"
@@ -5246,51 +5359,8 @@
       "noActiveConsumer": false
     },
     {
-      "slotId": "landing.pre-chess",
-      "default": {
-        "mode": "asset",
-        "path": "/art/landing/pre-chess-exercise"
-      },
-      "pro": {
-        "mode": "inherit"
-      },
-      "usedIn": [
-        "Landing — pre-chess exercise",
-        "↳ components/landing/landing-page.tsx"
-      ],
-      "deprecated": null,
-      "initialCategory": "B",
-      "category": "A",
-      "documentedFiles": [
-        "src/components/landing/landing-page.tsx"
-      ],
-      "currentConsumerState": "resolver",
-      "consumerCount": 1,
-      "consumers": [
-        {
-          "file": "src/components/landing/landing-page.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        }
-      ],
-      "patterns": [],
-      "usesResolver": true,
-      "usesHardcodedPath": false,
-      "usesImg": false,
-      "usesPicture": false,
-      "usesCssBackground": false,
-      "usesSharedMap": false,
-      "buildsPathDynamically": false,
-      "noActiveConsumer": false
-    },
-    {
       "slotId": "tactics.daily-exercise",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/ejercicio-diario-chess"
@@ -5359,6 +5429,7 @@
     },
     {
       "slotId": "hud.crown",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/icons/crown"
@@ -5414,6 +5485,7 @@
     },
     {
       "slotId": "hud.trophy",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/icons/trophy"
@@ -5577,6 +5649,7 @@
     },
     {
       "slotId": "pro-mission.sms",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/sms-chesscito"
@@ -5609,6 +5682,7 @@
     },
     {
       "slotId": "scene.gem-pill",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/gem-pill-base"
@@ -5653,6 +5727,7 @@
     },
     {
       "slotId": "scene.panel-pro",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/panel-pro"
@@ -5697,6 +5772,7 @@
     },
     {
       "slotId": "scene.pedestal",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/pedestal-play"
@@ -5741,6 +5817,7 @@
     },
     {
       "slotId": "scene.stone-1",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/piedra1"
@@ -5785,6 +5862,7 @@
     },
     {
       "slotId": "scene.stone-2",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/piedra2"
@@ -5829,6 +5907,7 @@
     },
     {
       "slotId": "scene.stone-3",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/piedra3"
@@ -5873,6 +5952,7 @@
     },
     {
       "slotId": "scene.stone-4",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/piedra4"
@@ -5917,6 +5997,7 @@
     },
     {
       "slotId": "scene.stone-5",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/piedra5"
@@ -5961,6 +6042,7 @@
     },
     {
       "slotId": "scene.stone-6",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/piedra6"
@@ -6005,6 +6087,7 @@
     },
     {
       "slotId": "scene.stone-7",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/piedra7"
@@ -6049,6 +6132,7 @@
     },
     {
       "slotId": "scene.stone-8",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/piedra8"
@@ -6093,6 +6177,7 @@
     },
     {
       "slotId": "scene.stone-9",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/piedra9"
@@ -6137,6 +6222,7 @@
     },
     {
       "slotId": "scene.stone-10",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/piedra10"
@@ -6181,6 +6267,7 @@
     },
     {
       "slotId": "scene.chest-large",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/treasure-chest-large"
@@ -6225,6 +6312,7 @@
     },
     {
       "slotId": "scene.chest-small",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/treasure-chest-small"
@@ -6269,6 +6357,7 @@
     },
     {
       "slotId": "scene.banner-large",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/wood-banner-blank-large"
@@ -6313,6 +6402,7 @@
     },
     {
       "slotId": "scene.banner-medium",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/wood-banner-blank-medium"
@@ -6357,6 +6447,7 @@
     },
     {
       "slotId": "scene.banner-short",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/scene-rooted/wood-banner-blank-short"
@@ -6401,6 +6492,7 @@
     },
     {
       "slotId": "bg.splash-chesscito",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/bg-splash-chesscito"
@@ -6458,6 +6550,7 @@
     },
     {
       "slotId": "bg.wallpaper-lite",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/bg-wallpaper-lite"
@@ -6502,6 +6595,7 @@
     },
     {
       "slotId": "bg.dock-4slots",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/bg/dock-4slots"
@@ -6546,6 +6640,7 @@
     },
     {
       "slotId": "bg.menu-wall",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/bg/menu-wall"
@@ -6590,6 +6685,7 @@
     },
     {
       "slotId": "bg.path-map",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/bg/path-map"
@@ -6634,6 +6730,7 @@
     },
     {
       "slotId": "bg.path-map-base",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/bg/path-map-base"
@@ -6678,6 +6775,7 @@
     },
     {
       "slotId": "bg.splash-loading",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/bg/splash-loading"
@@ -6723,6 +6821,7 @@
     },
     {
       "slotId": "shop.coach-pack-20",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/shop/coach-pack-20"
@@ -6754,7 +6853,53 @@
       "noActiveConsumer": true
     },
     {
+      "slotId": "shop.pro",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/shop/pro"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Shop — PRO subscription tile icon",
+        "↳ components/exercises/shop-sheet.tsx (SHOP_TILE_ASSETS)"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/exercises/shop-sheet.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/lib/contracts/shop-catalog.ts",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
       "slotId": "shop.slot-frame",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/shop-slot-frame"
@@ -6812,6 +6957,7 @@
     },
     {
       "slotId": "arena.bg-matchup",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/arena/bg-matchup"
@@ -6856,6 +7002,7 @@
     },
     {
       "slotId": "arena.result-checkmate",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/games/checkmate-game001"
@@ -6911,6 +7058,7 @@
     },
     {
       "slotId": "arena.result-draw",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/games/draw-game001"
@@ -6955,6 +7103,7 @@
     },
     {
       "slotId": "arena.result-resign",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/games/resign-game001"
@@ -6999,6 +7148,7 @@
     },
     {
       "slotId": "arena.result-stalemate",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/games/stalemate-game001"
@@ -7054,6 +7204,7 @@
     },
     {
       "slotId": "arena.player-you",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/avatar-blue"
@@ -7125,6 +7276,7 @@
     },
     {
       "slotId": "arena.player-bot",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/avatar-red"
@@ -7169,6 +7321,7 @@
     },
     {
       "slotId": "hub.cta-principal",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/hub/cta-principal"
@@ -7198,6 +7351,7 @@
     },
     {
       "slotId": "hub.mate-icon",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/hub/mate-icon"
@@ -7253,6 +7407,7 @@
     },
     {
       "slotId": "hub.invite-icon",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/hub-new/invite-icon"
@@ -7297,6 +7452,7 @@
     },
     {
       "slotId": "hub.bg",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/bg/bg-new-hub"
@@ -7352,6 +7508,7 @@
     },
     {
       "slotId": "hub.btn-stone-bg",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/banners/btn-stone-bg"
@@ -7407,6 +7564,7 @@
     },
     {
       "slotId": "hub.focus-passport-streak",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/focus-passport/panel-streak"
@@ -7451,6 +7609,7 @@
     },
     {
       "slotId": "exercises.wall",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/labyrinths/wall"
@@ -7502,6 +7661,7 @@
     },
     {
       "slotId": "exercises.laberinto",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/laberinto"
@@ -7546,6 +7706,7 @@
     },
     {
       "slotId": "exercises.badge-claim",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/badge-claim-icon"
@@ -7603,6 +7764,7 @@
     },
     {
       "slotId": "exercises.claim",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/claim-icon-v1"
@@ -7647,6 +7809,7 @@
     },
     {
       "slotId": "exercises.save-score",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-icons-chesscito/save-score-icon-v1"
@@ -7691,6 +7854,7 @@
     },
     {
       "slotId": "exercises.wallpaper",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/bg/wallpaper-exercises"
@@ -7759,6 +7923,7 @@
     },
     {
       "slotId": "welcome.achievement-3day",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/achievements/3day-focus"
@@ -7803,6 +7968,7 @@
     },
     {
       "slotId": "welcome.achievement-7day",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/achievements/7day-focus"
@@ -7847,6 +8013,7 @@
     },
     {
       "slotId": "welcome.focus-stamp",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/welcome-package/focus-stamp-day1"
@@ -7925,95 +8092,8 @@
       "noActiveConsumer": false
     },
     {
-      "slotId": "landing.hero",
-      "default": {
-        "mode": "asset",
-        "path": "/art/landing/hero-play-hub"
-      },
-      "pro": {
-        "mode": "inherit"
-      },
-      "usedIn": [
-        "Landing — play-hub hero",
-        "↳ components/landing/landing-page.tsx"
-      ],
-      "deprecated": null,
-      "initialCategory": "B",
-      "category": "A",
-      "documentedFiles": [
-        "src/components/landing/landing-page.tsx"
-      ],
-      "currentConsumerState": "resolver",
-      "consumerCount": 1,
-      "consumers": [
-        {
-          "file": "src/components/landing/landing-page.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        }
-      ],
-      "patterns": [],
-      "usesResolver": true,
-      "usesHardcodedPath": false,
-      "usesImg": false,
-      "usesPicture": false,
-      "usesCssBackground": false,
-      "usesSharedMap": false,
-      "buildsPathDynamically": false,
-      "noActiveConsumer": false
-    },
-    {
-      "slotId": "landing.progress-trophies",
-      "default": {
-        "mode": "asset",
-        "path": "/art/landing/progress-trophies"
-      },
-      "pro": {
-        "mode": "inherit"
-      },
-      "usedIn": [
-        "Landing — progress trophies",
-        "↳ components/landing/landing-page.tsx"
-      ],
-      "deprecated": null,
-      "initialCategory": "B",
-      "category": "A",
-      "documentedFiles": [
-        "src/components/landing/landing-page.tsx"
-      ],
-      "currentConsumerState": "resolver",
-      "consumerCount": 1,
-      "consumers": [
-        {
-          "file": "src/components/landing/landing-page.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        }
-      ],
-      "patterns": [],
-      "usesResolver": true,
-      "usesHardcodedPath": false,
-      "usesImg": false,
-      "usesPicture": false,
-      "usesCssBackground": false,
-      "usesSharedMap": false,
-      "buildsPathDynamically": false,
-      "noActiveConsumer": false
-    },
-    {
       "slotId": "coach.play",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/new-assets-chesscito/btns/play"
@@ -8060,6 +8140,7 @@
     },
     {
       "slotId": "account.account-icon",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/screen-mission/account-icon"
@@ -8104,6 +8185,7 @@
     },
     {
       "slotId": "shared.panel-frame",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/panel-frame-rune"
@@ -8161,6 +8243,7 @@
     },
     {
       "slotId": "shared.time",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/icons/time"
@@ -8223,6 +8306,7 @@
     },
     {
       "slotId": "brand.favicon",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/favicon-wolf"
@@ -8307,6 +8391,7 @@
     },
     {
       "slotId": "board.frame",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/board/borde-tablero-chesscito1"
@@ -8353,6 +8438,7 @@
     },
     {
       "slotId": "board.thumbnail",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/board/board-ch"
@@ -8425,6 +8511,7 @@
     },
     {
       "slotId": "board.legacy-bg",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/chesscito-board"
@@ -8492,6 +8579,7 @@
     },
     {
       "slotId": "board.tile.light",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/board/casilla-clara"
@@ -8536,6 +8624,7 @@
     },
     {
       "slotId": "board.tile.dark",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/board/casilla-oscura"
@@ -8580,6 +8669,7 @@
     },
     {
       "slotId": "board.piece.white.rook",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/pieces/w-rook"
@@ -8875,6 +8965,7 @@
     },
     {
       "slotId": "board.piece.white.bishop",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/pieces/w-bishop"
@@ -9159,6 +9250,7 @@
     },
     {
       "slotId": "board.piece.white.knight",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/pieces/w-knight"
@@ -9443,6 +9535,7 @@
     },
     {
       "slotId": "board.piece.white.pawn",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/pieces/w-pawn"
@@ -9859,6 +9952,7 @@
     },
     {
       "slotId": "board.piece.white.queen",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/pieces/w-queen"
@@ -10143,6 +10237,7 @@
     },
     {
       "slotId": "board.piece.white.king",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/pieces/w-king"
@@ -10442,6 +10537,7 @@
     },
     {
       "slotId": "board.piece.black.rook",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/pieces/b-rook"
@@ -10720,6 +10816,7 @@
     },
     {
       "slotId": "board.piece.black.bishop",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/pieces/b-bishop"
@@ -10998,6 +11095,7 @@
     },
     {
       "slotId": "board.piece.black.knight",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/pieces/b-knight"
@@ -11276,6 +11374,7 @@
     },
     {
       "slotId": "board.piece.black.pawn",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/pieces/b-pawn"
@@ -11556,6 +11655,7 @@
     },
     {
       "slotId": "board.piece.black.queen",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/pieces/b-queen"
@@ -11834,6 +11934,7 @@
     },
     {
       "slotId": "board.piece.black.king",
+      "root": "web",
       "default": {
         "mode": "asset",
         "path": "/art/redesign/pieces/b-king"

@@ -52,8 +52,7 @@ type CatalogItem = {
   itemId: bigint;
   label: string;
   subtitle: string;
-  icon?: string;
-  iconSlot?: ThemeAssetKey;
+  iconSlot: ThemeAssetKey;
   configured: boolean;
   enabled: boolean;
   onChainPrice: bigint;
@@ -261,7 +260,7 @@ export function useShopSheetState(
       SHOP_ITEMS.map((item, index) => {
         const label = tShopItem(`${item.copyKey}.label` as const);
         const subtitle = tShopItem(`${item.copyKey}.subtitle` as const);
-        const { icon, iconSlot } = SHOP_TILE_ASSETS[item.copyKey];
+        const { iconSlot } = SHOP_TILE_ASSETS[item.copyKey];
         const onChain = onChainItems?.[index];
         if (onChain?.status === "success" && Array.isArray(onChain.result)) {
           const price = onChain.result[0] as bigint;
@@ -270,7 +269,6 @@ export function useShopSheetState(
             itemId: item.itemId,
             label,
             subtitle,
-            icon,
             iconSlot,
             configured: price > 0n,
             enabled: price > 0n && enabled,
@@ -281,7 +279,6 @@ export function useShopSheetState(
           itemId: item.itemId,
           label,
           subtitle,
-          icon,
           iconSlot,
           configured: false,
           enabled: false,

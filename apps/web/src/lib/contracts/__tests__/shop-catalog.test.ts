@@ -68,17 +68,26 @@ describe("SHOP_TILE_ASSETS path resolution", () => {
     expect(entries.map(([key]) => key).sort()).toEqual(expectedKeys.sort());
   });
 
+  it("routes every tile icon through the catalog, never a raw path", () => {
+    // The PRO tile used a raw `icon` string, so its art was the one shop
+    // image the theme-builder could not replace.
+    for (const [, assets] of entries) {
+      expect(assets.iconSlot).toBeTruthy();
+      expect(assets).not.toHaveProperty("icon");
+    }
+  });
+
   it("uses extensionless basenames so the consumer can build image-set() per format", () => {
-    for (const [, { icon, iconSlot }] of entries) {
-      const basename = icon ?? (iconSlot ? resolveThemeAsset(iconSlot, "default") : null);
+    for (const [, { iconSlot }] of entries) {
+      const basename = resolveThemeAsset(iconSlot, "default");
       expect(basename).toBeTruthy();
       expect(basename).not.toMatch(/\.(png|webp|avif|jpg|jpeg|svg)$/i);
       expect(basename?.startsWith("/art/")).toBe(true);
     }
   });
 
-  for (const [copyKey, { icon, iconSlot }] of entries) {
-    const basename = icon ?? (iconSlot ? resolveThemeAsset(iconSlot, "default") : null);
+  for (const [copyKey, { iconSlot }] of entries) {
+    const basename = resolveThemeAsset(iconSlot, "default");
     for (const ext of FORMATS) {
       it(`${copyKey} icon resolves to ${basename}${ext}`, () => {
         const full = join(PUBLIC, `${basename}${ext}`);

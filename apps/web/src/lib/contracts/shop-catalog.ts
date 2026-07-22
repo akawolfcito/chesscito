@@ -77,8 +77,11 @@ export const SHOP_ITEMS: readonly ShopCatalogEntry[] = [
  *  `image-set()` URL list per format. New tiles MUST ship the
  *  triplet (`scripts/optimize-art-assets.sh` / cwebp / avifenc) —
  *  the `image-three-formats` memory rule. */
-export const SHOP_TILE_ASSETS: Record<ShopCopyKey, { icon?: string; iconSlot?: ThemeAssetKey }> = {
-  pro: { icon: "/art/shop/pro" },
+/** `iconSlot` is REQUIRED: while a raw `icon` string was allowed, the PRO
+ *  tile used it and its art was invisible to the theme-builder. A new tile
+ *  without a slot is now a type error. */
+export const SHOP_TILE_ASSETS: Record<ShopCopyKey, { iconSlot: ThemeAssetKey }> = {
+  pro: { iconSlot: "shop.pro" },
   founderBadge: { iconSlot: "account.founder" },
 };
 import type { ThemeAssetKey } from "@/lib/themes/theme-registry";

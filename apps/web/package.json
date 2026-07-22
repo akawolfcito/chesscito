@@ -24,6 +24,8 @@
     "theme:responsive-audit": "tsx scripts/audit-responsive-asset-families.ts",
     "theme:responsive-regenerate-avatars": "tsx scripts/regenerate-responsive-avatar-families.ts",
     "theme:coverage": "node scripts/audit-theme-runtime-coverage.mjs --check",
+    "art:sync-landing": "tsx scripts/sync-landing-shared-art.ts",
+    "art:sync-landing:check": "tsx scripts/sync-landing-shared-art.ts --check",
     "encrypt-key": "tsx scripts/encrypt-key.ts",
     "grant-pro": "tsx scripts/grant-pro.ts",
     "rail:smoke": "tsx scripts/rail-smoke.ts",

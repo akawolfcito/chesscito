@@ -13,7 +13,10 @@ export type Rival = {
   /** Character avatar slug → `/art/rivals/<avatar>-avatar.{avif,webp,png}`
    *  (custom rival art shipped 2026-06-15). */
   avatar: string;
-  avatarSlot?: ThemeAssetKey;
+  /** Catalog slot for the avatar. REQUIRED: while it was optional, Mara
+   *  shipped without one and her art was the only arena image the
+   *  theme-builder could not replace. A missing slot is now a type error. */
+  avatarSlot: ThemeAssetKey;
   /** Difficulty frame color → `/art/rivals/frame-<frame>.{avif,webp,png}`.
    *  blue = easy, silver = medium, gold = hard. */
   frame: "blue" | "silver" | "gold";
@@ -27,7 +30,7 @@ export type Rival = {
  *  founder-approved placeholders (Sally pass 2026-06-15). */
 export const RIVALS: Record<ArenaDifficulty, Rival> = {
   easy: { difficulty: "easy", name: "Pipo", piece: "pawn", avatar: "pipo", avatarSlot: "arena.rival-pipo", frame: "blue", frameSlot: "arena.rival-frame-blue", eloMin: 0, eloMax: 800 },
-  medium: { difficulty: "medium", name: "Mara", piece: "knight", avatar: "mara", frame: "silver", frameSlot: "arena.rival-frame-silver", eloMin: 801, eloMax: 1500 },
+  medium: { difficulty: "medium", name: "Mara", piece: "knight", avatar: "mara", avatarSlot: "arena.rival-mara", frame: "silver", frameSlot: "arena.rival-frame-silver", eloMin: 801, eloMax: 1500 },
   hard: { difficulty: "hard", name: "Kairo", piece: "bishop", avatar: "kairo", avatarSlot: "arena.rival-kairo", frame: "gold", frameSlot: "arena.rival-frame-gold", eloMin: 1501, eloMax: 2200 },
 };
 

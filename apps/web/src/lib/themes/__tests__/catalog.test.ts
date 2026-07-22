@@ -64,11 +64,31 @@ describe("buildThemeCatalog", () => {
     await buildThemeCatalog("candy-forest", resolver);
     expect(resolver).toHaveBeenCalledWith(
       "/art/avatar-lite-hub",
-      { key: "hub.avatar-lite", variant: "default" },
+      { key: "hub.avatar-lite", variant: "default", root: "web" },
     );
     expect(resolver).toHaveBeenCalledWith(
       "/art/avatar-pro",
-      { key: "hub.avatar-lite", variant: "pro" },
+      { key: "hub.avatar-lite", variant: "pro", root: "web" },
+    );
+  });
+
+  it("resolves every slot's owning app, defaulting to web", async () => {
+    const catalog = await buildThemeCatalog("candy-forest", okResolver);
+    const slots = new Map(catalog?.slots.map((slot) => [slot.key, slot]));
+
+    // Slots that predate multi-root support declare no root at all.
+    expect(THEMES["candy-forest"].assets["hub.portal"].root).toBeUndefined();
+    expect(slots.get("hub.portal")?.root).toBe("web");
+    // The carousel art lives in apps/landing/public, not apps/web/public.
+    expect(slots.get("landing.slide1-avatar")?.root).toBe("landing");
+  });
+
+  it("tells the resolver which app root to probe", async () => {
+    const resolver = vi.fn(okResolver);
+    await buildThemeCatalog("candy-forest", resolver);
+    expect(resolver).toHaveBeenCalledWith(
+      "/art/landing-slides/avatar-chesscito-welcome",
+      { key: "landing.slide1-avatar", variant: "default", root: "landing" },
     );
   });
 
@@ -98,7 +118,7 @@ describe("buildThemeCatalog", () => {
     expect(slots.get("hub.21-day-icon")?.surface).toBe("learn");
     expect(slots.get("arena.bg-matchup")?.surface).toBe("play");
     expect(slots.get("hub.principal-button")?.surface).toBe("unknown");
-    expect(slots.get("landing.hero")?.surface).toBe("unknown");
+    expect(slots.get("landing.hero")?.surface).toBe("landing");
     expect(slots.get("board.legacy-bg")?.surface).toBe("shared");
   });
 

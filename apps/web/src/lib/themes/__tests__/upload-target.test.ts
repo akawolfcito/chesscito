@@ -47,6 +47,23 @@ describe("resolveUploadTarget", () => {
     if (r.ok) expect(r.basename.startsWith("/art/")).toBe(true);
   });
 
+  it("carries the owning app so the write lands in the right public dir", () => {
+    // Same shape of basename, two different files on disk — without the root
+    // a landing upload would silently write into apps/web/public.
+    const web = resolveUploadTarget("candy-forest", "hub.portal", "default");
+    expect(web.ok && web.root).toBe("web");
+
+    const landing = resolveUploadTarget(
+      "candy-forest",
+      "landing.slide1-avatar",
+      "default",
+    );
+    expect(landing.ok && landing.root).toBe("landing");
+    expect(landing.ok && landing.basename).toBe(
+      "/art/landing-slides/avatar-chesscito-welcome",
+    );
+  });
+
   it("carries authoritative responsive metadata for every avatar variant", () => {
     for (const variant of ["default", "pro"] as const) {
       const r = resolveUploadTarget("candy-forest", "hub.avatar-lite", variant);
@@ -69,6 +86,7 @@ describe("resolveVariantBasename", () => {
       basename: "/art/x",
       declaresAsset: true,
       responsiveProfile: null,
+      root: "web",
     });
   });
 
@@ -79,6 +97,7 @@ describe("resolveVariantBasename", () => {
       basename: "/art/x-pro",
       declaresAsset: true,
       responsiveProfile: null,
+      root: "web",
     });
   });
 
@@ -92,6 +111,7 @@ describe("resolveVariantBasename", () => {
       basename: "/art/theme-builder/candy-forest/hub/example/pro",
       declaresAsset: false,
       responsiveProfile: null,
+      root: "web",
     });
   });
 
@@ -105,6 +125,7 @@ describe("resolveVariantBasename", () => {
       basename: "/art/theme-builder/candy-forest/arena/frame/default",
       declaresAsset: false,
       responsiveProfile: null,
+      root: "web",
     });
   });
 

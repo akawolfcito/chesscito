@@ -27,14 +27,53 @@ function groupByCategory(slots: SlotCatalogEntry[]): [string, SlotCatalogEntry[]
   return [...groups.entries()];
 }
 
+/**
+ * Last two segments of a basename — `…/landing-slides/avatar-play-chess`.
+ *
+ * `truncate` clips the tail, which is the only part that names the asset:
+ * the 18 landing slots all rendered as `/art/landing-slides/avat…`, so you
+ * could not tell them apart or find one by filename. Full path stays in the
+ * title tooltip and in the copy button.
+ */
+function shortPath(basename: string): string {
+  const parts = basename.split("/").filter(Boolean);
+  return parts.length <= 2 ? basename : `…/${parts.slice(-2).join("/")}`;
+}
+
 function dims(a: ResolvedAsset): string {
   if (a.width == null || a.height == null) return "— missing on disk —";
   return `${a.width}×${a.height} · ${a.format?.toUpperCase() ?? ""}`;
 }
 
+/**
+ * Where the preview <img> reads from. Web-rooted slots are served straight
+ * off this app's public dir; a slot owned by a sibling app has no such URL,
+ * so it goes through the dev streaming route. `mtime` busts the cache after
+ * a replace either way.
+ */
+function previewSrc(
+  slot: SlotCatalogEntry,
+  asset: ResolvedAsset,
+  variant: "default" | "pro",
+  themeId: string,
+): string | null {
+  if (!asset.file) return null;
+  if (slot.root === "web") {
+    return asset.mtime ? `${asset.file}?v=${asset.mtime}` : asset.file;
+  }
+  const query = new URLSearchParams({
+    themeId,
+    key: slot.key,
+    variant,
+    v: String(asset.mtime ?? 0),
+  });
+  return `/api/dev/theme-asset?${query}`;
+}
+
 function VariantCell({
   label,
   asset,
+  src,
   mode,
   themeId,
   slotKey,
@@ -43,6 +82,8 @@ function VariantCell({
 }: {
   label: string;
   asset: ResolvedAsset | null;
+  /** Resolved by the caller — differs per owning app. Null when no file. */
+  src: string | null;
   mode: "asset" | "inherit" | "none";
   themeId: string;
   slotKey: string;
@@ -59,9 +100,9 @@ function VariantCell({
           </span>
         )}
       </div>
-      {asset && asset.file ? (
+      {asset && src ? (
         <img
-          src={asset.mtime ? `${asset.file}?v=${asset.mtime}` : asset.file}
+          src={src}
           alt={`${label} — ${asset.basename}`}
           className="h-40 w-full rounded-lg border border-neutral-700 bg-neutral-800 object-contain"
         />
@@ -76,7 +117,7 @@ function VariantCell({
       )}
       <div className="mt-1 flex items-center gap-1.5">
         <span className="truncate text-[11px] text-neutral-500" title={asset?.basename}>
-          {asset?.basename ?? "—"}
+          {asset?.basename ? shortPath(asset.basename) : "—"}
         </span>
         {asset?.basename && <CopyPathButton path={asset.basename} />}
       </div>
@@ -186,6 +227,15 @@ export default async function ThemeBuilderDevPage({
                         >
                           {slot.surface}
                         </span>
+                        {slot.root !== "web" && (
+                          <span
+                            data-testid={`theme-slot-root-${slot.key}`}
+                            className="rounded-full border border-violet-700/60 bg-violet-950/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-300"
+                            title={`Reads and writes apps/${slot.root}/public`}
+                          >
+                            apps/{slot.root}
+                          </span>
+                        )}
                         <div className="max-w-xl text-right text-xs text-neutral-500">
                           {slot.usedIn.length ? (
                             slot.usedIn.map((location) => (
@@ -205,6 +255,7 @@ export default async function ThemeBuilderDevPage({
                         <VariantCell
                           label="default"
                           asset={slot.default}
+                          src={slot.default && previewSrc(slot, slot.default, "default", catalog.id)}
                           mode={slot.defaultMode}
                           themeId={catalog.id}
                           slotKey={slot.key}
@@ -214,6 +265,7 @@ export default async function ThemeBuilderDevPage({
                         <VariantCell
                           label="pro"
                           asset={slot.pro}
+                          src={slot.pro && previewSrc(slot, slot.pro, "pro", catalog.id)}
                           mode={slot.proMode}
                           themeId={catalog.id}
                           slotKey={slot.key}

@@ -27,6 +27,18 @@ describe("rivals config", () => {
     expect(rivalFor("hard").avatar).toBe("kairo");
   });
 
+  it("routes every rival avatar through a catalog slot", () => {
+    // Mara shipped without one, so her art was the single arena image the
+    // theme-builder could not replace — and the optional field meant no
+    // compile error flagged it.
+    expect(rivalFor("easy").avatarSlot).toBe("arena.rival-pipo");
+    expect(rivalFor("medium").avatarSlot).toBe("arena.rival-mara");
+    expect(rivalFor("hard").avatarSlot).toBe("arena.rival-kairo");
+    for (const difficulty of DIFFS) {
+      expect(rivalFor(difficulty).avatarSlot).toBeTruthy();
+    }
+  });
+
   it("maps difficulty to a frame color (blue/silver/gold)", () => {
     expect(rivalFor("easy").frame).toBe("blue");
     expect(rivalFor("medium").frame).toBe("silver");

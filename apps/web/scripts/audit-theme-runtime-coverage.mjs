@@ -12,11 +12,10 @@ const OUTPUT_FILE = path.resolve(
 );
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".css"]);
 const CHECK_MODE = process.argv.includes("--check");
-const ALLOWED_UNREGISTERED_LITERALS = new Map([
-  ["/art/redesign/icons/close", "Generic CandyIcon close art; distinct from the cataloged mission close button."],
-  ["/art/rivals/mara-avatar", "Active rival fallback that is not one of the 162 catalog slots."],
-  ["/art/shop/pro", "Shop product art outside the theme-builder catalog."],
-]);
+// Empty on purpose. An entry here is an asset nobody can replace from the
+// builder, which is the exact failure the catalog exists to prevent — every
+// former exception is now a registered slot.
+const ALLOWED_UNREGISTERED_LITERALS = new Map([]);
 const ART_LITERAL_RE = /["'`](\/art\/[^"'`\s),;]+)/g;
 const IMAGE_EXT_RE = /\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
 const INITIAL_CATEGORIES = {
@@ -170,6 +169,7 @@ function parseRegistry() {
       const entry = assignment.initializer;
       return {
         slotId: key,
+        root: stringValue(property(entry, "root")?.initializer) ?? "web",
         default: variantValue(entry, "default"),
         pro: variantValue(entry, "pro"),
         usedIn: stringArray(entry, "usedIn"),
@@ -349,7 +349,12 @@ function classify(slot, consumers) {
   return "G";
 }
 
-const slots = parseRegistry();
+// This audit answers one question: does every cataloged slot reach a runtime
+// consumer *in apps/web*? Slots owned by a sibling app (root !== "web") have
+// their consumers outside SRC_DIR by construction, so scanning for them here
+// would report a hole that isn't one. They are covered by their own
+// disk-presence test instead.
+const slots = parseRegistry().filter((slot) => slot.root === "web");
 const registeredPaths = new Set(
   slots.flatMap((slot) => [slot.default.path, slot.pro.path]).filter(Boolean),
 );
@@ -488,10 +493,14 @@ if (CHECK_MODE) {
   const unexpectedLiterals = unregisteredLiterals.filter(
     ({ basename }) => !ALLOWED_UNREGISTERED_LITERALS.has(basename),
   );
-  const requiredLiteralExceptions = ["/art/rivals/mara-avatar", "/art/shop/pro"];
+  const requiredLiteralExceptions = [];
   const missingExceptions = requiredLiteralExceptions.filter(
     (basename) => !unregisteredLiterals.some((literal) => literal.basename === basename),
   );
+  // 162 web-owned slots: the original 162 minus the 3 landing.* ones (whose
+  // consumer lives in apps/landing, out of this audit's scope) plus the 3
+  // former exceptions now cataloged (arena.rival-mara, shop.pro,
+  // shared.close-candy).
   const expectedInitial = { A: 2, B: 66, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,

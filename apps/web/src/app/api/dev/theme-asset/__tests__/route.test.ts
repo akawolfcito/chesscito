@@ -41,7 +41,8 @@ vi.mock("@/lib/themes/variant-undo", () => ({
   saveVariantUndo: mocks.saveUndo,
 }));
 
-import { POST } from "../route";
+import { GET, POST } from "../route";
+import { resolveAppRoot } from "@/lib/themes/asset-roots";
 
 function uploadRequest(): Request {
   const form = new FormData();
@@ -151,6 +152,53 @@ describe("POST /api/dev/theme-asset", () => {
     );
   });
 
+  it("writes a web-owned slot into the web app", async () => {
+    await POST(uploadRequest());
+    expect(mocks.replace).toHaveBeenCalledWith(
+      expect.objectContaining({ rootDir: resolveAppRoot("web") }),
+    );
+  });
+
+  it("writes a landing-owned slot into apps/landing, not apps/web", async () => {
+    // The regression this guards: /art/... exists in BOTH apps, so a write
+    // without a root silently lands in the wrong one and the founder sees
+    // no change on the live landing.
+    const form = new FormData();
+    form.set("themeId", "candy-forest");
+    form.set("key", "landing.slide1-avatar");
+    form.set("variant", "default");
+    form.set("file", new File(["image"], "slide.png", { type: "image/png" }));
+    const response = await POST({ formData: async () => form } as unknown as Request);
+
+    expect(response.status).toBe(200);
+    expect(mocks.replace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        basename: "/art/landing-slides/avatar-chesscito-welcome",
+        rootDir: resolveAppRoot("landing"),
+      }),
+    );
+    expect(resolveAppRoot("landing")).not.toBe(resolveAppRoot("web"));
+  });
+
+  it("undo restores from the same app it wrote to", async () => {
+    mocks.readUndo.mockResolvedValueOnce({
+      previous: { mode: "asset", path: "/art/landing-slides/chesscito-title" },
+      basename: "/art/landing-slides/chesscito-title",
+      restoreFamily: true,
+      restoreRegistry: false,
+    });
+    const form = new FormData();
+    form.set("themeId", "candy-forest");
+    form.set("key", "landing.slide1-title");
+    form.set("variant", "default");
+    form.set("action", "undo");
+    await POST({ formData: async () => form } as unknown as Request);
+
+    expect(mocks.restore).toHaveBeenCalledWith(
+      expect.objectContaining({ rootDir: resolveAppRoot("landing") }),
+    );
+  });
+
   it("rolls a mode change back when undo metadata cannot be persisted", async () => {
     mocks.saveUndo.mockRejectedValueOnce(new Error("injected metadata failure"));
     const form = new FormData();
@@ -176,5 +224,32 @@ describe("POST /api/dev/theme-asset", () => {
       "default",
       { mode: "asset", path: "/art/avatar-lite-hub" },
     );
+  });
+});
+
+describe("GET /api/dev/theme-asset", () => {
+  function previewRequest(key: string, variant = "default"): Request {
+    const query = new URLSearchParams({ themeId: "candy-forest", key, variant });
+    return new Request(`http://localhost/api/dev/theme-asset?${query}`);
+  }
+
+  it("streams a landing slot the web dev server cannot serve", async () => {
+    const response = await GET(previewRequest("landing.slide1-avatar"));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("image/png");
+    // No caching, or a replaced image would keep showing the old bytes.
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(0);
+  });
+
+  it("refuses a slot the registry does not declare", async () => {
+    const response = await GET(previewRequest("landing.nope"));
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({ ok: false });
+  });
+
+  it("refuses an invalid variant instead of guessing a path", async () => {
+    const response = await GET(previewRequest("landing.slide1-avatar", "ultra"));
+    expect(response.status).toBe(400);
   });
 });
