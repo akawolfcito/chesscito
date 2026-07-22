@@ -15103,3 +15103,210 @@ button.hud-resource-chip:active:not(:disabled) {
     opacity: 1;
   }
 }
+
+/* ── Season Pass sheet — visual offer ───────────────────────────────────────
+   The offer used to be four paragraphs. It now leads with the challenge
+   wordmark and carries its value in two icon rows, so the copy that stays is
+   only the habit promise. Kicker and wordmark are one unit: the gap between
+   them is deliberately tighter than the sheet's own `gap-4`. */
+.season-pass-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+}
+
+.season-pass-kicker {
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  opacity: 0.75;
+}
+
+.season-pass-wordmark {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  object-fit: contain;
+  margin-top: 0.15rem;
+}
+
+.season-pass-story {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.season-pass-story-icon {
+  width: 4rem;
+  height: 4rem;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 6px rgba(63, 34, 8, 0.22));
+}
+
+/* The arrows carry the reading order, not the meaning — they shrink first when
+   the row runs out of width (390px minus the panel's own padding). */
+.season-pass-story-arrow {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
+  object-fit: contain;
+}
+
+/* Benefit grid — three equal columns so a two-word label ("Special Trainings")
+   wraps inside its own tile instead of pushing the neighbours around. */
+.season-pass-benefits {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.season-pass-benefit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  padding: 0.6rem 0.35rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+.season-pass-benefit-icon {
+  width: 3rem;
+  height: 3rem;
+  object-fit: contain;
+}
+
+.season-pass-benefit-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+}
+
+/* `?` chip — inline with the habit line, so it reads as part of the sentence
+   rather than a separate control. 28px keeps it above the touch-target floor
+   while still sitting on a 14px text line. */
+/* `?` chip — the price pill's material (same gradient, border and inset
+   lights), squeezed into a circle. It sits inline at the end of the habit
+   line and is meant to interrupt it: a raised candy token in flat copy reads
+   as "tap me", which a plain glyph never does. */
+.season-pass-help-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-left: 0.25rem;
+  vertical-align: -0.4rem;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
+  background: linear-gradient(180deg,
+      rgba(255, 248, 222, 0.95) 0%,
+      rgba(247, 226, 175, 0.95) 100%);
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1px 0 rgba(150, 90, 20, 0.18),
+    0 1px 2px rgba(110, 65, 15, 0.18);
+}
+
+.season-pass-habit {
+  position: relative;
+  width: 100%;
+}
+
+/* Popover, not a row: absolutely positioned so opening it never reflows the
+   price, the picker or the CTA underneath. Opaque background + shadow because
+   it overlaps live content and must stay readable over it. */
+.season-pass-details {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: min(100%, 280px);
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.9rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-align: center;
+  color: rgba(63, 34, 8, 0.95);
+  background: linear-gradient(180deg,
+      rgba(255, 250, 232, 0.99) 0%,
+      rgba(250, 235, 197, 0.99) 100%);
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 8px 20px rgba(90, 55, 12, 0.28);
+}
+
+/* Little beak pointing back at the `?` that opened it. */
+.season-pass-details::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 0.45rem solid transparent;
+  border-bottom-color: rgba(180, 120, 35, 0.45);
+}
+
+/* PAY WITH header — label over an ornament flanked by hairlines. The rules are
+   pseudo-elements so the ornament stays a single centered asset. */
+.season-pass-paywith {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  width: 100%;
+}
+
+.season-pass-paywith-label {
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  opacity: 0.7;
+}
+
+/* The hairlines live on this wrapper, not on the <img>: replaced elements do
+   not render pseudo-elements. */
+.season-pass-paywith-rule {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 220px;
+}
+
+.season-pass-paywith-rule::before,
+.season-pass-paywith-rule::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(63, 34, 8, 0.25);
+}
+
+.season-pass-paywith-ornament {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: none;
+  object-fit: contain;
+}

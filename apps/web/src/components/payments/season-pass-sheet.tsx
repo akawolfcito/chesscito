@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useAccount } from "wagmi";
@@ -10,6 +10,7 @@ import { AddCashCta } from "@/components/minipay/add-cash-cta";
 import { SeasonPassCelebration } from "@/components/payments/season-pass-celebration";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { getSeasonPass } from "@/lib/payments/rail-config";
@@ -24,12 +25,26 @@ import {
 import { mapSeasonPassError } from "@/lib/season-pass/map-season-pass-error";
 import { useSeasonPassStatus } from "@/lib/season-pass/use-season-pass-status";
 import { useThemeBackground } from "@/lib/themes/use-theme-background";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 const SKU = "lite_season_pass_21" as const;
 const FALLBACK_TOKEN = "USDC";
 
+/** Narrative row. The order IS the promise's chronology: you get the pass, you
+ *  train, the streak stays alive. Decorative — the copy above says it in words.
+ *  Every icon resolves through the theme catalog; a raw path here would leave
+ *  this sheet unthemed while the same art re-skins everywhere else. */
+const STORY_SLOTS: readonly ThemeAssetKey[] = [
+  "shared.welcome-gift",
+  "hub.train-pieces",
+  "shared.flame-color",
+];
+
 // Inherited by every text in the sheet; amber/red state copy overrides it.
 const SHEET_TEXT_COLOR = "rgba(63, 34, 8, 0.95)";
+
+/** One tile of the 3-up benefit grid: a catalog slot + its resolved label. */
+type BenefitTile = { slot: ThemeAssetKey; label: string };
 
 export type SeasonPassSheetProps = {
   open: boolean;
@@ -78,7 +93,17 @@ function SeasonPassSheetInner({
   // or USDT — the same smoke bug the Peones rail already solved.
   const selection = useStablecoinTokenSelection(pass.priceUsd6);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const tokenSymbol = selection.selectedSymbol ?? FALLBACK_TOKEN;
+
+  const benefits: BenefitTile[] = [
+    { slot: "hub.21-day-icon", label: t("offerBenefitDays", { days: pass.durationDays }) },
+    { slot: "hub.training-icon", label: t("offerBenefitTrainings") },
+    {
+      slot: "shared.shield",
+      label: t("offerBenefitShields", { count: pass.shieldsOnPurchase }),
+    },
+  ];
 
   const rail = useSeasonPassRail({
     sku: SKU,
@@ -99,7 +124,7 @@ function SeasonPassSheetInner({
         ? "Sending..."
         : rail.phase === "verifying"
           ? "Verifying..."
-          : `Get Pass`;
+          : t("offerCta");
 
   const isSuccess = rail.phase === "success" && rail.result;
 
@@ -167,15 +192,72 @@ function SeasonPassSheetInner({
         ) : (
           <>
             {/* <ShieldIcon /> */}
-            <p className="arena-result-title">{t("offerTitle")}</p>
-            <p className="text-sm opacity-80 max-w-[240px]">{t("offerHabit")}</p>
-            <ul className="flex flex-col items-center gap-1 text-sm opacity-80">
-              <li>{t("offerPractice", { days: pass.durationDays })}</li>
-              <li>{t("offerShieldsBonus", { count: pass.shieldsOnPurchase })}</li>
-            </ul>
+            <div className="season-pass-title">
+              <p className="season-pass-kicker">{t("offerJoinKicker")}</p>
+              <TileIconSlot slot="hub.tour-title" className="season-pass-wordmark" />
+            </div>
+            {/* The habit promise stays in the flow; the two detail paragraphs
+                that used to sit under it now hide behind this chip. Reading
+                them never touches the rail, so it stays live while paying.
+                This block is the popover's positioning context — see the
+                floating panel below. */}
+            <div className="season-pass-habit" data-testid="season-pass-habit">
+              <p className="text-sm opacity-80">
+                {t("offerHabit")}{" "}
+                <button
+                  type="button"
+                  data-testid="season-pass-details-toggle"
+                  onClick={() => setDetailsOpen((o) => !o)}
+                  aria-expanded={detailsOpen}
+                  aria-controls="season-pass-details"
+                  aria-label={t("offerDetailsLabel")}
+                  className="season-pass-help-chip"
+                >
+                  ?
+                </button>
+              </p>
+
+              {/* Floating on purpose: laid out in flow it would push the price,
+                  the picker and the CTA down by its own height, moving the pay
+                  button out from under the reader's thumb mid-read. A popover,
+                  NOT a modal — the sheet already owns the only aria-modal. */}
+              {detailsOpen ? (
+                <div
+                  id="season-pass-details"
+                  data-testid="season-pass-details"
+                  className="season-pass-details"
+                  role="note"
+                >
+                  <p>{t("offerPractice", { days: pass.durationDays })}</p>
+                  <p>{t("offerShieldsBonus", { count: pass.shieldsOnPurchase })}</p>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="season-pass-story" data-testid="season-pass-story">
+              {STORY_SLOTS.map((slot, index) => (
+                <Fragment key={slot}>
+                  {index > 0 ? (
+                    <TileIconSlot
+                      slot="season.story-arrow"
+                      className="season-pass-story-arrow"
+                    />
+                  ) : null}
+                  <TileIconSlot slot={slot} className="season-pass-story-icon" />
+                </Fragment>
+              ))}
+            </div>
+
+            <div className="season-pass-benefits" data-testid="season-pass-benefits">
+              {benefits.map((tile) => (
+                <div key={tile.slot} className="season-pass-benefit">
+                  <TileIconSlot slot={tile.slot} className="season-pass-benefit-icon" />
+                  <span className="season-pass-benefit-label">{tile.label}</span>
+                </div>
+              ))}
+            </div>
 
             <span className="candy-stat-pill text-base font-bold">{priceLabel}</span>
-            <p className="text-[0.7rem] opacity-60">{t("offerPriceNote")}</p>
 
             {!rail.available ? (
               /* ---- UNAVAILABLE (no wallet / wrong chain) ---- */
@@ -200,6 +282,16 @@ function SeasonPassSheetInner({
             ) : (
               /* ---- PAY ---- */
               <div className="flex w-full flex-col items-center gap-3">
+                <div className="season-pass-paywith" data-testid="season-pass-paywith">
+                  <span className="season-pass-paywith-label">{t("offerPayWith")}</span>
+                  <span className="season-pass-paywith-rule">
+                    <TileIconSlot
+                      slot="shared.mission-adorno"
+                      className="season-pass-paywith-ornament"
+                    />
+                  </span>
+                </div>
+
                 {/* Token picker — auto-selects the payable token; user can
                  *  switch among the stablecoins they hold. */}
                 <div data-testid="season-pass-token-picker" className="w-full">
@@ -286,8 +378,11 @@ function SeasonPassSheetInner({
                   {payLabel}
                 </PrincipalButton>
 
-                <p className="text-[0.7rem] opacity-50">
-                  Paid with {tokenSymbol} on Celo.
+                {/* The picker right above already names the token, so the note
+                    spends its line on what the buyer cannot see: this is a
+                    one-off charge, not a subscription. */}
+                <p className="text-[0.7rem] opacity-60" data-testid="season-pass-note">
+                  {t("offerPriceNote")}
                 </p>
               </div>
             )}

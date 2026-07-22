@@ -3443,10 +3443,28 @@ export const CHALLENGE_CARD_COPY = {
   // via the Focus Passport, not "volume + consumables". The +Shields line is the
   // direct-purchase bonus ONLY; PRO holders see proIncludedTitle with no bonus.
   offerTitle: "Join the 21-Day Mind Challenge",
-  offerHabit: "Build a daily chess habit and keep your Focus Passport active.",
+  // The sheet renders the kicker as text and the rest as the canonical wordmark
+  // (`/art/mini-tour/tour-challenge-title`). `offerTitle` stays as the flat
+  // fallback and as the accessible name — an image cannot carry either.
+  offerJoinKicker: "Join the",
+  // One line on purpose: the two icon rows below already carry the offer, and
+  // the long version now lives behind the `?` chip.
+  offerHabit: "Build your daily focus habit.",
   offerPractice: "Access advanced challenges during your {days}-day journey",
   offerShieldsBonus: "Includes the direct-purchase +{count} Shields bonus",
   offerPriceNote: "One-time payment · No subscription",
+  // Benefit tiles. Both counts are interpolated from the SKU — a pass sold with
+  // a different duration or bonus must never advertise the old numbers.
+  offerBenefitDays: "{days} Days",
+  offerBenefitTrainings: "Training+",
+  offerBenefitShields: "+{count} Shields",
+  // Accessible name of the `?` chip that discloses offerPractice +
+  // offerShieldsBonus. The chip itself renders a glyph, which names nothing.
+  offerDetailsLabel: "What's included",
+  offerPayWith: "Pay with",
+  // The price already sits in its own pill above — repeating it on the CTA
+  // reads as a second charge.
+  offerCta: "Unlock Challenge",
   proIncludedTitle: "Included with PRO",
   // Post-purchase celebration. `celebrationShieldsPending` covers the path
   // where the payment settled but the shield grant did not (verify-payment
