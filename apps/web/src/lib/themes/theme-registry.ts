@@ -126,6 +126,13 @@ export type ThemeAssetKey =
   | "shared.feedback-surprised"
   | "shared.panel-bg"
   | "shared.shield"
+  // The Focus Passport streak sprites. Three slots, not one with variants:
+  // a theme may want a different flame per state, and `variant` is reserved
+  // for the free/PRO axis.
+  | "season.story-arrow"
+  | "shared.flame-color"
+  | "shared.flame-blue"
+  | "shared.flame-gray"
   | "shared.star"
   | "shared.mission-adorno"
   | "shared.mission-avatar"
@@ -459,6 +466,22 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "shared.shield": {
         default: "/art/redesign/icons/shield",
         usedIn: ["Arena", "Exercises", "↳ components/arena/arena-hud.tsx", "↳ components/exercises/exercise-drawer.tsx", "↳ components/exercises/fail-rescue-modal.tsx"],
+      },
+      "season.story-arrow": {
+        default: "/art/season/arrow-right",
+        usedIn: ["Payments — Season Pass offer, between the story beats", "↳ components/payments/season-pass-sheet.tsx"],
+      },
+      "shared.flame-color": {
+        default: "/art/focus-passport/flame-color",
+        usedIn: ["Hub — Focus Passport streak", "Hub — Challenge card streak", "Payments — Season Pass offer story row", "↳ components/hub/focus-passport.tsx", "↳ components/hub/challenge-card.tsx", "↳ components/payments/season-pass-sheet.tsx"],
+      },
+      "shared.flame-blue": {
+        default: "/art/focus-passport/flame-blue",
+        usedIn: ["Hub — Focus Passport streak", "Hub — Challenge card streak", "↳ components/hub/focus-passport.tsx", "↳ components/hub/challenge-card.tsx"],
+      },
+      "shared.flame-gray": {
+        default: "/art/focus-passport/flame-gray",
+        usedIn: ["Hub — Focus Passport streak", "Hub — Challenge card streak", "↳ components/hub/focus-passport.tsx", "↳ components/hub/challenge-card.tsx"],
       },
       "shared.star": {
         default: "/art/redesign/icons/star",
@@ -921,6 +944,10 @@ const LEARN_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "daily.welldone",
   "hub.mate-icon",
   "hub.focus-passport-streak",
+  "shared.flame-color",
+  "shared.flame-blue",
+  "shared.flame-gray",
+  "season.story-arrow",
   "bg.wallpaper-lite",
   "bg.path-map",
   "bg.path-map-base",

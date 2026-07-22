@@ -501,12 +501,16 @@ if (CHECK_MODE) {
   // consumer lives in apps/landing, out of this audit's scope) plus the 3
   // former exceptions now cataloged (arena.rival-mara, shop.pro,
   // shared.close-candy).
-  const expectedInitial = { A: 2, B: 66, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  // +4 (B: 66 → 70), all on 2026-07-22: the Focus Passport flames
+  // (shared.flame-color/blue/gray), which were always runtime art but whose
+  // consumers composed the path from a basename so this audit never saw them,
+  // plus season.story-arrow, new art for the Season Pass offer.
+  const expectedInitial = { A: 2, B: 70, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 162 ||
+    inventory.length !== 166 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

@@ -4,14 +4,15 @@ import { useTranslations } from "next-intl";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 import { type PassportSlotKind, passportSlots } from "@/lib/daily/passport";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 import type { HubFocusPassport, SeasonChallengeMeta } from "@/components/hub/use-hub-data";
 
-/** Flame sprite basenames in `public/art/focus-passport/` — same assets the
- *  standalone FocusPassport uses. */
-const FLAME_ASSET: Record<PassportSlotKind, string> = {
-  color: "flame-color",
-  blue: "flame-blue",
-  gray: "flame-gray",
+/** Flame sprites by catalog slot — same slots the standalone FocusPassport
+ *  uses, so a theme re-skins the streak on both surfaces at once. */
+const FLAME_SLOT: Record<PassportSlotKind, ThemeAssetKey> = {
+  color: "shared.flame-color",
+  blue: "shared.flame-blue",
+  gray: "shared.flame-gray",
 };
 
 /** Season-pass slice the card needs. Discriminated so the `active` branch
@@ -187,21 +188,20 @@ export function ChallengeCard({
               <>
                 <span className="challenge-card-flames" aria-hidden="true">
                   {slots.map((slot, i) => {
-                    const asset = FLAME_ASSET[slot.kind];
                     return (
-                      // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
-                      <picture
+                      <ThemeAssetPicture
                         key={i}
-                        data-testid="focus-passport-slot"
-                        data-kind={slot.kind}
-                        data-filled={slot.kind !== "gray" || undefined}
-                        data-glow={slot.glow || undefined}
-                        className={`challenge-card-flame${slot.glow ? " is-glow" : ""}`}
-                      >
-                        <source srcSet={`/art/focus-passport/${asset}.avif`} type="image/avif" />
-                        <source srcSet={`/art/focus-passport/${asset}.webp`} type="image/webp" />
-                        <img src={`/art/focus-passport/${asset}.png`} alt="" draggable={false} />
-                      </picture>
+                        slot={FLAME_SLOT[slot.kind]}
+                        pictureClassName={`challenge-card-flame${slot.glow ? " is-glow" : ""}`}
+                        pictureProps={{
+                          "data-testid": "focus-passport-slot",
+                          "data-kind": slot.kind,
+                          "data-filled": slot.kind !== "gray" || undefined,
+                          "data-glow": slot.glow || undefined,
+                        }}
+                        alt=""
+                        draggable={false}
+                      />
                     );
                   })}
                 </span>

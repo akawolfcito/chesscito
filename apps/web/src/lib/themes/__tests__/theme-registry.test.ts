@@ -266,7 +266,9 @@ describe("theme-registry", () => {
       },
     );
     expect(counts).toEqual({
-      learn: 31,
+      // +3 over 31: the Focus Passport flames, cataloged 2026-07-22. They are
+      // LEARN surfaces (passport, challenge card, Season Pass offer).
+      learn: 35,
       // +2 over the original 21: arena.rival-mara and shop.pro, both
       // formerly uncataloged "exceptions".
       play: 23,
