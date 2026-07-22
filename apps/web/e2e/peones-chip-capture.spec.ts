@@ -31,6 +31,15 @@ test.describe("Peones UX — PR capture", () => {
     });
   });
 
+  test("shield rescue cost ribbon", async ({ page }) => {
+    await page.goto("/dev/rescue-modal?variant=D&shields=0", {
+      waitUntil: "load",
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: `${OUT}/04-shield-rescue-ribbon.png` });
+  });
+
   test("spend delta", async ({ page }) => {
     await page.goto("/dev/peones-chip?variant=spend", { waitUntil: "load" });
     await page.evaluate(() => document.fonts.ready);

@@ -3647,8 +3647,6 @@ export const RESCUE_MODAL_COPY = {
     withShields: "Keep your streak alive.",
     /** Variant C only. */
     claimInPlace: "It's free. Yours right here.",
-    /** Variant D only. */
-    peonesFallback: "Costs {n} Peones.",
   },
   /** Stats pills row — shown between the body and the primary CTA.
    *  Mirrors the candy-pill HUD vocabulary so the count format
@@ -3660,8 +3658,6 @@ export const RESCUE_MODAL_COPY = {
     starProtected: "Star protected",
     /** Without-shields, variant C. */
     giftCount: "Gift · {n} free",
-    /** Without-shields, variant D — Peones cost companion pill. */
-    peonesCost: "{n} Peones",
   },
   cta: {
     /** State A/B primary — appended with the live shieldsLeft chip

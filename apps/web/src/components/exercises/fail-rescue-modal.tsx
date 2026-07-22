@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import type { RescueModalVariant } from "@/lib/exercises/use-rescue-modal-state";
 import { SHIELD_RESCUE_PEONES_COST } from "@/lib/peones/shield-spend-fallback";
+import { CoachCostRibbon } from "@/components/coach/coach-cost-ribbon";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { useThemeBackground } from "@/lib/themes/use-theme-background";
 
@@ -120,7 +121,12 @@ export function FailRescueModal({
   } else if (variant === "C") {
     footer = tRescue("footer.claimInPlace");
   } else {
-    footer = tRescue("footer.peonesFallback", { n: SHIELD_RESCUE_PEONES_COST });
+    // Variant D used to spell the price here ("Costs 5 Peones."). The
+    // corner ribbon on the CTA now carries it in the app's own cost
+    // language — sprite + number — so the footer is free to say what the
+    // player GETS instead of repeating what it costs (founder pass
+    // 2026-07-22: the ribbon already means "this is paid").
+    footer = tRescue("footer.withShields");
   }
 
   // Primary CTA — different label + handler per variant. Reuses the
@@ -160,9 +166,9 @@ export function FailRescueModal({
       n: WELCOME_PACK_GIFT_COUNT,
     });
   } else {
-    companionPillText = tRescue("pills.peonesCost", {
-      n: SHIELD_RESCUE_PEONES_COST,
-    });
+    // Variant D — no companion pill. The price lives on the CTA ribbon;
+    // a "5 Peones" pill next to it said the same thing a third time.
+    companionPillText = null;
   }
 
   return (
@@ -248,9 +254,22 @@ export function FailRescueModal({
               className="fail-rescue-modal-primary"
               onClick={primaryAction}
               aria-label={
-                primaryChip ? `${primaryLabel} · ${primaryChip}` : primaryLabel
+                primaryChip
+                  ? `${primaryLabel} · ${primaryChip}`
+                  : variant === "D"
+                    ? // The ribbon is decorative (aria-hidden), so the
+                      // price has to reach assistive tech through the
+                      // label — same contract as the Coach CTAs.
+                      `${primaryLabel} · ${SHIELD_RESCUE_PEONES_COST} Peones`
+                    : primaryLabel
               }
             >
+              {/* Cost ribbon — the app's cost language is sprite + number,
+               *  not a sentence. Variant D is the only paid branch: A/B
+               *  spend a shield the player already owns and C is free. */}
+              {variant === "D" ? (
+                <CoachCostRibbon target="shield" variant="cta" />
+              ) : null}
               <span className="fail-rescue-modal-primary-label">
                 {primaryLabel}
               </span>

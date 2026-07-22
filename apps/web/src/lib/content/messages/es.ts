@@ -2436,13 +2436,11 @@ const messages = {
     footer: {
       withShields: "Mantén tu racha viva.",
       claimInPlace: "Es gratis. Es tuyo, aquí mismo.",
-      peonesFallback: "Cuesta {n} Peones.",
     },
     pills: {
       shieldCount: "Escudo · {n} restantes",
       starProtected: "Estrella protegida",
       giftCount: "Regalo · {n} gratis",
-      peonesCost: "{n} Peones",
     },
     cta: {
       useShield: "Usar Escudo",

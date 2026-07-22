@@ -44,14 +44,48 @@ describe("FailRescueModal — variant D (0 shields, Peones fallback)", () => {
     expect(handlers.onUseShield).toHaveBeenCalledTimes(1);
   });
 
-  it("shows the shield rescue price as a companion pill", () => {
+  it("shows the price as a cost ribbon, in the app's sprite+number language", () => {
+    const { container } = render(
+      <FailRescueModal
+        visible
+        variant="D"
+        shieldsCount={0}
+        onUseShield={() => {}}
+        onRetryAnyway={() => {}}
+        onClaimFree={() => {}}
+      />,
+    );
+
+    // Moved off a "5 Peones" text pill onto the same ribbon the Coach
+    // CTAs use (founder pass 2026-07-22): a paid action is marked
+    // visually, not narrated. Still asserted against the canonical
+    // constant so the ribbon can never advertise a number the spend call
+    // does not charge.
+    const ribbon = container.querySelector(".coach-cost-ribbon__label");
+    expect(ribbon).not.toBeNull();
+    expect(ribbon).toHaveTextContent(String(SHIELD_RESCUE_PEONES_COST));
+  });
+
+  it("keeps the price reachable for assistive tech — the ribbon is decorative", () => {
     renderModal();
 
-    // Reads the canonical price so the pill can never advertise a
-    // number the spend call does not charge.
+    // The ribbon is aria-hidden, so the cost has to travel in the label.
     expect(
-      screen.getByText(`${SHIELD_RESCUE_PEONES_COST} Peones`),
+      screen.getByRole("button", {
+        name: new RegExp(`${SHIELD_RESCUE_PEONES_COST} Peones`, "i"),
+      }),
     ).toBeInTheDocument();
+  });
+
+  it("does not narrate the price anywhere else", () => {
+    renderModal();
+
+    // The old build said it three times: footer sentence, companion
+    // pill, and the CTA. One visual marker is the whole point.
+    expect(screen.queryByText(/costs \d+ peones/i)).toBeNull();
+    expect(
+      screen.queryByText(`${SHIELD_RESCUE_PEONES_COST} Peones`),
+    ).toBeNull();
   });
 });
 

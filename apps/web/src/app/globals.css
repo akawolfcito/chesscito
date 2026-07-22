@@ -14099,6 +14099,9 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .fail-rescue-modal-primary {
+  /* Anchors the corner cost ribbon on the Peones rescue (variant D),
+     the same way the arena Coach CTAs anchor theirs. */
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
