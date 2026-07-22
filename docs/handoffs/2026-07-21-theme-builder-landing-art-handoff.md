@@ -1,6 +1,6 @@
 # Handoff — Landing art en el theme-builder (2026-07-21)
 
-**Branch:** `feat/theme-builder-landing-art` (3 commits, sin mergear)
+**Branch:** `feat/theme-builder-landing-art` (9 commits, pusheada, sin mergear)
 **Plan:** `docs/superpowers/plans/2026-07-21-landing-art-in-theme-builder-plan.md`
 **Alcance aprobado por el founder:** Fase 1 + Fase 2; slides muertos como `deprecated`.
 
@@ -76,8 +76,49 @@ landing renderiza está en el catálogo o en el manifiesto, y ninguna deriva.
 
 ---
 
+---
+
+## Segunda tanda — huecos que encontró el founder mirando el builder
+
+Los tres salieron del mismo antipatrón: un asset con arte y consumidor reales,
+pero **sin slot**, tapado por un fallback hardcodeado o por la lista de
+excepciones del audit. Una entrada en `ALLOWED_UNREGISTERED_LITERALS` es, por
+definición, un asset que nadie puede reemplazar desde el builder. **La lista
+quedó vacía** y el audit reporta literal-diff 0.
+
+| Asset | Cómo estaba tapado | Fix |
+|---|---|---|
+| `/art/rivals/mara-avatar` | `if (avatarSlot) … else <picture>` en `arena-select-scaffold` | slot `arena.rival-mara`; `Rival.avatarSlot` ahora **obligatorio** |
+| `/art/shop/pro` | `icon` string crudo en `SHOP_TILE_ASSETS` | slot `shop.pro`; `iconSlot` ahora **obligatorio** |
+| `/art/redesign/icons/close` | ruta compuesta por `CandyIcon`, invisible al grep | slot `shared.close-candy` |
+
+En los dos primeros el campo pasó a **obligatorio**: el próximo rival o tile que
+se agregue sin slot es error de compilación, no un fallback silencioso.
+
+### ⚠️ Hallazgo colateral — el guard que no existía
+
+Catalogar a Mara **bajó** la suite de 5605 a 5603. `asset-integrity.test.ts`
+genera un test por literal `/art/…` hardcodeado, así que borrar el `<picture>`
+se llevó sus 3 chequeos de existencia. El problema de fondo: ese scanner **no ve
+los slots del catálogo** (basename sin extensión, resuelto en runtime). O sea
+**cada superficie que migró a `useThemeAsset` perdió su chequeo de que el
+archivo existe** — ~150 slots sin garantía. Ninguno roto hoy; un typo en un
+basename habría shippeado una imagen en blanco con la suite verde.
+Cubierto por `catalog-assets-on-disk.test.ts`.
+
+### UI — el basename se cortaba al revés
+
+`truncate` corta la **cola**, que es lo único que nombra al asset: los 18 slots
+del landing se leían todos `/art/landing-slides/avat…`. Por eso el founder buscó
+`avatar-play-chess`, no lo encontró y concluyó que el slot faltaba. Ahora muestra
+los últimos dos segmentos; el path completo sigue en el tooltip y en el copy.
+
 ## Próximos pasos
 
+0. **Correr la suite completa una vez.** La última corrida entera fue en
+   `1e6baa0` (5606 passing / 496 files, exit 0). Lo de después (`shop.pro`,
+   `shared.close-candy`, truncate) se validó con los 22 archivos afectados
+   (159 passing, exit 0) + `tsc --noEmit` limpio, no con la suite entera.
 1. **Mergear la branch** (no está mergeada; no hay PR abierto todavía).
 2. **Probar un reemplazo real** en `/dev/theme-builder` sobre un slide y mirar
    el landing local — es la única parte que no ejercité con un upload de verdad
