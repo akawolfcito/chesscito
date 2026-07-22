@@ -138,6 +138,23 @@ describe("landing art coverage", () => {
     expect(missing).toEqual([]);
   });
 
+  it("keeps every shared asset byte-identical across the two apps", () => {
+    // The drift this catches is silent by nature: both files exist, both
+    // render, and only one of them got the new art. Run
+    // `pnpm art:sync-landing` to converge.
+    const drifted = SHARED_LANDING_ASSETS.flatMap((basename) =>
+      ["png", "webp", "avif"]
+        .map((extension) => `${basename.replace(/^\//, "")}.${extension}`)
+        .filter(
+          (relative) =>
+            !readFileSync(path.join(WEB_PUBLIC, relative)).equals(
+              readFileSync(path.join(LANDING_PUBLIC, relative)),
+            ),
+        ),
+    );
+    expect(drifted).toEqual([]);
+  });
+
   it("never mirrors a landing-owned slot back from the web app", () => {
     // apps/web/public still holds stale copies of /art/landing/*. Syncing
     // those would overwrite the live landing art with the orphan.
