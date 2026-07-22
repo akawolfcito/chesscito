@@ -62,8 +62,11 @@ describe("writeDerivedIcons", () => {
     expect(names).toEqual(["icon.png"]);
   });
 
+  // These destinations are the first in the theme builder that live outside
+  // public/ — src/app is where the source code is. A malformed relative path
+  // here would not corrupt an asset, it would overwrite a component.
   it("refuses a destination that escapes the app root", async () => {
-    const result = await writeDerivedIcons([icon("../../../etc/passwd")], {
+    const result = await writeDerivedIcons([icon("../../src/app/layout.tsx")], {
       rootResolver: resolver,
     });
     expect(result).toEqual({
@@ -73,9 +76,10 @@ describe("writeDerivedIcons", () => {
   });
 
   it("writes nothing at all when one destination is rejected", async () => {
-    await writeDerivedIcons([icon("src/app/icon.png"), icon("../escape.png")], {
-      rootResolver: resolver,
-    });
+    await writeDerivedIcons(
+      [icon("src/app/icon.png"), icon("../../src/app/layout.tsx")],
+      { rootResolver: resolver },
+    );
     await expect(fs.access(path.join(sandbox, "web/src/app/icon.png"))).rejects.toThrow();
   });
 
