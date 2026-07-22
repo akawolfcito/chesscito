@@ -10126,10 +10126,9 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Zoom toward the character's face (upper-center) so the head reads big in
-   * the small framed slot; the parent's overflow:hidden crops the rest. */
-  transform: scale(1.85);
-  transform-origin: 50% 30%;
+  /* NO zoom transform. The rival art (2026-07-22) is already a square,
+   * face-forward portrait — scaling it up cropped everything but the snout.
+   * If a future avatar needs framing, crop the ASSET, not the slot. */
   filter: grayscale(1);
   transition: filter 160ms ease;
 }
