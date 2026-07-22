@@ -3711,10 +3711,18 @@ export function ExercisesScreen({
             // the surface where it is spent, not only on the Hub. Sits in
             // the quest tray next to stars/shields/combo and stays up for
             // the whole exercise, so a Hint debit is seen where it
-            // happens. Lite ships no Peones surfaces, so it gets none.
-            CHESSCITO_LITE_MODE ? null : (
-              <PeonesBalanceChip surface="exercises" />
-            )
+            // happens.
+            //
+            // NOT gated on mode (fixed 2026-07-22). It shipped behind
+            // `!CHESSCITO_LITE_MODE`, copied from the Hint's gate whose
+            // comment claims Lite "has no Peones surfaces". That claim is
+            // false: `CHESSCITO_LITE_MODE` is just `mode === "learn"`
+            // (feature-flags.ts), LEARN is a shipped mode, its Hub mounts
+            // this very chip ungated, and LEARN is where Peones are EARNED
+            // (Daily + exercise milestones). The gate therefore hid the
+            // balance from the exact players who accumulate one — a
+            // currency you cannot see may as well not exist.
+            <PeonesBalanceChip surface="exercises" />
           }
           isReplay={isReplay}
         />
