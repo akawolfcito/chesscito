@@ -3443,10 +3443,13 @@ export function ExercisesScreen({
             // persistent entry points (Daily / Special Training).
             // Hidden (not row-shifting empty space) outside
             // phase=ready / in labyrinth mode.
-            // Lite isolation: the hint is a Peones spend, so it never mounts
-            // in Chesscito Lite (no Peones surfaces in Lite). Season Pass is
-            // the only entitlement and is reachable via the Hub + Lite CTAs.
-            activeLabyrinth || phase !== "ready" || CHESSCITO_LITE_MODE ? null : (
+            // Mode gate REMOVED 2026-07-22. It read `|| CHESSCITO_LITE_MODE`
+            // on the premise that Lite "has no Peones surfaces" — false, and
+            // the same premise that hid the balance chip from LEARN. LEARN
+            // already earns Peones (Daily + milestones) and already spends
+            // them (shield rescue), so withholding the cheapest sink from the
+            // mode that accumulates the currency only starved the loop.
+            activeLabyrinth || phase !== "ready" ? null : (
               <PeonesHintButton
                 piece={selectedPiece}
                 exerciseId={currentExercise.id}
