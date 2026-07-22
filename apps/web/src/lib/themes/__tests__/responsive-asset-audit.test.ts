@@ -34,7 +34,12 @@ async function approvedSource(width = 600): Promise<Buffer> {
   }).png().toBuffer();
 }
 
-describe("responsive family audit", () => {
+// Four of these five generate a complete responsive family — seven files
+// each, AVIF included — through real sharp encoding. The file takes ~8s on an
+// idle machine, so the 5s default only passed while nothing else competed for
+// CPU: under the full suite it failed intermittently, and the failure said
+// "timeout", never anything about the audit.
+describe("responsive family audit", { timeout: 30_000 }, () => {
   it("classifies a generated family as healthy using decoded content", async () => {
     const profile = getResponsiveAssetProfile("hub.avatar-lite")!;
     await replaceAssetFamilyAtomic({
