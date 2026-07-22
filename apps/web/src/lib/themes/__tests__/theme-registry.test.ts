@@ -267,12 +267,14 @@ describe("theme-registry", () => {
     );
     expect(counts).toEqual({
       learn: 31,
-      // 22 = 21 + arena.rival-mara, the last uncataloged arena image.
-      play: 22,
+      // +2 over the original 21: arena.rival-mara and shop.pro, both
+      // formerly uncataloged "exceptions".
+      play: 23,
       // 3 reclassified off `unknown` (they always had a consumer — in the
       // sibling app) + 15 newly cataloged carousel slots.
       landing: 18,
-      shared: 74,
+      // +1: shared.close-candy, the CandyIcon close art.
+      shared: 75,
       "full-legacy": 29,
       "dev-only": 0,
       unknown: 4,

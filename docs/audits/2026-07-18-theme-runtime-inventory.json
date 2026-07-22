@@ -1,62 +1,39 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 160,
+  "totalSlots": 162,
   "categoryCounts": {
-    "A": 149,
+    "A": 150,
     "B": 0,
     "C": 0,
     "D": 0,
     "E": 0,
-    "F": 11,
+    "F": 12,
     "G": 0
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 64,
+    "B": 66,
     "C": 26,
     "D": 38,
     "E": 19,
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 150,
-  "fullyConnectedSlots": 149,
+  "resolverSlots": 151,
+  "fullyConnectedSlots": 150,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
-  "noActiveConsumerSlots": 4,
-  "connectedSlots": 149,
-  "excludedSlots": 11,
-  "exceptions": [
-    {
-      "basename": "/art/redesign/icons/close",
-      "reason": "Generic CandyIcon close art; distinct from the cataloged mission close button.",
-      "detected": false
-    },
-    {
-      "basename": "/art/shop/pro",
-      "reason": "Shop product art outside the theme-builder catalog.",
-      "detected": true
-    }
-  ],
+  "noActiveConsumerSlots": 5,
+  "connectedSlots": 150,
+  "excludedSlots": 12,
+  "exceptions": [],
   "literalDiff": {
-    "registeredBasenames": 181,
-    "discoveredBasenames": 18,
-    "unregisteredExistingAssets": [
-      {
-        "basename": "/art/shop/pro",
-        "occurrences": [
-          {
-            "file": "src/lib/contracts/shop-catalog.ts",
-            "line": 81,
-            "raw": "/art/shop/pro",
-            "sourceLine": "pro: { icon: \"/art/shop/pro\" },"
-          }
-        ]
-      }
-    ]
+    "registeredBasenames": 183,
+    "discoveredBasenames": 17,
+    "unregisteredExistingAssets": []
   },
   "slots": [
     {
@@ -2551,6 +2528,39 @@
       "usesSharedMap": false,
       "buildsPathDynamically": false,
       "noActiveConsumer": false
+    },
+    {
+      "slotId": "shared.close-candy",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/redesign/icons/close"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "UI — CandyIcon close",
+        "↳ components/redesign/candy-icon.tsx (composed path, name=\"close\")"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "F",
+      "documentedFiles": [
+        "src/components/redesign/candy-icon.tsx"
+      ],
+      "currentConsumerState": "none",
+      "consumerCount": 0,
+      "consumers": [],
+      "patterns": [],
+      "usesResolver": false,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": true
     },
     {
       "slotId": "shared.close",
@@ -6841,6 +6851,51 @@
       "usesSharedMap": false,
       "buildsPathDynamically": false,
       "noActiveConsumer": true
+    },
+    {
+      "slotId": "shop.pro",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/shop/pro"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Shop — PRO subscription tile icon",
+        "↳ components/exercises/shop-sheet.tsx (SHOP_TILE_ASSETS)"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/exercises/shop-sheet.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/lib/contracts/shop-catalog.ts",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
     },
     {
       "slotId": "shop.slot-frame",

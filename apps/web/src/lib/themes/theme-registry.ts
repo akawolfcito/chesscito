@@ -115,6 +115,7 @@ export type ThemeAssetKey =
   | "shared.mission-adorno"
   | "shared.mission-avatar"
   | "shared.close"
+  | "shared.close-candy"
   | "shared.mission-panel"
   | "shared.trophy-epic"
   | "shared.feedback-sad"
@@ -204,6 +205,7 @@ export type ThemeAssetKey =
   | "bg.path-map-base"
   | "bg.splash-loading"
   | "shop.coach-pack-20"
+  | "shop.pro"
   | "shop.slot-frame"
   | "arena.bg-matchup"
   | "arena.result-checkmate"
@@ -451,6 +453,12 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "shared.mission-avatar": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/shared/mission-avatar/pro" },
         default: "/art/screen-mission/avatar-icon",
         usedIn: ["Arena", "Exercises", "↳ components/arena/soft-gate-sheet.tsx", "↳ components/exercises/mission-briefing.tsx", "↳ components/exercises/mission-detail-sheet.tsx"],
+      },
+      // Distinct art from shared.close: that one is the mission panel's
+      // ornate close button, this is the flat icon CandyIcon renders.
+      "shared.close-candy": {
+        default: "/art/redesign/icons/close",
+        usedIn: ["UI — CandyIcon close", "↳ components/redesign/candy-icon.tsx (composed path, name=\"close\")"],
       },
       "shared.close": {
         default: "/art/screen-mission/close-icon",
@@ -704,6 +712,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "bg.splash-loading": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/bg/splash-loading/pro" }, default: "/art/redesign/bg/splash-loading", usedIn: ["Splash loading background", "↳ components/exercises/exercises-screen.tsx (.playhub-intro-overlay)"] },
       // shop
       "shop.coach-pack-20": { default: "/art/shop/coach-pack-20", usedIn: ["Shop — coach pack (20)", "↳ components/exercises/exercises-screen.tsx"] },
+      "shop.pro": { default: "/art/shop/pro", usedIn: ["Shop — PRO subscription tile icon", "↳ components/exercises/shop-sheet.tsx (SHOP_TILE_ASSETS)"] },
       "shop.slot-frame": { default: "/art/shop-slot-frame", usedIn: ["Shop — slot frame", "↳ globals.css .shop-slot-frame / --playhub-slot-frame (CSS-only)"] },
       // arena additions
       "arena.bg-matchup": { default: "/art/arena/bg-matchup", usedIn: ["Arena — matchup background", "↳ components/arena/arena-matchup-transition.tsx"] },
@@ -894,6 +903,7 @@ const LEARN_SLOT_KEYS: readonly ThemeAssetKey[] = [
 
 const PLAY_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "hub.shop-icon",
+  "shop.pro",
   "arena.save",
   "arena.resign",
   "arena.undo",
@@ -938,6 +948,7 @@ const SHARED_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "shared.panel-bg",
   "shared.shield",
   "shared.star",
+  "shared.close-candy",
   "shared.mission-adorno",
   "shared.mission-avatar",
   "shared.close",

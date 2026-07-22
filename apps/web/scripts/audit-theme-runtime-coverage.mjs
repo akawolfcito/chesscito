@@ -12,10 +12,10 @@ const OUTPUT_FILE = path.resolve(
 );
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".css"]);
 const CHECK_MODE = process.argv.includes("--check");
-const ALLOWED_UNREGISTERED_LITERALS = new Map([
-  ["/art/redesign/icons/close", "Generic CandyIcon close art; distinct from the cataloged mission close button."],
-  ["/art/shop/pro", "Shop product art outside the theme-builder catalog."],
-]);
+// Empty on purpose. An entry here is an asset nobody can replace from the
+// builder, which is the exact failure the catalog exists to prevent — every
+// former exception is now a registered slot.
+const ALLOWED_UNREGISTERED_LITERALS = new Map([]);
 const ART_LITERAL_RE = /["'`](\/art\/[^"'`\s),;]+)/g;
 const IMAGE_EXT_RE = /\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
 const INITIAL_CATEGORIES = {
@@ -493,18 +493,20 @@ if (CHECK_MODE) {
   const unexpectedLiterals = unregisteredLiterals.filter(
     ({ basename }) => !ALLOWED_UNREGISTERED_LITERALS.has(basename),
   );
-  const requiredLiteralExceptions = ["/art/shop/pro"];
+  const requiredLiteralExceptions = [];
   const missingExceptions = requiredLiteralExceptions.filter(
     (basename) => !unregisteredLiterals.some((literal) => literal.basename === basename),
   );
-  // 160 = the 162 cataloged slots, minus the 3 landing.* ones (whose consumer
-  // lives in apps/landing, out of this audit's scope), plus arena.rival-mara.
-  const expectedInitial = { A: 2, B: 64, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  // 162 web-owned slots: the original 162 minus the 3 landing.* ones (whose
+  // consumer lives in apps/landing, out of this audit's scope) plus the 3
+  // former exceptions now cataloged (arena.rival-mara, shop.pro,
+  // shared.close-candy).
+  const expectedInitial = { A: 2, B: 66, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 160 ||
+    inventory.length !== 162 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

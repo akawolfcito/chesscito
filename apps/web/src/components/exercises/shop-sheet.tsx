@@ -188,15 +188,7 @@ function ShopItemCard({
        *  overflow:visible on the picture). Text identity sits on the
        *  right row 1, footer pills on row 2 right. The bespoke art
        *  reads at card scale without leaving empty space below it. */}
-      {assets.iconSlot ? (
-        <ThemeAssetPicture slot={assets.iconSlot} pictureClassName="shop-item-tile-icon-figure" alt="" aria-hidden="true" className="shop-item-tile-icon-img" draggable={false} />
-      ) : assets.icon ? (
-        <picture className="shop-item-tile-icon-figure">
-          <source srcSet={`${assets.icon}.avif`} type="image/avif" />
-          <source srcSet={`${assets.icon}.webp`} type="image/webp" />
-          <img src={`${assets.icon}.png`} alt="" aria-hidden="true" className="shop-item-tile-icon-img" draggable={false} />
-        </picture>
-      ) : null}
+      <ThemeAssetPicture slot={assets.iconSlot} pictureClassName="shop-item-tile-icon-figure" alt="" aria-hidden="true" className="shop-item-tile-icon-img" draggable={false} />
 
       {/* Featured ribbon — absolute-positioned over the top-right
        *  corner of the tile so it reads as an honest badge instead
