@@ -11,6 +11,7 @@
  */
 import {
   THEMES,
+  type AppRoot,
   type ThemeAssetEntry,
   type ThemeAssetVariant,
 } from "./theme-registry";
@@ -29,6 +30,9 @@ export type UploadTarget =
       basename: string;
       declaresAsset: boolean;
       responsiveProfile: ResponsiveAssetProfile | null;
+      /** App whose `public/` receives the write. A basename alone is
+       *  ambiguous: the same `/art/...` path exists in both apps. */
+      root: AppRoot;
     }
   | { ok: false; reason: string };
 
@@ -48,6 +52,7 @@ export function resolveVariantBasename(
   if (!isVariant(variant)) {
     return { ok: false, reason: `invalid variant: ${variant}` };
   }
+  const root: AppRoot = entry.root ?? "web";
   const resolved = resolveAssetVariant(entry, variant);
   if (resolved.mode === "asset") {
     return {
@@ -55,6 +60,7 @@ export function resolveVariantBasename(
       basename: resolved.path,
       declaresAsset: true,
       responsiveProfile,
+      root,
     };
   }
   if (!fallback) {
@@ -68,6 +74,7 @@ export function resolveVariantBasename(
     basename: deterministicVariantPath(fallback.themeId, fallback.key, variant),
     declaresAsset: false,
     responsiveProfile,
+    root,
   };
 }
 

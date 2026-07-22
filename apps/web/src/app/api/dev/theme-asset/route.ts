@@ -11,6 +11,9 @@
  * SECURITY: the write path is derived from the registry via resolveUploadTarget,
  * NEVER from the request. The client only picks (theme, slot, variant).
  */
+import { promises as fs } from "node:fs";
+import path from "node:path";
+
 import { NextResponse } from "next/server";
 import { isDevSurfaceEnabled, canWriteBaseline } from "@/lib/dev/dev-surface";
 import { resolveUploadTarget } from "@/lib/themes/upload-target";
@@ -23,6 +26,7 @@ import { THEMES, type ThemeAssetEntry } from "@/lib/themes/theme-registry";
 import { resolveAssetVariant, type AssetVariant } from "@/lib/themes/asset-variant";
 import { setRegistryVariant } from "@/lib/themes/registry-editor";
 import { readVariantUndo, saveVariantUndo } from "@/lib/themes/variant-undo";
+import { resolveAppRoot } from "@/lib/themes/asset-roots";
 
 export const runtime = "nodejs";
 
@@ -52,6 +56,61 @@ function assetFamilyError(error: unknown): NextResponse {
   return NextResponse.json(
     { ok: false, error: messages[error.code], code: error.code },
     { status: clientError ? 400 : 500 },
+  );
+}
+
+/** Probe order matches the catalog's, so the preview shows the same file the
+ *  catalog reports dimensions for. */
+const PREVIEW_FORMATS = [
+  { extension: "png", type: "image/png" },
+  { extension: "webp", type: "image/webp" },
+  { extension: "avif", type: "image/avif" },
+] as const;
+
+/**
+ * GET /api/dev/theme-asset?themeId=&key=&variant= — stream a slot's current
+ * image.
+ *
+ * Only reason this exists: `apps/web`'s dev server serves `apps/web/public`,
+ * so a landing-rooted slot has no URL the catalog page could point an <img>
+ * at. Same security contract as the POST — the path comes from the registry
+ * via resolveUploadTarget, never from the query.
+ */
+export async function GET(req: Request) {
+  if (!isDevSurfaceEnabled()) {
+    return new NextResponse("Not found", { status: 404 });
+  }
+
+  const params = new URL(req.url).searchParams;
+  const target = resolveUploadTarget(
+    String(params.get("themeId") ?? ""),
+    String(params.get("key") ?? ""),
+    String(params.get("variant") ?? ""),
+  );
+  if (!target.ok) {
+    return NextResponse.json({ ok: false, error: target.reason }, { status: 400 });
+  }
+
+  const publicDir = path.join(resolveAppRoot(target.root), "public");
+  const relative = target.basename.replace(/^\//, "");
+  for (const { extension, type } of PREVIEW_FORMATS) {
+    let bytes: Buffer;
+    try {
+      bytes = await fs.readFile(path.join(publicDir, `${relative}.${extension}`));
+    } catch {
+      continue;
+    }
+    return new NextResponse(new Uint8Array(bytes), {
+      headers: {
+        "Content-Type": type,
+        // The whole point is seeing a replacement immediately.
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+  return NextResponse.json(
+    { ok: false, error: "no file on disk for this slot" },
+    { status: 404 },
   );
 }
 
@@ -86,6 +145,9 @@ export async function POST(req: Request) {
   const typedVariant = variant as "default" | "pro";
   const entry = (THEMES[themeId].assets as Record<string, ThemeAssetEntry>)[key];
   const current = resolveAssetVariant(entry, typedVariant);
+  // Which app's public/ the write lands in. Comes from the registry via the
+  // target, never from the request, and is a closed two-value whitelist.
+  const rootDir = resolveAppRoot(target.root);
 
   // Undo restores both the registry state and the triplet when the last action
   // was an upload. Old triplet-only backups remain supported.
@@ -98,6 +160,7 @@ export async function POST(req: Request) {
         if (restoresFamily && stateUndo.basename) {
           const family = await restorePreviousAssetFamilyAtomic({
             basename: stateUndo.basename,
+            rootDir,
             afterRestore: stateUndo.restoreRegistry
               ? () => setRegistryVariant(themeId, key, typedVariant, stateUndo.previous)
               : undefined,
@@ -116,7 +179,10 @@ export async function POST(req: Request) {
           await setRegistryVariant(themeId, key, typedVariant, stateUndo.previous);
         }
       } else {
-        const family = await restorePreviousAssetFamilyAtomic({ basename: target.basename });
+        const family = await restorePreviousAssetFamilyAtomic({
+          basename: target.basename,
+          rootDir,
+        });
         if (family.ok) restored = family.restored;
       }
     } catch (error) {
@@ -125,7 +191,7 @@ export async function POST(req: Request) {
     if (!stateUndo && restored.length === 0) {
       return NextResponse.json({ ok: false, error: "nothing to undo" }, { status: 409 });
     }
-    console.info("[dev/theme-asset] undo", { themeId, key, variant, basename: target.basename });
+      console.info("[dev/theme-asset] undo", { themeId, key, variant, root: target.root, basename: target.basename });
     return NextResponse.json({ ok: true, basename: target.basename, restored });
   }
 
@@ -185,6 +251,7 @@ export async function POST(req: Request) {
     result = await replaceAssetFamilyAtomic({
       basename: target.basename,
       input: buffer,
+      rootDir,
       profile: target.responsiveProfile,
       afterPromote: target.declaresAsset
         ? undefined
@@ -205,6 +272,6 @@ export async function POST(req: Request) {
   } catch (error) {
     return assetFamilyError(error);
   }
-  console.info("[dev/theme-asset]", { themeId, key, variant, basename: target.basename });
+  console.info("[dev/theme-asset]", { themeId, key, variant, root: target.root, basename: target.basename });
   return NextResponse.json({ ok: true, basename: target.basename, ...result });
 }
