@@ -27,6 +27,19 @@ function groupByCategory(slots: SlotCatalogEntry[]): [string, SlotCatalogEntry[]
   return [...groups.entries()];
 }
 
+/**
+ * Last two segments of a basename — `…/landing-slides/avatar-play-chess`.
+ *
+ * `truncate` clips the tail, which is the only part that names the asset:
+ * the 18 landing slots all rendered as `/art/landing-slides/avat…`, so you
+ * could not tell them apart or find one by filename. Full path stays in the
+ * title tooltip and in the copy button.
+ */
+function shortPath(basename: string): string {
+  const parts = basename.split("/").filter(Boolean);
+  return parts.length <= 2 ? basename : `…/${parts.slice(-2).join("/")}`;
+}
+
 function dims(a: ResolvedAsset): string {
   if (a.width == null || a.height == null) return "— missing on disk —";
   return `${a.width}×${a.height} · ${a.format?.toUpperCase() ?? ""}`;
@@ -104,7 +117,7 @@ function VariantCell({
       )}
       <div className="mt-1 flex items-center gap-1.5">
         <span className="truncate text-[11px] text-neutral-500" title={asset?.basename}>
-          {asset?.basename ?? "—"}
+          {asset?.basename ? shortPath(asset.basename) : "—"}
         </span>
         {asset?.basename && <CopyPathButton path={asset.basename} />}
       </div>
