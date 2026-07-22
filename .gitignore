@@ -157,4 +157,7 @@ lh-*.json
 graphify-out/
 
 # Theme-builder one-level undo store (dev tool; pre-overwrite triplet backups)
+# One per app root the builder can write to — a landing-rooted slot drops its
+# backups next to apps/landing/public, not in apps/web.
 apps/web/.theme-builder-trash/
+apps/landing/.theme-builder-trash/
