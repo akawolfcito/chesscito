@@ -204,6 +204,20 @@ describe("PeonesBalanceChip — Get Peones entry point (payment rail)", () => {
     expect(screen.getByTestId("chesito-card")).toBeInTheDocument();
   });
 
+  it("portals the card to <body> so a stacking-context ancestor can't trap it", () => {
+    // Regression 2026-07-22: on /exercises the chip lives inside
+    // `.atmosphere > * { position:relative; z-index:1 }` (the mission tray).
+    // A fixed modal rendered in-tree is painted WITHIN that child's stacking
+    // context, so the board — a later sibling with the same z-index — covers
+    // it despite the modal's z-[70]. Portaling to <body> escapes it.
+    successState();
+    const { container } = render(<PeonesBalanceChip />);
+    fireEvent.click(screen.getByTestId("peones-balance-chip"));
+    const dialog = screen.getByRole("dialog");
+    expect(container).not.toContainElement(dialog);
+    expect(dialog.parentElement).toBe(document.body);
+  });
+
   it("the chip is reachable as a button and shows no spend action", () => {
     successState();
     render(<PeonesBalanceChip />);
