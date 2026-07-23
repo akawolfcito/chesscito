@@ -3,8 +3,19 @@
 import { useEffect, useState } from "react";
 
 /**
- * Exercise streak counter — consecutive successful exercises without
- * a non-shielded failure.
+ * Session Combo counter — consecutive successful exercises without
+ * a non-shielded failure. This is the value surfaced as "×N COMBO" in
+ * the exercise overlay / drawer tray (`exercises.combo` icon).
+ *
+ * ⚠️ Canonical vocabulary (docs/product/2026-07-23-combo-streak-vocabulary.md):
+ * despite the `streak` naming here, this is the SESSION COMBO metric, a
+ * distinct counter from the DAILY STREAK (consecutive days, stored under
+ * `chesscito:daily-progress` and surfaced as "N-day streak" 🔥). They are
+ * independent — do not conflate or reuse one value under both names.
+ *
+ * Historical note: the identifiers keep the `streak` name (hook, storage
+ * key `chesscito:streak`, CSS `--streak`) to avoid a storage/CSS/test
+ * migration with no user-facing benefit; the label is already "COMBO".
  *
  * Why it matters: streak is the consumable visible state behind the
  * Shield rescue mechanic. Without streak surfaced, players don't grok

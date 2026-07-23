@@ -19,7 +19,13 @@ type Props = Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "srcSet" | "alt">
   optimized?: boolean;
   pictureClassName?: string;
   pictureStyle?: CSSProperties;
-  pictureProps?: Omit<HTMLAttributes<HTMLPictureElement>, "className" | "style">;
+  /** `data-*` is spelled out because `HTMLAttributes` does not carry it: JSX
+   *  accepts data attributes inline, but not through a typed prop object, and
+   *  the passport flames hang their test/CSS hooks (`data-kind`, `data-glow`)
+   *  on the <picture>, not the <img>. */
+  pictureProps?: Omit<HTMLAttributes<HTMLPictureElement>, "className" | "style"> & {
+    [dataAttribute: `data-${string}`]: string | number | boolean | undefined;
+  };
 };
 
 export function ThemeAssetPicture({

@@ -28,6 +28,10 @@ export type UseHubTourArgs = {
 export function useHubTour({ enabled, ready }: UseHubTourArgs) {
   const [open, setOpen] = useState(false);
   const decidedRef = useRef(false);
+  // A manual replay (the Focus Passport `?`) re-reads the intro without being
+  // the onboarding: it must not persist "seen", so `finish` skips the write
+  // while this is set.
+  const replayingRef = useRef(false);
 
   useEffect(() => {
     if (!enabled || !ready || decidedRef.current) return;
@@ -38,10 +42,27 @@ export function useHubTour({ enabled, ready }: UseHubTourArgs) {
   }, [enabled, ready]);
 
   const finish = useCallback((outcome: HubTourOutcome) => {
+    if (replayingRef.current) {
+      // Replaying leaves progress, rewards AND the "tour seen" flag untouched —
+      // a player who never finished the real tour still gets it next cold start.
+      replayingRef.current = false;
+      setOpen(false);
+      track("hub_tour_finish", { outcome, replay: true });
+      return;
+    }
     markHubTourSeen(outcome);
     setOpen(false);
     track("hub_tour_finish", { outcome });
   }, []);
 
-  return { open, finish };
+  /** Re-launch the tour on demand, bypassing the once-per-mount / "already
+   *  seen" gate. It starts fresh from step 1 because the presenter remounts
+   *  whenever `open` flips true. */
+  const replay = useCallback(() => {
+    replayingRef.current = true;
+    setOpen(true);
+    track("hub_tour_replay");
+  }, []);
+
+  return { open, finish, replay };
 }

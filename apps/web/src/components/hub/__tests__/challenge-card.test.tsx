@@ -38,6 +38,33 @@ afterEach(() => {
 })
 
 describe('<ChallengeCard>', () => {
+  it('shows the Focus Passport `?` and replays the tour on tap, without a Join dependency', () => {
+    const onReplayTour = vi.fn()
+    render(
+      <ChallengeCard
+        focusPassport={passport()}
+        challenge={CHALLENGE}
+        seasonPass={{ active: false, isLoading: false }}
+        onJoinChallenge={() => {}}
+        onReplayTour={onReplayTour}
+      />,
+    )
+    fireEvent.click(screen.getByTestId('challenge-replay-tour'))
+    expect(onReplayTour).toHaveBeenCalledTimes(1)
+  })
+
+  it('omits the `?` when no replay handler is wired', () => {
+    render(
+      <ChallengeCard
+        focusPassport={passport()}
+        challenge={CHALLENGE}
+        seasonPass={{ active: false, isLoading: false }}
+        onJoinChallenge={() => {}}
+      />,
+    )
+    expect(screen.queryByTestId('challenge-replay-tour')).toBeNull()
+  })
+
   it('pulses the Join CTA while the purchase is available', () => {
     // The transaction this whole surface exists for. Once the hub tour ends,
     // the pulse is the only thing still pointing at it.
@@ -52,6 +79,33 @@ describe('<ChallengeCard>', () => {
     expect(screen.getByTestId('challenge-join-cta').className).toContain(
       'is-pulsing',
     )
+  })
+
+  it('renders the tour Join nudge arrow alongside the button, and drops it when the pass is active', () => {
+    // The arrow lives in the DOM whenever Join does; CSS reveals it only while
+    // the mini-tour spotlights this card (see the hub-tour spotlight test).
+    const { rerender } = render(
+      <ChallengeCard
+        focusPassport={passport()}
+        challenge={CHALLENGE}
+        seasonPass={{ active: false, isLoading: false }}
+        onJoinChallenge={() => {}}
+      />,
+    )
+    // Offer state: Join exists → arrow is rendered next to it.
+    expect(document.querySelector('.challenge-card-join-arrow')).toBeInTheDocument()
+
+    // Active pass: no Join button, so no arrow.
+    rerender(
+      <ChallengeCard
+        focusPassport={passport()}
+        challenge={CHALLENGE}
+        seasonPass={{ active: true, source: 'season_pass', dayOfChallenge: 3, shieldsCredited: 3 }}
+        onJoinChallenge={null}
+      />,
+    )
+    expect(screen.queryByTestId('challenge-join-cta')).toBeNull()
+    expect(document.querySelector('.challenge-card-join-arrow')).toBeNull()
   })
 
   it('never pulses a CTA that cannot be tapped', () => {

@@ -2,6 +2,8 @@
 
 import { useTranslations } from "next-intl";
 
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 import {
   type PassportSlotKind,
   passportSlots,
@@ -21,11 +23,12 @@ export type FocusPassportProps = {
   isLoading: boolean;
 };
 
-/** Flame sprite basenames in `public/art/focus-passport/`. */
-const FLAME_ASSET: Record<PassportSlotKind, string> = {
-  color: "flame-color",
-  blue: "flame-blue",
-  gray: "flame-gray",
+/** Flame sprites, by catalog slot. Composing the path by basename used to hide
+ *  these three from the theme audit — a theme could not re-skin the streak. */
+const FLAME_SLOT: Record<PassportSlotKind, ThemeAssetKey> = {
+  color: "shared.flame-color",
+  blue: "shared.flame-blue",
+  gray: "shared.flame-gray",
 };
 
 /** Focus Passport card (Chesscito Learn, P1.1 visual iteration).
@@ -72,33 +75,28 @@ export function FocusPassport({
       <div className="focus-passport-slots" role="list">
         {slots.map((slot, i) => {
           const filled = slot.kind !== "gray";
-          const asset = FLAME_ASSET[slot.kind];
           const dayLabel = i + 1;
           return (
-            // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
-            <picture
+            <ThemeAssetPicture
               key={i}
-              role="listitem"
-              data-testid="focus-passport-slot"
-              data-kind={slot.kind}
-              data-filled={filled || undefined}
-              data-glow={slot.glow || undefined}
-              className={`focus-passport-slot focus-passport-slot--${slot.kind}${
+              slot={FLAME_SLOT[slot.kind]}
+              pictureClassName={`focus-passport-slot focus-passport-slot--${slot.kind}${
                 slot.glow ? " is-glow" : ""
               }`}
-            >
-              <source srcSet={`/art/focus-passport/${asset}.avif`} type="image/avif" />
-              <source srcSet={`/art/focus-passport/${asset}.webp`} type="image/webp" />
-              <img
-                src={`/art/focus-passport/${asset}.png`}
-                alt={
-                  filled
-                    ? t("slotFilledAria", { index: dayLabel })
-                    : t("slotEmptyAria", { index: dayLabel })
-                }
-                draggable={false}
-              />
-            </picture>
+              pictureProps={{
+                role: "listitem",
+                "data-testid": "focus-passport-slot",
+                "data-kind": slot.kind,
+                "data-filled": filled || undefined,
+                "data-glow": slot.glow || undefined,
+              }}
+              alt={
+                filled
+                  ? t("slotFilledAria", { index: dayLabel })
+                  : t("slotEmptyAria", { index: dayLabel })
+              }
+              draggable={false}
+            />
           );
         })}
       </div>

@@ -47,6 +47,9 @@ export type HubLiteScaffoldProps = {
   };
   // ── Training Path (horizontal piece roster) ──
   rewardTiles: RewardTile[];
+  /** Re-launches the intro mini-tour from the Focus Passport `?`. Optional so
+   *  the scaffold still mounts in `/dev` probes that don't wire the tour. */
+  onReplayTour?: () => void;
   /** Effective PRO subscriber flag from the global entitlement decision. */
   isPro: boolean;
   /** Opens the account surface. Routes to /exercises?sheet=account (the
@@ -73,12 +76,10 @@ export function HubLiteScaffold({
   onJoinChallenge,
   primaryFocus,
   rewardTiles,
-  isPro,
-  onAccountTap,
+  onReplayTour,
 }: HubLiteScaffoldProps) {
   const t = useTranslations("HUB_LITE_COPY");
   const tHud = useTranslations("HUD_COPY");
-  const tStatus = useTranslations("GLOBAL_STATUS_BAR_COPY");
 
   // Start Focus always reads "Start Focus" (founder: stable label, not the
   // per-variant intent). It still routes to /exercises in every state.
@@ -115,31 +116,10 @@ export function HubLiteScaffold({
           <LanguageChip />
         </div>
         <div className="hub-lite-hud-right">
-          {/* Right anchor = account entry (compact circular avatar, ref Image
-              #2). Hub has no account sheet → routes to /exercises?sheet=account.
-              PRO gets a brighter ring accent. */}
-          {isWalletConnected ? (
-            <button
-              type="button"
-              onClick={onAccountTap}
-              aria-label={
-                isPro ? tStatus("proManageLabel") : tStatus("accountLabel")
-              }
-              data-testid="hub-account-chip"
-              className={`hub-account-circle${
-                isPro ? " hub-account-circle--pro" : ""
-              }`}
-            >
-              {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-              <ThemeAssetPicture
-                slot="shared.avatar-small-account"
-                pictureClassName="hub-account-circle-avatar"
-                alt=""
-                aria-hidden="true"
-                draggable={false}
-              />
-            </button>
-          ) : null}
+          {/* Account entry (circular avatar chip) is intentionally hidden on
+              the Learn hub header — account access lives on /exercises.
+              `onAccountTap`/`isPro` stay in the props API for the container
+              but are not rendered here. */}
           {!isWalletConnected && onConnectTap ? (
             <button
               type="button"
@@ -206,6 +186,7 @@ export function HubLiteScaffold({
           // Tapping the flame/streak block routes into today's focus, same as
           // Start Focus (ritual entry point — UX spec §5 clickability).
           onFocusTap={primaryFocus.onPress}
+          onReplayTour={onReplayTour}
         />
       </div>
 

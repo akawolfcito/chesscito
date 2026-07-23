@@ -26,6 +26,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 /** How long the delta badge stays up. Long enough to read mid-exercise,
  *  short enough that it never sits over the tray while playing. */
@@ -271,36 +272,46 @@ export function PeonesBalanceChipView({
         ) : null}
       </div>
 
-      {cardOpen ? (
-        // Lightweight centered modal so the Chesito Card "floats" on the
-        // scrim (no extra panel frame around the already-framed card).
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-        <div
-          className="candy-modal-scrim pointer-events-auto fixed inset-0 z-[70] flex items-center justify-center animate-in fade-in duration-300"
-          role="dialog"
-          aria-modal="true"
-          aria-label={CHESITO_CARD_COPY.title}
-          onClick={closeCard}
-        >
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-          <div
-            className="relative mx-4 w-full max-w-[360px]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
+      {/* Portaled to <body>. The chip is mounted inside the /exercises mission
+       *  tray, whose `.atmosphere > * { position:relative; z-index:1 }` ancestor
+       *  opens a stacking context per child. A fixed modal rendered in-tree is
+       *  painted WITHIN the tray's context, so the board — a later sibling with
+       *  the same z-index — covers it despite z-[70]. The portal escapes that
+       *  context so the modal lands above the board everywhere it mounts
+       *  (regression fixed 2026-07-22). Same convention as MissionDetailSheet. */}
+      {cardOpen && typeof document !== "undefined"
+        ? createPortal(
+            // Lightweight centered modal so the Chesito Card "floats" on the
+            // scrim (no extra panel frame around the already-framed card).
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+            <div
+              className="candy-modal-scrim pointer-events-auto fixed inset-0 z-[70] flex items-center justify-center animate-in fade-in duration-300"
+              role="dialog"
+              aria-modal="true"
+              aria-label={CHESITO_CARD_COPY.title}
               onClick={closeCard}
-              aria-label="Close"
-              className="candy-close-asset-button absolute -right-2 -top-4 z-10"
             >
-              <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-9 w-9 object-contain" draggable={false} />
-            </button>
-            {/* Card modal is z-[70]; push its Top up sheet above it (default
-             *  z-[55] would render behind the card). */}
-            <ChesitoCard rechargeScrimZClassName="z-[75]" />
-          </div>
-        </div>
-      ) : null}
+              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+              <div
+                className="relative mx-4 w-full max-w-[360px]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={closeCard}
+                  aria-label="Close"
+                  className="candy-close-asset-button absolute -right-2 -top-4 z-10"
+                >
+                  <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-9 w-9 object-contain" draggable={false} />
+                </button>
+                {/* Card modal is z-[70]; push its Top up sheet above it (default
+                 *  z-[55] would render behind the card). */}
+                <ChesitoCard rechargeScrimZClassName="z-[75]" />
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }

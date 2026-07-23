@@ -48,7 +48,7 @@ export function PlayTacticsTile({
     <>
       <HubActionTile
         className={className}
-        iconSlot="tactics.daily-exercise"
+        iconSlot="hub.daily-icon"
         label={t("tileLabel")}
         ariaLabel={
           completedToday ? t("completedAriaLabel") : t("tileAriaLabel")

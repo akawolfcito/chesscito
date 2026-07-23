@@ -438,6 +438,7 @@ export function LearnHubClient({
             track("hub_account_chip_tap");
             router.push("/exercises?sheet=account");
           }}
+          onReplayTour={hubTour.replay}
         />
       ) : (
       <HubScaffold

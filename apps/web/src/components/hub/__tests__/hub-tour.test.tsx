@@ -71,7 +71,9 @@ describe("<HubTour>", () => {
 
   it("opens on the daily and closes on the challenge — two steps, not three", () => {
     render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    expect(screen.getByText(HUB_TOUR_COPY.dailyStart)).toBeInTheDocument();
+    // The daily sentence now lives behind the `?`; the visible surface is the
+    // art strip, so we anchor the "we opened on daily" check on its first label.
+    expect(screen.getByText(HUB_TOUR_COPY.dailyStripGift)).toBeInTheDocument();
     expect(screen.getByText("1 of 2")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
@@ -83,10 +85,52 @@ describe("<HubTour>", () => {
     ).toBeInTheDocument();
   });
 
+  it("hides the daily sentence behind the `?` and reveals it on tap", () => {
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
+    // Closed by default: the art strip carries the message, the full sentence is
+    // one tap away — and opening it must NOT reflow the panel (it's a popover).
+    expect(screen.queryByText(HUB_TOUR_COPY.dailyStart)).toBeNull();
+    fireEvent.click(screen.getByTestId("hub-tour-details-toggle"));
+    expect(screen.getByText(HUB_TOUR_COPY.dailyStart)).toBeInTheDocument();
+  });
+
+  it("labels the daily ritual strip: open gift → solve tactic → build combo", () => {
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
+    expect(screen.getByTestId("hub-tour-story")).toBeInTheDocument();
+    expect(screen.getByText(HUB_TOUR_COPY.dailyStripGift)).toBeInTheDocument();
+    expect(screen.getByText(HUB_TOUR_COPY.dailyStripTactic)).toBeInTheDocument();
+    expect(screen.getByText(HUB_TOUR_COPY.dailyStripCombo)).toBeInTheDocument();
+  });
+
+  it("does not carry the strip or `?` into the challenge step — that step is its own art", () => {
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
+    expect(screen.queryByTestId("hub-tour-story")).toBeNull();
+    expect(screen.queryByTestId("hub-tour-details-toggle")).toBeNull();
+  });
+
+  it("stamps the current step's target so a tour-only affordance can reveal itself", () => {
+    // The ChallengeCard's Join arrow shows only while THIS step spotlights it.
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
+    const daily = document.querySelector('[data-tour-target="daily"]');
+    const challenge = document.querySelector('[data-tour-target="challenge"]');
+
+    // Step 1: daily is flagged, challenge is not.
+    expect(daily).toHaveAttribute("data-tour-spotlight", "active");
+    expect(challenge).not.toHaveAttribute("data-tour-spotlight");
+
+    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
+
+    // Step 2: the flag moves to challenge, daily is cleared.
+    expect(challenge).toHaveAttribute("data-tour-spotlight", "active");
+    expect(daily).not.toHaveAttribute("data-tour-spotlight");
+  });
+
   it("keeps the pass's real terms visible and quotes them from config, not from a string", () => {
-    // The art carries the pitch, but the deal stays on screen. A "$0.99" typed
-    // into the copy would survive a price change with the suite green — feed the
-    // panel different terms and it must say THOSE.
+    // The benefit cards carry the pitch, but the deal stays on screen. A "$0.99"
+    // typed into the copy would survive a price change with the suite green —
+    // feed the panel different terms and it must say THOSE (days/shields in the
+    // cards, price on its own line).
     render(
       <HubTour
         steps={steps}
@@ -96,31 +140,35 @@ describe("<HubTour>", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
 
-    expect(screen.getByTestId("hub-tour-value")).toHaveTextContent(
-      "30 days · +5 shields · $2.49",
-    );
-    // And it asks for the transaction by naming the button.
-    expect(screen.getByText(HUB_TOUR_COPY.challengeAsk)).toBeInTheDocument();
+    const cards = screen.getByTestId("hub-tour-benefits");
+    expect(cards).toHaveTextContent("30 Days");
+    expect(cards).toHaveTextContent("+5 Shields");
+    // The price is kept visible on its own line, quoted from config.
+    expect(screen.getByTestId("hub-tour-value")).toHaveTextContent("$2.49");
   });
 
-  it("shows the art but not the sales pitch to a player who already owns the pass", () => {
+  it("shows the benefit cards but not to a player who already owns the pass", () => {
     const owner = buildHubTourSteps({ ...FRESH, hasSeasonPass: true });
     render(<HubTour steps={owner} challenge={CHALLENGE} onFinish={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
 
-    expect(screen.getByAltText(HUB_TOUR_COPY.challengeHeroAlt)).toBeInTheDocument();
+    // An owner gets the enrolled headline + body, and neither the offer cards
+    // nor the price line.
+    expect(
+      screen.getByText(HUB_TOUR_COPY.challengeTitleEnrolled),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("hub-tour-benefits")).toBeNull();
     expect(screen.queryByTestId("hub-tour-value")).toBeNull();
-    expect(screen.queryByText(HUB_TOUR_COPY.challengeAsk)).toBeNull();
   });
 
-  it("carries the headline as art, with the words reachable as alt text", () => {
+  it("carries the challenge headline as text, not baked-in art", () => {
     render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
 
-    // Baked-in words: without alt, a screen reader (and every non-EN locale)
-    // gets a nameless image where the headline should be.
+    // The wordmark art was invisible on short viewports; the headline is plain
+    // text now, reachable by every reader and locale.
     expect(
-      screen.getByAltText(HUB_TOUR_COPY.challengeTitleAlt),
+      screen.getByText(HUB_TOUR_COPY.challengeTitle),
     ).toBeInTheDocument();
   });
 
@@ -149,9 +197,17 @@ describe("<HubTour>", () => {
     expect(onFinish).toHaveBeenCalledWith("completed");
   });
 
-  it("has no escape hatch — at two steps, an exit link only bleeds players out of the pass", () => {
+  it("has no escape hatch — the daily `?` and Next are not exits, and the challenge step keeps one control", () => {
     render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    // The panel offers exactly one control per step: the one that advances it.
+    // The daily step offers exactly two controls — the `?` that reveals detail
+    // and Next that advances — and neither bleeds the player out of the tour.
+    expect(screen.queryByText(/skip/i)).toBeNull();
+    expect(screen.getByTestId("hub-tour-details-toggle")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: HUB_TOUR_COPY.next }),
+    ).toBeInTheDocument();
+    // The challenge step is carried by art alone: one advancing control, no exit.
+    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
     expect(screen.getAllByRole("button")).toHaveLength(1);
     expect(screen.queryByText(/skip/i)).toBeNull();
   });
@@ -185,7 +241,7 @@ describe("<HubTour>", () => {
     fireEvent.click(screen.getByTestId("hub-tour-scrim"));
 
     expect(onFinish).not.toHaveBeenCalled();
-    expect(screen.getByText(HUB_TOUR_COPY.dailyStart)).toBeInTheDocument();
+    expect(screen.getByText(HUB_TOUR_COPY.dailyStripGift)).toBeInTheDocument();
   });
 
   it("spotlights the target of the current step", () => {
@@ -256,9 +312,9 @@ describe("<HubTour>", () => {
       expect(cap).toBeGreaterThan(0);
       expect(cap).toBeLessThanOrEqual(600);
 
-      // The art is the sacrifice, and it is the ONLY one: the deal and the
-      // button — the two things that make the step worth showing — survive.
-      expect(screen.queryByAltText(HUB_TOUR_COPY.challengeHeroAlt)).toBeNull();
+      // The deal (cards + price) and the button survive — the panel just caps
+      // its height so "Got it" stays reachable.
+      expect(screen.getByTestId("hub-tour-benefits")).toBeInTheDocument();
       expect(screen.getByTestId("hub-tour-value")).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: HUB_TOUR_COPY.done }),
@@ -279,7 +335,7 @@ describe("<HubTour>", () => {
     render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
 
     const panel = screen
-      .getByText(HUB_TOUR_COPY.dailyStart)
+      .getByTestId("hub-tour-story")
       .closest(".hub-tour-panel") as HTMLElement;
     expect(panel.className).toContain("is-below");
     // Below the target's bottom edge (12 + 60), never on top of it.
@@ -292,7 +348,7 @@ describe("<HubTour>", () => {
     render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
 
     const panel = screen
-      .getByText(HUB_TOUR_COPY.dailyStart)
+      .getByTestId("hub-tour-story")
       .closest(".hub-tour-panel") as HTMLElement;
     expect(panel.className).toContain("is-above");
     expect(panel.style.bottom).not.toBe("");
@@ -319,6 +375,9 @@ describe("<HubTour>", () => {
     });
     render(<HubTour steps={veteran} challenge={CHALLENGE} onFinish={vi.fn()} />);
 
+    // The keep-the-streak sentence now lives behind the `?`; it must be the
+    // KEEP copy, not the START copy, for a mid-streak veteran.
+    fireEvent.click(screen.getByTestId("hub-tour-details-toggle"));
     expect(screen.getByText(HUB_TOUR_COPY.dailyKeep)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
     expect(

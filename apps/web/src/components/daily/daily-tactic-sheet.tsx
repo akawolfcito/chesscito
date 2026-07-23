@@ -153,7 +153,7 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, onFa
         <MissionHeaderCandy
           title={sheetTitle}
           subtitle={puzzleData.name}
-          iconSlot={<TileIconSlot slot="tactics.daily-exercise" />}
+          iconSlot={<TileIconSlot slot="hub.daily-icon" />}
           objective={
             isPlayExperience
               ? tPlay("objective", { piece: puzzleData.piece })

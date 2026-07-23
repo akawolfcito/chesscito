@@ -2451,11 +2451,16 @@ export const PRO_COPY = {
   },
   /** M1 funnel (Commit 5) — value bullets rendered before the price
    *  card so PRO is framed as "what you get" before "what you pay".
-   *  Three bullets, full sentences, in the canonical order:
-   *  Luz access → Training Journal → PRO identity. */
+   *  Full sentences, canonical order: Luz access → Training Journal →
+   *  Special Trainings → PRO identity. Only entitlement-backed perks:
+   *  Special Trainings is gated by the training_pass, which PRO grants
+   *  (source "pro"); Arena / VictoryNFT stay roadmap-only, never here.
+   *  Category-level wording ("new games added over time") stays valid
+   *  as more Special Trainings ship — do not list individual games. */
   perksActive: [
     "Luz unlimited. Coach review on every game.",
     "Full Training Journal. Every match kept.",
+    "Special Trainings. New games added over time.",
     "PRO identity on your profile.",
   ] as const,
   errors: {
@@ -3422,6 +3427,14 @@ export const CHALLENGE_CARD_COPY = {
   notJoinedTitle: "21-Day Mind Challenge",
   joinedTitle: "Mind Challenge",
   passportLabel: "Focus Passport",
+  /** Small `?` in the Focus Passport header — replays the intro mini-tour.
+   *  Replaying never touches progress, rewards or the "tour seen" flag. */
+  replayTourLabel: "Replay the intro tour",
+  /** Labels under the offer sheet's gift → tactic → habit story strip (same
+   *  wording as the mini-tour's step 1). */
+  storyGift: "Open gift",
+  storyTactic: "Solve 1 tactic",
+  storyHabit: "Build habit",
   activeBadge: "ACTIVE",
   includedWithPro: "PRO Benefit included",
   trainingPassStat: "Training Pass",
@@ -3443,10 +3456,31 @@ export const CHALLENGE_CARD_COPY = {
   // via the Focus Passport, not "volume + consumables". The +Shields line is the
   // direct-purchase bonus ONLY; PRO holders see proIncludedTitle with no bonus.
   offerTitle: "Join the 21-Day Mind Challenge",
-  offerHabit: "Build a daily chess habit and keep your Focus Passport active.",
-  offerPractice: "Access advanced challenges during your {days}-day journey",
+  // The sheet renders the kicker as text and the rest as the canonical wordmark
+  // (`/art/mini-tour/tour-challenge-title`). `offerTitle` stays as the flat
+  // fallback and as the accessible name — an image cannot carry either.
+  offerJoinKicker: "Join the",
+  // One line on purpose: the two icon rows below already carry the offer, and
+  // the long version now lives behind the `?` chip.
+  offerHabit: "Build your daily focus habit.",
+  // Special Trainings, framed at category level so it stays valid as more
+  // ludic games ship — never list individual games. `{days}` is still
+  // accepted by callers even though the copy no longer interpolates it.
+  offerPractice: "Advanced challenges, growing over time.",
   offerShieldsBonus: "Includes the direct-purchase +{count} Shields bonus",
   offerPriceNote: "One-time payment · No subscription",
+  // Benefit tiles. Both counts are interpolated from the SKU — a pass sold with
+  // a different duration or bonus must never advertise the old numbers.
+  offerBenefitDays: "{days} Days",
+  offerBenefitTrainings: "Special Trainings",
+  offerBenefitShields: "+{count} Shields",
+  // Accessible name of the `?` chip that discloses offerPractice +
+  // offerShieldsBonus. The chip itself renders a glyph, which names nothing.
+  offerDetailsLabel: "What's included",
+  offerPayWith: "Pay with",
+  // The price already sits in its own pill above — repeating it on the CTA
+  // reads as a second charge.
+  offerCta: "Unlock Challenge",
   proIncludedTitle: "Included with PRO",
   // Post-purchase celebration. `celebrationShieldsPending` covers the path
   // where the payment settled but the shield grant did not (verify-payment
@@ -3487,19 +3521,30 @@ export const HUB_TOUR_COPY = {
     "Open your daily gift, solve 1 quick tactic, and keep your streak alive.",
   dailyDone:
     "Your Daily Tactic lives here. Come back tomorrow for the next one.",
+  /** Daily step art-strip (start/keep only): three labels under the
+   *  gift → tactic → combo icons. The full sentence copy moves behind the
+   *  `?` help chip (`dailyDetailsLabel`), so the strip carries the ritual
+   *  visually and the paragraph stays one tap away without reflowing the panel. */
+  dailyStripGift: "Open gift",
+  dailyStripTactic: "Solve 1 tactic",
+  dailyStripCombo: "Build habit",
+  dailyDetailsLabel: "Show daily focus details",
   challengeTitle: "Join the 21-Day Challenge",
   challengeTitleEnrolled: "21-Day Mind Challenge",
-  /** The one screen that asks for money — carried by art, not by a paragraph.
-   *  The hook sells the outcome, `challengeValue` keeps the terms visible in a
-   *  single line, and `challengeAsk` names the button. A step that describes
-   *  the challenge and forgets to ask for the transaction is not a sales step.
+  /** The one screen that asks for money — carried by the benefit cards, not by
+   *  a paragraph. The hook sells the outcome, the cards keep days/shields
+   *  visible, and `challengePrice` keeps the price honest (quoted from config).
    *
    *  NOTHING here may imply the pass forgives a missed day. A shield rescues a
    *  FAILED EXERCISE; streak recovery is a permanent never-build, and selling it
-   *  would be selling something that does not exist. */
-  challengeJoin: "Decide better in {days} days. Track your streak, build a daily habit.",
+   *  would be selling something that does not exist. "Keep your streak" is a
+   *  forward promise (build the habit), NOT "we'll restore a broken one". */
+  challengeJoin: "Decide better. Keep your streak. Build a daily habit.",
   challengeValue: "{days} days · +{shields} shields · {price}",
   challengeAsk: "Tap Join Challenge to commit.",
+  /** Price line under the benefit cards on the tour's challenge step. Quoted
+   *  from rail-config, never typed, so it can't rot the day pricing moves. */
+  challengePrice: "{price} · one-time payment",
   challengeEnrolled:
     "Track your focus days and complete your {days}-day commitment.",
   /** Alt text for the headline art — the art bakes the words in, so this is what

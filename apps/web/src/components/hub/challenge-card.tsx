@@ -4,14 +4,15 @@ import { useTranslations } from "next-intl";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
 import { type PassportSlotKind, passportSlots } from "@/lib/daily/passport";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 import type { HubFocusPassport, SeasonChallengeMeta } from "@/components/hub/use-hub-data";
 
-/** Flame sprite basenames in `public/art/focus-passport/` — same assets the
- *  standalone FocusPassport uses. */
-const FLAME_ASSET: Record<PassportSlotKind, string> = {
-  color: "flame-color",
-  blue: "flame-blue",
-  gray: "flame-gray",
+/** Flame sprites by catalog slot — same slots the standalone FocusPassport
+ *  uses, so a theme re-skins the streak on both surfaces at once. */
+const FLAME_SLOT: Record<PassportSlotKind, ThemeAssetKey> = {
+  color: "shared.flame-color",
+  blue: "shared.flame-blue",
+  gray: "shared.flame-gray",
 };
 
 /** Season-pass slice the card needs. Discriminated so the `active` branch
@@ -31,6 +32,10 @@ export type ChallengeCardProps = {
   /** Optional: makes the flame/streak block a tap target into today's focus
    *  (same destination as Start Focus). Omitted → the block is static. */
   onFocusTap?: () => void;
+  /** Optional: replays the intro mini-tour from the Focus Passport `?`.
+   *  Omitted → no help chip renders. Replaying never touches progress,
+   *  rewards or the "tour seen" flag. */
+  onReplayTour?: () => void;
 };
 
 export function CalendarIcon() {
@@ -122,6 +127,7 @@ export function ChallengeCard({
   seasonPass,
   onJoinChallenge,
   onFocusTap,
+  onReplayTour,
 }: ChallengeCardProps) {
   const t = useTranslations("CHALLENGE_CARD_COPY");
 
@@ -181,27 +187,41 @@ export function ChallengeCard({
               </span>
             ) : null}
           </header>
-          <p className="challenge-card-passport-label">{t("passportLabel")}</p>
+          <div className="challenge-card-passport-head">
+            <p className="challenge-card-passport-label">{t("passportLabel")}</p>
+            {onReplayTour ? (
+              <button
+                type="button"
+                data-testid="challenge-replay-tour"
+                className="challenge-card-passport-help"
+                onClick={onReplayTour}
+                aria-label={t("replayTourLabel")}
+              >
+                <span className="challenge-card-passport-help-dot" aria-hidden="true">
+                  ?
+                </span>
+              </button>
+            ) : null}
+          </div>
           {(() => {
             const inner = (
               <>
                 <span className="challenge-card-flames" aria-hidden="true">
                   {slots.map((slot, i) => {
-                    const asset = FLAME_ASSET[slot.kind];
                     return (
-                      // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
-                      <picture
+                      <ThemeAssetPicture
                         key={i}
-                        data-testid="focus-passport-slot"
-                        data-kind={slot.kind}
-                        data-filled={slot.kind !== "gray" || undefined}
-                        data-glow={slot.glow || undefined}
-                        className={`challenge-card-flame${slot.glow ? " is-glow" : ""}`}
-                      >
-                        <source srcSet={`/art/focus-passport/${asset}.avif`} type="image/avif" />
-                        <source srcSet={`/art/focus-passport/${asset}.webp`} type="image/webp" />
-                        <img src={`/art/focus-passport/${asset}.png`} alt="" draggable={false} />
-                      </picture>
+                        slot={FLAME_SLOT[slot.kind]}
+                        pictureClassName={`challenge-card-flame${slot.glow ? " is-glow" : ""}`}
+                        pictureProps={{
+                          "data-testid": "focus-passport-slot",
+                          "data-kind": slot.kind,
+                          "data-filled": slot.kind !== "gray" || undefined,
+                          "data-glow": slot.glow || undefined,
+                        }}
+                        alt=""
+                        draggable={false}
+                      />
                     );
                   })}
                 </span>
@@ -276,21 +296,35 @@ export function ChallengeCard({
           </span>
         </div>
         {isActive ? null : (
-          <button
-            type="button"
-            // Pulses only while the purchase is actually available: `null` means
-            // the status is still resolving (or the player already owns it), and
-            // a CTA that throbs while disabled advertises a dead button.
-            className={`challenge-card-join${
-              onJoinChallenge ? " is-pulsing" : ""
-            }`}
-            data-testid="challenge-join-cta"
-            aria-label={t("joinAriaLabel", { price: challenge.priceLabel })}
-            onClick={onJoinChallenge ?? undefined}
-            disabled={!onJoinChallenge}
-          >
-            {t("joinCta")}
-          </button>
+          <>
+            {/* Nudge arrow — points at Join, but ONLY while the mini-tour is
+                spotlighting this card (CSS gates it on the tour's
+                `data-tour-spotlight` attribute; hidden on the plain hub).
+                Decorative; the subtle L→R nudge is CSS + reduced-motion aware. */}
+            <ThemeAssetPicture
+              slot="season.story-arrow"
+              pictureClassName="challenge-card-join-arrow"
+              alt=""
+              aria-hidden="true"
+              className="challenge-card-join-arrow-img"
+              draggable={false}
+            />
+            <button
+              type="button"
+              // Pulses only while the purchase is actually available: `null` means
+              // the status is still resolving (or the player already owns it), and
+              // a CTA that throbs while disabled advertises a dead button.
+              className={`challenge-card-join${
+                onJoinChallenge ? " is-pulsing" : ""
+              }`}
+              data-testid="challenge-join-cta"
+              aria-label={t("joinAriaLabel", { price: challenge.priceLabel })}
+              onClick={onJoinChallenge ?? undefined}
+              disabled={!onJoinChallenge}
+            >
+              {t("joinCta")}
+            </button>
+          </>
         )}
       </div>
     </section>

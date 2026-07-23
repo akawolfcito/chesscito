@@ -90,6 +90,137 @@ describe('SeasonPassSheet', () => {
   })
 })
 
+describe('SeasonPassSheet — visual offer', () => {
+  beforeEach(() => {
+    statusMock.mockReturnValue(INACTIVE_STATUS)
+    railMock.mockReturnValue(defaultRail())
+  })
+
+  it('leads with the JOIN THE kicker and the challenge wordmark', () => {
+    const { container } = render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
+
+    expect(screen.getByText('Join the')).toBeInTheDocument()
+    expect(
+      container.querySelector('img[src="/art/mini-tour/tour-challenge-title.png"]'),
+    ).toBeInTheDocument()
+  })
+
+  it('tells the promise with the gift → training → streak row, in that order', () => {
+    const { container } = render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
+
+    const row = container.querySelector('[data-testid="season-pass-story"]')
+    expect(row).toBeInTheDocument()
+    // Arrows sit BETWEEN the beats, never trailing: three icons, two arrows.
+    expect([...row!.querySelectorAll('img')].map((img) => img.getAttribute('src'))).toEqual([
+      '/art/shop/welcome-gift.png',
+      '/art/season/arrow-right.png',
+      '/art/hub/train-pieces.png',
+      '/art/season/arrow-right.png',
+      '/art/focus-passport/flame-color.png',
+    ])
+  })
+
+  it('labels the story beats: open gift → solve 1 tactic → build habit', () => {
+    render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
+
+    const row = screen.getByTestId('season-pass-story')
+    expect(row).toHaveTextContent('Open gift')
+    expect(row).toHaveTextContent('Solve 1 tactic')
+    expect(row).toHaveTextContent('Build habit')
+  })
+
+  it('shows the three benefits as icon tiles with interpolated labels', () => {
+    const { container } = render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
+
+    const grid = container.querySelector('[data-testid="season-pass-benefits"]')
+    expect(grid).toBeInTheDocument()
+    expect([...grid!.querySelectorAll('img')].map((img) => img.getAttribute('src'))).toEqual([
+      '/art/21-day-icon.png',
+      '/art/new-icons-chesscito/training-icon-v1.png',
+      '/art/redesign/icons/shield.png',
+    ])
+    // Interpolated from the SKU, never hardcoded: a pass sold with 5 shields
+    // must not advertise 3.
+    expect(grid).toHaveTextContent('21 Days')
+    expect(grid).toHaveTextContent('Special Trainings')
+    expect(grid).toHaveTextContent('+3 Shields')
+  })
+
+  it('keeps the long copy collapsed behind the help chip', () => {
+    render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
+
+    expect(screen.getByTestId('season-pass-details-toggle')).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    )
+    expect(screen.queryByTestId('season-pass-details')).toBeNull()
+    expect(screen.queryByText(/advanced challenges/i)).toBeNull()
+    expect(screen.queryByText(/direct-purchase/i)).toBeNull()
+  })
+
+  it('reveals and re-hides the long copy on the help chip', async () => {
+    render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
+    const toggle = screen.getByTestId('season-pass-details-toggle')
+
+    await userEvent.click(toggle)
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByTestId('season-pass-details')).toHaveTextContent(/advanced challenges/i)
+    expect(screen.getByTestId('season-pass-details')).toHaveTextContent(/direct-purchase/i)
+
+    await userEvent.click(toggle)
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByTestId('season-pass-details')).toBeNull()
+  })
+
+  it('floats the disclosure over the offer instead of pushing it down', async () => {
+    // It hangs inside the habit block, which is the positioning context. A
+    // sibling in the sheet's own column would reflow every row below it —
+    // price, picker and CTA would jump under the reader's thumb.
+    render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
+    await userEvent.click(screen.getByTestId('season-pass-details-toggle'))
+
+    const habit = screen.getByTestId('season-pass-habit')
+    expect(habit).toContainElement(screen.getByTestId('season-pass-details'))
+    // A popover, not a modal: the sheet already owns the only aria-modal.
+    expect(screen.getByTestId('season-pass-details')).not.toHaveAttribute('aria-modal')
+  })
+
+  it('says the habit promise in one line', () => {
+    render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
+
+    expect(screen.getByTestId('season-pass-habit')).toHaveTextContent(
+      'Build your daily focus habit.',
+    )
+  })
+
+  it('heads the token picker with a PAY WITH separator', () => {
+    const { container } = render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
+
+    const header = container.querySelector('[data-testid="season-pass-paywith"]')
+    expect(header).toHaveTextContent('Pay with')
+    expect(
+      header!.querySelector('img[src="/art/screen-mission/adorno-icon.png"]'),
+    ).toBeInTheDocument()
+    // The picker itself is untouched — same testid, same wiring.
+    expect(screen.getByTestId('season-pass-token-trigger')).toBeInTheDocument()
+  })
+
+  it('sells the CTA without repeating the price, and closes with the payment note', () => {
+    render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
+
+    const cta = screen.getByTestId('season-pass-pay')
+    expect(cta).toHaveTextContent('Unlock Challenge')
+    expect(cta).not.toHaveTextContent('$0.99')
+
+    expect(screen.getByTestId('season-pass-note')).toHaveTextContent(
+      'One-time payment · No subscription',
+    )
+    expect(screen.queryByText(/paid with .* on celo/i)).toBeNull()
+  })
+})
+
 function successRail(shieldsCredited: number) {
   return {
     ...defaultRail(),
