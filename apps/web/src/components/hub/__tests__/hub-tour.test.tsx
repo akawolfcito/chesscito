@@ -71,7 +71,9 @@ describe("<HubTour>", () => {
 
   it("opens on the daily and closes on the challenge — two steps, not three", () => {
     render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    expect(screen.getByText(HUB_TOUR_COPY.dailyStart)).toBeInTheDocument();
+    // The daily sentence now lives behind the `?`; the visible surface is the
+    // art strip, so we anchor the "we opened on daily" check on its first label.
+    expect(screen.getByText(HUB_TOUR_COPY.dailyStripGift)).toBeInTheDocument();
     expect(screen.getByText("1 of 2")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
@@ -81,6 +83,30 @@ describe("<HubTour>", () => {
     expect(
       screen.getByRole("button", { name: HUB_TOUR_COPY.done }),
     ).toBeInTheDocument();
+  });
+
+  it("hides the daily sentence behind the `?` and reveals it on tap", () => {
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
+    // Closed by default: the art strip carries the message, the full sentence is
+    // one tap away — and opening it must NOT reflow the panel (it's a popover).
+    expect(screen.queryByText(HUB_TOUR_COPY.dailyStart)).toBeNull();
+    fireEvent.click(screen.getByTestId("hub-tour-details-toggle"));
+    expect(screen.getByText(HUB_TOUR_COPY.dailyStart)).toBeInTheDocument();
+  });
+
+  it("labels the daily ritual strip: open gift → solve tactic → build combo", () => {
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
+    expect(screen.getByTestId("hub-tour-story")).toBeInTheDocument();
+    expect(screen.getByText(HUB_TOUR_COPY.dailyStripGift)).toBeInTheDocument();
+    expect(screen.getByText(HUB_TOUR_COPY.dailyStripTactic)).toBeInTheDocument();
+    expect(screen.getByText(HUB_TOUR_COPY.dailyStripCombo)).toBeInTheDocument();
+  });
+
+  it("does not carry the strip or `?` into the challenge step — that step is its own art", () => {
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
+    expect(screen.queryByTestId("hub-tour-story")).toBeNull();
+    expect(screen.queryByTestId("hub-tour-details-toggle")).toBeNull();
   });
 
   it("keeps the pass's real terms visible and quotes them from config, not from a string", () => {
@@ -149,9 +175,17 @@ describe("<HubTour>", () => {
     expect(onFinish).toHaveBeenCalledWith("completed");
   });
 
-  it("has no escape hatch — at two steps, an exit link only bleeds players out of the pass", () => {
+  it("has no escape hatch — the daily `?` and Next are not exits, and the challenge step keeps one control", () => {
     render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    // The panel offers exactly one control per step: the one that advances it.
+    // The daily step offers exactly two controls — the `?` that reveals detail
+    // and Next that advances — and neither bleeds the player out of the tour.
+    expect(screen.queryByText(/skip/i)).toBeNull();
+    expect(screen.getByTestId("hub-tour-details-toggle")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: HUB_TOUR_COPY.next }),
+    ).toBeInTheDocument();
+    // The challenge step is carried by art alone: one advancing control, no exit.
+    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
     expect(screen.getAllByRole("button")).toHaveLength(1);
     expect(screen.queryByText(/skip/i)).toBeNull();
   });
@@ -185,7 +219,7 @@ describe("<HubTour>", () => {
     fireEvent.click(screen.getByTestId("hub-tour-scrim"));
 
     expect(onFinish).not.toHaveBeenCalled();
-    expect(screen.getByText(HUB_TOUR_COPY.dailyStart)).toBeInTheDocument();
+    expect(screen.getByText(HUB_TOUR_COPY.dailyStripGift)).toBeInTheDocument();
   });
 
   it("spotlights the target of the current step", () => {
@@ -279,7 +313,7 @@ describe("<HubTour>", () => {
     render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
 
     const panel = screen
-      .getByText(HUB_TOUR_COPY.dailyStart)
+      .getByTestId("hub-tour-story")
       .closest(".hub-tour-panel") as HTMLElement;
     expect(panel.className).toContain("is-below");
     // Below the target's bottom edge (12 + 60), never on top of it.
@@ -292,7 +326,7 @@ describe("<HubTour>", () => {
     render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
 
     const panel = screen
-      .getByText(HUB_TOUR_COPY.dailyStart)
+      .getByTestId("hub-tour-story")
       .closest(".hub-tour-panel") as HTMLElement;
     expect(panel.className).toContain("is-above");
     expect(panel.style.bottom).not.toBe("");
@@ -319,6 +353,9 @@ describe("<HubTour>", () => {
     });
     render(<HubTour steps={veteran} challenge={CHALLENGE} onFinish={vi.fn()} />);
 
+    // The keep-the-streak sentence now lives behind the `?`; it must be the
+    // KEEP copy, not the START copy, for a mid-streak veteran.
+    fireEvent.click(screen.getByTestId("hub-tour-details-toggle"));
     expect(screen.getByText(HUB_TOUR_COPY.dailyKeep)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
     expect(

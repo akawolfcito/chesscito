@@ -1911,6 +1911,10 @@ const messages = {
       "Abre tu regalo diario, resuelve 1 táctica corta y mantén viva tu racha.",
     dailyDone:
       "Aquí vive tu Táctica diaria. Vuelve mañana por la siguiente.",
+    dailyStripGift: "Abre el regalo",
+    dailyStripTactic: "Resuelve 1 táctica",
+    dailyStripCombo: "Crea combo",
+    dailyDetailsLabel: "Ver detalles del foco diario",
     challengeTitle: "Únete al Reto de 21 días",
     challengeTitleEnrolled: "Reto Mental de 21 días",
     challengeJoin:

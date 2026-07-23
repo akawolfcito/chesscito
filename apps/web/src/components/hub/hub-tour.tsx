@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useTranslations } from "next-intl";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import type {
@@ -95,6 +96,9 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
   );
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
+  // The daily step's full copy lives behind a `?` popover; closed by default and
+  // reset whenever the step advances so it never carries over to the challenge.
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const reachable = reachableIds
     .map((id) => steps.find((s) => s.id === id))
@@ -105,6 +109,12 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
   const isChallenge = step?.id === "challenge";
   /** Only a player who can still buy gets the terms + the ask. */
   const isSalesStep = step?.bodyKey === "challengeJoin";
+  /** The daily ritual steps carry the message as an art strip (gift → tactic →
+   *  combo) with the full sentence tucked behind a `?`. The "already solved"
+   *  variant (`dailyDone`) keeps its plain paragraph — there is no gift/tactic
+   *  to promise once today is done. */
+  const isDailyStrip =
+    step?.bodyKey === "dailyStart" || step?.bodyKey === "dailyKeep";
 
   // Nothing to point at (a hub that rendered none of the three) → the tour is
   // over before it starts, and it counts as given: re-arming it would relaunch
@@ -133,6 +143,7 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
       onFinish("completed");
       return;
     }
+    setDetailsOpen(false);
     setIndex((i) => i + 1);
   }, [isLast, onFinish]);
 
@@ -244,17 +255,70 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
             height={89}
             draggable={false}
           />
+        ) : isDailyStrip ? (
+          // Title + `?` share a relative box so the details popover can float
+          // below the chip WITHOUT reflowing the art strip / Next button under
+          // it (a popover, not a row — the scrim already owns the aria-modal).
+          <div className="hub-tour-habit">
+            <h2 className="hub-tour-title">
+              {t(TITLE_KEY[step.bodyKey])}
+              <button
+                type="button"
+                data-testid="hub-tour-details-toggle"
+                onClick={() => setDetailsOpen((o) => !o)}
+                aria-expanded={detailsOpen}
+                aria-controls="hub-tour-details"
+                aria-label={t("dailyDetailsLabel")}
+                className="hub-tour-help-chip"
+              >
+                ?
+              </button>
+            </h2>
+            {detailsOpen ? (
+              <div
+                id="hub-tour-details"
+                data-testid="hub-tour-details"
+                className="hub-tour-details"
+                role="note"
+              >
+                <p>{t(step.bodyKey)}</p>
+              </div>
+            ) : null}
+          </div>
         ) : (
           <h2 className="hub-tour-title">{t(TITLE_KEY[step.bodyKey])}</h2>
         )}
 
-        <p className="hub-tour-body">
-          {t(step.bodyKey, {
-            days: challenge.days,
-            shields: challenge.shields,
-            price: challenge.price,
-          })}
-        </p>
+        {isDailyStrip ? (
+          // The ritual as art: gift → tactic → combo, labelled. Same catalog
+          // slots as the season-pass sheet's story row, so a theme re-skins both
+          // at once. Icons are decorative (aria-hidden via TileIconSlot); the
+          // labels carry the meaning.
+          <div className="hub-tour-story" data-testid="hub-tour-story">
+            <div className="hub-tour-story-step">
+              <TileIconSlot slot="shared.welcome-gift" className="hub-tour-story-icon" />
+              <span className="hub-tour-story-label">{t("dailyStripGift")}</span>
+            </div>
+            <TileIconSlot slot="season.story-arrow" className="hub-tour-story-arrow" />
+            <div className="hub-tour-story-step">
+              <TileIconSlot slot="hub.train-pieces" className="hub-tour-story-icon" />
+              <span className="hub-tour-story-label">{t("dailyStripTactic")}</span>
+            </div>
+            <TileIconSlot slot="season.story-arrow" className="hub-tour-story-arrow" />
+            <div className="hub-tour-story-step">
+              <TileIconSlot slot="shared.flame-color" className="hub-tour-story-icon" />
+              <span className="hub-tour-story-label">{t("dailyStripCombo")}</span>
+            </div>
+          </div>
+        ) : (
+          <p className="hub-tour-body">
+            {t(step.bodyKey, {
+              days: challenge.days,
+              shields: challenge.shields,
+              price: challenge.price,
+            })}
+          </p>
+        )}
 
         {isChallenge && showHero ? (
           // eslint-disable-next-line jsx-a11y/aria-unsupported-elements

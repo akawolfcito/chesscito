@@ -3505,6 +3505,14 @@ export const HUB_TOUR_COPY = {
     "Open your daily gift, solve 1 quick tactic, and keep your streak alive.",
   dailyDone:
     "Your Daily Tactic lives here. Come back tomorrow for the next one.",
+  /** Daily step art-strip (start/keep only): three labels under the
+   *  gift → tactic → combo icons. The full sentence copy moves behind the
+   *  `?` help chip (`dailyDetailsLabel`), so the strip carries the ritual
+   *  visually and the paragraph stays one tap away without reflowing the panel. */
+  dailyStripGift: "Open gift",
+  dailyStripTactic: "Solve 1 tactic",
+  dailyStripCombo: "Build combo",
+  dailyDetailsLabel: "Show daily focus details",
   challengeTitle: "Join the 21-Day Challenge",
   challengeTitleEnrolled: "21-Day Mind Challenge",
   /** The one screen that asks for money — carried by art, not by a paragraph.
