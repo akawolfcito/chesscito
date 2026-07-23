@@ -35,11 +35,11 @@ const messages = {
     slide3: {
       // The inclusion is the whole argument for PRO, so it is the headline.
       // It used to be the label of a gold pill.
-      headline: "Coach PRO includes the Season Pass.",
+      headline: "Chesscito PRO includes the Season Pass.",
       support: "Your games get reviewed, and the 21 Day Challenge comes with it.",
       savedGamesPill: "Saved games",
       coachReviewPill: "Coach review",
-      price: "Coach PRO, $1.99",
+      price: "Chesscito PRO, $1.99",
       cta: "NEXT",
     },
     slide4: {

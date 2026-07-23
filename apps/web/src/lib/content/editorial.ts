@@ -2426,13 +2426,13 @@ export const PRO_COPY = {
   chipGetAriaLabel: "Get {label}",
   /** <CoachProCard /> ARIA + kicker copy. Kicker flips between
    *  active/inactive subscription states. */
-  coachCardAriaLabel: "Coach PRO training",
-  coachChipsAriaLabel: "Coach PRO includes",
+  coachCardAriaLabel: "Chesscito PRO training",
+  coachChipsAriaLabel: "Coach Review includes",
   coachKickerActive: "Training Pass",
   coachKickerInactive: "Personal Coach",
   hubCoachCard: {
     inactive: {
-      title: "Coach PRO",
+      title: "Chesscito PRO",
       body: "Get feedback after games and practice.",
       chips: ["Insights", "Tips", "History"] as const,
       cta: "COACH",

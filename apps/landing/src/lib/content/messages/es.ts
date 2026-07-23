@@ -3,7 +3,7 @@ import type { OnboardingMessages } from "./en";
 /**
  * Real ES copy for the onboarding slides. Typed against
  * `OnboardingMessages` so it can never silently drift out of shape
- * from the EN source. Branded product names (Season Pass, Coach PRO,
+ * from the EN source. Branded product names (Season Pass, Chesscito PRO,
  * PRO, Focus Passport, 21 Day Challenge) stay in English; everything else
  * is natural Spanish. No em/en-dashes per the anti-AI-prose rule.
  */
@@ -29,11 +29,11 @@ const messages: OnboardingMessages = {
       cta: "SIGUIENTE",
     },
     slide3: {
-      headline: "Coach PRO incluye el Season Pass.",
+      headline: "Chesscito PRO incluye el Season Pass.",
       support: "Tus partidas se revisan, y el 21 Day Challenge viene incluido.",
       savedGamesPill: "Partidas guardadas",
       coachReviewPill: "Revisión del Coach",
-      price: "Coach PRO, $1.99",
+      price: "Chesscito PRO, $1.99",
       cta: "SIGUIENTE",
     },
     slide4: {

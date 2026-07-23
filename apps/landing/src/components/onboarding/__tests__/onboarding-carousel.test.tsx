@@ -60,7 +60,7 @@ describe("OnboardingCarousel", () => {
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
     expect(screen.getByText("3 / 4")).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /coach pro includes the season pass/i }),
+      screen.getByRole("heading", { name: /chesscito pro includes the season pass/i }),
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
@@ -93,7 +93,7 @@ describe("OnboardingCarousel", () => {
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
     fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
 
-    expect(screen.getByText("Coach PRO, $1.99")).toBeInTheDocument();
+    expect(screen.getByText("Chesscito PRO, $1.99")).toBeInTheDocument();
     expect(screen.queryByText(/free/i)).not.toBeInTheDocument();
   });
 
@@ -152,7 +152,7 @@ describe("OnboardingCarousel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /previous slide/i }));
     expect(
-      screen.getByRole("heading", { name: /coach pro includes the season pass/i }),
+      screen.getByRole("heading", { name: /chesscito pro includes the season pass/i }),
     ).toBeInTheDocument();
   });
 
