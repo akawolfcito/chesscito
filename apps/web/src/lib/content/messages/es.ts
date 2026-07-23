@@ -344,9 +344,9 @@ const messages = {
         "Revisa tu historial con el Coach y elige la próxima lección.",
     },
     perksActive: [
-      "Luz ilimitada. Análisis de cada partida.",
+      "El Season Pass completo, incluido.",
+      "Luz ilimitada. Análisis de cada partida que juegas.",
       "Training Journal completo. Toda tu historia guardada.",
-      "Special Trainings: nuevos juegos con el tiempo.",
       "Identidad PRO en tu perfil.",
     ],
     errors: {

@@ -2449,18 +2449,19 @@ export const PRO_COPY = {
     journal: "JOURNAL",
     journalSubline: "Review your coach history and pick the next lesson.",
   },
-  /** M1 funnel (Commit 5) — value bullets rendered before the price
-   *  card so PRO is framed as "what you get" before "what you pay".
-   *  Full sentences, canonical order: Luz access → Training Journal →
-   *  Special Trainings → PRO identity. Only entitlement-backed perks:
-   *  Special Trainings is gated by the training_pass, which PRO grants
-   *  (source "pro"); Arena / VictoryNFT stay roadmap-only, never here.
-   *  Category-level wording ("new games added over time") stays valid
-   *  as more Special Trainings ship — do not list individual games. */
+  /** Value bullets rendered before the price card so PRO is framed as
+   *  "what you get" before "what you pay". Canonical hierarchy (founder,
+   *  2026-07-23): PRO includes the full Season Pass, then adds unlimited
+   *  Coach Review, the Training Journal and PRO identity. Season Pass is
+   *  the entitlement PRO grants (source "pro" → training_pass), and it
+   *  subsumes Special Trainings, so those are NOT a separate bullet here.
+   *  "Play Chess" is folded into "every game you play": Arena is free
+   *  (progression-gated), never a PRO-exclusive entitlement, so it must
+   *  not read as one. Arena / VictoryNFT stay roadmap-only, never here. */
   perksActive: [
-    "Luz unlimited. Coach review on every game.",
+    "The full Season Pass, included.",
+    "Luz unlimited. Coach review on every game you play.",
     "Full Training Journal. Every match kept.",
-    "Special Trainings. New games added over time.",
     "PRO identity on your profile.",
   ] as const,
   errors: {
