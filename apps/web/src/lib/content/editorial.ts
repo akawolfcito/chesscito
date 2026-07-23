@@ -3422,6 +3422,9 @@ export const CHALLENGE_CARD_COPY = {
   notJoinedTitle: "21-Day Mind Challenge",
   joinedTitle: "Mind Challenge",
   passportLabel: "Focus Passport",
+  /** Small `?` in the Focus Passport header — replays the intro mini-tour.
+   *  Replaying never touches progress, rewards or the "tour seen" flag. */
+  replayTourLabel: "Replay the intro tour",
   activeBadge: "ACTIVE",
   includedWithPro: "PRO Benefit included",
   trainingPassStat: "Training Pass",

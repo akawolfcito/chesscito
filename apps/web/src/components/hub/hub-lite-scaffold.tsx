@@ -47,6 +47,9 @@ export type HubLiteScaffoldProps = {
   };
   // ── Training Path (horizontal piece roster) ──
   rewardTiles: RewardTile[];
+  /** Re-launches the intro mini-tour from the Focus Passport `?`. Optional so
+   *  the scaffold still mounts in `/dev` probes that don't wire the tour. */
+  onReplayTour?: () => void;
   /** Effective PRO subscriber flag from the global entitlement decision. */
   isPro: boolean;
   /** Opens the account surface. Routes to /exercises?sheet=account (the
@@ -73,6 +76,7 @@ export function HubLiteScaffold({
   onJoinChallenge,
   primaryFocus,
   rewardTiles,
+  onReplayTour,
 }: HubLiteScaffoldProps) {
   const t = useTranslations("HUB_LITE_COPY");
   const tHud = useTranslations("HUD_COPY");
@@ -182,6 +186,7 @@ export function HubLiteScaffold({
           // Tapping the flame/streak block routes into today's focus, same as
           // Start Focus (ritual entry point — UX spec §5 clickability).
           onFocusTap={primaryFocus.onPress}
+          onReplayTour={onReplayTour}
         />
       </div>
 

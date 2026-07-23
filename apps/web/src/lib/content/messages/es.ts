@@ -1855,6 +1855,7 @@ const messages = {
     notJoinedTitle: "Reto Mental de 21 Días",
     joinedTitle: "Reto Mental",
     passportLabel: "Pasaporte de foco",
+    replayTourLabel: "Repetir el tour de introducción",
     activeBadge: "ACTIVO",
     includedWithPro: "Beneficio PRO incluido",
     trainingPassStat: "Pase de entrenamiento",

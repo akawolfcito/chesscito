@@ -38,6 +38,33 @@ afterEach(() => {
 })
 
 describe('<ChallengeCard>', () => {
+  it('shows the Focus Passport `?` and replays the tour on tap, without a Join dependency', () => {
+    const onReplayTour = vi.fn()
+    render(
+      <ChallengeCard
+        focusPassport={passport()}
+        challenge={CHALLENGE}
+        seasonPass={{ active: false, isLoading: false }}
+        onJoinChallenge={() => {}}
+        onReplayTour={onReplayTour}
+      />,
+    )
+    fireEvent.click(screen.getByTestId('challenge-replay-tour'))
+    expect(onReplayTour).toHaveBeenCalledTimes(1)
+  })
+
+  it('omits the `?` when no replay handler is wired', () => {
+    render(
+      <ChallengeCard
+        focusPassport={passport()}
+        challenge={CHALLENGE}
+        seasonPass={{ active: false, isLoading: false }}
+        onJoinChallenge={() => {}}
+      />,
+    )
+    expect(screen.queryByTestId('challenge-replay-tour')).toBeNull()
+  })
+
   it('pulses the Join CTA while the purchase is available', () => {
     // The transaction this whole surface exists for. Once the hub tour ends,
     // the pulse is the only thing still pointing at it.

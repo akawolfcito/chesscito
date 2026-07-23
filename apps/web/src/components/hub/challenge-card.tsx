@@ -32,6 +32,10 @@ export type ChallengeCardProps = {
   /** Optional: makes the flame/streak block a tap target into today's focus
    *  (same destination as Start Focus). Omitted → the block is static. */
   onFocusTap?: () => void;
+  /** Optional: replays the intro mini-tour from the Focus Passport `?`.
+   *  Omitted → no help chip renders. Replaying never touches progress,
+   *  rewards or the "tour seen" flag. */
+  onReplayTour?: () => void;
 };
 
 export function CalendarIcon() {
@@ -123,6 +127,7 @@ export function ChallengeCard({
   seasonPass,
   onJoinChallenge,
   onFocusTap,
+  onReplayTour,
 }: ChallengeCardProps) {
   const t = useTranslations("CHALLENGE_CARD_COPY");
 
@@ -182,7 +187,22 @@ export function ChallengeCard({
               </span>
             ) : null}
           </header>
-          <p className="challenge-card-passport-label">{t("passportLabel")}</p>
+          <div className="challenge-card-passport-head">
+            <p className="challenge-card-passport-label">{t("passportLabel")}</p>
+            {onReplayTour ? (
+              <button
+                type="button"
+                data-testid="challenge-replay-tour"
+                className="challenge-card-passport-help"
+                onClick={onReplayTour}
+                aria-label={t("replayTourLabel")}
+              >
+                <span className="challenge-card-passport-help-dot" aria-hidden="true">
+                  ?
+                </span>
+              </button>
+            ) : null}
+          </div>
           {(() => {
             const inner = (
               <>
