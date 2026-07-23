@@ -2451,11 +2451,16 @@ export const PRO_COPY = {
   },
   /** M1 funnel (Commit 5) — value bullets rendered before the price
    *  card so PRO is framed as "what you get" before "what you pay".
-   *  Three bullets, full sentences, in the canonical order:
-   *  Luz access → Training Journal → PRO identity. */
+   *  Full sentences, canonical order: Luz access → Training Journal →
+   *  Special Trainings → PRO identity. Only entitlement-backed perks:
+   *  Special Trainings is gated by the training_pass, which PRO grants
+   *  (source "pro"); Arena / VictoryNFT stay roadmap-only, never here.
+   *  Category-level wording ("new games added over time") stays valid
+   *  as more Special Trainings ship — do not list individual games. */
   perksActive: [
     "Luz unlimited. Coach review on every game.",
     "Full Training Journal. Every match kept.",
+    "Special Trainings. New games added over time.",
     "PRO identity on your profile.",
   ] as const,
   errors: {
@@ -3458,13 +3463,16 @@ export const CHALLENGE_CARD_COPY = {
   // One line on purpose: the two icon rows below already carry the offer, and
   // the long version now lives behind the `?` chip.
   offerHabit: "Build your daily focus habit.",
-  offerPractice: "Access advanced challenges during your {days}-day journey",
+  // Special Trainings, framed at category level so it stays valid as more
+  // ludic games ship — never list individual games. `{days}` is still
+  // accepted by callers even though the copy no longer interpolates it.
+  offerPractice: "Advanced challenges, growing over time.",
   offerShieldsBonus: "Includes the direct-purchase +{count} Shields bonus",
   offerPriceNote: "One-time payment · No subscription",
   // Benefit tiles. Both counts are interpolated from the SKU — a pass sold with
   // a different duration or bonus must never advertise the old numbers.
   offerBenefitDays: "{days} Days",
-  offerBenefitTrainings: "Training+",
+  offerBenefitTrainings: "Special Trainings",
   offerBenefitShields: "+{count} Shields",
   // Accessible name of the `?` chip that discloses offerPractice +
   // offerShieldsBonus. The chip itself renders a glyph, which names nothing.

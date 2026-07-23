@@ -142,7 +142,7 @@ describe('SeasonPassSheet — visual offer', () => {
     // Interpolated from the SKU, never hardcoded: a pass sold with 5 shields
     // must not advertise 3.
     expect(grid).toHaveTextContent('21 Days')
-    expect(grid).toHaveTextContent('Training+')
+    expect(grid).toHaveTextContent('Special Trainings')
     expect(grid).toHaveTextContent('+3 Shields')
   })
 

@@ -346,6 +346,7 @@ const messages = {
     perksActive: [
       "Luz ilimitada. Análisis de cada partida.",
       "Training Journal completo. Toda tu historia guardada.",
+      "Special Trainings: nuevos juegos con el tiempo.",
       "Identidad PRO en tu perfil.",
     ],
     errors: {
@@ -1878,11 +1879,11 @@ const messages = {
     offerTitle: "Únete al Reto Mental de 21 Días",
     offerJoinKicker: "Únete al",
     offerHabit: "Crea tu hábito diario de foco.",
-    offerPractice: "Accede a retos avanzados durante tu recorrido de {days} días",
+    offerPractice: "Retos avanzados, sumando más con el tiempo.",
     offerShieldsBonus: "Incluye el bono de +{count} Escudos por compra directa",
     offerPriceNote: "Pago único · Sin suscripción",
     offerBenefitDays: "{days} días",
-    offerBenefitTrainings: "Entrenamiento+",
+    offerBenefitTrainings: "Special Trainings",
     offerBenefitShields: "+{count} Escudos",
     offerDetailsLabel: "Qué incluye",
     offerPayWith: "Pagar con",
