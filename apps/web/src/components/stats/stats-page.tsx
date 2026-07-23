@@ -6,6 +6,227 @@ import type {
 import { StatCard } from "./stat-card";
 import { PlayerIdentityPill } from "@/components/identity/player-identity-pill";
 import { formatNickname, type NicknameTokens } from "@/lib/identity/identity-lite";
+import {
+  statsFiltersToQuery,
+  type ContainerFilter,
+  type StatsFilters,
+  type SurfaceFilter,
+} from "@/lib/stats/filters";
+import type {
+  ActivationFunnel,
+  CountryCount,
+  Retention,
+} from "@/lib/stats/funnels";
+
+const ACTIVATION_STEP_LABELS: Record<string, string> = {
+  app_opened: "App opened",
+  hub_viewed: "Hub viewed",
+  exercise_started: "Exercise started",
+  exercise_completed: "Exercise completed",
+  daily_focus_completed: "Daily Focus done",
+};
+
+const regionNames =
+  typeof Intl !== "undefined" && "DisplayNames" in Intl
+    ? new Intl.DisplayNames(["en"], { type: "region" })
+    : null;
+
+function countryLabel(code: string): string {
+  try {
+    return regionNames?.of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+/** Surface + container filters as plain links (no client JS, no global state):
+ *  each chip navigates to the same path with an updated querystring, keeping
+ *  the other filter intact. */
+function FilterControls({ filters }: { filters: StatsFilters }) {
+  const surfaceOptions: Array<{ value: SurfaceFilter; label: string }> = [
+    { value: "all", label: "All" },
+    { value: "learn", label: "Learn" },
+    { value: "play", label: "Play" },
+  ];
+  const containerOptions: Array<{ value: ContainerFilter; label: string }> = [
+    { value: "all", label: "All" },
+    { value: "minipay", label: "MiniPay" },
+    { value: "browser", label: "Browser" },
+  ];
+  const chip = (active: boolean, href: string, label: string, key: string) => (
+    <a
+      key={key}
+      href={href}
+      aria-current={active ? "true" : undefined}
+      className="rounded-full border px-3 py-1 text-xs font-semibold transition-colors"
+      style={{
+        borderColor: "var(--paper-divider)",
+        background: active ? "var(--paper-text)" : "rgba(255,255,255,0.6)",
+        color: active ? "var(--paper-bg, #fff)" : "var(--paper-text-muted)",
+      }}
+    >
+      {label}
+    </a>
+  );
+  return (
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+      <div className="flex items-center gap-1.5">
+        <span
+          className="text-[0.625rem] font-semibold uppercase tracking-wide"
+          style={{ color: "var(--paper-text-subtle)" }}
+        >
+          Surface
+        </span>
+        {surfaceOptions.map((o) =>
+          chip(
+            filters.surface === o.value,
+            statsFiltersToQuery({ ...filters, surface: o.value }) || "?",
+            o.label,
+            `s-${o.value}`,
+          ),
+        )}
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span
+          className="text-[0.625rem] font-semibold uppercase tracking-wide"
+          style={{ color: "var(--paper-text-subtle)" }}
+        >
+          Container
+        </span>
+        {containerOptions.map((o) =>
+          chip(
+            filters.container === o.value,
+            statsFiltersToQuery({ ...filters, container: o.value }) || "?",
+            o.label,
+            `c-${o.value}`,
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Activation funnel: distinct sessions per canonical step, absolute counts
+ *  (no rates — a single session can read as 100% at early volume). */
+function ActivationFunnelChart({ funnel }: { funnel: ActivationFunnel }) {
+  const top = Math.max(1, ...funnel.map((s) => s.sessions));
+  return (
+    <div className="flex flex-col gap-1.5">
+      {funnel.map((s) => {
+        const pct = (s.sessions / top) * 100;
+        return (
+          <div key={s.step} className="flex items-center gap-2 text-xs">
+            <span
+              className="w-32 shrink-0"
+              style={{ color: "var(--paper-text-muted)" }}
+            >
+              {ACTIVATION_STEP_LABELS[s.step] ?? s.step}
+            </span>
+            <span
+              className="h-4 rounded"
+              style={{
+                width: `${Math.max(pct, s.sessions > 0 ? 3 : 0)}%`,
+                minWidth: s.sessions > 0 ? "0.5rem" : 0,
+                background: "rgba(58, 128, 148, 0.78)",
+              }}
+              aria-hidden
+            />
+            <span
+              className="tabular-nums font-semibold"
+              style={{ color: "var(--paper-text)" }}
+            >
+              {nf(s.sessions)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function TopCountriesList({ countries }: { countries: CountryCount[] }) {
+  if (countries.length === 0) {
+    return (
+      <p className="text-xs" style={{ color: "var(--paper-text-subtle)" }}>
+        No country data yet.
+      </p>
+    );
+  }
+  return (
+    <ul className="border-t" style={{ borderColor: "var(--paper-divider)" }}>
+      {countries.map((c) => (
+        <li
+          key={c.country}
+          className="flex items-center justify-between gap-2 border-b py-2 text-xs"
+          style={{
+            color: "var(--paper-text)",
+            borderColor: "var(--paper-divider)",
+          }}
+        >
+          <span>
+            {countryLabel(c.country)}{" "}
+            <span style={{ color: "var(--paper-text-subtle)" }}>
+              ({c.country})
+            </span>
+          </span>
+          <span
+            className="tabular-nums"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
+            {nf(c.sessions)} {c.sessions === 1 ? "session" : "sessions"}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function retentionPct(returned: number, cohort: number): string {
+  if (cohort <= 0) return "—";
+  return `${Math.round((returned / cohort) * 100)}%`;
+}
+
+function RetentionCards({ retention }: { retention: Retention }) {
+  const cards: Array<{ label: string; b: Retention["d1"] }> = [
+    { label: "D1 retention", b: retention.d1 },
+    { label: "D7 retention", b: retention.d7 },
+  ];
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {cards.map(({ label, b }) => (
+        <div
+          key={label}
+          className="flex flex-col gap-1 rounded-xl border px-4 py-3"
+          style={{
+            background: "rgba(255,255,255,0.92)",
+            borderColor: "var(--paper-divider)",
+          }}
+        >
+          <span
+            className="text-[0.625rem] font-semibold uppercase tracking-wide"
+            style={{ color: "var(--paper-text-subtle)" }}
+          >
+            {label}
+          </span>
+          <span
+            className="text-xl font-bold tabular-nums"
+            style={{ color: "var(--paper-text)" }}
+          >
+            {retentionPct(b.returned, b.cohort)}
+          </span>
+          <span
+            className="text-[0.625rem]"
+            style={{ color: "var(--paper-text-subtle)" }}
+          >
+            {b.cohort > 0
+              ? `${nf(b.returned)} of ${nf(b.cohort)} installs returned`
+              : "Not enough cohort data yet"}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 type StatsPageProps = {
   stats: PublicStats;
@@ -304,8 +525,8 @@ const TRACKED_TODAY: ReadonlyArray<string> = [
 const COMING_NEXT: ReadonlyArray<string> = [
   "Network fees paid (needs indexer)",
   "Failed transaction rate (needs indexer)",
-  "Retention cohorts · D1 / D7 / D30 (needs web analytics)",
-  "Top countries (needs web analytics)",
+  "Retention D30 · D3 / D21 cohorts",
+  "Monetization funnel · server-confirmed purchases",
 ];
 
 /** §8 method-tx rows: label + the OnchainMethodTx key it reads. Column
@@ -366,6 +587,7 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
             {formatGeneratedAt(stats.generatedAt)}
           </span>
         </p>
+        <FilterControls filters={stats.filters} />
       </header>
 
       {/* Executive Snapshot — vital-signs cockpit. Three hero tiles
@@ -392,6 +614,90 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
           sublabel="Saves in the last 30 days"
           variant="hero"
         />
+      </section>
+
+      {/* Acquisition & Activation — the core "¿Llegan? ¿Entienden?
+          ¿Entrenan? ¿Vuelven?" block. All four sub-blocks honor the
+          surface/container filters above. Absolute counts, no rates on
+          the funnel (a single session reads as 100% at early volume). */}
+      <section className="space-y-5">
+        <div>
+          <h3
+            className="mb-1 text-base font-bold md:text-lg"
+            style={{ color: "var(--paper-text)" }}
+          >
+            Acquisition &amp; Activation
+          </h3>
+          <p
+            className="text-[0.6875rem] leading-tight"
+            style={{ color: "var(--paper-text-subtle)" }}
+          >
+            App opens, the activation funnel, top countries, and D1/D7
+            retention — last 30 days
+            {stats.filters.surface !== "all" || stats.filters.container !== "all"
+              ? `, filtered by ${[
+                  stats.filters.surface !== "all" ? stats.filters.surface : null,
+                  stats.filters.container !== "all"
+                    ? stats.filters.container
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}`
+              : ""}
+            .
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <StatCard
+            label="App Opens (30d)"
+            value={stats.appOpens30d}
+            sublabel="Distinct sessions that opened the app"
+            variant="hero"
+          />
+        </div>
+
+        {stats.activation ? (
+          <div>
+            <p
+              className="mb-2 text-[0.625rem] font-semibold uppercase tracking-wide"
+              style={{ color: "var(--paper-text-subtle)" }}
+            >
+              Activation funnel · distinct sessions
+            </p>
+            <ActivationFunnelChart funnel={stats.activation} />
+          </div>
+        ) : null}
+
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div>
+            <p
+              className="mb-2 text-[0.625rem] font-semibold uppercase tracking-wide"
+              style={{ color: "var(--paper-text-subtle)" }}
+            >
+              Top countries · by sessions
+            </p>
+            <TopCountriesList countries={stats.topCountries} />
+          </div>
+          <div>
+            <p
+              className="mb-2 text-[0.625rem] font-semibold uppercase tracking-wide"
+              style={{ color: "var(--paper-text-subtle)" }}
+            >
+              Retention
+            </p>
+            {stats.retention ? (
+              <RetentionCards retention={stats.retention} />
+            ) : (
+              <p
+                className="text-xs"
+                style={{ color: "var(--paper-text-subtle)" }}
+              >
+                Retention data unavailable.
+              </p>
+            )}
+          </div>
+        </div>
       </section>
 
       {/* Activity trend chart — first visual right after Snapshot so
