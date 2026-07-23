@@ -12,6 +12,7 @@
  */
 
 import { getAnonymousId } from "@/lib/analytics/identity";
+import { clientDimensions } from "@/lib/analytics/client-dimensions";
 
 // Runaway-bug defense: cap events at a conservative 100 per 5-min window
 // per event name. If a render loop or malicious caller keeps firing the
@@ -45,6 +46,11 @@ export function track(event: string, props?: Record<string, unknown>): void {
   const session_id = getAnonymousId();
   if (!session_id) return;
 
+  // Client-stamped dimensions (surface/container/locale/source/campaign/
+  // app_version/visit_id). country is added server-side from the edge geo
+  // header — never sent from the client. The server re-sanitizes all of this.
+  const dims = clientDimensions();
+
   // Use keepalive + no-cache so the request survives page unload
   // (important for dock-tap → navigation flows) and doesn't share
   // anything with the browser cache.
@@ -53,7 +59,7 @@ export function track(event: string, props?: Record<string, unknown>): void {
       method: "POST",
       keepalive: true,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ session_id, event, props }),
+      body: JSON.stringify({ session_id, event, props, dims }),
     }).catch(() => {
       /* swallow — telemetry must never fail user-visible flows */
     });

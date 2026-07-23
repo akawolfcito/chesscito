@@ -1,16 +1,63 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
+import {
+  normalizeAppVersion,
+  normalizeCampaign,
+  normalizeContainer,
+  normalizeCountry,
+  normalizeLocale,
+  normalizeSource,
+  normalizeSurface,
+} from "@/lib/analytics/dimensions";
 
 export const runtime = "nodejs";
 
 const MAX_EVENT_LEN = 64;
 const MAX_SESSION_LEN = 64;
 const MAX_PROPS_BYTES = 4_096;
+const MAX_VISIT_LEN = 64;
 
 type Payload = {
   session_id?: unknown;
   event?: unknown;
   props?: unknown;
+  dims?: unknown;
 };
+
+/** Server-authoritative dimensions written to analytics_events. Every value is
+ *  re-sanitized through the shared allow-lists (the client already stamped
+ *  them, but the server is the source of truth) and `country` is derived here
+ *  from the edge header — never trusted from the client. */
+type ServerDims = {
+  surface: string | null;
+  container: string | null;
+  locale: string | null;
+  country: string | null;
+  source: string | null;
+  campaign: string | null;
+  app_version: string | null;
+  visit_id: string | null;
+};
+
+function sanitizeDims(raw: unknown, country: string | null): ServerDims {
+  const d = (raw && typeof raw === "object" ? raw : {}) as Record<
+    string,
+    unknown
+  >;
+  const visit =
+    typeof d.visit_id === "string" && d.visit_id.length <= MAX_VISIT_LEN
+      ? d.visit_id
+      : null;
+  return {
+    surface: normalizeSurface(d.surface),
+    container: normalizeContainer(d.container),
+    locale: normalizeLocale(d.locale),
+    country, // from edge header only
+    source: normalizeSource(d.source),
+    campaign: normalizeCampaign(d.campaign),
+    app_version: normalizeAppVersion(d.app_version),
+    visit_id: visit,
+  };
+}
 
 function sanitizeProps(raw: unknown): Record<string, unknown> | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
@@ -50,6 +97,14 @@ export async function POST(req: Request) {
 
     const props = sanitizeProps(payload.props);
 
+    // Country comes ONLY from the edge geo header — never from the client
+    // payload. We keep ISO alpha-2 and nothing else: no IP, city, region,
+    // postal code, or coordinates is ever read or stored (privacy §7).
+    const country = normalizeCountry(
+      req.headers.get("x-vercel-ip-country"),
+    );
+    const dims = sanitizeDims(payload.dims, country);
+
     const supabase = getSupabaseServer();
     if (!supabase) return new Response(null, { status: 204 });
 
@@ -59,7 +114,25 @@ export async function POST(req: Request) {
       session_id: sessionId,
       event,
       props,
+      ...dims,
     });
+
+    // The app_opened root event also fixes the retention cohort. Idempotent:
+    // on conflict the first visit's day-0 + first-touch attribution stand.
+    if (event === "app_opened") {
+      await supabase
+        .from("session_first_seen")
+        .upsert(
+          {
+            session_id: sessionId,
+            first_surface: dims.surface,
+            first_container: dims.container,
+            first_country: dims.country,
+            first_source: dims.source,
+          },
+          { onConflict: "session_id", ignoreDuplicates: true },
+        );
+    }
   } catch {
     /* swallow — telemetry must never fail user-visible flows */
   }
