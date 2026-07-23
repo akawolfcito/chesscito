@@ -319,13 +319,13 @@ const messages = {
     },
     chipActiveAriaLabel: "{label} activo",
     chipGetAriaLabel: "Activar {label}",
-    coachCardAriaLabel: "Entrenamiento Coach PRO",
-    coachChipsAriaLabel: "Coach PRO incluye",
+    coachCardAriaLabel: "Entrenamiento Chesscito PRO",
+    coachChipsAriaLabel: "Coach Review incluye",
     coachKickerActive: "Pase de entrenamiento",
     coachKickerInactive: "Coach personal",
     hubCoachCard: {
       inactive: {
-        title: "Coach PRO",
+        title: "Chesscito PRO",
         body: "Recibe feedback después de partidas y prácticas.",
         chips: ["Análisis", "Consejos", "Historial"],
         cta: "COACH",
