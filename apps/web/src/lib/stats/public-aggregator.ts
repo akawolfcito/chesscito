@@ -14,6 +14,19 @@ import {
   type OnchainStats,
   type StatsDb,
 } from "./onchain";
+import {
+  computeActivation,
+  computeRetention,
+  computeTopCountries,
+  type ActivationFunnel,
+  type CountryCount,
+  type Retention,
+} from "./funnels";
+import { ALL_FUNNEL_ALIASES } from "@/lib/analytics/canonical-events";
+import {
+  DEFAULT_STATS_FILTERS,
+  type StatsFilters,
+} from "./filters";
 
 /**
  * Read-only aggregator that powers the public `/stats` page.
@@ -149,6 +162,20 @@ export type PublicStats = {
   /** B2.1 — challenge link funnel (last 30d, isLite events only).
    *  null when the underlying query fails. */
   challengeFunnel: ChallengeFunnel | null;
+  /** Echo of the applied surface/container filters (drives the UI controls
+   *  + the "as of, filtered by" label). */
+  filters: StatsFilters;
+  /** Distinct sessions that fired app_opened in the last 30d, under the
+   *  active filters. null on query failure. Equals activation[0].sessions. */
+  appOpens30d: number | null;
+  /** Activation funnel (last 30d, filtered): distinct sessions per canonical
+   *  step. null on query failure. */
+  activation: ActivationFunnel | null;
+  /** Top countries by distinct sessions (last 30d, filtered). Empty on
+   *  failure; null country is never included. */
+  topCountries: CountryCount[];
+  /** Rolling D1/D7 retention (filtered cohorts). null on query failure. */
+  retention: Retention | null;
 };
 
 export const EMPTY_PUBLIC_STATS: PublicStats = {
@@ -169,6 +196,11 @@ export const EMPTY_PUBLIC_STATS: PublicStats = {
   generatedAt: new Date(0).toISOString(),
   onchain: EMPTY_ONCHAIN_STATS,
   challengeFunnel: null,
+  filters: DEFAULT_STATS_FILTERS,
+  appOpens30d: null,
+  activation: null,
+  topCountries: [],
+  retention: null,
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -324,10 +356,16 @@ function extractChallengeFunnel(res: {
   };
 }
 
-export async function getPublicStats(): Promise<PublicStats> {
+export async function getPublicStats(
+  filters: StatsFilters = DEFAULT_STATS_FILTERS,
+): Promise<PublicStats> {
   const supabase = getSupabaseServer();
   if (!supabase) {
-    return { ...EMPTY_PUBLIC_STATS, generatedAt: new Date().toISOString() };
+    return {
+      ...EMPTY_PUBLIC_STATS,
+      filters,
+      generatedAt: new Date().toISOString(),
+    };
   }
 
   const now = new Date();
@@ -491,6 +529,77 @@ export async function getPublicStats(): Promise<PublicStats> {
     error: unknown;
   }>).then(extractChallengeFunnel, () => null);
 
+  // Observability blocks (activation / top countries / retention). These are
+  // the ONLY blocks the surface/container filters touch — headline platform
+  // stats (mints, welcome packs, sessions, trend) stay global. Two filtered
+  // reads: one event scan (feeds all three) + the cohort table. Separate
+  // awaits keep the giant allSettled tuple's type instantiation shallow.
+  const applyEventFilters = <T>(q: T): T => {
+    let out = q as unknown as {
+      eq: (col: string, val: string) => unknown;
+    };
+    if (filters.surface !== "all") out = out.eq("surface", filters.surface) as typeof out;
+    if (filters.container !== "all")
+      out = out.eq("container", filters.container) as typeof out;
+    return out as unknown as T;
+  };
+
+  const filteredEvents30d = await (applyEventFilters(
+    supabase
+      .from("analytics_events")
+      .select("event, session_id, created_at, country")
+      .gte("created_at", since30d)
+      .range(0, DISTINCT_QUERY_MAX_ROWS),
+  ) as unknown as Promise<{
+    data: Array<{
+      event: string;
+      session_id: string;
+      created_at: string;
+      country: string | null;
+    }> | null;
+    error: unknown;
+  }>).then(
+    (res) => (res.error || !Array.isArray(res.data) ? null : res.data),
+    () => null,
+  );
+
+  const cohortRows = await (((): unknown => {
+    let q = supabase
+      .from("session_first_seen")
+      .select("session_id, first_seen")
+      .gte("first_seen", since30d)
+      .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as {
+      eq: (col: string, val: string) => unknown;
+    };
+    if (filters.surface !== "all") q = q.eq("first_surface", filters.surface) as typeof q;
+    if (filters.container !== "all")
+      q = q.eq("first_container", filters.container) as typeof q;
+    return q;
+  })() as Promise<{
+    data: Array<{ session_id: string; first_seen: string }> | null;
+    error: unknown;
+  }>).then(
+    (res) => (res.error || !Array.isArray(res.data) ? null : res.data),
+    () => null,
+  );
+
+  const activation: ActivationFunnel | null = filteredEvents30d
+    ? computeActivation(
+        filteredEvents30d.filter((r) =>
+          (ALL_FUNNEL_ALIASES as readonly string[]).includes(r.event),
+        ),
+      )
+    : null;
+  const appOpens30d =
+    activation?.find((s) => s.step === "app_opened")?.sessions ?? null;
+  const topCountries: CountryCount[] = filteredEvents30d
+    ? computeTopCountries(filteredEvents30d)
+    : [];
+  const retention: Retention | null =
+    cohortRows && filteredEvents30d
+      ? computeRetention(cohortRows, filteredEvents30d)
+      : null;
+
   return {
     totalVictories: extractCount(totalVictoriesRes as PromiseSettledResult<CountResult>),
     victories7d: extractCount(victories7dRes as PromiseSettledResult<CountResult>),
@@ -545,5 +654,10 @@ export async function getPublicStats(): Promise<PublicStats> {
     generatedAt,
     onchain,
     challengeFunnel,
+    filters,
+    appOpens30d,
+    activation,
+    topCountries,
+    retention,
   };
 }
