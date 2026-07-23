@@ -88,6 +88,13 @@ function walk(dir) {
       entry === ".next" ||
       rel.includes("/__tests__/") ||
       rel.startsWith("src/app/dev/") ||
+      // Public share/OG landing pages render with no theme provider in scope
+      // (they are social-preview surfaces, not the themeable app runtime), so
+      // their /art literals are hardcoded by design — same rationale as the
+      // dev/ exclusion above. Every slot they touch (hub.daily-icon,
+      // screen-mission/panel-mision-icon) is also consumed via the resolver
+      // elsewhere, so excluding this route orphans nothing.
+      rel.startsWith("src/app/[locale]/share/") ||
       rel.startsWith("src/lib/themes/")
     ) {
       continue;
@@ -507,12 +514,16 @@ if (CHECK_MODE) {
   // plus season.story-arrow, new art for the Season Pass offer.
   // +1 (B: 70 → 71) 2026-07-22: coach.share-trophy, the dedicated Match Review
   // share icon split off shared.trophy-epic.
-  const expectedInitial = { A: 2, B: 71, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  // +1 (B: 71 → 72) 2026-07-23: payments.offer-bg, the dedicated Season Pass
+  // offer sheet background (panel-bg2), so the shared panel-bg stays panel-bg1
+  // everywhere else. Consumed as a CSS background, so it lands in the excluded
+  // bucket (excludedSlots 12 → 13); totalSlots 167 → 168.
+  const expectedInitial = { A: 2, B: 72, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 167 ||
+    inventory.length !== 168 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

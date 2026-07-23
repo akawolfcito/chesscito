@@ -1,19 +1,19 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 167,
+  "totalSlots": 168,
   "categoryCounts": {
     "A": 155,
     "B": 0,
     "C": 0,
     "D": 0,
     "E": 0,
-    "F": 12,
+    "F": 13,
     "G": 0
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 71,
+    "B": 72,
     "C": 26,
     "D": 38,
     "E": 19,
@@ -26,12 +26,12 @@
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
-  "noActiveConsumerSlots": 5,
+  "noActiveConsumerSlots": 6,
   "connectedSlots": 155,
-  "excludedSlots": 12,
+  "excludedSlots": 13,
   "exceptions": [],
   "literalDiff": {
-    "registeredBasenames": 188,
+    "registeredBasenames": 189,
     "discoveredBasenames": 16,
     "unregisteredExistingAssets": []
   },
@@ -263,7 +263,7 @@
         "src/components/exercises/persistent-dock.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 5,
+      "consumerCount": 6,
       "consumers": [
         {
           "file": "src/components/exercises/persistent-dock.tsx",
@@ -300,6 +300,17 @@
         },
         {
           "file": "src/components/hub/hub-scaffold.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/hub/hub-tour.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -533,7 +544,7 @@
         "src/components/action-row/action-row-icon.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 4,
+      "consumerCount": 5,
       "consumers": [
         {
           "file": "src/components/action-row/action-row-icon.tsx",
@@ -548,6 +559,17 @@
         },
         {
           "file": "src/components/hub/hub-arena-tile.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/hub/hub-tour.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -613,7 +635,7 @@
         "src/app/[locale]/page.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 3,
+      "consumerCount": 5,
       "consumers": [
         {
           "file": "src/app/[locale]/page.tsx",
@@ -638,7 +660,29 @@
           "buildsPathDynamically": false
         },
         {
+          "file": "src/components/daily/daily-tactic-sheet.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
           "file": "src/components/hub/hub-daily-tile.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/tactics/play-tactics-tile.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -880,34 +924,22 @@
       ],
       "deprecated": null,
       "initialCategory": "B",
-      "category": "A",
+      "category": "F",
       "documentedFiles": [
         "src/components/hub/hub-tour.tsx"
       ],
-      "currentConsumerState": "resolver",
-      "consumerCount": 1,
-      "consumers": [
-        {
-          "file": "src/components/hub/hub-tour.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        }
-      ],
+      "currentConsumerState": "none",
+      "consumerCount": 0,
+      "consumers": [],
       "patterns": [],
-      "usesResolver": true,
+      "usesResolver": false,
       "usesHardcodedPath": false,
       "usesImg": false,
       "usesPicture": false,
       "usesCssBackground": false,
       "usesSharedMap": false,
       "buildsPathDynamically": false,
-      "noActiveConsumer": false
+      "noActiveConsumer": true
     },
     {
       "slotId": "hub.tour-title",
@@ -930,19 +962,8 @@
         "src/components/hub/hub-tour.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 2,
+      "consumerCount": 1,
       "consumers": [
-        {
-          "file": "src/components/hub/hub-tour.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        },
         {
           "file": "src/components/payments/season-pass-sheet.tsx",
           "occurrences": [],
@@ -1031,10 +1052,21 @@
         "src/components/hub/challenge-card.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 2,
+      "consumerCount": 3,
       "consumers": [
         {
           "file": "src/components/hub/challenge-card.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/hub/hub-tour.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -1501,7 +1533,7 @@
         "src/components/hub/hub-lite-scaffold.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 3,
+      "consumerCount": 2,
       "consumers": [
         {
           "file": "src/components/arena/arena-select-scaffold.tsx",
@@ -1516,17 +1548,6 @@
         },
         {
           "file": "src/components/exercises/exercises-screen.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        },
-        {
-          "file": "src/components/hub/hub-lite-scaffold.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -1691,7 +1712,7 @@
         "src/components/hub/hub-daily-trigger.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 3,
+      "consumerCount": 4,
       "consumers": [
         {
           "file": "src/components/exercises/welcome-pack-tile.tsx",
@@ -1706,6 +1727,17 @@
         },
         {
           "file": "src/components/hub/hub-daily-trigger.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/hub/hub-tour.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -2216,7 +2248,7 @@
         "src/components/exercises/fail-rescue-modal.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 5,
+      "consumerCount": 6,
       "consumers": [
         {
           "file": "src/components/arena/arena-hud.tsx",
@@ -2242,6 +2274,17 @@
         },
         {
           "file": "src/components/exercises/fail-rescue-modal.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/hub/hub-tour.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -2305,8 +2348,30 @@
         "src/components/payments/season-pass-sheet.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 3,
       "consumers": [
+        {
+          "file": "src/components/hub/challenge-card.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/hub/hub-tour.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/components/payments/season-pass-sheet.tsx",
           "occurrences": [],
@@ -2356,7 +2421,7 @@
         "src/components/payments/season-pass-sheet.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 3,
+      "consumerCount": 4,
       "consumers": [
         {
           "file": "src/components/hub/challenge-card.tsx",
@@ -2371,6 +2436,17 @@
         },
         {
           "file": "src/components/hub/focus-passport.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/hub/hub-tour.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -3465,6 +3541,51 @@
       "category": "A",
       "documentedFiles": [
         "src/components/payments/season-pass-celebration.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/payments/season-pass-sheet.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "payments.offer-bg",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/new-assets-chesscito/paneles/panel-bg2"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Payments — Season Pass offer sheet background (dedicated so the shared panel-bg stays panel-bg1)",
+        "↳ components/payments/season-pass-sheet.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/payments/season-pass-sheet.tsx"
       ],
       "currentConsumerState": "resolver",
       "consumerCount": 1,
@@ -5728,32 +5849,10 @@
         "src/components/tactics/play-tactics-tile.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 3,
+      "consumerCount": 1,
       "consumers": [
         {
           "file": "src/components/action-row/action-row-icon.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        },
-        {
-          "file": "src/components/daily/daily-tactic-sheet.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        },
-        {
-          "file": "src/components/tactics/play-tactics-tile.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,

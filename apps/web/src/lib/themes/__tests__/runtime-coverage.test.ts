@@ -24,10 +24,13 @@ describe("theme runtime catalog coverage", () => {
     // 167 = 162 + the three Focus Passport flames + the Season Pass story
     // arrow (cataloged 2026-07-22) + coach.share-trophy, the dedicated Match
     // Review share icon split off shared.trophy-epic (2026-07-22).
-    expect(report.totalSlots).toBe(167);
+    // 168 (2026-07-23): + payments.offer-bg, the dedicated Season Pass offer
+    // sheet background. Consumed as a CSS background, so it counts as excluded
+    // (excludedSlots 12 → 13), not a new resolver slot (connectedSlots stays 155).
+    expect(report.totalSlots).toBe(168);
     expect(report.initialCategoryCounts).toEqual({
       A: 2,
-      B: 71,
+      B: 72,
       C: 26,
       D: 38,
       E: 19,
@@ -35,7 +38,7 @@ describe("theme runtime catalog coverage", () => {
       G: 0,
     });
     expect(report.connectedSlots).toBe(155);
-    expect(report.excludedSlots).toBe(12);
+    expect(report.excludedSlots).toBe(13);
     expect(
       report.slots.filter(
         (slot: { category: string; currentConsumerState: string }) =>
