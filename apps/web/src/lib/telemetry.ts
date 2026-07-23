@@ -11,7 +11,7 @@
  *   track("share_tile_tap", { tile: "whatsapp" });
  */
 
-const SESSION_KEY = "chesscito:analytics-session";
+import { getAnonymousId } from "@/lib/analytics/identity";
 
 // Runaway-bug defense: cap events at a conservative 100 per 5-min window
 // per event name. If a render loop or malicious caller keeps firing the
@@ -35,23 +35,6 @@ function shouldThrottle(event: string): boolean {
   return false;
 }
 
-function getSessionId(): string {
-  if (typeof window === "undefined") return "";
-  try {
-    const existing = window.localStorage.getItem(SESSION_KEY);
-    if (existing) return existing;
-    // 16 random hex chars (~64 bits) — plenty for our scale, short
-    // enough to stay under the 64-char session id column.
-    const bytes = new Uint8Array(8);
-    window.crypto.getRandomValues(bytes);
-    const id = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-    window.localStorage.setItem(SESSION_KEY, id);
-    return id;
-  } catch {
-    return "";
-  }
-}
-
 export function track(event: string, props?: Record<string, unknown>): void {
   if (typeof window === "undefined") return;
   // Local development renders can double-run effects under React StrictMode
@@ -59,7 +42,7 @@ export function track(event: string, props?: Record<string, unknown>): void {
   // local API/Supabase path unless explicitly opted in.
   if (!LOCAL_TELEMETRY_ENABLED) return;
   if (shouldThrottle(event)) return;
-  const session_id = getSessionId();
+  const session_id = getAnonymousId();
   if (!session_id) return;
 
   // Use keepalive + no-cache so the request survives page unload
