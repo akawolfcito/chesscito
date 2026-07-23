@@ -15099,8 +15099,41 @@ button.hud-resource-chip:active:not(:disabled) {
   animation: challenge-join-pulse 2.2s ease-in-out infinite;
 }
 
+/* Nudge arrow pointing at Join. Hidden on the plain hub — it only appears while
+   the mini-tour is spotlighting this card (the tour stamps `data-tour-spotlight`
+   on the target it points at). `display: none` on the <picture> keeps it out of
+   the flex row entirely, so no phantom gap when it's absent. */
+.challenge-card-join-arrow {
+  display: none;
+}
+[data-tour-spotlight="active"] .challenge-card-join-arrow {
+  display: inline-flex;
+  width: 1.7rem;
+  height: 1.7rem;
+  flex: 0 0 auto;
+  animation: challenge-join-arrow-nudge 1.1s ease-in-out infinite;
+}
+.challenge-card-join-arrow-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@keyframes challenge-join-arrow-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .challenge-card-join.is-pulsing {
+    animation: none;
+  }
+  .challenge-card-join-arrow {
     animation: none;
   }
 }

@@ -133,6 +133,17 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
     };
   }, [step]);
 
+  // Flag the CURRENT step's target so surface-local affordances can react to
+  // being spotlighted (e.g. the ChallengeCard's Join arrow, which shows only
+  // during this step, never on the plain hub). Cleared when the step advances
+  // or the tour unmounts, so it never leaks past the tour.
+  useLayoutEffect(() => {
+    if (!step) return;
+    const el = findTarget(step.target);
+    el?.setAttribute("data-tour-spotlight", "active");
+    return () => el?.removeAttribute("data-tour-spotlight");
+  }, [step]);
+
   const handleNext = useCallback(() => {
     if (isLast) {
       onFinish("completed");

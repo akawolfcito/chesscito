@@ -81,6 +81,33 @@ describe('<ChallengeCard>', () => {
     )
   })
 
+  it('renders the tour Join nudge arrow alongside the button, and drops it when the pass is active', () => {
+    // The arrow lives in the DOM whenever Join does; CSS reveals it only while
+    // the mini-tour spotlights this card (see the hub-tour spotlight test).
+    const { rerender } = render(
+      <ChallengeCard
+        focusPassport={passport()}
+        challenge={CHALLENGE}
+        seasonPass={{ active: false, isLoading: false }}
+        onJoinChallenge={() => {}}
+      />,
+    )
+    // Offer state: Join exists → arrow is rendered next to it.
+    expect(document.querySelector('.challenge-card-join-arrow')).toBeInTheDocument()
+
+    // Active pass: no Join button, so no arrow.
+    rerender(
+      <ChallengeCard
+        focusPassport={passport()}
+        challenge={CHALLENGE}
+        seasonPass={{ active: true, source: 'season_pass', dayOfChallenge: 3, shieldsCredited: 3 }}
+        onJoinChallenge={null}
+      />,
+    )
+    expect(screen.queryByTestId('challenge-join-cta')).toBeNull()
+    expect(document.querySelector('.challenge-card-join-arrow')).toBeNull()
+  })
+
   it('never pulses a CTA that cannot be tapped', () => {
     // `null` = status still resolving. A throbbing disabled button advertises a
     // dead control.

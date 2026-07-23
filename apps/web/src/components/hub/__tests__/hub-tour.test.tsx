@@ -109,6 +109,23 @@ describe("<HubTour>", () => {
     expect(screen.queryByTestId("hub-tour-details-toggle")).toBeNull();
   });
 
+  it("stamps the current step's target so a tour-only affordance can reveal itself", () => {
+    // The ChallengeCard's Join arrow shows only while THIS step spotlights it.
+    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
+    const daily = document.querySelector('[data-tour-target="daily"]');
+    const challenge = document.querySelector('[data-tour-target="challenge"]');
+
+    // Step 1: daily is flagged, challenge is not.
+    expect(daily).toHaveAttribute("data-tour-spotlight", "active");
+    expect(challenge).not.toHaveAttribute("data-tour-spotlight");
+
+    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
+
+    // Step 2: the flag moves to challenge, daily is cleared.
+    expect(challenge).toHaveAttribute("data-tour-spotlight", "active");
+    expect(daily).not.toHaveAttribute("data-tour-spotlight");
+  });
+
   it("keeps the pass's real terms visible and quotes them from config, not from a string", () => {
     // The benefit cards carry the pitch, but the deal stays on screen. A "$0.99"
     // typed into the copy would survive a price change with the suite green —

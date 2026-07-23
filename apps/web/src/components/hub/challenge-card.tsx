@@ -296,21 +296,35 @@ export function ChallengeCard({
           </span>
         </div>
         {isActive ? null : (
-          <button
-            type="button"
-            // Pulses only while the purchase is actually available: `null` means
-            // the status is still resolving (or the player already owns it), and
-            // a CTA that throbs while disabled advertises a dead button.
-            className={`challenge-card-join${
-              onJoinChallenge ? " is-pulsing" : ""
-            }`}
-            data-testid="challenge-join-cta"
-            aria-label={t("joinAriaLabel", { price: challenge.priceLabel })}
-            onClick={onJoinChallenge ?? undefined}
-            disabled={!onJoinChallenge}
-          >
-            {t("joinCta")}
-          </button>
+          <>
+            {/* Nudge arrow — points at Join, but ONLY while the mini-tour is
+                spotlighting this card (CSS gates it on the tour's
+                `data-tour-spotlight` attribute; hidden on the plain hub).
+                Decorative; the subtle L→R nudge is CSS + reduced-motion aware. */}
+            <ThemeAssetPicture
+              slot="season.story-arrow"
+              pictureClassName="challenge-card-join-arrow"
+              alt=""
+              aria-hidden="true"
+              className="challenge-card-join-arrow-img"
+              draggable={false}
+            />
+            <button
+              type="button"
+              // Pulses only while the purchase is actually available: `null` means
+              // the status is still resolving (or the player already owns it), and
+              // a CTA that throbs while disabled advertises a dead button.
+              className={`challenge-card-join${
+                onJoinChallenge ? " is-pulsing" : ""
+              }`}
+              data-testid="challenge-join-cta"
+              aria-label={t("joinAriaLabel", { price: challenge.priceLabel })}
+              onClick={onJoinChallenge ?? undefined}
+              disabled={!onJoinChallenge}
+            >
+              {t("joinCta")}
+            </button>
+          </>
         )}
       </div>
     </section>
