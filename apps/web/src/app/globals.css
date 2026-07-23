@@ -2261,6 +2261,16 @@
     object-fit: contain;
   }
 
+  /* Account avatar variant — the small account sprite reads as a
+     square tile, so clip it to a circle (cover fills the round slot
+     without transparent bars from the base `contain`). Scoped so the
+     shield/streak floating sprites keep their untouched framing. */
+  .candy-tray-pill-icon--avatar-round>img,
+  .candy-tray-pill-icon--avatar-round>picture img {
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
   /* Streak sprite ships in its final orange-flame colorway as of
      2026-06-01 (design/version1-new/fire-icon.png). No CSS recolor
      needed anymore — only the warm drop-shadow to anchor it on the

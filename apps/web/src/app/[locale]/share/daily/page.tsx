@@ -135,39 +135,70 @@ export default async function ShareDailyPage({
 
   return (
     <main className="mission-shell secondary-page-scrim flex min-h-[100dvh] items-center justify-center px-6">
+      {/* Candy mission panel — cream wood frame + grass border via the
+          screen-mission/panel-mision-icon.png asset (same vocabulary as
+          MissionBriefing). Stretched 100% 100% so it fills the panel; the
+          inner %-padding keeps content off the decorative border. */}
       <div
-        className="candy-page-panel flex w-full max-w-[var(--app-max-width)] flex-col items-center gap-4 rounded-3xl px-6 py-10 text-center"
-        style={{ background: "var(--paper-bg)" }}
+        className="relative w-full max-w-[var(--app-max-width)]"
+        style={{
+          backgroundImage: "url(/art/screen-mission/panel-mision-icon.png)",
+          backgroundSize: "100% 100%",
+          backgroundRepeat: "no-repeat",
+          minHeight: "320px",
+        }}
       >
-        <p
-          className="text-xs font-bold uppercase tracking-widest"
-          style={{ color: "rgba(110, 65, 15, 0.55)" }}
-        >
-          {pieceLabel} · {params.name}
-        </p>
-        <p
-          className="fantasy-title text-3xl font-bold"
-          style={{ color: "rgba(110, 65, 15, 0.98)" }}
-        >
-          {headline}
-        </p>
-        <p
-          className="text-sm leading-snug"
-          style={{ color: "rgba(110, 65, 15, 0.75)" }}
-        >
-          {subhead}
-        </p>
-        <Link
-          href="/challenge/daily"
-          className="mt-2 inline-flex min-h-[44px] items-center justify-center rounded-full px-6 text-sm font-bold"
-          style={{
-            background: "rgba(245, 158, 11, 0.95)",
-            color: "rgba(63, 34, 8, 0.95)",
-            boxShadow: "0 4px 12px rgba(120, 65, 5, 0.32)",
-          }}
-        >
-          Play today&apos;s challenge
-        </Link>
+        <div className="flex flex-col items-center gap-4 px-[12%] pt-[14%] pb-[13%] text-center">
+          <p
+            className="text-xs font-bold uppercase tracking-widest"
+            style={{ color: "rgba(110, 65, 15, 0.55)" }}
+          >
+            {pieceLabel} · {params.name}
+          </p>
+          <p
+            className="fantasy-title text-3xl font-bold"
+            style={{ color: "rgba(110, 65, 15, 0.98)" }}
+          >
+            {headline}
+          </p>
+          {/* Daily Tactic mark — same daily-icon-v1 sprite used across
+              the hub/sheet. Static <picture> (no theme context on this
+              public share page); avif/webp negotiated, png fallback. */}
+          <picture>
+            <source srcSet="/art/new-icons-chesscito/daily-icon-v1.avif" type="image/avif" />
+            <source srcSet="/art/new-icons-chesscito/daily-icon-v1.webp" type="image/webp" />
+            <img
+              src="/art/new-icons-chesscito/daily-icon-v1.png"
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className="h-14 w-14 object-contain drop-shadow-[0_2px_6px_rgba(120,65,5,0.35)]"
+            />
+          </picture>
+          <p
+            className="text-sm leading-snug"
+            style={{ color: "rgba(110, 65, 15, 0.75)" }}
+          >
+            {subhead}
+          </p>
+          {/* Green CSS CTA — shared --cta-primary-green-* token family,
+              the canonical primary-action vocabulary (matches
+              .primary-play-cta--green-css). */}
+          <Link
+            href="/challenge/daily"
+            className="mt-2 inline-flex min-h-[48px] items-center justify-center px-7 text-sm font-extrabold"
+            style={{
+              background: "var(--cta-primary-green-grad)",
+              border: "2px solid var(--cta-primary-green-border)",
+              borderRadius: "1.1rem",
+              boxShadow: "var(--cta-primary-green-bevel)",
+              color: "#fffdf5",
+              textShadow: "var(--cta-primary-green-text-shadow)",
+            }}
+          >
+            Play today&apos;s challenge
+          </Link>
+        </div>
       </div>
     </main>
   );

@@ -3329,7 +3329,7 @@ export function ExercisesScreen({
                   data-testid="account-trigger"
                   className={`candy-tray-pill hub-hud-pill${proStatus?.active ? " hub-hud-pill--pro-text" : ""}`}
                 >
-                  <ThemeAssetPicture slot="shared.avatar-small-account" pictureClassName="candy-tray-pill-icon candy-tray-pill-icon--floating" alt="" aria-hidden="true" draggable={false} />
+                  <ThemeAssetPicture slot="shared.avatar-small-account" pictureClassName="candy-tray-pill-icon candy-tray-pill-icon--floating candy-tray-pill-icon--avatar-round" alt="" aria-hidden="true" draggable={false} />
                   <span>{tStatus("accountChipLabel")}</span>
                   {proStatus?.active ? (
                     (() => {
