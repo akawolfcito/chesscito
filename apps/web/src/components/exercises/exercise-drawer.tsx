@@ -225,6 +225,8 @@ export function ExerciseDrawer({
               </span>
             </>
           ) : null}
+          {/* Session Combo (consecutive correct, `chesscito:streak`), not the
+              daily streak — docs/product/2026-07-23-combo-streak-vocabulary.md. */}
           {typeof streakCount === 'number' && streakCount >= 2 ? (
             <>
               <span aria-hidden="true" className="candy-tray-pill-divider" />

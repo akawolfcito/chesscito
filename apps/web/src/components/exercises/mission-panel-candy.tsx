@@ -390,6 +390,9 @@ export function PhaseFlash({
             <span>+{lastEarnedStars} STAR</span>
           </span>
         ) : null}
+        {/* COMBO = Session Combo (consecutive correct exercises, from
+            useStreak/`chesscito:streak`) — NOT the daily streak. See
+            docs/product/2026-07-23-combo-streak-vocabulary.md. */}
         {showStreakPill ? (
           <span className="fail-rescue-reward-pill fail-rescue-reward-pill--streak">
             <span aria-hidden="true">×{streakCount}</span>
