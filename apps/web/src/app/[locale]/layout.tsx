@@ -10,6 +10,7 @@ import { DesktopAppFrame } from "@/components/chrome/desktop-app-frame"
 import { routing } from "@/i18n/routing"
 import { CHESSCITO_MODE } from "@/lib/feature-flags"
 import { ThemeCssVariables } from "@/components/themes/theme-css-variables"
+import { AnalyticsBoot } from "@/components/analytics/analytics-boot"
 
 const fredoka = Fredoka({
   subsets: ['latin'],
@@ -143,6 +144,7 @@ export default async function LocaleLayout({
             <div className="relative flex w-full flex-col text-foreground">
               <WalletProvider>
                 <ThemeCssVariables />
+                <AnalyticsBoot />
                 <main className="flex flex-1 flex-col">
                   <DesktopAppFrame>{children}</DesktopAppFrame>
                 </main>

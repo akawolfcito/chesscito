@@ -76,6 +76,23 @@ const SAMPLE_STATS: PublicStats = {
     shares: 14,
     continueToLite: 11,
   },
+  filters: { surface: "all", container: "all" },
+  appOpens30d: 1500,
+  activation: [
+    { step: "app_opened", sessions: 1500 },
+    { step: "hub_viewed", sessions: 1200 },
+    { step: "exercise_started", sessions: 800 },
+    { step: "exercise_completed", sessions: 600 },
+    { step: "daily_focus_completed", sessions: 300 },
+  ],
+  topCountries: [
+    { country: "BR", sessions: 420 },
+    { country: "NG", sessions: 210 },
+  ],
+  retention: {
+    d1: { returned: 300, cohort: 1000 },
+    d7: { returned: 120, cohort: 900 },
+  },
 };
 
 describe("StatsPage", () => {
@@ -163,14 +180,19 @@ describe("StatsPage", () => {
     expect(screen.getByText("9.75")).toBeInTheDocument(); // cUSD
   });
 
-  it("keeps network fees + failed-tx + retention + countries in the Coming next lane", () => {
+  it("keeps indexer-gated metrics in the Coming next lane (retention D1/D7 + countries now ship)", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
     const comingNext = screen.getByText("Coming next").closest("div");
     expect(comingNext).not.toBeNull();
     expect(comingNext).toHaveTextContent(/network fees/i);
     expect(comingNext).toHaveTextContent(/failed transaction rate/i);
-    expect(comingNext).toHaveTextContent(/retention/i);
-    expect(comingNext).toHaveTextContent(/countries/i);
+    // Only the further-out D30 / D3 / D21 cohorts stay deferred.
+    expect(comingNext).toHaveTextContent(/retention d30/i);
+    // Top countries + D1/D7 are no longer deferred — they render in the
+    // Acquisition & Activation block above.
+    expect(comingNext).not.toHaveTextContent(/top countries/i);
+    expect(screen.getByText("App Opens (30d)")).toBeInTheDocument();
+    expect(screen.getByText(/Top countries · by sessions/)).toBeInTheDocument();
   });
 
   it("renders an em-dash for a null on-chain metric (failed query)", () => {
@@ -337,11 +359,12 @@ describe("StatsPage", () => {
     // Tracked today bullets (sample)
     expect(screen.getByText("App sessions")).toBeInTheDocument();
     expect(screen.getByText("Leaderboard scores")).toBeInTheDocument();
-    // Coming next bullets (sample) — network fees + failed-tx + retention
-    // + countries are the deliberately-deferred §8 metrics.
+    // Coming next bullets (sample) — network fees + failed-tx stay in the
+    // deferred lane (need an indexer). Retention D1/D7 + top countries now
+    // SHIP in the Acquisition & Activation block, so the deferred lane only
+    // mentions the further-out D30 / D3 / D21 cohorts.
     expect(screen.getByText(/Network fees paid/)).toBeInTheDocument();
-    expect(screen.getByText(/Retention cohorts/)).toBeInTheDocument();
-    expect(screen.getByText(/Top countries/)).toBeInTheDocument();
+    expect(screen.getByText(/Retention D30/)).toBeInTheDocument();
   });
 
   it("renders sections in visual-momentum order (Snapshot → Trend → Mix → Signals → Windows → Recent → Leaderboard → Tracked → Methodology)", () => {

@@ -1,6 +1,8 @@
+import { unstable_cache } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { StatsPage } from "@/components/stats/stats-page";
 import { getPublicStats } from "@/lib/stats/public-aggregator";
+import { parseStatsFilters, type StatsFilters } from "@/lib/stats/filters";
 import {
   nicknameTokensFromTranslator,
   type NicknameTranslator,
@@ -19,8 +21,25 @@ export const metadata = {
 // page never 500s on partial Supabase outages.
 export const revalidate = 3600;
 
-export default async function StatsRoute() {
-  const stats = await getPublicStats();
+// Per-filter-combination hourly cache. Reading searchParams makes the route
+// dynamic, but the Supabase aggregation still caches for an hour keyed by the
+// (surface, container) pair, so each querystring gets its own correct,
+// independently-revalidated snapshot instead of re-querying every request.
+function loadStats(filters: StatsFilters) {
+  return unstable_cache(
+    () => getPublicStats(filters),
+    ["public-stats", filters.surface, filters.container],
+    { revalidate: 3600, tags: ["public-stats"] },
+  )();
+}
+
+export default async function StatsRoute({
+  searchParams,
+}: {
+  searchParams: { surface?: string; container?: string };
+}) {
+  const filters = parseStatsFilters(searchParams);
+  const stats = await loadStats(filters);
   // Build the locale-aware nickname tokens server-side (the aggregator is
   // locale-agnostic + cached); StatsPage formats names from the row variants.
   const tIdentity = await getTranslations("IDENTITY_COPY");
