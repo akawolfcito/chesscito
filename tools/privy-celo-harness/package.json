@@ -1,0 +1,35 @@
+{
+  "name": "privy-celo-harness",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Isolated empirical harness validating Privy embedded EVM wallets on Celo testnet. NOT part of the Chesscito workspace (pnpm-workspace globs apps/* only). Never imports productive code.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@privy-io/react-auth": "^2.13.0",
+    "@privy-io/wagmi": "^1.0.3",
+    "@tanstack/react-query": "5.90.21",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "viem": "2.46.3",
+    "wagmi": "2.19.5"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "16.3.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "6.0.1",
+    "jsdom": "29.0.2",
+    "typescript": "5.9.3",
+    "vite": "npm:rolldown-vite@^7.1.0",
+    "vitest": "4.1.4"
+  }
+}
