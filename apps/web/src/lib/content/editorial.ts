@@ -2126,7 +2126,7 @@ export const LEGAL_COPY = {
   },
   privacy: {
     title: "Privacy Policy",
-    lastUpdated: "March 15, 2026",
+    lastUpdated: "July 23, 2026",
     sections: [
       {
         heading: "Data We Handle",
@@ -2134,23 +2134,27 @@ export const LEGAL_COPY = {
       },
       {
         heading: "Data We Do Not Collect",
-        body: "Chesscito does not collect passwords, seed phrases, government-issued identification, personal identifiable information (PII), or analytics and tracking cookies.",
+        body: "Chesscito does not collect passwords, seed phrases, government-issued identification, personal identifiable information (PII), your full IP address, precise location, phone number, or email. We use no advertising or cross-site tracking cookies.",
       },
       {
         heading: "Local Storage",
         body: "Tutorial state, gameplay preferences, streak shields, and UX settings are stored on your device for UX purposes. On-chain actions and related blockchain data are public by nature and may be transmitted through wallet and network infrastructure required to operate the app.",
       },
       {
+        heading: "Product Analytics",
+        body: "Chesscito records anonymous, first-party usage analytics to understand how the app is used and to keep it secure. For example, we record which screens are viewed, whether training exercises are started and completed, and whether the app runs inside MiniPay or a regular browser. These events are tied to a random, device-generated anonymous identifier stored on your device, never to your wallet address, name, phone, or email. We derive an approximate country (a two-letter country code only) from the network request; we never store your full IP address, city, or coordinates. Analytics are used only in aggregate for product and security decisions, not to profile individuals.",
+      },
+      {
         heading: "Third-Party Infrastructure",
-        body: "Chesscito uses Celo RPC providers for blockchain reads and writes, and WalletConnect for wallet connection. We do not use analytics vendors or ad networks.",
+        body: "Chesscito uses Celo RPC providers for blockchain reads and writes, and WalletConnect for wallet connection. Anonymous usage analytics are first-party and stored in our own database (Supabase); we do not use third-party analytics vendors or ad networks.",
       },
       {
         heading: "Purpose of Data Use",
-        body: "Data is used solely to operate the game: validate moves, record scores, process purchases, and mint collectibles.",
+        body: "Data is used solely to operate the game and keep it secure: validate moves, record scores, process purchases, mint collectibles, and measure aggregate product usage.",
       },
       {
         heading: "Data Retention",
-        body: "On-chain data is permanent by nature of blockchain. Local data stored on your device can be cleared by you at any time through your browser settings.",
+        body: "On-chain data is permanent by nature of blockchain. Raw anonymous analytics events are retained for up to 90 days; anonymous first-visit records used to measure retention are kept longer in aggregated form. Local data stored on your device can be cleared by you at any time through your browser settings.",
       },
       {
         heading: "Contact",

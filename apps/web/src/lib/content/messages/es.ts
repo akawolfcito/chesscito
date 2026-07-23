@@ -174,7 +174,7 @@ const messages = {
     },
     privacy: {
       title: "Política de Privacidad",
-      lastUpdated: "15 de marzo de 2026",
+      lastUpdated: "23 de julio de 2026",
       sections: [
         {
           heading: "Datos que manejamos",
@@ -182,23 +182,27 @@ const messages = {
         },
         {
           heading: "Datos que NO recolectamos",
-          body: "Chesscito no recolecta contraseñas, frases semilla, identificaciones emitidas por gobiernos, información de identificación personal (PII), ni cookies de analítica o tracking.",
+          body: "Chesscito no recolecta contraseñas, frases semilla, identificaciones emitidas por gobiernos, información de identificación personal (PII), tu dirección IP completa, ubicación precisa, número de teléfono ni email. No usamos cookies de publicidad ni de rastreo entre sitios.",
         },
         {
           heading: "Almacenamiento local",
           body: "El estado de tutoriales, preferencias de juego, escudos de racha y ajustes de UX se almacenan en tu dispositivo con fines de experiencia. Las acciones on-chain y los datos blockchain relacionados son públicos por naturaleza y pueden transmitirse a través de la infraestructura de wallet y red necesaria para operar la app.",
         },
         {
+          heading: "Analítica de producto",
+          body: "Chesscito registra analítica de uso anónima y propia (first-party) para entender cómo se usa la app y mantenerla segura. Por ejemplo, registramos qué pantallas se ven, si los ejercicios de entrenamiento se inician y completan, y si la app corre dentro de MiniPay o de un navegador normal. Estos eventos se asocian a un identificador anónimo aleatorio generado en tu dispositivo, nunca a tu dirección de wallet, nombre, teléfono o email. Derivamos un país aproximado (solo un código de dos letras) a partir de la solicitud de red; nunca almacenamos tu dirección IP completa, ciudad ni coordenadas. La analítica se usa solo de forma agregada para decisiones de producto y seguridad, no para perfilar individuos.",
+        },
+        {
           heading: "Infraestructura de terceros",
-          body: "Chesscito utiliza proveedores RPC de Celo para lecturas y escrituras blockchain, y WalletConnect para conexión de wallets. No usamos proveedores de analítica ni redes de publicidad.",
+          body: "Chesscito utiliza proveedores RPC de Celo para lecturas y escrituras blockchain, y WalletConnect para conexión de wallets. La analítica de uso anónima es propia y se almacena en nuestra propia base de datos (Supabase); no usamos proveedores de analítica de terceros ni redes de publicidad.",
         },
         {
           heading: "Propósito del uso de datos",
-          body: "Los datos se usan únicamente para operar el juego: validar movimientos, registrar scores, procesar compras y mintear coleccionables.",
+          body: "Los datos se usan únicamente para operar el juego y mantenerlo seguro: validar movimientos, registrar scores, procesar compras, mintear coleccionables y medir el uso agregado del producto.",
         },
         {
           heading: "Retención de datos",
-          body: "Los datos on-chain son permanentes por la naturaleza de la blockchain. Los datos locales en tu dispositivo pueden ser borrados por ti en cualquier momento desde la configuración del navegador.",
+          body: "Los datos on-chain son permanentes por la naturaleza de la blockchain. Los eventos de analítica anónima se conservan hasta 90 días; los registros anónimos de primera visita usados para medir retención se conservan más tiempo de forma agregada. Los datos locales en tu dispositivo pueden ser borrados por ti en cualquier momento desde la configuración del navegador.",
         },
         {
           heading: "Contacto",
