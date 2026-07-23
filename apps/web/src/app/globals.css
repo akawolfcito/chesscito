@@ -14863,8 +14863,8 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .hub-tour-body {
-  margin-top: 8px;
-  font-size: 0.82rem;
+  /* margin-top: 8px; */
+  font-size: 0.72rem;
   line-height: 1.4;
   color: rgba(63, 34, 8, 0.88);
 }
@@ -14905,37 +14905,67 @@ button.hud-resource-chip:active:not(:disabled) {
   border-radius: 12px;
 }
 
-/* Everything that is not the hero holds its size: the deal and the button are
-   the two things that may never be squeezed out of the panel. */
-.hub-tour-title-art,
-.hub-tour-value,
-.hub-tour-ask,
+/* The deal and the button hold their size — never squeezed out of the panel. */
+.hub-tour-benefits,
+.hub-tour-price,
 .hub-tour-primary,
 .hub-tour-body,
 .hub-tour-step-counter {
   flex: 0 0 auto;
 }
 
-/* The terms, kept visible without a paragraph: one line, same numbers the
-   ChallengeCard shows, straight from rail-config.ts. */
-.hub-tour-value {
-  margin-top: 10px;
+/* Benefit cards — the same 21 Days / Training+ / +N Shields trio as the Season
+   Pass sheet, compacted so the panel stays short enough for MiniPay's chrome. */
+.hub-tour-benefits {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.hub-tour-benefit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.2rem;
+  padding: 0.4rem 0.25rem;
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+.hub-tour-benefit-icon {
+  width: 2.2rem;
+  height: 2.2rem;
+  object-fit: contain;
+}
+
+.hub-tour-benefit-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  color: rgba(63, 34, 8, 0.9);
+}
+
+/* Price line — kept visible under the cards, quoted from config (never typed). */
+.hub-tour-price {
+  margin-top: 8px;
   font-family: var(--font-game-action);
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: #3f2208;
 }
 
-.hub-tour-ask {
-  margin-top: 2px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: rgba(110, 65, 15, 0.78);
-}
-
+/* Button fits its label instead of spanning the panel — a full-width pill read
+   as an oversized control stealing the row. `min-width` keeps the touch target
+   comfortable; the panel's `align-items: center` centers it. */
 .hub-tour-primary {
-  margin-top: 16px;
-  width: 100%;
+  margin-top: 8px;
+  width: auto;
+  min-width: 132px;
 }
 
 /* Daily ritual as an art strip (start/keep steps). The full sentence hides

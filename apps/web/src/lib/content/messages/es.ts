@@ -1921,10 +1921,10 @@ const messages = {
     dailyDetailsLabel: "Ver detalles del foco diario",
     challengeTitle: "Únete al Reto de 21 días",
     challengeTitleEnrolled: "Reto Mental de 21 días",
-    challengeJoin:
-      "Decide mejor en {days} días. Sigue tu racha, construye un hábito diario.",
+    challengeJoin: "Decide mejor. Mantén tu racha. Crea un hábito diario.",
     challengeValue: "{days} días · +{shields} escudos · {price}",
     challengeAsk: "Toca Join Challenge para comprometerte.",
+    challengePrice: "{price} · pago único",
     challengeEnrolled:
       "Sigue tus días de foco y completa tu compromiso de {days} días.",
     challengeTitleAlt: "Reto Mental de 21 días",

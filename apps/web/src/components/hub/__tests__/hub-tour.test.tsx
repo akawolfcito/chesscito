@@ -110,9 +110,10 @@ describe("<HubTour>", () => {
   });
 
   it("keeps the pass's real terms visible and quotes them from config, not from a string", () => {
-    // The art carries the pitch, but the deal stays on screen. A "$0.99" typed
-    // into the copy would survive a price change with the suite green — feed the
-    // panel different terms and it must say THOSE.
+    // The benefit cards carry the pitch, but the deal stays on screen. A "$0.99"
+    // typed into the copy would survive a price change with the suite green —
+    // feed the panel different terms and it must say THOSE (days/shields in the
+    // cards, price on its own line).
     render(
       <HubTour
         steps={steps}
@@ -122,31 +123,35 @@ describe("<HubTour>", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
 
-    expect(screen.getByTestId("hub-tour-value")).toHaveTextContent(
-      "30 days · +5 shields · $2.49",
-    );
-    // And it asks for the transaction by naming the button.
-    expect(screen.getByText(HUB_TOUR_COPY.challengeAsk)).toBeInTheDocument();
+    const cards = screen.getByTestId("hub-tour-benefits");
+    expect(cards).toHaveTextContent("30 Days");
+    expect(cards).toHaveTextContent("+5 Shields");
+    // The price is kept visible on its own line, quoted from config.
+    expect(screen.getByTestId("hub-tour-value")).toHaveTextContent("$2.49");
   });
 
-  it("shows the art but not the sales pitch to a player who already owns the pass", () => {
+  it("shows the benefit cards but not to a player who already owns the pass", () => {
     const owner = buildHubTourSteps({ ...FRESH, hasSeasonPass: true });
     render(<HubTour steps={owner} challenge={CHALLENGE} onFinish={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
 
-    expect(screen.getByAltText(HUB_TOUR_COPY.challengeHeroAlt)).toBeInTheDocument();
+    // An owner gets the enrolled headline + body, and neither the offer cards
+    // nor the price line.
+    expect(
+      screen.getByText(HUB_TOUR_COPY.challengeTitleEnrolled),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("hub-tour-benefits")).toBeNull();
     expect(screen.queryByTestId("hub-tour-value")).toBeNull();
-    expect(screen.queryByText(HUB_TOUR_COPY.challengeAsk)).toBeNull();
   });
 
-  it("carries the headline as art, with the words reachable as alt text", () => {
+  it("carries the challenge headline as text, not baked-in art", () => {
     render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
 
-    // Baked-in words: without alt, a screen reader (and every non-EN locale)
-    // gets a nameless image where the headline should be.
+    // The wordmark art was invisible on short viewports; the headline is plain
+    // text now, reachable by every reader and locale.
     expect(
-      screen.getByAltText(HUB_TOUR_COPY.challengeTitleAlt),
+      screen.getByText(HUB_TOUR_COPY.challengeTitle),
     ).toBeInTheDocument();
   });
 
@@ -290,9 +295,9 @@ describe("<HubTour>", () => {
       expect(cap).toBeGreaterThan(0);
       expect(cap).toBeLessThanOrEqual(600);
 
-      // The art is the sacrifice, and it is the ONLY one: the deal and the
-      // button — the two things that make the step worth showing — survive.
-      expect(screen.queryByAltText(HUB_TOUR_COPY.challengeHeroAlt)).toBeNull();
+      // The deal (cards + price) and the button survive — the panel just caps
+      // its height so "Got it" stays reachable.
+      expect(screen.getByTestId("hub-tour-benefits")).toBeInTheDocument();
       expect(screen.getByTestId("hub-tour-value")).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: HUB_TOUR_COPY.done }),

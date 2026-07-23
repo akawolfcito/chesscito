@@ -3523,17 +3523,20 @@ export const HUB_TOUR_COPY = {
   dailyDetailsLabel: "Show daily focus details",
   challengeTitle: "Join the 21-Day Challenge",
   challengeTitleEnrolled: "21-Day Mind Challenge",
-  /** The one screen that asks for money — carried by art, not by a paragraph.
-   *  The hook sells the outcome, `challengeValue` keeps the terms visible in a
-   *  single line, and `challengeAsk` names the button. A step that describes
-   *  the challenge and forgets to ask for the transaction is not a sales step.
+  /** The one screen that asks for money — carried by the benefit cards, not by
+   *  a paragraph. The hook sells the outcome, the cards keep days/shields
+   *  visible, and `challengePrice` keeps the price honest (quoted from config).
    *
    *  NOTHING here may imply the pass forgives a missed day. A shield rescues a
    *  FAILED EXERCISE; streak recovery is a permanent never-build, and selling it
-   *  would be selling something that does not exist. */
-  challengeJoin: "Decide better in {days} days. Track your streak, build a daily habit.",
+   *  would be selling something that does not exist. "Keep your streak" is a
+   *  forward promise (build the habit), NOT "we'll restore a broken one". */
+  challengeJoin: "Decide better. Keep your streak. Build a daily habit.",
   challengeValue: "{days} days · +{shields} shields · {price}",
   challengeAsk: "Tap Join Challenge to commit.",
+  /** Price line under the benefit cards on the tour's challenge step. Quoted
+   *  from rail-config, never typed, so it can't rot the day pricing moves. */
+  challengePrice: "{price} · one-time payment",
   challengeEnrolled:
     "Track your focus days and complete your {days}-day commitment.",
   /** Alt text for the headline art — the art bakes the words in, so this is what

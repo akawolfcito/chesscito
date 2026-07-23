@@ -8,7 +8,6 @@ import {
   type CSSProperties,
 } from "react";
 import { useTranslations } from "next-intl";
-import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
@@ -62,16 +61,10 @@ const GAP = 18;
 const PANEL_WIDTH = 320;
 /** Minimum distance from the arrow to the panel's rounded corners. */
 const ARROW_INSET = 28;
-/** Floor for the panel. Below this even a squeezed hero has nothing left to
- *  give, so the panel keeps its size and overlaps the target instead of
- *  amputating its own button — a tour you cannot finish is worse than a tour
- *  that covers the card for a moment. */
+/** Floor for the panel. Below this the panel keeps its size and overlaps the
+ *  target instead of amputating its own button — a tour you cannot finish is
+ *  worse than a tour that covers the card for a moment. */
 const MIN_PANEL_HEIGHT = 260;
-/** Room the panel needs before the hero art earns its place. Under this the art
- *  is DROPPED, not shrunk: squeezing it just collided it with the price row. The
- *  order of sacrifice is deliberate — the art goes first, the deal and the
- *  button never go at all. */
-const HERO_MIN_SPACE = 340;
 
 /** The 2-step LEARN hub tour: a scrim with a hole over the step's target, a
  *  panel explaining it, and Next / Got it / Skip.
@@ -82,6 +75,9 @@ const HERO_MIN_SPACE = 340;
  *  no-goal) — the tour informs, it does not navigate. */
 export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
   const t = useTranslations("HUB_TOUR_COPY");
+  // The challenge step's benefit cards reuse the Season Pass sheet's own labels
+  // (offerBenefit*), so the tour and the checkout name the same three perks.
+  const tCard = useTranslations("CHALLENGE_CARD_COPY");
 
   // WHICH steps run is frozen at mount: a step whose target never rendered gets
   // dropped, not pointed at, and re-filtering per render would let a
@@ -106,8 +102,7 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
 
   const step = reachable[index] ?? null;
   const isLast = index === reachable.length - 1;
-  const isChallenge = step?.id === "challenge";
-  /** Only a player who can still buy gets the terms + the ask. */
+  /** Only a player who can still buy gets the benefit cards + price. */
   const isSalesStep = step?.bodyKey === "challengeJoin";
   /** The daily ritual steps carry the message as an art strip (gift → tactic →
    *  combo) with the full sentence tucked behind a `?`. The "already solved"
@@ -169,11 +164,6 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
     MIN_PANEL_HEIGHT,
     targetBelowFold ? spaceAbove : spaceBelow,
   );
-
-  // On a short viewport (MiniPay's chrome, a small phone) the art is the first
-  // thing to go. It is the only child that can be dropped without breaking the
-  // step: the price row still states the deal and "Got it" still ends the tour.
-  const showHero = !rect || available >= HERO_MIN_SPACE;
 
   const panelStyle: CSSProperties | undefined = rect
     ? targetBelowFold
@@ -242,20 +232,7 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
         <p className="hub-tour-step-counter">
           {t("stepCounter", { current: index + 1, total: reachable.length })}
         </p>
-        {isChallenge ? (
-          // The headline is ART: the words are baked into the image, so the alt
-          // text is what a screen reader — and any non-EN locale — actually
-          // receives. It is not decorative.
-          // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
-          <ThemeAssetPicture
-            slot="hub.tour-title"
-            pictureClassName="hub-tour-title-art"
-            alt={t("challengeTitleAlt")}
-            width={780}
-            height={89}
-            draggable={false}
-          />
-        ) : isDailyStrip ? (
+        {isDailyStrip ? (
           // Title + `?` share a relative box so the details popover can float
           // below the chip WITHOUT reflowing the art strip / Next button under
           // it (a popover, not a row — the scrim already owns the aria-modal).
@@ -320,32 +297,36 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
           </p>
         )}
 
-        {isChallenge && showHero ? (
-          // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
-          <ThemeAssetPicture
-            slot="hub.tour-hero"
-            pictureClassName="hub-tour-hero"
-            alt={t("challengeHeroAlt")}
-            width={840}
-            height={370}
-            draggable={false}
-          />
-        ) : null}
-
-        {/* The terms stay VISIBLE, but as one line instead of a paragraph — the
-            art carries the pitch, the row keeps the deal honest, and the ask
-            names the button the player has to press. Only for a player who can
-            still buy: an owner gets the art and nothing else. */}
+        {/* The pitch as three compact benefit cards — the same 21 Days /
+            Training+ / +N Shields trio the Season Pass sheet shows, so the tour
+            and the checkout promise the same thing. days/shields are quoted from
+            config (never typed), and the price line under them keeps the deal
+            honest. Only for a player who can still buy: an owner gets neither. */}
         {isSalesStep ? (
           <>
-            <p className="hub-tour-value" data-testid="hub-tour-value">
-              {t("challengeValue", {
-                days: challenge.days,
-                shields: challenge.shields,
-                price: challenge.price,
-              })}
+            <div className="hub-tour-benefits" data-testid="hub-tour-benefits">
+              <div className="hub-tour-benefit">
+                <TileIconSlot slot="hub.21-day-icon" className="hub-tour-benefit-icon" />
+                <span className="hub-tour-benefit-label">
+                  {tCard("offerBenefitDays", { days: challenge.days })}
+                </span>
+              </div>
+              <div className="hub-tour-benefit">
+                <TileIconSlot slot="hub.training-icon" className="hub-tour-benefit-icon" />
+                <span className="hub-tour-benefit-label">
+                  {tCard("offerBenefitTrainings")}
+                </span>
+              </div>
+              <div className="hub-tour-benefit">
+                <TileIconSlot slot="shared.shield" className="hub-tour-benefit-icon" />
+                <span className="hub-tour-benefit-label">
+                  {tCard("offerBenefitShields", { count: challenge.shields })}
+                </span>
+              </div>
+            </div>
+            <p className="hub-tour-price" data-testid="hub-tour-value">
+              {t("challengePrice", { price: challenge.price })}
             </p>
-            <p className="hub-tour-ask">{t("challengeAsk")}</p>
           </>
         ) : null}
 
