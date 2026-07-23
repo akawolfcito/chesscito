@@ -27,17 +27,33 @@ export function localeFromPath(pathname: string): Locale {
   return normalizeLocale(seg) ?? "en";
 }
 
+/** Safe fallback used if ANY dimension source throws. Telemetry is fail-open:
+ *  a broken dimension must never propagate into the business flow. */
+const FALLBACK_DIMENSIONS: ClientDimensions = {
+  visit_id: "",
+  surface: null,
+  container: "browser",
+  locale: "en",
+  source: "direct",
+  campaign: null,
+  app_version: "dev",
+};
+
 export function clientDimensions(): ClientDimensions {
-  const attribution = getAttribution();
-  const pathname =
-    typeof window === "undefined" ? "/" : window.location.pathname;
-  return {
-    visit_id: getVisitId(),
-    surface: normalizeSurface(CHESSCITO_MODE),
-    container: isMiniPayEnv() ? "minipay" : "browser",
-    locale: localeFromPath(pathname),
-    source: attribution.source,
-    campaign: attribution.campaign,
-    app_version: process.env.NEXT_PUBLIC_BUILD_SHA ?? "dev",
-  };
+  try {
+    const attribution = getAttribution();
+    const pathname =
+      typeof window === "undefined" ? "/" : window.location.pathname;
+    return {
+      visit_id: getVisitId(),
+      surface: normalizeSurface(CHESSCITO_MODE),
+      container: isMiniPayEnv() ? "minipay" : "browser",
+      locale: localeFromPath(pathname),
+      source: attribution.source,
+      campaign: attribution.campaign,
+      app_version: process.env.NEXT_PUBLIC_BUILD_SHA ?? "dev",
+    };
+  } catch {
+    return { ...FALLBACK_DIMENSIONS };
+  }
 }
