@@ -270,8 +270,9 @@ describe("theme-registry", () => {
       // LEARN surfaces (passport, challenge card, Season Pass offer).
       learn: 35,
       // +2 over the original 21: arena.rival-mara and shop.pro, both
-      // formerly uncataloged "exceptions".
-      play: 23,
+      // formerly uncataloged "exceptions". +1: coach.share-trophy, the
+      // dedicated Match Review share icon (2026-07-22), split off shared.trophy-epic.
+      play: 24,
       // 3 reclassified off `unknown` (they always had a consumer — in the
       // sibling app) + 15 newly cataloged carousel slots + 3 brand/social
       // files the landing layout declares as metadata (OG card, apple-icon,

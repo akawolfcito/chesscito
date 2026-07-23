@@ -505,12 +505,14 @@ if (CHECK_MODE) {
   // (shared.flame-color/blue/gray), which were always runtime art but whose
   // consumers composed the path from a basename so this audit never saw them,
   // plus season.story-arrow, new art for the Season Pass offer.
-  const expectedInitial = { A: 2, B: 70, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  // +1 (B: 70 → 71) 2026-07-22: coach.share-trophy, the dedicated Match Review
+  // share icon split off shared.trophy-epic.
+  const expectedInitial = { A: 2, B: 71, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 166 ||
+    inventory.length !== 167 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

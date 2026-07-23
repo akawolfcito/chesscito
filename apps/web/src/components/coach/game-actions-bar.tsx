@@ -70,7 +70,7 @@ const TILE_ICON: Record<TileKind, ThemeAssetKey> = {
   "play-again": "coach.play-again",
   "save-victory": "arena.save",
   "ask-coach": "coach.ask-icon",
-  share: "shared.trophy-epic",
+  share: "coach.share-trophy",
 };
 
 /**

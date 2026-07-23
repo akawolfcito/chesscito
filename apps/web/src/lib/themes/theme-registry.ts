@@ -178,6 +178,7 @@ export type ThemeAssetKey =
   // coach
   | "coach.ask-icon"
   | "coach.play-again"
+  | "coach.share-trophy"
   // account
   | "account.language-icon"
   | "account.network-icon"
@@ -649,6 +650,10 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/new-assets-chesscito/btns/play-again-icon",
         usedIn: ["Coach — play again icon", "↳ components/coach/game-actions-bar.tsx"],
       },
+      "coach.share-trophy": {
+        default: "/art/new-assets-chesscito/btns/share-trophy",
+        usedIn: ["Coach — share trophy icon (Match Review)", "↳ components/coach/game-actions-bar.tsx"],
+      },
       "account.language-icon": {
         default: "/art/new-assets-chesscito/account/language-icon",
         usedIn: ["Account — language row", "↳ components/account/account-sheet.tsx"],
@@ -996,6 +1001,7 @@ const PLAY_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "coach.ask-icon",
   "coach.play-again",
   "coach.play",
+  "coach.share-trophy",
 ];
 
 const SHARED_SLOT_KEYS: readonly ThemeAssetKey[] = [

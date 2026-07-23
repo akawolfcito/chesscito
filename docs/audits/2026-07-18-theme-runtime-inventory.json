@@ -1,9 +1,9 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 166,
+  "totalSlots": 167,
   "categoryCounts": {
-    "A": 154,
+    "A": 155,
     "B": 0,
     "C": 0,
     "D": 0,
@@ -13,25 +13,25 @@
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 70,
+    "B": 71,
     "C": 26,
     "D": 38,
     "E": 19,
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 155,
-  "fullyConnectedSlots": 154,
+  "resolverSlots": 156,
+  "fullyConnectedSlots": 155,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
   "noActiveConsumerSlots": 5,
-  "connectedSlots": 154,
+  "connectedSlots": 155,
   "excludedSlots": 12,
   "exceptions": [],
   "literalDiff": {
-    "registeredBasenames": 187,
+    "registeredBasenames": 188,
     "discoveredBasenames": 16,
     "unregisteredExistingAssets": []
   },
@@ -3221,7 +3221,7 @@
         "src/components/trophies/achievement-detail-sheet.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 7,
+      "consumerCount": 6,
       "consumers": [
         {
           "file": "src/app/[locale]/trophies/page.tsx",
@@ -3236,17 +3236,6 @@
         },
         {
           "file": "src/components/action-row/action-row-icon.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        },
-        {
-          "file": "src/components/coach/game-actions-bar.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -4999,6 +4988,51 @@
       },
       "usedIn": [
         "Coach — play again icon",
+        "↳ components/coach/game-actions-bar.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/coach/game-actions-bar.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/coach/game-actions-bar.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "coach.share-trophy",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/new-assets-chesscito/btns/share-trophy"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Coach — share trophy icon (Match Review)",
         "↳ components/coach/game-actions-bar.tsx"
       ],
       "deprecated": null,
