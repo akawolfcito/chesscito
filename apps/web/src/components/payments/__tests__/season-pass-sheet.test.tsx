@@ -120,6 +120,15 @@ describe('SeasonPassSheet — visual offer', () => {
     ])
   })
 
+  it('labels the story beats: open gift → solve 1 tactic → build habit', () => {
+    render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
+
+    const row = screen.getByTestId('season-pass-story')
+    expect(row).toHaveTextContent('Open gift')
+    expect(row).toHaveTextContent('Solve 1 tactic')
+    expect(row).toHaveTextContent('Build habit')
+  })
+
   it('shows the three benefits as icon tiles with interpolated labels', () => {
     const { container } = render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
 

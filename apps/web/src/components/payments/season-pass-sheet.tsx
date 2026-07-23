@@ -31,13 +31,14 @@ const SKU = "lite_season_pass_21" as const;
 const FALLBACK_TOKEN = "USDC";
 
 /** Narrative row. The order IS the promise's chronology: you get the pass, you
- *  train, the streak stays alive. Decorative — the copy above says it in words.
- *  Every icon resolves through the theme catalog; a raw path here would leave
- *  this sheet unthemed while the same art re-skins everywhere else. */
-const STORY_SLOTS: readonly ThemeAssetKey[] = [
-  "shared.welcome-gift",
-  "hub.train-pieces",
-  "shared.flame-color",
+ *  train, the habit sticks. Now labelled (same gift → tactic → habit strip as
+ *  the mini-tour's step 1). Every icon resolves through the theme catalog; a raw
+ *  path here would leave this sheet unthemed while the same art re-skins
+ *  everywhere else. `labelKey` is a key into `CHALLENGE_CARD_COPY`. */
+const STORY_STEPS: readonly { slot: ThemeAssetKey; labelKey: string }[] = [
+  { slot: "shared.welcome-gift", labelKey: "storyGift" },
+  { slot: "hub.train-pieces", labelKey: "storyTactic" },
+  { slot: "shared.flame-color", labelKey: "storyHabit" },
 ];
 
 // Inherited by every text in the sheet; amber/red state copy overrides it.
@@ -85,6 +86,9 @@ function SeasonPassSheetInner({
   const { address } = useAccount();
   const trainingPass = useSeasonPassStatus(address);
   const celebrationPanelBackground = useThemeBackground("payments.celebration-bg");
+  // Dedicated offer-state background (panel-bg2). Scoped to THIS sheet so the
+  // shared panel-bg (panel-bg1) stays put on every other modal.
+  const offerPanelBackground = useThemeBackground("payments.offer-bg");
   const pass = getSeasonPass(SKU);
   const priceLabel = formatUsd(pass.priceUsd6);
 
@@ -145,7 +149,7 @@ function SeasonPassSheetInner({
       disableBackdropClose={busy}
       ariaLabel="21-Day Mind Challenge Pass"
       closeLabel="Close"
-      panelBackgroundImage={isSuccess ? celebrationPanelBackground : undefined}
+      panelBackgroundImage={isSuccess ? celebrationPanelBackground : offerPanelBackground}
     >
       <div
         className="flex flex-col items-center gap-4 text-center"
@@ -235,15 +239,18 @@ function SeasonPassSheetInner({
             </div>
 
             <div className="season-pass-story" data-testid="season-pass-story">
-              {STORY_SLOTS.map((slot, index) => (
-                <Fragment key={slot}>
+              {STORY_STEPS.map((step, index) => (
+                <Fragment key={step.slot}>
                   {index > 0 ? (
                     <TileIconSlot
                       slot="season.story-arrow"
                       className="season-pass-story-arrow"
                     />
                   ) : null}
-                  <TileIconSlot slot={slot} className="season-pass-story-icon" />
+                  <div className="season-pass-story-step">
+                    <TileIconSlot slot={step.slot} className="season-pass-story-icon" />
+                    <span className="season-pass-story-label">{t(step.labelKey)}</span>
+                  </div>
                 </Fragment>
               ))}
             </div>

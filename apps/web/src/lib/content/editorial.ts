@@ -3425,6 +3425,11 @@ export const CHALLENGE_CARD_COPY = {
   /** Small `?` in the Focus Passport header — replays the intro mini-tour.
    *  Replaying never touches progress, rewards or the "tour seen" flag. */
   replayTourLabel: "Replay the intro tour",
+  /** Labels under the offer sheet's gift → tactic → habit story strip (same
+   *  wording as the mini-tour's step 1). */
+  storyGift: "Open gift",
+  storyTactic: "Solve 1 tactic",
+  storyHabit: "Build habit",
   activeBadge: "ACTIVE",
   includedWithPro: "PRO Benefit included",
   trainingPassStat: "Training Pass",
@@ -3514,7 +3519,7 @@ export const HUB_TOUR_COPY = {
    *  visually and the paragraph stays one tap away without reflowing the panel. */
   dailyStripGift: "Open gift",
   dailyStripTactic: "Solve 1 tactic",
-  dailyStripCombo: "Build combo",
+  dailyStripCombo: "Build habit",
   dailyDetailsLabel: "Show daily focus details",
   challengeTitle: "Join the 21-Day Challenge",
   challengeTitleEnrolled: "21-Day Mind Challenge",

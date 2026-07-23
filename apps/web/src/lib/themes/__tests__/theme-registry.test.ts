@@ -268,7 +268,9 @@ describe("theme-registry", () => {
     expect(counts).toEqual({
       // +3 over 31: the Focus Passport flames, cataloged 2026-07-22. They are
       // LEARN surfaces (passport, challenge card, Season Pass offer).
-      learn: 35,
+      // +1: payments.offer-bg, the Season Pass offer sheet's dedicated bg
+      // (panel-bg2), split off shared.panel-bg so it stays panel-bg1 elsewhere.
+      learn: 36,
       // +2 over the original 21: arena.rival-mara and shop.pro, both
       // formerly uncataloged "exceptions". +1: coach.share-trophy, the
       // dedicated Match Review share icon (2026-07-22), split off shared.trophy-epic.

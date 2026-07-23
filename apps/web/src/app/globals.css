@@ -15295,10 +15295,19 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .season-pass-story {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   gap: 0.4rem;
   width: 100%;
+}
+
+/* Icon + its label, stacked. */
+.season-pass-story-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 0 1 auto;
 }
 
 .season-pass-story-icon {
@@ -15308,13 +15317,23 @@ button.hud-resource-chip:active:not(:disabled) {
   filter: drop-shadow(0 3px 6px rgba(63, 34, 8, 0.22));
 }
 
+.season-pass-story-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  color: rgba(63, 34, 8, 0.9);
+}
+
 /* The arrows carry the reading order, not the meaning — they shrink first when
-   the row runs out of width (390px minus the panel's own padding). */
+   the row runs out of width (390px minus the panel's own padding). Nudged down
+   to sit on the icon centers rather than the label baseline. */
 .season-pass-story-arrow {
   width: 1.1rem;
   height: 1.1rem;
   flex: none;
   object-fit: contain;
+  margin-top: 1.5rem;
 }
 
 /* Benefit grid — three equal columns so a two-word label ("Special Trainings")

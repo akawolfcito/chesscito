@@ -144,6 +144,7 @@ export type ThemeAssetKey =
   | "shared.feedback-thinking"
   | "shared.feedback-questioning"
   | "payments.celebration-bg"
+  | "payments.offer-bg"
   // brand — identity assets (not game theme, but updatable)
   | "brand.title"
   | "brand.ring-start-focus"
@@ -530,6 +531,10 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "payments.celebration-bg": {
         default: "/art/celebration/bg-celebration",
         usedIn: ["Payments — celebration background", "↳ components/payments/season-pass-celebration.tsx"],
+      },
+      "payments.offer-bg": {
+        default: "/art/new-assets-chesscito/paneles/panel-bg2",
+        usedIn: ["Payments — Season Pass offer sheet background (dedicated so the shared panel-bg stays panel-bg1)", "↳ components/payments/season-pass-sheet.tsx"],
       },
       "brand.title": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/brand/title/pro" },
         default: "/art/title-chesscito",
@@ -944,6 +949,7 @@ const LEARN_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "hub.tour-title",
   "hub.21-day-icon",
   "payments.celebration-bg",
+  "payments.offer-bg",
   "brand.ring-start-focus",
   "daily.bg-session",
   "daily.welldone",
