@@ -129,16 +129,16 @@ describe("<HubLiteScaffold>", () => {
     expect(screen.queryByRole("button", { name: /connect/i })).toBeNull();
   });
 
-  it("connected: shows the Peones chip (hub surface) + Account chip that routes on tap", () => {
-    const onAccountTap = vi.fn();
+  it("connected: shows the Peones chip (hub surface); Account chip is hidden on the Learn hub", () => {
     render(
       <HubLiteScaffold
-        {...baseProps({ isWalletConnected: true, onConnectTap: null, onAccountTap })}
+        {...baseProps({ isWalletConnected: true, onConnectTap: null })}
       />,
     );
     expect(screen.getByTestId("peones-chip-stub")).toHaveAttribute("data-surface", "hub");
-    fireEvent.click(screen.getByTestId("hub-account-chip"));
-    expect(onAccountTap).toHaveBeenCalledTimes(1);
+    // Account access lives on /exercises — the circular avatar chip is
+    // intentionally not rendered in the Learn hub header.
+    expect(screen.queryByTestId("hub-account-chip")).toBeNull();
   });
 
   it("guest: no Peones chip and no Account chip", () => {
@@ -147,7 +147,7 @@ describe("<HubLiteScaffold>", () => {
     expect(screen.queryByTestId("hub-account-chip")).toBeNull();
   });
 
-  it("PRO connected: Account circle gets the PRO ring accent", () => {
+  it("PRO connected: Account chip stays hidden (no header avatar)", () => {
     render(
       <HubLiteScaffold
         {...baseProps({
@@ -157,7 +157,7 @@ describe("<HubLiteScaffold>", () => {
         })}
       />,
     );
-    expect(screen.getByTestId("hub-account-chip")).toHaveClass("hub-account-circle--pro");
+    expect(screen.queryByTestId("hub-account-chip")).toBeNull();
   });
 
   it("offer state: ChallengeCard shows the Join CTA", () => {
