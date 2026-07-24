@@ -20,7 +20,10 @@ describe("runtime entitlement provider tree", () => {
     expect(walletProvider.indexOf("</ThemeVariantProvider>")).toBeLessThan(
       walletProvider.indexOf("</EffectiveTrainingPassProvider>"),
     );
-    expect(localeLayout.match(/<WalletProvider\b/g)).toHaveLength(1);
+    // The layout mounts the client boundary, which mounts exactly one
+    // WalletProvider (unchanged) — the single QueryClient/theme tree above.
+    expect(localeLayout.match(/<WalletProviderBoundary\b/g)).toHaveLength(1);
+    expect(localeLayout).not.toMatch(/<WalletProvider>/);
   });
 
   it("does not shadow the effective tier inside either Hub", () => {

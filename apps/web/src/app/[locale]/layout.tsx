@@ -5,7 +5,7 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import '../globals.css';
 
-import { WalletProvider } from "@/components/wallet-provider"
+import { WalletProviderBoundary } from "@/components/wallet-provider-boundary"
 import { DesktopAppFrame } from "@/components/chrome/desktop-app-frame"
 import { routing } from "@/i18n/routing"
 import { CHESSCITO_MODE } from "@/lib/feature-flags"
@@ -142,13 +142,13 @@ export default async function LocaleLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <div className="flex min-h-[100dvh] justify-center">
             <div className="relative flex w-full flex-col text-foreground">
-              <WalletProvider>
+              <WalletProviderBoundary>
                 <ThemeCssVariables />
                 <AnalyticsBoot />
                 <main className="flex flex-1 flex-col">
                   <DesktopAppFrame>{children}</DesktopAppFrame>
                 </main>
-              </WalletProvider>
+              </WalletProviderBoundary>
             </div>
           </div>
         </NextIntlClientProvider>
