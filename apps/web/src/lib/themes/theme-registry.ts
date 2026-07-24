@@ -892,51 +892,51 @@ export const THEMES: Record<string, ThemeDefinition> = {
       // White = player pieces (main board renders these; black is tinted there
       // via pieceTintClass, but black ALSO ships as real b-* assets used for
       // enemies in promotion-run / safe-path and the kingdom-anchor board).
-      "board.piece.white.rook": {
+      "board.piece.white.rook": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/board/piece/white/rook/pro" },
         default: "/art/redesign/pieces/w-rook",
         usedIn: ["Board — white rook", "↳ components/board.tsx", "↳ components/exercises/badge-sheet.tsx", "↳ components/exercises/result-overlay.tsx", "↳ components/hub/mastery-tile.tsx", "↳ +3 more"],
       },
-      "board.piece.white.bishop": {
+      "board.piece.white.bishop": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/board/piece/white/bishop/pro" },
         default: "/art/redesign/pieces/w-bishop",
         usedIn: ["Board — white bishop", "↳ components/board.tsx", "↳ components/exercises/badge-sheet.tsx", "↳ components/exercises/diagonal-run-board.tsx", "↳ components/exercises/result-overlay.tsx", "↳ +3 more"],
       },
-      "board.piece.white.knight": {
+      "board.piece.white.knight": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/board/piece/white/knight/pro" },
         default: "/art/redesign/pieces/w-knight",
         usedIn: ["Board — white knight", "↳ components/board.tsx", "↳ components/exercises/badge-sheet.tsx", "↳ components/exercises/diagonal-run-board.tsx", "↳ components/exercises/knight-tour-board.tsx", "↳ +4 more"],
       },
-      "board.piece.white.pawn": {
+      "board.piece.white.pawn": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/board/piece/white/pawn/pro" },
         default: "/art/redesign/pieces/w-pawn",
         usedIn: ["Board — white pawn", "↳ components/arena/arena-end-state.tsx", "↳ components/arena/victory-celebration.tsx", "↳ components/arena/victory-claim-error.tsx", "↳ components/arena/victory-claim-success.tsx", "↳ +7 more"],
       },
-      "board.piece.white.queen": {
+      "board.piece.white.queen": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/board/piece/white/queen/pro" },
         default: "/art/redesign/pieces/w-queen",
         usedIn: ["Board — white queen", "↳ components/board.tsx", "↳ components/exercises/badge-sheet.tsx", "↳ components/exercises/queens-board.tsx", "↳ components/exercises/result-overlay.tsx", "↳ +3 more"],
       },
-      "board.piece.white.king": {
+      "board.piece.white.king": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/board/piece/white/king/pro" },
         default: "/art/redesign/pieces/w-king",
         usedIn: ["Board — white king", "↳ components/hub/hub-scaffold.tsx"],
       },
-      "board.piece.black.rook": {
+      "board.piece.black.rook": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/board/piece/black/rook/pro" },
         default: "/art/redesign/pieces/b-rook",
         usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board", "↳ lib/game/arena-utils.ts"],
       },
-      "board.piece.black.bishop": {
+      "board.piece.black.bishop": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/board/piece/black/bishop/pro" },
         default: "/art/redesign/pieces/b-bishop",
         usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board", "↳ lib/game/arena-utils.ts"],
       },
-      "board.piece.black.knight": {
+      "board.piece.black.knight": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/board/piece/black/knight/pro" },
         default: "/art/redesign/pieces/b-knight",
         usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board", "↳ lib/game/arena-utils.ts"],
       },
-      "board.piece.black.pawn": {
+      "board.piece.black.pawn": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/board/piece/black/pawn/pro" },
         default: "/art/redesign/pieces/b-pawn",
         usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board", "↳ components/arena/arena-select-scaffold.tsx", "↳ lib/game/arena-utils.ts"],
       },
-      "board.piece.black.queen": {
+      "board.piece.black.queen": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/board/piece/black/queen/pro" },
         default: "/art/redesign/pieces/b-queen",
         usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board", "↳ lib/game/arena-utils.ts"],
       },
-      "board.piece.black.king": {
+      "board.piece.black.king": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/board/piece/black/king/pro" },
         default: "/art/redesign/pieces/b-king",
         usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board", "↳ lib/game/arena-utils.ts"],
       },
