@@ -98,6 +98,7 @@ import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-t
 import { useConnectPrompt } from "@/lib/connect-prompt/use-connect-prompt";
 import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
 import { canSaveOnChain as deriveCanSaveOnChain } from "@/lib/exercises/save-proof-state";
+import { setSaveOnChainPending } from "@/lib/ui/save-onchain-hint-store";
 import { deriveTxToastState } from "@/lib/exercises/tx-toast-state";
 import { useMiniPay } from "@/hooks/use-minipay";
 import { useSplashLoader } from "@/hooks/use-splash-loader";
@@ -1294,6 +1295,14 @@ export function ExercisesScreen({
     lastSavedScore,
     lastSavedTxHash,
   });
+
+  // Publish the "score worth saving on-chain" hint so the PersistentDock
+  // (a sibling with no access to this state) can light the LEADERS dot.
+  // Cleared on unmount so a stale dot never survives leaving the screen.
+  useEffect(() => {
+    setSaveOnChainPending(canSaveOnChain);
+    return () => setSaveOnChainPending(false);
+  }, [canSaveOnChain]);
 
   // The done-hold keeps the TxProgressSteps toast mounted for a beat after a
   // save lands. It used to share an effect with `recordSaveFor` and a latch ref,

@@ -11,6 +11,7 @@ import type { PIECE_LABELS } from '@/lib/content/editorial'
 import { LottieAnimation } from '@/components/ui/lottie-animation'
 import { PiecePickerTrigger } from '@/components/exercises/piece-picker-trigger'
 import { MissionDetailSheet } from '@/components/exercises/mission-detail-sheet'
+import { PinStatusMarker } from '@/components/redesign/pin-status-marker'
 import type { TrainingNode } from '@/lib/training/path'
 
 type PieceKey = 'rook' | 'bishop' | 'knight' | 'pawn' | 'queen' | 'king'
@@ -569,9 +570,14 @@ export function MissionPanelCandy({
       type="button"
       data-testid={missionStatus ? 'dr-band' : 'mission-band'}
       data-phase={missionStatus?.phase}
-      className="w-full candy-tray-pill min-h-[36px]"
+      className="relative w-full candy-tray-pill min-h-[36px]"
       aria-label={missionAriaLabel}
     >
+      {/* Pending on-chain save → pulsing dot, same art as DAILY / reward
+          rail. Invites the player into Missions where "Save proof" lives.
+          Save-On-Chain's PRIMARY entry is the Leaders footer; this stays a
+          secondary hint. */}
+      {canSaveOnChain ? <PinStatusMarker status="pending" /> : null}
       <CandyIcon name="crosshair" className="candy-tray-pill-icon" />
       <span
         key={targetLabel}

@@ -10,6 +10,8 @@ import {
   useDockSheet,
 } from "@/lib/ui/dock-sheet-store";
 import { CHESSCITO_LITE_MODE, isPlayMode } from "@/lib/feature-flags";
+import { useSaveOnChainPending } from "@/lib/ui/save-onchain-hint-store";
+import { PinStatusMarker } from "@/components/redesign/pin-status-marker";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
@@ -175,6 +177,11 @@ function SideItem({
   const hostsOpener =
     pathname.startsWith("/exercises") || pathname.startsWith("/arena");
   const href = resolveSheetHref(pathname, item.sheet, item.fallback);
+  // Save-On-Chain lives behind the LEADERS sheet (its own-rank footer is
+  // the primary CTA). Pulse the LEADERS icon when a score is waiting so
+  // the player is guided toward it — same dot as DAILY / Missions.
+  const saveOnChainPending = useSaveOnChainPending();
+  const showSaveDot = item.id === "leaderboard" && saveOnChainPending;
   return (
     <div
       className={`chesscito-dock-item${isActive ? " is-active" : ""}`}
@@ -184,6 +191,7 @@ function SideItem({
         type="button"
         aria-label={label}
         aria-current={isActive ? "page" : undefined}
+        className={showSaveDot ? "relative" : undefined}
         onClick={() => {
           track("dock_tap", { item: item.id });
           // Same-route taps on pages that mount the auxiliary sheets
@@ -195,6 +203,7 @@ function SideItem({
           router.push(href);
         }}
       >
+        {showSaveDot ? <PinStatusMarker status="pending" /> : null}
         <DockIcon iconSlot={item.iconSlot} icon={item.icon} />
       </button>
       <span className="chesscito-dock-item-label game-label text-nano font-bold uppercase tracking-[0.12em]">

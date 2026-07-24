@@ -7,6 +7,7 @@ import {
   registerDockSheetOpener,
   setDockSheet,
 } from "@/lib/ui/dock-sheet-store";
+import { setSaveOnChainPending } from "@/lib/ui/save-onchain-hint-store";
 
 const pathnameMock = vi.hoisted(() => vi.fn(() => "/exercises"));
 const pushMock = vi.hoisted(() => vi.fn());
@@ -22,6 +23,7 @@ vi.mock("@/lib/telemetry", () => ({
 
 afterEach(() => {
   setDockSheet(null);
+  setSaveOnChainPending(false);
   // Clear any opener/closer registered during the test. The store
   // uses module-level singletons; register-and-immediately-unregister
   // with a noop drops whatever the previous test installed.
@@ -52,6 +54,43 @@ describe("PersistentDock — restored 5-slot taxonomy (badge/shop/arena/trophies
 
     expect(screen.getByRole("button", { name: /pieces/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^arena$/i })).not.toBeInTheDocument();
+  });
+});
+
+describe("PersistentDock — Save-On-Chain pending dot on LEADERS", () => {
+  const DOT = ".action-pin-notif";
+
+  it("lights the LEADERS icon when a score is waiting to be saved on-chain", () => {
+    pathnameMock.mockReturnValue("/exercises");
+    setSaveOnChainPending(true);
+
+    render(<PersistentDock />);
+
+    const leaders = screen.getByRole("button", { name: /leaders/i });
+    expect(leaders.querySelector(DOT)).toBeInTheDocument();
+  });
+
+  it("shows no dot when nothing is pending", () => {
+    pathnameMock.mockReturnValue("/exercises");
+    setSaveOnChainPending(false);
+
+    const { container } = render(<PersistentDock />);
+
+    expect(container.querySelector(DOT)).not.toBeInTheDocument();
+  });
+
+  it("never lights a non-LEADERS icon even when pending", () => {
+    pathnameMock.mockReturnValue("/exercises");
+    setSaveOnChainPending(true);
+
+    render(<PersistentDock />);
+
+    expect(
+      screen.getByRole("button", { name: /trophies/i }).querySelector(DOT),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /badges/i }).querySelector(DOT),
+    ).not.toBeInTheDocument();
   });
 });
 
