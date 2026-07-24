@@ -242,7 +242,7 @@ describe("LeaderboardSheet — own-rank Save-On-Chain CTA (founder 2026-07-23)",
       />,
     );
 
-    const cta = await screen.findByRole("button", { name: /save your score on Celo/i });
+    const cta = await screen.findByRole("button", { name: /save your score forever/i });
     expect(cta).toHaveAttribute("data-testid", "leaderboard-own-row");
     expect(cta).toHaveAttribute("data-cta", "save-onchain");
     await user.click(cta);
@@ -257,7 +257,7 @@ describe("LeaderboardSheet — own-rank Save-On-Chain CTA (founder 2026-07-23)",
     const ownRow = await screen.findByTestId("leaderboard-own-row");
     expect(ownRow.tagName).toBe("DIV");
     expect(
-      screen.queryByRole("button", { name: /save your score on Celo/i }),
+      screen.queryByRole("button", { name: /save your score forever/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -275,7 +275,7 @@ describe("LeaderboardSheet — own-rank Save-On-Chain CTA (founder 2026-07-23)",
       />,
     );
 
-    const cta = await screen.findByRole("button", { name: /save your score on Celo/i });
+    const cta = await screen.findByRole("button", { name: /save your score forever/i });
     expect(cta).toBeDisabled();
   });
 });

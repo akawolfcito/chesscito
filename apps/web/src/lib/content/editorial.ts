@@ -259,7 +259,7 @@ export const RESULT_OVERLAY_COPY = {
     cooldownActive: "Too soon. Wait a moment and try again.",
     /** Scoreboard's DailyLimitReached. Unlike the cooldown, retrying today will
      *  not work, so the copy must not invite it. */
-    dailyLimitReached: "You've hit today's on-chain limit. Try again tomorrow.",
+    dailyLimitReached: "You've hit today's save limit. Try again tomorrow.",
     /** Surfaced when the signing endpoint (/api/sign-*) is unreachable
      *  or returns 4xx/5xx (most often missing operator envs in local
      *  dev, but also catches prod signer outages + GCM auth-tag
@@ -610,12 +610,12 @@ export const LEADERBOARD_SHEET_COPY = {
   /** QA round 2026-06-11: on-chain marker + always-visible own rank. */
   onchainMarkerAria: "Saved on Celo",
   yourRankLabel: "Your rank",
-  /** Own-rank block doubles as the primary "save to Celo" CTA when a score
+  /** Own-rank block doubles as the primary permanent-save CTA when a score
    *  is waiting — visual only (dot + button affordance), so this string is
    *  the invisible accessible name for the tappable row. Follows the
-   *  language brief §5: the result ("on Celo"), never the mechanism
-   *  ("on-chain"), mirroring `onchainMarkerAria`. */
-  saveOnChainAria: "Save your score on Celo",
+   *  language brief §5: the result ("forever"), never the mechanism
+   *  ("on-chain"). */
+  saveOnChainAria: "Save your score forever",
 } as const;
 
 export const PURCHASE_CONFIRM_COPY = {

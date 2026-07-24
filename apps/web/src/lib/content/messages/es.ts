@@ -1298,7 +1298,7 @@ const messages = {
       unknown: "Algo salió mal. Por favor reintenta",
       badgeAlreadyClaimed: "¡Ya tienes esta insignia!",
       cooldownActive: "Muy pronto. Espera un momento y reintenta.",
-      dailyLimitReached: "Alcanzaste el límite on-chain de hoy. Reintenta mañana.",
+      dailyLimitReached: "Alcanzaste el límite de guardado de hoy. Reintenta mañana.",
       signingUnavailable: "Servicio de firma no disponible. Reintenta en un momento.",
       signatureExpired: "La firma expiró. Toca para obtener una nueva.",
       notEnoughPeones:
@@ -1474,7 +1474,7 @@ const messages = {
     heroEmptyHint: "Sé el primero en sumar puntos.",
     onchainMarkerAria: "Guardado en Celo",
     yourRankLabel: "Tu posición",
-    saveOnChainAria: "Guarda tu puntaje en Celo",
+    saveOnChainAria: "Guarda tu puntaje para siempre",
   },
   GET_PEONES_COPY: {
     ...en.GET_PEONES_COPY,
