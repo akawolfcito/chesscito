@@ -231,20 +231,50 @@ address ni botones activos; (3) autenticado sin wallet → loading; (4) wallet l
 (5) nunca envía en mainnet (guard + botón deshabilitado si chain ≠ testnet); (6) ninguna var
 `PRIVY_APP_SECRET` leída; (7) ninguna ruta/feature productiva importada.
 
-### 10.3 Evidencia EMPÍRICA (⏳ pendiente — requiere corrida en vivo del founder)
+### 10.3 Evidencia EMPÍRICA (✅ obtenida — corrida del founder, 2026-07-24)
 
-Rellenar tras correr el checklist §10.4. No pegar tokens de sesión, private keys, OTP ni cookies.
+Corrida en navegador incognito. Dos pasadas: la primera bloqueada por `Buffer is not
+defined`, la segunda (tras el fix del polyfill) completa. Detalle en
+`docs/validations/2026-07-24-privy-harness-smoke-diagnosis.md`.
 
 | Campo | Valor |
 |---|---|
-| App ID (enmascarado, p.ej. `clab…7890`) | `________` |
-| Login probado (google/email) | `________` |
-| Address embedded (testnet) | `0x________` |
-| Firma (truncada, `0x… …`) | `________` |
-| Tx hash (testnet) | `0x________` |
-| Chain ID conectado | esperado `11142220` (celoSepolia) |
-| Persistencia (misma cuenta → misma address) | `sí / NO (blocker)` |
-| Errores encontrados | `________` |
+| App ID (enmascarado) | `cmrx…4mgw` |
+| Login probado | **email** |
+| Address embedded (testnet) | `0x95e3785925A8Ae548BCBa1Be4336CF6527519479` |
+| Firma (truncada) | `0xbc0c57e2…9f88721b` ✅ |
+| Tx hash (testnet) | `0x265763120c…eecda9d141` ✅ |
+| Chain ID conectado | **`11142220`** ✅ (`chain matches: true`) |
+| Receipt | **`success`** ✅ |
+| Balance leído | `0.3 S-CELO` (faucet oficial OK) |
+| Persistencia (misma cuenta → misma address) | ⚠️ ver nota abajo |
+| Errores encontrados | Forno `403` (no bloqueante, ver §10.7); ruido cosmético de Privy |
+
+> **Nota sobre persistencia.** La address es **idéntica en las dos pasadas**, que son
+> sesiones separadas (dev server reiniciado, bundle nuevo, re-login). Es evidencia fuerte
+> de que la embedded wallet persiste por cuenta. **Falta la confirmación explícita del
+> paso 12** (logout → login en la misma sesión → misma address) para cerrarlo sin
+> ambigüedad.
+
+### 10.7 Hallazgo — el RPC default de Celo Sepolia devuelve 403 en browser
+
+Tras el fix del polyfill, los `POST https://forno.celo-sepolia.celo-testnet.org/ 403`
+**siguen apareciendo**, y aun así la tx se envió y confirmó. Traza:
+
+- Los 403 pegan en `prepareTransactionRequest → fillTransaction`, o sea el transport
+  `http()` **nuestro** (`providers.tsx:14`, sin URL → cae al RPC default de `celoSepolia`).
+- El envío real salió por `Embedded1193Provider.request({method: "eth_sendTransaction"})`
+  — **el RPC interno de Privy**, que sí funcionó. Privy compensó nuestro transport roto.
+
+Probado con `curl`: los 5 métodos que usa `prepareTransactionRequest` devuelven **200**,
+con y sin `Origin`. Sumado a que en el browser algunas lecturas sí pasan, el patrón es
+**rate limiting de Forno**, no un bloqueo.
+
+> ⚠️ **Requisito para el slice web**: producción usa `http()` pelado igual
+> (`apps/web/src/components/wallet-provider.tsx:22-24`) pero corre dentro de MiniPay, que
+> inyecta su propio RPC — por eso nunca apareció. **El `WebWalletProvider` necesita un
+> transport explícito** (con `fallback([...])`), o toda lectura vía wagmi queda a merced
+> del rate limit de Forno. No bloquea el gate; bloquea la confiabilidad del slice.
 
 ### 10.4 Checklist de validación manual (founder)
 
@@ -269,10 +299,25 @@ Rellenar tras correr el checklist §10.4. No pegar tokens de sesión, private ke
   Welcome Pack, rewards, migraciones y prod **no fueron tocados**.
 - El aislamiento está **machine-checked** (`guards.test.ts`), no sólo por convención.
 
-### 10.6 Veredicto provisional
+### 10.6 Veredicto — ✅ GO (2026-07-24)
 
-**GO con condición** — condición reducida a **una corrida manual en vivo** (§10.4). La capa automática
-del harness es concluyente: el stack Privy + `@privy-io/wagmi` + wagmi/viem compila, instala y opera con
-`celo`/`celoSepolia` sin incompatibilidad. Al completar §10.3 con éxito (wallet creada, address persiste,
-firma OK, tx testnet enviada) → **GO pleno**. Si la address cambia entre sesiones o no puede firmar/operar
-en Celo → **NO-GO** (no esperable según la doc y el harness verde).
+La corrida en vivo de §10.3 cerró la condición. Medido empíricamente contra Celo Sepolia,
+con embedded wallet real:
+
+- Login por email → **embedded wallet creada** ✅
+- **Firma** de mensaje ✅
+- **Tx de 0 CELO enviada y confirmada** (`receipt: success`) ✅
+- Chain `11142220` conectado, `chain matches: true` ✅
+
+**No se encontró ninguna incompatibilidad Privy × Celo.** Los dos problemas que aparecieron
+son de entorno y ambos están caracterizados:
+
+| Problema | Naturaleza | Estado |
+|---|---|---|
+| `Buffer is not defined` | Vite no polyfillea globals de Node; el SDK de Privy usa `Buffer` | ✅ **resuelto** (`src/polyfills.ts`, con test de regresión) |
+| Forno `403` | Rate limiting del RPC default en browser | ⚠️ **no bloqueante** (Privy usa su propio RPC para enviar); requisito para el slice — ver §10.7 |
+
+**Queda un único cabo suelto:** la confirmación explícita del paso 12 (logout → login →
+misma address). La evidencia disponible lo respalda (misma address en dos sesiones
+separadas) pero no es la prueba directa. Si esa prueba fallara, el veredicto vuelve a
+**NO-GO** y hay que detener el slice.
