@@ -265,8 +265,8 @@ importers:
         specifier: 2.4.1
         version: 2.4.1(react-dom@18.3.1)(react@18.3.1)
       lucide-react:
-        specifier: 0.292.0
-        version: 0.292.0(react@18.3.1)
+        specifier: 0.383.0
+        version: 0.383.0(react@18.3.1)
       next:
         specifier: 14.2.35
         version: 14.2.35(@playwright/test@1.58.2)(react-dom@18.3.1)(react@18.3.1)
@@ -275,7 +275,7 @@ importers:
         version: 4.12.0(next@14.2.35)(react@18.3.1)(typescript@5.9.3)
       openai:
         specifier: 6.32.0
-        version: 6.32.0(ws@8.18.3)(zod@3.25.76)
+        version: 6.32.0(ws@8.18.0)(zod@3.25.76)
       react:
         specifier: 18.3.1
         version: 18.3.1
@@ -13692,14 +13692,6 @@ packages:
     resolution: {integrity: sha512-Pn9cox5CsMYngeDbmChANltQl+5pi6XmTrraMSzhPmMBbmgcxmqWry0U3PGapCU1yB4/LqCcom7qhHZiF/jGfQ==}
     dev: true
 
-  /lucide-react@0.292.0(react@18.3.1):
-    resolution: {integrity: sha512-rRgUkpEHWpa5VCT66YscInCQmQuPCB1RFRzkkxMxg4b+jaL0V12E3riWWR2Sh5OIiUhCwGW/ZExuEO4Az32E6Q==}
-    peerDependencies:
-      react: ^16.5.1 || ^17.0.0 || ^18.0.0
-    dependencies:
-      react: 18.3.1
-    dev: false
-
   /lucide-react@0.383.0(react@18.3.1):
     resolution: {integrity: sha512-13xlG0CQCJtzjSQYwwJ3WRqMHtRj3EXmLlorrARt7y+IHnxUCp3XyFNL1DfaGySWxHObDvnu1u1dV+0VMKHUSg==}
     peerDependencies:
@@ -14267,7 +14259,7 @@ packages:
       is-wsl: 2.2.0
     dev: false
 
-  /openai@6.32.0(ws@8.18.3)(zod@3.25.76):
+  /openai@6.32.0(ws@8.18.0)(zod@3.25.76):
     resolution: {integrity: sha512-j3k+BjydAf8yQlcOI7WUQMQTbbF5GEIMAE2iZYCOzwwB3S2pCheaWYp+XZRNAch4jWVc52PMDGRRjutao3lLCg==}
     hasBin: true
     peerDependencies:
@@ -14279,7 +14271,7 @@ packages:
       zod:
         optional: true
     dependencies:
-      ws: 8.18.3
+      ws: 8.18.0
       zod: 3.25.76
     dev: false
 
