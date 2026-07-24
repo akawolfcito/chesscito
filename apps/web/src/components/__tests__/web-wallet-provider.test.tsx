@@ -7,16 +7,21 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { celo } from "wagmi/chains";
 
 // PrivyProvider hits Privy's network on mount, so it is stubbed to a
-// passthrough — which also demonstrates the guest guarantee: children render
-// without any login. `createConfig` from @privy-io/wagmi is kept real so the
+// passthrough. `createConfig` from @privy-io/wagmi is kept real so the
 // wagmi-config assertions exercise the true wiring; only WagmiProvider (which
-// reads Privy context) is stubbed for the render test.
+// reads Privy context) is stubbed for the render test. WebAccessGate is stubbed
+// to a passthrough too — the gate has its own suite (web-access-gate.test.tsx);
+// here we only assert that WebWalletProvider mounts the stack and wraps its
+// children in the gate.
 vi.mock("@privy-io/react-auth", () => ({
   PrivyProvider: ({ children }: { children?: ReactNode }) => children,
 }));
 vi.mock("@privy-io/wagmi", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@privy-io/wagmi")>()),
   WagmiProvider: ({ children }: { children?: ReactNode }) => children,
+}));
+vi.mock("@/components/web-access-gate", () => ({
+  WebAccessGate: ({ children }: { children?: ReactNode }) => children,
 }));
 
 import {
@@ -68,14 +73,20 @@ describe("requirePrivyAppId", () => {
 });
 
 describe("WebWalletProvider", () => {
-  it("renders children for a guest — no login required", () => {
+  it("mounts the provider stack and wraps children in the access gate", () => {
     vi.stubEnv("NEXT_PUBLIC_PRIVY_APP_ID", "app-xyz");
     render(
       <WebWalletProvider>
-        <div>guest content</div>
+        <div>gated content</div>
       </WebWalletProvider>,
     );
-    expect(screen.getByText("guest content")).toBeInTheDocument();
+    // The gate is stubbed to a passthrough here, so children reach the DOM;
+    // its real gating behavior is covered in web-access-gate.test.tsx.
+    expect(screen.getByText("gated content")).toBeInTheDocument();
+  });
+
+  it("wraps children in WebAccessGate — no guest bypass in the source", () => {
+    expect(moduleSource).toMatch(/WebAccessGate/);
   });
 });
 

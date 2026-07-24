@@ -114,7 +114,161 @@ Off por default. Con el flag apagado, el comportamiento anterior queda activo
 
 ---
 
-## Siguiente bloque — UI mínima de autenticación Privy (web)
+## Product decision override — mandatory web access gate
+
+> **Decisión de producto cerrada (founder, 2026-07-24).** **Reemplaza** el plan
+> de "UI mínima de login opcional en Account" descrito abajo — ese bloque queda
+> **SUPERSEDED**. El login web con Privy **no es opcional ni contextual**.
+
+### Regla de acceso
+
+```text
+MiniPay → entra directo con la wallet MiniPay (bypass del gate)
+Web     → requiere login Privy antes de entrar a Learn o Play
+```
+
+**No hay guest mode permanente** dentro de `learn.chesscito.com` ni
+`play.chesscito.com`. Una vez dentro del producto, Learn y Play **asumen** que
+existe una address EVM válida. Motivos para eliminar el guest permanente:
+no más cadena guest→login→migración→wallet-ready; sin prompts repartidos por
+feature; sin gates tardíos antes de pagos; un solo estado de identidad; sin
+mantenimiento duplicado por feature.
+
+### Responsabilidad por dominio
+
+**`chesscito.com`** — superficie de descubrimiento y elección. **No monta Privy,
+no muestra login, no pone login en el último slide.**
+
+```text
+Primera visita:  4 slides → Choose your path → Learn o Play
+Visita posterior: pantalla de entrada → Learn o Play
+CTA: Learn → learn.chesscito.com · Play → play.chesscito.com
+```
+
+**`learn.chesscito.com` / `play.chesscito.com`** — superficies responsables del
+acceso:
+
+```text
+MiniPay                                   → bypass → Hub
+Web + sesión Privy restaurada + wallet ok → bypass → Hub
+Web + sin sesión → WebAccessGate → login Privy → embedded wallet ready → Hub
+```
+
+El gate solo aparece en web sin sesión válida. Si Privy restaura sesión y la
+embedded wallet está lista, entra directo **sin volver a ver el gate**.
+
+### Reemplazo del siguiente bloque
+
+```text
+ELIMINADO:  WebAccountAccess opcional · Continue as Guest ·
+            soft prompt post-ejercicio · login contextual antes de comprar
+NUEVO:      WebAccessGate obligatorio para web no autenticada
+```
+
+Infraestructura existente **se conserva**:
+
+```text
+WalletProviderBoundary
+├─ MiniPay → WalletProvider
+└─ Web     → WebWalletProvider  ← el gate vive AQUÍ dentro, envolviendo children
+```
+
+Dentro de la rama web, antes de renderizar children productivos:
+
+```text
+Privy loading                  → shell
+unauthenticated                → WebAccessGate
+authenticating                 → estado de acceso
+authenticated + wallet pending → "Preparing your Chesscito wallet…"
+authenticated + wallet ready   → children
+error                          → retry + Open in MiniPay + Back to chesscito.com
+```
+
+### UX del gate — componente compartido `WebAccessGate`
+
+Reutilizado en Learn y Play; **solo varía el copy**.
+
+```text
+Copy base:  Every journey needs a key.
+            Sign in and your Chesscito wallet will be created automatically.
+CTA:        ENTER CHESSCITO   (abre el modal nativo de Privy: Google + email)
+Nota:       No wallet setup required.
+Copy Learn: Unlock your learning journey
+Copy Play:  Enter the Chesscito arena
+```
+
+No construir dos flujos propios separados salvo que la API del SDK lo exija.
+
+### Estados mínimos
+
+```text
+environment loading · unauthenticated · authenticating ·
+authenticated + wallet pending · authenticated + wallet ready · error · MiniPay bypass
+```
+
+### Reglas duras
+
+- MiniPay nunca monta ni ve el gate.
+- Web no autenticada **no renderiza children productivos**.
+- Web autenticada no vuelve a ver el gate.
+- **No existe `Continue as Guest`.**
+- No montar Privy en `chesscito.com`.
+- No duplicar el gate entre Learn y Play (un solo componente).
+- No tocar pagos ni entitlements · no account linking · no export wallet ·
+  no server-auth · no producción.
+
+### Compatibilidad con usuarios web previos
+
+El flujo `guest→wallet` existente se conserva **solo** como mecanismo de
+transición del progreso local previo — **no** como modo permanente. Tras login:
+`progreso local previo → migración existente a la wallet activa`. **No** crear un
+sistema de migración nuevo.
+
+### Analytics
+
+```text
+Registrar:    web_access_gate_viewed · web_login_started · web_login_succeeded ·
+              web_wallet_ready · web_login_failed
+NUNCA loguear: email · nombre social · address completa · tokens · errores crudos
+```
+
+### Tests RED→GREEN (13)
+
+1. MiniPay bypassa el gate.
+2. Web no autenticada ve el gate.
+3. Web no autenticada no renderiza children.
+4. Sesión restaurada + wallet ready entra directo.
+5. Autenticada sin wallet muestra preparación.
+6. Error permite retry.
+7. Error ofrece volver a `chesscito.com`.
+8. Error ofrece abrir MiniPay.
+9. No existe guest CTA.
+10. Learn y Play usan el mismo componente.
+11. `chesscito.com` no monta Privy.
+12. Ningún evento contiene PII.
+13. Pagos y entitlements permanecen intactos.
+
+### Proceso (detenerse tras `WebAccessGate`)
+
+1. ✅ Actualizar handoff (esta sección).
+2. Auditar el punto exacto de gateo de la rama web.
+3. Proponer el contrato técnico.
+4. Tests RED.
+5. Implementación GREEN.
+6. Typecheck.
+7. Suite focalizada.
+8. Suite completa.
+9. Commit atómico.
+
+**No avanzar** a landing final · Account · export · linking · pagos · producción.
+
+---
+
+## ~~Siguiente bloque — UI mínima de autenticación Privy (web)~~ · SUPERSEDED
+
+> ⛔ **SUPERSEDED por "Product decision override" (arriba).** El login web ya no
+> es opcional ni vive en Account: es un gate obligatorio (`WebAccessGate`). Se
+> conserva abajo solo como registro histórico del plan previo.
 
 Implementar **solo** esto. La UI existe únicamente cuando:
 

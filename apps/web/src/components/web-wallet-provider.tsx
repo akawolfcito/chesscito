@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { celo } from "wagmi/chains";
 
+import { WebAccessGate } from "@/components/web-access-gate";
 import { createWebTransports } from "@/lib/wallet/web-transports";
 
 /**
@@ -51,9 +52,10 @@ const queryClient = new QueryClient({
 });
 
 /**
- * Privy + wagmi tree for logged-in web users outside MiniPay. A guest (no
- * login) still renders `children`: Privy gates nothing here — login is the
- * client boundary's job, the next block.
+ * Privy + wagmi tree for web users outside MiniPay. `WebAccessGate` sits
+ * between wagmi and `children` and renders them only once the user is
+ * authenticated with a ready embedded wallet — web access is mandatory, there
+ * is no guest mode (product decision, 2026-07-24).
  */
 export function WebWalletProvider({ children }: { children: ReactNode }) {
   return (
@@ -71,7 +73,9 @@ export function WebWalletProvider({ children }: { children: ReactNode }) {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={webWagmiConfig}>{children}</WagmiProvider>
+        <WagmiProvider config={webWagmiConfig}>
+          <WebAccessGate>{children}</WebAccessGate>
+        </WagmiProvider>
       </QueryClientProvider>
     </PrivyProvider>
   );
