@@ -1,3 +1,6 @@
+// MUST stay first: installs globalThis.Buffer before Privy/wagmi are evaluated.
+import "./polyfills";
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
