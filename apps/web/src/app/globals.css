@@ -2498,6 +2498,21 @@
      Timing: 0-8% spawn (scale 0.4→1), 8-32% radial burst out, 32-100%
      gravity fall + tail fade. Fade-in is fast so chips appear at the
      burst origin, not blank. */
+  /* Top-of-screen transaction celebration host. Fixed to the viewport so
+     it escapes any centered modal and rains ConfettiBurst from near the top
+     edge (burst origin = this box's center, ~80px down). Constrained to the
+     390px app column and click-through. Fired on a CONFIRMED on-chain tx. */
+  .tx-celebration-top {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(100vw, var(--app-max-width, 390px));
+    height: 160px;
+    pointer-events: none;
+    z-index: 200;
+  }
+
   @keyframes confetti-burst-fall {
     0% {
       opacity: 0;

@@ -89,3 +89,16 @@ export function ConfettiBurst() {
     </div>
   )
 }
+
+/* Top-of-screen celebration — a fixed, viewport-anchored host that rains
+   the same ConfettiBurst from near the top edge. Mounted right after an
+   on-chain transaction is CONFIRMED (badge claim, score save, shop buy),
+   so the burst reads as "your transaction landed". Pointer-events off and
+   aria-hidden so it never intercepts taps or reaches the a11y tree. */
+export function TopScreenConfetti() {
+  return (
+    <div className="tx-celebration-top" aria-hidden="true" data-testid="tx-celebration-top">
+      <ConfettiBurst />
+    </div>
+  )
+}

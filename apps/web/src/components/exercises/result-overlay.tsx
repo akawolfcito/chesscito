@@ -14,6 +14,7 @@ import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { ShareModal } from "@/components/share/share-modal";
 import { clampMaxStars, shareUrlForBadge, shareUrlForScore } from "@/lib/og/share-urls";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { TopScreenConfetti } from "@/components/redesign/confetti-burst";
 import { pieceThemeSlot } from "@/lib/themes/piece-theme-assets";
 import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
@@ -307,6 +308,10 @@ export function ResultOverlay({
     const starsLabel = totalStars != null ? `${totalStars}/${clampMaxStars(maxPossibleStars)}` : null;
     return (
       <>
+        {/* On-chain save confirmed — rain confetti from the top of the screen.
+            Gated on a real receipt (txHash): the score overlay is reused for
+            the free OFF-chain save, which is not a transaction to celebrate. */}
+        {txHash && <TopScreenConfetti />}
         <div className={exiting ? "modal-exiting" : undefined}>
           <VictoryPopupShell
             onClose={handleDismiss}
@@ -403,6 +408,10 @@ export function ResultOverlay({
   //   error → static warning SVG (no Lotties) + avatar-asombrado peek
   return (
     <>
+      {/* Badge claim / shop buy confirmed on-chain — celebrate from the top.
+          Gated on a real receipt (txHash): error variants carry none, and
+          only a confirmed transaction earns the celebration. */}
+      {txHash && <TopScreenConfetti />}
       <div className={exiting ? "modal-exiting" : undefined}>
         <VictoryPopupShell
           onClose={handleDismiss}

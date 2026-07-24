@@ -202,3 +202,42 @@ describe("star readouts use the real pool, not the legacy 5-exercise constant", 
     expect(glyphs).toEqual(["★", "★", "★", "★", "☆"]);
   });
 });
+
+describe("ResultOverlay — top-screen transaction celebration", () => {
+  const CONFETTI = '[data-testid="tx-celebration-top"]';
+
+  it("rains confetti when a score save is confirmed on-chain (txHash present)", () => {
+    const { container } = renderWithIntl(
+      <ResultOverlay variant="score" txHash="0xabc" onDismiss={vi.fn()} />,
+    );
+    expect(container.querySelector(CONFETTI)).toBeInTheDocument();
+  });
+
+  it("does NOT celebrate the free off-chain score save (no txHash)", () => {
+    const { container } = renderWithIntl(
+      <ResultOverlay variant="score" onDismiss={vi.fn()} />,
+    );
+    expect(container.querySelector(CONFETTI)).not.toBeInTheDocument();
+  });
+
+  it("rains confetti on a confirmed badge claim", () => {
+    const { container } = renderWithIntl(
+      <ResultOverlay variant="badge" pieceType="rook" txHash="0xdef" onDismiss={vi.fn()} />,
+    );
+    expect(container.querySelector(CONFETTI)).toBeInTheDocument();
+  });
+
+  it("rains confetti on a confirmed shop purchase", () => {
+    const { container } = renderWithIntl(
+      <ResultOverlay variant="shop" itemLabel="Founder Badge" txHash="0x123" onDismiss={vi.fn()} />,
+    );
+    expect(container.querySelector(CONFETTI)).toBeInTheDocument();
+  });
+
+  it("never celebrates the error variant", () => {
+    const { container } = renderWithIntl(
+      <ResultOverlay variant="error" errorMessage="Boom" onDismiss={vi.fn()} />,
+    );
+    expect(container.querySelector(CONFETTI)).not.toBeInTheDocument();
+  });
+});
