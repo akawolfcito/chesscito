@@ -1,11 +1,14 @@
 # Session Handoff — 2026-07-24
 
 ## Reanudar con "continuemos"
-Estás **a mitad del slice `WebWalletProvider`**, en la rama `feat/web-wallet-provider`.
-El plan detallado, contratos, tests pendientes y riesgos viven en:
-**`docs/handoffs/2026-07-23-web-wallet-provider-handoff.md`** — leelo primero.
-Primer comando: `git switch feat/web-wallet-provider`. Primer paso: transport `fallback`
-(lógica pura, TDD, sin navegador). NO montar Privy en MiniPay · NO mergear · NO tocar prod.
+La **infraestructura** de Privy Web Access está **completa** en la rama
+`feat/web-wallet-provider` (resolver → transports → WebWalletProvider → client
+boundary → feature flag, 4 commits). El próximo bloque es **solo la UI mínima de
+login** (Google/Email/Guest/Sign out) detrás de `NEXT_PUBLIC_PRIVY_ENABLED=true &&
+!isMiniPayEnv()`. Estado, contratos, estados de UI y alcance exacto en:
+**`docs/handoffs/2026-07-24-privy-web-infrastructure-handoff.md`** — leelo primero.
+Primer comando: `git switch feat/web-wallet-provider`. NO montar Privy en MiniPay ·
+NO mergear · NO tocar prod · NO corregir `landing-assets.test.ts` (drift ajeno).
 
 ## Completed (esta sesión)
 - **✅ Gate Fase 0 de Privy × Celo CERRADO, sin condiciones pendientes.** Validado empíricamente
