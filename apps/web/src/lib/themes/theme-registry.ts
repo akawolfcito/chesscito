@@ -296,7 +296,11 @@ export type ThemeAssetKey =
   | "board.piece.black.knight"
   | "board.piece.black.pawn"
   | "board.piece.black.queen"
-  | "board.piece.black.king";
+  | "board.piece.black.king"
+  // Exercise obstacle — the practice blocker. NOT the maze/ludic wall
+  // (that stays ambient scene stone). Painted where a level lists
+  // `obstacles`, replacing the historic white-knight stand-in.
+  | "board.blocker.stone";
 
 export type ThemeDefinition = {
   /** Stable theme id — used as Shop itemId once monetized + as the
@@ -936,6 +940,11 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/redesign/pieces/b-king",
         usedIn: ["Enemies — promotion-run / safe-path", "Kingdom board", "↳ lib/game/arena-utils.ts"],
       },
+      "board.blocker.stone": {
+        default: "/art/redesign/blocker-stone",
+        format: "png",
+        usedIn: ["Exercise obstacle — practice blocker", "↳ components/board.tsx", "↳ components/exercises/diagonal-run-board.tsx"],
+      },
     },
   },
 };
@@ -1086,6 +1095,7 @@ const SHARED_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "board.piece.black.pawn",
   "board.piece.black.queen",
   "board.piece.black.king",
+  "board.blocker.stone",
 ];
 
 const FULL_LEGACY_SLOT_KEYS: readonly ThemeAssetKey[] = [

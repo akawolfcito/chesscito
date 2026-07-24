@@ -26,6 +26,7 @@ import {
 import { labyrinthStars } from "@/lib/game/exercises";
 import { hapticReject, hapticSuccess, hapticTap } from "@/lib/haptics";
 import { useThemePieceAssets } from "@/lib/themes/piece-theme-assets";
+import { useCurrentThemeAsset } from "@/lib/themes/use-current-theme-asset";
 import type { BoardPosition, Exercise } from "@/lib/game/types";
 
 const LABEL = (p: BoardPosition) => `${"abcdefgh"[p.file]}${p.rank + 1}`;
@@ -66,7 +67,8 @@ export function DiagonalRunBoard({
   const t = useTranslations("DIAGONAL_RUN_COPY.band");
   const pieceAssets = useThemePieceAssets();
   const bishopSrc = pieceAssets.w.bishop ? `${pieceAssets.w.bishop}.png` : null;
-  const knightSrc = pieceAssets.w.knight ? `${pieceAssets.w.knight}.png` : null;
+  const blockerStone = useCurrentThemeAsset("board.blocker.stone");
+  const blockerSrc = blockerStone ? `${blockerStone}.png` : null;
   const START = level.startPos;
   const TARGET = level.targetPos;
   const BLOCKERS = useMemo(() => level.obstacles ?? [], [level.obstacles]);
@@ -258,7 +260,7 @@ export function DiagonalRunBoard({
     return (
       <>
         {BLOCKERS.map((b) => {
-          if (!knightSrc) return null;
+          if (!blockerSrc) return null;
           const c = cellCenter(b.file, b.rank);
           return (
             <picture
@@ -266,7 +268,7 @@ export function DiagonalRunBoard({
               className="playhub-board-piece-float is-friendly-blocker"
               style={{ left: `${c.x}%`, top: `${c.y}%`, width: `${pw}%`, pointerEvents: "none" }}
             >
-              <img src={knightSrc} alt="" aria-hidden="true" className="playhub-board-piece-img" style={{ width: "100%" }} />
+              <img src={blockerSrc} alt="" aria-hidden="true" className="playhub-board-piece-img" style={{ width: "100%" }} />
             </picture>
           );
         })}

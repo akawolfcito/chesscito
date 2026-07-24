@@ -86,6 +86,7 @@ export function Board({
 }: BoardProps) {
   const pieceAssets = useThemePieceAssets();
   const targetMarkerSrc = useCurrentThemeAsset("shared.star");
+  const blockerStoneSrc = useCurrentThemeAsset("board.blocker.stone");
   const [piece, setPiece] = useState(() => makePiece(pieceType, startPosition));
   const [selectedPosition, setSelectedPosition] = useState<BoardPosition | null>(
     null
@@ -456,11 +457,11 @@ export function Board({
       })()}
 
       {/* Friendly blockers (practice only). The maze paints obstacles as ambient
-          stone walls — a level boundary. An exercise cannot: its whole lesson is
-          a CHESS rule ("you cannot jump over your own piece, and you cannot
-          capture it"), and a wall says "the level ends here" instead. So practice
-          renders the blocker as what the FEN actually encodes — a white knight,
-          the player's own piece — using the canonical piece art.
+          stone walls — a level boundary. An exercise's obstacle is a different
+          thing: its whole lesson is a CHESS rule ("you cannot jump over a piece
+          in your path, and you cannot land on it"). It is painted as a dedicated
+          stone obstacle (`board.blocker.stone`, theme-builder slot) — distinct
+          from the maze's ambient scene stone.
 
           Not interactive and not a drop target: pointer events stay off, so the
           cell button underneath still receives the tap and refuses the move,
@@ -468,8 +469,7 @@ export function Board({
       {mode !== "labyrinth" && (obstacles ?? []).map((o) => {
         const center = cellCenter(o.file, o.rank);
         const pw = pieceWidth();
-        const blockerSrc = pieceAssets.w.knight;
-        if (!blockerSrc) return null;
+        if (!blockerStoneSrc) return null;
         return (
           <picture
             key={`blocker-${o.file}-${o.rank}`}
@@ -481,14 +481,8 @@ export function Board({
               pointerEvents: "none",
             }}
           >
-            {THEME_CONFIG.hasOptimizedFormats && (
-              <>
-                <source srcSet={`${blockerSrc}.avif`} type="image/avif" />
-                <source srcSet={`${blockerSrc}.webp`} type="image/webp" />
-              </>
-            )}
             <img
-              src={`${blockerSrc}.png`}
+              src={`${blockerStoneSrc}.png`}
               alt=""
               aria-hidden="true"
               className={PIECE_IMG_CLASS}

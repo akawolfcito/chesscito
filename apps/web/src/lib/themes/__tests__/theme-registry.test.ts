@@ -281,7 +281,9 @@ describe("theme-registry", () => {
       // favicon.ico), whose consumer is likewise invisible from apps/web.
       landing: 21,
       // +1: shared.close-candy, the CandyIcon close art.
-      shared: 75,
+      // +1: board.blocker.stone, the exercise obstacle art (2026-07-23),
+      // classified with the board.piece.* slots.
+      shared: 76,
       "full-legacy": 29,
       "dev-only": 0,
       unknown: 4,
