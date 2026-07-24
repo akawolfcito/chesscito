@@ -1474,6 +1474,7 @@ const messages = {
     heroEmptyHint: "Sé el primero en sumar puntos.",
     onchainMarkerAria: "Guardado en Celo",
     yourRankLabel: "Tu posición",
+    saveOnChainAria: "Guarda tu puntaje en Celo",
   },
   GET_PEONES_COPY: {
     ...en.GET_PEONES_COPY,

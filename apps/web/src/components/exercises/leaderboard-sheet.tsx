@@ -15,6 +15,7 @@ import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import type { LeaderboardRow } from "@/lib/server/leaderboard";
 import { PlayerIdentityPill } from "@/components/identity/player-identity-pill";
+import { PinStatusMarker } from "@/components/redesign/pin-status-marker";
 import { useNicknameTokens } from "@/lib/identity/use-nickname-tokens";
 import { useDisplayName } from "@/hooks/use-display-name";
 import {
@@ -58,9 +59,16 @@ type LeaderboardSheetProps = {
    *  Wired from exercises-screen after a successful score save so the
    *  leaderboard reflects the new row without requiring close/reopen. */
   refreshTrigger?: number;
+  /** Save-On-Chain, surfaced here as the PRIMARY entry point (founder
+   *  2026-07-23). When a score is waiting, the own-rank footer becomes a
+   *  tappable CTA that runs the same handler as the Missions "Save proof"
+   *  button. Absent/false → the footer stays a static rank readout. */
+  canSaveOnChain?: boolean;
+  onSaveOnChain?: () => void;
+  isSavingOnChain?: boolean;
 };
 
-export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refreshTrigger }: LeaderboardSheetProps) {
+export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refreshTrigger, canSaveOnChain, onSaveOnChain, isSavingOnChain }: LeaderboardSheetProps) {
   const t = useTranslations("LEADERBOARD_SHEET_COPY");
   // Passport verify banner is hidden until we ship Celo-native verification.
   // See the disabled JSX block below for the revival point.
@@ -353,36 +361,65 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
             the scroll container so it stays anchored at the bottom and
             is always visible while the Top Competitors list scrolls,
             whenever the caller has a ranked row (QA G4 2026-06-11). */}
-        {ownRow ? (
-          <div className="leaderboard-own-rank-footer shrink-0">
-            <div className="flex flex-col gap-2.5">
-              <div
-                data-testid="leaderboard-own-row"
-                className="leaderboard-row-compact leaderboard-row-compact--identity"
-              >
-                <div className="leaderboard-rank-pill">{ownRow.rank}</div>
-                <div className="flex flex-1 min-width-0 items-center gap-1.5">
-                  <PlayerIdentityPill
-                    variant={ownRow.variant}
-                    name={rowName(ownRow, true)}
-                    size="sm"
-                    className="text-xs font-black text-[rgba(63,34,8,0.90)]"
+        {ownRow ? (() => {
+          // Primary Save-On-Chain entry (founder 2026-07-23): when a score
+          // is waiting, the own-rank block becomes a tappable CTA. Visual
+          // affordance only — a pulsing dot + pressable styling, no added
+          // copy (Chesscito communicates visually). Falls back to the
+          // static readout once saved or when there's nothing to save.
+          const isCta = Boolean(canSaveOnChain && onSaveOnChain);
+          const rowInner = (
+            <>
+              {isCta ? <PinStatusMarker status="pending" /> : null}
+              <div className="leaderboard-rank-pill">{ownRow.rank}</div>
+              <div className="flex flex-1 min-width-0 items-center gap-1.5">
+                <PlayerIdentityPill
+                  variant={ownRow.variant}
+                  name={rowName(ownRow, true)}
+                  size="sm"
+                  className="text-xs font-black text-[rgba(63,34,8,0.90)]"
+                />
+                {ownRow.hasOnchain && (
+                  <CandyIcon
+                    name="fingerprint"
+                    label={t("onchainMarkerAria")}
+                    className="inline-block h-3 w-3 opacity-80"
                   />
-                  {ownRow.hasOnchain && (
-                    <CandyIcon
-                      name="fingerprint"
-                      label={t("onchainMarkerAria")}
-                      className="inline-block h-3 w-3 opacity-80"
-                    />
-                  )}
-                </div>
-                <p className="text-sm font-black tabular-nums text-[rgba(63,34,8,0.95)]">
-                  {ownRow.score}
-                </p>
+                )}
+              </div>
+              <p className="text-sm font-black tabular-nums text-[rgba(63,34,8,0.95)]">
+                {ownRow.score}
+              </p>
+            </>
+          );
+          return (
+            <div className="leaderboard-own-rank-footer shrink-0">
+              <div className="flex flex-col gap-2.5">
+                {isCta ? (
+                  <button
+                    type="button"
+                    data-testid="leaderboard-own-row"
+                    data-cta="save-onchain"
+                    aria-label={t("saveOnChainAria")}
+                    disabled={isSavingOnChain}
+                    aria-busy={isSavingOnChain || undefined}
+                    onClick={onSaveOnChain}
+                    className="leaderboard-row-compact leaderboard-row-compact--identity leaderboard-own-rank-cta"
+                  >
+                    {rowInner}
+                  </button>
+                ) : (
+                  <div
+                    data-testid="leaderboard-own-row"
+                    className="leaderboard-row-compact leaderboard-row-compact--identity"
+                  >
+                    {rowInner}
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        ) : null}
+          );
+        })() : null}
       </SheetContent>
     </Sheet>
   );

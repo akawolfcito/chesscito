@@ -610,6 +610,12 @@ export const LEADERBOARD_SHEET_COPY = {
   /** QA round 2026-06-11: on-chain marker + always-visible own rank. */
   onchainMarkerAria: "Saved on Celo",
   yourRankLabel: "Your rank",
+  /** Own-rank block doubles as the primary "save to Celo" CTA when a score
+   *  is waiting — visual only (dot + button affordance), so this string is
+   *  the invisible accessible name for the tappable row. Follows the
+   *  language brief §5: the result ("on Celo"), never the mechanism
+   *  ("on-chain"), mirroring `onchainMarkerAria`. */
+  saveOnChainAria: "Save your score on Celo",
 } as const;
 
 export const PURCHASE_CONFIRM_COPY = {

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
 import { act } from "@testing-library/react";
 import { waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { LeaderboardSheet } from "../leaderboard-sheet";
 import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 
@@ -211,6 +212,71 @@ describe("LeaderboardSheet — on-chain marker + own rank (QA 2026-06-11)", () =
     });
     expect(String(fetchMock.mock.calls[0][0])).not.toContain("player=");
     expect(screen.queryByTestId("leaderboard-own-row")).not.toBeInTheDocument();
+  });
+});
+
+describe("LeaderboardSheet — own-rank Save-On-Chain CTA (founder 2026-07-23)", () => {
+  const rows = [
+    { rank: 1, rowId: "id_a", variant: { piece: "king", style: "golden", number: 1 }, score: 9000, isVerified: false, hasOnchain: true },
+  ];
+  const own = { rank: 42, rowId: "id_own", variant: { piece: "queen", style: "coral", number: 42 }, score: 120, isVerified: false, hasOnchain: false, walletShort: "0xABCD…1234" };
+
+  const mountConnected = (json: unknown) => {
+    accountState.address = "0xABCD000000000000000000000000000000001234";
+    accountState.isConnected = true;
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => json }) as unknown as typeof fetch;
+  };
+
+  it("makes the own-rank block a tappable CTA that runs the save handler", async () => {
+    mountConnected({ rows, player: own });
+    const onSaveOnChain = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <LeaderboardSheet
+        open
+        onOpenChange={() => {}}
+        showTrigger={false}
+        canSaveOnChain
+        onSaveOnChain={onSaveOnChain}
+      />,
+    );
+
+    const cta = await screen.findByRole("button", { name: /save your score on Celo/i });
+    expect(cta).toHaveAttribute("data-testid", "leaderboard-own-row");
+    expect(cta).toHaveAttribute("data-cta", "save-onchain");
+    await user.click(cta);
+    expect(onSaveOnChain).toHaveBeenCalledTimes(1);
+  });
+
+  it("stays a static readout (not a button) when there is nothing to save", async () => {
+    mountConnected({ rows, player: own });
+
+    render(<LeaderboardSheet open onOpenChange={() => {}} showTrigger={false} />);
+
+    const ownRow = await screen.findByTestId("leaderboard-own-row");
+    expect(ownRow.tagName).toBe("DIV");
+    expect(
+      screen.queryByRole("button", { name: /save your score on Celo/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("disables the CTA while a save is in flight", async () => {
+    mountConnected({ rows, player: own });
+
+    render(
+      <LeaderboardSheet
+        open
+        onOpenChange={() => {}}
+        showTrigger={false}
+        canSaveOnChain
+        onSaveOnChain={vi.fn()}
+        isSavingOnChain
+      />,
+    );
+
+    const cta = await screen.findByRole("button", { name: /save your score on Celo/i });
+    expect(cta).toBeDisabled();
   });
 });
 

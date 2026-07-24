@@ -4140,6 +4140,9 @@ export function ExercisesScreen({
           onOpenChange={setLeaderboardOpen}
           showTrigger={false}
           refreshTrigger={leaderboardRefreshTrigger}
+          canSaveOnChain={canSaveOnChain}
+          onSaveOnChain={() => void handleSaveScoreOnChain()}
+          isSavingOnChain={saveWrite.isBusy}
         />
       </main>
     </div>
