@@ -27,17 +27,21 @@ describe("theme runtime catalog coverage", () => {
     // 168 (2026-07-23): + payments.offer-bg, the dedicated Season Pass offer
     // sheet background. Consumed as a CSS background, so it counts as excluded
     // (excludedSlots 12 → 13), not a new resolver slot (connectedSlots stays 155).
-    expect(report.totalSlots).toBe(168);
+    // 169 (2026-07-23): + board.blocker.stone, the exercise obstacle art.
+    // Consumed via the resolver (useCurrentThemeAsset) in board.tsx +
+    // diagonal-run-board.tsx, so it lands in category A: connectedSlots 155 →
+    // 156, initial B 72 → 73, excludedSlots unchanged.
+    expect(report.totalSlots).toBe(169);
     expect(report.initialCategoryCounts).toEqual({
       A: 2,
-      B: 72,
+      B: 73,
       C: 26,
       D: 38,
       E: 19,
       F: 11,
       G: 0,
     });
-    expect(report.connectedSlots).toBe(155);
+    expect(report.connectedSlots).toBe(156);
     expect(report.excludedSlots).toBe(13);
     expect(
       report.slots.filter(

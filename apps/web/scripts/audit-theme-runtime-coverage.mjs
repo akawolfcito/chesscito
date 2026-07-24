@@ -518,12 +518,16 @@ if (CHECK_MODE) {
   // offer sheet background (panel-bg2), so the shared panel-bg stays panel-bg1
   // everywhere else. Consumed as a CSS background, so it lands in the excluded
   // bucket (excludedSlots 12 → 13); totalSlots 167 → 168.
-  const expectedInitial = { A: 2, B: 72, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  // +1 (B: 72 → 73) 2026-07-23: board.blocker.stone, the exercise obstacle art.
+  // Consumed via the resolver (useCurrentThemeAsset) in board.tsx +
+  // diagonal-run-board.tsx, so it lands in category A (connectedSlots 155 →
+  // 156); totalSlots 168 → 169.
+  const expectedInitial = { A: 2, B: 73, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 168 ||
+    inventory.length !== 169 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

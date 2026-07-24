@@ -1,9 +1,9 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 168,
+  "totalSlots": 169,
   "categoryCounts": {
-    "A": 155,
+    "A": 156,
     "B": 0,
     "C": 0,
     "D": 0,
@@ -13,25 +13,25 @@
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 72,
+    "B": 73,
     "C": 26,
     "D": 38,
     "E": 19,
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 156,
-  "fullyConnectedSlots": 155,
+  "resolverSlots": 157,
+  "fullyConnectedSlots": 156,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
   "noActiveConsumerSlots": 6,
-  "connectedSlots": 155,
+  "connectedSlots": 156,
   "excludedSlots": 13,
   "exceptions": [],
   "literalDiff": {
-    "registeredBasenames": 189,
+    "registeredBasenames": 190,
     "discoveredBasenames": 16,
     "unregisteredExistingAssets": []
   },
@@ -12666,6 +12666,64 @@
       "usesCssBackground": false,
       "usesSharedMap": false,
       "buildsPathDynamically": true,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "board.blocker.stone",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/redesign/blocker-stone"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Exercise obstacle — practice blocker",
+        "↳ components/board.tsx",
+        "↳ components/exercises/diagonal-run-board.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/board.tsx",
+        "src/components/exercises/diagonal-run-board.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 2,
+      "consumers": [
+        {
+          "file": "src/components/board.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/exercises/diagonal-run-board.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
       "noActiveConsumer": false
     }
   ]
