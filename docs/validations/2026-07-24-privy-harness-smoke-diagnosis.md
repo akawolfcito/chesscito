@@ -124,11 +124,10 @@ Con el polyfill aplicado (`src/polyfills.ts`, importado primero en `main.tsx`):
 - [x] **Firma** → `0xbc0c57e2…9f88721b`
 - [x] **Tx de 0 CELO en testnet** → `0x265763120c…eecda9d141`, `receipt: success`
 - [x] Chain `11142220`, `chain matches: true`
-- [ ] **Persistencia en logout → login** ← sigue sin confirmarse explícitamente
-
-> La address fue **idéntica en ambas corridas** (sesiones separadas, bundle nuevo,
-> re-login), lo que respalda la persistencia — pero no reemplaza la prueba directa del
-> paso 12.
+- [x] **Persistencia** ✅ — logout + login **desde otro navegador** → misma address
+  `0x95e3785925A8Ae548BCBa1Be4336CF6527519479`. Al ser otro navegador (localStorage
+  distinto), la address vino del servidor de Privy, no de caché local: la wallet es
+  estable **por cuenta, no por dispositivo**.
 
 ### Falla A: confirmada y cerrada
 

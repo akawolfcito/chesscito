@@ -247,14 +247,22 @@ defined`, la segunda (tras el fix del polyfill) completa. Detalle en
 | Chain ID conectado | **`11142220`** ✅ (`chain matches: true`) |
 | Receipt | **`success`** ✅ |
 | Balance leído | `0.3 S-CELO` (faucet oficial OK) |
-| Persistencia (misma cuenta → misma address) | ⚠️ ver nota abajo |
+| Persistencia (misma cuenta → misma address) | ✅ **sí** — ver abajo |
 | Errores encontrados | Forno `403` (no bloqueante, ver §10.7); ruido cosmético de Privy |
 
-> **Nota sobre persistencia.** La address es **idéntica en las dos pasadas**, que son
-> sesiones separadas (dev server reiniciado, bundle nuevo, re-login). Es evidencia fuerte
-> de que la embedded wallet persiste por cuenta. **Falta la confirmación explícita del
-> paso 12** (logout → login en la misma sesión → misma address) para cerrarlo sin
-> ambigüedad.
+> **Persistencia — confirmada con una prueba más fuerte que la pedida.** El checklist
+> pedía logout → login en la misma sesión. El founder hizo **logout y login desde OTRO
+> navegador**, y obtuvo la **misma address** `0x95e3785925A8Ae548BCBa1Be4336CF6527519479`.
+>
+> Otro navegador significa **localStorage distinto**: la address no pudo salir de caché
+> local, vino del servidor de Privy asociada a la cuenta. Eso descarta el falso positivo
+> por sesión restaurada y prueba algo más amplio que el criterio original: la embedded
+> wallet es **estable por cuenta, no por dispositivo**.
+>
+> ⚠️ **Por qué importa para el producto:** el backend ancla entitlements (PRO, Peones,
+> Welcome Pack) **por address EVM**. Una address estable por cuenta y portable entre
+> dispositivos es exactamente la propiedad que ese modelo necesita para que el login web
+> funcione sin reescribir features.
 
 ### 10.7 Hallazgo — el RPC default de Celo Sepolia devuelve 403 en browser
 
@@ -317,7 +325,8 @@ son de entorno y ambos están caracterizados:
 | `Buffer is not defined` | Vite no polyfillea globals de Node; el SDK de Privy usa `Buffer` | ✅ **resuelto** (`src/polyfills.ts`, con test de regresión) |
 | Forno `403` | Rate limiting del RPC default en browser | ⚠️ **no bloqueante** (Privy usa su propio RPC para enviar); requisito para el slice — ver §10.7 |
 
-**Queda un único cabo suelto:** la confirmación explícita del paso 12 (logout → login →
-misma address). La evidencia disponible lo respalda (misma address en dos sesiones
-separadas) pero no es la prueba directa. Si esa prueba fallara, el veredicto vuelve a
-**NO-GO** y hay que detener el slice.
+- **Persistencia de address** ✅ — verificada **cross-browser** (ver §10.3): misma cuenta,
+  otro navegador, misma address. Estable **por cuenta, no por dispositivo**.
+
+**Gate CERRADO. Sin condiciones pendientes.** Se desbloquea el PR del slice
+`WebWalletProvider` (requisitos en §8, más el transport explícito de §10.7).
