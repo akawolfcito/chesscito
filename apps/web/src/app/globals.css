@@ -15798,19 +15798,9 @@ button.hud-resource-chip:active:not(:disabled) {
   background-image: var(--theme-bg-login-play);
 }
 
-/* Scrim under the copy only. The art is the hero; this keeps the text
-   legible over whatever lands in the lower third without flattening it. */
-.web-access-screen::before {
-  content: "";
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 62%;
-  background: linear-gradient(180deg,
-      rgba(12, 28, 8, 0) 0%,
-      rgba(12, 28, 8, 0.55) 42%,
-      rgba(12, 28, 8, 0.88) 100%);
-  pointer-events: none;
-}
+/* No scrim. The wallpaper is the whole screen and any veil — even a gradient —
+   washes it out, so legibility is carried entirely by the type: every copy
+   class below pairs a tight dark outline with a soft ambient shadow. */
 
 /* The gate: copy pinned under the wordmark, action pinned to the thumb.
    `23dvh` is where the wordmark the wallpaper paints ends. The art is 941x1672
@@ -15819,23 +15809,6 @@ button.hud-resource-chip:active:not(:disabled) {
 .web-access-screen--gate {
   justify-content: space-between;
   padding-top: calc(env(safe-area-inset-top, 0px) + 23dvh);
-}
-
-/* Second scrim, only for the gate: the copy now lands over sky, which is the
-   brightest part of the Learn wallpaper. It peaks across the copy band and
-   fades out before the subject so the art is never flattened. */
-.web-access-screen--gate::after {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  z-index: 0;
-  height: 56%;
-  background: linear-gradient(180deg,
-      rgba(9, 24, 44, 0) 0%,
-      rgba(9, 24, 44, 0.3) 28%,
-      rgba(9, 24, 44, 0.42) 52%,
-      rgba(9, 24, 44, 0) 100%);
-  pointer-events: none;
 }
 
 .web-access-copy,
@@ -15857,30 +15830,39 @@ button.hud-resource-chip:active:not(:disabled) {
   font-weight: 700;
   line-height: 1.15;
   color: rgb(255, 246, 219);
-  text-shadow: 0 2px 0 rgba(20, 45, 12, 0.75), 0 6px 18px rgba(0, 0, 0, 0.45);
+  text-shadow:
+    0 2px 0 rgba(20, 45, 12, 0.85),
+    0 0 10px rgba(6, 18, 34, 0.65),
+    0 6px 18px rgba(0, 0, 0, 0.5);
 }
 
 .web-access-lede {
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
-  color: rgba(255, 246, 219, 0.92);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  color: rgba(255, 246, 219, 0.96);
+  text-shadow:
+    0 1px 2px rgba(6, 18, 34, 0.9),
+    0 0 10px rgba(6, 18, 34, 0.6);
 }
 
 .web-access-body {
   margin: 0;
   font-size: 0.9375rem;
   line-height: 1.5;
-  color: rgba(255, 246, 219, 0.82);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  color: rgba(255, 246, 219, 0.92);
+  text-shadow:
+    0 1px 2px rgba(6, 18, 34, 0.9),
+    0 0 10px rgba(6, 18, 34, 0.6);
 }
 
 .web-access-note {
   margin: 0;
   font-size: 0.8125rem;
-  color: rgba(255, 246, 219, 0.68);
-  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+  color: rgba(255, 246, 219, 0.85);
+  text-shadow:
+    0 1px 2px rgba(6, 18, 34, 0.9),
+    0 0 9px rgba(6, 18, 34, 0.6);
 }
 
 /* Green candy CTA — the same --cta-primary-green-* vocabulary as the
