@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 import {
   useAccount,
   useChainId,
-  useDisconnect,
   usePublicClient,
   useReadContract,
   useReadContracts,
@@ -15,6 +14,7 @@ import {
   useWriteContract,
 } from "wagmi";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
+import { useWalletSignOut } from "@/lib/wallet/wallet-session";
 import { useSeasonPassStatus } from "@/lib/season-pass/use-season-pass-status";
 
 import { Board } from "@/components/board";
@@ -402,7 +402,10 @@ export function ExercisesScreen({
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
   const { connectWallet } = useConnectWallet();
-  const { disconnect } = useDisconnect();
+  // Branch-aware: wagmi disconnect on the injected tree, Privy `logout()` on
+  // the web tree. Ending only the wagmi connection would leave a Privy session
+  // (and its `.chesscito.com` cookie) alive — see `lib/wallet/wallet-session`.
+  const signOut = useWalletSignOut();
   const { switchChain } = useSwitchChain();
   const { isMiniPay } = useMiniPay();
   // `isPending` is no longer read: `useOnChainWrite` owns the busy state for
@@ -3786,7 +3789,7 @@ export function ExercisesScreen({
             }}
             onDisconnect={() => {
               setAccountSheetOpen(false);
-              disconnect();
+              signOut();
             }}
           />
         ) : null}

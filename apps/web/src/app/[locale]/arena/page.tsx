@@ -6,7 +6,6 @@ import { useRouter } from "@/i18n/navigation";
 import {
   useAccount,
   useChainId,
-  useDisconnect,
 } from "wagmi";
 import { AccountSheet } from "@/components/account/account-sheet";
 import { daysRemaining } from "@/lib/pro/days-remaining";
@@ -14,6 +13,7 @@ import { useCoachCredits } from "@/lib/coach/use-coach-credits";
 import { truncateClaimError } from "@/lib/coach/claim-telemetry";
 import { formatWalletShort } from "@/lib/wallet/format";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
+import { useWalletSignOut } from "@/lib/wallet/wallet-session";
 import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
 import { useConnectPrompt } from "@/lib/connect-prompt/use-connect-prompt";
 import { useChessGame } from "@/lib/game/use-chess-game";
@@ -161,7 +161,10 @@ function ArenaPageInner() {
   // learn/exercises so the account entry opens in-mode (play `/exercises` is
   // cross-mode-redirected, so a route-based open would leave the surface).
   // `chainId` already declared below (shared useChainId()).
-  const { disconnect } = useDisconnect();
+  // Branch-aware: wagmi disconnect on the injected tree, Privy `logout()` on
+  // the web tree. Ending only the wagmi connection would leave a Privy session
+  // (and its `.chesscito.com` cookie) alive — see `lib/wallet/wallet-session`.
+  const signOut = useWalletSignOut();
   const { credits: coachCredits } = useCoachCredits();
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
   // Declared after proSheet (not next to badgeSheet above) so PRO
@@ -1230,7 +1233,7 @@ function ArenaPageInner() {
                 }}
                 onDisconnect={() => {
                   setAccountSheetOpen(false);
-                  disconnect();
+                  signOut();
                 }}
               />
             ) : null}

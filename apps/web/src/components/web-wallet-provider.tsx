@@ -1,13 +1,14 @@
 "use client";
 
-import { PrivyProvider } from "@privy-io/react-auth";
+import { PrivyProvider, useLogout } from "@privy-io/react-auth";
 import { WagmiProvider, createConfig } from "@privy-io/wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { useCallback, type ReactNode } from "react";
 import { celo } from "wagmi/chains";
 
 import { WebAccessGate } from "@/components/web-access-gate";
 import { createWebTransports } from "@/lib/wallet/web-transports";
+import { WalletSessionProvider } from "@/lib/wallet/wallet-session";
 
 /**
  * wagmi config for the web (Privy) branch — Celo mainnet only, no `injected`
@@ -52,6 +53,26 @@ const queryClient = new QueryClient({
 });
 
 /**
+ * Teaches the shared `useWalletSignOut()` how this branch ends a session:
+ * Privy's own `logout()`, not a wagmi disconnect. Privy owns the embedded
+ * wallet and the session, so tearing down the connector alone would leave the
+ * session (and, once HttpOnly cookies are on for `.chesscito.com`, the cookie
+ * shared with the sibling subdomain) intact.
+ *
+ * The existing Account sheet `Disconnect` row is the only control that reaches
+ * this — no second `Sign out` button exists, and MiniPay hides `Disconnect`
+ * entirely (`account-sheet.tsx`, `walletIsInterchangeable`).
+ */
+export function PrivyWalletSession({ children }: { children: ReactNode }) {
+  const { logout } = useLogout();
+  const signOut = useCallback(() => {
+    void logout();
+  }, [logout]);
+
+  return <WalletSessionProvider signOut={signOut}>{children}</WalletSessionProvider>;
+}
+
+/**
  * Privy + wagmi tree for web users outside MiniPay. `WebAccessGate` sits
  * between wagmi and `children` and renders them only once the user is
  * authenticated with a ready embedded wallet — web access is mandatory, there
@@ -74,7 +95,9 @@ export function WebWalletProvider({ children }: { children: ReactNode }) {
     >
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={webWagmiConfig}>
-          <WebAccessGate>{children}</WebAccessGate>
+          <PrivyWalletSession>
+            <WebAccessGate>{children}</WebAccessGate>
+          </PrivyWalletSession>
         </WagmiProvider>
       </QueryClientProvider>
     </PrivyProvider>

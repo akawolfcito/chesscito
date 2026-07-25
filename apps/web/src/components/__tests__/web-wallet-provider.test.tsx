@@ -15,6 +15,9 @@ import { celo } from "wagmi/chains";
 // children in the gate.
 vi.mock("@privy-io/react-auth", () => ({
   PrivyProvider: ({ children }: { children?: ReactNode }) => children,
+  // `PrivyWalletSession` sits in the tree and reads this; its own behavior is
+  // covered in web-wallet-session.test.tsx.
+  useLogout: () => ({ logout: vi.fn() }),
 }));
 vi.mock("@privy-io/wagmi", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@privy-io/wagmi")>()),
