@@ -96,6 +96,29 @@ const SAMPLE_STATS: PublicStats = {
   retention: {
     d1: { returned: 300, cohort: 1000 },
     d7: { returned: 120, cohort: 900 },
+    week3: { returned: 64, cohort: 700 },
+  },
+  // Values chosen NOT to collide with any other number on the page — the
+  // headline tiles already own 410 and 250, and getByText would go ambiguous.
+  accountLifecycle: {
+    known: 881,
+    newToday: 13,
+    new7d: 97,
+    active7d: 407,
+    dormant: 263,
+    inactive: 211,
+    resurrected7d: 33,
+  },
+  habitDepth: {
+    buckets: [
+      { minDays: 1, installs: 701 },
+      { minDays: 3, installs: 383 },
+      { minDays: 7, installs: 191 },
+      { minDays: 14, installs: 73 },
+      { minDays: 21, installs: 26 },
+    ],
+    cohort: 701,
+    medianActiveDays: 4,
   },
   accessFunnel: {
     steps: [
@@ -374,6 +397,40 @@ describe("StatsPage", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
     expect(screen.getByText("New installs")).toBeInTheDocument();
     expect(screen.getByText("Returning installs")).toBeInTheDocument();
+  });
+
+  it("renders the account lifecycle as people, with the partition adding up", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(screen.getByText("Active (7d)")).toBeInTheDocument();
+    expect(screen.getByText("Dormant")).toBeInTheDocument();
+    expect(screen.getByText("Inactive")).toBeInTheDocument();
+    // 407 + 263 + 211 = 881 known — the copy states the denominator so the
+    // three buckets can be checked against it by eye.
+    expect(screen.getByText(/Of 881 accounts ever seen/)).toBeInTheDocument();
+  });
+
+  it("shows resurrections apart from the partition", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(screen.getByText(/33 came back after going quiet/i)).toBeInTheDocument();
+  });
+
+  it("hides the lifecycle block when there is no account denominator", () => {
+    render(<StatsPage stats={{ ...SAMPLE_STATS, accountLifecycle: null }} />);
+    expect(screen.queryByText("Dormant")).toBeNull();
+  });
+
+  it("renders habit depth up to the 21-day promise", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(screen.getByText("21+ days")).toBeInTheDocument();
+    expect(screen.getByText("26")).toBeInTheDocument();
+    expect(
+      screen.getByText(/median 4 of 701 active installs/i),
+    ).toBeInTheDocument();
+  });
+
+  it("labels week-3 retention as a window, not an exact day", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(screen.getByText(/week 3/i)).toBeInTheDocument();
   });
 
   it("hides the Activity trend section entirely when the trend is empty", () => {

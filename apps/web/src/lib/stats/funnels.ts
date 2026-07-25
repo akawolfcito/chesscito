@@ -119,10 +119,184 @@ export function computeTopCountries(
 }
 
 export type RetentionBucket = { returned: number; cohort: number };
-export type Retention = { d1: RetentionBucket; d7: RetentionBucket };
+export type Retention = {
+  d1: RetentionBucket;
+  d7: RetentionBucket;
+  /** Deliberately a WINDOW, not a single day like d1/d7 — see computeRetention. */
+  week3: RetentionBucket;
+};
 
 function dayKey(ts: string): string {
   return ts.slice(0, 10);
+}
+
+/** Whole UTC days between two ISO timestamps' calendar days. */
+function ageInDays(ts: string, todayKey: string): number {
+  return Math.round(
+    (Date.parse(`${todayKey}T00:00:00.000Z`) -
+      Date.parse(`${dayKey(ts)}T00:00:00.000Z`)) /
+      86_400_000,
+  );
+}
+
+function todayKeyOf(now: Date): string {
+  const d = new Date(now);
+  d.setUTCHours(0, 0, 0, 0);
+  return d.toISOString().slice(0, 10);
+}
+
+/* ── Account lifecycle ──────────────────────────────────────────────────────
+   The install-level numbers answer "how many browsers", which is not the
+   question anyone asks. These answer "how many people", using the keyed
+   pseudonym derived at ingest (lib/analytics/account-ref.ts).
+
+   "Inactive" is not an event — it is the ABSENCE of one — so it can only be
+   counted against a denominator that outlives the event window. That
+   denominator is `account_first_seen`; without it the number does not exist. */
+
+export type AccountLifecycle = {
+  /** Accounts known to exist at all. The denominator for everything below. */
+  known: number;
+  newToday: number;
+  new7d: number;
+  /** Any event in the last 7 days. */
+  active7d: number;
+  /** Last event 8–29 days ago. */
+  dormant: number;
+  /** No event in the whole 30-day window. */
+  inactive: number;
+  /** Active in the last 7 days after a silent 8–29 day stretch — the number
+   *  that says whether streaks and reminders actually pull anyone back. */
+  resurrected7d: number;
+};
+
+export const EMPTY_ACCOUNT_LIFECYCLE: AccountLifecycle = {
+  known: 0,
+  newToday: 0,
+  new7d: 0,
+  active7d: 0,
+  dormant: 0,
+  inactive: 0,
+  resurrected7d: 0,
+};
+
+/**
+ * `active7d + dormant + inactive === known` by construction: the three are a
+ * partition of every known account, so the block can never describe more or
+ * fewer people than exist. `resurrected7d` is a subset of `active7d` and is
+ * NOT part of the partition.
+ *
+ * Limit worth knowing: `inactive` means "no event in the last 30 days", which
+ * is the widest window the event table's read covers. Someone gone for a year
+ * and someone gone for 31 days land in the same bucket.
+ */
+export function computeAccountLifecycle(
+  accounts: Array<{ account_ref?: string | null; first_seen?: string | null }>,
+  activity: Array<{ account_ref?: string | null; created_at?: string | null }>,
+  now: Date = new Date(),
+): AccountLifecycle {
+  const todayKey = todayKeyOf(now);
+
+  /** account → the smallest age (in days) of any of its events. */
+  const lastSeenAge = new Map<string, number>();
+  /** account → had at least one event in the 8–29 day band. */
+  const activeInGap = new Set<string>();
+  for (const row of activity) {
+    const ref =
+      typeof row.account_ref === "string" && row.account_ref
+        ? row.account_ref
+        : null;
+    const ts = typeof row.created_at === "string" ? row.created_at : null;
+    if (!ref || !ts) continue;
+    const age = ageInDays(ts, todayKey);
+    const prev = lastSeenAge.get(ref);
+    if (prev === undefined || age < prev) lastSeenAge.set(ref, age);
+    if (age >= 8 && age <= 29) activeInGap.add(ref);
+  }
+
+  const out: AccountLifecycle = { ...EMPTY_ACCOUNT_LIFECYCLE };
+  for (const row of accounts) {
+    const ref =
+      typeof row.account_ref === "string" && row.account_ref
+        ? row.account_ref
+        : null;
+    const fs = typeof row.first_seen === "string" ? row.first_seen : null;
+    if (!ref || !fs) continue;
+
+    out.known += 1;
+    const bornAge = ageInDays(fs, todayKey);
+    if (bornAge === 0) out.newToday += 1;
+    if (bornAge <= 7) out.new7d += 1;
+
+    const age = lastSeenAge.get(ref);
+    if (age !== undefined && age <= 7) {
+      out.active7d += 1;
+      // Back after a silence: nothing in the 8–29 band, and old enough that
+      // the silence was real rather than "did not exist yet".
+      if (!activeInGap.has(ref) && bornAge >= 8) out.resurrected7d += 1;
+    } else if (age !== undefined && age <= 29) {
+      out.dormant += 1;
+    } else {
+      out.inactive += 1;
+    }
+  }
+  return out;
+}
+
+/* ── Habit depth ────────────────────────────────────────────────────────────
+   The 21-day habit is the product's promise, and no single retention rate
+   measures it: D1 and D7 are two snapshots, and someone can pass both while
+   showing up twice. Counting DISTINCT active days per install answers the
+   actual question — how often does a person come back. */
+
+export type HabitBucket = { minDays: number; installs: number };
+export type HabitDepth = {
+  /** Cumulative: the 7+ bucket is a subset of the 3+ bucket. */
+  buckets: HabitBucket[];
+  /** Installs with any activity in the window — the buckets' denominator. */
+  cohort: number;
+  /** Median active days among that cohort. 0 when nobody was active. */
+  medianActiveDays: number;
+};
+
+/** Cut points, ending at the 21 the product promises. */
+export const HABIT_THRESHOLDS: readonly number[] = [1, 3, 7, 14, 21];
+
+/** Takes NO `now`: the window is whatever the caller already sliced when it
+ *  fetched `activity`. Accepting a date here would imply it re-windows the
+ *  rows, which it does not. */
+export function computeHabitDepth(
+  activity: Array<{ session_id?: string | null; created_at?: string | null }>,
+): HabitDepth {
+  const daysBySession = new Map<string, Set<string>>();
+  for (const row of activity) {
+    const sid = typeof row.session_id === "string" ? row.session_id : null;
+    const ts = typeof row.created_at === "string" ? row.created_at : null;
+    if (!sid || !ts) continue;
+    if (!daysBySession.has(sid)) daysBySession.set(sid, new Set());
+    daysBySession.get(sid)!.add(dayKey(ts));
+  }
+
+  const counts = Array.from(daysBySession.values(), (days) => days.size).sort(
+    (a, b) => a - b,
+  );
+
+  const median = counts.length
+    ? counts.length % 2 === 1
+      ? counts[(counts.length - 1) / 2]!
+      : Math.round(
+          (counts[counts.length / 2 - 1]! + counts[counts.length / 2]!) / 2,
+        )
+    : 0;
+
+  return {
+    buckets: HABIT_THRESHOLDS.map((minDays) => ({
+      minDays,
+      installs: counts.filter((c) => c >= minDays).length,
+    })),
+    cohort: counts.length,
+    medianActiveDays: median,
+  };
 }
 
 function addDays(dayKeyStr: string, days: number): string {
@@ -132,14 +306,23 @@ function addDays(dayKeyStr: string, days: number): string {
 }
 
 /**
- * Rolling D1/D7 retention. A cohort for offset N is every install whose
- * first_seen day is old enough to have had a day-N chance to return AND recent
- * enough to be meaningful:
- *   - D1 cohort: first_seen in [today-8, today-1]
- *   - D7 cohort: first_seen in [today-14, today-7]
- * An install is "retained at N" if it produced ANY event on
- * first_seen_day + N (exact calendar day, UTC). Returns absolute
- * returned/cohort counts per offset (the view derives the %).
+ * Rolling retention. A cohort for offset N is every install whose first_seen
+ * day is old enough to have had a day-N chance to return AND recent enough to
+ * be meaningful:
+ *   - D1 cohort:     first_seen in [today-8,  today-1]
+ *   - D7 cohort:     first_seen in [today-14, today-7]
+ *   - week-3 cohort: first_seen in [today-28, today-21]
+ *
+ * D1 and D7 are EXACT-DAY: retained means an event on first_seen_day + N.
+ *
+ * `week3` deliberately breaks that pattern and asks for any event in days
+ * 15–21 after install. Exact-day-21 would answer "did they happen to open the
+ * app on that specific Tuesday", which at this volume reads as ~0 and says
+ * nothing about habit. A window answers the question the product actually
+ * asks: three weeks in, are they still here. The field is named `week3`
+ * rather than `d21` so the different shape is visible at every call site.
+ *
+ * Returns absolute returned/cohort counts (the view derives the %).
  */
 export function computeRetention(
   firstSeen: Array<{ session_id?: string | null; first_seen?: string | null }>,
@@ -155,9 +338,7 @@ export function computeRetention(
     activeDays.get(sid)!.add(dayKey(ts));
   }
 
-  const today = new Date(now);
-  today.setUTCHours(0, 0, 0, 0);
-  const todayKey = today.toISOString().slice(0, 10);
+  const todayKey = todayKeyOf(now);
 
   const bucket = (offset: number, minAgo: number, maxAgo: number): RetentionBucket => {
     let cohort = 0;
@@ -167,11 +348,7 @@ export function computeRetention(
       const fs = typeof row.first_seen === "string" ? row.first_seen : null;
       if (!sid || !fs) continue;
       const fsKey = dayKey(fs);
-      const ageDays = Math.round(
-        (Date.parse(`${todayKey}T00:00:00.000Z`) -
-          Date.parse(`${fsKey}T00:00:00.000Z`)) /
-          86_400_000,
-      );
+      const ageDays = ageInDays(fs, todayKey);
       if (ageDays < minAgo || ageDays > maxAgo) continue;
       cohort += 1;
       if (activeDays.get(sid)?.has(addDays(fsKey, offset))) returned += 1;
@@ -179,8 +356,39 @@ export function computeRetention(
     return { returned, cohort };
   };
 
+  /** Same cohort rule as `bucket`, but retention is ANY event in the
+   *  [fromOffset, toOffset] day range after install rather than one exact day. */
+  const windowBucket = (
+    fromOffset: number,
+    toOffset: number,
+    minAgo: number,
+    maxAgo: number,
+  ): RetentionBucket => {
+    let cohort = 0;
+    let returned = 0;
+    for (const row of firstSeen) {
+      const sid = typeof row.session_id === "string" ? row.session_id : null;
+      const fs = typeof row.first_seen === "string" ? row.first_seen : null;
+      if (!sid || !fs) continue;
+      const fsKey = dayKey(fs);
+      const ageDays = ageInDays(fs, todayKey);
+      if (ageDays < minAgo || ageDays > maxAgo) continue;
+      cohort += 1;
+      const days = activeDays.get(sid);
+      if (!days) continue;
+      for (let offset = fromOffset; offset <= toOffset; offset += 1) {
+        if (days.has(addDays(fsKey, offset))) {
+          returned += 1;
+          break;
+        }
+      }
+    }
+    return { returned, cohort };
+  };
+
   return {
     d1: bucket(1, 1, 8),
     d7: bucket(7, 7, 14),
+    week3: windowBucket(15, 21, 21, 28),
   };
 }

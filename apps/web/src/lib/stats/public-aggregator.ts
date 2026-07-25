@@ -16,12 +16,16 @@ import {
 } from "./onchain";
 import {
   computeAccessFunnel,
+  computeAccountLifecycle,
   computeActivation,
+  computeHabitDepth,
   computeRetention,
   computeTopCountries,
   type AccessFunnel,
+  type AccountLifecycle,
   type ActivationFunnel,
   type CountryCount,
+  type HabitDepth,
   type Retention,
 } from "./funnels";
 import {
@@ -200,6 +204,13 @@ export type PublicStats = {
   /** Door-to-value funnel over the gate cohort (last 30d, filtered). null on
    *  query failure. */
   accessFunnel: AccessFunnel | null;
+  /** New / active / dormant / inactive PEOPLE (keyed pseudonyms), not
+   *  installs. null when the account table or the event scan is unavailable —
+   *  a lifecycle without its denominator would be a guess. */
+  accountLifecycle: AccountLifecycle | null;
+  /** Distinct active days per install: how often people actually come back,
+   *  which is what the 21-day habit means. null on query failure. */
+  habitDepth: HabitDepth | null;
   /** Which reads were truncated by the row ceiling. Rendered as an explicit
    *  caveat so a partial read is never mistaken for a real decline. */
   dataIntegrity: DataIntegrity;
@@ -229,6 +240,8 @@ export const EMPTY_PUBLIC_STATS: PublicStats = {
   topCountries: [],
   retention: null,
   accessFunnel: null,
+  accountLifecycle: null,
+  habitDepth: null,
   dataIntegrity: { truncated: [], rowCeiling: 0 },
 };
 
@@ -626,7 +639,7 @@ export async function getPublicStats(
   const filteredEvents30d = await (applyEventFilters(
     supabase
       .from("analytics_events")
-      .select("event, session_id, created_at, country")
+      .select("event, session_id, created_at, country, account_ref")
       .gte("created_at", since30d)
       .order("created_at", { ascending: false })
       .range(0, DISTINCT_QUERY_MAX_ROWS),
@@ -636,6 +649,7 @@ export async function getPublicStats(
       session_id: string;
       created_at: string;
       country: string | null;
+      account_ref: string | null;
     }> | null;
     error: unknown;
   }>).then(
@@ -712,6 +726,33 @@ export async function getPublicStats(
       ? []
       : computeActivityTrend(sessionTrendRows, mintTrendRows, trendFirstSeenRows);
 
+  // Account denominator. Read WITHOUT a time bound on purpose: "inactive" is
+  // the absence of activity, so counting it needs every account that ever
+  // existed, not just the ones seen recently. A 30-day slice here would
+  // define the churned population out of existence.
+  const accountRows = await (supabase
+    .from("account_first_seen")
+    .select("account_ref, first_seen")
+    .order("first_seen", { ascending: false })
+    .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<{
+    data: Array<{ account_ref: string; first_seen: string }> | null;
+    error: unknown;
+  }>).then(
+    (res) => (res.error || !Array.isArray(res.data) ? null : res.data),
+    () => null,
+  );
+
+  // Both derive from the broad event scan already in hand — no extra reads.
+  // `accountLifecycle` needs BOTH sides: with no account table there is no
+  // denominator and the honest answer is null, not zero.
+  const accountLifecycle: AccountLifecycle | null =
+    accountRows && filteredEvents30d
+      ? computeAccountLifecycle(accountRows, filteredEvents30d)
+      : null;
+  const habitDepth: HabitDepth | null = filteredEvents30d
+    ? computeHabitDepth(filteredEvents30d)
+    : null;
+
   // Integrity ledger — every ranged read that came back exactly full. Named
   // per read so the page can say WHICH numbers became lower bounds instead of
   // a blanket disclaimer nobody can act on.
@@ -728,6 +769,7 @@ export async function getPublicStats(
   noteIfTruncated("activation / countries (30d)", filteredEvents30d);
   noteIfTruncated("retention cohorts (30d)", cohortRows);
   noteIfTruncated("access funnel (30d)", accessRows);
+  noteIfTruncated("accounts (lifetime)", accountRows);
 
   const activation: ActivationFunnel | null = filteredEvents30d
     ? computeActivation(
@@ -806,6 +848,8 @@ export async function getPublicStats(
     topCountries,
     retention,
     accessFunnel,
+    accountLifecycle,
+    habitDepth,
     dataIntegrity: { truncated, rowCeiling: ROW_CEILING },
   };
 }

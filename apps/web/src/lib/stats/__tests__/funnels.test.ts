@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   computeAccessFunnel,
+  computeAccountLifecycle,
   computeActivation,
+  computeHabitDepth,
   computeRetention,
   computeTopCountries,
 } from "../funnels";
@@ -138,6 +140,163 @@ describe("computeRetention", () => {
     ];
     const r = computeRetention(firstSeen, activity, now);
     expect(r.d7).toEqual({ returned: 1, cohort: 1 });
+  });
+});
+
+describe("computeAccountLifecycle", () => {
+  const now = new Date("2026-07-25T12:00:00.000Z");
+  const day = (agoDays: number) =>
+    new Date(Date.parse("2026-07-25T00:00:00.000Z") - agoDays * 86_400_000)
+      .toISOString();
+
+  it("classifies active, dormant and inactive as mutually exclusive", () => {
+    const accounts = [
+      { account_ref: "a", first_seen: day(40) },
+      { account_ref: "b", first_seen: day(40) },
+      { account_ref: "c", first_seen: day(40) },
+    ];
+    const activity = [
+      { account_ref: "a", created_at: day(2) }, // active
+      { account_ref: "b", created_at: day(12) }, // dormant
+      // c: silent for the whole window → inactive
+    ];
+    const life = computeAccountLifecycle(accounts, activity, now);
+    expect(life.active7d).toBe(1);
+    expect(life.dormant).toBe(1);
+    expect(life.inactive).toBe(1);
+    expect(life.active7d + life.dormant + life.inactive).toBe(life.known);
+  });
+
+  it("counts an account with no events at all as inactive, not missing", () => {
+    const life = computeAccountLifecycle(
+      [{ account_ref: "ghost", first_seen: day(45) }],
+      [],
+      now,
+    );
+    expect(life.known).toBe(1);
+    expect(life.inactive).toBe(1);
+  });
+
+  it("counts today's and this week's arrivals", () => {
+    const life = computeAccountLifecycle(
+      [
+        { account_ref: "a", first_seen: day(0) },
+        { account_ref: "b", first_seen: day(3) },
+        { account_ref: "c", first_seen: day(20) },
+      ],
+      [],
+      now,
+    );
+    expect(life.newToday).toBe(1);
+    expect(life.new7d).toBe(2); // today's arrival is also part of the week
+  });
+
+  it("counts a resurrection only after a real silence", () => {
+    const accounts = [
+      { account_ref: "back", first_seen: day(40) },
+      { account_ref: "steady", first_seen: day(40) },
+      { account_ref: "fresh", first_seen: day(2) },
+    ];
+    const activity = [
+      // back: active now, nothing in the 8–29d band → came back from silence
+      { account_ref: "back", created_at: day(1) },
+      // steady: never stopped, so it is retention, not resurrection
+      { account_ref: "steady", created_at: day(1) },
+      { account_ref: "steady", created_at: day(15) },
+      // fresh: brand new, never had a chance to go dormant
+      { account_ref: "fresh", created_at: day(1) },
+    ];
+    const life = computeAccountLifecycle(accounts, activity, now);
+    expect(life.resurrected7d).toBe(1);
+  });
+
+  it("ignores rows with no account_ref instead of counting them as one account", () => {
+    const life = computeAccountLifecycle(
+      [{ account_ref: null, first_seen: day(3) }],
+      [{ account_ref: null, created_at: day(1) }],
+      now,
+    );
+    expect(life.known).toBe(0);
+  });
+});
+
+describe("computeHabitDepth", () => {
+  const now = new Date("2026-07-25T12:00:00.000Z");
+  const day = (agoDays: number) =>
+    new Date(Date.parse("2026-07-25T00:00:00.000Z") - agoDays * 86_400_000)
+      .toISOString();
+
+  it("counts DISTINCT active days, not events", () => {
+    const depth = computeHabitDepth([
+        { session_id: "a", created_at: day(1) },
+        { session_id: "a", created_at: day(1) }, // same day
+        { session_id: "a", created_at: day(2) },
+      ]);
+    expect(depth.cohort).toBe(1);
+    expect(depth.medianActiveDays).toBe(2);
+  });
+
+  it("reports cumulative buckets: 7+ is a subset of 3+", () => {
+    const rows = [
+      ...Array.from({ length: 8 }, (_, i) => ({
+        session_id: "deep",
+        created_at: day(i),
+      })),
+      ...Array.from({ length: 3 }, (_, i) => ({
+        session_id: "shallow",
+        created_at: day(i),
+      })),
+      { session_id: "once", created_at: day(0) },
+    ];
+    const depth = computeHabitDepth(rows);
+    const at = (min: number) =>
+      depth.buckets.find((b) => b.minDays === min)?.installs;
+    expect(at(1)).toBe(3);
+    expect(at(3)).toBe(2);
+    expect(at(7)).toBe(1);
+    expect(at(21)).toBe(0);
+  });
+
+  it("returns an empty shape rather than NaN when nobody was active", () => {
+    const depth = computeHabitDepth([]);
+    expect(depth.cohort).toBe(0);
+    expect(depth.medianActiveDays).toBe(0);
+    expect(depth.buckets.every((b) => b.installs === 0)).toBe(true);
+  });
+});
+
+describe("computeRetention — week 3", () => {
+  const now = new Date("2026-07-25T12:00:00.000Z");
+  const day = (agoDays: number) =>
+    new Date(Date.parse("2026-07-25T00:00:00.000Z") - agoDays * 86_400_000)
+      .toISOString();
+
+  it("counts a window, not a single day, so a habit is not missed by one day", () => {
+    // Installed 24 days ago; active on its day 18, inside the 15–21 window.
+    const r = computeRetention(
+      [{ session_id: "a", first_seen: day(24) }],
+      [{ session_id: "a", created_at: day(6) }],
+      now,
+    );
+    expect(r.week3).toEqual({ returned: 1, cohort: 1 });
+  });
+
+  it("excludes an install too young to have reached week 3", () => {
+    const r = computeRetention(
+      [{ session_id: "a", first_seen: day(10) }],
+      [{ session_id: "a", created_at: day(1) }],
+      now,
+    );
+    expect(r.week3.cohort).toBe(0);
+  });
+
+  it("does not count activity that stopped before week 3", () => {
+    const r = computeRetention(
+      [{ session_id: "a", first_seen: day(24) }],
+      [{ session_id: "a", created_at: day(23) }], // its day 1 only
+      now,
+    );
+    expect(r.week3).toEqual({ returned: 0, cohort: 1 });
   });
 });
 

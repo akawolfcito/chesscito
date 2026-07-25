@@ -14,8 +14,10 @@ import {
 } from "@/lib/stats/filters";
 import type {
   AccessFunnel,
+  AccountLifecycle,
   ActivationFunnel,
   CountryCount,
+  HabitDepth,
   Retention,
 } from "@/lib/stats/funnels";
 
@@ -159,6 +161,104 @@ function AccessFunnelChart({ funnel }: { funnel: AccessFunnel }) {
   );
 }
 
+/**
+ * Account lifecycle: people, not browsers. The three buckets are a partition
+ * of every known account, so the copy names the denominator — a reader can
+ * check that they add up without trusting the page.
+ */
+function AccountLifecycleCards({ life }: { life: AccountLifecycle }) {
+  const cards = [
+    { label: "Active (7d)", value: life.active7d, tone: "rgba(58, 128, 148, 0.9)" },
+    { label: "Dormant", value: life.dormant, tone: "rgba(191, 148, 74, 0.9)" },
+    { label: "Inactive", value: life.inactive, tone: "rgba(150, 140, 130, 0.75)" },
+  ];
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-3 gap-2">
+        {cards.map(({ label, value, tone }) => (
+          <div
+            key={label}
+            className="flex flex-col gap-1 rounded-xl border px-3 py-2.5"
+            style={{
+              background: "rgba(255,255,255,0.92)",
+              borderColor: "var(--paper-divider)",
+            }}
+          >
+            <span
+              className="text-[0.625rem] font-semibold uppercase tracking-wide"
+              style={{ color: "var(--paper-text-subtle)" }}
+            >
+              {label}
+            </span>
+            <span
+              className="text-xl font-bold tabular-nums"
+              style={{ color: tone }}
+            >
+              {nf(value)}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p
+        className="text-[0.6875rem] leading-snug"
+        style={{ color: "var(--paper-text-subtle)" }}
+      >
+        Of {nf(life.known)} accounts ever seen · {nf(life.newToday)} arrived
+        today, {nf(life.new7d)} this week ·{" "}
+        {nf(life.resurrected7d)} came back after going quiet. Dormant means no
+        activity for 8–29 days; inactive means none in the last 30.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Habit depth: how many distinct days an install actually showed up. This is
+ * the 21-day promise made checkable — a retention rate can look healthy while
+ * everyone visits twice, and this cannot.
+ */
+function HabitDepthChart({ depth }: { depth: HabitDepth }) {
+  const top = Math.max(1, ...depth.buckets.map((b) => b.installs));
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-col gap-1.5">
+        {depth.buckets.map((b) => (
+          <div key={b.minDays} className="flex items-center gap-2 text-xs">
+            <span
+              className="w-20 shrink-0"
+              style={{ color: "var(--paper-text-muted)" }}
+            >
+              {b.minDays}+ days
+            </span>
+            <span
+              className="h-4 rounded"
+              style={{
+                width: `${Math.max((b.installs / top) * 100, b.installs > 0 ? 3 : 0)}%`,
+                minWidth: b.installs > 0 ? "0.5rem" : 0,
+                background: "rgba(58, 128, 148, 0.7)",
+              }}
+              aria-hidden
+            />
+            <span
+              className="tabular-nums font-semibold"
+              style={{ color: "var(--paper-text)" }}
+            >
+              {nf(b.installs)}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p
+        className="text-[0.6875rem] leading-snug"
+        style={{ color: "var(--paper-text-subtle)" }}
+      >
+        Distinct active days per install over the window · median{" "}
+        {nf(depth.medianActiveDays)} of {nf(depth.cohort)} active installs.
+      </p>
+    </div>
+  );
+}
+
 /** Activation funnel: distinct sessions per canonical step, absolute counts
  *  (no rates — a single session can read as 100% at early volume). */
 function ActivationFunnelChart({ funnel }: { funnel: ActivationFunnel }) {
@@ -243,6 +343,10 @@ function RetentionCards({ retention }: { retention: Retention }) {
   const cards: Array<{ label: string; b: Retention["d1"] }> = [
     { label: "D1 retention", b: retention.d1 },
     { label: "D7 retention", b: retention.d7 },
+    // Named for the window it measures rather than "D21": it asks whether an
+    // install was active at ANY point in its days 15–21, because landing on
+    // one exact day three weeks out measures luck, not habit.
+    { label: "Week 3 retention", b: retention.week3 },
   ];
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -806,6 +910,36 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
             )}
           </div>
         </div>
+
+        {/* 4 — The habit itself. Retention rates above are snapshots; these two
+            blocks say who those people ARE (accounts, not browsers) and how
+            often they actually show up, which is the 21-day promise made
+            checkable. Both are hidden rather than zeroed when unavailable:
+            the account block needs a denominator that only exists once
+            TELEMETRY_ACCOUNT_SECRET is configured. */}
+        {stats.accountLifecycle ? (
+          <div>
+            <p
+              className="mb-2 text-[0.625rem] font-semibold uppercase tracking-wide"
+              style={{ color: "var(--paper-text-subtle)" }}
+            >
+              4 · Who are they? · accounts, not devices
+            </p>
+            <AccountLifecycleCards life={stats.accountLifecycle} />
+          </div>
+        ) : null}
+
+        {stats.habitDepth && stats.habitDepth.cohort > 0 ? (
+          <div>
+            <p
+              className="mb-2 text-[0.625rem] font-semibold uppercase tracking-wide"
+              style={{ color: "var(--paper-text-subtle)" }}
+            >
+              5 · Is it becoming a habit? · active days per install
+            </p>
+            <HabitDepthChart depth={stats.habitDepth} />
+          </div>
+        ) : null}
       </section>
 
       {/* Activity trend chart — first visual right after Snapshot so
