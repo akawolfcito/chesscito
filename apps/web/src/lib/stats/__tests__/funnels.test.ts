@@ -1,10 +1,73 @@
 import { describe, expect, it } from "vitest";
 import {
+  computeAccessFunnel,
   computeActivation,
   computeRetention,
   computeTopCountries,
 } from "../funnels";
 import { parseStatsFilters, statsFiltersToQuery } from "../filters";
+
+describe("computeAccessFunnel", () => {
+  const at = (step: ReturnType<typeof computeAccessFunnel>, name: string) =>
+    step.steps.find((s) => s.step === name)?.sessions;
+
+  it("scopes every step to sessions that entered through the gate", () => {
+    // Session `m` never saw the gate (MiniPay bypasses it) yet completes an
+    // exercise. Counting it would make the last step exceed the first and turn
+    // the funnel into nonsense.
+    const funnel = computeAccessFunnel([
+      { event: "web_access_gate_viewed", session_id: "a" },
+      { event: "web_login_started", session_id: "a" },
+      { event: "web_login_succeeded", session_id: "a" },
+      { event: "web_wallet_ready", session_id: "a" },
+      { event: "exercise_completed", session_id: "a" },
+      { event: "exercise_completed", session_id: "m" }, // no gate → excluded
+    ]);
+    expect(at(funnel, "gate_viewed")).toBe(1);
+    expect(at(funnel, "first_exercise_completed")).toBe(1);
+  });
+
+  it("never lets a later step exceed an earlier one", () => {
+    const funnel = computeAccessFunnel([
+      { event: "web_access_gate_viewed", session_id: "a" },
+      { event: "web_access_gate_viewed", session_id: "b" },
+      { event: "web_login_started", session_id: "a" },
+      // b bails at the door: sees the gate, never taps ENTER
+    ]);
+    expect(at(funnel, "gate_viewed")).toBe(2);
+    expect(at(funnel, "login_started")).toBe(1);
+    expect(at(funnel, "login_succeeded")).toBe(0);
+  });
+
+  it("folds exercise-completion aliases into the terminal step", () => {
+    const funnel = computeAccessFunnel([
+      { event: "web_access_gate_viewed", session_id: "a" },
+      { event: "training_exercise_completed", session_id: "a" }, // alias
+      { event: "play_tactics_completed", session_id: "a" }, // same session, alias
+    ]);
+    expect(at(funnel, "first_exercise_completed")).toBe(1);
+  });
+
+  it("reports login failures beside the funnel, not inside it", () => {
+    const funnel = computeAccessFunnel([
+      { event: "web_access_gate_viewed", session_id: "a" },
+      { event: "web_login_started", session_id: "a" },
+      { event: "web_login_failed", session_id: "a" },
+      { event: "web_login_succeeded", session_id: "a" }, // failed, then got in
+      { event: "web_login_failed", session_id: "a" }, // same session, counted once
+    ]);
+    expect(funnel.failedSessions).toBe(1);
+    expect(at(funnel, "login_succeeded")).toBe(1);
+  });
+
+  it("returns a zeroed funnel when no session ever saw the gate", () => {
+    const funnel = computeAccessFunnel([
+      { event: "exercise_completed", session_id: "m" },
+    ]);
+    expect(funnel.steps.every((s) => s.sessions === 0)).toBe(true);
+    expect(funnel.failedSessions).toBe(0);
+  });
+});
 
 describe("computeActivation", () => {
   it("counts distinct sessions per canonical step (aliases folded in)", () => {

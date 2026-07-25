@@ -1,6 +1,10 @@
 import {
+  ACCESS_FAILURE_EVENT,
+  ACCESS_FUNNEL,
+  accessStepFor,
   ACTIVATION_FUNNEL,
   canonicalEventFor,
+  type AccessStep,
   type CanonicalEvent,
 } from "@/lib/analytics/canonical-events";
 
@@ -34,6 +38,64 @@ export function computeActivation(
     step,
     sessions: byStep.get(step)!.size,
   }));
+}
+
+export type AccessStepCount = { step: AccessStep; sessions: number };
+export type AccessFunnel = {
+  steps: AccessStepCount[];
+  /** Distinct gate sessions that hit at least one login error. Sits BESIDE the
+   *  funnel: a session can fail and then succeed, so this is friction, not
+   *  loss, and is never subtracted from any step. */
+  failedSessions: number;
+};
+
+/**
+ * Door-to-value funnel, scoped to the sessions that actually saw the door.
+ *
+ * The cohort is every session that fired `web_access_gate_viewed`; each later
+ * step counts only sessions INSIDE that cohort. Without the scoping the funnel
+ * is meaningless: MiniPay never mounts the gate, so its sessions would land on
+ * `first_exercise_completed` without ever appearing at `gate_viewed` and the
+ * last step would exceed the first.
+ *
+ * Scoping also makes the sequence monotonic by construction, so a drop between
+ * two steps is always a real drop and never a mix artifact.
+ */
+export function computeAccessFunnel(
+  rows: Array<{ event?: string | null; session_id?: string | null }>,
+): AccessFunnel {
+  const byStep = new Map<AccessStep, Set<string>>();
+  for (const step of ACCESS_FUNNEL) byStep.set(step, new Set());
+  const failed = new Set<string>();
+
+  // Pass 1 — who entered the funnel at all.
+  const gateSessions = new Set<string>();
+  for (const row of rows) {
+    if (row.event !== "web_access_gate_viewed") continue;
+    const sid = typeof row.session_id === "string" ? row.session_id : null;
+    if (sid) gateSessions.add(sid);
+  }
+
+  // Pass 2 — everything else, admitted only for sessions in the cohort.
+  for (const row of rows) {
+    const event = typeof row.event === "string" ? row.event : null;
+    const sid = typeof row.session_id === "string" ? row.session_id : null;
+    if (!event || !sid || !gateSessions.has(sid)) continue;
+    if (event === ACCESS_FAILURE_EVENT) {
+      failed.add(sid);
+      continue;
+    }
+    const step = accessStepFor(event);
+    if (step) byStep.get(step)!.add(sid);
+  }
+
+  return {
+    steps: ACCESS_FUNNEL.map((step) => ({
+      step,
+      sessions: byStep.get(step)!.size,
+    })),
+    failedSessions: failed.size,
+  };
 }
 
 export type CountryCount = { country: string; sessions: number };
