@@ -15770,9 +15770,10 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* ── Web access gate ─────────────────────────────────────────────────────
    The login screen for web users outside MiniPay. Full-bleed wallpaper per
-   surface (Learn / Play) with the copy stack bottom-anchored so the art's
-   subject stays visible on tall phones. Mobile-first: the 390px app shell
-   applies here too. */
+   surface (Learn / Play). The gate splits into two blocks — copy under the
+   wordmark, action at the thumb — so the art's subject reads in the middle;
+   the interstitials keep a single centered stack. Mobile-first: the 390px app
+   shell applies here too. */
 .web-access-screen {
   position: relative;
   display: flex;
@@ -15811,8 +15812,36 @@ button.hud-resource-chip:active:not(:disabled) {
   pointer-events: none;
 }
 
-.web-access-copy {
+/* The gate: copy pinned under the wordmark, action pinned to the thumb.
+   `23dvh` is where the wordmark the wallpaper paints ends. The art is 941x1672
+   (~9:16) and `cover` on a phone narrower than that scales by height, so a
+   fraction of the art maps to the same fraction of the viewport. */
+.web-access-screen--gate {
+  justify-content: space-between;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 23dvh);
+}
+
+/* Second scrim, only for the gate: the copy now lands over sky, which is the
+   brightest part of the Learn wallpaper. It peaks across the copy band and
+   fades out before the subject so the art is never flattened. */
+.web-access-screen--gate::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 0;
+  height: 56%;
+  background: linear-gradient(180deg,
+      rgba(9, 24, 44, 0) 0%,
+      rgba(9, 24, 44, 0.3) 28%,
+      rgba(9, 24, 44, 0.42) 52%,
+      rgba(9, 24, 44, 0) 100%);
+  pointer-events: none;
+}
+
+.web-access-copy,
+.web-access-actions {
   position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;

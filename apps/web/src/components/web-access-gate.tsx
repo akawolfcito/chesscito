@@ -163,8 +163,11 @@ export function WebAccessGate({
     <div
       data-web-access={state}
       data-surface={surface}
-      className="web-access-screen"
+      className="web-access-screen web-access-screen--gate"
     >
+      {/* Two blocks, not one stack: the copy rides under the wordmark the
+          wallpaper already paints, and the action stays thumb-anchored at the
+          bottom, leaving the art's subject uncovered in between. */}
       <div className="web-access-copy">
         <h1 className="web-access-headline">{WEB_ACCESS_COPY.headline}</h1>
         <p className="web-access-lede">{WEB_ACCESS_COPY.lede}</p>
@@ -175,6 +178,8 @@ export function WebAccessGate({
             </span>
           ))}
         </p>
+      </div>
+      <div className="web-access-actions">
         <button
           type="button"
           className="web-access-cta"
