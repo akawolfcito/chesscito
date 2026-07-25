@@ -112,7 +112,8 @@ export function WebAccessGate({
     return (
       <div
         data-web-access="environment-loading"
-        className="flex min-h-screen items-center justify-center"
+        data-surface={surface}
+        className="web-access-screen web-access-screen--centered"
         aria-busy="true"
       />
     );
@@ -122,10 +123,13 @@ export function WebAccessGate({
     return (
       <div
         data-web-access="wallet-pending"
+        data-surface={surface}
         role="status"
-        className="flex min-h-screen items-center justify-center px-6 text-center"
+        className="web-access-screen web-access-screen--centered"
       >
-        <p className="text-base font-medium">{WEB_ACCESS_COPY.preparing}</p>
+        <div className="web-access-copy">
+          <p className="web-access-lede">{WEB_ACCESS_COPY.preparing}</p>
+        </div>
       </div>
     );
   }
@@ -134,19 +138,22 @@ export function WebAccessGate({
     return (
       <div
         data-web-access="error"
+        data-surface={surface}
         role="alert"
-        className="mx-auto flex min-h-screen max-w-[390px] flex-col items-center justify-center gap-4 px-6 text-center"
+        className="web-access-screen web-access-screen--centered"
       >
-        <p className="text-base font-medium">{WEB_ACCESS_COPY.error.title}</p>
-        <Button variant="game-primary" size="game" onClick={startLogin}>
-          {WEB_ACCESS_COPY.error.retry}
-        </Button>
-        <Button asChild variant="game-ghost" size="game">
-          <a href={MINIPAY_URL}>{WEB_ACCESS_COPY.error.openMiniPay}</a>
-        </Button>
-        <Button asChild variant="game-text" size="game-sm">
-          <a href={DISCOVERY_URL}>{WEB_ACCESS_COPY.error.backToDiscovery}</a>
-        </Button>
+        <div className="web-access-copy">
+          <p className="web-access-lede">{WEB_ACCESS_COPY.error.title}</p>
+          <button type="button" className="web-access-cta" onClick={startLogin}>
+            {WEB_ACCESS_COPY.error.retry}
+          </button>
+          <Button asChild variant="game-ghost" size="game">
+            <a href={MINIPAY_URL}>{WEB_ACCESS_COPY.error.openMiniPay}</a>
+          </Button>
+          <Button asChild variant="game-text" size="game-sm">
+            <a href={DISCOVERY_URL}>{WEB_ACCESS_COPY.error.backToDiscovery}</a>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -155,23 +162,30 @@ export function WebAccessGate({
   return (
     <div
       data-web-access={state}
-      className="mx-auto flex min-h-screen max-w-[390px] flex-col items-center justify-center gap-4 px-6 text-center"
+      data-surface={surface}
+      className="web-access-screen"
     >
-      <h1 className="font-action text-xl font-bold">
-        {WEB_ACCESS_COPY.surfaceHeadline[surface]}
-      </h1>
-      <p className="text-lg font-semibold">{WEB_ACCESS_COPY.title}</p>
-      <p className="text-sm opacity-80">{WEB_ACCESS_COPY.subtitle}</p>
-      <Button
-        variant="game-primary"
-        size="game"
-        onClick={startLogin}
-        disabled={authenticating}
-      >
-        {WEB_ACCESS_COPY.cta}
-      </Button>
-      <p className="text-xs opacity-70">{WEB_ACCESS_COPY.note}</p>
-      {/* No `Continue as Guest`: web access is mandatory by product decision. */}
+      <div className="web-access-copy">
+        <h1 className="web-access-headline">{WEB_ACCESS_COPY.headline}</h1>
+        <p className="web-access-lede">{WEB_ACCESS_COPY.lede}</p>
+        <p className="web-access-body">
+          {WEB_ACCESS_COPY.body.map((line) => (
+            <span key={line} className="block">
+              {line}
+            </span>
+          ))}
+        </p>
+        <button
+          type="button"
+          className="web-access-cta"
+          onClick={startLogin}
+          disabled={authenticating}
+        >
+          {WEB_ACCESS_COPY.cta}
+        </button>
+        <p className="web-access-note">{WEB_ACCESS_COPY.note}</p>
+        {/* No `Continue as Guest`: web access is mandatory by product decision. */}
+      </div>
     </div>
   );
 }

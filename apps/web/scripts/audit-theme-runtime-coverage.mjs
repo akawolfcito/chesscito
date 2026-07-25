@@ -522,12 +522,16 @@ if (CHECK_MODE) {
   // Consumed via the resolver (useCurrentThemeAsset) in board.tsx +
   // diagonal-run-board.tsx, so it lands in category A (connectedSlots 155 →
   // 156); totalSlots 168 → 169.
-  const expectedInitial = { A: 2, B: 73, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  // +2 (B: 73 → 75) 2026-07-25: bg.login-learn / bg.login-play, the web access
+  // gate wallpapers. Consumed via the resolver (WebAccessThemeVariables emits
+  // --theme-bg-login-*), so both land in category A (connectedSlots 156 → 158);
+  // totalSlots 169 → 171.
+  const expectedInitial = { A: 2, B: 75, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 169 ||
+    inventory.length !== 171 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

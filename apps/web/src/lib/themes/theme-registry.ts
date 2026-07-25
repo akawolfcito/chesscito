@@ -222,6 +222,8 @@ export type ThemeAssetKey =
   | "scene.banner-medium"
   | "scene.banner-short"
   | "bg.splash-chesscito"
+  | "bg.login-learn"
+  | "bg.login-play"
   | "bg.wallpaper-lite"
   | "bg.dock-4slots"
   | "bg.menu-wall"
@@ -759,6 +761,13 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "scene.banner-short": { default: "/art/scene-rooted/wood-banner-blank-short", usedIn: ["Kingdom scene — wood banner (short)", "↳ components/scene-rooted/wood-banner.tsx (.wood-banner-short)"] },
       // bg — screen backgrounds
       "bg.splash-chesscito": { default: "/art/bg-splash-chesscito", usedIn: ["Splash background", "↳ globals.css --intro-bg-mobile (splash background)"] },
+      // Web access gate wallpapers. Emitted by `WebAccessThemeVariables`, which
+      // mounts ABOVE the gate — the app-wide `ThemeCssVariables` sits behind it
+      // and would not exist while the gate is on screen. Default-only on
+      // purpose: the gate renders for a visitor with no wallet, so no theme
+      // entitlement can resolve and a `pro` variant would never show.
+      "bg.login-learn": { default: "/art/bg-login-learn", usedIn: ["Web access gate — Learn wallpaper", "↳ components/themes/theme-css-variables.tsx (--theme-bg-login-learn)", "↳ globals.css .web-access-screen[data-surface=learn]"] },
+      "bg.login-play": { default: "/art/bg-login-play", usedIn: ["Web access gate — Play wallpaper", "↳ components/themes/theme-css-variables.tsx (--theme-bg-login-play)", "↳ globals.css .web-access-screen[data-surface=play]"] },
       "bg.wallpaper-lite": { default: "/art/bg-wallpaper-lite", usedIn: ["Lite wallpaper background", "↳ components/hub/hub-lite-scaffold.tsx (.hub-lite-scaffold)"] },
       "bg.dock-4slots": { default: "/art/redesign/bg/dock-4slots", usedIn: ["Dock (4 slots) background", "↳ components/exercises/persistent-dock.tsx (.chesscito-dock--four)"] },
       "bg.menu-wall": { default: "/art/redesign/bg/menu-wall", usedIn: ["Menu wall background", "↳ components/exercises/persistent-dock.tsx (.chesscito-dock)"] },
@@ -954,6 +963,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
 export const DEFAULT_THEME_ID = "candy-forest";
 
 const LEARN_SLOT_KEYS: readonly ThemeAssetKey[] = [
+  "bg.login-learn",
   "hub.tour-hero",
   "hub.tour-title",
   "hub.21-day-icon",
@@ -993,6 +1003,7 @@ const LEARN_SLOT_KEYS: readonly ThemeAssetKey[] = [
 ];
 
 const PLAY_SLOT_KEYS: readonly ThemeAssetKey[] = [
+  "bg.login-play",
   "hub.shop-icon",
   "shop.pro",
   "arena.save",

@@ -31,17 +31,22 @@ describe("theme runtime catalog coverage", () => {
     // Consumed via the resolver (useCurrentThemeAsset) in board.tsx +
     // diagonal-run-board.tsx, so it lands in category A: connectedSlots 155 →
     // 156, initial B 72 → 73, excludedSlots unchanged.
-    expect(report.totalSlots).toBe(169);
+    // 171 (2026-07-25): + bg.login-learn / bg.login-play, the web access gate
+    // wallpapers. Emitted through the resolver by WebAccessThemeVariables (which
+    // mounts above the gate, where the app-wide ThemeCssVariables cannot reach),
+    // so both land in category A: connectedSlots 156 → 158, initial B 73 → 75,
+    // excludedSlots unchanged.
+    expect(report.totalSlots).toBe(171);
     expect(report.initialCategoryCounts).toEqual({
       A: 2,
-      B: 73,
+      B: 75,
       C: 26,
       D: 38,
       E: 19,
       F: 11,
       G: 0,
     });
-    expect(report.connectedSlots).toBe(156);
+    expect(report.connectedSlots).toBe(158);
     expect(report.excludedSlots).toBe(13);
     expect(
       report.slots.filter(

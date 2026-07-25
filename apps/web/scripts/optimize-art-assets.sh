@@ -9,6 +9,8 @@ if [[ ! -d "$ART_DIR" ]]; then
 fi
 
 assets=(
+  "bg-login-learn"
+  "bg-login-play"
   "bg-playhub-forest-mobile"
   "bg-playhub-forest-desktop"
   "panel-frame-rune"

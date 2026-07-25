@@ -7,6 +7,7 @@ import { useCallback, type ReactNode } from "react";
 import { celo } from "wagmi/chains";
 
 import { ProductContextProviders } from "@/components/product-context-providers";
+import { WebAccessThemeVariables } from "@/components/themes/theme-css-variables";
 import { WebAccessGate } from "@/components/web-access-gate";
 import { createWebTransports } from "@/lib/wallet/web-transports";
 import { WalletSessionProvider } from "@/lib/wallet/wallet-session";
@@ -97,6 +98,10 @@ export function WebWalletProvider({ children }: { children: ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={webWagmiConfig}>
           <PrivyWalletSession>
+            {/* Above the gate on purpose: the gate IS the screen that needs
+                these wallpapers, and the app-wide ThemeCssVariables mounts
+                behind it. */}
+            <WebAccessThemeVariables />
             <WebAccessGate>
               {/* Inside the gate: the product contexts are wallet-scoped, so
                   they mount only in `authenticated + wallet ready`. */}

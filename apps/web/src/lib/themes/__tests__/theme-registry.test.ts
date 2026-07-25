@@ -270,11 +270,13 @@ describe("theme-registry", () => {
       // LEARN surfaces (passport, challenge card, Season Pass offer).
       // +1: payments.offer-bg, the Season Pass offer sheet's dedicated bg
       // (panel-bg2), split off shared.panel-bg so it stays panel-bg1 elsewhere.
-      learn: 36,
+      // +1: bg.login-learn, the Learn web access gate wallpaper (2026-07-25).
+      learn: 37,
       // +2 over the original 21: arena.rival-mara and shop.pro, both
       // formerly uncataloged "exceptions". +1: coach.share-trophy, the
       // dedicated Match Review share icon (2026-07-22), split off shared.trophy-epic.
-      play: 24,
+      // +1: bg.login-play, the Play web access gate wallpaper (2026-07-25).
+      play: 25,
       // 3 reclassified off `unknown` (they always had a consumer — in the
       // sibling app) + 15 newly cataloged carousel slots + 3 brand/social
       // files the landing layout declares as metadata (OG card, apple-icon,

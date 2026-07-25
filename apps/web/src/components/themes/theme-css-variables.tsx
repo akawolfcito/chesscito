@@ -61,3 +61,33 @@ export function ThemeCssVariables(): React.JSX.Element {
     />
   );
 }
+
+/** Wallpapers for the web access gate.
+ *
+ *  These cannot ride `CSS_THEME_SLOTS`: `ThemeCssVariables` is mounted as a
+ *  child of the wallet boundary, so on the Privy branch it sits *behind* the
+ *  gate and would not exist while the gate is the thing on screen. This emitter
+ *  is mounted above the gate instead.
+ *
+ *  It resolves through the same path as every other slot, so the theme builder
+ *  reaches it — a Replace writes to the basename the registry declares, which
+ *  is exactly what these vars point at. In practice the variant is always
+ *  `default`: the gate is shown to a visitor with no wallet, so no entitlement
+ *  can resolve a `pro` asset there. */
+export const WEB_ACCESS_CSS_THEME_SLOTS = [
+  "bg.login-learn",
+  "bg.login-play",
+] as const satisfies readonly ThemeAssetKey[];
+
+export function WebAccessThemeVariables(): React.JSX.Element {
+  const assets = useCurrentThemeAssets(WEB_ACCESS_CSS_THEME_SLOTS);
+  const declarations = WEB_ACCESS_CSS_THEME_SLOTS.map(
+    (slot) => `${themeCssVariable(slot)}:${themeImageSet(assets[slot])}`,
+  ).join(";");
+  return (
+    <style
+      data-web-access-css-variables
+      dangerouslySetInnerHTML={{ __html: `:root{${declarations}}` }}
+    />
+  );
+}

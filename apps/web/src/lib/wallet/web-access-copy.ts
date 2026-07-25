@@ -19,11 +19,11 @@ export function resolveWebAccessSurface(): ProductSurface {
 /** Copy for the mandatory web access gate. English UI (lib/content/editorial.ts
  *  is the app's voice; this stays free of em-dashes to match that ceiling). */
 export const WEB_ACCESS_COPY = {
-  title: "Every journey needs a key.",
-  subtitle:
-    "Sign in and your Chesscito wallet will be created automatically.",
-  cta: "ENTER CHESSCITO",
-  note: "No wallet setup required.",
+  headline: "Unlock your Chesscito journey",
+  lede: "Every journey begins with a key.",
+  body: ["Sign in to enter.", "Your wallet will be created automatically."],
+  cta: "ENTER",
+  note: "No setup. No extensions. Just start playing.",
   preparing: "Preparing your Chesscito wallet…",
   error: {
     title: "Something interrupted your sign in.",
@@ -31,9 +31,9 @@ export const WEB_ACCESS_COPY = {
     openMiniPay: "Open in MiniPay",
     backToDiscovery: "Back to chesscito.com",
   },
-  /** The only line that varies between Learn and Play. */
-  surfaceHeadline: {
-    learn: "Unlock your learning journey",
-    play: "Enter the Chesscito arena",
-  },
 } as const;
+
+/* The wallpaper is the only thing that differs between Learn and Play: the copy
+   is identical on both surfaces (founder, 2026-07-25). `surface` still drives
+   the art — via `data-surface` in globals.css — so it stays derived from the
+   build mode, never the hostname. */

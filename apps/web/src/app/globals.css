@@ -417,6 +417,10 @@
     --playhub-board-bg: image-set(url("/art/chesscito-board.avif") type("image/avif"),
         url("/art/chesscito-board.webp") type("image/webp"),
         url("/art/chesscito-board.png") type("image/png"));
+    /* `--theme-bg-login-learn` / `--theme-bg-login-play` are NOT declared here.
+       They are registry slots (`bg.login-*`) emitted by
+       `WebAccessThemeVariables`; a literal fallback would fork the asset path
+       and the theme builder's Replace would stop reaching the gate. */
     /* Matchup transition (PLAY → board). The art already carries the VS crest
        and the pawn divider — nothing draws them in CSS. */
     --arena-matchup-bg: var(--theme-arena-bg-matchup);
@@ -15762,4 +15766,125 @@ button.hud-resource-chip:active:not(:disabled) {
   height: 1.15rem;
   flex: none;
   object-fit: contain;
+}
+
+/* ── Web access gate ─────────────────────────────────────────────────────
+   The login screen for web users outside MiniPay. Full-bleed wallpaper per
+   surface (Learn / Play) with the copy stack bottom-anchored so the art's
+   subject stays visible on tall phones. Mobile-first: the 390px app shell
+   applies here too. */
+.web-access-screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 100dvh;
+  width: 100%;
+  padding: 0 1.5rem calc(env(safe-area-inset-bottom, 0px) + 2.25rem);
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
+  background-color: rgb(24, 46, 18);
+  text-align: center;
+}
+
+.web-access-screen[data-surface="learn"] {
+  background-image: var(--theme-bg-login-learn);
+}
+
+.web-access-screen[data-surface="play"] {
+  background-image: var(--theme-bg-login-play);
+}
+
+/* Scrim under the copy only. The art is the hero; this keeps the text
+   legible over whatever lands in the lower third without flattening it. */
+.web-access-screen::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 62%;
+  background: linear-gradient(180deg,
+      rgba(12, 28, 8, 0) 0%,
+      rgba(12, 28, 8, 0.55) 42%,
+      rgba(12, 28, 8, 0.88) 100%);
+  pointer-events: none;
+}
+
+.web-access-copy {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: var(--app-max-width, 390px);
+}
+
+.web-access-headline {
+  margin: 0;
+  font-family: var(--font-game-display);
+  font-size: clamp(1.5rem, 6.5vw, 1.9rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: rgb(255, 246, 219);
+  text-shadow: 0 2px 0 rgba(20, 45, 12, 0.75), 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.web-access-lede {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 246, 219, 0.92);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+.web-access-body {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: rgba(255, 246, 219, 0.82);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+.web-access-note {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: rgba(255, 246, 219, 0.68);
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+}
+
+/* Green candy CTA — the same --cta-primary-green-* vocabulary as the
+   Connect wallet / PLAY buttons, so the entry action reads as one family. */
+.web-access-cta {
+  width: 100%;
+  min-height: 56px;
+  margin-block: 0.35rem;
+  padding: 12px 32px;
+  border: 2px solid var(--cta-primary-green-border);
+  border-radius: 14px;
+  background: var(--cta-primary-green-grad);
+  box-shadow: var(--cta-primary-green-bevel);
+  font-family: var(--font-game-action);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #fff8ed;
+  text-shadow: var(--cta-primary-green-text-shadow);
+  transition: filter 120ms ease, transform 120ms ease;
+}
+
+.web-access-cta:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: var(--cta-primary-green-bevel-pressed);
+}
+
+.web-access-cta:disabled {
+  opacity: 0.7;
+}
+
+/* Interstitials (preparing / error) reuse the wallpaper so the transition
+   from gate to Hub never flashes a bare background. */
+.web-access-screen--centered {
+  justify-content: center;
 }

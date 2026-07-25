@@ -65,7 +65,7 @@ describe("WebAccessGate", () => {
     expect(
       container.querySelector('[data-web-access="unauthenticated"]'),
     ).not.toBeNull();
-    expect(screen.getByText("ENTER CHESSCITO")).toBeTruthy();
+    expect(screen.getByText("ENTER")).toBeTruthy();
   });
 
   it("does not render productive children while unauthenticated", () => {
@@ -79,7 +79,7 @@ describe("WebAccessGate", () => {
     renderGate();
     expect(screen.getByText(CHILD)).toBeTruthy();
     expect(
-      screen.queryByText("ENTER CHESSCITO"),
+      screen.queryByText("ENTER"),
     ).toBeNull();
   });
 
@@ -104,13 +104,13 @@ describe("WebAccessGate", () => {
 
   it("opens the native Privy modal from the CTA", () => {
     renderGate();
-    fireEvent.click(screen.getByText("ENTER CHESSCITO"));
+    fireEvent.click(screen.getByText("ENTER"));
     expect(loginMock).toHaveBeenCalledTimes(1);
   });
 
   it("on error offers retry, Open in MiniPay, and Back to chesscito.com", () => {
     renderGate();
-    fireEvent.click(screen.getByText("ENTER CHESSCITO"));
+    fireEvent.click(screen.getByText("ENTER"));
     // Privy invokes onError for a failed login.
     act(() => {
       capturedLoginCallbacks?.onError?.("exited_auth_flow");
@@ -128,13 +128,41 @@ describe("WebAccessGate", () => {
     expect(container.textContent).not.toMatch(/continue as/i);
   });
 
-  it("uses the same component for Learn and Play, varying only the copy", () => {
+  it("uses the same component and the same copy for Learn and Play", () => {
+    // 2026-07-25: the copy is identical on both surfaces; only the wallpaper
+    // differs, and that is driven by `data-surface`, never by hostname.
     const learn = renderGate("learn");
-    expect(screen.getByText("Unlock your learning journey")).toBeTruthy();
+    expect(screen.getByText("Unlock your Chesscito journey")).toBeTruthy();
+    expect(
+      learn.container.querySelector('[data-surface="learn"]'),
+    ).not.toBeNull();
     learn.unmount();
 
-    renderGate("play");
-    expect(screen.getByText("Enter the Chesscito arena")).toBeTruthy();
+    const play = renderGate("play");
+    expect(screen.getByText("Unlock your Chesscito journey")).toBeTruthy();
+    expect(play.container.querySelector('[data-surface="play"]')).not.toBeNull();
+  });
+
+  it("tags every gate state with its surface so the wallpaper never drops out", () => {
+    // The interstitials share the wallpaper: without `data-surface` the
+    // preparing/error screens would flash a bare background mid-login.
+    for (const setup of [
+      () => {
+        readyMock = false;
+      },
+      () => {
+        authenticatedMock = true;
+        addressMock = undefined;
+      },
+    ]) {
+      readyMock = true;
+      authenticatedMock = false;
+      addressMock = undefined;
+      setup();
+      const { container, unmount } = renderGate("play");
+      expect(container.querySelector('[data-surface="play"]')).not.toBeNull();
+      unmount();
+    }
   });
 
   describe("analytics", () => {
@@ -149,7 +177,7 @@ describe("WebAccessGate", () => {
 
     it("emits login_started on the CTA and login_succeeded on completion", () => {
       const { rerender } = renderGate();
-      fireEvent.click(screen.getByText("ENTER CHESSCITO"));
+      fireEvent.click(screen.getByText("ENTER"));
       expect(
         trackMock.mock.calls.some(
           ([event]) => event === WEB_ACCESS_EVENTS.loginStarted,
