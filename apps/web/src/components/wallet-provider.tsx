@@ -6,10 +6,8 @@ import { WagmiProvider, createConfig, http, useConnect } from "wagmi";
 import { celo, celoSepolia } from "wagmi/chains";
 import { injected } from "wagmi/connectors";
 
-import { ProOriginWarning } from "@/components/dev/pro-origin-warning";
+import { ProductContextProviders } from "@/components/product-context-providers";
 import { getInjectedProvider, isMiniPayEnv } from "@/lib/minipay";
-import { EffectiveTrainingPassProvider } from "@/lib/season-pass/use-season-pass-status";
-import { ThemeVariantProvider } from "@/lib/themes/theme-variant-provider";
 
 /** Plain wagmi `injected()` connector (id: "injected") — the only wallet
  *  this app ever offered. RainbowKit was removed in the P2 JS cluster
@@ -66,12 +64,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <WalletProviderInner>
-          <EffectiveTrainingPassProvider>
-            <ThemeVariantProvider>
-              <ProOriginWarning />
-              {children}
-            </ThemeVariantProvider>
-          </EffectiveTrainingPassProvider>
+          <ProductContextProviders>{children}</ProductContextProviders>
         </WalletProviderInner>
       </QueryClientProvider>
     </WagmiProvider>

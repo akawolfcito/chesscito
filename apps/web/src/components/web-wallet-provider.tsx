@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useCallback, type ReactNode } from "react";
 import { celo } from "wagmi/chains";
 
+import { ProductContextProviders } from "@/components/product-context-providers";
 import { WebAccessGate } from "@/components/web-access-gate";
 import { createWebTransports } from "@/lib/wallet/web-transports";
 import { WalletSessionProvider } from "@/lib/wallet/wallet-session";
@@ -96,7 +97,11 @@ export function WebWalletProvider({ children }: { children: ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={webWagmiConfig}>
           <PrivyWalletSession>
-            <WebAccessGate>{children}</WebAccessGate>
+            <WebAccessGate>
+              {/* Inside the gate: the product contexts are wallet-scoped, so
+                  they mount only in `authenticated + wallet ready`. */}
+              <ProductContextProviders>{children}</ProductContextProviders>
+            </WebAccessGate>
           </PrivyWalletSession>
         </WagmiProvider>
       </QueryClientProvider>

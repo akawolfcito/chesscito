@@ -26,6 +26,11 @@ vi.mock("@privy-io/wagmi", async (importOriginal) => ({
 vi.mock("@/components/web-access-gate", () => ({
   WebAccessGate: ({ children }: { children?: ReactNode }) => children,
 }));
+// Wallet-scoped and covered by product-context-parity.test.tsx; with
+// WagmiProvider stubbed above it would have no config to read.
+vi.mock("@/components/product-context-providers", () => ({
+  ProductContextProviders: ({ children }: { children?: ReactNode }) => children,
+}));
 
 import {
   WebWalletProvider,

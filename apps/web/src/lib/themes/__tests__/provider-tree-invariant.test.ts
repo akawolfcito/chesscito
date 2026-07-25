@@ -10,15 +10,21 @@ describe("runtime entitlement provider tree", () => {
   it("mounts one QueryClient and one theme provider for the locale app", () => {
     const walletProvider = source("src/components/wallet-provider.tsx");
     const localeLayout = source("src/app/[locale]/layout.tsx");
+    // The two entitlement/theme providers moved into ProductContextProviders so
+    // the Privy branch mounts the same pair (provider parity, 2026-07-25). The
+    // invariant is unchanged — one instance, training pass outermost — it just
+    // lives one file over now.
+    const productContexts = source("src/components/product-context-providers.tsx");
 
     expect(walletProvider.match(/<QueryClientProvider\b/g)).toHaveLength(1);
-    expect(walletProvider.match(/<EffectiveTrainingPassProvider\b/g)).toHaveLength(1);
-    expect(walletProvider.match(/<ThemeVariantProvider\b/g)).toHaveLength(1);
-    expect(walletProvider.indexOf("<EffectiveTrainingPassProvider")).toBeLessThan(
-      walletProvider.indexOf("<ThemeVariantProvider"),
+    expect(walletProvider.match(/<ProductContextProviders\b/g)).toHaveLength(1);
+    expect(productContexts.match(/<EffectiveTrainingPassProvider\b/g)).toHaveLength(1);
+    expect(productContexts.match(/<ThemeVariantProvider\b/g)).toHaveLength(1);
+    expect(productContexts.indexOf("<EffectiveTrainingPassProvider")).toBeLessThan(
+      productContexts.indexOf("<ThemeVariantProvider"),
     );
-    expect(walletProvider.indexOf("</ThemeVariantProvider>")).toBeLessThan(
-      walletProvider.indexOf("</EffectiveTrainingPassProvider>"),
+    expect(productContexts.indexOf("</ThemeVariantProvider>")).toBeLessThan(
+      productContexts.indexOf("</EffectiveTrainingPassProvider>"),
     );
     // The layout mounts the client boundary, which mounts exactly one
     // WalletProvider (unchanged) — the single QueryClient/theme tree above.
