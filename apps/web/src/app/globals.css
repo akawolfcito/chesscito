@@ -776,7 +776,7 @@
     font-size: 0.78rem;
   }
 
-  .purchase-confirm-info-row + .purchase-confirm-info-row {
+  .purchase-confirm-info-row+.purchase-confirm-info-row {
     padding-top: 0.4rem;
     border-top: 1px solid rgba(180, 120, 35, 0.18);
   }
@@ -805,8 +805,8 @@
 
   .purchase-confirm-info-dot[data-tone="inactive"] {
     background: linear-gradient(180deg,
-      rgba(110, 65, 15, 0.45) 0%,
-      rgba(63, 34, 8, 0.55) 100%);
+        rgba(110, 65, 15, 0.45) 0%,
+        rgba(63, 34, 8, 0.55) 100%);
   }
 
   .purchase-confirm-info-label {
@@ -1148,8 +1148,15 @@
   }
 
   @keyframes coach-mint-toast-in {
-    from { opacity: 0; transform: translate(-50%, 8px); }
-    to   { opacity: 1; transform: translate(-50%, 0); }
+    from {
+      opacity: 0;
+      transform: translate(-50%, 8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
   }
 
   /* PRO variant — warm gold leaf gradient + crown, signals "covered". */
@@ -1319,7 +1326,7 @@
     opacity: 0.66;
   }
 
-  .arena-result-save-cta--done > span[aria-hidden] {
+  .arena-result-save-cta--done>span[aria-hidden] {
     color: #2e7d32;
     font-weight: 900;
   }
@@ -2151,7 +2158,7 @@
     border-top: 1px dashed var(--paper-divider);
   }
 
-    /* ── Candy stat pill ──
+  /* ── Candy stat pill ──
      Cream parchment pill with soft inset shadow; carries an icon +
      dynamic value (e.g. score, elapsed time). Built to live inside the
      candy panel-mision-icon surface so the background warmth bleeds
@@ -2186,7 +2193,7 @@
     flex-shrink: 0;
   }
 
-    /* ── Candy tray pill ──
+  /* ── Candy tray pill ──
      Block variant of the candy pill vocabulary used by the /exercises
      top row (piece picker, mission peek, exercise drawer trigger).
      Shares the cream gradient + amber border + soft inset shadow with
@@ -2780,7 +2787,8 @@
      sprite (founder 2026-06-16) and the interim stone gradient (2026-06-17).
      Non-target by the rules layer; cursor signals it's not a move. */
   .playhub-board-cell.is-wall {
-    background-color: #6b7178; /* tint while the image loads */
+    background-color: #6b7178;
+    /* tint while the image loads */
     background-image: var(--theme-exercises-wall);
     background-size: cover;
     background-position: center;
@@ -2861,12 +2869,10 @@
     aspect-ratio: 1;
     border-radius: 50%;
     pointer-events: none;
-    background: radial-gradient(
-      circle,
-      rgba(252, 211, 77, 0.38) 0%,
-      rgba(252, 211, 77, 0.16) 55%,
-      rgba(252, 211, 77, 0) 72%
-    );
+    background: radial-gradient(circle,
+        rgba(252, 211, 77, 0.38) 0%,
+        rgba(252, 211, 77, 0.16) 55%,
+        rgba(252, 211, 77, 0) 72%);
     box-shadow:
       0 0 0 2.5px rgba(217, 119, 6, 0.9),
       0 0 12px rgba(252, 211, 77, 0.65);
@@ -2874,12 +2880,15 @@
   }
 
   @keyframes peones-hint-circle-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: scale(0.92);
       box-shadow:
         0 0 0 2.5px rgba(217, 119, 6, 0.9),
         0 0 12px rgba(252, 211, 77, 0.65);
     }
+
     50% {
       transform: scale(1.04);
       box-shadow:
@@ -3106,25 +3115,30 @@
     pointer-events: none;
     overflow: visible;
   }
+
   .playhub-board-trail line {
     stroke: rgba(255, 193, 74, 0.92);
     stroke-linecap: round;
     filter: drop-shadow(0 0 3px rgba(255, 176, 46, 0.85));
     animation: playhub-trail-fade 680ms ease-out forwards;
   }
+
   @keyframes playhub-trail-fade {
     0% {
       opacity: 0;
       stroke-width: 2.2;
     }
+
     22% {
       opacity: 0.95;
     }
+
     100% {
       opacity: 0;
       stroke-width: 0.9;
     }
   }
+
   @media (prefers-reduced-motion: reduce) {
     .playhub-board-trail line {
       animation-duration: 1ms;
@@ -3156,28 +3170,31 @@
     animation: playhub-tap-pulse 1.6s ease-in-out infinite;
     pointer-events: none;
   }
+
   .playhub-phase-flash-tap::before {
     content: "";
     position: absolute;
     inset: -35% -20%;
     z-index: -1;
-    background: radial-gradient(
-      ellipse 55% 130% at center,
-      rgba(255, 205, 80, 0.8) 0%,
-      rgba(255, 180, 40, 0.28) 42%,
-      transparent 72%
-    );
+    background: radial-gradient(ellipse 55% 130% at center,
+        rgba(255, 205, 80, 0.8) 0%,
+        rgba(255, 180, 40, 0.28) 42%,
+        transparent 72%);
     filter: blur(7px);
   }
+
   @keyframes playhub-tap-pulse {
+
     0%,
     100% {
       opacity: 0.82;
     }
+
     50% {
       opacity: 1;
     }
   }
+
   @media (prefers-reduced-motion: reduce) {
     .playhub-phase-flash-tap {
       animation: none;
@@ -3192,7 +3209,8 @@
      wall (.playhub-board-cell.is-wall) stays a different thing entirely: that one
      IS scenery, and it should keep looking like it. */
   .playhub-board-piece-float.is-friendly-blocker {
-    z-index: 9; /* under the moving piece: it never competes for attention */
+    z-index: 9;
+    /* under the moving piece: it never competes for attention */
     transform: translate(-50%, -55%) scale(0.88);
     filter: saturate(0.55) brightness(0.82);
     opacity: 0.9;
@@ -3221,12 +3239,10 @@
     margin-top: -1.5px;
     transform-origin: left center;
     border-radius: 9999px;
-    background: linear-gradient(
-      90deg,
-      rgba(255, 240, 200, 0.95) 0%,
-      rgba(255, 90, 70, 0.95) 35%,
-      rgba(255, 40, 40, 0.85) 100%
-    );
+    background: linear-gradient(90deg,
+        rgba(255, 240, 200, 0.95) 0%,
+        rgba(255, 90, 70, 0.95) 35%,
+        rgba(255, 40, 40, 0.85) 100%);
     box-shadow:
       0 0 6px 2px rgba(255, 70, 60, 0.75),
       0 0 14px 4px rgba(255, 40, 40, 0.35);
@@ -3240,14 +3256,17 @@
       opacity: 0;
       scale: 0 1;
     }
+
     18% {
       opacity: 1;
       scale: 1 1;
     }
+
     70% {
       opacity: 1;
       scale: 1 1;
     }
+
     100% {
       opacity: 0.55;
       scale: 1 1;
@@ -3268,22 +3287,22 @@
      this is the one square on the board that is NOT trying to kill you. */
   .playhub-board-refuge-glow {
     border-radius: 9999px;
-    background: radial-gradient(
-      circle,
-      rgba(214, 255, 120, 0.85) 0%,
-      rgba(150, 235, 110, 0.45) 45%,
-      rgba(120, 220, 100, 0) 72%
-    );
+    background: radial-gradient(circle,
+        rgba(214, 255, 120, 0.85) 0%,
+        rgba(150, 235, 110, 0.45) 45%,
+        rgba(120, 220, 100, 0) 72%);
     animation: playhub-refuge-breathe 2.6s ease-in-out infinite;
     pointer-events: none;
   }
 
   @keyframes playhub-refuge-breathe {
+
     0%,
     100% {
       opacity: 0.75;
       transform: scale(0.94);
     }
+
     50% {
       opacity: 1;
       transform: scale(1.04);
@@ -3302,11 +3321,8 @@
      frame-perfect; re-enabled on .is-snap-back so an invalid drop
      animates back to (0,0). */
   .playhub-board-piece-float.is-dragging {
-    transform: translate(
-        calc(-50% + var(--drag-dx, 0px)),
-        calc(-55% + var(--drag-dy, 0px))
-      )
-      scale(1.18) rotate(-1deg);
+    transform: translate(calc(-50% + var(--drag-dx, 0px)),
+        calc(-55% + var(--drag-dy, 0px))) scale(1.18) rotate(-1deg);
     transition:
       left 0s,
       top 0s,
@@ -4077,7 +4093,7 @@
      on `.chesscito-dock-item > button`). Without this the center icon fills
      its container at the art's intrinsic size and reads larger than the
      siblings. */
-  .chesscito-dock-center > button {
+  .chesscito-dock-center>button {
     width: 2.75rem !important;
     height: 2.75rem !important;
     border-radius: 14px !important;
@@ -7311,8 +7327,7 @@ button.hud-resource-chip:active:not(:disabled) {
   pointer-events: none;
   /* Warm the flat white peón sprite toward the mockup's ivory so it reads as
    * part of the cream card instead of a stark cut-out. */
-  filter: sepia(0.18) saturate(1.2) brightness(0.98)
-    drop-shadow(0 6px 10px rgba(63, 34, 8, 0.28));
+  filter: sepia(0.18) saturate(1.2) brightness(0.98) drop-shadow(0 6px 10px rgba(63, 34, 8, 0.28));
 }
 
 /* Capped height + vertical centering so the peón is a tasteful accent with air
@@ -7527,6 +7542,7 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(180, 83, 9, 0.95);
   text-shadow: none;
 }
+
 /* Compact "PRO · Nd" suffix on the account chip — a gold inline badge so the
    PRO tier + remaining days read at a glance without widening the pill much. */
 .hub-hud-pill-pro-days {
@@ -7653,9 +7669,11 @@ button.hud-resource-chip:active:not(:disabled) {
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
     0 2px 5px rgba(80, 50, 10, 0.25);
 }
+
 .hub-account-circle:active {
   transform: scale(0.95);
 }
+
 .hub-account-circle--pro {
   border-color: #f5a623;
   box-shadow:
@@ -7663,12 +7681,14 @@ button.hud-resource-chip:active:not(:disabled) {
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
     0 2px 6px rgba(80, 50, 10, 0.3);
 }
+
 .hub-account-circle-avatar,
 .hub-account-circle-avatar img {
   display: block;
   width: 100%;
   height: 100%;
 }
+
 .hub-account-circle-avatar img {
   object-fit: cover;
 }
@@ -8280,6 +8300,7 @@ button.hud-resource-chip:active:not(:disabled) {
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
+
 .hub-scaffold-season-pass-cta:hover,
 .hub-scaffold-season-pass-cta:focus-visible {
   background: rgba(59, 130, 246, 0.28);
@@ -8305,8 +8326,7 @@ button.hud-resource-chip:active:not(:disabled) {
   max-width: var(--app-max-width);
   margin: 0 auto;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top, 0px) + 6px) 14px
-    calc(env(safe-area-inset-bottom, 0px) + 16px);
+  padding: calc(env(safe-area-inset-top, 0px) + 6px) 14px calc(env(safe-area-inset-bottom, 0px) + 16px);
   background: #7cc5f0 var(--theme-bg-wallpaper-lite) center top / cover no-repeat;
   background-size: cover;
   background-position: center top;
@@ -8324,6 +8344,7 @@ button.hud-resource-chip:active:not(:disabled) {
   /* Breath between the two clusters (larger than the in-cluster gap). */
   gap: 4px;
 }
+
 .hub-lite-hud-left,
 .hub-lite-hud-right {
   display: flex;
@@ -8350,15 +8371,18 @@ button.hud-resource-chip:active:not(:disabled) {
   width: min(calc(100vw - 48px), 260px);
   margin-top: 2px;
 }
+
 .hub-lite-title {
   display: block;
   width: clamp(141px, 40vw, 167px);
 }
+
 .hub-lite-title img {
   display: block;
   width: 100%;
   height: auto;
 }
+
 /* Avatar art is self-framed — render it raw (no CSS ring / crop). Sized so the
    mascot zone stays compact enough to keep Start Focus + Join above the
    390x640 fold (P1-A). */
@@ -8367,6 +8391,7 @@ button.hud-resource-chip:active:not(:disabled) {
   width: clamp(101px, 30vw, 113px);
   margin-top: -38px;
 }
+
 .hub-lite-avatar img {
   display: block;
   width: 100%;
@@ -8387,22 +8412,26 @@ button.hud-resource-chip:active:not(:disabled) {
     inset 0 2px 0 rgba(255, 255, 255, 0.6),
     0 4px 12px rgba(80, 50, 10, 0.18);
 }
+
 /* Header row — challenge icon on the left, title + flames stacked on the right. */
 .challenge-card-top {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+
 .challenge-card-icon {
   display: block;
   flex: 0 0 auto;
   width: clamp(58px, 17vw, 72px);
 }
+
 .challenge-card-icon img {
   display: block;
   width: 100%;
   height: auto;
 }
+
 .challenge-card-top-main {
   flex: 1 1 auto;
   min-width: 0;
@@ -8410,11 +8439,13 @@ button.hud-resource-chip:active:not(:disabled) {
   flex-direction: column;
   gap: 3px;
 }
+
 .challenge-card-head {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .challenge-card-title {
   margin: 0;
   font-family: var(--font-game-action);
@@ -8422,6 +8453,7 @@ button.hud-resource-chip:active:not(:disabled) {
   font-weight: 800;
   color: #4a2f12;
 }
+
 .challenge-card-passport-label {
   margin: 0;
   font-size: 0.52rem;
@@ -8431,12 +8463,14 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(120, 70, 20, 0.5);
   text-align: left;
 }
+
 /* FOCUS PASSPORT (?) — replays the intro tour. Label + chip share a row. */
 .challenge-card-passport-head {
   display: flex;
   align-items: center;
   gap: 4px;
 }
+
 /* The touch target is ≥24px; the visible disc is deliberately smaller so the
    `?` reads as a quiet affordance next to the tiny header label — no red dot,
    no idle animation (it's a re-read, not a nag). */
@@ -8451,6 +8485,7 @@ button.hud-resource-chip:active:not(:disabled) {
   border: none;
   cursor: pointer;
 }
+
 .challenge-card-passport-help-dot {
   display: inline-flex;
   align-items: center;
@@ -8466,9 +8501,11 @@ button.hud-resource-chip:active:not(:disabled) {
   border: 1.5px solid #4a8c1e;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
+
 .challenge-card-passport-help:active .challenge-card-passport-help-dot {
   transform: translateY(1px);
 }
+
 /* FOCUS PASSPORT week: 7 streak flames + the "N/21 focus days" ordinal.
    Restored from the pre-70ee44f7 flame view (the bar lost UX); flames sized
    down one step (1.4rem → 1.15rem) so the panel stays compact. */
@@ -8479,11 +8516,13 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 8px;
   margin-top: 2px;
 }
+
 .challenge-card-flames {
   display: flex;
   align-items: flex-end;
   gap: 4px;
 }
+
 .challenge-card-flame {
   display: inline-flex;
   align-items: flex-end;
@@ -8491,19 +8530,23 @@ button.hud-resource-chip:active:not(:disabled) {
   flex-shrink: 0;
   line-height: 0;
 }
-.challenge-card-flame > img {
+
+.challenge-card-flame>img {
   height: 100%;
   width: auto;
   display: block;
   filter: drop-shadow(0 1px 1px rgba(110, 65, 15, 0.3));
 }
-.challenge-card-flame[data-kind="gray"] > img {
+
+.challenge-card-flame[data-kind="gray"]>img {
   opacity: 0.5;
 }
-.challenge-card-flame.is-glow > img {
+
+.challenge-card-flame.is-glow>img {
   opacity: 0.85;
   filter: drop-shadow(0 0 5px rgba(255, 176, 60, 0.7));
 }
+
 .challenge-card-day-count {
   flex: 0 0 auto;
   font-size: 0.72rem;
@@ -8511,6 +8554,7 @@ button.hud-resource-chip:active:not(:disabled) {
   color: #6e4415;
   white-space: nowrap;
 }
+
 /* Tappable variant — the flame/streak block routes into today's focus. Button
    reset so it looks identical to the static div, with a subtle press state. */
 .challenge-card-passport--tap {
@@ -8527,6 +8571,7 @@ button.hud-resource-chip:active:not(:disabled) {
     background 0.12s ease,
     transform 0.12s ease;
 }
+
 .challenge-card-passport--tap:active {
   transform: scale(0.98);
   background: rgba(120, 80, 30, 0.08);
@@ -8538,6 +8583,7 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   gap: 8px;
 }
+
 .challenge-card-stats {
   flex: 1 1 auto;
   min-width: 0;
@@ -8548,6 +8594,7 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 3px 14px;
   padding: 7px 11px;
 }
+
 .challenge-card-stat {
   display: inline-flex;
   align-items: center;
@@ -8557,12 +8604,14 @@ button.hud-resource-chip:active:not(:disabled) {
   color: #4a2f12;
   white-space: nowrap;
 }
+
 .challenge-card-stat-icon {
   width: 0.85rem;
   height: 0.85rem;
   flex: 0 0 auto;
   color: #9a6a2e;
 }
+
 /* Join Challenge — verde token + GPU-safe halo (opacity/transform only). */
 .challenge-card-join {
   position: relative;
@@ -8570,23 +8619,40 @@ button.hud-resource-chip:active:not(:disabled) {
   width: auto;
   padding: 0 14px;
   min-height: 44px;
-  border-radius: 14px;
+  border-radius: 13px;
   background:
-    radial-gradient(circle at 30% 20%, rgba(255, 239, 100, 0.9), transparent 28%),
-    radial-gradient(circle at 75% 75%, rgba(180, 105, 0, 0.35), transparent 35%),
-    linear-gradient(145deg, #fbe04b 0%, #fcc00a 28%, #f3aa04 55%, #d38804 100%);
-  border: 1px solid rgba(154, 90, 0, 0.85);
+    radial-gradient(ellipse at 30% 5%,
+      rgba(255, 250, 190, 0.58) 0%,
+      rgba(255, 220, 100, 0.22) 24%,
+      transparent 48%),
+    linear-gradient(180deg,
+      #ffd95a 0%,
+      #f7b928 42%,
+      #e99a0b 76%,
+      #cd7400 100%);
+  /* border: 0.1px solid rgba(154, 90, 0, 0.85); */
   box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -3px 0 rgba(142, 78, 0, 0.35),
-    0 4px 0 #9a5a00,
-    0 8px 12px rgba(0, 0, 0, 0.28);
+    /* brillo fino interior superior */
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    /* sombreado inferior de la cara */
+    inset 0 -1px 0 rgba(145, 74, 0, 0.32),
+    /* línea dorada exterior */
+    /* 0 0 0 2px rgba(185, 103, 0, 0.95), */
+    /* halo amarillo */
+    0 0 8px 3px rgba(255, 211, 73, 0.68),
+    /* profundidad inferior */
+    /* 0 3px 0 #9b4f00, */
+    /* borde luminoso alrededor de la profundidad */
+    0 10px 0 -7px rgba(255, 194, 46, 0.74),
+    /* sombra ambiental */
+    0 14px 18px rgba(112, 58, 0, 0.34) !important;
   color: #fff;
   font-size: 0.86rem;
   font-weight: 800;
   text-shadow: -1px -1px 0 #6e4415, 1px -1px 0 #6e4415, -1px 1px 0 #6e4415, 1px 1px 0 #6e4415, 0 2px 2px rgba(0, 0, 0, 0.5);
   cursor: pointer;
 }
+
 .challenge-card-join::after {
   content: "";
   position: absolute;
@@ -8597,17 +8663,21 @@ button.hud-resource-chip:active:not(:disabled) {
   animation: challenge-join-halo 2.4s ease-in-out infinite;
   pointer-events: none;
 }
+
 @keyframes challenge-join-halo {
+
   0%,
   100% {
     opacity: 0.25;
     transform: scale(0.99);
   }
+
   50% {
     opacity: 0.7;
     transform: scale(1.01);
   }
 }
+
 .challenge-card-join:active {
   transform: translateY(2px);
   box-shadow:
@@ -8616,11 +8686,13 @@ button.hud-resource-chip:active:not(:disabled) {
     0 2px 0 #9a5a00,
     0 4px 8px rgba(0, 0, 0, 0.26);
 }
+
 /* While the pass status resolves, the CTA is briefly non-interactive but keeps
    its size + look (no flash / layout shift). */
 .challenge-card-join:disabled {
   cursor: default;
 }
+
 /* Active-pass state: ACTIVE is a green chip beside the title, and the flame
    row moves into the bottom slot (where Join Challenge sits when offering). */
 .challenge-card-active-chip {
@@ -8635,6 +8707,7 @@ button.hud-resource-chip:active:not(:disabled) {
   letter-spacing: 0.06em;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
+
 /* PRO-sourced pass reads as a premium perk, not a generic green "Active"
    badge: gold gradient + crown mark, tied to the PRO gold accent language. */
 .challenge-card-active-chip--pro {
@@ -8646,6 +8719,7 @@ button.hud-resource-chip:active:not(:disabled) {
     inset 0 1px 0 rgba(255, 255, 255, 0.6),
     0 1px 3px rgba(150, 90, 10, 0.32);
 }
+
 .challenge-card-active-chip-crown {
   width: 11px;
   height: 11px;
@@ -8663,17 +8737,20 @@ button.hud-resource-chip:active:not(:disabled) {
   /* Extra breathing room above the button (founder), space below too. */
   margin: 24px 0 16px;
 }
+
 .hub-lite-start-focus-ring {
   position: absolute;
   inset: -4px 0px;
   z-index: 1;
   pointer-events: none;
 }
+
 .hub-lite-start-focus-ring img {
   display: block;
   width: 100%;
   height: 100%;
 }
+
 .hub-lite-start-focus {
   width: auto;
   min-height: 60px;
@@ -8684,18 +8761,30 @@ button.hud-resource-chip:active:not(:disabled) {
   border: none;
   border-radius: 20px;
   background:
-    radial-gradient(circle at 30% 20%, rgba(214, 255, 150, 0.9), transparent 28%),
-    radial-gradient(circle at 75% 75%, rgba(30, 88, 8, 0.35), transparent 35%),
-    linear-gradient(145deg, #a3e857 0%, #74cf24 28%, #55b117 55%, #3b8c0e 100%);
+    radial-gradient(ellipse at 30% 5%,
+      rgba(218, 255, 157, 0.48) 0%,
+      rgba(183, 245, 109, 0.18) 24%,
+      transparent 48%),
+    linear-gradient(180deg,
+      #72db2d 0%,
+      #55c51b 42%,
+      #39a909 76%,
+      #2a8d04 100%);
   box-shadow:
-    inset 0 3px 0 rgba(255, 255, 255, 0.4),
-    inset 0 -5px 0 rgba(30, 80, 8, 0.35),
-    0 6px 0 #2c6a09,
-    0 0 0 2px rgba(160, 232, 90, 0.7),
-    0 6px 0 2px rgba(160, 232, 90, 0.7),
-    0 0 6px 2px rgba(130, 220, 60, 0.75),
-    0 8px 6px 2px rgba(130, 220, 60, 0.6),
-    0 12px 20px rgba(0, 0, 0, 0.35);
+    /* brillo fino interior superior */
+    inset 0 2px 0 rgba(255, 255, 255, 0.68),
+    /* sombreado inferior de la cara */
+    inset 0 -5px 0 rgba(20, 101, 0, 0.34),
+    /* línea verde exterior */
+    0 0 0 2px rgba(77, 171, 21, 0.95),
+    /* halo lima */
+    0 0 8px 3px rgba(196, 255, 118, 0.72),
+    /* profundidad inferior */
+    0 3px 0 #176d03,
+    /* borde luminoso alrededor de la profundidad */
+    0 10px 0 -7px rgba(173, 247, 89, 0.72),
+    /* sombra ambiental */
+    0 14px 18px rgba(29, 92, 4, 0.34);
   color: #fff;
   font-size: 1.35rem;
   font-weight: 800;
@@ -8708,12 +8797,14 @@ button.hud-resource-chip:active:not(:disabled) {
     0 2px 2px rgba(0, 0, 0, 0.5);
   cursor: pointer;
 }
+
 .hub-lite-start-focus-icon img {
   display: block;
   width: 34px;
   height: 34px;
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
 }
+
 .hub-lite-start-focus:active {
   transform: translateY(3px);
   box-shadow:
@@ -8737,6 +8828,7 @@ button.hud-resource-chip:active:not(:disabled) {
   /* background: rgba(60, 120, 40, 0.32);
   border: 1px solid rgba(255, 255, 255, 0.18); */
 }
+
 .hub-lite-training-path-label {
   margin: 0;
   font-size: 0.55rem;
@@ -8745,6 +8837,7 @@ button.hud-resource-chip:active:not(:disabled) {
   text-transform: uppercase;
   color: #f3e6c4;
 }
+
 /* Drop the inner dark wooden panel from RewardColumn — the lighter outer
    container is the only backdrop; force a tight horizontal row. */
 .reward-column.hub-lite-training-path-tiles {
@@ -8772,26 +8865,31 @@ button.hud-resource-chip:active:not(:disabled) {
   background: transparent;
   cursor: pointer;
 }
+
 .hub-daily-corner:disabled {
   opacity: 0.6;
   cursor: default;
 }
+
 .hub-daily-corner-icon {
   display: block;
   width: 100%;
   height: 100%;
 }
+
 .hub-daily-corner-icon img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
 }
+
 .hub-daily-corner .reward-tile-notif-streak {
   position: absolute;
   top: -4px;
   right: -4px;
 }
+
 .hub-daily-corner .hub-tile-status-chip {
   display: none;
 }
@@ -8865,7 +8963,7 @@ button.hud-resource-chip:active:not(:disabled) {
 /* FULL + PLAY only: seat the mode selector on the carved lower base of
    the kingdom portal. The extra portal margin reserves its overhang so
    the service pills below remain separate tap targets. */
-.play-hub-portal > .hub-app-mode-switch {
+.play-hub-portal>.hub-app-mode-switch {
   position: absolute;
   left: 50%;
   bottom: 11.5%;
@@ -8979,22 +9077,26 @@ button.hud-resource-chip:active:not(:disabled) {
     inset 0 2px 0 rgba(255, 255, 255, 0.6),
     0 4px 12px rgba(80, 50, 10, 0.18);
 }
+
 .kingdom-card-top {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+
 .kingdom-card-crest {
   display: block;
   flex: 0 0 auto;
   width: clamp(56px, 16vw, 68px);
 }
+
 .kingdom-card-crest img {
   display: block;
   width: 100%;
   height: auto;
   filter: drop-shadow(0 3px 5px rgba(110, 65, 15, 0.3));
 }
+
 .kingdom-card-top-main {
   flex: 1 1 auto;
   min-width: 0;
@@ -9002,11 +9104,13 @@ button.hud-resource-chip:active:not(:disabled) {
   flex-direction: column;
   gap: 4px;
 }
+
 .kingdom-card-head {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .kingdom-card-title {
   margin: 0;
   font-family: var(--font-game-action);
@@ -9014,6 +9118,7 @@ button.hud-resource-chip:active:not(:disabled) {
   font-weight: 800;
   color: #4a2f12;
 }
+
 .kingdom-card-chip {
   display: inline-flex;
   align-items: center;
@@ -9025,11 +9130,13 @@ button.hud-resource-chip:active:not(:disabled) {
   letter-spacing: 0.06em;
   line-height: 1.4;
 }
+
 .kingdom-card-chip--active {
   background: linear-gradient(180deg, #5bd16a, #2f9d43);
   color: #fff;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
+
 .kingdom-card-chip--discover {
   border: 1px solid rgba(255, 222, 112, 0.85);
   background: linear-gradient(180deg, #7c46b8, #5c2e97);
@@ -9039,9 +9146,11 @@ button.hud-resource-chip:active:not(:disabled) {
     inset 0 1px 0 rgba(255, 255, 255, 0.25),
     0 1px 3px rgba(60, 30, 90, 0.3);
 }
+
 .kingdom-card-chip--discover:active {
   transform: translateY(1px);
 }
+
 .kingdom-card-body {
   margin: 0;
   font-size: 0.8rem;
@@ -9049,6 +9158,7 @@ button.hud-resource-chip:active:not(:disabled) {
   line-height: 1.25;
   color: rgba(74, 47, 18, 0.78);
 }
+
 .kingdom-card-benefits {
   display: flex;
   align-items: center;
@@ -9059,6 +9169,7 @@ button.hud-resource-chip:active:not(:disabled) {
   padding: 7px 4px 2px;
   border-top: 1px solid rgba(180, 120, 35, 0.28);
 }
+
 .kingdom-card-benefit {
   display: inline-flex;
   align-items: center;
@@ -9068,6 +9179,7 @@ button.hud-resource-chip:active:not(:disabled) {
   color: #4a2f12;
   white-space: nowrap;
 }
+
 .kingdom-card-benefit-icon {
   width: 0.9rem;
   height: 0.9rem;
@@ -9085,6 +9197,7 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   gap: 6px;
 }
+
 .play-hub-tools-label {
   margin: 0;
   font-size: 0.6rem;
@@ -9093,12 +9206,14 @@ button.hud-resource-chip:active:not(:disabled) {
   text-transform: uppercase;
   color: #6e4415;
 }
+
 .play-hub-tools-grid {
   display: grid;
   grid-template-columns: repeat(3, 48px);
   gap: 14px;
   justify-content: center;
 }
+
 /* Tactics/Coach/Shop adopt the LEARN Training-Path piece tile verbatim: the
    gold candy tile at the compact 48px footprint (mirrors `.reward-tile.is-compact`
    + base gold gradient). HubActionTile ships `.reward-tile.is-locked` (gray) —
@@ -9129,6 +9244,7 @@ button.hud-resource-chip:active:not(:disabled) {
   filter: none;
   overflow: visible;
 }
+
 .play-hub-tools-grid .reward-tile .reward-tile-piece {
   order: 1;
   position: relative;
@@ -9138,6 +9254,7 @@ button.hud-resource-chip:active:not(:disabled) {
   transform: none;
   filter: drop-shadow(0 4px 2px rgba(61, 37, 7, 0.35));
 }
+
 .play-hub-tools-grid .reward-tile .reward-tile-label {
   order: 2;
   position: static;
@@ -9191,6 +9308,7 @@ button.hud-resource-chip:active:not(:disabled) {
     0 2px 2px rgba(0, 0, 0, 0.5);
   cursor: pointer;
 }
+
 .play-chess-cta:active {
   transform: translateY(3px);
   box-shadow:
@@ -9199,6 +9317,7 @@ button.hud-resource-chip:active:not(:disabled) {
     0 3px 0 #0a568f,
     0 5px 10px rgba(0, 0, 0, 0.3);
 }
+
 .play-chess-cta-icon {
   display: block;
   flex: 0 0 auto;
@@ -9206,6 +9325,7 @@ button.hud-resource-chip:active:not(:disabled) {
   height: 34px;
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
 }
+
 .play-chess-cta-icon img {
   display: block;
   width: 100%;
@@ -10210,8 +10330,7 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* Selected → avatar in full color. */
-.arena-scaffold-difficulty-pill[aria-pressed="true"]
-  .arena-scaffold-difficulty-avatar img {
+.arena-scaffold-difficulty-pill[aria-pressed="true"] .arena-scaffold-difficulty-avatar img {
   filter: none;
 }
 
@@ -12760,6 +12879,7 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 @keyframes leaderboard-cta-glow {
+
   0%,
   100% {
     box-shadow: var(--cta-secondary-cream-bevel),
@@ -13817,8 +13937,7 @@ button.hud-resource-chip:active:not(:disabled) {
    the cream surface by design, Sally pass 4). Matches the gold Save accent
    now used on the arena loss popup. */
 .coach-viewer__tile[data-kind="save-victory"] .coach-viewer__tile-icon img {
-  filter: drop-shadow(0 0 5px rgba(245, 190, 70, 1))
-    drop-shadow(0 0 13px rgba(245, 190, 70, 0.8));
+  filter: drop-shadow(0 0 5px rgba(245, 190, 70, 1)) drop-shadow(0 0 13px rgba(245, 190, 70, 0.8));
 }
 
 .coach-viewer__tile-price-ribbon {
@@ -14442,6 +14561,7 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 1.05rem;
   color: rgba(180, 60, 25, 0.95);
 }
+
 /* ─── Identity Lite — avatar + nickname pill (cross-surface) ─────────────── */
 .player-avatar-disc {
   display: inline-flex;
@@ -14534,7 +14654,7 @@ button.hud-resource-chip:active:not(:disabled) {
   line-height: 0;
 }
 
-.focus-passport-slot > img {
+.focus-passport-slot>img {
   height: 100%;
   width: auto;
   display: block;
@@ -14543,11 +14663,11 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* Pending flames recede; the still-pending "today" slot gets a subtle
    warm glow + slight lift so the next action reads at a glance. */
-.focus-passport-slot--gray > img {
+.focus-passport-slot--gray>img {
   opacity: 0.5;
 }
 
-.focus-passport-slot.is-glow > img {
+.focus-passport-slot.is-glow>img {
   opacity: 0.8;
   filter: drop-shadow(0 0 5px rgba(255, 176, 60, 0.7));
 }
@@ -14614,6 +14734,7 @@ button.hud-resource-chip:active:not(:disabled) {
   font-weight: 800;
   color: rgba(110, 65, 15, 0.80);
 }
+
 .wp-stamp-fallback .wp-stamp-text {
   display: block;
 }
@@ -14639,11 +14760,13 @@ button.hud-resource-chip:active:not(:disabled) {
     opacity: 0;
   }
 }
+
 @keyframes aux-sheet-fade-out {
   to {
     opacity: 0;
   }
 }
+
 .sheet-bg-hub[data-state="open"],
 .sheet-bg-badges[data-state="open"],
 .sheet-bg-shop[data-state="open"],
@@ -14652,6 +14775,7 @@ button.hud-resource-chip:active:not(:disabled) {
 .sheet-bg-exercises[data-state="open"] {
   animation-name: aux-sheet-fade-in !important;
 }
+
 .sheet-bg-hub[data-state="closed"],
 .sheet-bg-badges[data-state="closed"],
 .sheet-bg-shop[data-state="closed"],
@@ -14801,10 +14925,12 @@ button.hud-resource-chip:active:not(:disabled) {
    tour hands off to: it no longer spends a step on Start Focus, so after
    "Got it" the pulse is the only thing still pointing at the ritual. */
 @keyframes hub-daily-pulse {
+
   0%,
   100% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.06);
   }
@@ -15146,11 +15272,13 @@ button.hud-resource-chip:active:not(:disabled) {
    is what keeps pointing at it. It stops the moment the pass is owned — the
    button unmounts — so it can never nag a player who already paid. */
 @keyframes challenge-join-pulse {
+
   0%,
   100% {
     transform: scale(1);
     box-shadow: 0 0 0 0 rgba(243, 201, 105, 0);
   }
+
   50% {
     transform: scale(1.04);
     box-shadow: 0 0 0 6px rgba(243, 201, 105, 0.28);
@@ -15168,6 +15296,7 @@ button.hud-resource-chip:active:not(:disabled) {
 .challenge-card-join-arrow {
   display: none;
 }
+
 [data-tour-spotlight="active"] .challenge-card-join-arrow {
   display: inline-flex;
   width: 1.7rem;
@@ -15175,6 +15304,7 @@ button.hud-resource-chip:active:not(:disabled) {
   flex: 0 0 auto;
   animation: challenge-join-arrow-nudge 1.1s ease-in-out infinite;
 }
+
 .challenge-card-join-arrow-img {
   width: 100%;
   height: 100%;
@@ -15182,10 +15312,12 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 @keyframes challenge-join-arrow-nudge {
+
   0%,
   100% {
     transform: translateX(0);
   }
+
   50% {
     transform: translateX(4px);
   }
@@ -15195,6 +15327,7 @@ button.hud-resource-chip:active:not(:disabled) {
   .challenge-card-join.is-pulsing {
     animation: none;
   }
+
   .challenge-card-join-arrow {
     animation: none;
   }
