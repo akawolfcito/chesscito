@@ -1,5 +1,10 @@
 # Release checklist — sesión Privy compartida entre Learn y Play
 
+> ⛔ **SUPERSEDED por `2026-07-25-privy-web-access-final-release.md`.** El flujo por
+> etapas de abajo (deploy con flag OFF → validar → activar → redeploy) se descartó:
+> con el tráfico actual el founder va directo a producción con Privy ON y smoke
+> inmediato. Se conserva como registro del plan previo y de su fundamentación.
+
 > **Fecha:** 2026-07-25 · **Estado:** preparado, **no ejecutado**. Producción intacta.
 > Precondición ya cumplida por el founder: dominio de cookies verificado
 > (`chesscito.com`, HttpOnly ON, Status Ready) y variables de producción cargadas
