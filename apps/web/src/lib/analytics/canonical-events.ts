@@ -58,3 +58,59 @@ const ALIAS_TO_CANONICAL: Record<string, CanonicalEvent> = Object.fromEntries(
 export function canonicalEventFor(event: string): CanonicalEvent | null {
   return ALIAS_TO_CANONICAL[event] ?? null;
 }
+
+/* ── Access funnel ──────────────────────────────────────────────────────────
+   "¿Logran entrar y llegar al valor?" — the door is now mandatory (there is no
+   `Continue as Guest`), so every drop between these steps is a person who never
+   reached the product at all.
+
+   The last step deliberately is NOT `wallet_ready`: having a wallet is
+   plumbing, not value. Entering only counts once a first exercise is finished,
+   so the funnel spans door → value in one read. */
+
+export const ACCESS_FUNNEL: readonly AccessStep[] = [
+  "gate_viewed",
+  "login_started",
+  "login_succeeded",
+  "wallet_ready",
+  "first_exercise_completed",
+] as const;
+
+export type AccessStep =
+  | "gate_viewed"
+  | "login_started"
+  | "login_succeeded"
+  | "wallet_ready"
+  | "first_exercise_completed";
+
+/** Raw event names feeding each access step. The terminal step reuses the
+ *  activation vocabulary rather than redeclaring it, so a new completion alias
+ *  registered for activation is picked up here too. */
+export const ACCESS_EVENTS: Record<AccessStep, readonly string[]> = {
+  gate_viewed: ["web_access_gate_viewed"],
+  login_started: ["web_login_started"],
+  login_succeeded: ["web_login_succeeded"],
+  wallet_ready: ["web_wallet_ready"],
+  first_exercise_completed: CANONICAL_EVENTS.exercise_completed,
+};
+
+/** Emitted when Privy rejects/aborts a login. NOT a funnel step: the same
+ *  session can fail and then succeed, so it is reported beside the funnel as a
+ *  friction counter, never subtracted from it. */
+export const ACCESS_FAILURE_EVENT = "web_login_failed";
+
+/** Every raw name the access funnel reads, for a single `in (...)` query. */
+export const ALL_ACCESS_ALIASES: readonly string[] = Array.from(
+  new Set([...Object.values(ACCESS_EVENTS).flat(), ACCESS_FAILURE_EVENT]),
+);
+
+const ALIAS_TO_ACCESS: Record<string, AccessStep> = Object.fromEntries(
+  Object.entries(ACCESS_EVENTS).flatMap(([step, aliases]) =>
+    aliases.map((alias) => [alias, step as AccessStep]),
+  ),
+);
+
+/** Raw event name → access step, or `null` if it is not an access event. */
+export function accessStepFor(event: string): AccessStep | null {
+  return ALIAS_TO_ACCESS[event] ?? null;
+}
