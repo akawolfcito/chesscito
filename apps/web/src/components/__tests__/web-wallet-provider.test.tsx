@@ -98,6 +98,18 @@ describe("WebWalletProvider", () => {
   });
 });
 
+describe("Privy modal appearance", () => {
+  // The login modal is the one screen where an /art literal is tempting: it is
+  // configured in JS, not CSS, so the theme resolver is not the obvious path.
+  // Hardcoding it turns `brand.title` mixed and the theme builder's Replace
+  // stops reaching the modal — caught by runtime-coverage.test.ts, asserted
+  // here so the reason survives next to the code.
+  it("resolves the wordmark through the brand.title slot, never an /art literal", () => {
+    expect(moduleSource).toMatch(/useCurrentThemeAsset\("brand\.title"\)/);
+    expect(moduleSource).not.toMatch(/["'`]\/art\//);
+  });
+});
+
 describe("branch isolation", () => {
   it("never imports MiniPay wallet code", () => {
     expect(moduleSource).not.toMatch(/@\/lib\/minipay/);

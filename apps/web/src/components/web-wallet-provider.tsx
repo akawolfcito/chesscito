@@ -9,6 +9,9 @@ import { celo } from "wagmi/chains";
 import { ProductContextProviders } from "@/components/product-context-providers";
 import { WebAccessThemeVariables } from "@/components/themes/theme-css-variables";
 import { WebAccessGate } from "@/components/web-access-gate";
+import { useCurrentThemeAsset } from "@/lib/themes/use-current-theme-asset";
+import { buildWebAccessAppearance } from "@/lib/wallet/web-access-appearance";
+import { resolveWebAccessSurface } from "@/lib/wallet/web-access-copy";
 import { createWebTransports } from "@/lib/wallet/web-transports";
 import { WalletSessionProvider } from "@/lib/wallet/wallet-session";
 
@@ -81,10 +84,20 @@ export function PrivyWalletSession({ children }: { children: ReactNode }) {
  * is no guest mode (product decision, 2026-07-24).
  */
 export function WebWalletProvider({ children }: { children: ReactNode }) {
+  // The wordmark travels through the `brand.title` resolver like every other
+  // themed asset, so a creator's Replace reaches the login modal too. No
+  // ThemeVariantProvider is in scope this high in the tree, so it resolves to
+  // the default variant — correct here, since the modal only ever faces a
+  // visitor with no wallet and therefore no entitlement.
+  const wordmarkBase = useCurrentThemeAsset("brand.title");
+
   return (
     <PrivyProvider
       appId={requirePrivyAppId()}
       config={{
+        // Styling only. Privy renders its login modal in its own portal, so
+        // globals.css cannot reach it and this prop is the only way in.
+        appearance: buildWebAccessAppearance(resolveWebAccessSurface(), wordmarkBase),
         loginMethods: ["email", "google"],
         defaultChain: celo,
         supportedChains: [celo],

@@ -1,9 +1,9 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 169,
+  "totalSlots": 171,
   "categoryCounts": {
-    "A": 156,
+    "A": 158,
     "B": 0,
     "C": 0,
     "D": 0,
@@ -13,25 +13,25 @@
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 73,
+    "B": 75,
     "C": 26,
     "D": 38,
     "E": 19,
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 157,
-  "fullyConnectedSlots": 156,
+  "resolverSlots": 159,
+  "fullyConnectedSlots": 158,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
   "noActiveConsumerSlots": 6,
-  "connectedSlots": 156,
+  "connectedSlots": 158,
   "excludedSlots": 13,
   "exceptions": [],
   "literalDiff": {
-    "registeredBasenames": 190,
+    "registeredBasenames": 204,
     "discoveredBasenames": 16,
     "unregisteredExistingAssets": []
   },
@@ -3636,7 +3636,7 @@
         "src/components/hub/play-hub-scaffold.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 2,
+      "consumerCount": 3,
       "consumers": [
         {
           "file": "src/components/hub/hub-lite-scaffold.tsx",
@@ -3651,6 +3651,17 @@
         },
         {
           "file": "src/components/hub/play-hub-scaffold.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/web-wallet-provider.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -6995,6 +7006,126 @@
       "noActiveConsumer": false
     },
     {
+      "slotId": "bg.login-learn",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/bg-login-learn"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Web access gate — Learn wallpaper",
+        "↳ components/themes/theme-css-variables.tsx (--theme-bg-login-learn)",
+        "↳ globals.css .web-access-screen[data-surface=learn]"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/themes/theme-css-variables.tsx",
+        "src/app/globals.css"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 2,
+      "consumers": [
+        {
+          "file": "src/app/globals.css",
+          "occurrences": [],
+          "usesResolver": false,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": true,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/themes/theme-css-variables.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [
+        "css-background"
+      ],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": true,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "bg.login-play",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/bg-login-play"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Web access gate — Play wallpaper",
+        "↳ components/themes/theme-css-variables.tsx (--theme-bg-login-play)",
+        "↳ globals.css .web-access-screen[data-surface=play]"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/themes/theme-css-variables.tsx",
+        "src/app/globals.css"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 2,
+      "consumers": [
+        {
+          "file": "src/app/globals.css",
+          "occurrences": [],
+          "usesResolver": false,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": true,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/themes/theme-css-variables.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [
+        "css-background"
+      ],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": true,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
       "slotId": "bg.wallpaper-lite",
       "root": "web",
       "default": {
@@ -9132,7 +9263,8 @@
         "path": "/art/redesign/pieces/w-rook"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/board/piece/white/rook/pro"
       },
       "usedIn": [
         "Board — white rook",
@@ -9428,7 +9560,8 @@
         "path": "/art/redesign/pieces/w-bishop"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/board/piece/white/bishop/pro"
       },
       "usedIn": [
         "Board — white bishop",
@@ -9713,7 +9846,8 @@
         "path": "/art/redesign/pieces/w-knight"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/board/piece/white/knight/pro"
       },
       "usedIn": [
         "Board — white knight",
@@ -9998,7 +10132,8 @@
         "path": "/art/redesign/pieces/w-pawn"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/board/piece/white/pawn/pro"
       },
       "usedIn": [
         "Board — white pawn",
@@ -10415,7 +10550,8 @@
         "path": "/art/redesign/pieces/w-queen"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/board/piece/white/queen/pro"
       },
       "usedIn": [
         "Board — white queen",
@@ -10700,7 +10836,8 @@
         "path": "/art/redesign/pieces/w-king"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/board/piece/white/king/pro"
       },
       "usedIn": [
         "Board — white king",
@@ -11000,7 +11137,8 @@
         "path": "/art/redesign/pieces/b-rook"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/board/piece/black/rook/pro"
       },
       "usedIn": [
         "Enemies — promotion-run / safe-path",
@@ -11279,7 +11417,8 @@
         "path": "/art/redesign/pieces/b-bishop"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/board/piece/black/bishop/pro"
       },
       "usedIn": [
         "Enemies — promotion-run / safe-path",
@@ -11558,7 +11697,8 @@
         "path": "/art/redesign/pieces/b-knight"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/board/piece/black/knight/pro"
       },
       "usedIn": [
         "Enemies — promotion-run / safe-path",
@@ -11837,7 +11977,8 @@
         "path": "/art/redesign/pieces/b-pawn"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/board/piece/black/pawn/pro"
       },
       "usedIn": [
         "Enemies — promotion-run / safe-path",
@@ -12118,7 +12259,8 @@
         "path": "/art/redesign/pieces/b-queen"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/board/piece/black/queen/pro"
       },
       "usedIn": [
         "Enemies — promotion-run / safe-path",
@@ -12397,7 +12539,8 @@
         "path": "/art/redesign/pieces/b-king"
       },
       "pro": {
-        "mode": "inherit"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/board/piece/black/king/pro"
       },
       "usedIn": [
         "Enemies — promotion-run / safe-path",
