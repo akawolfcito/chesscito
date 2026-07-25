@@ -12,6 +12,7 @@
  */
 
 import { getAnonymousId } from "@/lib/analytics/identity";
+import { getTelemetryAccount } from "@/lib/analytics/account";
 import { clientDimensions } from "@/lib/analytics/client-dimensions";
 
 // Runaway-bug defense: cap events at a conservative 100 per 5-min window
@@ -59,7 +60,17 @@ export function track(event: string, props?: Record<string, unknown>): void {
       method: "POST",
       keepalive: true,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ session_id, event, props, dims }),
+      // `account` is the raw connected address and is deliberately a
+      // top-level field, NOT part of `props`: props are persisted verbatim,
+      // this is consumed by the route and replaced with a keyed pseudonym
+      // before anything is written. Null when signed out.
+      body: JSON.stringify({
+        session_id,
+        event,
+        props,
+        dims,
+        account: getTelemetryAccount(),
+      }),
     }).catch(() => {
       /* swallow — telemetry must never fail user-visible flows */
     });

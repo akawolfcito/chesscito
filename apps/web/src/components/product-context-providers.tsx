@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 
 import { ProOriginWarning } from "@/components/dev/pro-origin-warning";
+import { TelemetryAccountBridge } from "@/components/telemetry-account-bridge";
 import { EffectiveTrainingPassProvider } from "@/lib/season-pass/use-season-pass-status";
 import { ThemeVariantProvider } from "@/lib/themes/theme-variant-provider";
 
@@ -30,6 +31,7 @@ export function ProductContextProviders({ children }: { children: ReactNode }) {
     <EffectiveTrainingPassProvider>
       <ThemeVariantProvider>
         <ProOriginWarning />
+        <TelemetryAccountBridge />
         {children}
       </ThemeVariantProvider>
     </EffectiveTrainingPassProvider>

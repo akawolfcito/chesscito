@@ -1,4 +1,5 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { deriveAccountRef } from "@/lib/analytics/account-ref";
 import {
   normalizeAppVersion,
   normalizeCampaign,
@@ -21,6 +22,9 @@ type Payload = {
   event?: unknown;
   props?: unknown;
   dims?: unknown;
+  /** Raw connected address. Consumed here and replaced by a keyed pseudonym —
+   *  never persisted, never logged, never echoed back. */
+  account?: unknown;
 };
 
 /** Server-authoritative dimensions written to analytics_events. Every value is
@@ -105,6 +109,13 @@ export async function POST(req: Request) {
     );
     const dims = sanitizeDims(payload.dims, country);
 
+    // Wallet in, keyed pseudonym out. `payload.account` must not survive past
+    // this line: it is never assigned to a variable that reaches an insert,
+    // and this route intentionally has NO request logging — logging the body
+    // here would put raw addresses in the log drain, which is exactly the
+    // leak account_ref exists to prevent.
+    const accountRef = deriveAccountRef(payload.account);
+
     const supabase = getSupabaseServer();
     if (!supabase) return new Response(null, { status: 204 });
 
@@ -114,6 +125,7 @@ export async function POST(req: Request) {
       session_id: sessionId,
       event,
       props,
+      account_ref: accountRef,
       ...dims,
     });
 
@@ -131,6 +143,24 @@ export async function POST(req: Request) {
             first_source: dims.source,
           },
           { onConflict: "session_id", ignoreDuplicates: true },
+        );
+    }
+
+    // Account cohort. NOT gated on app_opened: the wallet only becomes known
+    // after login, which happens LATER in the visit than app_opened, so
+    // gating on it would mean the account cohort is never written at all on
+    // the visit that created the account. Same idempotence — first sight wins.
+    if (accountRef) {
+      await supabase
+        .from("account_first_seen")
+        .upsert(
+          {
+            account_ref: accountRef,
+            first_surface: dims.surface,
+            first_container: dims.container,
+            first_country: dims.country,
+          },
+          { onConflict: "account_ref", ignoreDuplicates: true },
         );
     }
   } catch {
