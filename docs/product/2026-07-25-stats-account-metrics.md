@@ -17,11 +17,9 @@ después no va en esta página.
 | Verbo | Pregunta | Métrica dueña | Estado |
 |---|---|---|---|
 | **Entrar** | ¿Cruzan la puerta obligatoria? | Access funnel: pantalla → ENTER → sesión → wallet → **primer ejercicio terminado** | ✅ implementado |
-| **Llegar al valor** | ¿Cuánto tardan en su primer ejercicio? | Activation funnel + tiempo hasta el primer ejercicio | ⚠️ funnel sí, latencia no |
-| **Volver** | ¿Vuelven al día siguiente? ¿A los 7? ¿Sostienen 21? | D1/D7 → D21 → días activos por instalación | ⚠️ D1/D7 sí, el resto no |
-
-El hábito de 21 días es el techo del producto y hoy **no se mide**: la retención llega a D7 y se
-corta. Sin D21 no hay forma de saber si el juego construye hábito o sólo entretiene una tarde.
+| **Llegar al valor** | ¿Llegan a su primer ejercicio? | Activation funnel | ✅ funnel · ⚠️ falta la latencia |
+| **Volver** | ¿Vuelven al día siguiente? ¿A los 7? ¿Sostienen 3 semanas? | D1 / D7 / semana 3 + días activos por instalación | ✅ implementado |
+| **Quiénes** | ¿Cuántas personas, no cuántos navegadores? | Ciclo de vida por cuenta: nuevas / activas / dormidas / inactivas / resucitadas | ✅ implementado |
 
 ## Lo que se construyó en esta rama
 
@@ -67,40 +65,67 @@ activo del día particionado por `session_first_seen`, de modo que siempre suman
 gráfico no puede contradecir su propio total. Una instalación sin fila en la tabla de cohortes
 (anterior a ella) cuenta como recurrente, que es la lectura conservadora.
 
-## Lo que sigue, en orden
-
 ### 5. Identidad a nivel de cuenta
 
-Hoy la unidad es `session_id` = el `anonymousId` de localStorage
+La unidad era `session_id` = el `anonymousId` de localStorage
 (`lib/analytics/identity.ts:34`): una **instalación**, no una persona. Dos dispositivos = dos
-"usuarios"; borrar storage = usuario "nuevo". Con login obligatorio ya existe un identificador
-estable (el embedded wallet de Privy) que el pipeline no registra.
+"usuarios"; borrar storage = usuario "nuevo".
 
-Propuesta: `account_ref = HMAC-SHA256(wallet, secreto de servidor)` calculado **server-side** en
-`/api/telemetry`. Nunca se guarda la wallet, se preserva la regla PII-free, y aparece identidad
-estable entre dispositivos. Precedente en el repo: `deriveRowId` (Identity Lite) ya hace esta
-derivación opaca.
+Ahora existe `account_ref = HMAC-SHA256(dirección en minúsculas, TELEMETRY_ACCOUNT_SECRET)`,
+truncado a 128 bits y calculado **server-side** en `/api/telemetry`.
 
-Con eso, y una tabla `account_first_seen`, las definiciones se fijan:
+- **Es HMAC con secreto, no un hash pelado.** El conjunto de wallets reales es enumerable: un
+  SHA-256 sin clave de una dirección lo revierte cualquiera con una lista de wallets — sería una
+  columna de wallets disfrazada. Con el secreto en el servidor el valor no es vinculable a una
+  persona, y rotar el secreto huérfana el histórico a propósito.
+- **La wallet nunca se persiste ni se loguea.** Llega en el body, se consume en una línea y se
+  reemplaza. Ese route **no tiene logging de request a propósito**: loguear el body pondría
+  direcciones crudas en el log drain, que es exactamente la fuga que `account_ref` evita.
+- **`deriveRowId` no sirve para esto.** Es un hash no criptográfico para mostrar avatares;
+  usarlo acá sería reversible.
+- El cliente publica la dirección vía `TelemetryAccountBridge`, montado en
+  `ProductContextProviders` — el único wrapper que montan **ambas** ramas de wallet.
+
+Definiciones fijadas en `computeAccountLifecycle`:
 
 - **nueva**: `first_seen` = hoy
 - **activa**: algún evento en los últimos 7 días
-- **dormida**: sin eventos hace 8–29 días
-- **inactiva / churn**: sin eventos hace 30+ días
-- **resucitada**: dormida que vuelve — la métrica que dice si la racha y las notificaciones sirven
+- **dormida**: último evento hace 8–29 días
+- **inactiva / churn**: sin eventos en los últimos 30 días
+- **resucitada**: activa esta semana tras un silencio de 8–29 días — la métrica que dice si la
+  racha y las notificaciones sirven
 
-"Inactiva" no es un evento: se deriva de la ausencia. Sin `account_first_seen` no hay denominador
-y el número no existe.
+`activas + dormidas + inactivas === conocidas` por construcción: son una partición, así que el
+bloque no puede describir más ni menos gente de la que existe. "Inactiva" no es un evento, se
+deriva de la ausencia — por eso `account_first_seen` se lee **sin cota temporal**: recortarlo a
+30 días definiría a los churneados fuera de la existencia.
 
-### 6. Hábito y retención — el techo del producto
+### 6. Hábito y retención
 
-- **D21**, no sólo D1/D7. La tabla tiene limpieza a 90 días, así que alcanza.
-- **Días activos por instalación en la ventana** (¿vuelven 1 vez o 12?): es el indicador de
-  hábito más directo, más que cualquier tasa de retención puntual.
+- **Retención de semana 3**, no sólo D1/D7. Deliberadamente es una **ventana** (algún evento en
+  los días 15–21 desde la instalación), no un día exacto como D1/D7. Preguntar por el día 21
+  exacto mide si alguien abrió la app justo ese martes: a este volumen da ~0 y no dice nada de
+  hábito. El campo se llama `week3` y no `d21` para que la diferencia de forma se vea en cada
+  call site.
+- **Días activos distintos por instalación** (`computeHabitDepth`), en cortes acumulativos
+  1/3/7/14/21 + mediana. Es la promesa de 21 días hecha verificable: una tasa de retención puede
+  verse sana mientras todo el mundo entra dos veces; esto no.
+
+## Lo que sigue
+
 - **Tiempo hasta el primer ejercicio terminado** desde el login: la latencia de valor.
 - **Abandono por pieza / por ejercicio**: dónde exactamente se cae la gente en el recorrido.
-- **Curva de 21 días por cohorte semanal**: la única vista que responde si el producto cumple
-  su promesa.
+- **Curva por cohorte semanal**, no rolling: la vista que muestra si el producto mejora entre
+  cohortes.
+
+## Requisito de despliegue
+
+`TELEMETRY_ACCOUNT_SECRET` (server-only, **sin** `NEXT_PUBLIC_`) tiene que existir en el entorno.
+Sin él `deriveAccountRef` devuelve `null` por diseño: la columna queda vacía y el bloque de
+cuentas se oculta, en vez de escribir un pseudónimo débil. Hay que agregarlo a `.env.template` y
+a Vercel — no lo toqué porque las reglas del repo me impiden leer o escribir archivos `.env`.
+
+También hay que correr la migración `20260725000000_account_level_identity.sql`.
 
 ## Caveats vigentes
 
