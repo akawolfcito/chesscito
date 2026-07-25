@@ -285,7 +285,10 @@ describe("theme-registry", () => {
       // +1: shared.close-candy, the CandyIcon close art.
       // +1: board.blocker.stone, the exercise obstacle art (2026-07-23),
       // classified with the board.piece.* slots.
-      shared: 76,
+      // +1: brand.title-login, the Privy login modal's wordmark (2026-07-25),
+      // carved off brand.title. Shared, not per-surface: the modal is the same
+      // on both deploys, only its wallpaper differs.
+      shared: 77,
       "full-legacy": 29,
       "dev-only": 0,
       unknown: 4,

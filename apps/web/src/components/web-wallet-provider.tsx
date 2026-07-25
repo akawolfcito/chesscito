@@ -84,12 +84,12 @@ export function PrivyWalletSession({ children }: { children: ReactNode }) {
  * is no guest mode (product decision, 2026-07-24).
  */
 export function WebWalletProvider({ children }: { children: ReactNode }) {
-  // The wordmark travels through the `brand.title` resolver like every other
-  // themed asset, so a creator's Replace reaches the login modal too. No
+  // `brand.title-login`, not `brand.title`: the modal's wordmark is its own
+  // slot so it can be replaced without touching the hub's. No
   // ThemeVariantProvider is in scope this high in the tree, so it resolves to
   // the default variant — correct here, since the modal only ever faces a
   // visitor with no wallet and therefore no entitlement.
-  const wordmarkBase = useCurrentThemeAsset("brand.title");
+  const wordmarkBase = useCurrentThemeAsset("brand.title-login");
 
   return (
     <PrivyProvider

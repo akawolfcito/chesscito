@@ -36,17 +36,22 @@ describe("theme runtime catalog coverage", () => {
     // mounts above the gate, where the app-wide ThemeCssVariables cannot reach),
     // so both land in category A: connectedSlots 156 → 158, initial B 73 → 75,
     // excludedSlots unchanged.
-    expect(report.totalSlots).toBe(171);
+    // 172 (2026-07-25): + brand.title-login, the wordmark inside the Privy
+    // login modal, carved off brand.title so a Replace can move one without the
+    // other. Consumed via the resolver in web-wallet-provider.tsx, so it lands
+    // in category A: connectedSlots 158 → 159, initial B 75 → 76, excludedSlots
+    // unchanged.
+    expect(report.totalSlots).toBe(172);
     expect(report.initialCategoryCounts).toEqual({
       A: 2,
-      B: 75,
+      B: 76,
       C: 26,
       D: 38,
       E: 19,
       F: 11,
       G: 0,
     });
-    expect(report.connectedSlots).toBe(158);
+    expect(report.connectedSlots).toBe(159);
     expect(report.excludedSlots).toBe(13);
     expect(
       report.slots.filter(

@@ -1,9 +1,9 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 171,
+  "totalSlots": 172,
   "categoryCounts": {
-    "A": 158,
+    "A": 159,
     "B": 0,
     "C": 0,
     "D": 0,
@@ -13,25 +13,25 @@
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 75,
+    "B": 76,
     "C": 26,
     "D": 38,
     "E": 19,
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 159,
-  "fullyConnectedSlots": 158,
+  "resolverSlots": 160,
+  "fullyConnectedSlots": 159,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
   "noActiveConsumerSlots": 6,
-  "connectedSlots": 158,
+  "connectedSlots": 159,
   "excludedSlots": 13,
   "exceptions": [],
   "literalDiff": {
-    "registeredBasenames": 204,
+    "registeredBasenames": 205,
     "discoveredBasenames": 16,
     "unregisteredExistingAssets": []
   },
@@ -3636,7 +3636,7 @@
         "src/components/hub/play-hub-scaffold.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 3,
+      "consumerCount": 2,
       "consumers": [
         {
           "file": "src/components/hub/hub-lite-scaffold.tsx",
@@ -3659,7 +3659,41 @@
           "usesCssBackground": false,
           "usesSharedMap": false,
           "buildsPathDynamically": false
-        },
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "brand.title-login",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/title-chesscito-login"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Web access gate — wordmark inside the Privy login modal",
+        "↳ components/web-wallet-provider.tsx (config.appearance.logo)"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/web-wallet-provider.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
         {
           "file": "src/components/web-wallet-provider.tsx",
           "occurrences": [],

@@ -104,9 +104,15 @@ describe("Privy modal appearance", () => {
   // Hardcoding it turns `brand.title` mixed and the theme builder's Replace
   // stops reaching the modal — caught by runtime-coverage.test.ts, asserted
   // here so the reason survives next to the code.
-  it("resolves the wordmark through the brand.title slot, never an /art literal", () => {
-    expect(moduleSource).toMatch(/useCurrentThemeAsset\("brand\.title"\)/);
+  it("resolves the wordmark through a slot, never an /art literal", () => {
+    expect(moduleSource).toMatch(/useCurrentThemeAsset\("brand\.title-login"\)/);
     expect(moduleSource).not.toMatch(/["'`]\/art\//);
+  });
+
+  // The whole point of carving the slot: a Replace on the login wordmark must
+  // not move the hub's, and vice versa.
+  it("keeps the modal wordmark off the slot the hub scaffolds render", () => {
+    expect(moduleSource).not.toMatch(/useCurrentThemeAsset\("brand\.title"\)/);
   });
 });
 

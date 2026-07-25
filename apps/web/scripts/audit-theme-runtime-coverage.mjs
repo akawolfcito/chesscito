@@ -526,12 +526,17 @@ if (CHECK_MODE) {
   // gate wallpapers. Consumed via the resolver (WebAccessThemeVariables emits
   // --theme-bg-login-*), so both land in category A (connectedSlots 156 → 158);
   // totalSlots 169 → 171.
-  const expectedInitial = { A: 2, B: 75, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  // +1 (B: 75 → 76) 2026-07-25: brand.title-login, the wordmark inside the
+  // Privy login modal. Carved out of brand.title so the hub's wordmark and the
+  // modal's can be replaced independently. Consumed via the resolver
+  // (useCurrentThemeAsset in web-wallet-provider.tsx), so it lands in category
+  // A (connectedSlots 158 → 159); totalSlots 171 → 172.
+  const expectedInitial = { A: 2, B: 76, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 171 ||
+    inventory.length !== 172 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

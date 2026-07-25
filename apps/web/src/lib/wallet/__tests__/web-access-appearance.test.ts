@@ -13,9 +13,9 @@ import {
 const LANDING_HEADER_MAX = 35;
 const LOGIN_MESSAGE_MAX = 100;
 
-/** What `brand.title` resolves to on the default theme. The builder takes the
- *  base as an argument precisely so it never hardcodes this. */
-const WORDMARK_BASE = "/art/title-chesscito";
+/** What `brand.title-login` resolves to on the default theme. The builder takes
+ *  the base as an argument precisely so it never hardcodes this. */
+const WORDMARK_BASE = "/art/title-chesscito-login";
 
 /** Relative luminance, WCAG definition. Privy generates the modal's foreground
  *  tones from `theme` by modulating its luminance and requires the value to be
@@ -49,8 +49,8 @@ describe("buildWebAccessAppearance", () => {
   });
 
   it("composes the logo from the resolved base, never from an /art literal", () => {
-    expect(buildWebAccessAppearance("play", "/art/title-chesscito").logo).toBe(
-      "/art/title-chesscito.webp",
+    expect(buildWebAccessAppearance("play", WORDMARK_BASE).logo).toBe(
+      "/art/title-chesscito-login.webp",
     );
     // A creator theme resolves the same slot to its own base.
     expect(

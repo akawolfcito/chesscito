@@ -11,6 +11,7 @@ fi
 assets=(
   "bg-login-learn"
   "bg-login-play"
+  "title-chesscito-login"
   "bg-playhub-forest-mobile"
   "bg-playhub-forest-desktop"
   "panel-frame-rune"

@@ -147,6 +147,7 @@ export type ThemeAssetKey =
   | "payments.offer-bg"
   // brand — identity assets (not game theme, but updatable)
   | "brand.title"
+  | "brand.title-login"
   | "brand.ring-start-focus"
   // exercises — the PLAY / learn-exercises surface
   | "exercises.avatar-fun"
@@ -545,6 +546,17 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "brand.title": { pro: { mode: "asset", path: "/art/theme-builder/candy-forest/brand/title/pro" },
         default: "/art/title-chesscito",
         usedIn: ["Brand — Chesscito wordmark", "↳ components/hub/hub-lite-scaffold.tsx", "↳ components/hub/play-hub-scaffold.tsx"],
+      },
+      // Its own slot, not a reuse of brand.title: the login modal is the only
+      // surface a visitor sees before the app, and it sits on a dark sheet the
+      // hub never uses. Sharing brand.title meant a Replace could not change
+      // one without the other.
+      "brand.title-login": {
+        default: "/art/title-chesscito-login",
+        usedIn: [
+          "Web access gate — wordmark inside the Privy login modal",
+          "↳ components/web-wallet-provider.tsx (config.appearance.logo)",
+        ],
       },
       "brand.ring-start-focus": {
         default: { mode: "none" },
@@ -1061,6 +1073,7 @@ const SHARED_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "shared.feedback-thinking",
   "shared.feedback-questioning",
   "brand.title",
+  "brand.title-login",
   "exercises.badge-menu",
   "exercises.leaderboard-menu",
   "exercises.leaderboard-crown",
