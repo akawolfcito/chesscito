@@ -53,6 +53,10 @@ const SAMPLE_STATS: PublicStats = {
     date: `2026-05-${String(i + 1).padStart(2, "0")}`,
     sessions: i % 5,
     mints: i % 3,
+    // The two series always partition `sessions` — same invariant the
+    // aggregator guarantees, so the fixture cannot describe an impossible day.
+    newInstalls: i % 5 === 0 ? 0 : 1,
+    returningInstalls: i % 5 === 0 ? 0 : (i % 5) - 1,
   })),
   generatedAt: new Date().toISOString(),
   // Values chosen distinct from the non-onchain fixture numbers above
@@ -93,6 +97,17 @@ const SAMPLE_STATS: PublicStats = {
     d1: { returned: 300, cohort: 1000 },
     d7: { returned: 120, cohort: 900 },
   },
+  accessFunnel: {
+    steps: [
+      { step: "gate_viewed", sessions: 900 },
+      { step: "login_started", sessions: 640 },
+      { step: "login_succeeded", sessions: 520 },
+      { step: "wallet_ready", sessions: 505 },
+      { step: "first_exercise_completed", sessions: 310 },
+    ],
+    failedSessions: 47,
+  },
+  dataIntegrity: { truncated: [], rowCeiling: 10000 },
 };
 
 describe("StatsPage", () => {
@@ -310,6 +325,55 @@ describe("StatsPage", () => {
     // mints = sum(i%3 for i in 0..29) = 30.
     expect(screen.getByText("60")).toBeInTheDocument();
     expect(screen.getByText("30")).toBeInTheDocument();
+  });
+
+  it("renders the access funnel from the door through the first finished exercise", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(screen.getByText("Login screen shown")).toBeInTheDocument();
+    expect(screen.getByText("Signed in")).toBeInTheDocument();
+    expect(screen.getByText("First exercise finished")).toBeInTheDocument();
+    // The terminal step's count must be readable — it is the "did they reach
+    // value" number the whole section exists for.
+    expect(screen.getByText("310")).toBeInTheDocument();
+  });
+
+  it("reports login failures beside the funnel, never as a funnel step", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(
+      screen.getByText(/47 of these sessions hit a login error/i),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the access funnel when the query failed", () => {
+    render(<StatsPage stats={{ ...SAMPLE_STATS, accessFunnel: null }} />);
+    expect(screen.queryByText("Login screen shown")).toBeNull();
+  });
+
+  it("names the truncated reads instead of printing confident partial numbers", () => {
+    render(
+      <StatsPage
+        stats={{
+          ...SAMPLE_STATS,
+          dataIntegrity: {
+            truncated: ["active sessions (7d)"],
+            rowCeiling: 10000,
+          },
+        }}
+      />,
+    );
+    expect(screen.getByText(/lower bounds/i)).toBeInTheDocument();
+    expect(screen.getByText(/active sessions \(7d\)/)).toBeInTheDocument();
+  });
+
+  it("stays silent about integrity when every read came back whole", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(screen.queryByText(/lower bounds/i)).toBeNull();
+  });
+
+  it("splits the trend into new vs returning installs", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(screen.getByText("New installs")).toBeInTheDocument();
+    expect(screen.getByText("Returning installs")).toBeInTheDocument();
   });
 
   it("hides the Activity trend section entirely when the trend is empty", () => {

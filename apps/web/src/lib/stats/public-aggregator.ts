@@ -15,14 +15,19 @@ import {
   type StatsDb,
 } from "./onchain";
 import {
+  computeAccessFunnel,
   computeActivation,
   computeRetention,
   computeTopCountries,
+  type AccessFunnel,
   type ActivationFunnel,
   type CountryCount,
   type Retention,
 } from "./funnels";
-import { ALL_FUNNEL_ALIASES } from "@/lib/analytics/canonical-events";
+import {
+  ALL_ACCESS_ALIASES,
+  ALL_FUNNEL_ALIASES,
+} from "@/lib/analytics/canonical-events";
 import {
   DEFAULT_STATS_FILTERS,
   type StatsFilters,
@@ -110,11 +115,27 @@ export function aggregateTopMinters(
  *  session_id count for that calendar day; `mints` is the number
  *  of Victory NFTs minted that day. Buckets are dense (every day in
  *  the window is present, missing days come through as zeros) so
- *  the chart consumer can index by position without holes. */
+ *  the chart consumer can index by position without holes.
+ *
+ *  `newInstalls` + `returningInstalls` ALWAYS sum to `sessions`: they
+ *  partition the same active set by whether the install's first-ever day is
+ *  this day. An install with no `session_first_seen` row (it predates the
+ *  cohort table) counts as returning — the conservative read, since it
+ *  provably existed before. */
 export type DailyBucket = {
   date: string;
   sessions: number;
   mints: number;
+  newInstalls: number;
+  returningInstalls: number;
+};
+
+/** Which reads hit the row ceiling. A truncated read makes its derived numbers
+ *  LOWER BOUNDS, not counts — the page says so instead of printing a confident
+ *  wrong figure. Empty `truncated` = every read came back whole. */
+export type DataIntegrity = {
+  truncated: string[];
+  rowCeiling: number;
 };
 
 /** B2.1 — challenge link funnel counts for the public /stats page.
@@ -176,6 +197,12 @@ export type PublicStats = {
   topCountries: CountryCount[];
   /** Rolling D1/D7 retention (filtered cohorts). null on query failure. */
   retention: Retention | null;
+  /** Door-to-value funnel over the gate cohort (last 30d, filtered). null on
+   *  query failure. */
+  accessFunnel: AccessFunnel | null;
+  /** Which reads were truncated by the row ceiling. Rendered as an explicit
+   *  caveat so a partial read is never mistaken for a real decline. */
+  dataIntegrity: DataIntegrity;
 };
 
 export const EMPTY_PUBLIC_STATS: PublicStats = {
@@ -201,6 +228,8 @@ export const EMPTY_PUBLIC_STATS: PublicStats = {
   activation: null,
   topCountries: [],
   retention: null,
+  accessFunnel: null,
+  dataIntegrity: { truncated: [], rowCeiling: 0 },
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -211,6 +240,20 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  *  values — explicit range bypasses that. Tune up if `victories` or
  *  `analytics_events` row count approaches this ceiling. */
 const DISTINCT_QUERY_MAX_ROWS = 9_999;
+
+/** Rows a `.range(0, DISTINCT_QUERY_MAX_ROWS)` read can return. A result of
+ *  exactly this size means PostgREST stopped at the ceiling and there is more
+ *  behind it. */
+const ROW_CEILING = DISTINCT_QUERY_MAX_ROWS + 1;
+
+/** True when a read came back exactly full — i.e. it was almost certainly cut
+ *  off. Every ranged read is ORDERED newest-first, so what a truncated read
+ *  drops is the OLDEST tail: the trailing-30d window stays intact and only
+ *  lifetime figures degrade, and they degrade into lower bounds, never into
+ *  arbitrary subsets. */
+function hitCeiling(rows: unknown): boolean {
+  return Array.isArray(rows) && rows.length >= ROW_CEILING;
+}
 
 type CountResult = { count: number | null; error?: unknown };
 type DataResult<T> = { data: T[] | null; error?: unknown };
@@ -249,15 +292,33 @@ function extractRows<T>(res: PromiseSettledResult<DataResult<T>>): T[] {
  * skipping holes. Distinct session_id per day is computed in JS
  * over the same row set the lifetime distinct count uses, no extra
  * query.
+ *
+ * `firstSeenRows` partitions each day's active installs into new vs
+ * returning. It is derived from the SAME active set rather than counted
+ * independently, so the two series always add up to `sessions` — a chart that
+ * cannot contradict its own total.
  */
 function computeActivityTrend(
   sessionRows: { session_id?: string | null; created_at?: string | null }[]
     | null
     | undefined,
   mintRows: { minted_at?: string | null }[] | null | undefined,
+  firstSeenRows?:
+    | { session_id?: string | null; first_seen?: string | null }[]
+    | null,
 ): DailyBucket[] {
   type Bucket = { sessions: Set<string>; mints: number };
   const buckets = new Map<string, Bucket>();
+
+  /** install id → the UTC day it was first ever seen. */
+  const firstSeenDay = new Map<string, string>();
+  if (Array.isArray(firstSeenRows)) {
+    for (const row of firstSeenRows) {
+      const sid = typeof row?.session_id === "string" ? row.session_id : null;
+      const fs = typeof row?.first_seen === "string" ? row.first_seen : null;
+      if (sid && fs) firstSeenDay.set(sid, fs.slice(0, 10));
+    }
+  }
 
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
@@ -288,11 +349,19 @@ function computeActivityTrend(
     }
   }
 
-  return Array.from(buckets.entries()).map(([date, b]) => ({
-    date,
-    sessions: b.sessions.size,
-    mints: b.mints,
-  }));
+  return Array.from(buckets.entries()).map(([date, b]) => {
+    let newInstalls = 0;
+    for (const sid of b.sessions) {
+      if (firstSeenDay.get(sid) === date) newInstalls += 1;
+    }
+    return {
+      date,
+      sessions: b.sessions.size,
+      mints: b.mints,
+      newInstalls,
+      returningInstalls: b.sessions.size - newInstalls,
+    };
+  });
 }
 
 function tallyDifficulty(
@@ -391,18 +460,24 @@ export async function getPublicStats(
     // 3. Unique minter wallets — fetch player column, dedupe in JS.
     //    Count-distinct via PostgREST requires an RPC; for current
     //    volume (low thousands at most), in-app dedupe is acceptable.
-    //    Explicit range bypasses the silent 1000-row default cap.
+    //    Explicit range bypasses the silent 1000-row default cap, and the
+    //    explicit ORDER makes truncation deterministic: without it PostgREST
+    //    may return ANY 10k rows, so the "distinct" count would drift between
+    //    refreshes with no way to tell. Newest-first keeps the recent window
+    //    whole and drops only the old tail.
     supabase
       .from("victories")
       .select("player")
+      .order("minted_at", { ascending: false })
       .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
       DataResult<{ player: string }>
     >,
-    // 4. Difficulty distribution — same defensive range so the tally
+    // 4. Difficulty distribution — same defensive range + order so the tally
     //    matches `totalVictories` instead of silently truncating.
     supabase
       .from("victories")
       .select("difficulty")
+      .order("minted_at", { ascending: false })
       .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
       DataResult<{ difficulty: number }>
     >,
@@ -423,6 +498,7 @@ export async function getPublicStats(
       .from("analytics_events")
       .select("session_id")
       .gte("created_at", since7d)
+      .order("created_at", { ascending: false })
       .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
       DataResult<{ session_id: string }>
     >,
@@ -434,6 +510,7 @@ export async function getPublicStats(
       .from("analytics_events")
       .select("session_id, created_at")
       .gte("created_at", since30d)
+      .order("created_at", { ascending: false })
       .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
       DataResult<{ session_id: string; created_at: string }>
     >,
@@ -464,6 +541,7 @@ export async function getPublicStats(
       .from("victories")
       .select("minted_at")
       .gte("minted_at", since30d)
+      .order("minted_at", { ascending: false })
       .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
       DataResult<{ minted_at: string }>
     >,
@@ -502,10 +580,10 @@ export async function getPublicStats(
     Array.isArray((mintsTrendRes.value as DataResult<{ minted_at: string }>)?.data)
       ? (mintsTrendRes.value as DataResult<{ minted_at: string }>).data!
       : null;
-  const activityTrend30d =
-    sessionTrendRows == null && mintTrendRows == null
-      ? []
-      : computeActivityTrend(sessionTrendRows, mintTrendRows);
+  // NOTE: the activity trend is assembled further down, after the
+  // new-vs-returning read. Query ORDER is load-bearing for the tests, which
+  // sequence `from()` fixtures positionally — new reads append at the end so
+  // the existing indices never shift.
 
   // §8 on-chain block. Computed as its own statement (NOT inline in the
   // return literal — that tips TS over "type instantiation excessively
@@ -524,6 +602,7 @@ export async function getPublicStats(
     .select("event, props")
     .in("event", [...CHALLENGE_EVENTS])
     .gte("created_at", since30d)
+    .order("created_at", { ascending: false })
     .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<{
     data: Array<{ event: string; props: unknown }> | null;
     error: unknown;
@@ -549,6 +628,7 @@ export async function getPublicStats(
       .from("analytics_events")
       .select("event, session_id, created_at, country")
       .gte("created_at", since30d)
+      .order("created_at", { ascending: false })
       .range(0, DISTINCT_QUERY_MAX_ROWS),
   ) as unknown as Promise<{
     data: Array<{
@@ -568,6 +648,7 @@ export async function getPublicStats(
       .from("session_first_seen")
       .select("session_id, first_seen")
       .gte("first_seen", since30d)
+      .order("first_seen", { ascending: false })
       .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as {
       eq: (col: string, val: string) => unknown;
     };
@@ -582,6 +663,71 @@ export async function getPublicStats(
     (res) => (res.error || !Array.isArray(res.data) ? null : res.data),
     () => null,
   );
+
+  // Access funnel — its own narrow read rather than a slice of
+  // `filteredEvents30d`. The door is the highest-value signal on the page and
+  // must not compete for the 10k row budget with every incidental event; an
+  // `.in(...)` read keeps it whole long after the broad scan starts truncating.
+  const accessRows = await (applyEventFilters(
+    supabase
+      .from("analytics_events")
+      .select("event, session_id")
+      .in("event", [...ALL_ACCESS_ALIASES])
+      .gte("created_at", since30d)
+      .order("created_at", { ascending: false })
+      .range(0, DISTINCT_QUERY_MAX_ROWS),
+  ) as unknown as Promise<{
+    data: Array<{ event: string; session_id: string }> | null;
+    error: unknown;
+  }>).then(
+    (res) => (res.error || !Array.isArray(res.data) ? null : res.data),
+    () => null,
+  );
+
+  const accessFunnel: AccessFunnel | null = accessRows
+    ? computeAccessFunnel(accessRows)
+    : null;
+
+  // New-vs-returning split for the trend. GLOBAL (unfiltered) because the
+  // trend is a headline series — the surface/container filters only touch the
+  // observability blocks. Its own await, outside the allSettled tuple: a 15th
+  // element tips TS over "type instantiation excessively deep". A failure here
+  // degrades to "everything reads as returning" rather than blanking the
+  // chart, so the total series survives a partial outage.
+  const trendFirstSeenRows = await (supabase
+    .from("session_first_seen")
+    .select("session_id, first_seen")
+    .gte("first_seen", since30d)
+    .order("first_seen", { ascending: false })
+    .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<{
+    data: Array<{ session_id: string; first_seen: string }> | null;
+    error: unknown;
+  }>).then(
+    (res) => (res.error || !Array.isArray(res.data) ? null : res.data),
+    () => null,
+  );
+
+  const activityTrend30d =
+    sessionTrendRows == null && mintTrendRows == null
+      ? []
+      : computeActivityTrend(sessionTrendRows, mintTrendRows, trendFirstSeenRows);
+
+  // Integrity ledger — every ranged read that came back exactly full. Named
+  // per read so the page can say WHICH numbers became lower bounds instead of
+  // a blanket disclaimer nobody can act on.
+  const truncated: string[] = [];
+  const noteIfTruncated = (label: string, rows: unknown) => {
+    if (hitCeiling(rows)) truncated.push(label);
+  };
+  noteIfTruncated("unique minters (lifetime)", extractRows(uniqueMintersRes as PromiseSettledResult<DataResult<{ player: string }>>));
+  noteIfTruncated("difficulty split (lifetime)", extractRows(difficultyRes as PromiseSettledResult<DataResult<{ difficulty: number }>>));
+  noteIfTruncated("active sessions (7d)", extractRows(sessions7dRes as PromiseSettledResult<DataResult<{ session_id: string }>>));
+  noteIfTruncated("active sessions + trend (30d)", sessionTrendRows);
+  noteIfTruncated("progress saves trend (30d)", mintTrendRows);
+  noteIfTruncated("new vs returning (30d)", trendFirstSeenRows);
+  noteIfTruncated("activation / countries (30d)", filteredEvents30d);
+  noteIfTruncated("retention cohorts (30d)", cohortRows);
+  noteIfTruncated("access funnel (30d)", accessRows);
 
   const activation: ActivationFunnel | null = filteredEvents30d
     ? computeActivation(
@@ -659,5 +805,7 @@ export async function getPublicStats(
     activation,
     topCountries,
     retention,
+    accessFunnel,
+    dataIntegrity: { truncated, rowCeiling: ROW_CEILING },
   };
 }

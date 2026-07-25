@@ -13,6 +13,7 @@ import {
   type SurfaceFilter,
 } from "@/lib/stats/filters";
 import type {
+  AccessFunnel,
   ActivationFunnel,
   CountryCount,
   Retention,
@@ -24,6 +25,16 @@ const ACTIVATION_STEP_LABELS: Record<string, string> = {
   exercise_started: "Exercise started",
   exercise_completed: "Exercise completed",
   daily_focus_completed: "Daily Focus done",
+};
+
+/** Plain-language step names. The dashboard is read by people deciding what to
+ *  build next, not by whoever named the events. */
+const ACCESS_STEP_LABELS: Record<string, string> = {
+  gate_viewed: "Login screen shown",
+  login_started: "Tapped ENTER",
+  login_succeeded: "Signed in",
+  wallet_ready: "Wallet ready",
+  first_exercise_completed: "First exercise finished",
 };
 
 const regionNames =
@@ -102,6 +113,48 @@ function FilterControls({ filters }: { filters: StatsFilters }) {
           ),
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Access funnel: door → value. Every step is scoped to the sessions that saw
+ * the login screen, so the bars are monotonic by construction and each gap is
+ * a real drop. Absolute counts, same as the activation funnel — a rate over
+ * three sessions reads as 33% and means nothing.
+ */
+function AccessFunnelChart({ funnel }: { funnel: AccessFunnel }) {
+  const top = Math.max(1, ...funnel.steps.map((s) => s.sessions));
+  return (
+    <div className="flex flex-col gap-1.5">
+      {funnel.steps.map((s) => {
+        const pct = (s.sessions / top) * 100;
+        return (
+          <div key={s.step} className="flex items-center gap-2 text-xs">
+            <span
+              className="w-40 shrink-0"
+              style={{ color: "var(--paper-text-muted)" }}
+            >
+              {ACCESS_STEP_LABELS[s.step] ?? s.step}
+            </span>
+            <span
+              className="h-4 rounded"
+              style={{
+                width: `${Math.max(pct, s.sessions > 0 ? 3 : 0)}%`,
+                minWidth: s.sessions > 0 ? "0.5rem" : 0,
+                background: "rgba(191, 106, 74, 0.82)",
+              }}
+              aria-hidden
+            />
+            <span
+              className="tabular-nums font-semibold"
+              style={{ color: "var(--paper-text)" }}
+            >
+              {nf(s.sessions)}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -242,6 +295,11 @@ type StatsPageProps = {
 // competing with the page background.
 const TREND_SESSIONS_ACCENT = "rgba(58, 128, 148, 0.78)";
 const TREND_MINTS_ACCENT = "rgba(217, 119, 87, 0.9)";
+/** New vs returning are two halves of one quantity, so they share the sessions
+ *  hue and separate by weight — not by two unrelated colors that would read as
+ *  two unrelated metrics. */
+const TREND_NEW_ACCENT = "rgba(58, 128, 148, 0.9)";
+const TREND_RETURNING_ACCENT = "rgba(58, 128, 148, 0.42)";
 
 // Segment colors for the stacked difficulty bar (Palette B —
 // "brand-tone evolutiva"): sage / mustard / terracotta. The prior
@@ -590,6 +648,28 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
         <FilterControls filters={stats.filters} />
       </header>
 
+      {/* Integrity notice — above every number, not buried in methodology. A
+          read that stopped at the ceiling looks exactly like a quiet decline,
+          and that is the one misreading this page cannot afford. Silent when
+          every read came back whole, which is the normal case. */}
+      {stats.dataIntegrity.truncated.length > 0 ? (
+        <p
+          className="rounded-lg px-3 py-2 text-[0.6875rem] leading-snug"
+          style={{
+            background: "rgba(217, 119, 87, 0.12)",
+            color: "var(--paper-text-muted)",
+          }}
+        >
+          Some reads hit the {nf(stats.dataIntegrity.rowCeiling)}-row ceiling,
+          so these are lower bounds, not exact counts:{" "}
+          <span style={{ color: "var(--paper-text)" }}>
+            {stats.dataIntegrity.truncated.join(", ")}
+          </span>
+          . The most recent days are always complete — truncation drops the
+          oldest rows first.
+        </p>
+      ) : null}
+
       {/* Executive Snapshot — vital-signs cockpit. Three hero tiles
           deliver scale at a glance: total minted, weekly sessions,
           monthly mints. The Hero subtitle above already orients the
@@ -616,24 +696,25 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
         />
       </section>
 
-      {/* Acquisition & Activation — the core "¿Llegan? ¿Entienden?
-          ¿Entrenan? ¿Vuelven?" block. All four sub-blocks honor the
-          surface/container filters above. Absolute counts, no rates on
-          the funnel (a single session reads as 100% at early volume). */}
+      {/* The product question this whole block answers:
+          "Do people get in, reach value fast, and come back to build the
+          21-day habit?" — read in that order: the door (access funnel), the
+          first session (activation funnel), and the return (retention).
+          All sub-blocks honor the surface/container filters above. Absolute
+          counts, no rates (a single session reads as 100% at early volume). */}
       <section className="space-y-5">
         <div>
           <h3
             className="mb-1 text-base font-bold md:text-lg"
             style={{ color: "var(--paper-text)" }}
           >
-            Acquisition &amp; Activation
+            Do they get in, reach value, and come back?
           </h3>
           <p
             className="text-[0.6875rem] leading-tight"
             style={{ color: "var(--paper-text-subtle)" }}
           >
-            App opens, the activation funnel, top countries, and D1/D7
-            retention — last 30 days
+            The door, the first session, and the return — last 30 days
             {stats.filters.surface !== "all" || stats.filters.container !== "all"
               ? `, filtered by ${[
                   stats.filters.surface !== "all" ? stats.filters.surface : null,
@@ -657,13 +738,40 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
           />
         </div>
 
+        {/* 1 — The door. First because it is the only mandatory step: since
+            the gate shipped there is no guest path, so anyone lost here is
+            lost entirely, and no later number can recover them. */}
+        {stats.accessFunnel ? (
+          <div>
+            <p
+              className="mb-2 text-[0.625rem] font-semibold uppercase tracking-wide"
+              style={{ color: "var(--paper-text-subtle)" }}
+            >
+              1 · Do they get in? · gate sessions, web only
+            </p>
+            <AccessFunnelChart funnel={stats.accessFunnel} />
+            {stats.accessFunnel.failedSessions > 0 ? (
+              <p
+                className="mt-2 text-[0.6875rem]"
+                style={{ color: "var(--paper-text-subtle)" }}
+              >
+                {nf(stats.accessFunnel.failedSessions)} of these sessions hit a
+                login error at least once (they may still have signed in after
+                retrying).
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
+        {/* 2 — The first session, for everyone who is already inside
+            (MiniPay included, which never sees the gate above). */}
         {stats.activation ? (
           <div>
             <p
               className="mb-2 text-[0.625rem] font-semibold uppercase tracking-wide"
               style={{ color: "var(--paper-text-subtle)" }}
             >
-              Activation funnel · distinct sessions
+              2 · Do they reach value? · distinct sessions
             </p>
             <ActivationFunnelChart funnel={stats.activation} />
           </div>
@@ -684,7 +792,7 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
               className="mb-2 text-[0.625rem] font-semibold uppercase tracking-wide"
               style={{ color: "var(--paper-text-subtle)" }}
             >
-              Retention
+              3 · Do they come back?
             </p>
             {stats.retention ? (
               <RetentionCards retention={stats.retention} />
@@ -707,8 +815,16 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
       {stats.activityTrend30d.length > 0 ? (() => {
         const sessions = stats.activityTrend30d.map((b: DailyBucket) => b.sessions);
         const mints = stats.activityTrend30d.map((b: DailyBucket) => b.mints);
+        const newInstalls = stats.activityTrend30d.map(
+          (b: DailyBucket) => b.newInstalls,
+        );
+        const returningInstalls = stats.activityTrend30d.map(
+          (b: DailyBucket) => b.returningInstalls,
+        );
         const sessionsTotal = sessions.reduce((a, b) => a + b, 0);
         const mintsTotal = mints.reduce((a, b) => a + b, 0);
+        const newTotal = newInstalls.reduce((a, b) => a + b, 0);
+        const returningTotal = returningInstalls.reduce((a, b) => a + b, 0);
         const first = stats.activityTrend30d[0]?.date ?? "";
         const last =
           stats.activityTrend30d[stats.activityTrend30d.length - 1]?.date ?? "";
@@ -740,6 +856,25 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
                 total={mintsTotal}
                 values={mints}
                 accent={TREND_MINTS_ACCENT}
+                rangeFrom={first}
+                rangeTo={last}
+              />
+              {/* The same active installs as the sessions panel, partitioned
+                  by whether today is their first day ever. The two panels
+                  always add back up to it — growth and habit read apart. */}
+              <TrendPanel
+                label="New installs"
+                total={newTotal}
+                values={newInstalls}
+                accent={TREND_NEW_ACCENT}
+                rangeFrom={first}
+                rangeTo={last}
+              />
+              <TrendPanel
+                label="Returning installs"
+                total={returningTotal}
+                values={returningInstalls}
+                accent={TREND_RETURNING_ACCENT}
                 rangeFrom={first}
                 rangeTo={last}
               />
