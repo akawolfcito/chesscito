@@ -25,6 +25,7 @@ const REQUIRED_ASSET_KEYS: readonly ThemeAssetKey[] = [
   "hub.tour-title",
   "hub.guide",
   "hub.21-day-icon",
+  "hub.focus-passport-calendar",
   "hub.avatar-lite",
   "hub.pro-chip",
   "hub.mastery.piece.rook",
@@ -271,7 +272,9 @@ describe("theme-registry", () => {
       // +1: payments.offer-bg, the Season Pass offer sheet's dedicated bg
       // (panel-bg2), split off shared.panel-bg so it stays panel-bg1 elsewhere.
       // +1: bg.login-learn, the Learn web access gate wallpaper (2026-07-25).
-      learn: 37,
+      // +1: hub.focus-passport-calendar, independently editable from the
+      // Shield and Training assets reused by the Challenge Card.
+      learn: 38,
       // +2 over the original 21: arena.rival-mara and shop.pro, both
       // formerly uncataloged "exceptions". +1: coach.share-trophy, the
       // dedicated Match Review share icon (2026-07-22), split off shared.trophy-epic.
@@ -300,6 +303,7 @@ describe("theme-registry", () => {
     expect(THEME_SLOT_SURFACES["hub.portal"]).toBe("full-legacy");
     expect(THEME_SLOT_SURFACES["hub.guide"]).toBe("full-legacy");
     expect(THEME_SLOT_SURFACES["hub.21-day-icon"]).toBe("learn");
+    expect(THEME_SLOT_SURFACES["hub.focus-passport-calendar"]).toBe("learn");
     expect(THEME_SLOT_SURFACES["hub.shop-icon"]).toBe("play");
     expect(UNKNOWN_THEME_SLOT_KEYS).toEqual([
       "hub.principal-button",

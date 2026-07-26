@@ -8744,10 +8744,18 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .challenge-card-stat-icon {
-  width: 0.85rem;
-  height: 0.85rem;
+  display: inline-flex;
+  width: 1.05rem;
+  height: 1.05rem;
   flex: 0 0 auto;
   color: #9a6a2e;
+}
+
+.challenge-card-stat-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 /* The gold `.challenge-card-join` skin lived here. Removed 2026-07-25: the

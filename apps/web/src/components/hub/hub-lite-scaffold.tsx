@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
@@ -84,6 +85,7 @@ export function HubLiteScaffold({
 }: HubLiteScaffoldProps) {
   const t = useTranslations("HUB_LITE_COPY");
   const tHud = useTranslations("HUD_COPY");
+  const [dailyOpen, setDailyOpen] = useState(false);
 
   return (
     <main className="hub-lite-scaffold" aria-label={t("rootAriaLabel")}>
@@ -151,7 +153,11 @@ export function HubLiteScaffold({
             }`}
             data-tour-target="daily"
           >
-            <HubDailyTile variant="corner-icon" />
+            <HubDailyTile
+              variant="corner-icon"
+              open={dailyOpen}
+              onOpenChange={setDailyOpen}
+            />
           </div>
         </div>
       </header>
@@ -184,9 +190,10 @@ export function HubLiteScaffold({
           seasonPass={seasonPass}
           onJoinChallenge={onJoinChallenge}
           shields={shields}
-          // Tapping the flame/streak block routes into today's focus, same as
-          // Start Focus (ritual entry point — UX spec §5 clickability). Now
-          // also the handler behind the card's own primary CTA.
+          // Tapping the flame/streak block opens today's Daily, same as the
+          // corner gift, through the SAME mounted HubDailyTile. The
+          // primary CTA intentionally keeps its piece-specific Exercises route.
+          onPassportTap={() => setDailyOpen(true)}
           onFocusTap={primaryFocus.onPress}
           onReplayTour={onReplayTour}
         />

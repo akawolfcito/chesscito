@@ -3449,6 +3449,7 @@ export const CHALLENGE_CARD_COPY = {
   activeBadge: "ACTIVE",
   includedWithPro: "PRO Benefit included",
   trainingPassStat: "Training Pass",
+  specialTrainingStat: "Special Training",
   accessActive: "Access active",
   dayProgress: "Day {day} / {total}",
   daysStat: "days",
@@ -3459,7 +3460,7 @@ export const CHALLENGE_CARD_COPY = {
   shieldsBonus: "+{count}",
   shieldsStat: "Shields",
   shieldsCount: "{count}",
-  shieldsOwned: "{count}/{max}",
+  shieldsOwned: "{count}/{max} Shields",
   /** Daily Streak, canonical wording (docs/product/2026-07-23-combo-streak-
    *  vocabulary.md). NOT "Combo" — Combo is the session metric and stays
    *  exclusive to the exercise overlay / drawer. */
@@ -3488,7 +3489,7 @@ export const CHALLENGE_CARD_COPY = {
   tomorrowNote: "Training stays open. Keep improving your scores.",
   dotFilledAria: "Day {index} done",
   dotEmptyAria: "Day {index}",
-  focusTapAria: "Continue today's focus",
+  focusTapAria: "Open today's Daily Tactic",
   // SeasonPassSheet offer state — the checkout must complete the same promise
   // that starts in onboarding and continues in the ChallengeCard: a daily habit
   // via the Focus Passport, not "volume + consumables". The +Shields line is the

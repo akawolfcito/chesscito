@@ -28,6 +28,25 @@ const WEEK_FLAME: Record<FocusWeekDayState, PassportSlotKind> = {
   future: "gray",
 };
 
+/** Legacy stat glyphs retained for the Season Pass celebration. The Focus
+ *  Passport benefits below resolve their art through Theme Builder slots. */
+export function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 16 16" className="challenge-card-stat-icon" aria-hidden="true">
+      <rect x="2" y="3" width="12" height="11" rx="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M2 6h12M5 2v3M11 2v3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function ShieldIcon() {
+  return (
+    <svg viewBox="0 0 16 16" className="challenge-card-stat-icon" aria-hidden="true">
+      <path d="M8 1.5l5 2v4c0 3.2-2.1 5.2-5 6.5C5.1 12.7 3 10.7 3 7.5v-4l5-2z" fill="currentColor" />
+    </svg>
+  );
+}
+
 /** The four states the single primary CTA can be in. */
 type CtaState = "join" | "start" | "tomorrow" | "complete";
 
@@ -46,8 +65,11 @@ export type ChallengeCardProps = {
   /** null when the pass is active (no purchase CTA, no glow). */
   onJoinChallenge: (() => void) | null;
   /** Optional: makes the flame/streak block a tap target into today's focus
-   *  (same destination as Start Focus). Omitted → the block is static. */
+   *  exercise route. Reserved for the state-driven primary CTA. */
   onFocusTap?: () => void;
+  /** Opens the Hub's canonical Daily Tactic sheet from the Focus Passport.
+   *  Loading/completed passports remain static even when this is provided. */
+  onPassportTap?: () => void;
   /** Optional: replays the intro mini-tour from the Focus Passport `?`.
    *  Omitted → no help chip renders. Replaying never touches progress,
    *  rewards or the "tour seen" flag. */
@@ -62,67 +84,6 @@ export type ChallengeCardProps = {
   shields?: { count: number; max: number };
 };
 
-export function CalendarIcon() {
-  return (
-    <svg viewBox="0 0 16 16" className="challenge-card-stat-icon" aria-hidden="true">
-      <rect x="2" y="3" width="12" height="11" rx="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M2 6h12M5 2v3M11 2v3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-export function ShieldIcon() {
-  return (
-    <svg viewBox="0 0 16 16" className="challenge-card-stat-icon" aria-hidden="true">
-      <path d="M8 1.5l5 2v4c0 3.2-2.1 5.2-5 6.5C5.1 12.7 3 10.7 3 7.5v-4l5-2z" fill="currentColor" />
-    </svg>
-  );
-}
-function TagIcon() {
-  return (
-    <svg viewBox="0 0 16 16" className="challenge-card-stat-icon" aria-hidden="true">
-      <path d="M2.5 2.5h5l6 6-5 5-6-6v-5z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-      <circle cx="5.2" cy="5.2" r="1.1" fill="currentColor" />
-    </svg>
-  );
-}
-function TicketIcon() {
-  return (
-    <svg viewBox="0 0 16 16" className="challenge-card-stat-icon" aria-hidden="true">
-      <path
-        d="M2.5 5.4h11v1.3a1.3 1.3 0 0 0 0 2.6v1.3h-11V9.3a1.3 1.3 0 0 0 0-2.6V5.4z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M8 6.2l0.62 1.45 1.57 0.14-1.19 1.03 0.35 1.54L8 9.6l-1.35 0.8 0.35-1.54-1.19-1.03 1.57-0.14z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-function ShieldCheckIcon() {
-  return (
-    <svg viewBox="0 0 16 16" className="challenge-card-stat-icon" aria-hidden="true">
-      <path
-        d="M8 1.5l5 2v4c0 3.2-2.1 5.2-5 6.5C5.1 12.7 3 10.7 3 7.5v-4l5-2z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M5.6 7.7l1.6 1.6 3.1-3.4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 function CrownIcon() {
   return (
     <svg viewBox="0 0 16 16" className="challenge-card-active-chip-crown" aria-hidden="true">
@@ -151,6 +112,7 @@ export function ChallengeCard({
   seasonPass,
   onJoinChallenge,
   onFocusTap,
+  onPassportTap,
   onReplayTour,
   today,
   shields,
@@ -201,6 +163,13 @@ export function ChallengeCard({
       : focusPassport.todayDone
         ? "tomorrow"
         : "start";
+  // Daily availability belongs to the passport, not to the commercial pass
+  // request. A resolved pending Daily must stay tappable while Season Pass
+  // status is still loading.
+  const canOpenPassport =
+    Boolean(onPassportTap) &&
+    !focusPassport.isLoading &&
+    !focusPassport.todayDone;
 
   return (
     <section
@@ -310,13 +279,13 @@ export function ChallengeCard({
                 </span>
               </>
             );
-            return onFocusTap ? (
+            return canOpenPassport ? (
               <button
                 type="button"
                 className="challenge-card-passport challenge-card-passport--tap"
                 data-testid="challenge-progress"
                 data-done={done}
-                onClick={onFocusTap}
+                onClick={onPassportTap}
                 aria-label={t("focusTapAria")}
               >
                 {inner}
@@ -334,58 +303,50 @@ export function ChallengeCard({
         </div>
       </div>
 
-      {/* Bottom row — inline stats + Join (offer). Fixed structure so the panel
-          height never changes across loading / offer / active (no flash). */}
+      {/* Honest benefits only: duration, the applicable Shield figure and
+          Special Training. Price lives exclusively on the CTA badge. */}
       <div className="challenge-card-bottom">
         <div className="challenge-card-stats" data-testid="challenge-stats">
           <span className="challenge-card-stat">
-            <CalendarIcon />
+            <ThemeAssetPicture
+              slot="hub.focus-passport-calendar"
+              pictureClassName="challenge-card-stat-icon"
+              alt=""
+              aria-hidden="true"
+              width={102}
+              height={115}
+              draggable={false}
+            />
             {durationDays} {t("daysStat")}
           </span>
-          <span className="challenge-card-stat">
-            {isActive && seasonPass.source === "pro" ? (
-              <>
-                <TicketIcon />
-                {t("trainingPassStat")}
-              </>
-            ) : (
-              <>
-                <ShieldIcon />
-                {t("shieldsBonus", { count: challenge.shieldBonus })} {t("shieldsStat").toLowerCase()}
-              </>
-            )}
-          </span>
-          <span className="challenge-card-stat">
-            {isActive ? (
-              seasonPass.source === "pro" ? (
-                <>
-                  <ShieldCheckIcon />
-                  <span data-testid="challenge-pro-coverage">{t("accessActive")}</span>
-                </>
-              ) : (
-                <span data-testid="challenge-day">
-                  {`${seasonPass.dayOfChallenge}/${durationDays} ${t("dayStat")}`}
-                </span>
-              )
-            ) : (
-              <>
-                <TagIcon />
-                {challenge.priceLabel}
-              </>
-            )}
-          </span>
-          {/* Shields OWNED (live balance) — only once the pass is ACTIVE.
-              In the offer state the row already advertises the `+3` purchase
-              bonus, and "+3 shields … 0/3" side by side reads as a
-              contradiction: one is what you will receive, the other what you
-              hold. Showing the balance only after the purchase removes the
-              clash without hiding anything the player needs to decide. */}
-          {shields && isActive ? (
+          {!isActive || shields ? (
             <span className="challenge-card-stat" data-testid="challenge-shields">
-              <ShieldCheckIcon />
-              {t("shieldsOwned", { count: shields.count, max: shields.max })}
+              <ThemeAssetPicture
+                slot="shared.shield"
+                pictureClassName="challenge-card-stat-icon"
+                alt=""
+                aria-hidden="true"
+                width={256}
+                height={243}
+                draggable={false}
+              />
+              {isActive && shields
+                ? t("shieldsOwned", { count: shields.count, max: shields.max })
+                : `${t("shieldsBonus", { count: challenge.shieldBonus })} ${t("shieldsStat")}`}
             </span>
           ) : null}
+          <span className="challenge-card-stat">
+            <ThemeAssetPicture
+              slot="hub.training-icon"
+              pictureClassName="challenge-card-stat-icon"
+              alt=""
+              aria-hidden="true"
+              width={256}
+              height={211}
+              draggable={false}
+            />
+            {t("specialTrainingStat")}
+          </span>
         </div>
         {/* ── The single primary CTA ──────────────────────────────────────
             Exactly one, chosen by `ctaState`. `join` and `start` are real

@@ -13,8 +13,22 @@ import { ThemeVariantOverride } from "@/lib/themes/theme-variant-provider";
 // Heavy leaves (wagmi / theme / routing) are exercised in their own suites;
 // stub them so this test stays a pure composition assertion.
 vi.mock("@/components/hub/hub-daily-tile", () => ({
-  HubDailyTile: ({ variant }: { variant?: string }) => (
-    <div data-testid="daily-tile-stub" data-variant={variant} />
+  HubDailyTile: ({
+    variant,
+    open,
+    onOpenChange,
+  }: {
+    variant?: string;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+  }) => (
+    <button
+      type="button"
+      data-testid="daily-tile-stub"
+      data-variant={variant}
+      data-open={open}
+      onClick={() => onOpenChange?.(true)}
+    />
   ),
 }));
 vi.mock("@/components/hub/language-chip", () => ({
@@ -210,6 +224,38 @@ describe("<HubLiteScaffold>", () => {
     expect(cta).toHaveAttribute("data-cta-state", "start");
     fireEvent.click(cta);
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens the same controlled Daily from the Focus Passport without invoking Exercises", () => {
+    const onPress = vi.fn();
+    render(
+      <HubLiteScaffold
+        {...baseProps({
+          focusPassport: {
+            streak: 2,
+            totalCompleted: 2,
+            todayDone: false,
+            isLoading: false,
+          },
+          primaryFocus: {
+            onPress,
+            contentLoop: action("daily-pending"),
+            isHydrated: true,
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByTestId("daily-tile-stub")).toHaveAttribute(
+      "data-open",
+      "false",
+    );
+    fireEvent.click(screen.getByTestId("challenge-progress"));
+    expect(screen.getByTestId("daily-tile-stub")).toHaveAttribute(
+      "data-open",
+      "true",
+    );
+    expect(onPress).not.toHaveBeenCalled();
   });
 
   it("card CTA: Enter and Space activate the same native button action", async () => {

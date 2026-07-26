@@ -106,6 +106,7 @@ export type ThemeAssetKey =
   | "hub.tour-title"
   | "hub.guide"
   | "hub.21-day-icon"
+  | "hub.focus-passport-calendar"
   | "hub.avatar-lite"
   // hub.pro-chip: the PRO status badge — default = inactive (upsell), pro = active
   | "hub.pro-chip"
@@ -353,7 +354,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
       },
       "hub.training-icon": {
         default: "/art/new-icons-chesscito/training-icon-v1",
-        usedIn: ["Full Hub — Special Training/Mate tile · HubArenaTile · route: /", "Exercises action row — Special Training bridge pedestal · MiniArenaBridgeSlot · route: /exercises", "Progression — Special Training unlock celebration · UnlockOverlay · exercise completion overlay", "Shared map — training-icon-v1 resolves through ActionRowIcon", "↳ components/hub/hub-arena-tile.tsx", "↳ components/mini-arena/mini-arena-bridge-slot.tsx", "↳ components/progression/unlock-overlay.tsx", "↳ components/action-row/action-row-icon.tsx"],
+        usedIn: ["Learn Hub — Focus Passport Special Training benefit · ChallengeCard · route: /", "Full Hub — Special Training/Mate tile · HubArenaTile · route: /", "Exercises action row — Special Training bridge pedestal · MiniArenaBridgeSlot · route: /exercises", "Progression — Special Training unlock celebration · UnlockOverlay · exercise completion overlay", "Shared map — training-icon-v1 resolves through ActionRowIcon", "↳ components/hub/challenge-card.tsx", "↳ components/hub/hub-arena-tile.tsx", "↳ components/mini-arena/mini-arena-bridge-slot.tsx", "↳ components/progression/unlock-overlay.tsx", "↳ components/action-row/action-row-icon.tsx"],
       },
       "hub.daily-icon": {
         default: "/art/new-icons-chesscito/daily-icon-v1",
@@ -390,6 +391,10 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "hub.21-day-icon": {
         default: "/art/21-day-icon",
         usedIn: ["Hub — 21-day challenge icon", "↳ components/hub/challenge-card.tsx"],
+      },
+      "hub.focus-passport-calendar": {
+        default: "/art/hub-icns/calendar-icon",
+        usedIn: ["Learn Hub — Focus Passport duration benefit · ChallengeCard · route: /", "↳ components/hub/challenge-card.tsx"],
       },
       // default = free lite avatar; pro = the PRO-skinned avatar. hub-lite-scaffold
       // swaps by isPro — this is a variant pair, not two separate slots.
@@ -474,7 +479,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
       },
       "shared.shield": {
         default: "/art/redesign/icons/shield",
-        usedIn: ["Arena", "Exercises", "↳ components/arena/arena-hud.tsx", "↳ components/exercises/exercise-drawer.tsx", "↳ components/exercises/fail-rescue-modal.tsx"],
+        usedIn: ["Learn Hub — Focus Passport Shield benefit · ChallengeCard · route: /", "Arena", "Exercises", "↳ components/hub/challenge-card.tsx", "↳ components/arena/arena-hud.tsx", "↳ components/exercises/exercise-drawer.tsx", "↳ components/exercises/fail-rescue-modal.tsx"],
       },
       "season.story-arrow": {
         default: "/art/season/arrow-right",
@@ -979,6 +984,7 @@ const LEARN_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "hub.tour-hero",
   "hub.tour-title",
   "hub.21-day-icon",
+  "hub.focus-passport-calendar",
   "payments.celebration-bg",
   "payments.offer-bg",
   "brand.ring-start-focus",

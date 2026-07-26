@@ -73,16 +73,24 @@ type SolveStreakType = "first" | "extended" | "reset";
  *  completed today, mirrors streak count as the floating badge. */
 export function HubDailyTile({
   variant = "tile",
+  open: controlledOpen,
+  onOpenChange,
 }: {
   /** `tile` (Full right-rail, default) or `corner-icon` (Lite top-right gift,
    *  P1-B). Only the trigger presentation changes; the sheet + overlays + state
    *  machine are identical across variants. */
   variant?: HubDailyTriggerVariant;
+  /** Optional controlled sheet state. Lite Hub uses this so the corner gift
+   *  and Focus Passport open this same Daily instance. Omitted preserves the
+   *  Full Hub's existing self-contained behavior. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 } = {}) {
   const t = useTranslations("HUB_ACTION_RAIL_COPY");
   const [hydrated, setHydrated] = useState(false);
   const [progress, setProgress] = useState<DailyProgress>(DEFAULT_PROGRESS);
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
   const [today, setToday] = useState<string>(() => todayUtc());
   const [solveResult, setSolveResult] = useState<{
     streak: number;
@@ -114,6 +122,13 @@ export function HubDailyTile({
 
   const puzzleData = getDailyTactic(today);
   const completed = isCompletedToday(today, progress);
+
+  function requestOpenChange(nextOpen: boolean) {
+    if (controlledOpen === undefined) {
+      setUncontrolledOpen(nextOpen);
+    }
+    onOpenChange?.(nextOpen);
+  }
 
   useEffect(() => {
     setHydrated(true);
@@ -299,7 +314,7 @@ export function HubDailyTile({
         iconSlot="hub.daily-icon"
         label={t("dailyLabel")}
         ariaLabel={ariaLabel}
-        onClick={() => setOpen(true)}
+        onClick={() => requestOpenChange(true)}
         disabled={completed}
         badge={
           <>
@@ -346,7 +361,7 @@ export function HubDailyTile({
       <DailyTacticSheet
         open={open}
         onOpenChange={(nextOpen) => {
-          setOpen(nextOpen);
+          requestOpenChange(nextOpen);
           if (!nextOpen) {
             // After sheet closes: if first Focus Day just earned, show achievement overlay
             // The achievement overlay's "Continue" then shows the Welcome Package

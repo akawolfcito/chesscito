@@ -11,7 +11,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl as render } from "@/test-utils/render-with-intl";
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 
 vi.mock("@/lib/haptics", () => ({ hapticTap: () => {} }));
 vi.mock("@/lib/pro/use-is-pro-active", () => ({
@@ -74,6 +74,26 @@ describe("HubDailyTile availability signal", () => {
     // (checkRealTimersCallback) — filter the harness, keep the app.
     expect(appIntervalCalls(spy)).toHaveLength(0);
     spy.mockRestore();
+  });
+
+  it("supports an optional controlled Daily sheet while preserving trigger notifications", async () => {
+    const onOpenChange = vi.fn();
+    const view = render(
+      <HubDailyTile open={false} onOpenChange={onOpenChange} />,
+    );
+    const status = await screen.findByTestId("hub-tile-status");
+    const trigger = status.closest("button");
+    expect(trigger).not.toBeNull();
+
+    fireEvent.click(trigger!);
+    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(screen.queryByTestId("daily-tactic-sheet")).toBeNull();
+
+    view.rerender(<HubDailyTile open onOpenChange={onOpenChange} />);
+    expect(await screen.findByTestId("daily-tactic-sheet")).toBeInTheDocument();
+
+    view.rerender(<HubDailyTile open={false} onOpenChange={onOpenChange} />);
+    expect(screen.queryByTestId("daily-tactic-sheet")).toBeNull();
   });
 });
 

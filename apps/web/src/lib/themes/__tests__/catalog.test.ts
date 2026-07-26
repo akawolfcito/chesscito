@@ -118,6 +118,7 @@ describe("buildThemeCatalog", () => {
     expect(slots.get("hub.avatar-lite")?.surface).toBe("shared");
     expect(slots.get("hub.portal")?.surface).toBe("full-legacy");
     expect(slots.get("hub.21-day-icon")?.surface).toBe("learn");
+    expect(slots.get("hub.focus-passport-calendar")?.surface).toBe("learn");
     expect(slots.get("arena.bg-matchup")?.surface).toBe("play");
     expect(slots.get("hub.principal-button")?.surface).toBe("unknown");
     expect(slots.get("landing.hero")?.surface).toBe("landing");
@@ -142,8 +143,28 @@ describe("buildThemeCatalog", () => {
     );
     expect(slots.get("hub.training-icon")).toEqual(
       expect.arrayContaining([
+        expect.stringContaining("Focus Passport Special Training benefit"),
+        "↳ components/hub/challenge-card.tsx",
         expect.stringContaining("Special Training/Mate tile"),
         "↳ components/hub/hub-arena-tile.tsx",
+      ]),
+    );
+  });
+
+  it("exposes independent Calendar and canonical Shield evidence for the Challenge Card", async () => {
+    const catalog = await buildThemeCatalog("candy-forest", okResolver);
+    const slots = new Map(catalog?.slots.map((slot) => [slot.key, slot]));
+
+    expect(slots.get("hub.focus-passport-calendar")?.default?.basename).toBe(
+      "/art/hub-icns/calendar-icon",
+    );
+    expect(slots.get("hub.focus-passport-calendar")?.usedIn).toEqual(
+      expect.arrayContaining(["↳ components/hub/challenge-card.tsx"]),
+    );
+    expect(slots.get("shared.shield")?.usedIn).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("Focus Passport Shield benefit"),
+        "↳ components/hub/challenge-card.tsx",
       ]),
     );
   });

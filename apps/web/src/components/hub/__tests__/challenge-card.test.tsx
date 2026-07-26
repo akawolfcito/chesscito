@@ -170,30 +170,73 @@ describe('<ChallengeCard>', () => {
     expect(screen.queryByTestId('challenge-active-badge')).toBeNull()
   })
 
-  it('flame block routes into today focus when onFocusTap is provided', () => {
+  it('pending flame block opens Daily through its dedicated callback, never the Exercises CTA callback', () => {
+    const onPassportTap = vi.fn()
     const onFocusTap = vi.fn()
     render(
       <ChallengeCard
-        focusPassport={passport({ streak: 3, todayDone: true })}
+        focusPassport={passport({ streak: 3, todayDone: false })}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: false }}
         onJoinChallenge={() => {}}
         onFocusTap={onFocusTap}
+        onPassportTap={onPassportTap}
       />,
     )
     const block = screen.getByTestId('challenge-progress')
     expect(block.tagName).toBe('BUTTON')
     fireEvent.click(block)
-    expect(onFocusTap).toHaveBeenCalledTimes(1)
+    expect(onPassportTap).toHaveBeenCalledTimes(1)
+    expect(onFocusTap).not.toHaveBeenCalled()
   })
 
-  it('flame block is a static div (not a button) without onFocusTap', () => {
+  it('keeps a hydrated pending Daily tappable while Season Pass status loads', () => {
+    const onPassportTap = vi.fn()
     render(
+      <ChallengeCard
+        focusPassport={passport({ streak: 3, todayDone: false, isLoading: false })}
+        challenge={CHALLENGE}
+        seasonPass={{ active: false, isLoading: true }}
+        onJoinChallenge={null}
+        onPassportTap={onPassportTap}
+      />,
+    )
+
+    const block = screen.getByTestId('challenge-progress')
+    expect(block.tagName).toBe('BUTTON')
+    fireEvent.click(block)
+    expect(onPassportTap).toHaveBeenCalledTimes(1)
+  })
+
+  it('flame block is static while loading, completed, or missing its Daily callback', () => {
+    const { rerender } = render(
       <ChallengeCard
         focusPassport={passport({ streak: 1 })}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: false }}
         onJoinChallenge={() => {}}
+      />,
+    )
+    expect(screen.getByTestId('challenge-progress').tagName).toBe('DIV')
+
+    rerender(
+      <ChallengeCard
+        focusPassport={passport({ streak: 1, isLoading: true })}
+        challenge={CHALLENGE}
+        seasonPass={{ active: false, isLoading: false }}
+        onJoinChallenge={() => {}}
+        onPassportTap={() => {}}
+      />,
+    )
+    expect(screen.getByTestId('challenge-progress').tagName).toBe('DIV')
+
+    rerender(
+      <ChallengeCard
+        focusPassport={passport({ streak: 1, todayDone: true })}
+        challenge={CHALLENGE}
+        seasonPass={{ active: false, isLoading: false }}
+        onJoinChallenge={() => {}}
+        onPassportTap={() => {}}
       />,
     )
     expect(screen.getByTestId('challenge-progress').tagName).toBe('DIV')
@@ -211,7 +254,7 @@ describe('<ChallengeCard>', () => {
     expect(focusDays()).toBe(21)
   })
 
-  it('active (joined): ACTIVE badge, Day X/21, shields count, no Join CTA', () => {
+  it('active (joined): ACTIVE badge, live shields benefit, no Join CTA', () => {
     render(
       <ChallengeCard
         focusPassport={passport({ streak: 1, todayDone: true })}
@@ -223,13 +266,14 @@ describe('<ChallengeCard>', () => {
           shieldsCredited: 3,
         }}
         onJoinChallenge={null}
+        shields={{ count: 2, max: 3 }}
       />,
     )
     expect(screen.getByTestId('challenge-active-badge')).toBeInTheDocument()
     const card = screen.getByTestId('challenge-card')
-    // Day fraction renders in the third stat tile (1/21); shields as +3.
-    expect(screen.getByTestId('challenge-day').textContent).toMatch(/1\/21/)
-    expect(card.textContent).toMatch(/\+3/)
+    expect(screen.getByTestId('challenge-shields')).toHaveTextContent('2/3 Shields')
+    expect(card.textContent).not.toMatch(/\+3/)
+    expect(card.textContent).toMatch(/Special Training/)
     expect(card.textContent).toMatch(/Mind Challenge/i)
     // One CTA always exists; what must disappear is the JOIN state.
     expect(screen.getByTestId('challenge-cta')).not.toHaveAttribute(
@@ -251,10 +295,10 @@ describe('<ChallengeCard>', () => {
     expect(screen.getByTestId('challenge-active-badge')).toHaveTextContent(
       'PRO Benefit included',
     )
-    expect(screen.getByTestId('challenge-pro-coverage')).toHaveTextContent(
-      'Access active',
-    )
     expect(screen.getByTestId('challenge-card')).not.toHaveTextContent('+3')
+    expect(screen.getByTestId('challenge-card')).toHaveTextContent(
+      'Special Training',
+    )
     // One CTA always exists; what must disappear is the JOIN state.
     expect(screen.getByTestId('challenge-cta')).not.toHaveAttribute(
       'data-cta-state',
@@ -554,7 +598,7 @@ describe('<ChallengeCard>', () => {
 
   // ── Compact stats ─────────────────────────────────────────────────────────
   describe('stats', () => {
-    it('shows Day X / 21 and the shields owned for an active Season Pass', () => {
+    it('shows only the live shields balance for an active Season Pass', () => {
       render(
         <ChallengeCard
           focusPassport={passport({ streak: 4, todayDone: true })}
@@ -569,8 +613,11 @@ describe('<ChallengeCard>', () => {
           shields={{ count: 2, max: 3 }}
         />,
       )
-      expect(screen.getByTestId('challenge-day').textContent).toMatch(/4\/21/)
-      expect(screen.getByTestId('challenge-shields').textContent).toMatch(/2\/3/)
+      expect(screen.queryByTestId('challenge-day')).toBeNull()
+      expect(screen.getByTestId('challenge-shields')).toHaveTextContent(
+        '2/3 Shields',
+      )
+      expect(screen.getByTestId('challenge-stats')).not.toHaveTextContent('+3')
     })
 
     it('omits Day X / 21 for PRO — the challenge day is not modelled there', () => {
@@ -589,7 +636,7 @@ describe('<ChallengeCard>', () => {
       )
     })
 
-    it('hides the owned-shields chip in the offer state so it cannot contradict the +N bonus', () => {
+    it('shows only the +N purchase bonus in the offer state', () => {
       // "+3 shields" (what you will receive) next to "0/3" (what you hold) read
       // as two answers to the same question. Before the purchase, only the
       // bonus is meaningful.
@@ -602,8 +649,51 @@ describe('<ChallengeCard>', () => {
           shields={{ count: 0, max: 3 }}
         />,
       )
+      expect(screen.getByTestId('challenge-shields')).toHaveTextContent(
+        '+3 Shields',
+      )
+      expect(screen.getByTestId('challenge-stats')).not.toHaveTextContent(
+        '0/3',
+      )
+    })
+
+    it('omits an unavailable active balance instead of inventing one', () => {
+      render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 1 })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: true, source: 'pro' }}
+          onJoinChallenge={null}
+        />,
+      )
       expect(screen.queryByTestId('challenge-shields')).toBeNull()
-      expect(screen.getByTestId('challenge-card').textContent).toMatch(/\+3/)
+    })
+
+    it('uses the editable Calendar, Shield, and Training slots and keeps price out of stats', () => {
+      const { container } = render(
+        <ChallengeCard
+          focusPassport={passport()}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+        />,
+      )
+      const stats = screen.getByTestId('challenge-stats')
+      expect(stats).toHaveTextContent('21 days')
+      expect(stats).toHaveTextContent('+3 Shields')
+      expect(stats).toHaveTextContent('Special Training')
+      expect(stats).not.toHaveTextContent('$1.99')
+      expect(
+        Array.from(container.querySelectorAll('[data-theme-slot]')).map(
+          (node) => node.getAttribute('data-theme-slot'),
+        ),
+      ).toEqual(
+        expect.arrayContaining([
+          'hub.focus-passport-calendar',
+          'shared.shield',
+          'hub.training-icon',
+        ]),
+      )
     })
 
     it('puts "Day N of 21" above the flames, not after them', () => {

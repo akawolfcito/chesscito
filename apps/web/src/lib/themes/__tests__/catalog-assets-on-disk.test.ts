@@ -66,4 +66,12 @@ describe("cataloged art exists on disk", () => {
       expect(formatsOnDisk(resolved.path)).toEqual(["png", "webp", "avif"]);
     }
   });
+
+  it("keeps the Focus Passport Calendar editable with its native triplet", () => {
+    const entry = assets["hub.focus-passport-calendar"];
+    const resolved = resolveAssetVariant(entry, "default");
+    expect(resolved.mode).toBe("asset");
+    if (resolved.mode !== "asset") return;
+    expect(formatsOnDisk(resolved.path)).toEqual(["png", "webp", "avif"]);
+  });
 });
