@@ -94,6 +94,19 @@ describe("<HubLiteScaffold>", () => {
     expect(screen.getByTestId("challenge-cta")).toBeInTheDocument();
   });
 
+  it("owns the canonical shared home/header geometry", () => {
+    const { container } = render(<HubLiteScaffold {...baseProps()} />);
+
+    expect(screen.getByRole("main")).toHaveClass("hub-home-scaffold");
+    expect(container.querySelector(".hub-lite-hud")).toHaveClass("hub-home-hud");
+    expect(container.querySelector(".hub-lite-hud-left")).toHaveClass(
+      "hub-home-hud-left",
+    );
+    expect(container.querySelector(".hub-lite-hud-right")).toHaveClass(
+      "hub-home-hud-right",
+    );
+  });
+
   it("responsive Lite image derivatives exist in public art", () => {
     const paths = [
       "art/avatar-lite-hub-224w.avif",

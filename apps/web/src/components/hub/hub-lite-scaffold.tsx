@@ -88,9 +88,12 @@ export function HubLiteScaffold({
   const [dailyOpen, setDailyOpen] = useState(false);
 
   return (
-    <main className="hub-lite-scaffold" aria-label={t("rootAriaLabel")}>
-      <header className="hub-lite-hud">
-        <div className="hub-lite-hud-left">
+    <main
+      className="hub-lite-scaffold hub-home-scaffold"
+      aria-label={t("rootAriaLabel")}
+    >
+      <header className="hub-lite-hud hub-home-hud">
+        <div className="hub-lite-hud-left hub-home-hud-left">
           <button
             type="button"
             onClick={onTrophyTap}
@@ -117,7 +120,7 @@ export function HubLiteScaffold({
           ) : null}
           <LanguageChip />
         </div>
-        <div className="hub-lite-hud-right">
+        <div className="hub-lite-hud-right hub-home-hud-right">
           {/* Account entry (circular avatar chip) is intentionally hidden on
               the Learn hub header — account access lives on /exercises.
               `onAccountTap`/`isPro` stay in the props API for the container

@@ -58,10 +58,13 @@ export function PlayHubScaffold({
   const tPlay = useTranslations("PLAY_HUB_COPY");
 
   return (
-    <main className="hub-scaffold play-hub-scaffold" aria-label={tPlay("rootAriaLabel")}>
+    <main
+      className="hub-scaffold play-hub-scaffold hub-home-scaffold"
+      aria-label={tPlay("rootAriaLabel")}
+    >
       <header className="hub-scaffold-hud">
-        <div className="hub-scaffold-hud-top">
-          <div className="hub-scaffold-hud-left">
+        <div className="hub-scaffold-hud-top hub-home-hud">
+          <div className="hub-scaffold-hud-left hub-home-hud-left">
             <button
               type="button"
               onClick={onTrophyTap}
@@ -86,7 +89,7 @@ export function PlayHubScaffold({
             ) : null}
             <LanguageChip />
           </div>
-          <div className="hub-scaffold-hud-right">
+          <div className="hub-scaffold-hud-right hub-home-hud-right">
             {/* Account entry intentionally omitted here (founder 2026-07-07):
                 the PLAY hub keeps the same universal header grammar as LEARN:
                 trophy · Peones · language + Daily. PRO discovery/status moved

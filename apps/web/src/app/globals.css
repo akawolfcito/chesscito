@@ -9054,6 +9054,34 @@ button.hud-resource-chip:active:not(:disabled) {
   padding-top: 0;
 }
 
+/* LEARN is the canonical geometry for the shared top-of-hub experience.
+   Neutral classes keep PLAY aligned through Daily + mascot + mode switch
+   without coupling it to `hub-lite-*` implementation names. Asset sizes are
+   already shared; these rules remove the container drift that made them look
+   different (PLAY was narrower, 8px-gapped, top-aligned and 8px lower). */
+.hub-home-scaffold {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 6px);
+}
+
+.play-hub-scaffold .hub-scaffold-hud {
+  width: 100%;
+}
+
+.hub-home-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 4px;
+}
+
+.hub-home-hud-left,
+.hub-home-hud-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* CTA breathing room — mirrors LEARN's `.hub-lite-start-focus-wrap`
    (24px above / 16px below) so the dominant Play CTA is not cramped
    against the Kingdom panel now that the flex gap is a tight 6px. */

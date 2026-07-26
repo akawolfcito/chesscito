@@ -72,6 +72,21 @@ describe("PlayHubScaffold", () => {
     expect(screen.getByTestId("play-daily")).toBeInTheDocument();
   });
 
+  it("opts into the canonical LEARN home/header geometry", () => {
+    const { container } = render(<PlayHubScaffold {...props} />);
+
+    expect(screen.getByRole("main")).toHaveClass("hub-home-scaffold");
+    expect(container.querySelector(".hub-scaffold-hud-top")).toHaveClass(
+      "hub-home-hud",
+    );
+    expect(container.querySelector(".hub-scaffold-hud-left")).toHaveClass(
+      "hub-home-hud-left",
+    );
+    expect(container.querySelector(".hub-scaffold-hud-right")).toHaveClass(
+      "hub-home-hud-right",
+    );
+  });
+
   it("orders mascot → switch → Kingdom panel → CTA → CHESS TOOLS", () => {
     render(<PlayHubScaffold {...props} />);
     const mascot = screen.getByAltText("Chesscito");
