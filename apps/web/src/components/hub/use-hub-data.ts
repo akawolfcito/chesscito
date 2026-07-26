@@ -148,6 +148,11 @@ export type HubFocusPassport = {
   totalCompleted: number;
   todayDone: boolean;
   isLoading: boolean;
+  /** Last completed UTC day ("YYYY-MM-DD"), or null if never. Needed by the
+   *  weekly row: `streak` alone cannot say WHEN the run happened, and a stored
+   *  streak is not normalized on read, so a stale one would paint days the
+   *  player never earned. Optional so probes/fixtures can omit it. */
+  lastCompletedDate?: string | null;
 };
 
 export type HubSessionQuota = {
@@ -305,6 +310,7 @@ export function useHubData(): HubData {
             todayDone: dailyProgress
               ? dailyProgress.lastCompletedDate === todayUtc()
               : false,
+            lastCompletedDate: dailyProgress?.lastCompletedDate ?? null,
             isLoading: dailyProgress === null,
           }
         : null,

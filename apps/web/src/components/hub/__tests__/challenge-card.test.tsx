@@ -76,7 +76,7 @@ describe('<ChallengeCard>', () => {
         onJoinChallenge={() => {}}
       />,
     )
-    expect(screen.getByTestId('challenge-join-cta').className).toContain(
+    expect(screen.getByTestId('challenge-cta').className).toContain(
       'is-pulsing',
     )
   })
@@ -104,7 +104,11 @@ describe('<ChallengeCard>', () => {
         onJoinChallenge={null}
       />,
     )
-    expect(screen.queryByTestId('challenge-join-cta')).toBeNull()
+    // One CTA always exists; what must disappear is the JOIN state.
+    expect(screen.getByTestId('challenge-cta')).not.toHaveAttribute(
+      'data-cta-state',
+      'join',
+    )
     expect(document.querySelector('.challenge-card-join-arrow')).toBeNull()
   })
 
@@ -119,7 +123,7 @@ describe('<ChallengeCard>', () => {
         onJoinChallenge={null}
       />,
     )
-    expect(screen.getByTestId('challenge-join-cta').className).not.toContain(
+    expect(screen.getByTestId('challenge-cta').className).not.toContain(
       'is-pulsing',
     )
   })
@@ -136,7 +140,7 @@ describe('<ChallengeCard>', () => {
     expect(focusDays()).toBe(0)
     // Stable structure: stats + CTA render during loading too (no height flash).
     expect(screen.getByTestId('challenge-stats')).toBeInTheDocument()
-    expect(screen.getByTestId('challenge-join-cta')).toBeInTheDocument()
+    expect(screen.getByTestId('challenge-cta')).toBeInTheDocument()
     expect(screen.getByTestId('challenge-card')).toHaveAttribute(
       'aria-busy',
       'true',
@@ -159,7 +163,7 @@ describe('<ChallengeCard>', () => {
     expect(card.textContent).toMatch(/\+3/)
     expect(card.textContent).toMatch(/\$1\.99/)
     expect(card.textContent).toMatch(/21-Day Mind Challenge/i)
-    const cta = screen.getByTestId('challenge-join-cta')
+    const cta = screen.getByTestId('challenge-cta')
     fireEvent.click(cta)
     expect(onJoin).toHaveBeenCalledTimes(1)
     // No active-only affordances in the offer state.
@@ -227,7 +231,11 @@ describe('<ChallengeCard>', () => {
     expect(screen.getByTestId('challenge-day').textContent).toMatch(/1\/21/)
     expect(card.textContent).toMatch(/\+3/)
     expect(card.textContent).toMatch(/Mind Challenge/i)
-    expect(screen.queryByTestId('challenge-join-cta')).toBeNull()
+    // One CTA always exists; what must disappear is the JOIN state.
+    expect(screen.getByTestId('challenge-cta')).not.toHaveAttribute(
+      'data-cta-state',
+      'join',
+    )
   })
 
   it('active PRO: shows included coverage without advertising the +3 Shields bonus', () => {
@@ -247,7 +255,11 @@ describe('<ChallengeCard>', () => {
       'Access active',
     )
     expect(screen.getByTestId('challenge-card')).not.toHaveTextContent('+3')
-    expect(screen.queryByTestId('challenge-join-cta')).toBeNull()
+    // One CTA always exists; what must disappear is the JOIN state.
+    expect(screen.getByTestId('challenge-cta')).not.toHaveAttribute(
+      'data-cta-state',
+      'join',
+    )
   })
 
   it('copy contains no forbidden web3 / medical terms', () => {
@@ -262,6 +274,323 @@ describe('<ChallengeCard>', () => {
     expect(container.textContent ?? '').not.toMatch(FORBIDDEN)
   })
 
+  // ── Single primary CTA (one per state) ────────────────────────────────────
+  describe('primary CTA', () => {
+    function cta() {
+      return screen.getByTestId('challenge-cta')
+    }
+
+    it('offers JOIN CHALLENGE with the price when there is no pass and no PRO', () => {
+      render(
+        <ChallengeCard
+          focusPassport={passport()}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+          onFocusTap={() => {}}
+        />,
+      )
+      expect(cta()).toHaveAttribute('data-cta-state', 'join')
+      expect(cta().textContent).toMatch(/Join Challenge/i)
+      expect(cta().textContent).toMatch(/\$1\.99/)
+    })
+
+    it('shows START TODAY\'S FOCUS with an active Season Pass and a pending daily', () => {
+      const onFocusTap = vi.fn()
+      render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 3, todayDone: false })}
+          challenge={CHALLENGE}
+          seasonPass={{
+            active: true,
+            source: 'season_pass',
+            dayOfChallenge: 4,
+            shieldsCredited: 3,
+          }}
+          onJoinChallenge={null}
+          onFocusTap={onFocusTap}
+        />,
+      )
+      expect(cta()).toHaveAttribute('data-cta-state', 'start')
+      expect(cta().textContent).toMatch(/Start Today's Focus/i)
+      fireEvent.click(cta())
+      expect(onFocusTap).toHaveBeenCalledTimes(1)
+    })
+
+    it('shows START TODAY\'S FOCUS for PRO — PRO never sees Join', () => {
+      render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 2, todayDone: false })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: true, source: 'pro' }}
+          onJoinChallenge={null}
+          onFocusTap={() => {}}
+        />,
+      )
+      expect(cta()).toHaveAttribute('data-cta-state', 'start')
+      expect(cta().textContent).not.toMatch(/Join Challenge/i)
+      // One CTA always exists; what must disappear is the JOIN state.
+    expect(screen.getByTestId('challenge-cta')).not.toHaveAttribute(
+      'data-cta-state',
+      'join',
+    )
+    })
+
+    it('shows COME BACK TOMORROW once today is done, as information and not a block', () => {
+      const onFocusTap = vi.fn()
+      render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 5, todayDone: true })}
+          challenge={CHALLENGE}
+          seasonPass={{
+            active: true,
+            source: 'season_pass',
+            dayOfChallenge: 5,
+            shieldsCredited: 3,
+          }}
+          onJoinChallenge={null}
+          onFocusTap={onFocusTap}
+        />,
+      )
+      expect(cta()).toHaveAttribute('data-cta-state', 'tomorrow')
+      expect(cta().textContent).toMatch(/Come Back Tomorrow/i)
+      // Not a button: it claims nothing and grants nothing. Tapping it must not
+      // re-enter the daily (a second entry is what would double-claim a reward).
+      expect(cta().tagName).not.toBe('BUTTON')
+      fireEvent.click(cta())
+      expect(onFocusTap).not.toHaveBeenCalled()
+      // The card still says training remains open.
+      expect(screen.getByTestId('challenge-card').textContent).toMatch(
+        /Training stays open/i,
+      )
+    })
+
+    it('shows CHALLENGE COMPLETE once the streak reaches the full duration', () => {
+      render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 21, todayDone: true })}
+          challenge={CHALLENGE}
+          seasonPass={{
+            active: true,
+            source: 'season_pass',
+            dayOfChallenge: 21,
+            shieldsCredited: 3,
+          }}
+          onJoinChallenge={null}
+          onFocusTap={() => {}}
+        />,
+      )
+      expect(cta()).toHaveAttribute('data-cta-state', 'complete')
+      expect(cta().textContent).toMatch(/Challenge Complete/i)
+    })
+
+    it('renders exactly one primary CTA in every state', () => {
+      const states: ChallengeCardProps['seasonPass'][] = [
+        { active: false, isLoading: false },
+        { active: false, isLoading: true },
+        { active: true, source: 'pro' },
+        {
+          active: true,
+          source: 'season_pass',
+          dayOfChallenge: 2,
+          shieldsCredited: 3,
+        },
+      ]
+      for (const seasonPass of states) {
+        const { unmount } = render(
+          <ChallengeCard
+            focusPassport={passport({ streak: 2 })}
+            challenge={CHALLENGE}
+            seasonPass={seasonPass}
+            onJoinChallenge={seasonPass.active ? null : () => {}}
+            onFocusTap={() => {}}
+          />,
+        )
+        expect(screen.getAllByTestId('challenge-cta')).toHaveLength(1)
+        unmount()
+      }
+    })
+
+    it('carries the Join styling of the Start Focus button', () => {
+      render(
+        <ChallengeCard
+          focusPassport={passport()}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+        />,
+      )
+      expect(cta().className).toContain('hub-lite-start-focus')
+    })
+  })
+
+  // ── Weekly row ────────────────────────────────────────────────────────────
+  describe('weekly row', () => {
+    // 2026-07-22 is a UTC Wednesday.
+    const WED = '2026-07-22'
+
+    function weekStates(): string[] {
+      return screen
+        .getAllByTestId('challenge-week-day')
+        .map((el) => el.getAttribute('data-state') ?? '')
+    }
+
+    it('renders 7 Monday-first day letters localized for EN', () => {
+      render(
+        <ChallengeCard
+          focusPassport={passport()}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+          today={WED}
+        />,
+      )
+      const letters = screen
+        .getAllByTestId('challenge-week-day')
+        .map((el) => el.textContent?.trim())
+      expect(letters).toEqual(['M', 'T', 'W', 'T', 'F', 'S', 'S'])
+    })
+
+    it('renders the ES letters (L M X J V S D), also Monday-first', () => {
+      render(
+        <ChallengeCard
+          focusPassport={passport()}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+          today={WED}
+        />,
+        { locale: 'es' },
+      )
+      const letters = screen
+        .getAllByTestId('challenge-week-day')
+        .map((el) => el.textContent?.trim())
+      expect(letters).toEqual(['L', 'M', 'X', 'J', 'V', 'S', 'D'])
+    })
+
+    it('marks the UTC day of today, not a local-time day', () => {
+      render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 3, todayDone: true })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+          today={WED}
+        />,
+      )
+      // Wednesday is index 2 in a Monday-first row.
+      expect(weekStates()).toEqual([
+        'completed',
+        'completed',
+        'today-done',
+        'future',
+        'future',
+        'future',
+        'future',
+      ])
+    })
+
+    it('leaves today pending when the daily is not done yet', () => {
+      render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 2, todayDone: false })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+          today={WED}
+        />,
+      )
+      expect(weekStates()[2]).toBe('today-pending')
+    })
+
+    it('claims nothing while loading — 7 neutral slots, no completions', () => {
+      render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 6, todayDone: true, isLoading: true })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: true }}
+          onJoinChallenge={null}
+          today={WED}
+        />,
+      )
+      expect(weekStates()).toHaveLength(7)
+      expect(weekStates().some((s) => s.startsWith('completed'))).toBe(false)
+      expect(weekStates().some((s) => s === 'today-done')).toBe(false)
+    })
+
+    it('never renders a shield-protected day (not modelled in storage)', () => {
+      render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 3, todayDone: true })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+          today={WED}
+        />,
+      )
+      expect(weekStates().some((s) => s.includes('shield'))).toBe(false)
+    })
+  })
+
+  // ── Compact stats ─────────────────────────────────────────────────────────
+  describe('stats', () => {
+    it('shows Day X / 21 and the shields owned for an active Season Pass', () => {
+      render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 4, todayDone: true })}
+          challenge={CHALLENGE}
+          seasonPass={{
+            active: true,
+            source: 'season_pass',
+            dayOfChallenge: 4,
+            shieldsCredited: 3,
+          }}
+          onJoinChallenge={null}
+          shields={{ count: 2, max: 3 }}
+        />,
+      )
+      expect(screen.getByTestId('challenge-day').textContent).toMatch(/4\/21/)
+      expect(screen.getByTestId('challenge-shields').textContent).toMatch(/2\/3/)
+    })
+
+    it('omits Day X / 21 for PRO — the challenge day is not modelled there', () => {
+      render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 4, todayDone: true })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: true, source: 'pro' }}
+          onJoinChallenge={null}
+          shields={{ count: 3, max: 3 }}
+        />,
+      )
+      expect(screen.queryByTestId('challenge-day')).toBeNull()
+      expect(screen.getByTestId('challenge-card').textContent).toMatch(
+        /4\/21 focus days/i,
+      )
+    })
+
+    it('labels the day run as a streak, never as a Combo (canonical vocabulary)', () => {
+      // Combo is the SESSION metric (chesscito:streak) and stays exclusive to
+      // the exercise overlay / drawer — see the combo-streak vocabulary doc.
+      render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 3, todayDone: true })}
+          challenge={CHALLENGE}
+          seasonPass={{
+            active: true,
+            source: 'season_pass',
+            dayOfChallenge: 3,
+            shieldsCredited: 3,
+          }}
+          onJoinChallenge={null}
+        />,
+      )
+      const text = screen.getByTestId('challenge-card').textContent ?? ''
+      expect(text).toMatch(/3-day streak/i)
+      expect(text).not.toMatch(/combo/i)
+    })
+  })
+
   it('renders ES locale copy for the Join CTA (i18n parity)', () => {
     render(
       <ChallengeCard
@@ -274,7 +603,7 @@ describe('<ChallengeCard>', () => {
     )
     // The CTA must resolve to real ES copy, never the literal key path.
     expect(
-      screen.getByTestId('challenge-join-cta').textContent ?? '',
+      screen.getByTestId('challenge-cta').textContent ?? '',
     ).not.toMatch(/CHALLENGE_CARD_COPY/)
   })
 })

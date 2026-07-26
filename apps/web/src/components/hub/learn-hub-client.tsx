@@ -33,6 +33,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
 import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
+import { MAX_SHIELDS } from "@/lib/shop/shield-storage";
 import { useClaimQueue } from "@/hooks/use-claim-queue";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import {
@@ -356,8 +357,16 @@ export function LearnHubClient({
     streak: 0,
     totalCompleted: 0,
     todayDone: false,
+    lastCompletedDate: null,
     isLoading: true,
   };
+
+  // Live shields balance for the ChallengeCard chip — the same counter the
+  // HUD chip reads, so the two can never disagree.
+  const liteShields = useMemo(
+    () => ({ count: shieldsValue, max: MAX_SHIELDS }),
+    [shieldsValue],
+  );
 
   // The Hub Tour (LEARN only). Held back until BOTH signals it narrates have
   // resolved — the daily's todayDone and the season pass — because its copy is
@@ -414,6 +423,7 @@ export function LearnHubClient({
           }}
           focusPassport={liteFocusPassport}
           challenge={lite.challenge}
+          shields={liteShields}
           seasonPass={lite.challengeSeasonPass}
           onJoinChallenge={
             // Same gate as the legacy season-pass CTA: never offer the buy

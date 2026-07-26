@@ -8527,6 +8527,61 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 4px;
 }
 
+/* Weekly row — 7 equal columns so the letters line up as a calendar week and
+   never reflow at 390px. Replaced the streak-only flame strip: same sprites,
+   but each column now names a real UTC weekday. */
+.challenge-card-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  align-items: end;
+  gap: 2px;
+  width: 100%;
+}
+
+.challenge-card-week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+}
+
+.challenge-card-week-letter {
+  font-size: 0.6rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #9a7a4d;
+  text-transform: uppercase;
+}
+
+/* A day not yet reached must not read like a day the player skipped: both are
+   gray sprites, so the separation lives here. */
+.challenge-card-week-day[data-state="missed"] .challenge-card-flame>img {
+  opacity: 0.35;
+}
+
+.challenge-card-week-day[data-state="future"] .challenge-card-flame>img {
+  opacity: 0.18;
+}
+
+.challenge-card-week-day[data-state="future"] .challenge-card-week-letter {
+  opacity: 0.5;
+}
+
+.challenge-card-week-day[data-state="today-done"] .challenge-card-week-letter,
+.challenge-card-week-day[data-state="today-pending"] .challenge-card-week-letter {
+  color: #b4611a;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Daily Streak readout. Canonical wording is "N-day streak" — never "Combo",
+   which names the session metric in the exercise overlay. */
+.challenge-card-streak {
+  margin-left: 8px;
+  color: #b4611a;
+}
+
 .challenge-card-flame {
   display: inline-flex;
   align-items: flex-end;
@@ -8581,11 +8636,55 @@ button.hud-resource-chip:active:not(:disabled) {
   background: rgba(120, 80, 30, 0.08);
 }
 
-/* Bottom row: inline stat chips + Join (offer). */
+/* Bottom block: inline stat chips, then the single full-width primary CTA
+   underneath. Column (not row) since the CTA became the panel's one anchor —
+   side-by-side made it compete with the stats for the same line. */
 .challenge-card-bottom {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 8px;
+}
+
+/* The single primary CTA. Wears `.hub-lite-start-focus` (the look the hidden
+   Start Focus button had), so JOIN / START / status all read as one control. */
+.challenge-card-cta {
+  width: 100%;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 18px;
+  margin: 0;
+  font-size: 1.15rem;
+  text-align: center;
+}
+
+/* Price pill inside JOIN CHALLENGE. */
+.challenge-card-cta-price {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #ffe9a8 0%, #f7c964 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 0 rgba(120, 74, 8, 0.45);
+  color: #7a4c07;
+  font-size: 0.92rem;
+  font-weight: 800;
+  text-shadow: none;
+}
+
+/* COME BACK TOMORROW / CHALLENGE COMPLETE — the CTA skin on a status element.
+   Muted and not interactive: it reports state, it never gates anything. */
+.challenge-card-cta--info {
+  cursor: default;
+  filter: saturate(0.55) brightness(0.94);
+  opacity: 0.92;
+}
+
+.challenge-card-cta-note {
+  margin: -2px 0 0;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #7d5a2a;
 }
 
 .challenge-card-stats {
@@ -8616,84 +8715,14 @@ button.hud-resource-chip:active:not(:disabled) {
   color: #9a6a2e;
 }
 
-/* Join Challenge — verde token + GPU-safe halo (opacity/transform only). */
-.challenge-card-join {
-  position: relative;
-  flex: 0 0 auto;
-  width: auto;
-  padding: 0 14px;
-  min-height: 44px;
-  border-radius: 13px;
-  background:
-    radial-gradient(ellipse at 30% 5%,
-      rgba(255, 250, 190, 0.58) 0%,
-      rgba(255, 220, 100, 0.22) 24%,
-      transparent 48%),
-    linear-gradient(180deg,
-      #ffd95a 0%,
-      #f7b928 42%,
-      #e99a0b 76%,
-      #cd7400 100%);
-  /* border: 0.1px solid rgba(154, 90, 0, 0.85); */
-  box-shadow:
-    /* brillo fino interior superior */
-    inset 0 1px 0 rgba(255, 255, 255, 0.72),
-    /* sombreado inferior de la cara */
-    inset 0 -1px 0 rgba(145, 74, 0, 0.32),
-    /* línea dorada exterior */
-    /* 0 0 0 2px rgba(185, 103, 0, 0.95), */
-    /* halo amarillo */
-    0 0 8px 3px rgba(255, 211, 73, 0.68),
-    /* profundidad inferior */
-    /* 0 3px 0 #9b4f00, */
-    /* borde luminoso alrededor de la profundidad */
-    0 10px 0 -7px rgba(255, 194, 46, 0.74),
-    /* sombra ambiental */
-    0 14px 18px rgba(112, 58, 0, 0.34) !important;
-  color: #fff;
-  font-size: 0.86rem;
-  font-weight: 800;
-  text-shadow: -1px -1px 0 #6e4415, 1px -1px 0 #6e4415, -1px 1px 0 #6e4415, 1px 1px 0 #6e4415, 0 2px 2px rgba(0, 0, 0, 0.5);
-  cursor: pointer;
-}
-
-.challenge-card-join::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: 16px;
-  box-shadow: 0 0 14px 2px rgb(255, 208, 0);
-  opacity: 0.25;
-  animation: challenge-join-halo 2.4s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes challenge-join-halo {
-
-  0%,
-  100% {
-    opacity: 0.25;
-    transform: scale(0.99);
-  }
-
-  50% {
-    opacity: 0.7;
-    transform: scale(1.01);
-  }
-}
-
-.challenge-card-join:active {
-  transform: translateY(2px);
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -2px 0 rgba(142, 78, 0, 0.4),
-    0 2px 0 #9a5a00,
-    0 4px 8px rgba(0, 0, 0, 0.26);
-}
+/* The gold `.challenge-card-join` skin lived here. Removed 2026-07-25: the
+   panel now has ONE CTA and it wears `.hub-lite-start-focus` (green), the look
+   the standalone Start Focus button had. Its press/disabled states come from
+   that class; `.challenge-card-cta` only overrides size and layout. */
 
 /* While the pass status resolves, the CTA is briefly non-interactive but keeps
    its size + look (no flash / layout shift). */
-.challenge-card-join:disabled {
+.challenge-card-cta:disabled {
   cursor: default;
 }
 
@@ -8896,12 +8925,6 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .hub-daily-corner .hub-tile-status-chip {
   display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .challenge-card-join::after {
-    animation: none;
-  }
 }
 
 /* Root-level CTA footer — sibling of `.hub-scaffold-body`. Sits at
@@ -15306,7 +15329,7 @@ button.hud-resource-chip:active:not(:disabled) {
   }
 }
 
-.challenge-card-join.is-pulsing {
+.challenge-card-cta.is-pulsing {
   animation: challenge-join-pulse 2.2s ease-in-out infinite;
 }
 
@@ -15345,7 +15368,7 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .challenge-card-join.is-pulsing {
+  .challenge-card-cta.is-pulsing {
     animation: none;
   }
 

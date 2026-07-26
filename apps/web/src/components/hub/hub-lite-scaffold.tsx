@@ -38,6 +38,9 @@ export type HubLiteScaffoldProps = {
   seasonPass: ChallengeCardSeasonPass;
   /** null when the pass is active (no purchase CTA). */
   onJoinChallenge: (() => void) | null;
+  /** Live shields balance for the card's stat chip. Optional: `/dev` probes
+   *  mount the scaffold without a wallet and must not fake a count. */
+  shields?: { count: number; max: number };
   // ── Start Focus (primary daily action) ──
   primaryFocus: {
     onPress: () => void;
@@ -74,16 +77,13 @@ export function HubLiteScaffold({
   challenge,
   seasonPass,
   onJoinChallenge,
+  shields,
   primaryFocus,
   rewardTiles,
   onReplayTour,
 }: HubLiteScaffoldProps) {
   const t = useTranslations("HUB_LITE_COPY");
   const tHud = useTranslations("HUD_COPY");
-
-  // Start Focus always reads "Start Focus" (founder: stable label, not the
-  // per-variant intent). It still routes to /exercises in every state.
-  const startFocusLabel = t("startFocus");
 
   return (
     <main className="hub-lite-scaffold" aria-label={t("rootAriaLabel")}>
@@ -183,44 +183,21 @@ export function HubLiteScaffold({
           challenge={challenge}
           seasonPass={seasonPass}
           onJoinChallenge={onJoinChallenge}
+          shields={shields}
           // Tapping the flame/streak block routes into today's focus, same as
-          // Start Focus (ritual entry point — UX spec §5 clickability).
+          // Start Focus (ritual entry point — UX spec §5 clickability). Now
+          // also the handler behind the card's own primary CTA.
           onFocusTap={primaryFocus.onPress}
           onReplayTour={onReplayTour}
         />
       </div>
 
-      <div className="hub-lite-start-focus-wrap">
-        <button
-          type="button"
-          className="hub-lite-start-focus"
-          data-testid="start-focus-cta"
-          aria-label={t("startFocusAriaLabel")}
-          onClick={primaryFocus.onPress}
-        >
-          {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-          <ThemeAssetPicture
-            slot="hub.train-pieces"
-            pictureClassName="hub-lite-start-focus-icon"
-            pictureProps={{ "aria-hidden": true }}
-            alt=""
-            width={64}
-            height={64}
-            draggable={false}
-          />
-          {startFocusLabel}
-        </button>
-        <ThemeAssetPicture
-          slot="brand.ring-start-focus"
-          pictureClassName="hub-lite-start-focus-ring"
-          pictureProps={{ "aria-hidden": true }}
-          alt=""
-          width={512}
-          height={260}
-          fetchPriority="high"
-          draggable={false}
-        />
-      </div>
+      {/* The standalone Start Focus button used to live here. It is HIDDEN for
+          now (founder, 2026-07-25): the ChallengeCard's single state-driven CTA
+          absorbed its job, and two primary CTAs one above the other made the
+          panel ambiguous. Nothing else changed — `primaryFocus.onPress` is the
+          same handler, now reached through the card's CTA and its flame block.
+          The props stay in the API so restoring it is a revert, not a rewrite. */}
 
       <section className="hub-lite-training-path" aria-label={t("trainingPathLabel")}>
         <h2 className="hub-lite-training-path-label">{t("trainingPathLabel")}</h2>

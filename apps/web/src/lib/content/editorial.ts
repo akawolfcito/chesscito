@@ -3457,8 +3457,33 @@ export const CHALLENGE_CARD_COPY = {
   shieldsBonus: "+{count}",
   shieldsStat: "Shields",
   shieldsCount: "{count}",
+  shieldsOwned: "{count}/{max}",
+  /** Daily Streak, canonical wording (docs/product/2026-07-23-combo-streak-
+   *  vocabulary.md). NOT "Combo" — Combo is the session metric and stays
+   *  exclusive to the exercise overlay / drawer. */
+  streakFormat: "{days, plural, =1 {1-day streak} other {#-day streak}}",
+  /** Weekly row — Monday-first, comma-separated so a locale can reorder or
+   *  re-letter it without touching the component. */
+  weekdayLetters: "M,T,W,T,F,S,S",
+  weekAriaLabel: "This week",
+  weekDayAria: "{day}: {state}",
+  weekDone: "done",
+  weekDoneToday: "done today",
+  weekToday: "today, pending",
+  weekMissed: "missed",
+  weekUpcoming: "upcoming",
   joinCta: "Join Challenge",
   joinAriaLabel: "Join the 21-Day Mind Challenge for {price}",
+  /** Single primary CTA — one label per state, never two CTAs at once. */
+  ctaStartToday: "Start Today's Focus",
+  ctaStartAriaLabel: "Start today's focus",
+  ctaTomorrow: "Come Back Tomorrow",
+  /** Informative, never a block: training, scores and the piece shortcuts all
+   *  stay open once today's focus is done. */
+  ctaTomorrowAriaLabel: "Today's focus is done. Training stays open.",
+  ctaComplete: "Challenge Complete",
+  ctaCompleteAriaLabel: "You finished the 21-Day Mind Challenge",
+  tomorrowNote: "Training stays open. Keep improving your scores.",
   dotFilledAria: "Day {index} done",
   dotEmptyAria: "Day {index}",
   focusTapAria: "Continue today's focus",

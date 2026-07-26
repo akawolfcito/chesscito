@@ -263,7 +263,7 @@
         "src/components/exercises/persistent-dock.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 6,
+      "consumerCount": 5,
       "consumers": [
         {
           "file": "src/components/exercises/persistent-dock.tsx",
@@ -278,17 +278,6 @@
         },
         {
           "file": "src/components/hub/app-mode-switch.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        },
-        {
-          "file": "src/components/hub/hub-lite-scaffold.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -3740,21 +3729,10 @@
         "src/app/[locale]/page.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 2,
+      "consumerCount": 1,
       "consumers": [
         {
           "file": "src/app/[locale]/page.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        },
-        {
-          "file": "src/components/hub/hub-lite-scaffold.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,

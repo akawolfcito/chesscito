@@ -815,11 +815,13 @@ describe("HubScaffoldClient — Lite Mode", () => {
     expect(monEvents).toHaveLength(0);
   });
 
-  it("routes START FOCUS to Exercises while Trophies keeps its own destination", async () => {
+  it("routes the focus entry point to Exercises while Trophies keeps its own destination", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClientLite />);
 
-    await user.click(await screen.findByTestId("start-focus-cta"));
+    // The standalone Start Focus button is hidden; without a pass the card's
+    // CTA sells the challenge, so the focus entry point is the passport block.
+    await user.click(await screen.findByTestId("challenge-progress"));
     expect(pushMock).toHaveBeenLastCalledWith(
       expect.stringMatching(/^\/exercises(?:\?|$)/),
     );

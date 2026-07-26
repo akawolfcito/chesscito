@@ -3,7 +3,9 @@
 import { useTranslations } from "next-intl";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 
-import { type PassportSlotKind, passportSlots } from "@/lib/daily/passport";
+import type { PassportSlotKind } from "@/lib/daily/passport";
+import { todayUtc } from "@/lib/daily/progress";
+import { focusWeek, type FocusWeekDayState } from "@/lib/daily/week";
 import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 import type { HubFocusPassport, SeasonChallengeMeta } from "@/components/hub/use-hub-data";
 
@@ -14,6 +16,20 @@ const FLAME_SLOT: Record<PassportSlotKind, ThemeAssetKey> = {
   blue: "shared.flame-blue",
   gray: "shared.flame-gray",
 };
+
+/** Weekly row → flame sprite. A proven completion burns blue, today burns gold,
+ *  everything unproven stays gray and is separated by `data-state` in CSS —
+ *  "missed" and "future" must not read the same even though both are gray. */
+const WEEK_FLAME: Record<FocusWeekDayState, PassportSlotKind> = {
+  completed: "blue",
+  "today-done": "color",
+  "today-pending": "gray",
+  missed: "gray",
+  future: "gray",
+};
+
+/** The four states the single primary CTA can be in. */
+type CtaState = "join" | "start" | "tomorrow" | "complete";
 
 /** Season-pass slice the card needs. Discriminated so the `active` branch
  *  carries the day-of-challenge + shields it must render, and the offer
@@ -36,6 +52,14 @@ export type ChallengeCardProps = {
    *  Omitted → no help chip renders. Replaying never touches progress,
    *  rewards or the "tour seen" flag. */
   onReplayTour?: () => void;
+  /** UTC "YYYY-MM-DD" that anchors the weekly row. Defaults to `todayUtc()` —
+   *  the SAME clock the Daily uses, so the row and the daily never disagree
+   *  about which day is today. Injected so tests can pin it. */
+  today?: string;
+  /** Shields the player owns right now, `min(MAX, credited - consumed)`.
+   *  Omitted → the chip is not rendered (a surface that cannot read the
+   *  balance must not claim one). */
+  shields?: { count: number; max: number };
 };
 
 export function CalendarIcon() {
@@ -128,6 +152,8 @@ export function ChallengeCard({
   onJoinChallenge,
   onFocusTap,
   onReplayTour,
+  today,
+  shields,
 }: ChallengeCardProps) {
   const t = useTranslations("CHALLENGE_CARD_COPY");
 
@@ -136,20 +162,45 @@ export function ChallengeCard({
     focusPassport.isLoading || (!seasonPass.active && seasonPass.isLoading);
 
   const { durationDays } = challenge;
-  const done = isLoading
-    ? 0
-    : Math.min(Math.max(focusPassport.streak, 0), durationDays);
+  const streak = isLoading ? 0 : Math.max(0, focusPassport.streak);
+  const done = Math.min(streak, durationDays);
 
-  // 7-flame streak window — same slot logic as the standalone FocusPassport
-  // (frozen-blue = earlier day done, orange-gold = today active, gray =
-  // pending). Slots derive from the streak count, NOT calendar dates, so no
-  // per-weekday labels (would imply data we do not persist — completedDates[]
-  // is P1.5 backlog). Restores the pre-70ee44f7 view the bar replaced; the
-  // "N/21 focus days" ordinal keeps the challenge-scale readout (UX spec §5,
-  // 2026-07-06, day-labels dropped by stakeholder).
-  const slots = isLoading
-    ? passportSlots(0, false).map((s) => ({ ...s, glow: false }))
-    : passportSlots(focusPassport.streak < 0 ? 0 : focusPassport.streak, focusPassport.todayDone);
+  // Calendar week (Monday-first, UTC) — replaces the old streak-derived flame
+  // window. Same 7 sprites, but each one now names a real weekday, so the row
+  // answers "did I show up this week?" instead of "how long is the run?".
+  //
+  // While loading we claim NOTHING: an empty run with today unreachable renders
+  // 7 neutral slots. Structure is identical across loading / offer / active, so
+  // the panel never resizes.
+  const todayDate = today ?? todayUtc();
+  // The run's last day. `lastCompletedDate` is authoritative — a stored streak
+  // is NOT normalized on read (it only resets on the next completion), so a
+  // stale streak would otherwise paint days the player never earned. Without
+  // it we fall back to "today, if today is done", which can under-claim but
+  // never over-claims.
+  const runEnd =
+    isLoading || streak === 0
+      ? null
+      : (focusPassport.lastCompletedDate ?? (focusPassport.todayDone ? todayDate : null));
+  const week = focusWeek(todayDate, isLoading ? 0 : streak, runEnd);
+  const weekdayLetters = t("weekdayLetters").split(",");
+  const WEEK_STATE_LABEL: Record<FocusWeekDayState, Parameters<typeof t>[0]> = {
+    completed: "weekDone",
+    "today-done": "weekDoneToday",
+    "today-pending": "weekToday",
+    missed: "weekMissed",
+    future: "weekUpcoming",
+  };
+
+  // Single primary CTA. Order matters: a finished challenge outranks a finished
+  // day, and no pass outranks everything (the purchase is the whole point).
+  const ctaState: CtaState = !isActive
+    ? "join"
+    : done >= durationDays
+      ? "complete"
+      : focusPassport.todayDone
+        ? "tomorrow"
+        : "start";
 
   return (
     <section
@@ -206,27 +257,52 @@ export function ChallengeCard({
           {(() => {
             const inner = (
               <>
-                <span className="challenge-card-flames" aria-hidden="true">
-                  {slots.map((slot, i) => {
-                    return (
+                <span
+                  className="challenge-card-week"
+                  role="list"
+                  aria-label={t("weekAriaLabel")}
+                >
+                  {week.map((day, i) => (
+                    <span
+                      key={day.date}
+                      className="challenge-card-week-day"
+                      role="listitem"
+                      data-testid="challenge-week-day"
+                      data-state={day.state}
+                      data-date={day.date}
+                      aria-label={t("weekDayAria", {
+                        day: weekdayLetters[i] ?? "",
+                        state: t(WEEK_STATE_LABEL[day.state]),
+                      })}
+                    >
                       <ThemeAssetPicture
-                        key={i}
-                        slot={FLAME_SLOT[slot.kind]}
-                        pictureClassName={`challenge-card-flame${slot.glow ? " is-glow" : ""}`}
+                        slot={FLAME_SLOT[WEEK_FLAME[day.state]]}
+                        pictureClassName={`challenge-card-flame${
+                          day.state === "today-pending" ? " is-glow" : ""
+                        }`}
                         pictureProps={{
                           "data-testid": "focus-passport-slot",
-                          "data-kind": slot.kind,
-                          "data-filled": slot.kind !== "gray" || undefined,
-                          "data-glow": slot.glow || undefined,
+                          "data-kind": WEEK_FLAME[day.state],
+                          "data-filled": WEEK_FLAME[day.state] !== "gray" || undefined,
+                          "data-glow": day.state === "today-pending" || undefined,
+                          "aria-hidden": true,
                         }}
                         alt=""
                         draggable={false}
                       />
-                    );
-                  })}
+                      <span className="challenge-card-week-letter" aria-hidden="true">
+                        {weekdayLetters[i] ?? ""}
+                      </span>
+                    </span>
+                  ))}
                 </span>
                 <span className="challenge-card-day-count">
                   {t("focusDaysFormat", { done, total: durationDays })}
+                  {streak > 0 ? (
+                    <span className="challenge-card-streak" data-testid="challenge-streak">
+                      {t("streakFormat", { days: streak })}
+                    </span>
+                  ) : null}
                 </span>
               </>
             );
@@ -294,8 +370,24 @@ export function ChallengeCard({
               </>
             )}
           </span>
+          {/* Shields OWNED (live balance), distinct from the `+N` purchase
+              bonus above. Rendered only when the container can actually read
+              the balance — a chip with an invented count is worse than none. */}
+          {shields ? (
+            <span className="challenge-card-stat" data-testid="challenge-shields">
+              <ShieldCheckIcon />
+              {t("shieldsOwned", { count: shields.count, max: shields.max })}
+            </span>
+          ) : null}
         </div>
-        {isActive ? null : (
+        {/* ── The single primary CTA ──────────────────────────────────────
+            Exactly one, chosen by `ctaState`. `join` and `start` are real
+            buttons; `tomorrow` and `complete` are STATUS text wearing the CTA
+            skin — they inform, they do not block. Nothing here gates the piece
+            shortcuts, training or score improvements, which live outside this
+            card and stay reachable in every state. All four wear
+            `.hub-lite-start-focus` so the panel keeps one CTA look. */}
+        {ctaState === "join" ? (
           <>
             {/* Nudge arrow — points at Join, but ONLY while the mini-tour is
                 spotlighting this card (CSS gates it on the tour's
@@ -314,18 +406,49 @@ export function ChallengeCard({
               // Pulses only while the purchase is actually available: `null` means
               // the status is still resolving (or the player already owns it), and
               // a CTA that throbs while disabled advertises a dead button.
-              className={`challenge-card-join${
+              className={`hub-lite-start-focus challenge-card-cta${
                 onJoinChallenge ? " is-pulsing" : ""
               }`}
-              data-testid="challenge-join-cta"
+              data-testid="challenge-cta"
+              data-cta-state="join"
               aria-label={t("joinAriaLabel", { price: challenge.priceLabel })}
               onClick={onJoinChallenge ?? undefined}
               disabled={!onJoinChallenge}
             >
               {t("joinCta")}
+              <span className="challenge-card-cta-price">{challenge.priceLabel}</span>
             </button>
           </>
+        ) : ctaState === "start" ? (
+          <button
+            type="button"
+            className="hub-lite-start-focus challenge-card-cta"
+            data-testid="challenge-cta"
+            data-cta-state="start"
+            aria-label={t("ctaStartAriaLabel")}
+            onClick={onFocusTap}
+            disabled={!onFocusTap}
+          >
+            {t("ctaStartToday")}
+          </button>
+        ) : (
+          <p
+            className="hub-lite-start-focus challenge-card-cta challenge-card-cta--info"
+            data-testid="challenge-cta"
+            data-cta-state={ctaState}
+            role="status"
+            aria-label={
+              ctaState === "tomorrow" ? t("ctaTomorrowAriaLabel") : t("ctaCompleteAriaLabel")
+            }
+          >
+            {ctaState === "tomorrow" ? t("ctaTomorrow") : t("ctaComplete")}
+          </p>
         )}
+        {ctaState === "tomorrow" ? (
+          <p className="challenge-card-cta-note" data-testid="challenge-cta-note">
+            {t("tomorrowNote")}
+          </p>
+        ) : null}
       </div>
     </section>
   );

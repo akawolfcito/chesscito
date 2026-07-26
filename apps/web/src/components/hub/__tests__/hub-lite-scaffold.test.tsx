@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent } from "@testing-library/react";
@@ -77,7 +77,7 @@ describe("<HubLiteScaffold>", () => {
 
     expect(screen.getByRole("main", { name: "Chesscito Learn home" })).toBeInTheDocument();
     expect(screen.getByText("21-Day Mind Challenge")).toBeInTheDocument();
-    expect(screen.getByTestId("start-focus-cta")).toHaveTextContent("Start Focus");
+    expect(screen.getByTestId("challenge-cta")).toBeInTheDocument();
   });
 
   it("responsive Lite image derivatives exist in public art", () => {
@@ -163,42 +163,74 @@ describe("<HubLiteScaffold>", () => {
   it("offer state: ChallengeCard shows the Join CTA", () => {
     const onJoin = vi.fn();
     render(<HubLiteScaffold {...baseProps({ onJoinChallenge: onJoin })} />);
-    fireEvent.click(screen.getByTestId("challenge-join-cta"));
+    const cta = screen.getByTestId("challenge-cta");
+    expect(cta).toHaveAttribute("data-cta-state", "join");
+    fireEvent.click(cta);
     expect(onJoin).toHaveBeenCalledTimes(1);
   });
 
-  it("Start Focus: always labelled 'Start Focus' (not per-variant), routes on press", () => {
+  // The standalone Start Focus button is HIDDEN (2026-07-25). Its job moved to
+  // the ChallengeCard's single state-driven CTA — these tests guard that the
+  // hand-off is complete and that nothing else lost its entry point.
+  it("no longer renders a standalone Start Focus button or its ring art", () => {
+    const { container } = render(<HubLiteScaffold {...baseProps()} />);
+    expect(screen.queryByTestId("start-focus-cta")).toBeNull();
+    expect(container.querySelector(".hub-lite-start-focus-wrap")).toBeNull();
+    expect(container.querySelector(".hub-lite-start-focus-ring")).toBeNull();
+  });
+
+  it("renders exactly one primary CTA on the hub", () => {
+    render(<HubLiteScaffold {...baseProps()} />);
+    expect(screen.getAllByTestId("challenge-cta")).toHaveLength(1);
+  });
+
+  it("routes into today's focus from the card CTA when the pass is active", () => {
     const onPress = vi.fn();
     render(
       <HubLiteScaffold
         {...baseProps({
+          seasonPass: {
+            active: true,
+            source: "season_pass",
+            dayOfChallenge: 3,
+            shieldsCredited: 3,
+          },
+          onJoinChallenge: null,
+          focusPassport: {
+            streak: 2,
+            totalCompleted: 2,
+            todayDone: false,
+            isLoading: false,
+          },
           primaryFocus: { onPress, contentLoop: action("daily-limit-reached"), isHydrated: true },
         })}
       />,
     );
-    const cta = screen.getByTestId("start-focus-cta");
-    // Stable label regardless of the content-loop variant.
-    expect(cta.textContent).toMatch(/Start Focus/i);
-    expect(cta.textContent).not.toMatch(/Practice|Continue/i);
+    const cta = screen.getByTestId("challenge-cta");
+    expect(cta).toHaveAttribute("data-cta-state", "start");
     fireEvent.click(cta);
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  it("Start Focus: Enter and Space activate the same native button action", async () => {
+  it("card CTA: Enter and Space activate the same native button action", async () => {
     const user = userEvent.setup();
     const onPress = vi.fn();
     render(
       <HubLiteScaffold
         {...baseProps({
-          primaryFocus: {
-            onPress,
-            contentLoop: action("view-progress"),
-            isHydrated: true,
+          seasonPass: { active: true, source: "pro" },
+          onJoinChallenge: null,
+          focusPassport: {
+            streak: 1,
+            totalCompleted: 1,
+            todayDone: false,
+            isLoading: false,
           },
+          primaryFocus: { onPress, contentLoop: action("view-progress"), isHydrated: true },
         })}
       />,
     );
-    const cta = screen.getByTestId("start-focus-cta");
+    const cta = screen.getByTestId("challenge-cta");
 
     cta.focus();
     await user.keyboard("{Enter}");
@@ -207,64 +239,40 @@ describe("<HubLiteScaffold>", () => {
     expect(onPress).toHaveBeenCalledTimes(2);
   });
 
-  it("keeps decorative art outside the CTA hit area", () => {
-    const { container } = render(<HubLiteScaffold {...baseProps()} />);
-    const cta = screen.getByTestId("start-focus-cta");
-    const ring = container.querySelector(".hub-lite-start-focus-ring");
-    const css = readFileSync(
-      resolve(process.cwd(), "src/app/globals.css"),
-      "utf8",
-    );
-
-    expect(cta.contains(ring)).toBe(false);
-    expect(css).toMatch(
-      /\.hub-lite-start-focus-ring\s*\{[^}]*pointer-events:\s*none/s,
-    );
-  });
-
-  it("Start Focus: pre-hydration (null content loop) → safe default label", () => {
+  it("a completed daily informs without disabling the piece shortcuts", () => {
+    // COME BACK TOMORROW is a status, not a gate: the Training Path stays
+    // fully interactive so the player can keep training and improving scores.
     render(
       <HubLiteScaffold
-        {...baseProps({ primaryFocus: { onPress: vi.fn(), contentLoop: null, isHydrated: false } })}
+        {...baseProps({
+          seasonPass: {
+            active: true,
+            source: "season_pass",
+            dayOfChallenge: 3,
+            shieldsCredited: 3,
+          },
+          onJoinChallenge: null,
+          focusPassport: {
+            streak: 3,
+            totalCompleted: 3,
+            todayDone: true,
+            isLoading: false,
+          },
+        })}
       />,
     );
-    expect(screen.getByTestId("start-focus-cta").textContent).toMatch(/Start Focus/i);
-  });
-
-  it("Start Focus: carries the train-pieces icon, decorative and before the label", () => {
-    render(<HubLiteScaffold {...baseProps()} />);
-    const cta = screen.getByTestId("start-focus-cta");
-    const icon = cta.querySelector(".hub-lite-start-focus-icon");
-    expect(icon).not.toBeNull();
-    expect(icon?.getAttribute("aria-hidden")).toBe("true");
-    expect(icon?.querySelector("img")?.getAttribute("src")).toBe("/art/hub/train-pieces.png");
-    // Decorative: the accessible name still comes from the label alone.
-    expect(cta.textContent).toMatch(/Start Focus/i);
-  });
-
-  it("Start Focus (non-PRO): no gold ring overlay", () => {
-    const { container } = render(<HubLiteScaffold {...baseProps()} />);
-    expect(container.querySelector(".hub-lite-start-focus-ring")).toBeNull();
-  });
-
-  it("Start Focus (PRO): prioritizes the AVIF ring with intrinsic dimensions", () => {
-    const { container } = render(
-      <ThemeVariantOverride variant="pro">
-        <HubLiteScaffold {...baseProps({ isPro: true })} />
-      </ThemeVariantOverride>,
+    expect(screen.getByTestId("challenge-cta")).toHaveAttribute(
+      "data-cta-state",
+      "tomorrow",
     );
-    const picture = container.querySelector(".hub-lite-start-focus-ring");
-    const sources = picture?.querySelectorAll("source");
-    const image = picture?.querySelector("img");
 
-    expect(sources).toHaveLength(2);
-    expect(sources?.[0]).toHaveAttribute("srcset", "/art/ring-start-focus.avif");
-    expect(sources?.[1]).toHaveAttribute("srcset", "/art/ring-start-focus.webp");
-    expect(image).toHaveAttribute("src", "/art/ring-start-focus.png");
-    expect(image).toHaveAttribute("width", "512");
-    expect(image).toHaveAttribute("height", "260");
-    expect(image).toHaveAttribute("fetchpriority", "high");
-    expect(image).toHaveAttribute("draggable", "false");
+    const path = screen.getByRole("region", { name: /training path/i });
+    const tiles = path.querySelectorAll(".reward-tile");
+    expect(tiles).toHaveLength(6);
+    for (const tile of tiles) {
+      expect(tile.querySelector("[disabled]")).toBeNull();
+      expect(tile.getAttribute("aria-disabled")).not.toBe("true");
+    }
   });
 
   it("Mascot: exposes responsive AVIF/WebP candidates with intrinsic fallbacks", () => {
@@ -345,19 +353,21 @@ describe("<HubLiteScaffold>", () => {
     expect(path.querySelectorAll(".reward-tile")).toHaveLength(6);
   });
 
-  it("P1-A: Start Focus and Join CTA precede the Training Path in DOM order", () => {
+  it("P1-A: the primary CTA precedes the Training Path in DOM order", () => {
     const { container } = render(<HubLiteScaffold {...baseProps()} />);
     const order = (sel: string) =>
       Array.prototype.indexOf.call(container.querySelectorAll("*"), container.querySelector(sel));
-    const startFocus = order('[data-testid="start-focus-cta"]');
-    const join = order('[data-testid="challenge-join-cta"]');
+    const cta = order('[data-testid="challenge-cta"]');
     const path = order(".hub-lite-training-path");
-    expect(startFocus).toBeLessThan(path);
-    expect(join).toBeLessThan(path);
+    expect(cta).toBeLessThan(path);
   });
 
-  it("ES locale: Start Focus label is translated (i18n parity)", () => {
+  it("ES locale: the CTA and the weekly row are translated (i18n parity)", () => {
     render(<HubLiteScaffold {...baseProps()} />, { locale: "es" });
-    expect(screen.getByTestId("start-focus-cta").textContent).toMatch(/Comenzar foco/i);
+    expect(screen.getByTestId("challenge-cta").textContent).toMatch(/Unirme al reto/i);
+    const letters = screen
+      .getAllByTestId("challenge-week-day")
+      .map((el) => el.textContent?.trim());
+    expect(letters).toEqual(["L", "M", "X", "J", "V", "S", "D"]);
   });
 });
