@@ -3648,13 +3648,12 @@ export const PLAY_HUB_COPY = {
   shopAriaLabel: "Open Play Shop",
   arenaLabel: "PLAY CHESS",
   arenaAriaLabel: "Play Chess: full chess vs AI",
-  // Play Kingdom panel (ref Image 2) — one panel, PRO chip is the only
-  // per-state difference (arena is free-to-all, never a paywall).
+  // Play Kingdom panel. Arena remains free-to-all; PRO is an explanatory
+  // secondary CTA, never a gate on the primary Play Chess action.
   kingdomPanelTitle: "Play Kingdom",
   kingdomPanelBody: "Play matches, sharpen tactics, and improve with Coach.",
-  kingdomProActiveChip: "PRO active",
-  kingdomProDiscoverChip: "PRO",
-  kingdomProDiscoverAriaLabel: "Discover PRO benefits",
+  kingdomProCtaTitle: "Chesscito PRO",
+  kingdomProCtaSubtitle: "Season Pass + unlimited Coach",
   quickMatchLabel: "Quick Match",
   coachReviewLabel: "Coach Review",
   rewardsLabel: "Rewards",

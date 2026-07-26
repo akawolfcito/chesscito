@@ -9235,38 +9235,6 @@ button.hud-resource-chip:active:not(:disabled) {
   color: #4a2f12;
 }
 
-.kingdom-card-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 9px;
-  border-radius: 9999px;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  line-height: 1.4;
-}
-
-.kingdom-card-chip--active {
-  background: linear-gradient(180deg, #5bd16a, #2f9d43);
-  color: #fff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
-}
-
-.kingdom-card-chip--discover {
-  border: 1px solid rgba(255, 222, 112, 0.85);
-  background: linear-gradient(180deg, #7c46b8, #5c2e97);
-  color: #fff7c7;
-  cursor: pointer;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.25),
-    0 1px 3px rgba(60, 30, 90, 0.3);
-}
-
-.kingdom-card-chip--discover:active {
-  transform: translateY(1px);
-}
-
 .kingdom-card-body {
   margin: 0;
   font-size: 0.8rem;
@@ -9301,6 +9269,105 @@ button.hud-resource-chip:active:not(:disabled) {
   height: 0.9rem;
   flex: 0 0 auto;
   color: #9a6a2e;
+}
+
+/* PRO discovery/status strip. The crowned badge remains the recognition
+   anchor, but the whole row is now one generous tap target with enough copy
+   to explain why PRO matters. It deliberately stays secondary to PLAY CHESS. */
+.kingdom-card-pro-cta {
+  width: 100%;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+  padding: 4px 9px 5px 5px;
+  border: 1.5px solid #efbd42;
+  border-radius: 14px;
+  background:
+    linear-gradient(110deg, rgba(255, 255, 255, 0.13), transparent 42%),
+    linear-gradient(180deg, #7536a9 0%, #52217f 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 3px 7px rgba(72, 31, 92, 0.25);
+  color: #fff8d2;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 120ms ease-out,
+    filter 120ms ease-out;
+}
+
+.kingdom-card-pro-cta:active {
+  transform: translateY(1px) scale(0.99);
+  filter: brightness(0.96);
+}
+
+.kingdom-card-pro-cta:focus-visible {
+  outline: 3px solid rgba(64, 177, 255, 0.95);
+  outline-offset: 2px;
+}
+
+.kingdom-card-pro-visual {
+  width: 66px;
+  min-width: 66px;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* The same theme-controlled chip used by the former header slot, rescaled and
+   seated inside the CTA. The status foot keeps Unlock / Xd / Checking /
+   Unavailable recognizable without becoming a second tap target. */
+.kingdom-card-pro-visual .hub-pro-badge {
+  width: 64px;
+  margin-top: 0;
+  filter: drop-shadow(0 2px 4px rgba(24, 8, 35, 0.42));
+}
+
+.kingdom-card-pro-visual .hub-pro-badge-label {
+  bottom: -3px;
+  padding: 1px 5px;
+  font-size: 0.43rem;
+}
+
+.kingdom-card-pro-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.kingdom-card-pro-title {
+  font-family: var(--font-game-action);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.05;
+  color: #fff7c3;
+  text-shadow: 0 1px 2px rgba(33, 9, 48, 0.65);
+}
+
+.kingdom-card-pro-subtitle {
+  overflow: hidden;
+  font-size: 0.62rem;
+  font-weight: 650;
+  line-height: 1.15;
+  color: rgba(255, 248, 220, 0.88);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kingdom-card-pro-chevron {
+  flex: 0 0 auto;
+  margin-left: auto;
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #ffd45a;
+  text-shadow: 0 1px 2px rgba(33, 9, 48, 0.7);
 }
 
 /* ── CHESS TOOLS grid — reuses the proven cream square-tile look. HubActionTile

@@ -1,6 +1,7 @@
 "use client";
 
 import { PlayHubScaffold } from "@/components/hub/play-hub-scaffold";
+import { HubDailyTrigger } from "@/components/hub/hub-daily-trigger";
 import type { PeonesBalanceState } from "@/lib/peones/use-peones-balance";
 
 /** Fixture variants for the PLAY hub home.
@@ -45,6 +46,14 @@ export function PlayHubFixture({ variant }: { variant: PlayHubVariant }) {
       // baseline that lies.
       pro={variant === "pro" ? { active: true, daysRemaining: 12 } : { active: false }}
       peones={connected ? PEONES_SETTLED : { kind: "guest" }}
+      dailySlot={
+        <HubDailyTrigger
+          variant="corner-icon"
+          label="Daily"
+          ariaLabel="Play today's Daily Tactic"
+          onClick={noop}
+        />
+      }
       onPeonesRefetch={noop}
       onConnectTap={noop}
       onTrophyTap={noop}

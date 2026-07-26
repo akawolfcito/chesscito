@@ -1,9 +1,9 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { AppModeSwitch } from "@/components/hub/app-mode-switch";
 import { HubActionTile } from "@/components/hub/hub-action-tile";
-import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { LanguageChip } from "@/components/hub/language-chip";
 import { KingdomCard } from "@/components/kingdom/kingdom-card";
 import { PeonesBalanceChipView } from "@/components/peones/peones-balance-chip";
@@ -22,6 +22,9 @@ type PlayHubScaffoldProps = {
    *  put a wagmi hook inside this tree and made the scaffold impossible to mount
    *  in a `/dev` probe — so the PLAY hub had zero visual coverage. */
   peones: PeonesBalanceState;
+  /** The client-owned Daily trigger. Composition keeps this scaffold free of
+   *  wagmi/localStorage hooks and preserves the provider-less `/dev` fixture. */
+  dailySlot: ReactNode;
   onPeonesRefetch: () => void;
   onConnectTap: () => void;
   onTrophyTap: () => void;
@@ -42,6 +45,7 @@ export function PlayHubScaffold({
   isWalletConnected,
   pro,
   peones,
+  dailySlot,
   onPeonesRefetch,
   onConnectTap,
   onTrophyTap,
@@ -51,18 +55,7 @@ export function PlayHubScaffold({
   onArenaPress,
 }: PlayHubScaffoldProps) {
   const tHud = useTranslations("HUD_COPY");
-  const tRail = useTranslations("HUB_ACTION_RAIL_COPY");
   const tPlay = useTranslations("PLAY_HUB_COPY");
-  const proStatus = pro.status ?? "inactive";
-  const proAriaLabel = pro.active
-    ? tHud("proAriaLabel", { days: pro.daysRemaining })
-    : proStatus === "inactive"
-      ? tHud("proInactiveAriaLabel")
-      : proStatus === "loading"
-        ? tHud("proLoadingAriaLabel")
-        : tHud("proUnavailableAriaLabel");
-  const staleVisualActive =
-    !pro.active && "staleVisualActive" in pro && pro.staleVisualActive;
 
   return (
     <main className="hub-scaffold play-hub-scaffold" aria-label={tPlay("rootAriaLabel")}>
@@ -95,8 +88,9 @@ export function PlayHubScaffold({
           </div>
           <div className="hub-scaffold-hud-right">
             {/* Account entry intentionally omitted here (founder 2026-07-07):
-                the PLAY hub keeps only trophy·Peones·language + PRO badge. The
-                account surface is reachable from /arena instead. */}
+                the PLAY hub keeps the same universal header grammar as LEARN:
+                trophy · Peones · language + Daily. PRO discovery/status moved
+                into KingdomCard, where its value can be explained. */}
             {!isWalletConnected ? (
               <button
                 type="button"
@@ -108,25 +102,7 @@ export function PlayHubScaffold({
                 <span>{tHud("connectLabel")}</span>
               </button>
             ) : null}
-            <HubProBadge
-              active={pro.active}
-              status={proStatus}
-              visualActive={pro.active || staleVisualActive}
-              daysRemaining={pro.active ? pro.daysRemaining : undefined}
-              daysLabel={
-                pro.active
-                  ? tHud("proRemainingFormat", { days: pro.daysRemaining })
-                  : undefined
-              }
-              sublineInactive={tRail("proDiscoverySubtitle")}
-              sublinePending={
-                proStatus === "loading"
-                  ? tRail("proCheckingSubtitle")
-                  : tRail("proUnavailableSubtitle")
-              }
-              ariaLabel={proAriaLabel}
-              onClick={onProTap}
-            />
+            {dailySlot}
           </div>
         </div>
       </header>
@@ -146,8 +122,8 @@ export function PlayHubScaffold({
         <AppModeSwitch activeMode="play" />
       </div>
 
-      {/* Kingdom hero panel — one panel, PRO chip is the only per-state
-          difference. The non-PRO chip opens the PRO sheet (onProTap). */}
+      {/* Kingdom hero panel — the PRO chip is embedded in an explanatory,
+          full-width CTA. Every state opens the same discovery/manage sheet. */}
       <KingdomCard pro={pro} onProDiscover={onProTap} />
 
       {/* Dominant CTA — occupies the Start Focus slot of the LEARN/LITE hub.

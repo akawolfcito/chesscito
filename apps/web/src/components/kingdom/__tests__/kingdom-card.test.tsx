@@ -17,25 +17,69 @@ describe("KingdomCard", () => {
     expect(screen.getByText("Rewards")).toBeInTheDocument();
   });
 
-  it("non-PRO: chip is a tappable discovery pill that fires onProDiscover", async () => {
+  it("non-PRO: the explanatory PRO strip is the tappable discovery surface", async () => {
     const onProDiscover = vi.fn();
     render(<KingdomCard pro={{ active: false }} onProDiscover={onProDiscover} />);
 
-    const chip = screen.getByRole("button", { name: "Discover PRO benefits" });
-    expect(chip).toHaveTextContent("PRO");
-    await userEvent.click(chip);
+    const cta = screen.getByRole("button", {
+      name: "PRO inactive: tap to learn more",
+    });
+    expect(cta).toHaveTextContent("Chesscito PRO");
+    expect(cta).toHaveTextContent("Season Pass + unlimited Coach");
+    expect(cta).toHaveTextContent("Unlock");
+    await userEvent.click(cta);
     expect(onProDiscover).toHaveBeenCalledTimes(1);
   });
 
-  it("PRO active: chip is a non-interactive 'PRO active' badge", () => {
+  it("PRO active: the same strip exposes days remaining and opens management", async () => {
+    const onProDiscover = vi.fn();
     render(
-      <KingdomCard pro={{ active: true, daysRemaining: 206 }} onProDiscover={() => {}} />,
+      <KingdomCard
+        pro={{ active: true, daysRemaining: 206 }}
+        onProDiscover={onProDiscover}
+      />,
     );
 
-    expect(screen.getByTestId("kingdom-pro-chip").tagName).not.toBe("BUTTON");
-    expect(screen.getByText("PRO active")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Discover PRO benefits" }),
-    ).not.toBeInTheDocument();
+    const cta = screen.getByRole("button", {
+      name: "PRO active, 206 days remaining",
+    });
+    expect(cta).toHaveAttribute("data-pro-status", "active");
+    expect(cta).toHaveTextContent("206d");
+    await userEvent.click(cta);
+    expect(onProDiscover).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["loading", "Checking", "PRO status is being checked"],
+    ["unknown", "Unavailable", "PRO status unavailable: try again shortly"],
+    ["error", "Unavailable", "PRO status unavailable: try again shortly"],
+  ] as const)(
+    "maps %s to a human-readable status inside the PRO strip",
+    (status, visibleStatus, ariaLabel) => {
+      render(
+        <KingdomCard
+          pro={{ active: false, status, staleVisualActive: false }}
+          onProDiscover={() => {}}
+        />,
+      );
+
+      const cta = screen.getByRole("button", { name: ariaLabel });
+      expect(cta).toHaveAttribute("data-pro-status", status);
+      expect(cta).toHaveTextContent(visibleStatus);
+    },
+  );
+
+  it("retains active chip art when an unavailable response has trusted stale state", () => {
+    render(
+      <KingdomCard
+        pro={{ active: false, status: "error", staleVisualActive: true }}
+        onProDiscover={() => {}}
+      />,
+    );
+
+    expect(screen.getByTestId("kingdom-pro-cta")).toHaveAttribute(
+      "data-pro-visual-stale",
+      "true",
+    );
   });
 });

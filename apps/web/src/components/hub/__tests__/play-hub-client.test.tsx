@@ -43,16 +43,21 @@ vi.mock("@/lib/shop/use-shop-sheet-state", () => ({
   }),
 }));
 vi.mock("@/lib/telemetry", () => ({ track: (...args: unknown[]) => trackMock(...args) }));
+vi.mock("@/components/hub/hub-daily-tile", () => ({
+  HubDailyTile: () => <button data-testid="client-daily">Daily</button>,
+}));
 vi.mock("@/components/hub/play-hub-scaffold", () => ({
   PlayHubScaffold: (props: {
     mintedVictoryCount: number;
     pro: { active: boolean };
+    dailySlot: React.ReactNode;
     onArenaPress: () => void;
     onCoachTap: () => void;
     onShopTap: () => void;
   }) => (
     <div data-testid="play-hub" data-pro={props.pro.active}>
       <span>victories:{props.mintedVictoryCount}</span>
+      {props.dailySlot}
       <button onClick={props.onArenaPress}>arena</button>
       <button onClick={props.onCoachTap}>coach</button>
       <button onClick={props.onShopTap}>shop</button>
@@ -91,6 +96,7 @@ describe("PlayHubClient", () => {
   it("passes the minted Victory NFT count to the Play scaffold", () => {
     render(<PlayHubClient />);
     expect(screen.getByText("victories:3")).toBeInTheDocument();
+    expect(screen.getByTestId("client-daily")).toBeInTheDocument();
   });
 
   it("updates the Hub CTA state when the shared entitlement hydrates", () => {

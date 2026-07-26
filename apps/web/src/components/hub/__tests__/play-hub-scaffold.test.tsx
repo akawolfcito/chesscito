@@ -18,9 +18,6 @@ vi.mock("@/components/hub/language-chip", () => ({ LanguageChip: () => null }));
 vi.mock("@/components/peones/peones-balance-chip", () => ({
   PeonesBalanceChipView: () => <div data-testid="peones-chip" />,
 }));
-vi.mock("@/components/hub/hub-pro-badge", () => ({
-  HubProBadge: ({ ariaLabel }: { ariaLabel: string }) => <button aria-label={ariaLabel}>PRO</button>,
-}));
 vi.mock("@/components/tactics/play-tactics-tile", () => ({
   PlayTacticsTile: ({ className }: { className?: string }) => (
     <button className={className}>Tactics</button>
@@ -53,6 +50,7 @@ const props = {
   // The scaffold is told the balance; it no longer fetches it. A wagmi hook in
   // this tree is what kept the PLAY hub out of every VR baseline.
   peones: { kind: "success", balance: 12, dailyEarnedCapped: 0, dailyCap: 10, lastEventAt: null } as const,
+  dailySlot: <button data-testid="play-daily">Daily</button>,
   onPeonesRefetch: vi.fn(),
   onConnectTap: vi.fn(),
   onTrophyTap: vi.fn(),
@@ -71,6 +69,7 @@ describe("PlayHubScaffold", () => {
     expect(screen.getByAltText("Chesscito")).toBeInTheDocument();
     expect(screen.getByTestId("kingdom-card")).toBeInTheDocument();
     expect(screen.getByText("PLAY CHESS")).toBeInTheDocument();
+    expect(screen.getByTestId("play-daily")).toBeInTheDocument();
   });
 
   it("orders mascot → switch → Kingdom panel → CTA → CHESS TOOLS", () => {

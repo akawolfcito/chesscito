@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "@/i18n/navigation";
 import { PlayHubScaffold } from "@/components/hub/play-hub-scaffold";
+import { HubDailyTile } from "@/components/hub/hub-daily-tile";
 import { usePlayHubData } from "@/components/hub/use-play-hub-data";
 import type { HubInitialSheet } from "@/components/hub/hub-scaffold-client";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
@@ -75,6 +76,7 @@ export function PlayHubClient({
         isWalletConnected={isConnected}
         pro={pro}
         peones={peones.state}
+        dailySlot={<HubDailyTile variant="corner-icon" />}
         onPeonesRefetch={() => void peones.refetch()}
         onConnectTap={() => {
           track("play_hub_connect_tap");
