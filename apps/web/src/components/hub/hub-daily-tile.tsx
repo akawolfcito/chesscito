@@ -316,6 +316,7 @@ export function HubDailyTile({
         ariaLabel={ariaLabel}
         onClick={() => requestOpenChange(true)}
         disabled={completed}
+        completed={completed}
         badge={
           <>
             {badge}

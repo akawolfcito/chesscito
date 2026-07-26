@@ -37,6 +37,7 @@ describe("<HubDailyTrigger>", () => {
 
     const btn = screen.getByTestId("hub-daily-corner-icon");
     expect(btn).toBeInTheDocument();
+    expect(btn).toHaveAttribute("data-state", "pending");
     expect(btn).toHaveAttribute("aria-label", "Play today's focus");
     // Reuses the existing welcome-gift asset, not the daily tile icon.
     const img = btn.querySelector("img");
@@ -60,13 +61,22 @@ describe("<HubDailyTrigger>", () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it("corner-icon variant: respects disabled (completed today)", () => {
+  it("corner-icon variant: keeps completed DAILY vivid and shows a check without replay", () => {
     const onClick = vi.fn();
     render(
-      <HubDailyTrigger variant="corner-icon" {...BASE} disabled onClick={onClick} />,
+      <HubDailyTrigger
+        variant="corner-icon"
+        {...BASE}
+        completed
+        disabled
+        onClick={onClick}
+      />,
     );
     const btn = screen.getByTestId("hub-daily-corner-icon");
     expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute("data-state", "completed");
+    expect(screen.getByTestId("hub-daily-complete-check")).toHaveTextContent("✓");
+    expect(screen.queryByTestId("test-badge")).toBeNull();
     fireEvent.click(btn);
     expect(onClick).not.toHaveBeenCalled();
   });

@@ -18,6 +18,9 @@ export type HubDailyTriggerProps = {
   ariaLabel: string;
   onClick: () => void;
   disabled?: boolean;
+  /** The daily was earned today. Corner variant renders a trophy-like
+   *  confirmation instead of making the gift look unavailable. */
+  completed?: boolean;
   /** Streak / notif badge — rendered in both variants, positioned by CSS. */
   badge?: ReactNode;
 };
@@ -40,6 +43,7 @@ export function HubDailyTrigger({
   ariaLabel,
   onClick,
   disabled = false,
+  completed = false,
   badge,
 }: HubDailyTriggerProps) {
   if (variant === "corner-icon") {
@@ -48,6 +52,7 @@ export function HubDailyTrigger({
         type="button"
         className="hub-daily-corner"
         data-testid="hub-daily-corner-icon"
+        data-state={completed ? "completed" : "pending"}
         aria-label={ariaLabel}
         disabled={disabled}
         onClick={onClick}
@@ -61,7 +66,18 @@ export function HubDailyTrigger({
           sizes="52px"
           draggable={false}
         />
-        {badge}
+        {completed ? (
+          <span
+            className="reward-tile-notif-streak hub-daily-corner-complete"
+            data-state="completed"
+            data-testid="hub-daily-complete-check"
+            aria-hidden="true"
+          >
+            ✓
+          </span>
+        ) : (
+          badge
+        )}
       </button>
     );
   }
