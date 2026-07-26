@@ -164,6 +164,11 @@ describe('<ChallengeCard>', () => {
     expect(card.textContent).toMatch(/\$1\.99/)
     expect(card.textContent).toMatch(/21-Day Mind Challenge/i)
     const cta = screen.getByTestId('challenge-cta')
+    expect(cta).toHaveClass(
+      'principal-button-medium',
+      'hub-lite-start-focus',
+      'challenge-card-cta',
+    )
     fireEvent.click(cta)
     expect(onJoin).toHaveBeenCalledTimes(1)
     // No active-only affordances in the offer state.
@@ -339,7 +344,7 @@ describe('<ChallengeCard>', () => {
       expect(cta().textContent).toMatch(/\$1\.99/)
     })
 
-    it('shows START TODAY\'S FOCUS with an active Season Pass and a pending daily', () => {
+    it('shows the compact START FOCUS label with an active Season Pass and a pending daily', () => {
       const onFocusTap = vi.fn()
       render(
         <ChallengeCard
@@ -356,12 +361,13 @@ describe('<ChallengeCard>', () => {
         />,
       )
       expect(cta()).toHaveAttribute('data-cta-state', 'start')
-      expect(cta().textContent).toMatch(/Start Today's Focus/i)
+      expect(cta()).toHaveClass('challenge-card-cta')
+      expect(cta()).toHaveTextContent(/^Start Focus$/)
       fireEvent.click(cta())
       expect(onFocusTap).toHaveBeenCalledTimes(1)
     })
 
-    it('shows START TODAY\'S FOCUS for PRO — PRO never sees Join', () => {
+    it('shows START FOCUS for PRO — PRO never sees Join', () => {
       render(
         <ChallengeCard
           focusPassport={passport({ streak: 2, todayDone: false })}
@@ -748,5 +754,25 @@ describe('<ChallengeCard>', () => {
     expect(
       screen.getByTestId('challenge-cta').textContent ?? '',
     ).not.toMatch(/CHALLENGE_CARD_COPY/)
+  })
+
+  it('renders the compact ES Start Focus label without shortening its accessible name', () => {
+    render(
+      <ChallengeCard
+        focusPassport={passport({ streak: 2, todayDone: false })}
+        challenge={CHALLENGE}
+        seasonPass={{ active: true, source: 'pro' }}
+        onJoinChallenge={null}
+        onFocusTap={() => {}}
+      />,
+      { locale: 'es' },
+    )
+
+    expect(screen.getByTestId('challenge-cta')).toHaveTextContent(
+      /^Comenzar foco$/,
+    )
+    expect(
+      screen.getByRole('button', { name: 'Comienza tu foco de hoy' }),
+    ).toBeInTheDocument()
   })
 })

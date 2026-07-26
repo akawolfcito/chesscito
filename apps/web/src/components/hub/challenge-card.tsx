@@ -379,7 +379,7 @@ export function ChallengeCard({
                 // Pulses only while the purchase is actually available: `null` means
                 // the status is still resolving (or the player already owns it), and
                 // a CTA that throbs while disabled advertises a dead button.
-                className={`principal-button principal-button-medium hub-tour-primary challenge-card-cta${
+                className={`principal-button principal-button-medium hub-lite-start-focus challenge-card-cta${
                   onJoinChallenge ? " is-pulsing" : ""
                 }`}
                 data-testid="challenge-cta"

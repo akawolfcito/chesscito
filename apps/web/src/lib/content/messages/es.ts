@@ -1891,7 +1891,7 @@ const messages = {
     weekUpcoming: "por venir",
     joinCta: "Unirme al reto",
     joinAriaLabel: "Únete al Reto Mental de 21 Días por {price}",
-    ctaStartToday: "Comienza tu foco de hoy",
+    ctaStartToday: "Comenzar foco",
     ctaStartAriaLabel: "Comienza tu foco de hoy",
     ctaTomorrow: "Vuelve mañana",
     ctaTomorrowAriaLabel: "Tu foco de hoy está hecho. El entrenamiento sigue abierto.",

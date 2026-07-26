@@ -3478,7 +3478,7 @@ export const CHALLENGE_CARD_COPY = {
   joinCta: "Join Challenge",
   joinAriaLabel: "Join the 21-Day Mind Challenge for {price}",
   /** Single primary CTA — one label per state, never two CTAs at once. */
-  ctaStartToday: "Start Today's Focus",
+  ctaStartToday: "Start Focus",
   ctaStartAriaLabel: "Start today's focus",
   ctaTomorrow: "Come Back Tomorrow",
   /** Informative, never a block: training, scores and the piece shortcuts all

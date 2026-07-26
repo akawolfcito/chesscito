@@ -8669,13 +8669,14 @@ button.hud-resource-chip:active:not(:disabled) {
 /* The single primary CTA. Sized to its own label (never full-bleed) and capped
    at the panel width, so the longest string in either locale still fits without
    the button turning into a bar. */
-.challenge-card-cta {
+.principal-button-medium.challenge-card-cta {
   width: auto;
   max-width: 100%;
   justify-content: center;
   margin: 0;
   text-align: center;
   overflow: visible;
+  white-space: nowrap;
 }
 
 /* Price badge floating on the button. Same featured-pill language as
@@ -8846,21 +8847,14 @@ button.hud-resource-chip:active:not(:disabled) {
       #55c51b 42%,
       #39a909 76%,
       #2a8d04 100%);
-  box-shadow:
-    /* brillo fino interior superior */
+  /* box-shadow:
     inset 0 2px 0 rgba(255, 255, 255, 0.68),
-    /* sombreado inferior de la cara */
     inset 0 -5px 0 rgba(20, 101, 0, 0.34),
-    /* línea verde exterior */
     0 0 0 2px rgba(77, 171, 21, 0.95),
-    /* halo lima */
     0 0 8px 3px rgba(196, 255, 118, 0.72),
-    /* profundidad inferior */
     0 3px 0 #176d03,
-    /* borde luminoso alrededor de la profundidad */
     0 10px 0 -7px rgba(173, 247, 89, 0.72),
-    /* sombra ambiental */
-    0 14px 18px rgba(29, 92, 4, 0.34) !important;
+    0 14px 18px rgba(29, 92, 4, 0.34) !important; */
   color: #fff;
   font-size: 1.35rem;
   font-weight: 800;
