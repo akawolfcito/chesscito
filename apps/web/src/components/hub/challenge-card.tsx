@@ -257,6 +257,18 @@ export function ChallengeCard({
           {(() => {
             const inner = (
               <>
+                {/* Ordinal FIRST, flames under it: the sentence the player
+                    reads is "Day N of 21", and the flames are the picture of
+                    that sentence. The reverse order made the row look like a
+                    legend for a number that had not been said yet. */}
+                <span className="challenge-card-day-count">
+                  {t("focusDayOrdinal", { done, total: durationDays })}
+                  {streak > 0 ? (
+                    <span className="challenge-card-streak" data-testid="challenge-streak">
+                      {t("streakFormat", { days: streak })}
+                    </span>
+                  ) : null}
+                </span>
                 <span
                   className="challenge-card-week"
                   role="list"
@@ -295,14 +307,6 @@ export function ChallengeCard({
                       </span>
                     </span>
                   ))}
-                </span>
-                <span className="challenge-card-day-count">
-                  {t("focusDaysFormat", { done, total: durationDays })}
-                  {streak > 0 ? (
-                    <span className="challenge-card-streak" data-testid="challenge-streak">
-                      {t("streakFormat", { days: streak })}
-                    </span>
-                  ) : null}
                 </span>
               </>
             );
@@ -370,10 +374,13 @@ export function ChallengeCard({
               </>
             )}
           </span>
-          {/* Shields OWNED (live balance), distinct from the `+N` purchase
-              bonus above. Rendered only when the container can actually read
-              the balance — a chip with an invented count is worse than none. */}
-          {shields ? (
+          {/* Shields OWNED (live balance) — only once the pass is ACTIVE.
+              In the offer state the row already advertises the `+3` purchase
+              bonus, and "+3 shields … 0/3" side by side reads as a
+              contradiction: one is what you will receive, the other what you
+              hold. Showing the balance only after the purchase removes the
+              clash without hiding anything the player needs to decide. */}
+          {shields && isActive ? (
             <span className="challenge-card-stat" data-testid="challenge-shields">
               <ShieldCheckIcon />
               {t("shieldsOwned", { count: shields.count, max: shields.max })}
@@ -387,63 +394,75 @@ export function ChallengeCard({
             shortcuts, training or score improvements, which live outside this
             card and stay reachable in every state. All four wear
             `.hub-lite-start-focus` so the panel keeps one CTA look. */}
-        {ctaState === "join" ? (
-          <>
-            {/* Nudge arrow — points at Join, but ONLY while the mini-tour is
-                spotlighting this card (CSS gates it on the tour's
-                `data-tour-spotlight` attribute; hidden on the plain hub).
-                Decorative; the subtle L→R nudge is CSS + reduced-motion aware. */}
-            <ThemeAssetPicture
-              slot="season.story-arrow"
-              pictureClassName="challenge-card-join-arrow"
-              alt=""
-              aria-hidden="true"
-              className="challenge-card-join-arrow-img"
-              draggable={false}
-            />
+        {/* Arrow and CTA share ONE row. The arrow sprite points left→right and
+            its nudge animates `translateX`, so it only reads as "look here"
+            when it sits beside its target — stacked above, it pointed at
+            nothing. Rotating the sprite would fight that same keyframe. */}
+        <div className="challenge-card-cta-row">
+          {ctaState === "join" ? (
+            <>
+              {/* Nudge arrow — points at Join, but ONLY while the mini-tour is
+                  spotlighting this card (CSS gates it on the tour's
+                  `data-tour-spotlight` attribute; hidden on the plain hub).
+                  Decorative; the subtle L→R nudge is CSS + reduced-motion aware. */}
+              <ThemeAssetPicture
+                slot="season.story-arrow"
+                pictureClassName="challenge-card-join-arrow"
+                alt=""
+                aria-hidden="true"
+                className="challenge-card-join-arrow-img"
+                draggable={false}
+              />
+              <button
+                type="button"
+                // Pulses only while the purchase is actually available: `null` means
+                // the status is still resolving (or the player already owns it), and
+                // a CTA that throbs while disabled advertises a dead button.
+                className={`principal-button principal-button-medium hub-tour-primary challenge-card-cta${
+                  onJoinChallenge ? " is-pulsing" : ""
+                }`}
+                data-testid="challenge-cta"
+                data-cta-state="join"
+                aria-label={t("joinAriaLabel", { price: challenge.priceLabel })}
+                onClick={onJoinChallenge ?? undefined}
+                disabled={!onJoinChallenge}
+              >
+                {/* Price BADGE floating on the button, not an inline pill —
+                    the same cost-cue pattern as the Save Victory tile
+                    (`.coach-viewer__tile-price-ribbon`), so a price reads the
+                    same wherever it appears. */}
+                <span className="challenge-card-cta-badge" aria-hidden="true">
+                  {challenge.priceLabel}
+                </span>
+                {t("joinCta")}
+              </button>
+            </>
+          ) : ctaState === "start" ? (
             <button
               type="button"
-              // Pulses only while the purchase is actually available: `null` means
-              // the status is still resolving (or the player already owns it), and
-              // a CTA that throbs while disabled advertises a dead button.
-              className={`hub-lite-start-focus challenge-card-cta${
-                onJoinChallenge ? " is-pulsing" : ""
-              }`}
+              className="principal-button principal-button-medium challenge-card-cta"
               data-testid="challenge-cta"
-              data-cta-state="join"
-              aria-label={t("joinAriaLabel", { price: challenge.priceLabel })}
-              onClick={onJoinChallenge ?? undefined}
-              disabled={!onJoinChallenge}
+              data-cta-state="start"
+              aria-label={t("ctaStartAriaLabel")}
+              onClick={onFocusTap}
+              disabled={!onFocusTap}
             >
-              {t("joinCta")}
-              <span className="challenge-card-cta-price">{challenge.priceLabel}</span>
+              {t("ctaStartToday")}
             </button>
-          </>
-        ) : ctaState === "start" ? (
-          <button
-            type="button"
-            className="hub-lite-start-focus challenge-card-cta"
-            data-testid="challenge-cta"
-            data-cta-state="start"
-            aria-label={t("ctaStartAriaLabel")}
-            onClick={onFocusTap}
-            disabled={!onFocusTap}
-          >
-            {t("ctaStartToday")}
-          </button>
-        ) : (
-          <p
-            className="hub-lite-start-focus challenge-card-cta challenge-card-cta--info"
-            data-testid="challenge-cta"
-            data-cta-state={ctaState}
-            role="status"
-            aria-label={
-              ctaState === "tomorrow" ? t("ctaTomorrowAriaLabel") : t("ctaCompleteAriaLabel")
-            }
-          >
-            {ctaState === "tomorrow" ? t("ctaTomorrow") : t("ctaComplete")}
-          </p>
-        )}
+          ) : (
+            <p
+              className="principal-button principal-button-medium challenge-card-cta challenge-card-cta--info"
+              data-testid="challenge-cta"
+              data-cta-state={ctaState}
+              role="status"
+              aria-label={
+                ctaState === "tomorrow" ? t("ctaTomorrowAriaLabel") : t("ctaCompleteAriaLabel")
+              }
+            >
+              {ctaState === "tomorrow" ? t("ctaTomorrow") : t("ctaComplete")}
+            </p>
+          )}
+        </div>
         {ctaState === "tomorrow" ? (
           <p className="challenge-card-cta-note" data-testid="challenge-cta-note">
             {t("tomorrowNote")}

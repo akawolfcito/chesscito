@@ -159,7 +159,7 @@ describe('<ChallengeCard>', () => {
     )
     expect(focusDays()).toBe(3)
     const card = screen.getByTestId('challenge-card')
-    expect(card.textContent).toMatch(/3\/21 focus days/i)
+    expect(card.textContent).toMatch(/Day 3 of 21/i)
     expect(card.textContent).toMatch(/\+3/)
     expect(card.textContent).toMatch(/\$1\.99/)
     expect(card.textContent).toMatch(/21-Day Mind Challenge/i)
@@ -411,7 +411,7 @@ describe('<ChallengeCard>', () => {
       }
     })
 
-    it('carries the Join styling of the Start Focus button', () => {
+    it('wears the shared primary-button skin and shows the price as a floating badge', () => {
       render(
         <ChallengeCard
           focusPassport={passport()}
@@ -420,7 +420,27 @@ describe('<ChallengeCard>', () => {
           onJoinChallenge={() => {}}
         />,
       )
-      expect(cta().className).toContain('hub-lite-start-focus')
+      expect(cta().className).toContain('principal-button')
+      // The price is a badge ON the button (Save Victory pattern), not an
+      // inline pill competing with the label for the same line.
+      const badge = cta().querySelector('.challenge-card-cta-badge')
+      expect(badge).not.toBeNull()
+      expect(badge?.textContent).toBe('$1.99')
+    })
+
+    it('keeps the tour arrow on the same row as the CTA it points at', () => {
+      const { container } = render(
+        <ChallengeCard
+          focusPassport={passport()}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+        />,
+      )
+      const row = container.querySelector('.challenge-card-cta-row')
+      expect(row).not.toBeNull()
+      expect(row?.contains(container.querySelector('.challenge-card-join-arrow'))).toBe(true)
+      expect(row?.contains(cta())).toBe(true)
     })
   })
 
@@ -565,8 +585,41 @@ describe('<ChallengeCard>', () => {
       )
       expect(screen.queryByTestId('challenge-day')).toBeNull()
       expect(screen.getByTestId('challenge-card').textContent).toMatch(
-        /4\/21 focus days/i,
+        /Day 4 of 21/i,
       )
+    })
+
+    it('hides the owned-shields chip in the offer state so it cannot contradict the +N bonus', () => {
+      // "+3 shields" (what you will receive) next to "0/3" (what you hold) read
+      // as two answers to the same question. Before the purchase, only the
+      // bonus is meaningful.
+      render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 1 })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+          shields={{ count: 0, max: 3 }}
+        />,
+      )
+      expect(screen.queryByTestId('challenge-shields')).toBeNull()
+      expect(screen.getByTestId('challenge-card').textContent).toMatch(/\+3/)
+    })
+
+    it('puts "Day N of 21" above the flames, not after them', () => {
+      const { container } = render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 2, todayDone: true })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+        />,
+      )
+      const all = Array.from(container.querySelectorAll('*'))
+      const ordinal = all.indexOf(container.querySelector('.challenge-card-day-count')!)
+      const week = all.indexOf(container.querySelector('.challenge-card-week')!)
+      expect(ordinal).toBeGreaterThanOrEqual(0)
+      expect(ordinal).toBeLessThan(week)
     })
 
     it('labels the day run as a streak, never as a Combo (canonical vocabulary)', () => {

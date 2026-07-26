@@ -8513,12 +8513,15 @@ button.hud-resource-chip:active:not(:disabled) {
 /* FOCUS PASSPORT week: 7 streak flames + the "N/21 focus days" ordinal.
    Restored from the pre-70ee44f7 flame view (the bar lost UX); flames sized
    down one step (1.4rem → 1.15rem) so the panel stays compact. */
+/* Column, not a row: "Day N of 21" is the sentence and the flames are its
+   picture, so the ordinal reads first and the week sits under it. */
 .challenge-card-passport {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
   margin-top: 2px;
+  text-align: left;
 }
 
 .challenge-card-flames {
@@ -8534,7 +8537,7 @@ button.hud-resource-chip:active:not(:disabled) {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   align-items: end;
-  gap: 2px;
+  gap: 7px;
   width: 100%;
 }
 
@@ -8542,12 +8545,12 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
 }
 
 .challenge-card-week-letter {
-  font-size: 0.6rem;
+  font-size: 0.66rem;
   font-weight: 800;
   line-height: 1;
   color: #9a7a4d;
@@ -8578,14 +8581,17 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Daily Streak readout. Canonical wording is "N-day streak" — never "Combo",
    which names the session metric in the exercise overlay. */
 .challenge-card-streak {
-  margin-left: 8px;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
   color: #b4611a;
 }
 
+/* The flames ARE the streak, visually. Bigger and further apart so each day
+   reads as its own token instead of a texture. */
 .challenge-card-flame {
   display: inline-flex;
   align-items: flex-end;
-  height: 1.15rem;
+  height: 1.7rem;
   flex-shrink: 0;
   line-height: 0;
 }
@@ -8606,9 +8612,13 @@ button.hud-resource-chip:active:not(:disabled) {
   filter: drop-shadow(0 0 5px rgba(255, 176, 60, 0.7));
 }
 
+/* "Day N of 21" line, with the streak readout pushed to the far side. */
 .challenge-card-day-count {
-  flex: 0 0 auto;
-  font-size: 0.72rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.88rem;
   font-weight: 800;
   color: #6e4415;
   white-space: nowrap;
@@ -8646,29 +8656,54 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 8px;
 }
 
-/* The single primary CTA. Wears `.hub-lite-start-focus` (the look the hidden
-   Start Focus button had), so JOIN / START / status all read as one control. */
-.challenge-card-cta {
-  width: 100%;
+/* Arrow + CTA on ONE line, centered. The tour arrow only points at something
+   when it shares the row with its target. */
+.challenge-card-cta-row {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 0 18px;
-  margin: 0;
-  font-size: 1.15rem;
-  text-align: center;
+  gap: 6px;
+  width: 100%;
 }
 
-/* Price pill inside JOIN CHALLENGE. */
-.challenge-card-cta-price {
-  flex: 0 0 auto;
-  padding: 3px 10px;
-  border-radius: 9px;
-  background: linear-gradient(180deg, #ffe9a8 0%, #f7c964 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 0 rgba(120, 74, 8, 0.45);
-  color: #7a4c07;
-  font-size: 0.92rem;
-  font-weight: 800;
-  text-shadow: none;
+/* The single primary CTA. Sized to its own label (never full-bleed) and capped
+   at the panel width, so the longest string in either locale still fits without
+   the button turning into a bar. */
+.challenge-card-cta {
+  width: auto;
+  max-width: 100%;
+  justify-content: center;
+  margin: 0;
+  text-align: center;
+  overflow: visible;
+}
+
+/* Price badge floating on the button. Same featured-pill language as
+   `.coach-viewer__tile-price-ribbon` (Save Victory), so a cost cue looks the
+   same on every surface that shows one. */
+.challenge-card-cta-badge {
+  position: absolute;
+  top: -9px;
+  right: -6px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%);
+  border: 1px solid rgba(120, 53, 15, 0.85);
+  color: #3f2208;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(255, 240, 175, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(120, 53, 15, 0.3),
+    0 2px 4px rgba(120, 53, 15, 0.32);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* COME BACK TOMORROW / CHALLENGE COMPLETE — the CTA skin on a status element.
@@ -8786,7 +8821,7 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .hub-lite-start-focus {
   width: auto;
-  min-height: 60px;
+  min-height: 44px;
   padding: 0 34px 0 26px;
   display: inline-flex;
   align-items: center;
@@ -8817,7 +8852,7 @@ button.hud-resource-chip:active:not(:disabled) {
     /* borde luminoso alrededor de la profundidad */
     0 10px 0 -7px rgba(173, 247, 89, 0.72),
     /* sombra ambiental */
-    0 14px 18px rgba(29, 92, 4, 0.34);
+    0 14px 18px rgba(29, 92, 4, 0.34) !important;
   color: #fff;
   font-size: 1.35rem;
   font-weight: 800;
@@ -9311,19 +9346,15 @@ button.hud-resource-chip:active:not(:disabled) {
   border: none;
   border-radius: 13px;
   background:
-    radial-gradient(
-      ellipse at 30% 5%,
+    radial-gradient(ellipse at 30% 5%,
       rgba(176, 236, 255, 0.52) 0%,
       rgba(112, 207, 255, 0.2) 24%,
-      transparent 48%
-    ),
-    linear-gradient(
-      180deg,
+      transparent 48%),
+    linear-gradient(180deg,
       #45c4f4 0%,
       #269fdf 42%,
       #117cc5 76%,
-      #075c9b 100%
-    );
+      #075c9b 100%);
 
   box-shadow:
     /* brillo fino interior superior */

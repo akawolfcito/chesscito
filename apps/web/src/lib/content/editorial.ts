@@ -3454,6 +3454,8 @@ export const CHALLENGE_CARD_COPY = {
   daysStat: "days",
   dayStat: "day",
   focusDaysFormat: "{done}/{total} focus days",
+  /** Passport headline, ABOVE the flames: the sentence the row illustrates. */
+  focusDayOrdinal: "Day {done} of {total}",
   shieldsBonus: "+{count}",
   shieldsStat: "Shields",
   shieldsCount: "{count}",

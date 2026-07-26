@@ -873,7 +873,7 @@ describe("HubScaffoldClient — Lite Mode", () => {
   it("Challenge progress label updates after daily completion event fires (no navigation)", async () => {
     render(<HubScaffoldClientLite />);
     const progress = await screen.findByTestId("challenge-progress");
-    await waitFor(() => expect(progress.textContent).toMatch(/0\/21 focus days/i));
+    await waitFor(() => expect(progress.textContent).toMatch(/Day 0 of 21/i));
 
     // Simulate daily completion.
     const today = new Date().toISOString().slice(0, 10);
@@ -884,7 +884,7 @@ describe("HubScaffoldClient — Lite Mode", () => {
     window.dispatchEvent(new CustomEvent("chesscito:daily-progress-changed"));
 
     // Visible label advances reactively, with no navigation.
-    await waitFor(() => expect(progress.textContent).toMatch(/1\/21 focus days/i));
+    await waitFor(() => expect(progress.textContent).toMatch(/Day 1 of 21/i));
     expect(pushMock).not.toHaveBeenCalled();
   });
 });

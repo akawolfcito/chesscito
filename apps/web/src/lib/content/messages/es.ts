@@ -1873,6 +1873,7 @@ const messages = {
     daysStat: "días",
     dayStat: "día",
     focusDaysFormat: "{done}/{total} días de foco",
+    focusDayOrdinal: "Día {done} de {total}",
     shieldsBonus: "+{count}",
     shieldsStat: "Escudos",
     shieldsCount: "{count}",
