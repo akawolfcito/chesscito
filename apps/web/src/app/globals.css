@@ -11183,7 +11183,7 @@ button.hud-resource-chip:active:not(:disabled) {
   background-image: var(--cta-primary-green-grad);
   border: 2px solid var(--cta-primary-green-border);
   border-radius: 14px;
-  box-shadow: var(--cta-primary-green-bevel);
+  box-shadow: var(--cta-primary-green-bevel) !important;
   color: #fff8ed;
   font-family: var(--font-game-action, system-ui, sans-serif);
   font-weight: 800;
