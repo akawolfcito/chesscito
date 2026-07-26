@@ -17,6 +17,10 @@ const REQUIRED_ASSET_KEYS: readonly ThemeAssetKey[] = [
   "hub.training",
   "hub.training-icon",
   "hub.daily-icon",
+  "hub.arena-warmup",
+  "hub.quick-match-benefit",
+  "hub.coach-review-benefit",
+  "hub.rewards-benefit",
   "hub.shop-icon",
   "hub.btn-battle",
   "hub.btn-play",
@@ -279,7 +283,9 @@ describe("theme-registry", () => {
       // formerly uncataloged "exceptions". +1: coach.share-trophy, the
       // dedicated Match Review share icon (2026-07-22), split off shared.trophy-epic.
       // +1: bg.login-play, the Play web access gate wallpaper (2026-07-25).
-      play: 25,
+      // +4: Arena Warm-up and the three KingdomCard benefits are independently
+      // editable PLAY slots, even when their defaults reuse established art.
+      play: 29,
       // 3 reclassified off `unknown` (they always had a consumer — in the
       // sibling app) + 15 newly cataloged carousel slots + 3 brand/social
       // files the landing layout declares as metadata (OG card, apple-icon,

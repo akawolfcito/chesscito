@@ -34,9 +34,14 @@ type PlayHubScaffoldProps = {
   onArenaPress: () => void;
 };
 
+/** Temporary product switch. PLAY remains available in PLAY PATH below.
+ *  Flip this single value to `true` to restore the standalone CTA without
+ *  reconstructing its markup, handler, theme slot or styles. */
+const SHOW_STANDALONE_PLAY_CHESS_CTA = false;
+
 /** Play Kingdom home. Mirrors the LEARN/LITE hub's visual system (unified
  *  vocabulary): floating HUD + Kingdom portal + mode switch + Kingdom hero
- *  panel + dominant Play Chess CTA + CHESS TOOLS square-tile grid.
+ *  panel + PLAY PATH square-tile grid.
  *
  *  Pure presentational — caller owns navigation + on-chain state. That claim is
  *  now true: it used to render a Peones chip that read the wallet on its own. */
@@ -129,50 +134,63 @@ export function PlayHubScaffold({
           full-width CTA. Every state opens the same discovery/manage sheet. */}
       <KingdomCard pro={pro} onProDiscover={onProTap} />
 
-      {/* Dominant CTA — occupies the Start Focus slot of the LEARN/LITE hub.
-          A 1:1 blue clone of that button's geometry (`.play-chess-cta` mirrors
-          `.hub-lite-start-focus`), keeping the crossed-swords icon. */}
-      <div className="hub-scaffold-cta-row play-hub-cta-row">
-        <button
-          type="button"
-          className="play-chess-cta"
-          data-testid="play-chess-cta"
-          aria-label={tPlay("arenaAriaLabel")}
-          onClick={() => {
-            hapticTap();
-            onArenaPress();
-          }}
-        >
-          {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-          <ThemeAssetPicture
-            slot="hub.enter-arena"
-            pictureClassName="play-chess-cta-icon"
-            pictureProps={{ "aria-hidden": true }}
-            alt=""
-            draggable={false}
-          />
-          <span>{tPlay("arenaLabel")}</span>
-        </button>
-      </div>
+      {SHOW_STANDALONE_PLAY_CHESS_CTA ? (
+        /* Temporarily hidden: PLAY PATH now owns the Arena entry. Keeping this
+           compile-checked branch makes restoration a one-value product switch. */
+        <div className="hub-scaffold-cta-row play-hub-cta-row">
+          <button
+            type="button"
+            className="play-chess-cta"
+            data-testid="play-chess-cta"
+            aria-label={tPlay("arenaAriaLabel")}
+            onClick={() => {
+              hapticTap();
+              onArenaPress();
+            }}
+          >
+            {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+            <ThemeAssetPicture
+              slot="hub.enter-arena"
+              pictureClassName="play-chess-cta-icon"
+              pictureProps={{ "aria-hidden": true }}
+              alt=""
+              draggable={false}
+            />
+            <span>{tPlay("arenaLabel")}</span>
+          </button>
+        </div>
+      ) : null}
 
-      {/* CHESS TOOLS — reuses the LEARN training-path square-tile visual
-          (HubActionTile already mirrors .reward-tile). Tactics stays
-          self-contained; Coach/Shop are prop-driven. Pinned to the floor
-          (margin-top:auto) like the LEARN Training Path. */}
-      <section className="play-hub-tools" aria-label={tPlay("chessToolsLabel")}>
-        <h2 className="play-hub-tools-label">{tPlay("chessToolsLabel")}</h2>
-        <div className="play-hub-tools-grid" aria-label={tPlay("actionsAriaLabel")}>
-          <PlayTacticsTile className="" />
+      {/* PLAY PATH mirrors the LEARN Training Path: one compact, persistent
+          action rail pinned to the floor. DOM and visual order are identical
+          (Play → Warm-up → Coach → Shop), preserving keyboard/screen-reader
+          navigation while keeping the primary activity first in LTR locales. */}
+      <section className="play-hub-path" aria-label={tPlay("playPathLabel")}>
+        <h2 className="play-hub-path-label">{tPlay("playPathLabel")}</h2>
+        <div className="play-hub-path-grid" aria-label={tPlay("actionsAriaLabel")}>
+          <HubActionTile
+            className="play-hub-path-tile play-hub-path-tile--primary"
+            iconSlot="hub.enter-arena"
+            label={tPlay("playPathPlayLabel")}
+            ariaLabel={tPlay("arenaAriaLabel")}
+            onClick={() => {
+              hapticTap();
+              onArenaPress();
+            }}
+          />
+          <PlayTacticsTile className="play-hub-path-tile" />
           {/* No PRO badge: the tile no longer guards a paywall. It opens the
               Journal, which any connected wallet can read. The badge would be
               announcing a wall that isn't there. */}
           <HubActionTile
+            className="play-hub-path-tile"
             iconSlot="hub.training"
             label={tPlay("coachLabel")}
             ariaLabel={tHud("coachAriaLabel")}
             onClick={onCoachTap}
           />
           <HubActionTile
+            className="play-hub-path-tile"
             iconSlot="hub.shop-icon"
             label={tPlay("shopLabel")}
             ariaLabel={tPlay("shopAriaLabel")}

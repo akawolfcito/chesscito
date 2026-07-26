@@ -1,9 +1,9 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 173,
+  "totalSlots": 177,
   "categoryCounts": {
-    "A": 160,
+    "A": 164,
     "B": 0,
     "C": 0,
     "D": 0,
@@ -13,25 +13,25 @@
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 77,
+    "B": 81,
     "C": 26,
     "D": 38,
     "E": 19,
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 161,
-  "fullyConnectedSlots": 160,
+  "resolverSlots": 165,
+  "fullyConnectedSlots": 164,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
   "noActiveConsumerSlots": 6,
-  "connectedSlots": 160,
+  "connectedSlots": 164,
   "excludedSlots": 13,
   "exceptions": [],
   "literalDiff": {
-    "registeredBasenames": 206,
+    "registeredBasenames": 207,
     "discoveredBasenames": 16,
     "unregisteredExistingAssets": []
   },
@@ -638,7 +638,7 @@
         "src/app/[locale]/page.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 5,
+      "consumerCount": 4,
       "consumers": [
         {
           "file": "src/app/[locale]/page.tsx",
@@ -683,9 +683,178 @@
           "usesCssBackground": false,
           "usesSharedMap": false,
           "buildsPathDynamically": false
-        },
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "hub.arena-warmup",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/action-row/pergamino-tactico"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Play Hub — Arena Warm-up path tile · PlayTacticsTile · route: /",
+        "↳ components/tactics/play-tactics-tile.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/tactics/play-tactics-tile.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
         {
           "file": "src/components/tactics/play-tactics-tile.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "hub.quick-match-benefit",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/hub/enter-arena"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Play Hub — KingdomCard Quick Match benefit · route: /",
+        "↳ components/kingdom/kingdom-card.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/kingdom/kingdom-card.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/kingdom/kingdom-card.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "hub.coach-review-benefit",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/new-icons-chesscito/training"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Play Hub — KingdomCard Coach Review benefit · route: /",
+        "↳ components/kingdom/kingdom-card.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/kingdom/kingdom-card.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/kingdom/kingdom-card.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "hub.rewards-benefit",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/scene-rooted/treasure-chest-small"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Play Hub — KingdomCard Rewards benefit · route: /",
+        "↳ components/kingdom/kingdom-card.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/kingdom/kingdom-card.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/kingdom/kingdom-card.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -5934,15 +6103,13 @@
       },
       "usedIn": [
         "Tactics — daily exercise icon",
-        "↳ components/daily/daily-tactic-sheet.tsx",
-        "↳ components/tactics/play-tactics-tile.tsx"
+        "↳ components/daily/daily-tactic-sheet.tsx"
       ],
       "deprecated": null,
       "initialCategory": "C",
       "category": "A",
       "documentedFiles": [
-        "src/components/daily/daily-tactic-sheet.tsx",
-        "src/components/tactics/play-tactics-tile.tsx"
+        "src/components/daily/daily-tactic-sheet.tsx"
       ],
       "currentConsumerState": "resolver",
       "consumerCount": 1,

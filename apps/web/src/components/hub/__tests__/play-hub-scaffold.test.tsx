@@ -1,6 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl as render } from "@/test-utils/render-with-intl";
 import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { PlayHubScaffold } from "../play-hub-scaffold";
 import { ThemeVariantOverride } from "@/lib/themes/theme-variant-provider";
 
@@ -20,7 +21,7 @@ vi.mock("@/components/peones/peones-balance-chip", () => ({
 }));
 vi.mock("@/components/tactics/play-tactics-tile", () => ({
   PlayTacticsTile: ({ className }: { className?: string }) => (
-    <button className={className}>Tactics</button>
+    <button className={className} aria-label="Open Arena warm-up">Warm-up</button>
   ),
 }));
 // The mock MUST render `badge` — otherwise a test asserting the Coach tile
@@ -31,13 +32,22 @@ vi.mock("@/components/hub/hub-action-tile", () => ({
     ariaLabel,
     className,
     badge,
+    iconSlot,
+    onClick,
   }: {
     label: string;
     ariaLabel: string;
     className?: string;
     badge?: React.ReactNode;
+    iconSlot?: string;
+    onClick?: () => void;
   }) => (
-    <button aria-label={ariaLabel} className={className}>
+    <button
+      aria-label={ariaLabel}
+      className={className}
+      data-icon-slot={iconSlot}
+      onClick={onClick}
+    >
       {label}
       {badge}
     </button>
@@ -61,14 +71,19 @@ const props = {
 };
 
 describe("PlayHubScaffold", () => {
-  it("renders the unified surfaces: LEARN mascot, Kingdom panel, Play Chess CTA", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders the unified surfaces: LEARN mascot, Kingdom panel and PLAY PATH", () => {
     render(<PlayHubScaffold {...props} />);
 
     expect(screen.getByLabelText("Minted victories: 0")).toHaveTextContent("0");
     // Title + avatar reuse the exact LEARN/LITE mascot markup.
     expect(screen.getByAltText("Chesscito")).toBeInTheDocument();
     expect(screen.getByTestId("kingdom-card")).toBeInTheDocument();
-    expect(screen.getByText("PLAY CHESS")).toBeInTheDocument();
+    expect(screen.getByText("PLAY PATH")).toBeInTheDocument();
+    expect(screen.getByText("Play")).toBeInTheDocument();
     expect(screen.getByTestId("play-daily")).toBeInTheDocument();
   });
 
@@ -87,15 +102,15 @@ describe("PlayHubScaffold", () => {
     );
   });
 
-  it("orders mascot → switch → Kingdom panel → CTA → CHESS TOOLS", () => {
+  it("orders mascot → switch → Kingdom panel → PLAY PATH", () => {
     render(<PlayHubScaffold {...props} />);
     const mascot = screen.getByAltText("Chesscito");
     const modeSwitch = screen.getByTestId("mode-switch");
     const panel = screen.getByTestId("kingdom-card");
-    const tools = screen.getByText("CHESS TOOLS");
+    const path = screen.getByText("PLAY PATH");
     expect(mascot.compareDocumentPosition(modeSwitch) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(modeSwitch.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(panel.compareDocumentPosition(tools) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(panel.compareDocumentPosition(path) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("renders the Peones chip when connected but NO account chip (hidden in PLAY)", () => {
@@ -120,7 +135,7 @@ describe("PlayHubScaffold", () => {
     expect(avatar.getAttribute("src")).toContain("avatar-pro");
   });
 
-  it("has one primary Play Chess CTA and no Learn/Training content", () => {
+  it("hides the standalone Play Chess CTA but keeps Arena first in PLAY PATH", async () => {
     const { container } = render(<PlayHubScaffold {...props} />);
 
     expect(
@@ -128,16 +143,34 @@ describe("PlayHubScaffold", () => {
     ).toHaveLength(1);
     expect(
       container.querySelector(".hub-scaffold-cta-row > .play-chess-cta"),
-    ).not.toBeNull();
+    ).toBeNull();
+    expect(screen.queryByTestId("play-chess-cta")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Play Chess: full chess vs AI" }),
+    ).toHaveAttribute("data-icon-slot", "hub.enter-arena");
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Play Chess: full chess vs AI" }),
+    );
+    expect(props.onArenaPress).toHaveBeenCalledTimes(1);
+
     expect(screen.queryByText(/Training Path/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Daily Focus/i)).not.toBeInTheDocument();
   });
 
-  it("renders CHESS TOOLS (Tactics/Coach/Shop) as square tiles, not pills", () => {
+  it("renders PLAY PATH in DOM order Play → Warm-up → Coach → Shop", () => {
     render(<PlayHubScaffold {...props} />);
 
-    expect(screen.getByText("CHESS TOOLS")).toBeInTheDocument();
-    for (const label of ["Tactics", "Coach", "Shop"]) {
+    expect(screen.getByText("PLAY PATH")).toBeInTheDocument();
+    const path = screen.getByRole("region", { name: "PLAY PATH" });
+    const actions = within(path).getAllByRole("button");
+    expect(actions.map((button) => button.textContent)).toEqual([
+      "Play",
+      "Warm-up",
+      "Coach",
+      "Shop",
+    ]);
+    for (const label of ["Play", "Warm-up", "Coach", "Shop"]) {
       expect(screen.getByText(label)).not.toHaveClass("candy-tray-pill");
     }
   });

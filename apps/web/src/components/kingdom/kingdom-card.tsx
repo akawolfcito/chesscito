@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import type { ProDisplayState } from "@/lib/pro/use-is-pro-active";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
 export type KingdomCardPro = ProDisplayState;
 
@@ -16,43 +17,24 @@ export type KingdomCardProps = {
   onProDiscover: () => void;
 };
 
-function BoltIcon() {
+function KingdomBenefit({
+  iconSlot,
+  label,
+}: {
+  iconSlot: ThemeAssetKey;
+  label: string;
+}) {
   return (
-    <svg viewBox="0 0 16 16" className="kingdom-card-benefit-icon" aria-hidden="true">
-      <path d="M8.5 1.5L3 9h4l-.5 5.5L13 7H9l-.5-5.5z" fill="currentColor" />
-    </svg>
-  );
-}
-function ShieldStarIcon() {
-  return (
-    <svg viewBox="0 0 16 16" className="kingdom-card-benefit-icon" aria-hidden="true">
-      <path
-        d="M8 1.5l5 2v4c0 3.2-2.1 5.2-5 6.5C5.1 12.7 3 10.7 3 7.5v-4l5-2z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
+    <span className="kingdom-card-benefit">
+      <ThemeAssetPicture
+        slot={iconSlot}
+        pictureClassName="kingdom-card-benefit-icon"
+        alt=""
+        aria-hidden="true"
+        draggable={false}
       />
-      <path
-        d="M8 5.4l.66 1.34 1.48.2-1.07 1.04.25 1.47L8 8.8l-1.32.65.25-1.47L5.86 6.94l1.48-.2z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-function GiftIcon() {
-  return (
-    <svg viewBox="0 0 16 16" className="kingdom-card-benefit-icon" aria-hidden="true">
-      <rect x="2.5" y="6.5" width="11" height="7" rx="1" fill="none" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M2 6.5h12M8 6.5v7" stroke="currentColor" strokeWidth="1.4" />
-      <path
-        d="M8 6.5C7 4 5.5 3.5 4.7 4.3c-.8.8 0 2.2 3.3 2.2zm0 0C9 4 10.5 3.5 11.3 4.3c.8.8 0 2.2-3.3 2.2z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinejoin="round"
-      />
-    </svg>
+      {label}
+    </span>
   );
 }
 
@@ -97,18 +79,18 @@ export function KingdomCard({ pro, onProDiscover }: KingdomCardProps) {
       </div>
 
       <div className="kingdom-card-benefits" data-testid="kingdom-benefits">
-        <span className="kingdom-card-benefit">
-          <BoltIcon />
-          {t("quickMatchLabel")}
-        </span>
-        <span className="kingdom-card-benefit">
-          <ShieldStarIcon />
-          {t("coachReviewLabel")}
-        </span>
-        <span className="kingdom-card-benefit">
-          <GiftIcon />
-          {t("rewardsLabel")}
-        </span>
+        <KingdomBenefit
+          iconSlot="hub.quick-match-benefit"
+          label={t("quickMatchLabel")}
+        />
+        <KingdomBenefit
+          iconSlot="hub.coach-review-benefit"
+          label={t("coachReviewLabel")}
+        />
+        <KingdomBenefit
+          iconSlot="hub.rewards-benefit"
+          label={t("rewardsLabel")}
+        />
       </div>
 
       <button

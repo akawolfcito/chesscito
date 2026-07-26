@@ -15,6 +15,15 @@ describe("KingdomCard", () => {
     expect(screen.getByText("Quick Match")).toBeInTheDocument();
     expect(screen.getByText("Coach Review")).toBeInTheDocument();
     expect(screen.getByText("Rewards")).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-theme-slot="hub.quick-match-benefit"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-theme-slot="hub.coach-review-benefit"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-theme-slot="hub.rewards-benefit"]'),
+    ).not.toBeNull();
   });
 
   it("non-PRO: the explanatory PRO strip is the tappable discovery surface", async () => {

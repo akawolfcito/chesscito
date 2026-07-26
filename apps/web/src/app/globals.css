@@ -8313,10 +8313,9 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* ─────────────────────────────────────────────────────────────────────────
    Chesscito Lite hub (PR B presenter — HubLiteScaffold). Habit-first vertical
-   stack: HUD + mascot oval + 21-Day Challenge card + Start Focus + Training
-   Path. Single-screen-first at 390px; Start Focus + the card CTA stay above
-   the fold (P1-A). Start Focus = dorado token, Join Challenge = verde + a
-   GPU-safe (transform/opacity) halo (P2-E). Reuses the canonical CTA tokens.
+   stack: HUD + mascot oval + 21-Day Challenge card + Training Path.
+   Single-screen-first at 390px; the card CTA stays above the fold (P1-A).
+   Join Challenge uses a GPU-safe (transform/opacity) halo (P2-E).
    ───────────────────────────────────────────────────────────────────────── */
 .hub-lite-scaffold {
   display: flex;
@@ -8915,11 +8914,47 @@ button.hud-resource-chip:active:not(:disabled) {
   flex-wrap: nowrap;
   gap: 4px;
   width: 100%;
-  padding: 0;
+  padding: 0 0 8px;
   border-radius: 0;
   background: none;
   box-shadow: none;
   justify-content: space-between;
+}
+
+/* Let the piece art own the orange tile and seat its name on a small plate
+   across the lower edge. The plate remains inside the same 48px button. */
+.hub-lite-training-path-tiles .reward-tile.is-compact {
+  padding: 1px;
+  overflow: visible;
+}
+
+.hub-lite-training-path-tiles .reward-tile.is-compact .reward-tile-piece {
+  width: 42px;
+  height: 43px;
+  margin: -2px auto 0;
+}
+
+.hub-lite-training-path-tiles .reward-tile.is-compact .reward-tile-label {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: -7px;
+  width: max-content;
+  max-width: 58px;
+  min-height: 14px;
+  padding: 2px 5px;
+  border: 1px solid rgba(173, 104, 23, 0.55);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff6d5 0%, #f6d98c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 1px 2px rgba(84, 45, 8, 0.22);
+  color: #3f2208;
+  font-size: 0.5rem;
+  line-height: 1;
+  text-shadow: none;
+  white-space: nowrap;
+  transform: translateX(-50%);
 }
 
 /* Daily gift corner-icon (P1-B) — gift glyph + streak badge, opens daily sheet.
@@ -9089,9 +9124,9 @@ button.hud-resource-chip:active:not(:disabled) {
   margin: 24px 0 16px;
 }
 
-/* Shortcuts pinned to the floor — same mechanism as LEARN's Training Path
+/* PLAY PATH pinned to the floor — same mechanism as LEARN's Training Path
    (`margin-top: auto` absorbs the leftover column height). */
-.play-hub-tools {
+.play-hub-path {
   margin-top: auto;
 }
 
@@ -9293,15 +9328,23 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .kingdom-card-benefit-icon {
-  width: 0.9rem;
-  height: 0.9rem;
+  display: block;
+  width: 1.15rem;
+  height: 1.15rem;
   flex: 0 0 auto;
-  color: #9a6a2e;
+}
+
+.kingdom-card-benefit-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px rgba(77, 38, 5, 0.24));
 }
 
 /* PRO discovery/status strip. The crowned badge remains the recognition
    anchor, but the whole row is now one generous tap target with enough copy
-   to explain why PRO matters. It deliberately stays secondary to PLAY CHESS. */
+   to explain why PRO matters. It deliberately stays secondary to PLAY PATH. */
 .kingdom-card-pro-cta {
   width: 100%;
   min-height: 54px;
@@ -9398,52 +9441,49 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 2px rgba(33, 9, 48, 0.7);
 }
 
-/* ── CHESS TOOLS grid — reuses the proven cream square-tile look. HubActionTile
-   renders .reward-tile.is-locked; override it back to the cream candy surface
-   (matches Image 1's Tactics/Coach/Shop tiles). ── */
-.play-hub-tools {
+/* ── PLAY PATH — four compact, persistent actions in the same visual family
+   as LEARN's Training Path. The icon fills the orange tile; the nameplate
+   floats across the lower edge but remains part of the same button. ── */
+.play-hub-path {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  padding: 4px 4px 10px;
 }
 
-.play-hub-tools-label {
+.play-hub-path-label {
   margin: 0;
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #6e4415;
+  color: #f3e6c4;
 }
 
-.play-hub-tools-grid {
+.play-hub-path-grid {
   display: grid;
-  grid-template-columns: repeat(3, 48px);
-  gap: 14px;
+  grid-template-columns: repeat(4, 50px);
+  gap: 12px;
   justify-content: center;
 }
 
-/* Tactics/Coach/Shop adopt the LEARN Training-Path piece tile verbatim: the
-   gold candy tile at the compact 48px footprint (mirrors `.reward-tile.is-compact`
-   + base gold gradient). HubActionTile ships `.reward-tile.is-locked` (gray) —
-   override the locked treatment back to the active gold gradient so the three
-   tools read as gold piece-tiles, same size + style as the LEARN chess-piece
-   shortcuts. (Founder 2026-07-07 cream look retired in favor of LEARN parity.) */
-.play-hub-tools-grid .reward-tile,
-.play-hub-tools-grid .reward-tile.is-locked {
+/* HubActionTile ships `.reward-tile.is-locked` for historic rails; PLAY PATH
+   actions are available, so restore the active orange candy surface. */
+.play-hub-path-grid .reward-tile,
+.play-hub-path-grid .reward-tile.is-locked {
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  width: 48px;
-  min-width: 48px;
-  height: 48px;
-  min-height: 48px;
+  width: 50px;
+  min-width: 50px;
+  height: 50px;
+  min-height: 50px;
   margin: 0;
-  padding: 4px 4px 5px;
+  padding: 1px;
   gap: 0;
   border: 0;
   border-radius: 13px;
@@ -9456,26 +9496,47 @@ button.hud-resource-chip:active:not(:disabled) {
   overflow: visible;
 }
 
-.play-hub-tools-grid .reward-tile .reward-tile-piece {
+.play-hub-path-grid .reward-tile .reward-tile-piece {
   order: 1;
   position: relative;
-  width: 28px;
-  height: 30px;
-  margin: -3px auto 1px;
+  width: 44px;
+  height: 44px;
+  margin: -2px auto 0;
   transform: none;
   filter: drop-shadow(0 4px 2px rgba(61, 37, 7, 0.35));
 }
 
-.play-hub-tools-grid .reward-tile .reward-tile-label {
+.play-hub-path-grid .reward-tile .reward-tile-label {
   order: 2;
-  position: static;
-  width: 100%;
-  min-height: auto;
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: -7px;
+  width: max-content;
+  max-width: 64px;
+  min-height: 14px;
+  padding: 2px 5px;
+  border: 1px solid rgba(173, 104, 23, 0.55);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff6d5 0%, #f6d98c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 1px 2px rgba(84, 45, 8, 0.22);
   letter-spacing: 0;
-  color: rgba(50, 25, 5, 0.95);
+  color: #3f2208;
   text-shadow: none;
-  font-size: 0.55rem;
+  font-size: 0.5rem;
   font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.play-hub-path-grid .play-hub-path-tile--primary {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.52),
+    0 0 0 2px rgba(35, 159, 220, 0.82),
+    0 2px 5px rgba(11, 102, 154, 0.26);
 }
 
 /* ── PLAY CHESS dominant CTA — a 1:1 blue clone of the LEARN Start Focus

@@ -205,9 +205,9 @@ export function HubLiteScaffold({
       {/* The standalone Start Focus button used to live here. It is HIDDEN for
           now (founder, 2026-07-25): the ChallengeCard's single state-driven CTA
           absorbed its job, and two primary CTAs one above the other made the
-          panel ambiguous. Nothing else changed — `primaryFocus.onPress` is the
-          same handler, now reached through the card's CTA and its flame block.
-          The props stay in the API so restoring it is a revert, not a rewrite. */}
+          panel ambiguous. `primaryFocus.onPress` remains on the card CTA; the
+          flame block intentionally opens Daily. The props stay in the API so
+          restoring the standalone button is a revert, not a rewrite. */}
 
       <section className="hub-lite-training-path" aria-label={t("trainingPathLabel")}>
         <h2 className="hub-lite-training-path-label">{t("trainingPathLabel")}</h2>

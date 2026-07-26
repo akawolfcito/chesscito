@@ -98,6 +98,10 @@ export type ThemeAssetKey =
   | "hub.training"
   | "hub.training-icon"
   | "hub.daily-icon"
+  | "hub.arena-warmup"
+  | "hub.quick-match-benefit"
+  | "hub.coach-review-benefit"
+  | "hub.rewards-benefit"
   | "hub.shop-icon"
   | "hub.btn-battle"
   | "hub.btn-play"
@@ -359,6 +363,22 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "hub.daily-icon": {
         default: "/art/new-icons-chesscito/daily-icon-v1",
         usedIn: ["Hub — daily icon", "↳ components/hub/hub-daily-tile.tsx", "↳ app/[locale]/page.tsx"],
+      },
+      "hub.arena-warmup": {
+        default: "/art/action-row/pergamino-tactico",
+        usedIn: ["Play Hub — Arena Warm-up path tile · PlayTacticsTile · route: /", "↳ components/tactics/play-tactics-tile.tsx"],
+      },
+      "hub.quick-match-benefit": {
+        default: "/art/hub/enter-arena",
+        usedIn: ["Play Hub — KingdomCard Quick Match benefit · route: /", "↳ components/kingdom/kingdom-card.tsx"],
+      },
+      "hub.coach-review-benefit": {
+        default: "/art/new-icons-chesscito/training",
+        usedIn: ["Play Hub — KingdomCard Coach Review benefit · route: /", "↳ components/kingdom/kingdom-card.tsx"],
+      },
+      "hub.rewards-benefit": {
+        default: "/art/scene-rooted/treasure-chest-small",
+        usedIn: ["Play Hub — KingdomCard Rewards benefit · route: /", "↳ components/kingdom/kingdom-card.tsx"],
       },
       "hub.shop-icon": {
         default: "/art/redesign/icons/shop",
@@ -743,7 +763,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
       },
       "tactics.daily-exercise": {
         default: "/art/new-icons-chesscito/ejercicio-diario-chess",
-        usedIn: ["Tactics — daily exercise icon", "↳ components/daily/daily-tactic-sheet.tsx", "↳ components/tactics/play-tactics-tile.tsx"],
+        usedIn: ["Tactics — daily exercise icon", "↳ components/daily/daily-tactic-sheet.tsx"],
       },
       "hud.crown": {
         default: "/art/redesign/icons/crown",
@@ -1022,6 +1042,10 @@ const LEARN_SLOT_KEYS: readonly ThemeAssetKey[] = [
 
 const PLAY_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "bg.login-play",
+  "hub.arena-warmup",
+  "hub.quick-match-benefit",
+  "hub.coach-review-benefit",
+  "hub.rewards-benefit",
   "hub.shop-icon",
   "shop.pro",
   "arena.save",

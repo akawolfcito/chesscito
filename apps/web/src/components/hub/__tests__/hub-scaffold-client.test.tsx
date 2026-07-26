@@ -815,18 +815,19 @@ describe("HubScaffoldClient — Lite Mode", () => {
     expect(monEvents).toHaveLength(0);
   });
 
-  it("routes the focus entry point to Exercises while Trophies keeps its own destination", async () => {
+  it("opens Daily from the passport while Trophies keeps its own destination", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClientLite />);
 
-    // The standalone Start Focus button is hidden; without a pass the card's
-    // CTA sells the challenge, so the focus entry point is the passport block.
+    // The passport block and corner gift open the same mounted Daily sheet.
     await user.click(await screen.findByTestId("challenge-progress"));
-    expect(pushMock).toHaveBeenLastCalledWith(
-      expect.stringMatching(/^\/exercises(?:\?|$)/),
-    );
-    expect(pushMock).not.toHaveBeenLastCalledWith("/trophies");
+    expect(await screen.findByTestId("daily-tactic-sheet")).toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalled();
 
+    await user.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(screen.queryByTestId("daily-tactic-sheet")).not.toBeInTheDocument(),
+    );
     await user.click(screen.getByLabelText("Trophies: 0"));
     expect(pushMock).toHaveBeenLastCalledWith("/trophies");
   });

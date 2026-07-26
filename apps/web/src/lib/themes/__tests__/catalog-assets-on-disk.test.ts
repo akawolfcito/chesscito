@@ -74,4 +74,22 @@ describe("cataloged art exists on disk", () => {
     if (resolved.mode !== "asset") return;
     expect(formatsOnDisk(resolved.path)).toEqual(["png", "webp", "avif"]);
   });
+
+  it("keeps Arena Warm-up and Kingdom benefits editable with native triplets", () => {
+    for (const slot of [
+      "hub.arena-warmup",
+      "hub.quick-match-benefit",
+      "hub.coach-review-benefit",
+      "hub.rewards-benefit",
+    ] as const) {
+      const resolved = resolveAssetVariant(assets[slot], "default");
+      expect(resolved.mode).toBe("asset");
+      if (resolved.mode !== "asset") continue;
+      expect(formatsOnDisk(resolved.path), slot).toEqual([
+        "png",
+        "webp",
+        "avif",
+      ]);
+    }
+  });
 });

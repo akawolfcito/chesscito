@@ -41,17 +41,23 @@ describe("theme runtime catalog coverage", () => {
     // other. Consumed via the resolver in web-wallet-provider.tsx, so it lands
     // in category A: connectedSlots 158 → 159, initial B 75 → 76, excludedSlots
     // unchanged.
-    expect(report.totalSlots).toBe(172);
+    // 173 (2026-07-25): + hub.focus-passport-calendar, independently editable
+    // from the other ChallengeCard benefits. Resolver-connected: A 159 → 160,
+    // initial B 76 → 77.
+    // 177 (2026-07-26): + Arena Warm-up and three KingdomCard benefit slots.
+    // All four are resolver-connected PLAY assets: A 160 → 164, initial
+    // B 77 → 81.
+    expect(report.totalSlots).toBe(177);
     expect(report.initialCategoryCounts).toEqual({
       A: 2,
-      B: 76,
+      B: 81,
       C: 26,
       D: 38,
       E: 19,
       F: 11,
       G: 0,
     });
-    expect(report.connectedSlots).toBe(159);
+    expect(report.connectedSlots).toBe(164);
     expect(report.excludedSlots).toBe(13);
     expect(
       report.slots.filter(

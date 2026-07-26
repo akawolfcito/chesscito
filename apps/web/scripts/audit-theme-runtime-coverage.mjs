@@ -534,12 +534,16 @@ if (CHECK_MODE) {
   // +1 (B: 76 → 77) 2026-07-25: hub.focus-passport-calendar, the independently
   // editable Calendar benefit in ChallengeCard. Consumed via ThemeAssetPicture,
   // so it lands in category A (connectedSlots 159 → 160); totalSlots 172 → 173.
-  const expectedInitial = { A: 2, B: 77, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  // +4 (B: 77 → 81) 2026-07-26: Arena Warm-up plus the three KingdomCard
+  // benefit icons. Each is independently editable in Theme Builder and
+  // consumed through ThemeAssetPicture, so all four land in category A
+  // (connectedSlots 160 → 164); totalSlots 173 → 177.
+  const expectedInitial = { A: 2, B: 81, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 173 ||
+    inventory.length !== 177 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

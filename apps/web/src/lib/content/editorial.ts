@@ -3642,10 +3642,11 @@ export const PLAY_HUB_COPY = {
   rootAriaLabel: "Chesscito Play Hub",
   victoriesLabel: "Victories",
   victoriesAriaLabel: "Minted victories: {count}",
-  actionsAriaLabel: "Play services",
+  actionsAriaLabel: "Play Path actions",
   coachLabel: "Coach",
   shopLabel: "Shop",
   shopAriaLabel: "Open Play Shop",
+  playPathPlayLabel: "Play",
   arenaLabel: "PLAY CHESS",
   arenaAriaLabel: "Play Chess: full chess vs AI",
   // Play Kingdom panel. Arena remains free-to-all; PRO is an explanatory
@@ -3657,11 +3658,11 @@ export const PLAY_HUB_COPY = {
   quickMatchLabel: "Quick Match",
   coachReviewLabel: "Coach Review",
   rewardsLabel: "Rewards",
-  chessToolsLabel: "CHESS TOOLS",
+  playPathLabel: "PLAY PATH",
 } as const;
 
 export const PLAY_TACTICS_COPY = {
-  tileLabel: "Tactics",
+  tileLabel: "Warm-up",
   tileAriaLabel: "Open Arena warm-up",
   completedAriaLabel: "Arena warm-up complete for today",
   doneBadge: "Done",

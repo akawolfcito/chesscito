@@ -17,8 +17,14 @@ vi.mock("@/components/hub/hub-action-tile", () => ({
     disabled?: boolean;
     onClick: () => void;
     badge?: React.ReactNode;
+    iconSlot?: string;
   }) => (
-    <button disabled={props.disabled} aria-label={props.ariaLabel} onClick={props.onClick}>
+    <button
+      disabled={props.disabled}
+      aria-label={props.ariaLabel}
+      data-icon-slot={props.iconSlot}
+      onClick={props.onClick}
+    >
       {props.label}{props.badge}
     </button>
   ),
@@ -34,7 +40,10 @@ describe("PlayTacticsTile", () => {
 
   it("opens the competitive warm-up and emits Play telemetry", async () => {
     render(<PlayTacticsTile />);
-    await userEvent.click(screen.getByRole("button", { name: "Open Arena warm-up" }));
+    const trigger = screen.getByRole("button", { name: "Open Arena warm-up" });
+    expect(trigger).toHaveTextContent("Warm-up");
+    expect(trigger).toHaveAttribute("data-icon-slot", "hub.arena-warmup");
+    await userEvent.click(trigger);
 
     expect(screen.getByText("play-tactics-sheet-open")).toBeInTheDocument();
     expect(openedMock).toHaveBeenCalledWith(

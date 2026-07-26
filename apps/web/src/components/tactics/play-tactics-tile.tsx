@@ -21,7 +21,7 @@ const EMPTY_PROGRESS: PlayTacticsProgress = {
 type PlayTacticsTileProps = {
   /** Tile chrome. Defaults to the legacy pill classes so existing callers
    *  are unchanged; the Play Kingdom hub passes `""` to fall back to
-   *  `HubActionTile`'s square reward-tile look for the CHESS TOOLS grid. */
+   *  `HubActionTile`'s square reward-tile look for the PLAY PATH. */
   className?: string;
 };
 
@@ -48,7 +48,7 @@ export function PlayTacticsTile({
     <>
       <HubActionTile
         className={className}
-        iconSlot="hub.daily-icon"
+        iconSlot="hub.arena-warmup"
         label={t("tileLabel")}
         ariaLabel={
           completedToday ? t("completedAriaLabel") : t("tileAriaLabel")
