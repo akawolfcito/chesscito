@@ -1915,7 +1915,10 @@ const messages = {
     offerPriceNote: "Pago único · Sin suscripción",
     offerBenefitDays: "{days} días",
     offerWindowNote: "Completá {goal} días de foco en una ventana de {window} días.",
-    offerBenefitTrainings: "Special Trainings",
+    // "Entrenamiento especial" es el término que ya usa la senda
+    // (`specialTrainingLabelFormat`). En plural para la baldosa, que nombra la
+    // categoría entera, no un entrenamiento suelto.
+    offerBenefitTrainings: "Entrenamientos especiales",
     offerBenefitShields: "+{count} Escudos",
     offerDetailsLabel: "Qué incluye",
     offerPayWith: "Pagar con",

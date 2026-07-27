@@ -16171,11 +16171,17 @@ button.hud-resource-chip:active:not(:disabled) {
   object-fit: contain;
 }
 
+/* Una columna de 3 a 390px deja ~100px por baldosa. El inglés cabe con dos
+   palabras cortas; el español no siempre ("Entrenamientos" sola ya roza el
+   ancho). `break-word` deja que una palabra larga se parta antes que desbordar
+   la baldosa vecina. */
 .season-pass-benefit-label {
   font-size: 0.78rem;
   font-weight: 800;
   line-height: 1.15;
   text-align: center;
+  overflow-wrap: break-word;
+  min-width: 0;
 }
 
 /* `?` chip — inline with the habit line, so it reads as part of the sentence
