@@ -100,6 +100,21 @@ export function elapsedEligibleDays(
 }
 
 /**
+ * The UTC date the pass opened, derived from its expiry. `null` when there is
+ * no expiry: PRO has access without a purchased window, and inventing a start
+ * for it would fabricate history.
+ */
+export function passWindowStartUtc(
+  expiresAt: string | null | undefined,
+  durationDays: number,
+): string | null {
+  if (!expiresAt) return null;
+  const expiryMs = Date.parse(expiresAt);
+  if (Number.isNaN(expiryMs)) return null;
+  return formatUtcDate(expiryMs - durationDays * DAY_MS);
+}
+
+/**
  * The one-shot seed for players who already owned a pass when this shipped.
  *
  * Inferred, not observed: `reportedStreak` comes from the client's

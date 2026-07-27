@@ -6,7 +6,22 @@ import {
   elapsedEligibleDays,
   focusDaysProgress,
   isUnreachable,
+  passWindowStartUtc,
 } from "@/lib/season-pass/focus-days";
+
+describe("passWindowStartUtc", () => {
+  it("derives the opening date from the expiry", () => {
+    expect(passWindowStartUtc("2026-08-13T00:00:00.000Z", 21)).toBe("2026-07-23");
+  });
+
+  it("has no opening date without an expiry (PRO)", () => {
+    expect(passWindowStartUtc(null, 21)).toBeNull();
+  });
+
+  it("has no opening date when the expiry is unparseable", () => {
+    expect(passWindowStartUtc("not-a-date", 21)).toBeNull();
+  });
+});
 
 /** Spec: docs/specs/2026-07-27-focus-days-ledger.md (APPROVED). */
 
