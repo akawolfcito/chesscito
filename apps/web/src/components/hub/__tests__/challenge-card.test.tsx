@@ -723,6 +723,83 @@ describe('<ChallengeCard>', () => {
       expect(ordinal).toBeLessThan(week)
     })
 
+    // ── Distribution (KingdomCard grammar) ────────────────────────────────
+    // The panel reads top-down: icon + title + day line, then the week at FULL
+    // width, then a divided benefits row. Nesting the week inside the narrow
+    // column beside the 72px icon squeezed 7 flames into ~250px at 390px.
+    it('lifts the weekly row out of the icon column so it spans the panel', () => {
+      const { container } = render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 2, todayDone: true })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+        />,
+      )
+      const card = container.querySelector('.challenge-card')!
+      const top = container.querySelector('.challenge-card-top')!
+      const week = container.querySelector('.challenge-card-week')!
+      expect(top.contains(week)).toBe(false)
+      expect(
+        container.querySelector('.challenge-card-passport')!.parentElement,
+      ).toBe(card)
+    })
+
+    it('keeps the day line beside the icon, with the title it belongs to', () => {
+      const { container } = render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 2, todayDone: true })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+        />,
+      )
+      const main = container.querySelector('.challenge-card-top-main')!
+      expect(
+        main.contains(container.querySelector('.challenge-card-day-count')!),
+      ).toBe(true)
+    })
+
+    it('puts the weekday letter above its flame — a column header, not a caption', () => {
+      const { container } = render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 2, todayDone: true })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+        />,
+      )
+      const day = screen.getAllByTestId('challenge-week-day')[0]!
+      const nodes = Array.from(day.querySelectorAll('*'))
+      const letter = nodes.indexOf(
+        day.querySelector('.challenge-card-week-letter')!,
+      )
+      const flame = nodes.indexOf(day.querySelector('.challenge-card-flame')!)
+      expect(letter).toBeGreaterThanOrEqual(0)
+      expect(flame).toBeGreaterThanOrEqual(0)
+      expect(letter).toBeLessThan(flame)
+    })
+
+    it('makes the full-width week the Daily tap target, ordinal excluded', () => {
+      const { container } = render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 3, todayDone: false })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+          onPassportTap={() => {}}
+        />,
+      )
+      const block = screen.getByTestId('challenge-progress')
+      expect(block.tagName).toBe('BUTTON')
+      expect(
+        block.contains(container.querySelector('.challenge-card-week')!),
+      ).toBe(true)
+      expect(
+        block.contains(container.querySelector('.challenge-card-day-count')!),
+      ).toBe(false)
+    })
+
     it('labels the day run as a streak, never as a Combo (canonical vocabulary)', () => {
       // Combo is the SESSION metric (chesscito:streak) and stays exclusive to
       // the exercise overlay / drawer — see the combo-streak vocabulary doc.

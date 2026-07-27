@@ -207,6 +207,18 @@ export function ChallengeCard({
               </span>
             ) : null}
           </header>
+          {/* Ordinal FIRST, flames under it: the sentence the player reads is
+              "Day N of 21", and the week below is the picture of that
+              sentence. It stays in the icon column with the title it belongs
+              to — only the 7-day row needs the full panel width. */}
+          <p className="challenge-card-day-count">
+            {t("focusDayOrdinal", { done, total: durationDays })}
+            {streak > 0 ? (
+              <span className="challenge-card-streak" data-testid="challenge-streak">
+                {t("streakFormat", { days: streak })}
+              </span>
+            ) : null}
+          </p>
           <div className="challenge-card-passport-head">
             <p className="challenge-card-passport-label">{t("passportLabel")}</p>
             {onReplayTour ? (
@@ -227,85 +239,80 @@ export function ChallengeCard({
               </button>
             ) : null}
           </div>
-          {(() => {
-            const inner = (
-              <>
-                {/* Ordinal FIRST, flames under it: the sentence the player
-                    reads is "Day N of 21", and the flames are the picture of
-                    that sentence. The reverse order made the row look like a
-                    legend for a number that had not been said yet. */}
-                <span className="challenge-card-day-count">
-                  {t("focusDayOrdinal", { done, total: durationDays })}
-                  {streak > 0 ? (
-                    <span className="challenge-card-streak" data-testid="challenge-streak">
-                      {t("streakFormat", { days: streak })}
-                    </span>
-                  ) : null}
-                </span>
-                <span
-                  className="challenge-card-week"
-                  role="list"
-                  aria-label={t("weekAriaLabel")}
-                >
-                  {week.map((day, i) => (
-                    <span
-                      key={day.date}
-                      className="challenge-card-week-day"
-                      role="listitem"
-                      data-testid="challenge-week-day"
-                      data-state={day.state}
-                      data-date={day.date}
-                      aria-label={t("weekDayAria", {
-                        day: weekdayLetters[i] ?? "",
-                        state: t(WEEK_STATE_LABEL[day.state]),
-                      })}
-                    >
-                      <ThemeAssetPicture
-                        slot={FLAME_SLOT[WEEK_FLAME[day.state]]}
-                        pictureClassName={`challenge-card-flame${
-                          day.state === "today-pending" ? " is-glow" : ""
-                        }`}
-                        pictureProps={{
-                          "data-testid": "focus-passport-slot",
-                          "data-kind": WEEK_FLAME[day.state],
-                          "data-filled": WEEK_FLAME[day.state] !== "gray" || undefined,
-                          "data-glow": day.state === "today-pending" || undefined,
-                          "aria-hidden": true,
-                        }}
-                        alt=""
-                        draggable={false}
-                      />
-                      <span className="challenge-card-week-letter" aria-hidden="true">
-                        {weekdayLetters[i] ?? ""}
-                      </span>
-                    </span>
-                  ))}
-                </span>
-              </>
-            );
-            return canOpenPassport ? (
-              <button
-                type="button"
-                className="challenge-card-passport challenge-card-passport--tap"
-                data-testid="challenge-progress"
-                data-done={done}
-                onClick={onPassportTap}
-                aria-label={t("focusTapAria")}
-              >
-                {inner}
-              </button>
-            ) : (
-              <div
-                className="challenge-card-passport"
-                data-testid="challenge-progress"
-                data-done={done}
-              >
-                {inner}
-              </div>
-            );
-          })()}
         </div>
       </div>
+
+      {/* The week is a SIBLING of the header row, not a child of the column
+          beside the icon: 7 weekday columns need the panel's full width, and
+          nested they were squeezed into ~250px at 390px. Same grammar as
+          KingdomCard — header row, then a full-bleed band, then the divided
+          benefits row. */}
+      {(() => {
+        const inner = (
+          <span
+            className="challenge-card-week"
+            role="list"
+            aria-label={t("weekAriaLabel")}
+          >
+            {week.map((day, i) => (
+              <span
+                key={day.date}
+                className="challenge-card-week-day"
+                role="listitem"
+                data-testid="challenge-week-day"
+                data-state={day.state}
+                data-date={day.date}
+                aria-label={t("weekDayAria", {
+                  day: weekdayLetters[i] ?? "",
+                  state: t(WEEK_STATE_LABEL[day.state]),
+                })}
+              >
+                {/* Letter ABOVE its flame: it heads the column the way a
+                    calendar names its days. Underneath it read as a caption
+                    for the sprite instead of naming the day. */}
+                <span className="challenge-card-week-letter" aria-hidden="true">
+                  {weekdayLetters[i] ?? ""}
+                </span>
+                <ThemeAssetPicture
+                  slot={FLAME_SLOT[WEEK_FLAME[day.state]]}
+                  pictureClassName={`challenge-card-flame${
+                    day.state === "today-pending" ? " is-glow" : ""
+                  }`}
+                  pictureProps={{
+                    "data-testid": "focus-passport-slot",
+                    "data-kind": WEEK_FLAME[day.state],
+                    "data-filled": WEEK_FLAME[day.state] !== "gray" || undefined,
+                    "data-glow": day.state === "today-pending" || undefined,
+                    "aria-hidden": true,
+                  }}
+                  alt=""
+                  draggable={false}
+                />
+              </span>
+            ))}
+          </span>
+        );
+        return canOpenPassport ? (
+          <button
+            type="button"
+            className="challenge-card-passport challenge-card-passport--tap"
+            data-testid="challenge-progress"
+            data-done={done}
+            onClick={onPassportTap}
+            aria-label={t("focusTapAria")}
+          >
+            {inner}
+          </button>
+        ) : (
+          <div
+            className="challenge-card-passport"
+            data-testid="challenge-progress"
+            data-done={done}
+          >
+            {inner}
+          </div>
+        );
+      })()}
 
       {/* Honest benefits only: duration, the applicable Shield figure and
           Special Training. Price lives exclusively on the CTA badge. */}

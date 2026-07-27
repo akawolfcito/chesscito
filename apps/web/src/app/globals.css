@@ -8513,16 +8513,13 @@ button.hud-resource-chip:active:not(:disabled) {
   transform: translateY(1px);
 }
 
-/* FOCUS PASSPORT week: 7 streak flames + the "N/21 focus days" ordinal.
-   Restored from the pre-70ee44f7 flame view (the bar lost UX); flames sized
-   down one step (1.4rem → 1.15rem) so the panel stays compact. */
-/* Column, not a row: "Day N of 21" is the sentence and the flames are its
-   picture, so the ordinal reads first and the week sits under it. */
+/* FOCUS PASSPORT week — a full-bleed band, sibling of the header row. It used
+   to live in the narrow column beside the 72px icon, which squeezed 7 weekday
+   columns into ~250px. The ordinal ("Day N of 21") stayed up there with the
+   title; only the row itself needs the panel's width. */
 .challenge-card-passport {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
+  display: block;
+  width: 100%;
   margin-top: 2px;
   text-align: left;
 }
@@ -8539,21 +8536,24 @@ button.hud-resource-chip:active:not(:disabled) {
 .challenge-card-week {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  align-items: end;
-  gap: 7px;
+  align-items: stretch;
+  gap: 6px;
   width: 100%;
 }
 
+/* Letter on top, flame under it: the letter heads its column like a calendar
+   day name instead of captioning the sprite. */
 .challenge-card-week-day {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  justify-content: flex-end;
+  gap: 3px;
   min-width: 0;
 }
 
 .challenge-card-week-letter {
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   font-weight: 800;
   line-height: 1;
   color: #9a7a4d;
@@ -8589,12 +8589,20 @@ button.hud-resource-chip:active:not(:disabled) {
   color: #b4611a;
 }
 
+/* Separator lives in CSS, not in the copy: it only exists when there IS a
+   streak (streak 0 renders no element at all, so no orphan dot). */
+.challenge-card-streak::before {
+  content: "·";
+  margin-right: 6px;
+  color: rgba(110, 68, 21, 0.45);
+}
+
 /* The flames ARE the streak, visually. Bigger and further apart so each day
    reads as its own token instead of a texture. */
 .challenge-card-flame {
   display: inline-flex;
   align-items: flex-end;
-  height: 1.7rem;
+  height: 1.85rem;
   flex-shrink: 0;
   line-height: 0;
 }
@@ -8615,24 +8623,26 @@ button.hud-resource-chip:active:not(:disabled) {
   filter: drop-shadow(0 0 5px rgba(255, 176, 60, 0.7));
 }
 
-/* "Day N of 21" line, with the streak readout pushed to the far side. */
+/* "Day N of 21 · 1-day streak" — ONE sentence. `space-between` used to push the
+   streak to the opposite edge, leaving a dead gap in the middle and reading as
+   two unrelated readouts. It wraps (ES is longer than EN) instead of clipping. */
 .challenge-card-day-count {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 0 6px;
+  margin: 0;
   font-size: 0.88rem;
   font-weight: 800;
   color: #6e4415;
-  white-space: nowrap;
 }
 
 /* Tappable variant — the flame/streak block routes into today's focus. Button
    reset so it looks identical to the static div, with a subtle press state. */
 .challenge-card-passport--tap {
   width: 100%;
-  padding: 3px 4px;
-  margin-left: -4px;
+  padding: 4px 2px;
+  margin-left: 0;
   border: none;
   background: transparent;
   font: inherit;
@@ -8730,6 +8740,9 @@ button.hud-resource-chip:active:not(:disabled) {
   color: #7d5a2a;
 }
 
+/* Benefits row — same hairline-divided band as `.kingdom-card-benefits`, so a
+   hero panel closes the same way on both hubs. Without the rule it floated
+   against the CTA with nothing separating the two blocks. */
 .challenge-card-stats {
   flex: 1 1 auto;
   min-width: 0;
@@ -8737,8 +8750,10 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 3px 14px;
-  padding: 7px 11px;
+  gap: 3px 12px;
+  margin-top: 2px;
+  padding: 7px 4px 2px;
+  border-top: 1px solid rgba(180, 120, 35, 0.28);
 }
 
 .challenge-card-stat {
@@ -8753,8 +8768,8 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .challenge-card-stat-icon {
   display: inline-flex;
-  width: 1.05rem;
-  height: 1.05rem;
+  width: 1.15rem;
+  height: 1.15rem;
   flex: 0 0 auto;
   color: #9a6a2e;
 }

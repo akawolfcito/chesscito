@@ -853,8 +853,12 @@ describe("HubScaffoldClient — Lite Mode", () => {
 
   it("Challenge progress advances after daily completion event fires (no navigation)", async () => {
     render(<HubScaffoldClientLite />);
-    const progress = await screen.findByTestId("challenge-progress");
-    const done = () => Number(progress.getAttribute("data-done"));
+    await screen.findByTestId("challenge-progress");
+    // Re-query every read: the block swaps between <button> (Daily pending) and
+    // <div> (done/loading), so React replaces the node and a held reference
+    // goes stale — it would keep reporting the pre-completion value.
+    const done = () =>
+      Number(screen.getByTestId("challenge-progress").getAttribute("data-done"));
     // Empty progress → 0 focus days.
     await waitFor(() => expect(done()).toBe(0));
 
@@ -873,8 +877,11 @@ describe("HubScaffoldClient — Lite Mode", () => {
 
   it("Challenge progress label updates after daily completion event fires (no navigation)", async () => {
     render(<HubScaffoldClientLite />);
-    const progress = await screen.findByTestId("challenge-progress");
-    await waitFor(() => expect(progress.textContent).toMatch(/Day 0 of 21/i));
+    // The ordinal sits with the title now, not inside the weekly row (which
+    // only holds the 7 weekday columns), so the label is read off the card.
+    const label = () => screen.getByTestId("challenge-card").textContent ?? "";
+    await screen.findByTestId("challenge-progress");
+    await waitFor(() => expect(label()).toMatch(/Day 0 of 21/i));
 
     // Simulate daily completion.
     const today = new Date().toISOString().slice(0, 10);
@@ -885,7 +892,7 @@ describe("HubScaffoldClient — Lite Mode", () => {
     window.dispatchEvent(new CustomEvent("chesscito:daily-progress-changed"));
 
     // Visible label advances reactively, with no navigation.
-    await waitFor(() => expect(progress.textContent).toMatch(/Day 1 of 21/i));
+    await waitFor(() => expect(label()).toMatch(/Day 1 of 21/i));
     expect(pushMock).not.toHaveBeenCalled();
   });
 });
