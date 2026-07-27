@@ -39,6 +39,10 @@ export function dailyStarsStorageKey(): string {
   return `${progressPrefix()}daily-stars`;
 }
 
+export function streakNudgeStorageKey(): string {
+  return `${progressPrefix()}streak-nudge`;
+}
+
 export function milestoneStorageKey(): string {
   return `${progressPrefix()}milestones`;
 }
