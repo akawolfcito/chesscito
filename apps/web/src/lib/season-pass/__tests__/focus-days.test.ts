@@ -5,9 +5,96 @@ import {
   challengeProgressView,
   elapsedEligibleDays,
   focusDaysProgress,
+  isEligibleFocusDate,
   isUnreachable,
   passWindowStartUtc,
 } from "@/lib/season-pass/focus-days";
+
+describe("isEligibleFocusDate", () => {
+  const NOW = Date.parse("2026-07-27T12:00:00.000Z");
+  /** 21-day pass bought on 2026-07-23. */
+  const EXPIRES = "2026-08-13T00:00:00.000Z";
+  const pass = (date: string, overrides: Record<string, unknown> = {}) =>
+    isEligibleFocusDate({
+      date,
+      now: NOW,
+      source: "season_pass",
+      windowStartUtc: "2026-07-23",
+      expiresAt: EXPIRES,
+      proExpiresAt: null,
+      ...overrides,
+    });
+
+  it("accepts today", () => {
+    expect(pass("2026-07-27")).toBe(true);
+  });
+
+  it("accepts yesterday, so a midnight crossing is recoverable", () => {
+    expect(pass("2026-07-26")).toBe(true);
+  });
+
+  it("rejects two days ago", () => {
+    expect(pass("2026-07-25")).toBe(false);
+  });
+
+  it("rejects the future", () => {
+    expect(pass("2026-07-28")).toBe(false);
+  });
+
+  it("rejects a malformed date", () => {
+    expect(pass("27-07-2026")).toBe(false);
+    expect(pass("2026-13-40")).toBe(false);
+    expect(pass("")).toBe(false);
+  });
+
+  it("rejects a date before the pass opened", () => {
+    // Window opens today, so yesterday predates the purchase.
+    expect(pass("2026-07-26", { windowStartUtc: "2026-07-27" })).toBe(false);
+  });
+
+  it("rejects a date after the pass expired", () => {
+    expect(pass("2026-07-27", { expiresAt: "2026-07-26T00:00:00.000Z" })).toBe(false);
+  });
+
+  it("rejects a buyer with no window at all", () => {
+    expect(pass("2026-07-27", { windowStartUtc: null, expiresAt: null })).toBe(false);
+  });
+
+  // PRO has no purchased window: rules 3 and 4 have nothing to test against.
+  // What remains is that PRO had not already lapsed before that date.
+  it("accepts a PRO date inside its coverage", () => {
+    expect(
+      pass("2026-07-26", {
+        source: "pro",
+        windowStartUtc: null,
+        expiresAt: null,
+        proExpiresAt: Date.parse("2026-08-01T00:00:00.000Z"),
+      }),
+    ).toBe(true);
+  });
+
+  it("accepts yesterday for a PRO that lapses today", () => {
+    expect(
+      pass("2026-07-26", {
+        source: "pro",
+        windowStartUtc: null,
+        expiresAt: null,
+        proExpiresAt: Date.parse("2026-07-27T06:00:00.000Z"),
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects a date the PRO had already lapsed before", () => {
+    expect(
+      pass("2026-07-27", {
+        source: "pro",
+        windowStartUtc: null,
+        expiresAt: null,
+        proExpiresAt: Date.parse("2026-07-26T23:00:00.000Z"),
+      }),
+    ).toBe(false);
+  });
+});
 
 describe("passWindowStartUtc", () => {
   it("derives the opening date from the expiry", () => {

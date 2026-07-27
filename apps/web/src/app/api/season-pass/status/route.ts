@@ -31,6 +31,10 @@ import {
   parseBackfillReport,
   type SupabaseServer,
 } from "@/lib/season-pass/focus-ledger-init";
+import {
+  readSeasonPassRow,
+  type SeasonPassRowRead,
+} from "@/lib/season-pass/read-season-pass-row";
 import { createLogger, hashWallet } from "@/lib/server/logger";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
@@ -43,20 +47,6 @@ const log = createLogger({ route: "/api/season-pass/status" });
 
 const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/i;
 
-type SeasonPassRow = {
-  expires_at: string;
-  season_id: string;
-  supporter_status: string | null;
-  shields_credited: number | null;
-};
-
-/** The purchased row, or the fact that the ledger could not answer. Kept apart
- *  on purpose: "no pass" and "cannot tell" must not collapse into one value —
- *  one revokes access, the other only degrades progress. */
-type LedgerRead =
-  | { status: "ok"; row: SeasonPassRow | null }
-  | { status: "unavailable" };
-
 /** Cached expiry when it is present AND still in the future; null otherwise.
  *  A Redis outage reads as "no cache", never as "no entitlement". */
 async function readCachedExpiry(wallet: string): Promise<string | null> {
@@ -64,34 +54,9 @@ async function readCachedExpiry(wallet: string): Promise<string | null> {
     const cached = await redis.get<string>(REDIS_KEYS.seasonPass(wallet));
     if (cached && new Date(cached) > new Date()) return cached;
   } catch (e) {
-    log.warn("redis_status_check_failed", { wallet, err: String(e) });
+    log.warn("redis_status_check_failed", { wallet: hashWallet(wallet), err: String(e) });
   }
   return null;
-}
-
-async function readSeasonPassRow(
-  supabase: SupabaseServer,
-  wallet: string,
-): Promise<LedgerRead> {
-  try {
-    const { data, error } = await supabase
-      .from("lite_season_passes")
-      .select("expires_at, season_id, supporter_status, shields_credited")
-      .eq("wallet", wallet)
-      .gt("expires_at", new Date().toISOString())
-      .order("expires_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      log.error("db_query_failed", { wallet, code: error.code });
-      return { status: "unavailable" };
-    }
-    return { status: "ok", row: (data as SeasonPassRow | null) ?? null };
-  } catch (e) {
-    log.error("unexpected_error", { wallet, err: String(e) });
-    return { status: "unavailable" };
-  }
 }
 
 export async function GET(req: Request) {
@@ -106,7 +71,7 @@ export async function GET(req: Request) {
   try {
     pro = await isProActive(wallet);
   } catch (e) {
-    log.error("pro_status_check_failed", { wallet, err: String(e) });
+    log.error("pro_status_check_failed", { wallet: hashWallet(wallet), err: String(e) });
     return NextResponse.json(
       { active: false, source: null, error: "entitlement_unavailable" },
       { status: 503 },
@@ -115,12 +80,15 @@ export async function GET(req: Request) {
 
   const configuredPass = getSeasonPass("lite_season_pass_21");
   const supabase = getSupabaseServer();
-  if (!supabase) log.error("supabase_unavailable", { wallet });
+  if (!supabase) log.error("supabase_unavailable", { wallet: hashWallet(wallet) });
 
   const cachedExpiresAt = await readCachedExpiry(wallet);
-  const ledger: LedgerRead = supabase
+  const ledger: SeasonPassRowRead = supabase
     ? await readSeasonPassRow(supabase, wallet)
     : { status: "unavailable" };
+  if (ledger.status === "unavailable" && supabase) {
+    log.error("db_query_failed", { wallet: hashWallet(wallet), code: ledger.code });
+  }
   const row = ledger.status === "ok" ? ledger.row : null;
 
   // The row wins when it exists; the cache still grants access when it does

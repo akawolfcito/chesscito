@@ -99,6 +99,54 @@ export function elapsedEligibleDays(
   return Math.min(Math.max(elapsed, 0), durationDays);
 }
 
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Whether a completion may be recorded for `date`.
+ *
+ * The endpoint is not an arbitrary registrar of history: the only dates it
+ * accepts are today and yesterday, and only inside an entitlement that was
+ * already live on that date. Everything else is somebody's clock being wrong,
+ * or somebody trying.
+ *
+ * PRO is evaluated differently on purpose. It has no purchased window, so
+ * "after the start" and "before the expiry" have nothing to compare against;
+ * what survives is that PRO had not already lapsed when that day began.
+ */
+export function isEligibleFocusDate(input: {
+  date: string;
+  now: number;
+  source: "pro" | "season_pass";
+  /** First UTC date of the purchased window. `null` for PRO. */
+  windowStartUtc: string | null;
+  /** Pass expiry, ISO. `null` for PRO. */
+  expiresAt: string | null;
+  proExpiresAt: number | null;
+}): boolean {
+  const { date, now, source, windowStartUtc, expiresAt, proExpiresAt } = input;
+
+  if (!DATE_RE.test(date)) return false;
+  const dateMs = parseUtcDate(date);
+  if (Number.isNaN(dateMs)) return false;
+  // Guards against a well-formed impossibility like 2026-13-40, which
+  // Date.parse rolls over instead of rejecting.
+  if (formatUtcDate(dateMs) !== date) return false;
+
+  const todayIndex = utcDayIndex(now);
+  const dayIndex = utcDayIndex(dateMs);
+  if (dayIndex !== todayIndex && dayIndex !== todayIndex - 1) return false;
+
+  if (source === "pro") {
+    return proExpiresAt !== null && proExpiresAt >= dateMs;
+  }
+
+  if (!windowStartUtc || !expiresAt) return false;
+  const expiryMs = Date.parse(expiresAt);
+  if (Number.isNaN(expiryMs)) return false;
+  if (dateMs < parseUtcDate(windowStartUtc)) return false;
+  return dateMs <= expiryMs;
+}
+
 /**
  * The UTC date the pass opened, derived from its expiry. `null` when there is
  * no expiry: PRO has access without a purchased window, and inventing a start
