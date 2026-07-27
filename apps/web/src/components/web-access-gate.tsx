@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 
 import { Button } from "@/components/ui/button";
+import { DesktopAppFrame } from "@/components/chrome/desktop-app-frame";
 import { trackWebAccess, WEB_ACCESS_EVENTS } from "@/lib/wallet/web-access-analytics";
 import {
   resolveWebAccessSurface,
@@ -108,89 +109,103 @@ export function WebAccessGate({
     return <>{children}</>;
   }
 
+  // Everything below is a screen of OURS, not productive app content, and each
+  // one wears the same desktop phone-bezel the app wears. Without this the gate
+  // was the single full-bleed surface of the product on desktop web: the layout
+  // frames `children` (`layout.tsx`), and these screens render INSTEAD of them,
+  // so they landed outside the frame. Below 768px `DesktopAppFrame` collapses to
+  // a pass-through, so MiniPay and mobile web are byte-for-byte unchanged.
   if (state === "environment-loading") {
     return (
-      <div
-        data-web-access="environment-loading"
-        data-surface={surface}
-        className="web-access-screen web-access-screen--centered"
-        aria-busy="true"
-      />
+      <DesktopAppFrame>
+        <div
+          data-web-access="environment-loading"
+          data-surface={surface}
+          className="web-access-screen web-access-screen--centered"
+          aria-busy="true"
+        />
+      </DesktopAppFrame>
     );
   }
 
   if (state === "wallet-pending") {
     return (
-      <div
-        data-web-access="wallet-pending"
-        data-surface={surface}
-        role="status"
-        className="web-access-screen web-access-screen--centered"
-      >
-        <div className="web-access-copy">
-          <p className="web-access-lede">{WEB_ACCESS_COPY.preparing}</p>
+      <DesktopAppFrame>
+        <div
+          data-web-access="wallet-pending"
+          data-surface={surface}
+          role="status"
+          className="web-access-screen web-access-screen--centered"
+        >
+          <div className="web-access-copy">
+            <p className="web-access-lede">{WEB_ACCESS_COPY.preparing}</p>
+          </div>
         </div>
-      </div>
+      </DesktopAppFrame>
     );
   }
 
   if (state === "error") {
     return (
-      <div
-        data-web-access="error"
-        data-surface={surface}
-        role="alert"
-        className="web-access-screen web-access-screen--centered"
-      >
-        <div className="web-access-copy">
-          <p className="web-access-lede">{WEB_ACCESS_COPY.error.title}</p>
-          <button type="button" className="web-access-cta" onClick={startLogin}>
-            {WEB_ACCESS_COPY.error.retry}
-          </button>
-          <Button asChild variant="game-ghost" size="game">
-            <a href={MINIPAY_URL}>{WEB_ACCESS_COPY.error.openMiniPay}</a>
-          </Button>
-          <Button asChild variant="game-text" size="game-sm">
-            <a href={DISCOVERY_URL}>{WEB_ACCESS_COPY.error.backToDiscovery}</a>
-          </Button>
+      <DesktopAppFrame>
+        <div
+          data-web-access="error"
+          data-surface={surface}
+          role="alert"
+          className="web-access-screen web-access-screen--centered"
+        >
+          <div className="web-access-copy">
+            <p className="web-access-lede">{WEB_ACCESS_COPY.error.title}</p>
+            <button type="button" className="web-access-cta" onClick={startLogin}>
+              {WEB_ACCESS_COPY.error.retry}
+            </button>
+            <Button asChild variant="game-ghost" size="game">
+              <a href={MINIPAY_URL}>{WEB_ACCESS_COPY.error.openMiniPay}</a>
+            </Button>
+            <Button asChild variant="game-text" size="game-sm">
+              <a href={DISCOVERY_URL}>{WEB_ACCESS_COPY.error.backToDiscovery}</a>
+            </Button>
+          </div>
         </div>
-      </div>
+      </DesktopAppFrame>
     );
   }
 
   // `unauthenticated` / `authenticating` — the gate itself.
   return (
-    <div
-      data-web-access={state}
-      data-surface={surface}
-      className="web-access-screen web-access-screen--gate"
-    >
-      {/* Two blocks, not one stack: the copy rides under the wordmark the
-          wallpaper already paints, and the action stays thumb-anchored at the
-          bottom, leaving the art's subject uncovered in between. */}
-      <div className="web-access-copy">
-        <h1 className="web-access-headline">{WEB_ACCESS_COPY.headline}</h1>
-        <p className="web-access-lede">{WEB_ACCESS_COPY.lede}</p>
-        <p className="web-access-body">
-          {WEB_ACCESS_COPY.body.map((line) => (
-            <span key={line} className="block">
-              {line}
-            </span>
-          ))}
-        </p>
+    <DesktopAppFrame>
+      <div
+        data-web-access={state}
+        data-surface={surface}
+        className="web-access-screen web-access-screen--gate"
+      >
+        {/* Two blocks, not one stack: the copy rides under the wordmark the
+            wallpaper already paints, and the action stays thumb-anchored at the
+            bottom, leaving the art's subject uncovered in between. */}
+        <div className="web-access-copy">
+          <h1 className="web-access-headline">{WEB_ACCESS_COPY.headline}</h1>
+          <p className="web-access-lede">{WEB_ACCESS_COPY.lede}</p>
+          <p className="web-access-body">
+            {WEB_ACCESS_COPY.body.map((line) => (
+              <span key={line} className="block">
+                {line}
+              </span>
+            ))}
+          </p>
+        </div>
+        <div className="web-access-actions">
+          <button
+            type="button"
+            className="web-access-cta"
+            onClick={startLogin}
+            disabled={authenticating}
+          >
+            {WEB_ACCESS_COPY.cta}
+          </button>
+          <p className="web-access-note">{WEB_ACCESS_COPY.note}</p>
+          {/* No `Continue as Guest`: web access is mandatory by product decision. */}
+        </div>
       </div>
-      <div className="web-access-actions">
-        <button
-          type="button"
-          className="web-access-cta"
-          onClick={startLogin}
-          disabled={authenticating}
-        >
-          {WEB_ACCESS_COPY.cta}
-        </button>
-        <p className="web-access-note">{WEB_ACCESS_COPY.note}</p>
-        {/* No `Continue as Guest`: web access is mandatory by product decision. */}
-      </div>
-    </div>
+    </DesktopAppFrame>
   );
 }

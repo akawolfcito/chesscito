@@ -37,6 +37,14 @@ vi.mock("@/lib/telemetry", () => ({
   track: (...args: unknown[]) => trackMock(...args),
 }));
 
+/** `DesktopAppFrame` reads the pathname to decide whether the route wears the
+ *  bezel. `/hub` is an app route, so the frame renders. */
+const usePathnameMock = vi.hoisted(() => vi.fn(() => "/en/hub"));
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => usePathnameMock(),
+}));
+
 import { WebAccessGate } from "@/components/web-access-gate";
 import { WEB_ACCESS_EVENTS } from "@/lib/wallet/web-access-analytics";
 
@@ -163,6 +171,61 @@ describe("WebAccessGate", () => {
       expect(container.querySelector('[data-surface="play"]')).not.toBeNull();
       unmount();
     }
+  });
+
+  describe("desktop app frame", () => {
+    // The gate is an app screen, not a page of its own: on web it must sit
+    // inside the same phone bezel the app wears (founder, 2026-07-27). Below
+    // 768px the frame is a CSS pass-through, so MiniPay is untouched.
+    const FRAME = ".desktop-app-frame-shell";
+
+    it("renders the gate inside the desktop app frame", () => {
+      const { container } = renderGate();
+      expect(container.querySelector(FRAME)).not.toBeNull();
+      expect(
+        container.querySelector(`${FRAME} [data-web-access="unauthenticated"]`),
+      ).not.toBeNull();
+    });
+
+    it("frames every interstitial too, so the bezel never blinks mid-login", () => {
+      for (const setup of [
+        () => {
+          readyMock = false;
+        },
+        () => {
+          authenticatedMock = true;
+          addressMock = undefined;
+        },
+      ]) {
+        readyMock = true;
+        authenticatedMock = false;
+        addressMock = undefined;
+        setup();
+        const { container, unmount } = renderGate();
+        expect(container.querySelector(FRAME)).not.toBeNull();
+        unmount();
+      }
+    });
+
+    it("frames the error screen", () => {
+      const { container } = renderGate();
+      fireEvent.click(screen.getByText("ENTER"));
+      act(() => {
+        capturedLoginCallbacks?.onError?.("exited_auth_flow");
+      });
+      expect(
+        container.querySelector(`${FRAME} [data-web-access="error"]`),
+      ).not.toBeNull();
+    });
+
+    it("adds NO frame of its own once children are admitted", () => {
+      // The layout already frames the app. A frame here would nest two bezels.
+      authenticatedMock = true;
+      addressMock = "0xabc0000000000000000000000000000000000000";
+      const { container } = renderGate();
+      expect(container.querySelector(FRAME)).toBeNull();
+      expect(screen.getByText(CHILD)).toBeTruthy();
+    });
   });
 
   describe("analytics", () => {
