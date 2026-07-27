@@ -83,8 +83,8 @@ lecturas de `null` no son igual de inocuas.
   el refactor. `main` NO tiene nada de Stage 2.
 - ⚠️ **Este `SESSION.md` vive en `feat/focus-days-ui`.** El de `main` sigue siendo el
   de Stage 1 hasta que esta branch mergee.
-- **Build**: suite **6115 passing / 534 files, EXIT=0, 0 `Unhandled Errors`**, `tsc`
-  limpio, eslint limpio, `content:audit` sin hallazgos en las claves nuevas (los 162
+- **Build (tras S2.4)**: suite **6139 passing / 537 files, EXIT=0, 0
+  `Unhandled Errors`**, `tsc` limpio, eslint limpio, `content:audit` sin hallazgos en las claves nuevas (los 162
   que reporta son preexistentes y es warn-only).
 - **Uncommitted work**: ninguno.
 - 📌 **Baseline corregido: `main` limpio da 531 archivos, no 529.** Lo medí con stash
@@ -105,9 +105,24 @@ lecturas de `null` no son igual de inocuas.
 
 Sigue el orden de commits de Stage 2 (S2.1, S2.2a y S2.2b+S2.3 hechos):
 
-- **S2.4** — cliente del POST al completar el Daily + reintento `daily_retry`.
-  **El slice de mayor riesgo del stage: el único que ESCRIBE.** Diseño ya
-  investigado contra el código (2026-07-27), listo para implementar:
+- ✅ **S2.4 — HECHO** (2026-07-27, 3 commits en `main` local). Lo construido:
+  1. `lib/daily/events.ts`: `dispatchDailyCompleted(date)` +
+     `subscribeToDailyCompleted`, canal DEDICADO; `progress.ts` lo emite **solo**
+     en la rama de cambio real (nunca en el no-op del mismo día).
+  2. `lib/season-pass/use-focus-day-recorder.ts`: completación → POST **sin**
+     `date`; retry en mount con `lastCompletedDate` acotado a [ayer, hoy]; un ref
+     `(wallet, date)` reclamado **antes** del await; un POST fallido **libera** su
+     clave para que el próximo mount lo vuelva a deber. 16 tests.
+  3. `useLearnFocusDays` toma `refreshToken`; `LearnHubClient` monta el recorder y
+     lo bumpea `onRecorded` → **el número se mueve en la misma sesión**. Sin eso
+     la escritura existía pero la tarjeta seguía congelada hasta el próximo mount.
+
+  ⚠️ De los 16 tests del recorder, **4 guardas verificadas por mutación**
+  (entitlement, PLAY, fecha vieja, fecha futura). Las otras 3 del bloque "no
+  escribe" (sin wallet, loading, sin historial) pasan estructuralmente: sin
+  wallet o sin fecha no hay nada que postear.
+
+  <details><summary>Diseño original (previo a implementar)</summary>
 
   ⚠️ **NO colgar el POST de `chesscito:daily-progress-changed`.** Ese evento se
   despacha desde **dos** lugares (`progress.ts:94` y, redundante,
@@ -136,7 +151,8 @@ Sigue el orden de commits de Stage 2 (S2.1, S2.2a y S2.2b+S2.3 hechos):
   localmente aunque el POST falle · sin wallet no se intenta escribir · la
   escritura normal NO manda `date` · el retry SÍ manda `lastCompletedDate` ·
   nunca se reintenta una fecha fuera de [ayer, hoy] · **ni un POST de más por
-  rerender o rehidratación**.
+  rerender o rehidratación**. — **las seis quedaron con aserción.**
+  </details>
 - **S2.5** — borrar `challenge-day.ts`, su test, `dayOfChallenge` y sus referencias
   (AC1). **Último**, para que el camino viejo viva hasta que el nuevo esté cableado.
   📌 Medido: `dayOfChallenge` está en el **tipo** (`challenge-card.tsx:59`), se produce
@@ -154,25 +170,14 @@ Fuera de Stage 2, cuando el founder quiera:
 
 ## Blockers
 
-⛔ **NO PUSHEAR `main` HASTA S2.4.** Esto NO es la validación visual: es un defecto
-funcional real, y el gate del ledger **ya está en `true` en prod (LEARN)**.
+✅ **LEVANTADO el bloqueo funcional de push: S2.4 está construido** (2026-07-27,
+commits `7977536` · `a528f19` · `1caf6c1`). La cadena en producción ya cierra:
+completar el Daily → POST `/api/focus-day` → el hub **relee** el conteo → el
+número se mueve en la misma sesión. El defecto "el número se congela" ya no
+existe.
 
-Con lo mergeado, la cadena queda así en producción:
-`useLearnFocusDays` manda el reporte → el server siembra el backfill y **latchea** →
-la tarjeta muestra `N of 21`. Pero **S2.4 no existe**, así que completar el Daily
-**no escribe ninguna fila**. Resultado: el jugador completa su Daily y el número
-**no se mueve nunca**. Y como el latch ya se escribió, el backfill no vuelve a
-correr para esa wallet: revertirlo exige borrarle la fila de `focus_ledger_init`.
-
-Es exactamente el defecto que Spec A venía a arreglar, con otra cara: antes el
-número retrocedía, ahora se congelaría. **Pushear esto sin S2.4 es peor que no
-pushear nada.**
-
-Salidas, si hace falta pushear antes de S2.4:
-1. **Terminar S2.4 primero** (preferida, el diseño ya está escrito arriba).
-2. Poner `focus-days-ledger:enabled = "false"` en Redis **antes** del deploy (no
-   requiere redeploy) → la slice llega `disabled`, la tarjeta cae en el estado
-   neutral y no se latchea a nadie.
+🚦 **Sigue en pie la validación visual** (abajo). Es lo único que queda antes del
+merge/push de Stage 2 desde el lado del founder.
 
 **Y además, para el merge final de Stage 2** (founder, 2026-07-27):
 
