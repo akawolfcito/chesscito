@@ -269,7 +269,7 @@ export function ProSheet(props: ProSheetProps) {
          *  `showActiveBanner`. */}
         <div className="relative mx-auto flex w-full max-w-[var(--app-max-width)] flex-col overflow-y-auto overflow-x-visible overscroll-contain pt-[12%]">
           {/* Floating banner */}
-          <ThemeAssetPicture slot="pro-sheet.header-icon" pictureClassName="pointer-events-none absolute left-1/2 top-0 z-20 w-[62%] -translate-x-1/2" alt="" aria-hidden="true" className="w-full" draggable={false} />
+          <ThemeAssetPicture slot="pro-sheet.header-icon" pictureClassName="pointer-events-none absolute left-1/2 top-5 z-20 w-[62%] -translate-x-1/2" alt="" aria-hidden="true" className="w-full" draggable={false} />
 
           {/* Close button */}
           <button
@@ -277,7 +277,7 @@ export function ProSheet(props: ProSheetProps) {
             onClick={() => onOpenChange(false)}
             aria-label={t("closeLabel")}
             className="candy-close-asset-button absolute right-4 z-30"
-            style={{ top: "8%" }}
+            style={{ top: "18%" }}
             data-testid="pro-close"
           >
             <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-10 w-10 object-contain" draggable={false} />
