@@ -19,6 +19,7 @@ import { Redis } from "@upstash/redis";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { resolveEffectiveTrainingPass } from "@/lib/entitlements/effective-training-pass";
 import { isProActive } from "@/lib/pro/is-active";
+import { daysRemaining } from "@/lib/pro/days-remaining";
 import { getSeasonPass } from "@/lib/payments/rail-config";
 import type { FocusDaysSlice } from "@/lib/season-pass/focus-days";
 import {
@@ -131,16 +132,59 @@ export async function GET(req: Request) {
   }
 
   if (effective.active) {
-    body.focusDays = await resolveFocusDays({
+    const focusDays = await resolveFocusDays({
       supabase,
       wallet,
       seasonId: effective.seasonId,
       expiresAt: effective.seasonPassExpiresAt,
       report: parseBackfillReport(searchParams),
     });
+    body.focusDays = focusDays;
+
+    // AC12 — una línea por respuesta con pase activo, con las DOS constantes
+    // juntas. El cambio 21-en-30 mueve un número que nadie mira: si un call
+    // site elige el equivocado, sin esto nos enteramos por un reporte de
+    // jugador. Verlas apareadas hace que un cruce salte a la vista.
+    //
+    // `state` es la unión real que el servidor puede resolver: el cliente
+    // agrega `loading` y `offer`, que aquí no existen (este bloque ya sabe que
+    // hay acceso). Wallet hasheada, y ningún `expires_at` exacto — la ventana
+    // viaja como días restantes, que es lo que se necesita para leer el estado.
+    const expiresAtMs = effective.seasonPassExpiresAt
+      ? Date.parse(effective.seasonPassExpiresAt)
+      : null;
+    const remaining = daysRemaining(
+      expiresAtMs !== null && !Number.isNaN(expiresAtMs) ? expiresAtMs : null,
+      Date.now(),
+    );
+    log.info("focus_days_status", {
+      wallet: hashWallet(wallet),
+      season_id: effective.seasonId,
+      challenge_goal_days: configuredPass.challengeGoalDays,
+      access_duration_days: configuredPass.accessDurationDays,
+      completed: focusDays.status === "ok" ? focusDays.completed : null,
+      days_remaining: remaining ?? 0,
+      state: focusDaysLogState(focusDays, configuredPass.challengeGoalDays),
+    });
   }
 
   return json(body);
+}
+
+/** El estado del reto, reducido a lo que el SERVIDOR puede saber.
+ *
+ *  Es la misma unión que `ChallengeProgressView` menos `loading` y `offer`:
+ *  esos dos son estados del cliente (una request en vuelo, un jugador sin
+ *  pase), y este log sólo se emite cuando ya hay acceso resuelto. Mantenerlos
+ *  fuera evita un estado que nunca podría aparecer y que alguien buscaría en
+ *  vano al leer los logs. */
+function focusDaysLogState(
+  slice: FocusDaysSlice,
+  goal: number,
+): "disabled" | "degraded" | "active" | "completed" {
+  if (slice.status === "disabled") return "disabled";
+  if (slice.status === "unavailable") return "degraded";
+  return slice.completed >= goal ? "completed" : "active";
 }
 
 function json(body: unknown, status = 200) {

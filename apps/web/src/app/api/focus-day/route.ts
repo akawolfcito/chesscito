@@ -162,6 +162,26 @@ export async function POST(req: Request) {
     source = "daily_retry";
   }
 
+  // Meta alcanzada ⇒ la escritura se cierra, aunque queden días de acceso.
+  //
+  // La ventana de 30 es margen para COMPLETAR 21, no permiso para registrar 30.
+  // Sin este corte el ledger seguiría acumulando filas que la tarjeta clampa y
+  // nadie ve — progreso invisible, que es exactamente lo que el ledger vino a
+  // eliminar. Se responde éxito idempotente, no error: para el jugador no pasó
+  // nada malo, ya terminó.
+  const before = await countFocusDays(supabase, wallet, effective.seasonId);
+  if (before === null) {
+    log.error("focus_day_ledger_unavailable", { wallet: walletHash, phase: "count" });
+    return fail("ledger_unavailable", 503);
+  }
+  if (before >= configuredPass.challengeGoalDays) {
+    log.info("focus_day_goal_reached", { wallet: walletHash, completed: before });
+    return NextResponse.json({
+      ok: true,
+      progress: focusDaysProgress(before, configuredPass.challengeGoalDays),
+    });
+  }
+
   const { data: inserted, error } = await supabase
     .from("focus_day_ledger")
     .upsert(

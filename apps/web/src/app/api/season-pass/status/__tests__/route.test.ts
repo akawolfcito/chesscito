@@ -35,8 +35,16 @@ vi.mock("@/lib/payments/rail-config", async (importOriginal) => {
 
 vi.mock("@/lib/supabase/server", () => ({ getSupabaseServer: vi.fn() }));
 vi.mock("@/lib/pro/is-active", () => ({ isProActive: mockIsProActive }));
+// Estable a propósito: `createLogger: () => ({ info: vi.fn() })` devolvía una
+// función nueva por llamada, así que nada de lo que la ruta loguea era
+// observable. AC12 necesita verlo.
+const logSpy = vi.hoisted(() => ({
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+}));
 vi.mock("@/lib/server/logger", () => ({
-  createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  createLogger: () => logSpy,
   // Never the raw wallet in a log line, not even in tests.
   hashWallet: (w: string) => `hash:${w.slice(0, 6)}`,
 }));
@@ -280,6 +288,9 @@ describe("focusDays slice", () => {
   });
 
   it("reports progress once the env flag is on", async () => {
+    // El spy es compartido y `beforeEach` no lo limpia: sin esto, un test que
+    // no logueara nada leería la línea de un caso anterior y pasaría en falso.
+    logSpy.info.mockClear();
     vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
     withActivePass();
     mockCountFocusDays.mockResolvedValue(5);
@@ -301,6 +312,9 @@ describe("focusDays slice", () => {
   // MUTACIÓN: al intercambiar las dos constantes debe ponerse rojo, que es lo
   // que prueba que la meta quedó atada al campo correcto y no al que sobró.
   it("AC3 · discriminación 21≠30 — el goal es la meta (21), no la ventana (30)", async () => {
+    // El spy es compartido y `beforeEach` no lo limpia: sin esto, un test que
+    // no logueara nada leería la línea de un caso anterior y pasaría en falso.
+    logSpy.info.mockClear();
     vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
     withActivePass();
     mockCountFocusDays.mockResolvedValue(5);
@@ -311,8 +325,56 @@ describe("focusDays slice", () => {
     expect(json.focusDays.goal).not.toBe(30);
   });
 
+  // AC12 — observabilidad. El cambio mueve una constante que nadie mira: si un
+  // call site elige el número equivocado, sin esto nos enteramos por un reporte
+  // de jugador. La línea lleva las DOS constantes juntas, que es lo que permite
+  // ver un cruce de un vistazo.
+  it("AC12 · loguea la forma de la temporada y el estado resuelto", async () => {
+    // El spy es compartido y `beforeEach` no lo limpia: sin esto, un test que
+    // no logueara nada leería la línea de un caso anterior y pasaría en falso.
+    logSpy.info.mockClear();
+    vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
+    withActivePass();
+    mockCountFocusDays.mockResolvedValue(5);
+
+    await GET(makeRequest(WALLET));
+
+    const call = logSpy.info.mock.calls.filter(([event]) => event === "focus_days_status").at(-1);
+    expect(call).toBeDefined();
+    const payload = call![1] as Record<string, unknown>;
+
+    expect(payload).toMatchObject({
+      challenge_goal_days: 21,
+      access_duration_days: 30,
+      completed: 5,
+      state: "active",
+    });
+    expect(payload.days_remaining).toEqual(expect.any(Number));
+
+    // Nunca la wallet completa: sólo el hash que usa el resto de las rutas.
+    expect(payload.wallet).toBe(`hash:${WALLET.slice(0, 6)}`);
+    expect(JSON.stringify(payload)).not.toContain(WALLET);
+  });
+
+  it("AC12 · el estado distingue completado de en curso", async () => {
+    // El spy es compartido y `beforeEach` no lo limpia: sin esto, un test que
+    // no logueara nada leería la línea de un caso anterior y pasaría en falso.
+    logSpy.info.mockClear();
+    vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
+    withActivePass();
+    mockCountFocusDays.mockResolvedValue(21);
+
+    await GET(makeRequest(WALLET));
+
+    const call = logSpy.info.mock.calls.filter(([event]) => event === "focus_days_status").at(-1);
+    expect((call![1] as Record<string, unknown>).state).toBe("completed");
+  });
+
   // AC27 wiring — the Redis override outranks the deployment default.
   it("lets the Redis override turn it off without a redeploy", async () => {
+    // El spy es compartido y `beforeEach` no lo limpia: sin esto, un test que
+    // no logueara nada leería la línea de un caso anterior y pasaría en falso.
+    logSpy.info.mockClear();
     vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
     withActivePass();
     redisReturning({ gate: "false" });
@@ -336,6 +398,9 @@ describe("focusDays slice", () => {
   });
 
   it("degrades to unavailable when the count cannot be read", async () => {
+    // El spy es compartido y `beforeEach` no lo limpia: sin esto, un test que
+    // no logueara nada leería la línea de un caso anterior y pasaría en falso.
+    logSpy.info.mockClear();
     vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
     withActivePass();
     mockCountFocusDays.mockResolvedValue(null);
@@ -354,6 +419,9 @@ describe("focusDays slice", () => {
   });
 
   it("hands the client's own report to the backfill", async () => {
+    // El spy es compartido y `beforeEach` no lo limpia: sin esto, un test que
+    // no logueara nada leería la línea de un caso anterior y pasaría en falso.
+    logSpy.info.mockClear();
     vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
     withActivePass();
 
@@ -369,6 +437,9 @@ describe("focusDays slice", () => {
   });
 
   it("backfills before counting, so the first load is not a zero", async () => {
+    // El spy es compartido y `beforeEach` no lo limpia: sin esto, un test que
+    // no logueara nada leería la línea de un caso anterior y pasaría en falso.
+    logSpy.info.mockClear();
     vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
     withActivePass();
     const order: string[] = [];
@@ -386,6 +457,9 @@ describe("focusDays slice", () => {
   });
 
   it("never caches: the response initializes the ledger", async () => {
+    // El spy es compartido y `beforeEach` no lo limpia: sin esto, un test que
+    // no logueara nada leería la línea de un caso anterior y pasaría en falso.
+    logSpy.info.mockClear();
     vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
     withActivePass();
     const res = await GET(makeRequest(WALLET));

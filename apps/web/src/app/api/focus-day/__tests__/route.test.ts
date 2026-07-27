@@ -341,6 +341,39 @@ describe("AC4 · discriminación 21≠30 — los dos números, cada uno en su lu
     expect(upserts).toHaveLength(1);
   });
 
+  // AC8 — `completed` es terminal, y cierra la escritura con él.
+  //
+  // Los días 22–30 son margen para COMPLETAR, no días registrables después de
+  // completar. Sin esto el ledger seguiría acumulando filas que la tarjeta
+  // clampa y nadie ve: progreso invisible, justo lo que Stage 2 vino a
+  // eliminar. Se verifica CONTANDO filas, no por el status code — un 200 no
+  // dice nada sobre si se escribió.
+  it("AC8 · alcanzada la meta, un POST más no escribe fila", async () => {
+    const { supabase, upserts } = buildSupabase({ row: activeRow });
+    mockedSupabase.mockReturnValue(supabase);
+    mockCountFocusDays.mockResolvedValue(21);
+
+    const res = await POST(makeRequest({ wallet: WALLET }));
+    const json = await res.json();
+
+    expect(upserts).toHaveLength(0);
+    // Éxito idempotente: no es un error, así que el cliente no debe ver uno.
+    expect(res.status).toBe(200);
+    expect(json.ok).toBe(true);
+    expect(json.progress).toEqual({ completed: 21, goal: 21 });
+  });
+
+  it("AC8 · con la meta sin alcanzar, la escritura sigue abierta", async () => {
+    const { supabase, upserts } = buildSupabase({ row: activeRow });
+    mockedSupabase.mockReturnValue(supabase);
+    mockCountFocusDays.mockResolvedValue(20);
+
+    const res = await POST(makeRequest({ wallet: WALLET }));
+
+    expect(res.status).toBe(200);
+    expect(upserts).toHaveLength(1);
+  });
+
   // (b) PROGRESO ← challengeGoalDays (21).
   //
   // ⚠️ Las 30 filas son un FIXTURE DEFENSIVO, no un estado que el POST pueda

@@ -119,6 +119,18 @@ describe("focusDaysProgress", () => {
     expect(focusDaysProgress(25, GOAL)).toEqual({ completed: 21, goal: 21 });
   });
 
+  // AC9 — el extremo que la ventana de 30 hace concebible.
+  //
+  // ⚠️ 30 filas NO son alcanzables por ningún escritor: el POST se cierra al
+  // llegar a la meta (AC8) y el backfill inicial ya capa en `goal`
+  // (`backfillDates` → min(streak, elapsed, goal)). Esto prueba la DEFENSA
+  // —datos históricos, fixtures, concurrencia— no un estado que el producto
+  // pueda producir. La regla que fija es incondicional: la presentación
+  // clampea aunque la persistencia tenga de más.
+  it("AC9 · defensa — clampea 30 filas a la meta de 21", () => {
+    expect(focusDaysProgress(30, GOAL)).toEqual({ completed: 21, goal: 21 });
+  });
+
   it("never reports a negative count", () => {
     expect(focusDaysProgress(-3, GOAL)).toEqual({ completed: 0, goal: 21 });
   });
@@ -132,10 +144,24 @@ describe("isUnreachable", () => {
     ).toBe(true);
   });
 
-  it("is false when the goal still fits in the window", () => {
+  // AC7 — el borde, como PAREJA. `owed === daysRemaining` es alcanzable:
+  // quedan exactamente tantos días como días se deben, así que todavía se
+  // completa acertando todos. La condición es `>`, estricta.
+  //
+  // De los dos casos, el que DISCRIMINA `>` de `>=` es el de 9 (ya existía):
+  // con `>=` daría true y el test se pone rojo. El de 8 no distingue las dos
+  // formas — está para que el borde se lea como borde y no como un valor
+  // suelto que alguien pueda mover sin notar de qué lado estaba.
+  it("AC7 · borde — 12/21 con 9 días restantes es ALCANZABLE (owed === remaining)", () => {
     expect(
       isUnreachable({ completed: 12, goal: GOAL }, { kind: "expiring", daysRemaining: 9 }),
     ).toBe(false);
+  });
+
+  it("AC7 · borde — 12/21 con 8 días restantes ya NO alcanza", () => {
+    expect(
+      isUnreachable({ completed: 12, goal: GOAL }, { kind: "expiring", daysRemaining: 8 }),
+    ).toBe(true);
   });
 
   it("is never true without a window: PRO has no deadline to miss", () => {
