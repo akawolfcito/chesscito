@@ -8489,24 +8489,21 @@ button.hud-resource-chip:active:not(:disabled) {
   cursor: pointer;
 }
 
+/* The sprite ships its own ring, so this box only sizes it. It used to fake the
+   circle in CSS (border + background + radius) around a bare "?" glyph; keeping
+   that now draws a ring around the sprite's ring. */
 .challenge-card-passport-help-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 22px;
   height: 22px;
-  padding: 2px 5px;
-  border-radius: 9999px;
-  background: #e6f6cf;
-  border: 1.5px solid #4a8c1e;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .challenge-card-passport-help-icon img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 1px 0 rgba(85, 45, 5, 0.4));
 }
 
 .challenge-card-passport-help:active .challenge-card-passport-help-icon {
@@ -9438,24 +9435,20 @@ button.hud-resource-chip:active:not(:disabled) {
   cursor: pointer;
 }
 
+/* Same slot as the Learn hub's help chip: the ring lives in the sprite now, so
+   this box only sizes it. See .challenge-card-passport-help-icon. */
 .kingdom-card-tour-help-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 23px;
   height: 23px;
-  padding: 2px 5px;
-  border: 1.5px solid #4a8c1e;
-  border-radius: 9999px;
-  background: #e6f6cf;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .kingdom-card-tour-help-icon img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 1px 0 rgba(85, 45, 5, 0.4));
 }
 
 .kingdom-card-tour-help:active .kingdom-card-tour-help-icon {
