@@ -31,16 +31,25 @@ Dos cosas que aparecieron sin estar pedidas y se cerraron:
 - **Build**: suite **6081 passing / 529 files, EXIT=0, 0 `Unhandled Errors`**, `tsc` limpio
   (verificado **sobre `main` ya mergeado**, no sólo en la branch)
 - **Uncommitted work**: ninguno
-- ⏳ **`main` local: 23 commits adelante de `origin/main`.** El founder pushea.
-- 🔒 **Gate apagado.** Sin `FOCUS_DAYS_LEDGER_ENABLED=true` ni override en Redis, `/status`
-  devuelve `focusDays: { status: "disabled" }` y el POST responde `disabled`.
+- ✅ **Pusheado**: `origin/main` está en `078d4aa0`.
+- 🟢 **EL LEDGER ESTÁ VIVO EN PRODUCCIÓN (LEARN).** El founder aplicó la migración y puso
+  `FOCUS_DAYS_LEDGER_ENABLED=true` el **2026-07-27**. `/status` ya escribe el latch de
+  backfill y cuenta filas reales.
 
-## Antes de prender el flag
+## Consecuencias de que ya esté prendido
 
-1. **Aplicar la migración** `apps/web/supabase/migrations/20260728000000_focus_day_ledger.sql`
-   en el Supabase hosted. Sin las tablas la slice queda `unavailable` — degrada, no rompe.
-2. Recién después: `FOCUS_DAYS_LEDGER_ENABLED=true` (server-side, **nunca** `NEXT_PUBLIC_*`)
-   + redeploy, o el override `focus-days-ledger:enabled` en Redis para prenderlo sin deploy.
+- **El backfill es de una sola vez por `(wallet, season_id)`.** Cada wallet que abra el Hub
+  con entitlement activo se siembra y se latchea con lo que el cliente reporte **hoy**. Un
+  bug en el reporte del cliente NO se arregla con un redeploy: hay que borrar la fila de
+  `focus_ledger_init` para esa wallet.
+  ⚠️ Stage 2 todavía no manda `streak`/`lastCompletedDate`, así que hasta que llegue, cada
+  llamada cae en `report = null` → **no siembra y no latchea**. Eso es correcto y a propósito
+  (AC13): nadie se está latcheando en cero mientras tanto.
+- **Apagarlo no requiere redeploy**: `focus-days-ledger:enabled = "false"` en Redis manda
+  sobre el env var. Un valor que no sea exactamente `"true"`/`"false"` cae al default seguro
+  (off) y se loguea.
+- **Qué mirar si algo se pone raro**: `focus_day_ledger_unavailable` y
+  `focus_days_gate_invalid_override` en los logs de `/api/season-pass/status`.
 
 **El env var va SÓLO en el proyecto de LEARN.** PLAY no tiene quién lo consuma:
 `hub-scaffold-client.tsx:15` despacha por modo y la `ChallengeCard` cuelga sólo de
