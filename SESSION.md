@@ -1,119 +1,179 @@
-# Session Handoff — 2026-07-27 (Focus Days ledger, Stage 1 — MERGEADO)
+# Session Handoff — 2026-07-27 (refactor del daily slot + Focus Days S2.1 y S2.2a)
 
 ## Completed
 
-Stage 1 entero, mergeado a `main` local (`078d4aa0`, `--no-ff`). El server ya cuenta
-Focus Days. **Nada de esto se ve todavía**: la UI es Stage 2 y el gate arranca apagado.
+### 1. Branch `feat/focus-days-ledger` borrada
+Mergeada y ausente de `origin` (verificado con `ls-remote` antes de borrar, y con
+`-d`, no `-D`).
 
-| commit | qué | tests |
-|---|---|---|
-| `5d54273d` | `seasonId` canónico en `/status` + fix del spread | 29 (10 nuevos) |
-| `26458173` | `focus-ledger-init.ts`: count, parseo del reporte y backfill | 22 |
-| `718bf54b` | slice `focusDays` + gate + init cableados en `/status` | 10 |
-| `492fc8ed` | `POST /api/focus-day` + regla pura de fechas + rate limit | 32 |
+### 2. `refactor/hub-lite-daily-slot` — MERGEADO a `main` local (`5444353`)
 
-**Decisión estructural**: el fast path de Redis **dejó de retornar temprano**. El spec exige
-el `seasonId` resuelto antes de cualquier rama (AC30) y para un comprador ese dato sólo
-existe en `lite_season_passes`. Redis conserva su único trabajo real — probar acceso: si
-Supabase cae, el entitlement se sirve igual y la slice queda `unavailable`.
+`HubLiteScaffold` montaba `HubDailyTile` y era dueño de `dailyOpen`. El tile llama
+`useAccount()`, así que el presenter entero necesitaba un provider de wagmi para
+renderizar: su propia suite tenía que stubbear el módulo, y un probe `/dev` del hub
+de LEARN moría con `WagmiProviderNotFoundError` (lo reproduje: es el rojo literal
+que quedó en el log antes de implementar).
 
-Dos cosas que aparecieron sin estar pedidas y se cerraron:
+Ahora el daily llega como `dailySlot: ReactNode`, **espejando `PlayHubScaffold`**
+(`play-hub-scaffold.tsx:27` — no inventé el patrón, ya existía del lado PLAY). El
+scaffold conserva lo suyo: el anchor, su `data-tour-target="daily"` y el pulso
+`is-pending`. `LearnHubClient` es dueño de la instancia y del estado.
 
-- **Rate limit por wallet, no por IP** (`enforceFocusDayRateLimit`, bucket
-  `rl:focus-day:wallet`, 10/10min). Lo que se protege es el ledger de una wallet, y una casa
-  detrás de un NAT no es abuso. La idempotencia **no** depende de esto: es el UNIQUE.
-- **`/status` logueaba la wallet completa en tres líneas viejas.** El logger sólo redacta
-  claves tipo `key|secret|token|…`, no wallets. Ahora pasan por `hashWallet()` (AC22).
+⚠️ **`HubDailyTile` era el ÚLTIMO hook de wagmi del subtree.** Verifiqué
+`ChallengeCard`, `LanguageChip`, `AppModeSwitch`, `RewardColumn` y `CandyIcon`:
+limpios. **El item 3 (`/dev/learn-hub` + VR) ya no tiene blocker.**
+
+La invariante "el regalo y el Focus Passport abren UNA sola instancia" era una
+aserción sobre el scaffold. Se movió a `learn-hub-client-daily-slot.test.tsx`, en un
+contenedor que **no tenía ningún test**. Verificada por mutación (rompí el cableado
+a propósito y confirmé el rojo), no sólo por verde. De paso el pulso `is-pending`
+ganó cobertura, que no tenía.
+
+### 3. `feat/focus-days-ui` — branch VIVA, sin mergear
+
+- **S2.1** (`6619294`): `useLearnFocusDays` + 11 tests.
+- **S2.2a** (`6534808`): `buildChallengeProgressView` + `focusWindow` + 14 tests.
+- **S2.2b + S2.3** (`afb28a9`): la tarjeta consume la vista, los 5 estados, copy en
+  los dos locales, CSS, y el cableado completo. **`Day N of 21` ELIMINADO.**
+
+Dos cosas que apareció el cambio y valen más que el feature:
+- **Un bug que iba a introducir yo**: el `·` separador de la racha es un `::before`
+  y dependía de que el ordinal fuera siempre primero. Sin ordinal, en `offer` y
+  `disabled` colgaba al principio de la fila. Ahora va con `:not(:first-child)`.
+- **Dos tests de integración fijaban el defecto** (`Day 0 of 21` a `Day 1 of 21`
+  movido sólo por localStorage). Reescritos, no borrados: ahora fijan que la racha
+  avanza reactivamente y que la tarjeta se NIEGA a convertirla en progreso.
+
+`disabled` no dice nada de sí mismo (decisión nuestra); `degraded` dice que falta
+la métrica (falla nuestra). Se distinguen en copy **y** en `data-progress-state`.
+
+Dos lecturas que el builder mantiene separadas a propósito:
+- **ledger sin responder = `loading`, NO `degraded`.** `degraded` nos acusa de una
+  falla; no haber preguntado no lo es, y tampoco es un cero.
+- **pase vencido = `0 days left`, NO ventana ausente.** Caer en `unbounded` le diría
+  a un jugador vencido que no tiene fecha límite.
+
+## Hallazgo que cambió el plan (y decisión del founder)
+
+**El plan decía "`use-hub-data` manda `streak` + `lastCompletedDate`". No se puede.**
+Ese fetch no es suyo: lo hace `EffectiveTrainingPassProvider`
+(`product-context-providers.tsx:31`), instancia única montada en los dos wallet
+providers y **fijada por `product-context-parity.test.tsx:111,118`**.
+`use-hub-data.ts:394` sólo lee ese snapshot compartido, que además sirve a PLAY.
+
+**El filo:** el reporte sale de `getDailyProgress()`, leído **diferido** en
+`use-hub-data.ts:292-296` (`dailyProgress` arranca `null`). El server latchea con un
+`streak=0` literal e ignora el ausente (`focus-ledger-init.ts:40,50`). Disparar antes
+de que resuelva el localStorage congela a un jugador real en cero **por toda la
+temporada**, y sólo se deshace borrándole la fila de `focus_ledger_init`.
+
+**Decisión firmada (founder, 2026-07-27): opción 1 — llamada aparte, sólo LEARN.**
+El provider global queda intacto como autoridad única de acceso pago. LEARN espera
+hidratación explícita y llama al mismo `/status` con el reporte, consumiendo
+**únicamente** la slice `focusDays`. Nunca re-decide `active`/`source`/expiración.
+Un fallo ahí → `degraded` en la tarjeta, **acceso intacto**.
+
+Por eso `DailyProgressState` es una unión discriminada y no un nullable: las dos
+lecturas de `null` no son igual de inocuas.
 
 ## Current State
 
-- **Branch**: `main` (el trabajo ya está mergeado; `feat/focus-days-ledger` sigue viva)
-- **Build**: suite **6081 passing / 529 files, EXIT=0, 0 `Unhandled Errors`**, `tsc` limpio
-  (verificado **sobre `main` ya mergeado**, no sólo en la branch)
-- **Uncommitted work**: ninguno
-- ✅ **Pusheado**: `origin/main` está en `078d4aa0`.
-- 🟢 **EL LEDGER ESTÁ VIVO EN PRODUCCIÓN (LEARN).** El founder aplicó la migración y puso
-  `FOCUS_DAYS_LEDGER_ENABLED=true` el **2026-07-27**. `/status` ya escribe el latch de
-  backfill y cuenta filas reales.
+- **Branch**: `feat/focus-days-ui` (S2.1, S2.2a y S2.2b+S2.3 adentro).
+- ✅ **`main` y `origin/main` están sincronizados en `cfe9ec41`** — el founder pusheó
+  el refactor. `main` NO tiene nada de Stage 2.
+- ⚠️ **Este `SESSION.md` vive en `feat/focus-days-ui`.** El de `main` sigue siendo el
+  de Stage 1 hasta que esta branch mergee.
+- **Build**: suite **6115 passing / 534 files, EXIT=0, 0 `Unhandled Errors`**, `tsc`
+  limpio, eslint limpio, `content:audit` sin hallazgos en las claves nuevas (los 162
+  que reporta son preexistentes y es warn-only).
+- **Uncommitted work**: ninguno.
+- 📌 **Baseline corregido: `main` limpio da 531 archivos, no 529.** Lo medí con stash
+  para confirmar que el delta era sólo mío. El 529 del handoff anterior estaba viejo.
 
-## Consecuencias de que ya esté prendido
+## Honestidad de proceso
 
-- **El backfill es de una sola vez por `(wallet, season_id)`.** Cada wallet que abra el Hub
-  con entitlement activo se siembra y se latchea con lo que el cliente reporte **hoy**. Un
-  bug en el reporte del cliente NO se arregla con un redeploy: hay que borrar la fila de
-  `focus_ledger_init` para esa wallet.
-  ⚠️ Stage 2 todavía no manda `streak`/`lastCompletedDate`, así que hasta que llegue, cada
-  llamada cae en `report = null` → **no siembra y no latchea**. Eso es correcto y a propósito
-  (AC13): nadie se está latcheando en cero mientras tanto.
-- **Apagarlo no requiere redeploy**: `focus-days-ledger:enabled = "false"` en Redis manda
-  sobre el env var. Un valor que no sea exactamente `"true"`/`"false"` cae al default seguro
-  (off) y se loguea.
-- **Qué mirar si algo se pone raro**: `focus_day_ledger_unavailable` y
-  `focus_days_gate_invalid_override` en los logs de `/api/season-pass/status`.
-
-**El env var va SÓLO en el proyecto de LEARN.** PLAY no tiene quién lo consuma:
-`hub-scaffold-client.tsx:15` despacha por modo y la `ChallengeCard` cuelga sólo de
-`LearnHubClient`. Prenderlo en PLAY agrega una query de conteo por carga que nadie muestra.
-No es peligroso: las superficies de PLAY que llaman al `/status` (`exercises-screen`,
-`season-pass-sheet`, `use-effective-theme-tier`) lo hacen **sin** `streak`, y sin reporte el
-backfill no siembra ni latchea.
-
-**El kill switch de Redis es compartido entre LEARN y PLAY, y está bien así** (decisión del
-founder, 2026-07-27). Si algún día hace falta separarlos, la key es una constante única
-(`FOCUS_DAYS_GATE_REDIS_KEY`, `focus-days-gate.ts:17`): namespacearla es una línea + su test.
+- El refactor y S2.1 se corrieron **en rojo verificado sobre lógica** antes de
+  implementar. Para S2.1 el primer rojo fue `no tests` (fallo de import, que **no**
+  cuenta): creé el módulo con el contrato y un cuerpo inerte para obtener un rojo
+  real de 8 tests, y recién ahí implementé.
+- ⚠️ **3 de los 11 tests de S2.1 pasaban ya contra el cuerpo inerte** (los tres
+  guardas de "no hace request": loading, PLAY, sin entitlement). Un stub que nunca
+  llama a `fetch` los satisface. No están verificados por mutación — si alguien toca
+  las guardas, conviene confirmar que se ponen rojos.
 
 ## Next Tasks
 
-**Orden recomendado y por qué**: el refactor del scaffold va ANTES de Stage 2. Los dos tocan
-la ChallengeCard y su host; juntos el diff es irrevisable y el refactor queda escondido
-debajo de una reescritura de UI. Además desbloquea `/dev/learn-hub` y los VR que Stage 2 va
-a querer para verificarse.
+Sigue el orden de commits de Stage 2 (S2.1, S2.2a y S2.2b+S2.3 hechos):
 
-1. **Borrar `feat/focus-days-ledger`** (mergeada, y **no existe en `origin`** — verificado).
-2. **`refactor/hub-lite-daily-slot`**: `HubLiteScaffold` → `dailySlot: ReactNode`. Hoy el
-   scaffold monta `HubDailyTile`, que llama `useAccount()`, así que un probe `/dev` de LEARN
-   renderiza un error overlay. Bloquea los puntos 3 y 4.
-3. `/dev/learn-hub` + `vr18-learn-hub-*`, espejando `/dev/play-hub`.
-4. `hub-clean` → `exercises-clean` + `mask` sobre tablero y objetivo; regenerar `vr9`–`vr17`
-   (~39 fotos), revisando una por una.
-5. **`feat/focus-days-ui` (Stage 2)**:
-   - `use-hub-data.ts`: consumir `focusDays` y mandar `streak` + `lastCompletedDate` como
-     params (**presentes** aunque sean `0`: ausentes = "no sé" y el backfill no latchea).
-   - `ChallengeCard`: los cinco estados de `challengeProgressView` (`offer`, `disabled`,
-     `degraded`, `active` con `unreachable`, `completed`). El CTA **sobrevive** a `unreachable`.
-   - i18n en `editorial.ts` + `messages/es.ts` (tabla del spec), cero em-dashes (AC23),
-     `pnpm content:audit` (AC24).
-   - Cliente del POST al completar el Daily + el reintento `daily_retry` (behavior 16).
-   - Borrar `challenge-day.ts`, su test, `dayOfChallenge` y sus 11 referencias (AC1).
-   - AC20 (camino real `/status` → `use-hub-data` → `ChallengeCard`) y AC18 (el test que
-     espía los cuatro caminos de acreditación y los deja en cero).
+- **S2.4** — cliente del POST al completar el Daily + reintento `daily_retry`.
+  **El slice de mayor riesgo del stage: el único que ESCRIBE.** Diseño ya
+  investigado contra el código (2026-07-27), listo para implementar:
+
+  ⚠️ **NO colgar el POST de `chesscito:daily-progress-changed`.** Ese evento se
+  despacha desde **dos** lugares (`progress.ts:94` y, redundante,
+  `challenge-daily-client.tsx:67`) y los tests lo emiten a mano. Colgarse de él es
+  exactamente la observación pasiva que el founder descartó: cualquiera que lo
+  emita provocaría una escritura.
+
+  📌 `recordDailyCompletion` (`lib/daily/progress.ts:83`) es el **único** punto de
+  escritura y devuelve **la misma referencia** en el no-op
+  (`if (next === prev) return prev`). Sus 3 llamadores: `hub-daily-tile.tsx:171`,
+  `daily-tactic-slot.tsx:116`, `challenge-daily-client.tsx:66`.
+
+  Plan:
+  1. `lib/daily/events.ts`: `dispatchDailyCompleted(date)` +
+     `subscribeToDailyCompleted`, evento DEDICADO con la fecha en el `detail`.
+  2. `progress.ts`: emitirlo SOLO en la rama de cambio real, nunca en el no-op.
+  3. `lib/season-pass/use-focus-day-recorder.ts`: completación → POST sin `date`;
+     en mount, **una vez por `(wallet, date)` con un ref** → retry con
+     `lastCompletedDate` si cae en [ayer, hoy].
+
+  📌 El retry puede dispararse sin saber si la fecha ya está en el ledger: la
+  idempotencia la da el UNIQUE. Y el cliente **no puede** saberlo de todos modos:
+  `/status` devuelve un conteo, no fechas.
+
+  Invariantes firmadas (founder) que los tests deben fijar: el Daily se completa
+  localmente aunque el POST falle · sin wallet no se intenta escribir · la
+  escritura normal NO manda `date` · el retry SÍ manda `lastCompletedDate` ·
+  nunca se reintenta una fecha fuera de [ayer, hoy] · **ni un POST de más por
+  rerender o rehidratación**.
+- **S2.5** — borrar `challenge-day.ts`, su test, `dayOfChallenge` y sus referencias
+  (AC1). **Último**, para que el camino viejo viva hasta que el nuevo esté cableado.
+  📌 Medido: `dayOfChallenge` está en el **tipo** (`challenge-card.tsx:59`), se produce
+  en `use-hub-data.ts:418`, y la tarjeta **nunca lo lee**. De sus 11 referencias, **9
+  son fixtures de tests**.
+- **S2.6** — AC20 (camino real `/status` → hub → `ChallengeCard`) y AC18 (los cuatro
+  caminos de acreditación espiados y en cero).
+
+Fuera de Stage 2, cuando el founder quiera:
+- **`/dev/learn-hub` + `vr18-learn-hub-*`** — desbloqueado por el refactor. Ahora
+  SÍ conviene: los 5 estados ya existen y `data-progress-state` los hace
+  fotografiables sin wallet ni pase vivo.
+- **`hub-clean` → `exercises-clean`** (~39 fotos revisadas una por una). No tiene
+  relación con Stage 2; se sacó del camino crítico a propósito.
 
 ## Blockers
 
-Ninguno.
+Ninguno para seguir. **Uno para el merge final de Stage 2** (founder, 2026-07-27):
+
+🚦 **Validación visual antes de mergear.** Nadie vio esto renderizado todavía; los
+tests fijan estructura y copy, no que entre en 390px. Revisar: 390px · `active` con
+las tres métricas · `unreachable` con su copy extra · `degraded` · **español**
+(ocupa más ancho) · streak de dos dígitos · `0 days left` · `Included with PRO`.
+
+El punto de ruptura más probable no es el texto sino la fila
+**progreso + countdown + racha**. Si no entra con aire, la salida preferida es
+**wrap controlado a dos líneas**, NO achicar tipografía ni convertir todo en chips.
+(`.challenge-card-day-count` ya es `flex-wrap: wrap`, así que el wrap existe; falta
+medir si respira.)
 
 ## Notes
 
-- **Higiene de branches**: hay ~25 branches locales acumuladas (`chore/art-assets`,
-  `feat/observability-lote-1`, `phase-1-ui-zone-map`…) más varias worktrees. Pendiente
-  auditarlas contra `main` y proponer cuáles borrar. **No se tocó nada** en esta sesión.
-- **El `/status` declara `no-store` + `force-dynamic`.** Puede inicializar el ledger; una capa
-  que lo cachee produce un bug irreproducible.
-- **`disabled` ≠ `unavailable`** hasta el cliente. Uno es una decisión nuestra, el otro una
-  falla nuestra; una tarjeta que los pinta igual esconde un incidente detrás de un flag.
-- **Orden dentro de la slice: gate → backfill → count.** Contar antes de sembrar le reporta
-  cero a alguien que tiene historia, y ese cero es justo lo que la tarjeta renderiza.
-- **El backfill nunca latchea después de un write fallido.** Un sembrado perdido no se
-  recupera; uno repetido es gratis bajo el UNIQUE.
-- **`?streak=` vacío y el param ausente NO latchean; `?streak=0` sí.** Un streak positivo
-  **sin** `lastCompletedDate` válido tampoco latchea: no hay dónde apoyarlo en el calendario.
-- **PRO no tiene ventana comprada**: el backfill le siembra 0 filas y cuenta desde hoy. Su
-  regla de fecha es sólo "PRO no había vencido antes de esa fecha".
-- **Honestidad de proceso**: los tests de `focus-days.ts`, `focus-ledger-init.ts` y del
-  `/status` se corrieron en rojo antes de implementar. Los del `POST /api/focus-day` se
-  escribieron primero pero **no se corrió el rojo** (el módulo no existía: el import habría
-  fallado, no es un rojo verificado sobre lógica).
-- **Spec B (21-en-30) NO está escrito.** Ahí vive el cambio de término comercial y la
-  migración de los pases vivos. Sin él "12 of 21" sigue siendo incompletable tras un salteo,
-  pero ahora **visible** — que era el punto de Spec A.
-- **CI NO corre Playwright.** VR local necesita `BASE_URL=http://localhost:3002 PORT=3002`.
+- **Higiene de branches**: siguen ~25 branches locales sin auditar. No se tocó.
+- **Spec B (21-en-30) sigue sin escribir.** Sin él, "12 of 21" sigue siendo
+  incompletable tras un salteo — pero **visible**, que era el punto de Spec A.
+- **CI NO corre Playwright.** VR local necesita `BASE_URL=http://localhost:3002
+  PORT=3002`.
+- El ledger **sigue prendido en prod (LEARN)**. Mientras Stage 2 no mande el reporte,
+  cada llamada cae en `report = null` → no siembra y no latchea. Es correcto y a
+  propósito (AC13).

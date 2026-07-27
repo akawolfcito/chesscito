@@ -59,6 +59,7 @@ function baseProps(over: Partial<HubLiteScaffoldProps> = {}): HubLiteScaffoldPro
     focusPassport: { streak: 3, totalCompleted: 3, todayDone: true, isLoading: false },
     challenge: { durationDays: 21, shieldBonus: 3, priceLabel: "$1.99" },
     seasonPass: { active: false, isLoading: false },
+    progress: { state: "offer" },
     onJoinChallenge: vi.fn(),
     primaryFocus: { onPress: vi.fn(), contentLoop: action("daily-pending"), isHydrated: true },
     rewardTiles: TILES,

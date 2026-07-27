@@ -56,6 +56,8 @@ import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import { useHubData } from "@/components/hub/use-hub-data";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
+import { useLearnFocusDays } from "@/lib/season-pass/use-learn-focus-days";
+import { buildChallengeProgressView } from "@/lib/season-pass/challenge-card-view";
 import { HubLiteScaffold } from "@/components/hub/hub-lite-scaffold";
 import { useHubTour } from "@/components/hub/use-hub-tour";
 import { buildLearnHubTourSteps } from "@/lib/hub/hub-tour";
@@ -177,6 +179,43 @@ export function LearnHubClient({
   // state, which forced it to mount `HubDailyTile` (and its `useAccount()`)
   // itself — see `dailySlot` in hub-lite-scaffold.tsx.
   const [dailyOpen, setDailyOpen] = useState(false);
+  // Focus Days. The LEARN-only read (never the global entitlement provider,
+  // which must not wait on the Daily's localStorage) plus the pure assembler.
+  const focusDaysSlice = useLearnFocusDays({
+    wallet: address,
+    entitlementActive: seasonPassStatus.active,
+    dailyProgress: focusPassport
+      ? focusPassport.isLoading
+        ? { status: "loading" }
+        : {
+            status: "ready",
+            value: {
+              streak: focusPassport.streak,
+              lastCompletedDate: focusPassport.lastCompletedDate ?? null,
+            },
+          }
+      : { status: "loading" },
+  });
+  const challengeProgress = useMemo(
+    () =>
+      buildChallengeProgressView({
+        entitlement: seasonPassStatus.loading
+          ? { status: "loading" }
+          : seasonPassStatus.active && seasonPassStatus.source
+            ? {
+                status: "active",
+                source: seasonPassStatus.source,
+                seasonPassExpiresAt: seasonPassStatus.seasonPassExpiresAt,
+              }
+            : { status: "none" },
+        slice: focusDaysSlice.status === "idle" || focusDaysSlice.status === "loading"
+          ? null
+          : focusDaysSlice,
+        streak: focusPassport?.streak ?? 0,
+        nowMs: Date.now(),
+      }),
+    [seasonPassStatus, focusDaysSlice, focusPassport],
+  );
   // `useClaimQueue` reads pending claims out of localStorage on mount;
   // the unread count drives the avatar notif-dot once the HUD slot
   // exists (deferred — see project note).
@@ -433,6 +472,7 @@ export function LearnHubClient({
           challenge={lite.challenge}
           shields={liteShields}
           seasonPass={lite.challengeSeasonPass}
+          progress={challengeProgress}
           dailySlot={
             <HubDailyTile
               variant="corner-icon"

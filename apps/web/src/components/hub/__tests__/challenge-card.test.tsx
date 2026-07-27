@@ -4,6 +4,7 @@ import { renderWithIntl as render, screen } from '@/test-utils/render-with-intl'
 
 import { ChallengeCard } from '../challenge-card'
 import type { ChallengeCardProps } from '../challenge-card'
+import type { ChallengeProgressView } from '@/lib/season-pass/focus-days'
 
 // Same guardrail the FocusPassport leaf enforces: no web3 / medical claims.
 const FORBIDDEN =
@@ -33,15 +34,178 @@ function focusDays(): number {
   )
 }
 
+/** Renders the card with a `progress` view inferred from the commercial state,
+ *  so the tests that are ABOUT something else (CTA wiring, week row, copy
+ *  guardrails) stay readable. Tests that are about progress pass it
+ *  explicitly — the inference here is a test convenience and deliberately NOT
+ *  what the product does: the real view comes from the ledger, never from the
+ *  pass or the streak. */
+function Card({
+  progress,
+  ...props
+}: Omit<ChallengeCardProps, 'progress'> & {
+  progress?: ChallengeProgressView
+}) {
+  const inferred: ChallengeProgressView = props.seasonPass.active
+    ? {
+        state: 'active',
+        progress: { completed: 0, goal: props.challenge.durationDays },
+        window: { kind: 'expiring', daysRemaining: props.challenge.durationDays },
+        streak: Math.max(0, props.focusPassport.streak),
+        unreachable: false,
+      }
+    : props.seasonPass.isLoading
+      ? { state: 'loading' }
+      : { state: 'offer' }
+  return <ChallengeCard {...props} progress={progress ?? inferred} />
+}
+
 afterEach(() => {
   cleanup()
+})
+
+/** The five ledger states (founder sign-off, 2026-07-27). The rule that binds
+ *  them: `disabled` is a decision of OURS and says nothing about itself;
+ *  `degraded` is a failure of ours and says so. A card that paints them alike
+ *  hides an incident behind a feature flag. */
+describe('<ChallengeCard> — Focus Days states', () => {
+  const ACTIVE_PASS: ChallengeCardProps['seasonPass'] = {
+    active: true,
+    source: 'season_pass',
+    dayOfChallenge: 3,
+    shieldsCredited: 3,
+  }
+  const WINDOW = { kind: 'expiring', daysRemaining: 9 } as const
+
+  function renderState(progress: ChallengeProgressView) {
+    render(
+      <Card
+        focusPassport={passport({ streak: 4, todayDone: false })}
+        challenge={CHALLENGE}
+        seasonPass={ACTIVE_PASS}
+        progress={progress}
+        onJoinChallenge={null}
+        onFocusTap={() => {}}
+      />,
+    )
+    return screen.getByTestId('challenge-card')
+  }
+
+  it('disabled: no error copy, no progress, no spinner — window, streak and CTA intact', () => {
+    const card = renderState({ state: 'disabled', window: WINDOW, streak: 4 })
+
+    expect(card).toHaveAttribute('data-progress-state', 'disabled')
+    // Never leaks the operational decision to the player.
+    expect(card.textContent).not.toMatch(/unavailable|disabled|tracking is off/i)
+    expect(screen.queryByTestId('challenge-progress-line')).toBeNull()
+    expect(screen.queryByTestId('challenge-progress-unavailable')).toBeNull()
+    expect(card).not.toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByTestId('challenge-window').textContent).toMatch(/9 days left/i)
+    expect(screen.getByTestId('challenge-streak').textContent).toMatch(/4-day streak/i)
+    expect(screen.getByTestId('challenge-cta')).toHaveAttribute('data-cta-state', 'start')
+  })
+
+  it('degraded: says the metric is missing, and never substitutes the streak for it', () => {
+    const card = renderState({ state: 'degraded', window: WINDOW, streak: 4 })
+
+    expect(card).toHaveAttribute('data-progress-state', 'degraded')
+    expect(screen.getByTestId('challenge-progress-unavailable').textContent).toMatch(
+      /Focus progress is temporarily unavailable/i,
+    )
+    expect(screen.queryByTestId('challenge-progress-line')).toBeNull()
+    // The streak is visible as its own metric but is never dressed up as a count.
+    expect(card.textContent).not.toMatch(/\b4 of 21\b/i)
+    expect(focusDays()).toBe(0)
+    // Access and the action survive OUR failure.
+    expect(screen.getByTestId('challenge-window').textContent).toMatch(/9 days left/i)
+    expect(screen.getByTestId('challenge-cta')).toHaveAttribute('data-cta-state', 'start')
+  })
+
+  it('neither disabled nor degraded revives the retired "Day N of 21" ordinal', () => {
+    for (const state of ['disabled', 'degraded'] as const) {
+      cleanup()
+      const card = renderState({ state, window: WINDOW, streak: 4 })
+      expect(card.textContent).not.toMatch(/Day \d+ of 21/i)
+    }
+  })
+
+  it('active: counts the ledger rows, with the window as a separate metric', () => {
+    renderState({
+      state: 'active',
+      progress: { completed: 12, goal: 21 },
+      window: WINDOW,
+      streak: 4,
+      unreachable: false,
+    })
+
+    expect(screen.getByTestId('challenge-progress-line').textContent).toMatch(
+      /12 of 21 Focus Days/i,
+    )
+    expect(screen.getByTestId('challenge-window').textContent).toMatch(/9 days left/i)
+    expect(screen.queryByTestId('challenge-unreachable')).toBeNull()
+  })
+
+  it('unreachable: explains the state and KEEPS the CTA, progress and countdown', () => {
+    // Replacing the CTA would turn a warning into a dead end. The Daily is
+    // still worth doing even when 21 is out of reach.
+    renderState({
+      state: 'active',
+      progress: { completed: 12, goal: 21 },
+      window: { kind: 'expiring', daysRemaining: 4 },
+      streak: 4,
+      unreachable: true,
+    })
+
+    expect(screen.getByTestId('challenge-unreachable').textContent).toMatch(
+      /Keep building the habit/i,
+    )
+    expect(screen.getByTestId('challenge-progress-line').textContent).toMatch(
+      /12 of 21 Focus Days/i,
+    )
+    expect(screen.getByTestId('challenge-window').textContent).toMatch(/4 days left/i)
+    expect(screen.getByTestId('challenge-cta')).toHaveAttribute('data-cta-state', 'start')
+    // Never defeatist, never "you already lost".
+    expect(screen.getByTestId('challenge-card').textContent).not.toMatch(
+      /failed|lost|too late|no longer possible/i,
+    )
+  })
+
+  it('PRO: no countdown to miss, so never unreachable', () => {
+    render(
+      <Card
+        focusPassport={passport({ streak: 4 })}
+        challenge={CHALLENGE}
+        seasonPass={{ active: true, source: 'pro' }}
+        progress={{
+          state: 'active',
+          progress: { completed: 2, goal: 21 },
+          window: { kind: 'unbounded' },
+          streak: 4,
+          unreachable: false,
+        }}
+        onJoinChallenge={null}
+        onFocusTap={() => {}}
+      />,
+    )
+    expect(screen.getByTestId('challenge-window').textContent).toMatch(/Included with PRO/i)
+    expect(screen.queryByTestId('challenge-unreachable')).toBeNull()
+  })
+
+  it('loading is exclusively a pending request, never a state with a number', () => {
+    const card = renderState({ state: 'loading' })
+
+    expect(card).toHaveAttribute('aria-busy', 'true')
+    expect(screen.queryByTestId('challenge-progress-line')).toBeNull()
+    expect(screen.queryByTestId('challenge-progress-unavailable')).toBeNull()
+    expect(screen.queryByTestId('challenge-window')).toBeNull()
+  })
 })
 
 describe('<ChallengeCard>', () => {
   it('shows the Focus Passport `?` and replays the tour on tap, without a Join dependency', () => {
     const onReplayTour = vi.fn()
     render(
-      <ChallengeCard
+      <Card
         focusPassport={passport()}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: false }}
@@ -60,7 +224,7 @@ describe('<ChallengeCard>', () => {
 
   it('omits the `?` when no replay handler is wired', () => {
     render(
-      <ChallengeCard
+      <Card
         focusPassport={passport()}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: false }}
@@ -74,7 +238,7 @@ describe('<ChallengeCard>', () => {
     // The transaction this whole surface exists for. Once the hub tour ends,
     // the pulse is the only thing still pointing at it.
     render(
-      <ChallengeCard
+      <Card
         focusPassport={passport()}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: false }}
@@ -90,7 +254,7 @@ describe('<ChallengeCard>', () => {
     // The arrow lives in the DOM whenever Join does; CSS reveals it only while
     // the mini-tour spotlights this card (see the hub-tour spotlight test).
     const { rerender } = render(
-      <ChallengeCard
+      <Card
         focusPassport={passport()}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: false }}
@@ -102,7 +266,7 @@ describe('<ChallengeCard>', () => {
 
     // Active pass: no Join button, so no arrow.
     rerender(
-      <ChallengeCard
+      <Card
         focusPassport={passport()}
         challenge={CHALLENGE}
         seasonPass={{ active: true, source: 'season_pass', dayOfChallenge: 3, shieldsCredited: 3 }}
@@ -121,7 +285,7 @@ describe('<ChallengeCard>', () => {
     // `null` = status still resolving. A throbbing disabled button advertises a
     // dead control.
     render(
-      <ChallengeCard
+      <Card
         focusPassport={passport()}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: true }}
@@ -135,7 +299,7 @@ describe('<ChallengeCard>', () => {
 
   it('loading: empty progress, stable structure (stats + CTA), aria-busy', () => {
     render(
-      <ChallengeCard
+      <Card
         focusPassport={passport({ streak: 5, isLoading: true })}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: true }}
@@ -152,19 +316,21 @@ describe('<ChallengeCard>', () => {
     )
   })
 
-  it('offer (not joined): inline stats + Join CTA, progress = streak', () => {
+  it('offer (not joined): inline stats + Join CTA, no progress claim', () => {
     const onJoin = vi.fn()
     render(
-      <ChallengeCard
+      <Card
         focusPassport={passport({ streak: 3, todayDone: true })}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: false }}
         onJoinChallenge={onJoin}
       />,
     )
-    expect(focusDays()).toBe(3)
+    expect(focusDays()).toBe(0)
     const card = screen.getByTestId('challenge-card')
-    expect(card.textContent).toMatch(/Day 3 of 21/i)
+    // The retired ordinal. It advanced with the calendar while its number came
+    // from the streak, so it walked backward after a skipped day.
+    expect(card.textContent).not.toMatch(/Day \d+ of 21/i)
     expect(card.textContent).toMatch(/\+3/)
     expect(card.textContent).toMatch(/\$1\.99/)
     expect(card.textContent).toMatch(/21-Day Mind Challenge/i)
@@ -184,7 +350,7 @@ describe('<ChallengeCard>', () => {
     const onPassportTap = vi.fn()
     const onFocusTap = vi.fn()
     render(
-      <ChallengeCard
+      <Card
         focusPassport={passport({ streak: 3, todayDone: false })}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: false }}
@@ -203,7 +369,7 @@ describe('<ChallengeCard>', () => {
   it('keeps a hydrated pending Daily tappable while Season Pass status loads', () => {
     const onPassportTap = vi.fn()
     render(
-      <ChallengeCard
+      <Card
         focusPassport={passport({ streak: 3, todayDone: false, isLoading: false })}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: true }}
@@ -220,7 +386,7 @@ describe('<ChallengeCard>', () => {
 
   it('flame block is static while loading, completed, or missing its Daily callback', () => {
     const { rerender } = render(
-      <ChallengeCard
+      <Card
         focusPassport={passport({ streak: 1 })}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: false }}
@@ -230,7 +396,7 @@ describe('<ChallengeCard>', () => {
     expect(screen.getByTestId('challenge-progress').tagName).toBe('DIV')
 
     rerender(
-      <ChallengeCard
+      <Card
         focusPassport={passport({ streak: 1, isLoading: true })}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: false }}
@@ -241,7 +407,7 @@ describe('<ChallengeCard>', () => {
     expect(screen.getByTestId('challenge-progress').tagName).toBe('DIV')
 
     rerender(
-      <ChallengeCard
+      <Card
         focusPassport={passport({ streak: 1, todayDone: true })}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: false }}
@@ -252,21 +418,24 @@ describe('<ChallengeCard>', () => {
     expect(screen.getByTestId('challenge-progress').tagName).toBe('DIV')
   })
 
-  it('offer with a long streak caps progress at durationDays (21)', () => {
+  it('offer: a long streak buys no progress at all', () => {
+    // Progress belongs to the pass. Before joining there is nothing to count,
+    // and the streak must not be dressed up as a head start.
     render(
-      <ChallengeCard
+      <Card
         focusPassport={passport({ streak: 40, todayDone: true })}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: false }}
         onJoinChallenge={() => {}}
       />,
     )
-    expect(focusDays()).toBe(21)
+    expect(focusDays()).toBe(0)
+    expect(screen.queryByTestId('challenge-progress-line')).toBeNull()
   })
 
   it('active (joined): ACTIVE badge, live shields benefit, no Join CTA', () => {
     render(
-      <ChallengeCard
+      <Card
         focusPassport={passport({ streak: 1, todayDone: true })}
         challenge={CHALLENGE}
         seasonPass={{
@@ -294,7 +463,7 @@ describe('<ChallengeCard>', () => {
 
   it('active PRO: shows included coverage without advertising the +3 Shields bonus', () => {
     render(
-      <ChallengeCard
+      <Card
         focusPassport={passport({ streak: 2, todayDone: true })}
         challenge={CHALLENGE}
         seasonPass={{ active: true, source: 'pro' }}
@@ -318,7 +487,7 @@ describe('<ChallengeCard>', () => {
 
   it('copy contains no forbidden web3 / medical terms', () => {
     const { container } = render(
-      <ChallengeCard
+      <Card
         focusPassport={passport({ streak: 4 })}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: false }}
@@ -336,7 +505,7 @@ describe('<ChallengeCard>', () => {
 
     it('offers JOIN CHALLENGE with the price when there is no pass and no PRO', () => {
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport()}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -352,7 +521,7 @@ describe('<ChallengeCard>', () => {
     it('shows the compact START FOCUS label with an active Season Pass and a pending daily', () => {
       const onFocusTap = vi.fn()
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 3, todayDone: false })}
           challenge={CHALLENGE}
           seasonPass={{
@@ -374,7 +543,7 @@ describe('<ChallengeCard>', () => {
 
     it('shows START FOCUS for PRO — PRO never sees Join', () => {
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 2, todayDone: false })}
           challenge={CHALLENGE}
           seasonPass={{ active: true, source: 'pro' }}
@@ -394,7 +563,7 @@ describe('<ChallengeCard>', () => {
     it('shows COME BACK TOMORROW once today is done, as information and not a block', () => {
       const onFocusTap = vi.fn()
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 5, todayDone: true })}
           challenge={CHALLENGE}
           seasonPass={{
@@ -420,9 +589,9 @@ describe('<ChallengeCard>', () => {
       )
     })
 
-    it('shows CHALLENGE COMPLETE once the streak reaches the full duration', () => {
+    it('shows CHALLENGE COMPLETE when the LEDGER says the goal is met', () => {
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 21, todayDone: true })}
           challenge={CHALLENGE}
           seasonPass={{
@@ -430,6 +599,12 @@ describe('<ChallengeCard>', () => {
             source: 'season_pass',
             dayOfChallenge: 21,
             shieldsCredited: 3,
+          }}
+          progress={{
+            state: 'completed',
+            progress: { completed: 21, goal: 21 },
+            window: { kind: 'expiring', daysRemaining: 2 },
+            streak: 21,
           }}
           onJoinChallenge={null}
           onFocusTap={() => {}}
@@ -453,7 +628,7 @@ describe('<ChallengeCard>', () => {
       ]
       for (const seasonPass of states) {
         const { unmount } = render(
-          <ChallengeCard
+          <Card
             focusPassport={passport({ streak: 2 })}
             challenge={CHALLENGE}
             seasonPass={seasonPass}
@@ -468,7 +643,7 @@ describe('<ChallengeCard>', () => {
 
     it('wears the shared primary-button skin and shows the price as a floating badge', () => {
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport()}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -485,7 +660,7 @@ describe('<ChallengeCard>', () => {
 
     it('keeps the tour arrow on the same row as the CTA it points at', () => {
       const { container } = render(
-        <ChallengeCard
+        <Card
           focusPassport={passport()}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -512,7 +687,7 @@ describe('<ChallengeCard>', () => {
 
     it('renders 7 Monday-first day letters localized for EN', () => {
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport()}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -528,7 +703,7 @@ describe('<ChallengeCard>', () => {
 
     it('renders the ES letters (L M X J V S D), also Monday-first', () => {
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport()}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -545,7 +720,7 @@ describe('<ChallengeCard>', () => {
 
     it('marks the UTC day of today, not a local-time day', () => {
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 3, todayDone: true })}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -567,7 +742,7 @@ describe('<ChallengeCard>', () => {
 
     it('leaves today pending when the daily is not done yet', () => {
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 2, todayDone: false })}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -580,7 +755,7 @@ describe('<ChallengeCard>', () => {
 
     it('claims nothing while loading — 7 neutral slots, no completions', () => {
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 6, todayDone: true, isLoading: true })}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: true }}
@@ -595,7 +770,7 @@ describe('<ChallengeCard>', () => {
 
     it('never renders a shield-protected day (not modelled in storage)', () => {
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 3, todayDone: true })}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -611,7 +786,7 @@ describe('<ChallengeCard>', () => {
   describe('stats', () => {
     it('shows only the live shields balance for an active Season Pass', () => {
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 4, todayDone: true })}
           challenge={CHALLENGE}
           seasonPass={{
@@ -633,7 +808,7 @@ describe('<ChallengeCard>', () => {
 
     it('omits Day X / 21 for PRO — the challenge day is not modelled there', () => {
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 4, todayDone: true })}
           challenge={CHALLENGE}
           seasonPass={{ active: true, source: 'pro' }}
@@ -642,8 +817,9 @@ describe('<ChallengeCard>', () => {
         />,
       )
       expect(screen.queryByTestId('challenge-day')).toBeNull()
-      expect(screen.getByTestId('challenge-card').textContent).toMatch(
-        /Day 4 of 21/i,
+      // No calendar ordinal anywhere anymore, for PRO or anyone else.
+      expect(screen.getByTestId('challenge-card').textContent).not.toMatch(
+        /Day \d+ of 21/i,
       )
     })
 
@@ -652,7 +828,7 @@ describe('<ChallengeCard>', () => {
       // as two answers to the same question. Before the purchase, only the
       // bonus is meaningful.
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 1 })}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -670,7 +846,7 @@ describe('<ChallengeCard>', () => {
 
     it('omits an unavailable active balance instead of inventing one', () => {
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 1 })}
           challenge={CHALLENGE}
           seasonPass={{ active: true, source: 'pro' }}
@@ -682,7 +858,7 @@ describe('<ChallengeCard>', () => {
 
     it('uses the editable Calendar, Shield, and Training slots and keeps price out of stats', () => {
       const { container } = render(
-        <ChallengeCard
+        <Card
           focusPassport={passport()}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -709,7 +885,7 @@ describe('<ChallengeCard>', () => {
 
     it('puts "Day N of 21" above the flames, not after them', () => {
       const { container } = render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 2, todayDone: true })}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -729,7 +905,7 @@ describe('<ChallengeCard>', () => {
     // column beside the 72px icon squeezed 7 flames into ~250px at 390px.
     it('lifts the weekly row out of the icon column so it spans the panel', () => {
       const { container } = render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 2, todayDone: true })}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -747,7 +923,7 @@ describe('<ChallengeCard>', () => {
 
     it('keeps the day line beside the icon, with the title it belongs to', () => {
       const { container } = render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 2, todayDone: true })}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -762,7 +938,7 @@ describe('<ChallengeCard>', () => {
 
     it('puts the weekday letter above its flame — a column header, not a caption', () => {
       const { container } = render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 2, todayDone: true })}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -782,7 +958,7 @@ describe('<ChallengeCard>', () => {
 
     it('makes the full-width week the Daily tap target, ordinal excluded', () => {
       const { container } = render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 3, todayDone: false })}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -802,7 +978,7 @@ describe('<ChallengeCard>', () => {
 
     it('drops the duration stat once enrolled — a sale term, not a status', () => {
       const { container } = render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 4, todayDone: true })}
           challenge={CHALLENGE}
           seasonPass={{
@@ -833,7 +1009,7 @@ describe('<ChallengeCard>', () => {
     // taught none of them.
     it('anchors the tour spotlight on the CTA row, not on the whole panel', () => {
       const { container } = render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 2 })}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -853,7 +1029,7 @@ describe('<ChallengeCard>', () => {
       // button alone would leave the arrow outside and blank it during the one
       // step that needs it.
       const { container } = render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 2 })}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
@@ -871,7 +1047,7 @@ describe('<ChallengeCard>', () => {
       // Combo is the SESSION metric (chesscito:streak) and stays exclusive to
       // the exercise overlay / drawer — see the combo-streak vocabulary doc.
       render(
-        <ChallengeCard
+        <Card
           focusPassport={passport({ streak: 3, todayDone: true })}
           challenge={CHALLENGE}
           seasonPass={{
@@ -891,7 +1067,7 @@ describe('<ChallengeCard>', () => {
 
   it('renders ES locale copy for the Join CTA (i18n parity)', () => {
     render(
-      <ChallengeCard
+      <Card
         focusPassport={passport({ streak: 2 })}
         challenge={CHALLENGE}
         seasonPass={{ active: false, isLoading: false }}
@@ -907,7 +1083,7 @@ describe('<ChallengeCard>', () => {
 
   it('renders the compact ES Start Focus label without shortening its accessible name', () => {
     render(
-      <ChallengeCard
+      <Card
         focusPassport={passport({ streak: 2, todayDone: false })}
         challenge={CHALLENGE}
         seasonPass={{ active: true, source: 'pro' }}
