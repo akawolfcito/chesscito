@@ -3556,7 +3556,10 @@ export const CHALLENGE_CARD_COPY = {
   // this line the player sees a countdown of 30 over a goal of 21 that nobody
   // explained. Deliberately not "a 30-day challenge" — what is sold is the
   // 21-day challenge, with room to stumble.
-  offerWindowNote: "Complete {goal} Focus Days within a {window}-day window.",
+  // Sin compuesto con guion: "{window}-day window" se partía como "30-" /
+  // "day window" a 390px, que es justo lo que no queremos — el 30 destacado
+  // solo. Esta forma es además paralela a la española.
+  offerWindowNote: "Complete {goal} Focus Days within a window of {window} days.",
   offerBenefitTrainings: "Special Trainings",
   offerBenefitShields: "+{count} Shields",
   // Accessible name of the `?` chip that discloses offerPractice +

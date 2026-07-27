@@ -16217,6 +16217,28 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Popover, not a row: absolutely positioned so opening it never reflows the
    price, the picker or the CTA underneath. Opaque background + shadow because
    it overlaps live content and must stay readable over it. */
+/* La nota que explica la ventana de 30 días sobre una meta de 21.
+ *
+ * SECUNDARIA por definición: informa, no vende. Sin estas reglas heredaba el
+ * tamaño del panel y salía MÁS GRANDE que el precio, compitiendo con el CTA
+ * — la oferta parecía tener dos titulares. 0.78rem la empareja con
+ * `.season-pass-details`, que es el otro texto explicativo de esta hoja.
+ *
+ * `max-width` fija la medida para que envuelva a dos líneas por decisión y no
+ * por el ancho del panel; `text-wrap: balance` reparte esas dos líneas en vez
+ * de dejar una larga y una corta. Dos líneas están BIEN (founder, 2026-07-27):
+ * lo que no puede pasar es que el número quede solo colgando de una. */
+.season-pass-window-note {
+  max-width: 30ch;
+  margin: 0 auto;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  font-weight: 600;
+  text-align: center;
+  text-wrap: balance;
+  color: rgba(63, 34, 8, 0.72);
+}
+
 .season-pass-details {
   position: absolute;
   top: calc(100% + 0.4rem);
