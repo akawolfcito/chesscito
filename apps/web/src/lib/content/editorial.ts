@@ -3411,6 +3411,26 @@ export const SECONDARY_CTA_COPY = {
   },
 } as const;
 
+/** Daily-streak nudge: the screen that teaches what lights the flame.
+ *
+ *  It is shown on the way OUT of a training session, to a player who has been
+ *  solving exercises and has not touched today's Daily. Its whole job is one
+ *  sentence of rule, so the body must never grow into a paragraph.
+ *
+ *  The tone is credit, then the rule: the player DID train. Nothing here may
+ *  scold, and nothing may imply a lost day can be recovered (shields rescue a
+ *  failed exercise, never a day). No "on-chain", NFT or mint language: the
+ *  streak is local. Keep every string free of em-dashes; the file ceiling is 0
+ *  and `anti-ai-prose.test.ts` counts string literals. */
+export const STREAK_NUDGE_COPY = {
+  rootAriaLabel: "Your daily streak is not lit yet today",
+  title: "Your flame is still dark",
+  body: "Nice training today. The Daily Tactic is the one thing that lights your streak, and it is a single quick puzzle.",
+  cta: "Solve today's Daily",
+  dismissHint: "Tap anywhere to keep going",
+  closeLabel: "Close",
+} as const;
+
 /** Focus Passport (Chesscito Learn P1) — streak-based daily-focus card.
  *  Local-only; copy deliberately avoids any "verified", "on-chain",
  *  "proof", NFT/mint, or health/medical claims (it reflects a local
