@@ -25,10 +25,19 @@ primeros como abiertos. Es deriva de documentación.
 
 ## 1. Investigación primero, no código
 
-**"Claim 3 Shields"** (LEARN #1) — el **único** pendiente con comportamiento inexplicado.
-¿Pertenece al Welcome Pack, al Season Pass o al rescue gift? ¿Duplica los 3 shields de
-onboarding? ¿Por qué al tocarlo lanza el 21-Day Mind Challenge? **No cambiar lógica hasta
-entenderlo.** Puede esconder un bug.
+**"Claim 3 Shields" (LEARN #1) — CERRADO el 2026-07-27.**
+Investigación completa: `docs/reviews/2026-07-27-claim-3-shields-investigation.md`.
+
+Las tres preguntas quedaron respondidas y **dos describían un bug ya arreglado**:
+pertenece al **Welcome Pack** (gratis, variante C del rescate); lo de "manda a la tienda"
+era un argumento descartado en silencio por una asignación que TypeScript acepta, arreglado
+el **2026-07-13** — tres días *después* de que se escribiera esta entrada, que nadie volvió
+a cerrar; y **no duplica** (UNIQUE en `welcome_pack_claims` + rama 23505 sin acreditar).
+
+El único defecto real era el **opuesto**: si el INSERT entraba y el `INCRBY` fallaba, la
+fila marcaba el pack como reclamado con el saldo intacto y todo reintento caía en
+"ya reclamado" ⇒ 3 escudos perdidos para siempre. Cerrado en `6cc68ce`: la fila insertada
+en ese request se revierte si el crédito no aterriza.
 
 ---
 
@@ -41,7 +50,9 @@ entenderlo.** Puede esconder un bug.
   generador de error-ABIs desde `artifacts/` y el mapa nombre → copy.
 - **PLAY #8 — quitar la confirmación redundante de LUZ.** Tocar Coach Review lanza análisis
   directo; LUZ conserva personalidad en loading y resultado. Borra una pantalla.
-- **Cobertura VR del play hub** (nuevo, 2026-07-10). Ningún test visual visita esa superficie.
+- ~~**Cobertura VR del play hub**~~ — **hecho**: `vr17-play-hub-{guest,connected,pro}`.
+  El hub **LEARN** también, desde el 2026-07-27: `vr18-learn-hub-{guest,active,pro}` sobre
+  `/dev/learn-hub`.
 
 ---
 
