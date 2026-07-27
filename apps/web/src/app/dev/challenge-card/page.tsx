@@ -151,7 +151,7 @@ const SCENARIOS: Scenario[] = [
   {
     id: "pro",
     label: "PRO — no countdown",
-    note: "Access without a purchased window: 'Included with PRO' and NO days-left chip.",
+    note: "Access without a purchased window: the crowned badge says it, and nothing else does.",
     props: {
       focusPassport: passport(6, false),
       challenge: CHALLENGE,

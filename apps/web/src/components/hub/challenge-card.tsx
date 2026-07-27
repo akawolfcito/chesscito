@@ -268,11 +268,15 @@ export function ChallengeCard({
                 {t("progressUnavailable")}
               </span>
             ) : null}
-            {window ? (
+            {/* An unbounded window renders NOTHING here (founder, 2026-07-27).
+                The badge above already says "PRO Benefit included"; saying
+                "Included with PRO" again two lines down was the same sentence
+                twice, and it pushed the title into two lines to make room.
+                Nothing is lost: the badge only appears when `source === "pro"`,
+                which is the only case that produces an unbounded window. */}
+            {window && window.kind !== "unbounded" ? (
               <span className="challenge-card-window" data-testid="challenge-window">
-                {window.kind === "unbounded"
-                  ? t("windowUnbounded")
-                  : t("windowDaysLeft", { days: window.daysRemaining })}
+                {t("windowDaysLeft", { days: window.daysRemaining })}
               </span>
             ) : null}
             {streak > 0 ? (

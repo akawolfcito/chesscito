@@ -166,8 +166,12 @@ describe("Focus Days — from the /status response to the card", () => {
     const card = await screen.findByTestId("challenge-card");
     await waitFor(() => expect(card).toHaveAttribute("data-progress-state", "active"));
     expect(screen.getByTestId("challenge-progress-line")).toHaveTextContent("6 of 21 Focus Days");
-    expect(screen.getByTestId("challenge-window")).toHaveTextContent("Included with PRO");
-    expect(screen.getByTestId("challenge-window")).not.toHaveTextContent(/left/);
+    // PRO reaches the challenge with no purchased window, so the countdown
+    // element is absent and the badge says why. The assertion that matters is
+    // still the one about `left`: a countdown for a subscriber who bought no
+    // window can only be wrong, and now it cannot render at all.
+    expect(screen.queryByTestId("challenge-window")).toBeNull();
+    expect(screen.getByTestId("challenge-active-badge")).toHaveTextContent(/included/i);
   });
 
   it("a response with no ledger slice degrades the card, and says so", async () => {

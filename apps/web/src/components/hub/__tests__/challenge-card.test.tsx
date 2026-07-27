@@ -186,7 +186,13 @@ describe('<ChallengeCard> — Focus Days states', () => {
         onFocusTap={() => {}}
       />,
     )
-    expect(screen.getByTestId('challenge-window').textContent).toMatch(/Included with PRO/i)
+    // The badge carries it, and ONLY the badge: an unbounded window renders no
+    // countdown element at all. What must never appear is a number — a "0 days
+    // left" here would read as an expired pass to a subscriber who has none.
+    expect(screen.getByTestId('challenge-active-badge').textContent).toMatch(
+      /included/i,
+    )
+    expect(screen.queryByTestId('challenge-window')).toBeNull()
     expect(screen.queryByTestId('challenge-unreachable')).toBeNull()
   })
 

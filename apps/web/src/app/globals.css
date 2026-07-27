@@ -8610,14 +8610,18 @@ button.hud-resource-chip:active:not(:disabled) {
   flex: 0 0 100%;
 }
 
-/* Separator lives in CSS, not in the copy. ONLY the streak carries one, and
-   that is a consequence of the break above, not a style preference: the two
-   elements that can precede the window (the count, the degraded note) are both
-   full-width, so the window always OPENS its line. A `:not(:first-child)`
-   separator on it is true in the DOM and wrong on screen — that is exactly the
-   orphan that survived the first attempt at this fix, visible in Spanish.
-   `:not(:first-child)` still guards the streak: `offer` renders it alone. */
-.challenge-card-streak:not(:first-child)::before {
+/* Separator lives in CSS, not in the copy — and the selector is the ADJACENT
+   sibling, not `:not(:first-child)`. The distinction is the whole bug: the
+   count and the degraded note are full-width, so anything after them opens a
+   new line. `:not(:first-child)` asks "is something before me in the DOM",
+   which stays true across a line break and hangs the "·" off the front of the
+   next line. `window + streak` asks the only question that matters here: is
+   the streak sitting NEXT TO the window, on the line they share?
+
+   Both orphans this fix chased were the same mistake, one line apart: the
+   window's dot when the count wrapped (Spanish), and the streak's dot when
+   PRO removed the window entirely. */
+.challenge-card-window + .challenge-card-streak::before {
   content: "·";
   margin-right: 6px;
   color: rgba(110, 68, 21, 0.45);

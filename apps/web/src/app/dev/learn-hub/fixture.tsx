@@ -115,9 +115,9 @@ const VARIANTS: Record<LearnHubVariant, VariantShape> = {
     shields: { count: 3, max: 3 },
     hasJoinCta: false,
   },
-  // PRO reaches the challenge without buying a window: `unbounded` keeps the
-  // countdown slot but fills it with "Included with PRO" — verified in the
-  // rendered HTML, not assumed. A number there would be a bug.
+  // PRO reaches the challenge without buying a window: `unbounded` renders no
+  // countdown at all, and the crowned badge is the only thing that says why
+  // (founder, 2026-07-27 — the two used to say it twice).
   pro: {
     isWalletConnected: true,
     trophies: 5,
