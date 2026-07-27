@@ -16325,6 +16325,9 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Green candy CTA — the same --cta-primary-green-* vocabulary as the
    Connect wallet / PLAY buttons, so the entry action reads as one family. */
 .web-access-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   min-height: 56px;
   margin-block: 0.35rem;
@@ -16349,6 +16352,27 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .web-access-cta:disabled {
   opacity: 0.7;
+}
+
+/* The secondary of the pair (Open in MiniPay). Same silhouette as the green
+   CTA so the two read as one stack, wearing the app-wide cream secondary
+   vocabulary. It replaces a translucent-glass ghost that was unreadable over
+   the wallpaper — white at 15% with warm-brown type on bright art is not a
+   button, it is a rumor (founder smoke, 2026-07-27). */
+.web-access-cta--cream {
+  border-color: var(--cta-secondary-cream-border);
+  background: var(--cta-secondary-cream-grad);
+  box-shadow: var(--cta-secondary-cream-bevel);
+  color: var(--cta-secondary-cream-color);
+  text-shadow: var(--cta-secondary-cream-text-shadow);
+}
+
+/* Tertiary escape hatch. Rides the `.web-access-note` type treatment (cream
+   with a dark outline) because it has to survive the same wallpaper the
+   headline does; the warm-brown link colour did not. */
+.web-access-link {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* Interstitials (preparing / error) reuse the wallpaper so the transition

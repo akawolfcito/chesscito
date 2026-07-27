@@ -119,9 +119,10 @@ describe("WebAccessGate", () => {
   it("on error offers retry, Open in MiniPay, and Back to chesscito.com", () => {
     renderGate();
     fireEvent.click(screen.getByText("ENTER"));
-    // Privy invokes onError for a failed login.
+    // A GENUINE failure. This case used to be driven by `exited_auth_flow`,
+    // which is the user closing the modal — the test was asserting the bug.
     act(() => {
-      capturedLoginCallbacks?.onError?.("exited_auth_flow");
+      capturedLoginCallbacks?.onError?.("generic_connect_wallet_error");
     });
     expect(screen.getByText("Try again")).toBeTruthy();
     const minipay = screen.getByText("Open in MiniPay").closest("a");
@@ -173,6 +174,57 @@ describe("WebAccessGate", () => {
     }
   });
 
+  describe("dismissing the login modal", () => {
+    // Founder smoke, 2026-07-27: cancelling the Privy modal landed on the error
+    // screen. `onError` fired for every code, and `exited_auth_flow` — the code
+    // for "the user closed it" — was one of them.
+    function cancelLogin() {
+      fireEvent.click(screen.getByText("ENTER"));
+      act(() => {
+        capturedLoginCallbacks?.onError?.("exited_auth_flow");
+      });
+    }
+
+    it("returns to the gate instead of the error screen", () => {
+      const { container } = renderGate();
+      cancelLogin();
+      expect(
+        container.querySelector('[data-web-access="unauthenticated"]'),
+      ).not.toBeNull();
+      expect(container.querySelector('[data-web-access="error"]')).toBeNull();
+      expect(screen.getByText("ENTER")).toBeTruthy();
+    });
+
+    it("re-arms the CTA so the player can sign in again", () => {
+      renderGate();
+      cancelLogin();
+      fireEvent.click(screen.getByText("ENTER"));
+      expect(loginMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not report a login failure for a deliberate cancel", () => {
+      // A cancel counted as a failure inflates the funnel's failure rate with
+      // users who simply changed their mind.
+      renderGate();
+      trackMock.mockClear();
+      cancelLogin();
+      expect(
+        trackMock.mock.calls.some(
+          ([event]) => event === WEB_ACCESS_EVENTS.loginFailed,
+        ),
+      ).toBe(false);
+    });
+
+    it("still shows the error screen for a genuine failure", () => {
+      const { container } = renderGate();
+      fireEvent.click(screen.getByText("ENTER"));
+      act(() => {
+        capturedLoginCallbacks?.onError?.("generic_connect_wallet_error");
+      });
+      expect(container.querySelector('[data-web-access="error"]')).not.toBeNull();
+    });
+  });
+
   describe("desktop app frame", () => {
     // The gate is an app screen, not a page of its own: on web it must sit
     // inside the same phone bezel the app wears (founder, 2026-07-27). Below
@@ -211,7 +263,7 @@ describe("WebAccessGate", () => {
       const { container } = renderGate();
       fireEvent.click(screen.getByText("ENTER"));
       act(() => {
-        capturedLoginCallbacks?.onError?.("exited_auth_flow");
+        capturedLoginCallbacks?.onError?.("generic_connect_wallet_error");
       });
       expect(
         container.querySelector(`${FRAME} [data-web-access="error"]`),

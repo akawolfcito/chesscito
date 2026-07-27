@@ -5,7 +5,6 @@ import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 
-import { Button } from "@/components/ui/button";
 import { DesktopAppFrame } from "@/components/chrome/desktop-app-frame";
 import { trackWebAccess, WEB_ACCESS_EVENTS } from "@/lib/wallet/web-access-analytics";
 import {
@@ -13,7 +12,10 @@ import {
   WEB_ACCESS_COPY,
   type ProductSurface,
 } from "@/lib/wallet/web-access-copy";
-import { deriveWebAccessState } from "@/lib/wallet/web-access-state";
+import {
+  deriveWebAccessState,
+  isUserDismissedLogin,
+} from "@/lib/wallet/web-access-state";
 
 /** Where the error escape hatches lead. The discovery app lives on the apex;
  *  MiniPay bypasses the gate entirely, so its link re-enters that flow. */
@@ -50,9 +52,12 @@ export function WebAccessGate({
       setAuthenticating(false);
       setError(false);
     },
-    onError: () => {
+    onError: (code) => {
       setAuthenticating(false);
-      setError(true);
+      // Closing the modal is a decision, not a failure: it returns the player
+      // to the gate they came from, with the CTA armed. Only genuine failures
+      // earn the error screen and its escape hatches.
+      setError(!isUserDismissedLogin(code));
     },
   });
 
@@ -148,23 +153,35 @@ export function WebAccessGate({
   if (state === "error") {
     return (
       <DesktopAppFrame>
+        {/* Same two-block layout as the gate, not a centered stack: the actions
+            belong at the thumb, and centering them dropped three controls onto
+            the wolf's face where none of them could be read (founder smoke,
+            2026-07-27). Sharing the layout also means gate → error moves
+            nothing on screen. */}
         <div
           data-web-access="error"
           data-surface={surface}
           role="alert"
-          className="web-access-screen web-access-screen--centered"
+          className="web-access-screen web-access-screen--gate"
         >
           <div className="web-access-copy">
             <p className="web-access-lede">{WEB_ACCESS_COPY.error.title}</p>
+          </div>
+          <div className="web-access-actions">
             <button type="button" className="web-access-cta" onClick={startLogin}>
               {WEB_ACCESS_COPY.error.retry}
             </button>
-            <Button asChild variant="game-ghost" size="game">
-              <a href={MINIPAY_URL}>{WEB_ACCESS_COPY.error.openMiniPay}</a>
-            </Button>
-            <Button asChild variant="game-text" size="game-sm">
-              <a href={DISCOVERY_URL}>{WEB_ACCESS_COPY.error.backToDiscovery}</a>
-            </Button>
+            {/* Cream, not glass: the secondary skin the rest of the app uses.
+                A translucent white ghost over bright art is not a button. */}
+            <a
+              href={MINIPAY_URL}
+              className="web-access-cta web-access-cta--cream"
+            >
+              {WEB_ACCESS_COPY.error.openMiniPay}
+            </a>
+            <a href={DISCOVERY_URL} className="web-access-note web-access-link">
+              {WEB_ACCESS_COPY.error.backToDiscovery}
+            </a>
           </div>
         </div>
       </DesktopAppFrame>

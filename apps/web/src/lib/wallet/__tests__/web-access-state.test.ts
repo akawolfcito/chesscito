@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   deriveWebAccessState,
+  isUserDismissedLogin,
   type WebAccessInput,
 } from "@/lib/wallet/web-access-state";
 
@@ -87,5 +88,27 @@ describe("deriveWebAccessState", () => {
         ).not.toBe("wallet-ready");
       }
     }
+  });
+});
+
+describe("isUserDismissedLogin", () => {
+  // Closing the Privy modal is a DECISION, not a failure. The gate used to
+  // answer it with "Something interrupted your sign in", which tells the player
+  // something broke when they are the one who broke it, on purpose.
+  it("reads the code Privy emits when the user closes the login modal", () => {
+    expect(isUserDismissedLogin("exited_auth_flow")).toBe(true);
+  });
+
+  it("still treats real failures as failures", () => {
+    expect(isUserDismissedLogin("generic_connect_wallet_error")).toBe(false);
+    expect(isUserDismissedLogin("embedded_wallet_create_error")).toBe(false);
+  });
+
+  it("never mistakes a missing or non-string code for a dismissal", () => {
+    // A failure with no code must reach the error screen: silently swallowing
+    // it would strand the player on a gate whose CTA appears to do nothing.
+    expect(isUserDismissedLogin(undefined)).toBe(false);
+    expect(isUserDismissedLogin(null)).toBe(false);
+    expect(isUserDismissedLogin(42)).toBe(false);
   });
 });

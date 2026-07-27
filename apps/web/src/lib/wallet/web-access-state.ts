@@ -20,6 +20,30 @@ export type WebAccessState =
   | "wallet-ready"
   | "error";
 
+/** The SDK's "the user walked away from the flow" codes, read off Privy's own
+ *  `PrivyErrorCode` union. `useLogin` can only produce `exited_auth_flow`; the
+ *  siblings are listed so a future flow (link, update) cannot silently become
+ *  an error screen either. */
+const USER_DISMISSED_CODES: ReadonlySet<string> = new Set([
+  "exited_auth_flow",
+  "exited_link_flow",
+  "exited_update_flow",
+  "user_exited_set_password_flow",
+]);
+
+/**
+ * True when Privy is reporting that the user closed the modal themselves.
+ *
+ * This is the difference between "we failed you" and "you changed your mind",
+ * and the gate must not answer the second with an error screen. Anything that
+ * is not a known dismissal code — including a missing or non-string code — is a
+ * real failure: swallowing an unknown error would strand the player on a gate
+ * whose CTA looks broken.
+ */
+export function isUserDismissedLogin(code: unknown): boolean {
+  return typeof code === "string" && USER_DISMISSED_CODES.has(code);
+}
+
 export type WebAccessInput = {
   /** `usePrivy().ready` — the SDK has resolved the session. */
   ready: boolean;
