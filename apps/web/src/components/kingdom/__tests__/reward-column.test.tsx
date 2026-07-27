@@ -137,6 +137,25 @@ describe("RewardColumn", () => {
     expect(onTap).toHaveBeenCalledTimes(1);
   });
 
+  it("marks only the requested tile as a tour target", () => {
+    render(
+      <RewardColumn
+        tourTargetId="rook"
+        tiles={[
+          { id: "rook", state: "progress" },
+          { id: "bishop", state: "locked" },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Rook").closest("button")).toHaveAttribute(
+      "data-tour-target",
+      "rook",
+    );
+    expect(screen.getByText("Bishop").closest("button")).not.toHaveAttribute(
+      "data-tour-target",
+    );
+  });
+
   it("uses the editorial.ts REWARD_COPY[id].ariaLabel(state) for each tile aria-label", () => {
     render(
       <RewardColumn

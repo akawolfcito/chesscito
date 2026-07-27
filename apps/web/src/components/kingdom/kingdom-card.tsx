@@ -3,6 +3,8 @@
 import { useTranslations } from "next-intl";
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { PRO_PRICE_USD6 } from "@/lib/contracts/shop-catalog";
+import { formatUsd } from "@/lib/contracts/tokens";
 import type { ProDisplayState } from "@/lib/pro/use-is-pro-active";
 import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
@@ -15,6 +17,8 @@ export type KingdomCardProps = {
   pro: KingdomCardPro;
   /** Opens the PRO sheet for discovery, status or renewal. */
   onProDiscover: () => void;
+  /** Replays the PLAY mini-tour from the persistent question icon. */
+  onReplayTour?: () => void;
 };
 
 function KingdomBenefit({
@@ -42,11 +46,20 @@ function KingdomBenefit({
  *  navigation. The crowned PRO badge stays recognizable, but now lives inside
  *  a full-width explanatory CTA instead of disappearing as a tiny title chip.
  *  The CTA keeps one stable footprint across inactive/loading/error/active. */
-export function KingdomCard({ pro, onProDiscover }: KingdomCardProps) {
+export function KingdomCard({
+  pro,
+  onProDiscover,
+  onReplayTour,
+}: KingdomCardProps) {
   const t = useTranslations("PLAY_HUB_COPY");
   const tHud = useTranslations("HUD_COPY");
   const tRail = useTranslations("HUB_ACTION_RAIL_COPY");
   const proStatus = pro.status ?? (pro.active ? "active" : "inactive");
+  // Price is stable catalog information, not an availability signal. Keep it
+  // visible for every non-PRO state (including checking/unavailable) while the
+  // crowned status chip explains whether purchase can proceed right now.
+  const showPurchasePrice = !pro.active;
+  const proPriceLabel = formatUsd(PRO_PRICE_USD6);
   const visualActive =
     pro.active ||
     (!pro.active &&
@@ -73,6 +86,23 @@ export function KingdomCard({ pro, onProDiscover }: KingdomCardProps) {
         <div className="kingdom-card-top-main">
           <header className="kingdom-card-head">
             <h2 className="kingdom-card-title">{t("kingdomPanelTitle")}</h2>
+            {onReplayTour ? (
+              <button
+                type="button"
+                className="kingdom-card-tour-help"
+                data-testid="kingdom-replay-tour"
+                onClick={onReplayTour}
+                aria-label={t("replayTourAriaLabel")}
+              >
+                <ThemeAssetPicture
+                  slot="shared.tour-help"
+                  pictureClassName="kingdom-card-tour-help-icon"
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                />
+              </button>
+            ) : null}
           </header>
           <p className="kingdom-card-body">{t("kingdomPanelBody")}</p>
         </div>
@@ -96,6 +126,7 @@ export function KingdomCard({ pro, onProDiscover }: KingdomCardProps) {
       <button
         type="button"
         className="kingdom-card-pro-cta"
+        data-tour-target="pro"
         data-testid="kingdom-pro-cta"
         data-pro-status={proStatus}
         data-pro-visual-stale={!pro.active && visualActive ? "true" : undefined}
@@ -134,6 +165,15 @@ export function KingdomCard({ pro, onProDiscover }: KingdomCardProps) {
         <span className="kingdom-card-pro-chevron" aria-hidden="true">
           ›
         </span>
+        {showPurchasePrice ? (
+          <span
+            className="kingdom-card-pro-price"
+            data-testid="kingdom-pro-price"
+            aria-hidden="true"
+          >
+            {proPriceLabel}
+          </span>
+        ) : null}
       </button>
     </section>
   );

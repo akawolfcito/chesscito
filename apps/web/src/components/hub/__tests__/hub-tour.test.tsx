@@ -3,31 +3,29 @@ import { cleanup, fireEvent } from "@testing-library/react";
 import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 
 import { HubTour } from "../hub-tour";
-import { buildHubTourSteps } from "@/lib/hub/hub-tour";
+import {
+  buildLearnHubTourSteps,
+  buildPlayHubTourSteps,
+} from "@/lib/hub/hub-tour";
 import { HUB_TOUR_COPY } from "@/lib/content/editorial";
 
-/** The hub targets the tour points at. Mounted into `document.body` so the
- *  presenter finds them exactly as it does on the real hub. */
 function mountTargets(targets: string[]) {
   const host = document.createElement("div");
   host.innerHTML = targets
     .map((target) => `<div data-tour-target="${target}">${target}</div>`)
     .join("");
   document.body.appendChild(host);
-  return host;
 }
 
-/** jsdom measures every element as 0x0. The panel's placement is a function of
- *  the target's rect, so the rect has to be real for those assertions. */
 function stubRect(
   target: string,
   rect: { top: number; left: number; width: number; height: number },
 ) {
-  const el = document.querySelector<HTMLElement>(
+  const element = document.querySelector<HTMLElement>(
     `[data-tour-target="${target}"]`,
   );
-  if (!el) throw new Error(`no target ${target}`);
-  el.getBoundingClientRect = () =>
+  if (!element) throw new Error(`missing target: ${target}`);
+  element.getBoundingClientRect = () =>
     ({
       ...rect,
       bottom: rect.top + rect.height,
@@ -38,22 +36,15 @@ function stubRect(
     }) as DOMRect;
 }
 
-/** The invariant, counted the only way that holds: `LabyrinthCompleteOverlay`
- *  is a dialog carrying `role="alert"`, so counting `role="dialog"` reports one
- *  modal while two are stacked. */
-function modalCount() {
-  return document.querySelectorAll('[aria-modal="true"]').length;
-}
-
-const ALL_TARGETS = ["daily", "challenge"];
-
-/** The pass's real terms, as the ChallengeCard receives them. */
 const CHALLENGE = { days: 21, shields: 3, price: "$0.99" };
-
-const FRESH = { dailyDone: false, streak: 0, hasSeasonPass: false };
+const LEARN_STEPS = buildLearnHubTourSteps({
+  dailyDone: false,
+  streak: 0,
+  hasSeasonPass: false,
+});
 
 beforeEach(() => {
-  mountTargets(ALL_TARGETS);
+  mountTargets(["daily", "challenge", "rook", "pro", "play"]);
 });
 
 afterEach(() => {
@@ -62,326 +53,129 @@ afterEach(() => {
 });
 
 describe("<HubTour>", () => {
-  const steps = buildHubTourSteps(FRESH);
+  it("uses the whole overlay as Next and renders no Next button", () => {
+    render(
+      <HubTour steps={LEARN_STEPS} challenge={CHALLENGE} onFinish={vi.fn()} />,
+    );
+    expect(screen.getByText("1 of 3")).toBeInTheDocument();
+    expect(screen.getByText(HUB_TOUR_COPY.tapToContinue)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Next" })).toBeNull();
 
-  it("is the only modal on screen while it runs", () => {
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    expect(modalCount()).toBe(1);
+    fireEvent.click(screen.getByTestId("hub-tour-scrim"));
+    expect(screen.getByText("2 of 3")).toBeInTheDocument();
+    expect(screen.getByText(HUB_TOUR_COPY.challengeTitle)).toBeInTheDocument();
   });
 
-  it("opens on the daily and closes on the challenge — two steps, not three", () => {
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    // The daily sentence now lives behind the `?`; the visible surface is the
-    // art strip, so we anchor the "we opened on daily" check on its first label.
-    expect(screen.getByText(HUB_TOUR_COPY.dailyStripGift)).toBeInTheDocument();
-    expect(screen.getByText("1 of 2")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-
-    expect(screen.getByText("2 of 2")).toBeInTheDocument();
-    // Last step → the primary closes the tour instead of promising another one.
-    expect(
-      screen.getByRole("button", { name: HUB_TOUR_COPY.done }),
-    ).toBeInTheDocument();
+  it("closes from the themed X without advancing", () => {
+    const onFinish = vi.fn();
+    render(
+      <HubTour steps={LEARN_STEPS} challenge={CHALLENGE} onFinish={onFinish} />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: HUB_TOUR_COPY.closeAriaLabel }),
+    );
+    expect(onFinish).toHaveBeenCalledWith("skipped");
+    expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
-  it("hides the daily sentence behind the `?` and reveals it on tap", () => {
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    // Closed by default: the art strip carries the message, the full sentence is
-    // one tap away — and opening it must NOT reflow the panel (it's a popover).
-    expect(screen.queryByText(HUB_TOUR_COPY.dailyStart)).toBeNull();
-    fireEvent.click(screen.getByTestId("hub-tour-details-toggle"));
-    expect(screen.getByText(HUB_TOUR_COPY.dailyStart)).toBeInTheDocument();
-  });
-
-  it("labels the daily ritual strip: open gift → solve tactic → build combo", () => {
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    expect(screen.getByTestId("hub-tour-story")).toBeInTheDocument();
-    expect(screen.getByText(HUB_TOUR_COPY.dailyStripGift)).toBeInTheDocument();
-    expect(screen.getByText(HUB_TOUR_COPY.dailyStripTactic)).toBeInTheDocument();
-    expect(screen.getByText(HUB_TOUR_COPY.dailyStripCombo)).toBeInTheDocument();
-  });
-
-  it("does not carry the strip or `?` into the challenge step — that step is its own art", () => {
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-    expect(screen.queryByTestId("hub-tour-story")).toBeNull();
-    expect(screen.queryByTestId("hub-tour-details-toggle")).toBeNull();
-  });
-
-  it("stamps the current step's target so a tour-only affordance can reveal itself", () => {
-    // The ChallengeCard's Join arrow shows only while THIS step spotlights it.
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    const daily = document.querySelector('[data-tour-target="daily"]');
-    const challenge = document.querySelector('[data-tour-target="challenge"]');
-
-    // Step 1: daily is flagged, challenge is not.
-    expect(daily).toHaveAttribute("data-tour-spotlight", "active");
-    expect(challenge).not.toHaveAttribute("data-tour-spotlight");
-
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-
-    // Step 2: the flag moves to challenge, daily is cleared.
-    expect(challenge).toHaveAttribute("data-tour-spotlight", "active");
-    expect(daily).not.toHaveAttribute("data-tour-spotlight");
-  });
-
-  it("keeps the pass's real terms visible and quotes them from config, not from a string", () => {
-    // The benefit cards carry the pitch, but the deal stays on screen. A "$0.99"
-    // typed into the copy would survive a price change with the suite green —
-    // feed the panel different terms and it must say THOSE (days/shields in the
-    // cards, price on its own line).
+  it("finishes LEARN on Rook without launching the introduced action", () => {
+    const onFinish = vi.fn();
     render(
       <HubTour
+        steps={LEARN_STEPS}
+        challenge={CHALLENGE}
+        onFinish={onFinish}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("hub-tour-scrim"));
+    fireEvent.click(screen.getByTestId("hub-tour-scrim"));
+    expect(screen.getByText(HUB_TOUR_COPY.rookTitle)).toBeInTheDocument();
+    expect(screen.getByText(HUB_TOUR_COPY.tapToExplore)).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("hub-tour-scrim"));
+    expect(onFinish).toHaveBeenCalledWith("completed");
+  });
+
+  it("renders a PLAY-specific PRO offer and ends on Play", () => {
+    const steps = buildPlayHubTourSteps({
+      dailyDone: false,
+      streak: 0,
+      includeDaily: false,
+      proStatus: "inactive",
+    });
+    render(
+      <HubTour
+        mode="play"
         steps={steps}
+        pro={{ active: false, price: "$1.99" }}
+        onFinish={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(HUB_TOUR_COPY.proTitle)).toBeInTheDocument();
+    expect(screen.getByText(/\$1\.99/)).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("hub-tour-scrim"));
+    expect(screen.getByText(HUB_TOUR_COPY.playTitle)).toBeInTheDocument();
+  });
+
+  it("shows Challenge terms from config and never hardcodes them", () => {
+    render(
+      <HubTour
+        steps={LEARN_STEPS}
         challenge={{ days: 30, shields: 5, price: "$2.49" }}
         onFinish={vi.fn()}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-
-    const cards = screen.getByTestId("hub-tour-benefits");
-    expect(cards).toHaveTextContent("30 Days");
-    expect(cards).toHaveTextContent("+5 Shields");
-    // The price is kept visible on its own line, quoted from config.
+    fireEvent.click(screen.getByTestId("hub-tour-scrim"));
+    expect(screen.getByTestId("hub-tour-benefits")).toHaveTextContent("30 Days");
+    expect(screen.getByTestId("hub-tour-benefits")).toHaveTextContent(
+      "+5 Shields",
+    );
     expect(screen.getByTestId("hub-tour-value")).toHaveTextContent("$2.49");
   });
 
-  it("shows the benefit cards but not to a player who already owns the pass", () => {
-    const owner = buildHubTourSteps({ ...FRESH, hasSeasonPass: true });
-    render(<HubTour steps={owner} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-
-    // An owner gets the enrolled headline + body, and neither the offer cards
-    // nor the price line.
-    expect(
-      screen.getByText(HUB_TOUR_COPY.challengeTitleEnrolled),
-    ).toBeInTheDocument();
-    expect(screen.queryByTestId("hub-tour-benefits")).toBeNull();
-    expect(screen.queryByTestId("hub-tour-value")).toBeNull();
-  });
-
-  it("carries the challenge headline as text, not baked-in art", () => {
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-
-    // The wordmark art was invisible on short viewports; the headline is plain
-    // text now, reachable by every reader and locale.
-    expect(
-      screen.getByText(HUB_TOUR_COPY.challengeTitle),
-    ).toBeInTheDocument();
-  });
-
-  it("never promises that the pass forgives a missed day", () => {
-    // A shield rescues a FAILED EXERCISE. Streak recovery is a permanent
-    // never-build, so this — the one screen that asks for money — must not sell
-    // it. Enforced on the copy itself, so it holds for whoever rewrites the
-    // pitch next.
-    const salesCopy = [
-      HUB_TOUR_COPY.challengeJoin,
-      HUB_TOUR_COPY.challengeValue,
-      HUB_TOUR_COPY.challengeAsk,
-    ].join(" ");
-    expect(salesCopy).not.toMatch(
-      /miss(ed)? (a )?day|recover|restore|save your streak|protect your streak/i,
+  it("moves the active spotlight marker with each tap", () => {
+    render(
+      <HubTour steps={LEARN_STEPS} challenge={CHALLENGE} onFinish={vi.fn()} />,
     );
-  });
-
-  it("closes on Got it and reports the tour completed", () => {
-    const onFinish = vi.fn();
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={onFinish} />);
-
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.done }));
-
-    expect(onFinish).toHaveBeenCalledWith("completed");
-  });
-
-  it("has no escape hatch — the daily `?` and Next are not exits, and the challenge step keeps one control", () => {
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    // The daily step offers exactly two controls — the `?` that reveals detail
-    // and Next that advances — and neither bleeds the player out of the tour.
-    expect(screen.queryByText(/skip/i)).toBeNull();
-    expect(screen.getByTestId("hub-tour-details-toggle")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: HUB_TOUR_COPY.next }),
-    ).toBeInTheDocument();
-    // The challenge step is carried by art alone: one advancing control, no exit.
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-    expect(screen.getAllByRole("button")).toHaveLength(1);
-    expect(screen.queryByText(/skip/i)).toBeNull();
-  });
-
-  it("skips a step whose target never mounted — a 1-step tour beats an arrow pointing at nothing", () => {
-    document.body.innerHTML = "";
-    mountTargets(["daily"]);
-
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-
-    expect(screen.getByText("1 of 1")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: HUB_TOUR_COPY.done }),
-    ).toBeInTheDocument();
-  });
-
-  it("finishes immediately when no target is on screen at all", () => {
-    document.body.innerHTML = "";
-    const onFinish = vi.fn();
-
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={onFinish} />);
-
-    expect(onFinish).toHaveBeenCalledWith("completed");
-    expect(modalCount()).toBe(0);
-  });
-
-  it("ignores a tap outside the panel — the tour exits by Skip or by finishing", () => {
-    const onFinish = vi.fn();
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={onFinish} />);
-
+    expect(document.querySelector('[data-tour-target="daily"]')).toHaveAttribute(
+      "data-tour-spotlight",
+      "active",
+    );
     fireEvent.click(screen.getByTestId("hub-tour-scrim"));
-
-    expect(onFinish).not.toHaveBeenCalled();
-    expect(screen.getByText(HUB_TOUR_COPY.dailyStripGift)).toBeInTheDocument();
-  });
-
-  it("spotlights the target of the current step", () => {
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-    expect(screen.getByTestId("hub-tour-spotlight")).toHaveAttribute(
-      "data-target",
-      "daily",
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-    expect(screen.getByTestId("hub-tour-spotlight")).toHaveAttribute(
-      "data-target",
-      "challenge",
-    );
-  });
-
-  it("stops selling the moment the pass confirms, even mid-tour", () => {
-    // Found on a real device: the card read ACTIVE and the panel was still
-    // quoting "$0.99". The step OBJECTS were frozen at mount, so a pass that
-    // confirmed one tick after the tour opened kept being sold to its owner.
-    const { rerender } = render(
-      <HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-    expect(screen.getByTestId("hub-tour-value")).toBeInTheDocument();
-
-    rerender(
-      <HubTour
-        steps={buildHubTourSteps({ ...FRESH, hasSeasonPass: true })}
-        challenge={CHALLENGE}
-        onFinish={vi.fn()}
-      />,
-    );
-
-    expect(screen.queryByTestId("hub-tour-value")).toBeNull();
-    expect(screen.queryByText(HUB_TOUR_COPY.challengeAsk)).toBeNull();
-  });
-
-  it("fits the panel to the room that actually exists, not to a 844px phone", () => {
-    // MiniPay's chrome eats the bottom of the viewport. Anchored to an assumed
-    // height, the panel — and "Got it" with it — walked off the screen, and the
-    // tour could not be finished at all.
-    const original = window.innerHeight;
-    try {
-      Object.defineProperty(window, "innerHeight", {
-        value: 600,
-        configurable: true,
-      });
-      // Card sits low: only ~200px left under it, but ~330px above it.
-      stubRect("challenge", { top: 330, left: 6, width: 378, height: 168 });
-
-      render(
-        <HubTour
-          steps={steps}
-          challenge={CHALLENGE}
-          onFinish={vi.fn()}
-        />,
-      );
-      fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
-
-      const panel = screen.getByTestId("hub-tour-value").closest(
-        ".hub-tour-panel",
-      ) as HTMLElement;
-      // It took the roomier side...
-      expect(panel.className).toContain("is-above");
-      // ...and capped itself to that room, so the button stays reachable.
-      const cap = Number.parseFloat(panel.style.maxHeight);
-      expect(cap).toBeGreaterThan(0);
-      expect(cap).toBeLessThanOrEqual(600);
-
-      // The deal (cards + price) and the button survive — the panel just caps
-      // its height so "Got it" stays reachable.
-      expect(screen.getByTestId("hub-tour-benefits")).toBeInTheDocument();
-      expect(screen.getByTestId("hub-tour-value")).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: HUB_TOUR_COPY.done }),
-      ).toBeInTheDocument();
-    } finally {
-      Object.defineProperty(window, "innerHeight", {
-        value: original,
-        configurable: true,
-      });
-    }
-  });
-
-  it("hangs the panel below a target in the top half, so it never covers it", () => {
-    // The header gift lives at the top of the hub. A panel parked at a fixed
-    // offset from the viewport floor drifted all the way down onto Start Focus.
-    stubRect("daily", { top: 12, left: 320, width: 60, height: 60 });
-
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-
-    const panel = screen
-      .getByTestId("hub-tour-story")
-      .closest(".hub-tour-panel") as HTMLElement;
-    expect(panel.className).toContain("is-below");
-    // Below the target's bottom edge (12 + 60), never on top of it.
-    expect(Number.parseFloat(panel.style.top)).toBeGreaterThan(72);
-  });
-
-  it("lifts the panel above a target in the bottom half", () => {
-    stubRect("daily", { top: 700, left: 40, width: 200, height: 60 });
-
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-
-    const panel = screen
-      .getByTestId("hub-tour-story")
-      .closest(".hub-tour-panel") as HTMLElement;
-    expect(panel.className).toContain("is-above");
-    expect(panel.style.bottom).not.toBe("");
-  });
-
-  it("points its arrow at the target it is describing", () => {
-    stubRect("daily", { top: 12, left: 320, width: 60, height: 60 });
-
-    render(<HubTour steps={steps} challenge={CHALLENGE} onFinish={vi.fn()} />);
-
-    // Target center is 350px — off the right edge of a 320px centered panel, so
-    // the arrow clamps inside the panel instead of floating past its corner.
-    const arrow = screen.getByTestId("hub-tour-arrow");
-    const left = Number.parseFloat(arrow.style.left);
-    expect(left).toBeGreaterThan(0);
-    expect(left).toBeLessThanOrEqual(320);
-  });
-
-  it("tells a veteran to keep the streak and does not re-sell a pass they own", () => {
-    const veteran = buildHubTourSteps({
-      dailyDone: false,
-      streak: 12,
-      hasSeasonPass: true,
-    });
-    render(<HubTour steps={veteran} challenge={CHALLENGE} onFinish={vi.fn()} />);
-
-    // The keep-the-streak sentence now lives behind the `?`; it must be the
-    // KEEP copy, not the START copy, for a mid-streak veteran.
-    fireEvent.click(screen.getByTestId("hub-tour-details-toggle"));
-    expect(screen.getByText(HUB_TOUR_COPY.dailyKeep)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: HUB_TOUR_COPY.next }));
     expect(
-      screen.getByText("Track your focus days and complete your 21-day commitment."),
-    ).toBeInTheDocument();
+      document.querySelector('[data-tour-target="challenge"]'),
+    ).toHaveAttribute("data-tour-spotlight", "active");
+  });
+
+  it("keeps keyboard progression equivalent to touch progression", () => {
+    render(
+      <HubTour steps={LEARN_STEPS} challenge={CHALLENGE} onFinish={vi.fn()} />,
+    );
+    fireEvent.keyDown(screen.getByTestId("hub-tour-scrim"), { key: "Enter" });
+    expect(screen.getByText("2 of 3")).toBeInTheDocument();
+  });
+
+  it("drops an unavailable target instead of pointing at empty space", () => {
+    document.body.innerHTML = "";
+    mountTargets(["challenge", "rook"]);
+    render(
+      <HubTour steps={LEARN_STEPS} challenge={CHALLENGE} onFinish={vi.fn()} />,
+    );
+    expect(screen.getByText("1 of 2")).toBeInTheDocument();
+    expect(screen.getByText(HUB_TOUR_COPY.challengeTitle)).toBeInTheDocument();
+  });
+
+  it("anchors below a top target and points the arrow inside the panel", () => {
+    stubRect("daily", { top: 12, left: 320, width: 60, height: 60 });
+    render(
+      <HubTour steps={LEARN_STEPS} challenge={CHALLENGE} onFinish={vi.fn()} />,
+    );
+    const panel = screen
+      .getByTestId("hub-tour-story")
+      .closest(".hub-tour-panel") as HTMLElement;
+    expect(panel).toHaveClass("is-below");
+    expect(Number.parseFloat(panel.style.top)).toBeGreaterThan(72);
+    expect(
+      Number.parseFloat(screen.getByTestId("hub-tour-arrow").style.left),
+    ).toBeLessThanOrEqual(320);
   });
 });

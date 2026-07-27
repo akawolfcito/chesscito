@@ -49,6 +49,11 @@ describe('<ChallengeCard>', () => {
         onReplayTour={onReplayTour}
       />,
     )
+    expect(
+      screen
+        .getByTestId('challenge-replay-tour')
+        .querySelector('[data-theme-slot="shared.tour-help"]'),
+    ).not.toBeNull()
     fireEvent.click(screen.getByTestId('challenge-replay-tour'))
     expect(onReplayTour).toHaveBeenCalledTimes(1)
   })

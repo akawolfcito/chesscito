@@ -8489,23 +8489,27 @@ button.hud-resource-chip:active:not(:disabled) {
   cursor: pointer;
 }
 
-.challenge-card-passport-help-dot {
+.challenge-card-passport-help-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
+  padding: 2px 5px;
   border-radius: 9999px;
-  font-size: 0.62rem;
-  font-weight: 800;
-  line-height: 1;
-  color: #2f6a12;
   background: #e6f6cf;
   border: 1.5px solid #4a8c1e;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
-.challenge-card-passport-help:active .challenge-card-passport-help-dot {
+.challenge-card-passport-help-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 0 rgba(85, 45, 5, 0.4));
+}
+
+.challenge-card-passport-help:active .challenge-card-passport-help-icon {
   transform: translateY(1px);
 }
 
@@ -8681,10 +8685,9 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Price badge floating on the button. Same featured-pill language as
    `.coach-viewer__tile-price-ribbon` (Save Victory), so a cost cue looks the
    same on every surface that shows one. */
-.challenge-card-cta-badge {
+.challenge-card-cta-badge,
+.kingdom-card-pro-price {
   position: absolute;
-  top: -9px;
-  right: -6px;
   z-index: 2;
   display: inline-flex;
   align-items: center;
@@ -8704,6 +8707,11 @@ button.hud-resource-chip:active:not(:disabled) {
   pointer-events: none;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.challenge-card-cta-badge {
+  top: -9px;
+  right: -6px;
 }
 
 /* COME BACK TOMORROW / CHALLENGE COMPLETE — the CTA skin on a status element.
@@ -8929,9 +8937,9 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .hub-lite-training-path-tiles .reward-tile.is-compact .reward-tile-piece {
-  width: 42px;
-  height: 43px;
-  margin: -2px auto 0;
+  width: 46px;
+  height: 47px;
+  margin: -3px auto 0;
 }
 
 .hub-lite-training-path-tiles .reward-tile.is-compact .reward-tile-label {
@@ -8940,7 +8948,7 @@ button.hud-resource-chip:active:not(:disabled) {
   left: 50%;
   bottom: -7px;
   width: max-content;
-  max-width: 58px;
+  max-width: 64px;
   min-height: 14px;
   padding: 2px 5px;
   border: 1px solid rgba(173, 104, 23, 0.55);
@@ -8951,6 +8959,7 @@ button.hud-resource-chip:active:not(:disabled) {
     0 1px 2px rgba(84, 45, 8, 0.22);
   color: #3f2208;
   font-size: 0.5rem;
+  font-weight: 800;
   line-height: 1;
   text-shadow: none;
   white-space: nowrap;
@@ -9095,7 +9104,39 @@ button.hud-resource-chip:active:not(:disabled) {
    already shared; these rules remove the container drift that made them look
    different (PLAY was narrower, 8px-gapped, top-aligned and 8px lower). */
 .hub-home-scaffold {
+  position: relative;
+  isolation: isolate;
   padding-top: calc(env(safe-area-inset-top, 0px) + 6px);
+}
+
+/* Shared lower readability veil. It begins above either PATH and darkens only
+   the wallpaper behind the controls; all Hub children stay in the foreground.
+   Using one root-level layer keeps LEARN and PLAY pixel-aligned. */
+.hub-home-scaffold::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: clamp(150px, 23dvh, 205px);
+  background: linear-gradient(
+    180deg,
+    rgba(9, 24, 8, 0) 0%,
+    rgba(9, 24, 8, 0.18) 30%,
+    rgba(8, 22, 8, 0.58) 72%,
+    rgba(6, 17, 7, 0.8) 100%
+  );
+  pointer-events: none;
+}
+
+.hub-home-scaffold > * {
+  position: relative;
+  z-index: 1;
+}
+
+.hub-home-scaffold > .hub-lite-mascot {
+  z-index: 2;
 }
 
 .play-hub-scaffold .hub-scaffold-hud {
@@ -9298,6 +9339,42 @@ button.hud-resource-chip:active:not(:disabled) {
   color: #4a2f12;
 }
 
+.kingdom-card-tour-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.kingdom-card-tour-help-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  padding: 2px 5px;
+  border: 1.5px solid #4a8c1e;
+  border-radius: 9999px;
+  background: #e6f6cf;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.kingdom-card-tour-help-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 0 rgba(85, 45, 5, 0.4));
+}
+
+.kingdom-card-tour-help:active .kingdom-card-tour-help-icon {
+  transform: translateY(1px);
+}
+
 .kingdom-card-body {
   margin: 0;
   font-size: 0.8rem;
@@ -9346,6 +9423,7 @@ button.hud-resource-chip:active:not(:disabled) {
    anchor, but the whole row is now one generous tap target with enough copy
    to explain why PRO matters. It deliberately stays secondary to PLAY PATH. */
 .kingdom-card-pro-cta {
+  position: relative;
   width: 100%;
   min-height: 54px;
   display: flex;
@@ -9353,20 +9431,24 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 8px;
   margin-top: 5px;
   padding: 4px 9px 5px 5px;
-  border: 1.5px solid #efbd42;
+  border: 2px solid #f6c94f;
   border-radius: 14px;
   background:
-    linear-gradient(110deg, rgba(255, 255, 255, 0.13), transparent 42%),
-    linear-gradient(180deg, #7536a9 0%, #52217f 100%);
+    radial-gradient(circle at 20% 0%, rgba(255, 221, 112, 0.18), transparent 38%),
+    linear-gradient(110deg, rgba(255, 255, 255, 0.16), transparent 45%),
+    linear-gradient(180deg, #9a4ed0 0%, #7430a9 48%, #561d80 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    0 3px 7px rgba(72, 31, 92, 0.25);
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -2px 0 rgba(55, 12, 83, 0.25),
+    0 4px 0 #3f145f,
+    0 8px 14px rgba(72, 31, 92, 0.3);
   color: #fff8d2;
   text-align: left;
   cursor: pointer;
   transition:
     transform 120ms ease-out,
     filter 120ms ease-out;
+  overflow: visible;
 }
 
 .kingdom-card-pro-cta:active {
@@ -9441,9 +9523,14 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 2px rgba(33, 9, 48, 0.7);
 }
 
+.kingdom-card-pro-price {
+  top: -9px;
+  right: 13px;
+}
+
 /* ── PLAY PATH — four compact, persistent actions in the same visual family
-   as LEARN's Training Path. The icon fills the orange tile; the nameplate
-   floats across the lower edge but remains part of the same button. ── */
+   as LEARN's Training Path. The icon fills its tile; the nameplate floats
+   across the lower edge but remains part of the same button. ── */
 .play-hub-path {
   width: 100%;
   display: flex;
@@ -9451,6 +9538,12 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   gap: 7px;
   padding: 4px 4px 10px;
+}
+
+.play-hub-daily-anchor {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .play-hub-path-label {
@@ -9469,8 +9562,9 @@ button.hud-resource-chip:active:not(:disabled) {
   justify-content: center;
 }
 
-/* HubActionTile ships `.reward-tile.is-locked` for historic rails; PLAY PATH
-   actions are available, so restore the active orange candy surface. */
+/* HubActionTile ships `.reward-tile.is-locked` for historic rails, but every
+   PLAY PATH action remains interactive here. Gray communicates secondary
+   hierarchy only; it is not a disabled/locked state. */
 .play-hub-path-grid .reward-tile,
 .play-hub-path-grid .reward-tile.is-locked {
   position: relative;
@@ -9487,8 +9581,10 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 0;
   border: 0;
   border-radius: 13px;
-  background: linear-gradient(180deg, #ffe26d 0%, #f9ce89 60%, #ffb555 100%);
-  box-shadow: none;
+  background: linear-gradient(180deg, #bfc2c4 0%, #aeb1b3 58%, #95999c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 2px 4px rgba(45, 47, 48, 0.22);
   color: rgba(50, 25, 5, 0.95);
   text-shadow: none;
   font-size: 0.55rem;
@@ -9532,7 +9628,9 @@ button.hud-resource-chip:active:not(:disabled) {
   transform: translateX(-50%);
 }
 
-.play-hub-path-grid .play-hub-path-tile--primary {
+.play-hub-path-grid .reward-tile.play-hub-path-tile--primary,
+.play-hub-path-grid .reward-tile.is-locked.play-hub-path-tile--primary {
+  background: linear-gradient(180deg, #ffe26d 0%, #f9ce89 60%, #ffb555 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.52),
     0 0 0 2px rgba(35, 159, 220, 0.82),
@@ -15231,8 +15329,8 @@ button.hud-resource-chip:active:not(:disabled) {
   }
 }
 
-/* ── Hub Tour (LEARN) ────────────────────────────────────────────────────────
-   The 3-step intro to the Daily-first hub. The scrim itself is NOT dimmed:
+/* ── Hub Tour (LEARN + PLAY) ─────────────────────────────────────────────────
+   The shared mini-tour. The scrim itself is NOT dimmed:
    the dim is the spotlight's outer box-shadow, which is what cuts the hole
    over the target. One node, one paint — no mask, no clip-path. */
 .hub-tour-scrim {
@@ -15243,6 +15341,8 @@ button.hud-resource-chip:active:not(:disabled) {
   /* Swallows every tap outside the panel: the tour exits by Skip or by
      finishing, never by a stray backdrop tap. */
   pointer-events: auto;
+  cursor: pointer;
+  outline: none;
 }
 
 .hub-tour-spotlight {
@@ -15271,7 +15371,7 @@ button.hud-resource-chip:active:not(:disabled) {
   left: 50%;
   transform: translateX(-50%);
   width: min(320px, calc(100% - 32px));
-  padding: 20px 22px 16px;
+  padding: 18px 22px 14px;
   text-align: center;
   /* A column, so a `max-height` set from the measured space squeezes the hero
      (the one flexible child) instead of pushing the button off the phone. */
@@ -15281,6 +15381,41 @@ button.hud-resource-chip:active:not(:disabled) {
   background-image: var(--theme-shared-panel-bg);
   background-size: 100% 100%;
   background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.hub-tour-close {
+  position: absolute;
+  top: -10px;
+  right: -8px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 5px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.hub-tour-close-icon {
+  display: block;
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 3px 3px rgba(63, 34, 8, 0.32));
+}
+
+.hub-tour-close-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hub-tour-close:active .hub-tour-close-icon {
+  transform: translateY(1px) scale(0.96);
 }
 
 /* `top` / `bottom` are set inline from the measured target rect — the panel is
@@ -15336,7 +15471,7 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .hub-tour-body {
-  /* margin-top: 8px; */
+  margin-top: 7px;
   font-size: 0.72rem;
   line-height: 1.4;
   color: rgba(63, 34, 8, 0.88);
@@ -15439,6 +15574,47 @@ button.hud-resource-chip:active:not(:disabled) {
   margin-top: 8px;
   width: auto;
   min-width: 132px;
+}
+
+.hub-tour-action-icon {
+  width: 4.4rem;
+  height: 4.4rem;
+  margin-top: 10px;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 7px rgba(63, 34, 8, 0.25));
+}
+
+.hub-tour-continue {
+  margin-top: 12px;
+  font-family: var(--font-game-action);
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: #4a2f12;
+  text-shadow:
+    0 1px 0 rgba(255, 250, 223, 0.95),
+    0 2px 2px rgba(92, 47, 8, 0.2);
+  animation: hub-tour-continue-nudge 1.5s ease-in-out infinite;
+}
+
+@keyframes hub-tour-continue-nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.82;
+  }
+
+  50% {
+    transform: translateY(2px);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-tour-continue {
+    animation: none;
+  }
 }
 
 /* Daily ritual as an art strip (start/keep steps). The full sentence hides

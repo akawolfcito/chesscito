@@ -36,8 +36,30 @@ describe("KingdomCard", () => {
     expect(cta).toHaveTextContent("Chesscito PRO");
     expect(cta).toHaveTextContent("Season Pass + unlimited Coach");
     expect(cta).toHaveTextContent("Unlock");
+    expect(screen.getByTestId("kingdom-pro-price")).toHaveTextContent("$1.99");
+    expect(cta).toHaveAttribute("data-tour-target", "pro");
     await userEvent.click(cta);
     expect(onProDiscover).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the shared themed question icon to replay the PLAY tour", async () => {
+    const onReplayTour = vi.fn();
+    render(
+      <KingdomCard
+        pro={{ active: false }}
+        onProDiscover={() => {}}
+        onReplayTour={onReplayTour}
+      />,
+    );
+
+    const replay = screen.getByRole("button", {
+      name: "Replay Play Hub tour",
+    });
+    expect(
+      replay.querySelector('[data-theme-slot="shared.tour-help"]'),
+    ).not.toBeNull();
+    await userEvent.click(replay);
+    expect(onReplayTour).toHaveBeenCalledTimes(1);
   });
 
   it("PRO active: the same strip exposes days remaining and opens management", async () => {
@@ -54,6 +76,7 @@ describe("KingdomCard", () => {
     });
     expect(cta).toHaveAttribute("data-pro-status", "active");
     expect(cta).toHaveTextContent("206d");
+    expect(screen.queryByTestId("kingdom-pro-price")).not.toBeInTheDocument();
     await userEvent.click(cta);
     expect(onProDiscover).toHaveBeenCalledTimes(1);
   });
@@ -75,6 +98,7 @@ describe("KingdomCard", () => {
       const cta = screen.getByRole("button", { name: ariaLabel });
       expect(cta).toHaveAttribute("data-pro-status", status);
       expect(cta).toHaveTextContent(visibleStatus);
+      expect(screen.getByTestId("kingdom-pro-price")).toHaveTextContent("$1.99");
     },
   );
 

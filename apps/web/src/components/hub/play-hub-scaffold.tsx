@@ -32,6 +32,7 @@ type PlayHubScaffoldProps = {
   onCoachTap: () => void;
   onShopTap: () => void;
   onArenaPress: () => void;
+  onReplayTour?: () => void;
 };
 
 /** Temporary product switch. PLAY remains available in PLAY PATH below.
@@ -58,6 +59,7 @@ export function PlayHubScaffold({
   onCoachTap,
   onShopTap,
   onArenaPress,
+  onReplayTour,
 }: PlayHubScaffoldProps) {
   const tHud = useTranslations("HUD_COPY");
   const tPlay = useTranslations("PLAY_HUB_COPY");
@@ -110,7 +112,9 @@ export function PlayHubScaffold({
                 <span>{tHud("connectLabel")}</span>
               </button>
             ) : null}
-            {dailySlot}
+            <div className="play-hub-daily-anchor" data-tour-target="daily">
+              {dailySlot}
+            </div>
           </div>
         </div>
       </header>
@@ -132,7 +136,11 @@ export function PlayHubScaffold({
 
       {/* Kingdom hero panel — the PRO chip is embedded in an explanatory,
           full-width CTA. Every state opens the same discovery/manage sheet. */}
-      <KingdomCard pro={pro} onProDiscover={onProTap} />
+      <KingdomCard
+        pro={pro}
+        onProDiscover={onProTap}
+        onReplayTour={onReplayTour}
+      />
 
       {SHOW_STANDALONE_PLAY_CHESS_CTA ? (
         /* Temporarily hidden: PLAY PATH now owns the Arena entry. Keeping this
@@ -170,6 +178,7 @@ export function PlayHubScaffold({
         <div className="play-hub-path-grid" aria-label={tPlay("actionsAriaLabel")}>
           <HubActionTile
             className="play-hub-path-tile play-hub-path-tile--primary"
+            tourTarget="play"
             iconSlot="hub.enter-arena"
             label={tPlay("playPathPlayLabel")}
             ariaLabel={tPlay("arenaAriaLabel")}

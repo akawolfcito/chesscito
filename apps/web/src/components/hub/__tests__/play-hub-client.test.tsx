@@ -54,6 +54,7 @@ vi.mock("@/components/hub/play-hub-scaffold", () => ({
     onArenaPress: () => void;
     onCoachTap: () => void;
     onShopTap: () => void;
+    onReplayTour?: () => void;
   }) => (
     <div data-testid="play-hub" data-pro={props.pro.active}>
       <span>victories:{props.mintedVictoryCount}</span>
@@ -61,6 +62,9 @@ vi.mock("@/components/hub/play-hub-scaffold", () => ({
       <button onClick={props.onArenaPress}>arena</button>
       <button onClick={props.onCoachTap}>coach</button>
       <button onClick={props.onShopTap}>shop</button>
+      {props.onReplayTour ? (
+        <button onClick={props.onReplayTour}>replay-tour</button>
+      ) : null}
     </div>
   ),
 }));
@@ -69,6 +73,7 @@ import { PlayHubClient } from "../play-hub-client";
 
 describe("PlayHubClient", () => {
   beforeEach(() => {
+    window.localStorage.clear();
     pushMock.mockReset();
     openProMock.mockReset();
     openShopMock.mockReset();
@@ -157,5 +162,11 @@ describe("PlayHubClient", () => {
     render(<PlayHubClient />);
     await userEvent.click(screen.getByText("shop"));
     expect(openShopMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("wires the persistent question icon to replay the PLAY tour", async () => {
+    render(<PlayHubClient />);
+    await userEvent.click(screen.getByText("replay-tour"));
+    expect(trackMock).toHaveBeenCalledWith("hub_tour_replay", { mode: "play" });
   });
 });

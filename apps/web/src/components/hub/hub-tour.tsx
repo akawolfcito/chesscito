@@ -4,39 +4,41 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
   type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
 } from "react";
 import { useTranslations } from "next-intl";
-import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 
-import { PrincipalButton } from "@/components/scene-rooted/principal-button";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import type {
+  HubTourMode,
   HubTourOutcome,
   HubTourStep,
   HubTourStepId,
 } from "@/lib/hub/hub-tour";
 
 export type HubTourProps = {
-  /** Built by `buildHubTourSteps` — the container owns the player's state. */
+  mode?: HubTourMode;
   steps: HubTourStep[];
-  /** The pass's real terms, from the SAME config that feeds the ChallengeCard
-   *  (`rail-config.ts`). Interpolated, never typed into the copy: a "$0.99"
-   *  baked into a string rots the day pricing moves, silently, with the suite
-   *  still green. */
-  challenge: { days: number; shields: number; price: string };
-  /** Fires once, on the way out. The container persists the flag. */
+  challenge?: { days: number; shields: number; price: string };
+  pro?: { active: boolean; price: string };
   onFinish: (outcome: HubTourOutcome) => void;
 };
 
-/** The headline changes with the body: a fresh profile is invited to START a
- *  streak, a veteran to KEEP one, and a pass holder is not sold anything. */
 const TITLE_KEY: Record<HubTourStep["bodyKey"], string> = {
   dailyStart: "dailyTitleStart",
   dailyKeep: "dailyTitle",
   dailyDone: "dailyTitle",
   challengeJoin: "challengeTitle",
   challengeEnrolled: "challengeTitleEnrolled",
+  rookStart: "rookTitle",
+  proJoin: "proTitle",
+  proActive: "proTitleActive",
+  playStart: "playTitle",
 };
 
 type Rect = { top: number; left: number; width: number; height: number };
@@ -53,74 +55,55 @@ function measure(target: string): Rect | null {
   return { top, left, width, height };
 }
 
-/** Padding around the target, so the ring frames it instead of clipping it. */
-const RING_PAD = 8;
-/** Breathing room between the ring and the panel that points at it. */
+/** Enough room to keep floating price chips inside the illuminated cutout. */
+const RING_PAD = 12;
 const GAP = 18;
-/** Keep in lockstep with `.hub-tour-panel` width in globals.css. */
 const PANEL_WIDTH = 320;
-/** Minimum distance from the arrow to the panel's rounded corners. */
 const ARROW_INSET = 28;
-/** Floor for the panel. Below this the panel keeps its size and overlaps the
- *  target instead of amputating its own button — a tour you cannot finish is
- *  worse than a tour that covers the card for a moment. */
-const MIN_PANEL_HEIGHT = 260;
+const MIN_PANEL_HEIGHT = 220;
 
-/** The 2-step LEARN hub tour: a scrim with a hole over the step's target, a
- *  panel explaining it, and Next / Got it / Skip.
- *
- *  It is a GATE, not a competitor: the container only mounts it when no other
- *  `aria-modal` is on screen, and while it runs the scrim swallows every tap
- *  outside the panel. The spotlight is deliberately NOT clickable (spec
- *  no-goal) — the tour informs, it does not navigate. */
-export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
+/** Shared mini-tour presenter. The overlay itself is the Next control: every
+ * tap advances, while the themed X is the single explicit exit. */
+export function HubTour({
+  mode = "learn",
+  steps,
+  challenge,
+  pro,
+  onFinish,
+}: HubTourProps) {
   const t = useTranslations("HUB_TOUR_COPY");
-  // The challenge step's benefit cards reuse the Season Pass sheet's own labels
-  // (offerBenefit*), so the tour and the checkout name the same three perks.
   const tCard = useTranslations("CHALLENGE_CARD_COPY");
+  const tPlay = useTranslations("PLAY_HUB_COPY");
+  const scrimRef = useRef<HTMLDivElement>(null);
 
-  // WHICH steps run is frozen at mount: a step whose target never rendered gets
-  // dropped, not pointed at, and re-filtering per render would let a
-  // late-hydrating card shift the itinerary under the player's feet.
-  //
-  // Only the IDs are frozen. Freezing the step OBJECTS froze their copy too, so
-  // a pass that confirmed one tick after the tour opened kept being sold to its
-  // own owner — the exact lie this component exists to avoid. The bodies are
-  // read LIVE from `steps` on every render.
   const [reachableIds] = useState<HubTourStepId[]>(() =>
-    steps.filter((s) => findTarget(s.target) !== null).map((s) => s.id),
+    steps.filter((step) => findTarget(step.target) !== null).map((step) => step.id),
   );
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
-  // The daily step's full copy lives behind a `?` popover; closed by default and
-  // reset whenever the step advances so it never carries over to the challenge.
-  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const reachable = reachableIds
-    .map((id) => steps.find((s) => s.id === id))
-    .filter((s): s is HubTourStep => s !== undefined);
-
+    .map((id) => steps.find((candidate) => candidate.id === id))
+    .filter((candidate): candidate is HubTourStep => candidate !== undefined);
   const step = reachable[index] ?? null;
   const isLast = index === reachable.length - 1;
-  /** Only a player who can still buy gets the benefit cards + price. */
-  const isSalesStep = step?.bodyKey === "challengeJoin";
-  /** The daily ritual steps carry the message as an art strip (gift → tactic →
-   *  combo) with the full sentence tucked behind a `?`. The "already solved"
-   *  variant (`dailyDone`) keeps its plain paragraph — there is no gift/tactic
-   *  to promise once today is done. */
-  const isDailyStrip =
-    step?.bodyKey === "dailyStart" || step?.bodyKey === "dailyKeep";
-
-  // Nothing to point at (a hub that rendered none of the three) → the tour is
-  // over before it starts, and it counts as given: re-arming it would relaunch
-  // on every mount for a player whose hub simply looks different.
+  const isDaily =
+    step?.bodyKey === "dailyStart" ||
+    step?.bodyKey === "dailyKeep" ||
+    step?.bodyKey === "dailyDone";
+  const isChallengeSale = step?.bodyKey === "challengeJoin";
+  const isProStep = step?.id === "pro";
+  const isActionStep = step?.id === "rook" || step?.id === "play";
   const empty = reachable.length === 0;
+
   useEffect(() => {
     if (empty) onFinish("completed");
   }, [empty, onFinish]);
 
-  // Measured against the LIVE target every step, and again on resize/rotation,
-  // so the ring tracks the element rather than a stale layout.
+  useEffect(() => {
+    scrimRef.current?.focus();
+  }, []);
+
   useLayoutEffect(() => {
     if (!step) return;
     const sync = () => setRect(measure(step.target));
@@ -133,10 +116,6 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
     };
   }, [step]);
 
-  // Flag the CURRENT step's target so surface-local affordances can react to
-  // being spotlighted (e.g. the ChallengeCard's Join arrow, which shows only
-  // during this step, never on the plain hub). Cleared when the step advances
-  // or the tour unmounts, so it never leaks past the tour.
   useLayoutEffect(() => {
     if (!step) return;
     const el = findTarget(step.target);
@@ -144,30 +123,42 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
     return () => el?.removeAttribute("data-tour-spotlight");
   }, [step]);
 
-  const handleNext = useCallback(() => {
+  const advance = useCallback(() => {
     if (isLast) {
       onFinish("completed");
       return;
     }
-    setDetailsOpen(false);
-    setIndex((i) => i + 1);
+    setIndex((current) => current + 1);
   }, [isLast, onFinish]);
 
+  const close = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation();
+      onFinish("skipped");
+    },
+    [onFinish],
+  );
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (
+        event.key !== "Enter" &&
+        event.key !== " " &&
+        event.key !== "ArrowRight"
+      ) {
+        return;
+      }
+      if ((event.target as HTMLElement).closest(".hub-tour-close")) return;
+      event.preventDefault();
+      advance();
+    },
+    [advance],
+  );
 
   if (!step) return null;
 
-  // The panel is anchored TO THE TARGET, not to the screen. Which SIDE of the
-  // target it takes is decided by measuring both, never by a top-half/
-  // bottom-half guess: that guess assumed a 844px-tall viewport, and MiniPay's
-  // chrome eats enough of it that the panel — and with it "Got it" — walked off
-  // the bottom of a real phone. The tour became uncompletable.
-  //
-  // So: measure the room on each side, take the roomier one, and CAP the panel
-  // to what is actually there. The hero art absorbs the squeeze (it shrinks);
-  // the button never does.
   const viewportW = typeof window === "undefined" ? 0 : window.innerWidth;
   const viewportH = typeof window === "undefined" ? 0 : window.innerHeight;
-
   const spaceBelow = rect ? viewportH - (rect.top + rect.height) - GAP * 2 : 0;
   const spaceAbove = rect ? rect.top - GAP * 2 : 0;
   const targetBelowFold = rect != null && spaceAbove > spaceBelow;
@@ -175,7 +166,6 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
     MIN_PANEL_HEIGHT,
     targetBelowFold ? spaceAbove : spaceBelow,
   );
-
   const panelStyle: CSSProperties | undefined = rect
     ? targetBelowFold
       ? {
@@ -184,9 +174,6 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
         }
       : { top: rect.top + rect.height + GAP, maxHeight: available }
     : undefined;
-
-  // The arrow tracks the target's horizontal center, clamped so it stays on the
-  // panel even when the target hugs a screen edge (the daily gift does).
   const panelWidth = Math.min(PANEL_WIDTH, viewportW - 32);
   const panelLeft = (viewportW - panelWidth) / 2;
   const arrowLeft = rect
@@ -196,13 +183,20 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
       )
     : panelWidth / 2;
 
+  const challengeTerms = challenge ?? { days: 21, shields: 3, price: "" };
+
   return (
     <div
+      ref={scrimRef}
       className="hub-tour-scrim"
       data-testid="hub-tour-scrim"
+      data-mode={mode}
       role="dialog"
       aria-modal="true"
       aria-label={t("rootAriaLabel")}
+      tabIndex={-1}
+      onClick={advance}
+      onKeyDown={handleKeyDown}
     >
       {rect ? (
         <div
@@ -218,9 +212,6 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
           }}
         />
       ) : (
-        // Target measured to nothing (hidden ancestor). Keep the tour running —
-        // the copy still carries the message — but skip the ring rather than
-        // drawing a 0×0 hole in the corner.
         <div
           className="hub-tour-spotlight is-unmeasured"
           data-testid="hub-tour-spotlight"
@@ -240,86 +231,67 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
           aria-hidden="true"
           style={{ left: arrowLeft }}
         />
+        <button
+          type="button"
+          className="hub-tour-close"
+          aria-label={t("closeAriaLabel")}
+          onClick={close}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          <ThemeAssetPicture
+            slot="shared.close-candy"
+            pictureClassName="hub-tour-close-icon"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+          />
+        </button>
+
         <p className="hub-tour-step-counter">
           {t("stepCounter", { current: index + 1, total: reachable.length })}
         </p>
-        {isDailyStrip ? (
-          // Title + `?` share a relative box so the details popover can float
-          // below the chip WITHOUT reflowing the art strip / Next button under
-          // it (a popover, not a row — the scrim already owns the aria-modal).
-          <div className="hub-tour-habit">
-            <h2 className="hub-tour-title">
-              {t(TITLE_KEY[step.bodyKey])}
-              <button
-                type="button"
-                data-testid="hub-tour-details-toggle"
-                onClick={() => setDetailsOpen((o) => !o)}
-                aria-expanded={detailsOpen}
-                aria-controls="hub-tour-details"
-                aria-label={t("dailyDetailsLabel")}
-                className="hub-tour-help-chip"
-              >
-                ?
-              </button>
-            </h2>
-            {detailsOpen ? (
-              <div
-                id="hub-tour-details"
-                data-testid="hub-tour-details"
-                className="hub-tour-details"
-                role="note"
-              >
-                <p>{t(step.bodyKey)}</p>
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          <h2 className="hub-tour-title">{t(TITLE_KEY[step.bodyKey])}</h2>
-        )}
+        <h2 className="hub-tour-title">{t(TITLE_KEY[step.bodyKey])}</h2>
 
-        {isDailyStrip ? (
-          // The ritual as art: gift → tactic → combo, labelled. Same catalog
-          // slots as the season-pass sheet's story row, so a theme re-skins both
-          // at once. Icons are decorative (aria-hidden via TileIconSlot); the
-          // labels carry the meaning.
-          <div className="hub-tour-story" data-testid="hub-tour-story">
-            <div className="hub-tour-story-step">
-              <TileIconSlot slot="shared.welcome-gift" className="hub-tour-story-icon" />
-              <span className="hub-tour-story-label">{t("dailyStripGift")}</span>
+        {isDaily ? (
+          <>
+            <div className="hub-tour-story" data-testid="hub-tour-story">
+              <div className="hub-tour-story-step">
+                <TileIconSlot slot="shared.welcome-gift" className="hub-tour-story-icon" />
+                <span className="hub-tour-story-label">{t("dailyStripGift")}</span>
+              </div>
+              <TileIconSlot slot="season.story-arrow" className="hub-tour-story-arrow" />
+              <div className="hub-tour-story-step">
+                <TileIconSlot slot="hub.train-pieces" className="hub-tour-story-icon" />
+                <span className="hub-tour-story-label">{t("dailyStripTactic")}</span>
+              </div>
+              <TileIconSlot slot="season.story-arrow" className="hub-tour-story-arrow" />
+              <div className="hub-tour-story-step">
+                <TileIconSlot slot="shared.flame-color" className="hub-tour-story-icon" />
+                <span className="hub-tour-story-label">{t("dailyStripCombo")}</span>
+              </div>
             </div>
-            <TileIconSlot slot="season.story-arrow" className="hub-tour-story-arrow" />
-            <div className="hub-tour-story-step">
-              <TileIconSlot slot="hub.train-pieces" className="hub-tour-story-icon" />
-              <span className="hub-tour-story-label">{t("dailyStripTactic")}</span>
-            </div>
-            <TileIconSlot slot="season.story-arrow" className="hub-tour-story-arrow" />
-            <div className="hub-tour-story-step">
-              <TileIconSlot slot="shared.flame-color" className="hub-tour-story-icon" />
-              <span className="hub-tour-story-label">{t("dailyStripCombo")}</span>
-            </div>
-          </div>
-        ) : (
+            <p className="hub-tour-body">{t(step.bodyKey)}</p>
+          </>
+        ) : null}
+
+        {!isDaily && !isChallengeSale && !isProStep ? (
           <p className="hub-tour-body">
             {t(step.bodyKey, {
-              days: challenge.days,
-              shields: challenge.shields,
-              price: challenge.price,
+              days: challengeTerms.days,
+              shields: challengeTerms.shields,
+              price: challengeTerms.price,
             })}
           </p>
-        )}
+        ) : null}
 
-        {/* The pitch as three compact benefit cards — the same 21 Days /
-            Training+ / +N Shields trio the Season Pass sheet shows, so the tour
-            and the checkout promise the same thing. days/shields are quoted from
-            config (never typed), and the price line under them keeps the deal
-            honest. Only for a player who can still buy: an owner gets neither. */}
-        {isSalesStep ? (
+        {isChallengeSale ? (
           <>
+            <p className="hub-tour-body">{t(step.bodyKey)}</p>
             <div className="hub-tour-benefits" data-testid="hub-tour-benefits">
               <div className="hub-tour-benefit">
                 <TileIconSlot slot="hub.21-day-icon" className="hub-tour-benefit-icon" />
                 <span className="hub-tour-benefit-label">
-                  {tCard("offerBenefitDays", { days: challenge.days })}
+                  {tCard("offerBenefitDays", { days: challengeTerms.days })}
                 </span>
               </div>
               <div className="hub-tour-benefit">
@@ -331,27 +303,49 @@ export function HubTour({ steps, challenge, onFinish }: HubTourProps) {
               <div className="hub-tour-benefit">
                 <TileIconSlot slot="shared.shield" className="hub-tour-benefit-icon" />
                 <span className="hub-tour-benefit-label">
-                  {tCard("offerBenefitShields", { count: challenge.shields })}
+                  {tCard("offerBenefitShields", { count: challengeTerms.shields })}
                 </span>
               </div>
             </div>
             <p className="hub-tour-price" data-testid="hub-tour-value">
-              {t("challengePrice", { price: challenge.price })}
+              {t("challengePrice", { price: challengeTerms.price })}
             </p>
           </>
         ) : null}
 
-        {/* No Skip. At two steps the tour is shorter than the escape hatch was
-            worth: an exit link next to the primary just bled players out of the
-            one screen that names the ritual and the pass. Two taps and it is
-            over. */}
-        <PrincipalButton
-          size="medium"
-          onClick={handleNext}
-          className="hub-tour-primary"
-        >
-          {isLast ? t("done") : t("next")}
-        </PrincipalButton>
+        {isProStep ? (
+          <>
+            <p className="hub-tour-body">{t(step.bodyKey)}</p>
+            <div className="hub-tour-benefits hub-tour-benefits--pro">
+              <div className="hub-tour-benefit">
+                <TileIconSlot slot="hub.quick-match-benefit" className="hub-tour-benefit-icon" />
+                <span className="hub-tour-benefit-label">{tPlay("quickMatchLabel")}</span>
+              </div>
+              <div className="hub-tour-benefit">
+                <TileIconSlot slot="hub.coach-review-benefit" className="hub-tour-benefit-icon" />
+                <span className="hub-tour-benefit-label">{tPlay("coachReviewLabel")}</span>
+              </div>
+              <div className="hub-tour-benefit">
+                <TileIconSlot slot="hub.rewards-benefit" className="hub-tour-benefit-icon" />
+                <span className="hub-tour-benefit-label">{tPlay("rewardsLabel")}</span>
+              </div>
+            </div>
+            {!pro?.active && pro?.price ? (
+              <p className="hub-tour-price">{t("proPrice", { price: pro.price })}</p>
+            ) : null}
+          </>
+        ) : null}
+
+        {isActionStep ? (
+          <TileIconSlot
+            slot={step.id === "rook" ? "board.piece.white.rook" : "hub.enter-arena"}
+            className="hub-tour-action-icon"
+          />
+        ) : null}
+
+        <p className="hub-tour-continue" aria-hidden="true">
+          {isLast ? t("tapToExplore") : t("tapToContinue")}
+        </p>
       </div>
     </div>
   );

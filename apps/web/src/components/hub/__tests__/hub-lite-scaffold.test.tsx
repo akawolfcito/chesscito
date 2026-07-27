@@ -211,6 +211,14 @@ describe("<HubLiteScaffold>", () => {
     expect(screen.getAllByTestId("challenge-cta")).toHaveLength(1);
   });
 
+  it("exposes the Rook as the final LEARN tour target", () => {
+    render(<HubLiteScaffold {...baseProps()} />);
+    expect(screen.getByText("Rook").closest("button")).toHaveAttribute(
+      "data-tour-target",
+      "rook",
+    );
+  });
+
   it("routes into today's focus from the card CTA when the pass is active", () => {
     const onPress = vi.fn();
     render(

@@ -51,6 +51,7 @@ const REQUIRED_ASSET_KEYS: readonly ThemeAssetKey[] = [
   "shared.mission-adorno",
   "shared.mission-avatar",
   "shared.close",
+  "shared.tour-help",
   "shared.mission-panel",
   "shared.feedback-sad",
   "shared.feedback-thinking",
@@ -297,7 +298,8 @@ describe("theme-registry", () => {
       // +1: brand.title-login, the Privy login modal's wordmark (2026-07-25),
       // carved off brand.title. Shared, not per-surface: the modal is the same
       // on both deploys, only its wallpaper differs.
-      shared: 77,
+      // +1: shared.tour-help, the replay affordance used by both Hub modes.
+      shared: 78,
       "full-legacy": 29,
       "dev-only": 0,
       unknown: 4,

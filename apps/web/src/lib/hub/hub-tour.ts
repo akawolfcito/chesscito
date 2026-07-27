@@ -1,101 +1,153 @@
 /**
- * Hub Tour (LEARN) — the 3-step introduction to the Daily-first hub.
- * Spec: docs/specs/2026-07-12-hub-tour-daily-first-spec.md
+ * Shared LEARN / PLAY mini-tour.
  *
- * Pure logic only: which steps a player gets, and whether the tour may run.
- * The presenter (`components/hub/hub-tour.tsx`) owns the spotlight.
+ * Each hub remembers its own tour, while Daily has one shared memory: once the
+ * gift has been explained in either hub, the other tour starts with its first
+ * hub-specific step. Manual replay always restores the complete itinerary.
  */
 
-/** Versioned. When the hub changes shape again, `v2` ships itself without
- *  rewriting anyone's history — and WITHOUT touching `chesscito:onboarded`,
- *  which `use-splash-loader.ts` owns. Two meanings in one key rot the day
- *  either one moves. */
-export const HUB_TOUR_STORAGE_KEY = "chesscito:hub-tour:v1";
-
+export type HubTourMode = "learn" | "play";
 export type HubTourOutcome = "completed" | "skipped";
 
-/** Also the `data-tour-target` attribute value the presenter measures.
- *
- *  There is deliberately NO `start-focus` step. Start Focus is the largest,
- *  brightest, most central control on the hub and it did not change — a panel
- *  explaining it spends the tour's most expensive step on the one thing nobody
- *  needs explained, and pushes the step that carries the purchase further away.
- *  The hub tour teaches the ritual, then sells the commitment. That's it. */
-export type HubTourStepId = "daily" | "challenge";
+export const HUB_TOUR_STORAGE_KEYS: Record<HubTourMode, string> = {
+  learn: "chesscito:hub-tour:learn:v2",
+  play: "chesscito:hub-tour:play:v1",
+};
+export const HUB_TOUR_DAILY_STORAGE_KEY = "chesscito:hub-tour:daily:v1";
+/** Backwards-compatible name for LEARN call sites/tests. */
+export const HUB_TOUR_STORAGE_KEY = HUB_TOUR_STORAGE_KEYS.learn;
+
+export type HubTourStepId =
+  | "daily"
+  | "challenge"
+  | "rook"
+  | "pro"
+  | "play";
+
+export type HubTourBodyKey =
+  | "dailyStart"
+  | "dailyKeep"
+  | "dailyDone"
+  | "challengeJoin"
+  | "challengeEnrolled"
+  | "rookStart"
+  | "proJoin"
+  | "proActive"
+  | "playStart";
 
 export type HubTourStep = {
   id: HubTourStepId;
   target: HubTourStepId;
-  /** Key into `HUB_TOUR_COPY`. */
-  bodyKey:
-    | "dailyStart"
-    | "dailyKeep"
-    | "dailyDone"
-    | "challengeJoin"
-    | "challengeEnrolled";
+  bodyKey: HubTourBodyKey;
 };
 
-export type HubTourContext = {
-  /** Today's Daily Tactic is already solved. */
+export type LearnHubTourContext = {
   dailyDone: boolean;
-  /** Days already strung together. A veteran mid-streak must not be told to
-   *  "start your streak" — same rule as never re-selling a pass someone owns. */
   streak: number;
-  /** The player holds the 21-Day pass. */
   hasSeasonPass: boolean;
+  includeDaily?: boolean;
 };
 
-/** Two steps: the free ritual, then the 21-day commitment. The itinerary is
- *  fixed; the COPY is what adapts. The tour reaches veterans too, so a body
- *  that assumes a fresh profile would lie to most of the people reading it. */
-export function buildHubTourSteps({
+export type PlayHubTourContext = {
+  dailyDone: boolean;
+  streak: number;
+  includeDaily?: boolean;
+  proStatus: "active" | "inactive" | "loading" | "error" | "unknown";
+};
+
+function dailyStep({
+  dailyDone,
+  streak,
+}: Pick<LearnHubTourContext, "dailyDone" | "streak">): HubTourStep {
+  return {
+    id: "daily",
+    target: "daily",
+    bodyKey: dailyDone
+      ? "dailyDone"
+      : streak > 0
+        ? "dailyKeep"
+        : "dailyStart",
+  };
+}
+
+/** LEARN: Daily (when still new) → Focus Passport → Rook. */
+export function buildLearnHubTourSteps({
   dailyDone,
   streak,
   hasSeasonPass,
-}: HubTourContext): HubTourStep[] {
+  includeDaily = true,
+}: LearnHubTourContext): HubTourStep[] {
   return [
+    ...(includeDaily ? [dailyStep({ dailyDone, streak })] : []),
     {
-      id: "daily",
-      target: "daily",
-      bodyKey: dailyDone
-        ? "dailyDone"
-        : streak > 0
-          ? "dailyKeep"
-          : "dailyStart",
+      id: "challenge" as const,
+      target: "challenge" as const,
+      bodyKey: hasSeasonPass
+        ? ("challengeEnrolled" as const)
+        : ("challengeJoin" as const),
     },
-    {
-      id: "challenge",
-      target: "challenge",
-      bodyKey: hasSeasonPass ? "challengeEnrolled" : "challengeJoin",
-    },
+    { id: "rook", target: "rook", bodyKey: "rookStart" },
   ];
 }
 
-export function hasSeenHubTour(): boolean {
+/** Historical export retained for local consumers while LEARN migrates. */
+export const buildHubTourSteps = buildLearnHubTourSteps;
+
+/** PLAY: shared Daily → PRO discovery/status → the primary Play tile.
+ * The strip exists in every state, so the tour always explains it; only a
+ * confirmed active entitlement switches the copy from discovery to status. */
+export function buildPlayHubTourSteps({
+  dailyDone,
+  streak,
+  includeDaily = true,
+  proStatus,
+}: PlayHubTourContext): HubTourStep[] {
+  return [
+    ...(includeDaily ? [dailyStep({ dailyDone, streak })] : []),
+    {
+      id: "pro",
+      target: "pro",
+      bodyKey: proStatus === "active" ? "proActive" : "proJoin",
+    },
+    { id: "play", target: "play", bodyKey: "playStart" },
+  ];
+}
+
+export function hasSeenHubTour(mode: HubTourMode = "learn"): boolean {
   try {
-    return window.localStorage.getItem(HUB_TOUR_STORAGE_KEY) !== null;
+    return window.localStorage.getItem(HUB_TOUR_STORAGE_KEYS[mode]) !== null;
   } catch {
-    // Private mode / WebView with storage disabled. Treat as seen: a tour that
-    // cannot remember being dismissed would relaunch on every hub mount.
     return true;
   }
 }
 
-/** Written ONLY on completion or skip. A tour abandoned mid-way is not a tour
- *  given, so a cold start puts the player back on step 1. */
-export function markHubTourSeen(outcome: HubTourOutcome): void {
+export function hasSeenDailyTour(): boolean {
   try {
-    window.localStorage.setItem(HUB_TOUR_STORAGE_KEY, outcome);
+    return window.localStorage.getItem(HUB_TOUR_DAILY_STORAGE_KEY) !== null;
   } catch {
-    // Nothing to do — the tour already ran; losing the flag costs one replay.
+    return true;
   }
 }
 
-/** The tour is a GATE: it never opens on top of another modal (the season-pass
- *  sheet, the daily sheet, a celebration). Counted on `[aria-modal="true"]` and
- *  never on `role="dialog"` — `LabyrinthCompleteOverlay` is a dialog carrying
- *  `role="alert"`, so counting roles reports "clear" with a modal on screen. */
-export function isHubTourLaunchable(doc: Document): boolean {
-  if (hasSeenHubTour()) return false;
+export function markHubTourSeen(
+  outcome: HubTourOutcome,
+  mode: HubTourMode = "learn",
+  includedDaily = false,
+): void {
+  try {
+    window.localStorage.setItem(HUB_TOUR_STORAGE_KEYS[mode], outcome);
+    if (includedDaily) {
+      window.localStorage.setItem(HUB_TOUR_DAILY_STORAGE_KEY, outcome);
+    }
+  } catch {
+    // A disabled WebView store costs at most one replay next mount.
+  }
+}
+
+export function isHubTourLaunchable(
+  doc: Document,
+  mode: HubTourMode = "learn",
+): boolean {
+  if (hasSeenHubTour(mode)) return false;
   return doc.querySelectorAll('[aria-modal="true"]').length === 0;
 }

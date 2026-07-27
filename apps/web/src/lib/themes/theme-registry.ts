@@ -143,6 +143,7 @@ export type ThemeAssetKey =
   | "shared.mission-avatar"
   | "shared.close"
   | "shared.close-candy"
+  | "shared.tour-help"
   | "shared.mission-panel"
   | "shared.trophy-epic"
   | "shared.feedback-sad"
@@ -538,6 +539,15 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "shared.close": {
         default: "/art/screen-mission/close-icon",
         usedIn: ["Arena", "Exercises", "Daily", "Peones", "UI", "↳ components/arena/arena-end-state.tsx", "↳ components/arena/promotion-overlay.tsx", "↳ components/arena/soft-gate-sheet.tsx", "↳ components/arena/victory-popup-shell.tsx", "↳ +8 more"],
+      },
+      "shared.tour-help": {
+        default: "/art/hub-icns/pregunta-icon",
+        usedIn: [
+          "Learn Hub — replay mini-tour",
+          "Play Hub — replay mini-tour",
+          "↳ components/hub/challenge-card.tsx",
+          "↳ components/kingdom/kingdom-card.tsx",
+        ],
       },
       "shared.mission-panel": {
         default: "/art/screen-mission/panel-mision-icon",
@@ -1097,6 +1107,7 @@ const SHARED_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "shared.mission-adorno",
   "shared.mission-avatar",
   "shared.close",
+  "shared.tour-help",
   "shared.mission-panel",
   "shared.trophy-epic",
   "shared.feedback-sad",

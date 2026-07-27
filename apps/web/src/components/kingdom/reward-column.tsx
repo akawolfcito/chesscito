@@ -20,6 +20,8 @@ export type RewardTile = {
 type Props = {
   tiles: RewardTile[];
   className?: string;
+  /** Optional tile that the mini-tour spotlights. */
+  tourTargetId?: RewardTileId;
   /** Compact variant — smaller tiles (48px) and mini-labels (0.55rem)
    *  with a tighter gap. Same DOM, opt-in via class modifier so the
    *  default rail keeps its current spacing. */
@@ -38,7 +40,12 @@ function isPieceTile(id: RewardTileId): id is (typeof PIECE_TILE_IDS)[number] {
 /** Vertical reward stack rendered on the Hub left edge. Adventure primitive
  *  showing reward tiles (claimable / progress / locked). Tiles are presentational buttons —
  *  copy + aria-labels live in `editorial.ts.REWARD_COPY` (single-source). */
-export function RewardColumn({ tiles, className = "", compact = false }: Props) {
+export function RewardColumn({
+  tiles,
+  className = "",
+  compact = false,
+  tourTargetId,
+}: Props) {
   if (tiles.length === 0) {
     return null;
   }
@@ -54,7 +61,12 @@ export function RewardColumn({ tiles, className = "", compact = false }: Props) 
   return (
     <div className={wrapperClass}>
       {tiles.map((tile) => (
-        <RewardTileButton key={tile.id} tile={tile} compact={compact} />
+        <RewardTileButton
+          key={tile.id}
+          tile={tile}
+          compact={compact}
+          tourTarget={tile.id === tourTargetId ? tile.id : undefined}
+        />
       ))}
     </div>
   );
@@ -63,9 +75,11 @@ export function RewardColumn({ tiles, className = "", compact = false }: Props) 
 function RewardTileButton({
   tile,
   compact,
+  tourTarget,
 }: {
   tile: RewardTile;
   compact: boolean;
+  tourTarget?: RewardTileId;
 }) {
   const tReward = useTranslations("REWARD_COPY");
   const tPieces = useTranslations("PIECE_LABELS");
@@ -91,6 +105,7 @@ function RewardTileButton({
       onClick={tile.onTap}
       aria-label={tReward(`${tile.id}.ariaLabel`, { state: ariaState })}
       className={classes}
+      data-tour-target={tourTarget}
     >
       <span className="reward-tile-label">{label}</span>
       {isPieceTile(tile.id) ? (

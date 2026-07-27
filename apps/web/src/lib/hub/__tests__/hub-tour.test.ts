@@ -1,8 +1,11 @@
-// apps/web/src/lib/hub/__tests__/hub-tour.test.ts
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+
 import {
-  HUB_TOUR_STORAGE_KEY,
-  buildHubTourSteps,
+  HUB_TOUR_DAILY_STORAGE_KEY,
+  HUB_TOUR_STORAGE_KEYS,
+  buildLearnHubTourSteps,
+  buildPlayHubTourSteps,
+  hasSeenDailyTour,
   hasSeenHubTour,
   isHubTourLaunchable,
   markHubTourSeen,
@@ -10,98 +13,96 @@ import {
 
 const FRESH = { dailyDone: false, streak: 0, hasSeasonPass: false };
 
-describe("buildHubTourSteps", () => {
-  it("teaches the free ritual, then sells the commitment — and stops there", () => {
-    expect(buildHubTourSteps(FRESH).map((step) => step.id)).toEqual([
+describe("tour itineraries", () => {
+  it("teaches LEARN as Daily → Challenge → Rook", () => {
+    expect(buildLearnHubTourSteps(FRESH).map((step) => step.id)).toEqual([
       "daily",
       "challenge",
+      "rook",
     ]);
   });
 
-  it("never spends a step on Start Focus — the biggest button on the hub needs no panel", () => {
-    const targets = buildHubTourSteps(FRESH).map((step) => step.target);
-    expect(targets).not.toContain("start-focus");
+  it("removes only the shared Daily step after another hub introduced it", () => {
+    expect(
+      buildLearnHubTourSteps({ ...FRESH, includeDaily: false }).map(
+        (step) => step.id,
+      ),
+    ).toEqual(["challenge", "rook"]);
   });
 
-  it("invites a fresh profile to START a streak", () => {
-    const [daily] = buildHubTourSteps(FRESH);
-    expect(daily.bodyKey).toBe("dailyStart");
+  it("adapts LEARN copy to progress and ownership", () => {
+    const veteran = buildLearnHubTourSteps({
+      dailyDone: true,
+      streak: 12,
+      hasSeasonPass: true,
+    });
+    expect(veteran[0]?.bodyKey).toBe("dailyDone");
+    expect(veteran[1]?.bodyKey).toBe("challengeEnrolled");
   });
 
-  it("invites a veteran mid-streak to KEEP it, never to start one", () => {
-    const [daily] = buildHubTourSteps({ ...FRESH, streak: 12 });
-    expect(daily.bodyKey).toBe("dailyKeep");
+  it("teaches PLAY as Daily → PRO → Play when PRO truth is known", () => {
+    expect(
+      buildPlayHubTourSteps({
+        dailyDone: false,
+        streak: 0,
+        proStatus: "inactive",
+      }).map((step) => step.id),
+    ).toEqual(["daily", "pro", "play"]);
   });
 
-  it("points a solved daily at tomorrow instead of re-selling it", () => {
-    const [daily] = buildHubTourSteps({ ...FRESH, dailyDone: true, streak: 3 });
-    expect(daily.bodyKey).toBe("dailyDone");
+  it("still narrates the visible PRO strip while entitlement is unknown", () => {
+    expect(
+      buildPlayHubTourSteps({
+        dailyDone: false,
+        streak: 0,
+        proStatus: "unknown",
+      }).map((step) => step.id),
+    ).toEqual(["daily", "pro", "play"]);
   });
 
-  it("offers the challenge to a player without the pass", () => {
-    const [, challenge] = buildHubTourSteps(FRESH);
-    expect(challenge.bodyKey).toBe("challengeJoin");
-  });
-
-  it("never re-sells the pass to a player who already bought it", () => {
-    const [, challenge] = buildHubTourSteps({ ...FRESH, hasSeasonPass: true });
-    expect(challenge.bodyKey).toBe("challengeEnrolled");
-  });
-
-  it("names a DOM target for every step so the spotlight can measure it", () => {
-    expect(buildHubTourSteps(FRESH).map((step) => step.target)).toEqual([
-      "daily",
-      "challenge",
-    ]);
-  });
-});
-
-describe("hub tour persistence", () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-  });
-
-  it("treats a player who never finished the tour as not-seen", () => {
-    expect(hasSeenHubTour()).toBe(false);
-  });
-
-  it("records a completed tour under the versioned key", () => {
-    markHubTourSeen("completed");
-    expect(hasSeenHubTour()).toBe(true);
-    expect(window.localStorage.getItem(HUB_TOUR_STORAGE_KEY)).toBe("completed");
-  });
-
-  it("treats a skip as a decision, not a postponement", () => {
-    markHubTourSeen("skipped");
-    expect(hasSeenHubTour()).toBe(true);
-    expect(window.localStorage.getItem(HUB_TOUR_STORAGE_KEY)).toBe("skipped");
-  });
-
-  it("never touches the splash key — two meanings in one key rot", () => {
-    markHubTourSeen("completed");
-    expect(window.localStorage.getItem("chesscito:onboarded")).toBeNull();
+  it("never re-sells PRO to an active subscriber", () => {
+    const proStep = buildPlayHubTourSteps({
+      dailyDone: false,
+      streak: 0,
+      proStatus: "active",
+    }).find((step) => step.id === "pro");
+    expect(proStep?.bodyKey).toBe("proActive");
   });
 });
 
-describe("isHubTourLaunchable", () => {
+describe("shared tour persistence", () => {
   beforeEach(() => {
     window.localStorage.clear();
     document.body.innerHTML = "";
   });
 
-  it("launches on a hub with no modal on screen", () => {
-    expect(isHubTourLaunchable(document)).toBe(true);
+  it("stores each hub independently and Daily only when it was included", () => {
+    markHubTourSeen("completed", "learn", true);
+    expect(hasSeenHubTour("learn")).toBe(true);
+    expect(hasSeenHubTour("play")).toBe(false);
+    expect(hasSeenDailyTour()).toBe(true);
+    expect(window.localStorage.getItem(HUB_TOUR_DAILY_STORAGE_KEY)).toBe(
+      "completed",
+    );
+
+    markHubTourSeen("skipped", "play", false);
+    expect(window.localStorage.getItem(HUB_TOUR_STORAGE_KEYS.play)).toBe(
+      "skipped",
+    );
   });
 
-  it("yields to any open modal — the tour is a gate, not a competitor", () => {
-    // Counted on `[aria-modal="true"]`, never on `role="dialog"`:
-    // LabyrinthCompleteOverlay is a dialog with `role="alert"`.
-    document.body.innerHTML = '<div aria-modal="true">Season Pass</div>';
-    expect(isHubTourLaunchable(document)).toBe(false);
+  it("never touches the unrelated splash onboarding key", () => {
+    markHubTourSeen("completed", "learn", true);
+    expect(window.localStorage.getItem("chesscito:onboarded")).toBeNull();
   });
 
-  it("does not relaunch for a player who already saw it", () => {
-    markHubTourSeen("skipped");
-    expect(isHubTourLaunchable(document)).toBe(false);
+  it("yields to another modal and to an already-seen mode", () => {
+    document.body.innerHTML = '<div aria-modal="true">Sheet</div>';
+    expect(isHubTourLaunchable(document, "play")).toBe(false);
+
+    document.body.innerHTML = "";
+    expect(isHubTourLaunchable(document, "play")).toBe(true);
+    markHubTourSeen("completed", "play");
+    expect(isHubTourLaunchable(document, "play")).toBe(false);
   });
 });

@@ -57,7 +57,7 @@ import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import { useHubData } from "@/components/hub/use-hub-data";
 import { HubLiteScaffold } from "@/components/hub/hub-lite-scaffold";
 import { useHubTour } from "@/components/hub/use-hub-tour";
-import { buildHubTourSteps } from "@/lib/hub/hub-tour";
+import { buildLearnHubTourSteps } from "@/lib/hub/hub-tour";
 const HubTour = dynamic(
   () => import("@/components/hub/hub-tour").then((m) => m.HubTour),
   { ssr: false },
@@ -344,7 +344,6 @@ export function LearnHubClient({
       },
     }));
   }, [badgesClaimed, completedPerPiece, router]);
-
   // The shields chip is the home for shop conversion (the user's primary
   // monetization surface). Always visible whether the count is 0 or N —
   // a depleted "Shield ×0" is the strongest replenishment cue.
@@ -373,21 +372,24 @@ export function LearnHubClient({
   // the product decision: a player who already holds the pass is never sold it
   // again, and one who already solved today's daily is pointed at tomorrow.
   const hubTour = useHubTour({
+    mode: "learn",
     enabled: CHESSCITO_LITE_MODE,
     ready: !liteFocusPassport.isLoading && !seasonPassStatus.loading,
   });
   const hubTourSteps = useMemo(
     () =>
-      buildHubTourSteps({
+      buildLearnHubTourSteps({
         dailyDone: liteFocusPassport.todayDone,
         // A veteran mid-streak is invited to KEEP it, never to "start" one.
         streak: liteFocusPassport.streak,
         hasSeasonPass: seasonPassStatus.active,
+        includeDaily: hubTour.includeDaily,
       }),
     [
       liteFocusPassport.todayDone,
       liteFocusPassport.streak,
       seasonPassStatus.active,
+      hubTour.includeDaily,
     ],
   );
   // The pass's terms come from the same meta the ChallengeCard renders
@@ -575,6 +577,7 @@ export function LearnHubClient({
       )}
       {CHESSCITO_LITE_MODE && hubTour.open ? (
         <HubTour
+          mode="learn"
           steps={hubTourSteps}
           challenge={hubTourChallenge}
           onFinish={hubTour.finish}

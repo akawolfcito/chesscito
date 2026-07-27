@@ -217,9 +217,13 @@ export function ChallengeCard({
                 onClick={onReplayTour}
                 aria-label={t("replayTourLabel")}
               >
-                <span className="challenge-card-passport-help-dot" aria-hidden="true">
-                  ?
-                </span>
+                <ThemeAssetPicture
+                  slot="shared.tour-help"
+                  pictureClassName="challenge-card-passport-help-icon"
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                />
               </button>
             ) : null}
           </div>

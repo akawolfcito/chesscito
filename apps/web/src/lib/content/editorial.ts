@@ -3542,7 +3542,7 @@ export const HUB_LITE_COPY = {
   trainingPathLabel: "Training Path",
 } as const;
 
-/** The 2-step hub tour: the free ritual, then the 21-day commitment.
+/** Shared LEARN / PLAY mini-tour.
  *
  *  Every body has a variant for each way the player's state could make it a
  *  lie — they already solved today's daily, they are mid-streak, they already
@@ -3552,6 +3552,7 @@ export const HUB_LITE_COPY = {
  *  would go red. See docs/specs/2026-07-12-hub-tour-daily-first-spec.md. */
 export const HUB_TOUR_COPY = {
   rootAriaLabel: "Hub tour",
+  closeAriaLabel: "Close tour",
   dailyTitleStart: "Start your streak today",
   dailyTitle: "Daily Tactic",
   dailyStart:
@@ -3586,11 +3587,27 @@ export const HUB_TOUR_COPY = {
   challengePrice: "{price} · one-time payment",
   challengeEnrolled:
     "Track your focus days and complete your {days}-day commitment.",
+  rookTitle: "Start with the Rook",
+  rookStart:
+    "The Rook is your first Training Path lesson. Start here whenever you are ready.",
+  proTitle: "Meet Chesscito PRO",
+  proTitleActive: "Your Chesscito PRO",
+  proJoin:
+    "Unlock the Season Pass and unlimited Coach support from this purple strip.",
+  proActive:
+    "Your Season Pass and unlimited Coach access live here whenever you need them.",
+  proPrice: "{price} · subscription",
+  playTitle: "Ready to Play",
+  playStart:
+    "This highlighted tile is your quickest path into a full chess match.",
   /** Alt text for the headline art — the art bakes the words in, so this is what
    *  a screen reader (and any non-EN locale) actually gets. */
   challengeTitleAlt: "21-Day Mind Challenge",
   challengeHeroAlt:
     "Chesscito's mascot beside a 21-day calendar and a Season Pass chest",
+  tapToContinue: "Tap to Continue",
+  tapToExplore: "Tap to Explore",
+  /** Legacy copy keys kept for locale/type compatibility; no button renders. */
   next: "Next",
   done: "Got it",
   stepCounter: "{current} of {total}",
@@ -3659,6 +3676,7 @@ export const PLAY_HUB_COPY = {
   coachReviewLabel: "Coach Review",
   rewardsLabel: "Rewards",
   playPathLabel: "PLAY PATH",
+  replayTourAriaLabel: "Replay Play Hub tour",
 } as const;
 
 export const PLAY_TACTICS_COPY = {

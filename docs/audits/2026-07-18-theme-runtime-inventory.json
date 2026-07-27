@@ -1,37 +1,37 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 177,
+  "totalSlots": 178,
   "categoryCounts": {
-    "A": 164,
+    "A": 166,
     "B": 0,
     "C": 0,
     "D": 0,
     "E": 0,
-    "F": 13,
+    "F": 12,
     "G": 0
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 81,
+    "B": 82,
     "C": 26,
     "D": 38,
     "E": 19,
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 165,
-  "fullyConnectedSlots": 164,
+  "resolverSlots": 167,
+  "fullyConnectedSlots": 166,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
-  "noActiveConsumerSlots": 6,
-  "connectedSlots": 164,
-  "excludedSlots": 13,
+  "noActiveConsumerSlots": 5,
+  "connectedSlots": 166,
+  "excludedSlots": 12,
   "exceptions": [],
   "literalDiff": {
-    "registeredBasenames": 207,
+    "registeredBasenames": 208,
     "discoveredBasenames": 16,
     "unregisteredExistingAssets": []
   },
@@ -187,7 +187,7 @@
         "src/components/hub/play-hub-scaffold.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 3,
+      "consumerCount": 4,
       "consumers": [
         {
           "file": "src/components/exercises/persistent-dock.tsx",
@@ -202,6 +202,17 @@
         },
         {
           "file": "src/components/hub/hub-scaffold.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/hub/hub-tour.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -761,8 +772,19 @@
         "src/components/kingdom/kingdom-card.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
+        {
+          "file": "src/components/hub/hub-tour.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/components/kingdom/kingdom-card.tsx",
           "occurrences": [],
@@ -806,8 +828,19 @@
         "src/components/kingdom/kingdom-card.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
+        {
+          "file": "src/components/hub/hub-tour.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/components/kingdom/kingdom-card.tsx",
           "occurrences": [],
@@ -851,8 +884,19 @@
         "src/components/kingdom/kingdom-card.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
+        {
+          "file": "src/components/hub/hub-tour.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/components/kingdom/kingdom-card.tsx",
           "occurrences": [],
@@ -3165,22 +3209,34 @@
       ],
       "deprecated": null,
       "initialCategory": "B",
-      "category": "F",
+      "category": "A",
       "documentedFiles": [
         "src/components/redesign/candy-icon.tsx"
       ],
-      "currentConsumerState": "none",
-      "consumerCount": 0,
-      "consumers": [],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/hub/hub-tour.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
       "patterns": [],
-      "usesResolver": false,
+      "usesResolver": true,
       "usesHardcodedPath": false,
       "usesImg": false,
       "usesPicture": false,
       "usesCssBackground": false,
       "usesSharedMap": false,
       "buildsPathDynamically": false,
-      "noActiveConsumer": true
+      "noActiveConsumer": false
     },
     {
       "slotId": "shared.close",
@@ -3339,6 +3395,65 @@
         },
         {
           "file": "src/components/ui/contextual-header.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "shared.tour-help",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/hub-icns/pregunta-icon"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Learn Hub — replay mini-tour",
+        "Play Hub — replay mini-tour",
+        "↳ components/hub/challenge-card.tsx",
+        "↳ components/kingdom/kingdom-card.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/hub/challenge-card.tsx",
+        "src/components/kingdom/kingdom-card.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 2,
+      "consumers": [
+        {
+          "file": "src/components/hub/challenge-card.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/kingdom/kingdom-card.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -9536,7 +9651,7 @@
         "src/components/hub/mastery-tile.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 23,
+      "consumerCount": 24,
       "consumers": [
         {
           "file": "src/app/api/og/exercise/route.tsx",
@@ -9735,6 +9850,17 @@
           "usesCssBackground": false,
           "usesSharedMap": false,
           "buildsPathDynamically": true
+        },
+        {
+          "file": "src/components/hub/hub-tour.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
         },
         {
           "file": "src/components/identity/player-avatar.tsx",

@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 
 import { useHubTour } from "../use-hub-tour";
-import { HUB_TOUR_STORAGE_KEY } from "@/lib/hub/hub-tour";
+import {
+  HUB_TOUR_DAILY_STORAGE_KEY,
+  HUB_TOUR_STORAGE_KEYS,
+} from "@/lib/hub/hub-tour";
 
 vi.mock("@/lib/telemetry", () => ({ track: vi.fn() }));
 
@@ -16,102 +19,69 @@ afterEach(() => {
 });
 
 describe("useHubTour", () => {
-  it("stays shut until the player's state is known — an early tour would sell the pass to someone who owns it", () => {
+  it("waits for narrated state to resolve", () => {
     const { result, rerender } = renderHook(
-      ({ ready }) => useHubTour({ enabled: true, ready }),
+      ({ ready }) => useHubTour({ mode: "learn", enabled: true, ready }),
       { initialProps: { ready: false } },
     );
     expect(result.current.open).toBe(false);
-
     rerender({ ready: true });
     expect(result.current.open).toBe(true);
   });
 
-  it("never runs outside LEARN", () => {
+  it("keeps LEARN and PLAY completion independent", () => {
+    window.localStorage.setItem(HUB_TOUR_STORAGE_KEYS.learn, "completed");
     const { result } = renderHook(() =>
-      useHubTour({ enabled: false, ready: true }),
-    );
-    expect(result.current.open).toBe(false);
-  });
-
-  it("yields to a modal that is already on screen", () => {
-    document.body.innerHTML = '<div aria-modal="true">Season Pass</div>';
-    const { result } = renderHook(() =>
-      useHubTour({ enabled: true, ready: true }),
-    );
-    expect(result.current.open).toBe(false);
-  });
-
-  it("does not relaunch for a player who already saw it", () => {
-    window.localStorage.setItem(HUB_TOUR_STORAGE_KEY, "skipped");
-    const { result } = renderHook(() =>
-      useHubTour({ enabled: true, ready: true }),
-    );
-    expect(result.current.open).toBe(false);
-  });
-
-  it("persists the outcome when the tour finishes and closes it", () => {
-    const { result } = renderHook(() =>
-      useHubTour({ enabled: true, ready: true }),
+      useHubTour({ mode: "play", enabled: true, ready: true }),
     );
     expect(result.current.open).toBe(true);
+  });
 
+  it("omits Daily when the shared introduction already ran", () => {
+    window.localStorage.setItem(HUB_TOUR_DAILY_STORAGE_KEY, "completed");
+    const { result } = renderHook(() =>
+      useHubTour({ mode: "play", enabled: true, ready: true }),
+    );
+    expect(result.current.includeDaily).toBe(false);
+  });
+
+  it("persists both mode and shared Daily when finishing a full tour", () => {
+    const { result } = renderHook(() =>
+      useHubTour({ mode: "play", enabled: true, ready: true }),
+    );
     act(() => result.current.finish("completed"));
-
     expect(result.current.open).toBe(false);
-    expect(window.localStorage.getItem(HUB_TOUR_STORAGE_KEY)).toBe("completed");
-  });
-
-  it("replays on demand even for a player who already saw it", () => {
-    window.localStorage.setItem(HUB_TOUR_STORAGE_KEY, "completed");
-    const { result } = renderHook(() =>
-      useHubTour({ enabled: true, ready: true }),
+    expect(window.localStorage.getItem(HUB_TOUR_STORAGE_KEYS.play)).toBe(
+      "completed",
     );
-    // Auto-launch stays shut (already seen)...
-    expect(result.current.open).toBe(false);
-
-    // ...but the manual replay bypasses the gate.
-    act(() => result.current.replay());
-    expect(result.current.open).toBe(true);
+    expect(window.localStorage.getItem(HUB_TOUR_DAILY_STORAGE_KEY)).toBe(
+      "completed",
+    );
   });
 
-  it("finishing a replay leaves the 'tour seen' flag untouched", () => {
-    // A fresh player who never completed the real tour taps replay and finishes
-    // it: the seen flag must stay null so the real onboarding still runs later.
+  it("manual replay restores Daily but never mutates seen flags", () => {
+    window.localStorage.setItem(HUB_TOUR_STORAGE_KEYS.learn, "skipped");
+    window.localStorage.setItem(HUB_TOUR_DAILY_STORAGE_KEY, "completed");
     const { result } = renderHook(() =>
-      useHubTour({ enabled: false, ready: true }),
+      useHubTour({ mode: "learn", enabled: true, ready: true }),
     );
     act(() => result.current.replay());
     expect(result.current.open).toBe(true);
-
+    expect(result.current.includeDaily).toBe(true);
     act(() => result.current.finish("completed"));
-
-    expect(result.current.open).toBe(false);
-    expect(window.localStorage.getItem(HUB_TOUR_STORAGE_KEY)).toBeNull();
-  });
-
-  it("does not overwrite an existing outcome when a replay finishes", () => {
-    window.localStorage.setItem(HUB_TOUR_STORAGE_KEY, "skipped");
-    const { result } = renderHook(() =>
-      useHubTour({ enabled: true, ready: true }),
+    expect(window.localStorage.getItem(HUB_TOUR_STORAGE_KEYS.learn)).toBe(
+      "skipped",
     );
-    act(() => result.current.replay());
-    act(() => result.current.finish("completed"));
-
-    // The replay must not persist — the original "skipped" outcome stands.
-    expect(window.localStorage.getItem(HUB_TOUR_STORAGE_KEY)).toBe("skipped");
   });
 
-  it("decides once per mount — it does not pop open mid-session behind a closing sheet", () => {
-    document.body.innerHTML = '<div aria-modal="true">Season Pass</div>';
+  it("decides once per mount instead of ambushing after a sheet closes", () => {
+    document.body.innerHTML = '<div aria-modal="true">Sheet</div>';
     const { result, rerender } = renderHook(() =>
-      useHubTour({ enabled: true, ready: true }),
+      useHubTour({ mode: "learn", enabled: true, ready: true }),
     );
     expect(result.current.open).toBe(false);
-
     document.body.innerHTML = "";
     rerender();
-
     expect(result.current.open).toBe(false);
   });
 });

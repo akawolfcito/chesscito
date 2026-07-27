@@ -1933,6 +1933,7 @@ const messages = {
   HUB_TOUR_COPY: {
     ...en.HUB_TOUR_COPY,
     rootAriaLabel: "Recorrido del hub",
+    closeAriaLabel: "Cerrar recorrido",
     dailyTitleStart: "Empieza hoy tu racha",
     dailyTitle: "Táctica diaria",
     dailyStart:
@@ -1953,11 +1954,24 @@ const messages = {
     challengePrice: "{price} · pago único",
     challengeEnrolled:
       "Sigue tus días de foco y completa tu compromiso de {days} días.",
+    rookTitle: "Empieza con la Torre",
+    rookStart:
+      "La Torre es tu primera lección de la Ruta de Entrenamiento. Empieza aquí cuando estés listo.",
+    proTitle: "Conoce Chesscito PRO",
+    proTitleActive: "Tu Chesscito PRO",
+    proJoin:
+      "Desbloquea el Season Pass y Coach ilimitado desde esta franja morada.",
+    proActive:
+      "Tu Season Pass y el acceso ilimitado a Coach viven aquí cuando los necesites.",
+    proPrice: "{price} · suscripción",
+    playTitle: "Listo para jugar",
+    playStart:
+      "Este botón iluminado es tu acceso más rápido a una partida completa de ajedrez.",
     challengeTitleAlt: "Reto Mental de 21 días",
     challengeHeroAlt:
       "La mascota de Chesscito junto a un calendario de 21 días y un cofre del Season Pass",
-    next: "Siguiente",
-    done: "Entendido",
+    tapToContinue: "Toca para continuar",
+    tapToExplore: "Toca para explorar",
     stepCounter: "{current} de {total}",
   },
   SETTINGS_STUB_COPY: {
@@ -1998,6 +2012,7 @@ const messages = {
     coachReviewLabel: "Revisión Coach",
     rewardsLabel: "Recompensas",
     playPathLabel: "RUTA DE JUEGO",
+    replayTourAriaLabel: "Repetir recorrido del Hub Play",
   },
   PLAY_TACTICS_COPY: {
     tileLabel: "Warm-up",

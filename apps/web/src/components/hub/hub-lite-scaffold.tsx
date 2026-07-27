@@ -215,6 +215,7 @@ export function HubLiteScaffold({
           tiles={rewardTiles}
           className="hub-lite-training-path-tiles"
           compact
+          tourTargetId="rook"
         />
       </section>
     </main>

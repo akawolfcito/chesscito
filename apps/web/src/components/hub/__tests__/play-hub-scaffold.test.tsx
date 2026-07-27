@@ -6,8 +6,16 @@ import { PlayHubScaffold } from "../play-hub-scaffold";
 import { ThemeVariantOverride } from "@/lib/themes/theme-variant-provider";
 
 vi.mock("@/components/kingdom/kingdom-card", () => ({
-  KingdomCard: ({ pro }: { pro: { active: boolean } }) => (
-    <div data-testid="kingdom-card" data-pro={pro.active} />
+  KingdomCard: ({
+    pro,
+    onReplayTour,
+  }: {
+    pro: { active: boolean };
+    onReplayTour?: () => void;
+  }) => (
+    <div data-testid="kingdom-card" data-pro={pro.active}>
+      {onReplayTour ? <button onClick={onReplayTour}>Replay Play Hub tour</button> : null}
+    </div>
   ),
 }));
 vi.mock("@/components/hub/app-mode-switch", () => ({
@@ -34,6 +42,7 @@ vi.mock("@/components/hub/hub-action-tile", () => ({
     badge,
     iconSlot,
     onClick,
+    tourTarget,
   }: {
     label: string;
     ariaLabel: string;
@@ -41,12 +50,14 @@ vi.mock("@/components/hub/hub-action-tile", () => ({
     badge?: React.ReactNode;
     iconSlot?: string;
     onClick?: () => void;
+    tourTarget?: string;
   }) => (
     <button
       aria-label={ariaLabel}
       className={className}
       data-icon-slot={iconSlot}
       onClick={onClick}
+      data-tour-target={tourTarget}
     >
       {label}
       {badge}
@@ -173,6 +184,28 @@ describe("PlayHubScaffold", () => {
     for (const label of ["Play", "Warm-up", "Coach", "Shop"]) {
       expect(screen.getByText(label)).not.toHaveClass("candy-tray-pill");
     }
+  });
+
+  it("marks only Play as the primary PLAY PATH action", () => {
+    render(<PlayHubScaffold {...props} />);
+
+    const path = screen.getByRole("region", { name: "PLAY PATH" });
+    const [play, ...secondaryActions] = within(path).getAllByRole("button");
+    expect(play).toHaveClass("play-hub-path-tile--primary");
+    expect(play).toHaveAttribute("data-tour-target", "play");
+    for (const action of secondaryActions) {
+      expect(action).not.toHaveClass("play-hub-path-tile--primary");
+    }
+  });
+
+  it("exposes stable Daily and replay targets for the PLAY mini-tour", async () => {
+    const onReplayTour = vi.fn();
+    const { container } = render(
+      <PlayHubScaffold {...props} onReplayTour={onReplayTour} />,
+    );
+    expect(container.querySelector('[data-tour-target="daily"]')).not.toBeNull();
+    await userEvent.click(screen.getByText("Replay Play Hub tour"));
+    expect(onReplayTour).toHaveBeenCalledTimes(1);
   });
 
   // The tile no longer guards a paywall, so it must not wear one. A badge that
