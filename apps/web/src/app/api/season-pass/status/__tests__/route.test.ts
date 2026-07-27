@@ -1,15 +1,44 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const mockCountFocusDays = vi.hoisted(() => vi.fn());
+const mockEnsureInit = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/season-pass/focus-ledger-init", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/season-pass/focus-ledger-init")>();
+  return {
+    ...actual,
+    countFocusDays: mockCountFocusDays,
+    ensureFocusLedgerInitialized: mockEnsureInit,
+  };
+});
+
 const mockRedisGet = vi.hoisted(() => vi.fn());
 const mockIsProActive = vi.hoisted(() => vi.fn());
+const configuredSeason = vi.hoisted(() => ({ id: "21day-mind-challenge-2026-q3" }));
 vi.mock("@upstash/redis", () => ({
   Redis: { fromEnv: vi.fn(() => ({ get: mockRedisGet })) },
 }));
+
+// The configured season is a moving target: a rollover edits it while purchased
+// passes are still alive. Tests that care about attribution set it explicitly.
+vi.mock("@/lib/payments/rail-config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/payments/rail-config")>();
+  return {
+    ...actual,
+    getSeasonPass: (sku: "lite_season_pass_21") => ({
+      ...actual.getSeasonPass(sku),
+      seasonId: configuredSeason.id,
+    }),
+  };
+});
 
 vi.mock("@/lib/supabase/server", () => ({ getSupabaseServer: vi.fn() }));
 vi.mock("@/lib/pro/is-active", () => ({ isProActive: mockIsProActive }));
 vi.mock("@/lib/server/logger", () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  // Never the raw wallet in a log line, not even in tests.
+  hashWallet: (w: string) => `hash:${w.slice(0, 6)}`,
 }));
 
 import { GET } from "../route";
@@ -20,11 +49,18 @@ const WALLET = "0xaaaabbbbccccddddeeeeffff0000111122223333";
 const EXPIRES_FUTURE = new Date(Date.now() + 20 * 86_400_000).toISOString();
 const EXPIRES_PAST = new Date(Date.now() - 1000).toISOString();
 
-function makeRequest(wallet?: string) {
+function makeRequest(wallet?: string, extraQuery = "") {
   const url = wallet
-    ? `http://localhost/api/season-pass/status?wallet=${wallet}`
+    ? `http://localhost/api/season-pass/status?wallet=${wallet}${extraQuery}`
     : `http://localhost/api/season-pass/status`;
   return new Request(url);
+}
+
+/** Redis serves two different keys here: the entitlement and the kill switch. */
+function redisReturning(values: { pass?: string | null; gate?: string | null }) {
+  mockRedisGet.mockImplementation(async (key: string) =>
+    key === "focus-days-ledger:enabled" ? (values.gate ?? null) : (values.pass ?? null),
+  );
 }
 
 function buildDbMock(row: Record<string, unknown> | null, error: unknown = null) {
@@ -39,6 +75,10 @@ function buildDbMock(row: Record<string, unknown> | null, error: unknown = null)
 }
 
 beforeEach(() => {
+  configuredSeason.id = "21day-mind-challenge-2026-q3";
+  vi.unstubAllEnvs();
+  mockCountFocusDays.mockReset().mockResolvedValue(0);
+  mockEnsureInit.mockReset().mockResolvedValue({ status: "skipped", seededRows: 0 });
   mockRedisGet.mockReset().mockResolvedValue(null);
   mockIsProActive.mockReset().mockResolvedValue({ active: false, expiresAt: null });
   mockedSupabase.mockReset();
@@ -69,7 +109,18 @@ describe("redis fast path", () => {
     expect(json.expiresAt).toBe(EXPIRES_FUTURE);
     expect(json.source).toBe("season_pass");
     expect(json.storageSource).toBe("redis");
-    expect(mockedSupabase).not.toHaveBeenCalled();
+  });
+
+  it("still authorizes from Redis when the ledger is down (access never degrades)", async () => {
+    mockRedisGet.mockResolvedValue(EXPIRES_FUTURE);
+    mockedSupabase.mockReturnValue(null as never);
+
+    const res = await GET(makeRequest(WALLET));
+    const json = await res.json();
+    expect(res.status).toBe(200);
+    expect(json.active).toBe(true);
+    expect(json.source).toBe("season_pass");
+    expect(json.storageSource).toBe("redis");
   });
 
   it("expired redis entry → falls through to db", async () => {
@@ -143,6 +194,206 @@ describe("supabase fallback", () => {
   });
 });
 
+describe("canonical seasonId", () => {
+  const ROW_SEASON = "21day-mind-challenge-2026-q3";
+  const activeRow = {
+    expires_at: EXPIRES_FUTURE,
+    season_id: ROW_SEASON,
+    supporter_status: "challenger",
+    shields_credited: 3,
+  };
+
+  // AC30 — the fast path must not invent a season. Redis caches the
+  // entitlement; it does not know which season was purchased.
+  it("uses the purchased row's season even when Redis served the entitlement and the config rolled", async () => {
+    configuredSeason.id = "21day-mind-challenge-2026-q4";
+    mockRedisGet.mockResolvedValue(EXPIRES_FUTURE);
+    mockedSupabase.mockReturnValue(buildDbMock(activeRow).supabase);
+
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json.active).toBe(true);
+    expect(json.seasonId).toBe(ROW_SEASON);
+  });
+
+  // AC25 — same rule on the plain DB path: the config never overwrites the row.
+  it("uses the purchased row's season on the db path with a rolled config", async () => {
+    configuredSeason.id = "21day-mind-challenge-2026-q4";
+    mockedSupabase.mockReturnValue(buildDbMock(activeRow).supabase);
+
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json.seasonId).toBe(ROW_SEASON);
+  });
+
+  // AC26 — a buyer whose row could not be read keeps access and gets NO season.
+  // Substituting the configured literal here is how progress lands under the
+  // wrong temporada after a rollover.
+  it("returns a null season for a buyer whose row could not be read", async () => {
+    configuredSeason.id = "21day-mind-challenge-2026-q4";
+    mockRedisGet.mockResolvedValue(EXPIRES_FUTURE);
+    mockedSupabase.mockReturnValue(null as never);
+
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json.active).toBe(true);
+    expect(json.seasonId).toBeNull();
+  });
+
+  it("returns a null season when no entitlement is active", async () => {
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json.active).toBe(false);
+    expect(json.seasonId).toBeNull();
+  });
+
+  it("gives PRO the configured season, not the row's", async () => {
+    configuredSeason.id = "21day-mind-challenge-2026-q4";
+    mockIsProActive.mockResolvedValue({
+      active: true,
+      expiresAt: Date.now() + 7 * 86_400_000,
+    });
+    mockedSupabase.mockReturnValue(buildDbMock(activeRow).supabase);
+
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json.source).toBe("pro");
+    expect(json.seasonId).toBe("21day-mind-challenge-2026-q4");
+  });
+});
+
+describe("focusDays slice", () => {
+  const ROW_SEASON = "21day-mind-challenge-2026-q3";
+  const activeRow = {
+    expires_at: EXPIRES_FUTURE,
+    season_id: ROW_SEASON,
+    supporter_status: "challenger",
+    shields_credited: 3,
+  };
+
+  function withActivePass() {
+    mockedSupabase.mockReturnValue(buildDbMock(activeRow).supabase);
+  }
+
+  it("is disabled by default, and reads nothing", async () => {
+    withActivePass();
+    const json = await (await GET(makeRequest(WALLET))).json();
+
+    expect(json.focusDays).toEqual({ status: "disabled" });
+    expect(mockCountFocusDays).not.toHaveBeenCalled();
+    expect(mockEnsureInit).not.toHaveBeenCalled();
+  });
+
+  it("reports progress once the env flag is on", async () => {
+    vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
+    withActivePass();
+    mockCountFocusDays.mockResolvedValue(5);
+
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json.focusDays).toEqual({
+      status: "ok",
+      completed: 5,
+      goal: 21,
+      seasonId: ROW_SEASON,
+    });
+  });
+
+  // AC27 wiring — the Redis override outranks the deployment default.
+  it("lets the Redis override turn it off without a redeploy", async () => {
+    vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
+    withActivePass();
+    redisReturning({ gate: "false" });
+
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json.focusDays).toEqual({ status: "disabled" });
+    expect(mockCountFocusDays).not.toHaveBeenCalled();
+  });
+
+  // AC26 — access from Redis, progress degraded. Not the same failure.
+  it("degrades to unavailable when the ledger is down but access is not", async () => {
+    vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
+    redisReturning({ pass: EXPIRES_FUTURE });
+    mockedSupabase.mockReturnValue(null as never);
+
+    const res = await GET(makeRequest(WALLET));
+    const json = await res.json();
+    expect(res.status).toBe(200);
+    expect(json.active).toBe(true);
+    expect(json.focusDays).toEqual({ status: "unavailable" });
+  });
+
+  it("degrades to unavailable when the count cannot be read", async () => {
+    vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
+    withActivePass();
+    mockCountFocusDays.mockResolvedValue(null);
+
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json.focusDays).toEqual({ status: "unavailable" });
+  });
+
+  it("carries no slice at all without an entitlement", async () => {
+    vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
+    const json = await (await GET(makeRequest(WALLET))).json();
+
+    expect(json.active).toBe(false);
+    expect(json.focusDays).toBeUndefined();
+    expect(mockCountFocusDays).not.toHaveBeenCalled();
+  });
+
+  it("hands the client's own report to the backfill", async () => {
+    vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
+    withActivePass();
+
+    await GET(makeRequest(WALLET, "&streak=4&lastCompletedDate=2026-07-27"));
+    expect(mockEnsureInit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        wallet: WALLET,
+        seasonId: ROW_SEASON,
+        report: { streak: 4, lastCompletedDate: "2026-07-27" },
+        goal: 21,
+      }),
+    );
+  });
+
+  it("backfills before counting, so the first load is not a zero", async () => {
+    vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
+    withActivePass();
+    const order: string[] = [];
+    mockEnsureInit.mockImplementation(async () => {
+      order.push("init");
+      return { status: "seeded", seededRows: 4 };
+    });
+    mockCountFocusDays.mockImplementation(async () => {
+      order.push("count");
+      return 4;
+    });
+
+    await GET(makeRequest(WALLET, "&streak=4&lastCompletedDate=2026-07-27"));
+    expect(order).toEqual(["init", "count"]);
+  });
+
+  it("never caches: the response initializes the ledger", async () => {
+    vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
+    withActivePass();
+    const res = await GET(makeRequest(WALLET));
+    expect(res.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("counts PRO progress against the configured season", async () => {
+    vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
+    configuredSeason.id = "21day-mind-challenge-2026-q4";
+    mockIsProActive.mockResolvedValue({
+      active: true,
+      expiresAt: Date.now() + 7 * 86_400_000,
+    });
+    mockedSupabase.mockReturnValue(buildDbMock(null).supabase);
+    mockCountFocusDays.mockResolvedValue(2);
+
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json.focusDays).toEqual({
+      status: "ok",
+      completed: 2,
+      goal: 21,
+      seasonId: "21day-mind-challenge-2026-q4",
+    });
+  });
+});
+
 describe("effective Training Pass", () => {
   it("returns active source=pro without requiring a Season Pass ledger", async () => {
     const proExpiresAt = Date.now() + 7 * 86_400_000;
@@ -156,6 +407,10 @@ describe("effective Training Pass", () => {
       source: "pro",
       seasonPassExpiresAt: null,
       proExpiresAt,
+      // PRO has no purchased row, so its season is the configured one — the
+      // only case where the config is the legitimate source.
+      seasonId: "21day-mind-challenge-2026-q3",
+      focusDays: { status: "disabled" },
     });
   });
 

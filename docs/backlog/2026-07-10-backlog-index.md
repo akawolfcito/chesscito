@@ -142,6 +142,18 @@ pero nadie lo llama).
 - `2026-06-17-isolate-dev-tools-into-separate-app.md`
 - `2026-06-26-exercises-sheet-open-slide-unification.md`
 
+### Fix: `verify-payment` no congela el `season_id` en el payload de Redis
+
+Abierto 2026-07-27, destapado por el spec `focus-days-ledger`. El fast path de
+`/api/season-pass/status` sirve `configuredPass.seasonId` (config, `route.ts:65`)
+mientras la rama de Supabase sirve `data.season_id` (fila comprada, `route.ts:122`):
+la misma wallet recibe dos temporadas según qué rama la atendió.
+
+Spec A **neutraliza** la divergencia resolviendo el `seasonId` en un punto canónico
+desde Supabase, pero **el payload de Redis sigue siendo incorrecto** y puede afectar
+a consumidores futuros durante un rollover de season. Hoy es inocuo: nada más
+consume el campo.
+
 ## 9. No scopeado
 
 Social login · gift-able PRO (`project_pro_growth_ideas_backlog`) · specs de Welcome Package y

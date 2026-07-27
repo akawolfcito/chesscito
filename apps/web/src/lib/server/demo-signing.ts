@@ -52,6 +52,25 @@ const scoreSaveIpLimiter = new Ratelimit({
   prefix: "rl:score:ip",
 });
 
+/** Per-wallet limit for POST /api/focus-day. Keyed by wallet, not IP: the
+ *  thing being protected is one wallet's ledger, and a household behind one
+ *  NAT is not abuse. A Focus Day is written once per day plus the odd retry,
+ *  so 10 per 10 minutes is orders of magnitude above real use and still caps
+ *  a loop. Idempotency does NOT depend on this — the UNIQUE guarantees it. */
+const MAX_FOCUS_DAY_REQUESTS_PER_WALLET = 10;
+
+const focusDayWalletLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(MAX_FOCUS_DAY_REQUESTS_PER_WALLET, "600s"),
+  prefix: "rl:focus-day:wallet",
+});
+
+/** Throws "Rate limit exceeded" on overflow; the route maps it to 429. */
+export async function enforceFocusDayRateLimit(wallet: string) {
+  const { success: ok } = await focusDayWalletLimiter.limit(wallet);
+  if (!ok) throw new Error("Rate limit exceeded");
+}
+
 function requireEnv(name: string) {
   const value = process.env[name];
 

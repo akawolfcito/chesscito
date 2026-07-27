@@ -21,6 +21,7 @@ describe("resolveEffectiveTrainingPass", () => {
       source: null,
       seasonPassExpiresAt: null,
       proExpiresAt: null,
+      seasonId: null,
     });
   });
 
@@ -46,6 +47,7 @@ describe("resolveEffectiveTrainingPass", () => {
       source: "pro",
       seasonPassExpiresAt: null,
       proExpiresAt: FUTURE_MS,
+      seasonId: null,
     });
   });
 
@@ -61,6 +63,7 @@ describe("resolveEffectiveTrainingPass", () => {
       source: "pro",
       seasonPassExpiresAt: FUTURE_ISO,
       proExpiresAt: FUTURE_MS,
+      seasonId: null,
     });
   });
 
@@ -72,5 +75,55 @@ describe("resolveEffectiveTrainingPass", () => {
         now: NOW,
       }),
     ).toMatchObject({ active: false, source: null });
+  });
+});
+
+/** Spec: docs/specs/2026-07-27-focus-days-ledger.md (APPROVED) — the seasonId
+ *  is resolved HERE, once, and never per-branch inside the status route. */
+describe("resolveEffectiveTrainingPass — canonical seasonId", () => {
+  it("carries the purchased season, not the configured one (AC30)", () => {
+    expect(
+      resolveEffectiveTrainingPass({
+        seasonPass: { active: true, expiresAt: FUTURE_ISO, seasonId: "bought-in-q3" },
+        pro: { active: false, expiresAt: null },
+        configuredSeasonId: "rolled-over-to-q4",
+        now: NOW,
+      }).seasonId,
+    ).toBe("bought-in-q3");
+  });
+
+  it("refuses to substitute the configured season when the purchased one is unknown", () => {
+    // The Redis fast path knows the expiry but not the row. Inventing a season
+    // here is how a buyer's progress lands under someone else's temporada.
+    expect(
+      resolveEffectiveTrainingPass({
+        seasonPass: { active: true, expiresAt: FUTURE_ISO, seasonId: null },
+        pro: { active: false, expiresAt: null },
+        configuredSeasonId: "rolled-over-to-q4",
+        now: NOW,
+      }).seasonId,
+    ).toBeNull();
+  });
+
+  it("uses the configured season for PRO, which has no purchased row", () => {
+    expect(
+      resolveEffectiveTrainingPass({
+        seasonPass: { active: false, expiresAt: null },
+        pro: { active: true, expiresAt: FUTURE_MS },
+        configuredSeasonId: "21day-mind-challenge-2026-q3",
+        now: NOW,
+      }).seasonId,
+    ).toBe("21day-mind-challenge-2026-q3");
+  });
+
+  it("has no season at all without an entitlement", () => {
+    expect(
+      resolveEffectiveTrainingPass({
+        seasonPass: { active: false, expiresAt: null },
+        pro: { active: false, expiresAt: null },
+        configuredSeasonId: "21day-mind-challenge-2026-q3",
+        now: NOW,
+      }).seasonId,
+    ).toBeNull();
   });
 });
