@@ -153,13 +153,25 @@ Sigue el orden de commits de Stage 2 (S2.1, S2.2a y S2.2b+S2.3 hechos):
   nunca se reintenta una fecha fuera de [ayer, hoy] · **ni un POST de más por
   rerender o rehidratación**. — **las seis quedaron con aserción.**
   </details>
-- **S2.5** — borrar `challenge-day.ts`, su test, `dayOfChallenge` y sus referencias
-  (AC1). **Último**, para que el camino viejo viva hasta que el nuevo esté cableado.
-  📌 Medido: `dayOfChallenge` está en el **tipo** (`challenge-card.tsx:59`), se produce
-  en `use-hub-data.ts:418`, y la tarjeta **nunca lo lee**. De sus 11 referencias, **9
-  son fixtures de tests**.
-- **S2.6** — AC20 (camino real `/status` → hub → `ChallengeCard`) y AC18 (los cuatro
-  caminos de acreditación espiados y en cero).
+- ✅ **S2.5 — HECHO** (`e3a94a5`). `challenge-day.ts`, su test, el campo del tipo y
+  las 11 referencias, borrados juntos. El typecheck es la red que prueba que no
+  quedó ninguna.
+- ✅ **S2.6 — HECHO** (`207d878`). `focus-days-real-path.test.tsx`: AC20 monta
+  `LearnHubClient` con `use-hub-data` **real** (sólo red y cadena mockeadas) y
+  cubre pase expirable · PRO unbounded · `degraded`; AC18 espía los cuatro
+  caminos de acreditación y los deja en cero — verificado que la aserción
+  discrimina (metí una ruta que sí se llama y se puso roja).
+  ⚠️ **Contrato que mi fixture tenía mal**: `proExpiresAt` viaja como **epoch en
+  número**, no ISO. Con ISO el validador (`use-season-pass-status.ts:105`)
+  descarta el body ENTERO y la tarjeta cae al `offer` **en silencio**.
+
+▶️ **Stage 2 está COMPLETO (S2.1 → S2.6).** Lo único pendiente es la validación
+visual del founder, abajo.
+
+- 🆕 **`/dev/challenge-card`** (`6e50e32`) — los 9 estados apilados a 390px con
+  toggle EN/ES. Existe para que esa validación no dependa de tener un pase vivo.
+  Hallazgo para el ojo del founder: en PRO la tarjeta dice lo mismo dos veces
+  ("PRO Benefit included" en el chip, "Included with PRO" donde va el countdown).
 
 Fuera de Stage 2, cuando el founder quiera:
 - **`/dev/learn-hub` + `vr18-learn-hub-*`** — desbloqueado por el refactor. Ahora
