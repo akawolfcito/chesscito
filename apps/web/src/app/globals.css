@@ -8431,7 +8431,7 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .challenge-card-icon img {
   display: block;
-  width: 100%;
+  width: 64px;
   height: auto;
 }
 
@@ -9312,7 +9312,7 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .kingdom-card-crest img {
   display: block;
-  width: 100%;
+  width: 64px;
   height: auto;
   filter: drop-shadow(0 3px 5px rgba(110, 65, 15, 0.3));
 }
