@@ -1,53 +1,85 @@
-# Session Handoff — 2026-07-27
+# Session Handoff — 2026-07-27 (Focus Days ledger, Stage 0)
 
 ## Completed
-Cluster: **ChallengeCard del hub LEARN** redistribuida a la gramática de `KingdomCard`, y
-un diagnóstico completo del estado del VR (que resultó ser otra cosa de la que creíamos).
 
-- [ `fb6d9f4` ] refactor(challenge-card): la semana de 7 llamas sale de la columna del
-  ícono y pasa a ser hermana del header → ancho completo (antes ~250px a 390px). El
-  ordinal se une al streak en una frase; la letra del día va arriba de su llama; la fila
-  de stats gana el hairline de `kingdom-card-benefits`.
-- [ `c08fa48` ] fix(art): `bg-wallpaper-lite` estaba desincronizado entre `apps/web` y
-  `apps/landing` desde `92a016e8`. **Era un job de CI en rojo** (`asset-drift`).
-- [ `de674e2` ] refactor(hub-tour): el spotlight del paso `challenge` pasa del panel
-  entero al `.challenge-card-cta-row`. La fila y NO el botón: la flecha es hermana del
-  botón y su regla CSS es de descendiente.
-- [ `ae47863` ] refactor(challenge-card): "21 days" se retira al inscribirse. Gateado, no
-  borrado: es el único consumidor de `hub.focus-passport-calendar` y `theme:coverage` es CI.
+- **Corregido un hecho falso del handoff anterior.** Decía que "Day X of 21" avanzaba por
+  reloj de pared. No: `challengeDayFromExpiry` se calcula (`use-hub-data.ts:418`) y viaja en
+  el prop `dayOfChallenge`, pero **ningún componente lo lee**. La tarjeta renderiza
+  `done = min(streak, 21)` (`challenge-card.tsx:128,215`). El defecto real es que el número
+  **retrocede**: `streak` vuelve a 1 al saltear un día (`progress.ts:75`).
+- **Spec A escrito, red-teameado en dos rondas y APPROVED**:
+  `docs/specs/2026-07-27-focus-days-ledger{,-redteam}.md`. 30 acceptance criteria, 3 P0 y
+  6 P1 cerrados, 2 firmas del founder al pie.
+- **Stage 0 implementado con TDD estricto** (rojo verificado antes de cada implementación):
+
+  | commit | qué | tests |
+  |---|---|---|
+  | `d4cb953a` | spec + red team + backlog | — |
+  | `c2967f57` | migración `focus_day_ledger` + `focus_ledger_init` | 6 |
+  | `272f7784` | módulo puro `focus-days.ts` | 22 |
+  | `a1551220` | `seasonId` canónico en el entitlement | 9 |
+  | `18b5525c` | gate Redis → env → off | 8 |
+
+- **Bug preexistente destapado y archivado** (`docs/backlog/2026-07-10-backlog-index.md` §8):
+  `verify-payment` no congela el `season_id` en el payload de Redis.
 
 ## Current State
-- **Branch**: `feat/challenge-card-redistribution`, 4 commits, **sin pushear**. `main`
-  local sigue en `275f75da`.
-- **Build**: suite `5903 passing / 522 files`, exit 0 verificado, 0 `Unhandled Errors`;
-  `tsc --noEmit` limpio; los 3 guards de `asset-drift` en verde.
-- **Verificación visual**: el founder revisó HUB LEARN en dispositivo → correcto.
-- **Uncommitted work**: ninguno.
 
-## Next Tasks
-Orden y detalle completo en `docs/handoffs/2026-07-27-challenge-card-and-vr-handoff.md`.
+- **Branch**: `feat/focus-days-ledger`, 5 commits, **sin mergear a `main`**
+- **Build**: suite **6011 passing / 529 files, EXIT=0, 0 `Unhandled Errors`**, `tsc` limpio
+- **Uncommitted work**: ninguno, árbol limpio
+- ⏳ **`main` local sigue 10 commits adelante de origin** (el nudge de la llama). El founder pushea.
 
-1. **Refactor `HubLiteScaffold` → `dailySlot: ReactNode`** (el mismo que PLAY ya tuvo).
-   Bloquea todo lo demás: hoy el scaffold monta `HubDailyTile`, que llama `useAccount()`,
-   así que un probe `/dev` de LEARN renderiza un error overlay.
+## Next Tasks — Stage 1
+
+1. **Wirear `configuredSeasonId` en `app/api/season-pass/status/route.ts` y arreglar el orden
+   del spread.** Hoy `response()` hace `{...resolveEffectiveTrainingPass(), ...details}`, y
+   `details` (per-rama: `route.ts:65` config vs `:122` fila) **pisa** al `seasonId` canónico.
+   Hasta arreglarlo el campo sale `null` en producción — inerte, nada lo consume.
+2. **`POST /api/focus-day`**: 5 reglas de validación de `date`, `source` `daily`/`daily_retry`,
+   rate limit 10 req/wallet/10min en Redis, logging con `hashWallet()`.
+3. **`ensureFocusLedgerInitialized`**: backfill lazy e idempotente desde el `GET /status`, con
+   el contrato **ausente ≠ cero** (AC13/AC28) y **un solo INSERT multi-row** (AC29).
+4. **Stage 2**: UI (`use-hub-data` + `ChallengeCard`), i18n en los dos locales, y borrado del
+   código muerto (`challenge-day.ts`, su test, `dayOfChallenge` y sus 11 referencias).
+
+## Cola anterior, TODAVÍA ABIERTA (no la toqué)
+
+Del `SESSION.md` del 2026-07-27 (challenge-card + VR). Detalle en
+`docs/handoffs/2026-07-27-challenge-card-and-vr-handoff.md`.
+
+1. **Refactor `HubLiteScaffold` → `dailySlot: ReactNode`.** Bloquea lo demás: hoy el scaffold
+   monta `HubDailyTile`, que llama `useAccount()`, así que un probe `/dev` de LEARN renderiza
+   un error overlay.
 2. `/dev/learn-hub` + `vr18-learn-hub-*`, espejando `/dev/play-hub`.
 3. `hub-clean` → `exercises-clean` + `mask` sobre tablero y objetivo.
 4. Regenerar `vr9`–`vr17` (~39 fotos) revisando una por una.
 
+⚠️ El punto 1 **choca con Stage 2**: los dos tocan la ChallengeCard y su host. Decidir orden
+antes de empezar el que venga segundo.
+
 ## Blockers
-- Ninguno técnico. El refactor del punto 1 toca 3 containers + tests: se dejó para
-  empezar en frío, no al final de una sesión larga.
+
+Ninguno. El spec está firmado y no quedan preguntas abiertas.
 
 ## Notes
-- **CI NO corre Playwright.** Jobs: `web-tests`, `type-check`, `asset-drift`,
-  `contract-tests`. Los baselines VR no ponen rojo el CI — el pendiente que arrastraba el
-  `SESSION.md` anterior era falso.
-- **Para correr VR local**: `BASE_URL=http://localhost:3002 PORT=3002` — si no, la app
-  pinta el banner `DEV: PRO origin mismatch` y todas las fotos salen con el cartel encima.
-- **`hub-clean` no fotografía el hub**: navega a `/exercises`. El nombre heredado nos hizo
-  razonar mal dos veces. No borrarlo — es la única cobertura VR de la pantalla de juego.
-- **Regla nueva a instalar**: el VR nunca debe leer contenido autorado. El catálogo va a
-  cambiar seguido por diseño (ejercicios y juegos lúdicos que se agregan y se sacan); las
-  fotos van contra probes `/dev` con props fixture, como ya hace `vr17`.
-- Decisiones de producto cerradas esta sesión (CTA sin chevron, sin "Challenge Badges",
-  theme como reveal post-compra): en el spec, §"Descartado en la misma revisión".
+
+- **El `/status` es la ruta más caliente del producto.** La firma acepta que consulte Supabase
+  en cada carga del Hub con entitlement activo. Invariante que protege: **una caída del ledger
+  degrada el progreso, nunca el acceso pagado.** Sin caché del contador todavía, a propósito.
+  Medir antes de optimizar: p50/p95, hit rate de Redis, frecuencia de `degraded`, lecturas por
+  usuario activo, errores por ruta.
+- **El gate arranca en `off`.** Precedencia Redis → env → off. Valor corrupto en Redis cae al
+  default seguro **y se reporta**; una caída de Redis se lee como "sin override", nunca como off.
+- **El backfill confía en un `streak` de localStorage manipulable.** Riesgo aceptado y declarado:
+  preserva continuidad de UX para quien ya pagó y **no concede valor económico**. Las filas van
+  marcadas `backfill_streak` para que cualquier sistema futuro las excluya.
+- **Guardrail de recompensas en el spec**: Spec A no define, promete, calcula ni distribuye
+  rewards, y el ledger es señal de actividad, no prueba de elegibilidad. **No debilitarlo.**
+- **Spec B (21-en-30) NO está escrito.** Ahí vive el cambio de término comercial y la migración
+  de los pases vivos. Sin él "12 of 21" sigue siendo incompletable tras un salteo, pero ahora
+  **visible** — que era el punto de Spec A.
+- El test de PII de la migración strippea comentarios antes de escanear: la nota de diseño
+  nombra legítimamente la PII que la tabla se niega a guardar.
+- **CI NO corre Playwright** (jobs: `web-tests`, `type-check`, `asset-drift`, `contract-tests`).
+  VR local necesita `BASE_URL=http://localhost:3002 PORT=3002` o sale el banner de origin mismatch.
