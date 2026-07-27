@@ -16,6 +16,7 @@ const supabaseChain = vi.hoisted(() => {
   const chain = {
     from: vi.fn(() => chain),
     insert: vi.fn(() => chain),
+    delete: vi.fn(() => chain),
     select: vi.fn(() => chain),
     eq: vi.fn(() => chain),
     maybeSingle: vi.fn(async (): Promise<ChainResult> => state.last),
@@ -216,7 +217,12 @@ describe("POST /api/welcome-pack/claim", () => {
     expect((await res.json()).error).toBe("claim_failed");
   });
 
-  it("returns 500 credit_failed when INSERT succeeds but Redis INCRBY fails (v1 edge case)", async () => {
+  // The row is what makes the pack unclaimable a second time. If the credit
+  // never landed, leaving the row behind spends the gift on nothing: every
+  // retry falls into the 23505 branch, which correctly refuses to credit, and
+  // the player loses 3 shields permanently — at the exact moment they ran out.
+  // Rolling the row back is what makes the claim retryable at all.
+  it("rolls the row back when INSERT succeeds but Redis INCRBY fails", async () => {
     supabaseChain.__setNextResult(
       { claimed_at: "2026-05-31T12:00:00.000Z" },
       null,
@@ -226,6 +232,40 @@ describe("POST /api/welcome-pack/claim", () => {
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(500);
     expect((await res.json()).error).toBe("credit_failed");
+    expect(supabaseChain.delete).toHaveBeenCalled();
+    expect(supabaseChain.eq).toHaveBeenCalledWith("wallet_address", ADDRESS_LOWER);
+  });
+
+  // The rollback is best-effort by construction: if it also fails we are back
+  // to the old behaviour, not worse. What must NOT happen is a 200 — the
+  // client has to learn the claim did not stick.
+  it("still answers credit_failed when the rollback itself fails", async () => {
+    supabaseChain.__setNextResult(
+      { claimed_at: "2026-05-31T12:00:00.000Z" },
+      null,
+    );
+    redisMock.incrby.mockRejectedValueOnce(new Error("redis down"));
+    supabaseChain.delete.mockImplementationOnce(() => {
+      throw new Error("delete blew up");
+    });
+
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toBe("credit_failed");
+  });
+
+  // Guards the direction of the fix: a claim that DID credit must never have
+  // its row rolled back, or the pack becomes farmable.
+  it("never rolls the row back on a successful credit", async () => {
+    supabaseChain.__setNextResult(
+      { claimed_at: "2026-05-31T12:00:00.000Z" },
+      null,
+    );
+
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(200);
+    expect(supabaseChain.delete).not.toHaveBeenCalled();
   });
 
   it("lowercases the wallet address before persisting (idempotency invariant)", async () => {

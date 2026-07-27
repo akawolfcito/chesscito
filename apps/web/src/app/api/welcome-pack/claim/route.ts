@@ -148,8 +148,24 @@ export async function POST(req: Request) {
       });
     }
 
-    // Credit shields. See §7 red-team item #8 for the known v1 edge case
-    // (INSERT succeeded, INCRBY fails — row exists, balance unchanged).
+    // Credit shields.
+    //
+    // The row is what makes the pack unclaimable twice, so a row without a
+    // credit is a gift spent on nothing: every retry lands in the 23505 branch
+    // above, which correctly refuses to credit, and the player loses 3 shields
+    // for good — with no path back short of editing the database by hand. That
+    // was the known v1 edge case (§7 red-team item #8), and it bites hardest
+    // where this claim actually surfaces: the rescue modal, i.e. a player who
+    // just failed an exercise and has zero shields.
+    //
+    // So the write is made atomic the only way it can be here: if the credit
+    // does not land, the row we just inserted goes back. That restores the
+    // pre-claim state and makes the next attempt an ordinary first claim.
+    //
+    // No new marker, and deliberately no Postgres column: a "credited" flag
+    // would have to be backfilled for every wallet that claimed before it
+    // existed, and getting that wrong credits +3 to people who already have
+    // theirs. Rolling back a row we inserted in THIS request needs no history.
     let credited: number;
     try {
       credited = Number(
@@ -164,6 +180,24 @@ export async function POST(req: Request) {
         errName: err instanceof Error ? err.name : "unknown",
         errMessage: err instanceof Error ? err.message : String(err),
       });
+      // Best effort by construction: if the rollback also fails we are back to
+      // the old behaviour, not worse. What must not change either way is the
+      // answer — the client has to learn the claim did not stick.
+      try {
+        await supabase
+          .from("welcome_pack_claims")
+          .delete()
+          .eq("wallet_address", walletLower);
+        logger.info("rolled back uncredited claim", { wallet_hash: walletHash });
+      } catch (rollbackErr) {
+        logger.error("rollback failed — claim row left uncredited", {
+          wallet_hash: walletHash,
+          errMessage:
+            rollbackErr instanceof Error
+              ? rollbackErr.message
+              : String(rollbackErr),
+        });
+      }
       return jsonError(500, "credit_failed");
     }
 
