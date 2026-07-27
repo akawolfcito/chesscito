@@ -800,6 +800,32 @@ describe('<ChallengeCard>', () => {
       ).toBe(false)
     })
 
+    it('drops the duration stat once enrolled — a sale term, not a status', () => {
+      const { container } = render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 4, todayDone: true })}
+          challenge={CHALLENGE}
+          seasonPass={{
+            active: true,
+            source: 'season_pass',
+            dayOfChallenge: 4,
+            shieldsCredited: 3,
+          }}
+          onJoinChallenge={null}
+          shields={{ count: 2, max: 3 }}
+        />,
+      )
+      const stats = screen.getByTestId('challenge-stats')
+      // "21-Day Mind Challenge" + "Day 4 of 21" already say it twice; inside
+      // the challenge a third mention informs nobody.
+      expect(stats).not.toHaveTextContent('21 days')
+      expect(stats).toHaveTextContent('2/3 Shields')
+      expect(stats).toHaveTextContent('Special Training')
+      expect(
+        container.querySelector('[data-theme-slot="hub.focus-passport-calendar"]'),
+      ).toBeNull()
+    })
+
     // ── Mini-tour spotlight ───────────────────────────────────────────────
     // Same granularity PLAY already uses: KingdomCard puts `data-tour-target`
     // on the PRO row, not on the whole panel. Lighting the entire card lit 4

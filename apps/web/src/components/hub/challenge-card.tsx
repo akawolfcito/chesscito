@@ -318,18 +318,25 @@ export function ChallengeCard({
           Special Training. Price lives exclusively on the CTA badge. */}
       <div className="challenge-card-bottom">
         <div className="challenge-card-stats" data-testid="challenge-stats">
-          <span className="challenge-card-stat">
-            <ThemeAssetPicture
-              slot="hub.focus-passport-calendar"
-              pictureClassName="challenge-card-stat-icon"
-              alt=""
-              aria-hidden="true"
-              width={102}
-              height={115}
-              draggable={false}
-            />
-            {durationDays} {t("daysStat")}
-          </span>
+          {/* Duration is a TERM OF THE SALE, so it rides with the offer and
+              retires on enrolment: inside the challenge the title and "Day N
+              of 21" already say it twice, and a third mention informs nobody.
+              The offer state still renders the slot, so the catalog entry
+              keeps a consumer. */}
+          {!isActive ? (
+            <span className="challenge-card-stat">
+              <ThemeAssetPicture
+                slot="hub.focus-passport-calendar"
+                pictureClassName="challenge-card-stat-icon"
+                alt=""
+                aria-hidden="true"
+                width={102}
+                height={115}
+                draggable={false}
+              />
+              {durationDays} {t("daysStat")}
+            </span>
+          ) : null}
           {!isActive || shields ? (
             <span className="challenge-card-stat" data-testid="challenge-shields">
               <ThemeAssetPicture
