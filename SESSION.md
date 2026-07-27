@@ -1,43 +1,43 @@
-# Session Handoff — 2026-07-27 (noche)
+# Session Handoff — 2026-07-27 (cierre del día)
 
-> 📌 El detalle del cluster Focus Days 21-en-30 vive en
-> `docs/handoffs/2026-07-27-focus-days-21-in-30-handoff.md`. Este archivo es el
-> checklist de la sesión que lo cerró.
+> 📌 El detalle de esta sesión vive en
+> `docs/handoffs/2026-07-27-icons-vr-coverage-and-pro-sheet-handoff.md`.
+> El cluster Focus Days 21-en-30 vive en `docs/handoffs/2026-07-27-focus-days-21-in-30-handoff.md`.
+> Este archivo es el checklist.
 
 ## Completed
 
-- **Backfill de producción Focus Days 21-en-30: EJECUTADO Y VERIFICADO.** Las 3 filas
-  activas de `lite_season_passes` +9 días, en el orden obligatorio del spec (deploy →
-  confirmación del founder → §3 → aprobación → §4 → §5). §5 completo: 3 expiradas
-  intactas · 6 filas totales · **0** filas con delta ≠ 9 días · `focus_day_ledger` en 0.
-  End-to-end en el device: la tarjeta pasó de **5 → 14 days left**.
-- `1c93d347` — handoff del backfill actualizado: el "Pendiente operacional" ahora dice
-  ejecutado, con la tabla antes/después (sin wallets), el rollback real y **cómo** se
-  ejecutó.
-- `92b40d8b` — **fix P2 de i18n**: `offerBenefitTrainings` decía "Special Trainings" en
-  español, en la hoja de **pago**. Ahora "Entrenamientos especiales". Guard de regla
-  nuevo (`challenge-card-es-parity.test.ts`) + `overflow-wrap` en la baldosa.
+- **Cluster Closure Protocol de Focus Days: completo.** `origin` quedó con `main` y `production`
+  únicamente — seis branches borradas, todas verificadas como squash-mergeadas (#266–#271) antes
+  de tocarlas. Issues/milestones sin nada abierto del cluster; README sin drift; MEMORY.md ya
+  estaba sincronizado.
+- `6c88ce2d` — **fix(hub)**: el ícono de ayuda ya trae su anillo y el CSS lo repintaba. Anillo
+  sobre anillo en las **dos** superficies del slot `shared.tour-help` (LEARN y PLAY).
+- `1b5c85c3` — **chore(art)**: calendario nuevo. Sin cambio de código: los tres consumidores son
+  aspect-safe. Verificado que los tres formatos (png/webp/avif) estén regenerados igual.
+- `30919b23` — **test(vr)**: los fixtures de `/dev/learn-hub` y `/dev/play-hub` no pasaban
+  `onReplayTour`, así que los baselines estaban **ciegos al chip** y en verde. Seis baselines
+  recapturados borrando el PNG.
+- `22418d08` — **fix(pro-sheet)**: la X se posicionaba con `top: 18%` contra el **alto** de la
+  hoja, así que se corría con cada estado. Ahora vive dentro del panel con las clases de
+  `MissionDetailSheet`. La corona cruza el borde por la mitad (`pt-[15.1%]` + banner en `top-0`).
 
 ## Current State
 
-- **Branch**: `main`, limpio, **2 commits por delante de `origin/main`** (`1c93d347`,
-  `92b40d8b`). ⏳ **El push a origin lo hace el founder.**
-- **Build**: suite **6160 passing / 539 files, EXIT=0** (código de salida confirmado, no
-  solo los conteos). `tsc --noEmit` limpio.
+- **Branch**: `main`, limpio, **6 commits por delante de `origin/main`** (los cuatro de arriba más
+  `1c93d347` y `92b40d8b`). ⏳ **El push a origin lo hace el founder.**
+- **Build**: suite **539 files / 6160 passing**, con **`VITEST_EXIT=0`** capturado aparte del
+  `tail`. `tsc --noEmit` limpio. VR `vr17`+`vr18`: **6/6**, y las seis fotos miradas una por una.
 - **Uncommitted work**: no.
-- **Producción**: `432bb664` desplegado y sano (`v.432bb66` verificado en MiniPay). La
-  base ya está normalizada al contrato 21-en-30.
+- **Verificación visual**: la hizo el founder a 390px sobre la app real.
 
 ## Next Tasks
 
-1. **Verificación visual del fix ES** — abrir la hoja de compra en español a 390px y
-   mirar que "Entrenamientos especiales" no empuje las baldosas vecinas. **No hay
-   baseline VR**: el servidor visual corre en modo PLAY y la oferta sólo existe en LEARN.
-2. **Cluster Closure Protocol** del cluster Focus Days (CLAUDE.md): README sync si cambió
-   "What's live", branch hygiene. MEMORY.md ya quedó sincronizado.
-3. **Theme Builder** — el frente grande elegido el 2026-07-18. Arranca con `/spec`:
-   estados de UI + superficies del tablero que pinta un tema + persistencia/distribución.
-   Merece sesión propia.
+1. **Theme Builder** — el frente grande. Arranca con `/spec`: estados de UI, superficies del
+   tablero que pinta un tema, persistencia y distribución. **Merece sesión propia.**
+2. **Probe `/dev` para las dos hojas de pago** (PRO y Season Pass) — ninguna de las dos se puede
+   fotografiar hoy. Media sesión, tapa las dos de una. Es deuda de cobertura, no un bug.
+3. **`pregunta-icon` a ~96×100** si en un 3x se ve blando. No se upscalea.
 
 ## Blockers
 
@@ -45,24 +45,15 @@
 
 ## Notes
 
-- **El rollback del backfill es el camino (b), no el (a).** La temp table
-  `backfill_21in30_rollback` murió al cerrarse la sesión de `psql`. Queda restar 9 días
-  con el mismo filtro — seguro porque el UPDATE corrió **una sola vez**, y lo prueba §5(d)
-  con 0 filas de delta incorrecto. Los tres valores originales están en el handoff y en §6
-  del `.sql`. **Es CÓDIGO + DATOS**: revertir los datos sin revertir el deploy de 30 días
-  deja el bug original.
-- **Correr SQL contra prod tiene un camino y sólo uno**: no hay `psql` local, el host
-  directo `db.<ref>.supabase.co` es **IPv6-only**, y el pooler es **`aws-1-us-east-1` en
-  session mode (5432)** — `aws-0` resuelve por DNS pero devuelve `FATAL: (ENOTFOUND)
-  tenant/user not found`. Un UPDATE y su verificación que compartan temp table tienen que
-  ir en **una sola corrida**. Detalle en el handoff y en memoria.
-- **El pase de prueba `8200fe9b` ya no puede llegar a 21/21**: se compró el 2026-07-11 y
-  estuvo 16 días sin uso. El backfill le devuelve la ventana de 30 días que le
-  correspondía, no le regala días. Para probar el flujo completo hace falta un pase fresco.
-- **Los tres números de la tarjeta miden cosas distintas** y se confunden fácil:
-  `N of 21` = ledger server-side · `days left` = vencimiento del pase · `streak` = la llama
-  (local).
-- **Por qué el bug de ES era invisible**: el bundle ES hace `...en.CHALLENGE_CARD_COPY`,
-  así que una traducción faltante **resuelve y renderiza en inglés** en vez de fallar.
-  Cualquier bloque de copy con ese patrón tiene el mismo agujero — el guard nuevo cubre
-  sólo `CHALLENGE_CARD_COPY`.
+- **Un fixture de `/dev` fotografía SOLO lo que le pasa.** Un handler opcional omitido deja el
+  baseline ciego a un elemento que en producción siempre está — y en verde. Antes de recapturar
+  un baseline "para cubrir" un cambio: **abrir el PNG y verificar que el cambio esté ahí.**
+- **El wallpaper ausente en los probes es correcto**, lo pinta el shell que `/dev` no monta a
+  propósito. Estos baselines vigilan layout, no fondo. No es un bug que redescubrir.
+- **`vr17` traía dos semanas de drift** (CTA `PLAY CHESS` y dock `CHESS TOOLS`, reemplazados por
+  `PLAY PATH`) porque **CI no corre Playwright**. Recapturar por otra cosa lo adopta de contrabando.
+- **Percentage `top` ≠ percentage `padding`.** El `top` de un absolute se resuelve contra el
+  **alto** del contenedor; el padding en porcentaje, incluso el vertical, **siempre** contra el
+  ancho. Se ven idénticos en el código y sólo uno es estable. Fue la causa del bug de la X.
+- **Actualizar un ícono es actualizar tres archivos.** Si sólo se toca el PNG, el `<picture>`
+  sirve el AVIF viejo y no cambia nada en el navegador, sin error que lo delate.
