@@ -58,9 +58,11 @@ lecturas de `null` no son igual de inocuas.
 
 ## Current State
 
-- **Branch**: `feat/focus-days-ui` (S2.1 adentro). `main` local tiene el refactor.
-- **`main` está 4 commits adelante de `origin/main`** (2 de docs previos + refactor +
-  merge). ⏳ **El founder pushea.**
+- **Branch**: `feat/focus-days-ui` (S2.1 adentro).
+- ✅ **`main` y `origin/main` están sincronizados en `cfe9ec41`** — el founder pusheó
+  el refactor. `main` NO tiene nada de Stage 2.
+- ⚠️ **Este `SESSION.md` vive en `feat/focus-days-ui`.** El de `main` sigue siendo el
+  de Stage 1 hasta que esta branch mergee.
 - **Build**: suite **6094 passing / 533 files, EXIT=0, 0 `Unhandled Errors`**, `tsc`
   limpio, eslint limpio.
 - **Uncommitted work**: ninguno.
