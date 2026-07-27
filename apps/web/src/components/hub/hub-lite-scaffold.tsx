@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LanguageChip } from "@/components/hub/language-chip";
-import { HubDailyTile } from "@/components/hub/hub-daily-tile";
 import { AppModeSwitch } from "@/components/hub/app-mode-switch";
 import { PeonesBalanceChipView } from "@/components/peones/peones-balance-chip";
 import type { PeonesBalanceState } from "@/lib/peones/use-peones-balance";
@@ -39,6 +38,15 @@ export type HubLiteScaffoldProps = {
   seasonPass: ChallengeCardSeasonPass;
   /** null when the pass is active (no purchase CTA). */
   onJoinChallenge: (() => void) | null;
+  /** The daily affordance, BUILT BY THE CONTAINER (mirrors PlayHubScaffold).
+   *  The scaffold owns the anchor — its `data-tour-target` and pending pulse —
+   *  but not the tile: `HubDailyTile` calls `useAccount()`, and mounting it
+   *  here made the whole scaffold unrenderable without a wagmi provider. */
+  dailySlot: ReactNode;
+  /** Tapping the flame/streak block opens today's Daily. The container routes
+   *  it to the SAME instance it put in `dailySlot`; from here it is only
+   *  "not the training CTA". */
+  onPassportTap: () => void;
   /** Live shields balance for the card's stat chip. Optional: `/dev` probes
    *  mount the scaffold without a wallet and must not fake a count. */
   shields?: { count: number; max: number };
@@ -78,6 +86,8 @@ export function HubLiteScaffold({
   challenge,
   seasonPass,
   onJoinChallenge,
+  dailySlot,
+  onPassportTap,
   shields,
   primaryFocus,
   rewardTiles,
@@ -85,7 +95,6 @@ export function HubLiteScaffold({
 }: HubLiteScaffoldProps) {
   const t = useTranslations("HUB_LITE_COPY");
   const tHud = useTranslations("HUD_COPY");
-  const [dailyOpen, setDailyOpen] = useState(false);
 
   return (
     <main
@@ -156,11 +165,7 @@ export function HubLiteScaffold({
             }`}
             data-tour-target="daily"
           >
-            <HubDailyTile
-              variant="corner-icon"
-              open={dailyOpen}
-              onOpenChange={setDailyOpen}
-            />
+            {dailySlot}
           </div>
         </div>
       </header>
@@ -197,9 +202,10 @@ export function HubLiteScaffold({
           onJoinChallenge={onJoinChallenge}
           shields={shields}
           // Tapping the flame/streak block opens today's Daily, same as the
-          // corner gift, through the SAME mounted HubDailyTile. The
-          // primary CTA intentionally keeps its piece-specific Exercises route.
-          onPassportTap={() => setDailyOpen(true)}
+          // corner gift, through the SAME mounted HubDailyTile — the container
+          // owns that instance and wires both. The primary CTA intentionally
+          // keeps its piece-specific Exercises route.
+          onPassportTap={onPassportTap}
           onFocusTap={primaryFocus.onPress}
           onReplayTour={onReplayTour}
         />

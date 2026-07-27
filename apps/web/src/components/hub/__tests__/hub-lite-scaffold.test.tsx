@@ -12,25 +12,12 @@ import { ThemeVariantOverride } from "@/lib/themes/theme-variant-provider";
 
 // Heavy leaves (wagmi / theme / routing) are exercised in their own suites;
 // stub them so this test stays a pure composition assertion.
-vi.mock("@/components/hub/hub-daily-tile", () => ({
-  HubDailyTile: ({
-    variant,
-    open,
-    onOpenChange,
-  }: {
-    variant?: string;
-    open?: boolean;
-    onOpenChange?: (open: boolean) => void;
-  }) => (
-    <button
-      type="button"
-      data-testid="daily-tile-stub"
-      data-variant={variant}
-      data-open={open}
-      onClick={() => onOpenChange?.(true)}
-    />
-  ),
-}));
+//
+// `hub-daily-tile` is NOT mocked here anymore, and that is the point of the
+// slot: the scaffold no longer imports it. The tile calls `useAccount()`, so
+// while the scaffold mounted it directly, every consumer without a wagmi
+// provider — this suite, a `/dev` probe — had to stub the module to render at
+// all. Now the daily arrives as a `ReactNode` the container builds.
 vi.mock("@/components/hub/language-chip", () => ({
   LanguageChip: () => <div data-testid="language-chip-stub" />,
 }));
@@ -77,6 +64,8 @@ function baseProps(over: Partial<HubLiteScaffoldProps> = {}): HubLiteScaffoldPro
     rewardTiles: TILES,
     isPro: false,
     onAccountTap: vi.fn(),
+    dailySlot: <button type="button" data-testid="daily-slot-stub" />,
+    onPassportTap: vi.fn(),
     ...over,
   };
 }
@@ -144,7 +133,11 @@ describe("<HubLiteScaffold>", () => {
 
     expect(screen.getByText("1")).toBeInTheDocument();
     expect(screen.getByTestId("language-chip-stub")).toBeInTheDocument();
-    expect(screen.getByTestId("daily-tile-stub")).toHaveAttribute("data-variant", "corner-icon");
+    // The daily is whatever the container handed over, mounted inside the
+    // anchor the Hub Tour measures its spotlight against.
+    const anchor = document.querySelector(".hub-lite-daily-anchor");
+    expect(anchor).toHaveAttribute("data-tour-target", "daily");
+    expect(anchor).toContainElement(screen.getByTestId("daily-slot-stub"));
 
     const connect = screen.getByRole("button", { name: /connect/i });
     fireEvent.click(connect);
@@ -247,8 +240,12 @@ describe("<HubLiteScaffold>", () => {
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  it("opens the same controlled Daily from the Focus Passport without invoking Exercises", () => {
+  it("routes the Focus Passport tap to onPassportTap without invoking Exercises", () => {
+    // That the tap opens the SAME mounted Daily (rather than a second
+    // instance) is a composition fact now, asserted in the container's suite —
+    // the scaffold only knows it must not confuse it with the training CTA.
     const onPress = vi.fn();
+    const onPassportTap = vi.fn();
     render(
       <HubLiteScaffold
         {...baseProps({
@@ -263,20 +260,49 @@ describe("<HubLiteScaffold>", () => {
             contentLoop: action("daily-pending"),
             isHydrated: true,
           },
+          onPassportTap,
         })}
       />,
     );
 
-    expect(screen.getByTestId("daily-tile-stub")).toHaveAttribute(
-      "data-open",
-      "false",
-    );
     fireEvent.click(screen.getByTestId("challenge-progress"));
-    expect(screen.getByTestId("daily-tile-stub")).toHaveAttribute(
-      "data-open",
-      "true",
-    );
+    expect(onPassportTap).toHaveBeenCalledTimes(1);
     expect(onPress).not.toHaveBeenCalled();
+  });
+
+  it("pulses the daily anchor only while today's daily is actually pending", () => {
+    // The pulse is a cue, not decoration: it must not run before the passport
+    // resolves (we don't know yet) nor after it is solved (that is a nag).
+    const anchor = () => document.querySelector(".hub-lite-daily-anchor");
+
+    const pending = render(
+      <HubLiteScaffold
+        {...baseProps({
+          focusPassport: { streak: 2, totalCompleted: 2, todayDone: false, isLoading: false },
+        })}
+      />,
+    );
+    expect(anchor()).toHaveClass("is-pending");
+    pending.unmount();
+
+    const loading = render(
+      <HubLiteScaffold
+        {...baseProps({
+          focusPassport: { streak: 0, totalCompleted: 0, todayDone: false, isLoading: true },
+        })}
+      />,
+    );
+    expect(anchor()).not.toHaveClass("is-pending");
+    loading.unmount();
+
+    render(
+      <HubLiteScaffold
+        {...baseProps({
+          focusPassport: { streak: 3, totalCompleted: 3, todayDone: true, isLoading: false },
+        })}
+      />,
+    );
+    expect(anchor()).not.toHaveClass("is-pending");
   });
 
   it("card CTA: Enter and Space activate the same native button action", async () => {
