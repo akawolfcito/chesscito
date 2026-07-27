@@ -2,9 +2,24 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockRedisGet = vi.hoisted(() => vi.fn());
 const mockIsProActive = vi.hoisted(() => vi.fn());
+const configuredSeason = vi.hoisted(() => ({ id: "21day-mind-challenge-2026-q3" }));
 vi.mock("@upstash/redis", () => ({
   Redis: { fromEnv: vi.fn(() => ({ get: mockRedisGet })) },
 }));
+
+// The configured season is a moving target: a rollover edits it while purchased
+// passes are still alive. Tests that care about attribution set it explicitly.
+vi.mock("@/lib/payments/rail-config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/payments/rail-config")>();
+  return {
+    ...actual,
+    getSeasonPass: (sku: "lite_season_pass_21") => ({
+      ...actual.getSeasonPass(sku),
+      seasonId: configuredSeason.id,
+    }),
+  };
+});
 
 vi.mock("@/lib/supabase/server", () => ({ getSupabaseServer: vi.fn() }));
 vi.mock("@/lib/pro/is-active", () => ({ isProActive: mockIsProActive }));
@@ -39,6 +54,7 @@ function buildDbMock(row: Record<string, unknown> | null, error: unknown = null)
 }
 
 beforeEach(() => {
+  configuredSeason.id = "21day-mind-challenge-2026-q3";
   mockRedisGet.mockReset().mockResolvedValue(null);
   mockIsProActive.mockReset().mockResolvedValue({ active: false, expiresAt: null });
   mockedSupabase.mockReset();
@@ -69,7 +85,18 @@ describe("redis fast path", () => {
     expect(json.expiresAt).toBe(EXPIRES_FUTURE);
     expect(json.source).toBe("season_pass");
     expect(json.storageSource).toBe("redis");
-    expect(mockedSupabase).not.toHaveBeenCalled();
+  });
+
+  it("still authorizes from Redis when the ledger is down (access never degrades)", async () => {
+    mockRedisGet.mockResolvedValue(EXPIRES_FUTURE);
+    mockedSupabase.mockReturnValue(null as never);
+
+    const res = await GET(makeRequest(WALLET));
+    const json = await res.json();
+    expect(res.status).toBe(200);
+    expect(json.active).toBe(true);
+    expect(json.source).toBe("season_pass");
+    expect(json.storageSource).toBe("redis");
   });
 
   it("expired redis entry → falls through to db", async () => {
@@ -143,6 +170,69 @@ describe("supabase fallback", () => {
   });
 });
 
+describe("canonical seasonId", () => {
+  const ROW_SEASON = "21day-mind-challenge-2026-q3";
+  const activeRow = {
+    expires_at: EXPIRES_FUTURE,
+    season_id: ROW_SEASON,
+    supporter_status: "challenger",
+    shields_credited: 3,
+  };
+
+  // AC30 — the fast path must not invent a season. Redis caches the
+  // entitlement; it does not know which season was purchased.
+  it("uses the purchased row's season even when Redis served the entitlement and the config rolled", async () => {
+    configuredSeason.id = "21day-mind-challenge-2026-q4";
+    mockRedisGet.mockResolvedValue(EXPIRES_FUTURE);
+    mockedSupabase.mockReturnValue(buildDbMock(activeRow).supabase);
+
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json.active).toBe(true);
+    expect(json.seasonId).toBe(ROW_SEASON);
+  });
+
+  // AC25 — same rule on the plain DB path: the config never overwrites the row.
+  it("uses the purchased row's season on the db path with a rolled config", async () => {
+    configuredSeason.id = "21day-mind-challenge-2026-q4";
+    mockedSupabase.mockReturnValue(buildDbMock(activeRow).supabase);
+
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json.seasonId).toBe(ROW_SEASON);
+  });
+
+  // AC26 — a buyer whose row could not be read keeps access and gets NO season.
+  // Substituting the configured literal here is how progress lands under the
+  // wrong temporada after a rollover.
+  it("returns a null season for a buyer whose row could not be read", async () => {
+    configuredSeason.id = "21day-mind-challenge-2026-q4";
+    mockRedisGet.mockResolvedValue(EXPIRES_FUTURE);
+    mockedSupabase.mockReturnValue(null as never);
+
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json.active).toBe(true);
+    expect(json.seasonId).toBeNull();
+  });
+
+  it("returns a null season when no entitlement is active", async () => {
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json.active).toBe(false);
+    expect(json.seasonId).toBeNull();
+  });
+
+  it("gives PRO the configured season, not the row's", async () => {
+    configuredSeason.id = "21day-mind-challenge-2026-q4";
+    mockIsProActive.mockResolvedValue({
+      active: true,
+      expiresAt: Date.now() + 7 * 86_400_000,
+    });
+    mockedSupabase.mockReturnValue(buildDbMock(activeRow).supabase);
+
+    const json = await (await GET(makeRequest(WALLET))).json();
+    expect(json.source).toBe("pro");
+    expect(json.seasonId).toBe("21day-mind-challenge-2026-q4");
+  });
+});
+
 describe("effective Training Pass", () => {
   it("returns active source=pro without requiring a Season Pass ledger", async () => {
     const proExpiresAt = Date.now() + 7 * 86_400_000;
@@ -156,10 +246,9 @@ describe("effective Training Pass", () => {
       source: "pro",
       seasonPassExpiresAt: null,
       proExpiresAt,
-      // Canonical season, resolved once by resolveEffectiveTrainingPass. Null
-      // here because the route does not feed it the configured season yet —
-      // that wiring is Stage 1. Nothing consumes the field today.
-      seasonId: null,
+      // PRO has no purchased row, so its season is the configured one — the
+      // only case where the config is the legitimate source.
+      seasonId: "21day-mind-challenge-2026-q3",
     });
   });
 
