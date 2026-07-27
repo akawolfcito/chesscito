@@ -1236,11 +1236,10 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     await expect(page).toHaveScreenshot("vr18-learn-hub-active.png", LEARN_HUB_OPTS);
   });
 
-  // PRO reaches the challenge without buying a window, so the countdown slot
-  // says "Included with PRO" instead of a number — the slot is NOT dropped, and
-  // a zero appearing there would read as an expired pass. The crown swaps into
-  // the ACTIVE badge at the same time; the two must not drift apart.
-  test("vr18-learn-hub-pro — unbounded window: 'Included with PRO' in the countdown slot", async ({
+  // PRO reaches the challenge without buying a window, so no countdown renders
+  // at all — the crowned badge is the single place that says why. A number
+  // appearing here would read as an expired pass to a subscriber who has none.
+  test("vr18-learn-hub-pro — unbounded window: the crowned badge, and no countdown", async ({
     page,
   }) => {
     await page.goto("/dev/learn-hub?variant=pro", {
