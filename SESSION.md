@@ -154,7 +154,27 @@ Fuera de Stage 2, cuando el founder quiera:
 
 ## Blockers
 
-Ninguno para seguir. **Uno para el merge final de Stage 2** (founder, 2026-07-27):
+⛔ **NO PUSHEAR `main` HASTA S2.4.** Esto NO es la validación visual: es un defecto
+funcional real, y el gate del ledger **ya está en `true` en prod (LEARN)**.
+
+Con lo mergeado, la cadena queda así en producción:
+`useLearnFocusDays` manda el reporte → el server siembra el backfill y **latchea** →
+la tarjeta muestra `N of 21`. Pero **S2.4 no existe**, así que completar el Daily
+**no escribe ninguna fila**. Resultado: el jugador completa su Daily y el número
+**no se mueve nunca**. Y como el latch ya se escribió, el backfill no vuelve a
+correr para esa wallet: revertirlo exige borrarle la fila de `focus_ledger_init`.
+
+Es exactamente el defecto que Spec A venía a arreglar, con otra cara: antes el
+número retrocedía, ahora se congelaría. **Pushear esto sin S2.4 es peor que no
+pushear nada.**
+
+Salidas, si hace falta pushear antes de S2.4:
+1. **Terminar S2.4 primero** (preferida, el diseño ya está escrito arriba).
+2. Poner `focus-days-ledger:enabled = "false"` en Redis **antes** del deploy (no
+   requiere redeploy) → la slice llega `disabled`, la tarjeta cae en el estado
+   neutral y no se latchea a nadie.
+
+**Y además, para el merge final de Stage 2** (founder, 2026-07-27):
 
 🚦 **Validación visual antes de mergear.** Nadie vio esto renderizado todavía; los
 tests fijan estructura y copy, no que entre en 390px. Revisar: 390px · `active` con
