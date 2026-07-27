@@ -55,6 +55,7 @@ import { track } from "@/lib/telemetry";
 import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import { useHubData } from "@/components/hub/use-hub-data";
+import { HubDailyTile } from "@/components/hub/hub-daily-tile";
 import { HubLiteScaffold } from "@/components/hub/hub-lite-scaffold";
 import { useHubTour } from "@/components/hub/use-hub-tour";
 import { buildLearnHubTourSteps } from "@/lib/hub/hub-tour";
@@ -171,6 +172,11 @@ export function LearnHubClient({
   const [profileOpen, setProfileOpen] = useState(!CHESSCITO_LITE_MODE && initialSheet === "profile");
   const [settingsOpen, setSettingsOpen] = useState(initialSheet === "settings");
   const [seasonPassSheetOpen, setSeasonPassSheetOpen] = useState(false);
+  // The Learn daily is CONTROLLED from here: the corner gift and the Focus
+  // Passport must open one instance, not two. The scaffold used to own this
+  // state, which forced it to mount `HubDailyTile` (and its `useAccount()`)
+  // itself — see `dailySlot` in hub-lite-scaffold.tsx.
+  const [dailyOpen, setDailyOpen] = useState(false);
   // `useClaimQueue` reads pending claims out of localStorage on mount;
   // the unread count drives the avatar notif-dot once the HUD slot
   // exists (deferred — see project note).
@@ -427,6 +433,14 @@ export function LearnHubClient({
           challenge={lite.challenge}
           shields={liteShields}
           seasonPass={lite.challengeSeasonPass}
+          dailySlot={
+            <HubDailyTile
+              variant="corner-icon"
+              open={dailyOpen}
+              onOpenChange={setDailyOpen}
+            />
+          }
+          onPassportTap={() => setDailyOpen(true)}
           onJoinChallenge={
             // Same gate as the legacy season-pass CTA: never offer the buy
             // flow while status resolves or to an existing pass holder.
