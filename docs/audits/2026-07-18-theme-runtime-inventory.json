@@ -3,12 +3,12 @@
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
   "totalSlots": 178,
   "categoryCounts": {
-    "A": 166,
+    "A": 165,
     "B": 0,
     "C": 0,
     "D": 0,
     "E": 0,
-    "F": 12,
+    "F": 13,
     "G": 0
   },
   "initialCategoryCounts": {
@@ -20,15 +20,15 @@
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 167,
-  "fullyConnectedSlots": 166,
+  "resolverSlots": 166,
+  "fullyConnectedSlots": 165,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
-  "noActiveConsumerSlots": 5,
-  "connectedSlots": 166,
-  "excludedSlots": 12,
+  "noActiveConsumerSlots": 6,
+  "connectedSlots": 165,
+  "excludedSlots": 13,
   "exceptions": [],
   "literalDiff": {
     "registeredBasenames": 208,
@@ -3209,34 +3209,22 @@
       ],
       "deprecated": null,
       "initialCategory": "B",
-      "category": "A",
+      "category": "F",
       "documentedFiles": [
         "src/components/redesign/candy-icon.tsx"
       ],
-      "currentConsumerState": "resolver",
-      "consumerCount": 1,
-      "consumers": [
-        {
-          "file": "src/components/hub/hub-tour.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        }
-      ],
+      "currentConsumerState": "none",
+      "consumerCount": 0,
+      "consumers": [],
       "patterns": [],
-      "usesResolver": true,
+      "usesResolver": false,
       "usesHardcodedPath": false,
       "usesImg": false,
       "usesPicture": false,
       "usesCssBackground": false,
       "usesSharedMap": false,
       "buildsPathDynamically": false,
-      "noActiveConsumer": false
+      "noActiveConsumer": true
     },
     {
       "slotId": "shared.close",
@@ -3270,7 +3258,7 @@
         "src/components/arena/victory-popup-shell.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 12,
+      "consumerCount": 13,
       "consumers": [
         {
           "file": "src/components/arena/arena-end-state.tsx",
@@ -3362,6 +3350,17 @@
         },
         {
           "file": "src/components/exercises/purchase-confirm-sheet.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/hub/hub-tour.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,

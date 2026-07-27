@@ -74,6 +74,9 @@ describe("<HubTour>", () => {
     fireEvent.click(
       screen.getByRole("button", { name: HUB_TOUR_COPY.closeAriaLabel }),
     );
+    expect(
+      document.querySelector('[data-theme-slot="shared.close"]'),
+    ).not.toBeNull();
     expect(onFinish).toHaveBeenCalledWith("skipped");
     expect(onFinish).toHaveBeenCalledTimes(1);
   });

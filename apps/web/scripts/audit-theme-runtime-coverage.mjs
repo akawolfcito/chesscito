@@ -539,9 +539,8 @@ if (CHECK_MODE) {
   // consumed through ThemeAssetPicture, so all four land in category A
   // (connectedSlots 160 → 164); totalSlots 173 → 177.
   // +1 (B: 81 → 82) 2026-07-26: shared.tour-help, the question icon shared by
-  // the LEARN and PLAY replay affordances. It also gives shared.close-candy a
-  // live resolver consumer in HubTour, so connectedSlots rises by two overall
-  // (164 → 166) while totalSlots rises once (177 → 178).
+  // the LEARN and PLAY replay affordances. The mini-tour closes with the
+  // established shared.close mission control.
   const expectedInitial = { A: 2, B: 82, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,

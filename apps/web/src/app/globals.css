@@ -15386,8 +15386,8 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .hub-tour-close {
   position: absolute;
-  top: -10px;
-  right: -8px;
+  top: 4%;
+  right: 4%;
   z-index: 3;
   display: inline-flex;
   align-items: center;

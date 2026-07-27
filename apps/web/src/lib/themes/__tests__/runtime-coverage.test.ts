@@ -47,9 +47,9 @@ describe("theme runtime catalog coverage", () => {
     // 177 (2026-07-26): + Arena Warm-up and three KingdomCard benefit slots.
     // All four are resolver-connected PLAY assets: A 160 → 164, initial
     // B 77 → 81.
-    // 178 (2026-07-26): + shared.tour-help. The new tour also activates the
-    // previously cataloged shared.close-candy resolver, so A grows 164 → 166
-    // and excluded falls 13 → 12.
+    // 178 (2026-07-26): + shared.tour-help. The tour reuses the established
+    // shared.close mission control; shared.close-candy remains cataloged for
+    // CandyIcon's composed-path vocabulary.
     expect(report.totalSlots).toBe(178);
     expect(report.initialCategoryCounts).toEqual({
       A: 2,
@@ -60,8 +60,8 @@ describe("theme runtime catalog coverage", () => {
       F: 11,
       G: 0,
     });
-    expect(report.connectedSlots).toBe(166);
-    expect(report.excludedSlots).toBe(12);
+    expect(report.connectedSlots).toBe(165);
+    expect(report.excludedSlots).toBe(13);
     expect(
       report.slots.filter(
         (slot: { category: string; currentConsumerState: string }) =>

@@ -239,7 +239,7 @@ export function HubTour({
           onKeyDown={(event) => event.stopPropagation()}
         >
           <ThemeAssetPicture
-            slot="shared.close-candy"
+            slot="shared.close"
             pictureClassName="hub-tour-close-icon"
             alt=""
             aria-hidden="true"
