@@ -156,6 +156,10 @@ describe("effective Training Pass", () => {
       source: "pro",
       seasonPassExpiresAt: null,
       proExpiresAt,
+      // Canonical season, resolved once by resolveEffectiveTrainingPass. Null
+      // here because the route does not feed it the configured season yet —
+      // that wiring is Stage 1. Nothing consumes the field today.
+      seasonId: null,
     });
   });
 
