@@ -57,6 +57,15 @@ export function isLiteModeServer(): boolean {
   return resolveChesscitoMode() === "learn";
 }
 
+/**
+ * The whole daily-streak nudge sits behind this one build-time flag, so a
+ * teaching moment that lands badly is turned off without reverting anything
+ * else. Off means: no state is written and nothing renders.
+ */
+export function isStreakNudgeEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_STREAK_NUDGE_ENABLED === "true";
+}
+
 export function isVictoryPermitMintEnabled(): boolean {
   return process.env.NEXT_PUBLIC_VICTORY_PERMIT_MINT_ENABLED === "true";
 }

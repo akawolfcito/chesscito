@@ -2060,7 +2060,7 @@
         "src/components/exercises/result-overlay.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 6,
+      "consumerCount": 7,
       "consumers": [
         {
           "file": "src/app/api/og/match/route.tsx",
@@ -2086,6 +2086,17 @@
         },
         {
           "file": "src/components/arena/victory-claim-success.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/daily/streak-nudge-screen.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
