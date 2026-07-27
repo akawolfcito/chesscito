@@ -47,7 +47,7 @@ export function SeasonPassCelebrationFixture({
         panelBackgroundImage={celebrationPanelBackground}
       >
         <SeasonPassCelebration
-          durationDays={pass.durationDays}
+          durationDays={pass.challengeGoalDays}
           shieldsCredited={SHIELDS[variant]}
           onStartFocus={() => {}}
         />

@@ -237,7 +237,7 @@ export async function POST(req: Request) {
       return err("ledger_unavailable", 503);
     }
 
-    const expiresAt = new Date(Date.now() + pass.durationDays * 86_400_000).toISOString();
+    const expiresAt = new Date(Date.now() + pass.accessDurationDays * 86_400_000).toISOString();
     const paymentMetadata = { rail: "stablecoin_single_tx", overpaid: verdict.overpaid };
     const { data: settlement, error: settlementError } = await supabase.rpc(
       "consume_lite_season_pass_payment",
@@ -277,7 +277,7 @@ export async function POST(req: Request) {
     if (!duplicate || shieldsPending) {
       try {
         await redis.incrby(REDIS_KEYS.shieldsCredited(walletNorm), pass.shieldsOnPurchase);
-        const ttlMs = pass.durationDays * 86_400_000;
+        const ttlMs = pass.accessDurationDays * 86_400_000;
         await redis.set(REDIS_KEYS.seasonPass(walletNorm), persistedExpiry, { px: ttlMs });
         if (shieldsPending) {
           await supabase.from("lite_season_passes").update({

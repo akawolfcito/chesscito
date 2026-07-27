@@ -457,7 +457,7 @@ export function LearnHubClient({
   // (rail-config.ts), so the tour cannot quote a price the card contradicts.
   const hubTourChallenge = useMemo(
     () => ({
-      days: lite.challenge.durationDays,
+      days: lite.challenge.challengeGoalDays,
       shields: lite.challenge.shieldBonus,
       price: lite.challenge.priceLabel,
     }),

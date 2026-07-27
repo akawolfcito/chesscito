@@ -146,6 +146,26 @@ describe('SeasonPassSheet — visual offer', () => {
     expect(grid).toHaveTextContent('+3 Shields')
   })
 
+  // AC6 · discriminación 21≠30 — la oferta nombra la meta DENTRO de la ventana.
+  // No es "un desafío de 30 días": son 21 Focus Days con 30 días para lograrlos,
+  // y las dos cifras tienen que aparecer con su rol correcto.
+  it('AC6 · discriminación 21≠30 — vende 21 Focus Days dentro de una ventana de 30', () => {
+    const { container } = render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
+    const text = container.textContent ?? ''
+
+    // La meta sigue siendo 21, interpolada desde el SKU.
+    const grid = container.querySelector('[data-testid="season-pass-benefits"]')
+    expect(grid).toHaveTextContent('21')
+
+    // Y la ventana de 30 se nombra: sin esto el jugador ve un countdown de 30
+    // sobre una meta de 21 que nadie le explicó.
+    expect(text).toMatch(/30/)
+
+    // Lo que NO puede pasar: que la venta se convierta en un desafío de 30.
+    expect(text).not.toMatch(/30[\s-]day challenge/i)
+    expect(text).not.toMatch(/30 Focus Days/i)
+  })
+
   it('keeps the long copy collapsed behind the help chip', () => {
     render(<SeasonPassSheet open={true} onOpenChange={() => {}} />)
 

@@ -30,7 +30,8 @@ export type LearnHubVariant = "guest" | "active" | "pro";
 
 const noop = () => {};
 
-const CHALLENGE = { durationDays: 21, shieldBonus: 3, priceLabel: "$0.99" };
+const CHALLENGE = { challengeGoalDays: 21,
+  accessDurationDays: 30, shieldBonus: 3, priceLabel: "$0.99" };
 
 /** A settled balance. `loading` would render "…" and make the chip's width the
  *  only thing under test; the resting state is what ships. */

@@ -57,7 +57,7 @@ function baseProps(over: Partial<HubLiteScaffoldProps> = {}): HubLiteScaffoldPro
     onConnectTap: vi.fn(),
     onTrophyTap: vi.fn(),
     focusPassport: { streak: 3, totalCompleted: 3, todayDone: true, isLoading: false },
-    challenge: { durationDays: 21, shieldBonus: 3, priceLabel: "$1.99" },
+    challenge: { challengeGoalDays: 21, accessDurationDays: 30, shieldBonus: 3, priceLabel: "$1.99" },
     seasonPass: { active: false, isLoading: false },
     progress: { state: "offer" },
     onJoinChallenge: vi.fn(),

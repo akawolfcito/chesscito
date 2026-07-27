@@ -135,7 +135,17 @@ export const SEASON_PASS_SOURCE = "season_pass" as const;
 export type SeasonPass = {
   sku: SeasonPassSku;
   priceUsd6: bigint;
-  durationDays: number;
+  /** Cuánto acceso pagado otorga la compra. Gobierna `expires_at` y, por lo
+   *  tanto, la reconstrucción del inicio de ventana. NO es la meta. */
+  accessDurationDays: number;
+  /** Cuántos Focus Days hay que completar DENTRO de la ventana de acceso.
+   *  NO es la duración del pase. Invariante: <= accessDurationDays.
+   *
+   *  Los dos son `number`, así que cruzarlos COMPILA. Lo único que lo detecta
+   *  son los tests de discriminación (AC2–AC6 del spec 21-en-30), que se
+   *  validan intercambiando estos dos valores: si la suite queda verde, los
+   *  tests no sirven. */
+  challengeGoalDays: number;
   shieldsOnPurchase: number;
   seasonId: string;
   supporterStatus: string;
@@ -146,7 +156,8 @@ export const SEASON_PASSES: Record<SeasonPassSku, SeasonPass> = {
   lite_season_pass_21: {
     sku: "lite_season_pass_21",
     priceUsd6: 990_000n, // $0.99
-    durationDays: 21,
+    accessDurationDays: 30,
+    challengeGoalDays: 21,
     shieldsOnPurchase: 3,
     seasonId: "21day-mind-challenge-2026-q3",
     supporterStatus: "challenger",

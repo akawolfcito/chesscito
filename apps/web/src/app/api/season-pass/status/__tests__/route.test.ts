@@ -293,6 +293,24 @@ describe("focusDays slice", () => {
     });
   });
 
+  // AC3 · discriminación 21≠30 — la meta que viaja al cliente es
+  // challengeGoalDays (21), nunca accessDurationDays (30).
+  //
+  // ⚠️ Este caso NO puede empezar en rojo: hoy un solo número hace los dos
+  // trabajos, así que `goal` ya vale 21 por coincidencia. Su valor está en la
+  // MUTACIÓN: al intercambiar las dos constantes debe ponerse rojo, que es lo
+  // que prueba que la meta quedó atada al campo correcto y no al que sobró.
+  it("AC3 · discriminación 21≠30 — el goal es la meta (21), no la ventana (30)", async () => {
+    vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");
+    withActivePass();
+    mockCountFocusDays.mockResolvedValue(5);
+
+    const json = await (await GET(makeRequest(WALLET))).json();
+
+    expect(json.focusDays.goal).toBe(21);
+    expect(json.focusDays.goal).not.toBe(30);
+  });
+
   // AC27 wiring — the Redis override outranks the deployment default.
   it("lets the Redis override turn it off without a redeploy", async () => {
     vi.stubEnv("FOCUS_DAYS_LEDGER_ENABLED", "true");

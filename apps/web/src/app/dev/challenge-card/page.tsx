@@ -27,7 +27,8 @@ export const dynamic = "force-dynamic";
 
 const TODAY = "2026-04-25";
 
-const CHALLENGE = { durationDays: 21, shieldBonus: 3, priceLabel: "$0.99" };
+const CHALLENGE = { challengeGoalDays: 21,
+  accessDurationDays: 30, shieldBonus: 3, priceLabel: "$0.99" };
 
 function passport(streak: number, todayDone = false, lastCompletedDate = "2026-04-24") {
   return {

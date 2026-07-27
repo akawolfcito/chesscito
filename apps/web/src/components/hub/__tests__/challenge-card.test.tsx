@@ -11,7 +11,8 @@ const FORBIDDEN =
   /verified|on-?chain|\bNFT\b|\bmint\b|proof|brain health|cure|improves (focus|memory)/i
 
 const CHALLENGE: ChallengeCardProps['challenge'] = {
-  durationDays: 21,
+  challengeGoalDays: 21,
+  accessDurationDays: 30,
   shieldBonus: 3,
   priceLabel: '$1.99',
 }
@@ -49,8 +50,8 @@ function Card({
   const inferred: ChallengeProgressView = props.seasonPass.active
     ? {
         state: 'active',
-        progress: { completed: 0, goal: props.challenge.durationDays },
-        window: { kind: 'expiring', daysRemaining: props.challenge.durationDays },
+        progress: { completed: 0, goal: props.challenge.challengeGoalDays },
+        window: { kind: 'expiring', daysRemaining: props.challenge.accessDurationDays },
         streak: Math.max(0, props.focusPassport.streak),
         unreachable: false,
       }

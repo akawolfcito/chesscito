@@ -297,6 +297,38 @@ describe("season pass", () => {
     expect(json.peonesCredited).toBe(50);
   });
 
+  // AC2 · discriminación 21≠30 — el acceso comprado dura accessDurationDays (30),
+  // NUNCA challengeGoalDays (21). Los literales son deliberados: leer
+  // `pass.accessDurationDays` aquí haría pasar el test igual con los dos valores
+  // intercambiados, que es exactamente lo que este caso existe para detectar.
+  it("AC2 · discriminación 21≠30 — la compra otorga 30 días de acceso, no 21", async () => {
+    const ACCESS_DAYS = 30;
+    const GOAL_DAYS = 21;
+    const now = Date.parse("2026-07-27T12:00:00.000Z");
+    vi.setSystemTime(now);
+
+    mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, SP_PRICE, 0)]));
+    const mock = buildSeasonPassSupabaseMock();
+    mockedSupabase.mockReturnValue(mock.supabase);
+
+    await POST(makeRequest(spBody()));
+
+    // (a) La expiración que se persiste: +30 días desde la compra.
+    const rpcArgs = mock.rpc.mock.calls[0][1] as { p_expires_at: string };
+    expect(Date.parse(rpcArgs.p_expires_at)).toBe(now + ACCESS_DAYS * 86_400_000);
+    expect(Date.parse(rpcArgs.p_expires_at)).not.toBe(now + GOAL_DAYS * 86_400_000);
+
+    // (b) El TTL del espejo en Redis sigue a la MISMA cifra. Si los dos números
+    //     se separan, este es el que se olvida.
+    expect(mockRedisSet).toHaveBeenCalledWith(
+      expect.stringContaining("lite:season-pass:"),
+      expect.any(String),
+      { px: ACCESS_DAYS * 86_400_000 },
+    );
+
+    vi.useRealTimers();
+  });
+
   it("valid $0.99 payment → issues season pass, credits 3 shields", async () => {
     mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, SP_PRICE, 0)]));
     mockedSupabase.mockReturnValue(buildSeasonPassSupabaseMock().supabase);

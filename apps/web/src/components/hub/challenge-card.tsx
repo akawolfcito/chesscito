@@ -114,7 +114,7 @@ function CrownIcon() {
  *  inline stat row + Join Challenge below. Pure leaf: parent hydrates and passes
  *  props, no localStorage / wagmi here.
  *
- *  Progress = focus days completed in the challenge = min(streak, durationDays).
+ *  Progress = focus days completed in the challenge = min(streak, challengeGoalDays).
  *  Structure is fixed across loading / offer / active so the panel never
  *  resizes. Copy avoids web3 / medical claims. */
 export function ChallengeCard({
@@ -137,7 +137,7 @@ export function ChallengeCard({
     focusPassport.isLoading ||
     (!seasonPass.active && seasonPass.isLoading);
 
-  const { durationDays } = challenge;
+  const { challengeGoalDays } = challenge;
   const streak = isLoading ? 0 : Math.max(0, focusPassport.streak);
 
   // Progress, ONLY where the ledger produced one. `disabled` and `offer` have
@@ -411,7 +411,7 @@ export function ChallengeCard({
                 height={115}
                 draggable={false}
               />
-              {durationDays} {t("daysStat")}
+              {challengeGoalDays} {t("daysStat")}
             </span>
           ) : null}
           {!isActive || shields ? (

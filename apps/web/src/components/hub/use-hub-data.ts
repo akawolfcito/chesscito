@@ -160,7 +160,12 @@ export type HubSessionQuota = {
 } | null;
 
 export type SeasonChallengeMeta = {
-  durationDays: number;
+  /** La meta que la tarjeta nombra: cuántos Focus Days hay que completar. */
+  challengeGoalDays: number;
+  /** La ventana dentro de la cual hay que lograrla. Campo aparte porque la
+   *  oferta tiene que poder decir las dos cosas sin que una se disfrace de la
+   *  otra — y porque ambos son `number`, así que cruzarlos compila. */
+  accessDurationDays: number;
   shieldBonus: number;
   priceLabel: string;
 };
@@ -396,7 +401,8 @@ export function useHubData(): HubData {
   const challenge = useMemo<SeasonChallengeMeta>(() => {
     const pass = getSeasonPass("lite_season_pass_21");
     return {
-      durationDays: pass.durationDays,
+      challengeGoalDays: pass.challengeGoalDays,
+      accessDurationDays: pass.accessDurationDays,
       shieldBonus: pass.shieldsOnPurchase,
       priceLabel: formatUsd6(pass.priceUsd6),
     };

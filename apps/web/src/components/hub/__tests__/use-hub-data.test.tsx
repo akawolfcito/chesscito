@@ -29,10 +29,22 @@ describe("useHubData", () => {
     expect(result.current.shared.starsPerPiece).toEqual({});
 
     // challenge meta is pure config — always available regardless of mode.
-    expect(result.current.lite.challenge.durationDays).toBe(21);
     expect(result.current.lite.challenge.shieldBonus).toBe(3);
 
     // Lite-gated data is null when CHESSCITO_LITE_MODE is off (test default).
     expect(result.current.lite.focusPassport).toBeNull();
+  });
+
+  // AC5 · discriminación 21≠30 — la meta y la ventana viajan a la tarjeta en
+  // campos DISTINTOS, cada uno con su cifra. Es el consumidor donde el
+  // typecheck no puede ayudar: los dos son `number` y cruzarlos compila.
+  it("AC5 · discriminación 21≠30 — la meta es 21 y la ventana 30, sin cruzarse", () => {
+    const { result } = renderHook(() => useHubData());
+    const challenge = result.current.lite.challenge;
+
+    expect(challenge.challengeGoalDays).toBe(21);
+    expect(challenge.accessDurationDays).toBe(30);
+    // Cruzados es el modo de falla real, y sin esta línea pasaría inadvertido.
+    expect(challenge.challengeGoalDays).not.toBe(challenge.accessDurationDays);
   });
 });

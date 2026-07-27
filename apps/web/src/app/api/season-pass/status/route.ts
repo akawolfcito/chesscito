@@ -191,8 +191,8 @@ async function resolveFocusDays(input: {
     seasonId,
     report,
     expiresAt,
-    durationDays: configuredPass.durationDays,
-    goal: configuredPass.durationDays,
+    durationDays: configuredPass.accessDurationDays,
+    goal: configuredPass.challengeGoalDays,
   });
   if (init.status === "seeded" && init.seededRows > 0) {
     log.info("focus_day_backfilled", {
@@ -210,7 +210,7 @@ async function resolveFocusDays(input: {
   return {
     status: "ok",
     completed,
-    goal: configuredPass.durationDays,
+    goal: configuredPass.challengeGoalDays,
     seasonId,
   };
 }

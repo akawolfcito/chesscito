@@ -149,7 +149,7 @@ export async function POST(req: Request) {
         source: effective.source,
         windowStartUtc: passWindowStartUtc(
           effective.seasonPassExpiresAt,
-          configuredPass.durationDays,
+          configuredPass.accessDurationDays,
         ),
         expiresAt: effective.seasonPassExpiresAt,
         proExpiresAt: effective.proExpiresAt,
@@ -191,7 +191,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     ok: true,
-    progress: focusDaysProgress(completed, configuredPass.durationDays),
+    progress: focusDaysProgress(completed, configuredPass.challengeGoalDays),
   });
 }
 

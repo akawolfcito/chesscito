@@ -308,8 +308,10 @@ describe("date rules", () => {
 
   it("rejects a date before the pass opened", async () => {
     const { supabase, upserts } = buildSupabase({
-      // 21-day pass that opened today: yesterday predates the purchase.
-      row: { ...activeRow, expires_at: new Date(Date.now() + 21 * DAY_MS).toISOString() },
+      // Pass that opened TODAY: its expiry is exactly one full access window
+      // away, so yesterday predates the purchase. Tied to the access duration
+      // (30), not to the goal — see the AC4(a) case below for why that matters.
+      row: { ...activeRow, expires_at: new Date(Date.now() + 30 * DAY_MS).toISOString() },
     });
     mockedSupabase.mockReturnValue(supabase);
 
@@ -317,5 +319,43 @@ describe("date rules", () => {
     expect(res.status).toBe(400);
     expect((await res.json()).error).toBe("invalid_date");
     expect(upserts).toHaveLength(0);
+  });
+});
+
+describe("AC4 · discriminación 21≠30 — los dos números, cada uno en su lugar", () => {
+  // (a) ELEGIBILIDAD ← accessDurationDays (30).
+  //
+  // Un pase que vence en 21 días abrió su ventana hace 9 (30 − 21), así que
+  // ayer cae DENTRO. Con la ventana atada a 21 el inicio sería hoy y ayer
+  // quedaría afuera: por eso este caso separa las dos constantes en vez de
+  // confirmarlas juntas.
+  it("AC4(a) · acepta una fecha que sólo es elegible con la ventana de 30", async () => {
+    const { supabase, upserts } = buildSupabase({
+      row: { ...activeRow, expires_at: new Date(Date.now() + 21 * DAY_MS).toISOString() },
+    });
+    mockedSupabase.mockReturnValue(supabase);
+
+    const res = await POST(makeRequest({ wallet: WALLET, date: utcDate(-1) }));
+
+    expect(res.status).toBe(200);
+    expect(upserts).toHaveLength(1);
+  });
+
+  // (b) PROGRESO ← challengeGoalDays (21).
+  //
+  // ⚠️ Las 30 filas son un FIXTURE DEFENSIVO, no un estado que el POST pueda
+  // producir: el flujo normal se cierra en 21 (Behavior 6b/AC8), y el backfill
+  // inicial ya capa en `goal` (focus-days.ts:188). Se usan aquí para probar que
+  // el clamp de presentación sobrevive a datos anómalos — históricos, fixtures
+  // o concurrencia — y que la meta reportada es 21, no la ventana.
+  it("AC4(b) · reporta goal 21 y clampea, aun con más filas de las alcanzables", async () => {
+    mockCountFocusDays.mockResolvedValue(30);
+
+    const res = await POST(makeRequest({ wallet: WALLET }));
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.progress).toEqual({ completed: 21, goal: 21 });
+    expect(json.progress.goal).not.toBe(30);
   });
 });

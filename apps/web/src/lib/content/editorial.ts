@@ -3551,6 +3551,12 @@ export const CHALLENGE_CARD_COPY = {
   // Benefit tiles. Both counts are interpolated from the SKU — a pass sold with
   // a different duration or bonus must never advertise the old numbers.
   offerBenefitDays: "{days} Days",
+  // The goal and the window are DIFFERENT numbers, and the offer has to say
+  // both: {goal} days of focus to complete, {window} days to do it in. Without
+  // this line the player sees a countdown of 30 over a goal of 21 that nobody
+  // explained. Deliberately not "a 30-day challenge" — what is sold is the
+  // 21-day challenge, with room to stumble.
+  offerWindowNote: "Complete {goal} Focus Days within a {window}-day window.",
   offerBenefitTrainings: "Special Trainings",
   offerBenefitShields: "+{count} Shields",
   // Accessible name of the `?` chip that discloses offerPractice +

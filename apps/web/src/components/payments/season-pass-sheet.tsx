@@ -101,7 +101,7 @@ function SeasonPassSheetInner({
   const tokenSymbol = selection.selectedSymbol ?? FALLBACK_TOKEN;
 
   const benefits: BenefitTile[] = [
-    { slot: "hub.21-day-icon", label: t("offerBenefitDays", { days: pass.durationDays }) },
+    { slot: "hub.21-day-icon", label: t("offerBenefitDays", { days: pass.challengeGoalDays }) },
     { slot: "hub.training-icon", label: t("offerBenefitTrainings") },
     {
       slot: "shared.shield",
@@ -163,7 +163,7 @@ function SeasonPassSheetInner({
         {isSuccess && rail.result ? (
           <div data-testid="season-pass-success" className="w-full">
             <SeasonPassCelebration
-              durationDays={pass.durationDays}
+              durationDays={pass.challengeGoalDays}
               shieldsCredited={rail.result.shieldsCredited}
               onStartFocus={startFocus}
             />
@@ -232,7 +232,7 @@ function SeasonPassSheetInner({
                   className="season-pass-details"
                   role="note"
                 >
-                  <p>{t("offerPractice", { days: pass.durationDays })}</p>
+                  <p>{t("offerPractice", { days: pass.challengeGoalDays })}</p>
                   <p>{t("offerShieldsBonus", { count: pass.shieldsOnPurchase })}</p>
                 </div>
               ) : null}
@@ -263,6 +263,20 @@ function SeasonPassSheetInner({
                 </div>
               ))}
             </div>
+
+            {/* The goal and the window are different numbers, and both belong
+                to the offer. Visible by default on purpose: the collapsed
+                details block would hide the only line that explains why the
+                countdown says 30 while the goal says 21. */}
+            <p
+              className="season-pass-window-note"
+              data-testid="season-pass-window-note"
+            >
+              {t("offerWindowNote", {
+                goal: pass.challengeGoalDays,
+                window: pass.accessDurationDays,
+              })}
+            </p>
 
             <span className="candy-stat-pill text-base font-bold">{priceLabel}</span>
 

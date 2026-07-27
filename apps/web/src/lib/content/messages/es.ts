@@ -1914,6 +1914,7 @@ const messages = {
     offerShieldsBonus: "Incluye el bono de +{count} Escudos por compra directa",
     offerPriceNote: "Pago único · Sin suscripción",
     offerBenefitDays: "{days} días",
+    offerWindowNote: "Completá {goal} días de foco en una ventana de {window} días.",
     offerBenefitTrainings: "Special Trainings",
     offerBenefitShields: "+{count} Escudos",
     offerDetailsLabel: "Qué incluye",
