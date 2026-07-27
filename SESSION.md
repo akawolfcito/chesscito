@@ -1,4 +1,4 @@
-# Session Handoff — 2026-07-27 (refactor del daily slot + Focus Days S2.1)
+# Session Handoff — 2026-07-27 (refactor del daily slot + Focus Days S2.1 y S2.2a)
 
 ## Completed
 
@@ -29,9 +29,18 @@ contenedor que **no tenía ningún test**. Verificada por mutación (rompí el c
 a propósito y confirmé el rojo), no sólo por verde. De paso el pulso `is-pending`
 ganó cobertura, que no tenía.
 
-### 3. `feat/focus-days-ui` S2.1 (`6619294`) — branch VIVA, sin mergear
+### 3. `feat/focus-days-ui` — branch VIVA, sin mergear
 
-`useLearnFocusDays` + 11 tests. **Todavía no lo consume ninguna superficie.**
+- **S2.1** (`6619294`): `useLearnFocusDays` + 11 tests.
+- **S2.2a** (`6534808`): `buildChallengeProgressView` + `focusWindow` + 14 tests.
+
+**Ninguno de los dos lo consume una superficie todavía.** El cableado es S2.2b.
+
+Dos lecturas que el builder mantiene separadas a propósito:
+- **ledger sin responder = `loading`, NO `degraded`.** `degraded` nos acusa de una
+  falla; no haber preguntado no lo es, y tampoco es un cero.
+- **pase vencido = `0 days left`, NO ventana ausente.** Caer en `unbounded` le diría
+  a un jugador vencido que no tiene fecha límite.
 
 ## Hallazgo que cambió el plan (y decisión del founder)
 
@@ -58,12 +67,12 @@ lecturas de `null` no son igual de inocuas.
 
 ## Current State
 
-- **Branch**: `feat/focus-days-ui` (S2.1 adentro).
+- **Branch**: `feat/focus-days-ui` (S2.1 + S2.2a adentro, 4 commits).
 - ✅ **`main` y `origin/main` están sincronizados en `cfe9ec41`** — el founder pusheó
   el refactor. `main` NO tiene nada de Stage 2.
 - ⚠️ **Este `SESSION.md` vive en `feat/focus-days-ui`.** El de `main` sigue siendo el
   de Stage 1 hasta que esta branch mergee.
-- **Build**: suite **6094 passing / 533 files, EXIT=0, 0 `Unhandled Errors`**, `tsc`
+- **Build**: suite **6108 passing / 534 files, EXIT=0, 0 `Unhandled Errors`**, `tsc`
   limpio, eslint limpio.
 - **Uncommitted work**: ninguno.
 - 📌 **Baseline corregido: `main` limpio da 531 archivos, no 529.** Lo medí con stash
@@ -84,13 +93,24 @@ lecturas de `null` no son igual de inocuas.
 
 Sigue el orden de commits de Stage 2 (S2.1 hecho):
 
-- **S2.2** — `ChallengeCard`: los 5 estados de `challengeProgressView` (`offer`,
-  `disabled`, `degraded`, `active` con `unreachable`, `completed`). El CTA
-  **sobrevive** a `unreachable` (spec, sección "convive con el CTA").
-  ⚠️ Acá se cablea `useLearnFocusDays` a `use-hub-data`/`LearnHubClient`: hoy el hook
-  existe y **no lo llama nadie**.
-- **S2.3** — i18n en `editorial.ts` + `messages/es.ts` (tabla del spec), cero
-  em-dashes (AC23, `anti-ai-prose.test.ts`), `pnpm content:audit` (AC24).
+- **S2.2b + S2.3 JUNTOS** (recomendación, ver abajo) — `ChallengeCard` consume
+  `progress: ChallengeProgressView` en vez de derivar `done = min(streak, 21)`
+  (`challenge-card.tsx:128`), y se cablea `useLearnFocusDays` +
+  `buildChallengeProgressView` en `use-hub-data`/`LearnHubClient`.
+  Los 5 estados: `offer`, `disabled`, `degraded`, `active` con `unreachable`,
+  `completed`. El CTA **sobrevive** a `unreachable` (spec, "convive con el CTA":
+  el copy de `unreachable` reemplaza ÚNICAMENTE los mensajes tipo `Only X more`).
+  Copy en `editorial.ts` + `messages/es.ts`, cero em-dashes (AC23,
+  `anti-ai-prose.test.ts`), `pnpm content:audit` (AC24).
+
+  **Por qué juntos:** S2.2b no puede renderizar 5 estados sin decir nada en cada
+  uno. Separarlos obliga a inventar copy placeholder que después hay que pasar por
+  `content:audit` y por el techo de em-dashes — o sea, escribir el copy dos veces.
+
+  ⚠️ **Decisión de producto pendiente ahí**: `disabled` y `degraded` no pueden
+  pintarse igual (una es decisión nuestra, la otra una falla nuestra; pintarlas
+  igual esconde un incidente detrás de un flag). El spec da el copy de `degraded`
+  pero **no** el de `disabled`. Preguntar antes de inventarlo.
 - **S2.4** — cliente del POST al completar el Daily + reintento `daily_retry`.
 - **S2.5** — borrar `challenge-day.ts`, su test, `dayOfChallenge` y sus referencias
   (AC1). **Último**, para que el camino viejo viva hasta que el nuevo esté cableado.
