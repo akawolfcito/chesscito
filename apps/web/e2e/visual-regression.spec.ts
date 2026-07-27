@@ -1196,7 +1196,18 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
   // Immune to the catalog by construction: the reward tiles are a literal, not
   // deriveRewardTiles(), which defaults to the shipping EXERCISES catalog and
   // would hand ownership of these photos to the content authors.
+  //
+  // ⚠️ Tighter than FIXTURE_OPTS on purpose. At the shared 0.01 these photos
+  // did NOT notice the metrics row re-flowing from
+  //   "12 of 21 Focus Days · 10 days left" / "12-day streak"    to
+  //   "12 of 21 Focus Days" / "10 days left · 12-day streak"
+  // — a full re-layout of the one row this shot exists to guard came in under
+  // 1% of a 390x844 frame, so `--update-snapshots` left the stale baseline in
+  // place and the run went green. Text re-flow is a small fraction of a phone
+  // screen; a threshold sized for antialiasing cannot see it.
   // ──────────────────────────────────────────────────────────────────────────
+
+  const LEARN_HUB_OPTS = { maxDiffPixelRatio: 0.002 } as const;
 
   test("vr18-learn-hub-guest — no wallet: Connect chip, no Peones, card in offer", async ({
     page,
@@ -1207,7 +1218,7 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     });
     await page.evaluate(() => document.fonts.ready);
     await settle(page, 800);
-    await expect(page).toHaveScreenshot("vr18-learn-hub-guest.png", FIXTURE_OPTS);
+    await expect(page).toHaveScreenshot("vr18-learn-hub-guest.png", LEARN_HUB_OPTS);
   });
 
   // The widest ordinary case, and the reason this shot exists: progress,
@@ -1222,7 +1233,7 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     });
     await page.evaluate(() => document.fonts.ready);
     await settle(page, 800);
-    await expect(page).toHaveScreenshot("vr18-learn-hub-active.png", FIXTURE_OPTS);
+    await expect(page).toHaveScreenshot("vr18-learn-hub-active.png", LEARN_HUB_OPTS);
   });
 
   // PRO reaches the challenge without buying a window, so the countdown slot
@@ -1238,6 +1249,6 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     });
     await page.evaluate(() => document.fonts.ready);
     await settle(page, 800);
-    await expect(page).toHaveScreenshot("vr18-learn-hub-pro.png", FIXTURE_OPTS);
+    await expect(page).toHaveScreenshot("vr18-learn-hub-pro.png", LEARN_HUB_OPTS);
   });
 });
