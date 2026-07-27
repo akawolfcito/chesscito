@@ -11,7 +11,7 @@
  * explicit `today` argument so tests can pin the clock.
  */
 
-import { dispatchDailyProgressChanged } from "./events";
+import { dispatchDailyCompleted, dispatchDailyProgressChanged } from "./events";
 import { dailyProgressStorageKey } from "@/lib/lite-progress-storage";
 
 
@@ -92,6 +92,9 @@ export function recordDailyCompletion(today: string = todayUtc()): DailyProgress
       // so the UI still reflects the completion for this session.
     }
     dispatchDailyProgressChanged();
+    // Only here: the state really changed, so exactly one day became complete.
+    // The Focus Days ledger write listens to this and nothing else.
+    dispatchDailyCompleted(today);
   }
   return next;
 }
