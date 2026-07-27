@@ -267,21 +267,16 @@ export function ProSheet(props: ProSheetProps) {
          *  sheet content. Shell is shared between active and non-active
          *  states — only the central card + CTA block branch on
          *  `showActiveBanner`. */}
-        <div className="relative mx-auto flex w-full max-w-[var(--app-max-width)] flex-col overflow-y-auto overflow-x-visible overscroll-contain pt-[12%]">
+        {/* The banner straddles the panel's top edge — half above, half over the
+            frame. Both numbers below are percentages of the SAME width, which is
+            what keeps the crown centred on the edge at any viewport:
+              banner height = 62% width x (249/512 asset ratio) = 30.2% width
+              padding-top   = half of that                      = 15.1% width
+            So with the banner at `top-0`, its centre lands exactly on the panel
+            edge. Change the width or swap the asset and this pair must follow. */}
+        <div className="relative mx-auto flex w-full max-w-[var(--app-max-width)] flex-col overflow-y-auto overflow-x-visible overscroll-contain pt-[15.1%]">
           {/* Floating banner */}
-          <ThemeAssetPicture slot="pro-sheet.header-icon" pictureClassName="pointer-events-none absolute left-1/2 top-5 z-20 w-[62%] -translate-x-1/2" alt="" aria-hidden="true" className="w-full" draggable={false} />
-
-          {/* Close button */}
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            aria-label={t("closeLabel")}
-            className="candy-close-asset-button absolute right-4 z-30"
-            style={{ top: "18%" }}
-            data-testid="pro-close"
-          >
-            <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-10 w-10 object-contain" draggable={false} />
-          </button>
+          <ThemeAssetPicture slot="pro-sheet.header-icon" pictureClassName="pointer-events-none absolute left-1/2 top-0 z-20 w-[62%] -translate-x-1/2" alt="" aria-hidden="true" className="w-full" draggable={false} />
 
           {/* Panel asset */}
           <div
@@ -292,6 +287,22 @@ export function ProSheet(props: ProSheetProps) {
               backgroundRepeat: "no-repeat",
             }}
           >
+            {/* Close button — absolute against the PANEL, not the scroll
+                container, so it hugs the frame's top-right corner the way
+                <MissionDetailSheet> does. It used to sit outside with
+                `top: 18%`: a percentage `top` resolves against the container's
+                HEIGHT, so it drifted down as the sheet grew and landed in a
+                different place in every state. */}
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              aria-label={t("closeLabel")}
+              className="candy-close-asset-button absolute right-[4%] top-[4%] z-30"
+              data-testid="pro-close"
+            >
+              <ThemeAssetPicture slot="shared.close" alt="" aria-hidden="true" className="h-10 w-10 object-contain" draggable={false} />
+            </button>
+
             <div className="flex flex-col items-stretch px-[8%] pt-[16%] pb-[4%]">
               {/* TRAINING PASS pill */}
               <span
