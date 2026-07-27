@@ -1181,4 +1181,63 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     await settle(page, 800);
     await expect(page).toHaveScreenshot("vr17-play-hub-pro.png", FIXTURE_OPTS);
   });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // vr18 — LEARN hub home. The mirror of vr17, unblocked once HubLiteScaffold
+  // took `dailySlot` as a prop (its daily tile called wagmi's useAccount, and
+  // /dev mounts no provider).
+  //
+  // /dev/challenge-card already photographs the card as a leaf, one state per
+  // section. What had NO coverage is the hub AROUND it: the HUD row, the mascot
+  // block, where the card sits in the vertical stack, and the Training Path
+  // underneath. The one baseline named after the hub — `hub-clean` — navigates
+  // to /exercises.
+  //
+  // Immune to the catalog by construction: the reward tiles are a literal, not
+  // deriveRewardTiles(), which defaults to the shipping EXERCISES catalog and
+  // would hand ownership of these photos to the content authors.
+  // ──────────────────────────────────────────────────────────────────────────
+
+  test("vr18-learn-hub-guest — no wallet: Connect chip, no Peones, card in offer", async ({
+    page,
+  }) => {
+    await page.goto("/dev/learn-hub?variant=guest", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot("vr18-learn-hub-guest.png", FIXTURE_OPTS);
+  });
+
+  // The widest ordinary case, and the reason this shot exists: progress,
+  // countdown and streak are three different two-digit numbers on ONE row at
+  // 390px. A unit test reads each of them and sees nothing when they collide.
+  test("vr18-learn-hub-active — 12 of 21, 10 days left, streak 12", async ({
+    page,
+  }) => {
+    await page.goto("/dev/learn-hub?variant=active", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot("vr18-learn-hub-active.png", FIXTURE_OPTS);
+  });
+
+  // PRO reaches the challenge without buying a window, so the countdown slot
+  // says "Included with PRO" instead of a number — the slot is NOT dropped, and
+  // a zero appearing there would read as an expired pass. The crown swaps into
+  // the ACTIVE badge at the same time; the two must not drift apart.
+  test("vr18-learn-hub-pro — unbounded window: 'Included with PRO' in the countdown slot", async ({
+    page,
+  }) => {
+    await page.goto("/dev/learn-hub?variant=pro", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot("vr18-learn-hub-pro.png", FIXTURE_OPTS);
+  });
 });
