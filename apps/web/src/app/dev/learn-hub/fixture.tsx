@@ -168,6 +168,9 @@ export function LearnHubFixture({ variant }: { variant: LearnHubVariant }) {
         />
       }
       onPassportTap={noop}
+      // See the PLAY probe: the challenge card's help chip renders only when this
+      // is defined, so without it the baseline is blind to the chip.
+      onReplayTour={noop}
       shields={v.shields}
       primaryFocus={{ onPress: noop, contentLoop: null, isHydrated: true }}
       rewardTiles={REWARD_TILES}
