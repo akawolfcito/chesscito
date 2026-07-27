@@ -3475,8 +3475,28 @@ export const CHALLENGE_CARD_COPY = {
   daysStat: "days",
   dayStat: "day",
   focusDaysFormat: "{done}/{total} focus days",
-  /** Passport headline, ABOVE the flames: the sentence the row illustrates. */
+  /** Passport headline, ABOVE the flames: the sentence the row illustrates.
+   *  RETIRED from the card (Focus Days ledger, 2026-07-27): it read as an
+   *  ordinal that advanced with the calendar while the number under it came
+   *  from the streak, so it went backward after a skipped day. Replaced by
+   *  `focusDaysProgress`, which counts rows the server actually recorded. */
   focusDayOrdinal: "Day {done} of {total}",
+  /** Progress, from the ledger. Never derived from the streak: a count that
+   *  can go backward is the whole defect this replaces. */
+  focusDaysProgress: "{completed} of {goal} Focus Days",
+  /** Access window. Its own metric, separate from progress. */
+  windowDaysLeft: "{days, plural, =1 {1 day left} other {# days left}}",
+  windowUnbounded: "Included with PRO",
+  /** Shown where progress would be when the ledger cannot answer. Says a
+   *  metric is missing, never that access or the Daily is broken, and never
+   *  falls back to the streak. */
+  progressUnavailable: "Focus progress is temporarily unavailable",
+  /** `unreachable`: the goal no longer fits in the window. Explains the state
+   *  and keeps the habit worth doing. It replaces optimistic progress lines
+   *  ONLY; the CTA stays (spec: "convive con el CTA, no lo reemplaza"). Never
+   *  defeatist, never "you already lost". */
+  unreachableTitle: "Keep building the habit",
+  unreachableBody: "Complete more days before your pass ends.",
   shieldsBonus: "+{count}",
   shieldsStat: "Shields",
   shieldsCount: "{count}",

@@ -6,6 +6,7 @@ import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import type { PassportSlotKind } from "@/lib/daily/passport";
 import { todayUtc } from "@/lib/daily/progress";
 import { focusWeek, type FocusWeekDayState } from "@/lib/daily/week";
+import type { ChallengeProgressView } from "@/lib/season-pass/focus-days";
 import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 import type { HubFocusPassport, SeasonChallengeMeta } from "@/components/hub/use-hub-data";
 
@@ -62,6 +63,11 @@ export type ChallengeCardProps = {
   focusPassport: HubFocusPassport;
   challenge: SeasonChallengeMeta;
   seasonPass: ChallengeCardSeasonPass;
+  /** The whole progress state, assembled upstream by
+   *  `buildChallengeProgressView`. The card no longer derives progress from
+   *  the streak: that number goes BACKWARD after a skipped day, which is the
+   *  defect the Focus Days ledger replaces. */
+  progress: ChallengeProgressView;
   /** null when the pass is active (no purchase CTA, no glow). */
   onJoinChallenge: (() => void) | null;
   /** Optional: makes the flame/streak block a tap target into today's focus
@@ -110,6 +116,7 @@ export function ChallengeCard({
   focusPassport,
   challenge,
   seasonPass,
+  progress,
   onJoinChallenge,
   onFocusTap,
   onPassportTap,
@@ -121,11 +128,23 @@ export function ChallengeCard({
 
   const isActive = seasonPass.active;
   const isLoading =
-    focusPassport.isLoading || (!seasonPass.active && seasonPass.isLoading);
+    progress.state === "loading" ||
+    focusPassport.isLoading ||
+    (!seasonPass.active && seasonPass.isLoading);
 
   const { durationDays } = challenge;
   const streak = isLoading ? 0 : Math.max(0, focusPassport.streak);
-  const done = Math.min(streak, durationDays);
+
+  // Progress, ONLY where the ledger produced one. `disabled` and `offer` have
+  // no number to show and must not invent one; `degraded` says the metric is
+  // missing instead. None of them may fall back to the streak.
+  const ledger =
+    progress.state === "active" || progress.state === "completed" ? progress.progress : null;
+  // Kept for the passport's `data-done` hook (flames + tour), which reads a
+  // count of finished days. Absent a ledger answer it claims nothing.
+  const done = ledger?.completed ?? 0;
+  const window = "window" in progress ? progress.window : null;
+  const unreachable = progress.state === "active" && progress.unreachable;
 
   // Calendar week (Monday-first, UTC) — replaces the old streak-derived flame
   // window. Same 7 sprites, but each one now names a real weekday, so the row
@@ -156,9 +175,13 @@ export function ChallengeCard({
 
   // Single primary CTA. Order matters: a finished challenge outranks a finished
   // day, and no pass outranks everything (the purchase is the whole point).
+  //
+  // `disabled` and `degraded` keep the ordinary Daily CTA: neither is a reason
+  // to take the action away. `unreachable` keeps it too -- replacing the CTA
+  // would turn a warning into a dead end, and the habit is the product.
   const ctaState: CtaState = !isActive
     ? "join"
-    : done >= durationDays
+    : progress.state === "completed"
       ? "complete"
       : focusPassport.todayDone
         ? "tomorrow"
@@ -176,6 +199,10 @@ export function ChallengeCard({
       className="challenge-card"
       data-testid="challenge-card"
       data-state={isLoading ? "loading" : isActive ? "active" : "offer"}
+      // The ledger state, exposed separately from the commercial one: a card
+      // that renders `disabled` and `degraded` identically hides an incident
+      // behind a feature flag.
+      data-progress-state={progress.state}
       aria-label={t("rootAriaLabel")}
       aria-busy={isLoading || undefined}
     >
@@ -211,14 +238,52 @@ export function ChallengeCard({
               "Day N of 21", and the week below is the picture of that
               sentence. It stays in the icon column with the title it belongs
               to — only the 7-day row needs the full panel width. */}
+          {/* Progress · window · streak. Three DIFFERENT metrics, never
+              substituted for one another:
+                - progress = distinct days the server recorded
+                - window   = how much access is left
+                - streak   = the daily run, a sibling cue
+              The old "Day N of 21" line is gone on purpose: it read as a
+              calendar ordinal while its number came from the streak, so it
+              went backward after a skipped day. */}
           <p className="challenge-card-day-count">
-            {t("focusDayOrdinal", { done, total: durationDays })}
+            {ledger ? (
+              <span data-testid="challenge-progress-line">
+                {t("focusDaysProgress", {
+                  completed: ledger.completed,
+                  goal: ledger.goal,
+                })}
+              </span>
+            ) : progress.state === "degraded" ? (
+              // A failure of OURS, said plainly. `disabled` is a decision of
+              // ours and says nothing: painting them alike would hide an
+              // incident behind a flag.
+              <span
+                className="challenge-card-progress-note"
+                data-testid="challenge-progress-unavailable"
+              >
+                {t("progressUnavailable")}
+              </span>
+            ) : null}
+            {window ? (
+              <span className="challenge-card-window" data-testid="challenge-window">
+                {window.kind === "unbounded"
+                  ? t("windowUnbounded")
+                  : t("windowDaysLeft", { days: window.daysRemaining })}
+              </span>
+            ) : null}
             {streak > 0 ? (
               <span className="challenge-card-streak" data-testid="challenge-streak">
                 {t("streakFormat", { days: streak })}
               </span>
             ) : null}
           </p>
+          {unreachable ? (
+            <div className="challenge-card-unreachable" data-testid="challenge-unreachable">
+              <p className="challenge-card-unreachable-title">{t("unreachableTitle")}</p>
+              <p className="challenge-card-unreachable-body">{t("unreachableBody")}</p>
+            </div>
+          ) : null}
           <div className="challenge-card-passport-head">
             <p className="challenge-card-passport-label">{t("passportLabel")}</p>
             {onReplayTour ? (

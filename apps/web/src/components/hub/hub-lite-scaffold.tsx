@@ -14,6 +14,7 @@ import {
   type ChallengeCardSeasonPass,
 } from "@/components/hub/challenge-card";
 import type { ContentLoopAction } from "@/lib/hub/content-loop";
+import type { ChallengeProgressView } from "@/lib/season-pass/focus-days";
 import type {
   HubFocusPassport,
   SeasonChallengeMeta,
@@ -36,6 +37,8 @@ export type HubLiteScaffoldProps = {
   focusPassport: HubFocusPassport;
   challenge: SeasonChallengeMeta;
   seasonPass: ChallengeCardSeasonPass;
+  /** Focus Days state, assembled by the container. Told, not derived. */
+  progress: ChallengeProgressView;
   /** null when the pass is active (no purchase CTA). */
   onJoinChallenge: (() => void) | null;
   /** The daily affordance, BUILT BY THE CONTAINER (mirrors PlayHubScaffold).
@@ -85,6 +88,7 @@ export function HubLiteScaffold({
   focusPassport,
   challenge,
   seasonPass,
+  progress,
   onJoinChallenge,
   dailySlot,
   onPassportTap,
@@ -199,6 +203,7 @@ export function HubLiteScaffold({
           focusPassport={focusPassport}
           challenge={challenge}
           seasonPass={seasonPass}
+          progress={progress}
           onJoinChallenge={onJoinChallenge}
           shields={shields}
           // Tapping the flame/streak block opens today's Daily, same as the

@@ -195,6 +195,8 @@ export type HubLiteData = {
     active: boolean;
     source: "pro" | "season_pass" | null;
     loading: boolean;
+    /** Needed to derive the Focus Days window (days left). */
+    seasonPassExpiresAt: string | null;
     refresh: () => void | Promise<void>;
   };
   /** Discriminated slice for <ChallengeCard> (active → day + shields). */
@@ -448,6 +450,7 @@ export function useHubData(): HubData {
         active: seasonPassStatus.active,
         source: seasonPassStatus.source,
         loading: seasonPassStatus.loading,
+        seasonPassExpiresAt: seasonPassStatus.seasonPassExpiresAt,
         refresh: seasonPassStatus.refresh,
       },
       challengeSeasonPass,

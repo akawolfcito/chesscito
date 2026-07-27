@@ -851,7 +851,7 @@ describe("HubScaffoldClient — Lite Mode", () => {
     expect(screen.queryByTestId("mini-arena-trigger")).not.toBeInTheDocument();
   });
 
-  it("Challenge progress advances after daily completion event fires (no navigation)", async () => {
+  it("a local daily completion moves the streak but never invents Focus Days progress", async () => {
     render(<HubScaffoldClientLite />);
     await screen.findByTestId("challenge-progress");
     // Re-query every read: the block swaps between <button> (Daily pending) and
@@ -859,6 +859,7 @@ describe("HubScaffoldClient — Lite Mode", () => {
     // goes stale — it would keep reporting the pre-completion value.
     const done = () =>
       Number(screen.getByTestId("challenge-progress").getAttribute("data-done"));
+    const streakText = () => screen.queryByTestId("challenge-streak")?.textContent ?? "";
     // Empty progress → 0 focus days.
     await waitFor(() => expect(done()).toBe(0));
 
@@ -870,29 +871,35 @@ describe("HubScaffoldClient — Lite Mode", () => {
     );
     window.dispatchEvent(new CustomEvent("chesscito:daily-progress-changed"));
 
-    // The progress bar must reflect the new streak immediately — no navigation.
-    await waitFor(() => expect(done()).toBe(1));
+    // Focus Days progress is the SERVER's count now. Completing a daily
+    // locally moves the streak, and the card must NOT turn that into progress:
+    // a number sourced from the streak walks backward after a skipped day,
+    // which is the defect the ledger replaces. Without an entitlement here
+    // there is no ledger answer at all, so the count stays empty.
+    await waitFor(() => expect(streakText()).toMatch(/1-day streak/i));
+    expect(done()).toBe(0);
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  it("Challenge progress label updates after daily completion event fires (no navigation)", async () => {
+  it("the streak block advances reactively after a daily completion, with no navigation", async () => {
+    // The reactive-without-navigation guarantee still holds; it belongs to the
+    // metric that is genuinely local (the daily run), not to Focus Days.
     render(<HubScaffoldClientLite />);
-    // The ordinal sits with the title now, not inside the weekly row (which
-    // only holds the 7 weekday columns), so the label is read off the card.
-    const label = () => screen.getByTestId("challenge-card").textContent ?? "";
     await screen.findByTestId("challenge-progress");
-    await waitFor(() => expect(label()).toMatch(/Day 0 of 21/i));
+    expect(screen.queryByTestId("challenge-streak")).toBeNull();
 
-    // Simulate daily completion.
     const today = new Date().toISOString().slice(0, 10);
     localStorage.setItem(
       "chesscito:daily-progress",
-      JSON.stringify({ streak: 1, lastCompletedDate: today, totalCompleted: 1 }),
+      JSON.stringify({ streak: 4, lastCompletedDate: today, totalCompleted: 4 }),
     );
     window.dispatchEvent(new CustomEvent("chesscito:daily-progress-changed"));
 
-    // Visible label advances reactively, with no navigation.
-    await waitFor(() => expect(label()).toMatch(/Day 1 of 21/i));
+    await waitFor(() =>
+      expect(screen.getByTestId("challenge-streak").textContent).toMatch(/4-day streak/i),
+    );
+    // And it never becomes a progress claim.
+    expect(screen.getByTestId("challenge-card").textContent).not.toMatch(/of 21/i);
     expect(pushMock).not.toHaveBeenCalled();
   });
 });

@@ -8590,11 +8590,52 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* Separator lives in CSS, not in the copy: it only exists when there IS a
-   streak (streak 0 renders no element at all, so no orphan dot). */
-.challenge-card-streak::before {
+   streak (streak 0 renders no element at all, so no orphan dot).
+   `:not(:first-child)` is load bearing since the Focus Days ledger: the row
+   used to always open with the "Day N of 21" ordinal, so the streak could
+   never be first. Now `offer` and `disabled` render fewer siblings, and a
+   leading separator would dangle off the front of the row. */
+.challenge-card-streak:not(:first-child)::before,
+.challenge-card-window:not(:first-child)::before {
   content: "·";
   margin-right: 6px;
   color: rgba(110, 68, 21, 0.45);
+}
+
+/* Access window — a metric of its own, deliberately NOT styled like the
+   progress count: how much time is left and how many days are done are
+   different questions, and the card stopped conflating them. */
+.challenge-card-window {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  color: #b4611a;
+}
+
+/* Shown where the count would be when the ledger cannot answer. Reads as a
+   missing metric, not as an alarm: access and the Daily are both fine. */
+.challenge-card-progress-note {
+  flex: 0 0 auto;
+  font-weight: 600;
+  color: rgba(110, 68, 21, 0.72);
+}
+
+/* `unreachable` — explains the state UNDER the row and above the CTA, which
+   it never replaces. Muted so it informs without shouting. */
+.challenge-card-unreachable {
+  margin: 4px 0 0;
+}
+
+.challenge-card-unreachable-title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #6e4415;
+}
+
+.challenge-card-unreachable-body {
+  margin: 0;
+  font-size: 0.72rem;
+  color: rgba(110, 68, 21, 0.78);
 }
 
 /* The flames ARE the streak, visually. Bigger and further apart so each day
