@@ -449,12 +449,12 @@ describe('<ChallengeCard>', () => {
           shieldsCredited: 3,
         }}
         onJoinChallenge={null}
-        shields={{ count: 2, max: 3 }}
+        shields={{ count: 2 }}
       />,
     )
     expect(screen.getByTestId('challenge-active-badge')).toBeInTheDocument()
     const card = screen.getByTestId('challenge-card')
-    expect(screen.getByTestId('challenge-shields')).toHaveTextContent('2/3 Shields')
+    expect(screen.getByTestId('challenge-shields')).toHaveTextContent('2 Shields')
     expect(card.textContent).not.toMatch(/\+3/)
     expect(card.textContent).toMatch(/Special Training/)
     expect(card.textContent).toMatch(/Mind Challenge/i)
@@ -795,13 +795,18 @@ describe('<ChallengeCard>', () => {
             shieldsCredited: 3,
           }}
           onJoinChallenge={null}
-          shields={{ count: 2, max: 3 }}
+          shields={{ count: 2 }}
         />,
       )
       expect(screen.queryByTestId('challenge-day')).toBeNull()
+      // No "/3". The 3 was never a capacity the player could fill — the
+      // displayed balance is min(3, credited - consumed), so a cap in the copy
+      // promised a tank that does not exist: it made 0 read as terminal, and it
+      // hid every shield credited past the third.
       expect(screen.getByTestId('challenge-shields')).toHaveTextContent(
-        '2/3 Shields',
+        '2 Shields',
       )
+      expect(screen.getByTestId('challenge-shields')).not.toHaveTextContent('/')
       expect(screen.getByTestId('challenge-stats')).not.toHaveTextContent('+3')
     })
 
@@ -812,7 +817,7 @@ describe('<ChallengeCard>', () => {
           challenge={CHALLENGE}
           seasonPass={{ active: true, source: 'pro' }}
           onJoinChallenge={null}
-          shields={{ count: 3, max: 3 }}
+          shields={{ count: 3 }}
         />,
       )
       expect(screen.queryByTestId('challenge-day')).toBeNull()
@@ -823,23 +828,23 @@ describe('<ChallengeCard>', () => {
     })
 
     it('shows only the +N purchase bonus in the offer state', () => {
-      // "+3 shields" (what you will receive) next to "0/3" (what you hold) read
-      // as two answers to the same question. Before the purchase, only the
-      // bonus is meaningful.
+      // "+3 Shields" (what you will receive) next to the balance (what you
+      // hold) read as two answers to the same question. Before the purchase,
+      // only the bonus is meaningful.
       render(
         <Card
           focusPassport={passport({ streak: 1 })}
           challenge={CHALLENGE}
           seasonPass={{ active: false, isLoading: false }}
           onJoinChallenge={() => {}}
-          shields={{ count: 0, max: 3 }}
+          shields={{ count: 0 }}
         />,
       )
       expect(screen.getByTestId('challenge-shields')).toHaveTextContent(
         '+3 Shields',
       )
       expect(screen.getByTestId('challenge-stats')).not.toHaveTextContent(
-        '0/3',
+        /\b0 Shields\b/,
       )
     })
 
@@ -986,14 +991,14 @@ describe('<ChallengeCard>', () => {
             shieldsCredited: 3,
           }}
           onJoinChallenge={null}
-          shields={{ count: 2, max: 3 }}
+          shields={{ count: 2 }}
         />,
       )
       const stats = screen.getByTestId('challenge-stats')
       // "21-Day Mind Challenge" + "Day 4 of 21" already say it twice; inside
       // the challenge a third mention informs nobody.
       expect(stats).not.toHaveTextContent('21 days')
-      expect(stats).toHaveTextContent('2/3 Shields')
+      expect(stats).toHaveTextContent('2 Shields')
       expect(stats).toHaveTextContent('Special Training')
       expect(
         container.querySelector('[data-theme-slot="hub.focus-passport-calendar"]'),

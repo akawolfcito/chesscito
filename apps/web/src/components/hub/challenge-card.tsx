@@ -86,8 +86,13 @@ export type ChallengeCardProps = {
   today?: string;
   /** Shields the player owns right now, `min(MAX, credited - consumed)`.
    *  Omitted → the chip is not rendered (a surface that cannot read the
-   *  balance must not claim one). */
-  shields?: { count: number; max: number };
+   *  balance must not claim one).
+   *
+   *  No `max`: the cap is a display clamp, not a capacity the player fills, so
+   *  showing it read as a tank — "0/3" looked terminal and "3/3" looked full
+   *  while extra credits sat buffered and invisible. The clamp still lives in
+   *  `shield-storage.ts`; it just stopped being a promise on screen. */
+  shields?: { count: number };
 };
 
 function CrownIcon() {
@@ -421,7 +426,7 @@ export function ChallengeCard({
                 draggable={false}
               />
               {isActive && shields
-                ? t("shieldsOwned", { count: shields.count, max: shields.max })
+                ? t("shieldsOwned", { count: shields.count })
                 : `${t("shieldsBonus", { count: challenge.shieldBonus })} ${t("shieldsStat")}`}
             </span>
           ) : null}

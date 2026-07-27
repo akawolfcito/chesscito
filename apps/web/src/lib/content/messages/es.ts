@@ -1884,7 +1884,7 @@ const messages = {
     shieldsBonus: "+{count}",
     shieldsStat: "Escudos",
     shieldsCount: "{count}",
-    shieldsOwned: "{count}/{max} Escudos",
+    shieldsOwned: "{count} Escudos",
     streakFormat: "{days, plural, =1 {Racha de 1 día} other {Racha de # días}}",
     // Lunes primero: L M X J V S D (miércoles = X, la convención de ES).
     weekdayLetters: "L,M,X,J,V,S,D",

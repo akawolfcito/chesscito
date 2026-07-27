@@ -3500,7 +3500,7 @@ export const CHALLENGE_CARD_COPY = {
   shieldsBonus: "+{count}",
   shieldsStat: "Shields",
   shieldsCount: "{count}",
-  shieldsOwned: "{count}/{max} Shields",
+  shieldsOwned: "{count} Shields",
   /** Daily Streak, canonical wording (docs/product/2026-07-23-combo-streak-
    *  vocabulary.md). NOT "Combo" — Combo is the session metric and stays
    *  exclusive to the exercise overlay / drawer. */

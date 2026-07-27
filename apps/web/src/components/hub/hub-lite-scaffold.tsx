@@ -52,7 +52,7 @@ export type HubLiteScaffoldProps = {
   onPassportTap: () => void;
   /** Live shields balance for the card's stat chip. Optional: `/dev` probes
    *  mount the scaffold without a wallet and must not fake a count. */
-  shields?: { count: number; max: number };
+  shields?: { count: number };
   // ── Start Focus (primary daily action) ──
   primaryFocus: {
     onPress: () => void;

@@ -66,7 +66,7 @@ type VariantShape = {
     isLoading: boolean;
     lastCompletedDate: string | null;
   };
-  shields?: { count: number; max: number };
+  shields?: { count: number };
   /** null when the pass is active (no purchase CTA). */
   hasJoinCta: boolean;
 };
@@ -112,7 +112,7 @@ const VARIANTS: Record<LearnHubVariant, VariantShape> = {
       isLoading: false,
       lastCompletedDate: "2026-04-25",
     },
-    shields: { count: 3, max: 3 },
+    shields: { count: 3 },
     hasJoinCta: false,
   },
   // PRO reaches the challenge without buying a window: `unbounded` renders no
@@ -137,7 +137,7 @@ const VARIANTS: Record<LearnHubVariant, VariantShape> = {
       isLoading: false,
       lastCompletedDate: "2026-04-24",
     },
-    shields: { count: 2, max: 3 },
+    shields: { count: 2 },
     hasJoinCta: false,
   },
 };
