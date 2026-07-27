@@ -43,6 +43,18 @@ Otras dos cosas que aparecieron y se cerraron en el camino:
 2. Recién después: `FOCUS_DAYS_LEDGER_ENABLED=true` (server-side, **nunca** `NEXT_PUBLIC_*`)
    + redeploy, o el override `focus-days-ledger:enabled` en Redis para prenderlo sin deploy.
 
+**El env var va SÓLO en el proyecto de LEARN.** PLAY no tiene quién lo consuma:
+`hub-scaffold-client.tsx:15` despacha por modo y la `ChallengeCard` cuelga sólo de
+`LearnHubClient`. Prenderlo en PLAY agrega una query de conteo por carga que nadie muestra.
+No es peligroso — las superficies de PLAY que sí llaman al `/status` (`exercises-screen`,
+`season-pass-sheet`, `use-effective-theme-tier`) lo hacen **sin** `streak`, y sin reporte el
+backfill no siembra ni latchea.
+
+**El kill switch de Redis es compartido entre LEARN y PLAY, y está bien así**
+(decisión del founder, 2026-07-27). Si algún día hace falta separarlos, la key es una
+constante única (`FOCUS_DAYS_GATE_REDIS_KEY`, `focus-days-gate.ts:17`): namespacearla por
+modo es un cambio de una línea más su test.
+
 ## Next Tasks — Stage 2 (UI)
 
 1. `use-hub-data.ts`: consumir `focusDays` del `/status` y mandar `streak` +
