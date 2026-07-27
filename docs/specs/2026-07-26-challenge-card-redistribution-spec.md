@@ -79,6 +79,38 @@ cambio debe preservar.
 - Test existente `'puts "Day N of 21" above the flames"'` sigue verde: el ordinal queda
   antes de `.challenge-card-week` en orden de DOM.
 
+## Adenda — el spotlight del mini-tour (mismo día)
+
+El paso `challenge` iluminaba `.hub-lite-challenge-anchor`, o sea **el panel entero**,
+mientras el paso equivalente de PLAY ilumina `.kingdom-card-pro-cta` — la fila, no la
+card. Un spotlight sobre el panel cubre cuatro cosas tappables (el `?`, la semana que
+abre el Daily, el CTA) y no señala ninguna; además, a 390px el panel del tour tapaba el
+HUD.
+
+`data-tour-target="challenge"` se mudó a **`.challenge-card-cta-row`**. La fila, no el
+botón: la flecha de nudge es hermana del botón y su regla CSS es
+`[data-tour-spotlight="active"] .challenge-card-join-arrow` — un selector de
+**descendiente**. Anclado al botón, la flecha se apagaría justo en el paso que la
+necesita. La fila contiene botón + flecha, que es exactamente lo que se quiere iluminar.
+
+El badge de precio flota a `top: -9px` fuera de la caja del botón; `RING_PAD = 12` del
+tour lo mantiene dentro del recorte iluminado.
+
+### Descartado en la misma revisión
+
+- **"Theme personalizado" como beneficio.** `useOwnedThemes()` (v1) devuelve solo el
+  theme default y **ningún slot de piezas tiene variante `pro`**: las 7 variantes `pro`
+  del registry son identidad del hub (portal, avatar, bordes dorados, chip, anillo de
+  Start Focus). El Season Pass activo SÍ pone LEARN en tier `pro`
+  (`use-effective-theme-tier.ts:62`), así que el hub se vuelve dorado — pero eso no es
+  "custom" ni son piezas. Además `resolveSurfaceThemeTierPresentation` documenta que el
+  tier se aplica *sin* cambiar copy/badges/beneficios. Va como **reveal post-compra**,
+  no como viñeta previa.
+- **Sacar "21 days" de la fila de stats.** Redundante con el título, sí — pero el stat es
+  el **único** consumidor de `hub.focus-passport-calendar`. Sacarlo orfanaría el slot
+  (`runtime-coverage.test.ts` cuenta cobertura) y le quitaría a los creadores un slot
+  re-skineable. Se queda.
+
 ## Verificación
 
 1. Tests nuevos (rojo → verde) en `__tests__/challenge-card.test.tsx`.

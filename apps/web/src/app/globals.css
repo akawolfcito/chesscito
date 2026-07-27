@@ -15766,9 +15766,11 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* Nudge arrow pointing at Join. Hidden on the plain hub — it only appears while
-   the mini-tour is spotlighting this card (the tour stamps `data-tour-spotlight`
-   on the target it points at). `display: none` on the <picture> keeps it out of
-   the flex row entirely, so no phantom gap when it's absent. */
+   the mini-tour is spotlighting the CTA row (the tour stamps
+   `data-tour-spotlight` on the target it points at, and the row is that target
+   precisely so this descendant selector still reaches the arrow).
+   `display: none` on the <picture> keeps it out of the flex row entirely, so no
+   phantom gap when it's absent. */
 .challenge-card-join-arrow {
   display: none;
 }

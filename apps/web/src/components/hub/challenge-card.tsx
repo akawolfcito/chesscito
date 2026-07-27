@@ -370,7 +370,11 @@ export function ChallengeCard({
             its nudge animates `translateX`, so it only reads as "look here"
             when it sits beside its target — stacked above, it pointed at
             nothing. Rotating the sprite would fight that same keyframe. */}
-        <div className="challenge-card-cta-row">
+        {/* The mini-tour lights THIS row, not the panel — same granularity
+            KingdomCard uses for its PRO row. The row (never the button alone)
+            is the anchor because the nudge arrow is its sibling, and the
+            arrow's CSS gate is a descendant selector. */}
+        <div className="challenge-card-cta-row" data-tour-target="challenge">
           {ctaState === "join" ? (
             <>
               {/* Nudge arrow — points at Join, but ONLY while the mini-tour is

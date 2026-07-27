@@ -186,7 +186,10 @@ export function HubLiteScaffold({
         <AppModeSwitch activeMode="learn" />
       </div>
 
-      <div className="hub-lite-challenge-anchor" data-tour-target="challenge">
+      {/* No `data-tour-target` here on purpose: the challenge step now lights
+          the card's CTA row. A spotlight over the whole panel covered four
+          tappable things at once and singled out none of them. */}
+      <div className="hub-lite-challenge-anchor">
         <ChallengeCard
           focusPassport={focusPassport}
           challenge={challenge}

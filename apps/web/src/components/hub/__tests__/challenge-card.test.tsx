@@ -800,6 +800,47 @@ describe('<ChallengeCard>', () => {
       ).toBe(false)
     })
 
+    // ── Mini-tour spotlight ───────────────────────────────────────────────
+    // Same granularity PLAY already uses: KingdomCard puts `data-tour-target`
+    // on the PRO row, not on the whole panel. Lighting the entire card lit 4
+    // tappable things at once (the `?`, the week into Daily, the CTA) and
+    // taught none of them.
+    it('anchors the tour spotlight on the CTA row, not on the whole panel', () => {
+      const { container } = render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 2 })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+        />,
+      )
+      const row = container.querySelector('.challenge-card-cta-row')!
+      expect(row).toHaveAttribute('data-tour-target', 'challenge')
+      expect(
+        container.querySelector('.challenge-card')!.getAttribute('data-tour-target'),
+      ).toBeNull()
+    })
+
+    it('keeps the nudge arrow inside the spotlighted element', () => {
+      // The arrow is CSS-gated on `[data-tour-spotlight="active"] .challenge-
+      // card-join-arrow` — a DESCENDANT selector. Anchoring the tour on the
+      // button alone would leave the arrow outside and blank it during the one
+      // step that needs it.
+      const { container } = render(
+        <ChallengeCard
+          focusPassport={passport({ streak: 2 })}
+          challenge={CHALLENGE}
+          seasonPass={{ active: false, isLoading: false }}
+          onJoinChallenge={() => {}}
+        />,
+      )
+      const target = container.querySelector('[data-tour-target="challenge"]')!
+      const arrow = container.querySelector('.challenge-card-join-arrow')!
+      const cta = screen.getByTestId('challenge-cta')
+      expect(target.contains(arrow)).toBe(true)
+      expect(target.contains(cta)).toBe(true)
+    })
+
     it('labels the day run as a streak, never as a Combo (canonical vocabulary)', () => {
       // Combo is the SESSION metric (chesscito:streak) and stays exclusive to
       // the exercise overlay / drawer — see the combo-streak vocabulary doc.
