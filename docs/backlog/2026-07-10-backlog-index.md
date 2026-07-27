@@ -48,6 +48,11 @@ en ese request se revierte si el crédito no aterriza.
   falso, y hay fallback genérico. Hoy `BadgeAlreadyClaimed`, `CooldownActive` y
   `DailyLimitReached` salen los tres como "Try again". El extractor está escrito; falta el
   generador de error-ABIs desde `artifacts/` y el mapa nombre → copy.
+- **P2 — `offerBenefitTrainings` sin traducir al español** (2026-07-27). En la hoja de
+  compra del Season Pass, con la app en ES, la grilla de beneficios muestra
+  **"Special Trainings"** en inglés junto a "21 días" y "+3 Escudos". Está a la vista en
+  una superficie de **pago**. Visto durante la validación visual de Focus Days 21-en-30;
+  fuera del alcance de ese spec.
 - **PLAY #8 — quitar la confirmación redundante de LUZ.** Tocar Coach Review lanza análisis
   directo; LUZ conserva personalidad en loading y resultado. Borra una pantalla.
 - ~~**Cobertura VR del play hub**~~ — **hecho**: `vr17-play-hub-{guest,connected,pro}`.
