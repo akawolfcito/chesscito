@@ -11,10 +11,14 @@ import {
 import { isStreakNudgeEnabled } from "@/lib/feature-flags";
 
 export type UseStreakNudgeOptions = {
-  /** UTC "YYYY-MM-DD". Passed in so the caller owns the clock. */
-  today: string;
-  /** `isCompletedToday()`. Read fresh by the caller on each render. */
-  dailySolvedToday: boolean;
+  /** UTC "YYYY-MM-DD", read at CALL time. A getter, not a value: computing
+   *  it during render would decide from state that may not be hydrated yet,
+   *  and this module persists what it decides. */
+  getToday: () => string;
+  /** `isCompletedToday()`, read at CALL time for the same reason. Both
+   *  handlers below run from events, never from render, so a getter costs
+   *  nothing and removes the hydration hazard entirely. */
+  isDailySolvedToday: () => boolean;
   /** True when a celebration or any other overlay already holds the screen.
    *  By construction this is nearly always false at an exit, but behavior 9
    *  of the spec asserts it rather than assuming it. */
@@ -47,60 +51,57 @@ export type UseStreakNudgeResult = {
  * player is already making. Keeping them apart is the whole point: the 3rd
  * victory is the busiest celebration instant in LEARN.
  */
-export function useStreakNudge({
-  today,
-  dailySolvedToday,
-  isOverlayOpen,
-  onOpenDaily,
-}: UseStreakNudgeOptions): UseStreakNudgeResult {
+export function useStreakNudge(options: UseStreakNudgeOptions): UseStreakNudgeResult {
   const [visible, setVisible] = useState(false);
   const deferredExit = useRef<(() => void) | null>(null);
+  // Latest options, so every returned handler keeps a stable identity and
+  // still sees current values. The handlers only ever run from events.
+  const latest = useRef(options);
+  latest.current = options;
 
-  const armOnSolve = useCallback(
-    (freshSolvesToday: number) => {
-      if (!isStreakNudgeEnabled()) return;
-      recordStreakNudgeOwed({ today, dailySolvedToday, freshSolvesToday });
-    },
-    [today, dailySolvedToday],
-  );
+  const armOnSolve = useCallback((freshSolvesToday: number) => {
+    if (!isStreakNudgeEnabled()) return;
+    recordStreakNudgeOwed({
+      today: latest.current.getToday(),
+      dailySolvedToday: latest.current.isDailySolvedToday(),
+      freshSolvesToday,
+    });
+  }, []);
 
-  const interceptExit = useCallback(
-    (exit: () => void) => {
-      if (!isStreakNudgeEnabled() || isOverlayOpen) {
-        exit();
-        return false;
-      }
-      const owed = shouldShowStreakNudge({
-        state: getStreakNudgeState(),
-        today,
-        dailySolvedToday,
-      });
-      if (!owed) {
-        exit();
-        return false;
-      }
-      deferredExit.current = exit;
-      setVisible(true);
-      return true;
-    },
-    [today, dailySolvedToday, isOverlayOpen],
-  );
+  const interceptExit = useCallback((exit: () => void) => {
+    if (!isStreakNudgeEnabled() || latest.current.isOverlayOpen) {
+      exit();
+      return false;
+    }
+    const owed = shouldShowStreakNudge({
+      state: getStreakNudgeState(),
+      today: latest.current.getToday(),
+      dailySolvedToday: latest.current.isDailySolvedToday(),
+    });
+    if (!owed) {
+      exit();
+      return false;
+    }
+    deferredExit.current = exit;
+    setVisible(true);
+    return true;
+  }, []);
 
   const handleDismiss = useCallback(() => {
     setVisible(false);
-    recordStreakNudgeShown(today);
+    recordStreakNudgeShown(latest.current.getToday());
     const exit = deferredExit.current;
     deferredExit.current = null;
     // "Tap to continue" has to mean continue to where they were going.
     exit?.();
-  }, [today]);
+  }, []);
 
   const handleOpenDaily = useCallback(() => {
     setVisible(false);
-    retireStreakNudge(today);
+    retireStreakNudge(latest.current.getToday());
     deferredExit.current = null;
-    onOpenDaily();
-  }, [today, onOpenDaily]);
+    latest.current.onOpenDaily();
+  }, []);
 
   return { visible, armOnSolve, interceptExit, handleDismiss, handleOpenDaily };
 }

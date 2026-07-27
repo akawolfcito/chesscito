@@ -194,11 +194,15 @@ import {
   buildContentId,
   recordExtraConsumed,
   getDailySession,
+  getUsedCount,
   isAtFreeLimit,
   isAtHardMax,
   isSessionOver,
   shouldFreezeScoring,
 } from "@/lib/daily/session-quota";
+import { isCompletedToday, todayUtc } from "@/lib/daily/progress";
+import { useStreakNudge } from "@/lib/daily/use-streak-nudge";
+import { StreakNudgeScreen } from "@/components/daily/streak-nudge-screen";
 import { subscribeToDailySessionChanges } from "@/lib/daily/session-events";
 import { DailyLimitBanner } from "@/components/daily/daily-limit-banner";
 import {
@@ -1384,6 +1388,16 @@ export function ExercisesScreen({
   // bumpStreak/resetStreak in the success / skip paths.
   const streakCount = useStreak();
 
+  // The daily-streak nudge. It arms on a solve and pays on the way OUT, so
+  // nothing it does competes with the celebration chain. `isOverlayOpen` is
+  // belt and braces: by the time an exit is possible the queue has drained.
+  const streakNudge = useStreakNudge({
+    getToday: () => todayUtc(),
+    isDailySolvedToday: () => isCompletedToday(),
+    isOverlayOpen: celebration.current !== null || labyrinthCompleted !== null,
+    onOpenDaily: () => router.push("/exercises?slot=daily"),
+  });
+
   // Welcome Pack hook — wired so the ShopSheet on this route can
   // render the pinned tile. exercises-screen mounts <ShopSheet>
   // directly (NOT via useShopSheetState), so we duplicate the
@@ -1636,7 +1650,13 @@ export function ExercisesScreen({
 
       // B2.3a: track extra content consumption (Lite-only; idempotent).
       if (CHESSCITO_LITE_MODE) {
-        recordExtraConsumed(buildContentId("exercise", selectedPiece, currentExercise.id));
+        const session = recordExtraConsumed(
+          buildContentId("exercise", selectedPiece, currentExercise.id),
+        );
+        // Arm the streak nudge off the SAME ledger, which is already
+        // idempotent per content id per UTC day. A replay therefore leaves
+        // the count where it was and arms nothing new.
+        streakNudge.armOnSolve(getUsedCount(session));
       }
 
       // ── Evaluation order, steps 1 → 4 ────────────────────────────────
@@ -3309,7 +3329,9 @@ export function ExercisesScreen({
             variant="back-control"
             title={tDrawer("title")}
             back={{
-              onClick: () => router.push("/"),
+              // Exit #1 of the flow. The nudge may DEFER this push and
+              // complete it on dismiss; it never cancels it.
+              onClick: () => streakNudge.interceptExit(() => router.push("/")),
               label: tStatus("backLabel"),
             }}
             trailingControl={
@@ -3691,7 +3713,15 @@ export function ExercisesScreen({
           exerciseDrawer={
             <ExerciseDrawer
               open={exerciseDrawerOpen}
-              onOpenChange={setExerciseDrawerOpen}
+              // Exit #2: opening the drawer to pick what is next is the other
+              // decision moment. Closing it is not an exit and passes through.
+              onOpenChange={(open) => {
+                if (!open) {
+                  setExerciseDrawerOpen(false);
+                  return;
+                }
+                streakNudge.interceptExit(() => setExerciseDrawerOpen(true));
+              }}
               piece={selectedPiece}
               exercises={catalog[selectedPiece]}
               stars={progress.stars}
@@ -4147,6 +4177,14 @@ export function ExercisesScreen({
           onSaveOnChain={() => void handleSaveScoreOnChain()}
           isSavingOnChain={saveWrite.isBusy}
         />
+        {/* Last in the tree on purpose: it only ever appears once every other
+            surface is done, on the way out of the flow. */}
+        {streakNudge.visible && (
+          <StreakNudgeScreen
+            onDismiss={streakNudge.handleDismiss}
+            onOpenDaily={streakNudge.handleOpenDaily}
+          />
+        )}
       </main>
     </div>
   );

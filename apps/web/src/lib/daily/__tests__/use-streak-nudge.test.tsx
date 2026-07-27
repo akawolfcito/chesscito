@@ -11,8 +11,8 @@ function mount(overrides: Partial<Options> = {}) {
   const onOpenDaily = vi.fn();
   const view = renderHook(() =>
     useStreakNudge({
-      today: TODAY,
-      dailySolvedToday: false,
+      getToday: () => TODAY,
+      isDailySolvedToday: () => false,
       isOverlayOpen: false,
       onOpenDaily,
       ...overrides,
@@ -143,7 +143,7 @@ describe("useStreakNudge", () => {
   });
 
   it("never arms once the Daily is solved", () => {
-    const { result } = mount({ dailySolvedToday: true });
+    const { result } = mount({ isDailySolvedToday: () => true });
     const exit = vi.fn();
 
     trainToThird(result);
