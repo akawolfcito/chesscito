@@ -1,5 +1,9 @@
 # Session Handoff — 2026-07-27 (refactor del daily slot + Focus Days S2.1 y S2.2a)
 
+> 📌 **Stage 2 cerró.** El handoff de esa sesión, con lo construido, los gotchas y
+> las preguntas abiertas: `docs/handoffs/2026-07-27-focus-days-stage2-handoff.md`.
+> Este archivo queda como el registro de cómo se llegó hasta acá.
+
 ## Completed
 
 ### 1. Branch `feat/focus-days-ledger` borrada
