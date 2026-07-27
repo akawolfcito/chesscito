@@ -150,9 +150,10 @@ export function passWindowStartUtc(
 7. Dado PRO, cuando se evalúa, entonces `unbounded`: sin countdown y nunca `unreachable`.
 8. Dada la oferta (sin pase), cuando se renderiza, entonces nombra **las dos** cifras: la meta (21)
    y la ventana (30). Nunca "30-day challenge".
-9. Dado el backfill inicial del ledger, cuando corre, entonces su techo es
-   `elapsedEligibleDays(expiresAt, accessDurationDays)` — hasta 30, no hasta 21 — y sigue clampeado
-   por `goal` al mostrarse.
+9. Dado el backfill inicial del ledger, cuando corre, entonces el rango de fechas **elegibles** se
+   ensancha a 30 días (`elapsedEligibleDays(expiresAt, accessDurationDays)`), pero la **cantidad**
+   de filas que siembra sigue capada por la meta: `Math.min(streak, elapsed, goal)`
+   (`focus-days.ts:188`). Ensanchar la ventana cambia *qué días* pueden sembrarse, no *cuántos*.
 10. **`sku` y `seasonId` son identificadores internos, nunca copy.** Verificado 2026-07-27:
    `lite_season_pass_21` aparece en un único componente (`season-pass-sheet.tsx:30`) y sólo como
    clave de lookup (`getSeasonPass(SKU)`) y parámetro del rail; `seasonId` no llega a ningún
@@ -163,10 +164,23 @@ export function passWindowStartUtc(
 
 ## Edge cases
 
-- **`completed > goal`.** Con 30 días de ventana y meta 21, un jugador puede registrar hasta 30 días.
-  `focusDaysProgress` ya clampa a `goal` (`focus-days.ts:70`), así que la tarjeta nunca dice "24 of 21".
-  El ledger **sí** guarda las 24 filas: el clamp es de presentación, no de escritura. Confirmar que
-  ningún consumidor derive porcentajes de `completed` sin clampar.
+- **`completed > goal` NO es alcanzable por el flujo normal.** El POST se cierra al llegar a
+  `challengeGoalDays` (Behavior 6b), así que el máximo que ese flujo puede escribir es **21 filas
+  por wallet y season**. La ventana de 30 días es margen para *completar* 21, no permiso para
+  registrar 30.
+
+  **Los dos escritores del ledger quedan capados en 21**, verificado: el POST por Behavior 6b, y
+  el backfill inicial por `backfillDates`, que ya calcula
+  `count = Math.min(streak, elapsed, goal)` (`focus-days.ts:188`) — `elapsed` sube a 30 con la
+  ventana nueva, pero `goal` sigue mandando. No hace falta tocar ese archivo para sostener el tope.
+
+  El clamp de `focusDaysProgress` a `goal` (`focus-days.ts:70`) se conserva igual, pero su rol es
+  **defensa, no comportamiento esperado**: cubre filas históricas anteriores a este cambio,
+  fixtures de test, escrituras concurrentes que crucen el umbral antes de que el cierre las vea,
+  y filas anómalas de cualquier otro origen. La regla de presentación es incondicional: **la
+  interfaz clampa a 21 aunque la persistencia contenga más filas** — nunca "24 of 21", venga de
+  donde venga ese 24. Confirmar además que ningún consumidor derive porcentajes de `completed`
+  sin clampar.
 - **Pase que vence entre el render y el POST.** Ya cubierto por `isEligibleFocusDate`; la ventana más
   larga no lo cambia.
 - **`expires_at` ausente o inválido.** `elapsedEligibleDays` devuelve 0 y no se infiere nada. Igual que hoy.
@@ -210,8 +224,10 @@ export function passWindowStartUtc(
 - [ ] **AC4 — `focus-day` usa los DOS, cada uno en su lugar.** Dos tests separados:
       (a) **elegibilidad con 30** — una fecha a 25 días del inicio de ventana es elegible
       (sería rechazada con 21);
-      (b) **progreso con 21** — `focusDaysProgress` recibe `goal = 21`, y la respuesta reporta
-      `goal: 21` con 30+ filas escritas.
+      (b) **progreso con 21** — `focusDaysProgress` recibe `goal = 21` y la respuesta reporta
+      `goal: 21`. Si el caso se monta con más de 21 filas, esas filas son un **fixture defensivo**
+      (simulan datos históricos o anómalos) y el test debe decirlo en su nombre o su comentario:
+      el POST no puede producirlas, y leerlas como "el flujo permite 30" contradice AC8.
 - [ ] **AC5 — `SeasonChallengeMeta` / tarjeta: meta 21, ventana 30.** La meta que la tarjeta nombra
       es 21 y la ventana que expone es 30, en campos distintos, con un test que falla si se cruzan.
 - [ ] **AC6 — la oferta nombra 21 DENTRO de 30.** La copy de compra menciona ambas cifras con su
@@ -226,8 +242,10 @@ export function passWindowStartUtc(
 - [ ] **AC8 — `completed` cierra la escritura.** Alcanzado `challengeGoalDays`, un POST de Focus Day
       con días de acceso restantes **no crea fila nueva** y responde éxito idempotente. Verificado
       contando filas antes y después, no sólo por el status code.
-- [ ] **AC9 — `focusDaysProgress(30, 21)`** devuelve `{completed: 21, goal: 21}`. Es el extremo real
-      con ventana de 30, no un valor intermedio.
+- [ ] **AC9 — `focusDaysProgress(30, 21)`** devuelve `{completed: 21, goal: 21}`. Es una prueba de
+      la **defensa**, no de un estado que el flujo pueda producir: ningún escritor llega a 30 filas
+      (ver Edge cases). Se elige 30 por ser el extremo que la ventana haría concebible si el tope
+      fallara — que es precisamente lo que este clamp tiene que sobrevivir.
 - [ ] **AC10 — AC18 de Stage 2 sigue verde**: llegar a 21 no acredita escudos, Peones, Coach ni pase.
 
 ### Identificadores y observabilidad

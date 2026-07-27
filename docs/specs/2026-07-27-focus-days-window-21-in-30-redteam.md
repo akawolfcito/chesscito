@@ -106,9 +106,22 @@ Nada que objetar salvo P0 #1.
 
 ### Test coverage gaps
 AC1–AC14 son testeables, y AC2–AC6 traen su propio criterio de validez (la mutación que los pone
-rojos). **Hueco que queda**: Behavior 9 (techo del backfill del ledger = `elapsedEligibleDays` con
-30) sigue sin AC propio. Es P2 hoy porque el ledger de las tres wallets está vacío, así que no hay
-nada que el techo pueda recortar mal — pero deja de ser inofensivo en cuanto alguien complete días.
+rojos). **Hueco que queda**: Behavior 9 (rango de fechas del backfill inicial ensanchado a 30) sigue
+sin AC propio. Es P2 hoy porque el ledger de las tres wallets está vacío, así que no hay nada que
+el rango pueda sembrar mal — pero deja de ser inofensivo en cuanto alguien complete días.
+
+**Contradicción encontrada en revisión 3 y corregida** (la marcó el founder, no esta revisión):
+el Edge case `completed > goal` seguía diciendo que el jugador "puede registrar hasta 30 días" y que
+"el ledger sí guarda las 24 filas". Era texto anterior a Behavior 6b/AC8, que cierran el POST al
+llegar a 21, y quedó contradiciéndolos. Reescrito: el flujo normal permite **como máximo 21 filas**
+por wallet y season, y el clamp de presentación es **defensa** ante datos históricos, fixtures o
+concurrencia. Verificado además que el **otro** escritor —el backfill inicial— ya está capado por
+`goal` (`Math.min(streak, elapsed, goal)`, `focus-days.ts:188`), así que ningún camino llega a 30
+filas. AC4(b) y AC9 pasaron a nombrar sus fixtures como defensivos.
+
+*Lección de proceso*: la contradicción nació de **agregar** comportamiento (6b/AC8) sin releer los
+Edge cases escritos antes. Un spec editado por partes necesita una pasada de coherencia al final,
+no sólo en las secciones tocadas.
 
 ### Operational readiness
 Rollback del backfill: tres niveles (transacción, temp table alimentada por el `RETURNING`, valores
