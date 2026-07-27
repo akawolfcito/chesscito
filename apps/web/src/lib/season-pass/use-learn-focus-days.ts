@@ -54,10 +54,15 @@ export function useLearnFocusDays({
   wallet,
   entitlementActive,
   dailyProgress,
+  refreshToken = 0,
 }: {
   wallet: string | undefined;
   entitlementActive: boolean;
   dailyProgress: DailyProgressState;
+  /** Bumped by the recorder once the server confirms a write. Without it the
+   *  count only moves on the next mount: the write and this read are separate
+   *  calls, and the write lands second. */
+  refreshToken?: number;
 }): LearnFocusDaysState {
   const [state, setState] = useState<LearnFocusDaysState>(IDLE);
   const abortRef = useRef<AbortController | null>(null);
@@ -108,7 +113,7 @@ export function useLearnFocusDays({
     })();
 
     return () => ctrl.abort();
-  }, [wallet, entitlementActive, hydrated, streak, lastCompletedDate]);
+  }, [wallet, entitlementActive, hydrated, streak, lastCompletedDate, refreshToken]);
 
   return state;
 }

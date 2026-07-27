@@ -56,7 +56,11 @@ import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import { useHubData } from "@/components/hub/use-hub-data";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
-import { useLearnFocusDays } from "@/lib/season-pass/use-learn-focus-days";
+import {
+  useLearnFocusDays,
+  type DailyProgressState,
+} from "@/lib/season-pass/use-learn-focus-days";
+import { useFocusDayRecorder } from "@/lib/season-pass/use-focus-day-recorder";
 import { buildChallengeProgressView } from "@/lib/season-pass/challenge-card-view";
 import { HubLiteScaffold } from "@/components/hub/hub-lite-scaffold";
 import { useHubTour } from "@/components/hub/use-hub-tour";
@@ -181,20 +185,36 @@ export function LearnHubClient({
   const [dailyOpen, setDailyOpen] = useState(false);
   // Focus Days. The LEARN-only read (never the global entitlement provider,
   // which must not wait on the Daily's localStorage) plus the pure assembler.
+  const dailyProgressState = useMemo<DailyProgressState>(
+    () =>
+      focusPassport
+        ? focusPassport.isLoading
+          ? { status: "loading" }
+          : {
+              status: "ready",
+              value: {
+                streak: focusPassport.streak,
+                lastCompletedDate: focusPassport.lastCompletedDate ?? null,
+              },
+            }
+        : { status: "loading" },
+    [focusPassport],
+  );
+  // The write and the read are separate calls, and the write lands second: the
+  // reader re-counts on this token, or the number a player just earned stays
+  // frozen until the next mount.
+  const [focusDaysToken, setFocusDaysToken] = useState(0);
   const focusDaysSlice = useLearnFocusDays({
     wallet: address,
     entitlementActive: seasonPassStatus.active,
-    dailyProgress: focusPassport
-      ? focusPassport.isLoading
-        ? { status: "loading" }
-        : {
-            status: "ready",
-            value: {
-              streak: focusPassport.streak,
-              lastCompletedDate: focusPassport.lastCompletedDate ?? null,
-            },
-          }
-      : { status: "loading" },
+    dailyProgress: dailyProgressState,
+    refreshToken: focusDaysToken,
+  });
+  useFocusDayRecorder({
+    wallet: address,
+    entitlementActive: seasonPassStatus.active,
+    dailyProgress: dailyProgressState,
+    onRecorded: useCallback(() => setFocusDaysToken((n) => n + 1), []),
   });
   const challengeProgress = useMemo(
     () =>

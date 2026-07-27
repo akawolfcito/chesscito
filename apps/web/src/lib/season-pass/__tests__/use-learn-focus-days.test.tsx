@@ -267,3 +267,67 @@ describe("useLearnFocusDays", () => {
     );
   });
 });
+
+/**
+ * A write and this read are separate calls, and the write happens second. The
+ * recorder bumps a token once the server confirms, which is the only thing that
+ * makes the number move in the same session it was earned.
+ */
+describe("useLearnFocusDays — re-reading after a write", () => {
+  it("re-counts when the refresh token changes", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ focusDays: { status: "ok", completed: 4, goal: 21, seasonId: "s1" } }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ focusDays: { status: "ok", completed: 5, goal: 21, seasonId: "s1" } }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result, rerender } = renderHook(
+      (props: { token: number }) =>
+        useLearnFocusDays({
+          wallet: WALLET,
+          entitlementActive: true,
+          dailyProgress: READY,
+          refreshToken: props.token,
+        }),
+      { initialProps: { token: 0 } },
+    );
+    await waitFor(() => expect(result.current).toMatchObject({ completed: 4 }));
+
+    rerender({ token: 1 });
+
+    await waitFor(() => expect(result.current).toMatchObject({ completed: 5 }));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not re-count while the token holds still", async () => {
+    const fetchMock = mockJson({
+      focusDays: { status: "ok", completed: 4, goal: 21, seasonId: "s1" },
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result, rerender } = renderHook(
+      (props: { token: number }) =>
+        useLearnFocusDays({
+          wallet: WALLET,
+          entitlementActive: true,
+          dailyProgress: READY,
+          refreshToken: props.token,
+        }),
+      { initialProps: { token: 3 } },
+    );
+    await waitFor(() => expect(result.current).toMatchObject({ completed: 4 }));
+
+    rerender({ token: 3 });
+
+    await Promise.resolve();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
