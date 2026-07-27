@@ -62,6 +62,43 @@ describe("useStreakNudge", () => {
     expect(exit).not.toHaveBeenCalled();
   });
 
+  it("still pays after solves 4 and 5 when the exit at 3 was blocked", () => {
+    // The whole reason this is a latch and not a modulo test: `% 3` is false
+    // at 4 and 5, so a blocked 3rd solve would teach nothing all day.
+    let overlayOpen = true;
+    const onOpenDaily = vi.fn();
+    const { result, rerender } = renderHook(() =>
+      useStreakNudge({
+        getToday: () => TODAY,
+        isDailySolvedToday: () => false,
+        isOverlayOpen: overlayOpen,
+        onOpenDaily,
+      }),
+    );
+    const blocked = vi.fn();
+
+    trainToThird(result);
+    act(() => {
+      result.current.interceptExit(blocked);
+    });
+    expect(result.current.visible).toBe(false);
+    expect(blocked).toHaveBeenCalledTimes(1);
+
+    overlayOpen = false;
+    rerender();
+    const laterExit = vi.fn();
+    act(() => {
+      result.current.armOnSolve(4);
+      result.current.armOnSolve(5);
+    });
+    act(() => {
+      result.current.interceptExit(laterExit);
+    });
+
+    expect(result.current.visible).toBe(true);
+    expect(laterExit).not.toHaveBeenCalled();
+  });
+
   it("lets an exit through untouched when nothing is owed", () => {
     const { result } = mount();
     const exit = vi.fn();
