@@ -33,8 +33,10 @@ const webWagmiConfig = createWebWagmiConfig();
 
 /**
  * Reads `NEXT_PUBLIC_PRIVY_APP_ID`, required only when the Privy branch mounts.
- * Importing the module never throws; mounting without an app id fails loud,
- * because the feature flag is meant to keep this tree off in production.
+ * Importing the module never throws; mounting without an app id fails loud —
+ * and "loud" means the whole web app, since this throws during render. Any host
+ * where `NEXT_PUBLIC_PRIVY_ENABLED` is on MUST carry the app id in the same
+ * environment, and both are `NEXT_PUBLIC_*`, so a redeploy is what applies them.
  * `PRIVY_APP_SECRET` is never read — the backend anchors entitlements to
  * on-chain tx keyed by EVM address, so it never verifies Privy sessions.
  */

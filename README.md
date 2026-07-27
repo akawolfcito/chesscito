@@ -20,7 +20,7 @@ Chesscito is an educational MiniApp on **Celo**, designed to be used with MiniPa
 
 - **Learn** how all six chess pieces move through interactive puzzles, labyrinths, and signature games
 - **Earn** Peones (in-game currency), on-chain badges, and leaderboard scores on Celo Mainnet
-- **Play** with MiniPay-compatible wallets or MetaMask — no setup friction
+- **Play** in MiniPay with the wallet you already have, or sign in on the web with email or Google — a wallet is created for you, no extension to install
 - **Battle** full chess vs AI in Arena and save any finished match as an on-chain NFT
 - **Improve** with the AI Coach analyzing your games (LLM-powered)
 
@@ -36,6 +36,18 @@ Chesscito ships as two focused apps built from the same repo, selected at build 
 
 `full` mode (everything on one host) exists for local development; it is not a shipped
 surface. Cross-mode links redirect to the right host automatically.
+
+### Two ways in
+
+| Environment                       | How you get a wallet                                                            |
+| --------------------------------- | ------------------------------------------------------------------------------- |
+| MiniPay (and any injected wallet) | The wallet is already there — Chesscito connects to it and never asks you to sign in |
+| Web browser                       | Sign in with email or Google; an embedded wallet on Celo Mainnet is created on first login |
+
+On the web this is a gate, not an option: the app renders only once the session is
+authenticated **and** the wallet is ready. There is no guest mode, and no seed phrase to
+write down. MiniPay never sees the gate — the branch resolver keeps it on the injected
+path.
 
 ## Gameplay
 
@@ -117,12 +129,12 @@ step — with proceeds routed to the Treasury.
 | Frontend    | Next.js 14 App Router + TypeScript                                 |
 | Styling     | Tailwind CSS                                                       |
 | Blockchain  | Celo Mainnet (chain ID 42220)                                      |
-| Wallet      | MiniPay-compatible + MetaMask via wagmi + viem                     |
+| Wallet      | Injected (MiniPay / MetaMask) + Privy embedded wallets on web, via wagmi + viem |
 | Payments    | Stablecoin direct transfer rail (cUSD / USDT / USDC, no approvals) |
 | Monorepo    | Turborepo + pnpm                                                   |
 | Contracts   | Solidity + Hardhat + OpenZeppelin v5                               |
 | AI Engine   | `js-chess-engine` (pure JS, no WASM)                               |
-| Cache layer | Supabase (read layer + cron sync)                                  |
+| Cache layer | Supabase (read layer + cron sync) + Upstash Redis (fast path, rate limiting) |
 | AI Coach    | OpenAI-compatible LLM provider                                     |
 | i18n        | next-intl (locale-prefixed routes)                                 |
 | Content     | CSV/JSON authored catalog compiled into a typed generated module    |
@@ -132,10 +144,12 @@ step — with proceeds routed to the Treasury.
 ```
 chesscito/
 ├── apps/
-│   ├── web/          # Next.js 14 MiniApp frontend
+│   ├── web/          # Next.js 14 MiniApp frontend (learn / play modes)
+│   ├── landing/      # Public landing page — www.chesscito.com
 │   ├── contracts/    # Hardhat contracts and deploy scripts
+│   ├── admin/        # Admin operations CLI (encode + simulate + send, append-only audit log)
 │   └── video/        # Remotion promo video
-└── docs/             # Planning and submission assets
+└── docs/             # Specs, handoffs, runbooks, postmortems, audits and product direction
 ```
 
 ## Getting Started
@@ -154,6 +168,7 @@ pnpm dev                          # start local development
 pnpm build                        # build all workspaces
 pnpm lint                         # lint all workspaces
 pnpm type-check                   # type-check all workspaces
+pnpm content:audit                # audit user-facing copy against the language brief
 pnpm contracts:compile            # compile contracts
 pnpm contracts:deploy:celo-sepolia # deploy to Celo Sepolia testnet
 pnpm contracts:deploy:celo        # deploy to Celo Mainnet
