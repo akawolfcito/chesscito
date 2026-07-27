@@ -66,7 +66,7 @@ const SCENARIOS: Scenario[] = [
     props: {
       focusPassport: passport(3, false),
       challenge: CHALLENGE,
-      seasonPass: { active: true, source: "season_pass", dayOfChallenge: 3, shieldsCredited: 3 },
+      seasonPass: { active: true, source: "season_pass", shieldsCredited: 3 },
       progress: {
         state: "active",
         progress: { completed: 3, goal: 21 },
@@ -84,7 +84,7 @@ const SCENARIOS: Scenario[] = [
     props: {
       focusPassport: passport(12, true, TODAY),
       challenge: CHALLENGE,
-      seasonPass: { active: true, source: "season_pass", dayOfChallenge: 12, shieldsCredited: 3 },
+      seasonPass: { active: true, source: "season_pass", shieldsCredited: 3 },
       progress: {
         state: "active",
         progress: { completed: 12, goal: 21 },
@@ -102,7 +102,7 @@ const SCENARIOS: Scenario[] = [
     props: {
       focusPassport: passport(1, false),
       challenge: CHALLENGE,
-      seasonPass: { active: true, source: "season_pass", dayOfChallenge: 4, shieldsCredited: 3 },
+      seasonPass: { active: true, source: "season_pass", shieldsCredited: 3 },
       progress: {
         state: "active",
         progress: { completed: 4, goal: 21 },
@@ -120,7 +120,7 @@ const SCENARIOS: Scenario[] = [
     props: {
       focusPassport: passport(9, false),
       challenge: CHALLENGE,
-      seasonPass: { active: true, source: "season_pass", dayOfChallenge: 21, shieldsCredited: 3 },
+      seasonPass: { active: true, source: "season_pass", shieldsCredited: 3 },
       progress: {
         state: "active",
         progress: { completed: 9, goal: 21 },
@@ -138,7 +138,7 @@ const SCENARIOS: Scenario[] = [
     props: {
       focusPassport: passport(21, true, TODAY),
       challenge: CHALLENGE,
-      seasonPass: { active: true, source: "season_pass", dayOfChallenge: 21, shieldsCredited: 3 },
+      seasonPass: { active: true, source: "season_pass", shieldsCredited: 3 },
       progress: {
         state: "completed",
         progress: { completed: 21, goal: 21 },
@@ -173,7 +173,7 @@ const SCENARIOS: Scenario[] = [
     props: {
       focusPassport: passport(5, false),
       challenge: CHALLENGE,
-      seasonPass: { active: true, source: "season_pass", dayOfChallenge: 5, shieldsCredited: 3 },
+      seasonPass: { active: true, source: "season_pass", shieldsCredited: 3 },
       progress: {
         state: "degraded",
         window: { kind: "expiring", daysRemaining: 16 },
@@ -189,7 +189,7 @@ const SCENARIOS: Scenario[] = [
     props: {
       focusPassport: passport(5, false),
       challenge: CHALLENGE,
-      seasonPass: { active: true, source: "season_pass", dayOfChallenge: 5, shieldsCredited: 3 },
+      seasonPass: { active: true, source: "season_pass", shieldsCredited: 3 },
       progress: {
         state: "disabled",
         window: { kind: "expiring", daysRemaining: 16 },

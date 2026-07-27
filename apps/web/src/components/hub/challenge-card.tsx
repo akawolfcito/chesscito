@@ -57,7 +57,7 @@ type CtaState = "join" | "start" | "tomorrow" | "complete";
 export type ChallengeCardSeasonPass =
   | { active: false; isLoading: boolean }
   | { active: true; source: "pro" }
-  | { active: true; source: "season_pass"; dayOfChallenge: number; shieldsCredited: number };
+   | { active: true; source: "season_pass"; shieldsCredited: number };
 
 export type ChallengeCardProps = {
   focusPassport: HubFocusPassport;

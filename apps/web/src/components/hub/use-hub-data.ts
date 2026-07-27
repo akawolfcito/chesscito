@@ -42,7 +42,6 @@ import { subscribeToShieldChanges } from "@/lib/shop/shield-events";
 import { pieceProgressStorageKey } from "@/lib/lite-progress-storage";
 import { getSeasonPass } from "@/lib/payments/rail-config";
 import { useSeasonPassStatus } from "@/lib/season-pass/use-season-pass-status";
-import { challengeDayFromExpiry } from "@/lib/season-pass/challenge-day";
 import type { ChallengeCardSeasonPass } from "@/components/hub/challenge-card";
 import { useWelcomePackage } from "@/lib/welcome-package/use-welcome-package";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
@@ -403,9 +402,13 @@ export function useHubData(): HubData {
     };
   }, []);
 
-  // Discriminated season-pass slice for <ChallengeCard>. Active → derive the
-  // 1-based challenge day from the pass expiry (Day X/21) + carry the credited
-  // shields. Offer → just the loading flag (gates the buy CTA against FOUC).
+  // Discriminated season-pass slice for <ChallengeCard>. Active → carry the
+  // credited shields. Offer → just the loading flag (gates the buy CTA against
+  // FOUC).
+  //
+  // The old `dayOfChallenge` is gone: progress is what the Focus Days ledger
+  // recorded, not a wall-clock ordinal derived from the pass expiry. Deriving
+  // it here made "Day N of 21" advance while the player skipped days.
   const challengeSeasonPass = useMemo<ChallengeCardSeasonPass>(() => {
     if (seasonPassStatus.active) {
       if (seasonPassStatus.source === "pro") {
@@ -417,15 +420,11 @@ export function useHubData(): HubData {
       return {
         active: true,
         source: "season_pass",
-        dayOfChallenge: challengeDayFromExpiry(
-          seasonPassStatus.seasonPassExpiresAt,
-          challenge.durationDays,
-        ),
         shieldsCredited: seasonPassStatus.shieldsCredited ?? challenge.shieldBonus,
       };
     }
     return { active: false, isLoading: seasonPassStatus.loading };
-  }, [seasonPassStatus, challenge.durationDays, challenge.shieldBonus]);
+  }, [seasonPassStatus, challenge.shieldBonus]);
 
   return {
     shared: {

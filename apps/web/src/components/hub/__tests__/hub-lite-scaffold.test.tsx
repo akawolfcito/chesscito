@@ -221,7 +221,6 @@ describe("<HubLiteScaffold>", () => {
           seasonPass: {
             active: true,
             source: "season_pass",
-            dayOfChallenge: 3,
             shieldsCredited: 3,
           },
           onJoinChallenge: null,
@@ -342,7 +341,6 @@ describe("<HubLiteScaffold>", () => {
           seasonPass: {
             active: true,
             source: "season_pass",
-            dayOfChallenge: 3,
             shieldsCredited: 3,
           },
           onJoinChallenge: null,

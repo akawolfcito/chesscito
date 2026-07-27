@@ -72,7 +72,6 @@ describe('<ChallengeCard> — Focus Days states', () => {
   const ACTIVE_PASS: ChallengeCardProps['seasonPass'] = {
     active: true,
     source: 'season_pass',
-    dayOfChallenge: 3,
     shieldsCredited: 3,
   }
   const WINDOW = { kind: 'expiring', daysRemaining: 9 } as const
@@ -269,7 +268,7 @@ describe('<ChallengeCard>', () => {
       <Card
         focusPassport={passport()}
         challenge={CHALLENGE}
-        seasonPass={{ active: true, source: 'season_pass', dayOfChallenge: 3, shieldsCredited: 3 }}
+        seasonPass={{ active: true, source: 'season_pass', shieldsCredited: 3 }}
         onJoinChallenge={null}
       />,
     )
@@ -441,7 +440,6 @@ describe('<ChallengeCard>', () => {
         seasonPass={{
           active: true,
           source: 'season_pass',
-          dayOfChallenge: 1,
           shieldsCredited: 3,
         }}
         onJoinChallenge={null}
@@ -527,7 +525,6 @@ describe('<ChallengeCard>', () => {
           seasonPass={{
             active: true,
             source: 'season_pass',
-            dayOfChallenge: 4,
             shieldsCredited: 3,
           }}
           onJoinChallenge={null}
@@ -569,7 +566,6 @@ describe('<ChallengeCard>', () => {
           seasonPass={{
             active: true,
             source: 'season_pass',
-            dayOfChallenge: 5,
             shieldsCredited: 3,
           }}
           onJoinChallenge={null}
@@ -597,7 +593,6 @@ describe('<ChallengeCard>', () => {
           seasonPass={{
             active: true,
             source: 'season_pass',
-            dayOfChallenge: 21,
             shieldsCredited: 3,
           }}
           progress={{
@@ -622,7 +617,6 @@ describe('<ChallengeCard>', () => {
         {
           active: true,
           source: 'season_pass',
-          dayOfChallenge: 2,
           shieldsCredited: 3,
         },
       ]
@@ -792,7 +786,6 @@ describe('<ChallengeCard>', () => {
           seasonPass={{
             active: true,
             source: 'season_pass',
-            dayOfChallenge: 4,
             shieldsCredited: 3,
           }}
           onJoinChallenge={null}
@@ -984,7 +977,6 @@ describe('<ChallengeCard>', () => {
           seasonPass={{
             active: true,
             source: 'season_pass',
-            dayOfChallenge: 4,
             shieldsCredited: 3,
           }}
           onJoinChallenge={null}
@@ -1053,7 +1045,6 @@ describe('<ChallengeCard>', () => {
           seasonPass={{
             active: true,
             source: 'season_pass',
-            dayOfChallenge: 3,
             shieldsCredited: 3,
           }}
           onJoinChallenge={null}
