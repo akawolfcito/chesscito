@@ -20,8 +20,23 @@ import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { resolveEffectiveTrainingPass } from "@/lib/entitlements/effective-training-pass";
 import { isProActive } from "@/lib/pro/is-active";
 import { getSeasonPass } from "@/lib/payments/rail-config";
-import { createLogger } from "@/lib/server/logger";
+import type { FocusDaysSlice } from "@/lib/season-pass/focus-days";
+import {
+  FOCUS_DAYS_GATE_REDIS_KEY,
+  resolveFocusDaysGate,
+} from "@/lib/season-pass/focus-days-gate";
+import {
+  countFocusDays,
+  ensureFocusLedgerInitialized,
+  parseBackfillReport,
+  type SupabaseServer,
+} from "@/lib/season-pass/focus-ledger-init";
+import { createLogger, hashWallet } from "@/lib/server/logger";
 import { getSupabaseServer } from "@/lib/supabase/server";
+
+/** The route can initialize the ledger, so a cached copy of it would be a bug
+ *  nobody can reproduce. */
+export const dynamic = "force-dynamic";
 
 const redis = Redis.fromEnv();
 const log = createLogger({ route: "/api/season-pass/status" });
@@ -54,13 +69,10 @@ async function readCachedExpiry(wallet: string): Promise<string | null> {
   return null;
 }
 
-async function readSeasonPassRow(wallet: string): Promise<LedgerRead> {
-  const supabase = getSupabaseServer();
-  if (!supabase) {
-    log.error("supabase_unavailable", { wallet });
-    return { status: "unavailable" };
-  }
-
+async function readSeasonPassRow(
+  supabase: SupabaseServer,
+  wallet: string,
+): Promise<LedgerRead> {
   try {
     const { data, error } = await supabase
       .from("lite_season_passes")
@@ -102,8 +114,13 @@ export async function GET(req: Request) {
   }
 
   const configuredPass = getSeasonPass("lite_season_pass_21");
+  const supabase = getSupabaseServer();
+  if (!supabase) log.error("supabase_unavailable", { wallet });
+
   const cachedExpiresAt = await readCachedExpiry(wallet);
-  const ledger = await readSeasonPassRow(wallet);
+  const ledger: LedgerRead = supabase
+    ? await readSeasonPassRow(supabase, wallet)
+    : { status: "unavailable" };
   const row = ledger.status === "ok" ? ledger.row : null;
 
   // The row wins when it exists; the cache still grants access when it does
@@ -137,13 +154,106 @@ export async function GET(req: Request) {
   });
   // `details` never carries `seasonId`: the resolver owns that field, and a
   // spread that overwrites it is how the two branches diverged before.
-  const body = { ...effective, ...details };
+  const body: Record<string, unknown> = { ...effective, ...details };
 
   // A ledger that cannot answer only costs progress. It costs access solely
   // when there is no other proof of entitlement at all.
   if (ledger.status === "unavailable" && !effective.active) {
-    return NextResponse.json({ ...body, error: "ledger_unavailable" }, { status: 503 });
+    return json({ ...body, error: "ledger_unavailable" }, 503);
   }
 
-  return NextResponse.json(body);
+  if (effective.active) {
+    body.focusDays = await resolveFocusDays({
+      supabase,
+      wallet,
+      seasonId: effective.seasonId,
+      expiresAt: effective.seasonPassExpiresAt,
+      report: parseBackfillReport(searchParams),
+    });
+  }
+
+  return json(body);
+}
+
+function json(body: unknown, status = 200) {
+  return NextResponse.json(body, {
+    status,
+    headers: { "cache-control": "no-store" },
+  });
+}
+
+/**
+ * Progress, or an honest admission that it is not available.
+ *
+ * `disabled` and `unavailable` are different answers on purpose: one is a
+ * decision we made, the other is a failure we had, and the card must not
+ * render them the same. Neither ever falls back to the streak.
+ */
+async function resolveFocusDays(input: {
+  supabase: SupabaseServer | null;
+  wallet: string;
+  seasonId: string | null;
+  expiresAt: string | null;
+  report: ReturnType<typeof parseBackfillReport>;
+}): Promise<FocusDaysSlice> {
+  const { supabase, wallet, seasonId, expiresAt, report } = input;
+  const configuredPass = getSeasonPass("lite_season_pass_21");
+
+  const gate = resolveFocusDaysGate(
+    await readGateOverride(wallet),
+    process.env.FOCUS_DAYS_LEDGER_ENABLED,
+  );
+  if (gate.invalidOverride !== undefined) {
+    log.error("focus_days_gate_invalid_override", {
+      wallet: hashWallet(wallet),
+      value: gate.invalidOverride,
+    });
+  }
+  if (!gate.enabled) {
+    return { status: "disabled" };
+  }
+
+  // No season means the buyer's row was not read. Counting against the
+  // configured literal would attribute their days to the wrong temporada.
+  if (!supabase || !seasonId) return { status: "unavailable" };
+
+  const init = await ensureFocusLedgerInitialized({
+    supabase,
+    wallet,
+    seasonId,
+    report,
+    expiresAt,
+    durationDays: configuredPass.durationDays,
+    goal: configuredPass.durationDays,
+  });
+  if (init.status === "seeded" && init.seededRows > 0) {
+    log.info("focus_day_backfilled", {
+      wallet: hashWallet(wallet),
+      seeded_rows: init.seededRows,
+    });
+  }
+
+  const completed = await countFocusDays(supabase, wallet, seasonId);
+  if (completed === null) {
+    log.warn("focus_day_ledger_unavailable", { wallet: hashWallet(wallet) });
+    return { status: "unavailable" };
+  }
+
+  return {
+    status: "ok",
+    completed,
+    goal: configuredPass.durationDays,
+    seasonId,
+  };
+}
+
+/** The kill switch override. A Redis outage reads as "no override", never as
+ *  "off": a cache blip must not silently retire a shipped feature. */
+async function readGateOverride(wallet: string): Promise<string | null> {
+  try {
+    return await redis.get<string>(FOCUS_DAYS_GATE_REDIS_KEY);
+  } catch (e) {
+    log.warn("focus_days_gate_read_failed", { wallet: hashWallet(wallet), err: String(e) });
+    return null;
+  }
 }
