@@ -8589,14 +8589,35 @@ button.hud-resource-chip:active:not(:disabled) {
   color: #b4611a;
 }
 
-/* Separator lives in CSS, not in the copy: it only exists when there IS a
-   streak (streak 0 renders no element at all, so no orphan dot).
-   `:not(:first-child)` is load bearing since the Focus Days ledger: the row
-   used to always open with the "Day N of 21" ordinal, so the streak could
-   never be first. Now `offer` and `disabled` render fewer siblings, and a
-   leading separator would dangle off the front of the row. */
-.challenge-card-streak:not(:first-child)::before,
-.challenge-card-window:not(:first-child)::before {
+/* THE BREAK IS DECIDED HERE, not measured (founder: controlled two-line wrap,
+   2026-07-27). The count takes the whole first line; the two orange metrics —
+   window and streak — share the second.
+
+   Why it had to be decided: a middot separator only works inside one line, and
+   this row does not fit in one. It was wrapping wherever the text ran out, so
+   whichever metric landed second carried its leading "·" to the START of the
+   new line. Fixing it for the streak alone just moved the orphan to the window
+   in Spanish (seen in /dev/challenge-card, ES). Splitting count | metrics means
+   the only separator left sits BETWEEN two short siblings that do fit together,
+   in both locales.
+
+   Bonus: the `degraded` note stops competing for width with the window, which
+   is what was clipping it in Spanish.
+
+   Typography untouched — the fix is the break, not the type scale. */
+.challenge-card-progress-line,
+.challenge-card-progress-note {
+  flex: 0 0 100%;
+}
+
+/* Separator lives in CSS, not in the copy. ONLY the streak carries one, and
+   that is a consequence of the break above, not a style preference: the two
+   elements that can precede the window (the count, the degraded note) are both
+   full-width, so the window always OPENS its line. A `:not(:first-child)`
+   separator on it is true in the DOM and wrong on screen — that is exactly the
+   orphan that survived the first attempt at this fix, visible in Spanish.
+   `:not(:first-child)` still guards the streak: `offer` renders it alone. */
+.challenge-card-streak:not(:first-child)::before {
   content: "·";
   margin-right: 6px;
   color: rgba(110, 68, 21, 0.45);
@@ -8614,7 +8635,9 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Shown where the count would be when the ledger cannot answer. Reads as a
    missing metric, not as an alarm: access and the Daily are both fine. */
 .challenge-card-progress-note {
-  flex: 0 0 auto;
+  /* No `flex` here: it takes the full first line with the count it replaces
+     (see the break rule above). A later `flex: 0 0 auto` at equal specificity
+     would silently win and put it back in the wrapping race. */
   font-weight: 600;
   color: rgba(110, 68, 21, 0.72);
 }
@@ -8671,7 +8694,11 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0 6px;
+  /* Row gap, not zero: two lines are the norm now (the streak owns the second
+     one), and baseline-aligned 0.72rem text stacked with no gap reads as one
+     smudged block. 2px is the smallest amount that separates them without
+     touching the type scale. */
+  gap: 2px 6px;
   margin: 0;
   font-size: 0.88rem;
   font-weight: 800;

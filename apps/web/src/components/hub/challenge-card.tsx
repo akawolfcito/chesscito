@@ -248,7 +248,10 @@ export function ChallengeCard({
               went backward after a skipped day. */}
           <p className="challenge-card-day-count">
             {ledger ? (
-              <span data-testid="challenge-progress-line">
+              <span
+                className="challenge-card-progress-line"
+                data-testid="challenge-progress-line"
+              >
                 {t("focusDaysProgress", {
                   completed: ledger.completed,
                   goal: ledger.goal,
