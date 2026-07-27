@@ -33,8 +33,19 @@ ganó cobertura, que no tenía.
 
 - **S2.1** (`6619294`): `useLearnFocusDays` + 11 tests.
 - **S2.2a** (`6534808`): `buildChallengeProgressView` + `focusWindow` + 14 tests.
+- **S2.2b + S2.3** (`afb28a9`): la tarjeta consume la vista, los 5 estados, copy en
+  los dos locales, CSS, y el cableado completo. **`Day N of 21` ELIMINADO.**
 
-**Ninguno de los dos lo consume una superficie todavía.** El cableado es S2.2b.
+Dos cosas que apareció el cambio y valen más que el feature:
+- **Un bug que iba a introducir yo**: el `·` separador de la racha es un `::before`
+  y dependía de que el ordinal fuera siempre primero. Sin ordinal, en `offer` y
+  `disabled` colgaba al principio de la fila. Ahora va con `:not(:first-child)`.
+- **Dos tests de integración fijaban el defecto** (`Day 0 of 21` a `Day 1 of 21`
+  movido sólo por localStorage). Reescritos, no borrados: ahora fijan que la racha
+  avanza reactivamente y que la tarjeta se NIEGA a convertirla en progreso.
+
+`disabled` no dice nada de sí mismo (decisión nuestra); `degraded` dice que falta
+la métrica (falla nuestra). Se distinguen en copy **y** en `data-progress-state`.
 
 Dos lecturas que el builder mantiene separadas a propósito:
 - **ledger sin responder = `loading`, NO `degraded`.** `degraded` nos acusa de una
@@ -67,13 +78,14 @@ lecturas de `null` no son igual de inocuas.
 
 ## Current State
 
-- **Branch**: `feat/focus-days-ui` (S2.1 + S2.2a adentro, 4 commits).
+- **Branch**: `feat/focus-days-ui` (S2.1, S2.2a y S2.2b+S2.3 adentro).
 - ✅ **`main` y `origin/main` están sincronizados en `cfe9ec41`** — el founder pusheó
   el refactor. `main` NO tiene nada de Stage 2.
 - ⚠️ **Este `SESSION.md` vive en `feat/focus-days-ui`.** El de `main` sigue siendo el
   de Stage 1 hasta que esta branch mergee.
-- **Build**: suite **6108 passing / 534 files, EXIT=0, 0 `Unhandled Errors`**, `tsc`
-  limpio, eslint limpio.
+- **Build**: suite **6115 passing / 534 files, EXIT=0, 0 `Unhandled Errors`**, `tsc`
+  limpio, eslint limpio, `content:audit` sin hallazgos en las claves nuevas (los 162
+  que reporta son preexistentes y es warn-only).
 - **Uncommitted work**: ninguno.
 - 📌 **Baseline corregido: `main` limpio da 531 archivos, no 529.** Lo medí con stash
   para confirmar que el delta era sólo mío. El 529 del handoff anterior estaba viejo.
@@ -91,27 +103,40 @@ lecturas de `null` no son igual de inocuas.
 
 ## Next Tasks
 
-Sigue el orden de commits de Stage 2 (S2.1 hecho):
+Sigue el orden de commits de Stage 2 (S2.1, S2.2a y S2.2b+S2.3 hechos):
 
-- **S2.2b + S2.3 JUNTOS** (recomendación, ver abajo) — `ChallengeCard` consume
-  `progress: ChallengeProgressView` en vez de derivar `done = min(streak, 21)`
-  (`challenge-card.tsx:128`), y se cablea `useLearnFocusDays` +
-  `buildChallengeProgressView` en `use-hub-data`/`LearnHubClient`.
-  Los 5 estados: `offer`, `disabled`, `degraded`, `active` con `unreachable`,
-  `completed`. El CTA **sobrevive** a `unreachable` (spec, "convive con el CTA":
-  el copy de `unreachable` reemplaza ÚNICAMENTE los mensajes tipo `Only X more`).
-  Copy en `editorial.ts` + `messages/es.ts`, cero em-dashes (AC23,
-  `anti-ai-prose.test.ts`), `pnpm content:audit` (AC24).
-
-  **Por qué juntos:** S2.2b no puede renderizar 5 estados sin decir nada en cada
-  uno. Separarlos obliga a inventar copy placeholder que después hay que pasar por
-  `content:audit` y por el techo de em-dashes — o sea, escribir el copy dos veces.
-
-  ⚠️ **Decisión de producto pendiente ahí**: `disabled` y `degraded` no pueden
-  pintarse igual (una es decisión nuestra, la otra una falla nuestra; pintarlas
-  igual esconde un incidente detrás de un flag). El spec da el copy de `degraded`
-  pero **no** el de `disabled`. Preguntar antes de inventarlo.
 - **S2.4** — cliente del POST al completar el Daily + reintento `daily_retry`.
+  **El slice de mayor riesgo del stage: el único que ESCRIBE.** Diseño ya
+  investigado contra el código (2026-07-27), listo para implementar:
+
+  ⚠️ **NO colgar el POST de `chesscito:daily-progress-changed`.** Ese evento se
+  despacha desde **dos** lugares (`progress.ts:94` y, redundante,
+  `challenge-daily-client.tsx:67`) y los tests lo emiten a mano. Colgarse de él es
+  exactamente la observación pasiva que el founder descartó: cualquiera que lo
+  emita provocaría una escritura.
+
+  📌 `recordDailyCompletion` (`lib/daily/progress.ts:83`) es el **único** punto de
+  escritura y devuelve **la misma referencia** en el no-op
+  (`if (next === prev) return prev`). Sus 3 llamadores: `hub-daily-tile.tsx:171`,
+  `daily-tactic-slot.tsx:116`, `challenge-daily-client.tsx:66`.
+
+  Plan:
+  1. `lib/daily/events.ts`: `dispatchDailyCompleted(date)` +
+     `subscribeToDailyCompleted`, evento DEDICADO con la fecha en el `detail`.
+  2. `progress.ts`: emitirlo SOLO en la rama de cambio real, nunca en el no-op.
+  3. `lib/season-pass/use-focus-day-recorder.ts`: completación → POST sin `date`;
+     en mount, **una vez por `(wallet, date)` con un ref** → retry con
+     `lastCompletedDate` si cae en [ayer, hoy].
+
+  📌 El retry puede dispararse sin saber si la fecha ya está en el ledger: la
+  idempotencia la da el UNIQUE. Y el cliente **no puede** saberlo de todos modos:
+  `/status` devuelve un conteo, no fechas.
+
+  Invariantes firmadas (founder) que los tests deben fijar: el Daily se completa
+  localmente aunque el POST falle · sin wallet no se intenta escribir · la
+  escritura normal NO manda `date` · el retry SÍ manda `lastCompletedDate` ·
+  nunca se reintenta una fecha fuera de [ayer, hoy] · **ni un POST de más por
+  rerender o rehidratación**.
 - **S2.5** — borrar `challenge-day.ts`, su test, `dayOfChallenge` y sus referencias
   (AC1). **Último**, para que el camino viejo viva hasta que el nuevo esté cableado.
   📌 Medido: `dayOfChallenge` está en el **tipo** (`challenge-card.tsx:59`), se produce
@@ -121,14 +146,26 @@ Sigue el orden de commits de Stage 2 (S2.1 hecho):
   caminos de acreditación espiados y en cero).
 
 Fuera de Stage 2, cuando el founder quiera:
-- **`/dev/learn-hub` + `vr18-learn-hub-*`** — desbloqueado por el refactor. Conviene
-  **después** de S2.2: fotografiar la tarjeta vieja no sirve.
+- **`/dev/learn-hub` + `vr18-learn-hub-*`** — desbloqueado por el refactor. Ahora
+  SÍ conviene: los 5 estados ya existen y `data-progress-state` los hace
+  fotografiables sin wallet ni pase vivo.
 - **`hub-clean` → `exercises-clean`** (~39 fotos revisadas una por una). No tiene
   relación con Stage 2; se sacó del camino crítico a propósito.
 
 ## Blockers
 
-Ninguno.
+Ninguno para seguir. **Uno para el merge final de Stage 2** (founder, 2026-07-27):
+
+🚦 **Validación visual antes de mergear.** Nadie vio esto renderizado todavía; los
+tests fijan estructura y copy, no que entre en 390px. Revisar: 390px · `active` con
+las tres métricas · `unreachable` con su copy extra · `degraded` · **español**
+(ocupa más ancho) · streak de dos dígitos · `0 days left` · `Included with PRO`.
+
+El punto de ruptura más probable no es el texto sino la fila
+**progreso + countdown + racha**. Si no entra con aire, la salida preferida es
+**wrap controlado a dos líneas**, NO achicar tipografía ni convertir todo en chips.
+(`.challenge-card-day-count` ya es `flex-wrap: wrap`, así que el wrap existe; falta
+medir si respira.)
 
 ## Notes
 
