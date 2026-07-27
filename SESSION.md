@@ -1,85 +1,96 @@
-# Session Handoff — 2026-07-27 (Focus Days ledger, Stage 0)
+# Session Handoff — 2026-07-27 (Focus Days ledger, Stage 1)
 
 ## Completed
 
-- **Corregido un hecho falso del handoff anterior.** Decía que "Day X of 21" avanzaba por
-  reloj de pared. No: `challengeDayFromExpiry` se calcula (`use-hub-data.ts:418`) y viaja en
-  el prop `dayOfChallenge`, pero **ningún componente lo lee**. La tarjeta renderiza
-  `done = min(streak, 21)` (`challenge-card.tsx:128,215`). El defecto real es que el número
-  **retrocede**: `streak` vuelve a 1 al saltear un día (`progress.ts:75`).
-- **Spec A escrito, red-teameado en dos rondas y APPROVED**:
-  `docs/specs/2026-07-27-focus-days-ledger{,-redteam}.md`. 30 acceptance criteria, 3 P0 y
-  6 P1 cerrados, 2 firmas del founder al pie.
-- **Stage 0 implementado con TDD estricto** (rojo verificado antes de cada implementación):
+Stage 1 entero: el server ya sabe contar Focus Days. Nada de esto se ve todavía —
+la UI es Stage 2 y el gate arranca apagado.
 
-  | commit | qué | tests |
-  |---|---|---|
-  | `d4cb953a` | spec + red team + backlog | — |
-  | `c2967f57` | migración `focus_day_ledger` + `focus_ledger_init` | 6 |
-  | `272f7784` | módulo puro `focus-days.ts` | 22 |
-  | `a1551220` | `seasonId` canónico en el entitlement | 9 |
-  | `18b5525c` | gate Redis → env → off | 8 |
+| commit | qué | tests |
+|---|---|---|
+| `5d54273` | `seasonId` canónico en `/status` + fix del spread | 29 (10 nuevos) |
+| `2645817` | `focus-ledger-init.ts`: count, parseo del reporte y backfill | 22 |
+| `718bf54` | slice `focusDays` + gate + init cableados en `/status` | 10 |
+| `492fc8e` | `POST /api/focus-day` + regla pura de fechas + rate limit | 32 |
 
-- **Bug preexistente destapado y archivado** (`docs/backlog/2026-07-10-backlog-index.md` §8):
-  `verify-payment` no congela el `season_id` en el payload de Redis.
+**Decisión estructural de Stage 1**: el fast path de Redis **dejó de retornar temprano**.
+El spec exige el `seasonId` resuelto antes de cualquier rama (AC30) y para un comprador ese
+dato sólo existe en `lite_season_passes`. Redis conserva su único trabajo real — probar
+acceso: si Supabase cae, el entitlement se sirve igual y la slice queda `unavailable`.
+
+Otras dos cosas que aparecieron y se cerraron en el camino:
+
+- **Rate limit por wallet, no por IP** (`enforceFocusDayRateLimit`, bucket
+  `rl:focus-day:wallet`, 10/10min). Lo que se protege es el ledger de una wallet, y una
+  casa detrás de un NAT no es abuso. La idempotencia **no** depende de esto: es el UNIQUE.
+- **`/status` logueaba la wallet completa en tres líneas viejas** (`pro_status_check_failed`,
+  `redis_status_check_failed`, `supabase_unavailable`). El logger no redacta wallets: sólo
+  matchea claves tipo `key|secret|token|…`. Pasan por `hashWallet()` (AC22).
 
 ## Current State
 
-- **Branch**: `feat/focus-days-ledger`, 5 commits, **sin mergear a `main`**
-- **Build**: suite **6011 passing / 529 files, EXIT=0, 0 `Unhandled Errors`**, `tsc` limpio
-- **Uncommitted work**: ninguno, árbol limpio
-- ⏳ **`main` local sigue 10 commits adelante de origin** (el nudge de la llama). El founder pushea.
+- **Branch**: `feat/focus-days-ledger`, 9 commits, **sin mergear a `main`**
+- **Build**: suite **6081 passing / 529 files, EXIT=0, 0 `Unhandled Errors`**, `tsc` limpio
+- **Uncommitted work**: ninguno
+- ⏳ **`main` local sigue 10 commits adelante de origin.** El founder pushea.
+- 🔒 **El gate arranca apagado.** Sin `FOCUS_DAYS_LEDGER_ENABLED=true` ni override en Redis,
+  `/status` devuelve `focusDays: { status: "disabled" }` y el POST responde `disabled`.
+  Nada lee ni escribe el ledger hasta que se prenda.
 
-## Next Tasks — Stage 1
+## Antes de prender el flag
 
-1. **Wirear `configuredSeasonId` en `app/api/season-pass/status/route.ts` y arreglar el orden
-   del spread.** Hoy `response()` hace `{...resolveEffectiveTrainingPass(), ...details}`, y
-   `details` (per-rama: `route.ts:65` config vs `:122` fila) **pisa** al `seasonId` canónico.
-   Hasta arreglarlo el campo sale `null` en producción — inerte, nada lo consume.
-2. **`POST /api/focus-day`**: 5 reglas de validación de `date`, `source` `daily`/`daily_retry`,
-   rate limit 10 req/wallet/10min en Redis, logging con `hashWallet()`.
-3. **`ensureFocusLedgerInitialized`**: backfill lazy e idempotente desde el `GET /status`, con
-   el contrato **ausente ≠ cero** (AC13/AC28) y **un solo INSERT multi-row** (AC29).
-4. **Stage 2**: UI (`use-hub-data` + `ChallengeCard`), i18n en los dos locales, y borrado del
-   código muerto (`challenge-day.ts`, su test, `dayOfChallenge` y sus 11 referencias).
+1. **Aplicar la migración** `apps/web/supabase/migrations/20260728000000_focus_day_ledger.sql`
+   en el Supabase hosted. Sin las tablas, la slice queda `unavailable` — degrada, no rompe.
+2. Recién después: `FOCUS_DAYS_LEDGER_ENABLED=true` (server-side, **nunca** `NEXT_PUBLIC_*`)
+   + redeploy, o el override `focus-days-ledger:enabled` en Redis para prenderlo sin deploy.
 
-## Cola anterior, TODAVÍA ABIERTA (no la toqué)
+## Next Tasks — Stage 2 (UI)
 
-Del `SESSION.md` del 2026-07-27 (challenge-card + VR). Detalle en
-`docs/handoffs/2026-07-27-challenge-card-and-vr-handoff.md`.
+1. `use-hub-data.ts`: consumir `focusDays` del `/status` y mandar `streak` +
+   `lastCompletedDate` como params (**presentes**, aunque sean `0`: ausentes = "no sé" y el
+   backfill no latchea).
+2. `ChallengeCard`: los cinco estados de `challengeProgressView` (`offer`, `disabled`,
+   `degraded`, `active` con `unreachable`, `completed`). El CTA **sobrevive** a `unreachable`.
+3. i18n en `editorial.ts` + `messages/es.ts` (tabla del spec), cero em-dashes (AC23),
+   `pnpm content:audit` (AC24).
+4. Cliente del POST al completar el Daily + el reintento `daily_retry` del behavior 16.
+5. Borrar `challenge-day.ts`, su test, `dayOfChallenge` y sus 11 referencias (AC1).
+6. AC20 — el test de camino real `/status` → `use-hub-data` → `ChallengeCard`.
+7. AC18 — el test que espía los cuatro caminos de acreditación y los deja en cero.
 
-1. **Refactor `HubLiteScaffold` → `dailySlot: ReactNode`.** Bloquea lo demás: hoy el scaffold
-   monta `HubDailyTile`, que llama `useAccount()`, así que un probe `/dev` de LEARN renderiza
-   un error overlay.
-2. `/dev/learn-hub` + `vr18-learn-hub-*`, espejando `/dev/play-hub`.
-3. `hub-clean` → `exercises-clean` + `mask` sobre tablero y objetivo.
-4. Regenerar `vr9`–`vr17` (~39 fotos) revisando una por una.
+## Cola anterior, TODAVÍA ABIERTA
 
-⚠️ El punto 1 **choca con Stage 2**: los dos tocan la ChallengeCard y su host. Decidir orden
-antes de empezar el que venga segundo.
+Detalle en `docs/handoffs/2026-07-27-challenge-card-and-vr-handoff.md`.
+
+1. **Refactor `HubLiteScaffold` → `dailySlot: ReactNode`.** Bloquea lo demás.
+2. `/dev/learn-hub` + `vr18-learn-hub-*`.
+3. `hub-clean` → `exercises-clean` + `mask`.
+4. Regenerar `vr9`–`vr17` (~39 fotos).
+
+⚠️ El punto 1 **choca con Stage 2**: los dos tocan la ChallengeCard y su host. Recomendación:
+hacer el refactor del scaffold **primero** — Stage 2 va a reescribir la tarjeta entera y
+mezclar las dos cosas hace irrevisable el diff.
 
 ## Blockers
 
-Ninguno. El spec está firmado y no quedan preguntas abiertas.
+Ninguno.
 
 ## Notes
 
-- **El `/status` es la ruta más caliente del producto.** La firma acepta que consulte Supabase
-  en cada carga del Hub con entitlement activo. Invariante que protege: **una caída del ledger
-  degrada el progreso, nunca el acceso pagado.** Sin caché del contador todavía, a propósito.
-  Medir antes de optimizar: p50/p95, hit rate de Redis, frecuencia de `degraded`, lecturas por
-  usuario activo, errores por ruta.
-- **El gate arranca en `off`.** Precedencia Redis → env → off. Valor corrupto en Redis cae al
-  default seguro **y se reporta**; una caída de Redis se lee como "sin override", nunca como off.
-- **El backfill confía en un `streak` de localStorage manipulable.** Riesgo aceptado y declarado:
-  preserva continuidad de UX para quien ya pagó y **no concede valor económico**. Las filas van
-  marcadas `backfill_streak` para que cualquier sistema futuro las excluya.
-- **Guardrail de recompensas en el spec**: Spec A no define, promete, calcula ni distribuye
-  rewards, y el ledger es señal de actividad, no prueba de elegibilidad. **No debilitarlo.**
-- **Spec B (21-en-30) NO está escrito.** Ahí vive el cambio de término comercial y la migración
-  de los pases vivos. Sin él "12 of 21" sigue siendo incompletable tras un salteo, pero ahora
-  **visible** — que era el punto de Spec A.
-- El test de PII de la migración strippea comentarios antes de escanear: la nota de diseño
-  nombra legítimamente la PII que la tabla se niega a guardar.
-- **CI NO corre Playwright** (jobs: `web-tests`, `type-check`, `asset-drift`, `contract-tests`).
-  VR local necesita `BASE_URL=http://localhost:3002 PORT=3002` o sale el banner de origin mismatch.
+- **El `/status` declara `no-store` + `force-dynamic`.** Puede inicializar el ledger; una capa
+  que lo cachee produce un bug irreproducible.
+- **`disabled` ≠ `unavailable`** hasta el cliente. Uno es una decisión nuestra, el otro una
+  falla nuestra, y una tarjeta que los pinta igual esconde un incidente detrás de un flag.
+- **Orden dentro de la slice: gate → backfill → count.** Contar antes de sembrar le reporta
+  cero a alguien que tiene historia, y ese cero es justo lo que la tarjeta renderiza.
+- **El backfill nunca latchea después de un write fallido.** Un sembrado perdido no se
+  recupera; uno repetido es gratis bajo el UNIQUE.
+- **`?streak=` vacío y el param ausente NO latchean; `?streak=0` sí.** Además: un streak
+  positivo **sin** `lastCompletedDate` válido tampoco latchea — no hay dónde apoyarlo en el
+  calendario y latchear ahí congelaría a ese jugador en cero para siempre.
+- **PRO no tiene ventana comprada**: el backfill le siembra 0 filas y cuenta desde hoy. Su
+  regla de fecha es sólo "PRO no había vencido antes de esa fecha".
+- **Honestidad de proceso**: los tests de `focus-days.ts`, `focus-ledger-init.ts` y del
+  `/status` se corrieron en rojo antes de implementar. Los del `POST /api/focus-day` se
+  escribieron primero pero **no se corrió el rojo** (el módulo no existía: el import habría
+  fallado, no es un rojo verificado sobre lógica).
+- **CI NO corre Playwright.** VR local necesita `BASE_URL=http://localhost:3002 PORT=3002`.
