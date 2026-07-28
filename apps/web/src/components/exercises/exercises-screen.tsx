@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -124,6 +131,10 @@ import { clearScoreSession } from "@/lib/scores/session-client";
 import { resolveDeploymentSurface } from "@/lib/scores/deployment-surface";
 import { deriveScoreSaveId } from "@/lib/scores/save-service";
 import { emitScoreSaveTelemetry } from "@/lib/scores/save-telemetry";
+import {
+  boardRunKeysReducer,
+  initialBoardRunKeys,
+} from "@/lib/scores/attempt-run-key";
 import {
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
@@ -452,7 +463,18 @@ export function ExercisesScreen({
   // opener. See `handleMilestoneNavigate`.
   const [miniArenaOpen, setMiniArenaOpen] = useState(false);
   const [phase, setPhase] = useState<"ready" | "success" | "failure">("ready");
-  const [boardKey, setBoardKey] = useState(0);
+  /**
+   * The four board remount counters, together, because they are one concept:
+   * the identity of the CURRENT run. Splitting them into four `useState`s is
+   * what let `resetBoard` rotate three of them and forget `labyrinthKey`
+   * (round-7 DEBT-1) — a hole that is invisible until the D19 latch reads them.
+   * Rotation rules and the per-family key live in `lib/scores/attempt-run-key`.
+   */
+  const [runKeys, dispatchRunKeys] = useReducer(
+    boardRunKeysReducer,
+    initialBoardRunKeys,
+  );
+  const boardKey = runKeys.board;
   const [moves, setMoves] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   // One exclusive dock tab at a time. Persistent-dock game UX: tapping
@@ -762,8 +784,9 @@ export function ExercisesScreen({
     awardsStars: boolean;
   } | null>(null);
   /** Bumps the labyrinth board key on retry so internal Board state
-   *  (piece position, selection, internal move counter) resets. */
-  const [labyrinthKey, setLabyrinthKey] = useState(0);
+   *  (piece position, selection, internal move counter) resets. Lives in
+   *  `runKeys` — see the reducer declaration above. */
+  const labyrinthKey = runKeys.labyrinth;
   /** Live move counter mirrored from the Board's onMove callback.
    *  Drives the labyrinth HUD chip ("X / Y moves") so the player
    *  can pace themselves against the optimal target in real time. */
@@ -1515,28 +1538,34 @@ export function ExercisesScreen({
     // the continuation itself lands here, so a stale tap can never re-fire.
     flashContinueRef.current = null;
     setAwaitFlashTap(false);
-    setBoardKey((previous) => previous + 1);
+    /* Rotates ALL FOUR run keys, which is the point of the single dispatch.
+       Each board reaches its next attempt differently and this is the one place
+       that has to know none of it:
+
+       - Safe Path keys off its own id, not boardKey. Every rescue path lands
+         here — shield, skip, server error — and all three mean the same thing
+         for the king: walk back to the start (D5). Losing on step 9 of 10 costs
+         the whole run.
+       - Promotion Run, same story, same reason — and the SAME meaning for both
+         of its two failures (caught, and crowning the wrong piece): back to the
+         start of the run.
+
+         The founder's first instinct was for a shield to buy a re-PICK on a
+         wrong crown — resume on the last rank rather than replay six moves —
+         and then ruled that keeping the existing behaviour was fine if it cost
+         much (2026-07-17). It does not just cost less; it is also the safer
+         machine: a shield that means "back to the start" here and "just
+         re-choose" there is ONE token with two meanings, and that drifts. One
+         shield, one promise. The picker re-opens on its own when the pawn
+         reaches the rank again.
+       - Diagonal Run, Knight's Tour and N-Queens have no reset prop at all:
+         their only reset is the remount `labyrinth` drives. Round 7 found this
+         function had never bumped it (DEBT-1). */
+    dispatchRunKeys({ type: "board_reset" });
     setPhase("ready");
     setMoves(0);
     setElapsedMs(0);
     timerStart.current = 0;
-    // Safe Path keys off its own id, not boardKey, so the bump above never
-    // reaches it. Every rescue path lands here — shield, skip, server error —
-    // and all three mean the same thing for the king: walk back to the start
-    // (D5). Losing on step 9 of 10 costs the whole run.
-    setSafePathResetKey((previous) => previous + 1);
-    /* Promotion Run, same story, same reason — and the SAME meaning for both of
-       its two failures (caught, and crowning the wrong piece): back to the
-       start of the run.
-
-       The founder's first instinct was for a shield to buy a re-PICK on a wrong
-       crown — resume on the last rank rather than replay six moves — and then
-       ruled that keeping the existing behaviour was fine if it cost much
-       (2026-07-17). It does not just cost less; it is also the safer machine:
-       a shield that means "back to the start" here and "just re-choose" there
-       is ONE token with two meanings, and that drifts. One shield, one promise.
-       The picker re-opens on its own when the pawn reaches the rank again. */
-    setPromotionRunResetKey((previous) => previous + 1);
     setPromotionPick(null);
     // A beat still in flight belongs to a run that no longer exists. Left
     // pending, it would fire a failure into the fresh board it lands on.
@@ -2753,8 +2782,9 @@ export function ExercisesScreen({
   } | null>(null);
 
   /** Bumped to walk the king back to the start after he is caught (D5) —
-   *  whether he was rescued by a shield or the player waved the modal away. */
-  const [safePathResetKey, setSafePathResetKey] = useState(0);
+   *  whether he was rescued by a shield or the player waved the modal away.
+   *  Rotated by `resetBoard`, which every one of those paths reaches. */
+  const safePathResetKey = runKeys.safePath;
 
   /** Holds the attack beat so it can be cancelled. Without this, leaving the
    *  level mid-beat fires a failure into a board that is no longer there — and
@@ -2772,7 +2802,7 @@ export function ExercisesScreen({
   } | null>(null);
 
   /** Bumped to send the pawn — and the pieces it ate — back to the start. */
-  const [promotionRunResetKey, setPromotionRunResetKey] = useState(0);
+  const promotionRunResetKey = runKeys.promotionRun;
 
   /** Set when the pawn reaches the last rank: the picker is up and waiting for a
    *  choice (P3/P5). Cleared on reset. Not a boolean because the square it
@@ -3025,7 +3055,7 @@ export function ExercisesScreen({
       setLabyrinthMode(true);
       setLabyrinthCompleted(null);
       setLabyrinthMoves(0);
-      setLabyrinthKey((key) => key + 1);
+      dispatchRunKeys({ type: "content_started" });
       writeLastTrainingContentId(selectedPiece, contentId);
       return result;
     },
