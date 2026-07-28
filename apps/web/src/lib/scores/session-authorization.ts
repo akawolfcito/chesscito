@@ -87,15 +87,26 @@ const MESSAGE_HEADER = `Chesscito Score Session ${SCORE_SESSION_MESSAGE_VERSION}
 export const SCORE_SESSION_TTL_SECONDS = 2 * 60 * 60;
 
 /**
- * How many saves one signature authorizes. 25.
+ * How many saves one signature authorizes. 100.
  *
- * Comfortably above a maxed-out day — 10 free exercises plus 2 paid packs of 5
- * is 15 (`HARD_MAX_EXTRAS`), and a save fires per *improvement*, not per
- * exercise, so a player who re-plays for stars generates a few more. 25 covers
- * that with margin while keeping a leaked token bounded to a nuisance rather
- * than an unbounded write capability.
+ * ⚠️ RAISED FROM 25 IN THE SAME CHANGE AS SERVER-SIDE GRADING (Slice 3), and
+ * the two are not independent. 25 was sized for a save that fires per
+ * IMPROVEMENT: a maxed-out day is 15 exercises (`HARD_MAX_EXTRAS`), and only
+ * the ones that beat a previous best cost a unit. Slice 3 posts once per
+ * completed ATTEMPT — including every replay of a level already aced, and
+ * every carril-2 completion, which never moves the score at all. The same day
+ * now spends several times what it used to, and at 25 a dedicated player would
+ * be re-prompted for a signature mid-session.
+ *
+ * Raising the ceiling does NOT invalidate live sessions: the challenge
+ * validator rejects `maxSaves` ABOVE this number (`isValidChallenge` below), so
+ * a 25-save session issued before the bump stays acceptable — it simply runs
+ * out sooner. Lowering it later is the breaking direction.
+ *
+ * A leaked token still buys only row count on its own wallet, and with D12 it
+ * cannot inflate a single star.
  */
-export const SCORE_SESSION_MAX_SAVES = 25;
+export const SCORE_SESSION_MAX_SAVES = 100;
 
 /**
  * How long the player has to sign the challenge before it goes stale. 3 min.
