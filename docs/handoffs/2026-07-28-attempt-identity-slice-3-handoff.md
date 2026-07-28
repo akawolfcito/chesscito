@@ -1,15 +1,66 @@
-# Handoff — Slice 3, identidad de intento (etapas 1, 2 y 3 cerradas)
+# Handoff — Slice 3, identidad de intento (etapas 1, 2, 3 y 4A cerradas)
 
 **Fecha**: 2026-07-28
-**Branch**: `feat/attempt-identity-slice-3` — **9 commits, SIN PUSHEAR**. El push es del founder.
+**Branch**: `feat/attempt-identity-slice-3` — **13 commits, SIN PUSHEAR**. El push es del founder.
 Sin merge y sin deploy: la branch queda quieta hasta que el founder decida.
-**Suite**: **6406 passing / 548 archivos, EXIT=0**. `tsc --noEmit` limpio. Lint limpio.
+**Suite**: **6418 passing / 549 archivos, EXIT=0**. `tsc --noEmit` limpio. Lint limpio.
 **Spec**: `docs/specs/2026-07-28-attempt-identity-score-attempts.md` — **CLOSED en v7**, D1–D20 congeladas.
 
 ## Estado en una línea
 
-**Slice 3 NO está terminado.** Etapa 1 (los dos módulos puros), **etapa 2 (DEBT-1 + DEBT-2)** y
-**etapa 3 (`gradeAttempt` + inventario)** están CLOSED. Lo que sigue es la migración + el RPC.
+**Slice 3 NO está terminado.** Etapa 1 (los dos módulos puros), **etapa 2 (DEBT-1 + DEBT-2)**,
+**etapa 3 (`gradeAttempt` + inventario)** y **etapa 4A (el catálogo servido)** están CLOSED. Lo
+que sigue es la migración + el RPC.
+
+---
+
+## Etapa 4A — CLOSED
+
+| Commit | Qué cerró |
+| --- | --- |
+| `c79e6fe` | Los siete pools obligatorios, el passthrough, y unicidad global de id |
+| `c5063cb` | El provider de `/exercises` montaba cinco pools de siete |
+
+**Decisión del founder**: ensanchar `MergedCatalog`. **No** construir un catálogo paralelo
+dentro de `gradeAttempt`.
+
+Los siete pools de `BaselineCatalog` ahora son **obligatorios**. Cinco eran opcionales "para que
+los fixtures parciales siguieran valiendo", y el costo de esa comodidad fue invisible: un campo
+opcional que nadie setea se ve igual que uno que no hace falta. Obligatorio significa que
+`MergedCatalog` satisface `GradingCatalog` **por asignación, sin cast** — agregar un bucket allá
+y olvidarlo acá es un error de tipos, no un `unknown_exercise` en la wire seis semanas después.
+
+**Unicidad global de id.** Un id es la clave del catálogo entre **todos** los pools, no por pool:
+`gradeAttempt` busca escaneando y grada con el primer hit, así que un id duplicado lo gradaría el
+bucket que gane el escaneo —un conteo de movimientos entregado a un grader de cobertura, en
+silencio—. `buildCatalog` ya lo garantiza dentro de una build; el overlay es el único camino que
+puede romperlo, porque sus filas se construyen de a una y nunca ven los otros pools. Ahora
+`mergeOverlay` descarta una fila cuyo id pertenece a otro pool, y mantiene el índice de dueños
+**mientras** aplica, así que dos filas de overlay tampoco chocan entre sí.
+`duplicateExerciseIds(pools)` queda exportado; el catálogo enviado da `[]`.
+
+### ⚠️ El test que estaba verde y no probaba nada
+
+La primera versión del test de `gradeAttempt` contra el catálogo servido mockeaba
+`getSupabaseServer` en `null`. Eso toma el **atajo baseline-only**, que devuelve el objeto
+baseline verbatim y **nunca llama a `mergeOverlay`** — o sea, probaba la rama que no es la de
+producción. Quedó **verde con `safePath` vaciado del merge**. Se descubrió por mutación, no por
+lectura. Ahora el mock devuelve un overlay de **cero filas**, así que el merge real corre y los
+ids siguen siendo los enviados (`source === "baseline+overlay"`, `overlayCount === 0`).
+
+**Mutaciones verificadas**: vaciar `safePath` en el merge rompe 4 casos; desactivar el guard de
+colisión rompe 2.
+
+### Consumidores revisados
+
+- 🔧 `page.tsx` — montaba cinco pools; `queens`, `safePath` y `promotionRun` caían al baseline en
+  cada selector. **Corregido**: hoy no se veía porque el overlay no maneja esos kinds; el día que
+  los maneje, la pantalla mezclaría catálogo staged con baseline sin decirlo.
+- ✅ `catalog-context.tsx` — ya declaraba los siete (opcionales, con fallback al baseline). Sin
+  cambios: ahí el opcional **sí** es el contrato, porque un consumidor sin provider debe caer al
+  baseline.
+- ✅ `page.test.tsx` — su fixture es un mock suelto, no tipado contra `MergedCatalog`. Sin cambios.
+- ✅ `scripts/verify-catalog-source.ts` — lee `source`/`overlayCount`, no los pools.
 
 ---
 
@@ -70,17 +121,10 @@ leyendo ese comentario.
 
 **Hallazgos que quedan abiertos:**
 
-1. 🔴 **`getMergedCatalog()` NO satisface `GradingCatalog`.** `MergedCatalog` tiene cinco pools:
-   `mergeOverlay` devuelve `exercises`, `labyrinths`, `diagonalRun`, `knightTour`, `queens` —
-   **le faltan `safePath` y `promotionRun`** (`merged-catalog.ts:157-168`). El catálogo que el
-   server sirve hoy no puede gradar dos de los siete buckets. **Esto es precondición del RPC**,
-   no un detalle de tipos: hay que ensanchar el merged catalog o construir el catálogo del
-   grader aparte. El test corre contra `puzzles.generated`, que sí tiene los siete.
-2. **Id duplicado entre pools.** `buildCatalog` rechaza ids duplicados globalmente
-   (`catalog.ts:419`), así que el primer match es el único — **pero solo dentro de UNA build**.
-   Un `GradingCatalog` ensamblado de builds separadas (como hace `buildOverlayRow`, una por
-   fila) podría tener el mismo id en dos pools y el grader elegiría en silencio. Vale la pena
-   un chequeo cuando se arme el catálogo del server.
+1. ✅ **RESUELTO en 4A** — `getMergedCatalog()` no satisfacía `GradingCatalog`: le faltaban
+   `safePath` y `promotionRun`. Ensanchado por decisión del founder (ver etapa 4A).
+2. ✅ **RESUELTO en 4A** — id duplicado entre pools: `mergeOverlay` descarta la fila y
+   `duplicateExerciseIds` deja la invariante asertable.
 3. **`asStarCount` y el `default` de `starsFor` tiran.** Son inalcanzables por construcción y el
    barrido del dominio lo demuestra, pero son las dos únicas ramas sin cobertura. Tirar es
    deliberado: un grader que se sale de 0..3 rompió su propio contrato, y lo honesto es un
@@ -158,13 +202,10 @@ comportamiento que nadie pidió.
 
 ## Próxima sesión
 
-**Etapa 4 — migración `score_attempts` + RPC `save_score_attempt`.**
+**Etapa 4B — migración `score_attempts` + RPC `save_score_attempt`.** El bloqueante de 4A está
+cerrado: el RPC puede leer `getMergedCatalog()` y pasárselo a `gradeAttempt` sin cast.
 
-**Bloqueante primero:** resolver el hallazgo 🔴 1 de arriba. El catálogo que el server sirve hoy
-no tiene `safePath` ni `promotionRun`, así que el RPC no puede gradar dos de los siete buckets.
-Decidir ahí si se ensancha `MergedCatalog` o si el grader arma su propio catálogo.
-
-Después, en orden:
+En orden:
 
 1. Migración `score_attempts` + RPC `save_score_attempt` (llama a `save_basic_score`, nunca lo
    reimplementa; consume dentro de la transacción; `revoke ... from public`).
@@ -188,11 +229,8 @@ Después, en orden:
 
 ## Preguntas abiertas
 
-**Una, y es de etapa 4:** el catálogo del server no tiene los siete pools (hallazgo 🔴 1).
-¿Se ensancha `mergeOverlay` para que devuelva `safePath` y `promotionRun` —el overlay no tiene
-filas de esos kinds hoy, pasarían derecho como `diagonalRun`— o el grader arma su propio
-catálogo desde `puzzles.generated`? Lo primero mantiene un solo catálogo; lo segundo deja el
-grader fuera del camino del overlay.
+**Ninguna bloqueante.** La de etapa 4A —si se ensancha `MergedCatalog` o si el grader arma su
+propio catálogo— la resolvió el founder: se ensancha, un solo catálogo.
 
 La que quedaba de etapa 2 —si la cola persistida es por-wallet— se resolvió por wallet, con
 el argumento en `attempt-outbox-storage.ts`.
