@@ -1,10 +1,16 @@
 # Handoff — Slice 3, identidad de intento (etapas 1–4B cerradas, preflights verdes)
 
 **Fecha**: 2026-07-28
-**Branch**: `feat/attempt-identity-slice-3` — **19 commits, SIN PUSHEAR**. El push es del founder.
-Sin merge y sin deploy: la branch queda quieta hasta que el founder decida.
+**Branch**: `feat/attempt-identity-slice-3`
+**Commits**: **20** — los 19 con que cerraron 4B + los preflights, más este handoff.
+**Árbol**: limpio.
+**SIN PUSH, SIN MERGE, SIN DEPLOY.** El push es del founder; la branch queda quieta.
 **Suite**: **6479 passing / 550 archivos, EXIT=0**. `tsc --noEmit` limpio. Lint limpio.
 **Spec**: `docs/specs/2026-07-28-attempt-identity-score-attempts.md` — **CLOSED en v7**, D1–D20 congeladas.
+
+> El conteo dice 20 y no 19 a propósito: 19 era el número **antes** de commitear este archivo.
+> Este handoff ya arrastró una vez un conteo desactualizado; el número correcto es el que vale
+> después del commit que lo escribe. Verificable con `git rev-list --count main..HEAD`.
 
 ## Estado en una línea
 
@@ -49,8 +55,10 @@ nada que perder).
 - `score_attempts_smoke.sql` — **12 casos PASSED**, incluido el rollback: un fallo después del
   consume deja `used_saves`, `score_saves` y `score_attempts` **sin cambios**.
 - Mismo `attemptId` en wallets distintas → **no es replay**, cada wallet recibe su propio ordinal.
-- Concurrencia real (`pgbench -c 8 -j 8`, 8 clientes sobre el MISMO `attemptId`): **1 fila de
-  intento, 1 de `score_saves`, `used_saves = 1`**. Siete de ocho fueron replays y no gastaron nada.
+- Concurrencia real (`pgbench -n -c 8 -j 8 -t 1`, 8 clientes sobre el MISMO `attemptId`, 0 fallos):
+  **1 fila de intento, 1 de `score_saves`, `used_saves = 1`**.
+- **Un replay consume 0.** Siete de las ocho llamadas concurrentes fueron replays y no gastaron
+  nada — el presupuesto no lo mueve la cantidad de requests, lo mueve la cantidad de intentos.
 - Privilegios vía `has_function_privilege` — **falló primero. Ver abajo.**
 
 ### 🔴 El hallazgo: revocar de `PUBLIC` no le sacaba `EXECUTE` a `anon`
@@ -66,8 +74,13 @@ y revocar de `PUBLIC` no toca un grant explícito.
 
 ⚠️ **El guard de vitest estaba en verde mientras la función estaba expuesta.** Asertaba
 `from public`, y eso era literalmente lo que decía el archivo. Ahora exige los tres roles — pero
-la lección no es esa: **una pregunta de privilegios solo la contesta la base de datos**, y el
-smoke hay que correrlo. Ningún guard de texto la habría cazado nunca.
+la lección no es esa: **ningún regex sobre el SQL puede contestar esta pregunta**, porque la
+respuesta no está en el texto de la migración, está en el ACL resultante después de que corran
+los default privileges del proyecto.
+
+**La propiedad se valida en la DB, no por regex**: `has_function_privilege('anon', ...)` y
+`pg_proc.proacl`. El guard de texto sirve para que nadie borre la línea; la prueba de que la
+línea alcanza es el smoke, y **hay que correrlo**.
 
 ### Cómo repetir los preflights
 
@@ -85,6 +98,11 @@ SUPABASE_URL=http://127.0.0.1:55321 SUPABASE_SERVICE_ROLE_KEY=<local> \
 ```
 
 No hay `psql` local: va por `docker exec` al contenedor `supabase_db_web`.
+
+> **Estado operativo al cerrar la sesión, NO una dependencia de este handoff:** el Supabase local
+> quedó **corriendo** (`supabase stop` para bajarlo). Nada de lo escrito acá depende de que siga
+> arriba — los preflights ya corrieron y sus resultados están registrados. La próxima sesión
+> puede empezar con Docker apagado y levantarlo solo cuando vuelva a necesitar la DB.
 
 ---
 
@@ -359,14 +377,26 @@ lo de abajo vive en `exercises-screen.tsx` (~3700 líneas) y **es una sesión pr
    save escribe una fila `ungraded` con `attempt_id_source = 'server'` — correcto, y es lo que
    hace seguro el orden de deploy.
 
-**Acceptance críticos** (los que fallarían en un cableado ingenuo):
+**Acceptance críticos de 4C** — los diez que fallarían en un cableado ingenuo:
 
-- reload con intento pendiente → se rehidrata y usa **el mismo** `attemptId`;
-- wallet A **no** drena la cola de wallet B;
-- una completación **durante** la hidratación no se pierde ni se duplica;
-- error de red conserva la cabeza; **400 terminal no bloquea la FIFO eternamente**;
-- carril 1, labyrinth/promotion y coverage producen **exactamente una** fila cada uno;
-- un retry produce **replay**, no una segunda fila (ya probado del lado servidor).
+1. **Hidratar antes de drenar.** Y antes de mintear: un intento rehidratado que se vuelve a
+   mintear deja de ser un intento y pasa a ser dos.
+2. **Wallet A nunca drena la cola de wallet B.** La cola persistida está namespaceada por wallet
+   (`chesscito:attempt-outbox:v1:<wallet>`); un teléfono que cambia de cuenta no puede acreditarle
+   a B lo que jugó A.
+3. **Una completación durante la hidratación no se pierde.** Ese es el caso que un `useEffect`
+   ingenuo come: llega el evento con el estado todavía sin hidratar y se persiste el estado vacío.
+4. **Un solo request en vuelo.** `selectNextSubmission` devuelve `null` mientras hay uno.
+5. **Un retry conserva el `attemptId`.** Es lo que hace que el servidor lo vea como replay y no
+   como un segundo intento — ya probado del lado servidor, falta que el cliente no lo rote.
+6. **Un fallo terminal no bloquea la cola.** Un 400 sobre la cabeza de la FIFO tranca todo lo que
+   hay detrás si se reencola; hay que distinguirlo del 5xx/red, que sí conserva la cabeza.
+7. **Cada familia emite exactamente una vez.** Carril 1, labyrinth/promotion y coverage: una fila
+   cada uno, con boards que pueden llamar `onComplete` más de una vez.
+8. **Un reload conserva la outbox**, y el intento pendiente se manda con **el mismo** `attemptId`.
+9. **`resetBoard` no borra pendientes.** El reducer no observa el ciclo de vida visual del tablero
+   — ese es el mecanismo de D20, no una precaución.
+10. **`submission_settled` borra solo su propio intento.** Que A se resuelva no puede tocar a B.
 
 ## Lo que hay que saber antes de tocar esto
 
