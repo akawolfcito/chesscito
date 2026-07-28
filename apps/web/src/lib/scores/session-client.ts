@@ -8,25 +8,41 @@
  *   first puntuable save  → challenge → ONE signature → token
  *   every save after that → silent
  *
- * WHY THE TOKEN LIVES IN MODULE MEMORY AND NOT IN STORAGE
- * -------------------------------------------------------
- * It is a bearer credential. Putting it in localStorage/sessionStorage widens
- * the blast radius to anything that can read the origin's storage (an XSS, a
- * shared device, a synced browser profile) in exchange for saving one wallet
- * prompt after a page reload. One prompt per two hours is a price worth
- * paying; a persisted write capability is not.
+ * WHY THE TOKEN IS PERSISTED (revisado 2026-07-27 tras el smoke en device)
+ * -----------------------------------------------------------------------
+ * La primera versión lo guardaba SOLO en memoria del módulo, con el argumento
+ * de que una credencial bearer en storage amplía el radio de exposición. El
+ * smoke en MiniPay mostró que ese razonamiento estaba mal calibrado:
  *
- * The cache is keyed by `(wallet, surface)`, which is what makes invalidation
- * automatic rather than something a caller must remember:
- *   - wallet changes  → key misses → new authorization
- *   - Disconnect      → no address → `clearScoreSession()` and no key at all
- *   - surface changes → key misses (a build only has one, but a token minted
- *                       on the other product must never be reused)
- *   - expiry          → checked against the cached `expiresAt` before use
- *   - server says the session is dead → dropped on the spot
+ *   - MiniPay es una mini-app que se abre y se cierra todo el tiempo. Cada
+ *     cierre descarga el módulo y tira el token, así que en la práctica no era
+ *     "una firma cada 2 horas" sino "una firma por cada apertura que produzca
+ *     un save". El founder lo verificó en dos dispositivos.
+ *   - Y el peor caso de un token robado es MUY acotado: permite escribir hasta
+ *     `maxSaves` scores EN LA WALLET DE LA VÍCTIMA. No mueve fondos, no lee
+ *     datos, no firma transacciones, no toca entitlements. El daño máximo es
+ *     inflarle el puntaje a alguien o gastarle su presupuesto de saves — un
+ *     ataque con casi ninguna utilidad.
  *
- * NEVER prompts on mount, on Hub open, or before an exercise is completed —
- * only on the first save that is actually going to be written.
+ * Pagar ese riesgo casi nulo con firmas repetidas es un mal negocio: un prompt
+ * que aparece seguido es un prompt que el jugador aprende a descartar sin leer,
+ * y esa es justo la costumbre de la que depende el carril on-chain.
+ *
+ * Lo que NO cambia: el alcance del token (una wallet, una superficie, 2h, 25
+ * saves, revocable server-side) y toda la lógica de invalidación. Solo cambia
+ * DÓNDE vive entre aperturas.
+ *
+ * El caché sigue keyed por `(wallet, surface)` — es lo que hace la
+ * invalidación automática en vez de algo que un caller deba recordar:
+ *   - wallet distinta  → miss → nueva autorización, y la entrada vieja se borra
+ *   - Disconnect       → `clearScoreSession()` explícito
+ *   - surface distinta → miss (un build tiene una sola, pero un token acuñado
+ *                        en el otro producto no debe reusarse jamás)
+ *   - expirado         → miss, contra el `expiresAt` guardado
+ *   - el server lo rechaza → se descarta en el acto
+ *
+ * NUNCA pide firma al montar, al abrir el Hub, ni antes de completar un
+ * ejercicio — solo en el primer save que realmente se va a escribir.
  */
 
 import type { ScoreSaveSurface } from "./save-authorization";
@@ -41,6 +57,11 @@ export type ScoreSession = {
   expiresAt: number;
   maxSaves: number;
 };
+
+/** Lo único que se persiste. `maxSaves` queda deliberadamente afuera: es
+ *  informativo para la UI y el servidor lo cuenta igual, así que guardarlo solo
+ *  crearía un segundo lugar donde el presupuesto puede mentir. */
+type PersistedSession = Pick<ScoreSession, "token" | "wallet" | "surface" | "expiresAt">;
 
 export type ScoreSessionError =
   | "no_wallet"
@@ -62,33 +83,117 @@ export type ScoreSessionResult =
  */
 const EXPIRY_MARGIN_SECONDS = 60;
 
+/** Versionada: si el shape cambia, la clave cambia y las entradas viejas se
+ *  ignoran solas en vez de parsearse mal. */
+const STORAGE_KEY = "chesscito:score-write-session:v1";
+
 let cached: ScoreSession | null = null;
 /** In-flight authorization, so two saves racing on the same tick produce ONE
  *  wallet prompt rather than two. This is the difference between "just in
  *  time" and "twice, confusingly". */
 let inFlight: Promise<ScoreSessionResult> | null = null;
 
-function cacheKeyMatches(
-  session: ScoreSession | null,
+// ─────────────────────────────────────────────────────────────────
+// Persistencia
+// ─────────────────────────────────────────────────────────────────
+
+function isPersistedSession(v: unknown): v is PersistedSession {
+  if (typeof v !== "object" || v === null) return false;
+  const s = v as Record<string, unknown>;
+  return (
+    typeof s.token === "string" &&
+    s.token.length > 0 &&
+    typeof s.wallet === "string" &&
+    s.wallet.length > 0 &&
+    (s.surface === "learn" || s.surface === "play") &&
+    typeof s.expiresAt === "number" &&
+    Number.isFinite(s.expiresAt)
+  );
+}
+
+/** Lee la entrada persistida. Cualquier cosa que no sea exactamente el shape
+ *  esperado se descarta EN SILENCIO y se borra: un token corrupto no es un
+ *  error del jugador ni algo que valga interrumpirlo, y dejarlo ahí haría que
+ *  cada lectura vuelva a fallar. */
+function readPersisted(): PersistedSession | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (!isPersistedSession(parsed)) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    // JSON inválido, storage bloqueado o modo privado.
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* nada que hacer */
+    }
+    return null;
+  }
+}
+
+function writePersisted(session: ScoreSession): void {
+  if (typeof window === "undefined") return;
+  try {
+    const toStore: PersistedSession = {
+      token: session.token,
+      wallet: session.wallet,
+      surface: session.surface,
+      expiresAt: session.expiresAt,
+    };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
+  } catch {
+    // Quota o modo privado: la sesión sigue viva en memoria para esta pestaña.
+    // Perder la persistencia degrada la comodidad, nunca la corrección.
+  }
+}
+
+function removePersisted(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* nada que hacer */
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Caché
+// ─────────────────────────────────────────────────────────────────
+
+function isUsable(
+  session: { wallet: string; surface: ScoreSaveSurface; expiresAt: number } | null,
   wallet: string,
   surface: ScoreSaveSurface,
   nowSeconds: number,
-): session is ScoreSession {
+): boolean {
   if (!session) return false;
   if (session.wallet !== wallet.toLowerCase()) return false;
   if (session.surface !== surface) return false;
   return session.expiresAt - EXPIRY_MARGIN_SECONDS > nowSeconds;
 }
 
-/** Drop the cached session. Called on Disconnect, and whenever the server
- *  reports the session is no longer usable. */
+/**
+ * Borra la sesión, en memoria y en disco.
+ *
+ * Se llama ante un cambio REAL de identidad (Disconnect, otra wallet) o cuando
+ * el servidor declara el token muerto — NUNCA por el ciclo de vida de una
+ * pantalla. Desmontar `ExercisesScreen` o navegar al Hub no es un evento de
+ * seguridad, y tratarlo como tal costaba una firma extra por navegación.
+ */
 export function clearScoreSession(): void {
   cached = null;
   inFlight = null;
+  removePersisted();
 }
 
-/** Test seam + the "server rejected our token" path: returns what is cached
- *  without ever minting anything. */
+/** Lo que hay en memoria. No toca storage ni acuña nada — para tests y para el
+ *  camino "el server rechazó nuestro token". */
 export function peekScoreSession(): ScoreSession | null {
   return cached;
 }
@@ -106,7 +211,7 @@ export type EnsureScoreSessionInput = {
 
 /**
  * Return a usable session, minting one (with a single wallet prompt) only if
- * the cache cannot serve the request.
+ * neither memory nor storage can serve the request.
  */
 export async function ensureScoreSession(
   input: EnsureScoreSessionInput,
@@ -126,8 +231,24 @@ export async function ensureScoreSession(
 
   if (forceRefresh) {
     cached = null;
-  } else if (cacheKeyMatches(cached, wallet, surface, nowSeconds)) {
-    return { ok: true, session: cached };
+    removePersisted();
+  } else {
+    if (isUsable(cached, wallet, surface, nowSeconds)) {
+      return { ok: true, session: cached! };
+    }
+
+    // Memoria vacía (pestaña nueva, app reabierta) — probar disco.
+    const stored = readPersisted();
+    if (stored) {
+      if (isUsable(stored, wallet, surface, nowSeconds)) {
+        // `maxSaves` no se persiste; el servidor es quien lleva la cuenta real.
+        cached = { ...stored, maxSaves: 0 };
+        return { ok: true, session: cached };
+      }
+      // Expirada, o de otra wallet/superficie: se borra en vez de quedar
+      // acumulando credenciales muertas de identidades pasadas.
+      removePersisted();
+    }
   }
 
   // Coalesce concurrent callers onto one prompt.
@@ -200,5 +321,6 @@ async function authorize(
     expiresAt: payload.expiresAt,
     maxSaves: payload.maxSaves,
   };
+  writePersisted(cached);
   return { ok: true, session: cached };
 }

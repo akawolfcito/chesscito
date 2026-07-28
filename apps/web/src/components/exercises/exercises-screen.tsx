@@ -388,12 +388,26 @@ export function ExercisesScreen({
   // — see lib/scores/session-authorization.
   const { signMessageAsync } = useSignMessage();
 
-  // Drop the cached write session whenever the identity behind it changes.
-  // The cache is keyed by (wallet, surface) so a stale token could never be
-  // USED for the wrong wallet; this is about not keeping a live bearer
-  // credential in memory after the player disconnects or switches accounts.
+  // Drop the write session when the IDENTITY behind it changes — never when a
+  // screen unmounts.
+  //
+  // La versión anterior devolvía `() => clearScoreSession()` como cleanup, que
+  // también corre al desmontar: navegar de /exercises al Hub y volver borraba
+  // un token perfectamente válido y costaba una firma extra. Desmontar una
+  // pantalla no es un evento de seguridad.
+  //
+  // Comparar contra el address ANTERIOR es lo que distingue "cambió de cuenta o
+  // se desconectó" de "esta pantalla se montó". En el primer render no hay
+  // previo, así que no se borra nada — y no hace falta: el caché está keyed por
+  // (wallet, surface), de modo que un token ajeno nunca podría USARSE, esto es
+  // solo para no dejarlo vivo.
+  const previousAddressRef = useRef<string | undefined>(undefined);
   useEffect(() => {
-    return () => clearScoreSession();
+    const previous = previousAddressRef.current;
+    previousAddressRef.current = address;
+    if (previous !== undefined && previous !== address) {
+      clearScoreSession();
+    }
   }, [address]);
   const trainingPassStatus = useSeasonPassStatus(address);
   const trainingPass: EffectiveTrainingPassSnapshot = useMemo(

@@ -187,6 +187,41 @@ describe("postScoreSave — expiry and retry", () => {
     );
   });
 
+  it.each([
+    "invalid_session",
+    "session_expired",
+    "session_revoked",
+    "missing_session",
+  ])("borra la sesión PERSISTIDA cuando el server dice %s", async (reason) => {
+    // Un token que el servidor rechazó no debe sobrevivir en disco: si lo
+    // hiciera, la próxima apertura de la app lo volvería a presentar y el
+    // jugador comería un 401 antes de cada save.
+    const { fetchImpl } = serverStub([
+      { status: 401, body: { status: "invalid", reason } },
+      { status: 200, body: SAVED },
+    ]);
+    await postScoreSave(baseInput(stubSigner()), fetchImpl, NOW);
+
+    const stored = localStorage.getItem("chesscito:score-write-session:v1");
+    // Quedó el token NUEVO (el de la re-autorización), nunca el rechazado.
+    expect(stored).not.toBeNull();
+    expect(JSON.parse(stored!).token).toBe(TOKEN_2);
+  });
+
+  it("un presupuesto agotado NO borra la sesión ni re-firma", async () => {
+    // `session_exhausted` no significa "tu token es inválido": significa que
+    // ya gastaste los 25 saves. Re-firmar no recarga el presupuesto, así que
+    // pedir una firma sería ruido puro camino al mismo 409.
+    const { fetchImpl } = serverStub([
+      { status: 409, body: { status: "invalid", reason: "session_exhausted" } },
+    ]);
+    const signer = stubSigner();
+    await postScoreSave(baseInput(signer), fetchImpl, NOW);
+
+    expect(signer).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem("chesscito:score-write-session:v1")).not.toBeNull();
+  });
+
   it("retries only ONCE — never loops on prompts", async () => {
     const { fetchImpl, calls } = serverStub([
       { status: 401, body: { status: "invalid", reason: "session_expired" } },
