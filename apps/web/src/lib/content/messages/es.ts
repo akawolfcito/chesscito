@@ -1263,6 +1263,14 @@ const messages = {
     scoreAtMax: "{stars}★ / {maxStars}★ · Máximo",
     closeLabelFormat: "Cerrar {title}",
   },
+  ATTEMPT_SAVE_COPY: {
+    saving: "Guardando progreso…",
+    savingCountFormat: "Guardando progreso… ({count})",
+    failed: "Tu último intento todavía no se guardó.",
+    failedCountFormat: "{count} intentos todavía no se guardaron.",
+    retryCta: "Reintentar",
+    retryAriaLabel: "Reintentar el guardado de tu progreso",
+  },
   BADGE_TITLES: {
     rook: "Torre Ascendente",
     bishop: "Alfil Ascendente",

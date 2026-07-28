@@ -16473,3 +16473,48 @@ button.hud-resource-chip:active:not(:disabled) {
 .web-access-screen--centered {
   justify-content: center;
 }
+
+/* ── Attempt save status (Slice 3, 4C-3) ─────────────────────────────────────
+   The persistent line that says an attempt is still waiting to be recorded.
+   Deliberately NOT a toast or a modal: it stays until the queue drains, and it
+   never takes the board away to report something the player did not cause.
+   Sits in the same stack slot as the daily-limit banner, above the mission
+   panel, at the app's 390px width. */
+.attempt-save-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 auto 6px;
+  padding: 6px 12px;
+  max-width: var(--app-max-width);
+  border-radius: 12px;
+  background: rgba(12, 24, 20, 0.55);
+  color: rgba(240, 246, 240, 0.86);
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: center;
+}
+
+/* Failure is a state to notice, not an alarm: the attempt is safe in the queue
+   and the retry costs the player nothing. Warm, not red. */
+.attempt-save-status.is-failed {
+  background: rgba(72, 44, 12, 0.72);
+  color: rgba(255, 236, 205, 0.95);
+}
+
+.attempt-save-status__message {
+  flex: 1 1 auto;
+}
+
+.attempt-save-status__cta {
+  flex: 0 0 auto;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 236, 205, 0.5);
+  background: rgba(255, 236, 205, 0.12);
+  color: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}

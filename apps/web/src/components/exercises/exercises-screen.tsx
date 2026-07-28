@@ -202,6 +202,7 @@ import {
 } from "@/lib/training/path";
 import { attemptShieldSpendWithPeones } from "@/lib/peones/shield-spend-fallback";
 import { ActionPin } from "@/components/redesign/action-pin";
+import { AttemptSaveStatus } from "@/components/exercises/attempt-save-status";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { computeStars } from "@/lib/game/scoring";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
@@ -3652,6 +3653,15 @@ export function ExercisesScreen({
             onBack={() => router.push("/")}
           />
         )}
+        {/* Slice 3 (4C-3): the attempt queue, said out loud. Sits with the
+            daily-limit banner because it is the same KIND of thing — a
+            persistent line about state the player cannot act on from the
+            board. Silent while the queue is empty. */}
+        <AttemptSaveStatus
+          status={attempts.status}
+          pendingCount={attempts.pendingCount}
+          onRetry={attempts.retry}
+        />
         <MissionPanelCandy
           selectedPiece={selectedPiece}
           onOpenPieceSheet={() => setBadgeSheetOpen(true)}

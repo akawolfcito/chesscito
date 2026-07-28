@@ -126,6 +126,36 @@ vi.mock("@/components/exercises/knight-tour-board", () => ({
   ),
 }));
 
+vi.mock("@/components/exercises/queens-board", () => ({
+  QueensBoard: ({
+    level,
+    onComplete,
+  }: {
+    level: { optimalMoves: number };
+    onComplete?: (covered: number, ceiling: number) => void;
+  }) => (
+    <button type="button" onClick={() => onComplete?.(2, level.optimalMoves + 1)}>
+      mock-complete-queens
+    </button>
+  ),
+}));
+
+vi.mock("@/components/exercises/safe-path-board", () => ({
+  SafePathBoard: ({ onComplete }: { onComplete?: (moves: number) => void }) => (
+    <button type="button" onClick={() => onComplete?.(7)}>
+      mock-complete-safe-path
+    </button>
+  ),
+}));
+
+vi.mock("@/components/exercises/diagonal-run-board", () => ({
+  DiagonalRunBoard: ({ onComplete }: { onComplete?: (moves: number) => void }) => (
+    <button type="button" onClick={() => onComplete?.(3)}>
+      mock-complete-diagonal-run
+    </button>
+  ),
+}));
+
 vi.mock("@/components/exercises/promotion-run-board", () => ({
   PromotionRunBoard: ({ onComplete }: { onComplete?: (moves: number) => void }) => (
     <button type="button" onClick={() => onComplete?.(5)}>
@@ -181,9 +211,35 @@ const ROOK_PROMOTION: Exercise = {
   mission: { promoteTo: "queen" },
 } as Exercise;
 
+/** Queens stores the queens the PLAYER places, so the ceiling is that plus the
+ *  one the level starts with — the same `+1` the tour uses. */
+const ROOK_QUEENS: Exercise = {
+  id: "t-queens-1",
+  startPos: { file: 0, rank: 0 },
+  targetPos: { file: 7, rank: 7 },
+  optimalMoves: 3,
+};
+
+const ROOK_SAFE_PATH: Exercise = {
+  id: "t-safe-1",
+  startPos: { file: 0, rank: 0 },
+  targetPos: { file: 7, rank: 7 },
+  optimalMoves: 7,
+};
+
+const ROOK_DIAGONAL: Exercise = {
+  id: "t-pivot-1",
+  startPos: { file: 0, rank: 0 },
+  targetPos: { file: 3, rank: 3 },
+  optimalMoves: 2,
+};
+
 type Pools = {
   labyrinths?: Exercise[];
   knightTour?: Exercise[];
+  queens?: Exercise[];
+  safePath?: Exercise[];
+  diagonalRun?: Exercise[];
   promotionRun?: Exercise[];
 };
 
@@ -196,6 +252,11 @@ function renderScreen(pools: Pools = {}) {
         descriptions: GENERATED_EXERCISE_DESCRIPTIONS,
         ...(pools.knightTour
           ? { knightTour: { rook: pools.knightTour } as never }
+          : {}),
+        ...(pools.queens ? { queens: { rook: pools.queens } as never } : {}),
+        ...(pools.safePath ? { safePath: { rook: pools.safePath } as never } : {}),
+        ...(pools.diagonalRun
+          ? { diagonalRun: { rook: pools.diagonalRun } as never }
           : {}),
         ...(pools.promotionRun
           ? { promotionRun: { rook: pools.promotionRun } as never }
@@ -381,6 +442,181 @@ describe("assembler 3 — the coverage lane", () => {
       // attempt would 400 and be dropped as terminal.
       ceiling: ROOK_TOUR.optimalMoves + 1,
     });
+  });
+});
+
+describe("the three families that share a handler each get their own case", () => {
+  // They route through the two handlers already covered, but the FAMILY is
+  // derived per game and decides which run key the completion key carries.
+  // Getting one wrong reads someone else's counter: the latch would reopen on
+  // an unrelated reset, or stay shut through a real new run.
+
+  it("N-Queens reports coverage against the catalogue ceiling", async () => {
+    seedUnlockedTraining();
+    renderScreen({ queens: [ROOK_QUEENS] });
+
+    await enterTraining(/t-queens-1/);
+    fireEvent.click(await screen.findByText("mock-complete-queens"));
+
+    await waitFor(() => expect(attemptCalls()).toHaveLength(1));
+    const call = attemptCalls()[0]!;
+    expect(call.exerciseId).toBe("t-queens-1");
+    expect(call.measurement).toEqual({
+      kind: "coverage",
+      reached: 2,
+      ceiling: ROOK_QUEENS.optimalMoves + 1,
+    });
+  });
+
+  it("Safe Path reports MOVES — it is arrival-graded, not coverage", async () => {
+    // Its neighbours in the render tree report coverage. Wiring this one to
+    // them would feed a move count to a percentage grader: same `number`,
+    // opposite meaning, no type error, three stars for everyone.
+    seedUnlockedTraining();
+    renderScreen({ safePath: [ROOK_SAFE_PATH] });
+
+    await enterTraining("Special Training 1");
+    fireEvent.click(await screen.findByText("mock-complete-safe-path"));
+
+    await waitFor(() => expect(attemptCalls()).toHaveLength(1));
+    const call = attemptCalls()[0]!;
+    expect(call.exerciseId).toBe("t-safe-1");
+    expect(call.measurement).toEqual({ kind: "moves", movesUsed: 7 });
+  });
+
+  it("Diagonal Run reports MOVES", async () => {
+    seedUnlockedTraining();
+    renderScreen({ diagonalRun: [ROOK_DIAGONAL] });
+
+    await enterTraining(/t-pivot-1/);
+    fireEvent.click(await screen.findByText("mock-complete-diagonal-run"));
+
+    await waitFor(() => expect(attemptCalls()).toHaveLength(1));
+    const call = attemptCalls()[0]!;
+    expect(call.exerciseId).toBe("t-pivot-1");
+    expect(call.measurement).toEqual({ kind: "moves", movesUsed: 3 });
+  });
+});
+
+describe("the queue is visible, and the retry is the player's (4C-3)", () => {
+  const SAVED = {
+    status: "saved" as const,
+    mode: "free" as const,
+    quota: {
+      wallet: WALLET,
+      freeLimit: 100,
+      freeUsed: 1,
+      freeRemaining: 99,
+      requiresPeones: false,
+      costPeones: 0,
+    },
+  };
+
+  it("parks on a retryable failure, offers RETRY, and re-sends the SAME id", async () => {
+    // Retryable is "not now", not "no". The attempt keeps its place and its
+    // identity, so the server answers the retry as a REPLAY: it inserts
+    // nothing and consumes no budget. That is what makes a visible retry safe
+    // to hand to a player who might tap it twice.
+    postScoreSave.mockImplementationOnce(
+      async () => ({ status: "error", reason: "network" }) as never,
+    );
+    renderScreen();
+
+    fireEvent.click(await screen.findByText("mock-complete-board"));
+    await waitFor(() => expect(attemptCalls()).toHaveLength(1));
+    const firstId = attemptCalls()[0]!.attemptId;
+
+    const cta = await screen.findByRole("button", {
+      name: /reintentar el guardado|retry saving/i,
+    });
+    expect(screen.getByTestId("attempt-save-status")).toBeInTheDocument();
+
+    fireEvent.click(cta);
+
+    await waitFor(() => expect(attemptCalls()).toHaveLength(2));
+    expect(attemptCalls()[1]!.attemptId).toBe(firstId);
+
+    // Settled: the queue is empty, so the line goes away entirely. A permanent
+    // "all saved" chip would train the player to stop reading this spot.
+    await waitFor(() =>
+      expect(screen.queryByTestId("attempt-save-status")).not.toBeInTheDocument(),
+    );
+  });
+
+  it("shows nothing to retry on a terminal rejection, and the next attempt still goes out", async () => {
+    // A 400 cannot be fixed by re-sending the same body. Offering RETRY would
+    // be a button that always fails; re-queuing it would block everything
+    // behind it in the FIFO for the life of the install.
+    postScoreSave.mockImplementationOnce(
+      async () => ({ status: "invalid", reason: "unknown_exercise" }) as never,
+    );
+    renderScreen();
+
+    fireEvent.click(await screen.findByText("mock-complete-board"));
+    await waitFor(() => expect(attemptCalls()).toHaveLength(1));
+
+    await waitFor(() =>
+      expect(screen.queryByTestId("attempt-save-status")).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByRole("button", { name: /reintentar el guardado|retry saving/i }),
+    ).not.toBeInTheDocument();
+
+    // The queue moved on: the next completion is delivered normally.
+    postScoreSave.mockImplementationOnce(async () => SAVED as never);
+    await screen.findByText("Tap to Continue", undefined, { timeout: 2500 });
+    fireEvent.click(screen.getByRole("button", { name: "Tap to Continue" }));
+    await waitFor(() =>
+      expect(screen.queryByText("Tap to Continue")).not.toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByText("mock-complete-board"));
+
+    await waitFor(() => expect(attemptCalls()).toHaveLength(2));
+    expect(attemptCalls()[1]!.exerciseId).toBe("t-rook-2");
+  });
+
+  it("shows the discreet line and NO retry while a delivery is in flight", async () => {
+    // There is nothing to retry while the server is still answering, and a
+    // button there would invite a second POST of an attempt already in flight.
+    postScoreSave.mockImplementationOnce(() => new Promise(() => {}) as never);
+    renderScreen();
+
+    fireEvent.click(await screen.findByText("mock-complete-board"));
+
+    const line = await screen.findByTestId("attempt-save-status");
+    expect(line.textContent ?? "").toMatch(/guardando progreso|saving progress/i);
+    expect(
+      screen.queryByRole("button", { name: /reintentar el guardado|retry saving/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("survives a reload and re-sends the SAME attempt for the same wallet", async () => {
+    // The exposure concentrates exactly here: a snapshot sits in the outbox
+    // only while a POST is failing, i.e. when the network is bad, which is
+    // when a MiniPay player closes the app. If the reload re-minted, one
+    // attempt would become two on a permanent table.
+    postScoreSave.mockImplementationOnce(
+      async () => ({ status: "error", reason: "network" }) as never,
+    );
+    renderScreen();
+
+    fireEvent.click(await screen.findByText("mock-complete-board"));
+    await waitFor(() => expect(attemptCalls()).toHaveLength(1));
+    const pendingId = attemptCalls()[0]!.attemptId;
+
+    // The reload: the tree goes away, localStorage does not.
+    cleanup();
+    postScoreSave.mockClear();
+    renderScreen();
+
+    await waitFor(() => expect(attemptCalls()).toHaveLength(1));
+    expect(attemptCalls()[0]!.attemptId).toBe(pendingId);
+  });
+
+  it("says nothing at all while the queue is empty", async () => {
+    renderScreen();
+    await screen.findByText("mock-complete-board");
+    expect(screen.queryByTestId("attempt-save-status")).not.toBeInTheDocument();
   });
 });
 
