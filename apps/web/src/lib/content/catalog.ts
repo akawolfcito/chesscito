@@ -118,8 +118,12 @@ export type BuiltCatalog = {
    *  map, so only it can measure the route the player is allowed to take. */
   safePath: Record<PieceId, Exercise[]>;
   /** Promotion Run pool (kind:"promotion-run"). Its own bucket, same source file.
-   *  Graded by ARRIVAL like safe-path — `optimalMoves` is a move count, lower is
-   *  better, and it feeds `labyrinthStars`, never tourStars.
+   *  `optimalMoves` is a move count like safe-path's — but ⛔ it does NOT grade the
+   *  player, and it must never reach a star function. Every winning run from rank r
+   *  is exactly `7 - r` moves long (see :286-291), so `labyrinthStars` would award
+   *  three stars to everyone, forever. The grader is `promotionRunStars(failures)`
+   *  (promotion-run.ts:73); the dispatch lives in lib/scores/attempt-grading.ts.
+   *  The number here is the authoring measure of the solved route, and nothing else.
    *
    *  Measured by `promotionRunSolve` and by nothing else. The generic BFS is not
    *  merely imprecise here, it is wrong in kind: it would walk the pawn onto
