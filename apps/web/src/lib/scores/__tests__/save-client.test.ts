@@ -21,11 +21,31 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { postScoreSave } from "../save-client";
-import { deriveScoreSaveId } from "../save-service";
+import { postScoreSave, createScoreSaveNonce } from "../save-client";
+import { parseScoreSaveMessage } from "../save-authorization";
 
 const PLAYER = "0x1234567890123456789012345678901234567890" as const;
-const BASE = { player: PLAYER, levelId: 1, score: 300, timeMs: 5000 };
+
+/** Stand-in for `signMessageAsync`. Records what it was asked to sign so the
+ *  tests can assert on the canonical message the wallet actually shows. */
+function stubSigner() {
+  const signed: string[] = [];
+  const fn = vi.fn(async ({ message }: { message: string }) => {
+    signed.push(message);
+    return `0x${"ab".repeat(65)}`;
+  });
+  return { fn, signed };
+}
+
+const BASE = {
+  player: PLAYER,
+  levelId: 1,
+  score: 300,
+  timeMs: 5000,
+  surface: "learn" as const,
+  chainId: 42220,
+  signMessage: stubSigner().fn,
+};
 
 function mockFetch(status: number, body: unknown) {
   return vi.fn().mockResolvedValue({
@@ -58,20 +78,82 @@ describe("postScoreSave — request shape", () => {
     expect((init as RequestInit).method).toBe("POST");
   });
 
-  it("derives saveId from (player, levelId, String(score)) and sends gameId", async () => {
+  it("sends ONLY the signed message and its signature", async () => {
+    // Slice 0: every value the server acts on must be inside the signature.
+    // A field alongside it is a field an attacker can rewrite in flight.
     const fetchImpl = mockFetch(200, { status: "saved", mode: "free", quota: QUOTA });
-    await postScoreSave(BASE, fetchImpl);
+    const signer = stubSigner();
+    await postScoreSave({ ...BASE, signMessage: signer.fn }, fetchImpl);
 
     const init = fetchImpl.mock.calls[0]![1] as RequestInit;
     const sent = JSON.parse(String(init.body));
-    const expectedSaveId = deriveScoreSaveId(PLAYER, 1, String(300));
 
-    expect(sent.gameId).toBe("300");
-    expect(sent.saveId).toBe(expectedSaveId);
-    expect(sent.player).toBe(PLAYER);
-    expect(sent.levelId).toBe(1);
-    expect(sent.score).toBe(300);
-    expect(sent.timeMs).toBe(5000);
+    expect(Object.keys(sent).sort()).toEqual(["message", "signature"]);
+    expect(sent.player).toBeUndefined();
+    expect(sent.saveId).toBeUndefined();
+  });
+
+  it("signs the canonical payload the server parses back", async () => {
+    const fetchImpl = mockFetch(200, { status: "saved", mode: "free", quota: QUOTA });
+    const signer = stubSigner();
+    await postScoreSave({ ...BASE, signMessage: signer.fn }, fetchImpl, 1_800_000_000_000);
+
+    expect(signer.fn).toHaveBeenCalledTimes(1);
+    const claim = parseScoreSaveMessage(signer.signed[0]!);
+    expect(claim).toMatchObject({
+      chainId: 42220,
+      player: PLAYER.toLowerCase(),
+      surface: "learn",
+      levelId: 1,
+      score: 300,
+      timeMs: 5000,
+    });
+    // The body carries the exact bytes that were signed — no rebuild.
+    const sent = JSON.parse(String((fetchImpl.mock.calls[0]![1] as RequestInit).body));
+    expect(sent.message).toBe(signer.signed[0]);
+  });
+
+  it("mints a validity window, not an open-ended authorization", async () => {
+    const fetchImpl = mockFetch(200, { status: "saved", mode: "free", quota: QUOTA });
+    const signer = stubSigner();
+    await postScoreSave({ ...BASE, signMessage: signer.fn }, fetchImpl, 1_800_000_000_000);
+
+    const claim = parseScoreSaveMessage(signer.signed[0]!)!;
+    expect(claim.issuedAt).toBe(1_800_000_000);
+    expect(claim.expiresAt).toBeGreaterThan(claim.issuedAt);
+    expect(claim.expiresAt - claim.issuedAt).toBeLessThanOrEqual(300);
+  });
+
+  it("uses a fresh nonce per save so one authorization cannot be reused", async () => {
+    const fetchImpl = mockFetch(200, { status: "saved", mode: "free", quota: QUOTA });
+    const signer = stubSigner();
+    await postScoreSave({ ...BASE, signMessage: signer.fn }, fetchImpl);
+    await postScoreSave({ ...BASE, signMessage: signer.fn }, fetchImpl);
+
+    const first = parseScoreSaveMessage(signer.signed[0]!)!;
+    const second = parseScoreSaveMessage(signer.signed[1]!)!;
+    expect(first.nonce).not.toBe(second.nonce);
+  });
+
+  it("reports a rejected signature instead of pretending it saved", async () => {
+    const fetchImpl = mockFetch(200, { status: "saved", mode: "free", quota: QUOTA });
+    const r = await postScoreSave(
+      { ...BASE, signMessage: vi.fn().mockRejectedValue(new Error("User rejected")) },
+      fetchImpl,
+    );
+    expect(r).toEqual({ status: "error", reason: "signature_rejected" });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+describe("createScoreSaveNonce", () => {
+  it("produces 32 lowercase hex chars (128 bits)", () => {
+    expect(createScoreSaveNonce()).toMatch(/^[0-9a-f]{32}$/);
+  });
+
+  it("zero-pads low bytes so the nonce is always full width", () => {
+    const nonce = createScoreSaveNonce(() => new Uint8Array(16));
+    expect(nonce).toBe("0".repeat(32));
   });
 });
 

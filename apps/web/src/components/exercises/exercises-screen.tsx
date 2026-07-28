@@ -9,6 +9,7 @@ import {
   usePublicClient,
   useReadContract,
   useReadContracts,
+  useSignMessage,
   useSwitchChain,
   useWaitForTransactionReceipt,
   useWriteContract,
@@ -119,6 +120,7 @@ import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
 import { getScoreboardAddress } from "@/lib/contracts/chains";
 import { shopAbi } from "@/lib/contracts/shop";
 import { postScoreSave } from "@/lib/scores/save-client";
+import { resolveDeploymentSurface } from "@/lib/scores/deployment-surface";
 import { deriveScoreSaveId } from "@/lib/scores/save-service";
 import { emitScoreSaveTelemetry } from "@/lib/scores/save-telemetry";
 import {
@@ -380,6 +382,9 @@ export function ExercisesScreen({
   const tResult = useTranslations("RESULT_OVERLAY_COPY");
   const router = useRouter();
   const { address, isConnected, status: accountStatus } = useAccount();
+  // Slice 0: the off-chain save is authored by the wallet (EIP-191). Works on
+  // MiniPay injected and Privy embedded alike — see lib/scores/save-authorization.
+  const { signMessageAsync } = useSignMessage();
   const trainingPassStatus = useSeasonPassStatus(address);
   const trainingPass: EffectiveTrainingPassSnapshot = useMemo(
     () => ({
@@ -2197,6 +2202,12 @@ export function ExercisesScreen({
         levelId: levelNum,
         score: scoreNum,
         timeMs: timeMsNum,
+        // The SAME resolver the route uses to decide what it expects. Sharing
+        // one function is what makes a client/server surface mismatch
+        // impossible by construction rather than by convention (audit R12).
+        surface: resolveDeploymentSurface(),
+        chainId,
+        signMessage: ({ message }) => signMessageAsync({ message }),
       });
 
       // Slice 6: exactly one telemetry event per response, fired only
