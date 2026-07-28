@@ -1,82 +1,70 @@
-# Session Handoff — 2026-07-27 (cierre del día)
+# Session Handoff — 2026-07-27 (noche)
 
-> 📌 Detalle de esta sesión: `docs/handoffs/2026-07-27-score-write-path-handoff.md`
-> Auditoría completa: `docs/product/2026-07-27-score-and-leaders-audit.md`
-> Sesiones anteriores del día: `docs/handoffs/2026-07-27-icons-vr-coverage-and-pro-sheet-handoff.md`
-> y `docs/handoffs/2026-07-27-focus-days-21-in-30-handoff.md`.
+> 📌 Detalle: `docs/handoffs/2026-07-27-leaders-weekly-spec-handoff.md`
+> Sesión previa del día: `docs/handoffs/2026-07-27-score-write-path-handoff.md`
 > Este archivo es el checklist.
 
 ## Completed
 
-- **Auditoría score → Leaders.** Los cuatro conceptos del brief hoy son **uno solo**. El score
-  mide inventario, no rendimiento; el desempate real es la dirección de wallet. Recomendación:
-  ruta D, más barata de lo que suena (`created_at` y `tier` ya están guardados y ociosos).
-- `d7691e31` — **Slice 0**: cualquiera podía escribir cualquier score en la wallet de otro.
-  Autoría por firma EIP-191, techo server-side, `surface` validada contra el deployment,
-  `SUM(...)::int` → `bigint` (el overflow hacía *raise* a la vista entera, no a una fila).
-- `ab1170af` — **Slice 0.1**: una firma por save era un prompt tras casi cada ejercicio.
-  Ahora `una firma → una sesión (2h / 25 saves) → N saves silenciosos`. Revocable.
-- `edee4713` — sin `NEXT_PUBLIC_CHAIN_ID` el challenge salía 200, pedía la firma, y moría
-  después con 400. Ahora 503 con el nombre de la variable en el log.
-- `197c774a`, `34f37fc1`, `6f30d711` — scripts de deploy versionados y diagnóstico de landing.
-- **Smoke en 2 devices (MiniPay + Privy web): el prompt funciona y se lee completo.** Encontró
-  que cerrar MiniPay tiraba la sesión → siempre re-firma. Decisión: persistir (opción A).
-- `87e35e35` — **pusheado, ya en `origin/main`.** Token en `localStorage`
-  (`chesscito:score-write-session:v1`), solo `token`/`wallet`/`surface`/`expiresAt`. Alcance
-  intacto (2h, 25 saves, revocable), solo cambia dónde vive entre aperturas. Corrige además un
-  bug propio: el cleanup corría al desmontar, así que ir al Hub y volver borraba un token
-  válido.
+- **Smoke del write path: PASÓ en device.** Firmar una vez, cerrar MiniPay del todo,
+  reabrir → ya no re-pide firma. El fix de persistencia (`87e35e35`) hizo lo que prometía.
+- **Release de scores preparado hasta el paso 4** del proceso canónico
+  (`docs/release/release-process.md`): `production` local fast-forwardeado a `87e35e35`.
+  **Falta el paso 5 — el push es del founder.**
+- **Suite verde con evidencia fresca**: 543 archivos / 6284 tests, EXIT=0.
+- **Spec + red-team de Slice 2** (ventana weekly en Leaders) escritos:
+  `docs/specs/2026-07-27-leaders-weekly-window{,-redteam}.md`.
+  **Verdict: NEEDS REVISION** (2 P0, 5 P1, 5 P2).
+- **P0-1 encontrado y verificado en código**: el weekly no puede medir "jugó esta semana"
+  con `score_saves` como está → **Slice 3 pasa a ser precondición de Slice 2** (decisión
+  del founder). Registrado en el header del spec para que no se re-descubra.
+- **Tres pendientes del handoff previo, cerrados**: Ignored Build Step (funcionando), y
+  el "Mini App Test" del prompt es del visor de MiniPay — no hay nada que corregir en el
+  repo, no era pedido del founder.
 
 ## Current State
 
-- **Branch**: `main`. `origin/main` está en `87e35e35` (verificado con `ls-remote`). Solo el
-  commit de docs de cierre queda local.
-- **Build**: passing. Tests 6284 / 543 archivos, exit 0 (suite de `apps/web`). Typecheck y
-  lint limpios.
-- **Uncommitted work**: no.
-- **DB**: migraciones **ya aplicadas** en Supabase (una sola base, preview + prod).
-  VERIFY 11/11 OK, 132 filas intactas, 0 sesiones.
-- **Preview**: código nuevo. **Prod**: código anterior, funcionando por compatibilidad hacia
-  atrás (verificada antes del deploy).
+- **Branch**: `main`. `origin/main` en `87e35e35`; local adelantado por commits de docs.
+- **`production`**: local en `87e35e35`, **sin pushear**. `origin/production` sigue en
+  `4f16d6c1` → prod corre el código anterior, que funciona por compatibilidad hacia atrás.
+- **Build**: passing. 6284 tests / 543 archivos, EXIT=0.
+- **Uncommitted work**: no (los specs + este handoff se commitean al cierre).
+- **DB**: migraciones ya aplicadas en Supabase. VERIFY 11/11. Nada nuevo esta sesión.
 
 ## Next Tasks
 
-1. **Re-hacer el smoke, esperando lo contrario que la vez pasada** (el código ya está en
-   preview): firmar una vez, **cerrar MiniPay del todo**, reabrir y hacer un ejercicio nuevo
-   → **no debe pedir firma**. Ir al Hub y volver tampoco. Si repregunta, mirar `localStorage`
-   → `chesscito:score-write-session:v1`.
-3. **Decidir cuándo promover a prod.** Ahí los jugadores reales empiezan a firmar y el texto
-   del prompt pasa a ser user-facing.
-3. **Builds de `apps/landing`** — poner Ignored Build Step en **`Automatic`** (borrar el
-   comando custom). Verificado contra la doc: los builds cancelados por el Ignored Build Step
-   **igual ocupan slot concurrente**, así que no ahorran cola; el toggle nativo "Skip
-   deployments" (ya Enabled) sí. El Root Directory **está bien** — esa hipótesis era falsa.
-   El motivo real de que landing se deploye siempre: `docs/`, `tools/` y `SESSION.md` están
-   fuera de `apps/*` → Vercel los trata como cambio global. 101 archivos así en 133 commits.
-   Diagnóstico completo en §6 del handoff.
-4. **Slice 2 — ventana weekly.** Sin migración (`created_at` ya existe). Mata R3 y R4.
-5. **Slice 3 — identidad de intento** (`attemptIndex`, `hintsUsed`). Único hueco estructural.
-6. **Renombrar la Mini App en MiniPay**: el prompt dice "Solicitado por: **Mini App Test**".
-   Ese string **no está en el repo** (manifest y title dicen "Chesscito Learn") — viene del
-   registro externo de la Mini App. Se cambia en ese dashboard, no en código.
+1. **`git push origin production`** — dispara el deploy de producción. Paso 5 de 6; el 6
+   (`git checkout main`) ya está hecho. Ahí los jugadores reales empiezan a firmar.
+2. **Spec de Slice 3 — identidad de intento.** Es ahora el camino crítico. Decisiones que
+   el spec debe resolver ANTES de tocar código:
+   - Cómo cambia `save_id` sin romper el dedup que hoy sostiene el `MAX(score)` del
+     leaderboard (`api/scores/save/route.ts:191`).
+   - **Retención**: el volumen pasa de acotado (≤ 6 × puntajes distintos) a uno por
+     intento. Sin respuesta a esto, la tabla crece sin techo.
+   - Qué campos entran: `attemptIndex`, `hintsUsed`, y si el tiempo ya guardado alcanza.
+3. **Revisar Slice 2 sobre Slice 3.** La ventana UTC, el desempate, la asimetría
+   off-chain y los estados de UI del spec **sobreviven**; cambia la fuente de filas.
+4. **P2 abierto del backlog**: `offerBenefitTrainings` muestra "Special Trainings" sin
+   traducir en ES (backlog §2).
+5. **Theme Builder** sigue siendo el frente grande elegido, sin agenda.
 
 ## Blockers
 
-Ninguno bloquea. Dos cosas abiertas **por decisión**, no por olvido:
-
-- **R1 sigue abierto en el carril on-chain.** `/api/sign-score` firma lo que le pidan y
-  `/api/cache-score` acepta `player` del body. Cuesta gas: frena el abuso masivo, no lo cierra.
-- **Usuarios con el bundle viejo** en preview: 401 hasta que recarguen. No pierden progreso.
+- **Slice 2 está BLOQUEADO por Slice 3** (P0-1). No mandarlo a `/tdd`: sus 16 acceptance
+  criteria pasarían en verde con la feature fallando su propósito.
+- **R1 sigue abierto en el carril on-chain** — `/api/sign-score` firma lo que le pidan,
+  `/api/cache-score` acepta `player` del body. Por eso el weekly se especificó
+  off-chain-only. Cuesta gas: frena el abuso masivo, no lo cierra.
 
 ## Notes
 
-- **Orden de deploy no negociable:** `SQL → VERIFY → push`. Rollback: `ROLLBACK.sql` **antes**
-  de revertir código, o todos los saves fallan con 500. Ver `apps/web/supabase/deploy/README.md`.
-- **El SQL Editor de Supabase muestra solo el ÚLTIMO statement** — un verify de N SELECTs
-  sueltos da falsa tranquilidad. Usar una consulta con UNION ALL.
-- **`NOTIFY pgrst, 'reload schema'` no puede vivir en la migración**; sin él `supabase.rpc()`
-  sigue viendo la firma vieja (`PGRST202`).
-- **Vercel marca las env vars como sensibles por defecto** y las oculta. Un `NEXT_PUBLIC_*`
-  marcado así no está protegido: Next lo inlinea en el bundle igual.
-- **zsh `noclobber`**: `>` sobre un archivo existente falla y el pipeline anterior "pasa" en
-  silencio. Verificar que el archivo se escribió, no que el comando salió 0.
+- **Orden de deploy no negociable**: `SQL → VERIFY → push`. Rollback: `ROLLBACK.sql`
+  **antes** de revertir código. Para Slice 2/3 no hay SQL pendiente todavía.
+- **El fast-forward de `production` se hizo a `87e35e35`, no a `main` local**: los commits
+  de docs no estaban en `origin/main`, y el proceso prohíbe deployar un commit que no pasó
+  por `origin/main` primero.
+- **`pnpm -C` NO existe en pnpm 8** (ni `--dir` acá): la suite se corre con
+  `pnpm --filter web test`. El `-C` de CLAUDE.md falla con
+  `ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL`.
+- **zsh `noclobber` mordió otra vez**: `>` sobre un log existente falla y el comando **ni
+  corre**, dejándote leer el archivo viejo. Usar un nombre de archivo nuevo por corrida.
