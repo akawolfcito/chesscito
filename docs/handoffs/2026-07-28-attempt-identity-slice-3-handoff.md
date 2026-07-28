@@ -1,16 +1,90 @@
-# Handoff — Slice 3, identidad de intento (etapas 1, 2, 3, 4A y 4B cerradas)
+# Handoff — Slice 3, identidad de intento (etapas 1–4B cerradas, preflights verdes)
 
 **Fecha**: 2026-07-28
-**Branch**: `feat/attempt-identity-slice-3` — **17 commits, SIN PUSHEAR**. El push es del founder.
+**Branch**: `feat/attempt-identity-slice-3` — **19 commits, SIN PUSHEAR**. El push es del founder.
 Sin merge y sin deploy: la branch queda quieta hasta que el founder decida.
 **Suite**: **6479 passing / 550 archivos, EXIT=0**. `tsc --noEmit` limpio. Lint limpio.
 **Spec**: `docs/specs/2026-07-28-attempt-identity-score-attempts.md` — **CLOSED en v7**, D1–D20 congeladas.
 
 ## Estado en una línea
 
-**Slice 3 NO está terminado.** Etapas 1, 2, 3, **4A (el catálogo servido)** y **4B (la migración
-+ el RPC + el endpoint)** están CLOSED. Lo que sigue son los ensambladores del host y el montaje
-de la outbox.
+**Slice 3 NO está terminado.** Etapas 1, 2, 3, **4A** y **4B están CLOSED**, y **los dos
+preflights que bloqueaban 4C están VERDES**. Lo que sigue —sin empezar— son los ensambladores del
+host y el montaje de la outbox (**etapa 4C**).
+
+---
+
+## Preflights — AMBOS VERDES (2026-07-28)
+
+El diseño de 4B nunca estuvo en duda. Lo pendiente era probarlo en los dos entornos donde los
+mocks y los tests unitarios no pueden hablar por la plataforma. Ya se probó.
+
+### PRE-FLIGHT 1 — `unstable_cache` en un Route Handler real: **FUNCIONA**
+
+Corrido contra un **build de producción + `next start`** (no un preview: desplegar estaba
+excluido en la misma instrucción). Es un Route Handler de Next 14 real con incremental cache
+real, que es exactamente lo que estaba en duda.
+
+| Caso | Resultado |
+| --- | --- |
+| Medición válida, invocación **COLD** (primer request tras el boot) | 200 · `graded` · 3★ |
+| Medición válida, **WARM** | 200 · `graded` · 3★ |
+| Legacy sin medición | 200 · `ungraded` · `starsEarned: null` |
+| Ejercicio desconocido | 400 · `unknown_exercise` |
+| Replay del mismo `attemptId` | 200 · `replayed: true`, mismo `attemptIndex` |
+
+**Cero** `Invariant: incrementalCache missing`, cero `catalog_unavailable` en los logs. DB después
+del smoke: `used_saves = 3`, 3 filas de intento, 3 de `score_saves` — **el replay consumió cero**.
+
+⇒ **No hay que crear una ruta alternativa de obtención del catálogo.** El guard de 503 que
+agregué en 4B queda como manejo honesto de una falla real del catálogo (el overlay puede caerse),
+**no** como un 503 permanente escondiendo un bug de plataforma. La pregunta abierta del handoff
+anterior queda contestada y cerrada.
+
+### PRE-FLIGHT 2 — DB real: **VERDE**, con un agujero de seguridad encontrado
+
+`supabase start` + la migración aplicada (sin `db reset`: los 29 previos ya estaban, no había
+nada que perder).
+
+- `score_attempts_smoke.sql` — **12 casos PASSED**, incluido el rollback: un fallo después del
+  consume deja `used_saves`, `score_saves` y `score_attempts` **sin cambios**.
+- Mismo `attemptId` en wallets distintas → **no es replay**, cada wallet recibe su propio ordinal.
+- Concurrencia real (`pgbench -c 8 -j 8`, 8 clientes sobre el MISMO `attemptId`): **1 fila de
+  intento, 1 de `score_saves`, `used_saves = 1`**. Siete de ocho fueron replays y no gastaron nada.
+- Privilegios vía `has_function_privilege` — **falló primero. Ver abajo.**
+
+### 🔴 El hallazgo: revocar de `PUBLIC` no le sacaba `EXECUTE` a `anon`
+
+El spec dice que Postgres le da `EXECUTE` a `PUBLIC` por default y que por eso revocar de
+`anon`/`authenticated` solos no cambia nada. **Es cierto y está incompleto.** Supabase además
+corre `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO anon, authenticated,
+service_role`, así que toda función nueva recibe **también un grant explícito** a esos dos roles,
+y revocar de `PUBLIC` no toca un grant explícito.
+
+`pg_proc.proacl` decía `anon=X/postgres | authenticated=X/postgres` en **las dos** funciones.
+**Los dos revokes son necesarios y cada uno solo es inútil.** Corregido en `2d59202`.
+
+⚠️ **El guard de vitest estaba en verde mientras la función estaba expuesta.** Asertaba
+`from public`, y eso era literalmente lo que decía el archivo. Ahora exige los tres roles — pero
+la lección no es esa: **una pregunta de privilegios solo la contesta la base de datos**, y el
+smoke hay que correrlo. Ningún guard de texto la habría cazado nunca.
+
+### Cómo repetir los preflights
+
+```
+# DB (desde apps/web)
+supabase start
+docker exec -i supabase_db_web psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+  < supabase/tests/score_attempts_smoke.sql
+# concurrencia: sembrar la sesión, docker cp del fixture, pgbench -n -c 8 -j 8 -t 1
+
+# HTTP (desde apps/web)
+pnpm build
+SUPABASE_URL=http://127.0.0.1:55321 SUPABASE_SERVICE_ROLE_KEY=<local> \
+  NEXT_PUBLIC_CHESSCITO_MODE=learn pnpm exec next start -p 3009
+```
+
+No hay `psql` local: va por `docker exec` al contenedor `supabase_db_web`.
 
 ---
 
@@ -263,19 +337,36 @@ comportamiento que nadie pidió.
 
 ## Próxima sesión
 
-**Etapa 4C — los ensambladores del host.** El servidor ya acepta intentos; hoy nadie los manda.
+**Etapa 4C — los ensambladores del host. DESBLOQUEADA y SIN EMPEZAR.**
 
-En orden:
+El servidor ya acepta intentos y está probado en los dos entornos; hoy nadie se los manda. Todo
+lo de abajo vive en `exercises-screen.tsx` (~3700 líneas) y **es una sesión propia**.
 
-1. **Correr los dos archivos de smoke** contra `supabase start` + `supabase db reset`. No corren
-   en CI y son la única prueba de que la transacción revierte de verdad.
-2. Los tres ensambladores del host + el latch (`:1700-1705`, `handleLabyrinthMove:3111`,
-   `handleCoverageComplete:3207`) **+ el cableado de DEBT-2** (leer la outbox en mount antes de
-   mintear, espejarla en cada cambio, drenarla). Cero emisiones desde boards.
-3. Separar los dos gates y renombrar la prop `canSaveScore={scorePendingNew}` (`:3476`).
-4. El cliente pasa a mandar `attemptId`, `exerciseId` y `measurement` en el body. Hasta que lo
-   haga, cada save escribe una fila `ungraded` con `attempt_id_source = 'server'` — que es
-   correcto y es lo que hace seguro el orden de deploy.
+1. Montar `attemptLifecycleReducer` en `exercises-screen`.
+2. **Hidratar la outbox por wallet ANTES de drenar** — y antes de mintear, o un intento
+   rehidratado se mintea de nuevo y se convierte en dos.
+3. Persistir la cola en cada cambio (`persistOutbox`).
+4. Drenar FIFO, un POST en vuelo a la vez.
+5. Conectar los tres ensambladores (`:1700-1705`, `handleLabyrinthMove:3111`,
+   `handleCoverageComplete:3207`). **Cero emisiones desde boards.**
+6. El latch con `runKeyFor` + `completionKeyFor`, **nunca `labyrinthKey` a mano**.
+7. Separar el trigger de escritura del gate visual: renombrar `canSaveScore={scorePendingNew}`
+   (`:3476`) a `canOfferScoreSave`.
+8. **Distinguir fallo retryable de terminal.** Un 400 es terminal: si la cabeza de la FIFO
+   vuelve a la cola en un 400, bloquea todo lo que hay detrás para siempre. Un 5xx/red sí
+   conserva la cabeza.
+9. El cliente pasa a mandar `attemptId`, `exerciseId` y `measurement`. Hasta que lo haga, cada
+   save escribe una fila `ungraded` con `attempt_id_source = 'server'` — correcto, y es lo que
+   hace seguro el orden de deploy.
+
+**Acceptance críticos** (los que fallarían en un cableado ingenuo):
+
+- reload con intento pendiente → se rehidrata y usa **el mismo** `attemptId`;
+- wallet A **no** drena la cola de wallet B;
+- una completación **durante** la hidratación no se pierde ni se duplica;
+- error de red conserva la cabeza; **400 terminal no bloquea la FIFO eternamente**;
+- carril 1, labyrinth/promotion y coverage producen **exactamente una** fila cada uno;
+- un retry produce **replay**, no una segunda fila (ya probado del lado servidor).
 
 ## Lo que hay que saber antes de tocar esto
 
@@ -292,14 +383,14 @@ En orden:
 
 ## Preguntas abiertas
 
-**Una, y se contesta mirando un preview:** ¿`unstable_cache` funciona dentro de un route handler
-de Next 14? Si no, todo save **con medición** contesta 503 (el guard nuevo), y `getMergedCatalog`
-habría que llamarlo por el camino sin cache en este endpoint. Los saves sin medición no tocan el
-catálogo, así que el síntoma sería parcial y confuso: el bundle viejo sigue funcionando y el
-nuevo no.
+**Ninguna.** La única que quedaba —si `unstable_cache` funciona dentro de un Route Handler de
+Next 14— se contestó corriéndolo: **funciona**, cold y warm. No hace falta una ruta alternativa
+de obtención del catálogo.
 
 La de etapa 4A —si se ensancha `MergedCatalog` o si el grader arma su propio catálogo— la
 resolvió el founder: se ensancha, un solo catálogo.
+
+Lo que sigue no es una duda de diseño, es trabajo: la etapa 4C entera.
 
 La que quedaba de etapa 2 —si la cola persistida es por-wallet— se resolvió por wallet, con
 el argumento en `attempt-outbox-storage.ts`.
