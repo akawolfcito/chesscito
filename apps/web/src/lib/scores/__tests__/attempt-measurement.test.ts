@@ -11,11 +11,64 @@ import { describe, expect, it } from "vitest";
 
 import {
   isMeasurementInRange,
+  parseAttemptMeasurement,
   MAX_ATTEMPT_FAILURES,
   MOVES_CEILING_FLOOR,
   movesCeiling,
   type AttemptMeasurement,
 } from "../attempt-measurement";
+
+describe("parseAttemptMeasurement — shape only", () => {
+  it("accepts each of the three kinds", () => {
+    expect(parseAttemptMeasurement({ kind: "moves", movesUsed: 4 })).toEqual({
+      kind: "moves",
+      movesUsed: 4,
+    });
+    expect(parseAttemptMeasurement({ kind: "failures", failures: 0 })).toEqual({
+      kind: "failures",
+      failures: 0,
+    });
+    expect(
+      parseAttemptMeasurement({ kind: "coverage", reached: 10, ceiling: 63 }),
+    ).toEqual({ kind: "coverage", reached: 10, ceiling: 63 });
+  });
+
+  it("drops fields the kind does not own", () => {
+    // A `moves` payload carrying a ceiling must not smuggle it through: the
+    // measurement's kind decides which columns exist, and an extra one would
+    // violate the table's coherence constraint.
+    expect(
+      parseAttemptMeasurement({ kind: "moves", movesUsed: 4, ceiling: 63 }),
+    ).toEqual({ kind: "moves", movesUsed: 4 });
+  });
+
+  it("rejects an unknown kind, a missing field and a non-object", () => {
+    for (const v of [
+      { kind: "vibes", n: 1 },
+      { kind: "moves" },
+      { kind: "coverage", reached: 1 },
+      null,
+      "moves",
+      [{ kind: "moves", movesUsed: 1 }],
+    ]) {
+      expect(parseAttemptMeasurement(v)).toBeNull();
+    }
+  });
+
+  it("rejects NaN, Infinity and fractions — shape, before any range", () => {
+    for (const movesUsed of [Number.NaN, Number.POSITIVE_INFINITY, 2.5, "4"]) {
+      expect(parseAttemptMeasurement({ kind: "moves", movesUsed })).toBeNull();
+    }
+  });
+
+  it("accepts a value the RANGE gate will refuse", () => {
+    // Deliberate: shape and range are separate answers. Collapsing them would
+    // make a malformed body indistinguishable from an implausible run.
+    const parsed = parseAttemptMeasurement({ kind: "moves", movesUsed: 0 });
+    expect(parsed).toEqual({ kind: "moves", movesUsed: 0 });
+    expect(isMeasurementInRange(parsed!, { movesCeiling: 60 })).toBe(false);
+  });
+});
 
 describe("movesCeiling", () => {
   it("floors at 60 so short-optimal exercises keep headroom", () => {

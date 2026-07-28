@@ -65,12 +65,33 @@ export type ScoreSaveQuota = {
   costPeones: number;
 };
 
+/**
+ * What the server recorded about ONE completed attempt (Slice 3, D12).
+ *
+ * `starsEarned` is server-computed and `null` is not "unknown by accident": a
+ * starless bucket awards none, an ungraded legacy bundle sent nothing to grade.
+ * `replayed` true means the row already existed — the request cost zero budget
+ * and every field here came out of storage.
+ */
+export type AttemptOutcome = {
+  attemptId: string;
+  attemptIndex: number;
+  replayed: boolean;
+  starsEarned: number | null;
+  gradeStatus: "graded" | "starless" | "ungraded";
+};
+
 /** Discriminated result of POST /api/scores/save — the endpoint maps the
- *  `save_basic_score` jsonb onto this union. */
+ *  `save_score_attempt` jsonb onto this union.
+ *
+ *  `attempt` is OPTIONAL on purpose. It is always present from the live
+ *  endpoint, but the field is additive: a client that ignores it behaves
+ *  exactly as before, and the older constructors of this union (the peones
+ *  branches, dead since 2026-07-08) never carried one. */
 export type BasicScoreSaveResult =
-  | { status: "saved"; mode: "free"; quota: ScoreSaveQuota }
+  | { status: "saved"; mode: "free"; quota: ScoreSaveQuota; attempt?: AttemptOutcome }
   | { status: "saved"; mode: "peones"; spent: number; quota: ScoreSaveQuota }
-  | { status: "duplicate"; quota: ScoreSaveQuota }
+  | { status: "duplicate"; quota: ScoreSaveQuota; attempt?: AttemptOutcome }
   | { status: "insufficient_peones"; required: number; balance: number; quota: ScoreSaveQuota }
   | { status: "invalid"; reason: string }
   | { status: "rate_limited"; retryAfterMs: number }

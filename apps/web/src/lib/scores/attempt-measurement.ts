@@ -87,6 +87,47 @@ function isNonNegativeInt(v: number): boolean {
   return Number.isSafeInteger(v) && v >= 0;
 }
 
+/**
+ * Parse an untrusted `measurement` field off the wire.
+ *
+ * SHAPE ONLY — this says "the client sent something that could be a
+ * measurement", never "the measurement is plausible". Range is
+ * `isMeasurementInRange`, and which kind this bucket accepts is `gradeAttempt`.
+ * Three gates, three answers, because collapsing them would make a
+ * `measurement_kind_mismatch` indistinguishable from a malformed body.
+ *
+ * `null` means "not a measurement". An ABSENT measurement is not this
+ * function's business: the caller decides that an absent one is `ungraded`
+ * (B15), while a present-but-broken one is a 400.
+ */
+export function parseAttemptMeasurement(v: unknown): AttemptMeasurement | null {
+  if (typeof v !== "object" || v === null || Array.isArray(v)) return null;
+  const raw = v as Record<string, unknown>;
+  const num = (x: unknown): number | null =>
+    typeof x === "number" && Number.isSafeInteger(x) ? x : null;
+
+  switch (raw.kind) {
+    case "moves": {
+      const movesUsed = num(raw.movesUsed);
+      return movesUsed === null ? null : { kind: "moves", movesUsed };
+    }
+    case "failures": {
+      const failures = num(raw.failures);
+      return failures === null ? null : { kind: "failures", failures };
+    }
+    case "coverage": {
+      const reached = num(raw.reached);
+      const ceiling = num(raw.ceiling);
+      if (reached === null || ceiling === null) return null;
+      return { kind: "coverage", reached, ceiling };
+    }
+    default:
+      // An unknown kind is malformed, NOT a mismatch: there is no bucket it
+      // could have belonged to.
+      return null;
+  }
+}
+
 /** Shape + range gate for a measurement, before it reaches the grader. */
 export function isMeasurementInRange(
   measurement: AttemptMeasurement,
