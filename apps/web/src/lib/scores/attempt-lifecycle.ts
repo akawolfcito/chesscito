@@ -55,6 +55,12 @@ export type AttemptSnapshot = {
 export type AttemptEvent =
   /** The completion transition. The ONLY event that mints. */
   | { type: "completed"; snapshot: Omit<AttemptSnapshot, "attemptId"> }
+  /**
+   * Attempts recovered from storage on mount — the previous session's queue,
+   * read back before anything new is minted. Mints nothing: these ids already
+   * exist, and re-minting would turn one attempt into two (DEBT-2).
+   */
+  | { type: "hydrated"; snapshots: readonly AttemptSnapshot[] }
   | { type: "submission_started"; attemptId: string }
   | { type: "submission_settled"; attemptId: string }
   | { type: "submission_failed"; attemptId: string };
@@ -98,6 +104,21 @@ export function attemptLifecycleReducer(
       // Drop the OLDEST on overflow: the most recent play is the more useful
       // thing to keep, and reaching the cap means a long outage, not a burst.
       return { ...state, outbox: queued.slice(-OUTBOX_MAX) };
+    }
+    case "hydrated": {
+      // Recovered attempts are OLDER than anything this session minted, so they
+      // go in front — they are the ones that have been waiting through an
+      // outage. Deduped by id because mount can run twice (StrictMode, a
+      // remount, a second drain): re-queuing a live id would leave a duplicate
+      // behind after the server settles the first copy.
+      const known = new Set(state.outbox.map((s) => s.attemptId));
+      if (state.inFlight !== null) known.add(state.inFlight);
+      const recovered = event.snapshots.filter((s) => !known.has(s.attemptId));
+      if (recovered.length === 0) return state;
+      return {
+        ...state,
+        outbox: [...recovered, ...state.outbox].slice(-OUTBOX_MAX),
+      };
     }
     case "submission_started":
       return { ...state, inFlight: event.attemptId };
