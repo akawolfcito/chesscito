@@ -306,6 +306,70 @@ describe("postScoreSave — status mapping", () => {
   });
 });
 
+describe("postScoreSave — attempt identity passthrough (Slice 3)", () => {
+  beforeEach(() => clearScoreSession());
+  afterEach(() => clearScoreSession());
+
+  it("sends attemptId, exerciseId and the raw measurement — and no stars", async () => {
+    const { fetchImpl, calls } = serverStub([{ status: 200, body: SAVED }]);
+
+    await postScoreSave(
+      {
+        ...baseInput(stubSigner()),
+        attemptId: "f".repeat(32),
+        exerciseId: "rook-distance-1",
+        measurement: { kind: "moves", movesUsed: 4 },
+      },
+      fetchImpl,
+      NOW,
+    );
+
+    const save = calls.find((c) => c.url === "/api/scores/save");
+    const body = JSON.parse(String(save?.init?.body)) as Record<string, unknown>;
+    expect(body.attemptId).toBe("f".repeat(32));
+    expect(body.exerciseId).toBe("rook-distance-1");
+    expect(body.measurement).toEqual({ kind: "moves", movesUsed: 4 });
+    // D12: the client never picks the grader and never sends a star count. The
+    // bucket the catalogue puts `exerciseId` in decides that, server-side.
+    expect(body).not.toHaveProperty("starsEarned");
+  });
+
+  it("keeps the same attemptId across the one re-authorization retry", async () => {
+    // The retry is the same ATTEMPT, so the server must answer it as a replay:
+    // no insert, no budget spent. A fresh id here would make one attempt two.
+    const { fetchImpl, calls } = serverStub([
+      { status: 401, body: { status: "invalid", reason: "session_expired" } },
+      { status: 200, body: SAVED },
+    ]);
+
+    await postScoreSave(
+      { ...baseInput(stubSigner()), attemptId: "e".repeat(32) },
+      fetchImpl,
+      NOW,
+    );
+
+    const ids = calls
+      .filter((c) => c.url === "/api/scores/save")
+      .map((c) => (JSON.parse(String(c.init?.body)) as { attemptId?: string }).attemptId);
+    expect(ids).toEqual(["e".repeat(32), "e".repeat(32)]);
+  });
+
+  it("OMITS the fields a pre-Slice-3 caller does not pass", async () => {
+    // Absent means "mint one, mark it `server`, file it ungraded" — the deploy
+    // order that lets the endpoint ship before the bundle. An explicit null
+    // would instead be a malformed id, which is a 400.
+    const { fetchImpl, calls } = serverStub([{ status: 200, body: SAVED }]);
+
+    await postScoreSave(baseInput(stubSigner()), fetchImpl, NOW);
+
+    const save = calls.find((c) => c.url === "/api/scores/save");
+    const body = JSON.parse(String(save?.init?.body)) as Record<string, unknown>;
+    expect(body).not.toHaveProperty("attemptId");
+    expect(body).not.toHaveProperty("exerciseId");
+    expect(body).not.toHaveProperty("measurement");
+  });
+});
+
 describe("postScoreSave — off-chain isolation guard", () => {
   it("imports NO contract / signing machinery", () => {
     const src = readFileSync(
