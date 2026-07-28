@@ -1,16 +1,77 @@
-# Handoff — Slice 3, identidad de intento (etapas 1, 2, 3 y 4A cerradas)
+# Handoff — Slice 3, identidad de intento (etapas 1, 2, 3, 4A y 4B cerradas)
 
 **Fecha**: 2026-07-28
-**Branch**: `feat/attempt-identity-slice-3` — **13 commits, SIN PUSHEAR**. El push es del founder.
+**Branch**: `feat/attempt-identity-slice-3` — **17 commits, SIN PUSHEAR**. El push es del founder.
 Sin merge y sin deploy: la branch queda quieta hasta que el founder decida.
-**Suite**: **6418 passing / 549 archivos, EXIT=0**. `tsc --noEmit` limpio. Lint limpio.
+**Suite**: **6479 passing / 550 archivos, EXIT=0**. `tsc --noEmit` limpio. Lint limpio.
 **Spec**: `docs/specs/2026-07-28-attempt-identity-score-attempts.md` — **CLOSED en v7**, D1–D20 congeladas.
 
 ## Estado en una línea
 
-**Slice 3 NO está terminado.** Etapa 1 (los dos módulos puros), **etapa 2 (DEBT-1 + DEBT-2)**,
-**etapa 3 (`gradeAttempt` + inventario)** y **etapa 4A (el catálogo servido)** están CLOSED. Lo
-que sigue es la migración + el RPC.
+**Slice 3 NO está terminado.** Etapas 1, 2, 3, **4A (el catálogo servido)** y **4B (la migración
++ el RPC + el endpoint)** están CLOSED. Lo que sigue son los ensambladores del host y el montaje
+de la outbox.
+
+---
+
+## Etapa 4B — CLOSED
+
+| Commit | Qué cerró |
+| --- | --- |
+| `043b9fc` | La tabla, el RPC, el guard de esquema y los dos archivos de smoke |
+| `a300b73` | El endpoint: grading server-side y una sola RPC |
+| `3589fdd` | `SCORE_SESSION_MAX_SAVES` 25 → 100 |
+
+### Lo que hay que saber del RPC
+
+**El orden no es estético.** Resolver sesión → lock del wallet → surface → **replay** → consume →
+`save_basic_score` → insert. El replay va **antes** del consume: reintentar un POST que falló no
+puede costar una segunda unidad de un presupuesto que el jugador ya pagó por ese intento. Y el
+consume va **adentro** de la transacción: *"rechazado consume cero"* es una propiedad de la
+transacción, no un camino de reembolso — y no debe existir un camino de reembolso.
+
+**No hay parámetro de wallet.** Sale de la fila de sesión, así que "un token escribiendo al
+wallet de otro" no es un chequeo que alguien pueda olvidar: es un valor que no existe.
+
+**Lock order.** El lock del wallet precede a todo UPDATE de `score_write_sessions`, y `authorize`
+nunca toma el lock del wallet — asertado leyendo su migración. Dos caminos con los mismos dos
+locks en orden opuesto se trancan bajo concurrencia, y eso aparece como timeouts bajo carga,
+jamás en un test que corre una sentencia a la vez.
+
+**`stars_earned` admite NULL y 0..3**, nunca 1..3. Un check de 1..3 abortaría el insert *y la
+transacción entera* en una corrida honesta y floja.
+
+### Lo que un guard de texto NO puede probar
+
+El guard de vitest lee el SQL como texto: no puede probar que la transacción revierte. Eso lo
+prueba `supabase/tests/score_attempts_smoke.sql` contra un Postgres vivo — 12 casos, incluido
+**fallar después del consume** (la violación de coherencia de grade dispara el rollback) y el
+estado de privilegios vía `has_function_privilege`. La concurrencia real va aparte, en
+`score_attempts_same_attempt_concurrency.sql`, como fixture de pgbench.
+
+**Ninguno de los dos corre en CI.** Hay que correrlos a mano contra `supabase start`.
+
+### ⚠️ Dos hallazgos que valen más que los tests
+
+1. **`getMergedCatalog()` está envuelto en `unstable_cache`, que tira fuera de un scope de request
+   de Next.** Apareció como `Invariant: incrementalCache missing` en los tests del route. Si eso
+   pasa en producción, el save path se cae con un stack. La lectura del catálogo ahora está
+   guardada y contesta **503**: sin catálogo no hay nota honesta, y adivinar una escribiría una
+   fila permanente con un valor que nadie calculó. **Vale verificarlo en preview**: si el route
+   handler de Next 14 no provee incremental cache, TODO save con medición contesta 503.
+2. **El guard de esquema medía posiciones de texto sobre prosa.** La primera versión falló porque
+   el comentario del paso 1 menciona `consume_score_write_session` mientras explica por qué ese
+   paso NO lo llama. Las aserciones de orden corren sobre el código sin comentarios.
+
+**Mutaciones verificadas**: sacar el advisory lock rompe 3 casos; revocar de `anon` en vez de
+`PUBLIC` rompe 1; hacer que el route respete `body.starsEarned` rompe el caso de D12.
+
+### Cambio de comportamiento visible
+
+El status HTTP de una RPC fallida se partió en dos: **503** si el store es inalcanzable (error sin
+`code`, o clases `08`/`53`/`57`), **500** si la llamada llegó y se rompió. Antes el consume corría
+primero y toda falla de DB salía 503. El cliente no lo nota — `save-client.ts` discrimina por el
+campo `status` del JSON, no por el código HTTP.
 
 ---
 
@@ -202,17 +263,19 @@ comportamiento que nadie pidió.
 
 ## Próxima sesión
 
-**Etapa 4B — migración `score_attempts` + RPC `save_score_attempt`.** El bloqueante de 4A está
-cerrado: el RPC puede leer `getMergedCatalog()` y pasárselo a `gradeAttempt` sin cast.
+**Etapa 4C — los ensambladores del host.** El servidor ya acepta intentos; hoy nadie los manda.
 
 En orden:
 
-1. Migración `score_attempts` + RPC `save_score_attempt` (llama a `save_basic_score`, nunca lo
-   reimplementa; consume dentro de la transacción; `revoke ... from public`).
+1. **Correr los dos archivos de smoke** contra `supabase start` + `supabase db reset`. No corren
+   en CI y son la única prueba de que la transacción revierte de verdad.
 2. Los tres ensambladores del host + el latch (`:1700-1705`, `handleLabyrinthMove:3111`,
-   `handleCoverageComplete:3207`) **+ el cableado de DEBT-2**. Cero emisiones desde boards.
+   `handleCoverageComplete:3207`) **+ el cableado de DEBT-2** (leer la outbox en mount antes de
+   mintear, espejarla en cada cambio, drenarla). Cero emisiones desde boards.
 3. Separar los dos gates y renombrar la prop `canSaveScore={scorePendingNew}` (`:3476`).
-4. `SCORE_SESSION_MAX_SAVES` 25 → 100, **en el mismo commit** que el grading server-side.
+4. El cliente pasa a mandar `attemptId`, `exerciseId` y `measurement` en el body. Hasta que lo
+   haga, cada save escribe una fila `ungraded` con `attempt_id_source = 'server'` — que es
+   correcto y es lo que hace seguro el orden de deploy.
 
 ## Lo que hay que saber antes de tocar esto
 
@@ -229,8 +292,14 @@ En orden:
 
 ## Preguntas abiertas
 
-**Ninguna bloqueante.** La de etapa 4A —si se ensancha `MergedCatalog` o si el grader arma su
-propio catálogo— la resolvió el founder: se ensancha, un solo catálogo.
+**Una, y se contesta mirando un preview:** ¿`unstable_cache` funciona dentro de un route handler
+de Next 14? Si no, todo save **con medición** contesta 503 (el guard nuevo), y `getMergedCatalog`
+habría que llamarlo por el camino sin cache en este endpoint. Los saves sin medición no tocan el
+catálogo, así que el síntoma sería parcial y confuso: el bundle viejo sigue funcionando y el
+nuevo no.
+
+La de etapa 4A —si se ensancha `MergedCatalog` o si el grader arma su propio catálogo— la
+resolvió el founder: se ensancha, un solo catálogo.
 
 La que quedaba de etapa 2 —si la cola persistida es por-wallet— se resolvió por wallet, con
 el argumento en `attempt-outbox-storage.ts`.
