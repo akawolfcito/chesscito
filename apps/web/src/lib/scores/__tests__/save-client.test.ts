@@ -1,59 +1,25 @@
 /**
- * SaveScore off-chain — Slice 5 client seam.
+ * SaveScore off-chain — client seam (Slice 0.1).
  *
- * `postScoreSave` is the thin client that REPLACES the on-chain
- * sign-score + submitScoreSigned path in the base game loop. It derives
- * the saveId, POSTs /api/scores/save, and maps the HTTP response onto the
- * shared `BasicScoreSaveResult` union the UI renders.
+ * The property this file exists to pin is the UX one: the FIRST puntuable save
+ * costs one wallet prompt, and every save after it is silent. That is the
+ * whole reason the per-save signature was replaced — a prompt after every
+ * exercise is a control players learn to dismiss reflexively, which trains the
+ * opposite of the habit the on-chain lane depends on.
  *
- * These tests pin the contract the UI rewire depends on:
- *   - the request hits /api/scores/save (NEVER /api/sign-score);
- *   - the body carries the deterministic saveId derived from
- *     (player, levelId, gameId=String(score));
- *   - every documented status maps cleanly (saved/free, saved/peones,
- *     duplicate, insufficient_peones, rate_limited, invalid, error);
- *   - a thrown fetch degrades to a controlled error (never a throw the
- *     caller has to catch, never a silent "saved").
- *   - the module imports NO contract / signing machinery (off-chain only).
+ * Audit: docs/product/2026-07-27-score-and-leaders-audit.md §10.
  */
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { postScoreSave, createScoreSaveNonce } from "../save-client";
-import { parseScoreSaveMessage } from "../save-authorization";
+import { postScoreSave } from "../save-client";
+import { clearScoreSession } from "../session-client";
 
 const PLAYER = "0x1234567890123456789012345678901234567890" as const;
-
-/** Stand-in for `signMessageAsync`. Records what it was asked to sign so the
- *  tests can assert on the canonical message the wallet actually shows. */
-function stubSigner() {
-  const signed: string[] = [];
-  const fn = vi.fn(async ({ message }: { message: string }) => {
-    signed.push(message);
-    return `0x${"ab".repeat(65)}`;
-  });
-  return { fn, signed };
-}
-
-const BASE = {
-  player: PLAYER,
-  levelId: 1,
-  score: 300,
-  timeMs: 5000,
-  surface: "learn" as const,
-  chainId: 42220,
-  signMessage: stubSigner().fn,
-};
-
-function mockFetch(status: number, body: unknown) {
-  return vi.fn().mockResolvedValue({
-    ok: status >= 200 && status < 300,
-    status,
-    json: async () => body,
-  } as unknown as Response);
-}
+const TOKEN = "a".repeat(64);
+const TOKEN_2 = "b".repeat(64);
 
 const QUOTA = {
   wallet: PLAYER.toLowerCase(),
@@ -64,179 +30,243 @@ const QUOTA = {
   costPeones: 0,
 };
 
-describe("postScoreSave — request shape", () => {
-  beforeEach(() => vi.restoreAllMocks());
+const SAVED = { status: "saved", mode: "free", quota: QUOTA };
 
-  it("POSTs to /api/scores/save (NEVER /api/sign-score)", async () => {
-    const fetchImpl = mockFetch(200, { status: "saved", mode: "free", quota: QUOTA });
-    await postScoreSave(BASE, fetchImpl);
+function jsonResponse(status: number, body: unknown) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => body,
+  } as unknown as Response;
+}
 
-    expect(fetchImpl).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchImpl.mock.calls[0]!;
-    expect(url).toBe("/api/scores/save");
-    expect(url).not.toMatch(/sign-score/);
-    expect((init as RequestInit).method).toBe("POST");
+/** Scripted server: challenge → authorize → N save responses. */
+function serverStub(saveResponses: Array<{ status: number; body: unknown }>) {
+  let tokenIndex = 0;
+  const tokens = [TOKEN, TOKEN_2];
+  const saves = [...saveResponses];
+  const calls: Array<{ url: string; init?: RequestInit }> = [];
+
+  const fetchImpl = vi.fn(async (url: string, init?: RequestInit) => {
+    calls.push({ url, init });
+    if (url === "/api/scores/session/challenge") {
+      return jsonResponse(200, {
+        message: [
+          "Chesscito Score Session v1",
+          "chainId: 42220",
+          `wallet: ${PLAYER.toLowerCase()}`,
+          "surface: learn",
+          "sessionId: a1b2c3d4e5f60718293a4b5c6d7e8f90",
+          "issuedAt: 1800000000",
+          "expiresAt: 1800007200",
+          "maxSaves: 25",
+        ].join("\n"),
+        sessionId: "a1b2c3d4e5f60718293a4b5c6d7e8f90",
+        expiresAt: 1_800_007_200,
+        maxSaves: 25,
+      });
+    }
+    if (url === "/api/scores/session/authorize") {
+      const token = tokens[Math.min(tokenIndex++, tokens.length - 1)]!;
+      return jsonResponse(200, { token, expiresAt: 1_800_007_200, maxSaves: 25 });
+    }
+    const next = saves.shift() ?? { status: 200, body: SAVED };
+    return jsonResponse(next.status, next.body);
+  }) as unknown as typeof fetch;
+
+  return { fetchImpl, calls };
+}
+
+function stubSigner() {
+  return vi.fn(async () => `0x${"ab".repeat(65)}`);
+}
+
+const NOW = 1_800_000_000_000;
+
+function baseInput(signMessage: ReturnType<typeof stubSigner>) {
+  return {
+    player: PLAYER,
+    levelId: 1,
+    score: 300,
+    timeMs: 5000,
+    surface: "learn" as const,
+    signMessage,
+  };
+}
+
+describe("postScoreSave — one prompt per session", () => {
+  beforeEach(() => clearScoreSession());
+  afterEach(() => clearScoreSession());
+
+  it("asks for exactly one signature on the first save", async () => {
+    const { fetchImpl, calls } = serverStub([{ status: 200, body: SAVED }]);
+    const signer = stubSigner();
+
+    const r = await postScoreSave(baseInput(signer), fetchImpl, NOW);
+
+    expect(r).toEqual(SAVED);
+    expect(signer).toHaveBeenCalledTimes(1);
+    expect(calls.map((c) => c.url)).toEqual([
+      "/api/scores/session/challenge",
+      "/api/scores/session/authorize",
+      "/api/scores/save",
+    ]);
   });
 
-  it("sends ONLY the signed message and its signature", async () => {
-    // Slice 0: every value the server acts on must be inside the signature.
-    // A field alongside it is a field an attacker can rewrite in flight.
-    const fetchImpl = mockFetch(200, { status: "saved", mode: "free", quota: QUOTA });
+  it("does NOT ask again on subsequent saves", async () => {
+    const { fetchImpl, calls } = serverStub([
+      { status: 200, body: SAVED },
+      { status: 200, body: SAVED },
+      { status: 200, body: SAVED },
+    ]);
     const signer = stubSigner();
-    await postScoreSave({ ...BASE, signMessage: signer.fn }, fetchImpl);
+    const input = baseInput(signer);
 
-    const init = fetchImpl.mock.calls[0]![1] as RequestInit;
-    const sent = JSON.parse(String(init.body));
+    await postScoreSave(input, fetchImpl, NOW);
+    await postScoreSave({ ...input, score: 600 }, fetchImpl, NOW);
+    await postScoreSave({ ...input, score: 900 }, fetchImpl, NOW);
 
-    expect(Object.keys(sent).sort()).toEqual(["message", "signature"]);
+    expect(signer).toHaveBeenCalledTimes(1);
+    expect(calls.filter((c) => c.url === "/api/scores/session/challenge")).toHaveLength(1);
+    expect(calls.filter((c) => c.url === "/api/scores/save")).toHaveLength(3);
+  });
+
+  it("sends the token as a Bearer header and no wallet in the body", async () => {
+    const { fetchImpl, calls } = serverStub([{ status: 200, body: SAVED }]);
+    await postScoreSave(baseInput(stubSigner()), fetchImpl, NOW);
+
+    const save = calls.find((c) => c.url === "/api/scores/save")!;
+    const headers = save.init!.headers as Record<string, string>;
+    expect(headers.authorization).toBe(`Bearer ${TOKEN}`);
+
+    const sent = JSON.parse(String(save.init!.body));
+    expect(Object.keys(sent).sort()).toEqual(["levelId", "score", "timeMs"]);
     expect(sent.player).toBeUndefined();
-    expect(sent.saveId).toBeUndefined();
   });
 
-  it("signs the canonical payload the server parses back", async () => {
-    const fetchImpl = mockFetch(200, { status: "saved", mode: "free", quota: QUOTA });
+  it("produces ONE prompt when two saves race on the same tick", async () => {
+    // Without in-flight coalescing the player gets two prompts back to back
+    // for one session — the exact confusion this slice exists to remove.
+    const { fetchImpl, calls } = serverStub([
+      { status: 200, body: SAVED },
+      { status: 200, body: SAVED },
+    ]);
     const signer = stubSigner();
-    await postScoreSave({ ...BASE, signMessage: signer.fn }, fetchImpl, 1_800_000_000_000);
+    const input = baseInput(signer);
 
-    expect(signer.fn).toHaveBeenCalledTimes(1);
-    const claim = parseScoreSaveMessage(signer.signed[0]!);
-    expect(claim).toMatchObject({
-      chainId: 42220,
-      player: PLAYER.toLowerCase(),
-      surface: "learn",
-      levelId: 1,
-      score: 300,
-      timeMs: 5000,
-    });
-    // The body carries the exact bytes that were signed — no rebuild.
-    const sent = JSON.parse(String((fetchImpl.mock.calls[0]![1] as RequestInit).body));
-    expect(sent.message).toBe(signer.signed[0]);
+    await Promise.all([
+      postScoreSave(input, fetchImpl, NOW),
+      postScoreSave({ ...input, score: 600 }, fetchImpl, NOW),
+    ]);
+
+    expect(signer).toHaveBeenCalledTimes(1);
+    expect(calls.filter((c) => c.url === "/api/scores/session/authorize")).toHaveLength(1);
+  });
+});
+
+describe("postScoreSave — expiry and retry", () => {
+  beforeEach(() => clearScoreSession());
+  afterEach(() => clearScoreSession());
+
+  it("re-authorizes once and replays the save when the server says the session died", async () => {
+    const { fetchImpl, calls } = serverStub([
+      { status: 401, body: { status: "invalid", reason: "session_expired" } },
+      { status: 200, body: SAVED },
+    ]);
+    const signer = stubSigner();
+
+    const r = await postScoreSave(baseInput(signer), fetchImpl, NOW);
+
+    expect(r).toEqual(SAVED);
+    expect(signer).toHaveBeenCalledTimes(2);
+    expect(calls.filter((c) => c.url === "/api/scores/save")).toHaveLength(2);
+    // The replay used the NEW token, not the dead one.
+    const second = calls.filter((c) => c.url === "/api/scores/save")[1]!;
+    expect((second.init!.headers as Record<string, string>).authorization).toBe(
+      `Bearer ${TOKEN_2}`,
+    );
   });
 
-  it("mints a validity window, not an open-ended authorization", async () => {
-    const fetchImpl = mockFetch(200, { status: "saved", mode: "free", quota: QUOTA });
+  it("retries only ONCE — never loops on prompts", async () => {
+    const { fetchImpl, calls } = serverStub([
+      { status: 401, body: { status: "invalid", reason: "session_expired" } },
+      { status: 401, body: { status: "invalid", reason: "session_expired" } },
+      { status: 200, body: SAVED },
+    ]);
     const signer = stubSigner();
-    await postScoreSave({ ...BASE, signMessage: signer.fn }, fetchImpl, 1_800_000_000_000);
 
-    const claim = parseScoreSaveMessage(signer.signed[0]!)!;
-    expect(claim.issuedAt).toBe(1_800_000_000);
-    expect(claim.expiresAt).toBeGreaterThan(claim.issuedAt);
-    expect(claim.expiresAt - claim.issuedAt).toBeLessThanOrEqual(300);
+    const r = await postScoreSave(baseInput(signer), fetchImpl, NOW);
+
+    expect(r).toMatchObject({ status: "invalid", reason: "session_expired" });
+    expect(signer).toHaveBeenCalledTimes(2);
+    expect(calls.filter((c) => c.url === "/api/scores/save")).toHaveLength(2);
   });
 
-  it("uses a fresh nonce per save so one authorization cannot be reused", async () => {
-    const fetchImpl = mockFetch(200, { status: "saved", mode: "free", quota: QUOTA });
+  it.each([
+    ["score_out_of_range", 400],
+    ["invalid_level", 400],
+    ["session_exhausted", 409],
+  ])("does NOT re-prompt on %s", async (reason, status) => {
+    // Re-signing does not make an out-of-range score valid, and it does not
+    // refill a spent budget. Prompting would be pure noise on the way to the
+    // same rejection.
+    const { fetchImpl } = serverStub([{ status, body: { status: "invalid", reason } }]);
     const signer = stubSigner();
-    await postScoreSave({ ...BASE, signMessage: signer.fn }, fetchImpl);
-    await postScoreSave({ ...BASE, signMessage: signer.fn }, fetchImpl);
 
-    const first = parseScoreSaveMessage(signer.signed[0]!)!;
-    const second = parseScoreSaveMessage(signer.signed[1]!)!;
-    expect(first.nonce).not.toBe(second.nonce);
+    const r = await postScoreSave(baseInput(signer), fetchImpl, NOW);
+
+    expect(r).toMatchObject({ reason });
+    expect(signer).toHaveBeenCalledTimes(1);
   });
 
   it("reports a rejected signature instead of pretending it saved", async () => {
-    const fetchImpl = mockFetch(200, { status: "saved", mode: "free", quota: QUOTA });
+    const { fetchImpl, calls } = serverStub([]);
     const r = await postScoreSave(
-      { ...BASE, signMessage: vi.fn().mockRejectedValue(new Error("User rejected")) },
+      { ...baseInput(stubSigner()), signMessage: vi.fn().mockRejectedValue(new Error("User rejected")) },
       fetchImpl,
+      NOW,
     );
     expect(r).toEqual({ status: "error", reason: "signature_rejected" });
-    expect(fetchImpl).not.toHaveBeenCalled();
-  });
-});
-
-describe("createScoreSaveNonce", () => {
-  it("produces 32 lowercase hex chars (128 bits)", () => {
-    expect(createScoreSaveNonce()).toMatch(/^[0-9a-f]{32}$/);
-  });
-
-  it("zero-pads low bytes so the nonce is always full width", () => {
-    const nonce = createScoreSaveNonce(() => new Uint8Array(16));
-    expect(nonce).toBe("0".repeat(32));
-  });
-});
-
-describe("postScoreSave — status mapping", () => {
-  beforeEach(() => vi.restoreAllMocks());
-
-  it("maps 200 saved/free", async () => {
-    const r = await postScoreSave(BASE, mockFetch(200, { status: "saved", mode: "free", quota: QUOTA }));
-    expect(r).toEqual({ status: "saved", mode: "free", quota: QUOTA });
-  });
-
-  it("maps 200 saved/peones with spent", async () => {
-    const r = await postScoreSave(
-      BASE,
-      mockFetch(200, { status: "saved", mode: "peones", spent: 1, quota: QUOTA }),
-    );
-    expect(r.status).toBe("saved");
-    if (r.status === "saved" && r.mode === "peones") {
-      expect(r.spent).toBe(1);
-    } else {
-      throw new Error("expected saved/peones");
-    }
-  });
-
-  it("maps 200 duplicate as idempotent success", async () => {
-    const r = await postScoreSave(BASE, mockFetch(200, { status: "duplicate", quota: QUOTA }));
-    expect(r.status).toBe("duplicate");
-  });
-
-  it("maps 409 insufficient_peones", async () => {
-    const r = await postScoreSave(
-      BASE,
-      mockFetch(409, { status: "insufficient_peones", required: 1, balance: 0, quota: QUOTA }),
-    );
-    expect(r.status).toBe("insufficient_peones");
-    if (r.status === "insufficient_peones") {
-      expect(r.required).toBe(1);
-    }
-  });
-
-  it("maps 429 rate_limited with retryAfterMs", async () => {
-    const r = await postScoreSave(BASE, mockFetch(429, { status: "rate_limited", retryAfterMs: 60000 }));
-    expect(r.status).toBe("rate_limited");
-    if (r.status === "rate_limited") {
-      expect(r.retryAfterMs).toBe(60000);
-    }
-  });
-
-  it("maps 400 invalid", async () => {
-    const r = await postScoreSave(BASE, mockFetch(400, { status: "invalid", reason: "invalid_score" }));
-    expect(r.status).toBe("invalid");
-  });
-
-  it("maps 500 error", async () => {
-    const r = await postScoreSave(BASE, mockFetch(500, { status: "error", reason: "save_failed" }));
-    expect(r.status).toBe("error");
-  });
-
-  it("maps 503 unavailable as error", async () => {
-    const r = await postScoreSave(BASE, mockFetch(503, { status: "error", reason: "unavailable" }));
-    expect(r.status).toBe("error");
+    expect(calls.some((c) => c.url === "/api/scores/save")).toBe(false);
   });
 
   it("degrades a thrown fetch to a controlled error (no throw, no silent saved)", async () => {
     const fetchImpl = vi.fn().mockRejectedValue(new Error("network down"));
-    const r = await postScoreSave(BASE, fetchImpl);
+    const r = await postScoreSave(baseInput(stubSigner()), fetchImpl as never, NOW);
     expect(r.status).toBe("error");
+  });
+});
+
+describe("postScoreSave — status mapping", () => {
+  beforeEach(() => clearScoreSession());
+  afterEach(() => clearScoreSession());
+
+  it.each([
+    ["200 duplicate", 200, { status: "duplicate", quota: QUOTA }, "duplicate"],
+    ["429 rate_limited", 429, { status: "rate_limited", retryAfterMs: 60000 }, "rate_limited"],
+    ["400 invalid", 400, { status: "invalid", reason: "invalid_score" }, "invalid"],
+    ["500 error", 500, { status: "error", reason: "save_failed" }, "error"],
+    ["503 unavailable", 503, { status: "error", reason: "unavailable" }, "error"],
+  ])("maps %s", async (_label, status, body, expected) => {
+    const { fetchImpl } = serverStub([{ status, body }]);
+    const r = await postScoreSave(baseInput(stubSigner()), fetchImpl, NOW);
+    expect(r.status).toBe(expected);
   });
 
   it("degrades an unparseable body to a controlled error", async () => {
-    const fetchImpl = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => {
-        throw new Error("not json");
-      },
-    } as unknown as Response);
-    const r = await postScoreSave(BASE, fetchImpl);
+    const fetchImpl = vi.fn(async (url: string) => {
+      if (url === "/api/scores/session/challenge") {
+        return jsonResponse(200, { message: "x" });
+      }
+      return { ok: true, status: 200, json: async () => { throw new Error("nope"); } } as unknown as Response;
+    }) as unknown as typeof fetch;
+    const r = await postScoreSave(baseInput(stubSigner()), fetchImpl, NOW);
     expect(r.status).toBe("error");
   });
 
   it("rejects an unknown status payload as a controlled error", async () => {
-    const r = await postScoreSave(BASE, mockFetch(200, { status: "weird_unknown" }));
+    const { fetchImpl } = serverStub([{ status: 200, body: { status: "weird_unknown" } }]);
+    const r = await postScoreSave(baseInput(stubSigner()), fetchImpl, NOW);
     expect(r.status).toBe("error");
   });
 });
@@ -247,17 +277,12 @@ describe("postScoreSave — off-chain isolation guard", () => {
       join(process.cwd(), "src", "lib", "scores", "save-client.ts"),
       "utf-8",
     );
-    // Strip comments — prose may NAME the retained on-chain lane; what
-    // must never appear is an import/use of it.
-    const code = src
-      .replace(/\/\*[\s\S]*?\*\//g, "")
-      .replace(/\/\/.*$/gm, "");
-    // No fetch to the signing endpoint.
+    // Strip comments — prose may NAME the retained on-chain lane; what must
+    // never appear is an import/use of it.
+    const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
     expect(code).not.toMatch(/["'`][^"'`]*\/api\/sign-score/);
-    // No contract write / ABI / address helpers.
     expect(code).not.toMatch(/submitScoreSigned/);
     expect(code).not.toMatch(/scoreboardAbi|getScoreboardAddress|ScoreboardAddress/);
-    // No wallet stack imports.
     expect(code).not.toMatch(/from\s+["'](wagmi|viem)["']/);
     expect(code).not.toMatch(/useWriteContract|writeContract/);
   });

@@ -12,6 +12,8 @@ esquema, Focus Passport, Daily ni UI.
 >   confirmado**.
 > - **R1 (critical): CERRADO** en el write path off-chain. Ver §10 para el estado residual —
 >   quedan dos superficies con el defecto original que Slice 0 no tocó.
+> - **Slice 0.1 (§11): la firma por save pasó a ser una SESIÓN** — una firma compra 2h / 25
+>   escrituras revocables. Cierra la fricción de UX sin ceder autoría.
 > - **R13 (overflow): CERRADO.** `total_score` es `bigint`; verificado contra Postgres local
 >   con una suma de 4.000.000.000 que antes hacía *raise* a la vista entera.
 > - **R12: MITIGADO, no cerrado.** El dato ya se etiqueta (`score_saves.surface`), pero el
@@ -644,41 +646,16 @@ Además, el techo de 30.000/nivel es un **guard de DoS/overflow, no un anti-chea
 sin haber progreso server-side contra el cual derivar un techo real por jugador. Eso es
 Slice 3 (identidad de intento), tal como decía §8.
 
-### 🚩 Decisión bloqueante ANTES de desplegar
+### 🚩 Decisión bloqueante — RESUELTA en Slice 0.1 (§11)
 
-El auto-save es **silencioso** hoy (`useEffect` en `exercises-screen.tsx`, dispara con cada
-score nuevo). Con firma obligatoria, eso significa **un prompt de wallet por cada mejora de
-estrellas**. Cambiar ese disparador es una decisión de producto/UI que este slice tenía
-prohibido tomar, así que el cableado quedó fiel a lo pedido y el problema queda señalado, no
-resuelto. Opciones, de menor a mayor alcance:
-
-- **(a)** convertir el save en CTA explícito (un prompt por sesión de práctica, no por
-  ejercicio);
-- **(b)** challenge server-issued → token de sesión corto: **una** firma por sesión,
-  autoriza N saves. Es la opción que preserva el auto-save silencioso;
-- **(c)** dejarlo por-save (lo implementado) y aceptar la fricción.
-
-**Recomendación: (b).** Conserva la UX actual y la propiedad de autoría; el costo es un
-endpoint de challenge y una tabla de sesiones.
+El auto-save es silencioso (`useEffect` en `exercises-screen.tsx`, dispara con cada score
+nuevo). Con firma por save, eso significaba **un prompt de wallet por cada mejora de
+estrellas**. Se eligió la opción **(b)**: challenge server-issued → token de sesión.
+Implementada abajo.
 
 ### Rollback
 
-Código: revertir el commit. La migración es **aditiva y no destructiva** (ninguna tabla se
-borra, ningún dato se muta), así que el revert de código sobre el esquema nuevo funciona:
-`surface` queda como columna nullable sin escritores, y `score_save_nonces` deja de recibir
-filas. Para revertir también el esquema:
-
-```sql
--- Restaurar la firma de 8 args (el código viejo la llama sin p_surface)
-drop function if exists public.save_basic_score(text,text,int,int,int,text,text,jsonb,text);
--- + reaplicar 20260708120000_savescore_always_free.sql
--- Las vistas bigint son compatibles hacia atrás; NO hace falta revertirlas.
-drop table if exists public.score_save_nonces;
-alter table public.score_saves drop column if exists surface;
-```
-
-⚠️ Revertir el código **sin** restaurar la función de 8 args deja el endpoint viejo llamando
-una firma que no existe → todos los saves fallan con 500. El orden importa.
+Ver §11 — el rollback de Slice 0 y Slice 0.1 es uno solo, y el orden importa.
 
 ### Verificación ejecutada
 
@@ -695,6 +672,120 @@ una firma que no existe → todos los saves fallan con 500. El orden importa.
 - **No ejecutado:** smoke en dispositivo real de MiniPay y de Privy web. La equivalencia a
   nivel protocolo está probada en tests (ambas son EOA con `personal_sign`), pero el
   comportamiento del prompt en un device real requiere hardware — queda para el founder.
+
+---
+
+## 11. Slice 0.1 — sesión de escritura, entregado 2026-07-30
+
+Cierra la decisión bloqueante de §10 sin debilitar nada de lo que Slice 0 estableció.
+
+```text
+una firma EIP-191  →  una sesión server-issued  →  N saves silenciosos
+```
+
+La propiedad de autoría **no cambia**. Cambia su granularidad: la wallet prueba posesión una
+vez y el servidor emite un bearer token acotado a esa wallet, esa superficie, 2 horas y 25
+escrituras. Un token robado vale como máximo 25 filas en una wallet — y **es revocable**,
+cosa que una firma nunca fue.
+
+### Contrato
+
+```text
+POST /api/scores/session/challenge   { wallet }
+  → { message, sessionId, expiresAt, maxSaves }
+
+POST /api/scores/session/authorize   { message, signature }
+  → { token, sessionId, expiresAt, maxSaves }      # token: 256 bits, UNA sola vez
+
+POST /api/scores/save
+  Authorization: Bearer <token>
+  { levelId, score, timeMs }                       # sin wallet: sale de la sesión
+```
+
+Mensaje canónico firmado (`Chesscito Score Session v1`): `chainId`, `wallet`, `surface`,
+`sessionId`, `issuedAt`, `expiresAt`, `maxSaves`. **Todos los términos los decide el
+servidor** — el cliente manda una wallet y recibe límites que no eligió. Esa es la
+diferencia entre un challenge y un bearer token auto-emitido, y es por qué la ventana
+elegida por el cliente en Slice 0 desapareció.
+
+### Decisiones que vale la pena defender
+
+| Decisión | Por qué |
+|---|---|
+| **Una tabla, dos etapas** (`token_hash IS NULL` = challenge pendiente) | Es **un objeto** observado antes y después de que el jugador acepte: mismo `session_id`, mismos términos. Separarlo obligaría a copiar cada término al autorizar e inventar qué pasa si la copia falla a medias. |
+| **El token vive en memoria del módulo, no en storage** | Es una credencial bearer. Persistirla cambia el radio de exposición (XSS, device compartido, perfil sincronizado) a cambio de ahorrar un prompt tras un reload. Un prompt cada 2h es barato; una capacidad de escritura persistida no. |
+| **Solo se guarda el SHA-256** | Un dump de la tabla no debe rendir una credencial usable. SHA-256 plano y no un KDF: la entrada son 256 bits de CSPRNG, no hay preimagen adivinable que ralentizar — un KDF solo agregaría latencia a cada save. |
+| **La wallet sale de la fila, no del body** | "Un token escribiendo en la wallet de otro" deja de ser un caso *expresable*. Es estructural, no una validación que alguien pueda olvidar. |
+| **Consumo = UN `UPDATE`** con `WHERE used_saves < max_saves` | El predicado se evalúa bajo el lock de fila. Dos saves concurrentes en `max-1` no pueden pasar ambos. Más un `CHECK (used_saves <= max_saves)` como respaldo de esquema. |
+| **Se borra `score_save_nonces`** | Existía solo para hacer single-use una firma por save. Ya no hay firma por save, nunca se desplegó, nadie escribió en ella. Dejarla sería una tabla inexplicable en seis meses. |
+| **Reintento exactamente UNA vez** | Un segundo reintento es un loop de prompts del que el jugador no puede salir — peor que un save fallido que puede reintentar a mano. Y **solo** ante `session_expired/revoked/invalid`: re-firmar no vuelve válido un score fuera de rango ni recarga un presupuesto gastado. |
+
+### Parámetros (centralizados en `lib/scores/session-authorization.ts`)
+
+| Parámetro | Valor | Razón |
+|---|---|---|
+| `SCORE_SESSION_TTL_SECONDS` | 2 h | Dimensionado contra la sesión de juego real: la cuota diaria son 10 ejercicios, que se terminan bien dentro de 2h. Menos re-promptea a mitad de sesión; mucho más convierte el token en credencial permanente en un device compartido. |
+| `SCORE_SESSION_MAX_SAVES` | 25 | `HARD_MAX_EXTRAS` es 15 (10 + 2×5). Los saves disparan por **mejora**, no por ejercicio, así que hace falta margen. 25 cubre un día maxeado y deja un token filtrado en molestia, no en capacidad ilimitada. |
+| `SCORE_SESSION_CHALLENGE_TTL_SECONDS` | 3 min | Cuán fresca debe ser la firma. **No** va en el mensaje: es política del servidor, no un término que el jugador acepta. |
+| `EXPIRY_MARGIN_SECONDS` (cliente) | 60 s | Sin margen, un token que pasa el chequeo del cliente puede expirar en vuelo → 401 que el jugador vive como un save fallido al azar. |
+
+### UX — cuándo se pide la firma
+
+**Just-in-time, en el primer save puntuable.** Nunca al montar Learn, ni al abrir el Hub, ni
+antes de completar un ejercicio. Dos saves que corren en el mismo tick se *coalescen* en un
+solo prompt (`inFlight`), porque dos prompts seguidos para una sesión es exactamente la
+confusión que este slice existe para eliminar.
+
+El caché se invalida **por construcción**: está keyed por `(wallet, surface)`, así que cambiar
+de wallet o de superficie es un miss, no una limpieza que alguien deba recordar. Disconnect y
+unmount llaman `clearScoreSession()` para no dejar una credencial viva en memoria.
+
+### MiniPay / Privy
+
+A nivel protocolo **no hay nada que distinguir**: ambas son EOA y producen una firma
+`personal_sign` estándar sobre los mismos bytes — que es precisamente por qué se eligió
+EIP-191. Los tests afirman la propiedad honesta (el material de clave de cualquiera de las
+dos funciona en igualdad de condiciones) en vez de fingir que el endpoint detecta un
+proveedor.
+
+### Rollback completo (Slice 0 + 0.1) — el orden importa
+
+```sql
+-- 1. Restaurar la firma de 8 args de save_basic_score (el código pre-Slice-0
+--    la llama sin p_surface). Reaplicar 20260708120000_savescore_always_free.sql
+drop function if exists public.save_basic_score(text,text,int,int,int,text,text,jsonb,text);
+
+-- 2. Recién ahora, revertir el código (git revert de los dos commits).
+
+-- 3. Opcional — el esquema es aditivo y puede quedarse sin daño:
+drop function if exists public.consume_score_write_session(text);
+drop function if exists public.authorize_score_write_session(text,text,text,text);
+drop function if exists public.revoke_score_write_session(text);
+drop function if exists public.purge_expired_score_write_sessions();
+drop table if exists public.score_write_sessions;
+alter table public.score_saves drop column if exists surface;
+-- Las vistas bigint son compatibles hacia atrás; NO revertirlas.
+```
+
+⚠️ Revertir el código **antes** del paso 1 deja el endpoint viejo llamando una firma que no
+existe → todos los saves fallan con 500.
+
+### Verificación ejecutada
+
+- Suite completa: **543 archivos, 6263 tests, exit 0**.
+- `tsc --noEmit` limpio · `next lint` sin warnings · `next build` exit 0, con
+  `/api/scores/save`, `/api/scores/session/authorize` y `/api/scores/session/challenge` en el
+  manifiesto.
+- Firmas **viem reales** en los tests de endpoint, no un verifier mockeado.
+- Migración aplicada y **re-ejecutada** contra Postgres local (exit 0 ambas veces).
+- **Concurrencia contra Postgres real** (no el mock single-thread de vitest):
+  - 12 conexiones concurrentes consumiendo una sesión de `max_saves=3` → exactamente
+    **3 `consumed`, 9 `exhausted`**, `used_saves = 3`. Ninguna carrera cruza el límite.
+  - 12 racers autorizando **un** challenge → **1 `authorized`, 11 `already_used`**.
+  - `CHECK` rechaza `used_saves > max_saves` incluso ante un `UPDATE` a mano.
+  - Revocación idempotente; sesión revocada → `revoked`; expirada → `expired`.
+  - `score_save_nonces` confirmada como inexistente tras la migración.
+- **No ejecutado:** smoke en dispositivo real de MiniPay/Privy — requiere hardware.
 
 ---
 
@@ -715,6 +806,17 @@ una firma que no existe → todos los saves fallan con 500. El orden importa.
 `app/api/cache-score/route.ts` · `app/api/leaderboard/route.ts` ·
 `app/api/focus-day/route.ts` · `lib/server/demo-signing.ts` (`enforceOrigin`,
 `enforceScoreSaveRateLimit`)
+
+**Write path endurecido (Slice 0 + 0.1)**
+`lib/scores/save-authorization.ts` (superficie + cotas) ·
+`lib/scores/session-authorization.ts` (mensaje canónico + política) ·
+`lib/scores/session-client.ts` (caché e invalidación) ·
+`lib/scores/deployment-surface.ts` ·
+`lib/server/score-session-verification.ts` · `lib/server/score-session-store.ts` ·
+`lib/server/score-save-origin.ts` ·
+`app/api/scores/session/{challenge,authorize}/route.ts` ·
+`supabase/migrations/20260729000000_score_save_write_path_hardening.sql` ·
+`supabase/migrations/20260730000000_score_write_sessions.sql`
 
 **Agregado / lectura**
 `lib/server/leaderboard.ts` · `lib/supabase/queries.ts` ·

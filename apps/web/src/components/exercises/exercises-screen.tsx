@@ -120,6 +120,7 @@ import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
 import { getScoreboardAddress } from "@/lib/contracts/chains";
 import { shopAbi } from "@/lib/contracts/shop";
 import { postScoreSave } from "@/lib/scores/save-client";
+import { clearScoreSession } from "@/lib/scores/session-client";
 import { resolveDeploymentSurface } from "@/lib/scores/deployment-surface";
 import { deriveScoreSaveId } from "@/lib/scores/save-service";
 import { emitScoreSaveTelemetry } from "@/lib/scores/save-telemetry";
@@ -382,9 +383,18 @@ export function ExercisesScreen({
   const tResult = useTranslations("RESULT_OVERLAY_COPY");
   const router = useRouter();
   const { address, isConnected, status: accountStatus } = useAccount();
-  // Slice 0: the off-chain save is authored by the wallet (EIP-191). Works on
-  // MiniPay injected and Privy embedded alike — see lib/scores/save-authorization.
+  // Slice 0.1: the off-chain save is authored by a write SESSION bought with
+  // one EIP-191 signature. Works on MiniPay injected and Privy embedded alike
+  // — see lib/scores/session-authorization.
   const { signMessageAsync } = useSignMessage();
+
+  // Drop the cached write session whenever the identity behind it changes.
+  // The cache is keyed by (wallet, surface) so a stale token could never be
+  // USED for the wrong wallet; this is about not keeping a live bearer
+  // credential in memory after the player disconnects or switches accounts.
+  useEffect(() => {
+    return () => clearScoreSession();
+  }, [address]);
   const trainingPassStatus = useSeasonPassStatus(address);
   const trainingPass: EffectiveTrainingPassSnapshot = useMemo(
     () => ({
@@ -2206,7 +2216,8 @@ export function ExercisesScreen({
         // one function is what makes a client/server surface mismatch
         // impossible by construction rather than by convention (audit R12).
         surface: resolveDeploymentSurface(),
-        chainId,
+        // Slice 0.1: this prompts ONCE per write session (2h / 25 saves), not
+        // once per save. Subsequent saves ride the cached bearer token.
         signMessage: ({ message }) => signMessageAsync({ message }),
       });
 

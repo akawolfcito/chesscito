@@ -7,48 +7,47 @@
  * Off-chain only: this module imports NO contract ABI, NO wagmi/viem, NO
  * /api/sign-score. It never broadcasts a tx.
  *
- * ── SLICE 0 (2026-07-29) ────────────────────────────────────────────────
- * The save is now AUTHORED. The client builds the canonical message from
- * `save-authorization.ts`, asks the wallet to sign it (EIP-191 personal_sign
- * — the one method proven on both MiniPay and Privy embedded, see that
- * module's header), and POSTs `{ message, signature }`.
+ * ── SLICE 0.1 (2026-07-30) ──────────────────────────────────────────────
+ * The save is authored by a SESSION, not by a per-save signature. The first
+ * puntuable save of a session mints one (one wallet prompt, via
+ * `session-client.ts`); every save after that is silent and carries
+ * `Authorization: Bearer <token>`.
  *
- * There is deliberately no `player` field in the request: the server recovers
- * the author from the signature. Passing an address alongside would invite a
+ * There is deliberately no `player` field in the request: the server reads the
+ * wallet out of the session row. Passing an address alongside would invite a
  * future reader to trust it.
+ *
+ * EXPIRY HANDLING — exactly one retry, never a loop
+ * -------------------------------------------------
+ * A token can die between the client's check and the server's (revoked
+ * mid-session, clock skew, a redeploy). When the server says the session is no
+ * longer valid, we re-authorize ONCE — costing one prompt — and retry the same
+ * save. If that also fails we report it. A second retry would be a prompt loop
+ * the player cannot escape, which is worse than a failed save they can retry
+ * by hand.
  *
  * `signMessage` is INJECTED rather than imported from wagmi, so this module
  * stays free of React hooks and is unit-testable without a wallet provider.
- * The caller supplies `signMessageAsync` from `useSignMessage()`.
- *
- * Failure policy is unchanged: a network throw, a user rejection, or an
- * unparseable body degrades to `{ status: "error" }`. The client NEVER
- * fabricates a "saved" the server did not return.
  */
 
+import type { ScoreSaveSurface } from "./save-authorization";
 import {
-  buildScoreSaveMessage,
-  MAX_SCORE_SAVE_WINDOW_SECONDS,
-  type ScoreSaveSurface,
-} from "./save-authorization";
+  clearScoreSession,
+  ensureScoreSession,
+  type SignMessageFn,
+} from "./session-client";
 import { type BasicScoreSaveResult } from "./save-service";
 
-/** How long the authorization we mint stays valid. Deliberately shorter than
- *  the server's `MAX_SCORE_SAVE_WINDOW_SECONDS` ceiling so ordinary clock
- *  skew never produces a window the server rejects as too wide. */
-const AUTHORIZATION_TTL_SECONDS = Math.min(120, MAX_SCORE_SAVE_WINDOW_SECONDS);
-
-export type SignMessageFn = (args: { message: string }) => Promise<string>;
+export type { SignMessageFn };
 
 export type ScoreSaveClientInput = {
   player: `0x${string}`;
   levelId: number;
   score: number;
   timeMs: number;
-  /** Which product this build is. Comes from the caller's mode flag, and is
-   *  re-checked server-side against the deployment — a lie here is a 400. */
+  /** Which product this build is. Bound into the session at authorize time and
+   *  re-checked server-side against the deployment. */
   surface: ScoreSaveSurface;
-  chainId: number;
   signMessage: SignMessageFn;
 };
 
@@ -63,66 +62,45 @@ const KNOWN_STATUSES = new Set<BasicScoreSaveResult["status"]>([
   "error",
 ]);
 
+/** Server reasons that mean "your token is dead" — the only ones worth one
+ *  re-authorization. A bounds error or a rate limit must NEVER trigger a
+ *  prompt: re-signing does not make an out-of-range score valid, it just
+ *  annoys the player on the way to the same 400. */
+const SESSION_DEAD_REASONS = new Set([
+  "missing_session",
+  "invalid_session",
+  "session_expired",
+  "session_revoked",
+]);
+
 function isBasicScoreSaveResult(v: unknown): v is BasicScoreSaveResult {
   if (typeof v !== "object" || v === null) return false;
   const status = (v as { status?: unknown }).status;
   return typeof status === "string" && KNOWN_STATUSES.has(status as BasicScoreSaveResult["status"]);
 }
 
-/** 128 bits of CSPRNG, lowercase hex. Uniqueness is ultimately enforced by the
- *  DB primary key; this only has to make honest collisions impossible. */
-export function createScoreSaveNonce(
-  randomValues: (arr: Uint8Array) => Uint8Array = (arr) =>
-    globalThis.crypto.getRandomValues(arr),
-): string {
-  const bytes = randomValues(new Uint8Array(16));
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+function reasonOf(result: BasicScoreSaveResult): string | null {
+  return "reason" in result && typeof result.reason === "string" ? result.reason : null;
 }
 
-/**
- * Persist a basic score off-chain, authored by the player's wallet.
- *
- * `gameId` stays the score itself server-side, so the derived saveId
- * (`player:levelId:score`) keeps its best-score-per-level dedup: re-saving the
- * same score is idempotent (`duplicate`), a higher score is a fresh row the
- * combined leaderboard's MAX picks up.
- *
- * `fetchImpl` / `now` are injectable for tests.
- */
-export async function postScoreSave(
+async function postWithToken(
+  token: string,
   input: ScoreSaveClientInput,
-  fetchImpl: typeof fetch = fetch,
-  now: number = Date.now(),
+  fetchImpl: typeof fetch,
 ): Promise<BasicScoreSaveResult> {
-  const issuedAt = Math.floor(now / 1000);
-
-  const message = buildScoreSaveMessage({
-    chainId: input.chainId,
-    player: input.player,
-    surface: input.surface,
-    levelId: input.levelId,
-    score: input.score,
-    timeMs: input.timeMs,
-    issuedAt,
-    expiresAt: issuedAt + AUTHORIZATION_TTL_SECONDS,
-    nonce: createScoreSaveNonce(),
-  });
-
-  let signature: string;
-  try {
-    signature = await input.signMessage({ message });
-  } catch {
-    // User rejected the prompt, or the wallet has no signing capability.
-    // Reported honestly; the caller decides whether to offer a retry.
-    return { status: "error", reason: "signature_rejected" };
-  }
-
   let res: Response;
   try {
     res = await fetchImpl("/api/scores/save", {
       method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message, signature }),
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        levelId: input.levelId,
+        score: input.score,
+        timeMs: input.timeMs,
+      }),
     });
   } catch {
     // Network / offline. The optimistic quick-save-local degrade is the
@@ -137,8 +115,63 @@ export async function postScoreSave(
     return { status: "error", reason: "bad_response" };
   }
 
-  if (isBasicScoreSaveResult(data)) {
-    return data;
+  return isBasicScoreSaveResult(data) ? data : { status: "error", reason: "bad_response" };
+}
+
+/**
+ * Persist a basic score off-chain under the caller's write session.
+ *
+ * `gameId` stays the score itself server-side, so the derived saveId
+ * (`player:levelId:score`) keeps its best-score-per-level dedup: re-saving the
+ * same score is idempotent (`duplicate`), a higher score is a fresh row the
+ * combined leaderboard's MAX picks up.
+ *
+ * `fetchImpl` / `now` are injectable for tests.
+ */
+export async function postScoreSave(
+  input: ScoreSaveClientInput,
+  fetchImpl: typeof fetch = fetch,
+  now: number = Date.now(),
+): Promise<BasicScoreSaveResult> {
+  const session = await ensureScoreSession({
+    wallet: input.player,
+    surface: input.surface,
+    signMessage: input.signMessage,
+    fetchImpl,
+    now,
+  });
+
+  if (!session.ok) {
+    return {
+      status: "error",
+      reason: session.error === "signature_rejected" ? "signature_rejected" : session.error,
+    };
   }
-  return { status: "error", reason: "bad_response" };
+
+  const first = await postWithToken(session.session.token, input, fetchImpl);
+  const reason = reasonOf(first);
+  if (!reason || !SESSION_DEAD_REASONS.has(reason)) {
+    return first;
+  }
+
+  // The token was dead server-side. Re-authorize ONCE and replay the save.
+  clearScoreSession();
+  const refreshed = await ensureScoreSession({
+    wallet: input.player,
+    surface: input.surface,
+    signMessage: input.signMessage,
+    fetchImpl,
+    now,
+    forceRefresh: true,
+  });
+  if (!refreshed.ok) {
+    return {
+      status: "error",
+      reason: refreshed.error === "signature_rejected" ? "signature_rejected" : refreshed.error,
+    };
+  }
+
+  // Whatever this returns is final. No third attempt: a prompt loop is worse
+  // than a save the player can retry by hand.
+  return postWithToken(refreshed.session.token, input, fetchImpl);
 }

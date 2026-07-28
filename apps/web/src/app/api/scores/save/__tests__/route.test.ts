@@ -1,23 +1,17 @@
 /**
- * POST /api/scores/save — Slice 0 hardened write path.
+ * POST /api/scores/save — session-token write path (Slice 0.1).
  *
- * Audit: docs/product/2026-07-27-score-and-leaders-audit.md §R1 (critical).
+ * Audit: docs/product/2026-07-27-score-and-leaders-audit.md §R1, §10.
  *
- * These tests use REAL viem signing (`privateKeyToAccount` + `signMessage`),
- * not a stubbed verifier. The whole finding was that nothing tied a request to
- * a wallet, so a mocked signature check would test the mock and prove nothing.
- * The two well-known keys below are public Hardhat test keys — not secrets.
- *
- * On "MiniPay vs Privy": at the protocol level there is nothing to tell apart.
- * Both produce a standard EOA `personal_sign` signature over the same bytes,
- * which is precisely why EIP-191 was chosen (see save-authorization.ts). The
- * two cases below therefore assert the honest property — that a signature from
- * either wallet's key material is accepted on equal terms — rather than
- * pretending the endpoint can detect a provider.
+ * The endpoint no longer verifies a signature per save; it spends one save
+ * from a write session (see `session/__tests__/routes.test.ts` for the
+ * signature side). What must NOT have regressed is everything Slice 0
+ * established: the wallet is never taken from the body, every value is
+ * bounded server-side, the surface is checked against the deployment, and an
+ * absent Origin buys nothing.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { privateKeyToAccount } from "viem/accounts";
 
 const redisMock = vi.hoisted(() => ({ get: vi.fn(), set: vi.fn(), eval: vi.fn() }));
 vi.mock("@upstash/redis", () => ({ Redis: { fromEnv: () => redisMock } }));
@@ -27,7 +21,7 @@ vi.mock("@/lib/server/demo-signing", () => ({
   getRequestIp: vi.fn(() => "127.0.0.1"),
 }));
 
-const supabaseMock = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn() }));
+const supabaseMock = vi.hoisted(() => ({ rpc: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({
   getSupabaseServer: vi.fn(() => supabaseMock),
 }));
@@ -35,404 +29,326 @@ vi.mock("@/lib/supabase/server", () => ({
 import { POST } from "../route";
 import { enforceScoreSaveRateLimit } from "@/lib/server/demo-signing";
 import { getSupabaseServer } from "@/lib/supabase/server";
-import {
-  buildScoreSaveMessage,
-  MAX_SCORE_PER_LEVEL,
-  type ScoreSaveClaim,
-  type ScoreSaveSurface,
-} from "@/lib/scores/save-authorization";
+import { MAX_SCORE_PER_LEVEL } from "@/lib/scores/save-authorization";
+import { hashSessionToken } from "@/lib/server/score-session-store";
 import { __setLoggerSink, __resetLoggerSink } from "@/lib/server/logger";
 
 const mockedRate = vi.mocked(enforceScoreSaveRateLimit);
 const mockedSupabase = vi.mocked(getSupabaseServer);
 
-/** Public Hardhat test keys. Never funded, never used outside tests. */
-const MINIPAY_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
-const PRIVY_KEY = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
+const WALLET_A = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266";
+const WALLET_B = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8";
+const TOKEN_A = "a".repeat(64);
+const TOKEN_B = "b".repeat(64);
 
-const minipayAccount = privateKeyToAccount(MINIPAY_KEY);
-const privyAccount = privateKeyToAccount(PRIVY_KEY);
+type Session = {
+  wallet: string;
+  surface: "learn" | "play";
+  maxSaves: number;
+  usedSaves: number;
+  expired?: boolean;
+  revoked?: boolean;
+};
 
-const CHAIN_ID = 42220;
-const NOW = 1_800_000_000_000;
-const NONCE = "a1b2c3d4e5f60718293a4b5c6d7e8f90";
+/** Sessions keyed by token HASH — the endpoint must never look one up by raw
+ *  token, and this makes that observable. Mirrors the SQL predicates,
+ *  including that `used_saves < max_saves` is evaluated at consume time. */
+function installSessions(entries: Record<string, Session>) {
+  const byHash = new Map<string, Session>();
+  for (const [token, s] of Object.entries(entries)) {
+    byHash.set(hashSessionToken(token), { ...s });
+  }
 
-function claimFor(
-  account: { address: string },
-  over: Partial<ScoreSaveClaim> = {},
-): ScoreSaveClaim {
-  const issuedAt = Math.floor(NOW / 1000);
-  return {
-    chainId: CHAIN_ID,
-    player: account.address.toLowerCase(),
-    surface: "learn",
-    levelId: 1,
-    score: 1200,
-    timeMs: 5000,
-    issuedAt,
-    expiresAt: issuedAt + 120,
-    nonce: NONCE,
-    ...over,
-  };
-}
+  supabaseMock.rpc.mockImplementation((fn: string, args: Record<string, unknown>) => {
+    if (fn === "consume_score_write_session") {
+      const s = byHash.get(args.p_token_hash as string);
+      if (!s) return Promise.resolve({ data: { status: "not_found" }, error: null });
+      if (s.revoked) return Promise.resolve({ data: { status: "revoked" }, error: null });
+      if (s.expired) return Promise.resolve({ data: { status: "expired" }, error: null });
+      if (s.usedSaves >= s.maxSaves) {
+        return Promise.resolve({ data: { status: "exhausted" }, error: null });
+      }
+      s.usedSaves += 1;
+      return Promise.resolve({
+        data: {
+          status: "consumed",
+          wallet: s.wallet,
+          surface: s.surface,
+          usedSaves: s.usedSaves,
+          maxSaves: s.maxSaves,
+        },
+        error: null,
+      });
+    }
+    if (fn === "save_basic_score") {
+      return Promise.resolve({
+        data: { status: "saved", mode: "free", freeUsed: 1 },
+        error: null,
+      });
+    }
+    throw new Error(`unexpected rpc ${fn}`);
+  });
 
-/** Sign a claim with `signer`. Passing a claim that names a DIFFERENT address
- *  is how the impersonation cases are built. */
-async function signedBody(
-  signer: typeof minipayAccount,
-  claim: ScoreSaveClaim,
-): Promise<{ message: string; signature: string }> {
-  const message = buildScoreSaveMessage(claim);
-  const signature = await signer.signMessage({ message });
-  return { message, signature };
+  return byHash;
 }
 
 function makeRequest(
   body: unknown,
+  token: string | null = TOKEN_A,
   headers: Record<string, string> = { origin: "http://localhost:3000" },
 ) {
+  const h: Record<string, string> = { "content-type": "application/json", ...headers };
+  if (token) h.authorization = `Bearer ${token}`;
   return new Request("http://localhost/api/scores/save", {
     method: "POST",
-    headers: { "content-type": "application/json", ...headers },
+    headers: h,
     body: JSON.stringify(body),
   });
 }
 
-/** Nonce store that accepts the first burn of a (wallet, nonce) and reports a
- *  Postgres unique violation for every repeat — the real table's behaviour. */
-function installNonceStore() {
-  const spent = new Set<string>();
-  supabaseMock.from.mockImplementation((table: string) => {
-    if (table !== "score_save_nonces") throw new Error(`unexpected table ${table}`);
-    return {
-      insert: (row: { wallet: string; nonce: string }) => {
-        const key = `${row.wallet}:${row.nonce}`;
-        if (spent.has(key)) {
-          return Promise.resolve({ error: { code: "23505", message: "duplicate key" } });
-        }
-        spent.add(key);
-        return Promise.resolve({ error: null });
-      },
-    };
-  });
-  return spent;
-}
+const VALID_BODY = { levelId: 1, score: 1200, timeMs: 5000 };
 
-/** Best-score-per-level store mirroring `save_basic_score`: the save_id UNIQUE
- *  makes an identical re-save a `duplicate`, a better score a fresh row. */
-function installScoreStore() {
-  const rows = new Map<string, { level: number; score: number }>();
-  supabaseMock.rpc.mockImplementation(
-    (_fn: string, args: Record<string, unknown>) => {
-      const saveId = args.p_save_id as string;
-      if (rows.has(saveId)) {
-        return Promise.resolve({
-          data: { status: "duplicate", mode: "free", freeUsed: rows.size },
-          error: null,
-        });
-      }
-      rows.set(saveId, {
-        level: args.p_level_id as number,
-        score: args.p_score as number,
-      });
-      return Promise.resolve({
-        data: { status: "saved", mode: "free", freeUsed: rows.size },
-        error: null,
-      });
-    },
-  );
-  return rows;
-}
-
-describe("POST /api/scores/save — Slice 0 write path", () => {
+describe("POST /api/scores/save — session token", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
-    vi.setSystemTime(NOW);
     __setLoggerSink(() => {});
-    process.env.NEXT_PUBLIC_CHAIN_ID = String(CHAIN_ID);
     process.env.NEXT_PUBLIC_CHESSCITO_MODE = "learn";
     mockedRate.mockResolvedValue(undefined);
     mockedSupabase.mockReturnValue(supabaseMock as never);
-    installNonceStore();
-    installScoreStore();
+    installSessions({
+      [TOKEN_A]: { wallet: WALLET_A, surface: "learn", maxSaves: 25, usedSaves: 0 },
+    });
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     __resetLoggerSink();
     delete process.env.NEXT_PUBLIC_APP_URL;
   });
 
-  // ── 1–3, 13: authorship ──────────────────────────────────────────────────
+  // ── 9: the happy path ────────────────────────────────────────────────────
 
-  it("rejects a request with no signature", async () => {
-    const message = buildScoreSaveMessage(claimFor(minipayAccount));
-    const res = await POST(makeRequest({ message }));
-    expect(res.status).toBe(401);
-    await expect(res.json()).resolves.toMatchObject({ reason: "missing_signature" });
-    expect(supabaseMock.rpc).not.toHaveBeenCalled();
-  });
-
-  it("rejects a garbage signature", async () => {
-    const message = buildScoreSaveMessage(claimFor(minipayAccount));
-    const res = await POST(makeRequest({ message, signature: `0x${"11".repeat(65)}` }));
-    expect(res.status).toBe(401);
-    await expect(res.json()).resolves.toMatchObject({ reason: "signature_mismatch" });
-    expect(supabaseMock.rpc).not.toHaveBeenCalled();
-  });
-
-  it("rejects a signature from a different wallet than the message names", async () => {
-    // The impersonation case. Privy's key signs a message that claims MiniPay's
-    // address — exactly what R1 allowed, and what must now fail.
-    const body = await signedBody(privyAccount, claimFor(minipayAccount));
-    const res = await POST(makeRequest(body));
-    expect(res.status).toBe(401);
-    await expect(res.json()).resolves.toMatchObject({ reason: "signature_mismatch" });
-    expect(supabaseMock.rpc).not.toHaveBeenCalled();
-  });
-
-  it("never writes for a wallet the caller does not control", async () => {
-    const claim = claimFor(minipayAccount, { score: MAX_SCORE_PER_LEVEL });
-    await POST(makeRequest(await signedBody(privyAccount, claim)));
-    expect(supabaseMock.rpc).not.toHaveBeenCalled();
-  });
-
-  it("ignores any player field smuggled in the request body", async () => {
-    // Authorship comes from recovery, never from the body.
-    const body = await signedBody(minipayAccount, claimFor(minipayAccount));
-    await POST(makeRequest({ ...body, player: privyAccount.address }));
-    expect(supabaseMock.rpc).toHaveBeenCalledWith(
-      "save_basic_score",
-      expect.objectContaining({ p_wallet: minipayAccount.address.toLowerCase() }),
-    );
-  });
-
-  // ── 4–5: freshness and replay ────────────────────────────────────────────
-
-  it("rejects an expired payload", async () => {
-    const body = await signedBody(minipayAccount, claimFor(minipayAccount));
-    vi.setSystemTime(NOW + 10 * 60 * 1000);
-    const res = await POST(makeRequest(body));
-    expect(res.status).toBe(401);
-    await expect(res.json()).resolves.toMatchObject({ reason: "expired" });
-    expect(supabaseMock.rpc).not.toHaveBeenCalled();
-  });
-
-  it("rejects a replay of the same nonce", async () => {
-    const body = await signedBody(minipayAccount, claimFor(minipayAccount));
-
-    const first = await POST(makeRequest(body));
-    expect(first.status).toBe(200);
-
-    const replay = await POST(makeRequest(body));
-    expect(replay.status).toBe(401);
-    await expect(replay.json()).resolves.toMatchObject({ reason: "nonce_replayed" });
-    expect(supabaseMock.rpc).toHaveBeenCalledTimes(1);
-  });
-
-  it("burns the nonce BEFORE writing, so a replay cannot reach the RPC", async () => {
-    const body = await signedBody(minipayAccount, claimFor(minipayAccount));
-    await POST(makeRequest(body));
-    supabaseMock.rpc.mockClear();
-    await POST(makeRequest(body));
-    expect(supabaseMock.rpc).not.toHaveBeenCalled();
-  });
-
-  it("fails closed when the nonce store is unreachable", async () => {
-    supabaseMock.from.mockImplementation(() => ({
-      insert: () => Promise.resolve({ error: { code: "08006", message: "down" } }),
-    }));
-    const body = await signedBody(minipayAccount, claimFor(minipayAccount));
-    const res = await POST(makeRequest(body));
-    expect(res.status).toBe(503);
-    expect(supabaseMock.rpc).not.toHaveBeenCalled();
-  });
-
-  // ── 6–8: bounds ──────────────────────────────────────────────────────────
-
-  it("rejects a score above the per-level ceiling", async () => {
-    const claim = claimFor(minipayAccount, { score: MAX_SCORE_PER_LEVEL + 1 });
-    const res = await POST(makeRequest(await signedBody(minipayAccount, claim)));
-    expect(res.status).toBe(400);
-    await expect(res.json()).resolves.toMatchObject({ reason: "score_out_of_range" });
-    expect(supabaseMock.rpc).not.toHaveBeenCalled();
-  });
-
-  it("rejects an out-of-range levelId", async () => {
-    const claim = claimFor(minipayAccount, { levelId: 9 });
-    const res = await POST(makeRequest(await signedBody(minipayAccount, claim)));
-    expect(res.status).toBe(400);
-    expect(supabaseMock.rpc).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    ["NaN", "score: NaN"],
-    ["negative", "score: -100"],
-    ["Infinity", "score: Infinity"],
-    ["fractional", "score: 12.5"],
-  ])("rejects a %s score even when correctly signed", async (_label, replacement) => {
-    // Signed, so authorship is genuine — the numeric bound is what stops it.
-    const message = buildScoreSaveMessage(claimFor(minipayAccount)).replace(
-      "score: 1200",
-      replacement,
-    );
-    const signature = await minipayAccount.signMessage({ message });
-    const res = await POST(makeRequest({ message, signature }));
-    expect(res.status).toBe(400);
-    expect(supabaseMock.rpc).not.toHaveBeenCalled();
-  });
-
-  // ── 9–10: both wallets ───────────────────────────────────────────────────
-
-  it("saves a valid MiniPay-signed score", async () => {
-    const res = await POST(
-      makeRequest(await signedBody(minipayAccount, claimFor(minipayAccount))),
-    );
+  it("saves under a valid token", async () => {
+    const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({ status: "saved", mode: "free" });
     expect(supabaseMock.rpc).toHaveBeenCalledWith(
       "save_basic_score",
       expect.objectContaining({
-        p_wallet: minipayAccount.address.toLowerCase(),
+        p_wallet: WALLET_A,
         p_level_id: 1,
         p_score: 1200,
+        p_surface: "learn",
       }),
     );
   });
 
-  it("saves a valid Privy-signed score on the same terms", async () => {
-    const res = await POST(
-      makeRequest(await signedBody(privyAccount, claimFor(privyAccount))),
-    );
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({ status: "saved" });
+  it("looks the session up by token HASH, never by the raw token", async () => {
+    await POST(makeRequest(VALID_BODY));
+    expect(supabaseMock.rpc).toHaveBeenCalledWith("consume_score_write_session", {
+      p_token_hash: hashSessionToken(TOKEN_A),
+    });
+  });
+
+  // ── 10: the wallet comes from the token ──────────────────────────────────
+
+  it("writes to the token's wallet, not one supplied in the body", async () => {
+    // "A token for another wallet" is not expressible: identity comes out of
+    // the session row, so a body-level player has nowhere to take effect.
+    await POST(makeRequest({ ...VALID_BODY, player: WALLET_B, wallet: WALLET_B }));
     expect(supabaseMock.rpc).toHaveBeenCalledWith(
       "save_basic_score",
-      expect.objectContaining({ p_wallet: privyAccount.address.toLowerCase() }),
+      expect.objectContaining({ p_wallet: WALLET_A }),
     );
   });
 
-  // ── 11–12: idempotency and best-of ───────────────────────────────────────
-
-  it("re-saving the same best score is idempotent", async () => {
-    const rows = installScoreStore();
-    await POST(makeRequest(await signedBody(minipayAccount, claimFor(minipayAccount))));
-
-    // A fresh nonce: this is an honest re-save, not a replay.
-    const again = claimFor(minipayAccount, { nonce: "b1b2c3d4e5f60718293a4b5c6d7e8f91" });
-    const res = await POST(makeRequest(await signedBody(minipayAccount, again)));
-
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({ status: "duplicate" });
-    expect(rows.size).toBe(1);
-  });
-
-  it("a better score writes a new row the aggregate's MAX picks up", async () => {
-    const rows = installScoreStore();
-    await POST(makeRequest(await signedBody(minipayAccount, claimFor(minipayAccount))));
-
-    const better = claimFor(minipayAccount, {
-      score: 1500,
-      nonce: "c1b2c3d4e5f60718293a4b5c6d7e8f92",
+  it("writes to wallet B under B's token, with the same body", async () => {
+    installSessions({
+      [TOKEN_B]: { wallet: WALLET_B, surface: "learn", maxSaves: 25, usedSaves: 0 },
     });
-    const res = await POST(makeRequest(await signedBody(minipayAccount, better)));
-
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({ status: "saved" });
-    expect(rows.size).toBe(2);
-    expect([...rows.values()].map((r) => r.score).sort((a, b) => a - b)).toEqual([1200, 1500]);
+    await POST(makeRequest(VALID_BODY, TOKEN_B));
+    expect(supabaseMock.rpc).toHaveBeenCalledWith(
+      "save_basic_score",
+      expect.objectContaining({ p_wallet: WALLET_B }),
+    );
   });
 
-  // ── 14: the origin bypass ────────────────────────────────────────────────
+  // ── 11–13: token state ───────────────────────────────────────────────────
 
-  it("still validates the signature when Origin and Referer are both absent", async () => {
-    // The MiniPay WebView case. It is allowed through — but it buys nothing,
-    // because the signature gate runs regardless.
-    const forged = await signedBody(privyAccount, claimFor(minipayAccount));
-    const res = await POST(makeRequest(forged, {}));
+  it("rejects a request with no token", async () => {
+    const res = await POST(makeRequest(VALID_BODY, null));
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toMatchObject({ reason: "missing_session" });
+    expect(supabaseMock.rpc).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed Authorization header without touching the DB", async () => {
+    const res = await POST(makeRequest(VALID_BODY, "not-a-token"));
     expect(res.status).toBe(401);
     expect(supabaseMock.rpc).not.toHaveBeenCalled();
   });
 
-  it("accepts a header-less request that IS correctly signed", async () => {
-    // Proves the previous test rejected on the signature, not on the headers —
-    // MiniPay must keep working.
-    const body = await signedBody(minipayAccount, claimFor(minipayAccount));
-    const res = await POST(makeRequest(body, {}));
+  it("rejects an unknown token", async () => {
+    const res = await POST(makeRequest(VALID_BODY, "c".repeat(64)));
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toMatchObject({ reason: "invalid_session" });
+  });
+
+  it("rejects an expired token", async () => {
+    installSessions({
+      [TOKEN_A]: {
+        wallet: WALLET_A, surface: "learn", maxSaves: 25, usedSaves: 0, expired: true,
+      },
+    });
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toMatchObject({ reason: "session_expired" });
+  });
+
+  it("rejects a revoked token", async () => {
+    installSessions({
+      [TOKEN_A]: {
+        wallet: WALLET_A, surface: "learn", maxSaves: 25, usedSaves: 0, revoked: true,
+      },
+    });
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toMatchObject({ reason: "session_revoked" });
+  });
+
+  it("rejects a token minted on the other product", async () => {
+    installSessions({
+      [TOKEN_A]: { wallet: WALLET_A, surface: "play", maxSaves: 25, usedSaves: 0 },
+    });
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({ reason: "surface_mismatch" });
+  });
+
+  // ── 14: the budget ───────────────────────────────────────────────────────
+
+  it("spends exactly one save per request", async () => {
+    const sessions = installSessions({
+      [TOKEN_A]: { wallet: WALLET_A, surface: "learn", maxSaves: 3, usedSaves: 0 },
+    });
+    await POST(makeRequest(VALID_BODY));
+    await POST(makeRequest(VALID_BODY));
+    expect(sessions.get(hashSessionToken(TOKEN_A))!.usedSaves).toBe(2);
+  });
+
+  it("refuses the save that would cross maxSaves", async () => {
+    installSessions({
+      [TOKEN_A]: { wallet: WALLET_A, surface: "learn", maxSaves: 2, usedSaves: 2 },
+    });
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({ reason: "session_exhausted" });
+  });
+
+  it("never writes a score once the budget is spent", async () => {
+    installSessions({
+      [TOKEN_A]: { wallet: WALLET_A, surface: "learn", maxSaves: 1, usedSaves: 0 },
+    });
+    await POST(makeRequest(VALID_BODY));
+    supabaseMock.rpc.mockClear();
+    const res = await POST(makeRequest({ ...VALID_BODY, score: 1500 }));
+    expect(res.status).toBe(409);
+    expect(supabaseMock.rpc).not.toHaveBeenCalledWith(
+      "save_basic_score",
+      expect.anything(),
+    );
+  });
+
+  it("does not exceed the budget under concurrent requests", async () => {
+    const sessions = installSessions({
+      [TOKEN_A]: { wallet: WALLET_A, surface: "learn", maxSaves: 3, usedSaves: 0 },
+    });
+    const results = await Promise.all(
+      Array.from({ length: 8 }, (_, i) =>
+        POST(makeRequest({ ...VALID_BODY, score: 1000 + i })),
+      ),
+    );
+    const ok = results.filter((r) => r.status === 200).length;
+    const refused = results.filter((r) => r.status === 409).length;
+    expect(ok).toBe(3);
+    expect(refused).toBe(5);
+    expect(sessions.get(hashSessionToken(TOKEN_A))!.usedSaves).toBe(3);
+  });
+
+  // ── 15, 22: bounds survive ───────────────────────────────────────────────
+
+  it("rejects a score above the per-level ceiling even with a valid token", async () => {
+    const res = await POST(makeRequest({ ...VALID_BODY, score: MAX_SCORE_PER_LEVEL + 1 }));
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({ reason: "score_out_of_range" });
+    // Bounds run BEFORE the spend: a rejected value must not cost a save.
+    expect(supabaseMock.rpc).not.toHaveBeenCalled();
+  });
+
+  it("accepts a score exactly at the ceiling", async () => {
+    const res = await POST(makeRequest({ ...VALID_BODY, score: MAX_SCORE_PER_LEVEL }));
+    expect(res.status).toBe(200);
+    expect(MAX_SCORE_PER_LEVEL * 6).toBeLessThan(2_147_483_647);
+  });
+
+  it.each([
+    ["out-of-range level", { levelId: 9 }],
+    ["NaN score", { score: Number.NaN }],
+    ["negative score", { score: -100 }],
+    ["Infinity score", { score: Number.POSITIVE_INFINITY }],
+    ["fractional score", { score: 12.5 }],
+    ["string score", { score: "1200" }],
+    ["zero time", { timeMs: 0 }],
+  ])("rejects %s", async (_label, over) => {
+    const res = await POST(makeRequest({ ...VALID_BODY, ...over }));
+    expect(res.status).toBe(400);
+    expect(supabaseMock.rpc).not.toHaveBeenCalled();
+  });
+
+  // ── origin ───────────────────────────────────────────────────────────────
+
+  it("still requires a token when Origin and Referer are absent", async () => {
+    const res = await POST(makeRequest(VALID_BODY, null, {}));
+    expect(res.status).toBe(401);
+  });
+
+  it("accepts a header-less request that carries a valid token", async () => {
+    // Proves the rejection above was about the token, not the headers —
+    // MiniPay's WebView must keep working.
+    const res = await POST(makeRequest(VALID_BODY, TOKEN_A, {}));
     expect(res.status).toBe(200);
   });
 
   it("rejects a mismatched origin outright", async () => {
     process.env.NEXT_PUBLIC_APP_URL = "https://learn.chesscito.xyz";
-    const body = await signedBody(minipayAccount, claimFor(minipayAccount));
-    const res = await POST(makeRequest(body, { origin: "https://evil.example" }));
+    const res = await POST(makeRequest(VALID_BODY, TOKEN_A, { origin: "https://evil.example" }));
     expect(res.status).toBe(403);
     expect(supabaseMock.rpc).not.toHaveBeenCalled();
   });
 
-  // ── 15: the aggregate survives a maxed score ─────────────────────────────
+  // ── infrastructure ───────────────────────────────────────────────────────
 
-  it("accepts a score at the ceiling and keeps six levels inside int range", async () => {
-    const claim = claimFor(minipayAccount, { score: MAX_SCORE_PER_LEVEL });
-    const res = await POST(makeRequest(await signedBody(minipayAccount, claim)));
-    expect(res.status).toBe(200);
-    // The value that reaches the DB is what the aggregate has to survive.
-    expect(MAX_SCORE_PER_LEVEL * 6).toBeLessThan(2_147_483_647);
-  });
-
-  // ── 16–20: surface ───────────────────────────────────────────────────────
-
-  it.each<[ScoreSaveSurface, ScoreSaveSurface, number]>([
-    ["learn", "learn", 200],
-    ["learn", "play", 400],
-    ["play", "play", 200],
-    ["play", "learn", 400],
-  ])(
-    "deployment %s with payload surface %s → %i",
-    async (deployment, payload, expected) => {
-      process.env.NEXT_PUBLIC_CHESSCITO_MODE = deployment;
-      const claim = claimFor(minipayAccount, { surface: payload });
-      const res = await POST(makeRequest(await signedBody(minipayAccount, claim)));
-      expect(res.status).toBe(expected);
-      if (expected === 400) {
-        await expect(res.json()).resolves.toMatchObject({ reason: "surface_mismatch" });
-        expect(supabaseMock.rpc).not.toHaveBeenCalled();
-      }
-    },
-  );
-
-  it("persists the surface alongside the score", async () => {
-    process.env.NEXT_PUBLIC_CHESSCITO_MODE = "play";
-    const claim = claimFor(minipayAccount, { surface: "play" });
-    await POST(makeRequest(await signedBody(minipayAccount, claim)));
-    expect(supabaseMock.rpc).toHaveBeenCalledWith(
-      "save_basic_score",
-      expect.objectContaining({ p_surface: "play" }),
-    );
-  });
-
-  // ── Unchanged behaviour that must not regress ────────────────────────────
-
-  it("returns 429 when the soft limiter trips, before any crypto", async () => {
+  it("returns 429 when the limiter trips, before any DB work", async () => {
     mockedRate.mockRejectedValue(new Error("Rate limit exceeded"));
-    const body = await signedBody(minipayAccount, claimFor(minipayAccount));
-    const res = await POST(makeRequest(body));
+    const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(429);
     expect(supabaseMock.rpc).not.toHaveBeenCalled();
   });
 
   it("returns 503 rather than a false 'saved' when Supabase is unconfigured", async () => {
     mockedSupabase.mockReturnValue(null as never);
-    const body = await signedBody(minipayAccount, claimFor(minipayAccount));
-    const res = await POST(makeRequest(body));
+    const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(503);
-    await expect(res.json()).resolves.toMatchObject({ reason: "unavailable" });
+  });
+
+  it("fails closed when the session store is unreachable", async () => {
+    supabaseMock.rpc.mockResolvedValue({ data: null, error: { code: "08006" } });
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(503);
   });
 
   it("never touches the on-chain lane", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
-    await POST(makeRequest(await signedBody(minipayAccount, claimFor(minipayAccount))));
+    await POST(makeRequest(VALID_BODY));
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
   });
