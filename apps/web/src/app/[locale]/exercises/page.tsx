@@ -131,11 +131,20 @@ export default async function ExercisesPage({
 
   return (
     <ContentCatalogProvider
+      // All seven pools. It used to mount five, and the three it left out
+      // (`queens`, `safePath`, `promotionRun`) fell through to the compiled
+      // baseline in every selector — invisible today, because the overlay
+      // manages no rows of those kinds, and a silent divergence the day it
+      // does: the screen would render a staged catalog for four buckets and
+      // the baseline for three.
       value={{
         exercises: merged.exercises,
         labyrinths: merged.labyrinths,
         diagonalRun: merged.diagonalRun,
         knightTour: merged.knightTour,
+        queens: merged.queens,
+        safePath: merged.safePath,
+        promotionRun: merged.promotionRun,
         descriptions: merged.descriptions,
       }}
     >
