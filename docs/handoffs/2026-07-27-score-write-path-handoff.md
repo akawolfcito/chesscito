@@ -128,11 +128,55 @@ revertir el código, o todos los saves fallan con 500.
 
 ---
 
+## 4b. Smoke en device — resultado y la corrección que disparó
+
+El smoke se hizo en **dos dispositivos** (MiniPay Android + Privy web). El prompt aparece
+correctamente en ambos y el mensaje se lee completo: `Chesscito Score Session v1`, chainId,
+wallet, `surface: learn`, sessionId, ventana y `maxSaves: 25`. Eso **valida haber elegido
+EIP-191 sobre EIP-712** — con typed data el jugador habría visto un struct opaco.
+
+**Lo que el smoke encontró:** cerrar MiniPay y reabrir volvía a pedir firma, siempre.
+
+Correcto según el diseño de entonces (el token vivía solo en memoria del módulo), pero el
+diseño estaba mal calibrado: MiniPay es una mini-app que se abre y se cierra todo el tiempo,
+así que en la práctica no era *una firma cada 2 horas* sino **una firma por cada apertura que
+produjera un save**.
+
+Y el peor caso de un token robado es mucho más acotado de lo que asumí al decidirlo: permite
+escribir hasta `maxSaves` scores **en la wallet de la víctima**. No mueve fondos, no lee
+datos, no firma transacciones, no toca entitlements. El daño máximo es inflarle el puntaje a
+alguien o gastarle su presupuesto de saves. Pagar ese riesgo casi nulo con firmas repetidas
+es mal negocio: un prompt frecuente es un prompt que el jugador aprende a descartar sin leer,
+que es justo la costumbre de la que depende el carril on-chain.
+
+### `87e35e35` — persistencia (pusheado por el founder, ya en `origin/main`)
+
+- Token en `localStorage`, clave versionada `chesscito:score-write-session:v1`.
+- Se guardan **solo** `token`, `wallet`, `surface`, `expiresAt`. `maxSaves` queda afuera: el
+  servidor lleva la cuenta real y un segundo lugar donde el presupuesto puede mentir no ayuda.
+- **El alcance no cambió**: misma wallet, misma superficie, 2h, 25 saves, revocable. Solo
+  cambia dónde vive entre aperturas. Contrato del servidor intacto.
+- **Bug propio corregido**: el cleanup era `useEffect(() => () => clearScoreSession(), [address])`
+  y ese cleanup **también corre al desmontar** — ir al Hub y volver borraba un token válido y
+  costaba una firma extra. Ahora compara contra el `address` anterior.
+- Storage corrupto se descarta en silencio y se borra (8 formas cubiertas en tests). Dejarlo
+  haría que cada lectura vuelva a fallar.
+- Dos casos que agregué porque el flujo los pedía: un **presupuesto agotado NO borra la sesión
+  ni re-firma** (re-firmar no recarga los 25 saves, sería ruido camino al mismo 409), y el
+  reintento sigue siendo **uno solo**, sin loop de prompts.
+
+Tests: **6284 passing / 543 archivos, exit 0** (suite de `apps/web`). Typecheck, lint y build
+limpios.
+
+---
+
 ## 5. Próximos pasos
 
-1. **Probar el prompt en device real.** Un ejercicio con wallet conectada en preview: **una**
-   firma, y los siguientes ninguna. Log: `session_authorized`.
-2. **Decidir cuándo promover a prod.** Ahí los jugadores reales empiezan a firmar.
+1. **Re-hacer el smoke, esperando lo contrario que la vez pasada** (el código ya está en
+   preview): firmar una vez, **cerrar MiniPay del todo**, reabrir y hacer un ejercicio nuevo
+   → **no debe pedir firma**. Navegar al Hub y volver tampoco. Si vuelve a pedir, mirar
+   `localStorage` → `chesscito:score-write-session:v1`.
+3. **Decidir cuándo promover a prod.** Ahí los jugadores reales empiezan a firmar.
 3. **Ignored Build Step de landing** (§6).
 4. **Slice 2 — ventana weekly.** Sin migración (`created_at` ya está). Mata R3 y R4.
 5. **Slice 3 — identidad de intento.** Único hueco estructural; Exercise Score y Daily Focus
@@ -219,6 +263,16 @@ sesión (docs + SESSION.md) lo hizo.
 `npx turbo-ignore`. Sigue siendo un Ignored Build Step, así que **también consumiría slot**.
 La doc solo lo menciona (vía `turbo query`) para monorepos que **no cumplen** los requisitos
 del skip nativo — no es el caso acá.
+
+---
+
+## 6b. Nombre visible de la Mini App en MiniPay
+
+MiniPay muestra **"Solicitado por: Mini App Test"** en el prompt de firma. Ese string **no
+existe en el repo**: `app/manifest.ts` y el `<title>` dicen `"Chesscito Learn"`.
+
+Viene del **registro externo de la Mini App** (dashboard de MiniPay / Celo), así que se
+cambia ahí y no en código. Debería decir `Chesscito`. No se mezcló en ningún commit por eso.
 
 ---
 

@@ -18,12 +18,21 @@
   Ahora `una firma → una sesión (2h / 25 saves) → N saves silenciosos`. Revocable.
 - `edee4713` — sin `NEXT_PUBLIC_CHAIN_ID` el challenge salía 200, pedía la firma, y moría
   después con 400. Ahora 503 con el nombre de la variable en el log.
-- `197c774a`, `34f37fc1` — scripts de deploy versionados en `apps/web/supabase/deploy/`.
+- `197c774a`, `34f37fc1`, `6f30d711` — scripts de deploy versionados y diagnóstico de landing.
+- **Smoke en 2 devices (MiniPay + Privy web): el prompt funciona y se lee completo.** Encontró
+  que cerrar MiniPay tiraba la sesión → siempre re-firma. Decisión: persistir (opción A).
+- `87e35e35` — **pusheado, ya en `origin/main`.** Token en `localStorage`
+  (`chesscito:score-write-session:v1`), solo `token`/`wallet`/`surface`/`expiresAt`. Alcance
+  intacto (2h, 25 saves, revocable), solo cambia dónde vive entre aperturas. Corrige además un
+  bug propio: el cleanup corría al desmontar, así que ir al Hub y volver borraba un token
+  válido.
 
 ## Current State
 
-- **Branch**: `main`, pusheado (`4f16d6c1..34f37fc1`), sin divergencia. Sin PRs abiertos.
-- **Build**: passing. Tests 6265 / 543 archivos, exit 0. Typecheck y lint limpios.
+- **Branch**: `main`. `origin/main` está en `87e35e35` (verificado con `ls-remote`). Solo el
+  commit de docs de cierre queda local.
+- **Build**: passing. Tests 6284 / 543 archivos, exit 0 (suite de `apps/web`). Typecheck y
+  lint limpios.
 - **Uncommitted work**: no.
 - **DB**: migraciones **ya aplicadas** en Supabase (una sola base, preview + prod).
   VERIFY 11/11 OK, 132 filas intactas, 0 sesiones.
@@ -32,10 +41,11 @@
 
 ## Next Tasks
 
-1. **Probar el prompt en device real** — lo único que no se pudo verificar. Un ejercicio con
-   wallet conectada en preview: **una** firma, los siguientes ninguna. Log:
-   `session_authorized`. Si repregunta en cada ejercicio, el caché de sesión falla.
-2. **Decidir cuándo promover a prod.** Ahí los jugadores reales empiezan a firmar y el texto
+1. **Re-hacer el smoke, esperando lo contrario que la vez pasada** (el código ya está en
+   preview): firmar una vez, **cerrar MiniPay del todo**, reabrir y hacer un ejercicio nuevo
+   → **no debe pedir firma**. Ir al Hub y volver tampoco. Si repregunta, mirar `localStorage`
+   → `chesscito:score-write-session:v1`.
+3. **Decidir cuándo promover a prod.** Ahí los jugadores reales empiezan a firmar y el texto
    del prompt pasa a ser user-facing.
 3. **Builds de `apps/landing`** — poner Ignored Build Step en **`Automatic`** (borrar el
    comando custom). Verificado contra la doc: los builds cancelados por el Ignored Build Step
@@ -46,6 +56,9 @@
    Diagnóstico completo en §6 del handoff.
 4. **Slice 2 — ventana weekly.** Sin migración (`created_at` ya existe). Mata R3 y R4.
 5. **Slice 3 — identidad de intento** (`attemptIndex`, `hintsUsed`). Único hueco estructural.
+6. **Renombrar la Mini App en MiniPay**: el prompt dice "Solicitado por: **Mini App Test**".
+   Ese string **no está en el repo** (manifest y title dicen "Chesscito Learn") — viene del
+   registro externo de la Mini App. Se cambia en ese dashboard, no en código.
 
 ## Blockers
 
