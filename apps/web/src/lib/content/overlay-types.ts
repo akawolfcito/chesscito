@@ -28,20 +28,40 @@ export const STAGE_RANK: Record<ContentStage, number> = {
   published: 2,
 };
 
-/** The compiled baseline catalog shape (mirrors the generated module). Input to
- *  the overlay merge; also the fallback when the overlay is unavailable. */
+/**
+ * The compiled baseline catalog shape (mirrors the generated module). Input to
+ * the overlay merge; also the fallback when the overlay is unavailable.
+ *
+ * ⚠️ ALL SEVEN POOLS ARE REQUIRED, and that is the point.
+ *
+ * Five of them used to be optional "so partial fixtures stay valid", and the
+ * cost of that convenience was invisible until Slice 3: `safePath` and
+ * `promotionRun` were never added at all, so the catalogue the server serves
+ * could not grade two of the seven buckets, and nothing said so — an optional
+ * field that is never set looks exactly like one that is not needed.
+ *
+ * Required means a fixture must state what it is serving, and it means
+ * `MergedCatalog` satisfies `GradingCatalog` (lib/scores/attempt-grading.ts)
+ * structurally, with no cast: adding a bucket there and forgetting it here is a
+ * type error rather than a silent `unknown_exercise` on the wire.
+ */
 export interface BaselineCatalog {
   exercises: Record<PieceId, Exercise[]>;
   labyrinths: Record<PieceId, Exercise[]>;
-  /** Pivot Challenge pool (kind:"pivot"). Baseline-sourced this phase — the
-   *  overlay does not manage pivot rows yet, so it passes straight through.
-   *  Optional so partial fixtures stay valid; `getBaseline()` always sets it. */
-  diagonalRun?: Record<PieceId, Exercise[]>;
+  /** Pivot Challenge pool (kind:"diagonal-run"). Baseline-sourced — the overlay
+   *  does not manage pivot rows yet, so it passes straight through the merge. */
+  diagonalRun: Record<PieceId, Exercise[]>;
   /** Knight's Tour pool (kind:"knight-tour"). Baseline-sourced, same as
    *  `diagonalRun`: the overlay does not manage tour rows yet. */
-  knightTour?: Record<PieceId, Exercise[]>;
+  knightTour: Record<PieceId, Exercise[]>;
   /** N-Queens pool (kind:"queens"). Baseline-sourced, same as the two above. */
-  queens?: Record<PieceId, Exercise[]>;
+  queens: Record<PieceId, Exercise[]>;
+  /** Safe Path pool (kind:"safe-path"). Baseline-sourced. Graded by ARRIVAL —
+   *  a move count, the opposite of its coverage neighbours. */
+  safePath: Record<PieceId, Exercise[]>;
+  /** Promotion Run pool (kind:"promotion-run"). Baseline-sourced. Graded by
+   *  FAILURES — neither coverage nor moves (`promotionRunStars`). */
+  promotionRun: Record<PieceId, Exercise[]>;
   descriptions: Record<string, string>;
 }
 

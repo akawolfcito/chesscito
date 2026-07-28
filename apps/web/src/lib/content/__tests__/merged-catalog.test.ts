@@ -18,7 +18,13 @@ vi.mock("@/lib/supabase/server", () => ({
   getSupabaseServer: vi.fn(() => supabaseMock),
 }));
 
-import { mergeOverlay, loadMergedCatalog } from "../merged-catalog";
+import {
+  mergeOverlay,
+  loadMergedCatalog,
+  getBaseline,
+  duplicateExerciseIds,
+  CATALOG_POOL_KEYS,
+} from "../merged-catalog";
 import { buildCatalog, type ExerciseRecord } from "../catalog";
 import { posToSquare } from "@/lib/game/fen-puzzle";
 import { getSupabaseServer } from "@/lib/supabase/server";
@@ -28,10 +34,28 @@ const mockedSupabase = vi.mocked(getSupabaseServer);
 
 const EMPTY_BOARD = "8/8/8/8/8/8/8/R7 w - - 0 1";
 
+/**
+ * A baseline from records, carrying ALL SEVEN pools.
+ *
+ * It used to return three and lean on the optional fields, which is precisely
+ * how `safePath` and `promotionRun` went missing from the served catalogue
+ * without a single test noticing: a fixture that may omit a pool cannot detect
+ * a merge that drops one. `buildCatalog` already returns the seven, so the
+ * fixture states them.
+ */
 function baselineWith(records: ExerciseRecord[]): BaselineCatalog {
   const c = buildCatalog([], [], records);
   expect(c.errors).toEqual([]);
-  return { exercises: c.exercises, labyrinths: c.labyrinths, descriptions: c.descriptions };
+  return {
+    exercises: c.exercises,
+    labyrinths: c.labyrinths,
+    diagonalRun: c.diagonalRun,
+    knightTour: c.knightTour,
+    queens: c.queens,
+    safePath: c.safePath,
+    promotionRun: c.promotionRun,
+    descriptions: c.descriptions,
+  };
 }
 
 function row(over: Partial<ContentOverlayRow> = {}): ContentOverlayRow {
@@ -112,6 +136,89 @@ describe("mergeOverlay", () => {
     const m = mergeOverlay(BASE, [row({ id: "rook-liar", target: "a8", optimal_moves: 9 })]);
     expect(m.exercises.rook.find((e) => e.id === "rook-liar")).toBeUndefined();
     expect(m.overlayCount).toBe(0);
+  });
+});
+
+/**
+ * The seven pools, and the id rule that lets a grader trust them.
+ *
+ * `gradeAttempt` finds a level by scanning the pools and grading with the first
+ * hit, so two pools claiming one id is not a tidiness problem — it is a move
+ * count handed to a coverage grader, silently. `buildCatalog` enforces
+ * uniqueness within one build; the overlay is the only path that can break it,
+ * because its rows are built one at a time and never see the other pools.
+ */
+describe("mergeOverlay — the seven pools", () => {
+  const BASELINE = getBaseline();
+
+  it("ships a non-empty pool for every catalogue bucket", () => {
+    // Otherwise every assertion about a bucket below is vacuous — and the
+    // missing-pool bug this suite exists for looked exactly like an empty one.
+    for (const poolKey of CATALOG_POOL_KEYS) {
+      const total = Object.values(BASELINE[poolKey]).flat().length;
+      expect(total, `pool '${poolKey}' is empty`).toBeGreaterThan(0);
+    }
+  });
+
+  it("passes every baseline-only pool through the merge", () => {
+    const m = mergeOverlay(BASELINE, []);
+    for (const poolKey of [
+      "diagonalRun",
+      "knightTour",
+      "queens",
+      "safePath",
+      "promotionRun",
+    ] as const) {
+      expect(m[poolKey], `pool '${poolKey}' did not survive the merge`).toBe(
+        BASELINE[poolKey],
+      );
+    }
+  });
+
+  it("gives the shipped catalogue exactly one owner per id", () => {
+    expect(duplicateExerciseIds(BASELINE)).toEqual([]);
+  });
+
+  it("drops an overlay row whose id is owned by another pool", () => {
+    // A real safe-path id: the bucket the served catalogue could not grade at
+    // all until this slice, and the one an overlay row could shadow.
+    const [piece, safePathLevel] = Object.entries(BASELINE.safePath).flatMap(
+      ([p, list]) => list.map((e) => [p, e] as const),
+    )[0]!;
+    // Otherwise valid — the same row shape the "appends" case applies happily.
+    const m = mergeOverlay(BASELINE, [row({ id: safePathLevel.id, target: "a8" })]);
+
+    expect(m.exercises.rook.some((e) => e.id === safePathLevel.id)).toBe(false);
+    expect(
+      m.safePath[piece as keyof typeof m.safePath].some((e) => e.id === safePathLevel.id),
+    ).toBe(true);
+    expect(m.overlayCount).toBe(0);
+    expect(duplicateExerciseIds(m)).toEqual([]);
+  });
+
+  it("drops a second overlay row that collides with the first", () => {
+    // The owner index is maintained AS rows are applied, so two overlay rows in
+    // different buckets cannot claim one id either.
+    const m = mergeOverlay(BASE, [
+      row({ id: "rook-twice", kind: "exercise", target: "a8" }),
+      row({ id: "rook-twice", kind: "labyrinth", target: "a8" }),
+    ]);
+    expect(m.exercises.rook.some((e) => e.id === "rook-twice")).toBe(true);
+    expect(m.labyrinths.rook.some((e) => e.id === "rook-twice")).toBe(false);
+    expect(m.overlayCount).toBe(1);
+    expect(duplicateExerciseIds(m)).toEqual([]);
+  });
+
+  it("frees an id when its row is disabled", () => {
+    // A soft-delete removes the level, so the id stops being claimed — a later
+    // row may legitimately take it.
+    const m = mergeOverlay(BASE, [
+      row({ id: "rook-base-1", disabled: true }),
+      row({ id: "rook-base-1", kind: "labyrinth", target: "a8" }),
+    ]);
+    expect(m.exercises.rook.some((e) => e.id === "rook-base-1")).toBe(false);
+    expect(m.labyrinths.rook.some((e) => e.id === "rook-base-1")).toBe(true);
+    expect(duplicateExerciseIds(m)).toEqual([]);
   });
 });
 
