@@ -339,14 +339,30 @@ describe("save_score_attempt — reuse, not reimplementation", () => {
   });
 });
 
-describe("privileges — PUBLIC gets EXECUTE by default, so it must be revoked", () => {
-  it("revokes execute on both functions from public", () => {
-    expect(migration).toMatch(
-      /revoke execute on function public\.save_score_attempt\([^)]*\)\s+from public/i,
-    );
-    expect(migration).toMatch(
-      /revoke execute on function public\.save_basic_score\([^)]*\)\s+from public/i,
-    );
+describe("privileges — two independent grants, so two revokes", () => {
+  it("revokes from PUBLIC *and* from anon/authenticated, on both functions", () => {
+    // Each revoke alone is useless, and the second one is the surprise:
+    // Postgres grants EXECUTE to PUBLIC by default, AND Supabase's default
+    // privileges grant it EXPLICITLY to anon/authenticated. Revoking from
+    // PUBLIC does not touch an explicit grant.
+    //
+    // ⚠️ THIS TEST DID NOT CATCH THE ORIGINAL BUG. It asserted `from public`
+    // and passed while `has_function_privilege('anon', ...)` was TRUE against
+    // a live Supabase. The migration is fixed and so is the assertion, but the
+    // lesson stands: only `supabase/tests/score_attempts_smoke.sql` can answer
+    // a privilege question, and it must be run.
+    for (const fn of ["save_score_attempt", "save_basic_score"]) {
+      const revoke = migration.match(
+        new RegExp(`revoke execute on function public\\.${fn}\\([^)]*\\)\\s+from ([^;]+);`, "i"),
+      );
+      expect(revoke, `no revoke for ${fn}`).not.toBeNull();
+      const roles = revoke![1].toLowerCase();
+      expect(roles, `${fn} still reachable through PUBLIC`).toMatch(/\bpublic\b/);
+      expect(roles, `${fn} keeps Supabase's explicit anon grant`).toMatch(/\banon\b/);
+      expect(roles, `${fn} keeps Supabase's explicit authenticated grant`).toMatch(
+        /\bauthenticated\b/,
+      );
+    }
   });
 
   it("grants execute to service_role only", () => {

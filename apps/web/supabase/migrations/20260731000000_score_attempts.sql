@@ -319,17 +319,30 @@ comment on function public.save_score_attempt(text, text, text, int, int, int, t
 -- ─────────────────────────────────────────────────────────────────
 -- 3. Privileges
 -- ─────────────────────────────────────────────────────────────────
--- Postgres grants EXECUTE on a new function to PUBLIC by default, so revoking
--- from anon/authenticated alone changes NOTHING — they would still hold it
--- through PUBLIC. Revoke from PUBLIC first, then grant to the one role that
--- should have it.
+-- BOTH REVOKES ARE REQUIRED, and each one alone is useless. This is not
+-- belt-and-braces, it is two independent grants:
+--
+--   1. Postgres grants EXECUTE on every new function to PUBLIC by default, so
+--      revoking from anon/authenticated alone leaves them holding it through
+--      PUBLIC.
+--   2. Supabase ships `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON
+--      FUNCTIONS TO anon, authenticated, service_role`, so every new function
+--      ALSO gets an EXPLICIT grant to those two roles. Revoking from PUBLIC
+--      does not touch an explicit grant.
+--
+-- ⚠️ Found by running the smoke against a live Supabase, NOT by review: the
+-- migration originally revoked from PUBLIC only — following the spec's
+-- reasoning, which is correct about (1) and silent about (2) — and
+-- `has_function_privilege('anon', ...)` came back TRUE. `pg_proc.proacl` read
+-- `anon=X/postgres | authenticated=X/postgres`. A text guard cannot see this;
+-- only the database can.
 --
 -- `save_basic_score` is included because it is now reachable two ways, and a
 -- caller who could invoke it directly would write a score row with no attempt
 -- row and no budget spent.
 
-revoke execute on function public.save_score_attempt(text, text, text, int, int, int, text, text, int, int, text, int, text) from public;
-revoke execute on function public.save_basic_score(text, text, int, int, int, text, text, jsonb, text) from public;
+revoke execute on function public.save_score_attempt(text, text, text, int, int, int, text, text, int, int, text, int, text) from public, anon, authenticated;
+revoke execute on function public.save_basic_score(text, text, int, int, int, text, text, jsonb, text) from public, anon, authenticated;
 
 grant execute on function public.save_score_attempt(text, text, text, int, int, int, text, text, int, int, text, int, text) to service_role;
 grant execute on function public.save_basic_score(text, text, int, int, int, text, text, jsonb, text) to service_role;
