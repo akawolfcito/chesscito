@@ -37,9 +37,13 @@
    `session_authorized`. Si repregunta en cada ejercicio, el caché de sesión falla.
 2. **Decidir cuándo promover a prod.** Ahí los jugadores reales empiezan a firmar y el texto
    del prompt pasa a ser user-facing.
-3. **Ignored Build Step de `apps/landing`** — 3 de los últimos 133 commits lo tocaron (88
-   tocaron web). La regla actual no sirve: `HEAD^ HEAD` mira un solo commit y `.` depende del
-   Root Directory. Diagnóstico completo en §6 del handoff.
+3. **Builds de `apps/landing`** — poner Ignored Build Step en **`Automatic`** (borrar el
+   comando custom). Verificado contra la doc: los builds cancelados por el Ignored Build Step
+   **igual ocupan slot concurrente**, así que no ahorran cola; el toggle nativo "Skip
+   deployments" (ya Enabled) sí. El Root Directory **está bien** — esa hipótesis era falsa.
+   El motivo real de que landing se deploye siempre: `docs/`, `tools/` y `SESSION.md` están
+   fuera de `apps/*` → Vercel los trata como cambio global. 101 archivos así en 133 commits.
+   Diagnóstico completo en §6 del handoff.
 4. **Slice 2 — ventana weekly.** Sin migración (`created_at` ya existe). Mata R3 y R4.
 5. **Slice 3 — identidad de intento** (`attemptIndex`, `hintsUsed`). Único hueco estructural.
 

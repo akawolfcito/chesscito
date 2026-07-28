@@ -140,28 +140,85 @@ revertir el código, o todos los saves fallan con 500.
 
 ---
 
-## 6. Ignored Build Step de `apps/landing` — diagnóstico
+## 6. Builds de `apps/landing` — diagnóstico (verificado contra la doc de Vercel)
 
 **Medición:** de los últimos 133 commits, **3 tocaron `apps/landing`** y 88 tocaron
-`apps/web`. ~98% de los builds de landing son desperdicio.
+`apps/web`. Casi todos esos builds son desperdicio.
 
-**Regla actual:** `git diff HEAD^ HEAD --quiet -- .` — tres problemas:
+### Config actual (confirmada en dashboard)
 
-1. **`HEAD^ HEAD` mira UN solo commit.** Hoy se pushearon 5 de golpe. Si el cambio de landing
-   estuviera en el commit 2 de 5, **no se detecta y landing queda stale** — el fallo
-   silencioso, peor que buildear de más.
-2. **`.` depende del Root Directory.** Si no está en `apps/landing`, `.` es todo el repo →
-   siempre buildea. **Sospecha principal de por qué la regla no surte efecto.**
-3. **Vercel clona shallow.** `HEAD^` puede no existir → git falla → exit ≠ 0/1 → buildea.
+- Root Directory: `apps/landing` ✅ **está bien puesto** — la primera hipótesis (que estuviera
+  en la raíz) era **incorrecta**.
+- "Skip deployments when there are no changes to the root directory or its dependencies":
+  **Enabled** ✅
+- Ignored Build Step: `git diff HEAD^ HEAD --quiet -- .`
 
-**A favor:** `apps/landing` **no tiene ninguna dependencia de workspace** (solo next, react,
-next-intl, sharp). No hay package compartido que pueda dejarlo stale, así que un filtro por
-carpeta es seguro — cosa que **no** sería cierta para `apps/web`.
+### El Ignored Build Step NO resuelve el problema
 
-**Dirección:** `npx turbo-ignore` (el repo ya usa Turborepo). Compara contra el último deploy
-exitoso en vez de contra `HEAD^`, y entiende el grafo de dependencias.
-⚠️ **Confirmar el comando exacto contra la doc vigente antes de pegarlo** — es config de
-producción y el conocimiento de la API de Vercel puede estar desactualizado.
+Doc oficial (`/docs/monorepos#ignoring-the-build-step`), textual:
+
+> *"Canceled builds initiated using the Ignored Build Step **count towards your deployment and
+> concurrent build limits**"*
+
+y sobre el skip nativo:
+
+> *"This setting does **not** occupy concurrent build slots, **unlike the Ignored Build Step
+> feature**, reducing build queue times."*
+
+Es decir: **aunque el comando funcionara perfecto, el build cancelado igual ocupa el slot** y
+los deploys de web siguen haciendo cola. No ataca la queja original ("los deploys tardan más").
+
+Además el comando tiene dos defectos propios:
+
+1. **`HEAD^ HEAD` mira UN solo commit.** Hoy se pushearon 5 de golpe; un cambio de landing en
+   el commit 2 de 5 **no se detecta y landing queda stale** — fallo silencioso, peor que
+   buildear de más.
+2. **Vercel clona shallow**: `HEAD^` puede no existir → git falla → exit ≠ 0/1 → buildea.
+
+La doc confirma que el comando **sí** corre dentro del Root Directory, así que el `.` estaba
+bien. Ese no era el problema.
+
+### El motivo real de que landing se deploye siempre
+
+Doc, requisitos del skip nativo:
+
+> *"Changes that are **not a part of the workspace definition** will be considered **global
+> changes and deploy all applications** in the repository."*
+
+`pnpm-workspace.yaml` define `packages: ["apps/*"]`. Todo lo que esté fuera de `apps/` es un
+cambio global.
+
+**Medición: 101 archivos fuera de `apps/*` en los últimos 133 commits** —
+`docs/` 53, `tools/` 26, `SESSION.md` 19, `pnpm-lock.yaml` 2, `README.md` 1.
+
+O sea: **cada handoff que escribimos fuerza un deploy de landing.** Es política del proyecto
+escribir uno por sesión, así que se dispara todo el tiempo. El commit `b62519ec` de esta misma
+sesión (docs + SESSION.md) lo hizo.
+
+### Requisitos del skip nativo — se cumplen todos
+
+| Requisito | Estado |
+|---|---|
+| Repo en GitHub | ✅ `akawolfcito/chesscito` |
+| Workspaces npm/yarn/pnpm/Bun | ✅ `pnpm-workspace.yaml` + `packageManager: pnpm@8.10.0` |
+| `name` único por package | ✅ `landing` |
+| Deps entre packages explícitas | ✅ landing no tiene deps de workspace (solo next, react, next-intl, sharp) |
+
+### Recomendación
+
+1. **Ignored Build Step → `Automatic`** (borrar el comando custom). No ahorra slot, y su
+   `HEAD^` puede dejar landing stale. El toggle nativo ya hace el trabajo, mejor.
+2. **Dejar el toggle nativo Enabled** (ya lo está).
+3. **Aceptar que los commits que tocan `docs/`, `tools/` o `SESSION.md` deployan todo.** Es
+   inherente al mecanismo: no hay forma de declararle a Vercel que una carpeta fuera del
+   workspace es irrelevante. Si molesta lo suficiente, la única palanca real es **no mezclar
+   docs con código en el mismo push** — pero eso es fricción diaria a cambio de un build de
+   landing, y probablemente no valga la pena.
+
+⚠️ **Corrección de una recomendación anterior de esta sesión:** llegué a sugerir
+`npx turbo-ignore`. Sigue siendo un Ignored Build Step, así que **también consumiría slot**.
+La doc solo lo menciona (vía `turbo query`) para monorepos que **no cumplen** los requisitos
+del skip nativo — no es el caso acá.
 
 ---
 
