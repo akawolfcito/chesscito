@@ -166,6 +166,27 @@ describe("at-least-once — an attempt survives until the server confirms IT", (
     expect(after.outbox[0].attemptId).toBe(state.outbox[0].attemptId);
   });
 
+  it("admits only the five known event types (D20, by enumeration)", () => {
+    // The test above proves an unknown event is inert TODAY. This one is what
+    // stops the union from growing a reset member tomorrow: adding one makes
+    // this assignment fail to compile, which is the point — the guarantee is
+    // that the reducer cannot hear about the board's visual lifecycle at all.
+    const known = [
+      "completed",
+      "hydrated",
+      "submission_started",
+      "submission_settled",
+      "submission_failed",
+    ] as const;
+    // Compile-time exhaustiveness: every member of the union must be one of
+    // the five above, or `tsc` rejects this assignment.
+    const everyMember = null as unknown as AttemptEvent["type"];
+    const covered: (typeof known)[number] = everyMember;
+    void covered;
+
+    expect(new Set<string>(known).size).toBe(5);
+  });
+
   it("caps the outbox at OUTBOX_MAX, dropping the OLDEST", () => {
     const mint = sequentialMint();
     const events = Array.from({ length: OUTBOX_MAX + 3 }, (_, i) =>

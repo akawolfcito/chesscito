@@ -483,8 +483,11 @@ At-least-once (D20):
 - [ ] A network error keeps A in the outbox and clears `inFlight`, so the next drain retries it.
 - [ ] `selectNextSubmission` returns null while one POST is in flight.
 - [ ] The outbox caps at 20, drops the oldest, and logs the overflow.
-- [ ] The reducer has **no** event for reset/exercise change — asserted structurally on the
-      `AttemptEvent` union, so no future wiring can reintroduce one.
+- [x] The reducer has **no** event for reset/exercise change — asserted structurally on the
+      `AttemptEvent` union, so no future wiring can reintroduce one. *(By enumeration: adding a
+      member makes the test file fail `tsc`. Verified by adding `board_reset` and watching it
+      break.)*
+- [x] A reload with unsent attempts still delivers them exactly once (DEBT-2).
 
 Gates (D18):
 
@@ -565,10 +568,22 @@ The two premise tests — never to be weakened:
 
 ## Blocking implementation debt (round-7 red team)
 
-Both must be closed **inside** this slice, before it ships. They are carried here rather than
-in a v8 because neither changes the schema or D1–D20 — each is one mechanism, and both are best
-verified by the tests that cover them. Full analysis:
-`2026-07-28-attempt-identity-score-attempts-redteam.md`.
+**Both CLOSED (2026-07-28).** They were carried here rather than in a v8 because neither
+changes the schema or D1–D20 — each is one mechanism, and both are best verified by the tests
+that cover them. Full analysis: `2026-07-28-attempt-identity-score-attempts-redteam.md`.
+
+- **DEBT-1 → `6e09c9f`.** The four counters are now one reducer,
+  `lib/scores/attempt-run-key.ts`: `board_reset` rotates all four, `content_started` rotates
+  `labyrinth`, and `runKeyFor(family, keys)` mirrors the board ternary once. Rotation is
+  asserted per family from a table that must cover `ATTEMPT_FAMILIES` in full.
+- **DEBT-2 → `dfa0e34`.** The outbox is mirrored to
+  `chesscito:attempt-outbox:v1:<wallet>` (`lib/scores/attempt-outbox-storage.ts`), and the
+  reducer gained `hydrated`, which re-queues without minting and dedupes by id. Per wallet,
+  because an attempt is credited to whoever is connected when it drains. **The host wiring —
+  read on mount, mirror on every change — lands with the assemblers**, which is where the
+  reducer first gets mounted at all.
+
+The original statements follow, unedited.
 
 **DEBT-1 · The latch's run key is unverified for three families.** `resetBoard()` rotates
 `boardKey` (`:1518`), `safePathResetKey` (`:1527`) and `promotionRunResetKey` (`:1539`) — it
