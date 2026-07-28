@@ -38,7 +38,6 @@ import type { Exercise, PieceId } from "@/lib/game/types";
 import {
   isMeasurementInRange,
   movesCeiling,
-  type AttemptMeasureKind,
   type AttemptMeasurement,
   type GradeResult,
 } from "./attempt-measurement";
@@ -296,7 +295,7 @@ export function gradeAttempt(
   }
 
   // A promotion-run id carrying a move count is a 400, not a graded guess.
-  if (input.measurement.kind !== (bucket.measureKind as AttemptMeasureKind)) {
+  if (input.measurement.kind !== bucket.measureKind) {
     return { ok: false, reason: "measurement_kind_mismatch" };
   }
 
