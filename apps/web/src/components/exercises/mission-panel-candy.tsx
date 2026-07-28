@@ -69,7 +69,7 @@ type MissionPanelProps = {
   trainingPath?: TrainingNode[]
   /** D5 — save-score affordance inside the mission detail sheet.
    *  Forwarded untouched; the host owns gating and busy state. */
-  canSaveScore?: boolean
+  canOfferScoreSave?: boolean
   isSavingScore?: boolean
   /** B2 (Lote 2): off-chain save auto-runs + is free. Forwarded to
    *  MissionDetailSheet, which renders the informative saved state / free
@@ -462,7 +462,7 @@ export function MissionPanelCandy({
   persistentDock,
   isCapture = false,
   trainingPath,
-  canSaveScore,
+  canOfferScoreSave,
   isSavingScore,
   scoreSaved,
   saveFailed,
@@ -673,7 +673,7 @@ export function MissionPanelCandy({
             score={score}
             trainingPath={trainingPath}
             onLabyrinthSelect={onLabyrinthSelect}
-            canSaveScore={canSaveScore}
+            canOfferScoreSave={canOfferScoreSave}
             isSavingScore={isSavingScore}
             scoreSaved={scoreSaved}
             saveFailed={saveFailed}
