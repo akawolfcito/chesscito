@@ -75,6 +75,20 @@ export async function POST(req: Request) {
   // capability even if asked politely (audit R12).
   const surface = resolveDeploymentSurface();
 
+  // A deployment with no configured chain cannot issue a usable challenge: the
+  // chain is part of the signed terms, and `authorize` rejects a non-positive
+  // one. Emitting a placeholder here would hand the client a message that is
+  // ALWAYS rejected later — a 200 followed by an inexplicable 400, with the
+  // real cause (a missing env var) named nowhere. Fail loudly, at the step
+  // that actually knows what is wrong.
+  const chainId = getConfiguredChainId();
+  if (chainId === null) {
+    log.error("chain_not_configured", {
+      hint: "NEXT_PUBLIC_CHAIN_ID missing or unsupported",
+    });
+    return NextResponse.json({ error: "unavailable" }, { status: 503 });
+  }
+
   const supabase = getSupabaseServer();
   if (!supabase) {
     log.error("supabase_unavailable", { wallet: hashWallet(wallet) });
@@ -91,7 +105,7 @@ export async function POST(req: Request) {
   return NextResponse.json(
     {
       message: buildScoreSessionMessage({
-        chainId: getConfiguredChainId() ?? 0,
+        chainId,
         wallet,
         surface,
         sessionId,

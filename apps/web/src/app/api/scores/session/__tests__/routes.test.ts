@@ -196,6 +196,25 @@ describe("score write session endpoints", () => {
     expect(res.status).toBe(400);
   });
 
+  it.each([
+    ["missing", undefined],
+    ["unsupported", "1"],
+  ])("refuses to issue a challenge when the chain is %s", async (_label, value) => {
+    // The chain is part of the SIGNED terms and `authorize` rejects a
+    // non-positive one. A deployment with no chain configured must fail HERE,
+    // loudly — emitting a placeholder would hand the client a message that is
+    // always rejected later: a 200 followed by an inexplicable 400, with the
+    // real cause (a missing env var) named nowhere.
+    if (value === undefined) delete process.env.NEXT_PUBLIC_CHAIN_ID;
+    else process.env.NEXT_PUBLIC_CHAIN_ID = value;
+
+    const res = await challengePOST(challengeReq({ wallet: minipay.address }));
+    expect(res.status).toBe(503);
+    expect(supabaseMock.from).not.toHaveBeenCalled();
+
+    process.env.NEXT_PUBLIC_CHAIN_ID = String(CHAIN_ID);
+  });
+
   // ── 4, 5, 21: signature ──────────────────────────────────────────────────
 
   it("does not create a session from an invalid signature", async () => {
