@@ -15,6 +15,7 @@ import {
   THEMES,
   DEFAULT_THEME_ID,
   type SingleFileFormat,
+  type ThemeAssetKey,
 } from "../theme-registry";
 import { resolveAppRoot } from "../asset-roots";
 import { SHARED_LANDING_ASSETS } from "../shared-landing-assets";
@@ -97,18 +98,48 @@ describe("landing art coverage", () => {
     const keys = landingSlots.map(([key]) => key);
     expect(keys).toEqual(
       expect.arrayContaining([
+        // Live slots (2026-07-29 redesign): one illustration per slide, and
+        // title art per locale for slides 2-4.
+        "landing.slide1-bg",
+        "landing.slide2-bg",
+        "landing.slide3-bg",
+        "landing.slide4-bg",
+        "landing.slide1-title",
+        "landing.slide2-title-en",
+        "landing.slide2-title-es",
+        "landing.slide3-title-en",
+        "landing.slide3-title-es",
+        "landing.slide4-title-en",
+        "landing.slide4-title-es",
+        "landing.season-pass-icon",
+        "landing.pro-icon",
+        // Superseded but still on disk, so still replaceable.
         "landing.slides-frame",
         "landing.slides-scene-desktop",
         "landing.slide1-avatar",
-        "landing.slide1-title",
         "landing.slide2-avatar",
         "landing.slide2-title",
         "landing.slide3-avatar",
         "landing.slide3-title",
         "landing.slide4-avatar",
-        "landing.season-pass-icon",
-        "landing.pro-icon",
       ]),
+    );
+  });
+
+  it("gives slides 2-4 a separate title slot per locale", () => {
+    const byKey = new Map(landingSlots);
+    // The whole reason these are two slots and not one: the files differ, so
+    // a single slot would have let someone replace the English wordmark and
+    // silently leave the Spanish one behind.
+    for (const step of [2, 3, 4]) {
+      const en = byKey.get(`landing.slide${step}-title-en` as ThemeAssetKey);
+      const es = byKey.get(`landing.slide${step}-title-es` as ThemeAssetKey);
+      expect(en?.default).toBeTruthy();
+      expect(es?.default).not.toEqual(en?.default);
+    }
+    // Slide 1 is the deliberate exception — one file, both locales.
+    expect(byKey.get("landing.slide1-title")?.default).toBe(
+      "/art/landing-slides/title-chesscito",
     );
   });
 
@@ -124,7 +155,10 @@ describe("landing art coverage", () => {
   it("leaves no landing image outside the catalog or the sync manifest", () => {
     const literals = landingArtLiterals();
     // Guard the guard: a scanner that finds nothing would pass vacuously.
-    expect(literals).toContain("/art/landing-slides/avatar-chesscito-welcome");
+    // Sentinel updated 2026-07-29 — the old one (avatar-chesscito-welcome)
+    // left the landing source with the slide redesign, so it stopped proving
+    // the scanner works and started proving only that the art moved.
+    expect(literals).toContain("/art/landing-slides/slide-bg-1");
     expect(literals.length).toBeGreaterThan(15);
 
     const cataloged = new Set(landingSlots.flatMap(([, e]) => basenamesOf(e)));

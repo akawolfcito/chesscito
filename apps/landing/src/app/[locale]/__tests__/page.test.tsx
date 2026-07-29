@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithIntl } from "@/test-utils/render-with-intl";
-import { WelcomeBack } from "@/components/onboarding/welcome-back";
 
 const cookieStore = new Map<string, string>();
 
@@ -11,33 +10,44 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
+async function renderPage() {
+  const { default: Page } = await import("@/app/[locale]/page");
+  return renderWithIntl(<Page />);
+}
+
 describe("[locale] onboarding page", () => {
-  it("renders the full carousel for a first-time visitor (no cookie)", async () => {
+  it("opens on slide 1 for a first-time visitor (no cookie)", async () => {
     cookieStore.clear();
-    const { default: Page } = await import("@/app/[locale]/page");
-    renderWithIntl(<Page />);
-    expect(screen.getByText("1 / 4")).toBeInTheDocument();
+    await renderPage();
+    expect(screen.getByText("1 of 4")).toBeInTheDocument();
   });
 
-  it("falls back to the full carousel for a corrupt cookie (missing mode)", async () => {
+  it("falls back to slide 1 for a corrupt cookie (missing mode)", async () => {
     cookieStore.clear();
     cookieStore.set("chesscito_onboarded", "true");
-    const { default: Page } = await import("@/app/[locale]/page");
-    renderWithIntl(<Page />);
-    expect(screen.getByText("1 / 4")).toBeInTheDocument();
+    await renderPage();
+    expect(screen.getByText("1 of 4")).toBeInTheDocument();
+    expect(screen.queryByText(/last used/i)).not.toBeInTheDocument();
   });
 
-  it("branches to WelcomeBack with the stored mode when a valid cookie is present", async () => {
-    // WelcomeBack is an async Server Component — React DOM's test renderer
-    // can't mount an unresolved child promise, so this checks the element
-    // Page() returns (type + props) rather than deep-rendering it. The
-    // WelcomeBack render itself is covered by welcome-back.test.tsx.
+  /**
+   * There is no second screen any more. A returning visitor gets the same
+   * carousel, opened on the choice slide with their previous pick labelled —
+   * which is why this can be a plain render assertion now, where it used to
+   * have to inspect the returned element because `WelcomeBack` was an async
+   * Server Component the test renderer could not mount.
+   */
+  it("drops a returning visitor on slide 4 with their mode labelled", async () => {
     cookieStore.clear();
     cookieStore.set("chesscito_onboarded", "true");
     cookieStore.set("chesscito_preferred_mode", "learn");
-    const { default: Page } = await import("@/app/[locale]/page");
-    const element = Page();
-    expect(element.type).toBe(WelcomeBack);
-    expect(element.props.preferredMode).toBe("learn");
+    await renderPage();
+
+    expect(screen.getByText("4 of 4")).toBeInTheDocument();
+    expect(screen.getByText(/last used/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /training/i })).toHaveAttribute(
+      "href",
+      "/api/enter?mode=learn",
+    );
   });
 });

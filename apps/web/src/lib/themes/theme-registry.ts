@@ -268,10 +268,24 @@ export type ThemeAssetKey =
   | "welcome.focus-stamp"
   | "landing.hero"
   | "landing.progress-trophies"
+  // Onboarding carousel, 2026-07-29 redesign: one illustration per slide, and
+  // title art per locale for slides 2-4 (the Spanish files spell different
+  // words). Slide 1 keeps a single title slot — same wordmark in both.
+  | "landing.slide1-bg"
+  | "landing.slide2-bg"
+  | "landing.slide3-bg"
+  | "landing.slide4-bg"
+  | "landing.slide1-title"
+  | "landing.slide2-title-en"
+  | "landing.slide2-title-es"
+  | "landing.slide3-title-en"
+  | "landing.slide3-title-es"
+  | "landing.slide4-title-en"
+  | "landing.slide4-title-es"
+  // Superseded by the above, still on disk and therefore still replaceable.
   | "landing.slides-frame"
   | "landing.slides-scene-desktop"
   | "landing.slide1-avatar"
-  | "landing.slide1-title"
   | "landing.slide2-avatar"
   | "landing.slide2-title"
   | "landing.slide3-avatar"
@@ -869,19 +883,42 @@ export const THEMES: Record<string, ThemeDefinition> = {
       // here never reached the live landing.
       "landing.hero": { root: "landing", default: "/art/landing/hero-play-hub", usedIn: ["Landing — play-hub hero", "↳ apps/landing · components/landing/landing-page.tsx"] },
       "landing.progress-trophies": { root: "landing", default: "/art/landing/progress-trophies", usedIn: ["Landing — progress trophies", "↳ apps/landing · components/landing/landing-page.tsx"] },
-      // landing onboarding carousel — the 4 slides (avatar + title art),
-      // their backdrops, and the two plan icons. Source of truth for the
-      // paths: apps/landing/src/lib/onboarding/slides.ts.
-      "landing.slides-frame": { root: "landing", default: "/art/landing-slides/bg-slides", usedIn: ["Landing — carousel phone frame", "↳ apps/landing · components/onboarding/slide-shell.tsx"] },
-      "landing.slides-scene-desktop": { root: "landing", default: "/art/landing-slides/bg-slides-web", usedIn: ["Landing — carousel desktop backdrop", "↳ apps/landing · components/onboarding/onboarding-carousel.tsx"] },
-      "landing.slide1-avatar": { root: "landing", default: "/art/landing-slides/avatar-chesscito-welcome", usedIn: ["Landing — slide 1 avatar (welcome)", "↳ apps/landing · lib/onboarding/slides.ts"] },
-      "landing.slide1-title": { root: "landing", default: "/art/landing-slides/chesscito-title", usedIn: ["Landing — slide 1 title art", "↳ apps/landing · lib/onboarding/slides.ts"] },
-      "landing.slide2-avatar": { root: "landing", default: "/art/landing-slides/avatar-21-day-challenge", usedIn: ["Landing — slide 2 avatar (21-day challenge)", "↳ apps/landing · lib/onboarding/slides.ts"] },
-      "landing.slide2-title": { root: "landing", default: "/art/landing-slides/21-day-challente-title", usedIn: ["Landing — slide 2 title art", "↳ apps/landing · lib/onboarding/slides.ts"] },
-      "landing.slide3-avatar": { root: "landing", default: "/art/landing-slides/avatar-play-chess", usedIn: ["Landing — slide 3 avatar (play chess)", "↳ apps/landing · lib/onboarding/slides.ts"] },
-      "landing.slide3-title": { root: "landing", default: "/art/landing-slides/play-chess-title", usedIn: ["Landing — slide 3 title art", "↳ apps/landing · lib/onboarding/slides.ts"] },
-      // Slide 4 ships no title art — the slide leads with copy, not a wordmark.
-      "landing.slide4-avatar": { root: "landing", default: "/art/landing-slides/avatar-learn-path", usedIn: ["Landing — slide 4 avatar (learn path)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      // landing onboarding carousel — one full-bleed illustration per slide
+      // plus its title art. Source of truth for the paths:
+      // apps/landing/src/lib/onboarding/slides.ts (SLIDE_VISUALS).
+      //
+      // ⚠️ Title art is PER LOCALE for slides 2-4: the Spanish files carry
+      // different words (ES-learn reads "APRENDE", not "LEARN"), so they are
+      // separate slots. One slot = one file stays true; a single "slide2
+      // title" slot would have made replacing the English wordmark silently
+      // leave the Spanish one behind. Slide 1 is the exception on purpose —
+      // the CHESSCITO wordmark is the same picture in both locales, so both
+      // locales read the one slot.
+      "landing.slide1-bg": { root: "landing", default: "/art/landing-slides/slide-bg-1", usedIn: ["Landing — slide 1 illustration (welcome)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide2-bg": { root: "landing", default: "/art/landing-slides/slide-bg-2", usedIn: ["Landing — slide 2 illustration (Learn)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide3-bg": { root: "landing", default: "/art/landing-slides/slide-bg-3", usedIn: ["Landing — slide 3 illustration (Play)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide4-bg": { root: "landing", default: "/art/landing-slides/slide-bg-4", usedIn: ["Landing — slide 4 illustration (Choose your path)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide1-title": { root: "landing", default: "/art/landing-slides/title-chesscito", usedIn: ["Landing — slide 1 title art (CHESSCITO, both locales)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide2-title-en": { root: "landing", default: "/art/landing-slides/title-learn-en", usedIn: ["Landing — slide 2 title art, EN (LEARN)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide2-title-es": { root: "landing", default: "/art/landing-slides/title-learn-es", usedIn: ["Landing — slide 2 title art, ES (APRENDE)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide3-title-en": { root: "landing", default: "/art/landing-slides/title-play-en", usedIn: ["Landing — slide 3 title art, EN (PLAY)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide3-title-es": { root: "landing", default: "/art/landing-slides/title-play-es", usedIn: ["Landing — slide 3 title art, ES (JUEGA)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide4-title-en": { root: "landing", default: "/art/landing-slides/title-choose-en", usedIn: ["Landing — slide 4 title art, EN (CHOOSE YOUR PATH)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      "landing.slide4-title-es": { root: "landing", default: "/art/landing-slides/title-choose-es", usedIn: ["Landing — slide 4 title art, ES (ELIGE TU CAMINO)", "↳ apps/landing · lib/onboarding/slides.ts"] },
+      // Superseded 2026-07-29 by the full-bleed redesign. Still on disk, so
+      // they stay cataloged rather than rotting invisibly — same treatment as
+      // the landing.slide-web-* group below. The frame and the desktop
+      // backdrop went away with the gold frame; the four avatars are now
+      // painted INTO each slide's illustration, and the two title files below
+      // were replaced by per-locale art.
+      "landing.slides-frame": { root: "landing", default: "/art/landing-slides/bg-slides", deprecated: "no consumer — gold frame removed by the 2026-07-29 slide redesign", usedIn: [] },
+      "landing.slides-scene-desktop": { root: "landing", default: "/art/landing-slides/bg-slides-web", deprecated: "no consumer — desktop backdrop removed by the 2026-07-29 slide redesign", usedIn: [] },
+      "landing.slide1-avatar": { root: "landing", default: "/art/landing-slides/avatar-chesscito-welcome", deprecated: "no consumer — baked into landing.slide1-bg", usedIn: [] },
+      "landing.slide2-avatar": { root: "landing", default: "/art/landing-slides/avatar-21-day-challenge", deprecated: "no consumer — baked into landing.slide2-bg", usedIn: [] },
+      "landing.slide3-avatar": { root: "landing", default: "/art/landing-slides/avatar-play-chess", deprecated: "no consumer — baked into landing.slide3-bg", usedIn: [] },
+      "landing.slide4-avatar": { root: "landing", default: "/art/landing-slides/avatar-learn-path", deprecated: "no consumer — baked into landing.slide4-bg", usedIn: [] },
+      "landing.slide2-title": { root: "landing", default: "/art/landing-slides/21-day-challente-title", deprecated: "no consumer — superseded by landing.slide2-title-{en,es}", usedIn: [] },
+      "landing.slide3-title": { root: "landing", default: "/art/landing-slides/play-chess-title", deprecated: "no consumer — superseded by landing.slide3-title-{en,es}", usedIn: [] },
       "landing.season-pass-icon": { root: "landing", default: "/art/landing-slides/season-pass-icon", usedIn: ["Landing — Season Pass plan icon", "↳ apps/landing · lib/onboarding/slides.ts (ICONS.seasonPass)"] },
       "landing.pro-icon": { root: "landing", default: "/art/landing-slides/pro-suscription-icon", usedIn: ["Landing — PRO subscription plan icon", "↳ apps/landing · lib/onboarding/slides.ts (ICONS.pro)"] },
       // On disk in apps/landing/public but referenced by nothing in the
@@ -1226,10 +1263,24 @@ export const LANDING_SLOT_KEYS = [
   "landing.pre-chess",
   "landing.hero",
   "landing.progress-trophies",
+  // Onboarding carousel, 2026-07-29 redesign: one illustration per slide plus
+  // per-locale title art (slide 1 shares one file — the wordmark is the same
+  // picture in EN and ES).
+  "landing.slide1-bg",
+  "landing.slide2-bg",
+  "landing.slide3-bg",
+  "landing.slide4-bg",
+  "landing.slide1-title",
+  "landing.slide2-title-en",
+  "landing.slide2-title-es",
+  "landing.slide3-title-en",
+  "landing.slide3-title-es",
+  "landing.slide4-title-en",
+  "landing.slide4-title-es",
+  // Superseded by the above but still on disk.
   "landing.slides-frame",
   "landing.slides-scene-desktop",
   "landing.slide1-avatar",
-  "landing.slide1-title",
   "landing.slide2-avatar",
   "landing.slide2-title",
   "landing.slide3-avatar",

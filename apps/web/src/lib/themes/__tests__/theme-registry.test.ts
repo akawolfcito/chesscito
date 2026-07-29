@@ -296,7 +296,14 @@ describe("theme-registry", () => {
       // sibling app) + 15 newly cataloged carousel slots + 3 brand/social
       // files the landing layout declares as metadata (OG card, apple-icon,
       // favicon.ico), whose consumer is likewise invisible from apps/web.
-      landing: 21,
+      // +10 (2026-07-29 slide redesign): 4 full-bleed illustrations, one per
+      // slide, and 6 title-art slots — slides 2-4 need one file PER LOCALE
+      // because the Spanish art carries different words (APRENDE / JUEGA /
+      // ELIGE TU CAMINO). Slide 1 keeps a single slot: the CHESSCITO wordmark
+      // is the same picture in both. The 8 slots they superseded are still
+      // counted — they stay cataloged as `deprecated` while the files sit on
+      // disk, same as the landing.slide-web-* group.
+      landing: 31,
       // +1: shared.close-candy, the CandyIcon close art.
       // +1: board.blocker.stone, the exercise obstacle art (2026-07-23),
       // classified with the board.piece.* slots.

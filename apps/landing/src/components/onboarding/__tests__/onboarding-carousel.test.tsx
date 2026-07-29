@@ -1,171 +1,141 @@
 import { describe, expect, it } from "vitest";
-import { OnboardingCarousel } from "@/components/onboarding/onboarding-carousel";
 import { renderWithIntl, screen, fireEvent } from "@/test-utils/render-with-intl";
+import { OnboardingCarousel } from "@/components/onboarding/onboarding-carousel";
+import { SLIDE_VISUALS } from "@/lib/onboarding/slides";
 
-describe("OnboardingCarousel", () => {
-  it("renders slide 1 with a 1/4 progress counter and no Skip control", () => {
-    renderWithIntl(<OnboardingCarousel />);
-    expect(screen.getByText("1 / 4")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /two ways into chess/i })).toBeInTheDocument();
-    expect(screen.queryByText(/skip/i)).not.toBeInTheDocument();
+function firstTime() {
+  return renderWithIntl(
+    <OnboardingCarousel initialStep={1} lastUsedMode={null} />,
+  );
+}
+
+function backgroundSources(container: HTMLElement): string[] {
+  return [...container.querySelectorAll("[data-slide-bg] img")].map(
+    (img) => img.getAttribute("src") ?? "",
+  );
+}
+
+function visibleStep(container: HTMLElement): number {
+  const active = container.querySelector('[data-slide-bg][data-active="true"]');
+  return Number(active?.getAttribute("data-slide-bg"));
+}
+
+describe("OnboardingCarousel — chrome", () => {
+  it("opens on slide 1 for a first-time visitor", () => {
+    firstTime();
+    expect(screen.getByText("1 of 4")).toBeInTheDocument();
   });
 
-  /**
-   * Slide 1's only job is orientation: this is chess, and there are two modes.
-   * It used to lead with "Turn chess into your daily focus ritual", which is
-   * slide 2's pitch, and spent its one moment of attention on a message the
-   * next screen makes better. The mode pills carry the whole payload, so they
-   * name the two paths rather than reading as loose feature chips.
-   */
-  it("slide 1 names both modes and sells neither", () => {
-    renderWithIntl(<OnboardingCarousel />);
-    expect(screen.getByText("Learn")).toBeInTheDocument();
-    expect(screen.getByText("From zero")).toBeInTheDocument();
-    expect(screen.getByText("Play")).toBeInTheDocument();
-    expect(screen.getByText("Full matches")).toBeInTheDocument();
-    expect(screen.queryByText(/\$/)).not.toBeInTheDocument();
-  });
-
-  /**
-   * NEXT, NEXT, NEXT, START. The advance button never claims to start
-   * anything, so START means one thing everywhere: you are going in. That is
-   * also the word `welcome-back.tsx` puts in the same spot for a returning
-   * player, who never sees this carousel again.
-   */
-  it("labels the three advance buttons NEXT and only the final CTA START", () => {
-    renderWithIntl(<OnboardingCarousel />);
-
-    expect(screen.getByRole("button", { name: "NEXT" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "START" })).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-
-    expect(screen.getByText("4 / 4")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "NEXT" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "START" })).toHaveAttribute(
-      "href",
-      "/api/enter?mode=learn",
-    );
-  });
-
-  it("advances slide 1 -> 2 -> 3 -> 4 via the CTA button", () => {
-    renderWithIntl(<OnboardingCarousel />);
-
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-    expect(screen.getByText("2 / 4")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /decide better in 21 days/i })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-    expect(screen.getByText("3 / 4")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: /chesscito pro includes the season pass/i }),
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-    expect(screen.getByText("4 / 4")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /learn the pieces first/i })).toBeInTheDocument();
-  });
-
-  /**
-   * Slides 2 and 3 are the only place the paid layer is ever explained: the
-   * cookie sends returning visitors straight past the carousel. Each screen
-   * states its price once, as a line of text. A price rendered as a pill reads
-   * as an item you own, sitting in the same tray as the thing it buys.
-   */
-  it("slide 2 states the Season Pass price once and never mentions PRO", () => {
-    renderWithIntl(<OnboardingCarousel />);
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-
-    expect(screen.getByText("Season Pass, $0.99")).toBeInTheDocument();
-    expect(screen.queryByText(/PRO/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/reward/i)).not.toBeInTheDocument();
-  });
-
-  /**
-   * "Play free" on slide 3 reinstated the very price inversion slide 4 was
-   * rebuilt to remove: the visitor read "free" here, then one screen later we
-   * recommend Learn, which runs through a $0.99 Season Pass.
-   */
-  it("slide 3 leads with the PRO argument and never says free", () => {
-    renderWithIntl(<OnboardingCarousel />);
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-
-    expect(screen.getByText("Chesscito PRO, $1.99")).toBeInTheDocument();
-    expect(screen.queryByText(/free/i)).not.toBeInTheDocument();
-  });
-
-  it("slide 4 offers Learn as the only CTA, with Play reachable via a text link", () => {
-    renderWithIntl(<OnboardingCarousel />);
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-
-    expect(screen.getByRole("link", { name: "START" })).toHaveAttribute(
-      "href",
-      "/api/enter?mode=learn",
-    );
-    expect(screen.getByRole("link", { name: /jump to play/i })).toHaveAttribute(
-      "href",
-      "/api/enter?mode=play",
-    );
-    // The recommendation only holds if Play never grows back into a rival
-    // button; both destinations stay reachable, one of them quietly.
-    expect(screen.getAllByRole("link")).toHaveLength(5);
-  });
-
-  it("always shows the Privacy/Terms/Support legal footer", () => {
-    renderWithIntl(<OnboardingCarousel />);
-    expect(screen.getByText("Privacy")).toBeInTheDocument();
-    expect(screen.getByText("Terms")).toBeInTheDocument();
-    expect(screen.getByText("Support")).toBeInTheDocument();
-  });
-
-  it("back arrow is disabled on slide 1, enabled after advancing, and navigates back", () => {
-    renderWithIntl(<OnboardingCarousel />);
-    const back = screen.getByRole("button", { name: /previous slide/i });
-    expect(back).toBeDisabled();
-
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-    expect(screen.getByText("2 / 4")).toBeInTheDocument();
-    expect(back).not.toBeDisabled();
-
-    fireEvent.click(back);
-    expect(screen.getByText("1 / 4")).toBeInTheDocument();
-  });
-
-  it("top forward arrow advances a slide same as the CTA button", () => {
-    renderWithIntl(<OnboardingCarousel />);
+  it("advances and goes back", () => {
+    firstTime();
     fireEvent.click(screen.getByRole("button", { name: /next slide/i }));
-    expect(screen.getByText("2 / 4")).toBeInTheDocument();
+    expect(screen.getByText("2 of 4")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /previous slide/i }));
+    expect(screen.getByText("1 of 4")).toBeInTheDocument();
   });
 
-  it("forward arrow is disabled on slide 4 (no slide 5); back arrow returns to slide 3", () => {
-    renderWithIntl(<OnboardingCarousel />);
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-    fireEvent.click(screen.getByRole("button", { name: "NEXT" }));
-    expect(screen.getByRole("heading", { name: /learn the pieces first/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /next slide/i })).toBeDisabled();
+  it("keeps the legal footer and the language switch together", () => {
+    firstTime();
+    expect(screen.getByRole("link", { name: /privacy/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /terms/i })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: /language/i })).toBeInTheDocument();
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: /previous slide/i }));
+  it("takes its nav labels from the copy bundle, not English literals", () => {
+    renderWithIntl(<OnboardingCarousel initialStep={1} lastUsedMode={null} />, {
+      locale: "es",
+    });
     expect(
-      screen.getByRole("heading", { name: /chesscito pro includes the season pass/i }),
+      screen.getByRole("button", { name: /diapositiva siguiente/i }),
     ).toBeInTheDocument();
   });
+});
 
-  it("swipes left to advance and right to go back", () => {
-    renderWithIntl(<OnboardingCarousel />);
-    const area = screen.getByTestId("slide-swipe-area");
+describe("OnboardingCarousel — backgrounds", () => {
+  // Mounting only the active slide would make every tap decode a fresh image
+  // and flash the blue underneath. Four slides used to share one background,
+  // so this cost is new, not inherited.
+  it("mounts all four illustrations at once and shows exactly one", () => {
+    const { container } = firstTime();
 
-    fireEvent.touchStart(area, { touches: [{ clientX: 300, clientY: 100 }] });
-    fireEvent.touchEnd(area, { changedTouches: [{ clientX: 50, clientY: 100 }] });
-    expect(screen.getByText("2 / 4")).toBeInTheDocument();
+    expect(backgroundSources(container)).toEqual([
+      `${SLIDE_VISUALS[1].backgroundSrc}.png`,
+      `${SLIDE_VISUALS[2].backgroundSrc}.png`,
+      `${SLIDE_VISUALS[3].backgroundSrc}.png`,
+      `${SLIDE_VISUALS[4].backgroundSrc}.png`,
+    ]);
+    expect(
+      container.querySelectorAll('[data-slide-bg][data-active="true"]'),
+    ).toHaveLength(1);
+    expect(visibleStep(container)).toBe(1);
+  });
 
-    fireEvent.touchStart(area, { touches: [{ clientX: 50, clientY: 100 }] });
-    fireEvent.touchEnd(area, { changedTouches: [{ clientX: 300, clientY: 100 }] });
-    expect(screen.getByText("1 / 4")).toBeInTheDocument();
+  it("swaps which one is visible as the visitor advances", () => {
+    const { container } = firstTime();
+    fireEvent.click(screen.getByRole("button", { name: /next slide/i }));
+    expect(visibleStep(container)).toBe(2);
+  });
+
+  it("never renders the retired gold frame", () => {
+    const { container } = firstTime();
+    expect(container.innerHTML).not.toContain("bg-slides.");
+  });
+});
+
+describe("OnboardingCarousel — title art per locale", () => {
+  it("uses the English wordmarks in English", () => {
+    const { container } = renderWithIntl(
+      <OnboardingCarousel initialStep={2} lastUsedMode={null} />,
+    );
+    const title = container.querySelector("[data-slide-title] img");
+    expect(title?.getAttribute("src")).toBe(
+      `${SLIDE_VISUALS[2].titleSrc.en}.png`,
+    );
+    expect(title?.getAttribute("alt")).toBe("Learn");
+  });
+
+  // The Spanish art spells a different word, so the alt has to change with it
+  // or a screen reader announces "Learn" over a picture reading APRENDE.
+  it("switches both the file and the alt in Spanish", () => {
+    const { container } = renderWithIntl(
+      <OnboardingCarousel initialStep={2} lastUsedMode={null} />,
+      { locale: "es" },
+    );
+    const title = container.querySelector("[data-slide-title] img");
+    expect(title?.getAttribute("src")).toBe(
+      `${SLIDE_VISUALS[2].titleSrc.es}.png`,
+    );
+    expect(title?.getAttribute("alt")).toBe("Aprende");
+  });
+
+  it("shares one wordmark across locales on slide 1", () => {
+    expect(SLIDE_VISUALS[1].titleSrc.en).toBe(SLIDE_VISUALS[1].titleSrc.es);
+  });
+});
+
+describe("OnboardingCarousel — slide 4", () => {
+  it("replaces the gold advance button with the mode switch", () => {
+    const { container } = renderWithIntl(
+      <OnboardingCarousel initialStep={4} lastUsedMode={null} />,
+    );
+
+    expect(container.querySelector(".primary-play-cta")).toBeNull();
+    expect(screen.getByRole("link", { name: /training/i })).toHaveAttribute(
+      "href",
+      "/api/enter?mode=learn",
+    );
+  });
+
+  it("drops a returning visitor here with their history marked", () => {
+    renderWithIntl(<OnboardingCarousel initialStep={4} lastUsedMode="play" />);
+    expect(screen.getByText("4 of 4")).toBeInTheDocument();
+    expect(screen.getByText(/last used/i)).toBeInTheDocument();
+  });
+
+  // The shortcut skips the pitch; it must not hide it.
+  it("lets a returning visitor walk back through slides 1-3", () => {
+    renderWithIntl(<OnboardingCarousel initialStep={4} lastUsedMode="learn" />);
+    fireEvent.click(screen.getByRole("button", { name: /previous slide/i }));
+    expect(screen.getByText("3 of 4")).toBeInTheDocument();
   });
 });

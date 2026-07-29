@@ -2,33 +2,46 @@
 
 import { useRef, type ReactNode, type TouchEvent } from 'react'
 import { ArtImage } from '@/components/onboarding/art-image'
-import {
-  MOBILE_SCENE_SRC,
-  DESKTOP_SCENE_SRC,
-  FRAME_SRC,
-} from '@/lib/onboarding/slides'
+import { SLIDE_STEPS, SLIDE_VISUALS } from '@/lib/onboarding/slides'
+import type { SlideStep } from '@/lib/onboarding/types'
 
 const SWIPE_THRESHOLD_PX = 40
 
+/** Intrinsic size of the slide art. Declared so the box is reserved before
+ *  the image decodes and the chrome above it does not jump. */
+const ART_WIDTH = 941
+const ART_HEIGHT = 1672
+
 /**
- * Shared visual chrome for every onboarding state (4 slides + the
- * returning-visitor welcome): full-bleed scene behind a fixed-aspect-ratio
- * gold frame, matching the frame PNG's native 980:1398 proportions (v3
- * asset, founder-updated 2026-07-04 — v1 was 1018:1768, v2 was 1070:1264)
- * so its ornate border never distorts. Content scrolls inside the frame
- * if a slide's copy runs long, rather than the frame stretching to fit it.
+ * Shared chrome for the onboarding carousel: a mobile-width column with the
+ * active slide's illustration full-bleed behind it, and three rows on top —
+ * nav pinned to the true top edge, content in the middle, footer pinned to
+ * the bottom.
+ *
+ * The gold frame this replaced imposed a fixed 980:1398 box whose WIDTH was
+ * derived from viewport height (`min(100%, calc(54dvh * 0.9))`), so short
+ * screens shrank the copy or scrolled it inside a picture frame.
  */
 export function SlideShell({
+  activeStep,
   topSlot,
   children,
-  ctaSlot,
+  actionSlot,
   footer,
   onSwipeLeft,
   onSwipeRight,
 }: {
+  activeStep: SlideStep
   topSlot?: ReactNode
   children: ReactNode
-  ctaSlot?: ReactNode
+  /**
+   * The action row at the foot of the slide. NOT "the button": slides 1-3 put
+   * the gold advance button here and slide 4 puts the mode switch, so the
+   * contract is the POSITION. Moving slide 4's control into the content block
+   * would ask the thumb to unlearn three screens of muscle memory exactly
+   * where the tap decides.
+   */
+  actionSlot?: ReactNode
   footer: ReactNode
   onSwipeLeft?: () => void
   onSwipeRight?: () => void
@@ -53,84 +66,64 @@ export function SlideShell({
   }
 
   return (
-    <div className="relative flex h-dvh w-full items-center justify-center overflow-hidden bg-[#1a3fae] px-4 py-4">
-      <ArtImage
-        src={MOBILE_SCENE_SRC}
-        alt=""
-        fit="cover"
-        className="absolute inset-0 h-full w-full md:hidden"
-      />
-      <ArtImage
-        src={DESKTOP_SCENE_SRC}
-        alt=""
-        fit="cover"
-        className="absolute inset-0 hidden h-full w-full md:block"
-      />
-
-      {/* `relative` (not just DOM order) is required here: the scene
-          images above are position:absolute with z-index:auto, which
-          paint in DOM order among z:auto positioned siblings. Without
-          `relative`, this wrapper is a non-positioned in-flow box, which
-          per CSS stacking order paints BEFORE (behind) z:auto positioned
-          siblings — the exact opposite of what we want. Confirmed via
-          elementFromPoint() during development; do not remove.
-
-          3-row layout (was a single centered flex column): the frame
-          never fills the full viewport height, which used to leave dead
-          space equally above the progress counter and below the legal
-          footer. Now topSlot pins to the true top edge, footer pins to
-          the true bottom edge, and only the frame+CTA group centers in
-          the leftover middle space (founder's on-screen markup request). */}
-      <div className="relative flex h-full w-full max-w-[420px] flex-col items-center">
-        <div className="w-full pt-1 text-center">{topSlot}</div>
-
-        <div className="flex w-full flex-1 flex-col items-center justify-center gap-2 min-h-0">
-          {/* The frame PNG has a fixed aspect ratio. The original 1018:1768
-              asset was tall enough that sizing it by width alone (`w-full`
-              up to max-w-420) produced a ~730px-tall frame that, with
-              topSlot/ctaSlot/footer, overflowed real mobile viewports
-              (browser chrome eats into `dvh`) and forced a page scroll.
-              Fix: `width` is an explicit `min(100%, <height-budget-derived
-              width>)` — deterministic, unlike relying on browser
-              aspect-ratio+max-height auto-sizing (tried first, unreliable:
-              content overflowed the frame's own bottom edge instead of
-              scrolling). `height: auto` + `aspectRatio` then derives height
-              from that resolved width, guaranteed to fit the budget. Kept
-              after the v2 (shorter) asset landed — still correct, just
-              binds less often now that the frame itself is shorter. */}
+    <div className="relative flex h-dvh w-full items-center justify-center overflow-hidden bg-[#1a3fae]">
+      <div className="relative h-full w-full max-w-[420px] overflow-hidden">
+        {/* All four illustrations stay mounted, three of them transparent.
+            Mounting only the active one makes each tap decode a fresh image
+            and flash the blue underneath — a cost that did not exist when the
+            four slides shared a single backdrop. */}
+        {SLIDE_STEPS.map((step) => (
           <div
-            className="relative"
-            style={{
-              aspectRatio: '980 / 1398',
-              width: 'min(100%, calc(54dvh * 0.9))',
-              height: 'auto',
-            }}
+            key={step}
+            data-slide-bg={step}
+            data-active={step === activeStep ? 'true' : undefined}
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 transition-opacity duration-200 ${
+              step === activeStep ? 'opacity-100' : 'opacity-0'
+            }`}
           >
             <ArtImage
-              src={FRAME_SRC}
+              src={SLIDE_VISUALS[step].backgroundSrc}
               alt=""
-              className="absolute inset-0 h-full w-full"
+              fit="cover"
+              width={ART_WIDTH}
+              height={ART_HEIGHT}
+              className="h-full w-full"
+              /* Anchored to the bottom: the wolf lives in the lower half and
+                 the sky above is the sacrificial zone. Only bites when the
+                 column is shorter than ~746px — above that, `cover` scales by
+                 height and crops the sides instead, where this is inert.
+                 Routed through imgClassName because object-position styles the
+                 replaced element; on the <picture> it would do nothing, and it
+                 would do it silently. */
+              imgClassName="object-bottom"
             />
-            <div
-              data-testid="slide-swipe-area"
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              className="relative z-10 flex h-full flex-col items-center gap-2 overflow-y-auto px-[9%] py-[6%] text-center"
-            >
-              {children}
-            </div>
+          </div>
+        ))}
+
+        <div
+          className="relative flex h-full w-full flex-col items-center px-4 py-3"
+          data-slide-step={activeStep}
+        >
+          <div className="w-full pt-1 text-center">{topSlot}</div>
+
+          {/* The swipe surface is this row alone. Stretching it over the whole
+              column would wrap the mode switch and the legal links, so a drag
+              starting on a link could both navigate the carousel and follow
+              the link. */}
+          <div
+            data-testid="slide-swipe-area"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            className="flex w-full min-h-0 flex-1 flex-col items-center justify-start gap-2 overflow-y-auto pt-2 text-center"
+          >
+            {children}
           </div>
 
-          {/* Full column width (was capped narrower via a dvh-derived
-              max-width matching the frame's own budget) — founder wants
-              Slide 4's 2-button row spread edge to edge like the Hub's
-              Train Pieces / Enter Arena row, not squeezed to the frame's
-              width. Applies to the single START/NEXT button too; a
-              wider full-width button reads fine there as well. */}
-          {ctaSlot ? <div>{ctaSlot}</div> : null}
-        </div>
+          {actionSlot ? <div className="w-full pb-1">{actionSlot}</div> : null}
 
-        <div className="w-full pb-1">{footer}</div>
+          <div className="w-full pb-1 pt-2">{footer}</div>
+        </div>
       </div>
     </div>
   )
