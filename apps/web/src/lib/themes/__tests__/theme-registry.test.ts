@@ -286,7 +286,10 @@ describe("theme-registry", () => {
       // +1: bg.login-play, the Play web access gate wallpaper (2026-07-25).
       // +4: Arena Warm-up and the three KingdomCard benefits are independently
       // editable PLAY slots, even when their defaults reuse established art.
-      play: 29,
+      // +3: the mini-tour's PRO benefit icons (2026-07-28). Separate from the
+      // KingdomCard trio on purpose — that trio names hub navigation, these
+      // name what the subscription buys.
+      play: 32,
       // 3 reclassified off `unknown` (they always had a consumer — in the
       // sibling app) + 15 newly cataloged carousel slots + 3 brand/social
       // files the landing layout declares as metadata (OG card, apple-icon,

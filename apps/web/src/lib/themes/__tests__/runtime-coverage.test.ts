@@ -50,17 +50,22 @@ describe("theme runtime catalog coverage", () => {
     // 178 (2026-07-26): + shared.tour-help. The tour reuses the established
     // shared.close mission control; shared.close-candy remains cataloged for
     // CandyIcon's composed-path vocabulary.
-    expect(report.totalSlots).toBe(178);
+    // 181 (2026-07-28): + the three mini-tour PRO benefit slots. Own slots on
+    // purpose: the KingdomCard trio they replaced describes hub navigation,
+    // not what PRO buys, and reusing it rendered the same strip on the tour's
+    // context step and its sale step. Resolver-connected via TileIconSlot:
+    // A 164 → 167, initial B 82 → 85.
+    expect(report.totalSlots).toBe(181);
     expect(report.initialCategoryCounts).toEqual({
       A: 2,
-      B: 82,
+      B: 85,
       C: 26,
       D: 38,
       E: 19,
       F: 11,
       G: 0,
     });
-    expect(report.connectedSlots).toBe(165);
+    expect(report.connectedSlots).toBe(168);
     expect(report.excludedSlots).toBe(13);
     expect(
       report.slots.filter(

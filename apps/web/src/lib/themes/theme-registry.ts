@@ -102,6 +102,11 @@ export type ThemeAssetKey =
   | "hub.quick-match-benefit"
   | "hub.coach-review-benefit"
   | "hub.rewards-benefit"
+  // PRO tour benefits — the subscription's own perks, deliberately NOT the
+  // three KingdomCard navigation chips above.
+  | "hub.pro-benefit-season-pass"
+  | "hub.pro-benefit-coach"
+  | "hub.pro-benefit-complete"
   | "hub.shop-icon"
   | "hub.btn-battle"
   | "hub.btn-play"
@@ -380,6 +385,18 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "hub.rewards-benefit": {
         default: "/art/scene-rooted/treasure-chest-small",
         usedIn: ["Play Hub — KingdomCard Rewards benefit · route: /", "↳ components/kingdom/kingdom-card.tsx"],
+      },
+      "hub.pro-benefit-season-pass": {
+        default: "/art/landing-slides/season-pass-icon",
+        usedIn: ["Play Hub — mini-tour PRO step, Season Pass benefit · route: /", "↳ components/hub/hub-tour.tsx"],
+      },
+      "hub.pro-benefit-coach": {
+        default: "/art/new-assets-chesscito/btns/ask-coach-icon",
+        usedIn: ["Play Hub — mini-tour PRO step, Unlimited Coach benefit · route: /", "↳ components/hub/hub-tour.tsx"],
+      },
+      "hub.pro-benefit-complete": {
+        default: "/art/landing-slides/pro-suscription-icon",
+        usedIn: ["Play Hub — mini-tour PRO step, Complete Experience benefit · route: /", "↳ components/hub/hub-tour.tsx"],
       },
       "hub.shop-icon": {
         default: "/art/redesign/icons/shop",
@@ -1056,6 +1073,9 @@ const PLAY_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "hub.quick-match-benefit",
   "hub.coach-review-benefit",
   "hub.rewards-benefit",
+  "hub.pro-benefit-season-pass",
+  "hub.pro-benefit-coach",
+  "hub.pro-benefit-complete",
   "hub.shop-icon",
   "shop.pro",
   "arena.save",

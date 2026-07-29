@@ -541,12 +541,16 @@ if (CHECK_MODE) {
   // +1 (B: 81 → 82) 2026-07-26: shared.tour-help, the question icon shared by
   // the LEARN and PLAY replay affordances. The mini-tour closes with the
   // established shared.close mission control.
-  const expectedInitial = { A: 2, B: 82, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  // +3 (B: 82 → 85) 2026-07-28: the mini-tour's PRO benefit icons
+  // (season-pass / coach / complete). They are deliberately their own slots
+  // rather than a reuse of the KingdomCard trio — that trio describes hub
+  // navigation, not what the subscription buys.
+  const expectedInitial = { A: 2, B: 85, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 178 ||
+    inventory.length !== 181 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

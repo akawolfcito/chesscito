@@ -1,9 +1,9 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 178,
+  "totalSlots": 181,
   "categoryCounts": {
-    "A": 165,
+    "A": 168,
     "B": 0,
     "C": 0,
     "D": 0,
@@ -13,25 +13,25 @@
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 82,
+    "B": 85,
     "C": 26,
     "D": 38,
     "E": 19,
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 166,
-  "fullyConnectedSlots": 165,
+  "resolverSlots": 169,
+  "fullyConnectedSlots": 168,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
   "noActiveConsumerSlots": 6,
-  "connectedSlots": 165,
+  "connectedSlots": 168,
   "excludedSlots": 13,
   "exceptions": [],
   "literalDiff": {
-    "registeredBasenames": 208,
+    "registeredBasenames": 210,
     "discoveredBasenames": 16,
     "unregisteredExistingAssets": []
   },
@@ -772,19 +772,8 @@
         "src/components/kingdom/kingdom-card.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 2,
+      "consumerCount": 1,
       "consumers": [
-        {
-          "file": "src/components/hub/hub-tour.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        },
         {
           "file": "src/components/kingdom/kingdom-card.tsx",
           "occurrences": [],
@@ -828,19 +817,8 @@
         "src/components/kingdom/kingdom-card.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 2,
+      "consumerCount": 1,
       "consumers": [
-        {
-          "file": "src/components/hub/hub-tour.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        },
         {
           "file": "src/components/kingdom/kingdom-card.tsx",
           "occurrences": [],
@@ -884,7 +862,52 @@
         "src/components/kingdom/kingdom-card.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 2,
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/kingdom/kingdom-card.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "hub.pro-benefit-season-pass",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/landing-slides/season-pass-icon"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Play Hub — mini-tour PRO step, Season Pass benefit · route: /",
+        "↳ components/hub/hub-tour.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/hub/hub-tour.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
       "consumers": [
         {
           "file": "src/components/hub/hub-tour.tsx",
@@ -896,9 +919,88 @@
           "usesCssBackground": false,
           "usesSharedMap": false,
           "buildsPathDynamically": false
-        },
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "hub.pro-benefit-coach",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/new-assets-chesscito/btns/ask-coach-icon"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Play Hub — mini-tour PRO step, Unlimited Coach benefit · route: /",
+        "↳ components/hub/hub-tour.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/hub/hub-tour.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
         {
-          "file": "src/components/kingdom/kingdom-card.tsx",
+          "file": "src/components/hub/hub-tour.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "hub.pro-benefit-complete",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/landing-slides/pro-suscription-icon"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Play Hub — mini-tour PRO step, Complete Experience benefit · route: /",
+        "↳ components/hub/hub-tour.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/hub/hub-tour.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/hub/hub-tour.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
