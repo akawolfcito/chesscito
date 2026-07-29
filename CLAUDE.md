@@ -59,8 +59,8 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 ## Convenciones
 - Commits: Conventional Commits (`feat:`, `fix:`, `style:`, `refactor:`)
 - Firma de commit: `Wolfcito 🐾 @akawolfcito`
-- Tests: Vitest + RTL (unit) + Playwright (E2E + VR); 5003 passing / 420 files, VR 51/51
-  (baseline 2026-07-12). Un test que verifica "un solo modal a la vez" **debe contar
+- Tests: Vitest + RTL (unit) + Playwright (E2E + VR); 6515 passing / 552 files, VR 51/51
+  (baseline 2026-07-29). Un test que verifica "un solo modal a la vez" **debe contar
   `[aria-modal="true"]`, nunca `role="dialog"`**: `LabyrinthCompleteOverlay` usa
   `role="alert"`, así que contar roles pasa en verde con dos diálogos en pantalla
 - Idioma de UI: English (ver `lib/content/editorial.ts`)
