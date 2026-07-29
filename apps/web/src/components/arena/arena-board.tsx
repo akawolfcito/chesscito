@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { cellCenter, pieceWidth } from "@/lib/game/board-geometry";
+import { cellCenter, pieceWidth, trailDartPoints } from "@/lib/game/board-geometry";
 import { squareToFileRank } from "@/lib/game/arena-utils";
 import { GameBoard } from "@/lib/game/game-board";
 import { THEME_CONFIG } from "@/lib/theme";
@@ -142,6 +142,39 @@ export function ArenaBoard({
       </div>
     );
   }
+
+  /* Last-move arrow. The same geometry the exercises trail uses, so a rook
+     going straight and a bishop going diagonally read identically on both
+     surfaces — but PERSISTENT here rather than a 680ms beat: in Arena the last
+     move is state, not a lesson beat, and the arrow's real value is showing
+     what the AI just played while the player thinks. The square tint stays;
+     it marks the exact squares, the arrow marks the direction.
+
+     `pos` is supplied by the caller and already carries the black-side flip,
+     so this needs no orientation logic of its own. */
+  const renderLastMoveArrow = (
+    pos: (file: number, rank: number) => { x: number; y: number },
+  ) => {
+    if (!lastMove) return null;
+    const from = squareToFileRank(lastMove.from);
+    const to = squareToFileRank(lastMove.to);
+    const points = trailDartPoints(
+      pos(from.file, from.rank),
+      pos(to.file, to.rank),
+    );
+    if (!points) return null;
+    return (
+      <svg
+        className="playhub-board-trail is-persistent"
+        data-testid="arena-last-move-arrow"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <polygon points={points} />
+      </svg>
+    );
+  };
 
   // Live + dying piece layer. `pos(file, rank)` (rank 0–7) resolves the cell
   // center as % of the parent region — supplied by the image board (manual
@@ -283,12 +316,19 @@ export function ArenaBoard({
                 if (!isLocked) onSquareClick(sq);
               }}
               renderCell={renderArenaCell}
-              renderOverlay={(geo) =>
-                renderPieceLayer((file, rank) => {
+              renderOverlay={(geo) => {
+                const pos = (file: number, rank: number) => {
                   const c = geo.center(file, rank + 1);
                   return { x: c.leftPct, y: c.topPct };
-                })
-              }
+                };
+                // Arrow first so it sits UNDER the pieces.
+                return (
+                  <>
+                    {renderLastMoveArrow(pos)}
+                    {renderPieceLayer(pos)}
+                  </>
+                );
+              }}
             />
           </div>
         </div>

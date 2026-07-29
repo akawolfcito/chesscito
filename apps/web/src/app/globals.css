@@ -3153,6 +3153,27 @@
     }
   }
 
+  /* Arena's last-move arrow. In exercises the trail is a lesson beat that
+     fades; here it is STATE — it has to survive while the player thinks about
+     the reply, which is exactly when the AI's move matters most. Quieter than
+     the exercises one so it sits behind the position rather than shouting
+     over it. */
+  .playhub-board-trail.is-persistent polygon {
+    animation: playhub-trail-arrive 260ms ease-out both;
+    fill: rgba(255, 193, 74, 0.55);
+    filter: drop-shadow(0 0 2px rgba(255, 176, 46, 0.5));
+  }
+
+  @keyframes playhub-trail-arrive {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .playhub-board-trail polygon {
       animation-duration: 1ms;

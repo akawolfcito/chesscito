@@ -65,3 +65,72 @@ describe("<ArenaBoard> procedural board substrate", () => {
     expect(container.querySelector(".arena-board-cell.is-capturable")).toBeInTheDocument();
   });
 });
+
+/**
+ * The same arrow the exercises board draws, so a rook going straight and a
+ * bishop going diagonally read identically on both surfaces — but persistent,
+ * because in Arena the last move is state the player reasons about, not a
+ * lesson beat that plays once.
+ */
+describe("<ArenaBoard> last-move arrow", () => {
+  const arrowPoints = (container: HTMLElement): number[][] | null => {
+    const poly = container.querySelector(
+      '[data-testid="arena-last-move-arrow"] polygon',
+    );
+    if (!poly) return null;
+    return (poly.getAttribute("points") ?? "")
+      .split(" ")
+      .map((pair) => pair.split(",").map(Number));
+  };
+
+  it("draws nothing before either side has moved", () => {
+    const { container } = renderWithIntl(<ArenaBoard {...BASE} />);
+    expect(
+      container.querySelector('[data-testid="arena-last-move-arrow"]'),
+    ).toBeNull();
+  });
+
+  it("points from the origin square to the destination", () => {
+    const { container } = renderWithIntl(
+      <ArenaBoard {...BASE} lastMove={{ from: "a1", to: "a4" }} />,
+    );
+    const points = arrowPoints(container)!;
+    expect(points).toHaveLength(7);
+    // a1 → a4 climbs the a-file, so the tip is the topmost point (smallest y)
+    // and every point shares roughly the same x.
+    const [tip] = points;
+    expect(tip[1]).toBe(Math.min(...points.map(([, y]) => y)));
+  });
+
+  it("keeps the square tint — the tint says WHICH squares, the arrow says which WAY", () => {
+    const { container } = renderWithIntl(
+      <ArenaBoard {...BASE} lastMove={{ from: "a1", to: "a4" }} />,
+    );
+    expect(
+      container.querySelectorAll(".arena-board-cell.is-last-move"),
+    ).toHaveLength(2);
+    expect(arrowPoints(container)).not.toBeNull();
+  });
+
+  /** The arrow takes already-resolved points, so the flip is the caller's —
+   *  which is the whole reason it needs no orientation logic. Playing black,
+   *  the same move has to point the OTHER way down the screen. */
+  it("follows the board when it is flipped for black", () => {
+    const white = renderWithIntl(
+      <ArenaBoard {...BASE} lastMove={{ from: "a1", to: "a4" }} />,
+    );
+    const black = renderWithIntl(
+      <ArenaBoard {...BASE} lastMove={{ from: "a1", to: "a4" }} playerColor="b" />,
+    );
+
+    const whiteTip = arrowPoints(white.container)![0];
+    const blackTip = arrowPoints(black.container)![0];
+    const whiteTail = arrowPoints(white.container)![3];
+    const blackTail = arrowPoints(black.container)![3];
+
+    // White sees a1 at the bottom, so the tip is ABOVE the tail. Black sees the
+    // board upside down, so the same move points DOWN the screen.
+    expect(whiteTip[1]).toBeLessThan(whiteTail[1]);
+    expect(blackTip[1]).toBeGreaterThan(blackTail[1]);
+  });
+});
