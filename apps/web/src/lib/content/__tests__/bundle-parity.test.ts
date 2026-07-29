@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import en from "../en";
-import es from "../es";
+import en from "../messages/en";
+import es from "../messages/es";
 
 /**
  * es.ts spreads the EN bundle at the TOP LEVEL only (`{ ...en, NAMESPACE: {…} }`).

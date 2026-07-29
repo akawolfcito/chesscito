@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import en from "../en";
+import en from "../messages/en";
 
 /**
  * Every literal `t("key")` call must resolve to a string in the EN bundle.
@@ -29,7 +29,7 @@ function resolve(root: unknown, keyPath: string): unknown {
   return cursor;
 }
 
-const SRC = path.resolve(__dirname, "../../../..");
+const SRC = path.resolve(__dirname, "../../..");
 
 function sourceFiles(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
