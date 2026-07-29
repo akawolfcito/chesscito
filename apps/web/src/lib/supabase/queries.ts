@@ -157,6 +157,107 @@ export async function fetchPlayerRankFromDb(
 }
 
 /**
+ * A row of the WEEKLY ranking (Slice 2A).
+ *
+ * Not `LeaderboardRow`, and the difference is not cosmetic:
+ *   - the identity column is `wallet` (the name `score_attempts` uses), not
+ *     `player` (the name the on-chain `scores` union uses);
+ *   - there is no `has_onchain`, because the weekly board reads no on-chain
+ *     source. Absent, not false — see the migration header.
+ */
+export type WeeklyLeaderboardRow = {
+  rank: number;
+  wallet: string;
+  total_score: number;
+  is_verified: boolean;
+};
+
+/** The weekly RPCs take the window as ISO strings; one place to build them. */
+function weeklyArgs(surface: string, weekStart: Date, weekEnd: Date) {
+  return {
+    p_surface: surface,
+    p_week_start: weekStart.toISOString(),
+    p_week_end: weekEnd.toISOString(),
+  };
+}
+
+/**
+ * The weekly board, cut at 10 by the RPC.
+ *
+ * The fallback reads `leaderboard_weekly_full_v` filtered by the SAME surface,
+ * for the same reason the all-time fallback reads the same view the RPC reads:
+ * two paths that can disagree eventually will. Dropping the surface filter here
+ * would merge Learn and Play into one board while every other assertion still
+ * passed.
+ */
+export async function fetchWeeklyLeaderboardFromDb(
+  surface: string,
+  weekStart: Date,
+  weekEnd: Date,
+): Promise<WeeklyLeaderboardRow[]> {
+  const supabase = getSupabaseServer();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase.rpc(
+    "get_weekly_leaderboard",
+    weeklyArgs(surface, weekStart, weekEnd),
+  );
+
+  if (error) {
+    const { data: viewData } = await supabase
+      .from("leaderboard_weekly_full_v")
+      .select("rank, wallet, total_score, is_verified")
+      .eq("surface", surface)
+      .order("rank", { ascending: true })
+      .limit(10);
+    return (viewData as WeeklyLeaderboardRow[]) ?? [];
+  }
+
+  return (data as WeeklyLeaderboardRow[]) ?? [];
+}
+
+/**
+ * The caller's own weekly row, ranked over the UNCUT set so rank 11+ is visible
+ * in the footer while absent from the board.
+ *
+ * `player` is lowercased HERE, at the boundary closest to SQL, mirroring
+ * `fetchPlayerRankFromDb`. `score_attempts.wallet` is check-constrained to
+ * lowercase hex, so a checksummed address — which is what wagmi hands the
+ * client — matches zero rows and returns null. Null is a SPECIFIED, valid state
+ * on the weekly board ("you have not played this week"), so that bug renders a
+ * friendly call to action instead of an error, and no fixture would catch it:
+ * the constraint forces test rows lowercase.
+ */
+export async function fetchWeeklyPlayerRankFromDb(
+  player: string,
+  surface: string,
+  weekStart: Date,
+  weekEnd: Date,
+): Promise<WeeklyLeaderboardRow | null> {
+  const supabase = getSupabaseServer();
+  if (!supabase) return null;
+
+  const wallet = player.toLowerCase();
+
+  const { data, error } = await supabase.rpc("get_weekly_player_rank", {
+    p_player: wallet,
+    ...weeklyArgs(surface, weekStart, weekEnd),
+  });
+
+  if (error) {
+    const { data: viewData } = await supabase
+      .from("leaderboard_weekly_full_v")
+      .select("rank, wallet, total_score, is_verified")
+      .eq("surface", surface)
+      .eq("wallet", wallet)
+      .limit(1);
+    return ((viewData as WeeklyLeaderboardRow[]) ?? [])[0] ?? null;
+  }
+
+  return ((data as WeeklyLeaderboardRow[]) ?? [])[0] ?? null;
+}
+
+/**
  * Fetch the 10 most recent victory mints (Hall of Fame).
  */
 export async function fetchHallOfFame(): Promise<VictoryRow[]> {
