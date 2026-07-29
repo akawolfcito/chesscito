@@ -56,27 +56,39 @@ describe("Daily celebration headline", () => {
     expect(screen.queryByAltText(/well done/i)).toBeNull();
   });
 
-  it("arches the glyphs without letting assistive tech spell the word out", () => {
+  it("curves the word along a real circular arc", () => {
     solveDaily();
-    const accessible = screen.getByText(PHASE_FLASH_COPY.success);
-    expect(accessible).toHaveClass("sr-only");
+    const onPath = screen.getByText(PHASE_FLASH_COPY.success);
+    expect(onPath.tagName.toLowerCase()).toBe("textpath");
 
-    const glyphs = Array.from(
-      accessible.parentElement?.querySelectorAll('[aria-hidden="true"]') ?? [],
-    );
-    expect(glyphs).toHaveLength([...PHASE_FLASH_COPY.success].length);
-    // Curved, not a straight line: the outer glyphs are rotated and dropped,
-    // the middle one is not.
-    const transforms = glyphs.map((g) => (g as HTMLElement).style.transform);
-    expect(transforms[0]).toMatch(/rotate\(-\d/);
-    expect(transforms[transforms.length - 1]).toMatch(/rotate\(\d/);
-    expect(new Set(transforms).size).toBeGreaterThan(1);
+    // The path it rides is an SVG elliptical-arc segment with both radii
+    // equal — a circle. A straight baseline (or the old per-glyph tent, which
+    // approximated the curve with transforms) would not produce one.
+    const href = onPath.getAttribute("href");
+    const path = document.querySelector(`path${href}`);
+    const [, rx, ry] = /A ([\d.]+) ([\d.]+)/.exec(path?.getAttribute("d") ?? "") ?? [];
+    expect(Number(rx)).toBeGreaterThan(0);
+    expect(Number(ry)).toBe(Number(rx));
+  });
+
+  it("says the whole word to assistive tech instead of spelling it out", () => {
+    solveDaily();
+    // One labelled image, not one node per glyph. (Queried through the DOM
+    // rather than by role: this whole overlay sits inside an aria-hidden
+    // scrim, so the role query would never reach it.)
+    const svg = screen.getByText(PHASE_FLASH_COPY.success).closest("svg");
+    expect(svg?.getAttribute("role")).toBe("img");
+    expect(svg?.getAttribute("aria-label")).toBe(PHASE_FLASH_COPY.success);
+    // Every layer of the sign edge (shadow, extrusion, gold, keyline, fill)
+    // is a <use> clone, so the string itself is in the DOM exactly once.
+    expect(screen.getAllByText(PHASE_FLASH_COPY.success)).toHaveLength(1);
+    expect(svg?.querySelectorAll("use")).toHaveLength(5);
   });
 
   it("shows the headline as authored — Title Case, never shouted by CSS", () => {
     expect(PHASE_FLASH_COPY.success).toBe("Well Done!");
     solveDaily();
-    const headline = screen.getByText(PHASE_FLASH_COPY.success).parentElement;
-    expect(headline?.style.textTransform).toBe("");
+    const text = screen.getByText(PHASE_FLASH_COPY.success).closest("text");
+    expect(text?.style.textTransform).toBe("");
   });
 });
