@@ -15032,8 +15032,8 @@ button.hud-resource-chip:active:not(:disabled) {
    inverse (cream text on brown), which put the darkest block on screen
    directly under the brightest headline. */
 .overlay-lesson {
-  /* 8px below the headline's own baseline gap (founder 2026-07-29). */
-  margin-top: 0.5rem;
+  /* 10px below the headline's own baseline gap (founder 2026-07-29). */
+  margin-top: 0.625rem;
   max-width: 78vw;
   padding: 0.25rem 0.75rem;
   border-radius: 999px;
