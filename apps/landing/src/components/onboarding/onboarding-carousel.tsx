@@ -60,13 +60,15 @@ export function OnboardingCarousel({ initialStep, lastUsedMode }: CarouselEntry)
       onSwipeRight={goBack}
       actionSlot={
         step < 4 ? (
-          <button
-            type="button"
-            onClick={goForward}
-            className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta"
-          >
-            <span className="primary-play-cta-label">{advanceLabel}</span>
-          </button>
+          <div className="onboarding-advance-row">
+            <button
+              type="button"
+              onClick={goForward}
+              className="primary-play-cta primary-play-cta--playhub hub-scaffold-practice-cta onboarding-advance-cta"
+            >
+              <span className="primary-play-cta-label">{advanceLabel}</span>
+            </button>
+          </div>
         ) : (
           <div className="flex w-full flex-col items-center gap-1">
             <ModeSwitch lastUsedMode={lastUsedMode} />

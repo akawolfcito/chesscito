@@ -256,22 +256,10 @@
   letter-spacing: 0;
 }
 
-/* Slide 4 escape hatch: a text link, never a button. Its hit area is the
-   width of its own text, and min-height keeps that area tappable without
-   widening it. It sits inside the frame, above the primary CTA, so the
-   only thing below Learn Pieces is empty meadow. */
-.slide4-jump-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  margin-top: 0.25rem;
-  padding: 0 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: rgba(110, 65, 15, 0.75);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
+/* .slide4-jump-link removed 2026-07-29: slide 4's escape hatch was a text link
+   under a single gold CTA. Both destinations are now halves of the mode
+   switch, so there is nothing left to escape from. Recover from git if a
+   secondary text action ever returns to that slide. */
 
 .primary-play-cta-piece-icon {
   position: relative;
@@ -404,18 +392,10 @@
     drop-shadow(0 3px 4px rgba(0, 0, 0, 0.32)) drop-shadow(0 1px 0 rgba(110, 65, 15, 0.45));
 }
 
-/* The price of the thing the slide just described. A line, not a chip: a pill
-   is an object you own, and putting a price in the same tray as Focus Passport
-   tells the eye they are the same kind of thing. Slide 3's gold PRO pill lived
-   here until 2026-07-08, when its label ("PRO $1.99 includes Season Pass") was
-   promoted to the slide's headline, where an argument that load-bearing
-   belongs. Recover it from git if a gold treatment is ever wanted again. */
-.onboarding-price {
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  color: #5a4520;
-}
+/* .onboarding-price removed 2026-07-29: the price used to be a bare line under
+   the slide's evidence pill. It now lives inside the Season Pass chip and the
+   PRO strip, next to what it buys, so there is no free-standing price left to
+   style. Recover from git if one returns. */
 
 /* ── Slide redesign, 2026-07-29 ──────────────────────────────────────────────
    The copy now sits on the illustration itself, not inside a cream frame, so
@@ -451,8 +431,9 @@
 .onboarding-progress-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 14px 5px 8px;
+  /* Symmetric padding: the left inset used to be tighter to seat a star that
+     no longer renders, which left the text sitting off-centre in the pill. */
+  padding: 5px 16px;
   border: 1.5px solid rgba(158, 197, 255, 0.65);
   border-radius: 9999px;
   background: rgba(19, 45, 122, 0.72);
@@ -462,10 +443,20 @@
   color: #ffffff;
 }
 
-.onboarding-progress-star {
-  width: 1.05rem;
-  height: 1.05rem;
-  flex: 0 0 auto;
+/* The advance button hugs its label. `.primary-play-cta` is `width: 100%`
+   because in the Hub it anchors a column of equally wide actions; here it is
+   the only control on the slide, and stretching it edge to edge over the
+   illustration reads as a banner laid across the art rather than as a button
+   sitting on it (founder, 2026-07-29). The row centres it. */
+.onboarding-advance-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.onboarding-advance-cta {
+  width: auto;
+  min-width: 10rem;
 }
 
 .onboarding-nav-arrow {

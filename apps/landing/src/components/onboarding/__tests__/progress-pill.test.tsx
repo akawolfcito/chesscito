@@ -16,8 +16,11 @@ describe("ProgressPill", () => {
     expect(screen.getByText("3 de 4")).toBeInTheDocument();
   });
 
-  it("carries the star", () => {
+  // Founder call, 2026-07-29: the counter is a reading, not a reward. The star
+  // is the currency the game pays out for exercises, and spending it here on
+  // "which slide am I on" cheapens it wherever it means something.
+  it("carries no star", () => {
     const { container } = renderWithIntl(<ProgressPill current={1} total={4} />);
-    expect(container.querySelector('img[src*="star"]')).toBeTruthy();
+    expect(container.querySelector("img")).toBeNull();
   });
 });
