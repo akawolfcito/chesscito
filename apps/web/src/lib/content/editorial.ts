@@ -571,9 +571,15 @@ export const SHARE_MODAL_COPY = {
   previewUnavailable: "Card preview unavailable",
 } as const;
 
+/** Celebration overlay copy, shared by the exercises flash and the Daily one.
+ *
+ *  Title Case, not caps: the headline renders as authored (no CSS
+ *  `text-transform`), so an all-caps string here would shout in every locale
+ *  and the arch would lose the ascender/descender rhythm that makes it read
+ *  as a sign. */
 export const PHASE_FLASH_COPY = {
-  success: "Well done!",
-  failure: "Try again",
+  success: "Well Done!",
+  failure: "Try Again",
   /** The lesson line under the success banner — names what the player just
    *  learned (the active exercise's curated title). Only shown on success. */
   lesson: "You learned: {title}",

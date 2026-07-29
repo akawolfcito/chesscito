@@ -1,9 +1,9 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 181,
+  "totalSlots": 180,
   "categoryCounts": {
-    "A": 168,
+    "A": 167,
     "B": 0,
     "C": 0,
     "D": 0,
@@ -13,25 +13,25 @@
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 85,
+    "B": 84,
     "C": 26,
     "D": 38,
     "E": 19,
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 169,
-  "fullyConnectedSlots": 168,
+  "resolverSlots": 168,
+  "fullyConnectedSlots": 167,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
   "noActiveConsumerSlots": 6,
-  "connectedSlots": 168,
+  "connectedSlots": 167,
   "excludedSlots": 13,
   "exceptions": [],
   "literalDiff": {
-    "registeredBasenames": 210,
+    "registeredBasenames": 209,
     "discoveredBasenames": 16,
     "unregisteredExistingAssets": []
   },
@@ -6100,51 +6100,6 @@
       "noActiveConsumer": false
     },
     {
-      "slotId": "daily.welldone",
-      "root": "web",
-      "default": {
-        "mode": "asset",
-        "path": "/art/welldone-sms"
-      },
-      "pro": {
-        "mode": "inherit"
-      },
-      "usedIn": [
-        "Daily — well-done message",
-        "↳ components/daily/daily-tactic-sheet.tsx"
-      ],
-      "deprecated": null,
-      "initialCategory": "B",
-      "category": "A",
-      "documentedFiles": [
-        "src/components/daily/daily-tactic-sheet.tsx"
-      ],
-      "currentConsumerState": "resolver",
-      "consumerCount": 1,
-      "consumers": [
-        {
-          "file": "src/components/daily/daily-tactic-sheet.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        }
-      ],
-      "patterns": [],
-      "usesResolver": true,
-      "usesHardcodedPath": false,
-      "usesImg": false,
-      "usesPicture": false,
-      "usesCssBackground": false,
-      "usesSharedMap": false,
-      "buildsPathDynamically": false,
-      "noActiveConsumer": false
-    },
-    {
       "slotId": "peones.hint",
       "root": "web",
       "default": {
@@ -9611,15 +9566,15 @@
           "file": "src/app/globals.css",
           "occurrences": [
             {
-              "line": 417,
+              "line": 427,
               "raw": "/art/chesscito-board.avif"
             },
             {
-              "line": 418,
+              "line": 428,
               "raw": "/art/chesscito-board.webp"
             },
             {
-              "line": 419,
+              "line": 429,
               "raw": "/art/chesscito-board.png"
             }
           ],

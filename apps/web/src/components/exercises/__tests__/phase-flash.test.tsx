@@ -24,13 +24,13 @@ describe("PhaseFlash", () => {
 
     // Immediately after the phase flips there is no banner yet: the board's
     // move/capture is still on screen and readable.
-    expect(screen.queryByText("Well done!")).toBeNull();
+    expect(screen.queryByText("Well Done!")).toBeNull();
 
     // After the entry beat the banner reveals.
     act(() => {
       vi.advanceTimersByTime(800);
     });
-    expect(screen.getByText("Well done!")).toBeInTheDocument();
+    expect(screen.getByText("Well Done!")).toBeInTheDocument();
   });
 
   it("C — renders the headline as real (i18n) text, not only image alt", () => {
@@ -41,7 +41,7 @@ describe("PhaseFlash", () => {
     });
     // A live text node the translator owns — so ES gets "Reintenta", and no
     // baked-in art carries the word.
-    const headline = screen.getByText("Try again");
+    const headline = screen.getByText("Try Again");
     expect(headline.tagName).not.toBe("IMG");
   });
 
@@ -74,7 +74,7 @@ describe("PhaseFlash", () => {
       act(() => {
         vi.advanceTimersByTime(6000);
       });
-      expect(screen.getByText("Well done!")).toBeInTheDocument();
+      expect(screen.getByText("Well Done!")).toBeInTheDocument();
       expect(onContinue).not.toHaveBeenCalled();
     });
 

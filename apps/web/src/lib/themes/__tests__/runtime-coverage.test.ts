@@ -55,17 +55,20 @@ describe("theme runtime catalog coverage", () => {
     // not what PRO buys, and reusing it rendered the same strip on the tour's
     // context step and its sale step. Resolver-connected via TileIconSlot:
     // A 164 → 167, initial B 82 → 85.
-    expect(report.totalSlots).toBe(181);
+    // 180 (2026-07-29): − daily.welldone. The retired art baked an English
+    // headline into a picture; the Daily celebration renders live text now,
+    // so the slot lost its only consumer: A 167 → 166, initial B 85 → 84.
+    expect(report.totalSlots).toBe(180);
     expect(report.initialCategoryCounts).toEqual({
       A: 2,
-      B: 85,
+      B: 84,
       C: 26,
       D: 38,
       E: 19,
       F: 11,
       G: 0,
     });
-    expect(report.connectedSlots).toBe(168);
+    expect(report.connectedSlots).toBe(167);
     expect(report.excludedSlots).toBe(13);
     expect(
       report.slots.filter(

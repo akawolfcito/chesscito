@@ -9,6 +9,11 @@ import { ConfettiBurst } from '@/components/redesign/confetti-burst'
 import { HudResourceChip } from '@/components/hud/hud-resource-chip'
 import type { PIECE_LABELS } from '@/lib/content/editorial'
 import { LottieAnimation } from '@/components/ui/lottie-animation'
+import {
+  ArchedHeadline,
+  CELEBRATION_ACCENT,
+  CELEBRATION_STROKE,
+} from '@/components/ui/arched-headline'
 import { PiecePickerTrigger } from '@/components/exercises/piece-picker-trigger'
 import { MissionDetailSheet } from '@/components/exercises/mission-detail-sheet'
 import { PinStatusMarker } from '@/components/redesign/pin-status-marker'
@@ -157,20 +162,20 @@ type MissionPanelProps = {
 
 type FlashConfig = { textKey: 'success' | 'failure'; accent: string; stroke: string }
 
-/* Warm-amber on grass reads better than emerald or rose. The stroke
-   is the darkest paper-text brown so the glyph silhouette stays
-   crisp against any background (forest, paper, etc.). */
+/* Success quotes the shared celebration palette so this overlay and the Daily
+   one cannot drift apart. Failure keeps its own accent — rose is the signal
+   that the attempt did not land. */
 const PHASE_FLASH: Record<MissionPanelProps['phase'], FlashConfig | null> = {
   ready: null,
   success: {
     textKey: 'success',
-    accent: 'rgb(245, 158, 11)', // amber-500
-    stroke: 'rgba(63, 34, 8, 0.95)', // darkest paper text
+    accent: CELEBRATION_ACCENT,
+    stroke: CELEBRATION_STROKE,
   },
   failure: {
     textKey: 'failure',
     accent: 'rgb(244, 63, 94)', // rose-500
-    stroke: 'rgba(63, 34, 8, 0.95)',
+    stroke: CELEBRATION_STROKE,
   },
 }
 
@@ -309,22 +314,16 @@ export function PhaseFlash({
   const wolfBlock = (
     <div className="relative animate-in zoom-in-90 duration-300">
       <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 flex -translate-x-1/2 flex-col items-center gap-1">
-        <span
-          className="whitespace-nowrap"
+        <ArchedHeadline
+          text={flashText}
+          stroke={flash.stroke}
+          accent={flash.accent}
           style={{
-            fontFamily: 'var(--font-game-action)',
             fontSize: 'clamp(2.75rem, 13vw, 4.25rem)',
-            fontWeight: 700,
-            lineHeight: 1,
-            textTransform: 'uppercase',
-            color: '#fff6df',
-            textShadow: `-2px -2px 0 ${flash.stroke}, 2px -2px 0 ${flash.stroke}, -2px 2px 0 ${flash.stroke}, 2px 2px 0 ${flash.stroke}, 0 0 12px ${flash.accent}, 0 6px 14px rgba(120, 65, 5, 0.45)`,
             animation:
               'reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
           }}
-        >
-          {flashText}
-        </span>
+        />
         {isSuccess && lessonTitle ? (
           <span
             className="max-w-[78vw] truncate rounded-full bg-amber-950/85 px-3 py-1 text-center text-sm font-bold text-amber-50"
@@ -363,7 +362,7 @@ export function PhaseFlash({
             src={`/art/${avatarBase}.png`}
             alt=""
             aria-hidden="true"
-            className="h-80 w-80 object-contain drop-shadow-[0_6px_22px_rgba(255,245,215,0.95)]"
+            className="h-72 w-72 object-contain drop-shadow-[0_6px_22px_rgba(255,245,215,0.95)]"
             style={{
               animation:
                 'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both',
@@ -384,20 +383,22 @@ export function PhaseFlash({
     isSuccess && typeof streakCount === 'number' && streakCount >= 2
   const rewardPills =
     showStarPill || showStreakPill ? (
-      <div className="fail-rescue-reward-row" aria-hidden="true">
+      <div className="overlay-reward-row" aria-hidden="true">
         {showStarPill ? (
-          <span className="fail-rescue-reward-pill fail-rescue-reward-pill--star">
+          <span className="overlay-reward">
             <ThemeAssetPicture slot="shared.star" alt="" aria-hidden="true" />
-            <span>+{lastEarnedStars} STAR</span>
+            <span className="overlay-reward-label">+{lastEarnedStars} Stars</span>
           </span>
         ) : null}
         {/* COMBO = Session Combo (consecutive correct exercises, from
             useStreak/`chesscito:streak`) — NOT the daily streak. See
-            docs/product/2026-07-23-combo-streak-vocabulary.md. */}
+            docs/product/2026-07-23-combo-streak-vocabulary.md.
+            No art of its own: the multiplier IS the icon here rather than
+            borrowing the flame, which already means daily streak elsewhere. */}
         {showStreakPill ? (
-          <span className="fail-rescue-reward-pill fail-rescue-reward-pill--streak">
-            <span aria-hidden="true">×{streakCount}</span>
-            <span>COMBO</span>
+          <span className="overlay-reward">
+            <span className="overlay-reward-glyph">×{streakCount}</span>
+            <span className="overlay-reward-label">Combo</span>
           </span>
         ) : null}
       </div>

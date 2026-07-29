@@ -205,7 +205,6 @@ export type ThemeAssetKey =
   | "pro-sheet.journal"
   // long tail — small surfaces (1–2 assets each)
   | "daily.bg-session"
-  | "daily.welldone"
   | "peones.hint"
   | "peones.piece"
   | "welcome.achievement-1day"
@@ -767,10 +766,6 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/bg-sesion-great",
         usedIn: ["Daily — great session background", "↳ components/daily/daily-limit-banner.tsx"],
       },
-      "daily.welldone": {
-        default: "/art/welldone-sms",
-        usedIn: ["Daily — well-done message", "↳ components/daily/daily-tactic-sheet.tsx"],
-      },
       "peones.hint": {
         default: "/art/new-icons-chesscito/hint-icon-v1",
         usedIn: ["Peones — hint icon", "↳ components/peones/peones-hint-button.tsx"],
@@ -1036,7 +1031,6 @@ const LEARN_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "payments.offer-bg",
   "brand.ring-start-focus",
   "daily.bg-session",
-  "daily.welldone",
   "hub.mate-icon",
   "hub.focus-passport-streak",
   "shared.flame-color",

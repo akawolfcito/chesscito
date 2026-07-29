@@ -545,12 +545,12 @@ if (CHECK_MODE) {
   // (season-pass / coach / complete). They are deliberately their own slots
   // rather than a reuse of the KingdomCard trio — that trio describes hub
   // navigation, not what the subscription buys.
-  const expectedInitial = { A: 2, B: 85, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  const expectedInitial = { A: 2, B: 84, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 181 ||
+    inventory.length !== 180 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

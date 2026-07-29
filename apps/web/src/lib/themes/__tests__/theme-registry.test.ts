@@ -95,7 +95,6 @@ const REQUIRED_ASSET_KEYS: readonly ThemeAssetKey[] = [
   "pro-sheet.subscription-panel",
   "pro-sheet.journal",
   "daily.bg-session",
-  "daily.welldone",
   "peones.hint",
   "peones.piece",
   "welcome.achievement-1day",
@@ -279,7 +278,10 @@ describe("theme-registry", () => {
       // +1: bg.login-learn, the Learn web access gate wallpaper (2026-07-25).
       // +1: hub.focus-passport-calendar, independently editable from the
       // Shield and Training assets reused by the Challenge Card.
-      learn: 38,
+      // -1 (2026-07-29): daily.welldone retired. Its art baked the English
+      // headline into a picture, so the Daily celebration could never
+      // translate; it renders live text now, like the exercises one.
+      learn: 37,
       // +2 over the original 21: arena.rival-mara and shop.pro, both
       // formerly uncataloged "exceptions". +1: coach.share-trophy, the
       // dedicated Match Review share icon (2026-07-22), split off shared.trophy-epic.

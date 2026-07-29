@@ -1436,7 +1436,7 @@ const messages = {
     purchaseOnchain: "Tu compra ahora está confirmada.",
   },
   PHASE_FLASH_COPY: {
-    success: "¡Bien hecho!",
+    success: "¡Bien Hecho!",
     failure: "Reintenta",
     lesson: "Aprendiste: {title}",
     tapToContinue: "Toca para continuar",
