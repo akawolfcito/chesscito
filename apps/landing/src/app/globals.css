@@ -488,14 +488,19 @@
   padding: 6px 12px 7px 6px;
   border: 2px solid #f6c94f;
   border-radius: 14px;
+  /* The purple of the in-app PRO strip, kept verbatim rather than tinted to
+     the slide. The visitor meets this exact surface again in the Play Hub, and
+     a green landing version would train them on a colour that never reappears.
+     It was green for one revision; the founder caught it (2026-07-29). */
   background:
     radial-gradient(circle at 20% 0%, rgba(255, 221, 112, 0.18), transparent 38%),
     linear-gradient(110deg, rgba(255, 255, 255, 0.16), transparent 45%),
-    linear-gradient(180deg, #1f5c3a 0%, #17462c 48%, #0f3220 100%);
+    linear-gradient(180deg, #9a4ed0 0%, #7430a9 48%, #561d80 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 4px 0 rgba(8, 32, 20, 0.85),
-    0 8px 14px rgba(6, 26, 16, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -2px 0 rgba(55, 12, 83, 0.25),
+    0 4px 0 #3f145f,
+    0 8px 14px rgba(72, 31, 92, 0.3);
   color: #fff8d2;
   text-align: left;
 }
@@ -506,7 +511,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 2px 4px rgba(6, 26, 16, 0.5));
+  filter: drop-shadow(0 2px 4px rgba(24, 8, 35, 0.42));
 }
 
 .onboarding-pro-strip-copy {
@@ -517,11 +522,16 @@
   gap: 1px;
 }
 
+/* Body face, not the game-action display face, and no longer bold. That face
+   is drawn for short uppercase labels; "PRO · $1.99 / 30 días" is mostly
+   digits and punctuation, and at weight 800 the glyphs thickened into each
+   other until the price was the hardest thing on the slide to read. The line
+   still outweighs the benefits under it, so the hierarchy survives the
+   lighter weight (founder, 2026-07-29). */
 .onboarding-pro-strip-title {
-  font-family: var(--font-game-action), system-ui, sans-serif;
-  font-size: 0.9rem;
-  font-weight: 800;
-  line-height: 1.05;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.15;
   color: #fff7c3;
 }
 
@@ -530,7 +540,7 @@
    English one: truncating it cuts the argument, not the decoration. */
 .onboarding-pro-strip-benefits {
   font-size: 0.68rem;
-  font-weight: 650;
+  font-weight: 500;
   line-height: 1.2;
   color: rgba(255, 248, 220, 0.9);
 }
