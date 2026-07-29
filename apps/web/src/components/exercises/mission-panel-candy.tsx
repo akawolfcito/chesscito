@@ -326,9 +326,8 @@ export function PhaseFlash({
         />
         {isSuccess && lessonTitle ? (
           <span
-            className="max-w-[78vw] truncate rounded-full bg-amber-950/85 px-3 py-1 text-center text-sm font-bold text-amber-50"
+            className="overlay-lesson"
             style={{
-              fontFamily: 'var(--font-game-action)',
               animation:
                 'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 180ms both',
             }}
