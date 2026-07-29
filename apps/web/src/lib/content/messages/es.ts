@@ -975,6 +975,7 @@ const messages = {
     sectionTitle: "Logros",
     sectionDescription: "{earned} de {total} desbloqueados",
     emptyHint: "Gana en Arena para desbloquear logros",
+    emptyHintLite: "Completa retos de enfoque para desbloquear logros.",
     lockedLabel: "Bloqueado",
     earnedLabel: "Ganado",
     progressLabel: "{current}/{goal}",
@@ -1413,6 +1414,7 @@ const messages = {
     rewardSaveFailed: "Daily resuelto. No pudimos guardar tus Peones ahora.",
     rewardSaving: "Guardando Peones…",
     rewardGuestCta: "Conecta tu wallet para guardar recompensas de Peones.",
+    rewardFocusComplete: "Enfoque completo",
   },
   STATUS_STRIP_COPY: {
     walletNotConnected: "Conecta tu wallet para jugar",
@@ -1572,6 +1574,7 @@ const messages = {
     title: "Ejercicios",
     progressLabel: "{earned}/{max}",
     badgeThresholdHint: "Insignia con {count} ejercicios",
+    claimBadgeCta: "Reclamar Insignia",
     locked: "Bloqueado",
     ariaLabel: "Ejercicios",
     closeAriaLabel: "Cerrar ejercicios",
