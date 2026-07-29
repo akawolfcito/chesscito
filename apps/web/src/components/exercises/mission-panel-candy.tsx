@@ -313,16 +313,18 @@ export function PhaseFlash({
      a cross-browser outline that keeps the glyphs crisp on any background. */
   const wolfBlock = (
     <div className="relative animate-in zoom-in-90 duration-300">
-      {/* Two things this className is load-bearing for (founder 2026-07-29):
-          - Negative bottom margin, not a positive one. The block hangs above
-            the wolf and grows UPWARD, so the arch — the tallest thing on
-            screen — was running off the top edge. This drops it into the
-            slack over the wolf's head.
-          - An explicit viewport width. The containing block here is the
-            wolf's 320px frame, so an auto-width absolute child can never get
-            wider than that however big its own max-width is, and the lesson
-            line wrapped early with half the screen empty beside it. */}
-      <div className="pointer-events-none absolute bottom-full left-1/2 -mb-6 flex w-[92vw] -translate-x-1/2 flex-col items-center gap-1">
+      {/* NO bottom margin, positive or negative (founder 2026-07-29). This
+          block hangs above the wolf and grows upward, so a negative margin
+          buys headroom for the arch by pushing the lesson line down INTO the
+          wolf — which is exactly the collision it was meant to avoid, just
+          moved to the other end. The headroom comes from the wolf's own size
+          below instead, and the two never overlap by construction.
+
+          The explicit viewport width IS load-bearing: the containing block
+          here is the wolf's frame, so an auto-width absolute child can never
+          get wider than that however big its own max-width is, and the lesson
+          wrapped early with half the screen empty beside it. */}
+      <div className="pointer-events-none absolute bottom-full left-1/2 flex w-[92vw] -translate-x-1/2 flex-col items-center gap-1">
         <ArchedHeadline
           text={flashText}
           stroke={flash.stroke}
@@ -333,19 +335,29 @@ export function PhaseFlash({
               'reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
           }}
         />
-        {isSuccess && lessonTitle ? (
-          <span
-            className="overlay-lesson"
-            style={{
-              animation:
-                'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 180ms both',
-            }}
-          >
-            {tFlash('lesson', { title: lessonTitle })}
-          </span>
-        ) : null}
+        {/* Rendered even with nothing to say, so the two-line box it reserves
+            exists in BOTH phases and the headline lands on the same pixel
+            whether the player just won or just failed. Gating the element
+            itself would put the jump back — one line shorter on failure. */}
+        <span
+          className="overlay-lesson"
+          style={{
+            animation:
+              'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 180ms both',
+          }}
+        >
+          {isSuccess && lessonTitle ? tFlash('lesson', { title: lessonTitle }) : null}
+        </span>
       </div>
-      <div className="relative flex h-80 w-80 items-center justify-center">
+      {/* 12rem, down from 20rem (founder 2026-07-29). This is the only knob
+          that buys headroom without a cost somewhere else: the whole stack is
+          centred in the scrim, so every rem the wolf gives back is half a rem
+          of clearance at the top for the arch. Moving the wolf down instead
+          would run it into the reward pills and the tap prompt; cropping the
+          art would change `avatar-fun` for every other surface that uses it.
+          It still carries the emotion at this size — what it stopped doing is
+          crowd the words. */}
+      <div className="relative flex h-48 w-48 items-center justify-center">
         {isSuccess && <ConfettiBurst />}
         {isSuccess && (
           <div className="pointer-events-none absolute inset-0">
@@ -357,7 +369,7 @@ export function PhaseFlash({
           </div>
         )}
         <div
-          className="pointer-events-none absolute h-72 w-72 rounded-full"
+          className="pointer-events-none absolute h-44 w-44 rounded-full"
           style={{
             background:
               'radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(245, 158, 11, 0.10) 55%, transparent 80%)',
@@ -370,7 +382,7 @@ export function PhaseFlash({
             src={`/art/${avatarBase}.png`}
             alt=""
             aria-hidden="true"
-            className="h-72 w-72 object-contain drop-shadow-[0_6px_22px_rgba(255,245,215,0.95)]"
+            className="h-44 w-44 object-contain drop-shadow-[0_6px_22px_rgba(255,245,215,0.95)]"
             style={{
               animation:
                 'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both',

@@ -15061,9 +15061,20 @@ button.hud-resource-chip:active:not(:disabled) {
   letter-spacing: 0.01em;
   line-height: 1.2;
   text-align: center;
-  /* Wraps rather than truncating, and two lines are fine: without the pill
-     there is no card edge for an ellipsis to sit against, and a clipped
-     lesson is the one line in the overlay the player has to read. */
+  /* EXACTLY two lines tall, always — the single most important rule here
+     (founder 2026-07-29). The celebration block hangs above the wolf and
+     grows UPWARD, so every line this element gains pushes the arched headline
+     off the top of the screen. Reserving the space makes the headline's
+     position a constant instead of a function of how long the lesson title
+     happens to be: `min-height` holds the second line open when the copy only
+     needs one, `line-clamp` refuses a third.
+     Two lines at 92vw is ~60 characters — comfortably more than any authored
+     lesson title, so the clamp is a guard rail, not a truncator. */
+  min-height: 2.4em;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   text-wrap: balance;
   text-shadow:
     -1.5px -1.5px 0 rgba(63, 34, 8, 0.9),
