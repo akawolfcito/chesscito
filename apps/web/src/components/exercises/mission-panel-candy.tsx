@@ -10,10 +10,10 @@ import { HudResourceChip } from '@/components/hud/hud-resource-chip'
 import type { PIECE_LABELS } from '@/lib/content/editorial'
 import { LottieAnimation } from '@/components/ui/lottie-animation'
 import {
-  ArchedHeadline,
   CELEBRATION_ACCENT,
   CELEBRATION_STROKE,
 } from '@/components/ui/arched-headline'
+import { CelebrationStack } from '@/components/ui/celebration-stack'
 import { PiecePickerTrigger } from '@/components/exercises/piece-picker-trigger'
 import { MissionDetailSheet } from '@/components/exercises/mission-detail-sheet'
 import { PinStatusMarker } from '@/components/redesign/pin-status-marker'
@@ -303,95 +303,45 @@ export function PhaseFlash({
 
   if (!visible || !flash) return null
 
-  const avatarBase = isSuccess ? 'avatar-fun' : 'avatar-try-again'
+  /* Theme slot, not a raw /art path. Both slots default to the very files the
+     hard-coded <picture> used to name, so the default theme is pixel-identical
+     — and a PRO theme now reaches this overlay, which it could not while the
+     avatar bypassed the resolver. */
+  const avatarSlot = isSuccess
+    ? ('exercises.avatar-fun' as const)
+    : ('exercises.avatar-try-again' as const)
 
   /* Wolf block extracted so both layouts (rescue + non-rescue) can
      render it without JSX duplication. The headline is LIVE Rowdies text
      (var(--font-game-action)) instead of the old baked-in welldone/try-again
      art, so it translates (ES: "¡Bien hecho!" / "Reintenta") and the lesson
-     line can sit beneath it (founder 2026-07-17). The 4-corner text-shadow is
-     a cross-browser outline that keeps the glyphs crisp on any background. */
-  const wolfBlock = (
-    <div className="relative animate-in zoom-in-90 duration-300">
-      {/* NO bottom margin, positive or negative (founder 2026-07-29). This
-          block hangs above the wolf and grows upward, so a negative margin
-          buys headroom for the arch by pushing the lesson line down INTO the
-          wolf — which is exactly the collision it was meant to avoid, just
-          moved to the other end. The headroom comes from the wolf's own size
-          below instead, and the two never overlap by construction.
+     line can sit beneath it (founder 2026-07-17).
 
-          The explicit viewport width IS load-bearing: the containing block
-          here is the wolf's frame, so an auto-width absolute child can never
-          get wider than that however big its own max-width is, and the lesson
-          wrapped early with half the screen empty beside it. */}
-      <div className="pointer-events-none absolute bottom-full left-1/2 flex w-[92vw] -translate-x-1/2 flex-col items-center gap-1">
-        <ArchedHeadline
-          text={flashText}
-          stroke={flash.stroke}
-          accent={flash.accent}
-          style={{
-            fontSize: 'clamp(2.75rem, 13vw, 4.25rem)',
-            animation:
-              'reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
-          }}
-        />
-        {/* Rendered even with nothing to say, so the two-line box it reserves
-            exists in BOTH phases and the headline lands on the same pixel
-            whether the player just won or just failed. Gating the element
-            itself would put the jump back — one line shorter on failure. */}
-        <span
-          className="overlay-lesson"
-          style={{
-            animation:
-              'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 180ms both',
-          }}
-        >
-          {isSuccess && lessonTitle ? tFlash('lesson', { title: lessonTitle }) : null}
-        </span>
-      </div>
-      {/* 13.5rem, down from 20rem (founder 2026-07-29; 12rem overshot). This
-          is the only knob that buys headroom without a cost somewhere else:
-          the whole stack is centred in the scrim, so every rem the wolf gives
-          back is half a rem of clearance at the top for the arch. Moving it
-          down instead
-          would run it into the reward pills and the tap prompt; cropping the
-          art would change `avatar-fun` for every other surface that uses it.
-          It still carries the emotion at this size — what it stopped doing is
-          crowd the words. */}
-      <div className="relative flex h-[13.5rem] w-[13.5rem] items-center justify-center">
-        {isSuccess && <ConfettiBurst />}
-        {isSuccess && (
-          <div className="pointer-events-none absolute inset-0">
-            <LottieAnimation
-              src="/animations/sparkle-burst.lottie"
-              loop={false}
-              className="h-full w-full"
-            />
-          </div>
-        )}
-        <div
-          className="pointer-events-none absolute h-[12.5rem] w-[12.5rem] rounded-full"
-          style={{
-            background:
-              'radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(245, 158, 11, 0.10) 55%, transparent 80%)',
-          }}
-        />
-        <picture className="relative z-10">
-          <source srcSet={`/art/${avatarBase}.avif`} type="image/avif" />
-          <source srcSet={`/art/${avatarBase}.webp`} type="image/webp" />
-          <img
-            src={`/art/${avatarBase}.png`}
-            alt=""
-            aria-hidden="true"
-            className="h-[12.5rem] w-[12.5rem] object-contain drop-shadow-[0_6px_22px_rgba(255,245,215,0.95)]"
-            style={{
-              animation:
-                'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both',
-            }}
+     Geometry now lives in CelebrationStack, shared with the Daily sheet —
+     which had been carrying a stale copy of these exact measurements. What
+     stays here is what is genuinely this surface's: which avatar the phase
+     picks, whether there is a lesson to show, and the success-only fireworks. */
+  const wolfBlock = (
+    <CelebrationStack
+      text={flashText}
+      stroke={flash.stroke}
+      accent={flash.accent}
+      avatarSlot={avatarSlot}
+      lesson={
+        isSuccess && lessonTitle ? tFlash('lesson', { title: lessonTitle }) : null
+      }
+    >
+      {isSuccess && <ConfettiBurst />}
+      {isSuccess && (
+        <div className="pointer-events-none absolute inset-0">
+          <LottieAnimation
+            src="/animations/sparkle-burst.lottie"
+            loop={false}
+            className="h-full w-full"
           />
-        </picture>
-      </div>
-    </div>
+        </div>
+      )}
+    </CelebrationStack>
   )
 
   /* Reward pills — surface "what the player just gained" so the

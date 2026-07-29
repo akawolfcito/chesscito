@@ -15,10 +15,10 @@ import { MissionHeaderCandy } from "@/components/exercises/mission-header-candy"
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import {
-  ArchedHeadline,
   CELEBRATION_ACCENT,
   CELEBRATION_STROKE,
 } from "@/components/ui/arched-headline";
+import { CelebrationStack } from "@/components/ui/celebration-stack";
 import { ShareModal } from "@/components/share/share-modal";
 import {
   hapticImpact,
@@ -324,34 +324,26 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, onFa
             aria-hidden="true"
           >
             <div className="flex flex-col items-center gap-3 px-4">
-              <div className="relative animate-in zoom-in-90 duration-300">
-                {/* Centring lives on the wrapper, not on the headline: an
-                    absolutely positioned headline shrink-wraps to its own
-                    glyphs, so -translate-x-1/2 pulled it back by the wrong
-                    half and the last letters ran off the right edge. */}
-                {/* Negative bottom margin + explicit viewport width, mirroring
-                    PhaseFlash: the block grows upward off the top edge, and
-                    an auto-width absolute child cannot outgrow the 320px
-                    frame it is positioned against (founder 2026-07-29). */}
-                <div className="pointer-events-none absolute bottom-full left-1/2 -mb-6 flex w-[92vw] -translate-x-1/2 flex-col items-center">
-                  <ArchedHeadline
-                    text={tFlash("success")}
-                    stroke={CELEBRATION_STROKE}
-                    accent={CELEBRATION_ACCENT}
-                    style={{
-                      fontSize: "clamp(2.75rem, 13vw, 4.25rem)",
-                      animation: "reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both",
-                    }}
-                  />
-                </div>
-                <div className="relative flex h-80 w-80 items-center justify-center">
-                  <div
-                    className="pointer-events-none absolute h-72 w-72 rounded-full"
-                    style={{ background: "radial-gradient(circle, rgba(245,158,11,0.32) 0%, rgba(245,158,11,0.10) 55%, transparent 80%)" }}
-                  />
-                  <ThemeAssetPicture slot="exercises.avatar-fun" pictureClassName="relative z-10" alt="" aria-hidden="true" className="h-72 w-72 object-contain drop-shadow-[0_6px_22px_rgba(255,245,215,0.95)]" style={{ animation: "reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both" }} />
-                </div>
-              </div>
+              {/* Geometry comes from CelebrationStack, shared with the
+                  exercises PhaseFlash. This used to be a copy of that block
+                  and it went stale: it kept the negative headline margin and
+                  the oversized wolf the founder had already corrected away
+                  from on 2026-07-29, and never mounted the lesson line, so it
+                  did not reserve the box the headline is positioned against.
+                  The Daily carries no lesson title, so `lesson` is omitted —
+                  the box is reserved either way, which is the whole reason it
+                  is unconditional.
+
+                  Do not spell the retired class names out here: a source
+                  guard in celebration-stack.test.tsx reads this file to make
+                  sure the measurements live in exactly one place, and prose
+                  counts. */}
+              <CelebrationStack
+                text={tFlash("success")}
+                stroke={CELEBRATION_STROKE}
+                accent={CELEBRATION_ACCENT}
+                avatarSlot="exercises.avatar-fun"
+              />
               {/* Rewards — same pattern as PhaseFlash(success): the prize is
                   the icon, the words are a caption at its foot. */}
               <div className="overlay-reward-row">
