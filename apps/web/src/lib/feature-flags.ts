@@ -69,3 +69,27 @@ export function isStreakNudgeEnabled(): boolean {
 export function isVictoryPermitMintEnabled(): boolean {
   return process.env.NEXT_PUBLIC_VICTORY_PERMIT_MINT_ENABLED === "true";
 }
+
+/**
+ * The attempt lane (Slice 3), and the ONLY way to turn it off.
+ *
+ * ⚠️ DEFAULT ON — the opposite of every flag above it, on purpose. Those gate
+ * features that ship dark and get turned on later. This one gates a lane that
+ * is already verified end to end against a production build and a real
+ * database; shipping it dark would mean a second deploy just to enable what was
+ * already proven. The switch exists to turn it OFF in an emergency, so only the
+ * exact string "false" does that — a typo leaves the lane running rather than
+ * silently killing it.
+ *
+ * OFF means: nothing is queued, nothing is drained, nothing renders. It does
+ * NOT mean "discard": a queue already persisted stays on disk untouched and
+ * drains when the lane comes back. Turning a feature off must not delete the
+ * player's plays.
+ *
+ * It is deliberately CLIENT-side only. The endpoint keeps accepting attempts
+ * either way, so flipping this cannot break a request already in flight, and a
+ * bundle older than the flag is unaffected.
+ */
+export function isAttemptLaneEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_ATTEMPT_LANE_ENABLED !== "false";
+}

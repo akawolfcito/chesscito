@@ -424,6 +424,55 @@ describe("useAttemptOutbox", () => {
     expect(a[0]?.attemptId).toBe("e".repeat(32));
   });
 
+  it("is inert when the lane is switched off, WITHOUT discarding what is queued", async () => {
+    // The kill switch has to be a way to stop, not a way to lose. A player who
+    // closed the app with three unsent attempts and comes back to a build with
+    // the lane off must still have those three when it comes back on.
+    seed(WALLET_A, [persisted("9".repeat(32))]);
+    vi.stubEnv("NEXT_PUBLIC_ATTEMPT_LANE_ENABLED", "false");
+    const { calls, submitAttempt } = deferredSubmit();
+
+    const { result } = renderHook(() =>
+      useAttemptOutbox({ wallet: WALLET_A, submitAttempt }),
+    );
+
+    act(() => {
+      result.current.report(report());
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(calls).toHaveLength(0);
+    expect(result.current.pendingCount).toBe(0);
+    expect(result.current.status).toBe("idle");
+    // Still there. Off is not a delete.
+    const stored = JSON.parse(
+      window.localStorage.getItem(outboxStorageKey(WALLET_A)) as string,
+    ) as AttemptSnapshot[];
+    expect(stored).toHaveLength(1);
+    expect(stored[0]?.attemptId).toBe("9".repeat(32));
+
+    vi.unstubAllEnvs();
+  });
+
+  it("stays ON for anything that is not exactly \"false\"", async () => {
+    // A typo must not kill the lane silently. The switch is for an emergency,
+    // and an emergency is always typed deliberately.
+    vi.stubEnv("NEXT_PUBLIC_ATTEMPT_LANE_ENABLED", "off");
+    const { calls, submitAttempt } = deferredSubmit();
+
+    const { result } = renderHook(() =>
+      useAttemptOutbox({ wallet: WALLET_A, submitAttempt }),
+    );
+    act(() => {
+      result.current.report(report());
+    });
+
+    await waitFor(() => expect(calls.length).toBe(1));
+    vi.unstubAllEnvs();
+  });
+
   it("does not submit or persist without a wallet", async () => {
     const { calls, submitAttempt } = deferredSubmit();
     const { result } = renderHook(() =>

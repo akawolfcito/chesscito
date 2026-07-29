@@ -39,6 +39,8 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 
+import { isAttemptLaneEnabled } from "@/lib/feature-flags";
+
 import {
   attemptLifecycleReducer,
   initialAttemptLifecycleState,
@@ -191,6 +193,23 @@ export function useAttemptOutbox(args: {
   const { wallet, submitAttempt } = args;
   const [state, dispatch] = useReducer(attemptOutboxReducer, initialScopedState);
 
+  /**
+   * The kill switch, read at render rather than at module load so a test — and
+   * a server/client boundary — sees the same answer the build does.
+   *
+   * ONE gate, not four. Off makes this hook inert: nothing hydrates, nothing
+   * queues, nothing drains, nothing is written. The consumer needs no flag of
+   * its own, because an empty queue already renders nothing — a second gate in
+   * the screen would be a second thing to forget.
+   *
+   * Note what is NOT gated: the persisted queue is never read and never
+   * WRITTEN while off, so a queue from a previous session survives untouched
+   * and drains when the lane returns. Off is a pause, not a delete.
+   */
+  const laneEnabled = isAttemptLaneEnabled();
+  const laneEnabledRef = useRef(laneEnabled);
+  laneEnabledRef.current = laneEnabled;
+
   /** Completion keys already accepted, per wallet scope. The latch (D19). */
   const seenRef = useRef<Set<string>>(new Set());
   /** The submit seam, read at call time so a re-render cannot stale it. */
@@ -214,24 +233,25 @@ export function useAttemptOutbox(args: {
   // 2. HYDRATE. Before draining and before minting — a rehydrated attempt that
   //    gets minted again stops being one attempt and becomes two.
   useEffect(() => {
-    if (!wallet || state.wallet !== wallet || state.hydrated) return;
+    if (!laneEnabled || !wallet || state.wallet !== wallet || state.hydrated) return;
     dispatch({
       type: "hydrated_from_storage",
       snapshots: readPersistedOutbox(wallet),
     });
-  }, [wallet, state.wallet, state.hydrated]);
+  }, [laneEnabled, wallet, state.wallet, state.hydrated]);
 
   // 3. MIRROR. Only after hydration: writing the pre-hydration state would
   //    erase the queue this mount was supposed to recover.
   useEffect(() => {
-    if (!wallet || state.wallet !== wallet || !state.hydrated) return;
+    if (!laneEnabled || !wallet || state.wallet !== wallet || !state.hydrated) return;
     persistOutbox(wallet, state.outbox);
-  }, [wallet, state.wallet, state.hydrated, state.outbox]);
+  }, [laneEnabled, wallet, state.wallet, state.hydrated, state.outbox]);
 
   // 4. DRAIN. One in flight, FIFO, and never for a wallet that has since
   //    changed.
   useEffect(() => {
-    if (!wallet || state.wallet !== wallet || !state.hydrated || state.parked) return;
+    if (!laneEnabled || !wallet || state.wallet !== wallet || !state.hydrated || state.parked)
+      return;
     const next = selectNextSubmission(state);
     if (!next) return;
 
@@ -280,9 +300,13 @@ export function useAttemptOutbox(args: {
     })();
     // `state` is read whole on purpose: the drain is a function of the queue,
     // the in-flight slot and the park flag together.
-  }, [wallet, state]);
+  }, [laneEnabled, wallet, state]);
 
   const report = useCallback((input: AttemptReportInput) => {
+    // The switch is checked through a ref so `report` keeps a stable identity:
+    // the host mirrors it into a ref of its own, and a changing callback there
+    // would be a second thing to keep fresh.
+    if (!laneEnabledRef.current) return;
     // Without a wallet nothing can be written: the save path requires one, so
     // such an attempt could never be sent and would only consume the cap.
     if (!walletRef.current) return;
