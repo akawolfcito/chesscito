@@ -40,32 +40,49 @@ describe("tour itineraries", () => {
     expect(veteran[1]?.bodyKey).toBe("challengeEnrolled");
   });
 
-  it("teaches PLAY as Daily → PRO → Play when PRO truth is known", () => {
+  it("teaches PLAY as context → offer → action, never sale-first", () => {
     expect(
-      buildPlayHubTourSteps({
-        dailyDone: false,
-        streak: 0,
-        proStatus: "inactive",
-      }).map((step) => step.id),
-    ).toEqual(["daily", "pro", "play"]);
+      buildPlayHubTourSteps({ proStatus: "inactive" }).map((step) => step.id),
+    ).toEqual(["kingdom", "pro", "play"]);
+  });
+
+  it("never puts the PRO offer before the Play Kingdom context", () => {
+    const ids = buildPlayHubTourSteps({ proStatus: "inactive" }).map(
+      (step) => step.id,
+    );
+    expect(ids.indexOf("kingdom")).toBeLessThan(ids.indexOf("pro"));
+    expect(ids.indexOf("pro")).toBeLessThan(ids.indexOf("play"));
+  });
+
+  it("keeps PLAY at three steps in every entitlement state", () => {
+    for (const proStatus of [
+      "active",
+      "inactive",
+      "loading",
+      "error",
+      "unknown",
+    ] as const) {
+      expect(buildPlayHubTourSteps({ proStatus })).toHaveLength(3);
+    }
+  });
+
+  it("no longer spends a PLAY step on the Daily gift — LEARN owns it", () => {
+    const ids = buildPlayHubTourSteps({ proStatus: "inactive" }).map(
+      (step) => step.id,
+    );
+    expect(ids).not.toContain("daily");
   });
 
   it("still narrates the visible PRO strip while entitlement is unknown", () => {
     expect(
-      buildPlayHubTourSteps({
-        dailyDone: false,
-        streak: 0,
-        proStatus: "unknown",
-      }).map((step) => step.id),
-    ).toEqual(["daily", "pro", "play"]);
+      buildPlayHubTourSteps({ proStatus: "unknown" }).map((step) => step.id),
+    ).toEqual(["kingdom", "pro", "play"]);
   });
 
   it("never re-sells PRO to an active subscriber", () => {
-    const proStep = buildPlayHubTourSteps({
-      dailyDone: false,
-      streak: 0,
-      proStatus: "active",
-    }).find((step) => step.id === "pro");
+    const proStep = buildPlayHubTourSteps({ proStatus: "active" }).find(
+      (step) => step.id === "pro",
+    );
     expect(proStep?.bodyKey).toBe("proActive");
   });
 });

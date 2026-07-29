@@ -42,6 +42,17 @@ describe("KingdomCard", () => {
     expect(onProDiscover).toHaveBeenCalledTimes(1);
   });
 
+  /** The tour's first step targets the whole card. HubTour drops steps whose
+   *  target is missing WITHOUT failing, so losing this attribute would quietly
+   *  turn the PLAY tour into two steps. */
+  it("exposes the whole card as the mini-tour's context target", () => {
+    render(<KingdomCard pro={{ active: false }} onProDiscover={() => {}} />);
+    expect(screen.getByTestId("kingdom-card")).toHaveAttribute(
+      "data-tour-target",
+      "kingdom",
+    );
+  });
+
   it("uses the shared themed question icon to replay the PLAY tour", async () => {
     const onReplayTour = vi.fn();
     render(
