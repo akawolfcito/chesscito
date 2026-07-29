@@ -16,6 +16,7 @@ import {
   labyrinthStars,
 } from "@/lib/game/exercises";
 import { tourStars } from "@/lib/game/tour-score";
+import { retiredLaneComplete } from "@/lib/training/retired-lane";
 
 /** Injected catalog for the training path (default = baseline). Phase 2c
  *  passes the merged (baseline ⊕ overlay) catalog. */
@@ -186,9 +187,16 @@ export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
   // Mastery = badge claimed + every labyrinth solved (vacuously true for
   // pieces with no labyrinths). Guests (badgeClaimed=false) never reach
   // "complete" — the crown is gated behind the on-chain claim.
-  const allLabyrinthsComplete = labyrinthNodes.every(
-    (node) => node.status === "complete",
-  );
+  //
+  // The retired-lane clause is the ONLY place history is consulted, and it
+  // reaches no further than this node: a crown earned before the signature
+  // games replaced the raw labyrinths is not revoked by that id change. It
+  // adds no nodes, unlocks nothing, recommends nothing, and awards no stars —
+  // the lane above is built from the active catalog alone, so the retired
+  // levels stay gone. All-or-nothing by construction; see retired-lane.ts.
+  const allLabyrinthsComplete =
+    labyrinthNodes.every((node) => node.status === "complete") ||
+    retiredLaneComplete(piece, labyrinthBests);
   const masteryNode: TrainingNode = {
     id: `mastery:${piece}`,
     kind: "mastery",
