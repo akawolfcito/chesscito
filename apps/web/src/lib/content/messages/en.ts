@@ -147,6 +147,10 @@ m.PURCHASE_CONFIRM_COPY.approving = "Approving {token}...";
 m.EXERCISE_DRAWER_COPY.progressLabel = "{earned}/{max}";
 m.EXERCISE_DRAWER_COPY.badgeThresholdHint = "Badge at {count} exercises";
 m.EXERCISE_DRAWER_COPY.claimBadgeCta = "Claim Badge";
+// ICU mirror for the editorial.ts `chipExpiringAriaLabel(daysLeft)` helper.
+// Consumed by ProChip's aria-label — without it EN rendered the raw key.
+m.PRO_COPY.chipExpiringAriaLabel =
+  "{daysLeft, plural, =1 {PRO active, expires tomorrow} other {PRO active, expires in # days}}";
 m.BADGE_SHEET_COPY.claimSuccess = "{piece} Badge claimed!";
 m.SHOP_SHEET_COPY.successBannerFormat = "{item} secured!";
 m.SHOP_SHEET_COPY.successBannerTxFormat = "tx {hash}";
