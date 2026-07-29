@@ -6,7 +6,15 @@ import { useAccount, useChainId, useReadContracts } from "wagmi";
 import { badgesAbi } from "@/lib/contracts/badges";
 import { getBadgesAddress } from "@/lib/contracts/chains";
 import type { PieceId } from "@/lib/game/types";
-import { EXERCISES, LABYRINTHS } from "@/lib/game/exercises";
+import {
+  DIAGONAL_RUN,
+  EXERCISES,
+  KNIGHT_TOUR,
+  LABYRINTHS,
+  PROMOTION_RUN,
+  QUEENS,
+  SAFE_PATH,
+} from "@/lib/game/exercises";
 import { getExercisesCompletedCount, readPieceStars } from "@/lib/game/exercise-progress";
 import { getLabyrinthBestsMap } from "@/lib/game/labyrinth-progress";
 import {
@@ -23,6 +31,11 @@ import {
 import { PLAYABLE_PIECES } from "@/lib/game/exercises";
 import { REWARD_TILE_ORDER } from "@/lib/hub/derive-reward-tiles";
 import { buildTrainingPath } from "@/lib/training/path";
+import {
+  coverageLaneIds,
+  projectSpecialTrainingLane,
+  starlessLaneIds,
+} from "@/lib/training/special-training-lane";
 import {
   type DailyProgress,
   getDailyHistoryCount,
@@ -61,6 +74,17 @@ const BADGE_PIECE_BY_INDEX: readonly PieceId[] = [
 ] as const;
 
 const BADGE_LEVEL_IDS = [1n, 2n, 3n, 4n, 5n, 6n] as const;
+
+/** Baseline signature-game pools, for the Special Training lane projection.
+ *  Module-level and frozen: this hook runs outside the ContentCatalogProvider,
+ *  so there is no overlay to read — the baseline IS the catalog here. */
+const SIGNATURE_POOLS = {
+  diagonalRun: DIAGONAL_RUN,
+  knightTour: KNIGHT_TOUR,
+  queens: QUEENS,
+  safePath: SAFE_PATH,
+  promotionRun: PROMOTION_RUN,
+} as const;
 
 // ─── localStorage loaders (moved verbatim) ───────────────────────────────────
 
@@ -360,6 +384,13 @@ export function useHubData(): HubData {
     // `next-piece` variant unreachable, so a player who had finished the rook
     // was told to keep training it, and Start Focus dropped them back onto its
     // last exercise on every entry.
+    // The lane the player actually sees, not the raw labyrinths. Passing
+    // LABYRINTHS here made the hub reason about `queen-lab-*` nodes the
+    // exercises screen had already replaced with `queens-*`, so Start Focus
+    // recommended levels that no longer exist in the lane. Same projection
+    // both sides — from the baseline pools, since this hook reads outside the
+    // ContentCatalogProvider (no overlay in Lite).
+    const specialTrainingLane = projectSpecialTrainingLane(LABYRINTHS, SIGNATURE_POOLS);
     const paths: PathsByPiece = {};
     for (const candidate of PLAYABLE_PIECES) {
       paths[candidate] = buildTrainingPath({
@@ -371,7 +402,9 @@ export function useHubData(): HubData {
         },
         labyrinthBests: getLabyrinthBestsMap(candidate),
         badgeClaimed: false,
-        catalog: { exercises: EXERCISES, labyrinths: LABYRINTHS },
+        catalog: { exercises: EXERCISES, labyrinths: specialTrainingLane },
+        coverageIds: coverageLaneIds(SIGNATURE_POOLS, candidate),
+        starlessIds: starlessLaneIds(SIGNATURE_POOLS, candidate),
       });
     }
 

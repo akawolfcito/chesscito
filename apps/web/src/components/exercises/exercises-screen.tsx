@@ -200,6 +200,11 @@ import {
   getNextChallenge,
   resolvePostLabContinue,
 } from "@/lib/training/path";
+import {
+  coverageLaneIds,
+  projectSpecialTrainingLane,
+  starlessLaneIds,
+} from "@/lib/training/special-training-lane";
 import { attemptShieldSpendWithPeones } from "@/lib/peones/shield-spend-fallback";
 import { ActionPin } from "@/components/redesign/action-pin";
 import { AttemptSaveStatus } from "@/components/exercises/attempt-save-status";
@@ -854,45 +859,35 @@ export function ExercisesScreen({
   const queensCatalog = useQueensCatalog();
   const safePathCatalog = useSafePathCatalog();
   const promotionRunCatalog = usePromotionRunCatalog();
-  // Special Training navigation pool. A piece that has Pivot Challenges surfaces
-  // THOSE (projected as labyrinth-kind nodes downstream) and hides its raw
-  // labyrinths this phase — bishop-lab-3/-4 stay in content, just unselected.
-  // Pieces without pivots keep their labyrinths byte-identically. This is the
-  // adapter that lets the whole labyrinth nav/unlock/completion machinery serve
-  // pivots without adding a TrainingNodeKind (design: docs/audits/…-b4_1-*).
-  // ⚠️ A signature game REPLACES the piece's raw labyrinths here (that is what
-  // the bishop's pivots did to bishop-lab-3/-4: still in content, unselected).
-  // So the knight's five labyrinths give way to its three tours. Same rule, one
-  // more piece — but it is a product call, not a mechanical one: flip the branch
-  // to a concat if both lanes should ship.
-  const specialTrainingCatalog: typeof labyrinthCatalog = useMemo(() => {
-    const out = { ...labyrinthCatalog };
-    for (const piece of Object.keys(out) as (keyof typeof out)[]) {
-      if (diagonalRunCatalog[piece]?.length) out[piece] = diagonalRunCatalog[piece];
-      else if (knightTourCatalog[piece]?.length) out[piece] = knightTourCatalog[piece];
-      else if (queensCatalog[piece]?.length) out[piece] = queensCatalog[piece];
-      else if (safePathCatalog[piece]?.length) out[piece] = safePathCatalog[piece];
-      // The last piece to get one. This retires the pawn's four untitled filler
-      // labyrinths — the lane is 6/6 signature games now.
-      else if (promotionRunCatalog[piece]?.length) out[piece] = promotionRunCatalog[piece];
-    }
-    return out;
-  }, [labyrinthCatalog, diagonalRunCatalog, knightTourCatalog, queensCatalog, safePathCatalog, promotionRunCatalog]);
+  // Special Training navigation pool. The projection itself lives in
+  // lib/training/special-training-lane.ts — it used to be inline here while
+  // the hub built its paths off raw LABYRINTHS, so the two surfaces disagreed
+  // about what the lane contained. One function, both callers.
+  const signaturePools = useMemo(
+    () => ({
+      diagonalRun: diagonalRunCatalog,
+      knightTour: knightTourCatalog,
+      queens: queensCatalog,
+      safePath: safePathCatalog,
+      promotionRun: promotionRunCatalog,
+    }),
+    [diagonalRunCatalog, knightTourCatalog, queensCatalog, safePathCatalog, promotionRunCatalog],
+  );
+  const specialTrainingCatalog: typeof labyrinthCatalog = useMemo(
+    () => projectSpecialTrainingLane(labyrinthCatalog, signaturePools),
+    [labyrinthCatalog, signaturePools],
+  );
 
   /** The ids in the Special Training lane that grade by COVERAGE, not by moves.
    *  Passed to buildTrainingPath so the drawer picks tourStars. Both signature
    *  games that score this way live here — the tour and queens. */
   const coverageIds = useMemo(
-    () =>
-      new Set([
-        ...(knightTourCatalog[selectedPiece] ?? []).map((t) => t.id),
-        ...(queensCatalog[selectedPiece] ?? []).map((q) => q.id),
-      ]),
-    [knightTourCatalog, queensCatalog, selectedPiece],
+    () => coverageLaneIds(signaturePools, selectedPiece),
+    [signaturePools, selectedPiece],
   );
   const starlessIds = useMemo(
-    () => new Set((knightTourCatalog[selectedPiece] ?? []).map((tour) => tour.id)),
-    [knightTourCatalog, selectedPiece],
+    () => starlessLaneIds(signaturePools, selectedPiece),
+    [signaturePools, selectedPiece],
   );
 
   // Progress is keyed by exerciseId (currentId). Derive the pool index for
