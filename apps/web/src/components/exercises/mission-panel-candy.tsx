@@ -313,7 +313,16 @@ export function PhaseFlash({
      a cross-browser outline that keeps the glyphs crisp on any background. */
   const wolfBlock = (
     <div className="relative animate-in zoom-in-90 duration-300">
-      <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 flex -translate-x-1/2 flex-col items-center gap-1">
+      {/* Two things this className is load-bearing for (founder 2026-07-29):
+          - Negative bottom margin, not a positive one. The block hangs above
+            the wolf and grows UPWARD, so the arch — the tallest thing on
+            screen — was running off the top edge. This drops it into the
+            slack over the wolf's head.
+          - An explicit viewport width. The containing block here is the
+            wolf's 320px frame, so an auto-width absolute child can never get
+            wider than that however big its own max-width is, and the lesson
+            line wrapped early with half the screen empty beside it. */}
+      <div className="pointer-events-none absolute bottom-full left-1/2 -mb-6 flex w-[92vw] -translate-x-1/2 flex-col items-center gap-1">
         <ArchedHeadline
           text={flashText}
           stroke={flash.stroke}

@@ -329,7 +329,11 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, onFa
                     absolutely positioned headline shrink-wraps to its own
                     glyphs, so -translate-x-1/2 pulled it back by the wrong
                     half and the last letters ran off the right edge. */}
-                <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 flex -translate-x-1/2 flex-col items-center">
+                {/* Negative bottom margin + explicit viewport width, mirroring
+                    PhaseFlash: the block grows upward off the top edge, and
+                    an auto-width absolute child cannot outgrow the 320px
+                    frame it is positioned against (founder 2026-07-29). */}
+                <div className="pointer-events-none absolute bottom-full left-1/2 -mb-6 flex w-[92vw] -translate-x-1/2 flex-col items-center">
                   <ArchedHeadline
                     text={tFlash("success")}
                     stroke={CELEBRATION_STROKE}
