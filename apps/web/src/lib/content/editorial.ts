@@ -3628,20 +3628,31 @@ export const HUB_TOUR_COPY = {
   rootAriaLabel: "Hub tour",
   closeAriaLabel: "Close tour",
   dailyTitleStart: "Start your streak today",
+  /** `dailyKeep` owns its own title: reusing `dailyTitle` would drag
+   *  `dailyDone` along, and that variant must stay the informational one. */
+  dailyTitleKeep: "Keep your focus streak going",
   dailyTitle: "Daily Tactic",
+  /** The ritual variants (`dailyStart` / `dailyKeep`) describe ONE ritual with
+   *  ONE vocabulary: "quick tactic" (the feature is named Daily Tactic — never
+   *  "lesson", which exists nowhere else in the product) and "focus streak".
+   *  Drifting between lesson/tactic/habit/streak by player state reads as four
+   *  different features. */
   dailyStart:
-    "Open the daily gift and solve 1 quick tactic. Come back each day to keep your streak alive.",
+    "Open your daily gift, complete one quick tactic, and begin building your focus streak.",
   dailyKeep:
-    "Open your daily gift, solve 1 quick tactic, and keep your streak alive.",
+    "Open your daily gift and complete one quick tactic to continue your focus streak.",
+  /** Completed state — informational, NOT the ritual. Renders without the
+   *  art-strip: showing the gift → tactic → streak sequence next to "come back
+   *  tomorrow" invites a tap that does nothing today. */
   dailyDone:
     "Your Daily Tactic lives here. Come back tomorrow for the next one.",
-  /** Daily step art-strip (start/keep only): three labels under the
-   *  gift → tactic → combo icons. The full sentence copy moves behind the
-   *  `?` help chip (`dailyDetailsLabel`), so the strip carries the ritual
-   *  visually and the paragraph stays one tap away without reflowing the panel. */
-  dailyStripGift: "Open gift",
-  dailyStripTactic: "Solve 1 tactic",
-  dailyStripCombo: "Build habit",
+  /** Daily step art-strip, ritual variants only: three labels under the
+   *  gift → tactic → streak icons. Each label names the same beat as the body
+   *  sentence, so the strip is a summary of the paragraph and not a fourth
+   *  vocabulary. */
+  dailyStripGift: "Gift",
+  dailyStripTactic: "Quick tactic",
+  dailyStripCombo: "Focus streak",
   dailyDetailsLabel: "Show daily focus details",
   challengeTitle: "Join the 21-Day Challenge",
   challengeTitleEnrolled: "21-Day Mind Challenge",
@@ -3664,16 +3675,34 @@ export const HUB_TOUR_COPY = {
   rookTitle: "Start with the Rook",
   rookStart:
     "The Rook is your first Training Path lesson. Start here whenever you are ready.",
-  proTitle: "Meet Chesscito PRO",
+  /** PLAY step 1 of 3 — CONTEXT, never a sale. First-visit players get told
+   *  where they are before they get told what to buy.
+   *
+   *  This body must NOT restate `PLAY_HUB_COPY.kingdomPanelBody`: the spotlit
+   *  KingdomCard is the illustration and already lists Quick Match / Coach
+   *  Review / Rewards as chips. The panel locates the player ("your home for"),
+   *  it does not re-enumerate what is visible underneath it. */
+  kingdomTitle: "Welcome to Play Kingdom",
+  kingdomBody: "This is your home for matches, Coach Review, and rewards.",
+  proTitle: "Unlock Chesscito PRO",
   proTitleActive: "Your Chesscito PRO",
   proJoin:
-    "Unlock the Season Pass and unlimited Coach support from this purple strip.",
+    "Get the Season Pass, unlimited Coach Review, and the complete Play experience.",
   proActive:
     "Your Season Pass and unlimited Coach access live here whenever you need them.",
-  proPrice: "{price} · subscription",
-  playTitle: "Ready to Play",
-  playStart:
-    "This highlighted tile is your quickest path into a full chess match.",
+  /** PRO step benefits — the SUBSCRIPTION's perks. Deliberately not the
+   *  KingdomCard trio (Quick Match / Coach Review / Rewards): those describe
+   *  hub navigation, so reusing them made steps 1 and 2 the same strip twice
+   *  and left the sale step with nothing of its own to say. */
+  proBenefitSeasonPass: "Season Pass",
+  proBenefitUnlimitedCoach: "Unlimited Coach",
+  proBenefitCompleteExperience: "Complete Experience",
+  /** Both halves are INTERPOLATED from the shop catalog (`PRO_PRICE_USD6`,
+   *  `PRO_DURATION_DAYS`). Typing "$1.99 · 30 days" here would rot silently the
+   *  day pricing or duration moves, and no test would go red. */
+  proPrice: "{price} · {days} days",
+  playTitle: "Choose How to Play",
+  playStart: "Tap Play to choose your match and start when you're ready.",
   /** Alt text for the headline art — the art bakes the words in, so this is what
    *  a screen reader (and any non-EN locale) actually gets. */
   challengeTitleAlt: "21-Day Mind Challenge",
