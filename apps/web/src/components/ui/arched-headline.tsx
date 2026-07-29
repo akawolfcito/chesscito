@@ -34,17 +34,23 @@ const TRACKING_EM = 0.08;
  * are the only ones that move. */
 /** Gold: the outer band. Centred on the glyph outline, so half shows outside. */
 const OUTLINE_EM = 0.26;
-/** Dark red keyline, inside the gold. Narrower than the gold by design: the
- *  gold reads as the sign and the red as the line drawn on it. */
-const INNER_EM = 0.12;
+/** Dark red keyline, inside the gold. Narrower than the gold by design, and
+ *  narrower still since 2026-07-29: at 0.12 the red was the widest coloured
+ *  band on the letter and the eye read cream → red → orange → gold. The
+ *  intended order is cream → gold → red as a separator → orange as depth, and
+ *  that ordering is set here, by which band is thickest. */
+const INNER_EM = 0.1;
 /** How far the hard shadow's silhouette out-grows the gold, giving the sign a
  *  thin dark rim on every side instead of only under the extrusion. */
 const RIM_EM = 0.02;
-/** Drop of the extrusion — the depth of the sign itself. */
-const EXTRUDE_DY_EM = 0.08;
+/** Drop of the extrusion — the depth of the sign itself. Tightened from 0.08
+ *  (2026-07-29): under a wide letter like the W the orange band and the shadow
+ *  stacked into one heavy skirt. */
+const EXTRUDE_DY_EM = 0.07;
 /** Drop of the hard shadow. Reads as the distance from the sign to whatever it
- *  hangs over, so it has to clearly outrun the extrusion. */
-const SHADOW_DY_EM = 0.17;
+ *  hangs over, so it has to clearly outrun the extrusion — but only just, or
+ *  the two read as one thick slab instead of two planes. */
+const SHADOW_DY_EM = 0.15;
 
 /* ── viewBox geometry ──────────────────────────────────────────────────────
  * The SVG is authored at font-size 100 and then sized in `em`, so the caller
