@@ -18,11 +18,7 @@ import { usePeonesBalance } from "@/lib/peones/use-peones-balance";
 import { track } from "@/lib/telemetry";
 import { useHubTour } from "@/components/hub/use-hub-tour";
 import { buildPlayHubTourSteps } from "@/lib/hub/hub-tour";
-import {
-  getDailyProgress,
-  isCompletedToday,
-  type DailyProgress,
-} from "@/lib/daily/progress";
+import { getDailyProgress, type DailyProgress } from "@/lib/daily/progress";
 import { subscribeToDailyProgressChanges } from "@/lib/daily/events";
 import { PRO_PRICE_USD6 } from "@/lib/contracts/shop-catalog";
 import { formatUsd } from "@/lib/contracts/tokens";
@@ -82,12 +78,9 @@ export function PlayHubClient({
   const hubTourSteps = useMemo(
     () =>
       buildPlayHubTourSteps({
-        dailyDone: dailyProgress ? isCompletedToday(undefined, dailyProgress) : false,
-        streak: dailyProgress?.streak ?? 0,
-        includeDaily: hubTour.includeDaily,
         proStatus: pro.status ?? (pro.active ? "active" : "inactive"),
       }),
-    [dailyProgress, hubTour.includeDaily, pro.active, pro.status],
+    [pro.active, pro.status],
   );
 
   useEffect(() => {

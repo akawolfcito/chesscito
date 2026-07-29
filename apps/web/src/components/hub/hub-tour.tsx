@@ -14,6 +14,7 @@ import { useTranslations } from "next-intl";
 
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
+import { PRO_DURATION_DAYS } from "@/lib/contracts/shop-catalog";
 import type {
   HubTourMode,
   HubTourOutcome,
@@ -29,13 +30,16 @@ export type HubTourProps = {
   onFinish: (outcome: HubTourOutcome) => void;
 };
 
-const TITLE_KEY: Record<HubTourStep["bodyKey"], string> = {
+/** Exported so a test can assert every entry resolves to real copy: the panel
+ *  looks titles up dynamically, so a stale mapping renders the raw key path. */
+export const TOUR_TITLE_KEYS: Record<HubTourStep["bodyKey"], string> = {
   dailyStart: "dailyTitleStart",
-  dailyKeep: "dailyTitle",
+  dailyKeep: "dailyTitleKeep",
   dailyDone: "dailyTitle",
   challengeJoin: "challengeTitle",
   challengeEnrolled: "challengeTitleEnrolled",
   rookStart: "rookTitle",
+  kingdomBody: "kingdomTitle",
   proJoin: "proTitle",
   proActive: "proTitleActive",
   playStart: "playTitle",
@@ -73,7 +77,6 @@ export function HubTour({
 }: HubTourProps) {
   const t = useTranslations("HUB_TOUR_COPY");
   const tCard = useTranslations("CHALLENGE_CARD_COPY");
-  const tPlay = useTranslations("PLAY_HUB_COPY");
   const scrimRef = useRef<HTMLDivElement>(null);
 
   const [reachableIds] = useState<HubTourStepId[]>(() =>
@@ -87,10 +90,11 @@ export function HubTour({
     .filter((candidate): candidate is HubTourStep => candidate !== undefined);
   const step = reachable[index] ?? null;
   const isLast = index === reachable.length - 1;
-  const isDaily =
-    step?.bodyKey === "dailyStart" ||
-    step?.bodyKey === "dailyKeep" ||
-    step?.bodyKey === "dailyDone";
+  /** Ritual variants only. `dailyDone` deliberately falls through to the plain
+   *  body: pairing the gift → tactic → streak strip with "come back tomorrow"
+   *  advertises a sequence the player cannot run today. */
+  const isDailyRitual =
+    step?.bodyKey === "dailyStart" || step?.bodyKey === "dailyKeep";
   const isChallengeSale = step?.bodyKey === "challengeJoin";
   const isProStep = step?.id === "pro";
   const isActionStep = step?.id === "rook" || step?.id === "play";
@@ -250,9 +254,9 @@ export function HubTour({
         <p className="hub-tour-step-counter">
           {t("stepCounter", { current: index + 1, total: reachable.length })}
         </p>
-        <h2 className="hub-tour-title">{t(TITLE_KEY[step.bodyKey])}</h2>
+        <h2 className="hub-tour-title">{t(TOUR_TITLE_KEYS[step.bodyKey])}</h2>
 
-        {isDaily ? (
+        {isDailyRitual ? (
           <>
             <div className="hub-tour-story" data-testid="hub-tour-story">
               <div className="hub-tour-story-step">
@@ -274,7 +278,7 @@ export function HubTour({
           </>
         ) : null}
 
-        {!isDaily && !isChallengeSale && !isProStep ? (
+        {!isDailyRitual && !isChallengeSale && !isProStep ? (
           <p className="hub-tour-body">
             {t(step.bodyKey, {
               days: challengeTerms.days,
@@ -316,22 +320,33 @@ export function HubTour({
         {isProStep ? (
           <>
             <p className="hub-tour-body">{t(step.bodyKey)}</p>
-            <div className="hub-tour-benefits hub-tour-benefits--pro">
+            {/* The subscription's own perks. These are NOT the KingdomCard's
+                Quick Match / Coach Review / Rewards chips: those describe hub
+                navigation, and reusing them made the context step and the sale
+                step render the same strip back to back. */}
+            <div
+              className="hub-tour-benefits hub-tour-benefits--pro"
+              data-testid="hub-tour-pro-benefits"
+            >
               <div className="hub-tour-benefit">
-                <TileIconSlot slot="hub.quick-match-benefit" className="hub-tour-benefit-icon" />
-                <span className="hub-tour-benefit-label">{tPlay("quickMatchLabel")}</span>
+                <TileIconSlot slot="hub.pro-benefit-season-pass" className="hub-tour-benefit-icon" />
+                <span className="hub-tour-benefit-label">{t("proBenefitSeasonPass")}</span>
               </div>
               <div className="hub-tour-benefit">
-                <TileIconSlot slot="hub.coach-review-benefit" className="hub-tour-benefit-icon" />
-                <span className="hub-tour-benefit-label">{tPlay("coachReviewLabel")}</span>
+                <TileIconSlot slot="hub.pro-benefit-coach" className="hub-tour-benefit-icon" />
+                <span className="hub-tour-benefit-label">{t("proBenefitUnlimitedCoach")}</span>
               </div>
               <div className="hub-tour-benefit">
-                <TileIconSlot slot="hub.rewards-benefit" className="hub-tour-benefit-icon" />
-                <span className="hub-tour-benefit-label">{tPlay("rewardsLabel")}</span>
+                <TileIconSlot slot="hub.pro-benefit-complete" className="hub-tour-benefit-icon" />
+                <span className="hub-tour-benefit-label">
+                  {t("proBenefitCompleteExperience")}
+                </span>
               </div>
             </div>
             {!pro?.active && pro?.price ? (
-              <p className="hub-tour-price">{t("proPrice", { price: pro.price })}</p>
+              <p className="hub-tour-price" data-testid="hub-tour-pro-price">
+                {t("proPrice", { price: pro.price, days: PRO_DURATION_DAYS })}
+              </p>
             ) : null}
           </>
         ) : null}

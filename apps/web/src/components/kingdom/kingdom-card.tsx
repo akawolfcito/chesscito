@@ -74,9 +74,15 @@ export function KingdomCard({
         : tHud("proUnavailableAriaLabel");
 
   return (
+    // The whole card is the mini-tour's first target: the spotlit card IS the
+    // illustration for "Welcome to Play Kingdom", so the tour panel does not
+    // repeat the benefits below. Removing this attribute does not fail loudly —
+    // HubTour silently drops steps whose target is absent — so it is covered by
+    // a test that counts the steps.
     <section
       className="kingdom-card"
       data-testid="kingdom-card"
+      data-tour-target="kingdom"
       data-state={pro.active ? "pro" : "free"}
       aria-label={t("kingdomPanelTitle")}
     >

@@ -1,9 +1,10 @@
 /**
  * Shared LEARN / PLAY mini-tour.
  *
- * Each hub remembers its own tour, while Daily has one shared memory: once the
- * gift has been explained in either hub, the other tour starts with its first
- * hub-specific step. Manual replay always restores the complete itinerary.
+ * Each hub remembers its own tour. The Daily gift is explained by LEARN only —
+ * it is LEARN's ritual, and PLAY's three steps are spent on context → offer →
+ * action instead (2026-07-28 spec). The shared Daily memory therefore has a
+ * single writer now; it stays because manual replay still passes through it.
  */
 
 export type HubTourMode = "learn" | "play";
@@ -21,6 +22,7 @@ export type HubTourStepId =
   | "daily"
   | "challenge"
   | "rook"
+  | "kingdom"
   | "pro"
   | "play";
 
@@ -31,6 +33,7 @@ export type HubTourBodyKey =
   | "challengeJoin"
   | "challengeEnrolled"
   | "rookStart"
+  | "kingdomBody"
   | "proJoin"
   | "proActive"
   | "playStart";
@@ -48,10 +51,9 @@ export type LearnHubTourContext = {
   includeDaily?: boolean;
 };
 
+/** PLAY no longer explains the Daily gift, so it needs nothing about the
+ *  player's daily state — only whether the PRO strip is already active. */
 export type PlayHubTourContext = {
-  dailyDone: boolean;
-  streak: number;
-  includeDaily?: boolean;
   proStatus: "active" | "inactive" | "loading" | "error" | "unknown";
 };
 
@@ -93,17 +95,18 @@ export function buildLearnHubTourSteps({
 /** Historical export retained for local consumers while LEARN migrates. */
 export const buildHubTourSteps = buildLearnHubTourSteps;
 
-/** PLAY: shared Daily → PRO discovery/status → the primary Play tile.
- * The strip exists in every state, so the tour always explains it; only a
+/** PLAY: Play Kingdom context → PRO discovery/status → the primary Play tile.
+ *
+ * Three fixed steps, in that order on purpose: a first-visit player is told
+ * WHERE THEY ARE before they are told what to buy. The offer never leads.
+ *
+ * The PRO strip exists in every state, so the tour always explains it; only a
  * confirmed active entitlement switches the copy from discovery to status. */
 export function buildPlayHubTourSteps({
-  dailyDone,
-  streak,
-  includeDaily = true,
   proStatus,
 }: PlayHubTourContext): HubTourStep[] {
   return [
-    ...(includeDaily ? [dailyStep({ dailyDone, streak })] : []),
+    { id: "kingdom", target: "kingdom", bodyKey: "kingdomBody" },
     {
       id: "pro",
       target: "pro",
