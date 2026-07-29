@@ -1,5 +1,6 @@
 import {
   ONBOARDING_COOKIE,
+  type CarouselEntry,
   type OnboardingCookieState,
   type PreferredMode,
 } from "@/lib/onboarding/types";
@@ -30,4 +31,23 @@ export function resolveOnboardingState(
   }
 
   return { onboarded: true, preferredMode };
+}
+
+/**
+ * Where the carousel opens, and which half of the mode switch wears the
+ * "Last used" label.
+ *
+ * A returning visitor lands on slide 4 — the choice screen — rather than on a
+ * separate welcome screen. Slides 1-3 stay reachable with the back arrow, so
+ * the shortcut costs nothing: it skips the pitch for someone who already
+ * bought it, without hiding it.
+ *
+ * The mode drives BOTH fields, so there is no state where the carousel opens
+ * on the choice screen with nothing to point at.
+ */
+export function carouselEntryFor(state: OnboardingCookieState): CarouselEntry {
+  if (!state.onboarded || state.preferredMode === null) {
+    return { initialStep: 1, lastUsedMode: null };
+  }
+  return { initialStep: 4, lastUsedMode: state.preferredMode };
 }
