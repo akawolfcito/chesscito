@@ -349,15 +349,16 @@ export function PhaseFlash({
           {isSuccess && lessonTitle ? tFlash('lesson', { title: lessonTitle }) : null}
         </span>
       </div>
-      {/* 12rem, down from 20rem (founder 2026-07-29). This is the only knob
-          that buys headroom without a cost somewhere else: the whole stack is
-          centred in the scrim, so every rem the wolf gives back is half a rem
-          of clearance at the top for the arch. Moving the wolf down instead
+      {/* 13.5rem, down from 20rem (founder 2026-07-29; 12rem overshot). This
+          is the only knob that buys headroom without a cost somewhere else:
+          the whole stack is centred in the scrim, so every rem the wolf gives
+          back is half a rem of clearance at the top for the arch. Moving it
+          down instead
           would run it into the reward pills and the tap prompt; cropping the
           art would change `avatar-fun` for every other surface that uses it.
           It still carries the emotion at this size — what it stopped doing is
           crowd the words. */}
-      <div className="relative flex h-48 w-48 items-center justify-center">
+      <div className="relative flex h-[13.5rem] w-[13.5rem] items-center justify-center">
         {isSuccess && <ConfettiBurst />}
         {isSuccess && (
           <div className="pointer-events-none absolute inset-0">
@@ -369,7 +370,7 @@ export function PhaseFlash({
           </div>
         )}
         <div
-          className="pointer-events-none absolute h-44 w-44 rounded-full"
+          className="pointer-events-none absolute h-[12.5rem] w-[12.5rem] rounded-full"
           style={{
             background:
               'radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(245, 158, 11, 0.10) 55%, transparent 80%)',
@@ -382,7 +383,7 @@ export function PhaseFlash({
             src={`/art/${avatarBase}.png`}
             alt=""
             aria-hidden="true"
-            className="h-44 w-44 object-contain drop-shadow-[0_6px_22px_rgba(255,245,215,0.95)]"
+            className="h-[12.5rem] w-[12.5rem] object-contain drop-shadow-[0_6px_22px_rgba(255,245,215,0.95)]"
             style={{
               animation:
                 'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both',
