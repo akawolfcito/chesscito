@@ -3130,9 +3130,11 @@
     overflow: visible;
   }
 
-  .playhub-board-trail line {
-    stroke: rgba(255, 193, 74, 0.92);
-    stroke-linecap: round;
+  /* The dart is a filled shape, so the fade animates opacity and a scale
+     toward the tip rather than the stroke width the old line used. */
+  .playhub-board-trail polygon {
+    fill: rgba(255, 193, 74, 0.92);
+    stroke: none;
     filter: drop-shadow(0 0 3px rgba(255, 176, 46, 0.85));
     animation: playhub-trail-fade 680ms ease-out forwards;
   }
@@ -3140,7 +3142,6 @@
   @keyframes playhub-trail-fade {
     0% {
       opacity: 0;
-      stroke-width: 2.2;
     }
 
     22% {
@@ -3149,12 +3150,11 @@
 
     100% {
       opacity: 0;
-      stroke-width: 0.9;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .playhub-board-trail line {
+    .playhub-board-trail polygon {
       animation-duration: 1ms;
     }
   }

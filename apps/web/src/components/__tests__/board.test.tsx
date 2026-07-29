@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent, screen } from "@testing-library/react";
-import { Board } from "../board";
+import { Board, trailDartPoints } from "../board";
 
 describe("<Board>", () => {
   it("renders a 64-cell grid of board buttons", () => {
@@ -471,7 +471,10 @@ describe("<Board>", () => {
   });
 
   describe("move trail", () => {
-    it("draws a trail line from origin to destination after a move", () => {
+    const parsePoints = (points: string): number[][] =>
+      points.split(" ").map((pair) => pair.split(",").map(Number));
+
+    it("draws a trail dart from origin to destination after a move", () => {
       const { container } = render(
         <Board pieceType="rook" startPosition={{ file: 0, rank: 0 }} mode="practice" />,
       );
@@ -481,12 +484,58 @@ describe("<Board>", () => {
       fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
       fireEvent.click(screen.getByRole("gridcell", { name: "Square a8" }));
 
-      const line = container.querySelector(".playhub-board-trail line");
-      expect(line).not.toBeNull();
-      // The line runs from the a1 cell to the a8 cell (same file → same x,
-      // different y), so it traces the path the rook actually travelled.
-      expect(line?.getAttribute("x1")).toBe(line?.getAttribute("x2"));
-      expect(line?.getAttribute("y1")).not.toBe(line?.getAttribute("y2"));
+      const dart = container.querySelector(".playhub-board-trail polygon");
+      expect(dart).not.toBeNull();
+
+      // Tip, two head barbs, two streak shoulders, two origin corners.
+      const points = parsePoints(dart?.getAttribute("points") ?? "");
+      expect(points).toHaveLength(7);
+
+      const [tip, barbLeft, , originLeft, originRight, , barbRight] = points;
+      const ys = points.map(([, y]) => y);
+      // Travelling UP the a-file, so the tip leads.
+      expect(tip[1]).toBe(Math.min(...ys));
+      // The arrow straddles the travel line, tip centred on it.
+      expect((barbLeft[0] + barbRight[0]) / 2).toBeCloseTo(tip[0], 1);
+      // A streak: a sliver where the piece set off, a wide head where it
+      // arrived — the shape a moving object leaves, not a wedge aimed back.
+      const originWidth = Math.abs(originLeft[0] - originRight[0]);
+      const headWidth = Math.abs(barbLeft[0] - barbRight[0]);
+      expect(headWidth).toBeGreaterThan(originWidth * 3);
+    });
+
+    it("draws nothing for a move that ends where it started", () => {
+      expect(trailDartPoints({ x: 40, y: 40 }, { x: 40, y: 40 })).toBeNull();
+    });
+
+    it("keeps the head under one square and the same size at any distance", () => {
+      const oneCell = 12.5;
+      const short = parsePoints(
+        trailDartPoints({ x: 50, y: 50 }, { x: 50, y: 50 - oneCell })!,
+      );
+      const long = parsePoints(
+        trailDartPoints({ x: 50, y: 93.75 }, { x: 50, y: 6.25 })!,
+      );
+      const headWidth = (p: number[][]) => Math.abs(p[1][0] - p[6][0]);
+
+      // The founder's constraint: never wider than a square.
+      expect(headWidth(long)).toBeLessThanOrEqual(oneCell);
+      // Scaling the whole arrow with the travel made it a needle over seven
+      // squares and a blob over one. Only the streak stretches now.
+      expect(headWidth(long)).toBeCloseTo(4.6 * 2, 5);
+      // …except on a one-square move, where the head has to give way or it
+      // swallows the streak whole.
+      expect(headWidth(short)).toBeLessThan(headWidth(long));
+      expect(headWidth(short)).toBeGreaterThan(0);
+    });
+
+    it("stops the tip short of the destination so the piece cannot hide it", () => {
+      const to = { x: 50, y: 6.25 };
+      const [tip] = parsePoints(trailDartPoints({ x: 50, y: 93.75 }, to)!);
+      // The trail is drawn after the move, so a tip on the centre would sit
+      // under the piece that just landed there.
+      expect(tip[1]).toBeGreaterThan(to.y);
+      expect(tip[1] - to.y).toBeCloseTo(5.6, 1);
     });
 
     it("shows no trail before any move", () => {
