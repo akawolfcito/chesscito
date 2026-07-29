@@ -410,6 +410,16 @@
      *  `app/layout.tsx`. Kept distinct from `--font-game-display` so we
      *  can tune body-display vs. action separately if needed. */
     --font-game-action: var(--font-rowdies), "Rowdies", system-ui, sans-serif;
+    /* Celebration headlines (the arched "Well Done!" on success overlays).
+     *  Lilita One is heavier and rounder than Rowdies, so the arch reads as
+     *  a sign rather than as tilted body text. Falls back to the action face
+     *  so a failed font load still lands on the game voice, not system-ui. */
+    /* The fallback inside var() is not optional: a bare `var(--font-lilita)`
+     *  makes the WHOLE declaration invalid at computed-value time when the
+     *  variable is missing, so font-family silently inherits the system stack
+     *  instead of falling through to the next name in the list. */
+    --font-game-celebration: var(--font-lilita, "Lilita One"), "Lilita One",
+      var(--font-game-action, system-ui), sans-serif;
     --intro-bg-mobile: var(--theme-bg-splash-chesscito);
     --playhub-rune-frame: var(--theme-shared-panel-frame);
     --playhub-slot-frame: var(--theme-shop-slot-frame);
@@ -14983,6 +14993,76 @@ button.hud-resource-chip:active:not(:disabled) {
      the mascot first, then sees the reward chips arrive. */
   animation:
     reward-icon-enter 360ms cubic-bezier(0.34, 1.56, 0.64, 1) 220ms both;
+}
+
+/* ─── Celebration overlay rewards — icon first, label at its foot ─────────
+   Supersedes the pill chips on the success overlays (founder 2026-07-29).
+   The chip gave the icon and the words equal weight inside one lozenge; at
+   overlay scale the prize is the icon, so it doubles in size and the words
+   shrink to a caption tucked under its feet. */
+.overlay-reward-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1.5rem;
+  animation:
+    reward-icon-enter 360ms cubic-bezier(0.34, 1.56, 0.64, 1) 220ms both;
+}
+
+.overlay-reward {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.overlay-reward picture,
+.overlay-reward img {
+  display: block;
+  /* Double the 1.4rem the pill used. */
+  width: 2.8rem;
+  height: 2.8rem;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 6px rgba(120, 65, 5, 0.45));
+}
+
+/* Rewards with no art of their own (the ×N multipliers) put the number where
+   the icon would be, at the same weight, so the row reads as one family. */
+.overlay-reward-glyph {
+  display: block;
+  height: 2.8rem;
+  line-height: 2.8rem;
+  font-family: var(--font-game-action);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #fff5d7;
+  text-shadow:
+    -2px -2px 0 rgba(63, 34, 8, 0.95),
+    2px -2px 0 rgba(63, 34, 8, 0.95),
+    -2px 2px 0 rgba(63, 34, 8, 0.95),
+    2px 2px 0 rgba(63, 34, 8, 0.95),
+    0 4px 8px rgba(120, 65, 5, 0.4);
+}
+
+/* Floating caption: overlaps the icon's foot rather than sitting below it,
+   so the pair reads as one object instead of two stacked ones. */
+.overlay-reward-label {
+  margin-top: -0.55rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff5d7 0%, #f7c64a 100%);
+  border: 1.5px solid rgba(180, 120, 35, 0.7);
+  color: rgba(63, 34, 8, 0.95);
+  font-family: var(--font-game-action);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+  white-space: nowrap;
+  text-transform: uppercase;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 3px 8px rgba(120, 65, 5, 0.35);
 }
 
 .fail-rescue-reward-pill {

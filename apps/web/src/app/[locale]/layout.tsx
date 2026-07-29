@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Fredoka, Rowdies } from 'next/font/google';
+import { Fredoka, Lilita_One, Rowdies } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
@@ -29,6 +29,17 @@ const rowdies = Rowdies({
   subsets: ['latin'],
   weight: ['300', '400', '700'],
   variable: '--font-rowdies',
+  display: 'swap',
+});
+
+// Celebration headlines only (the arched "Well Done!" on the success
+// overlays). Self-hosted by Next like the other two — the <link> to
+// fonts.googleapis.com the Google snippet suggests would add a third-party
+// hop and a FOUT this app already avoids. Lilita One ships one weight.
+const lilitaOne = Lilita_One({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-lilita',
   display: 'swap',
 });
 
@@ -132,7 +143,7 @@ export default async function LocaleLayout({
   return (
     <html
       lang={locale}
-      className={`dark ${fredoka.variable} ${rowdies.variable}`}
+      className={`dark ${fredoka.variable} ${rowdies.variable} ${lilitaOne.variable}`}
       suppressHydrationWarning
     >
       <body>
