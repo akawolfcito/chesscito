@@ -217,10 +217,21 @@ describe("validateScoreSessionChallenge", () => {
 
 describe("policy constants", () => {
   it("budgets more saves than a maxed-out day can produce", () => {
-    // HARD_MAX_EXTRAS is 15 (10 free + 2 packs x 5). Saves fire per
-    // improvement, not per exercise, so the budget needs headroom above that
-    // or a dedicated player gets re-prompted mid-session.
-    expect(SCORE_SESSION_MAX_SAVES).toBeGreaterThan(15);
+    // HARD_MAX_EXTRAS is 15 (10 free + 2 packs x 5). Slice 3 posts once per
+    // completed ATTEMPT rather than per improvement — replays of an aced level
+    // and every carril-2 completion each cost a unit — so the budget needs
+    // several times that headroom, not a little.
+    expect(SCORE_SESSION_MAX_SAVES).toBeGreaterThanOrEqual(100);
+  });
+
+  it("keeps a live 25-save session valid after the ceiling was raised", () => {
+    // The validator rejects maxSaves ABOVE the ceiling, so raising it is the
+    // safe direction: a session issued at 25 before the Slice 3 bump still
+    // authorizes, it just runs out sooner. Lowering the ceiling is what would
+    // invalidate live sessions, and this is the test that would catch it.
+    expect(
+      validateScoreSessionChallenge(challenge({ maxSaves: 25 }), OPTS),
+    ).toMatchObject({ ok: true });
   });
 
   it("lasts long enough to cover a play session but not a day", () => {

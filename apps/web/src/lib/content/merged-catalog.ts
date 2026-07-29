@@ -24,6 +24,8 @@ import {
   GENERATED_DIAGONAL_RUN,
   GENERATED_KNIGHT_TOUR,
   GENERATED_QUEENS,
+  GENERATED_SAFE_PATH,
+  GENERATED_PROMOTION_RUN,
   GENERATED_EXERCISE_DESCRIPTIONS,
 } from "@/lib/game/generated/puzzles.generated";
 import { getSupabaseServer } from "@/lib/supabase/server";
@@ -45,6 +47,62 @@ const OVERLAY_TIMEOUT_MS = 2000;
 const CONTENT_TTL_SECONDS = 60;
 
 const PIECES: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
+
+/**
+ * Every pool a catalogue carries, as one list.
+ *
+ * The seven-ness of the catalogue is stated ONCE. Everything that has to walk
+ * all of them — the id-uniqueness scan, the merge's passthrough — reads this,
+ * so an eighth bucket cannot be added to five of them and forgotten in the
+ * sixth.
+ */
+export const CATALOG_POOL_KEYS = [
+  "exercises",
+  "labyrinths",
+  "diagonalRun",
+  "knightTour",
+  "queens",
+  "safePath",
+  "promotionRun",
+] as const;
+
+export type CatalogPoolKey = (typeof CATALOG_POOL_KEYS)[number];
+
+/** Just the pools — the shape both the uniqueness scan and the grader read. */
+export type CatalogPools = Pick<BaselineCatalog, CatalogPoolKey>;
+
+/**
+ * Which pool owns each exercise id, and which ids more than one pool claims.
+ *
+ * Ids are the catalogue's primary key across ALL pools, not per pool.
+ * `buildCatalog` enforces that within one build (`catalog.ts:419`), and
+ * `gradeAttempt` depends on it: it finds a level by scanning the pools in order
+ * and grades with the first hit, so a duplicated id would be graded by whichever
+ * bucket happens to come first — a move count fed to a coverage grader, in
+ * silence. The overlay is the one path that can introduce a duplicate, because
+ * its rows are built one at a time and never see the other pools.
+ */
+export function indexExerciseIds(pools: CatalogPools): {
+  owner: Map<string, CatalogPoolKey>;
+  duplicates: string[];
+} {
+  const owner = new Map<string, CatalogPoolKey>();
+  const duplicates: string[] = [];
+  for (const poolKey of CATALOG_POOL_KEYS) {
+    for (const piece of PIECES) {
+      for (const exercise of pools[poolKey][piece] ?? []) {
+        if (owner.has(exercise.id)) duplicates.push(exercise.id);
+        else owner.set(exercise.id, poolKey);
+      }
+    }
+  }
+  return { owner, duplicates };
+}
+
+/** Ids claimed by more than one pool. Empty is the invariant. */
+export function duplicateExerciseIds(pools: CatalogPools): string[] {
+  return indexExerciseIds(pools).duplicates;
+}
 
 function emptyByPiece<T>(): Record<PieceId, T[]> {
   return { rook: [], bishop: [], knight: [], pawn: [], queen: [], king: [] };
@@ -117,25 +175,42 @@ export function mergeOverlay(
   const exercises = tag(baseline.exercises);
   const labyrinths = tag(baseline.labyrinths);
   const descriptions = { ...baseline.descriptions };
+  // Who owns each id BEFORE the merge, maintained as rows are applied so two
+  // overlay rows cannot collide with each other either.
+  const { owner } = indexExerciseIds(baseline);
   let applied = 0;
 
   for (const row of overlay) {
     try {
+      const targetPool: CatalogPoolKey =
+        row.kind === "labyrinth" ? "labyrinths" : "exercises";
       const list = (row.kind === "labyrinth" ? labyrinths : exercises)[
         row.piece
       ];
       if (!list) continue; // unknown piece — defensive skip
 
+      // An id already claimed by ANOTHER pool is dropped, not applied. Ids are
+      // the catalogue's key across every pool, and `gradeAttempt` grades the
+      // first pool that answers to one: letting an overlay row shadow a
+      // safe-path or promotion-run level would hand its move count to whichever
+      // grader won the scan. A row landing in its OWN pool is an edit, which is
+      // the whole point of the overlay.
+      const claimedBy = owner.get(row.id);
+      if (claimedBy !== undefined && claimedBy !== targetPool) continue;
+
       if (row.disabled) {
         const idx = list.findIndex((e) => e.exercise.id === row.id);
         if (idx >= 0) list.splice(idx, 1);
         delete descriptions[row.id];
+        // The id is free again: a later row may legitimately claim it.
+        if (claimedBy === targetPool) owner.delete(row.id);
         applied++;
         continue;
       }
 
       const built = buildOverlayRow(row);
       if (!built) continue; // dropped (unsolvable / optimal_moves mismatch)
+      owner.set(row.id, targetPool);
 
       const entry: Entry = { exercise: built.exercise, order: row.order };
       const idx = list.findIndex((e) => e.exercise.id === row.id);
@@ -157,11 +232,19 @@ export function mergeOverlay(
   return {
     exercises: finalize(exercises),
     labyrinths: finalize(labyrinths),
-    // Pivots are baseline-only this phase: the overlay has no pivot rows, so the
-    // compiled bucket passes straight through the merge untouched.
+    // The five signature-game pools are baseline-only: the overlay has no rows
+    // of those kinds, so the compiled buckets pass straight through untouched.
+    //
+    // ⚠️ "Untouched" is not the same as "absent", and that distinction is what
+    // Slice 3 tripped on: `safePath` and `promotionRun` were simply missing from
+    // this object, so the catalogue the server served could not grade two of the
+    // seven buckets. Passing a pool through costs a line; leaving it out costs a
+    // scoreboard that answers `unknown_exercise` to an honest run.
     diagonalRun: baseline.diagonalRun,
     knightTour: baseline.knightTour,
     queens: baseline.queens,
+    safePath: baseline.safePath,
+    promotionRun: baseline.promotionRun,
     descriptions,
     source: "baseline+overlay",
     overlayCount: applied,
@@ -176,6 +259,8 @@ export function getBaseline(): BaselineCatalog {
     diagonalRun: GENERATED_DIAGONAL_RUN,
     knightTour: GENERATED_KNIGHT_TOUR,
     queens: GENERATED_QUEENS,
+    safePath: GENERATED_SAFE_PATH,
+    promotionRun: GENERATED_PROMOTION_RUN,
     descriptions: GENERATED_EXERCISE_DESCRIPTIONS,
   };
 }

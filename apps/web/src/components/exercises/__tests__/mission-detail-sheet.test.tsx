@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { screen } from "@testing-library/react";
@@ -143,7 +145,7 @@ describe("<MissionDetailSheet> — off-chain save state (B2, Lote 2)", () => {
   });
 
   it("renders no save state when there is no pending/saved score", () => {
-    renderSheet({ canSaveScore: false });
+    renderSheet({ canOfferScoreSave: false });
 
     expect(
       screen.queryByRole("button", { name: "Save score" }),
@@ -158,7 +160,7 @@ describe("<MissionDetailSheet> — off-chain save state (B2, Lote 2)", () => {
     const onSaveOnChain = vi.fn();
     const user = userEvent.setup();
     renderSheet({
-      canSaveScore: true,
+      canOfferScoreSave: true,
       canSaveOnChain: true,
       onSaveOnChain,
       score: "120",
@@ -175,7 +177,7 @@ describe("<MissionDetailSheet> — off-chain save state (B2, Lote 2)", () => {
 
   it("hides the on-chain action when unavailable (no dead buttons)", () => {
     renderSheet({
-      canSaveScore: true,
+      canOfferScoreSave: true,
       canSaveOnChain: false,
       onSaveOnChain: vi.fn(),
     });
@@ -187,9 +189,9 @@ describe("<MissionDetailSheet> — off-chain save state (B2, Lote 2)", () => {
 });
 
 describe("<MissionDetailSheet> — score breakdown (transparency)", () => {
-  it("shows stars × 100 breakdown when canSaveScore + totalStars provided", () => {
+  it("shows stars × 100 breakdown when canOfferScoreSave + totalStars provided", () => {
     renderSheet({
-      canSaveScore: true,
+      canOfferScoreSave: true,
       score: "1200",
       totalStars: 12,
       maxPossibleStars: 30,
@@ -201,7 +203,7 @@ describe("<MissionDetailSheet> — score breakdown (transparency)", () => {
 
   it("shows Max indicator when totalStars equals maxPossibleStars", () => {
     renderSheet({
-      canSaveScore: true,
+      canOfferScoreSave: true,
       score: "3000",
       totalStars: 30,
       maxPossibleStars: 30,
@@ -220,7 +222,7 @@ describe("<MissionDetailSheet> — score breakdown (transparency)", () => {
         targetLabel="e5"
         isCapture={false}
         score="3000"
-        canSaveScore
+        canOfferScoreSave
         totalStars={30}
         maxPossibleStars={30}
         trigger={<button type="button">peek</button>}
@@ -235,7 +237,7 @@ describe("<MissionDetailSheet> — score breakdown (transparency)", () => {
 
   it("does NOT show breakdown when totalStars is absent", () => {
     renderSheet({
-      canSaveScore: true,
+      canOfferScoreSave: true,
       score: "1200",
     });
 
@@ -244,7 +246,7 @@ describe("<MissionDetailSheet> — score breakdown (transparency)", () => {
 
   it("does NOT include labyrinths in the breakdown text", () => {
     renderSheet({
-      canSaveScore: true,
+      canOfferScoreSave: true,
       score: "1200",
       totalStars: 12,
       maxPossibleStars: 30,
@@ -255,14 +257,39 @@ describe("<MissionDetailSheet> — score breakdown (transparency)", () => {
     expect(breakdown.textContent).not.toMatch(/maze/i);
   });
 
-  it("scorePendingNew gate unchanged: breakdown does not appear when canSaveScore is false", () => {
+  it("scorePendingNew gate unchanged: breakdown does not appear when canOfferScoreSave is false", () => {
     renderSheet({
-      canSaveScore: false,
+      canOfferScoreSave: false,
       score: "1200",
       totalStars: 12,
       maxPossibleStars: 30,
     });
 
     expect(screen.queryByTestId("score-breakdown")).not.toBeInTheDocument();
+  });
+});
+
+describe("the save gate is named for what it does (Slice 3)", () => {
+  it("has no `canSaveScore` prop left anywhere on this lane", () => {
+    // The rename is the point, not decoration. `canSaveScore` still exists in
+    // `exercises-screen` as the WALLET precondition, and this prop was a
+    // VISUAL gate that also happens to be false on every carril-2 completion.
+    // Two different things under one name is how a gate gets reused as the
+    // trigger for the attempt lane — which would file a table of improvements
+    // instead of a table of attempts. An alias left behind would let exactly
+    // that happen, silently, on the next edit.
+    const read = (p: string) =>
+      readFileSync(join(process.cwd(), "src", "components", "exercises", p), "utf-8");
+
+    expect(read("mission-detail-sheet.tsx")).toMatch(/canOfferScoreSave/);
+    expect(read("mission-panel-candy.tsx")).toMatch(/canOfferScoreSave/);
+    // Prose may still NAME the old prop while explaining the rename; what must
+    // be gone is any identifier or JSX attribute.
+    for (const file of ["mission-detail-sheet.tsx", "mission-panel-candy.tsx"]) {
+      const code = read(file)
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/\/\/.*$/gm, "");
+      expect(code).not.toMatch(/\bcanSaveScore\b/);
+    }
   });
 });

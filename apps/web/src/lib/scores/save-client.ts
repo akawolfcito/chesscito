@@ -30,6 +30,7 @@
  * stays free of React hooks and is unit-testable without a wallet provider.
  */
 
+import type { AttemptMeasurement } from "./attempt-measurement";
 import type { ScoreSaveSurface } from "./save-authorization";
 import {
   clearScoreSession,
@@ -49,6 +50,25 @@ export type ScoreSaveClientInput = {
    *  re-checked server-side against the deployment. */
   surface: ScoreSaveSurface;
   signMessage: SignMessageFn;
+  /**
+   * ── SLICE 3 (attempt identity) ─────────────────────────────────────────
+   * All three are OPTIONAL, and that is the deploy order, not laziness. The
+   * endpoint and the migration ship first; a bundle older than them sends
+   * none of these and the server mints an id, marks it `attempt_id_source =
+   * 'server'` and files the row `ungraded`. Correct, and legible as such.
+   *
+   * `attemptId` is what makes a retry a REPLAY: re-sending the same id
+   * inserts nothing and consumes no budget, so a failed POST retried three
+   * times is still one attempt. Rotating it would turn each retry into a new
+   * attempt on a permanent table.
+   *
+   * `measurement` is a RAW number, never a star count: the client does not
+   * pick the grader and does not send stars (D12). The bucket the catalogue
+   * puts `exerciseId` in decides which grader runs, server-side.
+   */
+  attemptId?: string;
+  exerciseId?: string;
+  measurement?: AttemptMeasurement;
 };
 
 /** Statuses the endpoint can return — used to validate the JSON body
@@ -96,10 +116,17 @@ async function postWithToken(
         "content-type": "application/json",
         authorization: `Bearer ${token}`,
       },
+      // The three attempt fields are OMITTED rather than sent as null when
+      // absent: `resolveAttemptIdentity` treats an absent id as "mint one" and
+      // a present-but-unusable one as a 400, so an explicit null would be the
+      // difference between a recorded play and a rejected request.
       body: JSON.stringify({
         levelId: input.levelId,
         score: input.score,
         timeMs: input.timeMs,
+        ...(input.attemptId !== undefined ? { attemptId: input.attemptId } : {}),
+        ...(input.exerciseId !== undefined ? { exerciseId: input.exerciseId } : {}),
+        ...(input.measurement !== undefined ? { measurement: input.measurement } : {}),
       }),
     });
   } catch {

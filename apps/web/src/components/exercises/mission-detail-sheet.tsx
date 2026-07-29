@@ -42,11 +42,16 @@ type Props = {
    *  free, so the sheet no longer renders a green "Save score" CTA. It shows
    *  an informative saved state — or, only if the background auto-save failed,
    *  a free manual retry.
-   *  `canSaveScore`: a new score is pending (auto-save in flight / just ran).
+   *  `canOfferScoreSave`: a new score is pending (auto-save in flight / just
+   *  ran) — a VISUAL gate, and nothing else. It was called `canSaveScore`
+   *  until Slice 3, when a second, unrelated write lane appeared: the attempt
+   *  lane records that an attempt happened whether or not the total improved.
+   *  Two things named "can save score", one of them false on every carril-2
+   *  completion, is how a gate gets reused as a trigger.
    *  `scoreSaved`: the score is persisted → show "✓ Score saved".
    *  `saveFailed`: the auto-save failed → show the free "Retry save" fallback.
    */
-  canSaveScore?: boolean;
+  canOfferScoreSave?: boolean;
   isSavingScore?: boolean;
   scoreSaved?: boolean;
   saveFailed?: boolean;
@@ -82,7 +87,7 @@ export function MissionDetailSheet({
   score,
   trainingPath,
   onLabyrinthSelect,
-  canSaveScore = false,
+  canOfferScoreSave = false,
   isSavingScore = false,
   scoreSaved = false,
   saveFailed = false,
@@ -140,7 +145,7 @@ export function MissionDetailSheet({
   const showNowLine = Boolean(nextChallenge && onLabyrinthSelect);
   // B2: the off-chain save is not a CTA. Surface its state (saved / retrying /
   // just-saved) whenever there is a pending or persisted score to reflect.
-  const showSaveState = Boolean(canSaveScore || scoreSaved || saveFailed);
+  const showSaveState = Boolean(canOfferScoreSave || scoreSaved || saveFailed);
   const showSaveOnChain = Boolean(canSaveOnChain && onSaveOnChain);
   const pieceName = (() => {
     try {

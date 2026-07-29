@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -125,6 +132,17 @@ import { resolveDeploymentSurface } from "@/lib/scores/deployment-surface";
 import { deriveScoreSaveId } from "@/lib/scores/save-service";
 import { emitScoreSaveTelemetry } from "@/lib/scores/save-telemetry";
 import {
+  boardRunKeysReducer,
+  completionKeyFor,
+  initialBoardRunKeys,
+  runKeyFor,
+  type AttemptFamily,
+} from "@/lib/scores/attempt-run-key";
+import type { AttemptMeasurement } from "@/lib/scores/attempt-measurement";
+import { coverageCeilingFor } from "@/lib/scores/attempt-grading";
+import { MAX_SCORE_SAVE_TIME_MS } from "@/lib/scores/save-authorization";
+import { useAttemptOutbox } from "@/lib/scores/use-attempt-outbox";
+import {
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
   PRO_ITEM_ID,
@@ -184,6 +202,7 @@ import {
 } from "@/lib/training/path";
 import { attemptShieldSpendWithPeones } from "@/lib/peones/shield-spend-fallback";
 import { ActionPin } from "@/components/redesign/action-pin";
+import { AttemptSaveStatus } from "@/components/exercises/attempt-save-status";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { computeStars } from "@/lib/game/scoring";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
@@ -452,7 +471,18 @@ export function ExercisesScreen({
   // opener. See `handleMilestoneNavigate`.
   const [miniArenaOpen, setMiniArenaOpen] = useState(false);
   const [phase, setPhase] = useState<"ready" | "success" | "failure">("ready");
-  const [boardKey, setBoardKey] = useState(0);
+  /**
+   * The four board remount counters, together, because they are one concept:
+   * the identity of the CURRENT run. Splitting them into four `useState`s is
+   * what let `resetBoard` rotate three of them and forget `labyrinthKey`
+   * (round-7 DEBT-1) — a hole that is invisible until the D19 latch reads them.
+   * Rotation rules and the per-family key live in `lib/scores/attempt-run-key`.
+   */
+  const [runKeys, dispatchRunKeys] = useReducer(
+    boardRunKeysReducer,
+    initialBoardRunKeys,
+  );
+  const boardKey = runKeys.board;
   const [moves, setMoves] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   // One exclusive dock tab at a time. Persistent-dock game UX: tapping
@@ -762,8 +792,9 @@ export function ExercisesScreen({
     awardsStars: boolean;
   } | null>(null);
   /** Bumps the labyrinth board key on retry so internal Board state
-   *  (piece position, selection, internal move counter) resets. */
-  const [labyrinthKey, setLabyrinthKey] = useState(0);
+   *  (piece position, selection, internal move counter) resets. Lives in
+   *  `runKeys` — see the reducer declaration above. */
+  const labyrinthKey = runKeys.labyrinth;
   /** Live move counter mirrored from the Board's onMove callback.
    *  Drives the labyrinth HUD chip ("X / Y moves") so the player
    *  can pace themselves against the optimal target in real time. */
@@ -1049,6 +1080,52 @@ export function ExercisesScreen({
     () => getMaxPossibleStars(selectedPiece, catalog),
     [selectedPiece, catalog],
   );
+
+  /**
+   * Slice 3 — the attempt lane. Separate from the score-save lane above it on
+   * purpose: that one persists a piece TOTAL when it improves, this one records
+   * that a specific attempt happened, improvement or not. Carril 2 never moved
+   * the total, which is why it never reached the server at all until now (and
+   * why every carril-2 row comes back `duplicate` — the score row already
+   * exists; the attempt row is the point).
+   *
+   * The session budget is what pays for it, and 4B raised it 25 → 100 saves for
+   * exactly this traffic.
+   */
+  const submitAttempt = useCallback(
+    (snapshot: {
+      attemptId: string;
+      exerciseId: string;
+      measurement: AttemptMeasurement;
+      timeMs: number;
+      levelId: number;
+      score: number;
+    }) => {
+      if (!address) {
+        // Unreachable: the hook refuses to queue without a wallet. Answering
+        // `network` rather than throwing keeps the attempt queued if it ever
+        // becomes reachable.
+        return Promise.resolve({ status: "error", reason: "network" } as const);
+      }
+      return postScoreSave({
+        player: address,
+        levelId: snapshot.levelId,
+        score: snapshot.score,
+        timeMs: snapshot.timeMs,
+        surface: resolveDeploymentSurface(),
+        signMessage: ({ message }) => signMessageAsync({ message }),
+        attemptId: snapshot.attemptId,
+        exerciseId: snapshot.exerciseId,
+        measurement: snapshot.measurement,
+      });
+    },
+    [address, signMessageAsync],
+  );
+
+  const attempts = useAttemptOutbox({
+    wallet: address ?? null,
+    submitAttempt,
+  });
 
   // v1: tracks last-exercise time only. 1000n fallback after board reset
   // is safe — on-chain time is informational, not used for scoring.
@@ -1515,28 +1592,34 @@ export function ExercisesScreen({
     // the continuation itself lands here, so a stale tap can never re-fire.
     flashContinueRef.current = null;
     setAwaitFlashTap(false);
-    setBoardKey((previous) => previous + 1);
+    /* Rotates ALL FOUR run keys, which is the point of the single dispatch.
+       Each board reaches its next attempt differently and this is the one place
+       that has to know none of it:
+
+       - Safe Path keys off its own id, not boardKey. Every rescue path lands
+         here — shield, skip, server error — and all three mean the same thing
+         for the king: walk back to the start (D5). Losing on step 9 of 10 costs
+         the whole run.
+       - Promotion Run, same story, same reason — and the SAME meaning for both
+         of its two failures (caught, and crowning the wrong piece): back to the
+         start of the run.
+
+         The founder's first instinct was for a shield to buy a re-PICK on a
+         wrong crown — resume on the last rank rather than replay six moves —
+         and then ruled that keeping the existing behaviour was fine if it cost
+         much (2026-07-17). It does not just cost less; it is also the safer
+         machine: a shield that means "back to the start" here and "just
+         re-choose" there is ONE token with two meanings, and that drifts. One
+         shield, one promise. The picker re-opens on its own when the pawn
+         reaches the rank again.
+       - Diagonal Run, Knight's Tour and N-Queens have no reset prop at all:
+         their only reset is the remount `labyrinth` drives. Round 7 found this
+         function had never bumped it (DEBT-1). */
+    dispatchRunKeys({ type: "board_reset" });
     setPhase("ready");
     setMoves(0);
     setElapsedMs(0);
     timerStart.current = 0;
-    // Safe Path keys off its own id, not boardKey, so the bump above never
-    // reaches it. Every rescue path lands here — shield, skip, server error —
-    // and all three mean the same thing for the king: walk back to the start
-    // (D5). Losing on step 9 of 10 costs the whole run.
-    setSafePathResetKey((previous) => previous + 1);
-    /* Promotion Run, same story, same reason — and the SAME meaning for both of
-       its two failures (caught, and crowning the wrong piece): back to the
-       start of the run.
-
-       The founder's first instinct was for a shield to buy a re-PICK on a wrong
-       crown — resume on the last rank rather than replay six moves — and then
-       ruled that keeping the existing behaviour was fine if it cost much
-       (2026-07-17). It does not just cost less; it is also the safer machine:
-       a shield that means "back to the start" here and "just re-choose" there
-       is ONE token with two meanings, and that drifts. One shield, one promise.
-       The picker re-opens on its own when the pawn reaches the rank again. */
-    setPromotionRunResetKey((previous) => previous + 1);
     setPromotionPick(null);
     // A beat still in flight belongs to a run that no longer exists. Left
     // pending, it would fire a failure into the fresh board it lands on.
@@ -1676,6 +1759,18 @@ export function ExercisesScreen({
       if (!scoringFrozen) {
         completeExercise(movesCount);
       }
+
+      // Slice 3 — assembler 1 of 3. Reported unconditionally: an attempt is
+      // something that HAPPENED, so a frozen replay and a run that beat
+      // nothing are both attempts. The gate on the save lane below is a
+      // different question (is there a better total worth persisting) and
+      // reusing it here would make the table a log of improvements.
+      reportAttemptRef.current({
+        family: "exercise",
+        contentId: currentExercise.id,
+        measurement: { kind: "moves", movesUsed: movesCount },
+        timeMs: Math.min(MAX_SCORE_SAVE_TIME_MS, Math.max(1, elapsed)),
+      });
 
       // B2.3a: track extra content consumption (Lite-only; idempotent).
       if (CHESSCITO_LITE_MODE) {
@@ -2753,8 +2848,9 @@ export function ExercisesScreen({
   } | null>(null);
 
   /** Bumped to walk the king back to the start after he is caught (D5) —
-   *  whether he was rescued by a shield or the player waved the modal away. */
-  const [safePathResetKey, setSafePathResetKey] = useState(0);
+   *  whether he was rescued by a shield or the player waved the modal away.
+   *  Rotated by `resetBoard`, which every one of those paths reaches. */
+  const safePathResetKey = runKeys.safePath;
 
   /** Holds the attack beat so it can be cancelled. Without this, leaving the
    *  level mid-beat fires a failure into a board that is no longer there — and
@@ -2772,7 +2868,7 @@ export function ExercisesScreen({
   } | null>(null);
 
   /** Bumped to send the pawn — and the pieces it ate — back to the start. */
-  const [promotionRunResetKey, setPromotionRunResetKey] = useState(0);
+  const promotionRunResetKey = runKeys.promotionRun;
 
   /** Set when the pawn reaches the last rank: the picker is up and waiting for a
    *  choice (P3/P5). Cleared on reset. Not a boolean because the square it
@@ -2941,6 +3037,95 @@ export function ExercisesScreen({
    *  would complain and everyone would get three stars. */
   const activeCoverage = activeKnightTour ?? activeQueens;
 
+  // ── Slice 3, stage 4C: the ONE assembler ────────────────────────────────
+  //
+  // Every completed attempt in this screen leaves through `reportAttempt`, and
+  // the hook (`use-attempt-outbox.ts`) owns everything after that: identity,
+  // the queue, persistence, the single in-flight POST, retries and the
+  // terminal/retryable split. Nothing here re-implements any of it, and NO
+  // BOARD emits: boards report a measurement to their handler, the handler
+  // assembles, the hook delivers.
+  //
+  // ⚠️ This function is rebuilt on EVERY render and mirrored into a ref, and
+  // that is load-bearing rather than sloppy. `handleLabyrinthMove` and
+  // `handleCoverageComplete` are `useCallback`s with narrow dep lists that do
+  // NOT include `runKeys`. If they closed over the run keys directly, a
+  // `resetBoard()` on the same content would leave them holding the previous
+  // run key — the completion key would repeat, and the latch would swallow the
+  // next attempt in silence. Reading through the ref is what keeps the key
+  // current. (Same discipline as `resolveMilestonesRef`, for the same reason.)
+
+  /** Which family the currently mounted content belongs to. The order matters:
+   *  the three coverage/arrival games are also `activeLabyrinth`, so a plain
+   *  "is there a labyrinth" test would file all six as `labyrinth` and read the
+   *  wrong run key for four of them. */
+  const attemptFamily: AttemptFamily = activeKnightTour
+    ? "knight-tour"
+    : activeQueens
+      ? "queens"
+      : activeDiagonalRun
+        ? "diagonal-run"
+        : activeSafePath
+          ? "safe-path"
+          : activePromotionRun
+            ? "promotion-run"
+            : "labyrinth";
+
+  /**
+   * When the mounted run began. Carril 2 has no timer of its own — the screen's
+   * `timeMs` is the EXERCISE clock and returns its 1000ms fallback whenever
+   * `phase !== "success"`, so reading it for a labyrinth would persist a fake
+   * one-second duration on a permanent row. There are no sentinels in this
+   * table, so the run is measured instead.
+   */
+  const attemptClockRef = useRef(Date.now());
+  const attemptRunKey = runKeyFor(attemptFamily, runKeys);
+  const attemptRunId = `${activeLabyrinth?.id ?? currentExercise.id}:${attemptRunKey}`;
+  const attemptRunIdRef = useRef(attemptRunId);
+  if (attemptRunIdRef.current !== attemptRunId) {
+    attemptRunIdRef.current = attemptRunId;
+    attemptClockRef.current = Date.now();
+  }
+
+  /** Clamped, never rejected. `invalid_time` is a 400, which this client
+   *  classifies terminal — so an honest attempt left open for two hours would
+   *  be DROPPED rather than recorded. The duration is informational; the
+   *  attempt is not. */
+  function attemptElapsedMs(startedAt: number): number {
+    return Math.min(MAX_SCORE_SAVE_TIME_MS, Math.max(1, Date.now() - startedAt));
+  }
+
+  function reportAttempt(input: {
+    /** The catalogue id the server grades against — never a display title. */
+    contentId: string;
+    measurement: AttemptMeasurement;
+    /** Defaults to the family of the MOUNTED content, which is what carril 2
+     *  always wants. Carril 1 states its own, because an exercise completes
+     *  while no special-training content is mounted at all. */
+    family?: AttemptFamily;
+    /** Defaults to the mounted run's own clock. */
+    timeMs?: number;
+  }): void {
+    const family = input.family ?? attemptFamily;
+    attempts.report({
+      // D19: `${contentId}:${runKey}`. The run key is the value React already
+      // uses as the board's key, so nothing parallel can drift from what the
+      // player sees.
+      completionKey: completionKeyFor(input.contentId, runKeyFor(family, runKeys)),
+      exerciseId: input.contentId,
+      measurement: input.measurement,
+      timeMs: input.timeMs ?? attemptElapsedMs(attemptClockRef.current),
+      levelId: Number(levelId),
+      // Reconciliation only, never ranked. The piece total at completion, which
+      // for carril 2 does not move at all — those stars go to the daily ledger,
+      // not to `pieceStars`.
+      score: Number(score),
+    });
+  }
+
+  const reportAttemptRef = useRef(reportAttempt);
+  reportAttemptRef.current = reportAttempt;
+
   /** Integrated training path (Slice 2 — read-only display in the
    *  mission detail sheet). Bests live in localStorage, so
    *  `labyrinthCompleted` acts as a refresh signal to re-read them
@@ -3025,7 +3210,7 @@ export function ExercisesScreen({
       setLabyrinthMode(true);
       setLabyrinthCompleted(null);
       setLabyrinthMoves(0);
-      setLabyrinthKey((key) => key + 1);
+      dispatchRunKeys({ type: "content_started" });
       writeLastTrainingContentId(selectedPiece, contentId);
       return result;
     },
@@ -3170,6 +3355,22 @@ export function ExercisesScreen({
       addNetStars(previousLabStars, stars);
       resolveMilestonesRef.current();
 
+      // Slice 3 — assembler 2 of 3, for the four families that arrive here:
+      // labyrinth, diagonal-run, safe-path and promotion-run.
+      //
+      // The measurement carries its own KIND rather than a bare number, which
+      // is the whole point of the union: Promotion Run is graded on FAILURES
+      // (every winning run measures `7 - startRank`, so moves would hand three
+      // stars to everyone), and `grading` is present exactly when that is the
+      // case. Sending the raw number under the wrong tag is a 400 server-side
+      // instead of a plausible wrong star count.
+      reportAttemptRef.current({
+        contentId: activeLabyrinth.id,
+        measurement: grading
+          ? { kind: "failures", failures: grading.metric }
+          : { kind: "moves", movesUsed: movesCount },
+      });
+
       track("labyrinth_complete", {
         labyrinth_id: activeLabyrinth.id,
         piece: selectedPiece,
@@ -3231,6 +3432,29 @@ export function ExercisesScreen({
         addNetStars(starResult.previousStars, stars);
       }
       resolveMilestonesRef.current();
+
+      // Slice 3 — assembler 3 of 3: Knight's Tour and N-Queens.
+      //
+      // Reported even for the tour, which is `starless: true`. That is a
+      // PRODUCT decision about stars, not about attempts: the run happened, it
+      // was measured, and the server files it `starless` with a NULL star count
+      // — which is not the same fact as `ungraded`, and only stays distinct if
+      // the row is written.
+      //
+      // ⚠️ The ceiling is the CATALOGUE's, not the board's. They agree today
+      // (both count the starting piece), but the server re-derives its own and
+      // rejects a mismatch outright — a client ceiling off by one would not
+      // grade wrong, it would make every coverage attempt a 400 this client
+      // classifies terminal and drops.
+      reportAttemptRef.current({
+        contentId: activeCoverage.id,
+        measurement: {
+          kind: "coverage",
+          reached: covered,
+          ceiling: coverageCeilingFor(activeCoverage),
+        },
+      });
+
       // Premium authorization is attempt-scoped. The result overlay may stay,
       // but any retry/replay must pass through a fresh entitlement decision.
       setTrainingAttemptGrantId(null);
@@ -3429,6 +3653,15 @@ export function ExercisesScreen({
             onBack={() => router.push("/")}
           />
         )}
+        {/* Slice 3 (4C-3): the attempt queue, said out loud. Sits with the
+            daily-limit banner because it is the same KIND of thing — a
+            persistent line about state the player cannot act on from the
+            board. Silent while the queue is empty. */}
+        <AttemptSaveStatus
+          status={attempts.status}
+          pendingCount={attempts.pendingCount}
+          onRetry={attempts.retry}
+        />
         <MissionPanelCandy
           selectedPiece={selectedPiece}
           onOpenPieceSheet={() => setBadgeSheetOpen(true)}
@@ -3473,7 +3706,7 @@ export function ExercisesScreen({
           totalStars={totalStars}
           maxPossibleStars={maxPossibleStars}
           trainingPath={trainingPath}
-          canSaveScore={scorePendingNew}
+          canOfferScoreSave={scorePendingNew}
           isSavingScore={isSubmitBusy}
           // B2: off-chain save auto-runs silently. The sheet shows an
           // informative "Score saved" state (or a free manual retry on

@@ -186,6 +186,31 @@ export const MISSION_DETAIL_COPY = {
   closeLabelFormat: "Close {title}",
 } as const;
 
+/**
+ * The attempt queue, said out loud (Slice 3, stage 4C-3).
+ *
+ * An attempt that failed to deliver used to be invisible: it sat in the outbox
+ * waiting for the next completion to drain it, and the player had no way to
+ * know or to ask. This is the surface for that — persistent, in place, never a
+ * modal and never a toast that expires while the player is mid-move.
+ *
+ * It says PROGRESS, not "score": what is waiting is the record that the attempt
+ * happened, and on carril 2 the score genuinely does not move.
+ */
+export const ATTEMPT_SAVE_COPY = {
+  /** Discreet, while a delivery is in flight. */
+  saving: "Saving progress…",
+  /** Same state with more than one waiting. */
+  savingCountFormat: "Saving progress… ({count})",
+  /** Persistent, after a retryable failure. Not an error the player caused. */
+  failed: "Your last attempt hasn’t been saved yet.",
+  failedCountFormat: "{count} attempts haven’t been saved yet.",
+  /** The manual retry. Re-sends the SAME attempt, which the server answers as a
+   *  replay — it costs the player nothing and cannot double-count. */
+  retryCta: "Retry",
+  retryAriaLabel: "Retry saving your progress",
+} as const;
+
 const PIECE_BASE = THEME_CONFIG.piecesBase;
 
 export const PIECE_IMAGES: Record<keyof typeof PIECE_LABELS, string> = {
