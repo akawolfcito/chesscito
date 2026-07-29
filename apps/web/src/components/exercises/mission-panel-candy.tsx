@@ -392,13 +392,13 @@ export function PhaseFlash({
         ) : null}
         {/* COMBO = Session Combo (consecutive correct exercises, from
             useStreak/`chesscito:streak`) — NOT the daily streak. See
-            docs/product/2026-07-23-combo-streak-vocabulary.md.
-            No art of its own: the multiplier IS the icon here rather than
-            borrowing the flame, which already means daily streak elsewhere. */}
+            docs/product/2026-07-23-combo-streak-vocabulary.md. Reuses the
+            `exercises.combo` slot the drawer already renders, so the reward
+            and the counter that tracks it share one icon. */}
         {showStreakPill ? (
           <span className="overlay-reward">
-            <span className="overlay-reward-glyph">×{streakCount}</span>
-            <span className="overlay-reward-label">Combo</span>
+            <ThemeAssetPicture slot="exercises.combo" alt="" aria-hidden="true" />
+            <span className="overlay-reward-label">×{streakCount} Combo</span>
           </span>
         ) : null}
       </div>

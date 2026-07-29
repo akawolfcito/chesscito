@@ -2809,8 +2809,19 @@
         "src/components/payments/season-pass-sheet.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 4,
+      "consumerCount": 5,
       "consumers": [
+        {
+          "file": "src/components/daily/daily-tactic-sheet.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/components/hub/challenge-card.tsx",
           "occurrences": [],
@@ -4762,19 +4773,33 @@
       },
       "usedIn": [
         "Exercises — combo icon",
-        "↳ components/exercises/exercise-drawer.tsx"
+        "↳ components/exercises/exercise-drawer.tsx",
+        "Exercises — celebration overlay Session Combo reward · route: /exercises",
+        "↳ components/exercises/mission-panel-candy.tsx"
       ],
       "deprecated": null,
       "initialCategory": "B",
       "category": "A",
       "documentedFiles": [
-        "src/components/exercises/exercise-drawer.tsx"
+        "src/components/exercises/exercise-drawer.tsx",
+        "src/components/exercises/mission-panel-candy.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
         {
           "file": "src/components/exercises/exercise-drawer.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/exercises/mission-panel-candy.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,

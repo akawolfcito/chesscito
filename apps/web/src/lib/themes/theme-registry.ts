@@ -656,7 +656,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
       },
       "exercises.combo": {
         default: "/art/redesign/icons/combo",
-        usedIn: ["Exercises — combo icon", "↳ components/exercises/exercise-drawer.tsx"],
+        usedIn: ["Exercises — combo icon", "↳ components/exercises/exercise-drawer.tsx", "Exercises — celebration overlay Session Combo reward · route: /exercises", "↳ components/exercises/mission-panel-candy.tsx"],
       },
       "exercises.score": {
         default: "/art/score-chesscito",

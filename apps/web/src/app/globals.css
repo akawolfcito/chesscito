@@ -15026,26 +15026,10 @@ button.hud-resource-chip:active:not(:disabled) {
   filter: drop-shadow(0 3px 6px rgba(120, 65, 5, 0.45));
 }
 
-/* Rewards with no art of their own (the ×N multipliers) put the number where
-   the icon would be, at the same weight, so the row reads as one family. */
-.overlay-reward-glyph {
-  display: block;
-  height: 2.8rem;
-  line-height: 2.8rem;
-  font-family: var(--font-game-action);
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: #fff5d7;
-  text-shadow:
-    -2px -2px 0 rgba(63, 34, 8, 0.95),
-    2px -2px 0 rgba(63, 34, 8, 0.95),
-    -2px 2px 0 rgba(63, 34, 8, 0.95),
-    2px 2px 0 rgba(63, 34, 8, 0.95),
-    0 4px 8px rgba(120, 65, 5, 0.4);
-}
-
 /* Floating caption: overlaps the icon's foot rather than sitting below it,
-   so the pair reads as one object instead of two stacked ones. */
+   so the pair reads as one object instead of two stacked ones. Deliberately
+   NOT bold — the icon carries the weight now, and a bold caption competed
+   with it instead of labelling it. */
 .overlay-reward-label {
   margin-top: -0.55rem;
   padding: 0.15rem 0.5rem;
@@ -15055,7 +15039,7 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(63, 34, 8, 0.95);
   font-family: var(--font-game-action);
   font-size: 0.7rem;
-  font-weight: 800;
+  font-weight: 400;
   letter-spacing: 0.04em;
   line-height: 1.25;
   white-space: nowrap;

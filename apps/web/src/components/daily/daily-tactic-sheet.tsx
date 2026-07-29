@@ -353,10 +353,14 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, onFa
               <div className="overlay-reward-row">
                 {streakAfterSolve != null && streakAfterSolve >= 1 && (
                   <span className="overlay-reward">
-                    <span className="overlay-reward-glyph" aria-hidden="true">
-                      ×{streakAfterSolve}
+                    <ThemeAssetPicture
+                      slot="shared.flame-color"
+                      alt=""
+                      aria-hidden="true"
+                    />
+                    <span className="overlay-reward-label">
+                      ×{streakAfterSolve} Streak
                     </span>
-                    <span className="overlay-reward-label">Streak</span>
                   </span>
                 )}
                 <span className="overlay-reward">
