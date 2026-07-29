@@ -115,6 +115,36 @@ describe("mergeOverlay", () => {
     expect(m.exercises.rook).toHaveLength(1);
   });
 
+  /**
+   * The Supabase table has no columns for principle/title/playerPrompt/
+   * learningObjective, so a row built from it always carries them undefined.
+   * Replacing the baseline entry wholesale therefore ERASED the authored copy
+   * on every builder edit — silently, because nothing downstream requires it.
+   * The visible symptom was the celebration overlay going quiet: no more
+   * "You learned: The rook is not a bishop" on any edited exercise.
+   */
+  it("an edit keeps the baseline pedagogy the overlay table cannot carry", () => {
+    const m = mergeOverlay(BASE, [row({ id: "rook-base-1", target: "a8", order: 0 })]);
+    const edited = m.exercises.rook.find((e) => e.id === "rook-base-1");
+
+    expect(posToSquare(edited!.targetPos)).toBe("a8"); // the edit still applied
+    expect(edited?.title).toBe("Move along the rank");
+    expect(edited?.principle).toBe("rank-movement");
+    expect(edited?.playerPrompt).toBe(
+      "Reach the star without leaving the rank.",
+    );
+    expect(edited?.learningObjective).toBe(
+      "The player recognises horizontal rook movement.",
+    );
+  });
+
+  it("a brand-new overlay row has no baseline copy to inherit", () => {
+    const m = mergeOverlay(BASE, [row({ id: "rook-new", target: "a8", order: 5 })]);
+    const added = m.exercises.rook.find((e) => e.id === "rook-new");
+    expect(added).toBeDefined();
+    expect(added?.title).toBeUndefined();
+  });
+
   it("removes a disabled overlay row from the pool and its description", () => {
     const m = mergeOverlay(BASE, [row({ id: "rook-base-1", disabled: true })]);
     expect(m.exercises.rook.find((e) => e.id === "rook-base-1")).toBeUndefined();

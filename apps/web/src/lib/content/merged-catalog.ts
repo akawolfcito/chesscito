@@ -131,8 +131,9 @@ function buildOverlayRow(
   };
   // Pedagogy is NOT enforced on overlay rows: the Supabase table has no columns
   // for principle/title/playerPrompt/learningObjective, so requiring them would
-  // drop every rook row the builder publishes. Overlay rows inherit the
-  // baseline's copy; adding the columns is the gate for turning this on.
+  // drop every rook row the builder publishes. The inheritance this comment
+  // promises is applied by the caller (see mergeOverlay) — it cannot happen
+  // here, where the baseline entry is not in scope.
   const cat = buildCatalog(
     [],
     row.kind === "labyrinth" ? [rec] : [],
@@ -212,8 +213,26 @@ export function mergeOverlay(
       if (!built) continue; // dropped (unsolvable / optimal_moves mismatch)
       owner.set(row.id, targetPool);
 
-      const entry: Entry = { exercise: built.exercise, order: row.order };
       const idx = list.findIndex((e) => e.exercise.id === row.id);
+      // The Supabase table has no columns for the pedagogy fields, so a row
+      // built from it always carries them as undefined. Replacing the baseline
+      // entry wholesale therefore ERASED the authored copy on every edit —
+      // silently, because nothing downstream requires it: the celebration
+      // overlay just stopped naming what the player had learned. Carry the
+      // baseline's copy forward, which is what the builder always assumed.
+      const previous = idx >= 0 ? list[idx].exercise : undefined;
+      const exercise: Exercise = previous
+        ? {
+            ...built.exercise,
+            principle: built.exercise.principle ?? previous.principle,
+            title: built.exercise.title ?? previous.title,
+            playerPrompt: built.exercise.playerPrompt ?? previous.playerPrompt,
+            learningObjective:
+              built.exercise.learningObjective ?? previous.learningObjective,
+          }
+        : built.exercise;
+
+      const entry: Entry = { exercise, order: row.order };
       if (idx >= 0) list[idx] = entry;
       else list.push(entry);
 
