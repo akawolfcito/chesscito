@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent, screen } from "@testing-library/react";
-import { Board, trailDartPoints } from "../board";
+import { Board } from "../board";
+import { trailDartPoints } from "@/lib/game/board-geometry";
 
 describe("<Board>", () => {
   it("renders a 64-cell grid of board buttons", () => {
