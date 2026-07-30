@@ -1485,6 +1485,13 @@ const messages = {
     onchainMarkerAria: "Guardado en Celo",
     yourRankLabel: "Tu posición",
     saveOnChainAria: "Guarda tu puntaje para siempre",
+    tabsAriaLabel: "Ventana del ranking",
+    tabWeekly: "ESTA SEMANA",
+    tabAllTime: "HISTÓRICO",
+    weeklyEmptyHeadline: "EL RANKING SEMANAL RECIÉN EMPIEZA",
+    weeklyEmptyHint: "Juega un ejercicio para poner el primer nombre.",
+    weeklyCtaTitle: "JUEGA PARA ENTRAR ESTA SEMANA",
+    weeklyCtaHint: "Completa un ejercicio para aparecer en el ranking semanal.",
   },
   GET_PEONES_COPY: {
     ...en.GET_PEONES_COPY,

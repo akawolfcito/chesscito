@@ -93,3 +93,28 @@ export function isVictoryPermitMintEnabled(): boolean {
 export function isAttemptLaneEnabled(): boolean {
   return process.env.NEXT_PUBLIC_ATTEMPT_LANE_ENABLED !== "false";
 }
+
+/**
+ * The weekly Leaders tab (Slice 2C), and the only way to turn it on.
+ *
+ * DEFAULT OFF, unlike the attempt lane above it. This one changes the DEFAULT
+ * VIEW of a live surface, sourced from a table that started writing on
+ * 2026-07-29 — so it ships dark and gets flipped after a full UTC week of real
+ * data exists to rank.
+ *
+ * OFF means the sheet renders exactly what it rendered before the slice: no tab
+ * control, no weekly request, no new copy on screen.
+ *
+ * CLIENT-SIDE ONLY, deliberately. `/api/leaderboard?window=weekly` answers
+ * regardless of this flag, so the board can be smoke-tested in production
+ * before any player can see it.
+ *
+ * ⚠️ Do not turn this on while `NEXT_PUBLIC_ATTEMPT_LANE_ENABLED` is off. The
+ * weekly board is derived entirely from `score_attempts`; with the write lane
+ * off it renders an empty board that looks like nobody played. The read path
+ * cannot detect that, so it is an ordering rule between two flags, not a check
+ * the app can make.
+ */
+export function isWeeklyLeadersEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED === "true";
+}

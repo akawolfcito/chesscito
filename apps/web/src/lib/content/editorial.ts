@@ -647,6 +647,19 @@ export const LEADERBOARD_SHEET_COPY = {
    *  language brief §5: the result ("forever"), never the mechanism
    *  ("on-chain"). */
   saveOnChainAria: "Save your score forever",
+  /** Slice 2C — the weekly window. Behind NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED,
+   *  so none of this is on screen until the flag is flipped. */
+  tabsAriaLabel: "Ranking window",
+  tabWeekly: "THIS WEEK",
+  tabAllTime: "ALL TIME",
+  /** A fresh Monday, or the very first week. Not an error and not a bug —
+   *  an empty weekly board is an invitation. */
+  weeklyEmptyHeadline: "THE WEEKLY BOARD IS JUST GETTING STARTED",
+  weeklyEmptyHint: "Play an exercise to put the first name on it.",
+  /** Replaces the own-rank footer when the player has not played this week.
+   *  Same height as the rank footer so switching tabs does not jump. */
+  weeklyCtaTitle: "PLAY TO JOIN THIS WEEK",
+  weeklyCtaHint: "Complete an exercise to enter the weekly ranking.",
 } as const;
 
 export const PURCHASE_CONFIRM_COPY = {
