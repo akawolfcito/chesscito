@@ -202,6 +202,19 @@ pública de agregados read-only y **ya está linkeada desde el landing** (`landi
 — no es rincón de ops. ⚠️ **Ya NO está en `sitemap.ts`** (`5595722`, 2026-07-30): sigue
 abierta y linkeada, pero `noindex`. Auditable ≠ indexable.
 
+> ✅ **CONSTRUIDO 2026-07-30** — `docs/handoffs/2026-07-30-stats-players-census-handoff.md`.
+> Spec + red team: `docs/specs/2026-07-30-stats-full-players-table{,-redteam}.md`.
+> Validado visualmente por el founder. **Sin migración.**
+> Resoluciones de las preguntas que este item dejaba abiertas:
+> - **La tabla NO respeta los filtros** (decisión del founder): all-time es global y da 17,
+>   weekly es surface-scoped y da 4. Global ⇒ el conteo cierra por construcción. Su
+>   encabezado lo declara.
+> - **Por lo tanto NO quedó amarrada a la open question de Slice 2** — se desató sola.
+> - **Se AGREGA después del podio**, no lo reemplaza. `PAGE_SIZE = 10`, paginador desde 11.
+> - ⚠️ `PAGE_SIZE` y `BOARD_CUT` valen 10 **por casualidad**: constantes separadas.
+> - ⚠️ Abierto y diferido: el desempate de all-time es por **dirección de wallet**, invisible
+>   en pantalla y distinto del de weekly. Alinearlo pide migración → su propio cluster.
+
 - **Forma recomendada**: la tabla viaja dentro del snapshot horario y se pagina **en el
   cliente**, con techo de filas (~500). Encaja con la arquitectura de la página
   (`revalidate = 3600` + `unstable_cache` por combinación de filtros, `Promise.allSettled`,
