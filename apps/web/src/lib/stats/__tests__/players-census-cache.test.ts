@@ -64,6 +64,7 @@ function census(total: number | null, rowCount: number): PlayersCensus {
     })),
     total,
     rowsRead: "ok",
+    asOf: "2026-07-30T10:30:00.000Z",
   };
 }
 

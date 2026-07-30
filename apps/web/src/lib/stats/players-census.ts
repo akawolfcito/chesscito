@@ -34,12 +34,23 @@ export type PlayersCensus = {
   /** Availability of the ROWS read, kept even when the UI hides the section.
    *  `[]` by empty population and `[]` by error are not semantically equal. */
   rowsRead: "ok" | "unavailable";
+  /** When THIS snapshot was composed.
+   *
+   *  The census caches on its own entry, so it ages on its own clock — the
+   *  page's `generatedAt` describes a DIFFERENT snapshot, and rendering it
+   *  beside these numbers would be a correct time attached to the wrong data.
+   *
+   *  Non-null even on a failed read, because the rows-down / total-alive case
+   *  still carries a valid total that deserves its stamp. Not rendering a time
+   *  when `rowsRead` is "unavailable" is a render rule, pinned in the view. */
+  asOf: string;
 };
 
 export const EMPTY_PLAYERS_CENSUS: PlayersCensus = {
   rows: [],
   total: null,
   rowsRead: "unavailable",
+  asOf: new Date(0).toISOString(),
 };
 
 /**
@@ -85,15 +96,18 @@ export async function readPlayersCensus(
 
   const rawRows = rowsResult.status === "fulfilled" ? rowsResult.value : null;
   const total = totalResult.status === "fulfilled" ? totalResult.value : null;
+  // Stamped after both reads settle, inside the cached function, so it freezes
+  // together with the rows and the total instead of drifting from them.
+  const asOf = new Date().toISOString();
 
   if (rawRows === null) {
-    return { rows: [], total, rowsRead: "unavailable" };
+    return { rows: [], total, rowsRead: "unavailable", asOf };
   }
 
   // `.map` preserves order, which is the view's ORDER BY rank. The aggregator
   // must not re-sort: the ordering rule (including its tiebreak) lives in SQL,
   // and a second sort here could disagree with the rank column beside it.
-  return { rows: rawRows.map(toIdentityRow), total, rowsRead: "ok" };
+  return { rows: rawRows.map(toIdentityRow), total, rowsRead: "ok", asOf };
 }
 
 // ---------------------------------------------------------------------------

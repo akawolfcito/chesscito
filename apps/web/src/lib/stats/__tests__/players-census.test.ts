@@ -183,3 +183,32 @@ describe("Identity Lite", () => {
     expect(rowsFn).toHaveBeenCalledWith(500);
   });
 });
+
+describe("asOf", () => {
+  it("stamps the moment this snapshot was composed", async () => {
+    // The census caches on its own entry, so it ages on its own clock. The
+    // page's `generatedAt` belongs to a different snapshot, and showing it
+    // beside these numbers would be a correct time describing the wrong data.
+    const before = Date.now();
+    rowsFn.mockResolvedValue([viewRow(1, WALLET_A)]);
+
+    const census = await readPlayersCensus();
+
+    const stamped = Date.parse(census.asOf);
+    expect(Number.isNaN(stamped)).toBe(false);
+    expect(stamped).toBeGreaterThanOrEqual(before);
+  });
+
+  it("is stamped even when the reads failed", async () => {
+    // Non-null by design: the rows-down / total-alive case has a perfectly
+    // valid total that deserves its stamp. Hiding the stamp on a failed rows
+    // read is a RENDER rule (§4.4), pinned where the rendering happens.
+    rowsFn.mockResolvedValue(null);
+    totalFn.mockResolvedValue(17);
+
+    const census = await readPlayersCensus();
+
+    expect(census.rowsRead).toBe("unavailable");
+    expect(Number.isNaN(Date.parse(census.asOf))).toBe(false);
+  });
+});
