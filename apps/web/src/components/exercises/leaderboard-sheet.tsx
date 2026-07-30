@@ -45,6 +45,11 @@ type TabState = {
   fetched: boolean;
   /** A save landed while the other tab was active; refetch on activation. */
   stale: boolean;
+  /** Ranked POPULATION for this window, from the server's count over the uncut
+   *  relation. `undefined` = unknown, and the hero then omits the figure: the
+   *  board is a top-10 cut, so deriving it from `rows` is a claim that cannot
+   *  exceed 10 (it read "10 players" beside a footer ranked 13th). */
+  total?: number;
   /** Weekly only. A CHANGE here is a week rollover: replace, never merge. */
   weekStart?: string;
 };
@@ -61,6 +66,8 @@ type WeeklyPayload = {
   window: LeaderWindow;
   rows: LeaderboardRow[];
   player: LeaderboardRow | null;
+  /** Absent when the server's count failed — see `TabState.total`. */
+  total?: number;
   weekStart?: string;
   weekEnd?: string;
   surface?: string;
@@ -134,6 +141,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
 
   const rows = tabs[active].rows;
   const ownRow = tabs[active].ownRow;
+  const total = tabs[active].total;
 
   /** Read at RESOLVE time, so a response for a tab the player already left is
    *  discarded instead of landing in the other tab's slot. */
@@ -174,6 +182,14 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
         ? payload.rows
         : [];
     const player = Array.isArray(payload) ? null : payload?.player ?? null;
+    // Only a NUMBER counts as a population. The legacy shapes carry none, and a
+    // failed count omits the field; both must leave this undefined so the hero
+    // stays silent rather than substituting the row count. `typeof` and not a
+    // truthy check, so a real 0 survives.
+    const total =
+      !Array.isArray(payload) && typeof (payload as WeeklyPayload)?.total === "number"
+        ? (payload as WeeklyPayload).total
+        : undefined;
     const weekStart =
       !Array.isArray(payload) && "weekStart" in payload
         ? payload.weekStart
@@ -219,6 +235,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
         ownRow: player,
         fetched: true,
         stale: false,
+        total,
         weekStart,
       },
     }));
@@ -228,10 +245,17 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
     (win: LeaderWindow, showLoading: boolean) => {
       if (showLoading) setLoading(true);
       setError(null);
-      const base =
-        win === "weekly" ? "/api/leaderboard?window=weekly" : "/api/leaderboard";
+      // All-time asks for the WINDOWED shape only when the tabs exist. That
+      // envelope is the one that carries `total`; the bare legacy shape is
+      // frozen and cannot grow one. With the flag off this stays on the legacy
+      // URL — byte-identical to its pre-slice self — and the hero simply shows
+      // no player count, which is the honest reading of "we were not told".
+      const windowed = win === "weekly" || weeklyEnabled;
+      const base = windowed
+        ? `/api/leaderboard?window=${win}`
+        : "/api/leaderboard";
       const url = address
-        ? `${base}${win === "weekly" ? "&" : "?"}player=${address}`
+        ? `${base}${windowed ? "&" : "?"}player=${address}`
         : base;
       fetch(url)
         .then((r) => {
@@ -248,7 +272,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
         })
         .finally(() => setLoading(false));
     },
-    [applyPayload, t, address],
+    [applyPayload, t, address, weeklyEnabled],
   );
 
   const refreshRef = useRef(refreshTrigger);
@@ -369,8 +393,20 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
                   <p className="leaderboard-vitrine-hero-stats">
                     {t("heroChampionLabelFormat", { player: rowName(champion) })}
                   </p>
+                  {/* The count is the server's POPULATION or nothing at all.
+                      `rows` is the top-10 cut, so a figure taken from it can
+                      never exceed 10 — that is how the hero came to announce
+                      "10 players" to a player whose footer read rank 13.
+                      Not `total + optimisticRow` either: the optimistic entry
+                      is the caller, who is already counted whenever they were
+                      ranked before. */}
                   <p className="leaderboard-vitrine-hero-sub">
-                    {t("heroChampionStatsFormat", { score: champion.score, count: rows.length })}
+                    {total === undefined
+                      ? t("heroChampionScoreFormat", { score: champion.score })
+                      : t("heroChampionStatsFormat", {
+                          score: champion.score,
+                          count: total,
+                        })}
                   </p>
                 </>
               ) : (

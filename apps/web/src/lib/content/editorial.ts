@@ -636,6 +636,12 @@ export const LEADERBOARD_SHEET_COPY = {
   heroEyebrow: "THE RANKING",
   heroChampionLabelFormat: "Champion: {player}",
   heroChampionStatsFormat: "{score} pts · {count} players",
+  /** Same line WITHOUT the player count, for when the population is unknown:
+   *  the legacy endpoint shape does not carry one, and a failed count must not
+   *  be papered over with the size of the top-10 cut (which is what made the
+   *  hero say "10 players" to a player ranked 13th). No count is honest; a
+   *  wrong count is not. */
+  heroChampionScoreFormat: "{score} pts",
   heroEmptyHeadline: "No ranking yet",
   heroEmptyHint: "Be the first to climb the board.",
   /** QA round 2026-06-11: on-chain marker + always-visible own rank. */

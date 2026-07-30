@@ -86,6 +86,68 @@ describe("LeaderboardSheet — ContextualHeader canary", () => {
   });
 });
 
+/**
+ * The hero's player count, with the weekly flag OFF (backlog §2).
+ *
+ * The legacy shapes are frozen byte for byte, so this path has no population to
+ * show — and the honest answer to "how many players" is then silence, not the
+ * size of the top-10 cut. That cut is what produced "10 players" next to a
+ * footer reading rank 13.
+ */
+describe("LeaderboardSheet — hero population with the flag OFF", () => {
+  const ORIGINAL_FLAG = process.env.NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED;
+
+  beforeEach(() => {
+    delete process.env.NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED;
+  });
+
+  afterEach(() => {
+    if (ORIGINAL_FLAG === undefined) {
+      delete process.env.NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED;
+    } else {
+      process.env.NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED = ORIGINAL_FLAG;
+    }
+    global.fetch = originalFetch;
+  });
+
+  it("shows the champion score with no player count on the legacy shape", async () => {
+    const variant = { piece: "king", style: "golden", number: 1 } as const;
+    const rows = Array.from({ length: 10 }, (_, i) => ({
+      rank: i + 1,
+      rowId: `id_${i}`,
+      variant,
+      score: 1000 - i * 10,
+      isVerified: false,
+      hasOnchain: false,
+    }));
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ rows, player: null }),
+    }) as unknown as typeof fetch;
+
+    render(<LeaderboardSheet open onOpenChange={() => {}} showTrigger={false} />);
+
+    expect(await screen.findByText(/1000 pts/i)).toBeInTheDocument();
+    expect(screen.queryByText(/players/i)).not.toBeInTheDocument();
+  });
+
+  it("never derives the hero count from the board (source guard)", async () => {
+    // Behaviour alone cannot protect this: `rows.length` renders fine, reads as
+    // correct, and is only wrong when the population exceeds the cut — which no
+    // fixture has to reproduce. A future "sensible fallback" would reintroduce
+    // exactly the defect, so the shape is banned in source.
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const src = readFileSync(
+      join(process.cwd(), "src/components/exercises/leaderboard-sheet.tsx"),
+      "utf-8",
+    );
+    const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+    expect(code).not.toMatch(/count:\s*rows\.length/);
+    expect(code).not.toMatch(/count:\s*competitors\.length/);
+  });
+});
+
 describe("LeaderboardSheet — on-chain marker + own rank (QA 2026-06-11)", () => {
   // Identity Lite: rows carry an opaque rowId + server-derived variant, never
   // a wallet. EN bundle template → "{style} {piece} #{number}".

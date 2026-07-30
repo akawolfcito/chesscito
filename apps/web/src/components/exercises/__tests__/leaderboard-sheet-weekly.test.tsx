@@ -481,6 +481,155 @@ describe("error state (UI-13)", () => {
   });
 });
 
+/**
+ * The hero's player count (backlog §2, seen on device 2026-07-29).
+ *
+ * It read `rows.length`, the size of the top-10 cut, so it announced "10
+ * players" while the same player's footer read rank 13 — and on the weekly tab
+ * it happened to be right only because three people had played. The figure now
+ * comes from `total`, counted over the uncut relation, or it does not appear.
+ */
+describe("hero population (never the top-10 cut)", () => {
+  const tenRows = (score = 1000) =>
+    Array.from({ length: 10 }, (_, i) =>
+      weeklyRow({ rank: i + 1, rowId: `id_${i}`, score: score - i * 10 }),
+    );
+
+  it("shows the population, not the row count, on the weekly tab", async () => {
+    mockFetch({
+      weekly: {
+        window: "weekly",
+        rows: tenRows(),
+        player: null,
+        total: 13,
+        weekStart: "2026-07-27T00:00:00.000Z",
+        weekEnd: "2026-08-03T00:00:00.000Z",
+        surface: "learn",
+      },
+    });
+
+    open();
+
+    expect(await screen.findByText(/13 players/i)).toBeInTheDocument();
+    expect(screen.queryByText(/10 players/i)).not.toBeInTheDocument();
+  });
+
+  it("agrees with a rank-13 footer instead of contradicting it", async () => {
+    // The exact screen the founder photographed: hero "10 players", footer 13.
+    accountState.address = WALLET;
+    accountState.isConnected = true;
+    mockFetch({
+      weekly: {
+        window: "weekly",
+        rows: tenRows(),
+        player: weeklyRow({ rank: 13, rowId: "id_own", score: 120 }),
+        total: 13,
+        weekStart: "2026-07-27T00:00:00.000Z",
+        weekEnd: "2026-08-03T00:00:00.000Z",
+        surface: "learn",
+      },
+    });
+
+    open();
+
+    const footer = await screen.findByTestId("leaderboard-own-row");
+    expect(footer).toHaveTextContent("13");
+    expect(screen.getByText(/13 players/i)).toBeInTheDocument();
+  });
+
+  it("asks for the windowed all-time shape, the only one carrying a population", async () => {
+    // The legacy bare-array shape is frozen and cannot grow a `total`, so the
+    // all-time tab has to request the envelope to have a number to show.
+    const { calls } = mockFetch({
+      alltime: {
+        window: "alltime",
+        rows: [allTimeRow()],
+        player: null,
+        total: 42,
+      },
+    });
+    const user = userEvent.setup();
+
+    open();
+    await user.click(await screen.findByRole("tab", { name: /all time/i }));
+
+    await waitFor(() =>
+      expect(calls.some((u) => u.includes("window=alltime"))).toBe(true),
+    );
+    expect(await screen.findByText(/42 players/i)).toBeInTheDocument();
+  });
+
+  it("DROPS the figure when the count is absent, never falling back to rows", async () => {
+    // A failed count must not resurrect the defect. Ten rows on screen and no
+    // population means the line says the score and stops.
+    mockFetch({
+      weekly: {
+        window: "weekly",
+        rows: tenRows(),
+        player: null,
+        weekStart: "2026-07-27T00:00:00.000Z",
+        weekEnd: "2026-08-03T00:00:00.000Z",
+        surface: "learn",
+      },
+    });
+
+    open();
+
+    expect(await screen.findByText(/1000 pts/i)).toBeInTheDocument();
+    expect(screen.queryByText(/players/i)).not.toBeInTheDocument();
+  });
+
+  it("renders a genuine population of 1 rather than dropping it", async () => {
+    // 0 and 1 are facts; only null is unknown. A falsy check here would hide a
+    // real number.
+    mockFetch({
+      weekly: {
+        window: "weekly",
+        rows: [weeklyRow({ score: 300 })],
+        player: null,
+        total: 1,
+        weekStart: "2026-07-27T00:00:00.000Z",
+        weekEnd: "2026-08-03T00:00:00.000Z",
+        surface: "learn",
+      },
+    });
+
+    open();
+
+    expect(await screen.findByText(/1 players/i)).toBeInTheDocument();
+  });
+
+  it("keeps each tab's own population when switching", async () => {
+    mockFetch({
+      weekly: {
+        window: "weekly",
+        rows: [weeklyRow({ score: 300 })],
+        player: null,
+        total: 3,
+        weekStart: "2026-07-27T00:00:00.000Z",
+        weekEnd: "2026-08-03T00:00:00.000Z",
+        surface: "learn",
+      },
+      alltime: {
+        window: "alltime",
+        rows: [allTimeRow({ score: 900 })],
+        player: null,
+        total: 13,
+      },
+    });
+    const user = userEvent.setup();
+
+    open();
+    expect(await screen.findByText(/3 players/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: /all time/i }));
+    expect(await screen.findByText(/13 players/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: /this week/i }));
+    expect(await screen.findByText(/3 players/i)).toBeInTheDocument();
+  });
+});
+
 describe("copy parity and source guards (UI-15, UI-18)", () => {
   const NEW_KEYS = [
     "tabsAriaLabel",
