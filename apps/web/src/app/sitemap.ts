@@ -30,7 +30,12 @@ const STATIC_PATHS = [
   "/coach/history",
   "/why",
   "/about",
-  "/stats",
+  // `/stats` is deliberately absent. It stays publicly reachable — MiniPay's
+  // listing requirements (§8) ask for a stats page the reviewer can open with
+  // no wallet — but nobody asked for retention curves, activation funnels and
+  // country splits to be carried into search results. Reachable and indexable
+  // are different properties; the page keeps the first and drops the second
+  // via `robots: { index: false }` in its own metadata.
   "/support",
   "/privacy",
   "/terms",

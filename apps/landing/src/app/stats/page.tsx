@@ -6,6 +6,11 @@ import { LEARN_URL, PLAY_URL } from "@/lib/app-urls";
 export const metadata: Metadata = {
   title: "Stats — Chesscito",
   description: "Activity and progress stats for Chesscito Learn and Chesscito Play.",
+  // This page is not in the landing sitemap, but the landing IS indexed and
+  // links here — so the crawler arrives anyway, and then follows the two
+  // buttons below into the Learn and Play dashboards. `follow: false` is the
+  // half that closes that second hop.
+  robots: { index: false, follow: false },
 };
 
 export default function StatsPage() {

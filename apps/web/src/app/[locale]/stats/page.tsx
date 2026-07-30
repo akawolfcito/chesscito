@@ -13,6 +13,12 @@ export const metadata = {
   description:
     "Public activity metrics for Chesscito on Celo — sessions, " +
     "focus training, progress saves, and MiniPay usage.",
+  // Reachable, not indexable. MiniPay's listing requirements (§8) ask for a
+  // stats page any reviewer can open without a wallet, so the route stays
+  // open — but the numbers on it describe the business, and search results
+  // are not where they belong. `follow: false` also stops the crawler from
+  // walking onward through the links on the page.
+  robots: { index: false, follow: false },
 };
 
 // Snapshot refreshed by Next.js every hour. Falls back to stale data
