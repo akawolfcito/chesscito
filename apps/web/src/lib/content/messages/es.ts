@@ -1484,6 +1484,7 @@ const messages = {
      *  traducir, y la clave existe igual para que la línea pueda omitir el
      *  conteo cuando no se conoce la población. */
     heroChampionScoreFormat: "{score} pts",
+    listCutFormat: "TOP {shown} DE {total}",
     heroEmptyHeadline: "Aún sin ranking",
     heroEmptyHint: "Sé el primero en sumar puntos.",
     onchainMarkerAria: "Guardado en Celo",

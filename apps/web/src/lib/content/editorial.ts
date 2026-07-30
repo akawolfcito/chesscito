@@ -642,6 +642,10 @@ export const LEADERBOARD_SHEET_COPY = {
    *  hero say "10 players" to a player ranked 13th). No count is honest; a
    *  wrong count is not. */
   heroChampionScoreFormat: "{score} pts",
+  /** Declares that the list is a CUT, and of what. Without it the honest
+   *  population reads as missing rows: 17 announced above 10 visible looks like
+   *  seven names failed to load. Shown only when the board really is cut. */
+  listCutFormat: "TOP {shown} OF {total}",
   heroEmptyHeadline: "No ranking yet",
   heroEmptyHint: "Be the first to climb the board.",
   /** QA round 2026-06-11: on-chain marker + always-visible own rank. */

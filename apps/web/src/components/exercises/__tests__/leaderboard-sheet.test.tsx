@@ -145,6 +145,11 @@ describe("LeaderboardSheet — hero population with the flag OFF", () => {
     const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
     expect(code).not.toMatch(/count:\s*rows\.length/);
     expect(code).not.toMatch(/count:\s*competitors\.length/);
+    // The cut label is the other place a row count would look right and be
+    // wrong: the all-time tab can append an optimistic row (making it "TOP 11")
+    // and a thin week would claim a cut of 3 that does not exist. It reads
+    // BOARD_CUT, which mirrors the SQL limit.
+    expect(code).not.toMatch(/shown:\s*(rows|competitors)\.length/);
   });
 });
 

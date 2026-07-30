@@ -27,6 +27,18 @@ import {
 
 const OPTIMISTIC_TTL_MS = 2 * 60 * 1000;
 
+/**
+ * How many rows the server sends. MIRRORS THE SQL, which is where the real cut
+ * lives: `leaderboard_combined_v … LIMIT 10` for all-time and
+ * `get_weekly_leaderboard … limit 10` for the week. If either changes, this
+ * changes with it.
+ *
+ * Not `rows.length`: the all-time tab can append an optimistic row, which would
+ * turn the label into "TOP 11" — and on a thin week it would invent a cut of 3
+ * where none exists.
+ */
+const BOARD_CUT = 10;
+
 /** Which ranking is on screen (Slice 2C). */
 type LeaderWindow = "weekly" | "alltime";
 
@@ -515,6 +527,20 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
 
           {competitors.length > 0 && (
             <div className="flex flex-col gap-2.5">
+              {/* The list declares itself a CUT, and only when it is one. With
+                  the population honest, "17 players" over ten rows reads as
+                  seven names that failed to load; naming both figures together
+                  is what stops the true number from feeling like a lie (founder
+                  2026-07-29). Silent when the population is unknown — a cut
+                  claim would then be a guess — and silent when everyone ranked
+                  already fits, because there is no cut to declare.
+                  Inside this container, not a sibling: the parent's space-y-6
+                  would park the label 24px above the rows it labels. */}
+              {total !== undefined && total > BOARD_CUT && (
+                <p className="leaderboard-list-cut-label">
+                  {t("listCutFormat", { shown: BOARD_CUT, total })}
+                </p>
+              )}
               {competitors.map((row) => {
                 const isOwn = !!ownRow && row.rowId === ownRow.rowId;
                 return (

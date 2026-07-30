@@ -13848,6 +13848,20 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
 }
 
+/* Tells the player the list below is a cut ("TOP 10 OF 17"), so the hero's
+   population stops reading as rows that failed to load. Borrows the hero
+   eyebrow's treatment on purpose — same register, one step quieter, since it
+   labels the list rather than announcing a section. */
+.leaderboard-list-cut-label {
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(110, 65, 15, 0.55);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.45);
+  padding-left: 0.25rem;
+}
+
 .leaderboard-vitrine-hero-stats {
   font-size: 0.95rem;
   font-weight: 900;

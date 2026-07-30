@@ -630,6 +630,84 @@ describe("hero population (never the top-10 cut)", () => {
   });
 });
 
+/**
+ * The list must DECLARE that it is a cut.
+ *
+ * Founder, 2026-07-29: with the population fixed, the hero says 17 over a list
+ * of 10 and nothing on screen explains the gap — it reads as seven missing rows,
+ * which makes the honest number feel like a lie. The label closes it by naming
+ * both figures at once.
+ *
+ * It appears ONLY when the list is actually cut. Announcing "TOP 10 OF 3" on a
+ * thin week would invent a cut that is not there, and claiming one while the
+ * population is unknown would be a guess.
+ */
+describe("cut label above the list", () => {
+  const rowsOf = (n: number) =>
+    Array.from({ length: n }, (_, i) =>
+      weeklyRow({ rank: i + 1, rowId: `id_${i}`, score: 1000 - i * 10 }),
+    );
+
+  const weeklyPayload = (rows: unknown[], total?: number) => ({
+    window: "weekly",
+    rows,
+    player: null,
+    ...(total === undefined ? {} : { total }),
+    weekStart: "2026-07-27T00:00:00.000Z",
+    weekEnd: "2026-08-03T00:00:00.000Z",
+    surface: "learn",
+  });
+
+  it("names the cut and the population when the board is cut", async () => {
+    mockFetch({ weekly: weeklyPayload(rowsOf(10), 17) });
+
+    open();
+
+    expect(await screen.findByText(/top 10 of 17/i)).toBeInTheDocument();
+  });
+
+  it("stays silent when everyone ranked is already on screen", async () => {
+    // Three players, three rows: there is no cut to declare, and "TOP 10 OF 3"
+    // would invent one.
+    mockFetch({ weekly: weeklyPayload(rowsOf(3), 3) });
+
+    open();
+
+    await screen.findByText("1000");
+    expect(screen.queryByText(/top \d+ of/i)).not.toBeInTheDocument();
+  });
+
+  it("stays silent when the population is unknown", async () => {
+    // No total means the count failed. A cut claim would be a guess, and the
+    // hero is already omitting its figure for the same reason.
+    mockFetch({ weekly: weeklyPayload(rowsOf(10)) });
+
+    open();
+
+    await screen.findByText("1000");
+    expect(screen.queryByText(/top \d+ of/i)).not.toBeInTheDocument();
+  });
+
+  it("declares the cut on the all-time tab too", async () => {
+    mockFetch({
+      alltime: {
+        window: "alltime",
+        rows: Array.from({ length: 10 }, (_, i) =>
+          allTimeRow({ rank: i + 1, rowId: `all_${i}`, score: 9000 - i * 10 }),
+        ),
+        player: null,
+        total: 42,
+      },
+    });
+    const user = userEvent.setup();
+
+    open();
+    await user.click(await screen.findByRole("tab", { name: /all time/i }));
+
+    expect(await screen.findByText(/top 10 of 42/i)).toBeInTheDocument();
+  });
+});
+
 describe("copy parity and source guards (UI-15, UI-18)", () => {
   const NEW_KEYS = [
     "tabsAriaLabel",
