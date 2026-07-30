@@ -64,6 +64,23 @@ conteo de la semana nueva sobre las filas de la vieja. Se autocorrige en el refe
 **Si algún día hay board de semanas pasadas, esto deja de alcanzar** y el conteo tiene que
 tomar la ventana (ahí sí, RPC nuevo + migración).
 
+## ✅ Verificado en producción (2026-07-29, endpoint)
+
+`GET /api/leaderboard?window=alltime` sobre el deployment de Learn devolvió **10 filas y
+`total: 17`** — exactamente la forma del bug: un board cortado en 10 sobre una población de 17.
+
+Eso cierra por medición las dos incógnitas que este handoff listaba como no verificadas:
+
+- **`service_role` SÍ puede leer `leaderboard_full_v`.** No había grant explícito (la migración
+  del 2026-06-11 nunca otorgó nada sobre esa vista) y el fallback que la lee puede no haber
+  corrido nunca en prod, así que era una suposición. Ya no.
+- **PostgREST devuelve `count` sobre una vista con `head: true`.**
+
+⚠️ **El primer vistazo en device mostró "10 players" con el endpoint ya sirviendo 17**: era el
+bundle viejo cacheado en el webview, no un fallo del arreglo. El mismo deployment sirve el
+route handler y el JS, así que un server nuevo con un cliente viejo se ve así. En MiniPay hay
+que **cerrar la app del todo**; un refresh no alcanza.
+
 ## Verificación
 
 | | |
