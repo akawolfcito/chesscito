@@ -199,7 +199,8 @@ existe en ninguna superficie**.
 Reparto decidido: **Leaders** = podio + tu posición (sigue cortado); **`/stats`** = la tabla
 completa, que es donde el número se audita. `/stats` es el hogar correcto porque ya es página
 pública de agregados read-only y **ya está linkeada desde el landing** (`landing-page.tsx:948`)
-y en el `sitemap.ts` — no es rincón de ops.
+— no es rincón de ops. ⚠️ **Ya NO está en `sitemap.ts`** (`5595722`, 2026-07-30): sigue
+abierta y linkeada, pero `noindex`. Auditable ≠ indexable.
 
 - **Forma recomendada**: la tabla viaja dentro del snapshot horario y se pagina **en el
   cliente**, con techo de filas (~500). Encaja con la arquitectura de la página
@@ -217,18 +218,62 @@ y en el `sitemap.ts` — no es rincón de ops.
   `/stats` introduce otro límite, que sea **una sola constante compartida** — dos cortes que
   pueden discrepar van a discrepar.
 
-### ⚠️ Métricas de negocio públicas E INDEXADAS en `/stats` (hallado 2026-07-29)
+### ✅ CERRADO — métricas de negocio indexadas en `/stats` (hallado 2026-07-29, cerrado 2026-07-30)
 
-`/stats` renderiza retention, activation funnel, access funnel y mix de países, y está en el
-`sitemap.ts`. **Eso es justo lo que un competidor quiere**, y hoy lo puede leer Google.
+**El defecto era la indexación, no la publicación.** Cerrado en `5595722`: `/stats` fuera de
+`STATIC_PATHS` y `robots: { index: false, follow: false }` en `apps/web` **y** `apps/landing`.
+Primer test sobre `sitemap.ts`.
 
-Conviven dos cosas de sensibilidad opuesta en la misma página: la mitad de **transparencia**
-(tabla de jugadores, totales, saves, hall of fame) **debe** ser pública y auditable; la mitad
-de **negocio** no tiene por qué. Ya existen app de admin y `/api/admin/lite-stats`, así que
-mover ese grupo cuesta poco y **no necesita ningún rail de pago**.
+⛔ **La otra mitad de este item —"mover el grupo de negocio a admin"— se RECHAZA, y no hay que
+volver a proponerla.** MiniPay lo **exige**: sus requisitos de listing (§8) piden una página de
+stats *"public-or-shared"* con **DAU, MAU, retention D1/D7/D30 y top countries**, publicada como
+*"a `/stats` page inside the Mini App, read-only, no wallet required"*, y es ítem con casilla en
+el checklist de pre-listing. El código ya lo sabía: `public-aggregator.ts` comenta el bloque
+on-chain como *MiniPay Stage-2* y la página trae un **Tracked today / Coming next** escrito
+contra esa lista. Recortarla rompe el listing.
 
-📌 Es la decisión con urgencia real de las tres, y toca el mismo archivo que la tabla → una
-sola pasada.
+📌 La lección que sobrevive: **alcanzable e indexable son propiedades distintas**, y sólo la
+segunda era el defecto. Una sesión entera se fue clasificando funnels como "internos" a partir
+de la premisa equivocada.
+
+⚠️ **Verificar §8 con MiniPay** en la próxima llamada — la fuente es un snapshot del PDF oficial
+(2026-05-13), no `docs.minipay.xyz`. Si la lista cambió, la clasificación se revisa.
+
+### 🅿️ Export de `/stats` con x402 — SPEC ESCRITO, APARCADO SIN FECHA (founder, 2026-07-30)
+
+**Spec listo y sin red team:** `docs/specs/2026-07-30-stats-paid-export-x402.md`.
+Aparcado por decisión del founder: buen feature, **no necesario ahora**. Retomarlo desde el spec,
+no desde cero.
+
+**Decisiones ya tomadas** (no re-litigar al retomar):
+- Precio **0.01 USDC**, configurable por entorno (`STATS_EXPORT_PRICE_USDC`). **No existe ni hace
+  falta ningún token propio** — el "1 CVT" de la conversación era "un centavo".
+- Rail **x402 sobre Celo**. USDC tiene **6 decimales**: `0.01` = `10000` unidades.
+- **El pago se verifica ANTES de cualquier query cara.** La validación de `format`/filtros va
+  antes del pago: cobrar por un request que igual termina en 400 es peor que no cobrar.
+- Payload = **los agregados que ya se ven**, leídos del mismo snapshot horario del dashboard.
+  Cero campos nuevos, ninguna wallet.
+- El dashboard **no cambia**: ni lo que muestra, ni quién entra. El 402 va delante del archivo,
+  **nunca delante del HTML** (rompería MiniPay §8).
+
+**Simplificaciones que caen solas** y que conviene no reintroducir: sin parámetro de fechas no
+hay rango máximo que imponer; con el archivo en el cuerpo del 200 no hay enlace que expirar; y
+el rate limit por wallet **se decidió NO construir en v1** (el pago ya es el límite, y x402
+gatea por pago, no por identidad).
+
+⛔ **Incógnita que puede mover el plan entero: ¿existe un facilitator de x402 en Celo?** Sin uno
+público hay que auto-hospedarlo, y eso es un frente propio, no una etapa. **Un spike corto
+responde esto antes de comprometer nada.**
+
+🧯 **Corrección a la nota vieja de abajo**: decía *"la página sigue gratis e indexada"*. Ya no es
+indexada, por decisión propia (ver el item cerrado arriba). El argumento que sí sigue en pie
+para no poner 402 delante del HTML es **MiniPay §8**, no el SEO.
+
+🧯 **Y a un supuesto que casi escribo como bloqueo**: Celopedia dice que MiniPay prohíbe message
+signing. **Es falso** — este repo lo midió en device: `eth_signTypedData_v4` funciona
+([[project_minipay_platform]]), así que el flujo canónico EIP-3009 de x402 es viable dentro del
+mini app. Y como lo settlea el facilitator, **el usuario no manda tx**, lo que importa porque
+las wallets de MiniPay no tienen CELO.
 
 ### Export de `/stats` con x402 (idea del founder 2026-07-29, SIN AGENDAR)
 

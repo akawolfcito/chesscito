@@ -1,8 +1,11 @@
 # Spec — `/stats`: descarga pagada con x402
 
 **Fecha:** 2026-07-30
-**Estado:** DRAFT — pendiente de red team
+**Estado:** 🅿️ **APARCADO SIN FECHA** (founder, 2026-07-30) — escrito, **sin red team**, sin
+implementar. Buen feature, no necesario ahora. Al retomarlo se arranca desde acá, no de cero:
+primero el spike de §9.1 (facilitator), después el red team, después la etapa 2.
 **Reemplaza a:** `2026-07-30-stats-noindex-and-internal-gate{,-redteam}.md` (borrados)
+**Backlog:** `docs/backlog/2026-07-10-backlog-index.md` §Export de `/stats` con x402
 
 ---
 
