@@ -20,7 +20,7 @@
  */
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 
 import { renderWithAppProviders } from "@/test-utils/render-with-app-providers";
 import { ContentCatalogProvider } from "@/lib/content/catalog-context";
@@ -630,7 +630,14 @@ describe("the promotion lane grades FAILURES", () => {
 
     // The board only says the pawn reached the last rank; the crown decides
     // whether the run is over.
-    fireEvent.click(await screen.findByRole("button", { name: /queen/i }));
+    // Scoped to the picker on purpose. A bare `/queen/i` over the whole screen
+    // is ambiguous: the Special Training lane also renders a Queens node, so
+    // the query matched two buttons and RTL refused to guess. Scoping keeps the
+    // accessible-name assertion — the crown is still found the way a screen
+    // reader would find it — without depending on nothing else ever mentioning
+    // a queen.
+    const picker = await screen.findByTestId("pr-picker");
+    fireEvent.click(within(picker).getByRole("button", { name: /queen/i }));
 
     await waitFor(() => expect(attemptCalls()).toHaveLength(1));
     const call = attemptCalls()[0]!;
