@@ -154,15 +154,18 @@ export const PLAYERS_TABLE_CEILING = 500;
  * avoids. The tradeoff is real and worth naming: the RPC exists over there
  * because a stale PostgREST schema cache can make direct view access fail
  * (Slice 4 — P1 leaderboard-view-undefined), so this read is exposed to the
- * scenario the older one was hardened against. On failure it returns an empty
- * list and the section hides, which is the same shape the aggregator already
- * handles for every other read.
+ * scenario the older one was hardened against.
+ *
+ * NULL IS "UNAVAILABLE" AND IT IS NOT AN EMPTY BOARD. Returning `[]` for a
+ * failed read would tell the caller "there are no ranked players", which on a
+ * visibly populated board is the same class of lie `fetchLeaderboardTotalFromDb`
+ * refuses to tell with 0. `[]` here means the view genuinely has no rows.
  */
 export async function fetchFullLeaderboardFromDb(
   limit: number,
-): Promise<LeaderboardRow[]> {
+): Promise<LeaderboardRow[] | null> {
   const supabase = getSupabaseServer();
-  if (!supabase) return [];
+  if (!supabase) return null;
 
   const { data, error } = await supabase
     .from("leaderboard_full_v")
@@ -170,7 +173,7 @@ export async function fetchFullLeaderboardFromDb(
     .order("rank", { ascending: true })
     .limit(limit);
 
-  if (error) return [];
+  if (error) return null;
 
   return (data as LeaderboardRow[]) ?? [];
 }

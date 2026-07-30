@@ -90,30 +90,30 @@ describe("fetchFullLeaderboardFromDb", () => {
 
     const rows = await fetchFullLeaderboardFromDb(PLAYERS_TABLE_CEILING);
 
-    expect(rows.map((r) => r.rank)).toEqual([1, 2, 3]);
+    expect(rows?.map((r) => r.rank)).toEqual([1, 2, 3]);
   });
 
-  it("returns an empty list when Supabase is unconfigured", async () => {
+  it("returns null when Supabase is unconfigured", async () => {
     vi.mocked(getSupabaseServer).mockReturnValue(null as never);
 
-    await expect(fetchFullLeaderboardFromDb(PLAYERS_TABLE_CEILING)).resolves.toEqual(
-      [],
-    );
+    await expect(
+      fetchFullLeaderboardFromDb(PLAYERS_TABLE_CEILING),
+    ).resolves.toBeNull();
   });
 
-  it("returns an empty list on a query error instead of throwing", async () => {
-    // The aggregator runs every read under Promise.allSettled and renders a
-    // per-field placeholder; a throw here would be caught, but an empty list
-    // keeps this helper's contract the same as its siblings in this module.
+  it("returns null on a query error instead of throwing", async () => {
     resolveWith(null, { message: "relation does not exist" });
 
-    await expect(fetchFullLeaderboardFromDb(PLAYERS_TABLE_CEILING)).resolves.toEqual(
-      [],
-    );
+    await expect(
+      fetchFullLeaderboardFromDb(PLAYERS_TABLE_CEILING),
+    ).resolves.toBeNull();
   });
 
-  it("returns an empty list when the view yields no rows", async () => {
-    resolveWith(null);
+  it("distinguishes a genuinely empty board from a failed read", async () => {
+    // This is the whole reason the return type is nullable. `[]` for a failure
+    // would announce "there are no ranked players" on a visibly populated
+    // board — the same lie fetchLeaderboardTotalFromDb refuses to tell with 0.
+    resolveWith([]);
 
     await expect(fetchFullLeaderboardFromDb(PLAYERS_TABLE_CEILING)).resolves.toEqual(
       [],
