@@ -20,10 +20,14 @@
 
 \echo '── 1. Objetos creados ────────────────────────────────────────────'
 
+-- ⚠️ to_regPROCEDURE, no to_regPROC. `to_regproc` toma un NOMBRE; con una lista
+-- de argumentos no parsea y devuelve NULL, así que las tres funciones daban
+-- `f` estando presentes — un falso negativo que parece "la migración falló".
+-- Lo agarró correr el script, no leerlo.
 select
-  to_regproc('public.weekly_ranking(text, timestamptz, timestamptz)')                  is not null as fn_weekly_ranking,
-  to_regproc('public.get_weekly_leaderboard(text, timestamptz, timestamptz)')          is not null as fn_board,
-  to_regproc('public.get_weekly_player_rank(text, text, timestamptz, timestamptz)')    is not null as fn_player_rank,
+  to_regprocedure('public.weekly_ranking(text, timestamptz, timestamptz)')             is not null as fn_weekly_ranking,
+  to_regprocedure('public.get_weekly_leaderboard(text, timestamptz, timestamptz)')     is not null as fn_board,
+  to_regprocedure('public.get_weekly_player_rank(text, text, timestamptz, timestamptz)') is not null as fn_player_rank,
   to_regclass('public.leaderboard_weekly_full_v')                                      is not null as view_fallback,
   exists(select 1 from pg_indexes
           where schemaname = 'public'
