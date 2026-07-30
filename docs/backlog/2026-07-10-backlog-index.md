@@ -56,17 +56,24 @@ en ese request se revierte si el crédito no aterriza.
   que no tenga nada que traducir (`"{count}"`, `"{day}: {state}"`).
 - **PLAY #8 — quitar la confirmación redundante de LUZ.** Tocar Coach Review lanza análisis
   directo; LUZ conserva personalidad en loading y resultado. Borra una pantalla.
-- **Leaders: el hero cuenta el CORTE, no la población** (visto en device 2026-07-29).
-  El hero dice **"10 players"** mientras el footer del mismo jugador dice **rank 13**.
-  `heroChampionStatsFormat` recibe `count: rows.length` (`leaderboard-sheet.tsx:217`) y `rows`
-  es el top-10, así que el número **nunca puede pasar de 10** por construcción.
-  Preexistente (no lo introdujo Slice 2), pero ahora lo hereda también el tab semanal, donde
-  hoy dice "3 players" y **acierta sólo porque hay tres**: con 15 jugadores diría 10.
-  **Es una afirmación falsa en pantalla**, no un detalle de formato.
-  Arreglo: devolver un `total` en la respuesta y que el hero lea ESO, no `rows.length`. La
-  mitad difícil ya existe — `get_weekly_player_rank` y `get_player_rank` rankean sobre el
-  conjunto **sin cortar**, así que el conteo sale de la misma relación sin query nueva.
-  ⚠️ Toca **all-time y weekly a la vez**: los dos usan el mismo hero.
+- ~~**Leaders: el hero cuenta el CORTE, no la población**~~ (visto en device 2026-07-29)
+  — **hecho el 2026-07-29** (`40893b1`, `483f0c9`, `899b6db`). El hero lee `total`, contado
+  con `count: "exact", head: true` sobre las relaciones **sin cortar**
+  (`leaderboard_full_v` · `leaderboard_weekly_full_v` filtrada por surface). **Sin migración**:
+  las dos vistas ya tienen una fila por jugador rankeado.
+  ⚠️ Lo que queda fijado para el próximo que toque esto:
+  - `total` va **sólo** en las formas windowed; las dos legacy siguen congeladas y **no
+    disparan el conteo** (hay test de que la función no se llama).
+  - **Conteo fallido ⇒ el campo se omite y el hero borra la cifra.** Nunca `rows.length`
+    (es el defecto) ni `0` (afirma un board vacío sobre uno poblado). Hay un **source guard**
+    que prohíbe `count: rows.length`: la versión mala renderiza bien y sólo miente cuando la
+    población pasa el corte, así que ningún test de comportamiento la obliga a aparecer.
+  - Con el flag ON el tab all-time pasó a pedir `?window=alltime` (la forma legacy no puede
+    llevar `total`); con el flag OFF sigue en la URL legacy y el hero muestra sólo los puntos.
+  - El conteo semanal **no toma ventana** — `leaderboard_weekly_full_v` calcula siempre la
+    semana UTC actual. Un request que cruce el lunes 00:00 UTC entre las dos queries mezcla
+    conteo nuevo con filas viejas; se autocorrige al refetch. **Si algún día hay board de
+    semanas pasadas, esto deja de alcanzar.**
 - ~~**Cobertura VR del play hub**~~ — **hecho**: `vr17-play-hub-{guest,connected,pro}`.
   El hub **LEARN** también, desde el 2026-07-27: `vr18-learn-hub-{guest,active,pro}` sobre
   `/dev/learn-hub`.
