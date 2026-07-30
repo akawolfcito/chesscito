@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from "vitest";
  * stubbed. Importing the real aggregator would open a Supabase client at module
  * load for a test that asserts a static object.
  *
- * Spec: docs/specs/2026-07-30-stats-noindex-and-internal-gate.md §4.4
+ * Spec: docs/specs/2026-07-30-stats-paid-export-x402.md §0
  */
 
 vi.mock("@/lib/stats/public-aggregator", () => ({ getPublicStats: vi.fn() }));

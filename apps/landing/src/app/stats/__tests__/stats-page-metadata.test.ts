@@ -12,7 +12,7 @@ import { metadata } from "../page";
  * through that link and then follows the two outbound buttons into the
  * dashboards. `follow: false` closes that second hop.
  *
- * Spec: docs/specs/2026-07-30-stats-noindex-and-internal-gate.md §4.4
+ * Spec: docs/specs/2026-07-30-stats-paid-export-x402.md §0
  */
 describe("landing /stats metadata", () => {
   it("is noindex, nofollow", () => {

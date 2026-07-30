@@ -13,7 +13,7 @@ import { routing } from "@/i18n/routing";
  * This suite pins the second: the sitemap does not advertise the page, while
  * the rest of the static surface stays exactly as it was.
  *
- * Spec: docs/specs/2026-07-30-stats-noindex-and-internal-gate.md §4.4
+ * Spec: docs/specs/2026-07-30-stats-paid-export-x402.md §0
  */
 
 /** Strip the origin + locale prefix so a URL can be compared as a path. */
