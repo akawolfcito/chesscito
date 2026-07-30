@@ -105,24 +105,41 @@ La UI semanal está oculta: `NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED` no existe en ni
 El endpoint **sí** responde `GET /api/leaderboard?window=weekly` a propósito, para sondear los
 datos en producción antes de encender la UI.
 
+## ✅ Migración APLICADA en producción (2026-07-29)
+
+`20260801000000_leaderboard_weekly.sql` aplicada, y el VERIFY corrido contra prod:
+**19/19 PASS.** Resultado registrado:
+
+| Grupo | Resultado |
+|---|---|
+| Objetos (índice, 3 funciones con firma, vista) | 5/5 existen |
+| `anon` / `authenticated` EXECUTE sobre las 3 funciones | 6/6 **sin** EXECUTE |
+| `service_role` EXECUTE sobre las 3 | 3/3 con EXECUTE |
+| `anon` / `authenticated` SELECT sobre la vista | 2/2 **sin** SELECT |
+| `service_role` SELECT sobre la vista | con SELECT |
+| `security_invoker=true` | true |
+| Ventana computada | `2026-07-27 Mon`, `db TimeZone=UTC` |
+
+> Las seis filas de "sin EXECUTE" son la parte que importa: en Slice 3 la migración decía
+> `revoke` y `has_function_privilege('anon', …)` devolvía TRUE igual. Acá está medido contra
+> la base, no inferido del texto del script.
+
+**El VERIFY costó dos arreglos, ambos encontrados al EJECUTARLO:** usaba `to_regproc` (que
+toma un nombre, no una firma) y reportaba las tres funciones como ausentes estando presentes;
+y estaba escrito con `\echo` + seis result sets, o sea sólo servía desde psql — pegado en el
+SQL Editor de Supabase revienta en la primera línea, y aun sin eso Studio muestra **sólo el
+último** result set. Ahora es una sola consulta con columna PASS/FAIL.
+
 ## Pendiente (del founder)
 
-1. **Push** — `git push origin main` (ahead 8). Verificar árbol limpio antes.
-2. **Aplicar la migración** — contenido verbatim de
-   `apps/web/supabase/migrations/20260801000000_leaderboard_weekly.sql` vía el mecanismo del
-   repo (pooler `aws-1`, session mode; el host directo es IPv6-only). **No correr el ROLLBACK
-   primero.**
-3. **Correr VERIFY** (`2026-08-01-leaderboard-weekly-VERIFY.sql`, read-only) y registrar el
-   resultado exacto: índice, las tres funciones y sus firmas, la vista,
-   `security_invoker=true`, `anon`/`authenticated` sin EXECUTE, sin SELECT sobre la vista, y
-   `service_role` con los privilegios requeridos.
-   > Verificar el **privilegio efectivo**, no el texto del revoke: en este cluster una función
-   > recién creada devuelve `has_function_privilege('anon', …) = true` por los default
-   > privileges de Supabase. Medido, no asumido.
-4. **Probar ambos deployments** con `NEXT_PUBLIC_CHESSCITO_MODE` explícito: Learn debe
+1. **Push** — `git push origin main`. Verificar árbol limpio antes.
+2. **Probar ambos deployments** con `NEXT_PUBLIC_CHESSCITO_MODE` explícito: Learn debe
    responder `surface: "learn"`, Play `surface: "play"`. Probar además top 10, player rank
    fuera del top 10, `hasOnchain` ausente, wallet checksummed, y el empty state de una wallet
    sin actividad semanal.
+   > El endpoint responde con el flag de UI apagado, a propósito.
+3. **Recién después**, y no antes de una semana UTC completa de datos: encender
+   `NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED` en los **dos** proyectos + redeploy.
 
 ## No hacer todavía
 
