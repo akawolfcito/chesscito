@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import {
   fetchLeaderboard,
+  fetchLeaderboardTotal,
   fetchPlayerRank,
   fetchWeeklyLeaderboard,
+  fetchWeeklyLeaderboardTotal,
   fetchWeeklyPlayerRank,
   type LeaderboardResponse,
 } from "@/lib/server/leaderboard";
@@ -25,6 +27,9 @@ export type { LeaderboardRow } from "@/lib/server/leaderboard";
  *
  * GET /api/leaderboard?window=weekly|alltime[&player=0x…] → LeaderboardResponse
  *   (Slice 2B). Anything else in `window`, including the empty string, is a 400.
+ *   Carries `total`, the ranked POPULATION over the uncut relation — the
+ *   windowed shapes only, because the legacy two are frozen. A client that
+ *   wants a truthful player count must ask for a window.
  *
  * THE TWO LEGACY SHAPES ARE FROZEN. A client that never sends `window` cannot
  * tell Slice 2 shipped — that is asserted, not assumed, by the first tests in
@@ -66,12 +71,22 @@ export async function GET(request: Request) {
     }
 
     if (windowParam === "alltime") {
-      const rows = await fetchLeaderboard();
-      const own = player ? await fetchPlayerRank(player) : null;
+      // In parallel: the count must not add a round trip to a board that
+      // already renders without it.
+      const [rows, own, total] = await Promise.all([
+        fetchLeaderboard(),
+        player ? fetchPlayerRank(player) : Promise.resolve(null),
+        fetchLeaderboardTotal(),
+      ]);
       return NextResponse.json({
         window: "alltime",
         rows,
         player: own,
+        // `?? undefined` DROPS the key: a failed count says nothing rather than
+        // asserting a population. A genuine 0 survives, since ?? only catches
+        // null. Never fall back to rows.length — that is the defect this
+        // field replaces.
+        total: total ?? undefined,
       } satisfies LeaderboardResponse);
     }
 
@@ -80,15 +95,21 @@ export async function GET(request: Request) {
     // legacy responses above into 500s.
     const surface = requireDeploymentSurface();
     const window = currentWeekWindow(new Date());
-    const rows = await fetchWeeklyLeaderboard(surface, window);
-    const own = player
-      ? await fetchWeeklyPlayerRank(player, surface, window)
-      : null;
+    const [rows, own, total] = await Promise.all([
+      fetchWeeklyLeaderboard(surface, window),
+      player
+        ? fetchWeeklyPlayerRank(player, surface, window)
+        : Promise.resolve(null),
+      // Surface-scoped like everything else in this branch: the weekly view
+      // holds both products and an unfiltered count merges them.
+      fetchWeeklyLeaderboardTotal(surface),
+    ]);
 
     return NextResponse.json({
       window: "weekly",
       rows,
       player: own,
+      total: total ?? undefined,
       weekStart: window.start.toISOString(),
       weekEnd: window.end.toISOString(),
       surface,
