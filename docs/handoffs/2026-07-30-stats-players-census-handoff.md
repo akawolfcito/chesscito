@@ -2,7 +2,8 @@
 
 **Fecha:** 2026-07-30
 **Estado:** cluster COMPLETO (7/7 etapas), verificado visualmente por el founder.
-**`main` local ahead 15 de `origin/main`, SIN PUSHEAR.** El push es del founder.
+**Los 15 commits del cluster están en `origin/main`.** Queda local `cc3dd7f` (este handoff +
+el sync del backlog), commiteado después del push. El push es del founder.
 
 ---
 
@@ -162,15 +163,42 @@ un facilitator de x402 en Celo?** Un spike corto responde eso antes de compromet
 | `78edbb6` | etapas 4 y 5 — tabla, paginador, encabezado local |
 | `b9530bf` | etapa 6 — cableado en la ruta |
 | `8f16ead` | etapa 7 — delegación al mismo conteo que Leaders |
+| `cc3dd7f` | cierre — handoff + sync del backlog (**sin pushear**) |
 
 ---
 
-## 8. Próximo paso sugerido
+## 8. Cerrado de paso, sin escribir código
 
-El founder pushea. Después, del tablero quedan como frentes reales:
+**🟢 Leaders Weekly está VIVO en prod** (confirmado por el founder, 2026-07-30). La migración
+`20260801000000_leaderboard_weekly.sql` **está aplicada** y
+`NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED = true` en Preview y Production, en **los dos proyectos**.
+El item se cerró comprobándolo, no construyéndolo.
 
-1. **Theme Builder** — el frente grande elegido el 2026-07-18, todavía sin spec.
-2. **Leaders Weekly** — ⚠️ **ya está vivo en prod** (migración aplicada, API sirviendo, flag
-   creada en los dos proyectos hace 12h). Verificar el valor de
-   `NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED` y, si está en `true`, **cerrar el item**.
-3. **Export x402** — aparcado, con spike pendiente.
+⛔ **Los handoffs anteriores a esta fecha afirman que la migración no está aplicada y que el
+flag no existe en ningún entorno. Están viejos.** Medido contra prod:
+`GET /api/leaderboard?window=weekly` devuelve 200 con agregación real (4 jugadores en learn
+esta semana; board vacío en play con `weekStart`/`weekEnd` correctos).
+
+⚠️ **Las dos ventanas de Leaders NO se comportan igual, y es a propósito**:
+all-time es **global** y desempata por **dirección de wallet**; weekly es **surface-scoped**,
+desempata por **quién llegó primero** y **falla cerrado (500) sin
+`NEXT_PUBLIC_CHESSCITO_MODE`**. No "arreglar" una para que se parezca a la otra sin decisión
+de producto: cambiar el desempate de all-time reordena jugadores vivos.
+
+**Privy**: env completo en los dos entornos y los dos proyectos (dos entradas de
+`NEXT_PUBLIC_PRIVY_APP_ID`, valores distintos por entorno) y `NEXT_PUBLIC_PRIVY_ENABLED` en
+`true` en prod. **Falta cerrar el issue #272**, cuya condición ya se cumple.
+⚠️ `vercel env ls production` **oculta las filas de Preview** y hace parecer que falta el
+APP_ID — auditar presencia **sin filtro de entorno**.
+
+---
+
+## 9. Próximo paso sugerido
+
+**El Theme Builder** — el frente grande elegido el 2026-07-18 y **todavía sin spec**. Es el
+único ítem del tablero que es trabajo de semanas en vez de días, así que si arranca, arranca
+por el spec.
+
+Lo demás abierto es chico o está aparcado a propósito: **export x402** (aparcado, con spike de
+facilitator pendiente) · **desempate de all-time** (diferido, pide migración) · arte huérfano
+del landing · P2 `offerBenefitTrainings` sin traducir en ES.
