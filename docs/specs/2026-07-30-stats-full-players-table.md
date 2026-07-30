@@ -107,15 +107,43 @@ test escrito de frente pasa en verde contra un memoizador que nunca memoiza.
 
 ## 5. UI — estados y transiciones
 
-La tabla **reemplaza** el bloque *Community Leaderboard* (top-10) que hoy vive en
-`stats-page.tsx:1188`. Dos rankings en la misma página compiten y ninguno se lee como la
-fuente. El podio ya vive en Leaders.
+### 5.0 La tabla se AGREGA, no reemplaza nada
+
+**Decisión del founder (2026-07-30):** el bloque *Community Leaderboard* (top-10,
+`stats-page.tsx:1188`) **se queda intacto**. La tabla nueva va **inmediatamente después**.
+
+Corrige una propuesta mía anterior que lo reemplazaba. Lo que ya funciona no se toca: el
+pedido era hacer auditable un número, no rediseñar la página.
+
+⚠️ **Entonces hay dos listas en la misma pantalla, y tienen que leerse distinto o compiten.**
+Los encabezados hacen ese trabajo:
+
+- *Community Leaderboard* → sigue como está. Es el **podio**.
+- Tabla nueva → *"Every ranked player"* + la línea de que **no la afectan los filtros de
+  arriba**. Es el **censo**.
+
+Podio y censo responden preguntas distintas: quién va ganando, y cuántos hay. Si los dos
+encabezados dijeran lo mismo, la segunda lista parecería un duplicado roto.
+
+### 5.1 Paginado — `PAGE_SIZE = 10`
+
+**Decisión del founder (2026-07-30): 10 filas por página, paginador desde el registro 11.**
+Con los 17 jugadores de hoy la tabla arranca **con paginador visible y 2 páginas**, que es
+el comportamiento que se espera ver de entrada.
+
+El propósito declarado es que la página no se vuelva infinita: con techo de 10 filas, el
+bloque mide lo mismo con 17 jugadores que con 900.
+
+⚠️ **`PAGE_SIZE = 10` coincide en valor con `BOARD_CUT = 10` y NO tiene ninguna relación con
+él.** Uno es el podio de Leaders (espejo de un `LIMIT 10` en SQL), el otro es cuántas filas
+entran en una página de esta tabla. **Constantes separadas, en archivos separados.** Que hoy
+valgan lo mismo es coincidencia, y compartirlas ataría el podio al paginado para siempre.
 
 | Estado | Qué se ve |
 |---|---|
 | **Normal** | Encabezado + total + tabla paginada. El encabezado **declara que es global**: *"Every ranked player — not affected by the filters above."* |
-| **Una sola página** | Los controles de paginado **no se renderizan**. Con 17 jugadores este es el estado real de hoy. |
-| **Varias páginas** | Prev / Next + indicador `Page N of M`. Sin salto de scroll al cambiar de página. |
+| **≤ 10 jugadores** | Una sola página; los controles **no se renderizan**. |
+| **> 10 jugadores** | Prev / Next + indicador `Page N of M`. Sin salto de scroll al cambiar de página. **Es el estado real de hoy** (17 → 2 páginas). |
 | **Vacío (0 jugadores)** | Mensaje explícito. **No es un error** y no debe parecerlo. |
 | **Query falló** (`playersFull: []` con `playersTotal: null`) | La sección **se oculta entera**. Una tabla vacía sobre un board poblado afirmaría que no hay jugadores. |
 | **Truncado por el techo** | Aviso de `dataIntegrity`: lo mostrado es un límite de transporte, no la población. |
@@ -148,22 +176,38 @@ Test explícito: mockear la vista con N filas y verificar que `playersTotal`, la
 | 1 | `fetchFullLeaderboardFromDb` | Lee `leaderboard_full_v`, respeta el techo, **no** lee `leaderboard_combined_v`. |
 | 2 | Identity Lite en el aggregator | Ninguna wallet en la salida (`"0x"` ausente); `rank` viene de la vista. |
 | 3 | Cache propia sin filtros | Con el seam de §4.2: dos filtros distintos, **una** sola lectura de la tabla. |
-| 4 | Render + paginado | Los 7 estados de §5, incluido "una sola página sin controles". |
-| 5 | Reemplazo del top-10 | El bloque viejo desaparece; nada más de la página se mueve. |
+| 4 | Render + paginado | Los estados de §5, incluido "una sola página sin controles". |
+| 5 | Inserción en la página | La tabla queda **después** del top-10, y **el top-10 renderiza exactamente igual que antes** (test de no-regresión sobre ese bloque). |
 | 6 | Invariante §6 | El conteo de la tabla y el del hero coinciden. |
+
+### 7.1 ⛔ Frontera de cambio: sólo `/stats`
+
+Este cluster **no toca** Leaders, `leaderboard-sheet.tsx`, `BOARD_CUT`,
+`/api/leaderboard`, ni la ventana weekly. Nada de lo que hoy corre en prod cambia de
+comportamiento.
+
+Los archivos que se tocan son:
+
+- `lib/supabase/queries.ts` — **sólo agrega** `fetchFullLeaderboardFromDb`; las funciones
+  existentes no se editan.
+- `lib/stats/public-aggregator.ts` — dos campos nuevos en `PublicStats`.
+- `components/stats/stats-page.tsx` — un bloque nuevo, después del top-10.
+
+Cualquier diff fuera de esa lista es señal de que el cluster se desbordó.
 
 **Verificación final** (una sola corrida): suite de `web`, `pnpm exec tsc --noEmit`,
 `content:audit`.
 
 ## 8. Riesgos y preguntas abiertas
 
-1. ⚠️ **Reemplazar el top-10 es una decisión de producto que tomé yo.** Si preferís que
-   convivan, es cambiar la etapa 5 — pero entonces hay que explicar en pantalla por qué hay
-   dos listas.
+1. ✅ **RESUELTO** — la tabla se agrega, no reemplaza (§5.0, founder 2026-07-30).
 2. ⚠️ **`fetchLeaderboardFromDb` usa RPC con fallback a la vista** porque el schema cache de
    PostgREST puede estar viejo (`queries.ts:112`). La función nueva **debería seguir el mismo
    patrón** o va a fallar en el mismo escenario en que la vieja fue endurecida. No hay RPC
    `get_full_leaderboard` hoy — o se agrega, o se acepta lectura directa a la vista y se
    documenta la diferencia.
 3. 🟢 Sin migración, sin contratos, sin cambios de acceso. Reversible con un revert.
-4. **¿Cuántas filas por página?** Asumo **25**. A 390 px son ~2 scrolls.
+4. ✅ **RESUELTO** — `PAGE_SIZE = 10`, paginador desde 11 (§5.1, founder 2026-07-30).
+5. ⚠️ **La última página puede quedar corta** (17 = 10 + 7). Es normal, pero el indicador
+   tiene que decir `Page 2 of 2` y no inventar filas vacías para rellenar la altura: un
+   relleno a 390 px se lee como jugadores fantasma.
