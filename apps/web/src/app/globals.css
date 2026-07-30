@@ -13284,6 +13284,47 @@ button.hud-resource-chip:active:not(:disabled) {
   margin-bottom: calc(env(safe-area-inset-bottom) + 4.75rem);
 }
 
+/* Weekly window tabs (Slice 2C). Behind NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED, so
+ * nothing below renders until the flag is flipped. */
+.leaderboard-window-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+  padding: 0.25rem;
+  border-radius: 14px;
+  background: rgba(110, 65, 15, 0.10);
+}
+
+.leaderboard-window-tab {
+  padding: 0.5rem 0.25rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(63, 34, 8, 0.55);
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.leaderboard-window-tab.is-active {
+  background: rgba(255, 255, 255, 0.72);
+  color: rgba(63, 34, 8, 0.95);
+  box-shadow: 0 1px 2px rgba(110, 65, 15, 0.18);
+}
+
+.leaderboard-window-tab:active {
+  transform: scale(0.98);
+}
+
+/* The weekly call to action reuses .leaderboard-own-rank-footer so it occupies
+ * the SAME vertical space as the rank footer it replaces — switching tabs must
+ * not jump the layout. This class only carries what differs. */
+.leaderboard-weekly-cta .leaderboard-row-compact {
+  align-items: flex-start;
+  text-align: left;
+}
+
 .leaderboard-row-compact:active {
   transform: scale(0.98);
   background: rgba(255, 255, 255, 0.45);

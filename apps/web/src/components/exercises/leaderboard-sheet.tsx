@@ -17,6 +17,7 @@ import type { LeaderboardRow } from "@/lib/server/leaderboard";
 import { PlayerIdentityPill } from "@/components/identity/player-identity-pill";
 import { PinStatusMarker } from "@/components/redesign/pin-status-marker";
 import { useNicknameTokens } from "@/lib/identity/use-nickname-tokens";
+import { isWeeklyLeadersEnabled } from "@/lib/feature-flags";
 import { useDisplayName } from "@/hooks/use-display-name";
 import {
   deriveAvatarVariant,
@@ -25,6 +26,45 @@ import {
 } from "@/lib/identity/identity-lite";
 
 const OPTIMISTIC_TTL_MS = 2 * 60 * 1000;
+
+/** Which ranking is on screen (Slice 2C). */
+type LeaderWindow = "weekly" | "alltime";
+
+/** Per-device tab memory. Read AFTER hydration — never during the first paint. */
+const TAB_STORAGE_KEY = "chesscito:leaders-tab";
+
+/**
+ * One slot per tab.
+ *
+ * The single `hasFetched` ref this replaced could not express "weekly fetched,
+ * all-time not", and reusing it renders one tab's data under the other's header.
+ */
+type TabState = {
+  rows: LeaderboardRow[];
+  ownRow: LeaderboardRow | null;
+  fetched: boolean;
+  /** A save landed while the other tab was active; refetch on activation. */
+  stale: boolean;
+  /** Weekly only. A CHANGE here is a week rollover: replace, never merge. */
+  weekStart?: string;
+};
+
+const EMPTY_TAB: TabState = {
+  rows: [],
+  ownRow: null,
+  fetched: false,
+  stale: false,
+};
+
+/** The weekly envelope (Slice 2B). All-time keeps the two legacy shapes. */
+type WeeklyPayload = {
+  window: LeaderWindow;
+  rows: LeaderboardRow[];
+  player: LeaderboardRow | null;
+  weekStart?: string;
+  weekEnd?: string;
+  surface?: string;
+};
 
 function getOptimisticScore(): { player: string; score: number } | null {
   try {
@@ -77,71 +117,162 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
   const { address } = useAccount();
   const nicknameTokens = useNicknameTokens();
   const { customName } = useDisplayName(address);
-  const [rows, setRows] = useState<LeaderboardRow[]>([]);
-  /** The caller's own row with its REAL rank over the full ranking —
-   *  visible even outside the top-10 cut (QA G4 2026-06-11). */
-  const [ownRow, setOwnRow] = useState<LeaderboardRow | null>(null);
+  const weeklyEnabled = isWeeklyLeadersEnabled();
+
+  /** First paint is ALWAYS weekly when the flag is on. A stored preference is
+   *  applied in an effect below — deciding from unhydrated storage is the exact
+   *  shape of an intermittent bug this codebase has already hit three times. */
+  const [active, setActive] = useState<LeaderWindow>(
+    weeklyEnabled ? "weekly" : "alltime",
+  );
+  const [tabs, setTabs] = useState<Record<LeaderWindow, TabState>>({
+    weekly: EMPTY_TAB,
+    alltime: EMPTY_TAB,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const hasFetched = useRef(false);
 
-  const applyRows = useCallback((data: unknown) => {
-    // Two response shapes: legacy array (no player param) or
-    // { rows, player } when the caller's wallet was sent along.
+  const rows = tabs[active].rows;
+  const ownRow = tabs[active].ownRow;
+
+  /** Read at RESOLVE time, so a response for a tab the player already left is
+   *  discarded instead of landing in the other tab's slot. */
+  const activeRef = useRef(active);
+  activeRef.current = active;
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
+
+  useEffect(() => {
+    if (!weeklyEnabled) return;
+    try {
+      const stored = window.localStorage.getItem(TAB_STORAGE_KEY);
+      if (stored === "alltime") setActive("alltime");
+    } catch {
+      /* storage unavailable — weekly stays the default */
+    }
+  }, [weeklyEnabled]);
+
+  const selectTab = useCallback((next: LeaderWindow) => {
+    setActive(next);
+    try {
+      window.localStorage.setItem(TAB_STORAGE_KEY, next);
+    } catch {
+      /* storage unavailable — the choice just does not survive a reload */
+    }
+  }, []);
+
+  const applyPayload = useCallback((win: LeaderWindow, data: unknown) => {
+    // Weekly is the Slice 2B envelope; all-time keeps the two legacy shapes,
+    // a bare array or { rows, player }.
     const payload = data as
       | LeaderboardRow[]
-      | { rows: LeaderboardRow[]; player: LeaderboardRow | null };
+      | { rows: LeaderboardRow[]; player: LeaderboardRow | null }
+      | WeeklyPayload;
     const apiRows = Array.isArray(payload)
       ? payload
       : Array.isArray(payload?.rows)
         ? payload.rows
         : [];
-    setOwnRow(Array.isArray(payload) ? null : payload?.player ?? null);
+    const player = Array.isArray(payload) ? null : payload?.player ?? null;
+    const weekStart =
+      !Array.isArray(payload) && "weekStart" in payload
+        ? payload.weekStart
+        : undefined;
+
+    // The optimistic entry is consumed by PRESENCE of its rowId — the check
+    // that already existed here. Comparing optimistic.score (one exercise)
+    // against a row's score (a per-player total) would type-check and mean
+    // nothing.
     const optimistic = getOptimisticScore();
-    if (optimistic) {
-      const optimisticRowId = deriveRowId(optimistic.player.toLowerCase());
-      const found = apiRows.some((r) => r.rowId === optimisticRowId);
-      if (found) {
-        clearOptimisticScore();
-        setRows(apiRows);
-        return;
-      }
-      setRows([
-        ...apiRows,
-        {
-          rank: apiRows.length + 1,
-          rowId: optimisticRowId,
-          variant: deriveAvatarVariant(optimistic.player.toLowerCase()),
-          score: optimistic.score,
-          isVerified: false,
-        },
-      ]);
-    } else {
-      setRows(apiRows);
-    }
+    const optimisticRowId = optimistic
+      ? deriveRowId(optimistic.player.toLowerCase())
+      : null;
+    const alreadyThere =
+      optimisticRowId !== null &&
+      (apiRows.some((r) => r.rowId === optimisticRowId) ||
+        player?.rowId === optimisticRowId);
+    if (alreadyThere) clearOptimisticScore();
+
+    // WEEKLY NEVER APPENDS IT. An absent own row is the EXPECTED state there,
+    // so the append heuristic would fabricate a rank; and the entry carries no
+    // surface, so a Play score could be painted onto a Learn board.
+    const withOptimistic =
+      win === "alltime" && optimistic && optimisticRowId && !alreadyThere
+        ? [
+            ...apiRows,
+            {
+              rank: apiRows.length + 1,
+              rowId: optimisticRowId,
+              variant: deriveAvatarVariant(optimistic.player.toLowerCase()),
+              score: optimistic.score,
+              isVerified: false,
+            },
+          ]
+        : apiRows;
+
+    // Wholesale replacement, never a merge: on a week rollover `weekStart`
+    // changes and the previous week's rows must not survive it.
+    setTabs((prev) => ({
+      ...prev,
+      [win]: {
+        rows: withOptimistic,
+        ownRow: player,
+        fetched: true,
+        stale: false,
+        weekStart,
+      },
+    }));
   }, []);
 
-  const fetchLeaderboard = useCallback((showLoading = true) => {
-    if (showLoading) setLoading(true);
-    setError(null);
-    const url = address
-      ? `/api/leaderboard?player=${address}`
-      : "/api/leaderboard";
-    fetch(url)
-      .then((r) => {
-        if (!r.ok) throw new Error("fetch failed");
-        return r.json();
-      })
-      .then(applyRows)
-      .catch(() => setError(t("error")))
-      .finally(() => setLoading(false));
-  }, [applyRows, t, address]);
+  const fetchWindow = useCallback(
+    (win: LeaderWindow, showLoading: boolean) => {
+      if (showLoading) setLoading(true);
+      setError(null);
+      const base =
+        win === "weekly" ? "/api/leaderboard?window=weekly" : "/api/leaderboard";
+      const url = address
+        ? `${base}${win === "weekly" ? "&" : "?"}player=${address}`
+        : base;
+      fetch(url)
+        .then((r) => {
+          if (!r.ok) throw new Error("fetch failed");
+          return r.json();
+        })
+        .then((data) => {
+          if (activeRef.current !== win) return;
+          applyPayload(win, data);
+        })
+        .catch(() => {
+          if (activeRef.current !== win) return;
+          setError(t("error"));
+        })
+        .finally(() => setLoading(false));
+    },
+    [applyPayload, t, address],
+  );
+
+  const refreshRef = useRef(refreshTrigger);
 
   useEffect(() => {
     if (!open) return;
-    fetchLeaderboard(!hasFetched.current);
-    hasFetched.current = true;
-  }, [open, fetchLeaderboard, refreshTrigger]);
+
+    const refreshed = refreshRef.current !== refreshTrigger;
+    refreshRef.current = refreshTrigger;
+
+    if (refreshed) {
+      // The active tab refetches now; the other is marked stale so it refetches
+      // when the player next lands on it, rather than firing two requests for a
+      // screen showing one board.
+      const other: LeaderWindow = active === "weekly" ? "alltime" : "weekly";
+      setTabs((prev) => ({ ...prev, [other]: { ...prev[other], stale: true } }));
+      fetchWindow(active, false);
+      return;
+    }
+
+    const state = tabsRef.current[active];
+    if (state.fetched && !state.stale) return;
+    fetchWindow(active, !state.fetched);
+  }, [open, active, refreshTrigger, fetchWindow]);
 
   const champion = rows.find(r => r.rank === 1);
   // The list is the FULL board — every player including #1 and the caller
@@ -192,6 +323,31 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
           />
         </div>
 
+        {/* WINDOW TABS (Slice 2C). Absent entirely when the flag is off, so the
+            sheet is byte-identical to its pre-slice self. */}
+        {weeklyEnabled ? (
+          <div
+            role="tablist"
+            aria-label={t("tabsAriaLabel")}
+            className="leaderboard-window-tabs shrink-0"
+          >
+            {(["weekly", "alltime"] as const).map((win) => (
+              <button
+                key={win}
+                type="button"
+                role="tab"
+                aria-selected={active === win}
+                onClick={() => selectTab(win)}
+                className={`leaderboard-window-tab${
+                  active === win ? " is-active" : ""
+                }`}
+              >
+                {win === "weekly" ? t("tabWeekly") : t("tabAllTime")}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {/* HERO BAND — overview anchor that mirrors badge + trophy
          *  vitrines. Golden crown character anchors the cream-amber
          *  panel; the right column carries the champion summary +
@@ -219,11 +375,22 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
                 </>
               ) : (
                 <>
+                  {/* A fresh Monday is not the same emptiness as "nobody has
+                      ever played": the weekly board says so out loud.
+                      NOT while `error` is set, though — "the board is just
+                      getting started" is a factual claim about the week, and we
+                      have no data to make it when the fetch failed. Falling back
+                      to the generic copy also leaves all-time's error rendering
+                      exactly as it was. */}
                   <p className="leaderboard-vitrine-hero-stats">
-                    {t("heroEmptyHeadline")}
+                    {active === "weekly" && !error
+                      ? t("weeklyEmptyHeadline")
+                      : t("heroEmptyHeadline")}
                   </p>
                   <p className="leaderboard-vitrine-hero-sub">
-                    {t("heroEmptyHint")}
+                    {active === "weekly" && !error
+                      ? t("weeklyEmptyHint")
+                      : t("heroEmptyHint")}
                   </p>
                 </>
               )}
@@ -279,7 +446,9 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
               </p>
               <button
                 type="button"
-                onClick={() => fetchLeaderboard()}
+                // Scoped to the tab that failed: retrying the weekly board must
+                // not go and refetch all-time.
+                onClick={() => fetchWindow(active, true)}
                 className="flex h-11 items-center justify-center px-6 rounded-xl bg-rose-600/10 text-xs font-black uppercase tracking-wider transition active:scale-95 text-rose-800"
               >
                 {t("retry")}
@@ -420,6 +589,30 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
             </div>
           );
         })() : null}
+
+        {/* WEEKLY CTA FOOTER (Slice 2C). Replaces the rank footer when the
+            player has not played this week — which on the weekly board is the
+            ORDINARY state, not an error. Same shell class as the rank footer so
+            switching tabs does not jump the layout.
+            All-time keeps its own behaviour: no CTA there, since an absent row
+            genuinely means "never played". */}
+        {weeklyEnabled && active === "weekly" && !ownRow && address ? (
+          <div
+            data-testid="leaderboard-weekly-cta"
+            className="leaderboard-own-rank-footer leaderboard-weekly-cta shrink-0"
+          >
+            <Link href="/arena?fresh=1" onClick={() => onOpenChange(false)}>
+              <div className="leaderboard-row-compact leaderboard-row-compact--identity flex-col items-start gap-0.5">
+                <p className="text-xs font-black uppercase tracking-wider text-[rgba(63,34,8,0.95)]">
+                  {t("weeklyCtaTitle")}
+                </p>
+                <p className="text-[0.7rem] font-medium text-[rgba(63,34,8,0.70)]">
+                  {t("weeklyCtaHint")}
+                </p>
+              </div>
+            </Link>
+          </div>
+        ) : null}
       </SheetContent>
     </Sheet>
   );
