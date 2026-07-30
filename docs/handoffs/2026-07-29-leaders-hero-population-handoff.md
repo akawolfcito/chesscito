@@ -93,6 +93,41 @@ que **cerrar la app del todo**; un refresh no alcanza.
 Los 17 tests flag-OFF preexistentes del sheet y los 4 del contrato legacy del route pasan
 **sin modificarse**.
 
+## Segundo slice de la sesión: el label del corte (`27b61de`)
+
+Con la población arreglada apareció el problema de percepción: el hero dice 17 sobre diez
+filas y **nada en pantalla explica el hueco** — se lee como siete nombres que no cargaron. El
+founder lo nombró: un número que nadie puede reconciliar se siente como mentira aunque sea
+verdad. La lista ahora se declara: **`TOP 10 OF 17`** (ES: `TOP 10 DE 17`).
+
+- Aparece **sólo cuando el board realmente está cortado**. Silencio si la población es
+  desconocida (una afirmación de corte sería una adivinanza, y el hero ya omite su cifra por lo
+  mismo) y silencio si los que hay ya entran (`TOP 10 OF 3` inventa un corte inexistente).
+- La cifra mostrada es **`BOARD_CUT`, constante que espeja el `LIMIT 10` de SQL**, nunca un
+  conteo de filas: el tab all-time puede agregar una fila optimista (daría `TOP 11`) y una
+  semana delgada reclamaría un corte de 3.
+- El source guard ahora prohíbe `shown: rows.length` además de `count: rows.length`. Los
+  nombres de parámetro son distintos **a propósito**: `shown` y `count` son afirmaciones
+  distintas.
+- El label vive **dentro** del contenedor de filas: el `space-y-6` del padre lo dejaría 24 px
+  arriba de la lista que etiqueta.
+
+## Decisiones de producto que salieron de la conversación
+
+Las tres quedaron anotadas en `docs/backlog/2026-07-10-backlog-index.md`:
+
+1. **Tabla paginada de jugadores en `/stats`** — reparto acordado: Leaders = podio + tu
+   posición; `/stats` = la lista completa, donde el número se audita. **Pide spec**: su pregunta
+   abierta (¿la tabla respeta los filtros `surface`/`container`?) está **amarrada** a la open
+   question de Slice 2 sobre scopear all-time por surface. Se toman juntas o divergen.
+2. **⚠️ Hallazgo con urgencia real**: `/stats` publica retention, funnels y mix de países **y
+   está en el `sitemap.ts`**. Métricas de negocio indexables. Ya existe app de admin — mover ese
+   grupo no necesita ningún rail de pago. Toca el mismo archivo que la tabla → una sola pasada.
+3. **Export con x402** (idea, sin agendar): ver gratis, **descargar** se paga. Cobra formato y
+   conveniencia, no acceso — así no hay que distinguir interno de externo, que era el agujero
+   (x402 gatea por pago, no por identidad). **Sin valor de enforcement**: el HTML ya trae los
+   datos. No poner 402 delante del HTML.
+
 ## Pendiente (del founder)
 
 1. **Push** — `git push origin main`, y `production` si va con el deploy del weekly slice.

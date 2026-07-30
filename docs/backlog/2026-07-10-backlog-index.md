@@ -189,6 +189,70 @@ desde Supabase, pero **el payload de Redis sigue siendo incorrecto** y puede afe
 a consumidores futuros durante un rollover de season. Hoy es inocuo: nada más
 consume el campo.
 
+### Tabla paginada de jugadores en `/stats` (acordado 2026-07-29, PIDE SPEC)
+
+Nace de una pregunta del founder: el hero de Leaders dice "17 players" sobre una lista de 10,
+y **un número que nadie puede auditar se siente como una mentira** aunque sea verdadero. El
+label `TOP 10 OF 17` (`27b61de`) tapa el hueco de percepción, pero **la lista completa no
+existe en ninguna superficie**.
+
+Reparto decidido: **Leaders** = podio + tu posición (sigue cortado); **`/stats`** = la tabla
+completa, que es donde el número se audita. `/stats` es el hogar correcto porque ya es página
+pública de agregados read-only y **ya está linkeada desde el landing** (`landing-page.tsx:948`)
+y en el `sitemap.ts` — no es rincón de ops.
+
+- **Forma recomendada**: la tabla viaja dentro del snapshot horario y se pagina **en el
+  cliente**, con techo de filas (~500). Encaja con la arquitectura de la página
+  (`revalidate = 3600` + `unstable_cache` por combinación de filtros, `Promise.allSettled`,
+  `null` = dato no disponible). La alternativa —endpoint con paginado server-side— es correcta
+  a escala grande pero se sale del snapshot y agrega una superficie que puede divergir.
+- **Pregunta de producto SIN RESOLVER, y está amarrada a otra**: ¿la tabla respeta los filtros
+  `surface`/`container` que la página ya tiene en el querystring? Si los respeta, el número que
+  muestre tiene que ser el conteo **de lo que está en la tabla**, y el estado sin filtros tiene
+  que dar **exactamente** el mismo número que Leaders, o no audita nada. Eso choca con la open
+  question de Slice 2 (*¿all-time debería scopearse por surface?*): **las dos decisiones se
+  toman juntas o divergen.**
+- ⚠️ **El corte vive en SQL, no en TS.** `BOARD_CUT` en `leaderboard-sheet.tsx` es un espejo de
+  `leaderboard_combined_v ... LIMIT 10` / `get_weekly_leaderboard ... limit 10`. Si la tabla de
+  `/stats` introduce otro límite, que sea **una sola constante compartida** — dos cortes que
+  pueden discrepar van a discrepar.
+
+### ⚠️ Métricas de negocio públicas E INDEXADAS en `/stats` (hallado 2026-07-29)
+
+`/stats` renderiza retention, activation funnel, access funnel y mix de países, y está en el
+`sitemap.ts`. **Eso es justo lo que un competidor quiere**, y hoy lo puede leer Google.
+
+Conviven dos cosas de sensibilidad opuesta en la misma página: la mitad de **transparencia**
+(tabla de jugadores, totales, saves, hall of fame) **debe** ser pública y auditable; la mitad
+de **negocio** no tiene por qué. Ya existen app de admin y `/api/admin/lite-stats`, así que
+mover ese grupo cuesta poco y **no necesita ningún rail de pago**.
+
+📌 Es la decisión con urgencia real de las tres, y toca el mismo archivo que la tabla → una
+sola pasada.
+
+### Export de `/stats` con x402 (idea del founder 2026-07-29, SIN AGENDAR)
+
+Ver la tabla en la página es gratis (y copiarla a mano también); **descargarla** en formato
+procesable se paga. Cobra **conveniencia y formato, no acceso**: la página sigue gratis e
+indexada y no hay que distinguir "interno" de "externo" — que era el agujero de la idea
+anterior, porque x402 gatea por **pago, no por identidad**, y cualquiera conecta una wallet en
+cinco segundos.
+
+Lo que hay que tener escrito antes de construirlo:
+
+- **No tiene valor de enforcement, y no hay que pretender que lo tenga.** El HTML ya trae los
+  datos; si además la tabla se pagina en cliente sobre el snapshot, **el dataset completo ya
+  viaja en el payload** y el "download" es reformatear algo que el cliente ya tiene. Precio
+  honesto = conveniencia. **No construir anti-scraping.**
+- **Qué se exporta importa más que el precio.** Con `rowId` opaco + score es inofensivo. El día
+  que incluya wallets es otro producto con una decisión de privacidad adentro: hoy **las
+  wallets no salen del servidor** y hay un test que lo fija (`JSON.stringify(body)` no contiene
+  `"0x"`).
+- El límite gratis/pago se resuelve **server-side**, con lo que x402 pide: facilitator,
+  settlement y verificación de recibo con protección de replay.
+- **No poner 402 delante del HTML** — mata el indexado y la señal de transparencia, que es el
+  trabajo de esa página.
+
 ## 9. No scopeado
 
 Social login · gift-able PRO (`project_pro_growth_ideas_backlog`) · specs de Welcome Package y
