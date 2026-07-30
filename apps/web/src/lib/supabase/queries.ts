@@ -127,6 +127,55 @@ export async function fetchLeaderboardFromDb(): Promise<LeaderboardRow[]> {
 }
 
 /**
+ * How many rows of the uncut ranking the /stats snapshot will carry.
+ *
+ * This is a TRANSPORT cap, not a ranking rule. It has no relationship to
+ * `BOARD_CUT` (the Leaders podium, a mirror of `LIMIT 10` in SQL) and the two
+ * must never be shared: tying them would bind the podium to how many rows this
+ * table is willing to ship.
+ */
+export const PLAYERS_TABLE_CEILING = 500;
+
+/**
+ * The uncut ranking, for the /stats census table.
+ *
+ * Reads `leaderboard_full_v` — the SAME relation `countRankedPlayers` counts to
+ * produce the population figure the Leaders hero shows. That shared source is
+ * the entire point: the census exists so that number can be counted by hand,
+ * and a table fed from anywhere else would eventually contradict it.
+ * `leaderboard_combined_v` is the top-10 cut and would answer 10 forever.
+ *
+ * `rank` comes from the view, never from an array index — an index would
+ * silently renumber a read that got truncated by the ceiling.
+ *
+ * Unlike `fetchLeaderboardFromDb`, this reads the view DIRECTLY instead of
+ * going through an RPC with a view fallback. There is no `get_full_leaderboard`
+ * function, and adding one would be a migration this cluster deliberately
+ * avoids. The tradeoff is real and worth naming: the RPC exists over there
+ * because a stale PostgREST schema cache can make direct view access fail
+ * (Slice 4 — P1 leaderboard-view-undefined), so this read is exposed to the
+ * scenario the older one was hardened against. On failure it returns an empty
+ * list and the section hides, which is the same shape the aggregator already
+ * handles for every other read.
+ */
+export async function fetchFullLeaderboardFromDb(
+  limit: number,
+): Promise<LeaderboardRow[]> {
+  const supabase = getSupabaseServer();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("leaderboard_full_v")
+    .select("rank, player, total_score, is_verified, has_onchain")
+    .order("rank", { ascending: true })
+    .limit(limit);
+
+  if (error) return [];
+
+  return (data as LeaderboardRow[]) ?? [];
+}
+
+/**
  * Fetch the player's own combined-leaderboard row with its REAL rank
  * over the full ranking (`get_player_rank` / `leaderboard_full_v`) —
  * visible even outside the top-10 cut (QA G4 2026-06-11). Null when
