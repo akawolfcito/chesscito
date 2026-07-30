@@ -4,6 +4,7 @@ import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl"
 
 import { StatsPage as StatsPageBase } from "../stats-page";
 import { EMPTY_PUBLIC_STATS } from "@/lib/stats/public-aggregator";
+import { EMPTY_PLAYERS_CENSUS } from "@/lib/stats/players-census";
 import type { PublicStats } from "@/lib/stats/public-aggregator";
 import { IDENTITY_COPY } from "@/lib/content/editorial";
 import type { NicknameTokens } from "@/lib/identity/identity-lite";
@@ -15,8 +16,18 @@ afterEach(() => {
 // EN tokens (the test renders the default-locale bundle). Wrapper injects them
 // so the 28 existing call sites stay unchanged.
 const TOKENS = IDENTITY_COPY as unknown as NicknameTokens;
+// The census is a sibling prop, not part of `stats`. These cases predate it and
+// are about the dashboard, so they get the unavailable census: the block hides
+// and nothing else on the page changes. Census behaviour has its own suites
+// (players-table*, players-census-placement).
 function StatsPage({ stats }: { stats: PublicStats }) {
-  return <StatsPageBase stats={stats} nicknameTokens={TOKENS} />;
+  return (
+    <StatsPageBase
+      stats={stats}
+      census={EMPTY_PLAYERS_CENSUS}
+      nicknameTokens={TOKENS}
+    />
+  );
 }
 
 const SAMPLE_STATS: PublicStats = {

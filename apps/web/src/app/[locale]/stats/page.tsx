@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { StatsPage } from "@/components/stats/stats-page";
 import { getPublicStats } from "@/lib/stats/public-aggregator";
+import { loadPlayersCensus } from "@/lib/stats/players-census";
 import { parseStatsFilters, type StatsFilters } from "@/lib/stats/filters";
 import {
   nicknameTokensFromTranslator,
@@ -45,7 +46,15 @@ export default async function StatsRoute({
   searchParams: { surface?: string; container?: string };
 }) {
   const filters = parseStatsFilters(searchParams);
-  const stats = await loadStats(filters);
+  // Two siblings, two caches. The page snapshot keys on (surface, container);
+  // the census keys on one global entry and takes no arguments at all, which is
+  // what keeps a filter from ever reaching it. Loaded together so a slow census
+  // does not serialize behind the dashboard, and independent so one going dark
+  // never blanks the other.
+  const [stats, census] = await Promise.all([
+    loadStats(filters),
+    loadPlayersCensus(),
+  ]);
   // Build the locale-aware nickname tokens server-side (the aggregator is
   // locale-agnostic + cached); StatsPage formats names from the row variants.
   const tIdentity = await getTranslations("IDENTITY_COPY");
@@ -68,7 +77,11 @@ export default async function StatsRoute({
       style={{ color: "var(--paper-text)" }}
     >
       <div className="mx-auto w-full max-w-[1200px] px-5 py-8 md:px-10 md:py-12">
-        <StatsPage stats={stats} nicknameTokens={nicknameTokens} />
+        <StatsPage
+          stats={stats}
+          census={census}
+          nicknameTokens={nicknameTokens}
+        />
       </div>
     </main>
   );

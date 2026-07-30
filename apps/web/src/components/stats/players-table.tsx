@@ -71,7 +71,14 @@ export function PlayersTable({ census, nicknameTokens }: PlayersTableProps) {
   const visible = census.rows.slice(start, start + PLAYERS_PAGE_SIZE);
 
   return (
-    <div>
+    <section>
+      <h3
+        className="mb-1 text-[0.6875rem] font-semibold uppercase tracking-wide"
+        style={{ color: "var(--paper-text-subtle)" }}
+      >
+        Players Census
+      </h3>
+
       {/* The block's LOCAL header. Everything here is an adjacency rule: the
           page already carries a global "as of" and a global truncation notice,
           both at the very top, and this table sits eight sections below them.
@@ -198,6 +205,6 @@ export function PlayersTable({ census, nicknameTokens }: PlayersTableProps) {
           </button>
         </div>
       ) : null}
-    </div>
+    </section>
   );
 }

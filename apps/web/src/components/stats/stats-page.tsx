@@ -4,6 +4,8 @@ import type {
   PublicStats,
 } from "@/lib/stats/public-aggregator";
 import { StatCard } from "./stat-card";
+import { PlayersTable } from "./players-table";
+import type { PlayersCensus } from "@/lib/stats/players-census";
 import { PlayerIdentityPill } from "@/components/identity/player-identity-pill";
 import { formatNickname, type NicknameTokens } from "@/lib/identity/identity-lite";
 import {
@@ -387,6 +389,14 @@ function RetentionCards({ retention }: { retention: Retention }) {
 
 type StatsPageProps = {
   stats: PublicStats;
+  /** The players census — a SIBLING of `stats`, not a field of it.
+   *
+   *  It is global (no surface/container) and caches on its own entry, so it
+   *  cannot live inside `PublicStats`: the page snapshot keys on the filters,
+   *  and folding the census in would store an identical copy per combination
+   *  and let two views hold censuses from different hours. The two degrade
+   *  independently — a dark census does not blank the page. */
+  census: PlayersCensus;
   /** Locale-aware tokens built server-side in the route; used to format each
    *  row's nickname from its variant. */
   nicknameTokens: NicknameTokens;
@@ -709,7 +719,7 @@ function formatStat(n: number | null): string {
   return n === null ? "—" : new Intl.NumberFormat("en-US").format(n);
 }
 
-export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
+export function StatsPage({ stats, census, nicknameTokens }: StatsPageProps) {
   const diff = stats.victoriesByDifficulty;
   const platformSignals = computePlatformSignals(stats);
 
@@ -1238,6 +1248,17 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
           </ol>
         )}
       </section>
+
+      {/* Players census — the podium's companion, deliberately placed right
+          after it. Two rankings on one screen only work if they answer
+          different questions: the block above is WHO IS WINNING (top 10, the
+          same cut Leaders shows), this one is HOW MANY THERE ARE. It exists so
+          the "17" the Leaders hero states can actually be counted, which is
+          why it ignores the filters above and says so in its own header. */}
+      {/* The component owns its own <section> and heading, so that when the
+          block hides there is no orphaned title left behind — and so the
+          decision to hide lives in exactly one place. */}
+      <PlayersTable census={census} nicknameTokens={nicknameTokens} />
 
       {/* §8 On-chain Activity (MiniPay Stage-2). Per-method tx counts +
           unique on-chain wallets + Get Peones stablecoin volume, all
