@@ -130,16 +130,52 @@ y estaba escrito con `\echo` + seis result sets, o sea sólo servía desde psql 
 SQL Editor de Supabase revienta en la primera línea, y aun sin eso Studio muestra **sólo el
 último** result set. Ahora es una sola consulta con columna PASS/FAIL.
 
+## ⚠️ El board semanal es SÓLO-LEARN (verificado en device, 2026-07-29)
+
+`arena/page.tsx:1197` es `isPlayMode() ? <PlayLeadersSheet/> : <LeaderboardSheet/>`. En Play el
+slot "leaderboard" del dock lo ocupa el **Hall of Fame** (victorias minteadas,
+`/api/hall-of-fame`), así que **`LeaderboardSheet` no se monta nunca en Play**.
+
+- `NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED` **sólo tiene efecto en Learn**. En Play es no-op —
+  inofensivo, pero no hace nada.
+- El carril `surface = 'play'` del SQL y del endpoint funciona y está probado, pero **hoy no
+  tiene consumidor**. D2 sigue siendo correcto; darle board a Play es decisión de producto
+  pendiente, no deuda técnica.
+- La open question del spec padre sobre "Arena mostrará un board sólo-Play" quedó **cerrada
+  por inexistente**.
+
+## ✅ Verificado en device (2026-07-29, Learn)
+
+Con el flag encendido, en el dock → Leaders:
+
+- **Los dos tabs son boards distintos**: ALL TIME 10000 pts / 10 players · THIS WEEK 4400 pts
+  / 3 players. Los 3 coinciden con `ranked_wallets = 3` del SQL — los dos caminos dan lo mismo.
+- **La asimetría off-chain se ve**: en ALL TIME las filas 1–4 llevan el sello; en THIS WEEK
+  **ninguna**. Es `hasOnchain` ausente, no `false` — lo que protegía el P0 del mapper.
+- **Rank 11+ en el footer**: en all-time el propio row sale **13** mientras la lista corta en 10.
+- El propio row resaltado en lista **y** espejado en el footer es intencional (preexistente).
+
+## 🐛 Preexistente, destapado al mirar: el hero cuenta el CORTE, no la población
+
+El hero dice "10 players" mientras el footer dice rank 13. `heroChampionStatsFormat` recibe
+`count: rows.length` (`leaderboard-sheet.tsx:217`), y `rows` es el top-10. Viene de antes de
+este slice y ahora lo hereda el tab semanal, donde hoy dice "3 players" y **acierta sólo porque
+hay tres**. Con 15 jugadores semanales diría 10.
+
+No se tocó a propósito: fuera del alcance de 2C, que ya estaba cerrado y verificado. Anotado en
+`docs/backlog/2026-07-10-backlog-index.md`. El arreglo pide un `total` en la respuesta — el
+`player` rank ya viaja sobre el conjunto sin cortar, así que la pieza que falta es sólo esa.
+
 ## Pendiente (del founder)
 
-1. **Push** — `git push origin main`. Verificar árbol limpio antes.
-2. **Probar ambos deployments** con `NEXT_PUBLIC_CHESSCITO_MODE` explícito: Learn debe
-   responder `surface: "learn"`, Play `surface: "play"`. Probar además top 10, player rank
-   fuera del top 10, `hasOnchain` ausente, wallet checksummed, y el empty state de una wallet
-   sin actividad semanal.
-   > El endpoint responde con el flag de UI apagado, a propósito.
-3. **Recién después**, y no antes de una semana UTC completa de datos: encender
-   `NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED` en los **dos** proyectos + redeploy.
+1. **Push** — `git push origin main`, y `git push origin production` para desplegar.
+2. **Plan de prueba: sólo Learn.** `/exercises` → dock → Leaders. Qué mirar:
+   - cambiar de tab y volver (la segunda vez no debe refetchear);
+   - el propio row con wallet **checksummed** — el caso que ningún fixture agarra;
+   - el **rollover**: el lunes que viene la ventana resetea y el board semanal queda vacío con
+     el CTA. Es el único estado que todavía nadie vio renderizado.
+   > Play no tiene board semanal que probar (ver arriba). Su carril sólo se puede sondear por
+   > endpoint: `GET /api/leaderboard?window=weekly` sobre el deployment de Play → `surface: "play"`.
 
 ## No hacer todavía
 

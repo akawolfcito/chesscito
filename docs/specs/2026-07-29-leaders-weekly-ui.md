@@ -26,6 +26,13 @@ definition, the off-chain asymmetry and the traceability matrix.
   `LeaderboardResponse`, that is a 2B gap, not a 2C fetch of something else.
 - `components/play/play-leaders-sheet.tsx` — it reads `/api/hall-of-fame` (victory NFTs) and is
   unrelated despite the name. **Untouched.**
+
+  ⚠️ **Corrección 2026-07-29, verificada en device:** no es sólo "otro componente" — lo
+  **sustituye**. `arena/page.tsx:1197` es `isPlayMode() ? <PlayLeadersSheet/> : <LeaderboardSheet/>`,
+  así que en Play `LeaderboardSheet` **no se monta nunca** y este slice no tiene superficie
+  visible ahí. La primera redacción decía "unrelated despite the name", lo cual es cierto y
+  además irrelevante: lo que importaba era la sustitución. Todo lo que este spec describe
+  ocurre **sólo en Learn**.
 - A reset countdown. `weekStart`/`weekEnd` are available; using them is a separate product call
   (parent §Open questions).
 - Changing all-time's rendering, its optimistic append, or its on-chain seal.

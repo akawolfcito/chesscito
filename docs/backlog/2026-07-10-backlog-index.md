@@ -56,6 +56,17 @@ en ese request se revierte si el crédito no aterriza.
   que no tenga nada que traducir (`"{count}"`, `"{day}: {state}"`).
 - **PLAY #8 — quitar la confirmación redundante de LUZ.** Tocar Coach Review lanza análisis
   directo; LUZ conserva personalidad en loading y resultado. Borra una pantalla.
+- **Leaders: el hero cuenta el CORTE, no la población** (visto en device 2026-07-29).
+  El hero dice **"10 players"** mientras el footer del mismo jugador dice **rank 13**.
+  `heroChampionStatsFormat` recibe `count: rows.length` (`leaderboard-sheet.tsx:217`) y `rows`
+  es el top-10, así que el número **nunca puede pasar de 10** por construcción.
+  Preexistente (no lo introdujo Slice 2), pero ahora lo hereda también el tab semanal, donde
+  hoy dice "3 players" y **acierta sólo porque hay tres**: con 15 jugadores diría 10.
+  **Es una afirmación falsa en pantalla**, no un detalle de formato.
+  Arreglo: devolver un `total` en la respuesta y que el hero lea ESO, no `rows.length`. La
+  mitad difícil ya existe — `get_weekly_player_rank` y `get_player_rank` rankean sobre el
+  conjunto **sin cortar**, así que el conteo sale de la misma relación sin query nueva.
+  ⚠️ Toca **all-time y weekly a la vez**: los dos usan el mismo hero.
 - ~~**Cobertura VR del play hub**~~ — **hecho**: `vr17-play-hub-{guest,connected,pro}`.
   El hub **LEARN** también, desde el 2026-07-27: `vr18-learn-hub-{guest,active,pro}` sobre
   `/dev/learn-hub`.

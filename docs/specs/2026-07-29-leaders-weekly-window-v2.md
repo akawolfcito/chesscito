@@ -246,8 +246,14 @@ the split moved text, it did not renegotiate anything.
 
 - **Does the weekly tab need a visible reset countdown?** Cheap to add, but it is a product call,
   and the Focus Days card already taught that three numbers in one row at 390px is a layout risk.
-- **`/arena?sheet=leaderboard` will show a Play-only weekly board.** That follows from D2 and is
-  believed correct, but Arena has never had a board that excluded Learn play — worth one look
-  before flipping the flag.
+- ~~**`/arena?sheet=leaderboard` will show a Play-only weekly board.**~~ **CERRADA
+  2026-07-29, verificada en device: no existe tal pantalla.** `arena/page.tsx:1197` monta
+  `PlayLeadersSheet` (el Hall of Fame de victorias minteadas) cuando `isPlayMode()`, y
+  `LeaderboardSheet` **sólo en la otra rama**. En Play el slot "leaderboard" del dock está
+  ocupado por el Hall of Fame, así que **el board semanal no se monta nunca ahí**.
+  Consecuencias: `NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED` sólo tiene efecto en **Learn** (en Play
+  es no-op), y el carril `surface = 'play'` del SQL y del endpoint funciona pero **no tiene
+  consumidor**. D2 sigue siendo correcto — Play puede tener su board el día que se decida —
+  pero es decisión de producto pendiente, no deuda.
 - **Should the all-time tab eventually be surface-scoped too?** Leaving it mixed means the two tabs
   differ in two dimensions at once (time *and* population). Deliberate for now.
