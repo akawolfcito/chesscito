@@ -54,35 +54,84 @@ es el corte de 10 y respondería 10 para siempre — no se usa acá.
 
 ## 4. Contrato (SDD)
 
+### 4.0 ⛔ El censo es un HERMANO de `PublicStats`, no un campo suyo
+
+**Corrección de arquitectura (2026-07-30).** La v1 de este spec decía que `PublicStats`
+ganaba `playersFull` y `playersTotal`. **Eso contradice §4.3 de este mismo documento** y la
+contradicción no es cosmética: `getPublicStats` se cachea por `(surface, container)`, así que
+meter el censo adentro guardaría una copia idéntica por cada combinación de filtros **y
+dejaría que dos vistas de la misma página sostengan censos de horas distintas**.
+
+`publicStats.playersFull` y `publicStats.playersTotal` **no existen**. Lo que hay:
+
+```ts
+// lib/stats/players-census.ts — resultado independiente, sin filtros
+export type PlayersCensus = {
+  /** Always an array, in the view's order. Empty means either "no ranked
+   *  players" or "the read failed" — `rowsRead` disambiguates. */
+  rows: LeaderboardIdentityRow[];
+  /** The population, from the SAME counting function that feeds the Leaders
+   *  hero (§6). `null` = the count read failed. NEVER `rows.length`. */
+  total: number | null;
+  /** Availability of the ROWS read. `[]` by empty population and `[]` by
+   *  error are not the same fact, and the UI needs to tell them apart. */
+  rowsRead: "ok" | "unavailable";
+  /** When THIS snapshot was composed. See §4.4 — it is not the page's
+   *  `generatedAt`, because the census caches on its own entry. */
+  asOf: string;
+};
+
+export const PLAYERS_CENSUS_CACHE_KEY = ["stats-players-census"];
+export const PLAYERS_CENSUS_REVALIDATE_SECONDS = 3600;
+export function loadPlayersCensus(): Promise<PlayersCensus>; // sin argumentos
+```
+
 ```ts
 // lib/supabase/queries.ts
-/** Uncut ranking, Identity Lite. `rank` comes from the view, not from the
- *  array index — a client-side index would silently renumber a truncated read. */
+/** Uncut ranking. `rank` comes from the view, not from the array index — an
+ *  index would silently renumber a truncated or paginated read.
+ *  ⛔ `null` = UNAVAILABLE. `[]` = the board is genuinely empty. */
 export async function fetchFullLeaderboardFromDb(
   limit: number,
-): Promise<LeaderboardRow[]>;
+): Promise<LeaderboardRow[] | null>;
 ```
+
+**La ruta compone los dos hermanos**, cada uno con su propia cache:
 
 ```ts
-// PublicStats gana dos campos
-/** Full ranking, Identity Lite, GLOBAL (ignores filters by design — §2).
- *  Empty on query failure: the table hides rather than showing a short list
- *  that would read as "these are all the players". */
-playersFull: LeaderboardIdentityRow[];
-/** The population. Same counting function that feeds the Leaders hero (§6).
- *  `null` = the count read failed. It does NOT mean the table is empty. */
-playersTotal: number | null;
+const [stats, census] = await Promise.all([
+  loadStats(filters),      // cacheado por (surface, container)
+  loadPlayersCensus(),     // cacheado por UNA clave global, sin filtros
+]);
 ```
 
-⛔ **Las filas y el conteo son DOS lecturas independientes y fallan por separado** (F3 del
-red team). Las cuatro combinaciones son alcanzables y ninguna colapsa en otra:
+Consecuencias que hay que sostener en las etapas 4–7:
 
-| filas | conteo | Qué se hace |
-|---|---|---|
-| hay | hay | caso normal |
-| hay | `null` | **renderizar la tabla SIN el total.** Nunca esconderla: se perdería justo el dato que el usuario vino a buscar por no poder imprimir un número al lado. ⛔ Y el total **no cae a `rows.length`** — es el defecto que ya hay un source guard prohibiendo en Leaders. |
-| vacío | `0` | board realmente vacío → mensaje explícito |
-| vacío | `null` | la sección se oculta entera |
+- **Ownership**: el censo es dueño de sus filas, su total y su hora. `PublicStats` no los ve.
+- **Frontera de cache**: dos entradas, dos claves. Ningún consumidor lee el censo desde la
+  entrada filtrada.
+- **Fallos independientes entre hermanos**: que `loadStats` se degrade **no** invalida el
+  censo, y viceversa. Son dos `Promise` distintas y ninguna decide por la otra.
+- **`StatsPage` recibe el censo como prop propia**, no anidada dentro de `stats`.
+
+### 4.1 Las cuatro combinaciones internas
+
+⛔ **Dentro del censo, las filas y el conteo son DOS lecturas independientes y fallan por
+separado** (F3 del red team). Las cuatro son alcanzables y ninguna colapsa en otra:
+
+| filas | conteo | `rowsRead` | Qué se hace |
+|---|---|---|---|
+| hay | hay | `ok` | caso normal |
+| hay | `null` | `ok` | **renderizar la tabla SIN el total.** Nunca esconderla: se perdería justo el dato que el usuario vino a buscar por no poder imprimir un número al lado. ⛔ Y el total **no cae a `rows.length`** — es el defecto que ya hay un source guard prohibiendo en Leaders. |
+| `[]` | `0` | `ok` | board realmente vacío → mensaje explícito |
+| `[]` | hay | `unavailable` | filas caídas con total vivo: se muestra el total, **no** una tabla vacía que afirmaría que no hay jugadores |
+| `[]` | `null` | `unavailable` | la sección se oculta entera |
+
+⚠️ **Filas y total se congelan JUNTOS** dentro del mismo snapshot cacheado (§4.3). La
+composición ocurre **dentro** de la función cacheada, así que lo que se guarda es una
+respuesta ya resuelta y nadie puede emparejar filas de un refresco con un total del
+siguiente. F1 acepta desfase contra el hero en vivo; **no** acepta desfase dentro de la
+propia tabla.
 
 `LeaderboardIdentityRow` **ya existe** (`rank`, `rowId`, `variant`, `totalScore`,
 `isVerified`, `hasOnchain`) y ya es Identity Lite.
@@ -91,7 +140,7 @@ red team). Las cuatro combinaciones son alcanzables y ninguna colapsa en otra:
 server-side y descarta la address, igual que `aggregateTopMinters`. Hay un test que fija
 que el payload serializado no contiene `"0x"`; **la tabla hereda esa aserción**.
 
-### 4.1 El techo de filas
+### 4.2 El techo de filas
 
 `PLAYERS_TABLE_CEILING = 500`. La tabla pagina **en el cliente** sobre el snapshot, como
 recomienda el backlog: encaja con `revalidate = 3600` + `unstable_cache` y no agrega una
@@ -109,7 +158,7 @@ muestra 500 de 900 sin decirlo es otra vez un número que miente.
 ⚠️ **El corte de Leaders (`BOARD_CUT = 10`) y este techo son cosas distintas y no deben
 compartirse.** Uno es el podio, el otro es un límite de transporte.
 
-### 4.2 Cache: no la metas en la key de los filtros
+### 4.3 Cache: no la metas en la key de los filtros
 
 El snapshot cachea por `(surface, container)`. La tabla es **global**, así que meterla ahí
 la duplica idéntica en cada combinación de filtros.
@@ -122,7 +171,35 @@ página, no una por combinación.
 (`app/api/scores/save/__tests__/route.test.ts:17`), así que en vitest **no hay cache** y un
 test escrito de frente pasa en verde contra un memoizador que nunca memoiza.
 
-### 4.3 Orden y desempate — cerrado como DEUDA TÉCNICA, no como semántica
+### 4.4 `asOf` es del censo, y el fallo cacheado es una degradación DELIBERADA
+
+**El censo tiene su propia entrada de cache, así que tiene su propia edad.** El
+`generatedAt` de la página sale del snapshot de `getPublicStats`, que revalida en su propio
+reloj. Poner **ese** sello al lado del total del censo mostraría la hora del snapshot
+equivocado — un dato correcto describiendo otra cosa, que es peor que no poner nada.
+
+Por eso `PlayersCensus.asOf` se compone **dentro** de la función cacheada, junto a las filas
+y el total, y viaja congelado con ellos.
+
+**Degradación deliberada, no limitación:**
+
+> Un resultado no disponible puede permanecer cacheado hasta la siguiente revalidación. Se
+> prioriza evitar reintentos repetidos contra una dependencia degradada sobre la recuperación
+> inmediata del bloque.
+
+Es el comportamiento que ya tiene cada bloque de esta página (el aggregator cachea sus `null`
+por campo). Saltear la cache en error lo cambiaría por una tormenta de reintentos contra una
+base que ya está mal.
+
+⛔ **Con `rowsRead === "unavailable"`, la UI NO muestra hora.** Un *"censo actualizado a las
+10:30"* sobre una lectura que falló afirma que a las 10:30 hubo un censo, y no lo hubo.
+
+📌 **`asOf` se mantiene no-nulo en el tipo** (es la hora real en que se compuso el intento) en
+vez de anularse en el fallo, porque la fila `[] + total vivo` de §4.1 tiene un total
+perfectamente válido que sí merece su sello. La regla vive en el render y **se fija con un
+test en la etapa 5**, no en la confianza.
+
+### 4.5 Orden y desempate — cerrado como DEUDA TÉCNICA, no como semántica
 
 `leaderboard_full_v` ordena:
 
@@ -220,6 +297,24 @@ La página ya trae *"Updated hourly · As of …"*, pero está arriba de todo
 está en pantalla. **La declaración va en la misma superficie donde se hace la afirmación**
 → [[feedback_an_unauditable_number_reads_as_a_lie]].
 
+⛔ **Y el sello que se muestra es `census.asOf`, NO el `generatedAt` de la página.** Son dos
+entradas de cache con relojes distintos (§4.4); usar el de la página sería poner una hora
+correcta sobre el dato equivocado.
+
+⛔ **Con `rowsRead === "unavailable"` no se muestra hora ninguna** (§4.4).
+
+### 5.3 Reparto de responsabilidades dentro del bloque
+
+Dos guardas del founder (2026-07-30), y las dos son verificables con test:
+
+1. **`players-table.tsx` recibe los datos YA resueltos y no los vuelve a tocar.** No ordena,
+   no deduplica, no deriva identidad. El orden viene del `ORDER BY` de la vista y la
+   identidad se derivó server-side; rehacer cualquiera de las dos en el cliente crea una
+   segunda fuente de verdad que puede discrepar de la columna `rank` que tiene al lado.
+2. **El sello `As of`, el total y el aviso de truncamiento son del encabezado LOCAL de la
+   tabla.** No del componente de paginación —que sólo sabe de páginas— ni del header global
+   de la página, que es justamente el error de adyacencia que F1 vino a corregir.
+
 **Edge cases**
 - Cambiar `surface`/`container` **no cambia la tabla**. Es correcto y por eso el encabezado
   lo dice. Sin esa línea se lee como un bug de render.
@@ -262,10 +357,10 @@ prod**: con la vista mockeada, los dos leen el mock y coinciden. El cache no est
 |---|---|---|
 | 1 | `fetchFullLeaderboardFromDb` | Lee `leaderboard_full_v`, respeta el techo, **no** lee `leaderboard_combined_v`. |
 | 2 | Identity Lite en el aggregator | Ninguna wallet en la salida (`"0x"` ausente); `rank` viene de la vista; **filas y conteo fallan por separado** (las 4 combinaciones de §4). |
-| 3 | Cache propia sin filtros | Con el seam de §4.2: dos filtros distintos, **una** sola lectura de la tabla. |
-| 4 | 🆕 `players-table.tsx` **cliente** | El paginado necesita estado y `stats-page.tsx` **no tiene `"use client"`** (F2). Componente chico y dedicado; **no** convertir las 1537 líneas del dashboard. |
-| 5 | Render + adyacencia | Los estados de §5.1, el sello de tiempo pegado al total (§5.2), el techo en el encabezado (§4.1), key por `rowId` (§5.2). |
-| 6 | Inserción en la página | La tabla queda **después** del top-10, y **el top-10 renderiza exactamente igual que antes** (test de no-regresión sobre ese bloque). |
+| 3 | Cache propia sin filtros | Con el seam de §4.3: clave sin filtros, `revalidate = 3600`, filas y total congelados juntos. |
+| 4 | 🆕 `players-table.tsx` **cliente** | El paginado necesita estado y `stats-page.tsx` **no tiene `"use client"`** (F2). Componente chico y dedicado; **no** convertir las 1537 líneas del dashboard. Guarda §5.3.1: no ordena, no deduplica, no deriva identidad. |
+| 5 | Render + adyacencia | Los estados de §5.1, `census.asOf` pegado al total y **ausente** cuando `rowsRead === "unavailable"` (§5.2), el techo en el encabezado (§4.2), key por `rowId` (§5.2), reparto §5.3.2. |
+| 6 | Inserción en la página | El `Promise.all` de §4.0, la tabla **después** del top-10, y **el top-10 renderiza exactamente igual que antes** (test de no-regresión sobre ese bloque). |
 | 7 | Invariante §6 | El aggregator llama a **la misma función de conteo** que el hero. |
 
 ### 7.1 ⛔ Frontera de cambio: sólo `/stats`
@@ -276,11 +371,17 @@ comportamiento.
 
 Los archivos que se tocan son:
 
-- `lib/supabase/queries.ts` — **sólo agrega** `fetchFullLeaderboardFromDb`; las funciones
-  existentes no se editan.
-- `lib/stats/public-aggregator.ts` — dos campos nuevos en `PublicStats`.
+- `lib/supabase/queries.ts` — **sólo agrega** `fetchFullLeaderboardFromDb` y
+  `PLAYERS_TABLE_CEILING`; las funciones existentes no se editan.
+- `lib/stats/players-census.ts` — **archivo nuevo**: el hermano de §4.0, con su cache.
 - `components/stats/players-table.tsx` — **archivo nuevo, `"use client"`** (F2 del red team).
-- `components/stats/stats-page.tsx` — un bloque nuevo, después del top-10.
+- `components/stats/stats-page.tsx` — un bloque nuevo, después del top-10, y **una prop nueva**
+  (`census`) al lado de `stats`.
+- `app/[locale]/stats/page.tsx` — el `Promise.all` de §4.0.
+
+⛔ **`lib/stats/public-aggregator.ts` NO se toca.** Que quede fuera de la lista es el
+resultado de §4.0: el censo es un hermano, no un campo de `PublicStats`. Un diff ahí
+significa que alguien volvió a meterlo en la cache filtrada.
 
 Cualquier diff fuera de esa lista es señal de que el cluster se desbordó.
 
@@ -299,7 +400,7 @@ Cualquier diff fuera de esa lista es señal de que el cluster se desbordó.
 4. ✅ **RESUELTO** — `PAGE_SIZE = 10`, paginador desde 11 (§5.1, founder 2026-07-30).
 5. ✅ **RESUELTO** — última página corta: `Page 2 of 2` sin relleno (§5.1).
 6. ✅ **CERRADO como deuda técnica** — el desempate por wallet se conserva y se documenta;
-   el cambio semántico se difiere (§4.3, founder 2026-07-30).
+   el cambio semántico se difiere (§4.5, founder 2026-07-30).
 7. 🅿️ **DIFERIDO a su propio cluster: alinear el desempate de all-time con weekly.** Necesita
    una columna derivada en `leaderboard_full_v` (migración), una decisión de `COALESCE` para
    el `scores.created_at` nullable, y aceptar que cambia el `rank` de jugadores vivos en prod.
