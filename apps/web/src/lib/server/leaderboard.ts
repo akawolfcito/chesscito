@@ -1,7 +1,9 @@
 import {
   fetchLeaderboardFromDb,
+  fetchLeaderboardTotalFromDb,
   fetchPlayerRankFromDb,
   fetchWeeklyLeaderboardFromDb,
+  fetchWeeklyLeaderboardTotalFromDb,
   fetchWeeklyPlayerRankFromDb,
   type LeaderboardRow as DbRow,
   type WeeklyLeaderboardRow as WeeklyDbRow,
@@ -51,6 +53,19 @@ export async function fetchLeaderboard(): Promise<LeaderboardRow[]> {
   return rows.map((r) => toApiRow(r));
 }
 
+/**
+ * The RANKED POPULATION, all-time. Null when it could not be taken.
+ *
+ * The hero used to print `rows.length`, the size of the top-10 cut, which meant
+ * the figure could not exceed 10 no matter how many people had played — a false
+ * statement on screen next to a footer reading rank 13. Null propagates as an
+ * absent field so the UI omits the figure; it must never be replaced with the
+ * row count again.
+ */
+export async function fetchLeaderboardTotal(): Promise<number | null> {
+  return fetchLeaderboardTotalFromDb();
+}
+
 /** The caller's own row with its real rank over the FULL ranking —
  *  visible even outside the top-10 cut (QA G4 2026-06-11). Carries
  *  `walletShort` since the caller already knows their own address. */
@@ -77,6 +92,14 @@ export type LeaderboardResponse = {
    *  rows IN THIS WINDOW — on weekly that is the ordinary state for someone
    *  who has not played since Monday, not an error and not a zero. */
   player: LeaderboardRow | null;
+  /** How many players are RANKED in this window — the population, counted over
+   *  the UNCUT relation, NOT `rows.length`.
+   *
+   *  ABSENT WHEN THE COUNT FAILED, and absence is meaningful: the client must
+   *  drop the figure from the hero rather than substitute the row count, which
+   *  is the defect this field exists to close. Only on the windowed shapes —
+   *  the two legacy shapes are frozen. */
+  total?: number;
   /** Weekly only. ISO 8601 UTC — lets the client label the window and notice a
    *  rollover without re-deriving the week itself. */
   weekStart?: string;
@@ -127,6 +150,14 @@ export async function fetchWeeklyLeaderboard(
     window.end,
   );
   return rows.map((r) => toWeeklyApiRow(r));
+}
+
+/** The ranked population for ONE surface this week. Null when it could not be
+ *  taken — same contract as the all-time count, same reason. */
+export async function fetchWeeklyLeaderboardTotal(
+  surface: ScoreSaveSurface,
+): Promise<number | null> {
+  return fetchWeeklyLeaderboardTotalFromDb(surface);
 }
 
 /** The caller's own weekly row. `player` may arrive checksummed; the query

@@ -157,6 +157,64 @@ export async function fetchPlayerRankFromDb(
 }
 
 /**
+ * How many players are RANKED, all-time — the population, not the board.
+ *
+ * Counts `leaderboard_full_v`, the uncut relation `get_player_rank` ranks over,
+ * so the number the hero shows and the rank the footer shows come from the same
+ * set. `leaderboard_combined_v` is the top-10 cut and would answer 10 forever.
+ *
+ * `head: true` means PostgREST returns the count in a header and transfers no
+ * rows, so this stays cheap as the population grows.
+ *
+ * NULL IS "UNKNOWN", DELIBERATELY, AND IT IS NOT ZERO. The caller must omit the
+ * figure rather than substitute one: `rows.length` is the defect this replaces
+ * (it announced "10 players" to a player ranked 13th), and 0 would claim an
+ * empty board over a visibly populated one.
+ */
+export async function fetchLeaderboardTotalFromDb(): Promise<number | null> {
+  const supabase = getSupabaseServer();
+  if (!supabase) return null;
+
+  const { count, error } = await supabase
+    .from("leaderboard_full_v")
+    .select("player", { count: "exact", head: true });
+
+  if (error) return null;
+  return count ?? null;
+}
+
+/**
+ * How many wallets are ranked THIS WEEK on ONE surface.
+ *
+ * The surface filter is load-bearing: `leaderboard_weekly_full_v` cross-joins
+ * learn and play, so an unfiltered count merges the two products into a single
+ * population while every score-shaped assertion still passes.
+ *
+ * TAKES NO WINDOW, BECAUSE THE VIEW HAS NONE TO TAKE. It always computes the
+ * CURRENT UTC week (see the migration header), which is the same week the
+ * endpoint asks the RPCs for. The one seam: a request that crosses Monday
+ * 00:00 UTC between the ranking query and this one gets the new week's count
+ * over the old week's rows. It self-corrects on the next fetch, and the
+ * alternative — a counting RPC that takes the window — is a migration this fix
+ * deliberately does not need. If a "past weeks" board ever ships, this stops
+ * being adequate and must take the window.
+ */
+export async function fetchWeeklyLeaderboardTotalFromDb(
+  surface: string,
+): Promise<number | null> {
+  const supabase = getSupabaseServer();
+  if (!supabase) return null;
+
+  const { count, error } = await supabase
+    .from("leaderboard_weekly_full_v")
+    .select("wallet", { count: "exact", head: true })
+    .eq("surface", surface);
+
+  if (error) return null;
+  return count ?? null;
+}
+
+/**
  * A row of the WEEKLY ranking (Slice 2A).
  *
  * Not `LeaderboardRow`, and the difference is not cosmetic:
