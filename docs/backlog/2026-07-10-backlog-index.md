@@ -54,6 +54,20 @@ en ese request se revierte si el crédito no aterriza.
   renderice en inglés** en vez de fallar. Queda un guard de regla —no de copy pineada— en
   `challenge-card-es-parity.test.ts`: ningún valor ES puede ser idéntico al inglés salvo
   que no tenga nada que traducir (`"{count}"`, `"{day}: {state}"`).
+- ~~**Esa misma regla, pero sobre TODO el bundle**~~ — **hecho el 2026-07-30** (`ddd3b83`).
+  El guard de arriba miraba un solo namespace. Generalizado en
+  `bundle-translation-parity.test.ts`, destapó **24 claves más** en inglés sobre pantalla
+  española: el nudge de racha entero, el 404, la tarjeta de Peones, las baldosas del riel y
+  el chip de razones. La mayoría **nunca estuvo en `es.ts`**: resolvían por el spread.
+  Decisión de vocabulario del founder: `Daily` → **"Diaria"** (no "Diario", que se lee como
+  periódico). El switch LEARN/PLAY pasó a i18n en `c748b3b`, que era lo que ataba
+  `mateLabel` al inglés. Audit: `docs/audits/2026-07-30-i18n-and-orphan-art-audit.md`.
+- ~~**Arte huérfano del landing**~~ — **hecho el 2026-07-30** (`ddfccdb`, `4270eb8`):
+  42 archivos / ~19.6 MB en `apps/landing` (restos del rediseño de slides del 29) + 5 en
+  `apps/web` (`bg-card-og`, `torre-selected`). Con ellos se fueron los 12 slots
+  `deprecated` del registro. ⚠️ **Quedan ~7.5 MB en `apps/web` SIN verificar**
+  (`/scene-rooted`, raíz de `/art`, `/redesign/avatars`): pide chequeo familia por familia,
+  no barrido.
 - **PLAY #8 — quitar la confirmación redundante de LUZ.** Tocar Coach Review lanza análisis
   directo; LUZ conserva personalidad en loading y resultado. Borra una pantalla.
 - ~~**Leaders: el hero cuenta el CORTE, no la población**~~ (visto en device 2026-07-29)
@@ -198,7 +212,8 @@ existe en ninguna superficie**.
 
 Reparto decidido: **Leaders** = podio + tu posición (sigue cortado); **`/stats`** = la tabla
 completa, que es donde el número se audita. `/stats` es el hogar correcto porque ya es página
-pública de agregados read-only y **ya está linkeada desde el landing** (`landing-page.tsx:948`)
+pública de agregados read-only y **ya está linkeada desde el landing**
+(`apps/landing` · `landing-page.tsx`; la copia muerta de `apps/web` se borró el 2026-07-30)
 — no es rincón de ops. ⚠️ **Ya NO está en `sitemap.ts`** (`5595722`, 2026-07-30): sigue
 abierta y linkeada, pero `noindex`. Auditable ≠ indexable.
 
