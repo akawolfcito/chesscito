@@ -300,10 +300,12 @@ describe("theme-registry", () => {
       // slide, and 6 title-art slots — slides 2-4 need one file PER LOCALE
       // because the Spanish art carries different words (APRENDE / JUEGA /
       // ELIGE TU CAMINO). Slide 1 keeps a single slot: the CHESSCITO wordmark
-      // is the same picture in both. The 8 slots they superseded are still
-      // counted — they stay cataloged as `deprecated` while the files sit on
-      // disk, same as the landing.slide-web-* group.
-      landing: 31,
+      // is the same picture in both.
+      // -12 (2026-07-30): the 8 slots the redesign superseded plus the 4
+      // landing.slide-web-* desktop slides. They had been kept cataloged so
+      // the stale art stayed replaceable; the founder confirmed none is
+      // coming back, so the 42 files were deleted and the slots with them.
+      landing: 19,
       // +1: shared.close-candy, the CandyIcon close art.
       // +1: board.blocker.stone, the exercise obstacle art (2026-07-23),
       // classified with the board.piece.* slots.

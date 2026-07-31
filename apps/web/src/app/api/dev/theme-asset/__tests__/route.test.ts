@@ -177,7 +177,7 @@ describe("POST /api/dev/theme-asset", () => {
     // no change on the live landing.
     const form = new FormData();
     form.set("themeId", "candy-forest");
-    form.set("key", "landing.slide1-avatar");
+    form.set("key", "landing.slide1-bg");
     form.set("variant", "default");
     form.set("file", new File(["image"], "slide.png", { type: "image/png" }));
     const response = await POST({ formData: async () => form } as unknown as Request);
@@ -185,7 +185,7 @@ describe("POST /api/dev/theme-asset", () => {
     expect(response.status).toBe(200);
     expect(mocks.replace).toHaveBeenCalledWith(
       expect.objectContaining({
-        basename: "/art/landing-slides/avatar-chesscito-welcome",
+        basename: "/art/landing-slides/slide-bg-1",
         rootDir: resolveAppRoot("landing"),
       }),
     );
@@ -194,8 +194,8 @@ describe("POST /api/dev/theme-asset", () => {
 
   it("undo restores from the same app it wrote to", async () => {
     mocks.readUndo.mockResolvedValueOnce({
-      previous: { mode: "asset", path: "/art/landing-slides/chesscito-title" },
-      basename: "/art/landing-slides/chesscito-title",
+      previous: { mode: "asset", path: "/art/landing-slides/title-chesscito" },
+      basename: "/art/landing-slides/title-chesscito",
       restoreFamily: true,
       restoreRegistry: false,
     });
@@ -314,7 +314,7 @@ describe("GET /api/dev/theme-asset", () => {
   }
 
   it("streams a landing slot the web dev server cannot serve", async () => {
-    const response = await GET(previewRequest("landing.slide1-avatar"));
+    const response = await GET(previewRequest("landing.slide1-bg"));
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("image/png");
     // No caching, or a replaced image would keep showing the old bytes.
@@ -329,7 +329,7 @@ describe("GET /api/dev/theme-asset", () => {
   });
 
   it("refuses an invalid variant instead of guessing a path", async () => {
-    const response = await GET(previewRequest("landing.slide1-avatar", "ultra"));
+    const response = await GET(previewRequest("landing.slide1-bg", "ultra"));
     expect(response.status).toBe(400);
   });
 

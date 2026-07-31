@@ -113,15 +113,9 @@ describe("landing art coverage", () => {
         "landing.slide4-title-es",
         "landing.season-pass-icon",
         "landing.pro-icon",
-        // Superseded but still on disk, so still replaceable.
-        "landing.slides-frame",
-        "landing.slides-scene-desktop",
-        "landing.slide1-avatar",
-        "landing.slide2-avatar",
-        "landing.slide2-title",
-        "landing.slide3-avatar",
-        "landing.slide3-title",
-        "landing.slide4-avatar",
+        // The slots the redesign superseded used to be listed here too, kept
+        // cataloged while their files sat on disk. Files and slots were both
+        // deleted on 2026-07-30.
       ]),
     );
   });

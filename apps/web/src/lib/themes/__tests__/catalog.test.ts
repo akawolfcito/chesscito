@@ -82,15 +82,15 @@ describe("buildThemeCatalog", () => {
     expect(THEMES["candy-forest"].assets["hub.portal"].root).toBeUndefined();
     expect(slots.get("hub.portal")?.root).toBe("web");
     // The carousel art lives in apps/landing/public, not apps/web/public.
-    expect(slots.get("landing.slide1-avatar")?.root).toBe("landing");
+    expect(slots.get("landing.slide1-bg")?.root).toBe("landing");
   });
 
   it("tells the resolver which app root to probe", async () => {
     const resolver = vi.fn(okResolver);
     await buildThemeCatalog("candy-forest", resolver);
     expect(resolver).toHaveBeenCalledWith(
-      "/art/landing-slides/avatar-chesscito-welcome",
-      { key: "landing.slide1-avatar", variant: "default", root: "landing" },
+      "/art/landing-slides/slide-bg-1",
+      { key: "landing.slide1-bg", variant: "default", root: "landing" },
     );
   });
 

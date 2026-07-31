@@ -282,21 +282,9 @@ export type ThemeAssetKey =
   | "landing.slide3-title-es"
   | "landing.slide4-title-en"
   | "landing.slide4-title-es"
-  // Superseded by the above, still on disk and therefore still replaceable.
-  | "landing.slides-frame"
-  | "landing.slides-scene-desktop"
-  | "landing.slide1-avatar"
-  | "landing.slide2-avatar"
-  | "landing.slide2-title"
-  | "landing.slide3-avatar"
-  | "landing.slide3-title"
-  | "landing.slide4-avatar"
+  // Plan icons for the paid layer named on slides 2 and 3.
   | "landing.season-pass-icon"
   | "landing.pro-icon"
-  | "landing.slide-web-1"
-  | "landing.slide-web-2"
-  | "landing.slide-web-3"
-  | "landing.slide-web-4"
   | "coach.play"
   | "account.account-icon"
   | "shared.panel-frame"
@@ -905,29 +893,16 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "landing.slide3-title-es": { root: "landing", default: "/art/landing-slides/title-play-es", usedIn: ["Landing — slide 3 title art, ES (JUEGA)", "↳ apps/landing · lib/onboarding/slides.ts"] },
       "landing.slide4-title-en": { root: "landing", default: "/art/landing-slides/title-choose-en", usedIn: ["Landing — slide 4 title art, EN (CHOOSE YOUR PATH)", "↳ apps/landing · lib/onboarding/slides.ts"] },
       "landing.slide4-title-es": { root: "landing", default: "/art/landing-slides/title-choose-es", usedIn: ["Landing — slide 4 title art, ES (ELIGE TU CAMINO)", "↳ apps/landing · lib/onboarding/slides.ts"] },
-      // Superseded 2026-07-29 by the full-bleed redesign. Still on disk, so
-      // they stay cataloged rather than rotting invisibly — same treatment as
-      // the landing.slide-web-* group below. The frame and the desktop
-      // backdrop went away with the gold frame; the four avatars are now
-      // painted INTO each slide's illustration, and the two title files below
-      // were replaced by per-locale art.
-      "landing.slides-frame": { root: "landing", default: "/art/landing-slides/bg-slides", deprecated: "no consumer — gold frame removed by the 2026-07-29 slide redesign", usedIn: [] },
-      "landing.slides-scene-desktop": { root: "landing", default: "/art/landing-slides/bg-slides-web", deprecated: "no consumer — desktop backdrop removed by the 2026-07-29 slide redesign", usedIn: [] },
-      "landing.slide1-avatar": { root: "landing", default: "/art/landing-slides/avatar-chesscito-welcome", deprecated: "no consumer — baked into landing.slide1-bg", usedIn: [] },
-      "landing.slide2-avatar": { root: "landing", default: "/art/landing-slides/avatar-21-day-challenge", deprecated: "no consumer — baked into landing.slide2-bg", usedIn: [] },
-      "landing.slide3-avatar": { root: "landing", default: "/art/landing-slides/avatar-play-chess", deprecated: "no consumer — baked into landing.slide3-bg", usedIn: [] },
-      "landing.slide4-avatar": { root: "landing", default: "/art/landing-slides/avatar-learn-path", deprecated: "no consumer — baked into landing.slide4-bg", usedIn: [] },
-      "landing.slide2-title": { root: "landing", default: "/art/landing-slides/21-day-challente-title", deprecated: "no consumer — superseded by landing.slide2-title-{en,es}", usedIn: [] },
-      "landing.slide3-title": { root: "landing", default: "/art/landing-slides/play-chess-title", deprecated: "no consumer — superseded by landing.slide3-title-{en,es}", usedIn: [] },
+      // The 2026-07-29 redesign left twelve slots with no consumer: the gold
+      // frame, the desktop backdrop, four avatars now painted INTO each
+      // slide's illustration, two titles replaced by per-locale art, and four
+      // desktop slides nothing ever imported. They stayed cataloged so the
+      // stale art was visible and replaceable. On 2026-07-30 the founder
+      // confirmed none is coming back and the 42 files were deleted
+      // (~19.6 MB), so the slots went with them: a slot pointing at a file
+      // that no longer exists is worse than no slot at all.
       "landing.season-pass-icon": { root: "landing", default: "/art/landing-slides/season-pass-icon", usedIn: ["Landing — Season Pass plan icon", "↳ apps/landing · lib/onboarding/slides.ts (ICONS.seasonPass)"] },
       "landing.pro-icon": { root: "landing", default: "/art/landing-slides/pro-suscription-icon", usedIn: ["Landing — PRO subscription plan icon", "↳ apps/landing · lib/onboarding/slides.ts (ICONS.pro)"] },
-      // On disk in apps/landing/public but referenced by nothing in the
-      // monorepo — cataloged so the stale art is visible and replaceable
-      // rather than silently rotting.
-      "landing.slide-web-1": { root: "landing", default: "/art/landing-slides/chesscito-slide-web-1", deprecated: "no consumer — desktop slide art nothing imports", usedIn: [] },
-      "landing.slide-web-2": { root: "landing", default: "/art/landing-slides/chesscito-slide-web-2", deprecated: "no consumer — desktop slide art nothing imports", usedIn: [] },
-      "landing.slide-web-3": { root: "landing", default: "/art/landing-slides/chesscito-slide-web-3", deprecated: "no consumer — desktop slide art nothing imports", usedIn: [] },
-      "landing.slide-web-4": { root: "landing", default: "/art/landing-slides/chesscito-slide-web-4", deprecated: "no consumer — desktop slide art nothing imports", usedIn: [] },
       // Brand icons — apps/landing/public, single files rather than triplets.
       // The two below are DERIVED from brand.favicon: replacing that slot
       // regenerates them and the upload API refuses a direct write, so they
@@ -1277,21 +1252,9 @@ export const LANDING_SLOT_KEYS = [
   "landing.slide3-title-es",
   "landing.slide4-title-en",
   "landing.slide4-title-es",
-  // Superseded by the above but still on disk.
-  "landing.slides-frame",
-  "landing.slides-scene-desktop",
-  "landing.slide1-avatar",
-  "landing.slide2-avatar",
-  "landing.slide2-title",
-  "landing.slide3-avatar",
-  "landing.slide3-title",
-  "landing.slide4-avatar",
+  // Plan icons for the paid layer named on slides 2 and 3.
   "landing.season-pass-icon",
   "landing.pro-icon",
-  "landing.slide-web-1",
-  "landing.slide-web-2",
-  "landing.slide-web-3",
-  "landing.slide-web-4",
   // Brand/social files owned by apps/landing. Their consumer is that app's
   // layout metadata, which is invisible from inside apps/web.
   "landing.og-image",

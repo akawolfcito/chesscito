@@ -93,7 +93,17 @@ Dos superficies del landing quedan **solo EN**, y las dos por decisión:
 
 ## 4. Arte huérfano
 
-### 4.1 LANDING — 51 archivos, **20.15 MB** (de 171 imágenes)
+### 4.1 LANDING — 42 archivos, **~19.6 MB** · BORRADO el 2026-07-30
+
+> Corrección al primer conteo (51 archivos / 20.15 MB): **9 de esos archivos no
+> eran huérfanos**. `bg-wallpaper-lite`, `focus-passport/flame-color` y
+> `btns/ask-coach-icon` están declarados en `SHARED_LANDING_ASSETS`: los espeja
+> el script `art:sync-landing` a propósito, y borrarlos sólo habría hecho que
+> el siguiente sync los recreara y que `--check` reportara drift. La lista
+> ejecutada excluye esas tres familias y suma la copia vieja de
+> `hub/enter-arena` (el slot es de **web**, la copia en landing no la sincroniza
+> nadie).
+
 
 **Ya está catalogado**: 12 slots `root: "landing"` llevan `deprecated:` con el
 motivo escrito. El redesign de slides del 2026-07-29 dejó su generación anterior
@@ -106,7 +116,17 @@ en disco.
 | `bg-slides`, `bg-slides-web` | 6 | 3.7 MB | `landing.slides-frame`, `landing.slides-scene-desktop` (deprecated) |
 | `21-day-challente-title`, `play-chess-title` | 6 | 2.6 MB | superseded por `title-*-{en,es}` |
 | `chesscito-title` | 3 | 1.1 MB | **sin slot** — huérfano puro |
-| `bg-wallpaper-lite`, `flame-color`, `enter-arena`, `ask-coach-icon` | 12 | 0.55 MB | copias sincronizadas desde web, sin consumidor en landing |
+| `hub/enter-arena` | 3 | 0.02 MB | copia vieja; el slot `hub.enter-arena` es de web |
+
+**Conservados** (no eran huérfanos): `bg-wallpaper-lite`, `flame-color`,
+`ask-coach-icon` — 9 archivos que `SHARED_LANDING_ASSETS` mantiene espejados.
+
+Borrar los archivos obligó a borrar también **los 12 slots `deprecated`** del
+registro: un slot que apunta a un archivo inexistente es peor que no tener slot.
+Eso movió los cuatro conteos pineados que la memoria anticipaba — `landing: 31 →
+19` en `theme-registry.test.ts`, la lista de `landing-assets.test.ts`, y dos
+tests que usaban un slot muerto como ejemplo (`upload-target`, `catalog`) más el
+de la API de `/dev/theme-asset`.
 
 El `.png` es el 90% del peso (hasta 2 MB por archivo) contra `.avif` de ~90 KB.
 

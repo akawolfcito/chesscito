@@ -55,12 +55,12 @@ describe("resolveUploadTarget", () => {
 
     const landing = resolveUploadTarget(
       "candy-forest",
-      "landing.slide1-avatar",
+      "landing.slide1-bg",
       "default",
     );
     expect(landing.ok && landing.root).toBe("landing");
     expect(landing.ok && landing.basename).toBe(
-      "/art/landing-slides/avatar-chesscito-welcome",
+      "/art/landing-slides/slide-bg-1",
     );
   });
 
