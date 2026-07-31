@@ -50,7 +50,6 @@ describe("sitemap", () => {
       "/arena",
       "/trophies",
       "/coach/history",
-      "/why",
       "/about",
       "/support",
       "/privacy",
@@ -58,8 +57,9 @@ describe("sitemap", () => {
     ]) {
       expect(paths, `${path} went missing`).toContain(path);
     }
-    // One entry per (path, locale) pair — 9 paths survive the /stats removal.
-    expect(entries).toHaveLength(9 * routing.locales.length);
+    // One entry per (path, locale) pair — 8 paths survive the /stats removal
+    // and the /why removal (that route is a 308 to a noindex root).
+    expect(entries).toHaveLength(8 * routing.locales.length);
   });
 
   it("keeps /support, whose path contains no /stats substring by accident", () => {

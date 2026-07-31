@@ -31,13 +31,6 @@ describe("MissionRibbon", () => {
     expect(node.className).toMatch(/mission-ribbon--pro-sheet\b/);
   });
 
-  it("renders the landing-cta-bar surface copy (Spanish per LANDING_COPY v0.5)", () => {
-    render(<MissionRibbon surface="landing-cta-bar" />);
-    const node = screen.getByRole("note");
-    expect(node.textContent).toBe(MISSION_RIBBON_COPY["landing-cta-bar"]);
-    expect(node.className).toMatch(/mission-ribbon--landing-cta-bar\b/);
-  });
-
   it("applies the default tone modifier by default", () => {
     render(<MissionRibbon surface="hub" />);
     const node = screen.getByRole("note");
@@ -74,7 +67,7 @@ describe("MissionRibbon", () => {
   });
 
   it("never weakens the canon framing — copy is sourced from MISSION_RIBBON_COPY (no inline strings)", () => {
-    const surfaces = ["hub", "arena", "pro-sheet", "landing-cta-bar"] as const;
+    const surfaces = ["hub", "arena", "pro-sheet"] as const;
     for (const surface of surfaces) {
       const { unmount } = render(<MissionRibbon surface={surface} />);
       const node = screen.getByRole("note");

@@ -4,7 +4,6 @@ export type MissionRibbonSurface =
   | 'hub'
   | 'arena'
   | 'pro-sheet'
-  | 'landing-cta-bar'
   | 'exercises'
 export type MissionRibbonTone = 'default' | 'emphatic'
 export type Atmosphere = 'adventure' | 'scholarly'
@@ -17,8 +16,8 @@ type Props = {
    *  falls back to the editorial map — preserving existing callsites. */
   text?: string
   tone?: MissionRibbonTone
-  /** Visual register. Adventure (default) for Hub/Arena/landing-cta-bar;
-   *  Scholarly for the PRO sheet hybrid (canon §11). */
+  /** Visual register. Adventure (default) for Hub/Arena; Scholarly for the
+   *  PRO sheet hybrid (canon §11). */
   atmosphere?: Atmosphere
   className?: string
 }

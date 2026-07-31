@@ -28,7 +28,9 @@ const STATIC_PATHS = [
   "/arena",
   "/trophies",
   "/coach/history",
-  "/why",
+  // `/why` is deliberately absent since 2026-07-30. The route is a 308 to `/`,
+  // and advertising a redirect to a noindex root is not a page worth crawling.
+  // The redirect itself stays for old links and bookmarks.
   "/about",
   // `/stats` is deliberately absent. It stays publicly reachable — MiniPay's
   // listing requirements (§8) ask for a stats page the reviewer can open with

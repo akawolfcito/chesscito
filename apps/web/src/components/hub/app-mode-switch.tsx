@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { appModeUrl, type ChesscitoAppMode } from "@/lib/hub/app-mode";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
@@ -10,21 +12,21 @@ type AppModeSwitchProps = {
 
 const MODES: Array<{
   mode: ChesscitoAppMode;
-  label: string;
+  labelKey: "learnLabel" | "playLabel";
   slot: ThemeAssetKey;
   width: number;
   height: number;
 }> = [
   {
     mode: "learn",
-    label: "Training",
+    labelKey: "learnLabel",
     slot: "hub.train-pieces",
     width: 200,
     height: 196,
   },
   {
     mode: "play",
-    label: "Play",
+    labelKey: "playLabel",
     slot: "hub.btn-battle",
     width: 512,
     height: 510,
@@ -32,6 +34,8 @@ const MODES: Array<{
 ];
 
 export function AppModeSwitch({ activeMode }: AppModeSwitchProps) {
+  const t = useTranslations("APP_MODE_SWITCH_COPY");
+
   const selectMode = (mode: ChesscitoAppMode) => {
     if (mode === activeMode) return;
     window.location.assign(appModeUrl(mode, new URL(window.location.href)));
@@ -40,15 +44,17 @@ export function AppModeSwitch({ activeMode }: AppModeSwitchProps) {
   return (
     <div
       role="group"
-      aria-label="Choose app mode"
+      aria-label={t("groupLabel")}
       className="hub-app-mode-switch"
     >
-      {MODES.map(({ mode, label, slot, width, height }) => (
+      {MODES.map(({ mode, labelKey, slot, width, height }) => {
+        const label = t(labelKey);
+        return (
         <button
           key={mode}
           type="button"
           aria-pressed={activeMode === mode}
-          aria-label={`Switch to ${label}`}
+          aria-label={t("switchTo", { mode: label })}
           onClick={() => selectMode(mode)}
           className="hub-app-mode-switch-pill"
         >
@@ -63,7 +69,8 @@ export function AppModeSwitch({ activeMode }: AppModeSwitchProps) {
           />
           <span>{label}</span>
         </button>
-      ))}
+        );
+      })}
     </div>
   );
 }

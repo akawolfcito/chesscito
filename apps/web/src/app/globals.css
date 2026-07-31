@@ -6660,8 +6660,7 @@ button.hud-resource-chip:active:not(:disabled) {
    Spec: docs/product/visual-language-minimum-2026-05-03.md §4.10 +
    _bmad-output/planning-artifacts/ux-design-specification.md Step 11 §6.
    Canon rule (§11): rendered ABOVE the CTA on every payment surface. The
-   pro-sheet variant is the single Scholarly + Adventure hybrid surface;
-   landing-cta-bar stays in Spanish per LANDING_COPY v0.5 lock. */
+   pro-sheet variant is the single Scholarly + Adventure hybrid surface. */
 .mission-ribbon {
   display: block;
   margin: 0;
@@ -6713,12 +6712,6 @@ button.hud-resource-chip:active:not(:disabled) {
   font-weight: 700;
   background: linear-gradient(180deg, var(--mission-ribbon-warm) 0%, rgba(232, 193, 96, 0.40) 100%);
   border: 1px solid rgba(201, 150, 43, 0.55);
-}
-
-/* Surface-specific subtle adjustments — kept minimal so canon rule §11
-   stays surface-agnostic. */
-.mission-ribbon--landing-cta-bar {
-  font-size: 0.75rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

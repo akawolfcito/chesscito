@@ -110,25 +110,16 @@ const NOT_COPY = new Set([
   "ABOUT_COPY.version",
 ]);
 
-/** Namespaces authored in Spanish inside the EN bundle. Every one is a defect,
- *  kept out of the failure list only because nothing reachable renders it: their
- *  consumers are `/why` (a one-line `redirect("/")`) and
- *  `components/landing/landing-page.tsx`, which no route imports — the real
- *  landing is `apps/landing`. Deleting that dead code deletes these entries;
- *  see docs/audits/2026-07-30-i18n-and-orphan-art-audit.md §2.1. */
-const SPANISH_IN_EN_DEAD_CODE = [
-  "WHY_PAGE_COPY.",
-  "LANDING_COPY.",
-  // Same story, one key deep: the `landing-cta-bar` ribbon surface has no
-  // caller outside its own test.
-  "MISSION_RIBBON_COPY.landing-cta-bar",
-];
-
-/** `HUB_ACTION_RAIL_COPY.mateLabel` mirrors a label hardcoded in
- *  `components/hub/app-mode-switch.tsx`, which has no i18n at all. Translating
- *  one without the other puts two words for the same destination on the same
- *  hub, which is worse than the leak. They move together or not at all. */
-const COUPLED_TO_HARDCODED_UI = new Set(["HUB_ACTION_RAIL_COPY.mateLabel"]);
+/** Empty, and worth keeping empty. It briefly held two kinds of entry, both
+ *  resolved on 2026-07-30 by deleting or fixing the thing rather than excusing
+ *  it: 30 keys authored in Spanish inside the EN bundle (WHY_PAGE_COPY,
+ *  LANDING_COPY and the `landing-cta-bar` ribbon surface — dead code, deleted),
+ *  and `HUB_ACTION_RAIL_COPY.mateLabel`, which mirrored a label hardcoded in
+ *  `app-mode-switch.tsx` and could not move alone without putting two words for
+ *  the same destination on one hub (the switch reads APP_MODE_SWITCH_COPY now).
+ *
+ *  A new entry here is a promise to come back. Prefer fixing the leak. */
+const EXCUSED: string[] = [];
 
 const stripPlaceholders = (value: string): string =>
   value.replace(/\{[^}]*\}/gu, " ");
@@ -188,8 +179,7 @@ describe("message bundle translation parity — ES must not render English", () 
     collectUntranslated(en, es, "", found);
     const untranslated = found.filter((entry) => {
       const path = entry.slice(0, entry.indexOf(" = "));
-      if (COUPLED_TO_HARDCODED_UI.has(path)) return false;
-      return !SPANISH_IN_EN_DEAD_CODE.some((prefix) => path.startsWith(prefix));
+      return !EXCUSED.some((prefix) => path.startsWith(prefix));
     });
 
     expect(
