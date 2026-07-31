@@ -2294,10 +2294,11 @@ export const ABOUT_COPY = {
   operatorDisclaimer:
     "Chesscito is an independent product built and operated by Wolfcito. It is not operated by, affiliated with, or endorsed by Opera or MiniPay. MiniPay is referenced solely as a wallet and distribution channel.",
   links: {
-    /** Public landing — opens the /why narrative for parents,
-     *  sponsors, and curious players. Lives at the top of the
-     *  About link list so it's the first discovery surface. */
-    why: "Por qué Chesscito",
+    /** Public landing — opens the narrative for parents, sponsors, and
+     *  curious players. Lives at the top of the About link list so it's the
+     *  first discovery surface. Was authored in Spanish and shipped that way
+     *  in both locales until 2026-07-30. */
+    why: "Why Chesscito",
     support: "Support",
     privacy: "Privacy Policy",
     terms: "Terms of Service",
