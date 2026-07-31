@@ -3,6 +3,13 @@
 Fecha: 2026-03-08
 Alcance: inventario visual de la escena `play-hub` y recursos relacionados para priorizar mejoras de arte/iconografía (sin cambios de implementación).
 
+> ⚠️ **Foto de marzo 2026, no el estado actual.** Los tres botones
+> `{torre,alfil,caballo}-selected` que aparecen abajo como "Activo" ya no
+> existen en disco: los dos últimos se habían ido antes, y `torre-selected` se
+> borró el 2026-07-30 tras confirmar que ningún componente lo referencia.
+> El inventario vivo de assets es el registro de temas
+> (`apps/web/src/lib/themes/theme-registry.ts`), que sí tiene enforcement.
+
 ## 1) Artes que componen la escena actual de `play-hub`
 
 | Asset | Formatos | Dimensiones base | Dónde se usa | Estado |

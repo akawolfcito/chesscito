@@ -144,10 +144,19 @@ huérfano real** — el slot `arena.player-you` resuelve a
 `/art/new-icons-chesscito/avatar-blue`, no a esa copia
 (patrón de `feedback_a_slot_can_point_at_an_orphan_copy`).
 
-⚠️ **No borrar esta lista en bloque.** Sospechosos de falso positivo que hay que
-mirar de a uno: `bg-card-og` (generación de OG), `pro-288w` / `pro-384w`
-(variantes responsive que se arman por `srcset`), `torre-selected` (le falta el
-`.png` de la familia).
+⚠️ **No borrar esta lista en bloque.** Los tres sospechosos que marqué se
+resolvieron de a uno el 2026-07-30, y dieron respuestas distintas:
+
+- `pro-288w` / `pro-384w` → **FALSO POSITIVO, se quedan.** Son las variantes
+  responsive de la override PRO del slot `brand.title` (el wordmark de Chesscito
+  en los hubs y en el sheet de PRO). El registro nombra la **base**
+  (`/art/theme-builder/candy-forest/brand/title/pro`) y el resolver deriva los
+  anchos, así que ningún literal dice `pro-288w`. **Lección de método: un audit
+  por literales no ve una familia responsive cuya base es la que se referencia.**
+- `bg-card-og` (3 archivos) y `torre-selected` (2) → **huérfanos reales,
+  borrados.** Cero referencias en `apps/web/src`, `scripts` y `apps/landing/src`.
+  Sólo sobrevivían en documentos: un plan de OG de marzo y
+  `docs/playhub-visual-art-inventory.md`, que los listaba como "Activo".
 
 ---
 
