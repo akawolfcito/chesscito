@@ -341,11 +341,10 @@ describe('<ChallengeCard>', () => {
     expect(card.textContent).toMatch(/\$1\.99/)
     expect(card.textContent).toMatch(/21-Day Mind Challenge/i)
     const cta = screen.getByTestId('challenge-cta')
-    expect(cta).toHaveClass(
-      'principal-button-medium',
-      'hub-lite-start-focus',
-      'challenge-card-cta',
-    )
+    // The offer wears the Season Pass banner, not the green primary skin
+    // (founder, 2026-08-03) — `challenge-card-cta` survives because that class
+    // owns the pulse and its reduced-motion override, not the look.
+    expect(cta).toHaveClass('season-pass-banner', 'challenge-card-cta')
     fireEvent.click(cta)
     expect(onJoin).toHaveBeenCalledTimes(1)
     // No active-only affordances in the offer state.
@@ -642,7 +641,7 @@ describe('<ChallengeCard>', () => {
       }
     })
 
-    it('wears the shared primary-button skin and shows the price as a floating badge', () => {
+    it('wears the Season Pass banner and shows the price as an inline chip', () => {
       render(
         <Card
           focusPassport={passport()}
@@ -651,12 +650,14 @@ describe('<ChallengeCard>', () => {
           onJoinChallenge={() => {}}
         />,
       )
-      expect(cta().className).toContain('principal-button')
-      // The price is a badge ON the button (Save Victory pattern), not an
-      // inline pill competing with the label for the same line.
-      const badge = cta().querySelector('.challenge-card-cta-badge')
-      expect(badge).not.toBeNull()
-      expect(badge?.textContent).toBe('$1.99')
+      expect(cta().className).toContain('season-pass-banner')
+      // The price moved OUT of the floating badge (Save Victory pattern) and
+      // into the banner's own chip, where the landing already shows it. It is
+      // inline, so it can never overlap the label the way an absolutely
+      // positioned badge could.
+      expect(cta().querySelector('.challenge-card-cta-badge')).toBeNull()
+      const chip = cta().querySelector('.season-pass-banner-price')
+      expect(chip?.textContent).toBe('$1.99')
     })
 
     it('keeps the tour arrow on the same row as the CTA it points at', () => {
@@ -1102,5 +1103,92 @@ describe('<ChallengeCard>', () => {
     expect(
       screen.getByRole('button', { name: 'Comienza tu foco de hoy' }),
     ).toBeInTheDocument()
+  })
+})
+
+/** The Season Pass banner — the SAME shape the landing shows on slide 2, so a
+ *  player who met the pass during onboarding recognises it here. On the landing
+ *  it is decorative; here it is the real purchase CTA, and it replaces the
+ *  `join` button ONLY: the other three CTA states keep the plain button skin. */
+describe('<ChallengeCard> — the Season Pass banner', () => {
+  const OFFER: ChallengeCardProps['seasonPass'] = { active: false, isLoading: false }
+
+  function renderOffer(onJoinChallenge: (() => void) | null) {
+    render(
+      <Card
+        focusPassport={passport({ streak: 1 })}
+        challenge={CHALLENGE}
+        seasonPass={OFFER}
+        onJoinChallenge={onJoinChallenge}
+      />,
+    )
+    return screen.getByTestId('challenge-cta')
+  }
+
+  it('wears the banner in the join state, keeping the CTA hooks', () => {
+    const cta = renderOffer(() => {})
+
+    expect(cta).toHaveClass('season-pass-banner')
+    expect(cta.tagName).toBe('BUTTON')
+    expect(cta).toHaveAttribute('data-cta-state', 'join')
+  })
+
+  it('shows the price as a chip and still says it in the accessible name', () => {
+    const cta = renderOffer(() => {})
+
+    // Visible chip: the recall cue. The landing shows the same one.
+    expect(screen.getByTestId('challenge-cta-price')).toHaveTextContent('$1.99')
+    // ...and the price stays INSIDE the button's accessible name. A chip that
+    // only exists visually leaves a screen reader buying blind.
+    expect(cta.getAttribute('aria-label') ?? '').toContain('$1.99')
+  })
+
+  it('hides the chevron from assistive tech', () => {
+    renderOffer(() => {})
+
+    expect(screen.getByTestId('challenge-cta-chevron')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    )
+  })
+
+  it('carries the pass icon, the same slot the card header uses', () => {
+    renderOffer(() => {})
+
+    expect(screen.getByTestId('challenge-cta-icon')).toBeInTheDocument()
+  })
+
+  it('does not pulse while the purchase is still resolving', () => {
+    const cta = renderOffer(null)
+
+    expect(cta).toBeDisabled()
+    expect(cta).not.toHaveClass('is-pulsing')
+  })
+
+  it('fires the purchase on tap', () => {
+    const onJoin = vi.fn()
+    const cta = renderOffer(onJoin)
+
+    fireEvent.click(cta)
+
+    expect(onJoin).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['start', { active: true, source: 'pro' } as const, false],
+    ['tomorrow', { active: true, source: 'pro' } as const, true],
+  ])('leaves the %s state on the plain button skin', (_state, pass, todayDone) => {
+    render(
+      <Card
+        focusPassport={passport({ streak: 2, todayDone })}
+        challenge={CHALLENGE}
+        seasonPass={pass}
+        onJoinChallenge={null}
+        onFocusTap={() => {}}
+      />,
+    )
+
+    expect(screen.getByTestId('challenge-cta')).not.toHaveClass('season-pass-banner')
+    expect(screen.queryByTestId('challenge-cta-price')).not.toBeInTheDocument()
   })
 })

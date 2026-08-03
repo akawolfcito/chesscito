@@ -109,6 +109,30 @@ function CrownIcon() {
   );
 }
 
+/** The banner's affordance: it points INTO the purchase. Decorative — the
+ *  button it lives in already carries the accessible name. The landing draws
+ *  the same glyph on a strip that is not a control, which is deliberate: the
+ *  two surfaces have to look identical for the pass to be recognisable. */
+function ChevronIcon() {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      className="season-pass-banner-chevron"
+      data-testid="challenge-cta-chevron"
+      aria-hidden="true"
+    >
+      <path
+        d="M6 3.5L10.5 8L6 12.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 /** The 21-Day Mind Challenge hero card (Chesscito Lite) — compact layout
  *  (reference Image #10): icon + title + FOCUS PASSPORT progress bar on top, an
  *  inline stat row + Join Challenge below. Pure leaf: parent hydrates and passes
@@ -473,12 +497,20 @@ export function ChallengeCard({
                 className="challenge-card-join-arrow-img"
                 draggable={false}
               />
+              {/* THE SEASON PASS BANNER. Same shape the landing shows on
+                  slide 2 (apps/landing · `SeasonPassBanner`), so a visitor who
+                  met the pass during onboarding recognises it here. There it is
+                  decorative; here it is the purchase itself.
+
+                  It keeps `challenge-card-cta` — that class owns the pulse and
+                  its reduced-motion override — but drops the green
+                  `principal-button` skin: the banner IS the look. */}
               <button
                 type="button"
                 // Pulses only while the purchase is actually available: `null` means
                 // the status is still resolving (or the player already owns it), and
                 // a CTA that throbs while disabled advertises a dead button.
-                className={`principal-button principal-button-medium hub-lite-start-focus challenge-card-cta${
+                className={`season-pass-banner challenge-card-cta${
                   onJoinChallenge ? " is-pulsing" : ""
                 }`}
                 data-testid="challenge-cta"
@@ -487,14 +519,33 @@ export function ChallengeCard({
                 onClick={onJoinChallenge ?? undefined}
                 disabled={!onJoinChallenge}
               >
-                {/* Price BADGE floating on the button, not an inline pill —
-                    the same cost-cue pattern as the Save Victory tile
-                    (`.coach-viewer__tile-price-ribbon`), so a price reads the
-                    same wherever it appears. */}
-                <span className="challenge-card-cta-badge" aria-hidden="true">
+                <ThemeAssetPicture
+                  slot="hub.21-day-icon"
+                  pictureClassName="season-pass-banner-icon"
+                  pictureProps={{
+                    "data-testid": "challenge-cta-icon",
+                    "aria-hidden": true,
+                  }}
+                  alt=""
+                  draggable={false}
+                />
+                {/* The CTA keeps its VERB. It does not repeat "21-Day Mind
+                    Challenge": the card header says that three lines up, and a
+                    banner that repeats the title stops reading as a button. */}
+                <span className="season-pass-banner-title">{t("joinCta")}</span>
+                {/* The price chip — the strongest recall cue the banner has, so
+                    it is the one part copied verbatim from the landing. Hidden
+                    from assistive tech because `joinAriaLabel` already says the
+                    price inside the button's accessible name; exposed twice it
+                    reads as two prices. */}
+                <span
+                  className="season-pass-banner-price"
+                  data-testid="challenge-cta-price"
+                  aria-hidden="true"
+                >
                   {challenge.priceLabel}
                 </span>
-                {t("joinCta")}
+                <ChevronIcon />
               </button>
             </>
           ) : ctaState === "start" ? (

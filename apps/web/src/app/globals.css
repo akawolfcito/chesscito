@@ -8871,6 +8871,111 @@ button.hud-resource-chip:active:not(:disabled) {
    the standalone Start Focus button had. Its press/disabled states come from
    that class; `.challenge-card-cta` only overrides size and layout. */
 
+/* ── The Season Pass banner ────────────────────────────────────────────────
+   ONE shape, TWO surfaces: this rule and its landing twin
+   (apps/landing/src/app/globals.css, same class names) must stay identical.
+   A player meets the pass on landing slide 2 and again here; if the two drift,
+   the recall this whole design exists for is gone — and nothing would say so,
+   because both render fine apart.
+
+   The canonical measures live HERE and are copied there, never the reverse:
+     · min-height 56px      · radius 16px       · gold hairline 2px
+     · icon column 46px     · gap 10px
+   Gold→cream on the horizontal axis: the gold sits under the icon and fades
+   out under the copy, which is what keeps dark-brown text readable on a gold
+   surface (founder, 2026-08-03). */
+.season-pass-banner {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 7px 8px;
+  border: 2px solid #f6c94f;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 12% 50%, rgba(255, 236, 160, 0.55), transparent 46%),
+    linear-gradient(96deg, #f5b731 0%, #f8cf5e 34%, #fbe6a6 66%, #fdf3d2 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 0 rgba(158, 106, 18, 0.2),
+    0 3px 0 rgba(190, 133, 26, 0.55),
+    0 6px 14px rgba(180, 128, 24, 0.28);
+  color: #4a2c07;
+  text-align: left;
+  cursor: pointer;
+}
+
+.season-pass-banner-icon {
+  width: 46px;
+  min-width: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(120, 78, 8, 0.35));
+}
+
+.season-pass-banner-icon img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Takes the slack so the price chip and chevron stay pinned right whatever the
+   label's length. Wraps rather than truncates: ES runs longer than EN, and the
+   CTA verb is the one string that must never be cut. */
+.season-pass-banner-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #4a2c07;
+  text-shadow: 0 1px 0 rgba(255, 249, 219, 0.55);
+}
+
+/* Deliberately MORE saturated than the surface it sits on: inside a piece that
+   is already gold, a chip in the same tone disappears. Same geometry as
+   `.challenge-card-cta-badge`, which it replaces here — but inline, not
+   absolutely positioned, so it can never overlap the label. */
+.season-pass-banner-price {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 11px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fde68a 0%, #f0a91b 100%);
+  border: 1.5px solid rgba(120, 53, 15, 0.85);
+  color: #3f2208;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(255, 240, 175, 0.7);
+}
+
+.season-pass-banner-chevron {
+  flex: 0 0 auto;
+  width: 0.95rem;
+  height: 0.95rem;
+  color: rgba(120, 74, 10, 0.9);
+}
+
+/* Pressed, and disabled-while-resolving. The banner has no `principal-button`
+   underneath it, so both states are its own — without this it would be the only
+   CTA in the Hub that does not answer a tap. */
+.season-pass-banner:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 1px 0 rgba(190, 133, 26, 0.55),
+    0 3px 8px rgba(180, 128, 24, 0.24);
+}
+
+.season-pass-banner:disabled {
+  filter: saturate(0.7) brightness(0.98);
+  opacity: 0.9;
+}
+
 /* While the pass status resolves, the CTA is briefly non-interactive but keeps
    its size + look (no flash / layout shift). */
 .challenge-card-cta:disabled {
