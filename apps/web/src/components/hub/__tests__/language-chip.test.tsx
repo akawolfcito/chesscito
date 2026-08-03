@@ -59,4 +59,28 @@ describe("LanguageChip", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(replaceMock).not.toHaveBeenCalled();
   });
+
+  /**
+   * The card MUST escape the chip's subtree. Both hubs wear
+   * `.hub-home-scaffold`, whose `> *` rule gives every direct child
+   * `position: relative; z-index: 1` — including the HUD header this chip
+   * lives in. That makes the header a stacking context at z-1, and a modal
+   * rendered inside it is capped there however high its own z-index goes: the
+   * mascot (z-2) and every later z-1 sibling paint straight over it.
+   *
+   * Portalling to `document.body` is the fix, and this test is the only thing
+   * that can catch a regression — the modal renders, its markup is identical,
+   * and every behavioural test above still passes while the player looks at a
+   * dialog buried under the cards.
+   */
+  it("renders the card outside the chip's subtree, above the hub's stacking context", () => {
+    const { container } = render(<LanguageChip />);
+    fireEvent.click(screen.getByTestId("language-chip"));
+
+    // Present in the document...
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    // ...but NOT inside the HUD subtree, which is where it would be trapped.
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(container.querySelector('[data-testid="language-chip-confirm"]')).toBeNull();
+  });
 });

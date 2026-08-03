@@ -84,6 +84,14 @@ export function LanguageChip() {
           onClose={() => setConfirmOpen(false)}
           ariaLabel={t("dialogAriaLabel")}
           closeLabel={t("closeLabel")}
+          // Portalled to `document.body` because this chip lives INSIDE the
+          // hub's HUD header, and `.hub-home-scaffold > *` gives every direct
+          // child `position: relative; z-index: 1`. That makes the header a
+          // stacking context at z-1: rendered in place, the card's z-70 is
+          // capped there and the mascot (z-2) and the panels below it paint
+          // straight over the dialog. Both hubs wear that scaffold, so this is
+          // one fix for LEARN and PLAY.
+          portal
         >
           <h2 className="language-modal-title">{t("title")}</h2>
           <div
