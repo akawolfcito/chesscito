@@ -47,8 +47,11 @@ const messages = {
     slide3: {
       titleAlt: "Play",
       support: "Play full games.\nLearn from every move.",
-      proTitle: "PRO · $1.99 / 30 days",
+      // The price left the title for the corner badge — the same cue slide 2
+      // uses. The DURATION stays: it is a term of the plan, not its price.
+      proTitle: "PRO · 30 days",
       proBenefits: "Full Play · Unlimited Coach · Season Pass included",
+      proPrice: "$1.99",
       cta: "NEXT",
     },
     slide4: {

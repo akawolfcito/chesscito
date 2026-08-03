@@ -76,7 +76,11 @@ export function Slide3Body() {
       <SlideTitle step={3} alt={t('titleAlt')} />
       <Divider />
       <Support>{t('support')}</Support>
-      <ProStrip title={t('proTitle')} benefits={t('proBenefits')} />
+      <ProStrip
+        title={t('proTitle')}
+        benefits={t('proBenefits')}
+        price={t('proPrice')}
+      />
     </>
   )
 }

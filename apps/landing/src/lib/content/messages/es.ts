@@ -45,8 +45,11 @@ const messages: OnboardingMessages = {
       // El arte dice JUEGA.
       titleAlt: "Juega",
       support: "Juega partidas completas.\nAprende de cada jugada.",
-      proTitle: "PRO · $1.99 / 30 días",
+      // El precio salió del título y subió al badge de la esquina; la duración
+      // se queda, porque es un término del plan y no su precio.
+      proTitle: "PRO · 30 días",
       proBenefits: "Play completo · Coach ilimitado · Season Pass incluido",
+      proPrice: "$1.99",
       cta: "SIGUIENTE",
     },
     slide4: {

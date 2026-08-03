@@ -38,7 +38,10 @@ export function SeasonPassBanner({
             the pass is explained, and the Spanish line is longer. */}
         <span className="season-pass-banner-benefits">{benefits}</span>
       </span>
-      <span className="season-pass-banner-price">{price}</span>
+      {/* The price floats on the corner rather than sitting in the row. That is
+          the house pattern for "this costs money" — the Hub's CTA badge — and
+          it is deliberately the same here, so the cue is learned once. */}
+      <span className="season-pass-banner-badge">{price}</span>
       <svg viewBox="0 0 16 16" className="season-pass-banner-chevron" aria-hidden="true">
         <path
           d="M6 3.5L10.5 8L6 12.5"

@@ -496,6 +496,7 @@
        Hub's card already explains the pass three lines above its CTA), so the
        flex slack lives on that column instead of on the title. */
 .season-pass-banner {
+  position: relative;
   width: 100%;
   min-height: 56px;
   display: flex;
@@ -558,10 +559,20 @@
   color: rgba(74, 44, 7, 0.82);
 }
 
-/* More saturated than the surface under it — inside a piece that is already
-   gold, a chip in the same tone disappears. */
-.season-pass-banner-price {
-  flex: 0 0 auto;
+/* ── The price badge ───────────────────────────────────────────────────────
+   The house cue for "this costs money": a gold pill floating on the top-right
+   corner of whatever it prices, never a word inside the sentence. Ported from
+   apps/web (`.challenge-card-cta-badge` / `.season-pass-banner-badge` /
+   `.kingdom-card-pro-price`), which is where the geometry is owned.
+
+   Deliberately MORE saturated than the surfaces it lands on — on the gold
+   banner a pill in the same tone would disappear. */
+.season-pass-banner-badge,
+.onboarding-pro-strip-badge {
+  position: absolute;
+  z-index: 2;
+  top: -11px;
+  right: 10px;
   display: inline-flex;
   align-items: center;
   padding: 3px 11px;
@@ -583,6 +594,7 @@
 }
 
 .onboarding-pro-strip {
+  position: relative;
   width: 100%;
   min-height: 54px;
   display: flex;

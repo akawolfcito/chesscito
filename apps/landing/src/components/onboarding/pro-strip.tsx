@@ -11,9 +11,22 @@ import { ICONS } from "@/lib/onboarding/slides";
  * from the theme system, which this app does not have. The icon is a plain
  * ArtImage instead, or the 66px the badge used to fill would render as a hole.
  */
-export function ProStrip({ title, benefits }: { title: string; benefits: string }) {
+export function ProStrip({
+  title,
+  benefits,
+  price,
+}: {
+  title: string;
+  benefits: string;
+  price: string;
+}) {
   return (
     <div className="onboarding-pro-strip">
+      {/* Price on the corner, not inside the title. Same badge the Season Pass
+          banner wears one slide earlier: a visitor should learn the cue once
+          and read it everywhere. It used to live in the title string, where it
+          competed with the plan name for the same line. */}
+      <span className="onboarding-pro-strip-badge">{price}</span>
       <span className="onboarding-pro-strip-icon">
         <ArtImage src={ICONS.pro} alt="" />
       </span>
