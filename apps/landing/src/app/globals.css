@@ -479,6 +479,109 @@
    Ported from apps/web `.kingdom-card-pro-cta`, minus its badge subtree (theme
    art this app has no access to) and minus the pointer affordances: on the
    landing this states that a paid tier exists, it does not sell one. */
+/* ── The Season Pass banner (slide 2) ──────────────────────────────────────
+   TWIN of apps/web `.season-pass-banner` (globals.css, next to
+   `.challenge-card-cta`). Same class names, same measures — the visitor meets
+   this exact surface again as the purchase CTA in the Learn Hub, and the recall
+   is the entire reason the banner exists. If one side changes, change both:
+   nothing observable breaks when they drift, they simply stop being the same
+   thing (the same trap slide 3's ProStrip documents in its own comment).
+
+   Measures are OWNED by apps/web and copied here:
+     · min-height 56px      · radius 16px       · gold hairline 2px
+     · icon column 46px     · gap 10px
+   Two intentional differences, both structural rather than visual:
+     · no :active / :disabled — on the landing this is not a control;
+     · a `-copy` column, because here the banner carries a benefits line (the
+       Hub's card already explains the pass three lines above its CTA), so the
+       flex slack lives on that column instead of on the title. */
+.season-pass-banner {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 7px 8px;
+  border: 2px solid #f6c94f;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 12% 50%, rgba(255, 236, 160, 0.55), transparent 46%),
+    linear-gradient(96deg, #f5b731 0%, #f8cf5e 34%, #fbe6a6 66%, #fdf3d2 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 0 rgba(158, 106, 18, 0.2),
+    0 3px 0 rgba(190, 133, 26, 0.55),
+    0 6px 14px rgba(180, 128, 24, 0.28);
+  color: #4a2c07;
+  text-align: left;
+}
+
+.season-pass-banner-icon {
+  width: 46px;
+  min-width: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(120, 78, 8, 0.35));
+}
+
+.season-pass-banner-icon img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Two lines of copy where the Hub has one: there the card header already
+   explains the pass, here this is the only place it is explained. */
+.season-pass-banner-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.season-pass-banner-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #4a2c07;
+  text-shadow: 0 1px 0 rgba(255, 249, 219, 0.55);
+}
+
+/* Deliberately NOT nowrap+ellipsis: the Spanish line is longer than the
+   English one, and truncating it cuts the argument, not the decoration. */
+.season-pass-banner-benefits {
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: rgba(74, 44, 7, 0.82);
+}
+
+/* More saturated than the surface under it — inside a piece that is already
+   gold, a chip in the same tone disappears. */
+.season-pass-banner-price {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 11px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fde68a 0%, #f0a91b 100%);
+  border: 1.5px solid rgba(120, 53, 15, 0.85);
+  color: #3f2208;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(255, 240, 175, 0.7);
+}
+
+.season-pass-banner-chevron {
+  flex: 0 0 auto;
+  width: 0.95rem;
+  height: 0.95rem;
+  color: rgba(120, 74, 10, 0.9);
+}
+
 .onboarding-pro-strip {
   width: 100%;
   min-height: 54px;

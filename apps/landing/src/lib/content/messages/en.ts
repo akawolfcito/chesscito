@@ -36,8 +36,12 @@ const messages = {
     slide2: {
       titleAlt: "Learn",
       support: "Build your focus,\none day at a time.",
-      passLabel: "21-Day Season Pass · $0.99",
+      // The price left this string when the pass became a banner: it now has
+      // its own chip, the same one the Play Hub's CTA wears. Spelling it twice
+      // read as two different prices.
+      passLabel: "21-Day Season Pass",
       passBenefits: "Daily training · Progress rewards · 3 welcome Shields",
+      passPrice: "$0.99",
       cta: "NEXT",
     },
     slide3: {

@@ -33,9 +33,12 @@ const messages: OnboardingMessages = {
       // El arte dice APRENDE, no LEARN.
       titleAlt: "Aprende",
       support: "Construye tu enfoque,\nun día a la vez.",
-      passLabel: "Season Pass de 21 días · $0.99",
+      // El precio salió de esta línea: ahora vive en su propio chip, el mismo
+      // que usa el CTA del Hub.
+      passLabel: "Season Pass de 21 días",
       passBenefits:
         "Entrenamiento diario · Recompensas por progreso · 3 Shields de bienvenida",
+      passPrice: "$0.99",
       cta: "SIGUIENTE",
     },
     slide3: {

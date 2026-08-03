@@ -1,10 +1,10 @@
 import { useLocale, useTranslations } from 'next-intl'
 import { ArtImage } from '@/components/onboarding/art-image'
-import { Pill } from '@/components/onboarding/pill'
 import { ProStrip } from '@/components/onboarding/pro-strip'
+import { SeasonPassBanner } from '@/components/onboarding/season-pass-banner'
 import { CandyIcon } from '@/components/redesign/candy-icon'
 import type { Locale } from '@/i18n/routing'
-import { ICONS, SLIDE_VISUALS } from '@/lib/onboarding/slides'
+import { SLIDE_VISUALS } from '@/lib/onboarding/slides'
 import type { SlideStep } from '@/lib/onboarding/types'
 
 function Divider() {
@@ -60,10 +60,10 @@ export function Slide2Body() {
       <SlideTitle step={2} alt={t('titleAlt')} />
       <Divider />
       <Support>{t('support')}</Support>
-      <Pill
-        icon={<ArtImage src={ICONS.seasonPass} alt="" />}
-        label={t('passLabel')}
-        sublabel={t('passBenefits')}
+      <SeasonPassBanner
+        title={t('passLabel')}
+        benefits={t('passBenefits')}
+        price={t('passPrice')}
       />
     </>
   )
