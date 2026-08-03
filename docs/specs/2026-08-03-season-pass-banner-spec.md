@@ -36,6 +36,35 @@ pero en la dirección inversa — la forma nace en el landing y baja al Hub.
    *decorativos* del HUD. Acá el chip vive dentro de una forma que en el Hub SÍ
    es un botón, y es la señal de recordación más fuerte que tiene el banner.
 
+## 2-bis. Corrección del founder (mismo día, después de ver la primera pasada)
+
+Tres decisiones **reemplazan** parte de §2 y §3. Lo de arriba se conserva para
+que se lea por qué se hizo lo que se hizo:
+
+6. **`art/21-day-icon` NO se toca.** Es el calendario del panel, y lo consumen
+   tres superficies. La primera pasada lo sobreescribió con el ticket dorado
+   para "unificar": exceso de alcance. Revertido. **Lo único que cambia en el
+   Hub es el botón JOIN CHALLENGE.**
+7. **El banner del Hub es el banner del landing**, entero: ticket dorado,
+   título del pass y línea de beneficios. No hereda el icono del panel.
+8. **El precio es un badge FLOTANTE sobre la esquina**, en las tres
+   superficies. No un chip dentro de la fila. Es vocabulario visual ya
+   establecido — el badge que el botón verde tenía — y por eso se extiende
+   también al **PRO strip de slide 3**, que lo llevaba dentro del título.
+
+### Lo que esto cuesta, dicho explícitamente
+
+El banner del Hub **ya no muestra el verbo**: donde decía "Unirme al reto" ahora
+dice "Season Pass de 21 días". El verbo sobrevive en el nombre accesible
+(`joinAriaLabel`), así que un lector de pantalla sigue oyendo "Únete al Reto
+Mental de 21 Días por $0.99", y dos tests fijan las dos mitades. Visualmente, lo
+que dice que se puede tocar son el badge, el chevron y el pulso.
+
+Segundo costo: la línea de beneficios del banner repite, con otras palabras, los
+tres stats que la tarjeta ya lista 40px más arriba ("21 días · +3 Escudos ·
+Entrenamiento especial"). Se shippea como lo pidió la referencia; quitarla es
+borrar un `<span>`.
+
 ## 3. El icono: cómo se unifica sin tocar el catálogo
 
 El slot `hub.21-day-icon` tiene **tres consumidores** en `apps/web`:
@@ -43,6 +72,12 @@ El slot `hub.21-day-icon` tiene **tres consumidores** en `apps/web`:
 - `challenge-card.tsx:217` — cabecera de la tarjeta
 - `hub-tour.tsx:296` — beneficio del mini-tour
 - `season-pass-sheet.tsx:104` — beneficio del sheet de compra
+
+> ⛔ **REVERTIDO por §2-bis.6.** Esta sección describe lo que se hizo en la
+> primera pasada y ya no es el estado del repo: `21-day-icon` volvió a ser el
+> calendario. El banner del Hub lee `landing.season-pass-icon`, el mismo slot
+> que el landing, así que el ticket sigue siendo un solo archivo y un solo slot
+> — que era el objetivo real de esta sección.
 
 **Enfoque: reemplazar los ARCHIVOS, no el slot.** Se sobreescriben
 `apps/web/public/art/21-day-icon.{png,webp,avif}` con el arte de

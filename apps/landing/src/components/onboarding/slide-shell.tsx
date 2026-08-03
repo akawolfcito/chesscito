@@ -66,7 +66,16 @@ export function SlideShell({
   }
 
   return (
-    <div className="relative flex h-dvh w-full items-center justify-center overflow-hidden bg-[#1a3fae]">
+    <div
+      className="relative flex h-dvh w-full items-center justify-center overflow-hidden"
+      // The letterbox behind the 420px column. Only ever visible on screens
+      // wider than the slide art, so it reads as the frame around the phone
+      // rather than as part of any slide.
+      style={{
+        background:
+          'radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 60%), linear-gradient(135deg, #2a2a2e 0%, #141416 100%)',
+      }}
+    >
       <div className="relative h-full w-full max-w-[420px] overflow-hidden">
         {/* All four illustrations stay mounted, three of them transparent.
             Mounting only the active one makes each tap decode a fresh image
