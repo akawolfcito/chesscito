@@ -3150,6 +3150,15 @@ export const CHALLENGE_CARD_COPY = {
   weekUpcoming: "upcoming",
   joinCta: "Join Challenge",
   joinAriaLabel: "Join the 21-Day Mind Challenge for {price}",
+  /** The offer CTA is the Season Pass banner — the SAME surface the visitor met
+   *  on landing slide 2, wording included, so the two read as one product.
+   *  `joinAriaLabel` still carries the verb and the price: the banner shows the
+   *  product, the accessible name says what tapping it does. */
+  passBannerTitle: "21-Day Season Pass",
+  /** Shields come from `challenge.shieldBonus`, never a literal: the landing
+   *  can hardcode "3" because it ships with the copy, the Hub reads config and
+   *  would otherwise promise a number the purchase does not grant. */
+  passBannerBenefits: "Daily training · Progress rewards · {shields} welcome Shields",
   /** Single primary CTA — one label per state, never two CTAs at once. */
   ctaStartToday: "Start Focus",
   ctaStartAriaLabel: "Start today's focus",

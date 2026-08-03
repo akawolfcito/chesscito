@@ -456,7 +456,13 @@ describe("<HubLiteScaffold>", () => {
 
   it("ES locale: the CTA and the weekly row are translated (i18n parity)", () => {
     render(<HubLiteScaffold {...baseProps()} />, { locale: "es" });
-    expect(screen.getByTestId("challenge-cta").textContent).toMatch(/Unirme al reto/i);
+    const cta = screen.getByTestId("challenge-cta");
+    // The offer CTA is the Season Pass banner, so what it SHOWS is the pass;
+    // the verb it used to display now lives in the accessible name. Both are
+    // asserted, because both are translated strings and either could regress
+    // to English (or to a raw key path) on its own.
+    expect(cta.textContent).toMatch(/Season Pass de 21 días/i);
+    expect(cta).toHaveAccessibleName(/Únete al Reto Mental/i);
     const letters = screen
       .getAllByTestId("challenge-week-day")
       .map((el) => el.textContent?.trim());

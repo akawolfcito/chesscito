@@ -901,7 +901,7 @@ export const THEMES: Record<string, ThemeDefinition> = {
       // confirmed none is coming back and the 42 files were deleted
       // (~19.6 MB), so the slots went with them: a slot pointing at a file
       // that no longer exists is worse than no slot at all.
-      "landing.season-pass-icon": { root: "landing", default: "/art/landing-slides/season-pass-icon", usedIn: ["Landing — Season Pass plan icon", "↳ apps/landing · lib/onboarding/slides.ts (ICONS.seasonPass)"] },
+      "landing.season-pass-icon": { root: "landing", default: "/art/landing-slides/season-pass-icon", usedIn: ["Landing — Season Pass plan icon", "↳ apps/landing · lib/onboarding/slides.ts (ICONS.seasonPass)", "↳ apps/web · hub/challenge-card.tsx — the Season Pass banner (the Hub's purchase CTA reuses the landing's icon on purpose: one pass, one picture of it)"] },
       "landing.pro-icon": { root: "landing", default: "/art/landing-slides/pro-suscription-icon", usedIn: ["Landing — PRO subscription plan icon", "↳ apps/landing · lib/onboarding/slides.ts (ICONS.pro)"] },
       // Brand icons — apps/landing/public, single files rather than triplets.
       // The two below are DERIVED from brand.favicon: replacing that slot

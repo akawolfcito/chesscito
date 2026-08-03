@@ -519,8 +519,13 @@ export function ChallengeCard({
                 onClick={onJoinChallenge ?? undefined}
                 disabled={!onJoinChallenge}
               >
+                {/* The pass icon is the GOLDEN TICKET, not the card's own
+                    calendar: the calendar heads the panel six lines up, and the
+                    ticket is what the visitor saw on the landing. Same slot the
+                    landing reads, so one Replace in the theme builder moves
+                    both surfaces. */}
                 <ThemeAssetPicture
-                  slot="hub.21-day-icon"
+                  slot="landing.season-pass-icon"
                   pictureClassName="season-pass-banner-icon"
                   pictureProps={{
                     "data-testid": "challenge-cta-icon",
@@ -529,17 +534,20 @@ export function ChallengeCard({
                   alt=""
                   draggable={false}
                 />
-                {/* The CTA keeps its VERB. It does not repeat "21-Day Mind
-                    Challenge": the card header says that three lines up, and a
-                    banner that repeats the title stops reading as a button. */}
-                <span className="season-pass-banner-title">{t("joinCta")}</span>
-                {/* The price chip — the strongest recall cue the banner has, so
-                    it is the one part copied verbatim from the landing. Hidden
-                    from assistive tech because `joinAriaLabel` already says the
-                    price inside the button's accessible name; exposed twice it
-                    reads as two prices. */}
+                <span className="season-pass-banner-copy">
+                  <span className="season-pass-banner-title">{t("passBannerTitle")}</span>
+                  <span className="season-pass-banner-benefits">
+                    {t("passBannerBenefits", { shields: challenge.shieldBonus })}
+                  </span>
+                </span>
+                {/* Price as a BADGE on the corner, not a chip in the row — the
+                    house pattern for "this costs money" (`.challenge-card-cta-badge`,
+                    shared with the Kingdom card's PRO row). Hidden from
+                    assistive tech because `joinAriaLabel` already says the price
+                    inside the button's accessible name; exposed twice it reads
+                    as two prices. */}
                 <span
-                  className="season-pass-banner-price"
+                  className="season-pass-banner-badge"
                   data-testid="challenge-cta-price"
                   aria-hidden="true"
                 >

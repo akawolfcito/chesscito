@@ -1928,6 +1928,9 @@ const messages = {
     weekUpcoming: "por venir",
     joinCta: "Unirme al reto",
     joinAriaLabel: "Únete al Reto Mental de 21 Días por {price}",
+    passBannerTitle: "Season Pass de 21 días",
+    passBannerBenefits:
+      "Entrenamiento diario · Recompensas por progreso · {shields} Shields de bienvenida",
     ctaStartToday: "Comenzar foco",
     ctaStartAriaLabel: "Comienza tu foco de hoy",
     ctaTomorrow: "Vuelve mañana",

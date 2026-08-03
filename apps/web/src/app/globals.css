@@ -8781,6 +8781,7 @@ button.hud-resource-chip:active:not(:disabled) {
    `.coach-viewer__tile-price-ribbon` (Save Victory), so a cost cue looks the
    same on every surface that shows one. */
 .challenge-card-cta-badge,
+.season-pass-banner-badge,
 .kingdom-card-pro-price {
   position: absolute;
   z-index: 2;
@@ -8807,6 +8808,14 @@ button.hud-resource-chip:active:not(:disabled) {
 .challenge-card-cta-badge {
   top: -9px;
   right: -6px;
+}
+
+/* The pass banner is full-bleed inside the panel, so the badge tucks INTO its
+   top-right corner instead of hanging off it: at `right: -6px` it would sit on
+   the panel's own border. */
+.season-pass-banner-badge {
+  top: -11px;
+  right: 10px;
 }
 
 /* COME BACK TOMORROW / CHALLENGE COMPLETE — the CTA skin on a status element.
@@ -8885,6 +8894,7 @@ button.hud-resource-chip:active:not(:disabled) {
    out under the copy, which is what keeps dark-brown text readable on a gold
    surface (founder, 2026-08-03). */
 .season-pass-banner {
+  position: relative;
   width: 100%;
   min-height: 56px;
   display: flex;
@@ -8921,12 +8931,19 @@ button.hud-resource-chip:active:not(:disabled) {
   height: auto;
 }
 
-/* Takes the slack so the price chip and chevron stay pinned right whatever the
-   label's length. Wraps rather than truncates: ES runs longer than EN, and the
-   CTA verb is the one string that must never be cut. */
-.season-pass-banner-title {
-  flex: 1 1 auto;
+/* Takes the slack so the chevron stays pinned right whatever the copy's
+   length. The price is NOT in this row — it floats on the corner — so the
+   column may use the full width up to the chevron. */
+.season-pass-banner-copy {
   min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  text-align: left;
+}
+
+.season-pass-banner-title {
   font-size: 0.92rem;
   font-weight: 800;
   line-height: 1.15;
@@ -8934,23 +8951,13 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 0 rgba(255, 249, 219, 0.55);
 }
 
-/* Deliberately MORE saturated than the surface it sits on: inside a piece that
-   is already gold, a chip in the same tone disappears. Same geometry as
-   `.challenge-card-cta-badge`, which it replaces here — but inline, not
-   absolutely positioned, so it can never overlap the label. */
-.season-pass-banner-price {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 11px;
-  border-radius: 9999px;
-  background: linear-gradient(180deg, #fde68a 0%, #f0a91b 100%);
-  border: 1.5px solid rgba(120, 53, 15, 0.85);
-  color: #3f2208;
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  text-shadow: 0 1px 0 rgba(255, 240, 175, 0.7);
+/* Wraps to two lines rather than truncating: ES runs longer than EN, and this
+   line is the offer's argument, not decoration. */
+.season-pass-banner-benefits {
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: rgba(74, 44, 7, 0.82);
 }
 
 .season-pass-banner-chevron {

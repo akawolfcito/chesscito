@@ -507,7 +507,11 @@ describe('<ChallengeCard>', () => {
       return screen.getByTestId('challenge-cta')
     }
 
-    it('offers JOIN CHALLENGE with the price when there is no pass and no PRO', () => {
+    /** The offer CTA shows the PRODUCT and prices it; the verb moved into the
+     *  accessible name when the button became the Season Pass banner (founder,
+     *  2026-08-03). Both halves are asserted here — a banner that stops saying
+     *  what a tap does, in EITHER channel, is a shop window, not a CTA. */
+    it('offers the Season Pass with its price when there is no pass and no PRO', () => {
       render(
         <Card
           focusPassport={passport()}
@@ -518,8 +522,9 @@ describe('<ChallengeCard>', () => {
         />,
       )
       expect(cta()).toHaveAttribute('data-cta-state', 'join')
-      expect(cta().textContent).toMatch(/Join Challenge/i)
+      expect(cta().textContent).toMatch(/21-Day Season Pass/i)
       expect(cta().textContent).toMatch(/\$1\.99/)
+      expect(cta()).toHaveAccessibleName(/join/i)
     })
 
     it('shows the compact START FOCUS label with an active Season Pass and a pending daily', () => {
@@ -641,7 +646,7 @@ describe('<ChallengeCard>', () => {
       }
     })
 
-    it('wears the Season Pass banner and shows the price as an inline chip', () => {
+    it('wears the Season Pass banner and keeps the price on its corner badge', () => {
       render(
         <Card
           focusPassport={passport()}
@@ -651,13 +656,10 @@ describe('<ChallengeCard>', () => {
         />,
       )
       expect(cta().className).toContain('season-pass-banner')
-      // The price moved OUT of the floating badge (Save Victory pattern) and
-      // into the banner's own chip, where the landing already shows it. It is
-      // inline, so it can never overlap the label the way an absolutely
-      // positioned badge could.
-      expect(cta().querySelector('.challenge-card-cta-badge')).toBeNull()
-      const chip = cta().querySelector('.season-pass-banner-price')
-      expect(chip?.textContent).toBe('$1.99')
+      // The price keeps floating on the corner — the house cue — it just moved
+      // onto the banner with the CTA it prices.
+      const badge = cta().querySelector('.season-pass-banner-badge')
+      expect(badge?.textContent).toBe('$1.99')
     })
 
     it('keeps the tour arrow on the same row as the CTA it points at', () => {
@@ -1133,14 +1135,42 @@ describe('<ChallengeCard> — the Season Pass banner', () => {
     expect(cta).toHaveAttribute('data-cta-state', 'join')
   })
 
-  it('shows the price as a chip and still says it in the accessible name', () => {
+  it('floats the price as a corner badge and still says it in the accessible name', () => {
     const cta = renderOffer(() => {})
 
-    // Visible chip: the recall cue. The landing shows the same one.
-    expect(screen.getByTestId('challenge-cta-price')).toHaveTextContent('$1.99')
-    // ...and the price stays INSIDE the button's accessible name. A chip that
+    const badge = screen.getByTestId('challenge-cta-price')
+    expect(badge).toHaveTextContent('$1.99')
+    // The house cue for "this costs money" — the same badge the Kingdom card's
+    // PRO row wears, and the one slide 2 and slide 3 wear on the landing.
+    expect(badge).toHaveClass('season-pass-banner-badge')
+    // ...and the price stays INSIDE the button's accessible name. A badge that
     // only exists visually leaves a screen reader buying blind.
     expect(cta.getAttribute('aria-label') ?? '').toContain('$1.99')
+  })
+
+  /** The banner shows the PRODUCT — the pass, by the name the landing gave it —
+   *  while the accessible name carries the action. The card header already says
+   *  "21-Day Mind Challenge", so the banner must not repeat that string. */
+  it('names the pass the way the landing does', () => {
+    const cta = renderOffer(() => {})
+
+    expect(cta).toHaveTextContent(/21-Day Season Pass/)
+    expect(cta.getAttribute('aria-label') ?? '').toMatch(/^Join the/)
+  })
+
+  /** Shields come from config, never from a literal copied off the landing:
+   *  the banner must not promise a bonus the purchase does not grant. */
+  it('reads the shield bonus from the challenge, not from the copy', () => {
+    render(
+      <Card
+        focusPassport={passport({ streak: 1 })}
+        challenge={{ ...CHALLENGE, shieldBonus: 5 }}
+        seasonPass={OFFER}
+        onJoinChallenge={() => {}}
+      />,
+    )
+
+    expect(screen.getByTestId('challenge-cta')).toHaveTextContent(/5 welcome Shields/)
   })
 
   it('hides the chevron from assistive tech', () => {
