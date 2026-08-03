@@ -8810,12 +8810,12 @@ button.hud-resource-chip:active:not(:disabled) {
   right: -6px;
 }
 
-/* The pass banner is full-bleed inside the panel, so the badge tucks INTO its
-   top-right corner instead of hanging off it: at `right: -6px` it would sit on
-   the panel's own border. */
+/* The PRO row's exact offsets. Both banners are full-bleed inside their panel,
+   so the badge tucks INTO the top-right corner instead of hanging off it: at
+   `right: -6px` it would sit on the panel's own border. */
 .season-pass-banner-badge {
-  top: -11px;
-  right: 10px;
+  top: -9px;
+  right: 13px;
 }
 
 /* COME BACK TOMORROW / CHALLENGE COMPLETE — the CTA skin on a status element.
@@ -8887,22 +8887,24 @@ button.hud-resource-chip:active:not(:disabled) {
    the recall this whole design exists for is gone — and nothing would say so,
    because both render fine apart.
 
-   The canonical measures live HERE and are copied there, never the reverse:
-     · min-height 56px      · radius 16px       · gold hairline 2px
-     · icon column 46px     · gap 10px
+   The canonical measures live HERE and are copied there, never the reverse.
+   They are the PRO row's (`.kingdom-card-pro-cta`) to the pixel, because the
+   two are the product's only paid banners and sit one tap apart:
+     · min-height 54px      · radius 14px       · gold hairline 2px
+     · gap 8px              · padding 4px 9px 5px 5px
    Gold→cream on the horizontal axis: the gold sits under the icon and fades
    out under the copy, which is what keeps dark-brown text readable on a gold
    surface (founder, 2026-08-03). */
 .season-pass-banner {
   position: relative;
   width: 100%;
-  min-height: 56px;
+  min-height: 54px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 12px 7px 8px;
+  gap: 8px;
+  padding: 4px 9px 5px 5px;
   border: 2px solid #f6c94f;
-  border-radius: 16px;
+  border-radius: 14px;
   background:
     radial-gradient(circle at 12% 50%, rgba(255, 236, 160, 0.55), transparent 46%),
     linear-gradient(96deg, #f5b731 0%, #f8cf5e 34%, #fbe6a6 66%, #fdf3d2 100%);
@@ -8916,9 +8918,13 @@ button.hud-resource-chip:active:not(:disabled) {
   cursor: pointer;
 }
 
+/* Sized by HEIGHT, not width. The ticket art is portrait (240x329), so a width
+   of 46px made it 63px tall and IT, not the copy, was what stretched the
+   banner past the PRO row. Capping the height and letting the width follow is
+   what makes the two banners the same size. */
 .season-pass-banner-icon {
-  width: 46px;
-  min-width: 46px;
+  width: 34px;
+  min-width: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -8929,6 +8935,8 @@ button.hud-resource-chip:active:not(:disabled) {
   display: block;
   width: 100%;
   height: auto;
+  max-height: 46px;
+  object-fit: contain;
 }
 
 /* Takes the slack so the chevron stays pinned right whatever the copy's
@@ -8943,27 +8951,33 @@ button.hud-resource-chip:active:not(:disabled) {
   text-align: left;
 }
 
+/* PRO's title size, in the BODY face rather than the game-action one. That
+   face is drawn for short uppercase labels and thickens on digits — and this
+   string opens with "21-". The landing's PRO strip hit the same wall and made
+   the same call (founder, 2026-07-29). */
 .season-pass-banner-title {
-  font-size: 0.92rem;
+  font-size: 0.82rem;
   font-weight: 800;
-  line-height: 1.15;
+  line-height: 1.05;
   color: #4a2c07;
   text-shadow: 0 1px 0 rgba(255, 249, 219, 0.55);
 }
 
-/* Wraps to two lines rather than truncating: ES runs longer than EN, and this
-   line is the offer's argument, not decoration. */
+/* PRO's subtitle size, but WRAPPING where PRO ellipsises. Same reason the
+   landing strip gives: this line is the offer's argument, and ES runs longer
+   than EN, so truncating cuts the argument rather than the decoration. */
 .season-pass-banner-benefits {
-  font-size: 0.68rem;
-  font-weight: 500;
-  line-height: 1.2;
+  font-size: 0.62rem;
+  font-weight: 650;
+  line-height: 1.15;
   color: rgba(74, 44, 7, 0.82);
 }
 
 .season-pass-banner-chevron {
   flex: 0 0 auto;
-  width: 0.95rem;
-  height: 0.95rem;
+  margin-left: auto;
+  width: 0.8rem;
+  height: 0.8rem;
   color: rgba(120, 74, 10, 0.9);
 }
 
