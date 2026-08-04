@@ -48,6 +48,7 @@ function healthy(): ClassifyInput {
 
 function model(overrides: Partial<ReportModel> = {}): ReportModel {
   return {
+    target: "production",
     taken_at_utc: "2026-08-04T04:24:25Z",
     taken_at_local: "2026-08-03 23:24:25",
     duration_ms: 1_468,
@@ -70,6 +71,7 @@ function model(overrides: Partial<ReportModel> = {}): ReportModel {
 function envelope(over: Partial<SnapshotEnvelope> = {}): SnapshotEnvelope {
   return {
     schema_version: SNAPSHOT_SCHEMA_VERSION,
+    target: "production",
     taken_at_utc: "2026-08-04T04:00:00.000Z",
     taken_at_local: "2026-08-03 23:00:00",
     duration_ms: 1_000,
@@ -197,7 +199,8 @@ describe("snapshot store", () => {
     const stamp = snapshotStamp(new Date("2026-08-04T04:24:25Z"));
     writeSnapshot(root, stamp, envelope(), "# report");
 
-    const dir = path.join(root, "artifacts", "ops");
+    // Snapshots live under their target, never in a shared directory.
+    const dir = path.join(root, "artifacts", "ops", "production");
     expect(readFileSync(path.join(dir, `${stamp}.md`), "utf8")).toBe("# report");
     expect(readFileSync(path.join(dir, "latest.md"), "utf8")).toBe("# report");
     expect(JSON.parse(readFileSync(path.join(dir, "latest.json"), "utf8")).schema_version)
@@ -207,16 +210,20 @@ describe("snapshot store", () => {
   it("reads back the previous snapshot", () => {
     const root = tempRepo();
     writeSnapshot(root, "stamp", envelope(), "# report");
-    expect(readLatest(root)?.taken_at_utc).toBe("2026-08-04T04:00:00.000Z");
+    expect(readLatest(root, "production")?.taken_at_utc).toBe("2026-08-04T04:00:00.000Z");
   });
 
   it("treats a missing or corrupt latest.json as no previous snapshot", () => {
     const root = tempRepo();
-    expect(readLatest(root)).toBeNull();
+    expect(readLatest(root, "production")).toBeNull();
 
-    mkdirSync(path.join(root, "artifacts", "ops"), { recursive: true });
-    writeFileSync(path.join(root, "artifacts", "ops", "latest.json"), "{ broken", "utf8");
-    expect(readLatest(root)).toBeNull();
+    mkdirSync(path.join(root, "artifacts", "ops", "production"), { recursive: true });
+    writeFileSync(
+      path.join(root, "artifacts", "ops", "production", "latest.json"),
+      "{ broken",
+      "utf8",
+    );
+    expect(readLatest(root, "production")).toBeNull();
   });
 });
 

@@ -9,11 +9,22 @@
  *      and "the system is on fire" call for different reactions, and collapsing
  *      them teaches the reader to ignore both.
  *
+ * ⚠️ `pnpm run` COLLAPSES every non-zero exit to 1. Measured: this file exits 3
+ * on a bad `--target`, `pnpm -C apps/web exec …` preserves the 3, and
+ * `pnpm ops:health` turns it into a 1. So the convenience scripts distinguish
+ * only success from failure. Automation that needs 1 vs 2 vs 3 must invoke the
+ * script directly:
+ *
+ *     pnpm -C apps/web exec tsx ../../scripts/ops/launch-health-snapshot.ts
+ *
+ * The human-readable verdict is unaffected — it is printed either way.
+ *
  * Read-only throughout: no writes, no DDL, no config changes, no infrastructure
  * touched. Every SQL statement passes `assertReadOnlySql` before execution.
  */
 
 import { collectSupabase } from "./collectors/supabase";
+import type { DomainProbe } from "./collectors/vercel";
 import { collectUpstash } from "./collectors/upstash";
 import { collectVercel } from "./collectors/vercel";
 import { classify, exitCodeFor, type ClassifyInput } from "./lib/classify";
@@ -27,6 +38,7 @@ import {
   type Projection,
 } from "./lib/derive";
 import { loadOpsEnv, type OpsEnv } from "./lib/env";
+import { InvalidTargetError, parseTarget, type OpsTarget } from "./lib/target";
 import {
   assertNoSecrets,
   formatBytes,
@@ -78,7 +90,7 @@ function buildProjections(supabase: SupabaseResult): Projection[] {
 function supabaseSection(supabase: SupabaseResult, projections: Projection[]) {
   if (supabase.status !== "observable") {
     return {
-      title: "SUPABASE",
+      title: "SUPABASE  ⚠️ SHARED DATABASE",
       status: "not observable",
       lines: [`no se pudo medir: ${supabase.reason}`],
     };
@@ -122,19 +134,57 @@ function supabaseSection(supabase: SupabaseResult, projections: Projection[]) {
     lines.push(`bloques no disponibles en este servidor: ${supabase.degraded_blocks.join(", ")}`);
   }
 
-  return { title: "SUPABASE", status: "observable", lines };
+  return {
+    title: "SUPABASE  ⚠️ SHARED DATABASE",
+    status: "observable · compartida entre production y preview",
+    lines: [
+      "⚠️ Esta base NO se separa por target: production y preview escriben en la MISMA.",
+      "   Filas, ritmo y proyecciones de abajo son la SUMA de los dos entornos y no",
+      "   son atribuibles a uno solo.",
+      ...lines,
+    ],
+  };
+}
+
+/** The public domain probe, rendered separately from the deployment. */
+function domainLine(probe: DomainProbe): string {
+  if (probe.status !== "observable") {
+    return `   dominio    ${probe.domain} · NO RESPONDE — ${probe.reason}`;
+  }
+  const mark = probe.healthy ? "✓" : "✗";
+  const redirect = probe.redirected ? ` → ${probe.final_url}` : "";
+  return `   dominio    ${probe.domain} · HTTP ${probe.http_status} ${mark} · ${probe.latency_ms} ms${redirect}`;
 }
 
 function vercelSection(vercel: VercelResult, supabase: SupabaseResult) {
   const lines: string[] = [];
 
   for (const p of vercel.projects) {
-    if (p.status !== "observable") {
-      lines.push(`${p.project}: no observable — ${p.reason}`);
+    if (p.status === "not_observable") {
+      lines.push(`${p.label} · ${p.domain}: no observable — ${p.reason}`);
       continue;
     }
+
+    if (p.status === "target_mismatch") {
+      // Not a warning about the system: the monitor could not find what it was
+      // told to look at. Both sides are printed so the reader can see which
+      // signal disagreed.
+      const m = p.mismatch;
+      lines.push(`${p.label} · ${p.domain}`);
+      lines.push(`   ⛔ TARGET MISMATCH — deployment NO corresponde al perfil pedido`);
+      lines.push(`      esperado : target=${m.expected_target} ref=${m.expected_ref}`);
+      lines.push(`      recibido : target=${m.actual_target ?? "?"} ref=${m.actual_ref ?? "?"}`);
+      lines.push(domainLine(p.domain_probe));
+      continue;
+    }
+
     const d = p.deployment;
-    lines.push(`${p.project}: ${d?.state} · ${d?.commit_sha?.slice(0, 12) ?? "?"} · hace ${d?.age_minutes ?? "?"} min`);
+    lines.push(`${p.label} · ${p.domain}`);
+    lines.push(domainLine(p.domain_probe));
+    lines.push(`   deployment ${d?.url ?? "?"}`);
+    lines.push(`   target     ${d?.target ?? "?"} ✓ · ref ${d?.commit_ref ?? "?"} ✓`);
+    lines.push(`   commit     ${d?.commit_sha?.slice(0, 12) ?? "?"} · ${d?.state} · hace ${d?.age_minutes ?? "?"} min`);
+
     if (p.logs) {
       const l = p.logs;
       lines.push(`   muestra de logs: ${l.requests} requests (de ${l.raw_rows} filas crudas) en ${l.window_seconds}s`);
@@ -357,7 +407,9 @@ function buildClassifyInput(
           p.status === "observable" ? (p.logs?.html_gateway_errors ?? []) : [],
         ),
       ).size,
-      logs_observed: vercel.projects.some((p) => p.status === "observable" && p.logs !== null),
+        logs_observed: vercel.projects.some(
+        (p) => p.status === "observable" && p.logs !== null,
+      ),
     },
     upstash: {
       percent_used: upstash.quota.status === "observable" ? upstash.quota.percent_used : null,
@@ -383,14 +435,18 @@ function buildActions(classification: ReturnType<typeof classify>, env: OpsEnv):
   return actions;
 }
 
-export async function main(): Promise<number> {
+export async function main(argv: readonly string[] = process.argv.slice(2)): Promise<number> {
   const startedAt = Date.now();
+  // Throws on an unknown value; the caller turns that into exit 3. A silent
+  // fallback would let `--target prod` report production while the operator
+  // believes they are looking at preview.
+  const target: OpsTarget = parseTarget(argv);
   const env = loadOpsEnv(REPO_ROOT);
 
   // Collectors are independent: one provider failing must not abort the others.
   const [supabaseOutcome, vercelOutcome, upstashOutcome] = await Promise.allSettled([
     collectSupabase(env),
-    collectVercel(env.get("VERCEL_TOKEN")),
+    collectVercel(env.get("VERCEL_TOKEN"), target),
     collectUpstash({
       restUrl: env.get("UPSTASH_REDIS_REST_URL"),
       restToken: env.get("UPSTASH_REDIS_REST_TOKEN"),
@@ -406,7 +462,7 @@ export async function main(): Promise<number> {
   const vercel: VercelResult =
     vercelOutcome.status === "fulfilled"
       ? vercelOutcome.value
-      : { projects: [], usage: { status: "not_observable", reason: "collector threw", http_status: null }, not_observable: [] };
+      : { target, projects: [], usage: { status: "not_observable", reason: "collector threw", http_status: null }, not_observable: [] };
   const upstash: UpstashResult =
     upstashOutcome.status === "fulfilled"
       ? upstashOutcome.value
@@ -422,6 +478,7 @@ export async function main(): Promise<number> {
   const takenAt = new Date();
   const envelope: SnapshotEnvelope = {
     schema_version: SNAPSHOT_SCHEMA_VERSION,
+    target,
     taken_at_utc: takenAt.toISOString(),
     taken_at_local: formatLocal(takenAt),
     duration_ms: Date.now() - startedAt,
@@ -432,8 +489,9 @@ export async function main(): Promise<number> {
     classification,
   };
 
-  const previous = readLatest(REPO_ROOT);
+  const previous = readLatest(REPO_ROOT, target);
   const model: ReportModel = {
+    target,
     taken_at_utc: envelope.taken_at_utc,
     taken_at_local: envelope.taken_at_local,
     duration_ms: envelope.duration_ms,
@@ -477,6 +535,14 @@ export async function main(): Promise<number> {
 main()
   .then((code) => process.exit(code))
   .catch((error) => {
+    // An invalid --target is an operator error, reported as a monitor failure
+    // rather than a statement about the system. Same exit code, clearer text.
+    if (error instanceof InvalidTargetError) {
+      console.error(`\n  ✖ ${error.message}\n`);
+      console.error("  Uso: pnpm ops:health [-- --target production|preview]");
+      console.error("       pnpm ops:health:preview\n");
+      process.exit(3);
+    }
     console.error("monitor failed:", error instanceof Error ? error.message : String(error));
     process.exit(3);
   });

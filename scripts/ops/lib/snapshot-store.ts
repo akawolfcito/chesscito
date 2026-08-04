@@ -20,11 +20,22 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-/** Bump when the snapshot shape changes in a way that breaks comparison. */
-export const SNAPSHOT_SCHEMA_VERSION = 1;
+import type { OpsTarget } from "./target";
+
+/**
+ * Bump when the snapshot shape changes in a way that breaks comparison.
+ *
+ * v1 → v2 (2026-08-04): the envelope gained `target`. Older snapshots are not
+ * comparable and are refused rather than reinterpreted — they were taken
+ * without knowing which environment they described, and guessing now would be
+ * exactly the kind of confident nonsense this guard exists to prevent.
+ */
+export const SNAPSHOT_SCHEMA_VERSION = 2;
 
 export type SnapshotEnvelope = {
   schema_version: number;
+  /** production | preview. Carried so a diff can refuse to cross environments. */
+  target: OpsTarget;
   taken_at_utc: string;
   taken_at_local: string;
   duration_ms: number;
@@ -64,6 +75,17 @@ export function checkCompatibility(
         "written by a different version of this tool",
     };
   }
+  // Second line of defence. Separate directories already make a cross-target
+  // read unlikely; this makes it impossible even if someone copies a
+  // latest.json by hand. On 2026-08-04 the two targets were seven commits
+  // apart, so a crossed diff would have announced a production advance that
+  // never happened.
+  if (previous.target !== current.target) {
+    return {
+      comparable: false,
+      reason: `snapshot de ${previous.target} vs ${current.target} — son entornos distintos`,
+    };
+  }
   if (!previous.taken_at_utc || !current.taken_at_utc) {
     return { comparable: false, reason: "a snapshot is missing its timestamp" };
   }
@@ -82,8 +104,12 @@ export type SnapshotPaths = {
   latestMarkdown: string;
 };
 
-export function snapshotPaths(repoRoot: string, stamp: string): SnapshotPaths {
-  const dir = path.join(repoRoot, "artifacts", "ops");
+export function snapshotPaths(
+  repoRoot: string,
+  stamp: string,
+  target: OpsTarget,
+): SnapshotPaths {
+  const dir = path.join(repoRoot, "artifacts", "ops", target);
   return {
     dir,
     json: path.join(dir, `${stamp}.json`),
@@ -94,9 +120,14 @@ export function snapshotPaths(repoRoot: string, stamp: string): SnapshotPaths {
 }
 
 /** The previous run, or null. Never throws: a corrupt file is just "no previous". */
-export function readLatest(repoRoot: string): SnapshotEnvelope | null {
+export function readLatest(
+  repoRoot: string,
+  target: OpsTarget,
+): SnapshotEnvelope | null {
   try {
-    const file = path.join(repoRoot, "artifacts", "ops", "latest.json");
+    // Reads ONLY this target's directory. A production run never sees a
+    // preview snapshot, whatever is lying around in the sibling folder.
+    const file = path.join(repoRoot, "artifacts", "ops", target, "latest.json");
     const parsed = JSON.parse(readFileSync(file, "utf8")) as SnapshotEnvelope;
     return typeof parsed?.schema_version === "number" ? parsed : null;
   } catch {
@@ -112,7 +143,7 @@ export function writeSnapshot(
   envelope: SnapshotEnvelope,
   markdown: string,
 ): WrittenArtifacts {
-  const paths = snapshotPaths(repoRoot, stamp);
+  const paths = snapshotPaths(repoRoot, stamp, envelope.target);
   mkdirSync(paths.dir, { recursive: true });
 
   const json = `${JSON.stringify(envelope, null, 2)}\n`;

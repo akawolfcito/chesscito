@@ -20,18 +20,35 @@ import {
 
 const T0 = 1_785_810_000_000;
 
-function lsJson(sha: string, url = "chesscito-abc-goodwolf.vercel.app") {
+function lsJson(
+  sha: string,
+  opts: { target?: string; ref?: string; url?: string } = {},
+) {
   return `Vercel CLI 58.4.4\nFetching deployments\n${JSON.stringify({
     deployments: [
       {
-        url,
+        url: opts.url ?? "chesscito-abc-goodwolf.vercel.app",
         state: "READY",
-        target: "production",
+        target: opts.target ?? "production",
         ready: T0 - 600_000,
-        meta: { githubCommitSha: sha, githubCommitRef: "production" },
+        meta: {
+          githubCommitSha: sha,
+          githubCommitRef: opts.ref ?? "production",
+        },
       },
     ],
   })}`;
+}
+
+/** Answers both the domain probe and the usage endpoint. */
+function fetchFor(opts: { usageStatus?: number; domainStatus?: number } = {}) {
+  return vi.fn(async (input: unknown) => {
+    const url = String(input);
+    if (url.includes("api.vercel.com")) {
+      return new Response(JSON.stringify({}), { status: opts.usageStatus ?? 200 });
+    }
+    return new Response("<html>ok</html>", { status: opts.domainStatus ?? 200 });
+  }) as unknown as typeof fetch;
 }
 
 function logLines(rows: unknown[]) {
@@ -55,8 +72,9 @@ describe("CLI parsing", () => {
 
   it("reads the commit SHA, which `vercel inspect` does not print", async () => {
     const sha = "986bb38320d99a49807803e48f4d5390250a47cb";
-    const result = await collectVercel(undefined, {
+    const result = await collectVercel(undefined, "production", {
       cli: (args) => (args[0] === "ls" ? lsJson(sha) : logLines([])),
+      fetchImpl: fetchFor(),
       now: () => T0,
     });
 
@@ -148,8 +166,9 @@ describe("log summary", () => {
 
 describe("usage endpoint", () => {
   it("is not_observable without a token, and says so", async () => {
-    const r = await collectVercel(undefined, {
+    const r = await collectVercel(undefined, "production", {
       cli: (a) => (a[0] === "ls" ? lsJson("sha") : logLines([])),
+      fetchImpl: fetchFor(),
       now: () => T0,
     });
     expect(r.usage.status).toBe("not_observable");
@@ -161,9 +180,9 @@ describe("usage endpoint", () => {
   it.each([401, 403, 404])("reports the REAL status code on %i", async (status) => {
     // `vercel usage` answers 404 on this plan. 401 (bad token) and 403 (plan
     // or scope) need different fixes, so the code must survive to the report.
-    const r = await collectVercel("tok", {
+    const r = await collectVercel("tok", "production", {
       cli: (a) => (a[0] === "ls" ? lsJson("sha") : logLines([])),
-      fetchImpl: okFetch({}, status),
+      fetchImpl: fetchFor({ usageStatus: status }),
       now: () => T0,
     });
 
@@ -174,9 +193,9 @@ describe("usage endpoint", () => {
   });
 
   it("lists CPU and invocations as not observable whenever usage fails", async () => {
-    const r = await collectVercel("tok", {
+    const r = await collectVercel("tok", "production", {
       cli: (a) => (a[0] === "ls" ? lsJson("sha") : logLines([])),
-      fetchImpl: okFetch({}, 403),
+      fetchImpl: fetchFor({ usageStatus: 403 }),
       now: () => T0,
     });
     expect(r.not_observable.join(" ")).toMatch(/Active CPU/);
@@ -184,7 +203,7 @@ describe("usage endpoint", () => {
   });
 
   it("handles a network failure without throwing", async () => {
-    const r = await collectVercel("tok", {
+    const r = await collectVercel("tok", "production", {
       cli: (a) => (a[0] === "ls" ? lsJson("sha") : logLines([])),
       fetchImpl: vi.fn(async () => { throw new Error("ETIMEDOUT"); }) as unknown as typeof fetch,
       now: () => T0,
@@ -193,9 +212,13 @@ describe("usage endpoint", () => {
   });
 
   it("handles a malformed body without throwing", async () => {
-    const r = await collectVercel("tok", {
+    const r = await collectVercel("tok", "production", {
       cli: (a) => (a[0] === "ls" ? lsJson("sha") : logLines([])),
-      fetchImpl: vi.fn(async () => new Response("not json", { status: 200 })) as unknown as typeof fetch,
+      fetchImpl: vi.fn(async (u: unknown) =>
+        String(u).includes("api.vercel.com")
+          ? new Response("not json", { status: 200 })
+          : new Response("ok", { status: 200 }),
+      ) as unknown as typeof fetch,
       now: () => T0,
     });
     expect(r.usage.status).toBe("not_observable");
@@ -204,11 +227,12 @@ describe("usage endpoint", () => {
 
 describe("fault tolerance", () => {
   it("one failing project does not take the other down", async () => {
-    const r = await collectVercel(undefined, {
+    const r = await collectVercel(undefined, "production", {
       cli: (args) => {
         if (args.includes("lite-chesscito")) throw new Error("project not found");
         return args[0] === "ls" ? lsJson("sha") : logLines([]);
       },
+      fetchImpl: fetchFor(),
       now: () => T0,
     });
 
@@ -216,11 +240,12 @@ describe("fault tolerance", () => {
   });
 
   it("a failing log fetch still reports the deployment", async () => {
-    const r = await collectVercel(undefined, {
+    const r = await collectVercel(undefined, "production", {
       cli: (args) => {
         if (args[0] === "logs") throw new Error("logs unavailable");
         return lsJson("sha");
       },
+      fetchImpl: fetchFor(),
       now: () => T0,
     });
 
@@ -233,11 +258,12 @@ describe("fault tolerance", () => {
   });
 
   it("skips malformed log lines instead of failing the window", async () => {
-    const r = await collectVercel(undefined, {
+    const r = await collectVercel(undefined, "production", {
       cli: (args) =>
         args[0] === "ls"
           ? lsJson("sha")
           : `{"requestId":"1","id":"a","requestPath":"/a","responseStatusCode":200}\n{ truncated`,
+      fetchImpl: fetchFor(),
       now: () => T0,
     });
 
@@ -249,7 +275,7 @@ describe("fault tolerance", () => {
 
 describe("secret redaction", () => {
   it("never echoes a bearer token from an error", async () => {
-    const r = await collectVercel("super-secret-token", {
+    const r = await collectVercel("super-secret-token", "production", {
       cli: (a) => (a[0] === "ls" ? lsJson("sha") : logLines([])),
       fetchImpl: vi.fn(async () => {
         throw new Error("failed: Bearer super-secret-token");

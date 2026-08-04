@@ -37,8 +37,14 @@
 
 import { execFile } from "node:child_process";
 
-export const VERCEL_PROJECTS = ["chesscito", "lite-chesscito"] as const;
-export type VercelProjectName = (typeof VERCEL_PROJECTS)[number];
+import {
+  profileFor,
+  type OpsTarget,
+  type TargetProfile,
+  type TargetProject,
+} from "../lib/target";
+
+export type VercelProjectName = TargetProject["project"];
 
 export const VERCEL_CLI_TIMEOUT_MS = 25_000;
 /** Hard cap on concurrent `vercel` subprocesses. */
@@ -71,16 +77,69 @@ export type VercelLogSample = {
   html_gateway_errors: string[];
 };
 
+/**
+ * A read-only GET of the project's PUBLIC domain.
+ *
+ * Reported separately from the deployment on purpose: the internal
+ * `*.vercel.app` URL answering says the build exists, while the public domain
+ * answering says the alias is actually wired to it. Those fail independently —
+ * a domain can point at an older deployment, or at nothing.
+ *
+ * Only `/`, one request, bounded timeout, no writes.
+ */
+export type DomainProbe =
+  | {
+      status: "observable";
+      domain: string;
+      http_status: number;
+      /** After redirects; a locale prefix here is normal and expected. */
+      final_url: string;
+      redirected: boolean;
+      latency_ms: number;
+      /** 2xx, or a redirect that resolved to one. */
+      healthy: boolean;
+    }
+  | { status: "not_observable"; domain: string; reason: string };
+
+/**
+ * The deployment Vercel returned did not match the profile that was asked for.
+ *
+ * Classified as NOT OBSERVABLE rather than as a warning about the system:
+ * production may be perfectly healthy: what failed is that the monitor could
+ * not find what it was told to look at. Treating it as yellow would file a
+ * lookup problem next to real incidents.
+ */
+export type TargetMismatch = {
+  expected_target: string;
+  expected_ref: string;
+  actual_target: string | null;
+  actual_ref: string | null;
+  reason: string;
+};
+
 export type VercelProjectResult =
   | {
       project: VercelProjectName;
+      label: string;
+      domain: string;
       status: "observable";
       deployment: VercelDeployment | null;
+      domain_probe: DomainProbe;
       logs: VercelLogSample | null;
       logs_error: string | null;
     }
   | {
       project: VercelProjectName;
+      label: string;
+      domain: string;
+      status: "target_mismatch";
+      mismatch: TargetMismatch;
+      domain_probe: DomainProbe;
+    }
+  | {
+      project: VercelProjectName;
+      label: string;
+      domain: string;
       status: "not_observable";
       reason: string;
     };
@@ -90,12 +149,84 @@ export type VercelUsage =
   | { status: "not_observable"; reason: string; http_status: number | null };
 
 export type VercelResult = {
+  /** Which environment this whole block describes. */
+  target: OpsTarget;
   projects: VercelProjectResult[];
   /** Invocations + Active CPU. See the module header on why this is separate. */
   usage: VercelUsage;
   /** Always present: no derivation from logs to these exists. */
   not_observable: string[];
 };
+
+export const DOMAIN_PROBE_TIMEOUT_MS = 12_000;
+
+/**
+ * Validate the deployment against the requested profile.
+ *
+ * BOTH signals are checked because they come from different systems: `target`
+ * is Vercel's own classification, `githubCommitRef` is what git reported at
+ * build time. Agreeing on one while disagreeing on the other means the
+ * topology changed — a branch renamed, a domain repointed — and that is worth
+ * refusing rather than papering over.
+ */
+export function validateTargetMatch(
+  deployment: VercelDeployment,
+  profile: TargetProfile,
+): { ok: true } | { ok: false; mismatch: TargetMismatch } {
+  const actualTarget = deployment.target;
+  const actualRef = deployment.commit_ref;
+
+  const targetOk = actualTarget === profile.target;
+  const refOk = actualRef === profile.expectedGitRef;
+  if (targetOk && refOk) return { ok: true };
+
+  const problems: string[] = [];
+  if (!targetOk) problems.push(`target is "${actualTarget ?? "unknown"}"`);
+  if (!refOk) problems.push(`git ref is "${actualRef ?? "unknown"}"`);
+
+  return {
+    ok: false,
+    mismatch: {
+      expected_target: profile.target,
+      expected_ref: profile.expectedGitRef,
+      actual_target: actualTarget,
+      actual_ref: actualRef,
+      reason: `asked for ${profile.target} (ref ${profile.expectedGitRef}) but ${problems.join(" and ")}`,
+    },
+  };
+}
+
+/** GET the public domain once. Never throws. */
+export async function probeDomain(
+  domain: string,
+  fetchImpl: typeof fetch,
+  clock: () => number,
+): Promise<DomainProbe> {
+  const url = `https://${domain}/`;
+  const startedAt = clock();
+  try {
+    const response = await fetchImpl(url, {
+      method: "GET",
+      redirect: "follow",
+      signal: AbortSignal.timeout(DOMAIN_PROBE_TIMEOUT_MS),
+    });
+    const latency = clock() - startedAt;
+
+    return {
+      status: "observable",
+      domain,
+      http_status: response.status,
+      final_url: response.url || url,
+      // A locale redirect (`/` → `/en`) is the app working as designed, so a
+      // followed redirect ending in 2xx counts as healthy.
+      redirected: Boolean(response.redirected),
+      latency_ms: latency,
+      healthy: response.status >= 200 && response.status < 300,
+    };
+  } catch (error) {
+    return { status: "not_observable", domain, reason: sanitizeVercelError(error) };
+  }
+}
 
 /** May return synchronously or asynchronously; the collector awaits either. */
 export type CliRunner = (args: string[], timeoutMs: number) => string | Promise<string>;
@@ -233,13 +364,31 @@ export function sanitizeVercelError(raw: unknown): string {
     .slice(0, 200);
 }
 
+/**
+ * Vercel's encoding of the deployment target.
+ *
+ * Measured against the live API: a production deployment carries
+ * `target: "production"`, and a preview deployment carries `target: null` —
+ * the key is present, the value is null. So `null` is not a missing field, it
+ * IS the preview marker, and reading it as "unknown" makes every preview run
+ * report a mismatch against itself. Caught by the first real `--target preview`
+ * run (2026-08-04).
+ *
+ * Anything else is passed through unchanged so it fails validation loudly
+ * rather than being coerced into one of the two known values.
+ */
+export function normalizeDeploymentTarget(raw: unknown): string | null {
+  if (raw === null || raw === undefined) return "preview";
+  return typeof raw === "string" ? raw : null;
+}
+
 function toDeployment(raw: Record<string, unknown>, nowMs: number): VercelDeployment {
   const meta = (raw.meta ?? {}) as Record<string, unknown>;
   const ready = typeof raw.ready === "number" ? raw.ready : null;
   return {
     url: typeof raw.url === "string" ? raw.url : "unknown",
     state: typeof raw.state === "string" ? raw.state : "unknown",
-    target: typeof raw.target === "string" ? raw.target : null,
+    target: normalizeDeploymentTarget(raw.target),
     commit_sha: typeof meta.githubCommitSha === "string" ? meta.githubCommitSha : null,
     commit_ref: typeof meta.githubCommitRef === "string" ? meta.githubCommitRef : null,
     ready_at: ready === null ? null : new Date(ready).toISOString(),
@@ -285,16 +434,27 @@ async function runCli(
  * bounded whether there are two projects or ten.
  */
 async function collectProject(
-  project: VercelProjectName,
+  entry: TargetProject,
+  profile: TargetProfile,
   cli: CliRunner,
+  fetchImpl: typeof fetch,
   nowMs: number,
+  clock: () => number,
 ): Promise<VercelProjectResult> {
+  const { project, domain, label } = entry;
+
+  // The public domain is probed regardless of how the deployment lookup goes:
+  // "the alias answers but the monitor cannot identify the build behind it" is
+  // a state worth being able to report.
+  const domainProbe = await probeDomain(domain, fetchImpl, clock);
+
   let deployment: VercelDeployment | null = null;
 
   try {
     const raw = await runCli(
       cli,
-      ["ls", project, "--prod", "--json", "--limit", "1"],
+      // `--environment` replaces the hardcoded `--prod`; the profile decides.
+      ["ls", project, "--environment", profile.target, "--json", "--limit", "1"],
       VERCEL_CLI_TIMEOUT_MS,
     );
     const parsed = parseCliJson(raw) as { deployments?: Array<Record<string, unknown>> };
@@ -303,9 +463,27 @@ async function collectProject(
   } catch (error) {
     return {
       project,
+      label,
+      domain,
       status: "not_observable",
       reason: sanitizeVercelError(error),
     };
+  }
+
+  if (deployment) {
+    const verdict = validateTargetMatch(deployment, profile);
+    if (!verdict.ok) {
+      // Stop here: reading logs from the wrong environment would produce
+      // numbers labelled with a target they do not belong to.
+      return {
+        project,
+        label,
+        domain,
+        status: "target_mismatch",
+        mismatch: verdict.mismatch,
+        domain_probe: domainProbe,
+      };
+    }
   }
 
   // Logs are a bonus, not a precondition: a project whose deployment is known
@@ -327,7 +505,16 @@ async function collectProject(
     }
   }
 
-  return { project, status: "observable", deployment, logs, logs_error: logsError };
+  return {
+    project,
+    label,
+    domain,
+    status: "observable",
+    deployment,
+    domain_probe: domainProbe,
+    logs,
+    logs_error: logsError,
+  };
 }
 
 /** Run `tasks` with at most `limit` in flight. */
@@ -400,28 +587,36 @@ async function collectUsage(
 
 export async function collectVercel(
   token: string | undefined,
+  target: OpsTarget,
   deps: VercelDeps = {},
 ): Promise<VercelResult> {
   const cli = deps.cli ?? defaultCli;
   const fetchImpl = deps.fetchImpl ?? fetch;
-  const nowMs = (deps.now ?? Date.now)();
+  const clock = deps.now ?? Date.now;
+  const nowMs = clock();
+  const profile = profileFor(target);
 
   // Projects run concurrently under a hard subprocess cap, and one failing
   // project must not take the other down with it.
   const settled = await withConcurrency(
     VERCEL_MAX_CONCURRENCY,
-    VERCEL_PROJECTS.map((project) => () => collectProject(project, cli, nowMs)),
+    profile.projects.map(
+      (entry) => () => collectProject(entry, profile, cli, fetchImpl, nowMs, clock),
+    ),
   );
 
-  const projects: VercelProjectResult[] = settled.map((outcome, index) =>
-    outcome.status === "fulfilled"
+  const projects: VercelProjectResult[] = settled.map((outcome, index) => {
+    const entry = profile.projects[index]!;
+    return outcome.status === "fulfilled"
       ? outcome.value
       : {
-          project: VERCEL_PROJECTS[index]!,
+          project: entry.project,
+          label: entry.label,
+          domain: entry.domain,
           status: "not_observable" as const,
           reason: sanitizeVercelError(outcome.reason),
-        },
-  );
+        };
+  });
 
   const usage = await collectUsage(token, fetchImpl);
 
@@ -433,6 +628,11 @@ export async function collectVercel(
       "days until CPU exhaustion",
     );
   }
+  for (const p of projects) {
+    if (p.status === "target_mismatch") {
+      notObservable.push(`${p.label} deployment (${p.mismatch.reason})`);
+    }
+  }
 
-  return { projects, usage, not_observable: notObservable };
+  return { target, projects, usage, not_observable: notObservable };
 }

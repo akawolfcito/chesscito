@@ -67,6 +67,9 @@ export function renderVerdict(classification: Classification): string {
 export type NotObservableEntry = { what: string; why: string; manual?: string };
 
 export type ReportModel = {
+  /** production | preview. Printed prominently: every number below is scoped
+   *  to it, EXCEPT the shared database — see the Supabase section. */
+  target: string;
   taken_at_utc: string;
   taken_at_local: string;
   duration_ms: number;
@@ -87,6 +90,7 @@ export function renderConsole(model: ReportModel): string {
   out.push(rule);
   out.push(`CHESSCITO — LAUNCH HEALTH        ${model.taken_at_utc}`);
   out.push(`                                 ${model.taken_at_local} (Bogotá)`);
+  out.push(`TARGET: ${model.target.toUpperCase()}`);
   out.push(`ESTADO: ${renderVerdict(model.classification)}`);
   out.push(rule);
 
@@ -143,6 +147,8 @@ export function renderMarkdown(model: ReportModel): string {
   const out: string[] = [];
 
   out.push("# Chesscito — Launch Health");
+  out.push("");
+  out.push(`**TARGET: ${model.target.toUpperCase()}**`);
   out.push("");
   out.push(`**${renderVerdict(model.classification)}**`);
   out.push("");
