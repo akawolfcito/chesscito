@@ -52,7 +52,7 @@ archivo. **El informe solo dice si cada una está configurada, nunca su valor.**
 
 | Variable | Qué desbloquea |
 |---|---|
-| `VERCEL_TOKEN` | invocations del período y Fluid Active CPU — ⚠️ **configurado, pero el endpoint responde HTTP 400**; ver §12 |
+| `VERCEL_TOKEN` | **invocations por proyecto** del ciclo de facturación, vía Observability API — ver §12bis. **No** desbloquea Active CPU ni % de cuota |
 | `UPSTASH_EMAIL` + `UPSTASH_API_KEY` | comandos del período, % de la cuota de 500 K, bandwidth |
 
 Sin estas cuatro, el monitor **funciona igual** pero no puede dar verde pleno:
@@ -415,25 +415,111 @@ Tras un incidente, en orden:
 | Síntoma | Causa | Solución |
 |---|---|---|
 | Proyecto en `not_observable` | CLI sin sesión | `vercel login` |
-| `usage: 404` | el plan Hobby no exponía el endpoint de costos | histórico; ya no aplica |
-| **`usage: 400`** | **estado actual — PENDIENTE DE INVESTIGAR** | ver abajo |
-| `usage: 401` | token inválido | regenerar `VERCEL_TOKEN` |
-| `usage: 403` | el token no alcanza para el scope | revisar permisos |
-
-> **`usage: 400` con `VERCEL_TOKEN` configurado.** Medido el 2026-08-04: el token
-> **está presente** y el endpoint devuelve **400**, no 401 ni 403. Eso importa,
-> porque 401 y 403 son los códigos de "credencial mala" o "permiso insuficiente",
-> y 400 dice *petición mal formada* — apunta a la forma de la llamada (endpoint,
-> parámetros o scope de equipo faltante), no a los permisos del token.
->
-> **No lo diagnostiques asumiendo que el token está mal.** Hay que inspeccionar
-> el cuerpo redactado de la respuesta. Sigue como **no observable** hasta
-> entonces, y por lo tanto el informe sigue saliendo `(partial)`.
+| `usage: 404` / `usage: 400` | **histórico** — `/v1/usage`, retirado el 2026-08-04 | ver §12bis |
+| `team lookup returned 401` | token inválido | regenerar `VERCEL_TOKEN` |
+| `team lookup returned 403` | el token no alcanza para el scope | revisar permisos |
+| `observability query … returned 400` | forma de la petición | el mensaje del servidor **viene incluido** en el `reason` |
 | Muestra de logs vacía | sin tráfico en la ventana | no es un error |
+
+> **Todo error de la API de Vercel ahora trae el mensaje del servidor**, no sólo
+> el código. Esa línea existe porque su ausencia costó tres sesiones: el 400 de
+> `/v1/usage` decía ``missing required property `from` `` en un cuerpo que el
+> colector descartaba, y el informe imprimía sólo `returned 400`.
 
 > Los logs vienen **duplicados** (mismo `requestId` y mismo `id`). El monitor
 > deduplica y muestra ambos números: `52 requests (de 100 filas crudas)`. Si
 > alguna vez ves los dos iguales, la deduplicación se rompió.
+
+---
+
+## 12bis. Vercel Usage — qué se mide y qué no
+
+**`/v1/usage` está RETIRADO.** No es un endpoint público de Vercel (ausente de los
+272 paths de su OpenAPI oficial) y rechaza todo rango temporal, incluido el ciclo
+de facturación real de la cuenta. No quedó como fallback: un endpoint interno que
+no funciona no es una red de seguridad.
+
+**La fuente es `POST /v2/observability/query`**, documentada y funcionando con el
+token actual.
+
+### La ventana
+
+Sale del ciclo de facturación real (`GET /v2/teams/goodwolf` → `billing.period`),
+recortada a "ahora". **El informe la imprime siempre**, y hay que leerla:
+
+```
+consumo (Observability) · ventana 2026-08-04T07:00:00.000Z → 2026-08-04T15:46:26.946Z
+   ciclo de facturación desde 2026-08-04T07:00:00.000Z
+```
+
+⚠️ **El ciclo rota.** El 2026-08-04 rotó esa misma mañana: el "total del período"
+cubría 8 horas, no un mes. Un número sin su ventana acá no significa nada.
+
+### Granularidad: 60 minutos, y no es un parámetro ajustable
+
+**Medido:** la misma ventana y la misma métrica con `{hours:24}` devolvió **53.897**
+y con `{minutes:60}` **28.881**. Los buckets gruesos se alinean al **calendario** y
+el `summary` suma el bucket **entero**, incluyendo tiempo anterior al `startTime`.
+**87 % de sobreestimación, con HTTP 200 y sin ningún aviso.** Hay un test que lo fija.
+
+### Filtrado por proyecto
+
+El scope `owner` abarca **los seis proyectos del equipo**. El total in-scope suma
+**sólo** `chesscito` y `lite-chesscito`. Los demás — `chesscito-landing`,
+`furinkazan`, `denscope-xr`, `xymyx-dasboard` y cualquiera futuro — salen listados
+aparte y **nunca se suman**:
+
+```
+   TOTAL in-scope: 24,915 invocaciones
+   fuera de alcance (NO sumado): chesscito-landing, denscope-xr, furinkazan, xymyx-dasboard — 5,298 invocaciones
+```
+
+Sin ese filtro, el landing solo aportaría ~18 % de consumo ajeno al total de
+Chesscito, y el sesgo crecería con cada proyecto nuevo sin que nada lo señale.
+
+### ⚠️ Production y preview NO están separados en estas métricas
+
+Los dos entornos comparten **nombre de proyecto**, y no se validó ninguna dimensión
+de environment. Es consumo **por proyecto**, no atribución por entorno. Las cifras
+salen iguales en `pnpm ops:health` y en `ops:health:preview` **a propósito**: es la
+misma medición. Es el mismo matiz que `SHARED DATABASE` en Supabase.
+
+### ⛔ Active CPU NO se reporta — y no es por falta de credencial
+
+**Medido el 2026-08-04**, tres llamadas idénticas y consecutivas, misma ventana:
+
+```
+#1 → 1 fila  · chesscito-landing 659.512
+#2 → 3 filas · 535.102 / 77.205 / 47.205
+#3 → 2 filas · 526.443 / 133.069
+```
+
+Cambia la cantidad de filas, cambian los proyectos, y los valores se mueven ~25 %.
+Un par anterior atribuyó **el mismo valor 46.479** a `chesscito` en una llamada y a
+`lite-chesscito` en la siguiente. Las **invocaciones** sobre exactamente el mismo
+`groupBy` se mantuvieron estables a ±1, así que el problema es de la medida de CPU,
+no del agrupamiento.
+
+> Es la trampa de `INFO` de Upstash otra vez (§14): un número con aspecto de métrica
+> y comportamiento de ruido. Publicarlo sería peor que dejar el eje sin medir,
+> porque una cifra de CPU equivocada se lee como tranquilidad.
+
+### Qué sigue sin ser observable
+
+| Métrica | Por qué |
+|---|---|
+| **Fluid Active CPU** | atribución por proyecto no determinista (arriba) |
+| **% de la cuota** | hace falta el **denominador** — lo incluido en el plan — y **ninguna API lo expone**: `/v1/billing/charges` devuelve **404 `costs_not_found`** |
+| **Días hasta agotar CPU** | depende de los dos anteriores |
+
+**Por eso el informe sigue saliendo `GREEN (partial)` y el eje `vercel_cpu` sigue
+contando como crítico sin medir. Es intencional.** Lo que cambió es que ahora hay
+**consumo absoluto por proyecto, comparable entre snapshots** — que es exactamente
+la señal que faltó el 3 de agosto. Inventar un denominador para pintar un
+porcentaje sería el dato con aspecto de verdad que este monitor existe para no
+producir.
+
+---
 
 ### Credenciales
 
