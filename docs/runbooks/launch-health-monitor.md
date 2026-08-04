@@ -52,7 +52,7 @@ archivo. **El informe solo dice si cada una está configurada, nunca su valor.**
 
 | Variable | Qué desbloquea |
 |---|---|
-| `VERCEL_TOKEN` | invocations del período y Fluid Active CPU |
+| `VERCEL_TOKEN` | invocations del período y Fluid Active CPU — ⚠️ **configurado, pero el endpoint responde HTTP 400**; ver §12 |
 | `UPSTASH_EMAIL` + `UPSTASH_API_KEY` | comandos del período, % de la cuota de 500 K, bandwidth |
 
 Sin estas cuatro, el monitor **funciona igual** pero no puede dar verde pleno:
@@ -66,19 +66,116 @@ capacidad sin que aparezca ningún error. Se activan solas en cuanto existan.
 ## 3. Ejecución
 
 ```bash
-pnpm ops:health              # informe en consola + artefactos en disco
-pnpm ops:health; echo $?     # ver el exit code
+pnpm ops:health              # PRODUCTION (por defecto)
+pnpm ops:health:preview      # PREVIEW
 ```
 
-Cada corrida escribe en `artifacts/ops/` (gitignoreado):
+Forma técnica, si necesitás el flag explícito:
+
+```bash
+pnpm -C apps/web exec tsx ../../scripts/ops/launch-health-snapshot.ts --target production
+pnpm -C apps/web exec tsx ../../scripts/ops/launch-health-snapshot.ts --target preview
+```
+
+Un `--target` desconocido **falla con exit 3** y no cae al default: `--target prod`
+es un typo plausible que reportaría production mientras creés estar mirando preview.
+
+Cada corrida escribe bajo el directorio de **su** target (gitignoreado):
 
 ```
-2026-08-04T07-22-55Z.json    datos crudos
-2026-08-04T07-22-55Z.md      informe legible
-latest.json / latest.md      copia de la última — es lo que se compara la próxima vez
+artifacts/ops/production/2026-08-04T13-20-52Z.json|.md
+artifacts/ops/production/latest.json|.md      ← lo que compara la próxima corrida production
+artifacts/ops/preview/2026-08-04T13-22-42Z.json|.md
+artifacts/ops/preview/latest.json|.md         ← lo que compara la próxima corrida preview
 ```
 
 Duración típica: **~10 s**. Supabase ~1,5 s; el resto es el CLI de Vercel.
+
+---
+
+## 3bis. Targets: production y preview
+
+### Topología
+
+| Dominio público | Proyecto Vercel | Target | Git ref |
+|---|---|---|---|
+| `play.chesscito.com` | `chesscito` | production | **`production`** |
+| `learn.chesscito.com` | `lite-chesscito` | production | **`production`** |
+| `preview.chesscito.com` | `chesscito` | preview | **`main`** |
+| `learn-preview.chesscito.com` | `lite-chesscito` | preview | **`main`** |
+| `www.chesscito.com` | `chesscito-landing` | — | **fuera del monitor** |
+
+El landing es un proyecto aparte, con su propio ciclo de vida y sin backend
+compartido. El monitor nunca lo consulta.
+
+### Por qué la separación importa
+
+**No es hipotético.** El 2026-08-04, medido justo después de un push:
+
+```
+production → 986bb383      preview → 5d6083f8      (7 commits de diferencia)
+```
+
+Un monitor sin separación, corrido contra preview y comparado con el `latest.json`
+de production, reportaría *"el commit desplegado cambió de 986bb383 a 5d6083f8"* —
+describiendo un avance que **no ocurrió**.
+
+### Validación cruzada: se chequean DOS señales
+
+- `deployment.target` — la clasificación de Vercel
+- `meta.githubCommitRef` — lo que git reportó al construir
+
+Vienen de sistemas distintos. Si coinciden en una y discrepan en la otra, la
+topología cambió (rama renombrada, dominio repuntado) y el monitor lo rechaza en
+vez de disimularlo.
+
+> **Detalle de la API:** Vercel codifica un deployment preview como
+> `target: null`, con la clave presente. `null` **es** el marcador de preview,
+> no un valor faltante. Leerlo como desconocido hacía que toda corrida preview
+> reportara mismatch contra sí misma.
+
+### `target_mismatch` = NOT OBSERVABLE
+
+Si pedís un target y Vercel devuelve otro, el proyecto sale como **no observable**,
+no como amarillo ni rojo. El sistema puede estar perfectamente sano: lo que falló
+es que el monitor **no encontró lo que se le pidió mirar**. El informe imprime los
+dos lados:
+
+```
+  ⛔ TARGET MISMATCH — deployment NO corresponde al perfil pedido
+     esperado : target=preview ref=main
+     recibido : target=production ref=production
+```
+
+Además, un mismatch **corta antes de leer los logs**: números de un entorno
+etiquetados con el target de otro serían peor que no tenerlos. Y como es un eje
+crítico sin medir, **no puede producir verde pleno** — el informe sale `(partial)`.
+
+### Incompatibilidades: doble defensa
+
+| Caso | Resultado |
+|---|---|
+| Snapshot production vs preview | **rechazado** — `son entornos distintos` |
+| Snapshot **schema v1** vs **v2** | **rechazado** — `written by a different version` |
+
+Los directorios separados hacen improbable el cruce; el guard en
+`checkCompatibility` lo hace **imposible** aunque alguien copie un `latest.json`
+a mano.
+
+**`SNAPSHOT_SCHEMA_VERSION` = 2.** Los snapshots v1 que quedaron sueltos en
+`artifacts/ops/` (fuera de los subdirectorios) **siguen ahí intactos y no se
+borran**, pero **no se comparan**: fueron tomados sin saber de qué entorno
+hablaban, y adivinarlo ahora sería exactamente la clase de dato con aspecto de
+verdad que este guard existe para impedir.
+
+### Probe del dominio público
+
+Separado del deployment, porque fallan de forma independiente: que responda la URL
+interna `*.vercel.app` dice que el build existe; que responda el dominio público
+dice que el alias está efectivamente apuntado a él.
+
+Un solo `GET /`, timeout acotado, sin escrituras. Un redirect de locale
+(`/` → `/en`) que termina en 2xx cuenta como sano.
 
 ---
 
@@ -93,6 +190,29 @@ Duración típica: **~10 s**. Supabase ~1,5 s; el resto es el CLI de Vercel.
 
 **El 3 es deliberadamente distinto del 2.** "No pude medir" y "el sistema está
 en llamas" piden reacciones opuestas, y confundirlos enseña a ignorar los dos.
+
+### ⚠️ `pnpm run` colapsa los códigos no-cero a 1
+
+Medido capa por capa:
+
+| Invocación | exit real |
+|---|---|
+| `pnpm -C apps/web exec tsx …/launch-health-snapshot.ts --target prod` | **3** ✅ |
+| `pnpm ops:health -- --target prod` | **1** ❌ |
+
+`pnpm run` normaliza cualquier código distinto de cero a 1. Es del script runner,
+no del monitor.
+
+**Consecuencia:** `pnpm ops:health` y `pnpm ops:health:preview` distinguen
+**éxito de fallo**, nada más. Cualquier automatización que necesite separar
+amarillo (1) de rojo (2) de fallo del monitor (3) debe invocar directo:
+
+```bash
+pnpm -C apps/web exec tsx ../../scripts/ops/launch-health-snapshot.ts
+echo $?   # 0 | 1 | 2 | 3, exacto
+```
+
+El veredicto legible sale igual por consola en ambos casos.
 
 ---
 
@@ -156,6 +276,28 @@ Cómo leerlas:
 **La clasificación usa solo 24h y peak day**, el peor de los dos. Las ventanas
 cortas se muestran pero no deciden: si decidieran, el informe se pondría
 amarillo cada vez que alguien abre la app dos veces.
+
+---
+
+## 7bis. Supabase = SHARED DATABASE
+
+⚠️ **La base NO se separa por target.** Production y preview escriben en la
+**MISMA** base de datos. El informe lo rotula así:
+
+```
+SUPABASE  ⚠️ SHARED DATABASE  [observable · compartida entre production y preview]
+  ⚠️ Esta base NO se separa por target: production y preview escriben en la MISMA.
+     Filas, ritmo y proyecciones de abajo son la SUMA de los dos entornos y no
+     son atribuibles a uno solo.
+```
+
+**Por qué el rótulo es imprescindible y no cosmético:** un informe que arriba dice
+`TARGET: PREVIEW` invita a leer *todo* lo que sigue como preview. Sin el aviso, un
+pico de tráfico causado por production se leería como causado por preview, y una
+proyección de disco se atribuiría al entorno equivocado.
+
+Lo que **sí** está separado por target: deployments, logs, dominios, y los
+snapshots en disco. Lo que **no**: nada de Supabase.
 
 ---
 
@@ -273,9 +415,20 @@ Tras un incidente, en orden:
 | Síntoma | Causa | Solución |
 |---|---|---|
 | Proyecto en `not_observable` | CLI sin sesión | `vercel login` |
-| `usage: 404` | **el plan Hobby no expone el endpoint de costos** | esperado; usar el panel |
+| `usage: 404` | el plan Hobby no exponía el endpoint de costos | histórico; ya no aplica |
+| **`usage: 400`** | **estado actual — PENDIENTE DE INVESTIGAR** | ver abajo |
 | `usage: 401` | token inválido | regenerar `VERCEL_TOKEN` |
 | `usage: 403` | el token no alcanza para el scope | revisar permisos |
+
+> **`usage: 400` con `VERCEL_TOKEN` configurado.** Medido el 2026-08-04: el token
+> **está presente** y el endpoint devuelve **400**, no 401 ni 403. Eso importa,
+> porque 401 y 403 son los códigos de "credencial mala" o "permiso insuficiente",
+> y 400 dice *petición mal formada* — apunta a la forma de la llamada (endpoint,
+> parámetros o scope de equipo faltante), no a los permisos del token.
+>
+> **No lo diagnostiques asumiendo que el token está mal.** Hay que inspeccionar
+> el cuerpo redactado de la respuesta. Sigue como **no observable** hasta
+> entonces, y por lo tanto el informe sigue saliendo `(partial)`.
 | Muestra de logs vacía | sin tráfico en la ventana | no es un error |
 
 > Los logs vienen **duplicados** (mismo `requestId` y mismo `id`). El monitor
