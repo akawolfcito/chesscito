@@ -78,10 +78,47 @@ describe("an unmeasured critical axis forbids a full green", () => {
   });
 });
 
+describe("unreachable is red; unconfigured is a gap", () => {
+  it("a database that did not answer is RED", () => {
+    const c = classify({
+      ...healthy(),
+      supabase: { observed: false, reason: "unreachable" },
+    });
+    expect(c.level).toBe("red");
+    expect(c.triggers[0]?.detail).toMatch(/did not answer/);
+  });
+
+  it("ABSENT CREDENTIALS are a gap, not a red", () => {
+    // Caught by running from a clean checkout: a fresh clone carries no
+    // credentials and was reporting RED about a database that is perfectly
+    // healthy. "Never asked" and "asked and got nothing" are different facts,
+    // and only the second one says anything about production.
+    const c = classify({
+      ...healthy(),
+      supabase: { observed: false, reason: "not_configured" },
+    });
+    expect(c.level).not.toBe("red");
+    expect(c.partial).toBe(true);
+    expect(c.unmeasured_critical).toContain("supabase");
+    expect(c.triggers.filter((t) => t.axis === "supabase")).toHaveLength(0);
+  });
+
+  it("a clean checkout with nothing configured is GREEN (partial), exit 0", () => {
+    const c = classify({
+      supabase: { observed: false, reason: "not_configured" },
+      vercel: { cpu_percent: null, gateway_error_routes: 0, logs_observed: false },
+      upstash: { percent_used: null, hours_to_exhaustion: null },
+    });
+    expect(c.label).toBe("GREEN (partial)");
+    expect(exitCodeFor(c)).toBe(0);
+    expect(c.unmeasured_critical).toHaveLength(3);
+  });
+});
+
 describe("an observed red survives every gap", () => {
   it("stays RED when other axes are unmeasured", () => {
     const c = classify({
-      supabase: { observed: false },
+      supabase: { observed: false, reason: "unreachable" },
       vercel: { cpu_percent: null, gateway_error_routes: 0, logs_observed: false },
       upstash: { percent_used: null, hours_to_exhaustion: null },
     });

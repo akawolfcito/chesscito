@@ -120,7 +120,20 @@ export type ClassifyInput = {
         /** Physical bytes projected at 90 days, per rate window. */
         projection_90d_bytes: number | null;
       }
-    | { observed: false };
+    | {
+        observed: false;
+        /**
+         * WHY there is no measurement, and the two are not interchangeable:
+         *
+         *  · `unreachable` — we asked and the database did not answer. That is
+         *    an observed fact about production, and it is red.
+         *  · `not_configured` — we never got to ask. That is a gap in this
+         *    machine's setup, and reporting it as red would mean a fresh clone
+         *    alarms about a database that is perfectly healthy. Caught exactly
+         *    that way from a clean checkout (2026-08-04).
+         */
+        reason: "unreachable" | "not_configured";
+      };
   vercel: {
     cpu_percent: number | null;
     gateway_error_routes: number;
@@ -140,13 +153,18 @@ export function classify(input: ClassifyInput): Classification {
 
   // ── Supabase ────────────────────────────────────────────────────────────
   if (!input.supabase.observed) {
-    // The database not answering is not a gap in coverage, it is the loudest
-    // red the monitor can report. It is NOT downgraded to "partial".
-    triggers.push({
-      axis: "supabase",
-      level: "red",
-      detail: "database did not answer select now()",
-    });
+    if (input.supabase.reason === "unreachable") {
+      // We asked and got nothing. That is the loudest red the monitor can
+      // report, and it is NOT softened into a coverage gap.
+      triggers.push({
+        axis: "supabase",
+        level: "red",
+        detail: "database did not answer select now()",
+      });
+    } else {
+      // We never asked. A gap in setup, not a statement about production.
+      unmeasuredCritical.push("supabase");
+    }
   } else {
     const s = input.supabase;
 

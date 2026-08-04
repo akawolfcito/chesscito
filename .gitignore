@@ -161,3 +161,6 @@ graphify-out/
 # backups next to apps/landing/public, not in apps/web.
 apps/web/.theme-builder-trash/
 apps/landing/.theme-builder-trash/
+
+# Operational snapshots — data with a cadence of minutes, not history.
+artifacts/ops/

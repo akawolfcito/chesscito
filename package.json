@@ -20,7 +20,8 @@
     "contracts:verify:alfajores": "turbo run verify:alfajores --filter=hardhat",
     "contracts:verify:celo-sepolia": "turbo run verify:celo-sepolia --filter=hardhat",
     "contracts:verify:celo": "turbo run verify:celo --filter=hardhat",
-    "admin": "pnpm --filter admin run admin --"
+    "admin": "pnpm --filter admin run admin --",
+    "ops:health": "pnpm --filter web exec tsx ../../scripts/ops/launch-health-snapshot.ts"
   },
   "comments": {
     "versions": "Team convention — exact pins (no ^ or ~) for every dependency to harden against malicious version-range hijacks. See feedback_exact_version_pins memory."

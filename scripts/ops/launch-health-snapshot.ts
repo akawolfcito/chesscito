@@ -343,7 +343,12 @@ function buildClassifyInput(
             session_event_counts: supabase.top_sessions_1h.map((s) => s.events),
             projection_90d_bytes: worstProjection?.bytes_at_90d ?? null,
           }
-        : { observed: false },
+        : {
+            observed: false,
+            // `missing` is populated only when a credential was absent, so it
+            // is what separates "never asked" from "asked and got nothing".
+            reason: supabase.missing.length > 0 ? "not_configured" : "unreachable",
+          },
     vercel: {
       // No derivation from logs to CPU exists; absent means absent.
       cpu_percent: null,
