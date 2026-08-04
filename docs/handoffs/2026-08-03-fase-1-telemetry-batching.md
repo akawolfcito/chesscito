@@ -203,3 +203,56 @@ Aparece en tu propia evidencia como `POST /rest/v1/peones_ledger` con 522.
 **Pasa a prioridad alta inmediatamente después de Fase 1.** El índice único sigue siendo
 la garantía final de idempotencia — la corrección es sólo *cuándo* se intenta la semilla,
 no *si* está protegida.
+
+---
+
+## 7. Validación inicial post-push (2026-08-03)
+
+**Commit:** `8d995e81` · pusheado a `origin/main`.
+
+### ⚠️ Producción NO está corriendo Fase 1
+
+Los proyectos despliegan Production desde la rama **`production`**, no `main`
+(alias `chesscito-git-production-goodwolf.vercel.app`, y los logs traen `branch:
+"production"`). `origin/production` sigue en `b784dd34` = Fase 0.
+
+El push a `main` generó **Preview** en ambos proyectos:
+
+| Proyecto | Preview | Production actual |
+|---|---|---|
+| chesscito | `chesscito-6e1tdt0xo` ● Ready · `8d995e81` | `dpl_GPJCGu4wLNZtUEfs21swfaTy6GgD` · `b784dd34` |
+| lite-chesscito | `lite-chesscito-f7vicv0sm` ● Ready · `8d995e81` | `dpl_8HuDa3fxPgsgcqP4nMwbfRSx5TwV` · `b784dd34` |
+
+Avanzar `production` es tuyo. No lo hago yo.
+
+### Smoke tests sobre Preview — VERIFICADO
+
+| Caso | chesscito | lite |
+|---|---|---|
+| 21 eventos | **413** · 0.69 s | **413** · 0.93 s |
+| body > 64 KB (82 KB) | **413** · 0.94 s | — |
+| un evento > 8 KB | **413** · 0.37 s | **413** · 0.43 s |
+| legacy individual > 8 KB | **413** · 0.37 s | — |
+| JSON inválido | **204** · 0.39 s | — |
+| 20 eventos válidos | timeout 25 s | timeout 20 s |
+| legacy individual válido | timeout 25 s | — |
+
+**El contraste es la prueba del requisito 7.** Los rechazados vuelven en menos de un
+segundo; los válidos cuelgan 20–25 s. La única diferencia entre ambos es si el request
+llega a Supabase. Es decir: **la validación de tamaño corre antes de cualquier escritura,
+verificado en un deployment real**, no sólo en tests con mock.
+
+El timeout de los válidos es el **incidente 522 en curso**, no una regresión de Fase 1:
+la ruta ya esperaba sus escrituras antes de este commit. Lo que cambia es cuántas
+invocaciones quedan colgadas — una por lote en vez de una por evento.
+
+### Métricas de `/api/telemetry` en producción — NO OBSERVABLE
+
+Invocations, errores, duración, 522 observados, requests por sesión y llamadas a
+`analytics_events` / `session_first_seen` / `account_first_seen`: **no medibles todavía**,
+porque el código no está en producción. Quedan pendientes de que avances `production`.
+
+### Errores nuevos — ninguno
+
+Los 413 son el comportamiento nuevo esperado. Los timeouts sobre payloads válidos son el
+522 preexistente, idéntico al del deployment anterior.
