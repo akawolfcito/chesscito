@@ -129,6 +129,38 @@ de consumo ajeno que antes se habría atribuido a Chesscito).
 
 ---
 
+## ✅ CERRADO — el RED de `telemetry_volume` («p95 218»)
+
+**Auditoría:** `docs/audits/2026-08-04-telemetry-session-p95-audit.md`
+**Commits:** `80a63b8b` (auditoría) · `ca5f7ef3` (corrección)
+
+**Fue un defecto del instrumento, no del sistema.** El p95 se derivaba en el
+cliente sobre `top_sessions_1h`, que el SQL corta con `limit 20`, así que
+`percentile(20 valores, 0.95)` devolvía `sorted[18]` — **la 2.ª sesión más ruidosa
+de la última hora**, sin importar el tráfico. Medido en la misma ventana: el
+top-20 daba **182** y el p95 real era **77**; 182 era exactamente el **p99**.
+
+**Corregido:** `percentile_disc(0.95) within group` en PostgreSQL, sobre **toda**
+la población de 24 h, con el tamaño de la población al lado. `top_sessions_1h`
+queda sólo como muestra diagnóstica y **nunca** alimenta la clasificación.
+**El umbral rojo sigue en 200.**
+
+**Valor real hoy:** `p50 15 · p95 73 · máx 592` sobre 2.403 sesiones — a 2,7× del
+umbral. Sólo el 0,79 % de las sesiones supera 200, y esas sesiones emiten 23–48
+`event_name` distintos a **1,07 ev/min** (el ritmo más bajo de todas las bandas)
+sobre 298 min de media: son **largas, no desbocadas**.
+
+**Dos defectos reales que la auditoría destapó y que NO se tocaron** (fuera del
+alcance aprobado, ninguno causa el p95):
+
+- **Duplicados exactos: 8,6 % de las filas** (5.262 en 24 h), mismo evento y mismo
+  `created_at`. `dock_tap` ×14 con span **0,0 s**, `score_submit_tx` ×11 en 0,0 s
+  → emisión múltiple en el mismo tick.
+- **217 sesiones (9 %) abarcan varias visitas**, hasta 8 en 21 h: el `session_id`
+  no rota, así que "eventos por sesión" mide días, no una sentada.
+
+---
+
 ## Pendientes priorizados
 
 1. **Obtener `UPSTASH_EMAIL` + `UPSTASH_API_KEY`.** Desbloquea comandos del
@@ -145,6 +177,13 @@ de consumo ajeno que antes se habría atribuido a Chesscito).
    nada.
 5. **Diseñar el rollup ANTES de reducir la retención.** Acortar la ventana sin
    agregados pierde historia de forma irreversible.
+6. **Investigar los duplicados de telemetría con span 0,0 s.** 8,6 % de las filas
+   y de las escrituras que nadie quiso emitir. Empezar por `dock_tap`,
+   `score_submit_tx`, `hub_reward_tile_tap` y `play_hub_arena_tap`: mismo
+   instante, mismo handler.
+7. **Decidir qué significa "sesión".** Mientras `session_id` no rote entre
+   visitas, "eventos por sesión" mide días. Si la métrica busca *intensidad*, el
+   agrupador correcto es `visit_id`.
 
 ---
 

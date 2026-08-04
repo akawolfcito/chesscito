@@ -279,6 +279,43 @@ amarillo cada vez que alguien abre la app dos veces.
 
 ---
 
+## 7ter. p95 de eventos por sesión — población completa
+
+```
+distribución 24h · p50 15 · p95 73 · máx 592 (población completa: 2,403 sesiones)
+```
+
+**El percentil se calcula en PostgreSQL** (`percentile_disc(0.95) within group`)
+sobre **todas** las sesiones de las últimas 24 h, ignorando `session_id` nulo o
+vacío. El tamaño de la población viaja junto al número **a propósito**: un p95 sin
+su *n* no se puede leer.
+
+### ⚠️ `top_sessions_1h` es DIAGNÓSTICO, nunca una distribución
+
+Sirve para *mirar* sesiones concretas. **No se percentila.** Está ordenado por la
+misma cantidad que uno querría percentilar, así que cualquier percentil sobre él
+describe la muestra, no la población — y no converge por más que crezca el
+tráfico.
+
+> **El RED del 2026-08-04 fue un defecto del instrumento, no del sistema.** El p95
+> se derivaba en el cliente sobre ese top-20: `percentile(20 valores, 0.95)` =
+> `sorted[18]` = **la 2.ª sesión más ruidosa de la hora**. Medido en la misma
+> ventana: el top-20 daba **182** y el p95 real era **77** — 182 era el **p99**.
+> Auditoría: `docs/audits/2026-08-04-telemetry-session-p95-audit.md`.
+
+### Umbral y casos borde
+
+- **Rojo ≥ 200, sin cambios.** Como p95 poblacional es holgado: hoy el valor real
+  es **73** y sólo el 0,79 % de las sesiones cruza 200.
+- **Ventana vacía → p95 `null`**, nunca `0`. Un cero se leería como "ninguna
+  sesión emite nada", que es lo contrario de "no se pudo medir". Sale como eje sin
+  medir, no como verde ni como rojo.
+- **Una sola sesión** → `percentile_disc` devuelve el conteo de esa sesión. Es la
+  semántica esperada, y está fijada por un test.
+- **Bloque ausente o malformado** → `null`, sin tumbar la corrida.
+
+---
+
 ## 7bis. Supabase = SHARED DATABASE
 
 ⚠️ **La base NO se separa por target.** Production y preview escriben en la
