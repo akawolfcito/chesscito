@@ -53,10 +53,6 @@ export function PlayersTable({ census, nicknameTokens }: PlayersTableProps) {
 
   const rowsAvailable = census.rowsRead === "ok";
 
-  // Nothing survived. Rendering an empty list here would assert there are no
-  // ranked players over a board that may be full.
-  if (!rowsAvailable && census.total === null) return null;
-
   // The population exceeded what the snapshot carries. Undeclared, the table
   // silently passes itself off as the census it is not. Only computable when
   // there is a population to compare against — guessing at truncation from the
@@ -114,7 +110,22 @@ export function PlayersTable({ census, nicknameTokens }: PlayersTableProps) {
         >
           Census as of {formatAsOf(census.asOf)}
         </p>
-      ) : null}
+      ) : (
+        /* A DIFFERENT claim, deliberately worded as an ATTEMPT rather than a
+           census: "Census as of 10:30" over a failed read would assert a census
+           happened at 10:30, and none did. But hiding the stamp entirely was
+           worse — a failed read caches like any other, and production served a
+           dark census for 18h34m across a full deploy with nothing on screen
+           saying how old the silence was. An age the reader can see is the only
+           way that stops being invisible. */
+        <p
+          data-testid="census-last-attempt"
+          className="mb-2 text-[0.625rem]"
+          style={{ color: "var(--paper-text-subtle)" }}
+        >
+          Last attempted {formatAsOf(census.asOf)} — unavailable since.
+        </p>
+      )}
 
       {truncated ? (
         <p

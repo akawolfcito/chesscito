@@ -86,10 +86,10 @@ describe("placement", () => {
     // its own header instead of borrowing this one.
     renderPage(censusWith(3), {
       ...STATS_WITH_PODIUM,
-      dataIntegrity: { truncated: ["victories"], rowCeiling: 10_000 },
+      dataIntegrity: { truncated: ["victories"], rowCeiling: 1_000 },
     });
 
-    const notice = screen.getByText(/lower bounds, not exact counts/i);
+    const notice = screen.getByTestId("integrity-notice");
     const podium = screen.getByText(/community leaderboard/i);
 
     expect(comesBefore(notice, podium)).toBe(true);
@@ -111,9 +111,13 @@ describe("the podium is untouched", () => {
     renderPage(EMPTY_PLAYERS_CENSUS);
 
     expect(screen.getByText(/community leaderboard/i)).toBeInTheDocument();
-    expect(
-      screen.queryByText(/not affected by the filters/i),
-    ).not.toBeInTheDocument();
+    // The census block no longer vanishes on a failed read — it says it is
+    // down and since when. Silently disappearing is how a dark census went
+    // unnoticed in production for 18h34m, across a deploy.
+    expect(screen.getByText(/temporarily unavailable/i)).toBeInTheDocument();
+    expect(screen.getByTestId("census-last-attempt")).toBeInTheDocument();
+    // What it must NOT do is claim a ranking it does not have.
+    expect(screen.queryByTestId("census-total")).not.toBeInTheDocument();
   });
 });
 

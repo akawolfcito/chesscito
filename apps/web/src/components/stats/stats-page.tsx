@@ -169,7 +169,7 @@ function AccessFunnelChart({ funnel }: { funnel: AccessFunnel }) {
  * check that they add up without trusting the page.
  */
 function AccountLifecycleCards({ life }: { life: AccountLifecycle }) {
-  const cards = [
+  const cards: Array<{ label: string; value: number | null; tone: string }> = [
     { label: "Active (7d)", value: life.active7d, tone: "rgba(58, 128, 148, 0.9)" },
     { label: "Dormant", value: life.dormant, tone: "rgba(191, 148, 74, 0.9)" },
     { label: "Inactive", value: life.inactive, tone: "rgba(150, 140, 130, 0.75)" },
@@ -196,7 +196,7 @@ function AccountLifecycleCards({ life }: { life: AccountLifecycle }) {
               className="text-xl font-bold tabular-nums"
               style={{ color: tone }}
             >
-              {nf(value)}
+              {formatStat(value)}
             </span>
           </div>
         ))}
@@ -205,10 +205,17 @@ function AccountLifecycleCards({ life }: { life: AccountLifecycle }) {
         className="text-[0.6875rem] leading-snug"
         style={{ color: "var(--paper-text-subtle)" }}
       >
+        {/* The three head counts are exact; the partition above may not be.
+            "last 7 days" rather than "this week" because the window is a
+            ROLLING one — the product's other weekly surface starts on Monday
+            UTC and the two would disagree by up to six days. */}
         Of {nf(life.known)} accounts ever seen · {nf(life.newToday)} arrived
-        today, {nf(life.new7d)} this week ·{" "}
-        {nf(life.resurrected7d)} came back after going quiet. Dormant means no
-        activity for 8–29 days; inactive means none in the last 30.
+        today, {nf(life.new7d)} in the last 7 days ·{" "}
+        {formatStat(life.resurrected7d)} came back after going quiet. Dormant
+        means no activity for 8–29 days; inactive means none in the last 30.
+        {life.active7d === null
+          ? " The three figures above could not be measured for this snapshot — they are unavailable, not zero."
+          : ""}
       </p>
     </div>
   );
@@ -750,11 +757,18 @@ export function StatsPage({ stats, census, nicknameTokens }: StatsPageProps) {
           player profile. Some metrics are exact counts from Chesscito
           records, while active sessions are anonymous usage estimates.
         </p>
+        {/* An explicit stamp, NOT a cadence promise. `revalidate` is a floor,
+            not a ceiling: with stale-while-revalidate the first request past
+            the TTL still gets the old snapshot, so "Updated hourly" was
+            measurably false — one surface served a 5h22m-old snapshot under
+            that exact line. A timestamp the reader can check beats a promise
+            the cache does not keep. */}
         <p
+          data-testid="snapshot-stamp"
           className="text-[0.6875rem]"
           style={{ color: "var(--paper-text-subtle)" }}
         >
-          Updated hourly · As of{" "}
+          Snapshot taken{" "}
           <span style={{ color: "var(--paper-text-muted)" }}>
             {formatGeneratedAt(stats.generatedAt)}
           </span>
@@ -768,19 +782,23 @@ export function StatsPage({ stats, census, nicknameTokens }: StatsPageProps) {
           every read came back whole, which is the normal case. */}
       {stats.dataIntegrity.truncated.length > 0 ? (
         <p
+          data-testid="integrity-notice"
           className="rounded-lg px-3 py-2 text-[0.6875rem] leading-snug"
           style={{
             background: "rgba(217, 119, 87, 0.12)",
             color: "var(--paper-text-muted)",
           }}
         >
-          Some reads hit the {nf(stats.dataIntegrity.rowCeiling)}-row ceiling,
-          so these are lower bounds, not exact counts:{" "}
+          Some reads hit the {nf(stats.dataIntegrity.rowCeiling)}-row transport
+          ceiling, so the metrics built on them are shown as{" "}
+          <span style={{ color: "var(--paper-text)" }}>—</span> and are
+          temporarily unavailable —{" "}
+          <span style={{ color: "var(--paper-text)" }}>they are not zero</span>.
+          Affected reads:{" "}
           <span style={{ color: "var(--paper-text)" }}>
             {stats.dataIntegrity.truncated.join(", ")}
           </span>
-          . The most recent days are always complete — truncation drops the
-          oldest rows first.
+          . Everything still showing a number is an exact count.
         </p>
       ) : null}
 

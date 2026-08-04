@@ -175,9 +175,24 @@ export function unionDistinctOrNull(sources: (string[] | null)[]): number | null
 // testability.
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-/** Range bound to dodge PostgREST's silent 1000-row default cap on the
- *  distinct/volume row scans (matches public-aggregator.ts). */
-const ONCHAIN_QUERY_MAX_ROWS = 9_999;
+/**
+ * The `to` bound for the distinct/volume row scans — inclusive, so 999 asks for
+ * 1,000 rows.
+ *
+ * ⛔ THIS IS NOT A CHOICE. PostgREST caps every response at `db-max-rows`
+ * (1,000 on Supabase) and an explicit `.range()` does NOT lift it: asking for
+ * `0-9999` returns `Content-Range: 0-999/…`. The previous value here was 9,999
+ * with a comment claiming it dodged the cap — the same false comment as in
+ * `public-aggregator.ts`, copied along with the constant. Evidence:
+ * `docs/audits/2026-08-04-public-stats-accuracy-audit.md` §9.
+ *
+ * ✅ These three scans are still WHOLE today, and that is luck, not design:
+ * `victories` has 249 rows, `scores` 35, and `peones_ledger` filtered to
+ * `source=pack_purchase` 17. `peones_ledger` itself already holds 4,100. The
+ * day any of them passes 1,000 this block starts undercounting silently, which
+ * is why the aggregator's `hitCeiling` ledger is the real defence.
+ */
+const ONCHAIN_QUERY_MAX_ROWS = 999;
 
 /** Minimal structural shape of the Supabase client this module needs.
  *  Kept loose (the query builder is heavily overloaded) — resolution is

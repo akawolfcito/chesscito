@@ -390,13 +390,19 @@ describe("StatsPage", () => {
           ...SAMPLE_STATS,
           dataIntegrity: {
             truncated: ["active sessions (7d)"],
-            rowCeiling: 10000,
+            rowCeiling: 1000,
           },
         }}
       />,
     );
-    expect(screen.getByText(/lower bounds/i)).toBeInTheDocument();
-    expect(screen.getByText(/active sessions \(7d\)/)).toBeInTheDocument();
+    // The copy no longer says "lower bounds": a capped read does not make a
+    // windowed metric smaller, it makes it a different window. Those metrics
+    // now go to `—` and the notice says so.
+    // Scoped by testid, not by free text: the census block carries its own
+    // "temporarily unavailable" line and a global query would match both.
+    const notice = screen.getByTestId("integrity-notice");
+    expect(notice).toHaveTextContent(/temporarily unavailable/i);
+    expect(notice).toHaveTextContent(/active sessions \(7d\)/);
   });
 
   it("stays silent about integrity when every read came back whole", () => {

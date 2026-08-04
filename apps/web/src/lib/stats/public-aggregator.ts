@@ -21,11 +21,13 @@ import {
   computeHabitDepth,
   computeRetention,
   computeTopCountries,
+  UNMEASURED_ACCOUNT_ACTIVITY,
   type AccessFunnel,
   type AccountLifecycle,
   type ActivationFunnel,
   type CountryCount,
   type HabitDepth,
+  type MeasuredAccountLifecycle,
   type Retention,
 } from "./funnels";
 import {
@@ -247,23 +249,64 @@ export const EMPTY_PUBLIC_STATS: PublicStats = {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Upper bound for PostgREST `range` on distinct-count queries.
- *  Supabase Cloud's default `db-default-rows-limit` (currently 1000)
- *  would silently truncate the row set and undercount distinct
- *  values — explicit range bypasses that. Tune up if `victories` or
- *  `analytics_events` row count approaches this ceiling. */
-const DISTINCT_QUERY_MAX_ROWS = 9_999;
+/** Midnight UTC of `now`, as an ISO string. "Arrived today" is a CALENDAR day
+ *  and not a rolling 24 h — the two disagree by a full day's worth of signups
+ *  every afternoon, and the label says "today". */
+/** Keep only the activity half of a measured lifecycle. The head counts win
+ *  over the ones derived from rows: they are exact and the row-derived pair
+ *  agrees with them only while the read stays under the ceiling. */
+function pickAccountActivity(life: MeasuredAccountLifecycle) {
+  return {
+    active7d: life.active7d,
+    dormant: life.dormant,
+    inactive: life.inactive,
+    resurrected7d: life.resurrected7d,
+  };
+}
 
-/** Rows a `.range(0, DISTINCT_QUERY_MAX_ROWS)` read can return. A result of
- *  exactly this size means PostgREST stopped at the ceiling and there is more
- *  behind it. */
-const ROW_CEILING = DISTINCT_QUERY_MAX_ROWS + 1;
+function startOfUtcDay(now: Date): string {
+  const d = new Date(now);
+  d.setUTCHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+/**
+ * How many rows PostgREST will actually hand back, no matter what we ask for.
+ *
+ * ⛔ AN EXPLICIT `.range()` DOES NOT RAISE THIS. Supabase enforces `db-max-rows`
+ * server-side, and it wins over the request. Measured 2026-08-04 against the
+ * production REST endpoint:
+ *
+ *     Range: 0-9999     → 206 · 1000 rows · Content-Range 0-999/3066
+ *     Range: 0-1500     → 206 · 1000 rows · Content-Range 0-999/3066
+ *     Range: 1000-2999  → 206 · 1000 rows · Content-Range 1000-1999/3066
+ *
+ * The previous value here was 9,999 with a comment claiming the explicit range
+ * bypassed the cap. It never did. Every ranged read is ORDERED newest-first, so
+ * the cap turned "last 30 days" into "last 15 minutes" and the page published
+ * 46 sessions against a real 3,928. Full evidence:
+ * `docs/audits/2026-08-04-public-stats-accuracy-audit.md` §9.
+ *
+ * The third measurement above is the way out: paging works. Counting in SQL is
+ * the better one — see §15 of the same audit.
+ */
+const POSTGREST_MAX_ROWS = 1_000;
+
+/** Rows a `.range(0, ROW_CEILING - 1)` read can return. A result of exactly
+ *  this size means PostgREST stopped at the ceiling and there is more behind
+ *  it. It must equal `POSTGREST_MAX_ROWS`: the old code compared against
+ *  10,000, a size the server can never return, so the check was unsatisfiable
+ *  and the page never warned anyone. */
+const ROW_CEILING = POSTGREST_MAX_ROWS;
+
+/** The `to` bound for a ranged read — inclusive, hence the −1. */
+const RANGE_TO = POSTGREST_MAX_ROWS - 1;
 
 /** True when a read came back exactly full — i.e. it was almost certainly cut
  *  off. Every ranged read is ORDERED newest-first, so what a truncated read
- *  drops is the OLDEST tail: the trailing-30d window stays intact and only
- *  lifetime figures degrade, and they degrade into lower bounds, never into
- *  arbitrary subsets. */
+ *  drops is the OLDEST tail. That is survivable for a lifetime figure (it
+ *  degrades into a lower bound) and FATAL for a windowed one (it silently
+ *  narrows the window), which is why the windowed metrics go null instead. */
 function hitCeiling(rows: unknown): boolean {
   return Array.isArray(rows) && rows.length >= ROW_CEILING;
 }
@@ -471,18 +514,19 @@ export async function getPublicStats(
       .select("*", { count: "exact", head: true })
       .gte("minted_at", since30d) as unknown as Promise<CountResult>,
     // 3. Unique minter wallets — fetch player column, dedupe in JS.
-    //    Count-distinct via PostgREST requires an RPC; for current
-    //    volume (low thousands at most), in-app dedupe is acceptable.
-    //    Explicit range bypasses the silent 1000-row default cap, and the
-    //    explicit ORDER makes truncation deterministic: without it PostgREST
-    //    may return ANY 10k rows, so the "distinct" count would drift between
-    //    refreshes with no way to tell. Newest-first keeps the recent window
-    //    whole and drops only the old tail.
+    //    Count-distinct via PostgREST requires an RPC; `victories` holds 249
+    //    rows today, so in-app dedupe is still whole. It stops being whole at
+    //    1,000 — the range CANNOT be raised past that, see POSTGREST_MAX_ROWS.
+    //    The explicit ORDER makes truncation deterministic: without it
+    //    PostgREST may return ANY 1,000 rows, so the "distinct" count would
+    //    drift between refreshes with no way to tell. Newest-first keeps the
+    //    recent window whole and drops only the old tail, which is why this
+    //    lifetime figure degrades into a lower bound rather than into a lie.
     supabase
       .from("victories")
       .select("player")
       .order("minted_at", { ascending: false })
-      .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
+      .range(0, RANGE_TO) as unknown as Promise<
       DataResult<{ player: string }>
     >,
     // 4. Difficulty distribution — same defensive range + order so the tally
@@ -491,7 +535,7 @@ export async function getPublicStats(
       .from("victories")
       .select("difficulty")
       .order("minted_at", { ascending: false })
-      .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
+      .range(0, RANGE_TO) as unknown as Promise<
       DataResult<{ difficulty: number }>
     >,
     // 5. Welcome Packs lifetime
@@ -512,7 +556,7 @@ export async function getPublicStats(
       .select("session_id")
       .gte("created_at", since7d)
       .order("created_at", { ascending: false })
-      .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
+      .range(0, RANGE_TO) as unknown as Promise<
       DataResult<{ session_id: string }>
     >,
     // 8. Active sessions 30d — also feeds the daily session bucket
@@ -524,7 +568,7 @@ export async function getPublicStats(
       .select("session_id, created_at")
       .gte("created_at", since30d)
       .order("created_at", { ascending: false })
-      .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
+      .range(0, RANGE_TO) as unknown as Promise<
       DataResult<{ session_id: string; created_at: string }>
     >,
     // 9. Coach analyses lifetime
@@ -555,7 +599,7 @@ export async function getPublicStats(
       .select("minted_at")
       .gte("minted_at", since30d)
       .order("minted_at", { ascending: false })
-      .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
+      .range(0, RANGE_TO) as unknown as Promise<
       DataResult<{ minted_at: string }>
     >,
   ]);
@@ -616,7 +660,7 @@ export async function getPublicStats(
     .in("event", [...CHALLENGE_EVENTS])
     .gte("created_at", since30d)
     .order("created_at", { ascending: false })
-    .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<{
+    .range(0, RANGE_TO) as unknown as Promise<{
     data: Array<{ event: string; props: unknown }> | null;
     error: unknown;
   }>).then(extractChallengeFunnel, () => null);
@@ -642,7 +686,7 @@ export async function getPublicStats(
       .select("event, session_id, created_at, country, account_ref")
       .gte("created_at", since30d)
       .order("created_at", { ascending: false })
-      .range(0, DISTINCT_QUERY_MAX_ROWS),
+      .range(0, RANGE_TO),
   ) as unknown as Promise<{
     data: Array<{
       event: string;
@@ -663,7 +707,7 @@ export async function getPublicStats(
       .select("session_id, first_seen")
       .gte("first_seen", since30d)
       .order("first_seen", { ascending: false })
-      .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as {
+      .range(0, RANGE_TO) as unknown as {
       eq: (col: string, val: string) => unknown;
     };
     if (filters.surface !== "all") q = q.eq("first_surface", filters.surface) as typeof q;
@@ -689,7 +733,7 @@ export async function getPublicStats(
       .in("event", [...ALL_ACCESS_ALIASES])
       .gte("created_at", since30d)
       .order("created_at", { ascending: false })
-      .range(0, DISTINCT_QUERY_MAX_ROWS),
+      .range(0, RANGE_TO),
   ) as unknown as Promise<{
     data: Array<{ event: string; session_id: string }> | null;
     error: unknown;
@@ -713,7 +757,7 @@ export async function getPublicStats(
     .select("session_id, first_seen")
     .gte("first_seen", since30d)
     .order("first_seen", { ascending: false })
-    .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<{
+    .range(0, RANGE_TO) as unknown as Promise<{
     data: Array<{ session_id: string; first_seen: string }> | null;
     error: unknown;
   }>).then(
@@ -721,20 +765,50 @@ export async function getPublicStats(
     () => null,
   );
 
-  const activityTrend30d =
-    sessionTrendRows == null && mintTrendRows == null
-      ? []
-      : computeActivityTrend(sessionTrendRows, mintTrendRows, trendFirstSeenRows);
+  // NOTE: the trend is assembled AFTER the integrity ledger below — it is a
+  // windowed series and a capped read would draw 29 empty days beside one tall
+  // bar, which reads as a collapse in traffic rather than as a capped read.
 
-  // Account denominator. Read WITHOUT a time bound on purpose: "inactive" is
-  // the absence of activity, so counting it needs every account that ever
-  // existed, not just the ones seen recently. A 30-day slice here would
-  // define the churned population out of existence.
+  // Account denominator — THREE EXACT COUNTS, not a row scan.
+  //
+  // `count: "exact", head: true` is answered in a `Content-Range` header with
+  // ZERO rows transferred, so these three are immune to the 1,000-row ceiling
+  // that capped everything above. Deriving them from `accountRows.length` is
+  // what once published "1,000 accounts ever seen · 1,000 arrived today · 1,000
+  // this week" — three fields with the same value because they were the same
+  // capped list counted three times.
+  const accountCountResults = await Promise.allSettled([
+    supabase
+      .from("account_first_seen")
+      .select("*", { count: "exact", head: true }) as unknown as Promise<CountResult>,
+    supabase
+      .from("account_first_seen")
+      .select("*", { count: "exact", head: true })
+      .gte("first_seen", startOfUtcDay(now)) as unknown as Promise<CountResult>,
+    supabase
+      .from("account_first_seen")
+      .select("*", { count: "exact", head: true })
+      .gte("first_seen", since7d) as unknown as Promise<CountResult>,
+  ]);
+  const knownAccounts = extractCount(
+    accountCountResults[0] as PromiseSettledResult<CountResult>,
+  );
+  const newAccountsToday = extractCount(
+    accountCountResults[1] as PromiseSettledResult<CountResult>,
+  );
+  const newAccounts7d = extractCount(
+    accountCountResults[2] as PromiseSettledResult<CountResult>,
+  );
+
+  // The row scan survives only to build the active/dormant/inactive partition,
+  // which needs each account's identity and not just how many there are. Read
+  // WITHOUT a time bound on purpose: "inactive" is the absence of activity, so
+  // it can only be counted against every account that ever existed.
   const accountRows = await (supabase
     .from("account_first_seen")
     .select("account_ref, first_seen")
     .order("first_seen", { ascending: false })
-    .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<{
+    .range(0, RANGE_TO) as unknown as Promise<{
     data: Array<{ account_ref: string; first_seen: string }> | null;
     error: unknown;
   }>).then(
@@ -742,51 +816,99 @@ export async function getPublicStats(
     () => null,
   );
 
-  // Both derive from the broad event scan already in hand — no extra reads.
-  // `accountLifecycle` needs BOTH sides: with no account table there is no
-  // denominator and the honest answer is null, not zero.
+  // ── Integrity ledger ──────────────────────────────────────────────────────
+  // Computed BEFORE the derivations, because every windowed metric below is
+  // gated on it. Named per read so the page can say WHICH numbers went dark
+  // instead of a blanket disclaimer nobody can act on.
+  const truncated: string[] = [];
+  const noteIfTruncated = (label: string, rows: unknown): boolean => {
+    const capped = hitCeiling(rows);
+    if (capped) truncated.push(label);
+    return capped;
+  };
+  const mintersCapped = noteIfTruncated("unique minters (lifetime)", extractRows(uniqueMintersRes as PromiseSettledResult<DataResult<{ player: string }>>));
+  const difficultyCapped = noteIfTruncated("difficulty split (lifetime)", extractRows(difficultyRes as PromiseSettledResult<DataResult<{ difficulty: number }>>));
+  const sessions7dCapped = noteIfTruncated("app sessions (7d)", extractRows(sessions7dRes as PromiseSettledResult<DataResult<{ session_id: string }>>));
+  const sessions30dCapped = noteIfTruncated("app sessions + trend (30d)", sessionTrendRows);
+  const mintTrendCapped = noteIfTruncated("progress saves trend (30d)", mintTrendRows);
+  const firstSeenCapped = noteIfTruncated("new vs returning (30d)", trendFirstSeenRows);
+  const events30dCapped = noteIfTruncated("activation / countries / habit (30d)", filteredEvents30d);
+  const cohortCapped = noteIfTruncated("retention cohorts (30d)", cohortRows);
+  const accessCapped = noteIfTruncated("access funnel (30d)", accessRows);
+  const accountsCapped = noteIfTruncated("account partition (lifetime)", accountRows);
+
+  // ── Gating ────────────────────────────────────────────────────────────────
+  // A capped read is fatal for a WINDOWED metric and merely lossy for a
+  // LIFETIME one. Every ranged read is ordered newest-first, so a cap silently
+  // narrows the window — "last 30 days" became "last 15 minutes" and the page
+  // published 46 sessions against a real 3,928. A lifetime figure degrades into
+  // an honest lower bound; a windowed one degrades into a lie with no tell.
+  //
+  // So: windowed metrics go `null`, which the view already renders as an
+  // em-dash. NEVER zero — a zero asserts "nobody did this", the opposite of
+  // "we could not measure this".
+  const wholeEvents30d = events30dCapped ? null : filteredEvents30d;
+  const wholeCohorts = cohortCapped ? null : cohortRows;
+
   const accountLifecycle: AccountLifecycle | null =
-    accountRows && filteredEvents30d
-      ? computeAccountLifecycle(accountRows, filteredEvents30d)
-      : null;
-  const habitDepth: HabitDepth | null = filteredEvents30d
-    ? computeHabitDepth(filteredEvents30d)
+    knownAccounts === null || newAccountsToday === null || newAccounts7d === null
+      ? null
+      : {
+          known: knownAccounts,
+          newToday: newAccountsToday,
+          new7d: newAccounts7d,
+          // The partition needs BOTH sides whole: the account list for the
+          // denominator and the event scan for the activity. Either one capped
+          // and the three buckets are unmeasurable — not zero.
+          ...(accountRows && wholeEvents30d && !accountsCapped
+            ? pickAccountActivity(
+                computeAccountLifecycle(accountRows, wholeEvents30d),
+              )
+            : UNMEASURED_ACCOUNT_ACTIVITY),
+        };
+
+  const habitDepth: HabitDepth | null = wholeEvents30d
+    ? computeHabitDepth(wholeEvents30d)
     : null;
 
-  // Integrity ledger — every ranged read that came back exactly full. Named
-  // per read so the page can say WHICH numbers became lower bounds instead of
-  // a blanket disclaimer nobody can act on.
-  const truncated: string[] = [];
-  const noteIfTruncated = (label: string, rows: unknown) => {
-    if (hitCeiling(rows)) truncated.push(label);
-  };
-  noteIfTruncated("unique minters (lifetime)", extractRows(uniqueMintersRes as PromiseSettledResult<DataResult<{ player: string }>>));
-  noteIfTruncated("difficulty split (lifetime)", extractRows(difficultyRes as PromiseSettledResult<DataResult<{ difficulty: number }>>));
-  noteIfTruncated("active sessions (7d)", extractRows(sessions7dRes as PromiseSettledResult<DataResult<{ session_id: string }>>));
-  noteIfTruncated("active sessions + trend (30d)", sessionTrendRows);
-  noteIfTruncated("progress saves trend (30d)", mintTrendRows);
-  noteIfTruncated("new vs returning (30d)", trendFirstSeenRows);
-  noteIfTruncated("activation / countries (30d)", filteredEvents30d);
-  noteIfTruncated("retention cohorts (30d)", cohortRows);
-  noteIfTruncated("access funnel (30d)", accessRows);
-  noteIfTruncated("accounts (lifetime)", accountRows);
-
-  const activation: ActivationFunnel | null = filteredEvents30d
+  const activation: ActivationFunnel | null = wholeEvents30d
     ? computeActivation(
-        filteredEvents30d.filter((r) =>
+        wholeEvents30d.filter((r) =>
           (ALL_FUNNEL_ALIASES as readonly string[]).includes(r.event),
         ),
       )
     : null;
   const appOpens30d =
     activation?.find((s) => s.step === "app_opened")?.sessions ?? null;
-  const topCountries: CountryCount[] = filteredEvents30d
-    ? computeTopCountries(filteredEvents30d)
+  const topCountries: CountryCount[] = wholeEvents30d
+    ? computeTopCountries(wholeEvents30d)
     : [];
   const retention: Retention | null =
-    cohortRows && filteredEvents30d
-      ? computeRetention(cohortRows, filteredEvents30d)
+    wholeCohorts && wholeEvents30d
+      ? computeRetention(wholeCohorts, wholeEvents30d)
       : null;
+
+  // The access funnel is its own narrow read, so it survives long after the
+  // broad scan starts truncating — but when IT is capped, the door counts are
+  // a 15-minute slice labelled 30 days, same as the rest.
+  const gatedAccessFunnel: AccessFunnel | null = accessCapped
+    ? null
+    : accessFunnel;
+
+  // The trend is four panels over ONE bucket array, so it is all-or-nothing:
+  // there is no way to blank one series without printing zeros for it, and a
+  // 30-bar chart of zeros reads as "traffic collapsed", not as "not measured".
+  //
+  // Both reads must be whole. A capped session read draws 29 empty days beside
+  // one tall bar; a capped `session_first_seen` read makes every install look
+  // brand new, which is how the page came to show "New installs 46 ·
+  // Returning 0". Either one capped and the section is hidden — the exact
+  // "Progress Saves (30d)" card above already carries the mint total.
+  const trendReadable = !sessions30dCapped && !firstSeenCapped && !mintTrendCapped;
+  const activityTrend30d =
+    !trendReadable || (sessionTrendRows == null && mintTrendRows == null)
+      ? []
+      : computeActivityTrend(sessionTrendRows, mintTrendRows, trendFirstSeenRows);
 
   return {
     totalVictories: extractCount(totalVictoriesRes as PromiseSettledResult<CountResult>),
@@ -805,18 +927,25 @@ export async function getPublicStats(
       welcomePacksLifetimeRes as PromiseSettledResult<CountResult>,
     ),
     welcomePacks7d: extractCount(welcomePacks7dRes as PromiseSettledResult<CountResult>),
-    activeSessions7d: extractDistinctCount(
-      sessions7dRes as PromiseSettledResult<
-        DataResult<{ session_id: string }>
-      >,
-      "session_id",
-    ),
-    activeSessions30d: extractDistinctCount(
-      sessions30dRes as PromiseSettledResult<
-        DataResult<{ session_id: string }>
-      >,
-      "session_id",
-    ),
+    // Both go null the moment their read is capped. A `Set` built over the
+    // newest 1,000 rows is a 15-minute headcount, and printing it under a "7d"
+    // or "30d" label is the single worst number this page has ever shipped.
+    activeSessions7d: sessions7dCapped
+      ? null
+      : extractDistinctCount(
+          sessions7dRes as PromiseSettledResult<
+            DataResult<{ session_id: string }>
+          >,
+          "session_id",
+        ),
+    activeSessions30d: sessions30dCapped
+      ? null
+      : extractDistinctCount(
+          sessions30dRes as PromiseSettledResult<
+            DataResult<{ session_id: string }>
+          >,
+          "session_id",
+        ),
     coachAnalysesLifetime: extractCount(
       coachLifetimeRes as PromiseSettledResult<CountResult>,
     ),
@@ -847,7 +976,7 @@ export async function getPublicStats(
     activation,
     topCountries,
     retention,
-    accessFunnel,
+    accessFunnel: gatedAccessFunnel,
     accountLifecycle,
     habitDepth,
     dataIntegrity: { truncated, rowCeiling: ROW_CEILING },

@@ -154,21 +154,52 @@ function todayKeyOf(now: Date): string {
    counted against a denominator that outlives the event window. That
    denominator is `account_first_seen`; without it the number does not exist. */
 
+/**
+ * The three head counts are EXACT — they come from `count: "exact"`, which
+ * PostgREST answers in a header without transferring a row, so they are immune
+ * to the 1,000-row transport ceiling.
+ *
+ * The four activity fields are `number | null` because they are NOT: they need
+ * both the account list and the event scan in memory, and either one arriving
+ * capped makes the whole partition a guess. `null` is "we could not measure
+ * this", and it is emphatically not zero — publishing `inactive: 962` off a
+ * capped read is exactly the defect this shape exists to prevent.
+ */
 export type AccountLifecycle = {
   /** Accounts known to exist at all. The denominator for everything below. */
   known: number;
   newToday: number;
   new7d: number;
-  /** Any event in the last 7 days. */
-  active7d: number;
-  /** Last event 8–29 days ago. */
-  dormant: number;
-  /** No event in the whole 30-day window. */
-  inactive: number;
+  /** Any event in the last 7 days. `null` when the reads were capped. */
+  active7d: number | null;
+  /** Last event 8–29 days ago. `null` when the reads were capped. */
+  dormant: number | null;
+  /** No event in the whole 30-day window. `null` when the reads were capped. */
+  inactive: number | null;
   /** Active in the last 7 days after a silent 8–29 day stretch — the number
    *  that says whether streaks and reminders actually pull anyone back. */
+  resurrected7d: number | null;
+};
+
+/** The COMPLETE shape — what `computeAccountLifecycle` returns. It only runs on
+ *  the path where both reads came back whole, so its four activity fields are
+ *  narrowed back to plain numbers and the partition identity
+ *  `active7d + dormant + inactive === known` is checkable without null guards. */
+export type MeasuredAccountLifecycle = AccountLifecycle & {
+  active7d: number;
+  dormant: number;
+  inactive: number;
   resurrected7d: number;
 };
+
+/** The activity half, unmeasured. Spread over the exact head counts when either
+ *  underlying read came back capped. */
+export const UNMEASURED_ACCOUNT_ACTIVITY = {
+  active7d: null,
+  dormant: null,
+  inactive: null,
+  resurrected7d: null,
+} as const;
 
 export const EMPTY_ACCOUNT_LIFECYCLE: AccountLifecycle = {
   known: 0,
@@ -194,7 +225,7 @@ export function computeAccountLifecycle(
   accounts: Array<{ account_ref?: string | null; first_seen?: string | null }>,
   activity: Array<{ account_ref?: string | null; created_at?: string | null }>,
   now: Date = new Date(),
-): AccountLifecycle {
+): MeasuredAccountLifecycle {
   const todayKey = todayKeyOf(now);
 
   /** account → the smallest age (in days) of any of its events. */
@@ -214,7 +245,18 @@ export function computeAccountLifecycle(
     if (age >= 8 && age <= 29) activeInGap.add(ref);
   }
 
-  const out: AccountLifecycle = { ...EMPTY_ACCOUNT_LIFECYCLE };
+  // Local all-number accumulator: the exported shape allows `null` on the four
+  // activity fields, and `+=` cannot run against that union. This function is
+  // only ever called on the COMPLETE path, so every field here is a number.
+  const out = {
+    known: 0,
+    newToday: 0,
+    new7d: 0,
+    active7d: 0,
+    dormant: 0,
+    inactive: 0,
+    resurrected7d: 0,
+  };
   for (const row of accounts) {
     const ref =
       typeof row.account_ref === "string" && row.account_ref

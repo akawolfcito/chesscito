@@ -91,12 +91,25 @@ describe("the timestamp belongs to THIS snapshot", () => {
     expect(screen.getByTestId("census-as-of")).toBeInTheDocument();
   });
 
-  it("shows NO time when the rows read failed", () => {
+  it("shows NO census time when the rows read failed", () => {
     // "Census as of 10:30" over a failed read claims a census happened at
     // 10:30. None did.
     renderTable(census(0, { rowsRead: "unavailable", total: 17 }));
 
     expect(screen.queryByTestId("census-as-of")).not.toBeInTheDocument();
+  });
+
+  it("does show the AGE of the failure, worded as an attempt", () => {
+    // The stamp used to vanish entirely on a failed read, and a degraded census
+    // caches like any other: production served a dark census for 18h34m, across
+    // a deploy, with nothing on screen saying so. The wording carries the whole
+    // distinction — an attempt is not a census.
+    renderTable(census(0, { rowsRead: "unavailable", total: 17 }));
+
+    const stamp = screen.getByTestId("census-last-attempt");
+    expect(stamp).toBeInTheDocument();
+    expect(stamp).toHaveTextContent(/last attempted/i);
+    expect(stamp).toHaveTextContent(/unavailable since/i);
   });
 });
 
@@ -139,12 +152,17 @@ describe("the four internal outcomes", () => {
     expect(screen.getByTestId("census-total")).toHaveTextContent("17");
   });
 
-  it("rows down and count down → the block renders nothing at all", () => {
-    const { container } = renderTable(
-      census(0, { total: null, rowsRead: "unavailable" }),
-    );
+  it("rows down and count down → says it is down, and says since when", () => {
+    // This used to render nothing at all. That is how a census stayed dark for
+    // 18h34m in production without a single pixel admitting it — a block that
+    // hides on failure is indistinguishable from a block that was never built.
+    // No list and no total, but the outage itself is now stated.
+    renderTable(census(0, { total: null, rowsRead: "unavailable" }));
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("census-total")).not.toBeInTheDocument();
+    expect(screen.getByText(/temporarily unavailable/i)).toBeInTheDocument();
+    expect(screen.getByTestId("census-last-attempt")).toBeInTheDocument();
   });
 });
 
