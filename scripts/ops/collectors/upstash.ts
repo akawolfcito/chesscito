@@ -35,13 +35,33 @@ export const UPSTASH_TIMEOUT_MS = 10_000;
 /** Free-tier monthly command allowance, for the renderer to compare against. */
 export const UPSTASH_MONTHLY_COMMAND_QUOTA = 500_000;
 
+/**
+ * Latency from a small sample, never a single shot.
+ *
+ * The first PING of a run pays TLS setup and reads far above steady state — 395
+ * ms against a ~40 ms warm round trip, measured here. Reporting that one number
+ * would make every snapshot look like a latency spike. Median is the headline;
+ * p95 is what catches a real tail.
+ *
+ * This is a health signal only. It is never used as, or converted into, a quota
+ * figure — see the module header on why nothing from the data plane can be.
+ */
+export type UpstashLatency = {
+  samples: number[];
+  median_ms: number;
+  p95_ms: number;
+  /** Kept separately so a warm-up outlier is visible rather than averaged away. */
+  first_ms: number;
+};
+
+export const UPSTASH_LATENCY_SAMPLES = 5;
+
 export type UpstashDataPlane =
   | {
       status: "observable";
       /** Total keys. Global and deterministic, unlike anything from INFO. */
       keys: number;
-      /** Round-trip time we measured ourselves. */
-      ping_ms: number;
+      latency: UpstashLatency;
     }
   | { status: "not_observable"; reason: string; missing: string[] };
 
@@ -97,6 +117,24 @@ export function sanitizeUpstashError(raw: unknown, secrets: string[] = []): stri
     .slice(0, 200);
 }
 
+/**
+ * Nearest-rank percentile. No interpolation: with five samples an interpolated
+ * p95 would be a number that no request actually took.
+ */
+export function summarizeLatency(samples: number[]): UpstashLatency {
+  const sorted = [...samples].sort((a, b) => a - b);
+  const at = (q: number) =>
+    sorted.length === 0
+      ? 0
+      : sorted[Math.min(sorted.length - 1, Math.ceil(q * sorted.length) - 1)]!;
+  return {
+    samples,
+    median_ms: at(0.5),
+    p95_ms: at(0.95),
+    first_ms: samples[0] ?? 0,
+  };
+}
+
 async function restCommand(
   url: string,
   token: string,
@@ -138,10 +176,14 @@ async function collectDataPlane(
   }
 
   try {
-    const startedAt = clock();
-    // PING first so the measured latency is a round trip, not a DBSIZE scan.
-    await restCommand(url!, token!, ["PING"], fetchImpl);
-    const pingMs = clock() - startedAt;
+    // A small PING sample. Sequential on purpose: parallel requests would
+    // measure our own concurrency, not the service's round trip.
+    const samples: number[] = [];
+    for (let i = 0; i < UPSTASH_LATENCY_SAMPLES; i++) {
+      const startedAt = clock();
+      await restCommand(url!, token!, ["PING"], fetchImpl);
+      samples.push(clock() - startedAt);
+    }
 
     const dbsize = await restCommand(url!, token!, ["DBSIZE"], fetchImpl);
     if (typeof dbsize !== "number") {
@@ -152,7 +194,7 @@ async function collectDataPlane(
       };
     }
 
-    return { status: "observable", keys: dbsize, ping_ms: pingMs };
+    return { status: "observable", keys: dbsize, latency: summarizeLatency(samples) };
   } catch (error) {
     return {
       status: "not_observable",

@@ -11,9 +11,11 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  UPSTASH_LATENCY_SAMPLES,
   UPSTASH_MONTHLY_COMMAND_QUOTA,
   collectUpstash,
   sanitizeUpstashError,
+  summarizeLatency,
 } from "../collectors/upstash";
 
 const REST_URL = "https://fake-db-12345.upstash.io";
@@ -53,17 +55,35 @@ function fakeFetch(opts: {
 }
 
 describe("data plane", () => {
-  it("reports DBSIZE and a locally measured ping", async () => {
-    let tick = 0;
+  it("reports DBSIZE and a latency SAMPLE, not a single shot", async () => {
+    // A first PING pays TLS setup: 395ms measured against a ~40ms warm trip.
+    // One reading would make every snapshot look like a spike.
+    const readings = [395, 42, 38, 40, 45];
+    let call = 0;
+    let clock = 0;
     const r = await collectUpstash(DATA_ONLY, {
       fetchImpl: fakeFetch({ dbsize: 5_799 }),
-      now: () => (tick += 41),
+      now: () => {
+        // Even calls start a sample, odd calls end it.
+        const value = clock;
+        clock += call % 2 === 0 ? (readings[Math.floor(call / 2)] ?? 0) : 0;
+        call += 1;
+        return value;
+      },
     });
 
     expect(r.data_plane.status).toBe("observable");
     if (r.data_plane.status !== "observable") return;
     expect(r.data_plane.keys).toBe(5_799);
-    expect(r.data_plane.ping_ms).toBeGreaterThan(0);
+    expect(r.data_plane.latency.samples).toHaveLength(UPSTASH_LATENCY_SAMPLES);
+  });
+
+  it("takes exactly UPSTASH_LATENCY_SAMPLES pings", async () => {
+    const fetchImpl = fakeFetch();
+    await collectUpstash(DATA_ONLY, { fetchImpl });
+    const bodies = (fetchImpl as unknown as { mock: { calls: unknown[][] } }).mock.calls
+      .map((c) => String((c[1] as { body?: string } | undefined)?.body ?? ""));
+    expect(bodies.filter((b) => b.includes("PING"))).toHaveLength(UPSTASH_LATENCY_SAMPLES);
   });
 
   it("never calls INFO — it is per node and cannot be trusted", async () => {
@@ -214,5 +234,37 @@ describe("secret redaction", () => {
 
   it("bounds the output", () => {
     expect(sanitizeUpstashError(new Error("e".repeat(2_000))).length).toBeLessThanOrEqual(200);
+  });
+});
+
+
+describe("latency summary", () => {
+  it("reports median and p95, and keeps the warm-up sample visible", () => {
+    // The 395 is the TLS handshake. Median must not be dragged by it, and it
+    // must remain inspectable rather than averaged away.
+    const l = summarizeLatency([395, 42, 38, 40, 45]);
+    expect(l.median_ms).toBe(42);
+    expect(l.p95_ms).toBe(395);
+    expect(l.first_ms).toBe(395);
+  });
+
+  it("uses nearest-rank, never an interpolated value nobody measured", () => {
+    const l = summarizeLatency([10, 20, 30, 40]);
+    expect(l.samples).toContain(l.median_ms);
+    expect(l.samples).toContain(l.p95_ms);
+  });
+
+  it("survives an empty sample without dividing by zero", () => {
+    expect(summarizeLatency([])).toMatchObject({ median_ms: 0, p95_ms: 0 });
+  });
+
+  it("latency is never presented as a quota figure", async () => {
+    const r = await collectUpstash(DATA_ONLY, { fetchImpl: fakeFetch() });
+    if (r.data_plane.status !== "observable") throw new Error("expected observable");
+    // The data plane may not carry anything quota-shaped: only the management
+    // API can answer that, and it is absent here.
+    expect(Object.keys(r.data_plane)).not.toContain("percent_used");
+    expect(Object.keys(r.data_plane)).not.toContain("commands_period");
+    expect(r.quota.status).toBe("not_observable");
   });
 });

@@ -35,12 +35,14 @@
  * number, so rows are deduped on the `requestId + id` pair.
  */
 
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 
 export const VERCEL_PROJECTS = ["chesscito", "lite-chesscito"] as const;
 export type VercelProjectName = (typeof VERCEL_PROJECTS)[number];
 
 export const VERCEL_CLI_TIMEOUT_MS = 25_000;
+/** Hard cap on concurrent `vercel` subprocesses. */
+export const VERCEL_MAX_CONCURRENCY = 4;
 export const VERCEL_API_TIMEOUT_MS = 15_000;
 export const VERCEL_LOG_LIMIT = 100;
 
@@ -95,18 +97,34 @@ export type VercelResult = {
   not_observable: string[];
 };
 
+/** May return synchronously or asynchronously; the collector awaits either. */
+export type CliRunner = (args: string[], timeoutMs: number) => string | Promise<string>;
+
 export type VercelDeps = {
   /** Injected so tests never shell out. Returns stdout. */
-  cli?: (args: string[], timeoutMs: number) => string;
+  cli?: CliRunner;
   fetchImpl?: typeof fetch;
   now?: () => number;
 };
 
-function defaultCli(args: string[], timeoutMs: number): string {
-  return execFileSync("vercel", args, {
-    encoding: "utf8",
-    timeout: timeoutMs,
-    stdio: ["pipe", "pipe", "pipe"],
+/**
+ * Async spawn with a per-call timeout. Not `execFileSync`: that blocks the
+ * process, so two projects could never overlap and the collector measured ~17 s
+ * for four calls that each take ~4 s.
+ */
+function defaultCli(args: string[], timeoutMs: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    execFile(
+      "vercel",
+      args,
+      { encoding: "utf8", timeout: timeoutMs, maxBuffer: 16 * 1024 * 1024 },
+      (error, stdout) => {
+        // A non-zero exit still carries usable stdout in some CLI paths, but a
+        // timeout does not — surface the error and let the caller degrade.
+        if (error) reject(error);
+        else resolve(stdout);
+      },
+    );
   });
 }
 
@@ -229,15 +247,53 @@ function toDeployment(raw: Record<string, unknown>, nowMs: number): VercelDeploy
   };
 }
 
+function parseLogRows(raw: string): RawLogRow[] {
+  const rows: RawLogRow[] = [];
+  for (const line of raw.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith("{")) continue;
+    try {
+      rows.push(JSON.parse(trimmed));
+    } catch {
+      // A partial line at the tail of the stream is normal; skip it.
+    }
+  }
+  return rows;
+}
+
+/**
+ * A CLI call, off the event loop, with its OWN timeout.
+ *
+ * `execFileSync` blocks the whole process, which is why the sequential version
+ * of this collector took ~17 s for two projects: four calls of ~4 s each, none
+ * able to overlap. Running them concurrently needs the async spawn.
+ */
+async function runCli(
+  cli: CliRunner,
+  args: string[],
+  timeoutMs: number,
+): Promise<string> {
+  return cli(args, timeoutMs);
+}
+
+/**
+ * Fetch a project's deployment and its log window CONCURRENTLY.
+ *
+ * The two calls are independent — the log fetch needs a deployment URL, so it
+ * is issued after `ls` resolves, but the two PROJECTS overlap fully. With a
+ * concurrency cap of 4 (see `VERCEL_MAX_CONCURRENCY`) that keeps the collector
+ * bounded whether there are two projects or ten.
+ */
 async function collectProject(
   project: VercelProjectName,
-  cli: (args: string[], timeoutMs: number) => string,
+  cli: CliRunner,
   nowMs: number,
 ): Promise<VercelProjectResult> {
   let deployment: VercelDeployment | null = null;
 
   try {
-    const raw = cli(
+    const raw = await runCli(
+      cli,
       ["ls", project, "--prod", "--json", "--limit", "1"],
       VERCEL_CLI_TIMEOUT_MS,
     );
@@ -253,32 +309,51 @@ async function collectProject(
   }
 
   // Logs are a bonus, not a precondition: a project whose deployment is known
-  // is still worth reporting even if the log window cannot be fetched.
+  // is still worth reporting even if the log window cannot be fetched. The log
+  // call carries its own timeout, so a slow log stream cannot consume the
+  // budget that already produced the deployment.
   let logs: VercelLogSample | null = null;
   let logsError: string | null = null;
   if (deployment) {
     try {
-      const raw = cli(
+      const raw = await runCli(
+        cli,
         ["logs", `https://${deployment.url}`, "--json", "--limit", String(VERCEL_LOG_LIMIT)],
         VERCEL_CLI_TIMEOUT_MS,
       );
-      const rows: RawLogRow[] = [];
-      for (const line of raw.split("\n")) {
-        const trimmed = line.trim();
-        if (!trimmed.startsWith("{")) continue;
-        try {
-          rows.push(JSON.parse(trimmed));
-        } catch {
-          // A partial line at the tail of the stream is normal; skip it.
-        }
-      }
-      logs = summarizeLogs(rows);
+      logs = summarizeLogs(parseLogRows(raw));
     } catch (error) {
       logsError = sanitizeVercelError(error);
     }
   }
 
   return { project, status: "observable", deployment, logs, logs_error: logsError };
+}
+
+/** Run `tasks` with at most `limit` in flight. */
+export async function withConcurrency<T>(
+  limit: number,
+  tasks: Array<() => Promise<T>>,
+): Promise<Array<PromiseSettledResult<T>>> {
+  const results: Array<PromiseSettledResult<T>> = new Array(tasks.length);
+  let cursor = 0;
+
+  async function worker(): Promise<void> {
+    for (;;) {
+      const index = cursor++;
+      if (index >= tasks.length) return;
+      try {
+        results[index] = { status: "fulfilled", value: await tasks[index]!() };
+      } catch (reason) {
+        results[index] = { status: "rejected", reason };
+      }
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.max(1, Math.min(limit, tasks.length)) }, worker),
+  );
+  return results;
 }
 
 /**
@@ -331,9 +406,11 @@ export async function collectVercel(
   const fetchImpl = deps.fetchImpl ?? fetch;
   const nowMs = (deps.now ?? Date.now)();
 
-  // One failing project must not take the other down with it.
-  const settled = await Promise.allSettled(
-    VERCEL_PROJECTS.map((project) => collectProject(project, cli, nowMs)),
+  // Projects run concurrently under a hard subprocess cap, and one failing
+  // project must not take the other down with it.
+  const settled = await withConcurrency(
+    VERCEL_MAX_CONCURRENCY,
+    VERCEL_PROJECTS.map((project) => () => collectProject(project, cli, nowMs)),
   );
 
   const projects: VercelProjectResult[] = settled.map((outcome, index) =>
