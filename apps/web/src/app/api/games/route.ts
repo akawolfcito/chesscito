@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Redis } from "@upstash/redis";
+import { getRedis } from "@/lib/server/redis";
 import { isAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { enforceGameCap, GAME_LIST_LPUSH_LUA, UUID_RE } from "@/lib/coach/game-persistence";
@@ -9,7 +9,7 @@ import type { GameRecord } from "@/lib/coach/types";
 
 const MAX_MOVES = 500;
 
-const redis = Redis.fromEnv();
+const redis = getRedis();
 const log = createLogger({ route: "/api/games" });
 
 export async function POST(req: Request) {

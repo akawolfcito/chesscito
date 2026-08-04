@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createPublicClient, decodeEventLog, http, isAddress, keccak256, toBytes } from "viem";
 import { celo } from "viem/chains";
-import { Redis } from "@upstash/redis";
+import { getRedis } from "@/lib/server/redis";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { extendProExpiry } from "@/lib/coach/pro-extend";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
@@ -19,7 +19,7 @@ const ITEM_PURCHASED_TOPIC = keccak256(
 
 const PROCESSED_TX_TTL_SECONDS = 90 * 24 * 60 * 60;
 
-const redis = Redis.fromEnv();
+const redis = getRedis();
 const SHOP_ADDRESS = process.env.NEXT_PUBLIC_SHOP_ADDRESS as `0x${string}` | undefined;
 
 const client = SHOP_ADDRESS

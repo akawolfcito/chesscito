@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { Redis } from "@upstash/redis";
+import { getRedis } from "@/lib/server/redis";
 import { isAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { enforceOrigin } from "@/lib/server/demo-signing";
 import type { JobStatus } from "@/lib/coach/types";
 
-const redis = Redis.fromEnv();
+const redis = getRedis();
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {

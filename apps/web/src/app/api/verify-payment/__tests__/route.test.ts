@@ -32,8 +32,11 @@ vi.mock("@upstash/redis", () => ({
 
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
-  enforceReadRateLimit: vi.fn(),
   getRequestIp: vi.fn(() => "127.0.0.1"),
+}));
+// FAIL-CLOSED route — keeps the throwing guard, now from its own module.
+vi.mock("@/lib/server/rate-limit", () => ({
+  enforceReadRateLimit: vi.fn(),
 }));
 vi.mock("@/lib/supabase/server", () => ({ getSupabaseServer: vi.fn() }));
 vi.mock("@/lib/server/logger", () => ({

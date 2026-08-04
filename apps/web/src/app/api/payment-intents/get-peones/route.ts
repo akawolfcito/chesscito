@@ -23,7 +23,8 @@ import {
   isTokenAllowedByCanaryConfig,
   resolveGetPeonesCanaryServerConfig,
 } from "@/lib/payments/get-peones-canary-server";
-import { enforceOrigin, enforceReadRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceOrigin, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceReadRateLimit } from "@/lib/server/rate-limit";
 import { createLogger, hashWallet } from "@/lib/server/logger";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
@@ -87,9 +88,10 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 export async function POST(req: Request) {
+  // FAIL-CLOSED: creates a payment intent.
   try {
     enforceOrigin(req);
-    await enforceReadRateLimit(getRequestIp(req));
+    await enforceReadRateLimit(getRequestIp(req), "payment-intent-get-peones");
   } catch {
     return error("rate_limited", 429);
   }
@@ -436,9 +438,10 @@ const CLIENT_TRANSITIONS: Record<
 
 /** Persist client submission evidence without treating it as payment proof. */
 export async function PATCH(req: Request) {
+  // FAIL-CLOSED: persists submission evidence against a payment intent.
   try {
     enforceOrigin(req);
-    await enforceReadRateLimit(getRequestIp(req));
+    await enforceReadRateLimit(getRequestIp(req), "payment-intent-submission");
     const body = await req.json();
     const report = parseSubmissionReport(body);
     const diagnostics = parseSubmissionDiagnostics(body);

@@ -1,17 +1,14 @@
 import { NextResponse } from "next/server";
 import { isAddress } from "viem";
-import { Redis } from "@upstash/redis";
 
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
-import {
-  enforceOrigin,
-  enforceReadRateLimit,
-  getRequestIp,
-} from "@/lib/server/demo-signing";
+import { enforceOrigin, getRequestIp } from "@/lib/server/demo-signing";
+import { checkRateLimit } from "@/lib/server/rate-limit";
+import { getRedis } from "@/lib/server/redis";
 import { createLogger } from "@/lib/server/logger";
 
 const logger = createLogger({ route: "/api/shields/me" });
-const redis = Redis.fromEnv();
+const redis = getRedis();
 
 function jsonError(status: number, error: string) {
   return NextResponse.json({ ok: false, error }, { status });
@@ -24,11 +21,14 @@ export async function GET(req: Request) {
     } catch {
       return jsonError(403, "origin_blocked");
     }
-    try {
-      await enforceReadRateLimit(getRequestIp(req));
-    } catch {
-      return jsonError(429, "rate_limited");
-    }
+    // FAIL-OPEN (D0.1): reads the credited-shields counter, mutates nothing.
+    // `/api/shields/spend` keeps its own fail-closed guard.
+    const limit = await checkRateLimit({
+      identifier: getRequestIp(req),
+      route: "shields-me",
+      policy: "fail-open",
+    });
+    if (!limit.allowed) return jsonError(429, "rate_limited");
 
     const url = new URL(req.url);
     const wallet = url.searchParams.get("wallet");

@@ -13,8 +13,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
-  enforceReadRateLimit: vi.fn(),
   getRequestIp: vi.fn(() => "127.0.0.1"),
+}));
+
+vi.mock("@/lib/server/rate-limit", () => ({
+  checkRateLimit: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -38,15 +41,16 @@ vi.mock("@/lib/peones/welcome-pack-server", () => ({
 
 import { GET } from "../route";
 import { PEONES_DAILY_CAP } from "@/lib/peones/types";
-import {
-  enforceOrigin,
-  enforceReadRateLimit,
-} from "@/lib/server/demo-signing";
+import { enforceOrigin } from "@/lib/server/demo-signing";
+import { checkRateLimit } from "@/lib/server/rate-limit";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { ensurePeonesWelcomePack } from "@/lib/peones/welcome-pack-server";
 
 const mockedOrigin = vi.mocked(enforceOrigin);
-const mockedRate = vi.mocked(enforceReadRateLimit);
+const mockedRate = vi.mocked(checkRateLimit);
+
+/** The guard's "you may proceed" shape. */
+const ALLOWED = { allowed: true, outcome: "allowed", resetAt: null } as const;
 const mockedSupabase = vi.mocked(getSupabaseServer);
 const mockedWelcomePack = vi.mocked(ensurePeonesWelcomePack);
 
@@ -105,6 +109,7 @@ function buildSupabaseMock(opts: {
 beforeEach(() => {
   mockedOrigin.mockReset();
   mockedRate.mockReset();
+  mockedRate.mockResolvedValue(ALLOWED);
   mockedSupabase.mockReset();
 });
 
@@ -241,14 +246,55 @@ describe("GET /api/peones/balance — success path", () => {
 });
 
 describe("GET /api/peones/balance — error paths", () => {
-  it("returns 429 rate_limited when enforceReadRateLimit throws", async () => {
-    mockedRate.mockRejectedValueOnce(new Error("Rate limit exceeded"));
+  it("returns 429 rate_limited when the identifier really is over its budget", async () => {
+    mockedRate.mockResolvedValueOnce({
+      allowed: false,
+      outcome: "limited",
+      resetAt: null,
+    });
     const { supabase } = buildSupabaseMock({});
     mockedSupabase.mockReturnValue(supabase as never);
 
     const res = await GET(makeRequest(VALID_WALLET));
     expect(res.status).toBe(429);
     expect(await res.json()).toEqual({ error: "rate_limited" });
+  });
+
+  // D0.1 — the whole point of the hotfix. Before this, an Upstash fault
+  // reached the handler as a thrown error and came out as 429, so the panel
+  // reported user throttling during a backend outage.
+  it("takes its own bucket and a fail-open policy (Upstash fault ≠ 429)", async () => {
+    const { supabase } = buildSupabaseMock({});
+    mockedSupabase.mockReturnValue(supabase as never);
+
+    await GET(makeRequest(VALID_WALLET));
+
+    expect(mockedRate).toHaveBeenCalledWith({
+      identifier: "127.0.0.1",
+      route: "peones-balance",
+      policy: "fail-open",
+    });
+  });
+
+  it("still serves the balance when the limiter fails open on a backend fault", async () => {
+    mockedRate.mockResolvedValueOnce({
+      allowed: true,
+      outcome: "redis_error",
+      resetAt: null,
+    });
+    const { supabase } = buildSupabaseMock({
+      rpcResult: {
+        data: [
+          { balance: 7, daily_earned_capped: 0, daily_cap: PEONES_DAILY_CAP },
+        ],
+        error: null,
+      },
+    });
+    mockedSupabase.mockReturnValue(supabase as never);
+
+    const res = await GET(makeRequest(VALID_WALLET));
+    expect(res.status).toBe(200);
+    expect((await res.json()).balance).toBe(7);
   });
 
   it("returns 429 rate_limited when enforceOrigin throws", async () => {
@@ -330,7 +376,7 @@ describe("GET /api/peones/balance — welcome pack seed (Sprint 4 commit J)", ()
     mockedSupabase.mockReset();
     mockedWelcomePack.mockReset();
     mockedOrigin.mockImplementation(() => {});
-    mockedRate.mockResolvedValue(undefined);
+    mockedRate.mockResolvedValue(ALLOWED);
     mockedWelcomePack.mockResolvedValue(false);
   });
 

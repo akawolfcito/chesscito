@@ -13,8 +13,11 @@ vi.mock("@upstash/redis", () => ({
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
   enforceRateLimit: vi.fn(),
-  enforceReadRateLimit: vi.fn(),
   getRequestIp: vi.fn(() => "127.0.0.1"),
+}));
+
+vi.mock("@/lib/server/rate-limit", () => ({
+  checkRateLimit: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -22,11 +25,13 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 import { GET } from "../route";
-import { enforceOrigin, enforceRateLimit, enforceReadRateLimit } from "@/lib/server/demo-signing";
+import { enforceOrigin, enforceRateLimit } from "@/lib/server/demo-signing";
+import { checkRateLimit } from "@/lib/server/rate-limit";
 
 const mockedOrigin = vi.mocked(enforceOrigin);
 const mockedRate = vi.mocked(enforceRateLimit);
-const mockedReadRate = vi.mocked(enforceReadRateLimit);
+const mockedReadRate = vi.mocked(checkRateLimit);
+const ALLOWED = { allowed: true, outcome: "allowed", resetAt: null } as const;
 
 const VALID_WALLET = "0xcc4179a22b473ea2eb2b9b9b210458d0f60fc2dd";
 
@@ -67,6 +72,7 @@ describe("GET /api/coach/history", () => {
 
     mockedOrigin.mockImplementation(() => {});
     mockedRate.mockResolvedValue(undefined);
+    mockedReadRate.mockResolvedValue(ALLOWED);
   });
 
   it("returns paired analysis+game records (status 200)", async () => {
@@ -150,7 +156,11 @@ describe("GET /api/coach/history", () => {
     // /api/pro/status). Strict enforceRateLimit was the old gate that
     // tripped during hub ↔ /coach/history navigation in dev (real
     // incident 2026-05-07).
-    mockedReadRate.mockRejectedValue(new Error("Rate limit"));
+    mockedReadRate.mockResolvedValue({
+      allowed: false,
+      outcome: "limited",
+      resetAt: null,
+    });
     const res = await GET(makeRequest(VALID_WALLET));
     expect(res.status).toEqual(403);
   });

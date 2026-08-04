@@ -21,7 +21,7 @@
 import { NextResponse } from "next/server";
 import { createPublicClient, http } from "viem";
 import { celo } from "viem/chains";
-import { Redis } from "@upstash/redis";
+import { getRedis } from "@/lib/server/redis";
 
 import { ACCEPTED_TOKENS, normalizePrice } from "@/lib/contracts/tokens";
 import {
@@ -44,18 +44,15 @@ import { verifyStablecoinTransfer } from "@/lib/payments/verify-transfer";
 import { isLiteModeServer } from "@/lib/feature-flags";
 import { normalizeWallet } from "@/lib/peones/ledger-service";
 import { buildAttestationHash } from "@/lib/peones/ledger-service-server";
-import {
-  enforceOrigin,
-  enforceReadRateLimit,
-  getRequestIp,
-} from "@/lib/server/demo-signing";
+import { enforceOrigin, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceReadRateLimit } from "@/lib/server/rate-limit";
 import { createLogger } from "@/lib/server/logger";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { extendProExpiry } from "@/lib/coach/pro-extend";
 import { isProActive } from "@/lib/pro/is-active";
 
-const redis = Redis.fromEnv();
+const redis = getRedis();
 
 const log = createLogger({ route: "/api/verify-payment" });
 
@@ -113,9 +110,10 @@ function err(error: string, status: number) {
 }
 
 export async function POST(req: Request) {
+  // FAIL-CLOSED: payment verification.
   try {
     enforceOrigin(req);
-    await enforceReadRateLimit(getRequestIp(req));
+    await enforceReadRateLimit(getRequestIp(req), "verify-payment");
   } catch (e) {
     log.warn("guard_failed", { reason: (e as Error)?.message });
     return err("rate_limited", 429);

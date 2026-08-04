@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { Redis } from "@upstash/redis";
 import { isAddress } from "viem";
 import { UUID_RE, getGameRecord } from "@/lib/coach/game-persistence";
 import { createLogger } from "@/lib/server/logger";
-import { enforceOrigin, enforceReadRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceOrigin, getRequestIp } from "@/lib/server/demo-signing";
+import { checkRateLimit } from "@/lib/server/rate-limit";
+import { getRedis } from "@/lib/server/redis";
 
-const redis = Redis.fromEnv();
+const redis = getRedis();
 const log = createLogger({ route: "/api/games/[id]" });
 
 export async function GET(
@@ -14,8 +15,18 @@ export async function GET(
 ) {
   try {
     enforceOrigin(req);
-    await enforceReadRateLimit(getRequestIp(req));
   } catch {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  // FAIL-OPEN (D0.1): reads one game record, mutates nothing. Ownership is
+  // still checked below — the limiter is not the authorization control.
+  const limit = await checkRateLimit({
+    identifier: getRequestIp(req),
+    route: "games-detail",
+    policy: "fail-open",
+  });
+  if (!limit.allowed) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

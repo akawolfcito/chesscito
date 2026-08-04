@@ -17,7 +17,8 @@ import {
 } from "@/lib/payments/get-peones-canary-verifier";
 import { normalizeWallet } from "@/lib/peones/ledger-service";
 import { buildAttestationHash } from "@/lib/peones/ledger-service-server";
-import { enforceOrigin, enforceReadRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceOrigin, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceReadRateLimit } from "@/lib/server/rate-limit";
 import { createLogger, hashWallet } from "@/lib/server/logger";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
@@ -130,9 +131,10 @@ async function persistLifecycle(
 }
 
 export async function POST(req: Request) {
+  // FAIL-CLOSED: payment canary.
   try {
     enforceOrigin(req);
-    await enforceReadRateLimit(getRequestIp(req));
+    await enforceReadRateLimit(getRequestIp(req), "get-peones-canary");
   } catch {
     return error("rate_limited", 429);
   }

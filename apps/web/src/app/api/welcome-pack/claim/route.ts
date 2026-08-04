@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Redis } from "@upstash/redis";
+import { getRedis } from "@/lib/server/redis";
 
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import {
@@ -39,7 +39,7 @@ import {
  */
 
 const logger = createLogger({ route: "/api/welcome-pack/claim" });
-const redis = Redis.fromEnv();
+const redis = getRedis();
 
 export const dynamic = "force-dynamic";
 

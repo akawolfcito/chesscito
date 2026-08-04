@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAddress } from "viem";
-import { Redis } from "@upstash/redis";
+import { getRedis } from "@/lib/server/redis";
 
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import {
@@ -35,7 +35,7 @@ import { getSupabaseServer } from "@/lib/supabase/server";
  */
 
 const logger = createLogger({ route: "/api/shields/spend" });
-const redis = Redis.fromEnv();
+const redis = getRedis();
 
 export const dynamic = "force-dynamic";
 

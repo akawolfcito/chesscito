@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Redis } from "@upstash/redis";
+import { getRedis } from "@/lib/server/redis";
 import { isAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { UUID_RE } from "@/lib/coach/game-persistence";
@@ -7,7 +7,7 @@ import { createLogger, hashWallet } from "@/lib/server/logger";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import type { GameRecord } from "@/lib/coach/types";
 
-const redis = Redis.fromEnv();
+const redis = getRedis();
 const log = createLogger({ route: "/api/games/[id]/mint-receipt" });
 
 const TX_HASH_RE = /^0x[a-fA-F0-9]{64}$/;

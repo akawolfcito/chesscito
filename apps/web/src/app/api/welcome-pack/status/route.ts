@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { isAddress } from "viem";
 
-import {
-  enforceOrigin,
-  enforceReadRateLimit,
-  getRequestIp,
-} from "@/lib/server/demo-signing";
+import { enforceOrigin, getRequestIp } from "@/lib/server/demo-signing";
+import { checkRateLimit } from "@/lib/server/rate-limit";
 import { createLogger } from "@/lib/server/logger";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
@@ -38,11 +35,16 @@ export async function GET(req: Request) {
     } catch {
       return jsonError(403, "origin_blocked");
     }
-    try {
-      await enforceReadRateLimit(getRequestIp(req));
-    } catch {
-      return jsonError(429, "rate_limited");
-    }
+    // FAIL-OPEN (D0.1). Pure read of a monotonic flag — `claimed` never goes
+    // back to false, and the CLAIM endpoint (which does mutate) keeps its own
+    // fail-closed guard. An Upstash outage must not make the Shop tile render
+    // its pre-claim state to someone who already claimed.
+    const limit = await checkRateLimit({
+      identifier: getRequestIp(req),
+      route: "welcome-pack-status",
+      policy: "fail-open",
+    });
+    if (!limit.allowed) return jsonError(429, "rate_limited");
 
     const url = new URL(req.url);
     const wallet = url.searchParams.get("wallet");

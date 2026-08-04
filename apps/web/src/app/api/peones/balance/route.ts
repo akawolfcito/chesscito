@@ -27,11 +27,8 @@ import { NextResponse } from "next/server";
 import { normalizeWallet } from "@/lib/peones/ledger-service";
 import { PEONES_DAILY_CAP } from "@/lib/peones/types";
 import { ensurePeonesWelcomePack } from "@/lib/peones/welcome-pack-server";
-import {
-  enforceOrigin,
-  enforceReadRateLimit,
-  getRequestIp,
-} from "@/lib/server/demo-signing";
+import { enforceOrigin, getRequestIp } from "@/lib/server/demo-signing";
+import { checkRateLimit } from "@/lib/server/rate-limit";
 import { createLogger } from "@/lib/server/logger";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
@@ -49,9 +46,26 @@ export async function GET(req: Request) {
   // "rate_limited" keeps the client error surface flat.
   try {
     enforceOrigin(req);
-    await enforceReadRateLimit(getRequestIp(req));
   } catch (e) {
     log.warn("guard_failed", { reason: (e as Error)?.message });
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+  }
+
+  // FAIL-OPEN (D0.1, 2026-08-03). Until today an unreachable Upstash came out
+  // of here as `429 rate_limited`, so an outage was indistinguishable from a
+  // player over quota — that conflation is most of the 17.4% error rate this
+  // endpoint was reporting.
+  //
+  // Serving the balance when the limiter cannot answer is safe: this is a
+  // read, and the one write still on this path (the welcome-pack seed below)
+  // is guarded by the UNIQUE index on `idempotency_key`, which is the actual
+  // idempotency guarantee. The rate limiter never was.
+  const limit = await checkRateLimit({
+    identifier: getRequestIp(req),
+    route: "peones-balance",
+    policy: "fail-open",
+  });
+  if (!limit.allowed) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 

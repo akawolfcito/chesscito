@@ -35,11 +35,8 @@ import {
   SPEND_COST_BY_TARGET,
   type PeonesSpendTarget,
 } from "@/lib/peones/spend-service";
-import {
-  enforceOrigin,
-  enforceReadRateLimit,
-  getRequestIp,
-} from "@/lib/server/demo-signing";
+import { enforceOrigin, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceReadRateLimit } from "@/lib/server/rate-limit";
 import { createLogger } from "@/lib/server/logger";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
@@ -144,10 +141,10 @@ function parseAndValidate(body: unknown): ParseResult {
 }
 
 export async function POST(req: Request) {
-  // 1. Guards: origin + rate limit.
+  // 1. Guards: origin + rate limit. FAIL-CLOSED — this debits the ledger.
   try {
     enforceOrigin(req);
-    await enforceReadRateLimit(getRequestIp(req));
+    await enforceReadRateLimit(getRequestIp(req), "peones-spend");
   } catch (e) {
     log.warn("guard_failed", { reason: (e as Error)?.message });
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });

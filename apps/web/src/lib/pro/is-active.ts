@@ -1,7 +1,7 @@
-import { Redis } from "@upstash/redis";
+import { getRedis } from "@/lib/server/redis";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 
-const redis = Redis.fromEnv();
+const redis = getRedis();
 
 export type ProStatus = {
   active: boolean;

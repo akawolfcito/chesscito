@@ -1,4 +1,4 @@
-import { Redis } from "@upstash/redis";
+import { getRedis } from "@/lib/server/redis";
 import { isAddress } from "viem";
 import { getTranslations } from "next-intl/server";
 import { ContextualHeader } from "@/components/ui/contextual-header";
@@ -12,7 +12,7 @@ type PageProps = {
   searchParams: Promise<{ wallet?: string }>;
 };
 
-const redis = Redis.fromEnv();
+const redis = getRedis();
 const log = createLogger({ route: "/coach/[gameId]" });
 
 export default async function CoachGamePage({ params, searchParams }: PageProps) {

@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
 import { createPublicClient, http, isAddress, parseAbiItem } from "viem";
 import { celo } from "viem/chains";
-import { Redis } from "@upstash/redis";
-import {
-  enforceOrigin,
-  enforceReadRateLimit,
-  getRequestIp,
-} from "@/lib/server/demo-signing";
+import { enforceOrigin, getRequestIp } from "@/lib/server/demo-signing";
+import { checkRateLimit } from "@/lib/server/rate-limit";
+import { getRedis } from "@/lib/server/redis";
 import {
   FOUNDER_BADGE_ITEM_ID,
   FOUNDER_BADGE_CELO_ITEM_ID,
@@ -66,7 +63,7 @@ function getShopDeployBlock(): bigint {
   }
 }
 
-const redis = Redis.fromEnv();
+const redis = getRedis();
 
 // This route does a historical getLogs scan from SHOP_DEPLOY_BLOCK to
 // latest — a range Alchemy free tier rejects (10-block cap). We use
@@ -92,11 +89,20 @@ type FounderStatus = {
 export async function GET(req: Request) {
   try {
     enforceOrigin(req);
-    await enforceReadRateLimit(getRequestIp(req));
   } catch (err) {
     logger.warn("auth rejected", {
       errName: err instanceof Error ? err.name : "unknown",
     });
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  // FAIL-OPEN (D0.1): read-only ownership check behind a cosmetic badge.
+  const limit = await checkRateLimit({
+    identifier: getRequestIp(req),
+    route: "founder-status",
+    policy: "fail-open",
+  });
+  if (!limit.allowed) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

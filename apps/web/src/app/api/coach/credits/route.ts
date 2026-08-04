@@ -1,17 +1,24 @@
 import { NextResponse } from "next/server";
-import { Redis } from "@upstash/redis";
 import { isAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
-import { enforceOrigin, enforceReadRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceOrigin, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceReadRateLimit } from "@/lib/server/rate-limit";
+import { getRedis } from "@/lib/server/redis";
 
-const redis = Redis.fromEnv();
+const redis = getRedis();
 
 const FREE_CREDITS = 3;
 
 export async function GET(req: Request) {
+  // FAIL-CLOSED (D0.1) despite the GET verb and the name: this handler SEEDS
+  // three free credits on first sight (the SETNX below). That makes it a
+  // reward-granting path, and the policy for rewards is fail-closed — an
+  // unmetered grant path is not something to open up during an outage.
+  // The route still gets its own bucket (D0.3), so a shared-IP storm on
+  // /api/pro/status can no longer starve it.
   try {
     enforceOrigin(req);
-    await enforceReadRateLimit(getRequestIp(req));
+    await enforceReadRateLimit(getRequestIp(req), "coach-credits");
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

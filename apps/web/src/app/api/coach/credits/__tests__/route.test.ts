@@ -14,12 +14,18 @@ vi.mock("@upstash/redis", () => ({
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
   enforceRateLimit: vi.fn(),
-  enforceReadRateLimit: vi.fn(),
   getRequestIp: vi.fn(() => "127.0.0.1"),
 }));
 
+// FAIL-CLOSED route (it seeds three free credits), so it keeps the throwing
+// `enforceReadRateLimit` rather than the fail-open `checkRateLimit`.
+vi.mock("@/lib/server/rate-limit", () => ({
+  enforceReadRateLimit: vi.fn(),
+}));
+
 import { GET } from "../route";
-import { enforceOrigin, enforceReadRateLimit } from "@/lib/server/demo-signing";
+import { enforceOrigin } from "@/lib/server/demo-signing";
+import { enforceReadRateLimit } from "@/lib/server/rate-limit";
 
 const mockedOrigin = vi.mocked(enforceOrigin);
 const mockedRate = vi.mocked(enforceReadRateLimit);

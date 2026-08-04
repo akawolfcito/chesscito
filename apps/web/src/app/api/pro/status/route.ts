@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { isAddress } from "viem";
 import { isProActive } from "@/lib/pro/is-active";
-import { enforceOrigin, enforceReadRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceOrigin, getRequestIp } from "@/lib/server/demo-signing";
+import { checkRateLimit } from "@/lib/server/rate-limit";
 import { createLogger } from "@/lib/server/logger";
 
 const logger = createLogger({ route: "/api/pro/status" });
@@ -20,15 +21,28 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   try {
     enforceOrigin(req);
-    // Read-only status endpoint — uses the lenient 60/min/IP limiter so
-    // a user navigating scaffold ↔ legacy several times per minute does
-    // not 403 the PRO chip into permanent inactive state.
-    await enforceReadRateLimit(getRequestIp(req));
   } catch (err) {
     logger.warn("auth rejected", {
       errName: err instanceof Error ? err.name : "unknown",
       errMessage: err instanceof Error ? err.message : String(err),
     });
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  // Read-only status endpoint on its own 60/min/IP bucket (D0.3) so a user
+  // navigating scaffold ↔ legacy does not 403 the PRO chip into a permanent
+  // inactive state — and no longer shares that budget with thirteen other
+  // routes.
+  //
+  // FAIL-OPEN (D0.1): this route only READS the PRO key. Serving it during an
+  // Upstash outage grants nobody anything; every path that GRANTS pro
+  // (/api/verify-pro, the payment routes) stays fail-closed.
+  const limit = await checkRateLimit({
+    identifier: getRequestIp(req),
+    route: "pro-status",
+    policy: "fail-open",
+  });
+  if (!limit.allowed) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

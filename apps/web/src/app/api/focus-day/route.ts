@@ -22,7 +22,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { Redis } from "@upstash/redis";
+import { getRedis } from "@/lib/server/redis";
 
 import { resolveEffectiveTrainingPass } from "@/lib/entitlements/effective-training-pass";
 import { getSeasonPass } from "@/lib/payments/rail-config";
@@ -40,7 +40,7 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-const redis = Redis.fromEnv();
+const redis = getRedis();
 const log = createLogger({ route: "/api/focus-day" });
 
 const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/i;

@@ -154,3 +154,24 @@ export function hashWallet(wallet: string): string {
     .digest("hex")
     .slice(0, 16);
 }
+
+/**
+ * Same construction as {@link hashWallet}, for a client IP.
+ *
+ * A full IP is personal data (privacy §7 — we already refuse to store city,
+ * region, postal code or coordinates), but rate-limit forensics need to answer
+ * "is this ONE identifier being limited, or many?". A salted 64-bit digest
+ * answers that without ever writing the address down.
+ *
+ * The `"ip:"` domain separator is not decoration: without it, an IP and a
+ * wallet that happened to share a string form would hash to the same value,
+ * and the two spaces of identifiers must never be joinable in a log scan.
+ */
+export function hashIp(ip: string): string {
+  const salt = process.env.LOG_SALT;
+  if (!salt) return "unsalted";
+  return createHash("sha256")
+    .update(`ip:${ip}${salt}`)
+    .digest("hex")
+    .slice(0, 16);
+}

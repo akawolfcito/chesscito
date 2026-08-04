@@ -10,16 +10,21 @@ vi.mock("@upstash/redis", () => ({
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
   enforceRateLimit: vi.fn(),
-  enforceReadRateLimit: vi.fn(),
   getRequestIp: vi.fn(() => "127.0.0.1"),
 }));
 
+vi.mock("@/lib/server/rate-limit", () => ({
+  checkRateLimit: vi.fn(),
+}));
+
 import { GET } from "../route";
-import { enforceOrigin, enforceReadRateLimit } from "@/lib/server/demo-signing";
+import { enforceOrigin } from "@/lib/server/demo-signing";
+import { checkRateLimit } from "@/lib/server/rate-limit";
 import { __setLoggerSink, __resetLoggerSink } from "@/lib/server/logger";
 
 const mockedOrigin = vi.mocked(enforceOrigin);
-const mockedRate = vi.mocked(enforceReadRateLimit);
+const mockedRate = vi.mocked(checkRateLimit);
+const ALLOWED = { allowed: true, outcome: "allowed", resetAt: null } as const;
 
 let logLines: Array<{ level: string; record: Record<string, unknown> }>;
 
@@ -40,7 +45,7 @@ describe("GET /api/pro/status", () => {
     redisMock.get.mockReset();
 
     mockedOrigin.mockImplementation(() => {});
-    mockedRate.mockResolvedValue(undefined);
+    mockedRate.mockResolvedValue(ALLOWED);
     vi.spyOn(Date, "now").mockReturnValue(NOW);
 
     logLines = [];

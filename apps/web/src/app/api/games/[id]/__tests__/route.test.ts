@@ -6,8 +6,15 @@ vi.mock("@upstash/redis", () => ({
 }));
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
-  enforceReadRateLimit: vi.fn(),
   getRequestIp: () => "127.0.0.1",
+}));
+// FAIL-OPEN read — reads one game record and mutates nothing.
+vi.mock("@/lib/server/rate-limit", () => ({
+  checkRateLimit: vi.fn(async () => ({
+    allowed: true,
+    outcome: "allowed",
+    resetAt: null,
+  })),
 }));
 vi.mock("@/lib/server/logger", () => ({
   createLogger: () => ({ warn: vi.fn(), error: vi.fn() }),

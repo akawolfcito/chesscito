@@ -1,25 +1,34 @@
 import { NextResponse } from "next/server";
-import { Redis } from "@upstash/redis";
 import { isAddress, recoverMessageAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { buildDeleteMessage } from "@/lib/coach/delete-message";
 import { getCachedAnalysisWithFallback } from "@/lib/coach/cache-fallback";
-import { enforceOrigin, enforceRateLimit, enforceReadRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { checkRateLimit } from "@/lib/server/rate-limit";
+import { getRedis } from "@/lib/server/redis";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { createLogger, hashWallet } from "@/lib/server/logger";
 import type { GameRecord } from "@/lib/coach/types";
 
-const redis = Redis.fromEnv();
+const redis = getRedis();
 
 export async function GET(req: Request) {
   try {
     enforceOrigin(req);
-    // Read-only history endpoint — uses the lenient 60/min/IP limiter
-    // so navigating hub ↔ /coach/history rapidly (or React StrictMode's
-    // double-mount in dev) does not lock the user out of their own
-    // history with cascading 403s. Mirrors /api/pro/status.
-    await enforceReadRateLimit(getRequestIp(req));
   } catch {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  // Read-only history endpoint on its own 60/min/IP bucket, so navigating
+  // hub ↔ /coach/history rapidly (or React StrictMode's double-mount in dev)
+  // does not lock the user out of their own history with cascading 403s.
+  // FAIL-OPEN (D0.1): reading your own history is not a privileged mutation.
+  const limit = await checkRateLimit({
+    identifier: getRequestIp(req),
+    route: "coach-history",
+    policy: "fail-open",
+  });
+  if (!limit.allowed) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

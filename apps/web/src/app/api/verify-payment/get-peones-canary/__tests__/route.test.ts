@@ -14,8 +14,11 @@ vi.mock("viem", async (importOriginal) => {
 
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
-  enforceReadRateLimit: vi.fn(),
   getRequestIp: () => "127.0.0.1",
+}));
+// FAIL-CLOSED route — keeps the throwing guard, now from its own module.
+vi.mock("@/lib/server/rate-limit", () => ({
+  enforceReadRateLimit: vi.fn(),
 }));
 vi.mock("@/lib/server/logger", () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }),

@@ -10,8 +10,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
-  enforceReadRateLimit: vi.fn(),
   getRequestIp: vi.fn(() => "127.0.0.1"),
+}));
+
+// FAIL-CLOSED route (it writes the ledger), so it keeps the throwing guard.
+vi.mock("@/lib/server/rate-limit", () => ({
+  enforceReadRateLimit: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -27,10 +31,8 @@ vi.mock("@/lib/server/logger", () => ({
 }));
 
 import { POST } from "../route";
-import {
-  enforceOrigin,
-  enforceReadRateLimit,
-} from "@/lib/server/demo-signing";
+import { enforceOrigin } from "@/lib/server/demo-signing";
+import { enforceReadRateLimit } from "@/lib/server/rate-limit";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 const mockedOrigin = vi.mocked(enforceOrigin);

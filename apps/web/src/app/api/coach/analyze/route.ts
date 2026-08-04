@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Redis } from "@upstash/redis";
+import { getRedis } from "@/lib/server/redis";
 import OpenAI from "openai";
 import { isAddress } from "viem";
 import { validateGameRecord } from "@/lib/coach/validate-game";
@@ -53,7 +53,7 @@ async function verifyPeonesCoachPayment(
   );
 }
 
-const redis = Redis.fromEnv();
+const redis = getRedis();
 
 const MODEL = process.env.COACH_LLM_MODEL ?? "gpt-4o-mini";
 const BASE_URL = process.env.COACH_LLM_BASE_URL ?? "https://api.openai.com/v1";

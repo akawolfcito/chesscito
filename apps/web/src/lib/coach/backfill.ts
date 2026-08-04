@@ -1,4 +1,4 @@
-import { Redis } from "@upstash/redis";
+import { getRedis } from "@/lib/server/redis";
 import type {
   CoachAnalysisRecord,
   CoachAnalysisRow,
@@ -18,7 +18,7 @@ const BACKFILL_DEPTH = 20;
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-const redis = Redis.fromEnv();
+const redis = getRedis("batch");
 
 /**
  * Build a `CoachAnalysisRow` from a Redis (analysis, game) pair.

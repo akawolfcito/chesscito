@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Redis } from "@upstash/redis";
+import { getRedis } from "@/lib/server/redis";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { createLogger } from "@/lib/server/logger";
 
@@ -11,7 +11,7 @@ const PURGE_LOCK_TTL_S = 600;
 const PURGE_LOCK_KEY = "coach:cron:purge";
 const PURGE_MAX_PASSES = 20;
 
-const redis = Redis.fromEnv();
+const redis = getRedis("batch");
 
 /**
  * Daily cron: deletes `coach_analyses` rows where `expires_at < now()`.

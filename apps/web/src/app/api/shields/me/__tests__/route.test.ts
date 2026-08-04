@@ -9,18 +9,20 @@ vi.mock("@upstash/redis", () => ({
 
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
-  enforceReadRateLimit: vi.fn(),
   getRequestIp: vi.fn(() => "127.0.0.1"),
 }));
 
+vi.mock("@/lib/server/rate-limit", () => ({
+  checkRateLimit: vi.fn(),
+}));
+
 import { GET } from "../route";
-import {
-  enforceOrigin,
-  enforceReadRateLimit,
-} from "@/lib/server/demo-signing";
+import { enforceOrigin } from "@/lib/server/demo-signing";
+import { checkRateLimit } from "@/lib/server/rate-limit";
 
 const mockedOrigin = vi.mocked(enforceOrigin);
-const mockedRate = vi.mocked(enforceReadRateLimit);
+const mockedRate = vi.mocked(checkRateLimit);
+const ALLOWED = { allowed: true, outcome: "allowed", resetAt: null } as const;
 
 const VALID_WALLET = "0xcc4179a22b473ea2eb2b9b9b210458d0f60fc2dd";
 
@@ -35,7 +37,7 @@ describe("GET /api/shields/me", () => {
     redisMock.get.mockReset();
 
     mockedOrigin.mockImplementation(() => {});
-    mockedRate.mockResolvedValue(undefined);
+    mockedRate.mockResolvedValue(ALLOWED);
   });
 
   afterEach(() => {
@@ -63,6 +65,13 @@ describe("GET /api/shields/me", () => {
     redisMock.get.mockResolvedValue("3");
     await GET(makeRequest(`wallet=${VALID_WALLET}`));
     expect(mockedRate).toHaveBeenCalledTimes(1);
+    // D0.3 — and its own bucket within the read family, so a storm on another
+    // read route cannot starve this one.
+    expect(mockedRate).toHaveBeenCalledWith({
+      identifier: "127.0.0.1",
+      route: "shields-me",
+      policy: "fail-open",
+    });
   });
 
   it("returns 400 missing_params when wallet query is absent", async () => {
@@ -95,8 +104,12 @@ describe("GET /api/shields/me", () => {
     });
   });
 
-  it("returns 429 rate_limited when enforceReadRateLimit throws", async () => {
-    mockedRate.mockRejectedValue(new Error("Rate limit exceeded"));
+  it("returns 429 rate_limited when the identifier really is over its budget", async () => {
+    mockedRate.mockResolvedValue({
+      allowed: false,
+      outcome: "limited",
+      resetAt: null,
+    });
     const res = await GET(makeRequest(`wallet=${VALID_WALLET}`));
     expect(res.status).toBe(429);
     expect(await res.json()).toEqual({

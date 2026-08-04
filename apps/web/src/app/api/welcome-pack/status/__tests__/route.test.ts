@@ -26,16 +26,21 @@ vi.mock("@/lib/supabase/server", () => ({
 
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
-  enforceReadRateLimit: vi.fn(),
   getRequestIp: vi.fn(() => "1.2.3.4"),
+}));
+
+vi.mock("@/lib/server/rate-limit", () => ({
+  checkRateLimit: vi.fn(async () => ({
+    allowed: true,
+    outcome: "allowed",
+    resetAt: null,
+  })),
 }));
 
 import { GET } from "../route";
 import { getSupabaseServer } from "@/lib/supabase/server";
-import {
-  enforceOrigin,
-  enforceReadRateLimit,
-} from "@/lib/server/demo-signing";
+import { enforceOrigin } from "@/lib/server/demo-signing";
+import { checkRateLimit } from "@/lib/server/rate-limit";
 
 const VALID_WALLET = "0xcc4179a22b473ea2eb2b9b9b210458d0f60fc2dd";
 
@@ -120,14 +125,29 @@ describe("GET /api/welcome-pack/status", () => {
     expect(supabaseChain.maybeSingle).not.toHaveBeenCalled();
   });
 
-  it("returns 429 when read-limiter throws", async () => {
-    vi.mocked(enforceReadRateLimit).mockRejectedValueOnce(
-      new Error("Rate limit exceeded"),
-    );
+  it("returns 429 when the identifier really is over its budget", async () => {
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({
+      allowed: false,
+      outcome: "limited",
+      resetAt: null,
+    });
 
     const res = await GET(makeRequest(VALID_WALLET));
     expect(res.status).toBe(429);
     expect((await res.json()).error).toBe("rate_limited");
+  });
+
+  // D0.1 — a dead Upstash used to surface here as 429.
+  it("serves the status when the limiter fails open on a backend fault", async () => {
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({
+      allowed: true,
+      outcome: "redis_timeout",
+      resetAt: null,
+    });
+    supabaseChain.__setNextResult(null, null);
+
+    const res = await GET(makeRequest(VALID_WALLET));
+    expect(res.status).toBe(200);
   });
 
   it("returns 500 when Supabase env is missing", async () => {
@@ -147,9 +167,14 @@ describe("GET /api/welcome-pack/status", () => {
     expect(res.status).toBe(500);
   });
 
-  it("uses enforceReadRateLimit (lenient, not the strict signing limiter)", async () => {
+  it("uses its OWN bucket, not the shared read bucket (D0.3)", async () => {
     supabaseChain.__setNextResult(null, null);
     await GET(makeRequest(VALID_WALLET));
-    expect(enforceReadRateLimit).toHaveBeenCalledTimes(1);
+    expect(checkRateLimit).toHaveBeenCalledTimes(1);
+    expect(checkRateLimit).toHaveBeenCalledWith({
+      identifier: "1.2.3.4",
+      route: "welcome-pack-status",
+      policy: "fail-open",
+    });
   });
 });

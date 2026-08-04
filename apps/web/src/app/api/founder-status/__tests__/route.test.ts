@@ -29,15 +29,20 @@ vi.mock("viem", async () => {
 
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
-  enforceReadRateLimit: vi.fn(),
   getRequestIp: vi.fn(() => "127.0.0.1"),
 }));
 
+vi.mock("@/lib/server/rate-limit", () => ({
+  checkRateLimit: vi.fn(async () => ({
+    allowed: true,
+    outcome: "allowed",
+    resetAt: null,
+  })),
+}));
+
 import { GET } from "../route";
-import {
-  enforceOrigin,
-  enforceReadRateLimit,
-} from "@/lib/server/demo-signing";
+import { enforceOrigin } from "@/lib/server/demo-signing";
+import { checkRateLimit } from "@/lib/server/rate-limit";
 
 const VALID_WALLET = "0xcc4179a22b473ea2eb2b9b9b210458d0f60fc2dd";
 const DEPLOY_BLOCK = 37_800_000n;
@@ -137,9 +142,14 @@ describe("/api/founder-status", () => {
     );
   });
 
-  it("invokes enforceReadRateLimit (lenient, 60/min) not the strict limiter", async () => {
+  it("invokes the lenient 60/min guard on its OWN bucket, not the strict limiter", async () => {
     await GET(makeRequest(VALID_WALLET));
-    expect(enforceReadRateLimit).toHaveBeenCalledTimes(1);
+    expect(checkRateLimit).toHaveBeenCalledTimes(1);
+    expect(checkRateLimit).toHaveBeenCalledWith({
+      identifier: "127.0.0.1",
+      route: "founder-status",
+      policy: "fail-open",
+    });
   });
 
   // The pagination always respects the deploy block as the lower scan floor.

@@ -1,23 +1,19 @@
 import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 import { ethers } from "ethers";
 import { classifyProOriginHost } from "@/lib/pro/pro-origin";
 import { decryptSignerKey } from "./crypto";
 import { createLogger } from "./logger";
+import { getRedis } from "./redis";
 
 const originLog = createLogger({ route: "demo-signing.enforceOrigin" });
 
 const MAX_REQUESTS_PER_IP = 5;
 const MAX_REQUESTS_PER_ADDRESS = 3;
-/** Higher-volume limit for read-only endpoints. Status reads (PRO chip,
- *  Coach credits) re-fire on every mount + wallet change, so the 5/min
- *  budget designed for signing endpoints starves the UI within a few
- *  scaffold↔legacy round-trips. 60/min/IP keeps abuse manageable while
- *  letting normal navigation breathe. Sized roughly to "1/sec sustained
- *  with bursts up to 5/sec" — comfortably above any UI-driven workload. */
-const MAX_READ_REQUESTS_PER_IP = 60;
 
-const redis = Redis.fromEnv();
+/** Shared, time-bounded client (see `./redis.ts`). The bare `Redis.fromEnv()`
+ *  that used to live here inherited the SDK's six-attempt retry ladder with no
+ *  timeout — the mechanism behind the guard stalls of 2026-08-03. */
+const redis = getRedis();
 
 const ipLimiter = new Ratelimit({
   redis,
@@ -29,12 +25,6 @@ const addrLimiter = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(MAX_REQUESTS_PER_ADDRESS, "60s"),
   prefix: "rl:addr",
-});
-
-const readIpLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(MAX_READ_REQUESTS_PER_IP, "60s"),
-  prefix: "rl:read:ip",
 });
 
 /** Soft per-IP limit for the off-chain SaveScore endpoint
@@ -114,15 +104,6 @@ export async function enforceRateLimit(ip: string, playerAddress?: string) {
     const { success: addrOk } = await addrLimiter.limit(playerAddress);
     if (!addrOk) throw new Error("Rate limit exceeded");
   }
-}
-
-/** Lenient IP-only rate limiter for read-only status endpoints
- *  (PRO chip, Coach credits, etc.). Reuses the same Redis backend as
- *  the strict limiter but with a separate prefix so the buckets don't
- *  cross-contaminate. */
-export async function enforceReadRateLimit(ip: string) {
-  const { success: ok } = await readIpLimiter.limit(ip);
-  if (!ok) throw new Error("Rate limit exceeded");
 }
 
 /** Soft IP-only limiter for the off-chain SaveScore endpoint. Throws

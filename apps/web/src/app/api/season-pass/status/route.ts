@@ -15,7 +15,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { Redis } from "@upstash/redis";
+import { getRedis } from "@/lib/server/redis";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { resolveEffectiveTrainingPass } from "@/lib/entitlements/effective-training-pass";
 import { isProActive } from "@/lib/pro/is-active";
@@ -43,7 +43,7 @@ import { getSupabaseServer } from "@/lib/supabase/server";
  *  nobody can reproduce. */
 export const dynamic = "force-dynamic";
 
-const redis = Redis.fromEnv();
+const redis = getRedis();
 const log = createLogger({ route: "/api/season-pass/status" });
 
 const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/i;
