@@ -202,6 +202,107 @@ describe("usage endpoint", () => {
     expect(r.not_observable.join(" ")).toMatch(/invocations/);
   });
 
+  it("surfaces the error code and message Vercel put in the body", async () => {
+    // The defect that cost three sessions: the collector read the status and
+    // threw the body away, so `missing required property \`from\`` — which
+    // names the cause outright — never reached the report.
+    const r = await collectVercel("tok", "production", {
+      cli: (a) => (a[0] === "ls" ? lsJson("sha") : logLines([])),
+      fetchImpl: vi.fn(async (u: unknown) =>
+        String(u).includes("api.vercel.com")
+          ? new Response(
+              JSON.stringify({
+                error: { code: "bad_request", message: "Invalid request: missing required property `from`." },
+              }),
+              { status: 400, headers: { "content-type": "application/json" } },
+            )
+          : new Response("ok", { status: 200 }),
+      ) as unknown as typeof fetch,
+      now: () => T0,
+    });
+
+    expect(r.usage.status).toBe("not_observable");
+    if (r.usage.status !== "not_observable") return;
+    expect(r.usage.http_status).toBe(400);
+    expect(r.usage.reason).toContain("400");
+    expect(r.usage.reason).toContain("bad_request");
+    expect(r.usage.reason).toContain("missing required property");
+  });
+
+  it("degrades to the plain message when the error body is not JSON", async () => {
+    const r = await collectVercel("tok", "production", {
+      cli: (a) => (a[0] === "ls" ? lsJson("sha") : logLines([])),
+      fetchImpl: vi.fn(async (u: unknown) =>
+        String(u).includes("api.vercel.com")
+          ? new Response("<!DOCTYPE html><html><body>gateway</body></html>", { status: 502 })
+          : new Response("ok", { status: 200 }),
+      ) as unknown as typeof fetch,
+      now: () => T0,
+    });
+
+    if (r.usage.status !== "not_observable") throw new Error("expected not_observable");
+    expect(r.usage.reason).toContain("502");
+    // An HTML body must never be dumped into the report.
+    expect(r.usage.reason).not.toContain("DOCTYPE");
+  });
+
+  it("never leaks the token even when the error body echoes it", async () => {
+    const r = await collectVercel("super-secret-token", "production", {
+      cli: (a) => (a[0] === "ls" ? lsJson("sha") : logLines([])),
+      fetchImpl: vi.fn(async (u: unknown) =>
+        String(u).includes("api.vercel.com")
+          ? new Response(
+              JSON.stringify({
+                error: { code: "forbidden", message: "Bearer super-secret-token is not allowed" },
+              }),
+              { status: 403 },
+            )
+          : new Response("ok", { status: 200 }),
+      ) as unknown as typeof fetch,
+      now: () => T0,
+    });
+
+    expect(JSON.stringify(r)).not.toContain("super-secret-token");
+  });
+
+  it("bounds the reason length so a large body cannot flood the report", async () => {
+    const r = await collectVercel("tok", "production", {
+      cli: (a) => (a[0] === "ls" ? lsJson("sha") : logLines([])),
+      fetchImpl: vi.fn(async (u: unknown) =>
+        String(u).includes("api.vercel.com")
+          ? new Response(
+              JSON.stringify({ error: { code: "bad_request", message: "x".repeat(5_000) } }),
+              { status: 400 },
+            )
+          : new Response("ok", { status: 200 }),
+      ) as unknown as typeof fetch,
+      now: () => T0,
+    });
+
+    if (r.usage.status !== "not_observable") throw new Error("expected not_observable");
+    expect(r.usage.reason.length).toBeLessThanOrEqual(260);
+  });
+
+  it("survives a body that throws while being read", async () => {
+    const r = await collectVercel("tok", "production", {
+      cli: (a) => (a[0] === "ls" ? lsJson("sha") : logLines([])),
+      fetchImpl: vi.fn(async (u: unknown) => {
+        if (!String(u).includes("api.vercel.com")) return new Response("ok", { status: 200 });
+        return {
+          ok: false,
+          status: 400,
+          text: () => Promise.reject(new Error("stream closed")),
+          json: () => Promise.reject(new Error("stream closed")),
+        } as unknown as Response;
+      }) as unknown as typeof fetch,
+      now: () => T0,
+    });
+
+    if (r.usage.status !== "not_observable") throw new Error("expected not_observable");
+    expect(r.usage.http_status).toBe(400);
+    expect(r.usage.reason).toContain("400");
+  });
+
   it("handles a network failure without throwing", async () => {
     const r = await collectVercel("tok", "production", {
       cli: (a) => (a[0] === "ls" ? lsJson("sha") : logLines([])),

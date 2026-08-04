@@ -544,6 +544,51 @@ export async function withConcurrency<T>(
 }
 
 /**
+ * Read the structured error Vercel puts in a non-2xx body.
+ *
+ * This exists because of a measured failure: the collector used to report only
+ * `usage endpoint returned 400` while the body said, verbatim,
+ * `Invalid request: missing required property \`from\``. The cause was on the
+ * wire the whole time and the monitor threw it away, turning a self-explaining
+ * error into three sessions of investigation (audit 2026-08-04).
+ *
+ * Never throws, never returns a raw body: an HTML gateway page or a
+ * five-thousand-character message must not reach the report, and neither must
+ * anything token-shaped.
+ */
+export async function readErrorDetail(response: Response): Promise<string | null> {
+  try {
+    const text = await response.text();
+    if (!text) return null;
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      // HTML or plain text: there is no field worth quoting, and dumping the
+      // body would flood the report. The status code alone stands.
+      return null;
+    }
+
+    const error = (parsed as { error?: unknown })?.error;
+    if (!error || typeof error !== "object") return null;
+
+    const { code, message } = error as { code?: unknown; message?: unknown };
+    const parts = [
+      typeof code === "string" ? code : null,
+      typeof message === "string" ? message : null,
+    ].filter((p): p is string => Boolean(p));
+    if (!parts.length) return null;
+
+    return sanitizeVercelError(parts.join(": ")).slice(0, 200);
+  } catch {
+    // A body that fails mid-read must not take the run down; the status code
+    // is already known and is enough to report.
+    return null;
+  }
+}
+
+/**
  * Billing usage. Reports the real HTTP status when the call is refused, because
  * "403 on this plan" and "401 bad token" need different fixes and a generic
  * "not available" hides which one it is.
@@ -567,9 +612,12 @@ async function collectUsage(
     });
 
     if (!response.ok) {
+      const detail = await readErrorDetail(response);
       return {
         status: "not_observable",
-        reason: `usage endpoint returned ${response.status}`,
+        reason: detail
+          ? `usage endpoint returned ${response.status}: ${detail}`
+          : `usage endpoint returned ${response.status}`,
         http_status: response.status,
       };
     }
