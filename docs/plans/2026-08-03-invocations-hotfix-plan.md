@@ -60,7 +60,11 @@ Default ON. Apagarlo revierte a 1-request-por-evento sin redeploy.
 
 ### Fase 2 — Peones balance
 
-**D2.1 · `fix(peones): sacar el welcome pack del camino de lectura`**
+**D2.1 · `fix(peones): sacar el welcome pack del camino de lectura` — 🔴 PRIORIDAD ALTA
+(reclasificada 2026-08-03, incidente Supabase 522 + Disk IO budget agotándose).**
+Va inmediatamente después de Fase 1: son ~5.9K escrituras inútiles cada 12 h, cada una
+con conflicto de índice único, sobre la base saturada. Aparece en la evidencia del
+incidente como `POST /rest/v1/peones_ledger` con 522.
 `api/peones/balance/route.ts:88`. Hoy hay un INSERT que falla con `23505` en **cada** GET
 de todo usuario recurrente. Cambio: sembrar solo cuando la lectura demuestre que hace
 falta — leer primero el `rpc`, y sembrar únicamente si el wallet no tiene ninguna fila.
