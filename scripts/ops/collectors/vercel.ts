@@ -144,8 +144,64 @@ export type VercelProjectResult =
       reason: string;
     };
 
+export type ProjectUsage = {
+  project: string;
+  invocations: number;
+  /**
+   * ALWAYS null. See `CPU_PER_PROJECT_UNRELIABLE` — the API's per-project CPU
+   * attribution is not deterministic, so there is no honest number to put here.
+   */
+  cpu_ms: null;
+};
+
+/**
+ * Why Active CPU is not reported per project, measured 2026-08-04.
+ *
+ * Three back-to-back calls, same window, same query, seconds apart:
+ *   #1 → 1 row  · chesscito-landing 659,512
+ *   #2 → 3 rows · 535,102 / 77,205 / 47,205
+ *   #3 → 2 rows · 526,443 / 133,069
+ *
+ * The row COUNT changes, the projects change, and the values move ~25%. An
+ * earlier pair even reported the identical value 46,479 attributed to
+ * `chesscito` in one call and `lite-chesscito` in the next.
+ *
+ * Invocations over the exact same grouping are stable to ±1 across the same
+ * three calls, so this is specific to the CPU measure, not to `groupBy`.
+ *
+ * This is the Upstash `INFO` trap again: a number shaped like a metric that
+ * behaves like noise. Publishing it per project would be worse than leaving
+ * the axis unmeasured, because a wrong CPU figure reads as reassurance.
+ */
+export const CPU_PER_PROJECT_UNRELIABLE =
+  "Active CPU per project: NOT OBSERVABLE — the API's per-project attribution is non-deterministic (3 identical calls returned 1, 3 and 2 rows with values moving ~25%)";
+
 export type VercelUsage =
-  | { status: "observable"; source: "rest"; data: Record<string, unknown> }
+  | {
+      status: "observable";
+      source: "observability";
+      /**
+       * The window ACTUALLY queried. Never "the month": the billing cycle
+       * rolls, and on 2026-08-04 it had rolled that same morning, so a
+       * period-to-date figure covered ~8 hours. Every number here is only
+       * readable next to the window that produced it.
+       */
+      window: { start: string; end: string; billing_cycle_start: string };
+      /** Only the profile's projects, one row each. */
+      by_project: ProjectUsage[];
+      in_scope_total: { invocations: number; cpu_ms: null };
+      /** Why `cpu_ms` is null everywhere above. */
+      cpu_ms_reason: string;
+      /** What the TEAM consumed outside the monitor's scope. Never summed in. */
+      out_of_scope: { projects: string[]; invocations: number };
+      /**
+       * Always null, deliberately. A percentage needs the plan's included
+       * allowance as a denominator, and no reachable API exposes it:
+       * `/v1/billing/charges` answers 404 `costs_not_found`. Absolute
+       * consumption is a fact; a percentage would be an invention.
+       */
+      cpu_percent: null;
+    }
   | { status: "not_observable"; reason: string; http_status: number | null };
 
 export type VercelResult = {
@@ -588,14 +644,155 @@ export async function readErrorDetail(response: Response): Promise<string | null
   }
 }
 
+/** The team every monitored project lives under. */
+export const VERCEL_TEAM_SLUG = "goodwolf";
+
 /**
- * Billing usage. Reports the real HTTP status when the call is refused, because
- * "403 on this plan" and "401 bad token" need different fixes and a generic
- * "not available" hides which one it is.
+ * Hourly buckets, fixed — NOT a knob.
+ *
+ * MEASURED TRAP (2026-08-04): coarse buckets are calendar-aligned and the
+ * `summary` sums the WHOLE bucket, including time before `startTime`. Same
+ * window, same metric: `{minutes:60}` returned 28,881 invocations and
+ * `{hours:24}` returned 53,897 — an 87% overstatement, HTTP 200, no warning.
+ * `{hours:24}` is exactly what one would reach for to get "the period total".
+ */
+export const OBSERVABILITY_GRANULARITY = { minutes: 60 } as const;
+
+const METRIC_INVOCATIONS = "vercel.function_invocation.count";
+const METRIC_CPU_MS = "vercel.function_invocation.function_cpu_time_ms";
+
+type BillingWindow = {
+  ownerId: string;
+  cycleStart: number;
+  cycleEnd: number;
+};
+
+type UsageFailure = { reason: string; http_status: number | null };
+
+function failure(reason: string, http_status: number | null = null): UsageFailure {
+  return { reason, http_status };
+}
+
+/**
+ * Resolve the team's canonical id and billing cycle.
+ *
+ * The id matters: the Observability API rejects the slug with
+ * `invalid_union_discriminator`, so `ownerId` must be the `team_…` value.
+ */
+async function resolveTeam(
+  token: string,
+  fetchImpl: typeof fetch,
+): Promise<BillingWindow | UsageFailure> {
+  const response = await fetchImpl(
+    `https://api.vercel.com/v2/teams/${VERCEL_TEAM_SLUG}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(VERCEL_API_TIMEOUT_MS),
+    },
+  );
+
+  if (!response.ok) {
+    const detail = await readErrorDetail(response);
+    return failure(
+      detail
+        ? `team lookup returned ${response.status}: ${detail}`
+        : `team lookup returned ${response.status}`,
+      response.status,
+    );
+  }
+
+  const body = (await response.json()) as {
+    id?: unknown;
+    billing?: { period?: { start?: unknown; end?: unknown } };
+  };
+  const ownerId = typeof body.id === "string" ? body.id : null;
+  const start = body.billing?.period?.start;
+  const end = body.billing?.period?.end;
+
+  if (!ownerId || typeof start !== "number" || typeof end !== "number") {
+    return failure("team payload carried no id or billing period");
+  }
+  return { ownerId, cycleStart: start, cycleEnd: end };
+}
+
+type SummaryRow = Record<string, unknown>;
+
+/** One metric, grouped by project. Returns the `summary` rows or a failure. */
+async function queryMetric(
+  token: string,
+  fetchImpl: typeof fetch,
+  metric: string,
+  window: BillingWindow,
+  startIso: string,
+  endIso: string,
+  aggregation?: string,
+): Promise<SummaryRow[] | UsageFailure> {
+  const response = await fetchImpl(
+    `https://api.vercel.com/v2/observability/query?teamId=${VERCEL_TEAM_SLUG}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        metric,
+        scope: { type: "owner", ownerId: window.ownerId },
+        startTime: startIso,
+        endTime: endIso,
+        granularity: OBSERVABILITY_GRANULARITY,
+        groupBy: ["project_name"],
+        ...(aggregation ? { aggregation } : {}),
+      }),
+      signal: AbortSignal.timeout(VERCEL_API_TIMEOUT_MS),
+    },
+  );
+
+  if (!response.ok) {
+    const detail = await readErrorDetail(response);
+    return failure(
+      detail
+        ? `observability query for ${metric} returned ${response.status}: ${detail}`
+        : `observability query for ${metric} returned ${response.status}`,
+      response.status,
+    );
+  }
+
+  const body = (await response.json()) as { summary?: unknown };
+  return Array.isArray(body.summary) ? (body.summary as SummaryRow[]) : [];
+}
+
+function isFailure(value: unknown): value is UsageFailure {
+  return Boolean(value) && typeof (value as UsageFailure).reason === "string";
+}
+
+/** Fold `summary` rows into project → number, reading the metric's own key. */
+function byProjectFrom(rows: SummaryRow[], suffix: string): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const row of rows) {
+    const project = typeof row.project_name === "string" ? row.project_name : null;
+    if (!project) continue;
+    const key = Object.keys(row).find((k) => k.endsWith(suffix));
+    const value = key ? Number(row[key]) : Number.NaN;
+    if (!Number.isFinite(value)) continue;
+    out.set(project, (out.get(project) ?? 0) + value);
+  }
+  return out;
+}
+
+/**
+ * Invocations and Active CPU, from the DOCUMENTED Observability API.
+ *
+ * `GET /v1/usage` used to be called here. It is absent from Vercel's official
+ * OpenAPI spec and rejects every time range tried — including the account's
+ * real billing cycle — so it was retired rather than kept as a fallback
+ * (audit 2026-08-04).
  */
 async function collectUsage(
   token: string | undefined,
+  profile: TargetProfile,
   fetchImpl: typeof fetch,
+  nowMs: number,
 ): Promise<VercelUsage> {
   if (!token) {
     return {
@@ -606,24 +803,70 @@ async function collectUsage(
   }
 
   try {
-    const response = await fetchImpl("https://api.vercel.com/v1/usage", {
-      headers: { Authorization: `Bearer ${token}` },
-      signal: AbortSignal.timeout(VERCEL_API_TIMEOUT_MS),
-    });
+    const window = await resolveTeam(token, fetchImpl);
+    if (isFailure(window)) {
+      return { status: "not_observable", ...window };
+    }
 
-    if (!response.ok) {
-      const detail = await readErrorDetail(response);
+    // The window never runs past the cycle it belongs to, and never past now.
+    const startIso = new Date(window.cycleStart).toISOString();
+    const endIso = new Date(Math.min(nowMs, window.cycleEnd)).toISOString();
+
+    // Only invocations are queried. The CPU measure is deliberately NOT
+    // requested per project — see CPU_PER_PROJECT_UNRELIABLE.
+    const invocationRows = await queryMetric(
+      token,
+      fetchImpl,
+      METRIC_INVOCATIONS,
+      window,
+      startIso,
+      endIso,
+    );
+    if (isFailure(invocationRows)) return { status: "not_observable", ...invocationRows };
+
+    const invocations = byProjectFrom(invocationRows, "_count_sum");
+
+    if (invocations.size === 0) {
+      // Absence is not a measured zero. Reporting it as zero would say
+      // "nothing ran" about a system that is plainly serving traffic.
       return {
         status: "not_observable",
-        reason: detail
-          ? `usage endpoint returned ${response.status}: ${detail}`
-          : `usage endpoint returned ${response.status}`,
-        http_status: response.status,
+        reason: "observability returned an empty summary (no rows)",
+        http_status: null,
       };
     }
 
-    const data = (await response.json()) as Record<string, unknown>;
-    return { status: "observable", source: "rest", data };
+    const inScopeNames = new Set<string>(profile.projects.map((p) => p.project));
+
+    const byProject: ProjectUsage[] = [...inScopeNames].map((project) => ({
+      project,
+      invocations: invocations.get(project) ?? 0,
+      cpu_ms: null,
+    }));
+
+    const outOfScopeNames = [...invocations.keys()]
+      .filter((project) => !inScopeNames.has(project))
+      .sort();
+
+    return {
+      status: "observable",
+      source: "observability",
+      window: { start: startIso, end: endIso, billing_cycle_start: startIso },
+      by_project: byProject,
+      in_scope_total: {
+        invocations: byProject.reduce((sum, p) => sum + p.invocations, 0),
+        cpu_ms: null,
+      },
+      cpu_ms_reason: CPU_PER_PROJECT_UNRELIABLE,
+      out_of_scope: {
+        projects: outOfScopeNames,
+        invocations: outOfScopeNames.reduce(
+          (sum, project) => sum + (invocations.get(project) ?? 0),
+          0,
+        ),
+      },
+      cpu_percent: null,
+    };
   } catch (error) {
     return {
       status: "not_observable",
@@ -666,7 +909,7 @@ export async function collectVercel(
         };
   });
 
-  const usage = await collectUsage(token, fetchImpl);
+  const usage = await collectUsage(token, profile, fetchImpl, nowMs);
 
   const notObservable: string[] = [];
   if (usage.status !== "observable") {
@@ -674,6 +917,14 @@ export async function collectVercel(
       "invocations for the billing period",
       "Fluid Active CPU and quota %",
       "days until CPU exhaustion",
+    );
+  } else {
+    // Invocations are measured now; CPU is not, and neither is the ALLOWANCE
+    // that a percentage would need. All three stay listed on a successful run.
+    notObservable.push(
+      "Fluid Active CPU (per-project attribution is non-deterministic)",
+      "Active CPU as a % of the plan quota (no allowance is exposed by any API)",
+      "days until CPU exhaustion (depends on the two above)",
     );
   }
   for (const p of projects) {

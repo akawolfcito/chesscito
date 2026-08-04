@@ -196,15 +196,40 @@ function vercelSection(vercel: VercelResult, supabase: SupabaseResult) {
     }
   }
 
-  lines.push(
-    vercel.usage.status === "observable"
-      ? "usage: disponible vía REST"
-      : `invocations y Active CPU: NO OBSERVABLE — ${vercel.usage.reason}`,
-  );
+  const usage = vercel.usage;
+  if (usage.status === "observable") {
+    lines.push(
+      `consumo (Observability) · ventana ${usage.window.start} → ${usage.window.end}`,
+    );
+    lines.push(`   ciclo de facturación desde ${usage.window.billing_cycle_start}`);
+    for (const p of usage.by_project) {
+      lines.push(`   ${p.project}: ${formatCount(p.invocations)} invocaciones`);
+    }
+    lines.push(
+      `   TOTAL in-scope: ${formatCount(usage.in_scope_total.invocations)} invocaciones`,
+    );
+    // Printed separately and never added in: the team runs projects the
+    // monitor deliberately excludes (chesscito-landing among them), and
+    // folding them into the total would inflate Chesscito's consumption.
+    lines.push(
+      usage.out_of_scope.projects.length
+        ? `   fuera de alcance (NO sumado): ${usage.out_of_scope.projects.join(", ")} — ${formatCount(usage.out_of_scope.invocations)} invocaciones`
+        : "   fuera de alcance: ninguno",
+    );
+    lines.push(
+      "   ⚠️ es consumo POR PROYECTO, no separado por environment: production y preview comparten nombre de proyecto",
+    );
+    lines.push(`   ${usage.cpu_ms_reason}`);
+    lines.push("   % de cuota y días hasta agotamiento: NO OBSERVABLE — ninguna API expone lo incluido en el plan");
+  } else {
+    lines.push(`invocations y Active CPU: NO OBSERVABLE — ${usage.reason}`);
+  }
 
   return {
     title: "VERCEL",
-    status: vercel.usage.status === "observable" ? "observable" : "parcial",
+    // Never fully observable: even with consumption measured, the quota
+    // percentage has no denominator, so the CPU axis stays unmeasured.
+    status: "parcial",
     lines,
   };
 }
@@ -291,14 +316,15 @@ function buildNotObservable(
 ): NotObservableEntry[] {
   const out: NotObservableEntry[] = [];
 
-  if (vercel.usage.status !== "observable") {
-    for (const what of vercel.not_observable) {
-      out.push({
-        what,
-        why: vercel.usage.reason,
-        manual: "Vercel → Usage → Fluid Active CPU / Function Invocations",
-      });
-    }
+  for (const what of vercel.not_observable) {
+    out.push({
+      what,
+      why:
+        vercel.usage.status === "observable"
+          ? "el consumo se mide; lo INCLUIDO en el plan no lo expone ninguna API (/v1/billing/charges → 404 costs_not_found)"
+          : vercel.usage.reason,
+      manual: "Vercel → Usage → Fluid Active CPU / Function Invocations",
+    });
   }
   if (upstash.quota.status !== "observable") {
     for (const what of upstash.not_observable) {
