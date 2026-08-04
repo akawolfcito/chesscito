@@ -123,6 +123,18 @@ function supabaseSection(supabase: SupabaseResult, projections: Projection[]) {
   if (today) {
     lines.push(`eventos/sesión (${today.day}): ${today.events_per_session ?? "—"}`);
   }
+
+  const ss = supabase.session_stats_24h;
+  if (ss && ss.p95_events !== null) {
+    // The population size travels with the percentile on purpose: a p95 is
+    // only readable next to the n it came from.
+    lines.push(
+      `distribución 24h · p50 ${ss.p50_events ?? "—"} · p95 ${ss.p95_events} · máx ${ss.max_events ?? "—"} ` +
+        `(población completa: ${formatCount(ss.session_count)} sesiones)`,
+    );
+  } else {
+    lines.push("distribución de eventos por sesión: NO OBSERVABLE");
+  }
   const job = supabase.cron_jobs?.[0];
   if (job) {
     lines.push(`cron poda: ${String(job.jobname)} · ${String(job.schedule)} · ${job.active ? "activo" : "INACTIVO"} · ${supabase.cron_runs?.length ?? 0} corridas registradas`);
@@ -416,7 +428,11 @@ function buildClassifyInput(
             latency_ms: supabase.latency_ms,
             events_per_hour: supabase.events_per_hour,
             events_per_session: supabase.daily[0]?.events_per_session ?? null,
-            session_event_counts: supabase.top_sessions_1h.map((s) => s.events),
+            // From the server-side population block. NOT from
+            // `top_sessions_1h`, which is a top-20 sample and can only
+            // describe itself.
+            session_events_p95_24h: supabase.session_stats_24h?.p95_events ?? null,
+            session_population_24h: supabase.session_stats_24h?.session_count ?? null,
             projection_90d_bytes: worstProjection?.bytes_at_90d ?? null,
           }
         : {

@@ -199,6 +199,11 @@ select json_build_object(
       group by 1 order by 2 desc limit 20
     ) t
   ),
+  -- DIAGNOSTIC ONLY. This is a top-N sample: it is ordered by the very
+  -- quantity one would want to percentile, so no percentile taken over it is
+  -- the population's. Deriving the p95 from here reported "the second noisiest
+  -- session of the last hour" under a p95 label, and fired a RED over a healthy
+  -- system (audit 2026-08-04). The classifier reads session_stats_24h instead.
   'top_sessions_1h', (
     select coalesce(json_agg(row_to_json(t) order by t.events desc), '[]'::json)
     from (
@@ -206,6 +211,27 @@ select json_build_object(
       from public.analytics_events
       where created_at > now() - interval '1 hour'
       group by 1 order by 2 desc limit 20
+    ) t
+  ),
+  -- The percentile the classifier actually uses: computed in PostgreSQL over
+  -- EVERY session of the window, never a sample. session_count travels with
+  -- it so the report can say how large the population behind the number was.
+  'session_stats_24h', (
+    select row_to_json(t) from (
+      select count(*) as session_count,
+             percentile_disc(0.95) within group (order by s.event_count)
+               as p95_events,
+             percentile_disc(0.50) within group (order by s.event_count)
+               as p50_events,
+             max(s.event_count) as max_events
+      from (
+        select session_id, count(*) as event_count
+        from public.analytics_events
+        where created_at > now() - interval '24 hours'
+          and session_id is not null
+          and session_id <> ''
+        group by 1
+      ) s
     ) t
   ),
   'table_stats', (

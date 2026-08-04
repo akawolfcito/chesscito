@@ -116,7 +116,18 @@ export type ClassifyInput = {
         events_per_hour: Array<{ events: number }>;
         /** Most recent complete day. */
         events_per_session: number | null;
-        session_event_counts: number[];
+        /**
+         * p95 of events per session over the WHOLE 24h population, computed in
+         * PostgreSQL. `null` means it could not be measured — never zero.
+         *
+         * This replaced a client-side percentile over `top_sessions_1h`, which
+         * is a top-20 sample ordered by the very quantity being percentiled.
+         * That returned the second noisiest session of the hour under a p95
+         * label and fired a RED over a healthy system (audit 2026-08-04).
+         */
+        session_events_p95_24h: number | null;
+        /** Population size behind the p95 above. Reported, never classified. */
+        session_population_24h: number | null;
         /** Physical bytes projected at 90 days, per rate window. */
         projection_90d_bytes: number | null;
       }
@@ -194,12 +205,14 @@ export function classify(input: ClassifyInput): Classification {
       unmeasuredOther.push("events per session (no complete day yet)");
     }
 
-    const p95 = percentile(s.session_event_counts, 0.95);
-    if (p95 !== null && p95 >= THRESHOLDS.sessionEventsP95.red) {
+    const p95 = s.session_events_p95_24h;
+    if (p95 === null) {
+      unmeasuredOther.push("p95 events per session (population not measured)");
+    } else if (p95 >= THRESHOLDS.sessionEventsP95.red) {
       triggers.push({
         axis: "telemetry_volume",
         level: "red",
-        detail: `p95 session emits ${p95} events (>=${THRESHOLDS.sessionEventsP95.red})`,
+        detail: `p95 session emits ${p95} events over 24h (>=${THRESHOLDS.sessionEventsP95.red}), n=${s.session_population_24h ?? "?"} sessions`,
       });
     }
 

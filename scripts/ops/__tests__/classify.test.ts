@@ -26,7 +26,8 @@ function healthy(): ClassifyInput {
       latency_ms: 240,
       events_per_hour: [{ events: 100 }, { events: 120 }],
       events_per_session: 24,
-      session_event_counts: [10, 20, 30],
+      session_events_p95_24h: 73,
+      session_population_24h: 2411,
       projection_90d_bytes: 2.7 * 1024 ** 3,
     },
     vercel: { cpu_percent: 12, gateway_error_routes: 0, logs_observed: true },
@@ -167,19 +168,70 @@ describe("Supabase rules", () => {
     expect(classify(healthy()).level).toBe("green");
   });
 
-  it("a runaway session is red even when the average looks fine", () => {
-    // Few sessions generating hundreds of events: invisible in a mean.
+  it("a runaway POPULATION is red even when the average looks fine", () => {
+    // The rule is "many sessions generating hundreds of events", which a mean
+    // hides. It takes a population p95 to see it — not one loud session.
     const base = healthy();
     const c = classify({
       ...base,
       supabase: {
         ...(base.supabase as { observed: true }),
         events_per_session: 20,
-        session_event_counts: [5, 8, 12, 250],
+        session_events_p95_24h: 250,
+        session_population_24h: 2000,
       },
     });
     expect(c.level).toBe("red");
     expect(c.triggers.some((t) => t.detail.includes("p95"))).toBe(true);
+  });
+
+  it("the RED threshold is exactly 200, and 199 does not fire", () => {
+    const base = healthy();
+    const at = (p95: number) =>
+      classify({
+        ...base,
+        supabase: { ...(base.supabase as { observed: true }), session_events_p95_24h: p95 },
+      });
+
+    expect(at(199).triggers.some((t) => t.detail.includes("p95"))).toBe(false);
+    expect(at(199).level).toBe("green");
+    expect(at(200).triggers.some((t) => t.detail.includes("p95"))).toBe(true);
+    expect(at(200).level).toBe("red");
+    expect(THRESHOLDS.sessionEventsP95.red).toBe(200);
+  });
+
+  it("the real measurement (p95 73 over 2,411 sessions) is GREEN", () => {
+    // Audit 2026-08-04: the population p95 was 73 while the top-20 figure the
+    // classifier used to read was 182 — which is the real p99, not a p95.
+    const c = classify(healthy());
+    expect(c.level).toBe("green");
+    expect(c.triggers.some((t) => t.detail.includes("p95"))).toBe(false);
+  });
+
+  it("reports the population size alongside the percentile when it fires", () => {
+    // A p95 without its n is not readable.
+    const base = healthy();
+    const c = classify({
+      ...base,
+      supabase: {
+        ...(base.supabase as { observed: true }),
+        session_events_p95_24h: 240,
+        session_population_24h: 1846,
+      },
+    });
+    const trigger = c.triggers.find((t) => t.detail.includes("p95"));
+    expect(trigger?.detail).toContain("1846");
+    expect(trigger?.detail).toContain("24h");
+  });
+
+  it("an unmeasured p95 is neither green nor red — it is unmeasured", () => {
+    const base = healthy();
+    const c = classify({
+      ...base,
+      supabase: { ...(base.supabase as { observed: true }), session_events_p95_24h: null },
+    });
+    expect(c.triggers.some((t) => t.detail.includes("p95"))).toBe(false);
+    expect(c.unmeasured_other.join(" ")).toMatch(/p95 events per session/);
   });
 
   it("a 90-day projection between 4 and 6 GB is yellow, above 6 GB red", () => {

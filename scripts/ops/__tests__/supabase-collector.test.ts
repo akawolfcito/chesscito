@@ -14,6 +14,7 @@ import {
   hashSession,
   isDeltaComparable,
   isMissingRelationError,
+  normalizeSessionStats,
   sanitizeError,
 } from "../collectors/supabase";
 import { buildSnapshotSql } from "../collectors/supabase-sql";
@@ -53,6 +54,12 @@ const PAYLOAD = {
     { session_digest: "aaaaaaaaaaaa", events: 31 },
     { session_digest: "bbbbbbbbbbbb", events: 12 },
   ],
+  session_stats_24h: {
+    session_count: 2_411,
+    p95_events: 73,
+    p50_events: 15,
+    max_events: 592,
+  },
   server_version: "17.6",
   ingest_windows: {
     last_15m: { minutes: 15, events: 300, sessions: 20 },
@@ -291,6 +298,112 @@ describe("version degradation", () => {
   it("isMissingRelationError only matches a missing relation", () => {
     expect(isMissingRelationError(new Error('relation "x" does not exist'))).toBe(true);
     expect(isMissingRelationError(new Error("ETIMEDOUT"))).toBe(false);
+  });
+});
+
+describe("session p95 — population, not a top-N sample", () => {
+  it("computes the percentile in PostgreSQL over the whole window", () => {
+    for (const includeOptional of [true, false]) {
+      const sql = buildSnapshotSql({ includeOptional });
+      expect(sql).toContain("percentile_disc(0.95) within group");
+      expect(sql).toContain("session_stats_24h");
+    }
+  });
+
+  it("uses a 24-hour window for the population block", () => {
+    const sql = buildSnapshotSql({ includeOptional: true });
+    const block = sql.slice(sql.indexOf("'session_stats_24h'"));
+    const body = block.slice(0, block.indexOf("'table_stats'"));
+    expect(body).toContain("interval '24 hours'");
+    expect(body).not.toContain("interval '1 hour'");
+  });
+
+  it("does NOT cap the population with a LIMIT", () => {
+    // The whole defect: a top-20 slice is ordered by the very quantity being
+    // percentiled, so its percentile can only describe itself.
+    const sql = buildSnapshotSql({ includeOptional: true });
+    const block = sql.slice(sql.indexOf("'session_stats_24h'"));
+    const body = block.slice(0, block.indexOf("'table_stats'"));
+    expect(body).not.toMatch(/limit\s+\d+/i);
+  });
+
+  it("ignores null and empty session ids", () => {
+    const sql = buildSnapshotSql({ includeOptional: true });
+    const block = sql.slice(sql.indexOf("'session_stats_24h'"));
+    const body = block.slice(0, block.indexOf("'table_stats'"));
+    expect(body).toContain("session_id is not null");
+    expect(body).toContain("session_id <> ''");
+  });
+
+  it("keeps top_sessions_1h available as a diagnostic", () => {
+    const sql = buildSnapshotSql({ includeOptional: true });
+    expect(sql).toContain("'top_sessions_1h'");
+  });
+
+  it("reports the population size next to the percentile", () => {
+    expect(buildSnapshotSql({ includeOptional: true })).toContain("session_count");
+  });
+
+  it("passes the read-only guard", () => {
+    expect(() => assertReadOnlySql(buildSnapshotSql({ includeOptional: true }))).not.toThrow();
+  });
+});
+
+describe("session p95 — normalisation", () => {
+  it("carries the population block through the collector", async () => {
+    const result = await collectSupabase(fakeEnv(), {
+      run: () => JSON.stringify(PAYLOAD),
+      now: () => 1_785_810_000_000,
+    });
+    if (result.status !== "observable") throw new Error("expected observable");
+    expect(result.session_stats_24h).toEqual({
+      session_count: 2_411,
+      p95_events: 73,
+      p50_events: 15,
+      max_events: 592,
+    });
+  });
+
+  it("an empty window has NO p95 — never a fabricated zero", () => {
+    // A zero would read as "no session emits anything", which is the opposite
+    // of "we could not measure it".
+    expect(
+      normalizeSessionStats({ session_count: 0, p95_events: null, p50_events: null, max_events: null }),
+    ).toEqual({ session_count: 0, p95_events: null, p50_events: null, max_events: null });
+  });
+
+  it("a single session yields that session's own count as the p95", () => {
+    // percentile_disc over one row is that row. Documented, not accidental.
+    expect(
+      normalizeSessionStats({ session_count: 1, p95_events: 12, p50_events: 12, max_events: 12 }),
+    ).toMatchObject({ session_count: 1, p95_events: 12 });
+  });
+
+  it("a missing or malformed block degrades to null without throwing", () => {
+    for (const raw of [undefined, null, "nope", 42, {}, { session_count: "x" }]) {
+      expect(() => normalizeSessionStats(raw)).not.toThrow();
+      expect(normalizeSessionStats(raw)).toBeNull();
+    }
+  });
+
+  it("a payload without the block does not take the run down", async () => {
+    const { session_stats_24h: _omitted, ...withoutBlock } = PAYLOAD;
+    const result = await collectSupabase(fakeEnv(), {
+      run: () => JSON.stringify(withoutBlock),
+      now: () => 1_785_810_000_000,
+    });
+    expect(result.status).toBe("observable");
+    if (result.status !== "observable") return;
+    expect(result.session_stats_24h).toBeNull();
+  });
+
+  it("never emits a raw session id", async () => {
+    const result = await collectSupabase(fakeEnv(), {
+      run: () => JSON.stringify(PAYLOAD),
+      now: () => 1_785_810_000_000,
+    });
+    // The population block is pure counts; the diagnostic sample is digested.
+    expect(JSON.stringify(result)).not.toContain("aaaaaaaaaaaa");
   });
 });
 

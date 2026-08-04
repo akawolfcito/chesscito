@@ -80,7 +80,27 @@ export type SupabaseSnapshot = {
   }>;
   top_events_1h: Array<{ event: string; events: number }>;
   top_events_24h: Array<{ event: string; events: number }>;
+  /**
+   * DIAGNOSTIC ONLY — a top-20 sample, never a distribution.
+   *
+   * It is ordered by the same quantity one would want to percentile, so any
+   * percentile taken over it belongs to the sample, not the population. That
+   * is exactly how a healthy system produced a RED: the client-side p95 over
+   * these 20 rows returned the SECOND noisiest session of the hour (measured:
+   * 182, equal to the real p99, while the real p95 was 77).
+   */
   top_sessions_1h: Array<{ session_digest: string; events: number }>;
+  /**
+   * The distribution the classifier reads. Computed in PostgreSQL over EVERY
+   * session in the window. `null` when the query could not run — never a
+   * fabricated zero, which would read as "no session emits anything".
+   */
+  session_stats_24h: {
+    session_count: number;
+    p95_events: number | null;
+    p50_events: number | null;
+    max_events: number | null;
+  } | null;
   table_stats: Record<string, unknown> | null;
   index_stats: Array<{ index_name: string; idx_scan: number; size_bytes: number }>;
   database: (Record<string, unknown> & { stats_reset: string | null }) | null;
@@ -252,5 +272,36 @@ export async function collectSupabase(
       session_digest: hashSession(row.session_digest, salt, index),
       events: row.events,
     })),
+    session_stats_24h: normalizeSessionStats(parsed.session_stats_24h),
+  };
+}
+
+/**
+ * Normalise the population block.
+ *
+ * An empty window yields `session_count = 0` and null percentiles, and that is
+ * kept as-is: a zero-session window has no p95, and inventing one — 0 — would
+ * be read as "no session emits anything", which is the opposite of unknown.
+ */
+export function normalizeSessionStats(
+  raw: unknown,
+): SupabaseSnapshot["session_stats_24h"] {
+  if (!raw || typeof raw !== "object") return null;
+  const row = raw as Record<string, unknown>;
+
+  const num = (value: unknown): number | null => {
+    if (value === null || value === undefined) return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const count = num(row.session_count);
+  if (count === null) return null;
+
+  return {
+    session_count: count,
+    p95_events: count > 0 ? num(row.p95_events) : null,
+    p50_events: count > 0 ? num(row.p50_events) : null,
+    max_events: count > 0 ? num(row.max_events) : null,
   };
 }
