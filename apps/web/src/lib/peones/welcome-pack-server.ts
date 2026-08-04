@@ -28,6 +28,7 @@
 
 import { createHash } from "node:crypto";
 
+import type { getSupabaseServer } from "@/lib/supabase/server";
 import { normalizeWallet } from "./ledger-service";
 
 /** Minimal structural typing for the Supabase client surface this
@@ -42,6 +43,21 @@ export type WelcomePackSupabase = {
     }>;
   };
 };
+
+/**
+ * Read surface for {@link hasPeonesWelcomePack}.
+ *
+ * Deliberately NOT a hand-written structural shape like the one above. The
+ * real client's `select` is heavily overloaded and generic, and asking
+ * TypeScript to match a literal `select → eq → maybeSingle` chain against it
+ * exceeds its instantiation depth (TS2589 — observed here, not hypothetical).
+ * Deriving the type from `getSupabaseServer` is the convention the rest of the
+ * codebase already uses for read helpers (see
+ * `season-pass/focus-ledger-init.ts`), and it keeps the call sites cast-free.
+ */
+export type WelcomePackProbeSupabase = NonNullable<
+  ReturnType<typeof getSupabaseServer>
+>;
 
 export const PEONES_WELCOME_PACK_AMOUNT = 1;
 
@@ -73,6 +89,59 @@ function buildAttestation(payload: {
 }
 
 /**
+ * Has this wallet already been granted its welcome pack?
+ *
+ * An equality probe on `idempotency_key`, which carries the UNIQUE btree
+ * index `peones_ledger_idempotency_uq` — so this is an index probe returning
+ * at most one row, and it never writes.
+ *
+ * Three-valued on purpose. `"unknown"` (the database could not answer) is NOT
+ * folded into `false`: treating an outage as "not seeded" would fire an INSERT
+ * at a database that is already failing, which is exactly the behaviour D2.1
+ * exists to remove. The caller skips the seed and a later successful read
+ * picks it up.
+ *
+ * This is an OPTIMISATION, never the guarantee. The unique index remains the
+ * sole thing standing between us and a double grant — see
+ * {@link ensurePeonesWelcomePack}.
+ */
+export async function hasPeonesWelcomePack(
+  supabase: WelcomePackProbeSupabase,
+  rawWallet: string,
+): Promise<boolean | "unknown"> {
+  let idempotencyKey: string;
+  try {
+    idempotencyKey = buildWelcomePackIdempotencyKey(rawWallet);
+  } catch {
+    // Malformed wallet — the seed would reject it too. Report "seeded" so the
+    // caller skips the write entirely.
+    return true;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("peones_ledger")
+      // One column, and the smallest one available: the key we are matching
+      // on, so the index alone can answer. Never `select("*")` — this table
+      // carries wallets, metadata and attestations that have no business
+      // crossing the wire for an existence check.
+      .select("idempotency_key")
+      .eq("idempotency_key", idempotencyKey)
+      // Redundant against the UNIQUE index, and kept anyway: verified in the
+      // installed postgrest-js (2.100.1) that `maybeSingle()` adds NO limit to
+      // the query — it only post-processes the array client-side. So without
+      // this, "at most one row" would rest entirely on the index. With it, the
+      // bound holds at the query level too.
+      .limit(1)
+      .maybeSingle();
+    if (error) return "unknown";
+    return data != null;
+  } catch {
+    return "unknown";
+  }
+}
+
+/**
  * Inserts the welcome-pack row if the wallet has none yet. Returns
  * `true` when a row was newly inserted, `false` when the wallet was
  * already seeded (idempotent no-op) or when the insert failed
@@ -81,6 +150,12 @@ function buildAttestation(payload: {
  * The "already seeded" check piggybacks on the unique index on
  * `idempotency_key`, so this is one INSERT and (at most) one
  * conflict resolution — no preliminary SELECT round-trip.
+ *
+ * ⚠️ Callers should gate this behind {@link hasPeonesWelcomePack} so a
+ * recurring wallet never issues the INSERT at all (D2.1, 2026-08-03). That
+ * gate is a performance measure; the 23505 branch below stays because it is
+ * the ONLY thing that makes concurrent first-reads safe, and it is what the
+ * unique index enforces regardless of what any cache or probe believed.
  */
 export async function ensurePeonesWelcomePack(
   supabase: WelcomePackSupabase,

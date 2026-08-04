@@ -30,6 +30,10 @@ vi.mock("@/lib/server/logger", () => ({
     warn: vi.fn(),
     error: vi.fn(),
   }),
+  // D2.1: the route hashes the wallet before logging it. Privacy itself is
+  // asserted in `welcome-pack-gate.test.ts` against the REAL logger; this
+  // stub only keeps the module contract satisfied.
+  hashWallet: (w: string) => `hashed(${w.length})`,
 }));
 
 // Sprint 4 commit J — welcome pack helper. Default = no-op (returns
@@ -37,6 +41,10 @@ vi.mock("@/lib/server/logger", () => ({
 // identically. Specific welcome-pack-seeded tests override per-test.
 vi.mock("@/lib/peones/welcome-pack-server", () => ({
   ensurePeonesWelcomePack: vi.fn(async () => false),
+  // D2.1: the seed is gated behind this probe. Default `true` (already
+  // seeded) keeps every legacy test in this file exercising the recurring
+  // path — which is the path they were written for.
+  hasPeonesWelcomePack: vi.fn(async () => true),
 }));
 
 import { GET } from "../route";
@@ -44,7 +52,10 @@ import { PEONES_DAILY_CAP } from "@/lib/peones/types";
 import { enforceOrigin } from "@/lib/server/demo-signing";
 import { checkRateLimit } from "@/lib/server/rate-limit";
 import { getSupabaseServer } from "@/lib/supabase/server";
-import { ensurePeonesWelcomePack } from "@/lib/peones/welcome-pack-server";
+import {
+  ensurePeonesWelcomePack,
+  hasPeonesWelcomePack,
+} from "@/lib/peones/welcome-pack-server";
 
 const mockedOrigin = vi.mocked(enforceOrigin);
 const mockedRate = vi.mocked(checkRateLimit);
@@ -53,6 +64,7 @@ const mockedRate = vi.mocked(checkRateLimit);
 const ALLOWED = { allowed: true, outcome: "allowed", resetAt: null } as const;
 const mockedSupabase = vi.mocked(getSupabaseServer);
 const mockedWelcomePack = vi.mocked(ensurePeonesWelcomePack);
+const mockedHasPack = vi.mocked(hasPeonesWelcomePack);
 
 const VALID_WALLET = "0xabcdef0123456789abcdef0123456789abcdef01";
 const VALID_WALLET_UPPER = "0xABCDEF0123456789ABCDEF0123456789ABCDEF01";
@@ -375,9 +387,13 @@ describe("GET /api/peones/balance — welcome pack seed (Sprint 4 commit J)", ()
     mockedRate.mockReset();
     mockedSupabase.mockReset();
     mockedWelcomePack.mockReset();
+    mockedHasPack.mockReset();
     mockedOrigin.mockImplementation(() => {});
     mockedRate.mockResolvedValue(ALLOWED);
     mockedWelcomePack.mockResolvedValue(false);
+    // These cases predate D2.1 and describe the FIRST read of a wallet, so
+    // the probe must report "not seeded" for the seed to run at all.
+    mockedHasPack.mockResolvedValue(false);
   });
 
   it("calls ensurePeonesWelcomePack with the normalized wallet before reading balance", async () => {

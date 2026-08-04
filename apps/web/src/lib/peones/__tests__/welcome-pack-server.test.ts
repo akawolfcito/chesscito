@@ -14,6 +14,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   buildWelcomePackIdempotencyKey,
   ensurePeonesWelcomePack,
+  hasPeonesWelcomePack,
   PEONES_WELCOME_PACK_AMOUNT,
   type WelcomePackSupabase,
 } from "@/lib/peones/welcome-pack-server";
@@ -112,5 +113,120 @@ describe("ensurePeonesWelcomePack — invalid wallet", () => {
     const result = await ensurePeonesWelcomePack(client, "0xnotvalid");
     expect(result).toBe(false);
     expect(insertSpy).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * D2.1 — the probe that gates the seed.
+ *
+ * It is an optimisation, and every test here exists to prove it cannot become
+ * a correctness dependency: the UNIQUE index stays the guarantee.
+ */
+describe("hasPeonesWelcomePack", () => {
+  function client(opts: {
+    data?: unknown;
+    error?: { code?: string; message?: string } | null;
+    throws?: boolean;
+  }) {
+    const maybeSingle = vi.fn(async () => {
+      if (opts.throws) throw new Error("network down");
+      return { data: opts.data ?? null, error: opts.error ?? null };
+    });
+    const limit = vi.fn(() => ({ maybeSingle }));
+    const eq = vi.fn(() => ({ limit, maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    const insert = vi.fn(async () => ({ error: null }));
+    return {
+      supabase: { from: vi.fn(() => ({ select, insert })) },
+      select,
+      eq,
+      limit,
+      insert,
+      maybeSingle,
+    };
+  }
+
+  it("probes by idempotency_key on the unique index — never a table scan", async () => {
+    const c = client({ data: { idempotency_key: "x" } });
+    await hasPeonesWelcomePack(c.supabase as never, W);
+
+    expect(c.supabase.from).toHaveBeenCalledWith("peones_ledger");
+    expect(c.eq).toHaveBeenCalledWith(
+      "idempotency_key",
+      buildWelcomePackIdempotencyKey(W),
+    );
+  });
+
+  it("selects ONE column and bounds the result to ONE row", async () => {
+    const c = client({ data: null });
+    await hasPeonesWelcomePack(c.supabase as never, W);
+
+    // Not `*`: this table holds wallets, metadata and attestation hashes.
+    expect(c.select).toHaveBeenCalledWith("idempotency_key");
+    // postgrest-js 2.100.1's `maybeSingle()` adds no LIMIT — it only
+    // post-processes the array — so the bound must be explicit.
+    expect(c.limit).toHaveBeenCalledWith(1);
+  });
+
+  it("reports true when the row exists, false when it does not", async () => {
+    await expect(
+      hasPeonesWelcomePack(client({ data: { idempotency_key: "x" } }).supabase as never, W),
+    ).resolves.toBe(true);
+    await expect(
+      hasPeonesWelcomePack(client({ data: null }).supabase as never, W),
+    ).resolves.toBe(false);
+  });
+
+  it("normalizes the wallet before probing", async () => {
+    const c = client({ data: null });
+    await hasPeonesWelcomePack(c.supabase as never, W_UPPER);
+    expect(c.eq).toHaveBeenCalledWith(
+      "idempotency_key",
+      buildWelcomePackIdempotencyKey(W),
+    );
+  });
+
+  it("reports 'unknown' on a DB error — NOT false", async () => {
+    // Folding an outage into "not seeded" would fire an INSERT at a database
+    // that just failed a read, which is the behaviour D2.1 removes.
+    await expect(
+      hasPeonesWelcomePack(
+        client({ error: { code: "PGRST", message: "boom" } }).supabase as never,
+        W,
+      ),
+    ).resolves.toBe("unknown");
+  });
+
+  it("reports 'unknown' when the client throws", async () => {
+    await expect(
+      hasPeonesWelcomePack(client({ throws: true }).supabase as never, W),
+    ).resolves.toBe("unknown");
+  });
+
+  it("never writes", async () => {
+    const c = client({ data: null });
+    await hasPeonesWelcomePack(c.supabase as never, W);
+    expect(c.insert).not.toHaveBeenCalled();
+  });
+
+  it("treats a malformed wallet as seeded, so no write is attempted", async () => {
+    const c = client({ data: null });
+    await expect(
+      hasPeonesWelcomePack(c.supabase as never, "0xnotvalid"),
+    ).resolves.toBe(true);
+    expect(c.supabase.from).not.toHaveBeenCalled();
+  });
+
+  it("does not make the index redundant: a stale 'false' still cannot double-grant", async () => {
+    // The probe says "not seeded" while the row already exists — the exact
+    // race the gate cannot prevent. The insert must no-op on 23505.
+    const insert = vi.fn(async () => ({
+      error: { code: "23505", message: "duplicate key" },
+    }));
+    const supabase = { from: vi.fn(() => ({ insert })) };
+
+    await expect(
+      ensurePeonesWelcomePack(supabase as never, W),
+    ).resolves.toBe(false);
   });
 });
