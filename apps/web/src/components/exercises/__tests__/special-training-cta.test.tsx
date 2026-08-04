@@ -100,11 +100,28 @@ function solve(exercise: Exercise) {
   fireEvent.click(screen.getByRole("gridcell", { name: to }));
 }
 
+/**
+ * The panel arms its tap prompt on a real `setTimeout`, not on a render:
+ * `mission-panel-candy.tsx` waits `entryBeat + 550`, and `entryBeat` is 600 on
+ * success — 1150 ms of wall clock before "Tap to Continue" can appear.
+ *
+ * This used to wait with `{ timeout: 2500 }`, i.e. 1.17x the nominal delay.
+ * That is enough on an idle machine and not enough inside a loaded suite, where
+ * jsdom timers drift: the test passed alone and failed roughly two runs in
+ * three under the full suite (2026-08-04). Raising the number would only move
+ * the threshold, so the wait is derived from the component's own timing and
+ * given a margin sized for a loaded worker rather than a lucky one.
+ */
+const TAP_ARM_DELAY_MS = 600 + 550;
+const TAP_ARM_TIMEOUT_MS = TAP_ARM_DELAY_MS * 4;
+
 /** The WELL DONE flash now holds for the player's tap before the queued
  *  recognition takes the stage (founder 2026-07-17). Wait for the prompt to
  *  arm, then tap past it. */
 async function tapPastWellDone() {
-  await screen.findByText("Tap to Continue", undefined, { timeout: 2500 });
+  await screen.findByText("Tap to Continue", undefined, {
+    timeout: TAP_ARM_TIMEOUT_MS,
+  });
   fireEvent.click(screen.getByRole("button", { name: "Tap to Continue" }));
 }
 
