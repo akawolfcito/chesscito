@@ -187,6 +187,50 @@ function toActivityTrend(rows: Record<string, unknown>[] | null): DailyBucket[] 
   }));
 }
 
+/** Learn vs Play vs Total, for the installs cards. */
+export type SurfaceBreakdown = {
+  learn: InstallCounts | null;
+  play: InstallCounts | null;
+  total: InstallCounts | null;
+};
+
+/**
+ * The Learn / Play / Total row.
+ *
+ * ⚠️ **`learn + play` can be LESS than `total`, and that is not a bug.** 15.5 %
+ * of the event rows carry no `surface`, and a non-null filter excludes them, so
+ * the two named products cannot add up to the unfiltered figure. The surface
+ * that prints this row MUST say so beside it — an unauditable number reads as a
+ * lie, and the reader has no other way to reconcile the three.
+ *
+ * Three calls to ONE rpc (not three full aggregations): the breakdown only
+ * needs install counts, and the page already pays for eight elsewhere.
+ * `container` is carried through so the row answers the same question the rest
+ * of the page is filtered to.
+ */
+export async function getSurfaceBreakdown(
+  container: StatsFilters["container"] = "all",
+): Promise<SurfaceBreakdown> {
+  const supabase = getSupabaseServer();
+  if (!supabase) return { learn: null, play: null, total: null };
+
+  const client = supabase as unknown as RpcClient;
+  const read = (surface: StatsFilters["surface"]) =>
+    callRpc(client, "stats_install_counts", { surface, container });
+
+  const [learn, play, total] = await Promise.all([
+    read("learn"),
+    read("play"),
+    read("all"),
+  ]);
+
+  return {
+    learn: toInstallCounts(learn),
+    play: toInstallCounts(play),
+    total: toInstallCounts(total),
+  };
+}
+
 /**
  * Read every block for the given filters.
  *

@@ -1,128 +1,102 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { LEARN_URL, PLAY_URL } from "@/lib/app-urls";
+import { headers } from "next/headers";
 
+import { StatsDashboard } from "@/components/stats/stats-dashboard";
+import { getPublicStats, getSurfaceBreakdown } from "@/lib/stats/aggregator";
+import { parseStatsFilters } from "@/lib/stats/filters";
+import { resolveStatsLocale, STATS_LOCALES, type StatsLocale } from "@/lib/stats/locale";
+import { EMPTY_PLAYERS_CENSUS, readPlayersCensus } from "@/lib/stats/players-census";
 
+/**
+ * The consolidated public `/stats` dashboard.
+ *
+ * ⛔ **Reachable is not the same as indexable.** This page is a deliverable of
+ * the MiniPay listing (§8) — it must be public, with no wallet and no auth — and
+ * it must also stay out of search results. `noindex, nofollow` plus absence
+ * from the sitemap is what reconciles those two, and gating it would break the
+ * listing. See `docs/specs/2026-07-30-stats-paid-export-x402.md` §0.
+ *
+ * `follow: false` is load-bearing: the landing IS indexed and links here, so a
+ * crawler arrives through that link. Without it, it would then follow the
+ * outbound links onward.
+ *
+ * ⛔ **One URL.** `/stats` stays outside the next-intl middleware matcher, so
+ * there is no `/en/stats` and no `/es/stats`: two indexable URLs for the same
+ * content is one more than the listing can declare. Language comes from
+ * `Accept-Language`, overridable with `?locale=en|es`.
+ */
 export const metadata: Metadata = {
   title: "Stats — Chesscito",
   description: "Activity and progress stats for Chesscito Learn and Chesscito Play.",
-  // This page is not in the landing sitemap, but the landing IS indexed and
-  // links here — so the crawler arrives anyway, and then follows the two
-  // buttons below into the Learn and Play dashboards. `follow: false` is the
-  // half that closes that second hop.
+  alternates: { canonical: "https://www.chesscito.com/stats" },
   robots: { index: false, follow: false },
 };
 
-export default function StatsPage() {
+/**
+ * ⚠️ NO caching in this phase — no `revalidate`, no `unstable_cache`, no tag.
+ * The aggregator is uncached by design (Phase C policy) and every request runs
+ * the eight RPCs. Phase E adds the cache at this level, where its TTL and its
+ * invalidation are visible; until then this page must not be published to
+ * traffic.
+ */
+export const dynamic = "force-dynamic";
+
+type SearchParams = {
+  surface?: string | string[];
+  container?: string | string[];
+  locale?: string | string[];
+};
+
+export default async function StatsPage({
+  searchParams = {},
+}: {
+  searchParams?: SearchParams;
+}) {
+  // ⚠️ `locale` is deliberately NOT part of the filters. It is presentation:
+  // folding it into the read would fetch the same numbers once per language,
+  // and Phase E's cache key inherits this separation. There is a test for it.
+  const filters = parseStatsFilters(searchParams);
+
+  const rawLocale = Array.isArray(searchParams.locale)
+    ? searchParams.locale[0]
+    : searchParams.locale;
+  const localeOverride: StatsLocale | null =
+    rawLocale && (STATS_LOCALES as readonly string[]).includes(rawLocale.toLowerCase())
+      ? (rawLocale.toLowerCase() as StatsLocale)
+      : null;
+
+  const locale = resolveStatsLocale(
+    searchParams.locale,
+    headers().get("accept-language"),
+  );
+
+  // `allSettled` so a thrown read cannot blank a public page. The aggregator
+  // already swallows its own failures; this is the belt for the census, which
+  // reaches a different relation.
+  const [statsResult, breakdownResult, censusResult] = await Promise.allSettled([
+    getPublicStats(filters),
+    getSurfaceBreakdown(filters.container),
+    readPlayersCensus(),
+  ]);
+
+  const stats =
+    statsResult.status === "fulfilled"
+      ? statsResult.value
+      : await getPublicStats(filters);
+  const breakdown =
+    breakdownResult.status === "fulfilled"
+      ? breakdownResult.value
+      : { learn: null, play: null, total: null };
+  const census =
+    censusResult.status === "fulfilled" ? censusResult.value : EMPTY_PLAYERS_CENSUS;
+
   return (
-    <main className="min-h-[100dvh] bg-[var(--paper-bg)] px-5 py-10 md:px-10">
-      <div className="mx-auto max-w-[800px]">
-        <Link
-          href="/"
-          className="mb-8 inline-flex items-center gap-1 text-sm font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
-          style={{ color: "rgba(110, 65, 15, 0.75)" }}
-        >
-          ← Back
-        </Link>
-
-        <h1
-          className="fantasy-title mb-2 mt-6 text-2xl font-extrabold uppercase tracking-[0.14em] md:text-3xl"
-          style={{ color: "var(--landing-text)", textShadow: "var(--landing-text-shadow-soft)" }}
-        >
-          Stats
-        </h1>
-        <p
-          className="mb-10 text-sm leading-relaxed md:text-base"
-          style={{ color: "var(--paper-text-muted)" }}
-        >
-          Live activity from both products.
-        </p>
-
-        <ul className="grid grid-cols-1 gap-4 md:grid-cols-2" role="list">
-          {/* Learn */}
-          <li
-            className="flex flex-col gap-3 rounded-2xl border px-6 py-6"
-            style={{
-              background: "var(--landing-card-bg)",
-              borderColor: "var(--landing-card-border)",
-              boxShadow: "inset 0 1px 0 var(--landing-card-shadow-inner)",
-            }}
-          >
-            <span
-              className="inline-flex w-fit rounded-full border px-3 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.14em]"
-              style={{
-                background: "var(--landing-accent-bg)",
-                borderColor: "var(--landing-accent-border)",
-                color: "var(--landing-text)",
-              }}
-            >
-              Learn
-            </span>
-            <h2
-              className="fantasy-title text-lg font-extrabold"
-              style={{ color: "var(--landing-text)", textShadow: "var(--landing-text-shadow)" }}
-            >
-              Chesscito Learn
-            </h2>
-            <p className="text-sm leading-relaxed" style={{ color: "var(--paper-text-muted)" }}>
-              Daily habits, streak data, and exercises completed.
-            </p>
-            <a
-              href={`${LEARN_URL}/stats`}
-              className="mt-auto inline-flex min-h-[40px] items-center justify-center rounded-2xl border px-5 text-sm font-extrabold uppercase tracking-[0.10em] transition-opacity hover:opacity-80"
-              style={{
-                background: "var(--landing-accent-bg)",
-                borderColor: "var(--landing-accent-border)",
-                color: "var(--landing-text)",
-              }}
-            >
-              View Learn Stats →
-            </a>
-          </li>
-
-          {/* Play */}
-          <li
-            className="flex flex-col gap-3 rounded-2xl border px-6 py-6"
-            style={{
-              background: "var(--landing-card-bg)",
-              borderColor: "var(--landing-accent-border)",
-              boxShadow:
-                "inset 0 1px 0 var(--landing-card-shadow-inner), 0 0 0 2px var(--landing-accent-border)",
-            }}
-          >
-            <span
-              className="inline-flex w-fit rounded-full border px-3 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.14em]"
-              style={{
-                background: "var(--landing-accent-bg-strong)",
-                borderColor: "var(--landing-accent-border)",
-                color: "var(--landing-text)",
-              }}
-            >
-              Play
-            </span>
-            <h2
-              className="fantasy-title text-lg font-extrabold"
-              style={{ color: "var(--landing-text)", textShadow: "var(--landing-text-shadow)" }}
-            >
-              Chesscito Play
-            </h2>
-            <p className="text-sm leading-relaxed" style={{ color: "var(--paper-text-muted)" }}>
-              Arena matches, leaderboard rankings, and achievements.
-            </p>
-            <a
-              href={`${PLAY_URL}/stats`}
-              className="mt-auto inline-flex min-h-[40px] items-center justify-center rounded-2xl border px-5 text-sm font-extrabold uppercase tracking-[0.10em] transition-opacity hover:opacity-80"
-              style={{
-                background: "var(--landing-accent-bg-strong)",
-                borderColor: "var(--landing-accent-border)",
-                color: "var(--landing-text)",
-              }}
-            >
-              View Play Stats →
-            </a>
-          </li>
-        </ul>
-      </div>
-    </main>
+    <StatsDashboard
+      stats={stats}
+      breakdown={breakdown}
+      census={census}
+      locale={locale}
+      localeOverride={localeOverride}
+    />
   );
 }
