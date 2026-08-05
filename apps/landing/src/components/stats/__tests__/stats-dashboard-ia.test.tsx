@@ -289,6 +289,38 @@ describe("the trend is a chart, and the table is its precision", () => {
     expect(col.getAttribute("title")).toContain("100");
   });
 
+  it("prints the scale on the chart, because there is no hover on a phone", () => {
+    // ⚠️ `title` never fires on a touch screen, and this page ships inside
+    // MiniPay. Bars with no printed reference are shapes without magnitude.
+    renderDashboard();
+    const plot = screen.getByTestId("trend-plot");
+    expect(plot.textContent).toContain("129"); // peak of the fixture
+    expect(plot.textContent).toContain("65"); // half of it
+    expect(plot.textContent).toContain(statsCopy("en").trendAverage);
+  });
+
+  it("anchors the two values a reader looks for: the peak and the last day", () => {
+    renderDashboard();
+    const activity = screen.getByText(statsCopy("en").sectionActivity).closest("section")!;
+    expect(activity.textContent).toContain("Peak: 129 · 2026-07-30");
+    expect(activity.textContent).toContain("Latest: 129 · 2026-07-30");
+  });
+
+  it("places the average line inside the plot, never above the peak", () => {
+    // A spike day can drag the mean, but the mean can never exceed the max —
+    // an offset over 100% would park the line outside the box.
+    renderDashboard({
+      activityTrend30d: [
+        ...trend(29),
+        { date: "2026-07-30", sessions: 2612, newInstalls: 2600, returningInstalls: 12 },
+      ],
+    });
+    const line = screen.getByTestId("trend-average-line");
+    const bottom = Number.parseFloat(line.style.bottom || "0");
+    expect(bottom).toBeGreaterThan(0);
+    expect(bottom).toBeLessThanOrEqual(100);
+  });
+
   it("describes itself to a screen reader", () => {
     renderDashboard();
     const img = screen.getByRole("img");

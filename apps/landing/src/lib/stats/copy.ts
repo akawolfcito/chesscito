@@ -57,6 +57,11 @@ export type StatsCopy = {
   /** Read to a screen reader in place of the columns. */
   trendChartLabel: string;
   trendPeak: string;
+  trendLatest: string;
+  /** Prefixes the 30-day average reference line. ⚠️ Load-bearing after a launch
+   *  spike: without a line to compare against, the quiet days are an
+   *  unreadable strip at the bottom of the plot. */
+  trendAverage: string;
 
   sectionSummary: string;
   sectionBreakdown: string;
@@ -174,6 +179,8 @@ const EN: StatsCopy = {
   trendTable: "Show the exact figures for all {count} days",
   trendChartLabel: "Daily sessions over the last 30 days, split into new installs and returning.",
   trendPeak: "Peak",
+  trendLatest: "Latest",
+  trendAverage: "30-day average",
 
   sectionSummary: "Summary",
   sectionBreakdown: "Learn / Play breakdown",
@@ -296,6 +303,8 @@ const ES: StatsCopy = {
   trendChartLabel:
     "Sesiones diarias de los últimos 30 días, separadas en instalaciones nuevas y recurrentes.",
   trendPeak: "Máximo",
+  trendLatest: "Último día",
+  trendAverage: "Promedio de 30 días",
 
   sectionSummary: "Resumen",
   sectionBreakdown: "Desglose Learn / Play",
