@@ -162,7 +162,7 @@ end $$;
 -- ─────────────────────────────────────────────────────────────────
 -- 4. Apply the migration under test
 -- ─────────────────────────────────────────────────────────────────
-\ir ../supabase/migrations/20260805000000_close_public_access_to_privileged_views.sql
+\ir ../supabase/migrations/20260805010000_close_public_access_to_privileged_views.sql
 
 -- ─────────────────────────────────────────────────────────────────
 -- 5. AFTER — anon and authenticated are locked out, service_role is not

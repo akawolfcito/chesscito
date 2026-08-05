@@ -21,7 +21,15 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const MIGRATIONS = join(process.cwd(), "supabase", "migrations");
-const MIGRATION = "20260805000000_close_public_access_to_privileged_views.sql";
+/**
+ * ⚠️ The version prefix must be UNIQUE across the whole migration set. Supabase
+ * tracks migrations by VERSION, not by filename, so a second file sharing a
+ * prefix is not a cosmetic clash: `supabase db push --dry-run` resolved
+ * `20260805000000` to `..._stats_aggregation_rpcs.sql` and silently omitted
+ * this migration from the push plan. The P0 would have stayed open while the
+ * command reported success. Renamed 20260805000000 -> 20260805010000.
+ */
+const MIGRATION = "20260805010000_close_public_access_to_privileged_views.sql";
 
 const VIEWS = [
   "public.peones_balances",
@@ -87,6 +95,29 @@ describe("privileged views migration — additive only", () => {
     expect(executable).not.toMatch(/^\s*(create|drop|alter) policy/im);
     expect(executable).not.toMatch(/^\s*(insert|update|delete) /im);
     expect(executable).not.toMatch(/^\s*(create|drop) (or replace )?view/im);
+  });
+});
+
+describe("migration versions are unique", () => {
+  /**
+   * Caught in production prep, not in review: this migration originally shipped
+   * as 20260805000000, colliding with `..._stats_aggregation_rpcs.sql`.
+   * Supabase keys migrations on the VERSION prefix, so `db push --dry-run`
+   * resolved the version to the stats file and dropped this one from the plan
+   * entirely — it would have reported success while leaving anon's SELECT on
+   * three views untouched. A duplicate prefix is a silent no-op, not a
+   * cosmetic problem, so it is asserted for the whole set rather than for the
+   * one file this suite owns.
+   */
+  it("no two migrations share a version prefix", () => {
+    const { readdirSync } = require("node:fs") as typeof import("node:fs");
+    const byVersion = new Map<string, string[]>();
+    for (const file of readdirSync(MIGRATIONS).filter((f) => f.endsWith(".sql"))) {
+      const version = file.slice(0, file.indexOf("_"));
+      byVersion.set(version, [...(byVersion.get(version) ?? []), file]);
+    }
+    const collisions = [...byVersion.entries()].filter(([, files]) => files.length > 1);
+    expect(collisions).toEqual([]);
   });
 });
 
