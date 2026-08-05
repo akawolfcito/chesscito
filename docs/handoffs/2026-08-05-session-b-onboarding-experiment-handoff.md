@@ -1,8 +1,12 @@
 # Handoff — Sesión B: experimento Tour → primera actividad (2026-08-05)
 
-> **⛔ PARADA OBLIGATORIA.** Nada se desplegó y nada se aplicó a producción.
-> El experimento está en `main` local con rollout **0 %** (oscuro). La migración
-> analítica está **escrita y sin aplicar**. Hace falta un **GO nuevo**.
+> **⚠️ EL CUERPO DE ESTE DOC SE ESCRIBIÓ ANTES DE DESPLEGAR. Manda el apéndice
+> "Ejecución" del final.** Desde entonces: `origin/main` = `2666a499`,
+> `origin/production` = `b3281c5c` (con el P0 del mutex, que **nunca había llegado a
+> producción**), y la migración `20260805020000` está **aplicada**.
+>
+> **⛔ PARADA VIGENTE:** la variante sigue **apagada** (flag ausente → 0 % → control).
+> La Etapa 3 (rollout al 10 %) no arrancó y necesita un **GO nuevo**.
 
 **Documento madre del descubrimiento:** `docs/audits/2026-08-05-session-b-b0-discovery.md`.
 Este handoff no lo repite: sólo lo que hace falta para retomar o desplegar.
@@ -511,3 +515,165 @@ lo preexistente más el doc de descubrimiento de esta sesión:
    resultados del experimento?
 5. **`leaderboard_v`** — la quinta vista stale con el bug de overflow. ¿Se dropea?
 6. **Los cinco archivos sin trackear** — ¿se commitean?
+
+---
+
+# Ejecución — 2026-08-05 (apéndice; manda sobre el cuerpo donde difieran)
+
+## Etapa 1 — Push
+
+`origin/main` = **`2666a499`** (4 commits, fast-forward). Flag
+`NEXT_PUBLIC_ONBOARDING_FIRST_ACTIVITY_PCT` **ausente en los dos proyectos** de Vercel
+→ default 0 → control. Auditado antes de pushear.
+
+## ⚠️ Sorpresa 1 — producción NO sigue `main`
+
+El cuerpo de este doc asumía que pushear a `main` desplegaba. **No.** Producción sigue la
+rama **`production`**: el alias de `learn.chesscito.com` es
+`lite-chesscito-git-**production**-goodwolf.vercel.app`, y `origin/production` = `b90ee4f6`
+(2026-08-04 14:29) se corresponde con el deploy Production de las 14:48 del mismo día.
+Pushear a `main` genera **Preview** en los dos proyectos.
+
+**Consecuencia grave, anterior a esta sesión:** `git branch -r --contains fbbe33ff`
+devolvía **sólo `origin/main``. El commit del **mutex PRO — el P0 del doble cobro —
+nunca había llegado a producción.** El handoff de la Sesión A declara los dos P0
+"desplegados y verificados en producción"; eso es cierto para la migración de vistas
+(se aplica con `supabase db push --linked`, independiente del deploy de la app) y
+**falso para el mutex**.
+
+## ⚠️ Sorpresa 2 — `production` estaba indeployable desde el 4 de agosto
+
+El primer push del hotfix falló a los 8 s en los dos proyectos:
+
+```
+Running "bash ../../scripts/ops/vercel-should-build.sh web"
+bash: ../../scripts/ops/vercel-should-build.sh: No such file or directory
+```
+
+El "Ignored Build Step" de ambos proyectos apunta a un script que sólo existía en `main`,
+agregado por `4d2d4eaf` el **2026-08-04 18:21** — 3½ h **después** del último deploy
+Production exitoso. Nadie había tocado `production` desde entonces, así que el defecto
+estaba latente. Los deploys fallidos **no** reemplazaron los alias: no hubo impacto de
+usuario en ningún momento.
+
+## Hotfix del P0 en `production`
+
+`origin/production` = `b90ee4f6` → **`b3281c5c`**, por cherry-pick, sin merge de los 29
+commits de `main`:
+
+| Commit | Origen | Qué es |
+|---|---|---|
+| `5a5e3e09` | `fbbe33ff` | mutex PRO + sus tests |
+| `b3281c5c` | `4d2d4eaf` | `vercel-should-build.sh` + su test (prerequisito de Vercel) |
+
+Diff contra `b90ee4f6`: **exactamente 4 archivos** — `use-pro-rail.ts` (+17/−1), sus tests
+(+161), el script (+119, bit `100755` preservado), su test (+156). Nada de Sesión B, ni
+`/stats`, ni migraciones.
+
+**Verificación:** 261 tests del script · 498 vecindario PRO/payments (incluye 14/14 de
+`use-pro-rail`) · `tsc` exit 0 · `pnpm build` exit 0 · `bash -n` OK.
+⚠️ `shellcheck` **no está instalado** en esta máquina; no corrió.
+
+**Deploys:** `lite-chesscito-3kovz9o3n` y `chesscito-ejrjzrowa`, ambos ● Ready ·
+Production. Alias movidos (`learn` + `lite` → learn; `play` → play).
+
+**Log de la decisión de build**, que era el punto de fallo:
+
+```
+Cloning ... (Branch: production, Commit: b3281c5)
+Running "bash ../../scripts/ops/vercel-should-build.sh web"
+[should-build] delegating to turbo-ignore for workspace 'web'
+≫   This commit affects "web"
+✓ Proceeding with deployment
+[should-build] BUILD — turbo-ignore reports this workspace is affected
+```
+
+**Trazabilidad del mutex:** alias → `3kovz9o3n` → commit `b3281c5` (del log) → `5a5e3e09`
+es ancestro (`merge-base --is-ancestor`, exit 0) → `use-pro-rail.ts` en ese árbol contiene
+`payInFlightRef` 5 veces.
+
+⛔ **El doble tap NO se probó contra producción**, por decisión explícita: exige una wallet
+con fondos y mueve dinero real — un doble tap contra el bug **sería** el cobro doble. La
+evidencia es la reproducción automatizada (el test falla sin el fix con
+`expected "vi.fn()" to be called 1 times, but got 2 times`) más la cadena de trazabilidad
+de arriba.
+
+## Etapa 2 — Migración aplicada
+
+Proyecto verificado antes de tocar nada: **`brsbdzpuvotxsadmcxyj`** (producción).
+
+`supabase db push --dry-run --linked` resolvió a **exactamente una** migración,
+`20260805020000_split_daily_focus_from_training_funnel.sql`. Sin colisiones.
+
+Aplicada. El bloque `do $$` de autoverificación **no abortó**. Historial remoto:
+`20260805000000`, `20260805010000`, `20260805020000`.
+
+### Contrato preservado
+
+| Función | Argumentos | Shape | anon | auth | service_role |
+|---|---|---|---|---|---|
+| `stats_activation_funnel` | `p_surface text DEFAULT NULL, p_container text DEFAULT NULL` | `TABLE(step text, sessions bigint)` | f | f | **t** |
+| `stats_daily_focus_funnel` | idem | idem | f | f | **t** |
+
+9 funciones `stats_*` en total: las 8 originales + la nueva.
+
+### 🔎 La evidencia de que el split hacía falta
+
+Contra datos reales de producción:
+
+```
+TRAINING  app_opened=5898 | hub_viewed=5797 | exercise_started=1107 | exercise_completed=788
+DAILY     app_opened=5898 | hub_viewed=5797 | daily_focus_started=1261 | daily_focus_completed=901
+```
+
+Las dos ramas comparten los primeros dos pasos **idénticos** (5898 / 5797) — son hermanas
+del mismo tronco. Y **`daily_focus_completed = 901 > exercise_completed = 788`**.
+
+Bajo la definición vieja, `daily_focus_completed` se calculaba como
+`s2 and s3 and s4 and s5`, así que **no podía superar 788 por construcción**. Estaba
+suprimiendo ≥113 finalizaciones de Daily reales. Es el fenómeno "426 > 415 parece un bug",
+medido en vivo.
+
+### Nada fuera de alcance
+
+| Chequeo | Resultado |
+|---|---|
+| Las 5 vistas | Idénticas al estado post-Sesión A (las 4 cerradas `anon=f`; `leaderboard_v` sigue siendo la excepción legacy conocida) |
+| `leaderboard_combined_v` | 10 filas (top-10 intacto) |
+| `leaderboard_full_v` | 448 jugadores (era 441 hace un día) |
+| `peones_balances` | 4.654 wallets (eran 4.567) |
+| `/stats` learn + play | **200**, Leaders renderiza |
+| Filas de probe filtradas a prod | **0** |
+
+### Rollback — probado, no sólo documentado
+
+`scripts` del probe en el scratchpad, ejecutado contra el Postgres local dentro de **una
+transacción revertida al final**, con un fixture de dos instalaciones (una sólo-Daily, una
+sólo-Training):
+
+- Definiciones nuevas → training **4 filas**, daily **4 filas**.
+- Cada instalación aparece en **su propia rama** y no en la otra.
+- Rollback de la sección 6 → `stats_activation_funnel` vuelve a **5 filas**,
+  `stats_daily_focus_funnel` **desaparece** (`to_regprocedure` → NULL).
+- `rollback;` → la base local queda sin ninguna de las dos funciones. Intacta.
+
+## Estado al cerrar
+
+| | |
+|---|---|
+| `origin/main` | `2666a499` |
+| `origin/production` | `b3281c5c` (desplegado y sirviendo) |
+| Migración | `20260805020000` **aplicada** en `brsbdzpuvotxsadmcxyj` |
+| Flag de la variante | **ausente → 0 % → control**. Sin activar |
+| `production..main` | **29 commits** |
+
+⚠️ **Rama y base desincronizadas por diseño del flujo actual:** `origin/production` no
+contiene las migraciones `20260805*`, pero las tres están aplicadas en la base. Quien
+deduzca el schema leyendo la rama se va a equivocar.
+
+## Pendiente
+
+1. Etapa 3 — rollout al 10 % (no arrancó).
+2. Reconciliar `production` con `main` sin perder el hotfix. Los dos commits de
+   `production` son cherry-picks de commits que ya viven en `main`, así que no hay nada
+   que rescatar de ese lado.
