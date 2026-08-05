@@ -15,10 +15,13 @@
 export const CANONICAL_EVENTS = {
   app_opened: ["app_opened"],
   hub_viewed: ["hub_viewed", "hub_view", "play_hub_view"],
+  /** TRAINING starts only. `daily_tactic_started` deliberately does NOT live
+   *  here (see DAILY_FOCUS_EVENTS): it put every Daily starter inside the
+   *  training funnel at step 3 and then dropped them at step 4, depressing
+   *  training completion with people who never trained. */
   exercise_started: [
     "exercise_started",
     "training_exercise_started",
-    "daily_tactic_started",
     "play_tactics_opened",
   ],
   exercise_completed: [
@@ -32,20 +35,84 @@ export const CANONICAL_EVENTS = {
 
 export type CanonicalEvent = keyof typeof CANONICAL_EVENTS;
 
-/** Ordered funnel steps (activation). */
-export const ACTIVATION_FUNNEL: readonly CanonicalEvent[] = [
+/* ── Training activation funnel ─────────────────────────────────────────────
+   ⚠️ THIS USED TO HAVE A FIFTH STEP, `daily_focus_completed`, and that step was
+   a lie about the product.
+
+   A linear funnel asserts that step k+1 is a SUBSET of step k. Finishing the
+   Daily and finishing a training exercise come from disjoint code paths:
+   `hub-daily-tile.tsx` emits `daily_tactic_completed` and never a completion
+   alias, `exercises-screen.tsx` emits `exercise_complete` and never a Daily
+   one. So the fifth step claimed "of the people who completed a training
+   exercise, these also did the Daily" while actually counting a population
+   that overlaps rather than nests — which is exactly why production showed
+   426 Daily completions against 415 exercise completions and it read as an
+   instrumentation bug (handoff 2026-08-05).
+
+   Daily now has its own funnel below. They are SIBLINGS: both start at
+   `app_opened` → `hub_viewed` and then branch. Neither is a later stage of
+   the other, and no chart may render them as one column. */
+export const TRAINING_ACTIVATION_FUNNEL: readonly CanonicalEvent[] = [
   "app_opened",
   "hub_viewed",
   "exercise_started",
   "exercise_completed",
-  "daily_focus_completed",
 ];
 
-/** Flat list of every raw event name that feeds any canonical step — for a
+/** Flat list of every raw event name that feeds any TRAINING step — for a
  *  single `in (...)` query. */
 export const ALL_FUNNEL_ALIASES: readonly string[] = Array.from(
-  new Set(Object.values(CANONICAL_EVENTS).flat()),
+  new Set(
+    TRAINING_ACTIVATION_FUNNEL.flatMap((step) => CANONICAL_EVENTS[step]),
+  ),
 );
+
+/* ── Daily Focus funnel ─────────────────────────────────────────────────────
+   The Daily's own path to value, branching off the shared first two steps.
+
+   Its third step exists only here: `daily_tactic_started` is the Daily's
+   start, and letting it feed `exercise_started` was the mirror image of the
+   defect above — the two funnels have to be disjoint where they branch, not
+   only at the end. */
+
+export type DailyFocusStep =
+  | "app_opened"
+  | "hub_viewed"
+  | "daily_focus_started"
+  | "daily_focus_completed";
+
+export const DAILY_FOCUS_FUNNEL: readonly DailyFocusStep[] = [
+  "app_opened",
+  "hub_viewed",
+  "daily_focus_started",
+  "daily_focus_completed",
+] as const;
+
+/** The shared steps read the SAME alias lists as the training funnel rather
+ *  than re-spelling them, so the two can never disagree about what "hub
+ *  viewed" means. */
+export const DAILY_FOCUS_EVENTS: Record<DailyFocusStep, readonly string[]> = {
+  app_opened: CANONICAL_EVENTS.app_opened,
+  hub_viewed: CANONICAL_EVENTS.hub_viewed,
+  daily_focus_started: ["daily_focus_started", "daily_tactic_started"],
+  daily_focus_completed: CANONICAL_EVENTS.daily_focus_completed,
+};
+
+/** Every raw name the Daily funnel reads, for a single `in (...)` query. */
+export const ALL_DAILY_FOCUS_ALIASES: readonly string[] = Array.from(
+  new Set(Object.values(DAILY_FOCUS_EVENTS).flat()),
+);
+
+const ALIAS_TO_DAILY_FOCUS: Record<string, DailyFocusStep> = Object.fromEntries(
+  Object.entries(DAILY_FOCUS_EVENTS).flatMap(([step, aliases]) =>
+    aliases.map((alias) => [alias, step as DailyFocusStep]),
+  ),
+);
+
+/** Raw event name → Daily Focus step, or `null` if it is not a Daily event. */
+export function dailyFocusStepFor(event: string): DailyFocusStep | null {
+  return ALIAS_TO_DAILY_FOCUS[event] ?? null;
+}
 
 const ALIAS_TO_CANONICAL: Record<string, CanonicalEvent> = Object.fromEntries(
   Object.entries(CANONICAL_EVENTS).flatMap(([canonical, aliases]) =>

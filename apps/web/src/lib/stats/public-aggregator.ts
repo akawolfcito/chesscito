@@ -18,6 +18,7 @@ import {
   computeAccessFunnel,
   computeAccountLifecycle,
   computeActivation,
+  computeDailyFocusFunnel,
   computeHabitDepth,
   computeRetention,
   computeTopCountries,
@@ -26,12 +27,14 @@ import {
   type AccountLifecycle,
   type ActivationFunnel,
   type CountryCount,
+  type DailyFocusFunnel,
   type HabitDepth,
   type MeasuredAccountLifecycle,
   type Retention,
 } from "./funnels";
 import {
   ALL_ACCESS_ALIASES,
+  ALL_DAILY_FOCUS_ALIASES,
   ALL_FUNNEL_ALIASES,
 } from "@/lib/analytics/canonical-events";
 import {
@@ -195,9 +198,14 @@ export type PublicStats = {
   /** Distinct sessions that fired app_opened in the last 30d, under the
    *  active filters. null on query failure. Equals activation[0].sessions. */
   appOpens30d: number | null;
-  /** Activation funnel (last 30d, filtered): distinct sessions per canonical
-   *  step. null on query failure. */
+  /** TRAINING activation funnel (last 30d, filtered): distinct sessions per
+   *  canonical step. null on query failure. Four steps — Daily lives in
+   *  `dailyFocusFunnel` below, as a sibling and never as a fifth rung. */
   activation: ActivationFunnel | null;
+  /** Daily Focus funnel (last 30d, filtered). Branches off the SAME first two
+   *  steps as `activation`; a session may appear in both, one or neither. null
+   *  on query failure. */
+  dailyFocusFunnel: DailyFocusFunnel | null;
   /** Top countries by distinct sessions (last 30d, filtered). Empty on
    *  failure; null country is never included. */
   topCountries: CountryCount[];
@@ -239,6 +247,7 @@ export const EMPTY_PUBLIC_STATS: PublicStats = {
   filters: DEFAULT_STATS_FILTERS,
   appOpens30d: null,
   activation: null,
+  dailyFocusFunnel: null,
   topCountries: [],
   retention: null,
   accessFunnel: null,
@@ -878,6 +887,13 @@ export async function getPublicStats(
         ),
       )
     : null;
+  const dailyFocusFunnel: DailyFocusFunnel | null = wholeEvents30d
+    ? computeDailyFocusFunnel(
+        wholeEvents30d.filter((r) =>
+          (ALL_DAILY_FOCUS_ALIASES as readonly string[]).includes(r.event),
+        ),
+      )
+    : null;
   const appOpens30d =
     activation?.find((s) => s.step === "app_opened")?.sessions ?? null;
   const topCountries: CountryCount[] = wholeEvents30d
@@ -974,6 +990,7 @@ export async function getPublicStats(
     filters,
     appOpens30d,
     activation,
+    dailyFocusFunnel,
     topCountries,
     retention,
     accessFunnel: gatedAccessFunnel,

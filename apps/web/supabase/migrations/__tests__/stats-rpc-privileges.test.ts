@@ -4,10 +4,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   ACCESS_FUNNEL,
-  ACTIVATION_FUNNEL,
   CANONICAL_EVENTS,
   ACCESS_EVENTS,
   ACCESS_FAILURE_EVENT,
+  DAILY_FOCUS_EVENTS,
+  DAILY_FOCUS_FUNNEL,
+  TRAINING_ACTIVATION_FUNNEL,
 } from "../../../src/lib/analytics/canonical-events";
 
 /**
@@ -192,15 +194,21 @@ describe("stats aggregation RPCs — invariants, as far as text can carry them",
     expect(body).toContain("where c.s2 and c.s3)");
   });
 
-  it("names the five activation steps exactly as the canonical vocabulary does", () => {
+  /** ⚠️ Pinned to LITERALS, not to the TS array, on purpose. This file is
+   *  APPLIED IN PRODUCTION; its text is history and can never change again.
+   *  Asserting it against the live vocabulary would make a legitimate change
+   *  to that vocabulary fail here, pointing at the wrong file. The CURRENT
+   *  pairing is asserted in the split-migration block at the bottom. */
+  it("names the five activation steps it shipped with (historical text)", () => {
     const body = bodyOf("stats_activation_funnel");
-    for (const step of ACTIVATION_FUNNEL) {
+    for (const step of [
+      "app_opened",
+      "hub_viewed",
+      "exercise_started",
+      "exercise_completed",
+      "daily_focus_completed",
+    ]) {
       expect(body, step).toContain(`'${step}'`);
-    }
-    // Every alias the TS module maps must be readable by the SQL, or the two
-    // funnels silently disagree about what "hub viewed" means.
-    for (const alias of Object.values(CANONICAL_EVENTS).flat()) {
-      expect(body, alias).toContain(`'${alias}'`);
     }
   });
 
@@ -401,5 +409,146 @@ describe("stats aggregation RPCs — blast radius", () => {
 
   it("never reads visit_id, which is both coarser than session_id and 15.5% null", () => {
     expect(ddl).not.toContain("visit_id");
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   The split migration (20260805020000) — NOT applied at time of writing.
+
+   Everything above describes text that already ran in production and is now
+   frozen. This block describes the correction, and unlike the block above it
+   IS pinned to the live TypeScript vocabulary: these two must move together
+   or the SQL and the aggregator silently disagree about what a step means.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const SPLIT_MIGRATION_PATH =
+  "supabase/migrations/20260805020000_split_daily_focus_from_training_funnel.sql";
+
+const splitMigration = fs.readFileSync(
+  path.resolve(process.cwd(), SPLIT_MIGRATION_PATH),
+  "utf8",
+);
+
+const splitDdl = splitMigration.replace(/--[^\n]*/g, "");
+
+function splitBodyOf(name: string): string {
+  const start = splitDdl.indexOf(`create or replace function public.${name}(`);
+  expect(start, `${name} not found`).toBeGreaterThanOrEqual(0);
+  const end = splitDdl.indexOf("$$;", start);
+  expect(end, `${name} has no terminator`).toBeGreaterThan(start);
+  return splitDdl.slice(start, end + 3);
+}
+
+describe("daily/training funnel split migration", () => {
+  it("redefines exactly two functions and nothing else", () => {
+    const declared = [
+      ...splitDdl.matchAll(/create or replace function public\.(\w+)\(/g),
+    ]
+      .map((m) => m[1]!)
+      .sort();
+    expect(declared).toEqual([
+      "stats_activation_funnel",
+      "stats_daily_focus_funnel",
+    ]);
+  });
+
+  it("preserves the RPC contract: same params, same returned shape", () => {
+    for (const name of ["stats_activation_funnel", "stats_daily_focus_funnel"]) {
+      const body = splitBodyOf(name);
+      expect(body, name).toMatch(/p_surface\s+text\s+default\s+null/);
+      expect(body, name).toMatch(/p_container\s+text\s+default\s+null/);
+      expect(body, name).toMatch(/step\s+text/);
+      expect(body, name).toMatch(/sessions\s+bigint/);
+      expect(body, name).toContain("security definer");
+      expect(body, name).toContain("set search_path = public");
+    }
+  });
+
+  /** The defect being fixed, asserted directly: the training funnel must not
+   *  carry a fifth predicate, because that fifth predicate was the claim that
+   *  Daily completions nest inside training completions. */
+  it("drops the fifth step from the training funnel", () => {
+    const body = splitBodyOf("stats_activation_funnel");
+    expect(body).not.toContain("c.s5");
+    expect(body).not.toContain("daily_focus_completed");
+    expect(body).not.toContain("daily_tactic_completed");
+    expect(body).toContain("where c.s2 and c.s3 and c.s4)");
+  });
+
+  /** The mirror half: a Daily START must not enter the training funnel
+   *  either, or training completion stays depressed by people who never
+   *  trained. */
+  it("drops the Daily start alias from the training funnel", () => {
+    expect(splitBodyOf("stats_activation_funnel")).not.toContain(
+      "daily_tactic_started",
+    );
+  });
+
+  it("names the four training steps exactly as the TS vocabulary does", () => {
+    const body = splitBodyOf("stats_activation_funnel");
+    expect(TRAINING_ACTIVATION_FUNNEL).toHaveLength(4);
+    for (const step of TRAINING_ACTIVATION_FUNNEL) {
+      expect(body, step).toContain(`'${step}'`);
+      for (const alias of CANONICAL_EVENTS[step]) {
+        expect(body, alias).toContain(`'${alias}'`);
+      }
+    }
+  });
+
+  it("names the four Daily steps and aliases exactly as the TS vocabulary does", () => {
+    const body = splitBodyOf("stats_daily_focus_funnel");
+    expect(DAILY_FOCUS_FUNNEL).toHaveLength(4);
+    for (const step of DAILY_FOCUS_FUNNEL) {
+      expect(body, step).toContain(`'${step}'`);
+      for (const alias of DAILY_FOCUS_EVENTS[step]) {
+        expect(body, alias).toContain(`'${alias}'`);
+      }
+    }
+  });
+
+  /** Both branches keep the cohort gate and the prefix nesting, which is what
+   *  makes each one individually monotone. The split removes a FALSE nesting,
+   *  not nesting itself. */
+  it("keeps both branches cohort-scoped and prefix-nested", () => {
+    for (const name of ["stats_activation_funnel", "stats_daily_focus_funnel"]) {
+      const body = splitBodyOf(name);
+      expect(body, name).toMatch(
+        /cohort as \(\s*select \* from per_install where s1\s*\)/,
+      );
+      expect(body, name).toContain("where c.s2 and c.s3)");
+      expect(body, name).toContain("where c.s2 and c.s3 and c.s4)");
+    }
+  });
+
+  it("revokes execute from all three public roles and grants only service_role", () => {
+    for (const name of ["stats_activation_funnel", "stats_daily_focus_funnel"]) {
+      for (const role of ["public", "anon", "authenticated"]) {
+        expect(splitDdl, `${name} / ${role}`).toContain(
+          `revoke execute on function public.${name}(text, text) from ${role};`,
+        );
+      }
+      expect(splitDdl, name).toContain(
+        `grant  execute on function public.${name}(text, text) to service_role;`,
+      );
+    }
+  });
+
+  /** A security-shaped change whose green output is indistinguishable from its
+   *  failed output is the worst failure mode there is (postmortem 2026-08-05).
+   *  The migration must throw instead. */
+  it("self-verifies effective privileges rather than trusting the statements", () => {
+    expect(splitDdl).toContain("has_function_privilege");
+    expect(splitDdl).toMatch(/raise exception/);
+  });
+
+  it("stays read-only against the telemetry tables", () => {
+    expect(splitDdl).not.toMatch(/\binsert into\b/i);
+    expect(splitDdl).not.toMatch(/\bdelete from\b/i);
+    expect(splitDdl).not.toMatch(/\bdrop table\b/i);
+    expect(splitDdl).not.toMatch(/\balter table\b/i);
+    const relations = [...splitDdl.matchAll(/from public\.(\w+)/g)].map(
+      (m) => m[1]!,
+    );
+    expect([...new Set(relations)]).toEqual(["analytics_events"]);
   });
 });

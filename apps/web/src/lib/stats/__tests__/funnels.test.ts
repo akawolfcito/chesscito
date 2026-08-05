@@ -3,6 +3,7 @@ import {
   computeAccessFunnel,
   computeAccountLifecycle,
   computeActivation,
+  computeDailyFocusFunnel,
   computeHabitDepth,
   computeRetention,
   computeTopCountries,
@@ -85,7 +86,6 @@ describe("computeActivation", () => {
     expect(byStep.app_opened).toBe(2);
     expect(byStep.hub_viewed).toBe(2);
     expect(byStep.exercise_completed).toBe(1); // session a counted once
-    expect(byStep.daily_focus_completed).toBe(0);
   });
 
   it("ignores non-funnel events", () => {
@@ -93,6 +93,74 @@ describe("computeActivation", () => {
       { event: "share_tile_tap", session_id: "a" },
     ]);
     expect(funnel.every((s) => s.sessions === 0)).toBe(true);
+  });
+
+  /** The split, asserted from the consumer side: the training funnel has four
+   *  steps and Daily is not one of them. */
+  it("has four steps and none of them is a Daily step", () => {
+    const funnel = computeActivation([]);
+    expect(funnel.map((s) => s.step)).toEqual([
+      "app_opened",
+      "hub_viewed",
+      "exercise_started",
+      "exercise_completed",
+    ]);
+  });
+
+  /** A session that ONLY did the Daily used to land on `exercise_started`
+   *  (because `daily_tactic_started` fed it) and then vanish at
+   *  `exercise_completed`, reading as a training drop-off that never happened. */
+  it("does not count a Daily-only session as a training start", () => {
+    const funnel = computeActivation([
+      { event: "app_opened", session_id: "d" },
+      { event: "hub_view", session_id: "d" },
+      { event: "daily_tactic_started", session_id: "d" },
+      { event: "daily_tactic_completed", session_id: "d" },
+    ]);
+    const byStep = Object.fromEntries(funnel.map((s) => [s.step, s.sessions]));
+    expect(byStep.exercise_started).toBe(0);
+    expect(byStep.exercise_completed).toBe(0);
+  });
+});
+
+describe("computeDailyFocusFunnel", () => {
+  it("counts distinct sessions per Daily step", () => {
+    const funnel = computeDailyFocusFunnel([
+      { event: "app_opened", session_id: "a" },
+      { event: "app_opened", session_id: "b" },
+      { event: "hub_view", session_id: "a" },
+      { event: "daily_tactic_started", session_id: "a" },
+      { event: "daily_tactic_started", session_id: "a" }, // same session twice
+      { event: "daily_tactic_completed", session_id: "a" },
+    ]);
+    const byStep = Object.fromEntries(funnel.map((s) => [s.step, s.sessions]));
+    expect(byStep.app_opened).toBe(2);
+    expect(byStep.hub_viewed).toBe(1);
+    expect(byStep.daily_focus_started).toBe(1);
+    expect(byStep.daily_focus_completed).toBe(1);
+  });
+
+  /** The mirror image of the training assertion above: a training session must
+   *  never advance the Daily funnel. */
+  it("ignores training events", () => {
+    const funnel = computeDailyFocusFunnel([
+      { event: "app_opened", session_id: "t" },
+      { event: "training_exercise_started", session_id: "t" },
+      { event: "exercise_complete", session_id: "t" },
+    ]);
+    const byStep = Object.fromEntries(funnel.map((s) => [s.step, s.sessions]));
+    expect(byStep.app_opened).toBe(1);
+    expect(byStep.daily_focus_started).toBe(0);
+    expect(byStep.daily_focus_completed).toBe(0);
+  });
+
+  it("returns its four steps in order even with no rows", () => {
+    expect(computeDailyFocusFunnel([]).map((s) => s.step)).toEqual([
+      "app_opened",
+      "hub_viewed",
+      "daily_focus_started",
+      "daily_focus_completed",
+    ]);
   });
 });
 

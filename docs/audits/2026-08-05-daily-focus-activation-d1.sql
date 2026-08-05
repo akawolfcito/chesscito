@@ -27,12 +27,23 @@
 --    (`exercises-screen.tsx:1824`). Finishing the Daily does NOT emit an
 --    exercise completion. They are overlapping populations, not nested.
 --
--- 3. THEREFORE `ACTIVATION_FUNNEL` IS MIS-ORDERED. `canonical-events.ts:36`
---    declares app_opened → hub_viewed → exercise_started →
---    exercise_completed → daily_focus_completed, which asserts that Daily
---    completions are a subset of exercise completions. They are not, and
---    that is exactly why 426 > 415 looks like a bug. Groups 3 and 4 below
---    are therefore defined as SIBLINGS, not as consecutive funnel steps.
+-- 3. THEREFORE `ACTIVATION_FUNNEL` WAS MIS-ORDERED — ✅ FIXED 2026-08-05
+--    (Session B). It used to declare app_opened → hub_viewed →
+--    exercise_started → exercise_completed → daily_focus_completed, which
+--    asserted that Daily completions are a subset of exercise completions.
+--    They are not, and that is exactly why 426 > 415 looked like a bug.
+--    It is now two SIBLING funnels in `canonical-events.ts`:
+--      TRAINING_ACTIVATION_FUNNEL — app_opened → hub_viewed →
+--                                   exercise_started → exercise_completed
+--      DAILY_FOCUS_FUNNEL         — app_opened → hub_viewed →
+--                                   daily_focus_started → daily_focus_completed
+--    `daily_tactic_started` also moved OUT of `exercise_started`, so a
+--    Daily-only install no longer enters the training funnel and drops.
+--    Groups 3 and 4 below were already defined as siblings; the code now
+--    agrees with them. ⚠️ The `stats_activation_funnel` RPC carries the same
+--    correction in migration 20260805020000, which is written but NOT YET
+--    APPLIED — until it is, that RPC still nests Daily inside Training.
+--    (It has no callers, so nothing on /stats reads the stale shape.)
 --
 -- 4. `session_id` IS A PERSISTENT PER-INSTALL ID, despite the name. It
 --    lives in localStorage and never rotates (`lib/analytics/identity.ts:34`),

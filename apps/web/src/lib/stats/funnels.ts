@@ -2,10 +2,13 @@ import {
   ACCESS_FAILURE_EVENT,
   ACCESS_FUNNEL,
   accessStepFor,
-  ACTIVATION_FUNNEL,
+  DAILY_FOCUS_FUNNEL,
+  dailyFocusStepFor,
+  TRAINING_ACTIVATION_FUNNEL,
   canonicalEventFor,
   type AccessStep,
   type CanonicalEvent,
+  type DailyFocusStep,
 } from "@/lib/analytics/canonical-events";
 
 /**
@@ -22,19 +25,65 @@ import {
 export type ActivationStep = { step: CanonicalEvent; sessions: number };
 export type ActivationFunnel = ActivationStep[];
 
+/**
+ * TRAINING activation — four steps, ending at `exercise_completed`.
+ *
+ * It used to carry a fifth step, `daily_focus_completed`, which asserted that
+ * Daily completions were a subset of training completions. They are not: the
+ * two come from disjoint emitters, so the step described a population that
+ * overlaps rather than nests. Daily now has `computeDailyFocusFunnel` beside
+ * this one — see the header of `canonical-events.ts`.
+ *
+ * ⚠️ Known limit, PRE-EXISTING and deliberately untouched here: steps are
+ * counted INDEPENDENTLY, so this array is not guaranteed monotone (production
+ * once shipped `app_opened 37 < hub_viewed 41`). Nesting the steps is a
+ * separate change that moves live numbers; the `stats_activation_funnel` RPC
+ * already implements the nested shape for whoever wires it up.
+ */
 export function computeActivation(
   rows: Array<{ event?: string | null; session_id?: string | null }>,
 ): ActivationFunnel {
   const byStep = new Map<CanonicalEvent, Set<string>>();
-  for (const step of ACTIVATION_FUNNEL) byStep.set(step, new Set());
+  for (const step of TRAINING_ACTIVATION_FUNNEL) byStep.set(step, new Set());
   for (const row of rows) {
     const event = typeof row.event === "string" ? row.event : null;
     const sid = typeof row.session_id === "string" ? row.session_id : null;
     if (!event || !sid) continue;
     const canonical = canonicalEventFor(event);
-    if (canonical) byStep.get(canonical)!.add(sid);
+    // `canonicalEventFor` still resolves `daily_focus_completed`, which is a
+    // valid canonical name but NOT a training step. Admitting it here would
+    // reintroduce the fifth rung through the back door.
+    if (canonical && byStep.has(canonical)) byStep.get(canonical)!.add(sid);
   }
-  return ACTIVATION_FUNNEL.map((step) => ({
+  return TRAINING_ACTIVATION_FUNNEL.map((step) => ({
+    step,
+    sessions: byStep.get(step)!.size,
+  }));
+}
+
+export type DailyFocusStepCount = { step: DailyFocusStep; sessions: number };
+export type DailyFocusFunnel = DailyFocusStepCount[];
+
+/**
+ * The Daily's own path to value — a SIBLING of `computeActivation`, never a
+ * continuation of it. Both branch off the same `app_opened → hub_viewed`, and
+ * a session can appear in both, one, or neither.
+ *
+ * Same independent-count caveat as the training funnel above.
+ */
+export function computeDailyFocusFunnel(
+  rows: Array<{ event?: string | null; session_id?: string | null }>,
+): DailyFocusFunnel {
+  const byStep = new Map<DailyFocusStep, Set<string>>();
+  for (const step of DAILY_FOCUS_FUNNEL) byStep.set(step, new Set());
+  for (const row of rows) {
+    const event = typeof row.event === "string" ? row.event : null;
+    const sid = typeof row.session_id === "string" ? row.session_id : null;
+    if (!event || !sid) continue;
+    const step = dailyFocusStepFor(event);
+    if (step) byStep.get(step)!.add(sid);
+  }
+  return DAILY_FOCUS_FUNNEL.map((step) => ({
     step,
     sessions: byStep.get(step)!.size,
   }));

@@ -28,6 +28,7 @@ const ACTIVATION_STEP_LABELS: Record<string, string> = {
   hub_viewed: "Hub viewed",
   exercise_started: "Exercise started",
   exercise_completed: "Exercise completed",
+  daily_focus_started: "Daily Focus started",
   daily_focus_completed: "Daily Focus done",
 };
 
@@ -269,8 +270,19 @@ function HabitDepthChart({ depth }: { depth: HabitDepth }) {
 }
 
 /** Activation funnel: distinct sessions per canonical step, absolute counts
- *  (no rates — a single session can read as 100% at early volume). */
-function ActivationFunnelChart({ funnel }: { funnel: ActivationFunnel }) {
+ *  (no rates — a single session can read as 100% at early volume).
+ *
+ *  Takes the structural shape rather than `ActivationFunnel` so the Daily
+ *  sibling renders through the SAME bars. Two charts that look different would
+ *  imply the two funnels measure different things; they measure the same thing
+ *  down two branches. Each chart scales to ITS OWN top, so a small Daily
+ *  branch stays readable next to a large training one — the bars compare
+ *  within a funnel, never across. */
+function ActivationFunnelChart({
+  funnel,
+}: {
+  funnel: ReadonlyArray<{ step: string; sessions: number }>;
+}) {
   const top = Math.max(1, ...funnel.map((s) => s.sessions));
   return (
     <div className="flex flex-col gap-1.5">
@@ -897,7 +909,11 @@ export function StatsPage({ stats, census, nicknameTokens }: StatsPageProps) {
 
         {/* 2 — The first session, for everyone who is already inside
             (MiniPay included, which never sees the gate above). */}
-        {stats.activation ? (
+        {/* Two SIBLING funnels, never one column. Both branch off the same
+            `App opened → Hub viewed`; finishing the Daily is not a later stage
+            of training, and stacking them implied a subset that does not
+            exist (handoff 2026-08-05). */}
+        {stats.activation || stats.dailyFocusFunnel ? (
           <div>
             <p
               className="mb-2 text-[0.625rem] font-semibold uppercase tracking-wide"
@@ -905,7 +921,37 @@ export function StatsPage({ stats, census, nicknameTokens }: StatsPageProps) {
             >
               2 · Do they reach value? · distinct sessions
             </p>
-            <ActivationFunnelChart funnel={stats.activation} />
+            <p
+              className="mb-3 text-[0.625rem] leading-snug"
+              style={{ color: "var(--paper-text-subtle)" }}
+            >
+              Two branches off the same start. A session can appear in both,
+              one, or neither — they are not stages of each other.
+            </p>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              {stats.activation ? (
+                <div>
+                  <p
+                    className="mb-2 text-[0.625rem] font-semibold uppercase tracking-wide"
+                    style={{ color: "var(--paper-text-muted)" }}
+                  >
+                    Training
+                  </p>
+                  <ActivationFunnelChart funnel={stats.activation} />
+                </div>
+              ) : null}
+              {stats.dailyFocusFunnel ? (
+                <div>
+                  <p
+                    className="mb-2 text-[0.625rem] font-semibold uppercase tracking-wide"
+                    style={{ color: "var(--paper-text-muted)" }}
+                  >
+                    Daily Focus
+                  </p>
+                  <ActivationFunnelChart funnel={stats.dailyFocusFunnel} />
+                </div>
+              ) : null}
+            </div>
           </div>
         ) : null}
 

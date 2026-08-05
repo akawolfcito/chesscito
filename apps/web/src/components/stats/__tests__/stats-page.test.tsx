@@ -98,7 +98,16 @@ const SAMPLE_STATS: PublicStats = {
     { step: "hub_viewed", sessions: 1200 },
     { step: "exercise_started", sessions: 800 },
     { step: "exercise_completed", sessions: 600 },
-    { step: "daily_focus_completed", sessions: 300 },
+  ],
+  // Values unique on the whole page, like every other fixture number here, so
+  // a getByText cannot match the wrong block. The Daily leaf (289) is smaller
+  // than the training leaf (600) but they are NOT compared anywhere: the two
+  // funnels are siblings, and no assertion orders one against the other.
+  dailyFocusFunnel: [
+    { step: "app_opened", sessions: 1500 },
+    { step: "hub_viewed", sessions: 1200 },
+    { step: "daily_focus_started", sessions: 417 },
+    { step: "daily_focus_completed", sessions: 289 },
   ],
   topCountries: [
     { country: "BR", sessions: 420 },
@@ -369,6 +378,42 @@ describe("StatsPage", () => {
     // The terminal step's count must be readable — it is the "did they reach
     // value" number the whole section exists for.
     expect(screen.getByText("310")).toBeInTheDocument();
+  });
+
+  /** The funnel split (2026-08-05). The page used to render ONE column ending
+   *  in "Daily Focus done", which asserted that finishing the Daily was a
+   *  later stage of finishing a training exercise. It is not — the two come
+   *  from disjoint emitters — so they now render as two labelled branches. */
+  it("renders Training and Daily Focus as two labelled sibling branches", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(screen.getByText("Training")).toBeInTheDocument();
+    expect(screen.getByText("Daily Focus")).toBeInTheDocument();
+    // Each branch's own leaf is readable.
+    expect(screen.getByText("Exercise completed")).toBeInTheDocument();
+    expect(screen.getByText("Daily Focus done")).toBeInTheDocument();
+    expect(screen.getByText("Daily Focus started")).toBeInTheDocument();
+    expect(screen.getByText("289")).toBeInTheDocument();
+    expect(screen.getByText("417")).toBeInTheDocument();
+  });
+
+  /** The branches must be declared as branches in prose too. A reader who
+   *  sees two funnels stacked and no explanation will read the smaller one as
+   *  a drop-off from the larger. */
+  it("tells the reader the two branches are not stages of each other", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(
+      screen.getByText(/not stages of each other/i),
+    ).toBeInTheDocument();
+  });
+
+  /** Either branch may be missing on query failure without taking the other
+   *  down with it. */
+  it("renders the Training branch alone when the Daily read failed", () => {
+    render(
+      <StatsPage stats={{ ...SAMPLE_STATS, dailyFocusFunnel: null }} />,
+    );
+    expect(screen.getByText("Exercise completed")).toBeInTheDocument();
+    expect(screen.queryByText("Daily Focus done")).not.toBeInTheDocument();
   });
 
   it("reports login failures beside the funnel, never as a funnel step", () => {
