@@ -28,6 +28,21 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  * the eight `stats_*` RPCs (`anon` and `authenticated` are revoked; verified
  * against the real database by `scripts/ops/verify-stats-rpcs.ts`).
  */
+/**
+ * Every request this client makes is opted OUT of Next's Data Cache.
+ *
+ * `supabase-js` goes through `fetch`, and Next 14 caches `fetch` inside a
+ * Server Component by default — silently, and with a cache that **does NOT get
+ * purged by a deploy**. A stale census once survived 18 h 34 min *and a full
+ * deploy* because of exactly this. Caching /stats is a real goal, but it is
+ * Phase E's, it belongs at the page level where its TTL and its invalidation
+ * are visible, and it must never be something the data layer did by accident.
+ *
+ * So: `no-store` here, explicitly, on the client every read shares.
+ */
+const noStoreFetch: typeof fetch = (input, init) =>
+  fetch(input, { ...init, cache: "no-store" });
+
 export function getSupabaseServer(): SupabaseClient | null {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -37,6 +52,7 @@ export function getSupabaseServer(): SupabaseClient | null {
   }
 
   return createClient(url, key, {
+    global: { fetch: noStoreFetch },
     auth: {
       // A service-role client is stateless and request-scoped: there is no
       // user session to keep, refresh, or recover from a URL fragment. All
