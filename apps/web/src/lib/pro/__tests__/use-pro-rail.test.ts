@@ -335,3 +335,149 @@ describe("useProRail — single-flight mutex", () => {
     expect(writeMock).toHaveBeenCalledTimes(1);
   });
 });
+
+/**
+ * The mutex protects the MONEY. It never protected the MEASUREMENT: the sheet
+ * emitted `pro_purchase_started` before calling `pay()`, so two taps in the
+ * same tick produced two "started" events against one transfer and inflated
+ * the denominator of PRO conversion.
+ *
+ * The fix is an acceptance hook: `pay()` invokes `onAccepted` immediately
+ * after claiming the mutex, so the event describes an attempt the rail took,
+ * not a finger touching glass. It fires BEFORE any await, so a funnel still
+ * sees "started" ahead of "confirmed".
+ */
+describe("useProRail — accepted-attempt hook", () => {
+  it("calls onAccepted once per accepted attempt", async () => {
+    const fetchMock = mockFetch({
+      ok: true,
+      expiresAt: 1_800_000_000_000,
+      duplicate: false,
+      overpaid: false,
+      token: USDC,
+      amountPaid: "1990000",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const onAccepted = vi.fn();
+    const { result } = renderHook(() => useProRail(args));
+
+    await act(async () => {
+      await result.current.pay({ onAccepted });
+    });
+
+    expect(onAccepted).toHaveBeenCalledTimes(1);
+  });
+
+  it("synchronous double tap → ONE onAccepted, matching the one transfer", async () => {
+    const fetchMock = mockFetch({
+      ok: true,
+      expiresAt: 1_800_000_000_000,
+      duplicate: false,
+      overpaid: false,
+      token: USDC,
+      amountPaid: "1990000",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const onAccepted = vi.fn();
+    const { result } = renderHook(() => useProRail(args));
+
+    await act(async () => {
+      await Promise.all([
+        result.current.pay({ onAccepted }),
+        result.current.pay({ onAccepted }),
+      ]);
+    });
+
+    expect(onAccepted).toHaveBeenCalledTimes(1);
+    expect(writeMock).toHaveBeenCalledTimes(1);
+  });
+
+  /** A rejected wallet is an attempt the rail ACCEPTED and that then failed.
+   *  It must count once, and the retry after it must count again — otherwise
+   *  the fix trades an inflated numerator for a suppressed one. */
+  it("a rejected attempt still counts, and the retry counts again", async () => {
+    const onAccepted = vi.fn();
+    writeMock.mockReset();
+    writeMock.mockRejectedValueOnce(new Error("User rejected the request"));
+    const { result } = renderHook(() => useProRail(args));
+
+    await act(async () => {
+      await result.current.pay({ onAccepted });
+    });
+    expect(onAccepted).toHaveBeenCalledTimes(1);
+    expect(result.current.phase).toBe("error");
+
+    const fetchMock = mockFetch({
+      ok: true,
+      expiresAt: 1_800_000_000_000,
+      duplicate: false,
+      overpaid: false,
+      token: USDC,
+      amountPaid: "1990000",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    writeMock.mockResolvedValueOnce(HASH);
+
+    await act(async () => {
+      await result.current.pay({ onAccepted });
+    });
+    expect(onAccepted).toHaveBeenCalledTimes(2);
+  });
+
+  /** The tap that the mutex swallows must leave no trace in analytics. */
+  it("does not call onAccepted for a tap while the signature is pending", async () => {
+    const signature = deferred2<`0x${string}`>();
+    const onAccepted = vi.fn();
+    writeMock.mockReset();
+    writeMock.mockReturnValue(signature.promise);
+    const { result } = renderHook(() => useProRail(args));
+
+    let first!: Promise<void>;
+    await act(async () => {
+      first = result.current.pay({ onAccepted });
+      await Promise.resolve();
+    });
+    expect(onAccepted).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await result.current.pay({ onAccepted });
+    });
+    expect(onAccepted).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      signature.reject(new Error("User rejected the request"));
+      await first;
+    });
+  });
+
+  /** Calling with no argument must keep working — every existing call site
+   *  passes nothing. */
+  it("is optional: pay() with no options still runs", async () => {
+    const fetchMock = mockFetch({
+      ok: true,
+      expiresAt: 1_800_000_000_000,
+      duplicate: false,
+      overpaid: false,
+      token: USDC,
+      amountPaid: "1990000",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { result } = renderHook(() => useProRail(args));
+
+    await act(async () => {
+      await result.current.pay();
+    });
+
+    expect(result.current.phase).toBe("success");
+  });
+});
+
+function deferred2<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}

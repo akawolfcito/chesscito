@@ -268,13 +268,23 @@ export function useProSheetState(
       setPreviewErrorMessage(t("insufficientBalance"));
       return;
     }
-    track("pro_purchase_started", {
-      item_id: 6,
-      price_usd6: Number(pack.priceUsd6),
-      source: sourceRef.current,
+    // Emitted from INSIDE the rail's mutex, not from here. Two taps in the
+    // same tick both reach this line — React has not re-rendered, so the CTA
+    // is still live — but only one claims the mutex and only one becomes a
+    // transfer. Emitting here counted taps and inflated the denominator of PRO
+    // conversion; `onAccepted` counts attempts the rail actually took. Same
+    // fix covers `pro-extend-link`, which calls onPurchase() without passing
+    // through `resolveCta`.
+    await rail.pay({
+      onAccepted: () => {
+        track("pro_purchase_started", {
+          item_id: 6,
+          price_usd6: Number(pack.priceUsd6),
+          source: sourceRef.current,
+        });
+        setAttemptToken((n) => n + 1);
+      },
     });
-    setAttemptToken((n) => n + 1);
-    await rail.pay();
   }, [selection, pack, rail, t]);
 
   const handleRetryVerify = useCallback(() => {

@@ -160,9 +160,27 @@ export function useProRail({
     [address, sku, tokenEntry, onVerified, retryDelaysMs],
   );
 
-  const pay = useCallback(async () => {
+  /**
+   * `onAccepted` fires exactly once per attempt the rail actually takes —
+   * immediately after the mutex is claimed and before any await.
+   *
+   * The mutex protects the money; it never protected the MEASUREMENT. The
+   * sheet used to emit `pro_purchase_started` before calling `pay()`, so two
+   * taps in the same tick produced two "started" events against one transfer
+   * and inflated the denominator of PRO conversion. Emitting from here makes
+   * the event mean "an attempt the rail accepted" instead of "a finger touched
+   * glass", and it covers every caller — including `pro-extend-link`, which
+   * bypasses `resolveCta` and reaches `pay()` by the same path.
+   *
+   * Firing BEFORE the first await keeps funnel ordering intact: started still
+   * precedes confirmed. A failed attempt releases the mutex in the `finally`
+   * below, so a deliberate retry is a NEW accepted attempt and fires again —
+   * suppressing that would trade an inflated count for a missing one.
+   */
+  const pay = useCallback(async (opts?: { onAccepted?: () => void }) => {
     if (payInFlightRef.current) return;
     payInFlightRef.current = true;
+    opts?.onAccepted?.();
     try {
     if (!available || !treasury || !tokenEntry) {
       setErrorReason("unavailable");

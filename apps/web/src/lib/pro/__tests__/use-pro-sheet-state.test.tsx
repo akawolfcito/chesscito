@@ -392,3 +392,102 @@ describe("useProSheetState — handleRetryVerify", () => {
     );
   });
 });
+
+/**
+ * `pro_purchase_started` used to count TAPS. The CTA is disabled during
+ * `purchasing`/`verifying` (`resolveCta`), but that gate only engages after a
+ * re-render — two taps in the same tick both reach `handlePurchase`. The mutex
+ * added in Session A stopped the second TRANSFER; it never stopped the second
+ * EVENT, so PRO conversion was measured against an inflated denominator.
+ *
+ * The event now rides the rail's `onAccepted` hook: one accepted attempt, one
+ * event.
+ */
+describe("useProSheetState — pro_purchase_started counts accepted attempts", () => {
+  function startedCount() {
+    return trackMock.mock.calls.filter((c) => c[0] === "pro_purchase_started")
+      .length;
+  }
+
+  it("synchronous double tap → ONE started event", async () => {
+    withSufficientBalances();
+    const { result } = renderProSheetHook();
+
+    act(() => {
+      result.current.openSheet();
+    });
+    await act(async () => {
+      await Promise.all([
+        result.current.sheetProps.onPurchase(),
+        result.current.sheetProps.onPurchase(),
+      ]);
+    });
+
+    expect(startedCount()).toBe(1);
+    expect(writeContractAsyncMock).toHaveBeenCalledTimes(1);
+  });
+
+  /** The alternative caller: `pro-extend-link` (pro-sheet.tsx) calls
+   *  `props.onPurchase()` directly, without the `resolveCta` gate that
+   *  disables the main CTA. It must not be able to double-count either. */
+  it("the ungated extend caller cannot double-count either", async () => {
+    withSufficientBalances();
+    const { result } = renderProSheetHook();
+
+    act(() => {
+      result.current.openSheet();
+    });
+    // Exactly what the extend link does — no CTA gate in between.
+    const onPurchase = result.current.sheetProps.onPurchase;
+    await act(async () => {
+      await Promise.all([onPurchase(), onPurchase()]);
+    });
+
+    expect(startedCount()).toBe(1);
+  });
+
+  /** A failed attempt is still an attempt: it must count, and the retry after
+   *  it must count again. Otherwise the fix trades over-counting for
+   *  under-counting. */
+  it("a failed attempt counts, and a later retry counts again", async () => {
+    withSufficientBalances();
+    writeContractAsyncMock.mockRejectedValueOnce(
+      new Error("User rejected the request"),
+    );
+    const { result } = renderProSheetHook();
+
+    act(() => {
+      result.current.openSheet();
+    });
+    await act(async () => {
+      await result.current.sheetProps.onPurchase();
+    });
+    expect(startedCount()).toBe(1);
+
+    await act(async () => {
+      await result.current.sheetProps.onPurchase();
+    });
+    expect(startedCount()).toBe(2);
+  });
+
+  /** Ordering is part of the contract: a funnel that sees `confirmed` before
+   *  `started` is unreadable. `onAccepted` runs before the rail's first await,
+   *  so the order survives the move. */
+  it("still emits started before confirmed", async () => {
+    withSufficientBalances();
+    const { result } = renderProSheetHook();
+
+    act(() => {
+      result.current.openSheet();
+    });
+    await act(async () => {
+      await result.current.sheetProps.onPurchase();
+    });
+
+    const names = trackMock.mock.calls.map((c) => c[0]);
+    expect(names.indexOf("pro_purchase_started")).toBeGreaterThanOrEqual(0);
+    expect(names.indexOf("pro_purchase_confirmed")).toBeGreaterThan(
+      names.indexOf("pro_purchase_started"),
+    );
+  });
+});
