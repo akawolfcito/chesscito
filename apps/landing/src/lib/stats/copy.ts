@@ -25,6 +25,35 @@ export type StatsCopy = {
   browser: string;
   total: string;
 
+  /** Editorial prefix for the launch context line. The DATE is not part of the
+   *  string: it is formatted from `MINIPAY_LAUNCH_DATE` per locale. */
+  launchPrefix: string;
+
+  sectionGlance: string;
+  sectionJourney: string;
+  sectionEngagement: string;
+  sectionAudience: string;
+  sectionActivity: string;
+
+  journeyNote: string;
+  journeyHabitStep: string;
+
+  glanceActivePeople7d: string;
+  glanceExercisesStarted: string;
+  glanceExercisesCompleted: string;
+  glanceEarlyHabit: string;
+  glanceEarlyHabitNote: string;
+
+  /** `{count}` is substituted. The summary ALWAYS names what is inside — a
+   *  collapsed block with a vague label reads as missing data. */
+  moreDays: string;
+  morePlayers: string;
+  /** ⚠️ Declares the cut ON the table it applies to. The ranking renders 50
+   *  rows while the census counts hundreds; a reader who cannot reconcile the
+   *  two reads the smaller number as a lie. `{shown}` / `{total}`. */
+  playersCut: string;
+  trendRecent: string;
+
   sectionSummary: string;
   sectionBreakdown: string;
   sectionActivation: string;
@@ -115,6 +144,30 @@ const EN: StatsCopy = {
   minipay: "MiniPay",
   browser: "Browser",
   total: "Total",
+
+  launchPrefix: "Since MiniPay launch",
+
+  sectionGlance: "At a glance",
+  sectionJourney: "From first visit to habit",
+  sectionEngagement: "Engagement",
+  sectionAudience: "Audience",
+  sectionActivity: "Activity",
+
+  journeyNote:
+    "These checkpoints summarize product progress; they are not a strict cohort funnel.",
+  journeyHabitStep: "Active on 3+ days",
+
+  glanceActivePeople7d: "Active people (7d)",
+  glanceExercisesStarted: "Exercises started",
+  glanceExercisesCompleted: "Exercises completed",
+  glanceEarlyHabit: "Early habit signal",
+  glanceEarlyHabitNote:
+    "Installs active on 3+ days. The longer windows are still maturing since launch — an early signal, not settled retention.",
+
+  moreDays: "Show {count} more days",
+  morePlayers: "Show {count} more players",
+  playersCut: "This table lists the top {shown} of {total} ranked players.",
+  trendRecent: "Last 7 days",
 
   sectionSummary: "Summary",
   sectionBreakdown: "Learn / Play breakdown",
@@ -211,6 +264,30 @@ const ES: StatsCopy = {
   browser: "Navegador",
   total: "Total",
 
+  launchPrefix: "Desde el lanzamiento en MiniPay",
+
+  sectionGlance: "De un vistazo",
+  sectionJourney: "Del primer ingreso al hábito",
+  sectionEngagement: "Interacción",
+  sectionAudience: "Audiencia",
+  sectionActivity: "Actividad",
+
+  journeyNote:
+    "Estos checkpoints resumen el avance dentro del producto; no forman un embudo estricto de cohorte.",
+  journeyHabitStep: "Activos 3+ días",
+
+  glanceActivePeople7d: "Personas activas (7d)",
+  glanceExercisesStarted: "Ejercicios iniciados",
+  glanceExercisesCompleted: "Ejercicios completados",
+  glanceEarlyHabit: "Señal temprana de hábito",
+  glanceEarlyHabitNote:
+    "Instalaciones activas 3+ días. Las ventanas largas siguen madurando desde el lanzamiento: es una señal temprana, no retención consolidada.",
+
+  moreDays: "Ver {count} días más",
+  morePlayers: "Ver {count} jugadores más",
+  playersCut: "Esta tabla muestra los primeros {shown} de {total} jugadores del ranking.",
+  trendRecent: "Últimos 7 días",
+
   sectionSummary: "Resumen",
   sectionBreakdown: "Desglose Learn / Play",
   sectionActivation: "Activación",
@@ -301,6 +378,46 @@ export function statsCopy(locale: StatsLocale): StatsCopy {
 /** The em-dash the whole page uses for "not measured". One constant so a
  *  hyphen can never sneak in beside it and read as a minus sign. */
 export const EM_DASH = "—";
+
+/**
+ * When Chesscito went live on MiniPay.
+ *
+ * ⛔ **Editorial constant, deliberately NOT derived from telemetry.** The
+ * earliest event in the stream is when *measurement* started, not when the
+ * product launched — `session_first_seen` was created on 2026-07-23, weeks
+ * after. Deriving this would also mean a new read, which is outside this
+ * initiative's scope, and it would put a hand-authored fact into a cache key.
+ */
+export const MINIPAY_LAUNCH_DATE = "2026-08-03" as const;
+
+/** `August 3, 2026` / `3 de agosto de 2026`. Forced to UTC so the date never
+ *  slips a day for a reader west of Greenwich. */
+export function formatLaunchDate(locale: StatsLocale): string {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${MINIPAY_LAUNCH_DATE}T00:00:00Z`));
+}
+
+/** `{token}` substitution with locale-formatted numbers. A collapsed block must
+ *  say how much is inside, so the count is part of the sentence, not a suffix. */
+export function withTokens(
+  template: string,
+  tokens: Record<string, number | null>,
+  locale: StatsLocale,
+): string {
+  return Object.entries(tokens).reduce(
+    (out, [key, value]) => out.replace(`{${key}}`, formatCount(value, locale)),
+    template,
+  );
+}
+
+/** `Show {count} more days` → `Show 23 more days`. */
+export function withCount(template: string, count: number, locale: StatsLocale): string {
+  return withTokens(template, { count }, locale);
+}
 
 /** Locale-aware thousands separators. `null` is the ONLY thing that becomes a
  *  dash — `0` is a real measurement and prints as `0`. */

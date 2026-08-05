@@ -16,14 +16,16 @@ import type { StatsLocale } from "@/lib/stats/locale";
 export function Section({
   title,
   note,
+  testId,
   children,
 }: {
   title: string;
   note?: ReactNode;
+  testId?: string;
   children: ReactNode;
 }) {
   return (
-    <section className="mb-10">
+    <section className="mb-6 md:mb-8" data-testid={testId}>
       <h2
         className="fantasy-title mb-1 text-base font-extrabold uppercase tracking-[0.12em] md:text-lg"
         style={{ color: "var(--landing-text)", textShadow: "var(--landing-text-shadow-soft)" }}
@@ -42,6 +44,80 @@ export function Section({
       )}
       {children}
     </section>
+  );
+}
+
+/**
+ * A block inside one of the five top-level sections.
+ *
+ * The IA groups twelve measurements under five ideas; this is the heading that
+ * keeps each measurement named without adding a sixth `h2` and blurring the
+ * outline a screen reader announces.
+ */
+export function SubSection({
+  title,
+  note,
+  testId,
+  children,
+}: {
+  title: string;
+  note?: ReactNode;
+  testId?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="mb-5" data-testid={testId}>
+      <h3
+        className="mb-1 text-[0.7rem] font-extrabold uppercase tracking-[0.14em]"
+        style={{ color: "var(--paper-text-muted)" }}
+      >
+        {title}
+      </h3>
+      {note ? (
+        <p className="mb-2 text-xs leading-relaxed" style={{ color: "var(--paper-text-subtle)" }}>
+          {note}
+        </p>
+      ) : (
+        <div className="mb-2" />
+      )}
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Native progressive disclosure.
+ *
+ * ⛔ `<details>` and NOT a JavaScript accordion: the page has no `"use client"`
+ * anywhere, and that is exactly why no env var can reach the browser bundle.
+ *
+ * ⚠️ The `summary` must NAME AND COUNT what is inside. A collapsed block with a
+ * vague label ("More") reads as data that does not exist, which on a page whose
+ * whole job is trust is worse than the extra scroll it saves.
+ */
+export function Disclosure({
+  summary,
+  testId,
+  children,
+}: {
+  summary: string;
+  testId?: string;
+  children: ReactNode;
+}) {
+  return (
+    <details className="mt-3" data-testid={testId}>
+      <summary
+        className="cursor-pointer list-none rounded-xl border px-3 py-2 text-xs font-extrabold uppercase tracking-[0.1em]"
+        style={{
+          background: "var(--paper-bg-inner-tray)",
+          borderColor: "var(--paper-divider)",
+          color: "var(--paper-text-muted)",
+        }}
+      >
+        {summary}
+      </summary>
+      <div className="mt-3">{children}</div>
+    </details>
   );
 }
 
@@ -70,7 +146,8 @@ export function StatCard({
   const missing = text === EM_DASH;
   return (
     <div
-      className="flex flex-col gap-1 rounded-2xl border px-4 py-3"
+      data-testid="stat-card"
+      className="flex flex-col gap-0.5 rounded-2xl border px-3 py-2.5 md:gap-1 md:px-4 md:py-3"
       style={{
         background: emphasis ? "var(--landing-accent-bg)" : "var(--landing-card-bg)",
         borderColor: "var(--landing-card-border)",
@@ -84,7 +161,8 @@ export function StatCard({
         {label}
       </span>
       <span
-        className="text-xl font-extrabold tabular-nums md:text-2xl"
+        data-testid="stat-value"
+        className="text-lg font-extrabold tabular-nums md:text-2xl"
         style={{ color: missing ? "var(--paper-text-subtle)" : "var(--landing-text)" }}
         aria-label={missing ? undefined : String(value)}
       >
@@ -100,7 +178,7 @@ export function StatCard({
 }
 
 export function CardGrid({ children }: { children: ReactNode }) {
-  return <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{children}</div>;
+  return <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">{children}</div>;
 }
 
 /** A labelled bar. `max` is passed in so a group of bars shares one scale;
@@ -120,9 +198,13 @@ export function Bar({
 }) {
   const pct = value !== null && max > 0 ? Math.max(2, (value / max) * 100) : 0;
   return (
-    <li className="flex flex-col gap-1">
+    <li className="flex flex-col gap-0.5 md:gap-1">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-xs font-semibold md:text-sm" style={{ color: "var(--paper-text)" }}>
+        <span
+          data-testid="bar-label"
+          className="text-xs font-semibold md:text-sm"
+          style={{ color: "var(--paper-text)" }}
+        >
           {label}
         </span>
         <span
@@ -208,7 +290,7 @@ export function RetentionRow({
   const empty = !bucket || bucket.cohort === 0;
   return (
     <li
-      className="flex flex-col gap-1 rounded-2xl border px-4 py-3"
+      className="flex flex-col gap-0.5 rounded-2xl border px-3 py-2.5 md:gap-1 md:px-4 md:py-3"
       style={{
         background: "var(--landing-card-bg)",
         borderColor: "var(--landing-card-border)",
