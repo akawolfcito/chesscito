@@ -55,6 +55,22 @@ import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import { useHubData } from "@/components/hub/use-hub-data";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
+import { getAnonymousId } from "@/lib/analytics/identity";
+import { getDailyTactic } from "@/lib/daily/daily-puzzles";
+import { todayUtc } from "@/lib/daily/progress";
+import {
+  decideFirstActivity,
+  type OnboardingVariant,
+} from "@/lib/onboarding/first-activity-experiment";
+import {
+  emitOnboardingActivityFailed,
+  emitOnboardingActivityReady,
+  emitOnboardingActivityRequested,
+  emitOnboardingClosureShown,
+  emitOnboardingFallbackToHub,
+  emitOnboardingHubReached,
+  emitOnboardingVariantAssigned,
+} from "@/lib/onboarding/telemetry";
 import {
   useLearnFocusDays,
   type DailyProgressState,
@@ -432,11 +448,135 @@ export function LearnHubClient({
   // resolved — the daily's todayDone and the season pass — because its copy is
   // the product decision: a player who already holds the pass is never sold it
   // again, and one who already solved today's daily is pointed at tomorrow.
+  /* ── Tour → first activity experiment (LEARN only, 2026-08-05) ───────────
+     Control keeps `tour → hub`, byte for byte. The variant opens the Daily
+     Focus sheet that this hub ALREADY owns (`dailyOpen`, wired for the Focus
+     Passport), so there is no parallel micro-experience, no new route, no
+     wallet, no payment and no extra state to keep in sync.
+
+     Idempotence comes for free: the tour writes its seen-flag before
+     `onFinished` runs and only completes once per install, so refresh, back
+     navigation and reentry cannot re-open the activity or re-award anything.
+     The Daily itself is latched by `recordDailyCompletion` exactly as it is
+     for control. */
+  const onboardingVariantRef = useRef<OnboardingVariant | null>(null);
+  const onboardingAutoOpenedRef = useRef(false);
+  const onboardingClosureFiredRef = useRef(false);
+
+  const handleTourFinished = useCallback(
+    ({
+      outcome,
+      replay,
+    }: {
+      outcome: "completed" | "skipped";
+      replay: boolean;
+    }) => {
+      const decision = decideFirstActivity({
+        installId: getAnonymousId(),
+        isLearnSurface: CHESSCITO_LITE_MODE,
+        isReplay: replay,
+        dailyAlreadyDone: liteFocusPassport.todayDone,
+      });
+      if (decision.variant === null) return; // not in the experiment at all
+      onboardingVariantRef.current = decision.variant;
+      emitOnboardingVariantAssigned({ variant: decision.variant, outcome });
+      if (!decision.start) {
+        if (decision.reason === "daily-already-done") {
+          // Assigned to the variant but with nothing to open. Reported as a
+          // failure-to-present plus an explicit fallback, never as a silent
+          // no-op — an arm that quietly does nothing looks like control.
+          emitOnboardingActivityFailed({
+            variant: decision.variant,
+            activity: "daily-focus",
+            reason: "already-done",
+          });
+          emitOnboardingFallbackToHub({
+            variant: decision.variant,
+            reason: "already-done",
+          });
+        }
+        return;
+      }
+
+      emitOnboardingActivityRequested({
+        variant: decision.variant,
+        activity: "daily-focus",
+      });
+
+      // Readiness is checked against the SAME source the tile renders from,
+      // so "ready" cannot be a guess. If today's puzzle does not resolve, the
+      // player simply stays on the hub — the fallback is doing nothing, which
+      // is the one fallback that cannot itself fail.
+      let ready = false;
+      try {
+        ready = Boolean(getDailyTactic(todayUtc()));
+      } catch {
+        ready = false;
+      }
+      if (!ready) {
+        emitOnboardingActivityFailed({
+          variant: decision.variant,
+          activity: "daily-focus",
+          reason: "no-puzzle",
+        });
+        emitOnboardingFallbackToHub({
+          variant: decision.variant,
+          reason: "no-puzzle",
+        });
+        return;
+      }
+
+      onboardingAutoOpenedRef.current = true;
+      setDailyOpen(true);
+      emitOnboardingActivityReady({
+        variant: decision.variant,
+        activity: "daily-focus",
+      });
+    },
+    [liteFocusPassport.todayDone],
+  );
+
   const hubTour = useHubTour({
     mode: "learn",
     enabled: CHESSCITO_LITE_MODE,
     ready: !liteFocusPassport.isLoading && !seasonPassStatus.loading,
+    onFinished: handleTourFinished,
   });
+
+  /** The closure screen. Observed from the hub rather than from inside
+   *  `HubDailyTile` so the tile stays unaware of the experiment: the Daily
+   *  flipping to done WHILE the auto-opened sheet is up is exactly "the player
+   *  saw the reward and the streak". Deliberately NOT `daily_streak_updated`,
+   *  which fires from the same block as the completion and would just be the
+   *  completion under a second name. */
+  useEffect(() => {
+    if (!onboardingAutoOpenedRef.current) return;
+    if (onboardingClosureFiredRef.current) return;
+    if (!dailyOpen) return;
+    if (!liteFocusPassport.todayDone) return;
+    const variant = onboardingVariantRef.current;
+    if (!variant) return;
+    onboardingClosureFiredRef.current = true;
+    emitOnboardingClosureShown({
+      variant,
+      closure: liteFocusPassport.streak <= 1 ? "first-focus-day" : "streak",
+    });
+  }, [dailyOpen, liteFocusPassport.todayDone, liteFocusPassport.streak]);
+
+  /** Back on the hub after the activity — the end of the variant's path.
+   *  Separate from `hub_view`, which fires on arrival and is identical for
+   *  both arms. */
+  useEffect(() => {
+    if (!onboardingAutoOpenedRef.current) return;
+    if (dailyOpen) return;
+    const variant = onboardingVariantRef.current;
+    if (!variant) return;
+    onboardingAutoOpenedRef.current = false;
+    emitOnboardingHubReached({
+      variant,
+      completedActivity: liteFocusPassport.todayDone,
+    });
+  }, [dailyOpen, liteFocusPassport.todayDone]);
   const hubTourSteps = useMemo(
     () =>
       buildLearnHubTourSteps({

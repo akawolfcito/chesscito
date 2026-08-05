@@ -120,3 +120,103 @@ describe("useHubTour", () => {
     expect(result.current.open).toBe(false);
   });
 });
+
+/**
+ * `onFinished` is the single hook the tour → first-activity experiment hangs
+ * off. Its contract is narrow on purpose: it must fire exactly once per
+ * completion, AFTER the seen-flag is persisted, and it must tell a replay
+ * apart from a first run.
+ */
+describe("useHubTour — onFinished", () => {
+  it("fires once with the outcome, for a completion", () => {
+    const onFinished = vi.fn();
+    const { result } = renderHook(() =>
+      useHubTour({ mode: "learn", enabled: true, ready: true, onFinished }),
+    );
+
+    act(() => {
+      result.current.finish("completed");
+    });
+
+    expect(onFinished).toHaveBeenCalledTimes(1);
+    expect(onFinished).toHaveBeenCalledWith({
+      outcome: "completed",
+      replay: false,
+    });
+  });
+
+  it("reports a skip as a skip, not as a completion", () => {
+    const onFinished = vi.fn();
+    const { result } = renderHook(() =>
+      useHubTour({ mode: "learn", enabled: true, ready: true, onFinished }),
+    );
+
+    act(() => {
+      result.current.finish("skipped");
+    });
+
+    expect(onFinished).toHaveBeenCalledWith({
+      outcome: "skipped",
+      replay: false,
+    });
+  });
+
+  /** A veteran replaying from settings must be distinguishable, or the
+   *  experiment would hijack the hub of somebody already using the product. */
+  it("flags a manual replay", () => {
+    const onFinished = vi.fn();
+    const { result } = renderHook(() =>
+      useHubTour({ mode: "learn", enabled: true, ready: true, onFinished }),
+    );
+
+    act(() => {
+      result.current.finish("completed");
+    });
+    act(() => {
+      result.current.replay();
+    });
+    act(() => {
+      result.current.finish("completed");
+    });
+
+    expect(onFinished).toHaveBeenCalledTimes(2);
+    expect(onFinished).toHaveBeenLastCalledWith({
+      outcome: "completed",
+      replay: true,
+    });
+  });
+
+  /** Ordering IS the idempotency guarantee: whatever the callback does next
+   *  must never run against an install that could still see the tour again. */
+  it("runs only after the seen-flag is persisted", () => {
+    let flagAtCallback: string | null = "unwritten";
+    const { result } = renderHook(() =>
+      useHubTour({
+        mode: "learn",
+        enabled: true,
+        ready: true,
+        onFinished: () => {
+          flagAtCallback = window.localStorage.getItem(
+            HUB_TOUR_STORAGE_KEYS.learn,
+          );
+        },
+      }),
+    );
+
+    act(() => {
+      result.current.finish("completed");
+    });
+
+    expect(flagAtCallback).toBe("completed");
+  });
+
+  it("is optional — the tour works with no callback at all", () => {
+    const { result } = renderHook(() =>
+      useHubTour({ mode: "learn", enabled: true, ready: true }),
+    );
+    act(() => {
+      result.current.finish("completed");
+    });
+    expect(result.current.open).toBe(false);
+  });
+});
