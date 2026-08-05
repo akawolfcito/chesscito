@@ -17,6 +17,7 @@ import { stepLabel } from "@/lib/stats/step-labels";
 import type { ActivationFunnel, DailyBucket, PublicStats } from "@/lib/stats/types";
 
 import { FilterChips } from "./filter-chips";
+import { TrendChart } from "./trend-chart";
 import {
   Bar,
   Callout,
@@ -55,9 +56,6 @@ function fmtTime(iso: string, locale: StatsLocale): string {
   return d.toISOString().replace("T", " ").slice(0, 16) + " UTC";
 }
 
-/** Days shown before the disclosure. Seven, because that is the window every
- *  headline on the page is already measured over. */
-const TREND_VISIBLE_DAYS = 7;
 /** Ranked players shown before the disclosure. */
 const PLAYERS_VISIBLE_ROWS = 10;
 /** Ranked players rendered at all. Unchanged from the consolidated page — the
@@ -223,9 +221,9 @@ export function StatsDashboard({
   const journeyMax = Math.max(0, ...journeySteps.map((s) => s.value ?? 0));
 
   // ── Progressive disclosure ────────────────────────────────────────────────
+  // ⚠️ The trend is NOT truncated: every day is on the chart. What the
+  // disclosure holds is the PRECISION (the per-day figures), not the data.
   const trend = stats.activityTrend30d;
-  const trendRecent = trend.slice(-TREND_VISIBLE_DAYS);
-  const trendRest = trend.slice(0, Math.max(0, trend.length - TREND_VISIBLE_DAYS));
 
   const playerRows = census.rows.slice(0, PLAYERS_MAX_ROWS);
   const playersTop = playerRows.slice(0, PLAYERS_VISIBLE_ROWS);
@@ -582,18 +580,22 @@ export function StatsDashboard({
             return them and recovering them would need a ranged read. The mint
             totals live in the Celo block below. */}
         <Section title={c.sectionActivity}>
-          <SubSection title={c.trendRecent}>
-            {trendRecent.length > 0 ? (
+          <SubSection title={c.sectionTrend}>
+            {trend.length > 0 ? (
               <>
-                <TrendTable rows={trendRecent} copy={c} locale={locale} testId="trend-recent" />
-                {trendRest.length > 0 ? (
-                  <Disclosure
-                    testId="trend-more"
-                    summary={withCount(c.moreDays, trendRest.length, locale)}
-                  >
-                    <TrendTable rows={trendRest} copy={c} locale={locale} />
-                  </Disclosure>
-                ) : null}
+                {/* The SHAPE first. Thirty rows of digits publish the numbers
+                    without publishing the trend — the reader has to difference
+                    them mentally to answer "is this growing?". Columns answer
+                    it at a glance, and no day is hidden to get there. */}
+                <TrendChart days={trend} copy={c} locale={locale} />
+                {/* The exact figures, one click away. This is also the table
+                    view the palette's contrast warning requires. */}
+                <Disclosure
+                  testId="trend-table"
+                  summary={withCount(c.trendTable, trend.length, locale)}
+                >
+                  <TrendTable rows={trend} copy={c} locale={locale} testId="trend-rows" />
+                </Disclosure>
               </>
             ) : (
               <Callout>{c.notMeasured}</Callout>

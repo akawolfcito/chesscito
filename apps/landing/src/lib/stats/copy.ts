@@ -52,7 +52,11 @@ export type StatsCopy = {
    *  rows while the census counts hundreds; a reader who cannot reconcile the
    *  two reads the smaller number as a lie. `{shown}` / `{total}`. */
   playersCut: string;
-  trendRecent: string;
+  /** Summary of the `<details>` holding the exact per-day figures. `{count}`. */
+  trendTable: string;
+  /** Read to a screen reader in place of the columns. */
+  trendChartLabel: string;
+  trendPeak: string;
 
   sectionSummary: string;
   sectionBreakdown: string;
@@ -167,7 +171,9 @@ const EN: StatsCopy = {
   moreDays: "Show {count} more days",
   morePlayers: "Show {count} more players",
   playersCut: "This table lists the top {shown} of {total} ranked players.",
-  trendRecent: "Last 7 days",
+  trendTable: "Show the exact figures for all {count} days",
+  trendChartLabel: "Daily sessions over the last 30 days, split into new installs and returning.",
+  trendPeak: "Peak",
 
   sectionSummary: "Summary",
   sectionBreakdown: "Learn / Play breakdown",
@@ -286,7 +292,10 @@ const ES: StatsCopy = {
   moreDays: "Ver {count} días más",
   morePlayers: "Ver {count} jugadores más",
   playersCut: "Esta tabla muestra los primeros {shown} de {total} jugadores del ranking.",
-  trendRecent: "Últimos 7 días",
+  trendTable: "Ver las cifras exactas de los {count} días",
+  trendChartLabel:
+    "Sesiones diarias de los últimos 30 días, separadas en instalaciones nuevas y recurrentes.",
+  trendPeak: "Máximo",
 
   sectionSummary: "Resumen",
   sectionBreakdown: "Desglose Learn / Play",

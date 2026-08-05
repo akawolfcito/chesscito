@@ -65,6 +65,32 @@ cierre midió contra la página desplegada.
 
 ---
 
+## 2 bis. El trend pasó de tabla a gráfico (pedido del founder, post-review)
+
+Treinta filas de fechas publican los **números** sin publicar la **forma**: para
+contestar «¿esto crece?» el lector tenía que restar de memoria. Ahora:
+
+- **Columnas apiladas, los 30 días visibles** — `returning` en la base,
+  `newInstalls` arriba. Se apilan porque `new + returning === sessions` por
+  construcción, así que **particionan** la columna, no la superponen.
+- **La tabla exacta vive en un `<details>`** (`Show the exact figures for all 30
+  days`). ⚠️ Esto **invierte** lo que decía el spec (7 visibles / 23 escondidos):
+  ahora **no se esconde ningún día**, sólo la precisión.
+- **Cero JavaScript**: flexbox con alturas en `%` y tooltip nativo por `title`.
+  Sigue sin haber un solo `"use client"`.
+- **Paleta validada, no elegida a ojo**: `#d9821e` / `#8a6818`, los dos ya en los
+  tokens de Chesscito. Contra la superficie `#f6e6b8`: banda de luminosidad
+  PASS, croma PASS, **CVD ΔE 12,0 (protan)**, visión normal ΔE 16,1. El WARN de
+  contraste del naranja (2,36:1) se descarga como exige la regla: leyenda con
+  etiquetas visibles **más** la tabla.
+- **Identidad nunca por color solo**: leyenda con swatch + etiqueta, `role="img"`
+  con `aria-label`, y el pico anotado (`Peak: 515 · 2026-07-25`).
+
+Altura: 4.752 px @390 (el gráfico ocupa casi lo mismo que las 7 filas que
+reemplazó). Sin overflow horizontal en 390/768/1280.
+
+---
+
 ## 3. Decisiones que no estaban en el spec
 
 1. **El recorte de 50 filas del ranking ahora se declara en pantalla**
@@ -104,7 +130,7 @@ cierre midió contra la página desplegada.
 ## 5. Verificación
 
 ```
-suite landing      252 passed / 25 files · 0 skipped   (corrida DESPUÉS del build)
+suite landing      255 passed / 25 files · 0 skipped   (corrida DESPUÉS del build)
 tsc --noEmit       exit 0
 build              exit 0 · /stats 8,9 kB
 altura móvil       6.794 → 4.815 px @ 390

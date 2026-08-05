@@ -239,33 +239,66 @@ describe("from first visit to habit", () => {
   });
 });
 
-describe("progressive disclosure — trend", () => {
-  it("shows seven days and hides the other 23 behind a counted summary", () => {
+describe("the trend is a chart, and the table is its precision", () => {
+  it("plots EVERY day — the disclosure holds precision, not data", () => {
     renderDashboard();
-    const visible = screen.getByTestId("trend-recent").querySelectorAll("tbody tr");
-    expect(visible).toHaveLength(7);
+    expect(screen.getAllByTestId("trend-column")).toHaveLength(30);
 
-    const details = screen.getByTestId("trend-more");
+    const details = screen.getByTestId("trend-table");
     expect(details.tagName).toBe("DETAILS");
-    expect(within(details).getByText("Show 23 more days")).toBeTruthy();
-    expect(details.querySelectorAll("tbody tr")).toHaveLength(23);
+    expect(within(details).getByText("Show the exact figures for all 30 days")).toBeTruthy();
+    expect(details.querySelectorAll("tbody tr")).toHaveLength(30);
+    expect(details.hasAttribute("open")).toBe(false);
   });
 
-  it("shows the MOST RECENT seven, not the oldest", () => {
+  it("scales the columns against the busiest day, not against themselves", () => {
+    // A bar normalised on its own value makes every day look identical.
     renderDashboard();
-    const rows = screen.getByTestId("trend-recent").querySelectorAll("tbody tr");
-    expect(rows[rows.length - 1]?.textContent).toContain("2026-07-30");
+    const cols = screen.getAllByTestId("trend-column");
+    const heightOf = (col: HTMLElement) =>
+      Array.from(col.querySelectorAll<HTMLElement>("div")).reduce(
+        (sum, seg) => sum + Number.parseFloat(seg.style.height || "0"),
+        0,
+      );
+    // The fixture rises monotonically, so the last day must be the tallest.
+    expect(heightOf(cols[cols.length - 1])).toBeGreaterThan(heightOf(cols[0]));
+    expect(heightOf(cols[cols.length - 1])).toBeCloseTo(100, 0);
   });
 
-  it("renders no empty disclosure when there is nothing to hide", () => {
-    renderDashboard({ activityTrend30d: trend(5) });
-    expect(screen.getByTestId("trend-recent").querySelectorAll("tbody tr")).toHaveLength(5);
-    expect(screen.queryByTestId("trend-more")).toBeNull();
-  });
-
-  it("starts collapsed — the summary is the whole point", () => {
+  it("splits each column into new and returning, never overlapping them", () => {
+    // `newInstalls + returningInstalls === sessions` by construction, so the
+    // two segments PARTITION the column.
     renderDashboard();
-    expect(screen.getByTestId("trend-more").hasAttribute("open")).toBe(false);
+    const first = screen.getAllByTestId("trend-column")[0];
+    expect(within(first).getByTestId("trend-segment-new")).toBeTruthy();
+    expect(within(first).getByTestId("trend-segment-returning")).toBeTruthy();
+  });
+
+  it("identifies the two series by label, never by colour alone", () => {
+    renderDashboard();
+    const c = statsCopy("en");
+    const activity = screen.getByText(c.sectionActivity).closest("section")!;
+    expect(within(activity).getAllByText(c.trendNew).length).toBeGreaterThan(0);
+    expect(within(activity).getAllByText(c.trendReturning).length).toBeGreaterThan(0);
+  });
+
+  it("carries a per-day tooltip with no JavaScript at all", () => {
+    renderDashboard();
+    const col = screen.getAllByTestId("trend-column")[0];
+    expect(col.getAttribute("title")).toContain("2026-07-01");
+    expect(col.getAttribute("title")).toContain("100");
+  });
+
+  it("describes itself to a screen reader", () => {
+    renderDashboard();
+    const img = screen.getByRole("img");
+    expect(img.getAttribute("aria-label")).toContain(statsCopy("en").trendChartLabel);
+  });
+
+  it("falls back to the not-measured callout with no days at all", () => {
+    renderDashboard({ activityTrend30d: [] });
+    expect(screen.queryByTestId("trend-column")).toBeNull();
+    expect(screen.queryByTestId("trend-table")).toBeNull();
   });
 });
 
