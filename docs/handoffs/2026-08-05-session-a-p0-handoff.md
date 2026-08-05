@@ -1,7 +1,9 @@
 # Handoff — Sesión A: los dos P0 + la consulta de activación (2026-08-05)
 
-> **Parada obligatoria alcanzada.** Los tres commits están en `main` **local**.
-> El founder pushea. **No arrancar la Sesión B (slice Tour → ejercicio) sin un GO nuevo.**
+> **✅ DESPLEGADO Y VERIFICADO EN PRODUCCIÓN.** Ver *Ejecución en producción* al final:
+> los dos P0 están cerrados en `brsbdzpuvotxsadmcxyj`, con evidencia por rol.
+> El cuerpo de este doc quedó escrito **antes** del deploy; el apéndice manda donde
+> difieran. **No arrancar la Sesión B sin un GO nuevo.**
 
 **Documento madre de la verificación previa:** `docs/audits/2026-08-05-prod-audit-verification.md`.
 Este handoff no lo repite: cubre sólo lo que se hizo hoy.
@@ -425,3 +427,119 @@ Esos cuatro venían de la sesión anterior y **no se tocaron**. Decidir si entra
    frente al experimento?
 5. **`pro-sheet.tsx:453-456`** — heredada, sigue sin respuesta.
 6. **Los cuatro archivos sin trackear** — ¿se commitean?
+
+---
+
+# Ejecución en producción — 2026-08-05
+
+Ejecutado tras la aprobación de la Sesión A. Ambos P0 **cerrados y verificados en
+producción**. Dos sorpresas, ninguna prevista por el cuerpo de este doc.
+
+## Push
+
+`origin/main` estaba **2 commits más atrás** de lo asumido: `c98400ec` (feat(ops),
+código) y `7ef0c2c3` (docs) de la sesión de stats IA nunca se pushearon. Un push
+llevaba 6, no 4, y no se podían separar (eran ancestros). Se auditó `c98400ec` antes:
+1 archivo (`scripts/ops/onchain-revenue.mjs`), nadie lo importa desde `apps/`, no está
+en scripts de `package.json`, no toca lockfile/migraciones/env, y sólo hace
+`getBlockNumber`/`getBlock`/`getLogs` — sin claves, sin firma, sin escrituras. Único env:
+`CELO_RPC` opcional. **No entra al build ni al runtime.** Aprobado y pusheado.
+
+`b93a6972..cbfa1315`, y luego `cbfa1315..5c03d581`.
+
+## ⚠️ Sorpresa 1 — colisión de versión: la migración se iba a saltear en silencio
+
+`supabase db push --dry-run` antes de aplicar:
+
+```
+Would push these migrations:
+ • 20260805000000_stats_aggregation_rpcs.sql
+```
+
+**La migración de las vistas no aparecía.** Había dos archivos con el prefijo
+`20260805000000`, y Supabase trackea por **versión, no por nombre de archivo**. El push
+habría reportado éxito, re-ejecutado una migración ya viva en prod desde el 2026-08-04, y
+dejado `anon` con SELECT sobre las tres vistas. **Un no-op silencioso es el peor modo de
+falla posible para un arreglo de seguridad: la salida en verde es indistinguible de la
+real.**
+
+Causa: elegí un timestamp ya ocupado. Arreglo: renombrada a `20260805010000`
+(commit `5c03d581`), sin cambiar una línea del SQL. Dry-run posterior resuelve a
+exactamente una migración, la correcta. Se agregó un guard que falla si dos migraciones
+comparten prefijo — el defecto es invisible en un diff.
+
+**Confirmado a posteriori:** el historial de prod tiene `20260805000000` **y**
+`20260805010000` como filas distintas, o sea que la versión vieja efectivamente ya
+estaba tomada.
+
+## Migración aplicada
+
+`supabase db push` → `Applying migration 20260805010000_...` → exit 0. El bloque `do $$`
+de autoverificación **no abortó**, que era la primera señal de cierre.
+
+## Verificación por rol contra producción (paso 4)
+
+```
+v                        | opts                    | anon  | auth  | svc
+-------------------------|-------------------------|-------|-------|------
+leaderboard_combined_v   | {security_invoker=true} | false | false | true   ✓
+leaderboard_full_v       | {security_invoker=true} | false | false | true   ✓
+leaderboard_weekly_full_v| {security_invoker=true} | false | false | true   ✓ (ya estaba)
+peones_balances          | {security_invoker=true} | false | false | true   ✓
+leaderboard_v            | {security_invoker=on}   | true  | true  | true   ⚠️ ver abajo
+```
+
+Intento real como `anon`:
+
+```
+ERROR: 42501: permission denied for view peones_balances
+```
+
+> **Nota de método:** `supabase db query` apunta a la base **LOCAL** por defecto. La
+> primera corrida devolvió las tres vistas abiertas y un historial de migraciones vacío
+> — no era producción. Hay que pasar **`--linked`**. Una lectura apresurada de esa
+> primera salida habría reportado que el arreglo falló.
+
+## ⚠️ Sorpresa 2 — hay una QUINTA vista en producción
+
+El cuerpo de este doc afirma *"el esquema tiene exactamente cuatro vistas, auditoría
+completa, sin deuda pendiente"*. **Eso era cierto del set de migraciones, no de
+producción**, que tiene cinco. `leaderboard_v` no la crea ninguna migración.
+
+**No es una vulnerabilidad**, verificado y no asumido:
+- Es el predecesor legacy de `leaderboard_combined_v`: sólo lee `scores` +
+  `passport_cache`, top-10, y conserva el cast `::integer` que la migración del
+  2026-07-29 tuvo que ensanchar a bigint porque desbordaba.
+- Tiene `security_invoker=on`, así que la RLS **sí** se aplica.
+- `scores` tiene la policy `scores_select_public` con `using (true)` y roles `{}` — esa
+  tabla es **pública por diseño explícito**. La vista no escala privilegios: expone lo
+  que `scores` ya expone.
+- La app no la lee. Sólo aparece en tests como "la legacy que nunca hay que tocar".
+
+**Deuda separada, no P0:** una vista stale, fuera del historial de migraciones, con el
+bug de overflow que el resto del sistema ya corrigió. Decidir si se dropea.
+
+## Verificación funcional (paso 5)
+
+| Chequeo | Resultado |
+|---|---|
+| `service_role` → `leaderboard_combined_v` | **10** filas (top-10 intacto) |
+| `service_role` → `leaderboard_full_v` | **441** jugadores rankeados |
+| `service_role` → `peones_balances` | **4.567** wallets |
+| `anon` → `peones_balances` | **denegado** (42501) |
+| `play.chesscito.com` | HTTP 200 |
+| `learn.chesscito.com` | HTTP 200 |
+| `/stats` renderiza Leaders | **441 aparece 3 veces en el HTML**, coincide con la base |
+| `/api/peones/balance?wallet=…` | HTTP 200, payload correcto |
+
+> `/stats` contiene el string "Something went wrong" 8 veces. **No es un error**: es copy
+> serializado del bundle editorial (`ERROR_PAGE_COPY`, `errorGeneric`). Se verificó antes
+> de reportar.
+
+## Estado final
+
+`origin/main` = `5c03d581`. Árbol limpio salvo los 4 archivos preexistentes sin trackear.
+Migración `20260805010000` registrada en el historial de Supabase de prod.
+
+**Ya no queda nada pendiente contra prod de la Sesión A.** El "pendiente: probe contra
+producción" que declara el cuerpo de este doc está **resuelto**.
