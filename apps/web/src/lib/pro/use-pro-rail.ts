@@ -11,7 +11,7 @@
  * `lib/shop/use-shop-sheet-state.ts`.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useAccount, useChainId, usePublicClient, useWriteContract } from "wagmi";
 
 import { erc20Abi } from "@/lib/contracts/tokens";
@@ -75,6 +75,12 @@ export function useProRail({
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [result, setResult] = useState<ProRailResult | null>(null);
   const [errorReason, setErrorReason] = useState<string | null>(null);
+  // Single-flight mutex, mirroring `use-payment-rail.ts`. A ref (not state)
+  // because two taps in the same tick must be discriminated before React has
+  // re-rendered. This is the only layer that can stop a double charge: both
+  // server-side idempotency keys in `/api/verify-payment` are per-tx-hash, and
+  // two taps produce two distinct, genuine transfers.
+  const payInFlightRef = useRef(false);
 
   const treasury = getTreasuryAddressClient();
   const tokenEntry = RAIL_ACCEPTED_STABLECOINS.find((t) => t.symbol === tokenSymbol) ?? null;
@@ -83,6 +89,10 @@ export function useProRail({
     Boolean(treasury) && chainId === CELO_MAINNET_CHAIN_ID && Boolean(tokenEntry);
 
   const reset = useCallback(() => {
+    // Resetting mid-flight would drop the UI back to `idle` and re-enable the
+    // CTA while a transfer is still being signed. The owning payment clears
+    // its own mutex when it settles.
+    if (payInFlightRef.current) return;
     setPhase("idle");
     setTxHash(null);
     setResult(null);
@@ -151,6 +161,9 @@ export function useProRail({
   );
 
   const pay = useCallback(async () => {
+    if (payInFlightRef.current) return;
+    payInFlightRef.current = true;
+    try {
     if (!available || !treasury || !tokenEntry) {
       setErrorReason("unavailable");
       setPhase("error");
@@ -203,6 +216,9 @@ export function useProRail({
             : "tx_failed",
       );
       setPhase("error");
+    }
+    } finally {
+      payInFlightRef.current = false;
     }
   }, [
     available,

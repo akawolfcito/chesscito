@@ -174,3 +174,164 @@ describe("useProRail — errors", () => {
     expect(result.current.errorReason).toBe("user_rejected");
   });
 });
+
+/**
+ * A double tap on "Unlock PRO" signs two independent transfers. Server-side
+ * idempotency cannot undo that: both keys in `/api/verify-payment`
+ * (`REDIS_KEYS.proProcessedTx` and `consume_pro_treasury_payment`'s
+ * `${source}:${chainId}:${txHash}:${logIndex}`) are per-tx-hash, so two
+ * genuine transfers settle as two distinct payments — the wallet is charged
+ * twice and PRO is extended twice. The mutex is the only layer that can stop
+ * the second transfer from ever being requested.
+ */
+describe("useProRail — single-flight mutex", () => {
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    let reject!: (reason?: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
+  it("synchronous double tap → one transfer requested, one verify", async () => {
+    const fetchMock = mockFetch({
+      ok: true,
+      expiresAt: 1_800_000_000_000,
+      duplicate: false,
+      overpaid: false,
+      token: USDC,
+      amountPaid: "1990000",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { result } = renderHook(() => useProRail(args));
+
+    await act(async () => {
+      await Promise.all([result.current.pay(), result.current.pay()]);
+    });
+
+    expect(writeMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result.current.phase).toBe("success");
+  });
+
+  it("second tap while the signature is pending → ignored", async () => {
+    const signature = deferred<`0x${string}`>();
+    writeMock.mockReset();
+    writeMock.mockReturnValue(signature.promise);
+    const { result } = renderHook(() => useProRail(args));
+
+    let first!: Promise<void>;
+    await act(async () => {
+      first = result.current.pay();
+      await Promise.resolve();
+    });
+    expect(result.current.phase).toBe("awaiting_signature");
+
+    // The wallet sheet is open; the user taps the CTA again.
+    await act(async () => {
+      await result.current.pay();
+    });
+    expect(writeMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      signature.resolve(HASH);
+      await first;
+    });
+    expect(writeMock).toHaveBeenCalledTimes(1);
+    expect(result.current.phase).toBe("success");
+  });
+
+  it("reset() while in flight does not unlock a second transfer", async () => {
+    const signature = deferred<`0x${string}`>();
+    writeMock.mockReset();
+    writeMock.mockReturnValue(signature.promise);
+    const { result } = renderHook(() => useProRail(args));
+
+    let first!: Promise<void>;
+    await act(async () => {
+      first = result.current.pay();
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      result.current.reset();
+    });
+    expect(result.current.phase).toBe("awaiting_signature");
+
+    await act(async () => {
+      await result.current.pay();
+    });
+    expect(writeMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      signature.resolve(HASH);
+      await first;
+    });
+  });
+
+  it("releases after a user rejection → an intentional retry still works", async () => {
+    writeMock.mockReset();
+    writeMock.mockRejectedValueOnce({ cancelled: true }).mockResolvedValueOnce(HASH);
+    const { result } = renderHook(() => useProRail(args));
+
+    await act(async () => {
+      await result.current.pay();
+    });
+    expect(result.current.errorReason).toBe("user_rejected");
+
+    await act(async () => {
+      await result.current.pay();
+    });
+    expect(writeMock).toHaveBeenCalledTimes(2);
+    expect(result.current.phase).toBe("success");
+  });
+
+  it("releases after an unavailable/not-connected bail-out", async () => {
+    useAccountMock.mockReturnValue({ address: undefined });
+    const { result, rerender } = renderHook(() => useProRail(args));
+    await act(async () => {
+      await result.current.pay();
+    });
+    expect(result.current.errorReason).toBe("not_connected");
+
+    useAccountMock.mockReturnValue({ address: WALLET });
+    rerender();
+    await act(async () => {
+      await result.current.pay();
+    });
+    expect(writeMock).toHaveBeenCalledTimes(1);
+    expect(result.current.phase).toBe("success");
+  });
+
+  it("releases after a verify error → verifyAgain is still reachable", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ ok: false, error: "bad_receipt" }) })
+      .mockResolvedValueOnce({
+        json: () =>
+          Promise.resolve({
+            ok: true,
+            expiresAt: 1_800_000_000_000,
+            duplicate: true,
+            token: USDC,
+            amountPaid: "1990000",
+          }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+    const { result } = renderHook(() => useProRail({ ...args, retryDelaysMs: [] }));
+
+    await act(async () => {
+      await result.current.pay();
+    });
+    expect(result.current.phase).toBe("error");
+
+    await act(async () => {
+      await result.current.verifyAgain();
+    });
+    expect(result.current.phase).toBe("success");
+    // The settled transfer is verified again, never re-sent.
+    expect(writeMock).toHaveBeenCalledTimes(1);
+  });
+});
