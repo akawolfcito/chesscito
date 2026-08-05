@@ -16,10 +16,12 @@
     "versions": "Team convention — exact pins (no ^ or ~) for every dependency to harden against malicious version-range hijacks. See feedback_exact_version_pins memory."
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.100.1",
     "next": "14.2.35",
     "next-intl": "4.12.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "server-only": "0.0.1",
     "sharp": "0.34.5"
   },
   "devDependencies": {

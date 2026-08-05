@@ -121,6 +121,9 @@ importers:
 
   apps/landing:
     dependencies:
+      '@supabase/supabase-js':
+        specifier: 2.100.1
+        version: 2.100.1
       next:
         specifier: 14.2.35
         version: 14.2.35(@playwright/test@1.58.2)(react-dom@18.3.1)(react@18.3.1)
@@ -133,6 +136,9 @@ importers:
       react-dom:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
+      server-only:
+        specifier: 0.0.1
+        version: 0.0.1
       sharp:
         specifier: 0.34.5
         version: 0.34.5
@@ -5620,6 +5626,7 @@ packages:
   /@safe-global/safe-gateway-typescript-sdk@3.23.1:
     resolution: {integrity: sha512-6ORQfwtEJYpalCeVO21L4XXGSdbEMfyp2hEv6cP82afKXSwvse6d3sdelgaPWUxHIsFRkWvHDdzh8IyyKHZKxw==}
     engines: {node: '>=16'}
+    requiresBuild: true
     dev: false
 
   /@schummar/icu-type-parser@1.21.5:
@@ -15680,6 +15687,10 @@ packages:
     dependencies:
       randombytes: 2.1.0
     dev: true
+
+  /server-only@0.0.1:
+    resolution: {integrity: sha512-qepMx2JxAa5jjfzxG79yPPq+8BuFToHd1hm7kI+Z4zAq1ftQiP7HcxMhDDItrbtwVeLg/cY2JnKnrcFkmiswNA==}
+    dev: false
 
   /set-blocking@2.0.0:
     resolution: {integrity: sha512-KiKBS8AnWGEyLzofFfmvKwpdPzqiy16LvQfK3yv/fVH7Bj13/wl3JSR1J+rfgRE9q7xUJK4qvgS8raSOeLUehw==}
