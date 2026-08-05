@@ -399,7 +399,54 @@ docs(stats): validate the consolidated dashboard against SQL
 
 ---
 
-## Fase G — Redirects
+## Fase G — Redirects · ⛔ **CANCELADA 2026-08-05**
+
+> **CANCELADA POR FALTA DE CONSUMIDORES REALES.** No se implementa ningún
+> redirect: ni 307 ni 308. Nada de lo que sigue en esta sección está construido.
+>
+> **La premisa se venció sola.** La fase existía para reapuntar tráfico de
+> `learn…/stats` y `play…/stats` al destino canónico — pero el listing de MiniPay
+> **ya apunta directo a `https://www.chesscito.com/stats`**, así que no queda
+> tráfico que reapuntar. Investigación read-only del 2026-08-05:
+>
+> | Eje | Hallazgo |
+> |---|---|
+> | Enlaces internos de `apps/web` a su propio `/stats` | **cero** |
+> | Footer del landing | apunta a **su propia** `/stats` (`href="/stats"`), no a Learn/Play. El `${LEGAL_URL}/stats` que documentaba el audit de 2026-06-22 lo reemplazó la Fase D |
+> | Referencias en docs | sólo históricas y de diseño; ninguna es un link operativo |
+> | Tráfico | **0 hits** a rutas `/stats` en 100 requests muestreados **por proyecto** |
+> | Única referencia viva | `apps/web/e2e/grant-shots.spec.ts:260` — **probe propio**, no corre en CI |
+>
+> ⚠️ **Límite de la evidencia de tráfico:** `vercel logs` da una ventana reciente
+> en vivo, no «los últimos N días». Es una **muestra**, no un censo. Lo afirmado
+> es que en la ventana observada no apareció ningún hit — no que no exista
+> tráfico en absoluto.
+>
+> ### Condiciones de REAPERTURA
+>
+> Reabrir esta fase si aparece **cualquiera** de estas:
+>
+> 1. **tráfico real** medido sobre las rutas viejas;
+> 2. **un enlace externo** hacia ellas;
+> 3. **un enlace interno humano** (no un probe);
+> 4. **un bookmark o integración conocida** que dependa de ellas.
+>
+> Al reabrir: **307, NUNCA 308.** Un 308 lo cachea el navegador de forma casi
+> irreversible y anularía el rollback.
+>
+> ### Trabajo derivado, sin urgencia
+>
+> - **`apps/web/e2e/grant-shots.spec.ts` debe repuntarse a
+>   `https://www.chesscito.com/stats`** en una futura iteración de E2E. Es la
+>   única cosa que todavía visita la ruta vieja.
+> - **La ruta vieja de `apps/web` puede eliminarse en una fase de limpieza
+>   posterior** (la Fase H ya la contempla). No hace falta redirigir antes de
+>   borrarla.
+
+---
+
+<details>
+<summary>Diseño original de la Fase G — conservado como referencia, NO construido</summary>
 
 ⚠️ **No empezar hasta que F esté verde.** El link del listing de MiniPay apunta
 al destino: redirigir hacia una página a medias apunta el tráfico del reviewer a
@@ -461,12 +508,16 @@ rollback es efectivo de inmediato. Con 308 no lo sería.
 feat(stats): redirect the app stats routes to the canonical page
 ```
 
+</details>
+
 ---
 
 ## Fase H — Retirada del código antiguo
 
-⚠️ **≥7 días después de G, y sólo si el monitor y el listing están limpios.**
-Es el **punto de no retorno**.
+⚠️ **G quedó CANCELADA**, así que su gate de «≥7 días después de G» ya no aplica.
+La condición vigente es: **el monitor y el listing limpios**, y
+`grant-shots.spec.ts` repuntado antes de borrar la ruta vieja de `apps/web`.
+Sigue siendo el **punto de no retorno**.
 
 ### Archivos a borrar
 
@@ -534,17 +585,52 @@ feat(ops): monitor chesscito-landing
 | D · UI | ~620 | ~300 | 0 | revert | C |
 | E · caché | ~90 | ~120 | 0 | `revalidateTag` + revert | D |
 | F · validación | 0 | 0 | 0 | — | E |
-| G · redirects | ~50 | ~90 | 0 | revert (307 no se cachea) | **F verde** |
-| H · retirada | **−1.100** | **−2.400** | 0 | revert | **G + 7 días** |
+| ~~G · redirects~~ | **0** | **0** | 0 | — | ⛔ **CANCELADA** — sin consumidores |
+| H · retirada | **−1.100** | **−2.400** | 0 | revert | monitor + listing limpios |
 | **NETO** | **≈ −210** | **≈ −1.310** | **~260** | | |
 
 **Puntos donde hay que detenerse y confirmar:**
 
-1. **Antes de A** — es la primera migración de esta línea de trabajo.
-2. **Antes de B** — añade la primera credencial de servicio a un proyecto que
-   nunca tuvo secretos.
-3. **Antes de G** — a partir de ahí el tráfico público cambia de destino.
-4. **Antes de H** — punto de no retorno.
+1. ~~**Antes de A**~~ — hecho.
+2. ~~**Antes de B**~~ — hecho.
+3. ~~**Antes de G**~~ — **sin efecto: G cancelada.**
+4. **Antes de H** — punto de no retorno. Sigue vigente.
+
+---
+
+## Estado al 2026-08-05
+
+| Fase | Estado |
+|---|---|
+| A · RPC | ✅ en producción, verificador 1.084/1.084 |
+| B · cliente | ✅ |
+| C · agregador | ✅ |
+| D · UI | ✅ |
+| E · caché | ✅ — con un incidente de identidad de caché ya cerrado (`b8e58996`) |
+| F · validación | ✅ **READY** — `docs/audits/2026-08-05-stats-consolidation-validation.md` |
+| G · redirects | ⛔ **CANCELADA** |
+| H · retirada | pendiente, sin urgencia |
+
+**`census.total`: RESUELTO.** La auditoría lo dejó abierto porque
+`fetchLeaderboardTotalFromDb()` devolvía `null` en producción mientras el mismo
+`HEAD count` respondía desde una máquina local. El port de Fase C reescribió esa
+consulta sobre `leaderboard_full_v` con el cliente server-only nuevo y **la
+página publica hoy 373 jugadores**. Queda sólo el forense de por qué fallaba el
+código anterior — sobre código ya reemplazado, así que **no bloquea cerrar
+`/stats`**.
+
+### Siguiente iniciativa propuesta — *Stats dashboard information architecture*
+
+Reorganiza lo que ya existe. **No toca RPC, ni caché, ni fuentes de datos**, y
+**preserva todas las cifras y la metodología**.
+
+- Resumen ejecutivo arriba, con contexto **«Since MiniPay launch»**.
+- Distinguir **reach**, **activation** y **habit** como tres ideas separadas.
+- Mostrar **5 métricas primero**; el resto, debajo.
+- Recorrido explícito: **Opened → Started → Completed → Daily Focus → 3+ days**.
+- **Últimos 7 días visibles**; los 30 días, expandibles.
+- **Top 10 players visibles**; el ranking completo, expandible.
+- **Reducir la altura móvil** — hoy son 6.794 px a 390 px.
 
 ---
 

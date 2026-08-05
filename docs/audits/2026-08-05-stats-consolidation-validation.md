@@ -168,3 +168,38 @@ exactamente la condición que la auditoría original dejó escrita.
 >    irreversible y el rollback dejaría de ser efectivo.
 > 3. El cold start (§8 #1) es lo primero que vería un reviewer llegando por el
 >    link del listing.
+
+---
+
+## 10. Actualización 2026-08-05 — `census.total` RESUELTO y Fase G CANCELADA
+
+### `census.total` ya no es la reserva
+
+La reserva de §7 **se cae**. La auditoría original lo dejó abierto porque
+`fetchLeaderboardTotalFromDb()` devolvía `null` **en producción** mientras el
+mismo `HEAD ... Prefer: count=exact` contra `leaderboard_full_v` respondía
+`Content-Range: 0-290/291` desde una máquina local.
+
+**La página publica hoy `Ranked players 373`.** El port de Fase C reescribió esa
+consulta con el cliente server-only nuevo y el `null` desapareció; 291 → 373 es
+crecimiento real en el mes transcurrido.
+
+Queda una pregunta más chica que la original: **por qué fallaba el código
+anterior**. Es forense sobre código ya reemplazado, así que **no bloquea cerrar
+`/stats`**.
+
+### El veredicto de §9 cambia de destino
+
+Decía «READY para Fase G». **La Fase G quedó CANCELADA** — no por un defecto,
+sino porque su premisa se venció: el listing de MiniPay **ya apunta directo** a
+`https://www.chesscito.com/stats`, así que no hay tráfico que reapuntar.
+Investigación read-only: cero enlaces internos humanos, cero hits en la muestra
+de logs, y una sola referencia viva que es un probe E2E propio.
+
+**No se implementó ningún redirect. Ni 307 ni 308.** Detalle y condiciones de
+reapertura en `docs/plans/2026-08-04-stats-consolidation-execution-plan.md`,
+Fase G.
+
+**Veredicto vigente: la consolidación de `/stats` está COMPLETA y validada.**
+Lo que queda es limpieza sin urgencia (repuntar `grant-shots.spec.ts`, borrar la
+ruta vieja de `apps/web`) y la iniciativa de arquitectura de información.
