@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 
 import { StatsDashboard } from "@/components/stats/stats-dashboard";
 import { parseStatsFilters } from "@/lib/stats/filters";
+import { bump } from "@/lib/stats/instrument";
 import { resolveStatsLocale, STATS_LOCALES, type StatsLocale } from "@/lib/stats/locale";
 import { EMPTY_PLAYERS_CENSUS } from "@/lib/stats/players-census";
 import {
@@ -64,6 +65,7 @@ export default async function StatsPage({
   // ⚠️ `locale` is deliberately NOT part of the filters. It is presentation:
   // folding it into the read would fetch the same numbers once per language,
   // and Phase E's cache key inherits this separation. There is a test for it.
+  bump("renders");
   const filters = parseStatsFilters(searchParams);
 
   const rawLocale = Array.isArray(searchParams.locale)

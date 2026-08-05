@@ -1,5 +1,7 @@
 import { unstable_cache } from "next/cache";
 
+import { bump, noteGeneratedAt } from "./instrument";
+
 import { getPublicStats, getSurfaceBreakdown, type SurfaceBreakdown } from "./aggregator";
 import { DEFAULT_STATS_FILTERS, type StatsFilters } from "./filters";
 import { readPlayersCensus, type PlayersCensus } from "./players-census";
@@ -86,10 +88,15 @@ export function createSnapshotLoader(
   cache: CacheFactory<StatsSnapshot>,
   filters: StatsFilters = DEFAULT_STATS_FILTERS,
   read: () => Promise<StatsSnapshot> = async () => {
+    // Inside the cached callback ON PURPOSE: a cached value returned without
+    // running this must not move the counter, or the diagnostic would report
+    // work that never happened.
+    bump("snapshotReads");
     const [stats, breakdown] = await Promise.all([
       getPublicStats(filters),
       getSurfaceBreakdown(filters.container),
     ]);
+    noteGeneratedAt(stats.generatedAt);
     return { stats, breakdown };
   },
 ): () => Promise<StatsSnapshot> {
@@ -122,16 +129,42 @@ export function createCensusLoader(
   });
 }
 
-/** Production loaders. */
+/* ── Production loaders ─────────────────────────────────────────────────────
+   ⚠️ The wrappers are built ONCE and memoised at module scope, NOT per
+   request.
+
+   The previous version called `createSnapshotLoader(unstable_cache, filters)()`
+   inside the request, which handed `unstable_cache` a brand-new closure every
+   time. Next derives part of the entry's identity from the callback it is
+   given, so a fresh closure per request is a plausible way to mint a fresh
+   entry per request — and it is trivially avoidable. Nine filter combinations
+   means at most nine wrappers, built lazily and kept.
+
+   The key is normalised through `snapshotKeyParts`, so two equivalent spellings
+   of the same filters cannot land on two entries. */
+
+const snapshotLoaders = new Map<string, () => Promise<StatsSnapshot>>();
+
 export function loadStatsSnapshot(filters: StatsFilters): Promise<StatsSnapshot> {
-  return createSnapshotLoader(
-    unstable_cache as unknown as CacheFactory<StatsSnapshot>,
-    filters,
-  )();
+  const key = snapshotKeyParts(filters).join("::");
+  let loader = snapshotLoaders.get(key);
+  if (!loader) {
+    loader = createSnapshotLoader(
+      unstable_cache as unknown as CacheFactory<StatsSnapshot>,
+      filters,
+    );
+    snapshotLoaders.set(key, loader);
+  }
+  return loader();
 }
 
+let censusLoader: (() => Promise<PlayersCensus>) | null = null;
+
 export function loadPlayersCensus(): Promise<PlayersCensus> {
-  return createCensusLoader(
-    unstable_cache as unknown as CacheFactory<PlayersCensus>,
-  )();
+  if (!censusLoader) {
+    censusLoader = createCensusLoader(
+      unstable_cache as unknown as CacheFactory<PlayersCensus>,
+    );
+  }
+  return censusLoader();
 }

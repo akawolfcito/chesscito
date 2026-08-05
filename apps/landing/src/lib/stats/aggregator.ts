@@ -1,5 +1,7 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
 
+import { bump } from "./instrument";
+
 import { DEFAULT_STATS_FILTERS, toRpcArg, type StatsFilters } from "./filters";
 import {
   EMPTY_ONCHAIN_STATS,
@@ -69,6 +71,7 @@ async function callRpc(
   name: StatsRpcName,
   filters: StatsFilters,
 ): Promise<Record<string, unknown>[] | null> {
+  bump("rpcCalls");
   try {
     const { data, error } = await client.rpc(name, {
       // ⛔ `"all"` never reaches SQL — null is how the functions spell

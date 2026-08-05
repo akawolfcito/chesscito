@@ -1,6 +1,7 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 import { deriveAvatarVariant, deriveRowId, type AvatarVariant } from "./identity";
+import { bump } from "./instrument";
 
 /**
  * The players census behind the /stats table — every ranked player, plus the
@@ -129,6 +130,7 @@ function toIdentityRow(row: LeaderboardRow): LeaderboardIdentityRow {
 export async function readPlayersCensus(
   ceiling: number = PLAYERS_TABLE_CEILING,
 ): Promise<PlayersCensus> {
+  bump("censusReads");
   const [rowsResult, totalResult] = await Promise.allSettled([
     fetchFullLeaderboardFromDb(ceiling),
     fetchLeaderboardTotalFromDb(),
