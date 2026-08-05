@@ -1,4 +1,3 @@
-import { bump } from "./instrument";
 
 /**
  * §8 on-chain stats — pure helpers + types for the public /stats page.
@@ -207,7 +206,6 @@ function pluckWallets(rows: Record<string, unknown>[] | null, key: string): stri
 }
 
 export async function fetchOnchainStats(supabase: StatsDb): Promise<OnchainStats> {
-  bump("onchainReads");
   const now = Date.now();
   const since7d = new Date(now - 7 * DAY_MS).toISOString();
   const since30d = new Date(now - 30 * DAY_MS).toISOString();

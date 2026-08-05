@@ -69,17 +69,17 @@ function makeCache() {
 const F = (surface: StatsFilters["surface"], container: StatsFilters["container"]) =>
   ({ surface, container }) as StatsFilters;
 
-let snapshotReads = 0;
+let snapshotRunCount = 0;
 const fakeSnapshot = async () => {
-  snapshotReads += 1;
+  snapshotRunCount += 1;
   return {
-    stats: { generatedAt: `read-${snapshotReads}` },
+    stats: { generatedAt: `read-${snapshotRunCount}` },
     breakdown: { learn: null, play: null, total: null },
   } as never;
 };
 
 beforeEach(() => {
-  snapshotReads = 0;
+  snapshotRunCount = 0;
 });
 
 describe("the key", () => {
@@ -112,7 +112,7 @@ describe("reuse", () => {
     const first = await load();
     const second = await load();
 
-    expect(snapshotReads).toBe(1);
+    expect(snapshotRunCount).toBe(1);
     expect(cache.reads).toBe(1);
     expect(second).toBe(first);
   });
@@ -123,7 +123,7 @@ describe("reuse", () => {
     await createSnapshotLoader(cache.factory as never, F("play", "all"), fakeSnapshot)();
     await createSnapshotLoader(cache.factory as never, F("learn", "minipay"), fakeSnapshot)();
 
-    expect(snapshotReads).toBe(3);
+    expect(snapshotRunCount).toBe(3);
     expect(cache.entries().sort()).toEqual([
       "public-stats::learn::all",
       "public-stats::learn::minipay",
@@ -145,7 +145,7 @@ describe("reuse", () => {
     const load = () => createSnapshotLoader(cache.factory as never, F("all", "all"), fakeSnapshot)();
     await load(); // an "en" request
     await load(); // an "es" request — same filters
-    expect(snapshotReads).toBe(1);
+    expect(snapshotRunCount).toBe(1);
     expect(cache.entries()).toEqual(["public-stats::all::all"]);
   });
 });
@@ -185,12 +185,12 @@ describe("invalidation", () => {
 
     await load();
     await load();
-    expect(snapshotReads).toBe(1);
+    expect(snapshotRunCount).toBe(1);
 
     cache.invalidateTag("public-stats");
 
     const after = await load();
-    expect(snapshotReads).toBe(2);
+    expect(snapshotRunCount).toBe(2);
     expect((after as { stats: { generatedAt: string } }).stats.generatedAt).toBe("read-2");
   });
 
@@ -208,25 +208,25 @@ describe("invalidation", () => {
 describe("what a cache HIT costs", () => {
   it("zero RPCs, zero on-chain queries, zero census reads", async () => {
     const cache = makeCache();
-    let censusReads = 0;
+    let censusRunCount = 0;
     const loadSnapshot = () =>
       createSnapshotLoader(cache.factory as never, F("all", "all"), fakeSnapshot)();
     const loadCensus = () =>
       createCensusLoader(cache.factory as never, async () => {
-        censusReads += 1;
+        censusRunCount += 1;
         return {} as never;
       })();
 
     await loadSnapshot();
     await loadCensus();
-    expect(snapshotReads).toBe(1);
-    expect(censusReads).toBe(1);
+    expect(snapshotRunCount).toBe(1);
+    expect(censusRunCount).toBe(1);
 
     // Second render of the same page: nothing underneath is touched.
     await loadSnapshot();
     await loadCensus();
-    expect(snapshotReads).toBe(1);
-    expect(censusReads).toBe(1);
+    expect(snapshotRunCount).toBe(1);
+    expect(censusRunCount).toBe(1);
   });
 });
 

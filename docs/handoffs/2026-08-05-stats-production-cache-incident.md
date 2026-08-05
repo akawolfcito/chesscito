@@ -1,7 +1,17 @@
 # Incidente — el snapshot de `/stats` no se reutiliza en producción
 
 **Fecha:** 2026-08-05 · **Deployment:** `chesscito-landing-z81lhauxk` · **SHA:** `b2c0873d`
-**Estado:** **abierto**. Fase F **bloqueada**.
+**Estado:** **CAUSA IDENTIFICADA 2026-08-05** — ver
+`docs/handoffs/2026-08-05-stats-production-cache-runtime-diagnosis.md`.
+Fase F sigue bloqueada hasta retirar la instrumentación.
+
+> **Resuelto por diferencia controlada en `35314f7a`:** el wrapper de
+> `unstable_cache` se construía **por request**, y en Vercel eso mintea una
+> entrada nueva en cada invocación. Memoizarlo a nivel de módulo dejó
+> `generatedAt` estable en diez peticiones y una pausa de 60 s.
+> **`force-dynamic` era inocente**, como decía la hipótesis 1 refutada abajo.
+> ⚠️ Yo mismo descarté la memoización apoyándome en un contrafactual local que
+> **no podía** detectar el defecto: `next start` es un proceso de larga vida.
 **Severidad:** alta para el costo y la latencia; **cero** para la corrección de los números.
 
 > **La página es funcionalmente correcta y sus cifras son buenas.** Lo que falla

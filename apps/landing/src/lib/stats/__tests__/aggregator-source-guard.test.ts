@@ -146,9 +146,14 @@ describe("cache policy — exactly ONE deliberate layer", () => {
   const CACHE_OWNER = "src/lib/stats/snapshot.ts";
 
   for (const token of ["unstable_cache", "revalidateTag", "revalidatePath"]) {
-    it(`only ${CACHE_OWNER} may use ${token}`, () => {
+    it(`only ${CACHE_OWNER} may use ${token} in production source`, () => {
+      // Tests are exempt: `cache-identity-guard.test.ts` asserts *about*
+      // `unstable_cache` and would otherwise trip the very rule it enforces.
+      // Third time this pattern bit — a guard that fires on the test asserting
+      // the same rule is a guard someone eventually deletes.
       const offenders = FILES.filter(
-        (f) => code(f).includes(token) && rel(f) !== CACHE_OWNER,
+        (f) =>
+          !f.includes("__tests__") && code(f).includes(token) && rel(f) !== CACHE_OWNER,
       ).map(rel);
       expect(offenders).toEqual([]);
     });

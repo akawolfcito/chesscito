@@ -1,6 +1,5 @@
 import { unstable_cache } from "next/cache";
 
-import { bump, noteGeneratedAt } from "./instrument";
 
 import { getPublicStats, getSurfaceBreakdown, type SurfaceBreakdown } from "./aggregator";
 import { DEFAULT_STATS_FILTERS, type StatsFilters } from "./filters";
@@ -88,15 +87,10 @@ export function createSnapshotLoader(
   cache: CacheFactory<StatsSnapshot>,
   filters: StatsFilters = DEFAULT_STATS_FILTERS,
   read: () => Promise<StatsSnapshot> = async () => {
-    // Inside the cached callback ON PURPOSE: a cached value returned without
-    // running this must not move the counter, or the diagnostic would report
-    // work that never happened.
-    bump("snapshotReads");
     const [stats, breakdown] = await Promise.all([
       getPublicStats(filters),
       getSurfaceBreakdown(filters.container),
     ]);
-    noteGeneratedAt(stats.generatedAt);
     return { stats, breakdown };
   },
 ): () => Promise<StatsSnapshot> {
@@ -130,18 +124,28 @@ export function createCensusLoader(
 }
 
 /* ── Production loaders ─────────────────────────────────────────────────────
-   ⚠️ The wrappers are built ONCE and memoised at module scope, NOT per
-   request.
 
-   The previous version called `createSnapshotLoader(unstable_cache, filters)()`
-   inside the request, which handed `unstable_cache` a brand-new closure every
-   time. Next derives part of the entry's identity from the callback it is
-   given, so a fresh closure per request is a plausible way to mint a fresh
-   entry per request — and it is trivially avoidable. Nine filter combinations
-   means at most nine wrappers, built lazily and kept.
+   ⛔ Do not construct this unstable_cache wrapper per request. next start uses
+   a long-lived process and can mask this defect; the Vercel runtime did not.
 
-   The key is normalised through `snapshotKeyParts`, so two equivalent spellings
-   of the same filters cannot land on two entries. */
+   That is not a style note, it is the postmortem. The shipped version called
+   `createSnapshotLoader(unstable_cache, filters)()` INSIDE the request, handing
+   Next a brand-new closure on every render. Next derives part of an entry's
+   identity from the callback it receives, so every request minted a new entry
+   and `/stats` regenerated on every visit: 1.9–3.6 s per view, one connection
+   that hung for 38.8 s, and 11 RPCs plus the on-chain block plus the census
+   against production, per visitor.
+
+   It was invisible locally. `next start` is ONE process, so a fresh closure
+   still lands on the same in-memory store and the counters showed a clean hit —
+   which is exactly why the local counterfactual wrongly cleared this code.
+   Evidence: docs/handoffs/2026-08-05-stats-production-cache-runtime-diagnosis.md.
+
+   So: built ONCE, memoised at module scope, at most nine wrappers (three
+   surfaces × three containers). The key goes through `snapshotKeyParts`, so two
+   equivalent spellings of the same filters cannot land on two entries.
+   `cache-identity-guard.test.ts` fails if this moves back inside a
+   per-request function — verified by counterfactual, not by assumption. */
 
 const snapshotLoaders = new Map<string, () => Promise<StatsSnapshot>>();
 
