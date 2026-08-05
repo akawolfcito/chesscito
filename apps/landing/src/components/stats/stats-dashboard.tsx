@@ -276,7 +276,7 @@ export function StatsDashboard({
                 <thead>
                   <tr style={{ color: "var(--paper-text-muted)" }}>
                     <th className="py-2 text-left text-[0.6rem] font-extrabold uppercase tracking-[0.1em]">
-                      {c.snapshotAt}
+                      {c.trendDay}
                     </th>
                     <th className="py-2 text-right text-[0.6rem] font-extrabold uppercase tracking-[0.1em]">
                       {c.trendSessions}

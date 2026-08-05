@@ -137,20 +137,55 @@ describe("the false comment cannot come back", () => {
   });
 });
 
-describe("cache policy — Phase C introduces none", () => {
-  for (const token of [
-    "unstable_cache",
-    "revalidateTag",
-    "revalidatePath",
-    "export const revalidate",
-  ]) {
-    it(`no stats file uses ${token}`, () => {
-      const offenders = FILES.filter((f) => code(f).includes(token)).map(rel);
+describe("cache policy — exactly ONE deliberate layer", () => {
+  // Phase C forbade caching outright. Phase E introduces it, so the guard is
+  // NARROWED rather than deleted: caching is allowed in `snapshot.ts` and
+  // nowhere else under lib/stats. Scattering `unstable_cache` across the
+  // aggregator and its ports is how you end up with two TTLs stacked, only one
+  // of them visible in the code.
+  const CACHE_OWNER = "src/lib/stats/snapshot.ts";
+
+  for (const token of ["unstable_cache", "revalidateTag", "revalidatePath"]) {
+    it(`only ${CACHE_OWNER} may use ${token}`, () => {
+      const offenders = FILES.filter(
+        (f) => code(f).includes(token) && rel(f) !== CACHE_OWNER,
+      ).map(rel);
       expect(offenders).toEqual([]);
     });
   }
 
-  it("the Supabase client opts out of Next's fetch cache explicitly", () => {
+  it("no stats file declares a route-level revalidate", () => {
+    // The TTL belongs to the snapshot, not to a route: a route-level
+    // `revalidate` would have to key on Accept-Language too.
+    const offenders = FILES.filter((f) =>
+      code(f).includes("export const revalidate"),
+    ).map(rel);
+    expect(offenders).toEqual([]);
+  });
+
+  it("the cache owner declares the TTL and the tag, and NOT the content tag", () => {
+    const src = code(join(STATS_ROOT, "snapshot.ts"));
+    expect(src).toMatch(/STATS_REVALIDATE_SECONDS\s*=\s*900\b/);
+    expect(src).toMatch(/STATS_CACHE_TAG\s*=\s*"public-stats"/);
+    // ⛔ `"content"` is the puzzle catalogue. Reusing it already produced a
+    // false green once.
+    expect(src).not.toMatch(/"content"/);
+  });
+
+  it("no PRODUCTION stats file reaches for the content tag", () => {
+    // Scoped to production source: the sibling cache test legitimately writes
+    // `not.toContain("content")`, and a guard that fires on the test asserting
+    // the very same rule is a guard nobody keeps.
+    const offenders = FILES.filter(
+      (f) => !f.includes("__tests__") && /["']content["']/.test(code(f)),
+    ).map(rel);
+    expect(offenders).toEqual([]);
+  });
+
+  it("the Supabase client STILL opts out of Next's fetch cache", () => {
+    // The load-bearing half of the architecture:
+    //   fetch no-store → aggregator → ONE explicit snapshot cache → UI
+    // and never an implicit fetch cache underneath a second TTL.
     const src = code(join(APP_ROOT, "src/lib/supabase/server.ts"));
     expect(src).toMatch(/cache:\s*"no-store"/);
     expect(src).toMatch(/global:\s*\{\s*fetch:/);

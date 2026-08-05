@@ -67,6 +67,10 @@ export type StatsCopy = {
   inactive: string;
   resurrected7d: string;
 
+  /** Column header for the trend's date column. ⚠️ NOT `snapshotAt` — that one
+   *  labels when the whole photo was taken, and reusing it here made the day
+   *  column read "Snapshot taken" on all 30 rows. */
+  trendDay: string;
   trendSessions: string;
   trendNew: string;
   trendReturning: string;
@@ -157,6 +161,7 @@ const EN: StatsCopy = {
   inactive: "Inactive (30d+)",
   resurrected7d: "Came back (7d)",
 
+  trendDay: "Day",
   trendSessions: "Sessions",
   trendNew: "New installs",
   trendReturning: "Returning",
@@ -251,6 +256,7 @@ const ES: StatsCopy = {
   inactive: "Sin actividad (30d+)",
   resurrected7d: "Volvieron (7d)",
 
+  trendDay: "Día",
   trendSessions: "Sesiones",
   trendNew: "Instalaciones nuevas",
   trendReturning: "Recurrentes",

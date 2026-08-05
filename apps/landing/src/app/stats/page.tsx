@@ -2,10 +2,15 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 
 import { StatsDashboard } from "@/components/stats/stats-dashboard";
-import { getPublicStats, getSurfaceBreakdown } from "@/lib/stats/aggregator";
 import { parseStatsFilters } from "@/lib/stats/filters";
 import { resolveStatsLocale, STATS_LOCALES, type StatsLocale } from "@/lib/stats/locale";
-import { EMPTY_PLAYERS_CENSUS, readPlayersCensus } from "@/lib/stats/players-census";
+import { EMPTY_PLAYERS_CENSUS } from "@/lib/stats/players-census";
+import {
+  loadPlayersCensus,
+  loadStatsSnapshot,
+  STATS_REVALIDATE_SECONDS,
+} from "@/lib/stats/snapshot";
+import { EMPTY_PUBLIC_STATS } from "@/lib/stats/types";
 
 /**
  * The consolidated public `/stats` dashboard.
@@ -33,11 +38,15 @@ export const metadata: Metadata = {
 };
 
 /**
- * ⚠️ NO caching in this phase — no `revalidate`, no `unstable_cache`, no tag.
- * The aggregator is uncached by design (Phase C policy) and every request runs
- * the eight RPCs. Phase E adds the cache at this level, where its TTL and its
- * invalidation are visible; until then this page must not be published to
- * traffic.
+ * ⚠️ The page itself stays dynamic. The CACHE lives one layer down, on the
+ * snapshot (`lib/stats/snapshot.ts`), keyed by `surface`/`container` and
+ * tagged `"public-stats"`.
+ *
+ * That split is deliberate: the render depends on `Accept-Language`, and a
+ * route-level `revalidate` would have to key on the header too — which would
+ * store the same numbers once per language and let two readers hold different
+ * snapshots of the same moment. Caching the DATA and re-rendering the HTML
+ * costs a few milliseconds and keeps one photo behind both languages.
  */
 export const dynamic = "force-dynamic";
 
@@ -73,27 +82,28 @@ export default async function StatsPage({
   // `allSettled` so a thrown read cannot blank a public page. The aggregator
   // already swallows its own failures; this is the belt for the census, which
   // reaches a different relation.
-  const [statsResult, breakdownResult, censusResult] = await Promise.allSettled([
-    getPublicStats(filters),
-    getSurfaceBreakdown(filters.container),
-    readPlayersCensus(),
+  // Two cache entries, two clocks: the snapshot is keyed by the filters, the
+  // census is global and stamps its own `asOf`. `allSettled` so a throw in
+  // either loader cannot blank a public page.
+  const [snapshotResult, censusResult] = await Promise.allSettled([
+    loadStatsSnapshot(filters),
+    loadPlayersCensus(),
   ]);
 
-  const stats =
-    statsResult.status === "fulfilled"
-      ? statsResult.value
-      : await getPublicStats(filters);
-  const breakdown =
-    breakdownResult.status === "fulfilled"
-      ? breakdownResult.value
-      : { learn: null, play: null, total: null };
+  const snapshot =
+    snapshotResult.status === "fulfilled"
+      ? snapshotResult.value
+      : {
+          stats: { ...EMPTY_PUBLIC_STATS, filters, generatedAt: new Date().toISOString() },
+          breakdown: { learn: null, play: null, total: null },
+        };
   const census =
     censusResult.status === "fulfilled" ? censusResult.value : EMPTY_PLAYERS_CENSUS;
 
   return (
     <StatsDashboard
-      stats={stats}
-      breakdown={breakdown}
+      stats={snapshot.stats}
+      breakdown={snapshot.breakdown}
       census={census}
       locale={locale}
       localeOverride={localeOverride}
