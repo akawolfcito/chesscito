@@ -92,6 +92,56 @@ Orden propuesto:
 3. **Re-baselinear** con rationale escrito, ya con el puerto correcto.
 4. `hub-shop-sheet-open` se resuelve aparte (env con treasury) o se marca como esperada.
 
+## Addendum — el re-baseline se produjo, pero NO se pudo verificar
+
+El founder confirmó el 2026-08-06 que el arte actual (fondo gris azulado, avatar con
+sombrero de mago) es el look buscado. Con eso:
+
+- ✅ **Re-baseline ejecutado**: 48 snapshots re-escritos, **0 creados, 0 borrados** — el mismo
+  set, re-fotografiado. La corrida fue real y completa: 62 tests, 61 verdes, 1 roja
+  (`hub-shop-sheet-open`, la conocida por env sin treasury, que falla en una aserción de
+  texto y por eso ningún `--update-snapshots` la toca).
+- ✅ **Config arreglado**: `BASE_URL` por defecto pasa a `http://localhost:3002` y el
+  `webServer` recibe `PORT` derivado de `BASE_URL`, para que nadie dependa de acordarse.
+- ❌ **La pasada de verificación (sin `--update-snapshots`) nunca se completó.**
+
+⚠️ **Un `--update-snapshots` NO verifica nada.** Cada test sobrescribe su propia referencia,
+así que "61 verdes" ahí dentro significa "se escribieron 61 archivos", no "61 coinciden".
+La única evidencia que valdría es una corrida limpia posterior, y esa es la que falta.
+
+### Por qué falló la verificación (hasta donde se midió)
+
+Cuatro intentos. Síntomas, en orden de descubrimiento — cada uno tumbó la explicación anterior:
+
+1. Exit 0 con salida vacía. **Hipótesis: `rtk` filtra la salida de comandos sin fallos.**
+   Refutada: redirigir a archivo con `rtk proxy` dio 0 bytes igual.
+2. El reporte HTML decía `{"total":62,"skipped":62,"ok":true}`. **Hipótesis: algo saltea los
+   tests.** Refutada: el spec sólo tiene un `test.skip` por browser (línea 312) y `minipay`
+   es chromium; además Step 1 y 2 no tienen skip alguno.
+3. **Lo que realmente pasa**: el `index.html` quedó congelado en una hora vieja mientras
+   corrían intentos nuevos — o sea **las corridas posteriores no escribieron reporte**. El
+   "62 skipped" que se leyó era de un reporte anterior, no del intento en curso.
+4. Cada intento deja vivos un `node` + `next-server (v14.2.35)` en 3002 que el siguiente
+   reusa. La suite, que tarda **2,2 min**, pasó a no terminar en **9 min**.
+
+**Conclusión honesta: no se sabe la causa.** Lo que sí está medido es que el runner deja de
+completar y de reportar, y que el estado se degrada corrida a corrida. Perseguirlo con más
+corridas fue improductivo — cuatro intentos, ninguno concluyente.
+
+### Estado en el árbol
+
+Los 48 snapshots y el cambio de `playwright.config.ts` quedaron **sin commitear**, a la
+espera de decidir si se aceptan sin la pasada de verificación.
+
+### Lo que hay que hacer antes de confiar en estos baselines
+
+1. Matar todo residuo (`pkill -f "playwright test"`, liberar 3002) **antes** de cada corrida
+   — no dejar que la siguiente reuse el server de la anterior.
+2. Una corrida limpia **sin** `--update-snapshots` que llegue a escribir reporte. Verificar
+   por el **mtime de `e2e-results/report/index.html`**, no por el exit code: exit 0 acá
+   demostró no significar nada.
+3. Recién con esa corrida en verde, los baselines valen.
+
 ## Nota de método
 
 Un VR con 49 rojas **no informa nada** hasta separar "el arte cambió" de "algo se rompió".
