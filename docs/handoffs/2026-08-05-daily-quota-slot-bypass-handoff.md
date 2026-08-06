@@ -166,6 +166,71 @@ El modo de falla del env es benigno: con la variable ausente o vacía,
 
 ---
 
+## 5-bis. Disco liberado y corrida VR completa (2026-08-05, ruta estricta)
+
+### Cachés eliminadas
+
+| Cache | Tamaño | Reconstrucción |
+|---|---:|---|
+| `~/.npm` | 4,5 GB | sola, al próximo `npm` |
+| `~/Library/Caches/ms-playwright/chromium-1234` | 356 MB | `playwright install` |
+| `~/Library/Caches/ms-playwright/chromium_headless_shell-1234` | 196 MB | idem |
+
+**Espacio libre: 6,5 GB → 12 GB.**
+
+⚠️ **La versión a conservar era la de número MENOR.** `playwright-core@1.58.2`
+declara `chromium -> 1208` en su `browsers.json`; el directorio `1234` es el
+residuo. "Conservar el más nuevo" habría borrado el navegador en uso. Se
+conservaron `chromium-1208`, `chromium_headless_shell-1208`, `webkit-2248` y
+`ffmpeg-1011`. No se tocó `~/Library/pnpm/store` ni ningún `node_modules`.
+
+`~/Library/pnpm/store` tiene además un `playwright-core@1.49.1` huérfano
+(`pnpm why` sólo reporta 1.58.2); sus navegadores (chromium 1148, webkit 2104)
+ni siquiera están en la cache, así que no había nada que preservar por él.
+
+### Preflight
+
+**Nunca se editó.** El `6` de la corrida anterior fue una variable inline en la
+línea de comando, no un cambio de archivo: `DEFAULT_MIN_FREE_GB = 10` sigue en
+`apps/web/scripts/preflight-disk.ts:20`, el árbol está limpio y el shell no
+arrastra `DISK_MIN_FREE_GB`. La corrida completa se hizo con el floor original.
+
+### Resultado: la suite corrió íntegra y está ROJA — desde antes de este slice
+
+**62 casos: 11 pasaron, 51 fallaron. Ninguno omitido.**
+
+⚠️ Corrijo lo que reporté en la vuelta anterior: la lista larga al pie del log
+**no eran casos sin correr**, era la enumeración de los 51 fallidos. La corrida
+previa tampoco se había "muerto a mitad de camino" — terminó, y estaba roja.
+
+| Causa | Casos |
+|---|---:|
+| Diferencia de píxeles contra la baseline | **47** |
+| `TimeoutError: page.goto` (30 s, compilación fría del dev server) | **4** |
+| Snapshot inexistente | 0 |
+
+Las diferencias van de **2% a 50%** de los píxeles.
+
+### No lo causó este slice — medido, no argumentado
+
+Restauré `exercises-screen.tsx` y `exercise-drawer.tsx` a `cceed76b` (el commit
+anterior al fix), dejando todo lo demás igual, y corrí el mismo subconjunto
+(`support-page` + `vr9-arena-end-state-draw`):
+
+| Fuentes | Resultado |
+|---|---|
+| Con el fix | 2 failed |
+| Sin el fix (`cceed76b`) | **2 failed, idénticos** |
+
+Además, los fallos caen en superficies que el diff no toca: `support-page`,
+`terms-page`, `privacy-page`, arena end-states, coach viewer, play/learn hub.
+
+Las baselines se tocaron por última vez el **2026-07-27** (`30919b23`); `main`
+avanzó mucho desde entonces. Es **drift de baseline acumulado**, y no lo
+re-baselineo por mi cuenta: eso es una decisión, no una limpieza.
+
+---
+
 ## 6. Por qué NO desplegué
 
 Pediste desplegar si todo quedaba verde. Todo quedó verde y aun así paré, por dos
@@ -175,25 +240,22 @@ razones que no puedo resolver yo:
    `origin/production` con el flujo de 6 pasos de `docs/release/release-process.md`,
    y su paso 1 es `git push origin main` — que por decisión tuya hace el founder,
    no yo. `main` local está fast-forward con los dos commits y limpio.
-2. **La suite VR no pudo correr entera: disco.** El preflight aborta bajo 10 GB
-   libres. Bajé el floor a 6 y la corrida murió a mitad de camino ("11 passed",
-   el resto sin correr) porque **la corrida misma consumió 2 GB**: quedaban 6,5 GB
-   y ahora quedan 4,5 GB.
+2. **El VR está rojo, y la condición que pusiste era que quedara verde.** Corrió
+   íntegro con el floor original y dio 11/62 (§5-bis). El rojo es **anterior a
+   este slice y ajeno a él**, medido revirtiendo las fuentes: mismos fallos con y
+   sin el fix. Pero la puerta que definiste no se cumple, y re-baselinear 47
+   snapshots es una decisión de producto sobre otro trabajo, no parte de este.
 
-   Sobre el VR tengo un argumento, no una medición: **no hay una sola referencia a
-   cuota, `slot`, `dailySession` ni `consumedContentIds` en todo `e2e/`**, así que
-   ningún fixture llega al límite, `quotaDisplayState` es `null` en todos y los
-   dos atributos que saqué ya estaban ausentes. El cambio no puede mover un píxel
-   en ningún caso VR. **Pero eso es razonamiento, no la suite en verde** — y ya
-   sabemos que un VR puede fotografiar cosas que el razonamiento no anticipa.
+**La decisión es tuya, y son tres caminos:**
 
-   Para correrlo hacen falta ~6 GB. Los candidatos, sin tocar nada todavía:
-   `~/.npm` (4,5 GB, cache puro, se reconstruye) y `~/Library/Caches/ms-playwright`
-   (1,3 GB, con **dos** Chromium instalados: 1208 y 1234 — solo el nuevo se usa).
-   **No toqué `~/Library/pnpm/store`**: son hard links contra los `node_modules`
-   vivos.
+- **Pushear igual.** El slice está verde donde puede estarlo (7397 unit, tsc,
+  build, lint) y el VR rojo no lo involucra. El riesgo que asumís es el que ya
+  corría en `main` desde el 27-07.
+- **Arreglar las baselines primero**, en su propio slice, y después pushear este.
+- **Investigar antes de decidir**: los 4 timeouts huelen a compilación fría del
+  dev server (el VR levanta `pnpm dev`, no un build), y podrían no ser drift
+  real. Los 47 diffs sí parecen drift acumulado de 9 días de `main`.
 
-**Para desplegar, decime una de dos:** liberás disco y corro el VR antes, o lo
-damos por no-riesgo y hacés el push. En cualquiera de los dos casos el smoke
-dirigido (9 consumidos → 10 permitido → 11 bloqueado → rejugada → carril 2 →
-entrada por Daily → PLAY intacto) lo corro yo después del deploy.
+En cualquiera de los tres, el smoke dirigido (9 consumidos → 10 permitido → 11
+bloqueado → rejugada → carril 2 → entrada por `?slot=daily` y `?slot=challenge`
+sin bypass → PLAY intacto) lo corro yo apenas el deploy esté arriba.
