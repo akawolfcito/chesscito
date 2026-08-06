@@ -152,15 +152,16 @@ export function ExerciseDrawer({
     )
   }
 
-  function isLabReplayable(node: TrainingNode): boolean {
-    if (!quotaState?.isAtLimit) return true
-    return (
-      node.status === 'complete' ||
-      quotaState.consumedContentIds.includes(
-        buildContentId('labyrinth', quotaState.piece, node.id),
-      )
-    )
-  }
+  /* There is deliberately no `isLabReplayable`. Carril 2 never costs quota, so
+   * quota never gates it — the lane's own path rules (`node.status`) and the
+   * training-pass check are its only locks.
+   *
+   * The removed version mirrored `isExerciseReplayable` and asked whether the
+   * node's `labyrinth:` content id had been consumed today. Nothing writes that
+   * id: `recordExtraConsumed` has exactly one call site and it passes
+   * `kind:"exercise"`. So at the limit the answer was `false` for every unplayed
+   * lane node and the whole signature-game lane locked until the next UTC day —
+   * a lock with no key, on content the quota does not price. */
 
   function lockedFor(exercise: Exercise, index: number): boolean {
     const isDone = (stars[exercise.id] ?? 0) > 0
@@ -320,13 +321,12 @@ export function ExerciseDrawer({
                   labyrinthLabels?.[node.id] ??
                   tPath('specialTrainingLabelFormat', { number: labIndex + 1 })
                 const isLocked = node.status === 'locked'
-                const isQuotaLocked = !isLocked && !isLabReplayable(node)
                 const isDone = node.status === 'complete'
                 const access = labyrinthAccess?.[node.id] ?? { allowed: true as const }
                 const isAccessPending = isContentAccessPending(access)
                 const isAccessLocked = !isAccessPending && !access.allowed
                 const effectiveLocked =
-                  isLocked || isQuotaLocked || isAccessLocked ||
+                  isLocked || isAccessLocked ||
                   isAccessPending || !onLabyrinthSelect
                 const tooltipText = isAccessLocked
                   ? tPath('trainingPassRequired')
@@ -392,7 +392,6 @@ export function ExerciseDrawer({
                             : nodeLabel
                         }
                         data-locked={effectiveLocked && !isAccessPending ? 'true' : undefined}
-                        data-quota-locked={isQuotaLocked ? 'true' : undefined}
                         data-access-locked={isAccessLocked ? 'true' : undefined}
                         data-access-pending={isAccessPending ? 'true' : undefined}
                         aria-busy={isAccessPending || undefined}

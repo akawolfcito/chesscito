@@ -359,8 +359,16 @@ export type ExercisesScreenProps = {
    *  on mount so it does not trigger the `initialAction` bounce-to-hub
    *  behavior. */
   initialSheet?: ExercisesInitialSheet;
-  /** B2.3b: content slot discriminator. "daily" and "challenge" bypass
-   *  the Lite daily quota banner. Absent/other values → gated in Lite mode. */
+  /** Content slot discriminator from `?slot=`. Accepted and carried for the
+   *  links that already emit it; it does NOT change gating.
+   *
+   *  It used to: `"daily"` and `"challenge"` short-circuited the daily quota
+   *  for the whole mounted session. Those are the URLs the hub's primary CTA
+   *  and the content loop's top action produce, so the quota was off down the
+   *  path most players take — while slots kept being spent. The Daily Tactic
+   *  is not played here at all (it has its own components and its own ledger,
+   *  `focus_day_ledger`), so nothing on this screen ever needed the exemption.
+   *  Audit: docs/audits/2026-08-05-session-limit-and-ranking-integrity.md. */
   slot?: string;
   /** Known Special Training id from `?content=`. The client gate still owns
    *  authorization because the effective pass is wallet-bound. */
@@ -380,10 +388,8 @@ export function ExercisesScreen({
   initialPiece = "rook",
   initialAction,
   initialSheet,
-  slot,
   initialContentId,
 }: ExercisesScreenProps = {}) {
-  const isFreeSlot = slot === "daily" || slot === "challenge";
   const tShopItem = useTranslations("SHOP_ITEM_COPY");
   const tCapture = useTranslations("CAPTURE_COPY");
   const tLab = useTranslations("LABYRINTH_COPY");
@@ -753,8 +759,16 @@ export function ExercisesScreen({
     consumedContentIds: string[];
   } | null;
   const [quotaDisplayState, setQuotaDisplayState] = useState<QuotaDisplayState>(null);
+  /* The ONE producer of the quota state, and therefore the only thing standing
+   * between the player and unlimited fresh content: it feeds both the banner
+   * and the drawer's `quotaState`, and nothing else computes them.
+   *
+   * `CHESSCITO_LITE_MODE` is the whole condition. It used to also carry
+   * `|| isFreeSlot`, which turned the gate off for the entire mounted session
+   * whenever the URL said `?slot=daily` — the hub's primary CTA. One `return`
+   * here was the difference between a 10-exercise day and a 64-exercise one. */
   useEffect(() => {
-    if (!CHESSCITO_LITE_MODE || isFreeSlot) return;
+    if (!CHESSCITO_LITE_MODE) return;
     function read() {
       const s = getDailySession();
       const atFreeLimit = isAtFreeLimit(s);
@@ -767,7 +781,7 @@ export function ExercisesScreen({
     }
     read();
     return subscribeToDailySessionChanges(read);
-  }, [isFreeSlot]);
+  }, []);
 
   /** Modal trap fix: when the global ResultOverlay opens (success OR
    *  error) while a Radix dock sheet is still mounted, Radix's modal

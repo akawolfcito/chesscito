@@ -444,7 +444,16 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
       expect(row).toBeEnabled();
     });
 
-    it("available labyrinth (not consumed today) is quota-locked at limit", () => {
+    /* The quota counts carril 1 and ONLY carril 1: `recordExtraConsumed` is
+     * called with `kind:"exercise"` at the single call site that exists, so a
+     * `labyrinth:` content id can never appear in `consumedContentIds`.
+     *
+     * This used to assert the opposite, and the opposite was a bug with no way
+     * out: at the limit every unplayed carril-2 node asked for an id that
+     * nothing writes, so the whole lane locked for the rest of the day. A lane
+     * that costs no quota cannot be gated by quota. */
+    it("available labyrinth (not consumed today) stays open at the quota limit", () => {
+      const onLabyrinthSelect = vi.fn();
       const nodes = rookLabNodes(sixStars);
       render(
         <ExerciseDrawer
@@ -453,12 +462,15 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
           totalStars={6}
           onNavigate={vi.fn()}
           labyrinthNodes={nodes}
-          onLabyrinthSelect={vi.fn()}
+          onLabyrinthSelect={onLabyrinthSelect}
           quotaState={{ isAtLimit: true, consumedContentIds: [], piece: "rook" }}
         />,
       );
       const row = screen.getByText("Special Training 1").closest("button");
-      expect(row).toHaveAttribute("data-quota-locked", "true");
+      expect(row).not.toHaveAttribute("data-quota-locked");
+      expect(row).toBeEnabled();
+      fireEvent.click(row!);
+      expect(onLabyrinthSelect).toHaveBeenCalledWith(nodes[0].id);
     });
 
     it("path-locked labyrinth stays locked regardless of quota", () => {
