@@ -1,79 +1,85 @@
-# Session Handoff — 2026-08-06 (Docker, backup de prod y cierre del baseline de 2026-04)
+# Session Handoff — 2026-08-06 (higiene de branches + diagnóstico del VR)
 
-> 📌 Auditoría de esta sesión (committeada, **manda**):
-> `docs/audits/2026-08-06-docker-local-audit.md` — §1–10 Docker + backup, §11 el incidente
-> del volumen corrupto, §12 el restore, §13–14 las dos migraciones.
->
-> **🟢 El baseline vacío de 2026-04 quedó cerrado.** Un `supabase db reset` limpio ahora
-> produce un entorno igual a prod: antes le faltaban 2 tablas y RLS en 3.
+> 📌 **La primera tarea de la próxima sesión está abajo, en §Arrancar por acá.**
+> Auditorías de esta sesión (committeadas, **mandan**):
+> `docs/audits/2026-08-06-branch-hygiene-audit.md` y
+> `docs/audits/2026-08-06-vr-red-diagnosis.md` (leer su **Addendum**).
 
 ## Estado
 
 | | |
 |---|---|
-| Rama actual | `fix/baseline-schema-and-rls-parity` — commit **`5925c284`** |
-| **Sin pushear** | ⚠️ **sí** — el founder pushea cuando quiera (`origin/main` sigue en `b32b9949`) |
-| Trabajo sin commitear | no (árbol limpio) |
-| Suite unit | **7397 passing / 596 files** — corrida completa post-migraciones |
-| `tsc` / lint / build | ⚠️ **no corridos esta sesión** (cambios son SQL + markdown) |
-| **VR** | ⚠️ **no corrido** — seguía 🔴 11/62 preexistente de la sesión del 2026-08-05 |
-| Supabase local | levantado, con **datos de prod al 2026-08-06** |
+| Rama | `main` local, **8 commits SIN PUSHEAR** (el founder pushea) |
+| `origin/main` | sigue en `b32b9949` |
+| Árbol | ⚠️ **48 snapshots del VR modificados y SIN COMMITEAR** — a propósito |
+| Suite unit | 7397 passing / 596 files (no re-corrida esta sesión: los cambios son SQL, markdown, git y PNGs) |
+| VR | ⚠️ re-baselineado pero **NO verificado** |
+| Entorno | limpio al cerrar: sin procesos residuales, 3002 libre, disco 13 Gi |
+
+## Arrancar por acá — la verificación limpia del VR
+
+Es lo único pendiente con pasos definidos. **No re-generar los snapshots**: ya están escritos
+en el árbol y son deterministas. Lo que falta es comprobarlos.
+
+1. **Matar residuos ANTES de correr** — no dejar que la corrida reuse un server viejo:
+   `pkill -f "playwright test"`, y liberar 3002 (`lsof -nP -iTCP:3002 -sTCP:LISTEN -t`).
+2. Correr **sin** `--update-snapshots`:
+   `pnpm -C <abs>/apps/web exec playwright test e2e/visual-regression.spec.ts --project=minipay --reporter=list`
+   (ya no hace falta pasar `PORT`/`BASE_URL`: el config los resuelve solo desde `fad1e3d9`).
+3. ⛔ **NO leer el exit code como resultado.** Esta sesión `exit 0` significó "no corrió"
+   cuatro veces. **Confirmar por el `mtime` de `apps/web/e2e-results/report/index.html`**:
+   si no se reescribió, la corrida no pasó por su reporter y el resultado no existe.
+4. Si da verde → **commitear los 48 snapshots ahí mismo**, con el rationale que el spec exige
+   (`visual-regression.spec.ts:6-8`: los PRs que bumpean baselines en silencio se rechazan).
+   El rationale es: el founder aprobó el arte nuevo el 2026-08-06.
+5. `hub-shop-sheet-open` va a seguir roja: falla en una aserción de texto
+   (espera `"$"`, recibe `"Coming soon"`) **antes** de la foto. Es env sin treasury, no visual.
+
+⚠️ **No canalizar la salida a `tail`/`head`**: bufferiza hasta el final y deja la corrida ciega.
+Esta sesión me costó tres relanzamientos.
 
 ## Completed
 
-- **Auditoría read-only de Docker.** Eran 2 stacks completos, no 2 contenedores: `web` =
-  chesscito, `qxwztvfazronkshgkckk` = **minixymyx** (`~/development/BLCKCHN/GOOD_WOLF_LABS/akawolfcito/xymyx/minixymyx`).
-  Los 17 volúmenes huérfanos se inspeccionaron **uno por uno**: entre los 17 había **14
-  filas** en total, todas artefactos de una corrida de tests.
-- **Limpieza: ~4,6 GB netos.** De 22 imágenes / 22 volúmenes / 23 contenedores a 15 / 2 / 12.
-  minixymyx destruido con OK del founder (dump de seguro en
-  `~/backups/2026-08-06-minixymyx-local-public.sql`, fuera de todo repo porque su
-  `.gitignore` no ignora `private/`).
-- **Backup de prod** en `private/backups/` (gitignoreado): `2026-08-06-prod-schema.sql`
-  (138,8 KB) + `2026-08-06-prod-data.sql` (64 MB). El anterior era del 2026-07-21 (7,2 MB).
-- **Restore completo en local**, verificado con `db reset` integral + recarga con **0 errores**.
-- **`5925c284` — dos migraciones.** Los tres baselines de 2026-04 son placeholders vacíos;
-  el DDL real vive en `src/lib/supabase/schema.sql`.
-  - `20260806000000_victories_sync_state_baseline.sql` — crea las dos tablas que prod tiene
-    y ninguna migración creaba.
-  - `20260806010000_baseline_rls_parity.sql` — RLS de 18/21 a **21/21**. La grave era
-    `analytics_events`: su propia migración **afirma** en el header que el RLS queda
-    default-deny y **nunca ejecuta el `enable`** → exponía 216.409 filas de telemetría
-    (`country` incluido) a la anon key en cualquier entorno reconstruido.
-
-## Next Tasks
-
-1. **Pushear y mergear `fix/baseline-schema-and-rls-parity`.** Listo para ir; en hosted
-   ambas migraciones son no-op, así que prod no cambia de comportamiento.
-2. **Actualizar el baseline de tests en `CLAUDE.md`** — dice 6515 passing / 552 files
-   (2026-07-29); hoy son **7397 / 596**.
-3. **VR sigue 🔴 11/62** de la sesión anterior — no se tocó ni se corrió acá.
-4. Evaluar si conviene **`--rm`** donde se levanta Postgres para tests: 7 de los 17
-   volúmenes huérfanos eran `chesscito_test`, a ~45 MB por corrida.
-5. Supabase CLI en v2.98.2 (hay v2.111.0). Además avisa drift de servicios: local `gotrue`
-   v2.188.1 vs v2.195.0 en prod, `storage-api` v1.54.0 vs v1.68.1.
+- **Higiene de branches: 40 locales → 5.** Política del founder escrita en el audit
+  (`main` = desarrollo integrado · `production` = lo desplegado · temporales sólo con trabajo
+  activo · **abandonado-pero-útil va a TAGS** · backups se borran al dejar de servir).
+  Quedan `main`, `production`, `backup/main-before-author-rewrite` y los dos `feat/spec-1-*`.
+- **7 tags `archive/*`**, verificados uno por uno contra el tip antes de borrar. **LOCALES y
+  sin pushear**; se publican explícitamente, **nunca con `git push --tags`**.
+- **Observability Lote 1 (en pausa, no abandonado): ninguna rama sola servía.** Las dos eran
+  el mismo trabajo rebaseado, 10 de 11 commits con patch-id equivalente.
+  **Retomar = `archive/2026-07-observability-lote-1-code` + cherry-pick de `d324be56`.**
+  Sin eso se pierde el runbook de migración o la declaración de privacidad, y **el hueco es
+  silencioso: el código compila igual**.
+- **VR diagnosticado**: son **49 rojas de 62**, no las "11" que decía el handoff anterior (ese
+  número no tenía ningún artefacto detrás). **No son regresiones**: el último re-baseline fue
+  el 2026-07-27 y después entraron nueve commits de arte (fondos + avatares).
+- **Fix real encontrado de paso** (`fad1e3d9`): el `BASE_URL` por defecto era 3000, pero
+  `/api/pro/status` sólo acepta un origin allow-listado → `ProOriginWarning` pintaba un banner
+  fijo sobre **cada página real** en dev, que es lo que fotografiaba el VR.
+- **Re-baseline producido**: 48 snapshots re-escritos, 0 creados, 0 borrados.
 
 ## Blockers
 
-- **Ninguno para avanzar.** La única deuda abierta es cosmética: el directorio
-  `_corrupt_supabase_db_web_20260806` quedó dentro de la VM de Docker y **no se puede
-  borrar por vía normal** (corrupción ext4, `bad message`). Ocupa poco. Sólo lo limpia un
-  *Clean/Purge data* de Docker Desktop, que borra TODO — **no recomendado**.
+- **La pasada de verificación del VR no se completó en 4 intentos.** Causa raíz **desconocida**.
+  Medido: cada corrida dejaba vivos `node` + `next-server` en 3002, y con
+  `reuseExistingServer: true` la siguiente los reusaba — el defecto se acumula solo. La suite
+  pasó de 2,2 min a no terminar en 9.
+- Parte fue proceso mío (pipes a `tail`, timeouts de herramienta que forzaron `kill`, y un
+  Playwright muerto a `kill` **no baja a su hijo** → yo fabriqué huérfanos).
 
 ## Notes
 
-- ⚠️ **`src/lib/supabase/schema.sql` NO es fiel a prod**: no menciona RLS ni policies. Al
-  rescatar algo de ahí, tomar la forma de un **dump de prod**, no del archivo.
-- ⚠️ **Auditar RLS midiendo, no leyendo.** `set role anon; select count(*)` — fue lo que
-  delató las 3 tablas (dos de las cuales nadie había pedido revisar). El header de una
-  migración puede afirmar una postura que el SQL no implementa.
-- ⚠️ **Volumen Docker corrupto:** `docker volume rm --force` y reiniciar Docker Desktop **no
-  sirven**. Se resuelve **renombrando** desde dentro de la VM
-  (`docker run --rm --privileged --pid=host alpine nsenter -t 1 -m -u -i -n -- mv …`),
-  porque `rename()` no lee las entradas del directorio y `unlink()` sí.
-- El `supabase db reset` de esta sesión **destruyó los datos de desarrollo local** (46.898
-  `analytics_events` de dev). Estaba aprobado; el local hoy tiene datos de prod.
-- `imgproxy` se borró y **`supabase start` lo volvió a bajar**: es parte del stack que
-  levanta el CLI. Borrarlo no ahorra nada.
-- Memorias nuevas: `project_prod_schema_drift_victories_sync_state`,
-  `feedback_a_comment_is_not_a_control`, `feedback_corrupt_docker_volume_rename_dont_delete`.
+- ⚠️ **Un `--update-snapshots` NO verifica nada.** Cada test sobrescribe su propia referencia:
+  "61 verdes" ahí significa "se escribieron 61 archivos", no "61 coinciden".
+- ⚠️ **Los 48 PNG no son trabajo humano** — son función determinista de (código, arte, puerto,
+  viewport), todo committeado. Se reproducen en ~2,5 min. Revertirlos no perdía nada, pero
+  tampoco compraba evidencia: por eso quedan en el árbol.
+- ⚠️ **Tres puntos vs dos puntos en `git diff`**: `main...rama` mide el aporte propio de la
+  rama; `main rama` mide la diferencia. Para decidir un borrado hace falta el segundo. Con el
+  primero leí "idéntica a main" una rama que estaba 3.820 líneas atrasada.
+- 🧯 **Tres hipótesis mías se cayeron** durante el diagnóstico del VR: que `rtk` filtraba la
+  salida (refutada: el archivo redirigido dio 0 bytes), que Playwright salteaba los 62
+  (refutada: ese `62 skipped` salía de un reporte viejo) y que `exit 0` significaba éxito.
+- Sigue pendiente de antes: Supabase CLI v2.98.2 → v2.111.0 · evaluar `--rm` en el Postgres
+  de tests · el directorio corrupto dentro de la VM de Docker (cosmético).
