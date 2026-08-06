@@ -60,12 +60,15 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 - Commits: Conventional Commits (`feat:`, `fix:`, `style:`, `refactor:`)
 - Firma de commit: `Wolfcito 🐾 @akawolfcito`
 - Tests: Vitest + RTL (unit) + Playwright (E2E + VR); **7397 passing / 596 files**
-  (baseline 2026-08-06). ⚠️ **El VR está 13/62** (medido 2026-08-06, no "11 rojas": eso
-  nunca tuvo respaldo). Los baselines quedaron viejos — último re-baseline 2026-07-27,
-  y después entraron nueve commits de arte (fondos + avatares). **No son regresiones y no
-  re-baselinear a ciegas**: `docs/audits/2026-08-06-vr-red-diagnosis.md`.
-  ⚠️ Correr SIEMPRE con `BASE_URL=http://localhost:3002`; el default 3000 del config pinta
-  un banner de dev sobre cada página real. Un test que verifica "un solo modal a la vez" **debe contar
+  (baseline 2026-08-06). ✅ **El VR está 61/62** — re-baselineado y **verificado sin
+  `--update-snapshots`** el 2026-08-06 (`44ee073`, 48 snapshots). La única roja es
+  `hub-shop-sheet-open`: muere en una aserción de texto (espera `$`, recibe `Coming soon`)
+  **antes** de la foto — es entorno sin treasury, no visual.
+  Diagnóstico de por qué había 49 rojas: `docs/audits/2026-08-06-vr-red-diagnosis.md`.
+  ⚠️ El config ya resuelve `BASE_URL` a 3002 solo (`fad1e3d9`); en 3000 `ProOriginWarning`
+  pinta un banner de dev sobre cada página real. ⛔ Si pasás `--reporter=list`, el reporte
+  HTML **no se escribe** — no uses su `mtime` como prueba de que la suite corrió.
+  Un test que verifica "un solo modal a la vez" **debe contar
   `[aria-modal="true"]`, nunca `role="dialog"`**: `LabyrinthCompleteOverlay` usa
   `role="alert"`, así que contar roles pasa en verde con dos diálogos en pantalla
 - Idioma de UI: English (ver `lib/content/editorial.ts`)
