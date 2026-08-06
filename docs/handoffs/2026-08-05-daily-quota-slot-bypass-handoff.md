@@ -231,7 +231,97 @@ re-baselineo por mi cuenta: eso es una decisión, no una limpieza.
 
 ---
 
-## 6. Por qué NO desplegué
+## 5-ter. Desplegado (2026-08-05) — topología, rebuild y smoke
+
+### El push no era de 4 commits, y `production` había divergido
+
+Dos bloqueos aparecieron en la verificación previa, ninguno del slice:
+
+1. `main` estaba **5** commits por delante de `origin/main`, no 4: `cceed76b`
+   (docs del founder, sin pushear) era ancestro y no se podía dejar afuera.
+2. `origin/production` tenía **2 commits que `main` no tenía** — `b3281c5c` y
+   `5a5e3e09` — con **patch-id idéntico** a `4d2d4eaf` y `fbbe33ff` de `main`.
+   Mismo contenido, distinto SHA: un rebase/cherry-pick pasado. Eso rompía la
+   invariante "production es ancestro estricto de main" y hacía imposible el
+   `git merge --ff-only` del paso 3 del release process.
+
+**Resuelto con el swap propuesto por el founder**, en vez de otro merge de
+reconcile (que habría dejado la divergencia viva, como ya hizo `da1cc992`):
+
+| Paso | Qué |
+|---|---|
+| 1 | `production-backup-2026-08-05` → origin, en `da1cc992`, **antes** de tocar nada |
+| 2 | Protección de `production`: `allow_force_pushes` → true (temporal) |
+| 3 | `git push origin main` → `170bf7af..31c74ad5` |
+| 4 | `git push --force-with-lease=…:da1cc992 origin main:production` |
+| 5 | Protección restaurada, idéntica al backup en `scratchpad/production-protection-backup.json` |
+
+Se usó `--force-with-lease` en vez de borrar y recrear la rama: `production`
+nunca deja de existir, Vercel no ve un hueco, y el lease aborta si alguien movió
+la ref. **No se borró ninguna rama.** `git merge-base --is-ancestor` confirma la
+invariante restaurada.
+
+⚠️ **Esto NO cura la causa.** La divergencia vino de SHAs duplicados; si vuelve a
+entrar contenido a `production` por fuera del ff-merge, vuelve a divergir. El
+swap devuelve la posibilidad de sostener `main → ff-only → production`, no la
+garantía.
+
+### Rebuild real con el valor nuevo
+
+Ambos proyectos compilaron de verdad (no hubo build-skip). Confirmado en el
+dashboard: `chesscito` y `lite-chesscito` en **Production**, commit **`31c74ad`**,
+rama `production`, ambos `Ready`. Aliases movidos: `learn.chesscito.com` /
+`lite.chesscito.com` y `play.chesscito.com`.
+
+La prueba de que el `10` entró no es el listado de env sino el comportamiento:
+con **9** consumidos no hay cartel de límite y con **10** sí. Si el build siguiera
+en 5, el cartel habría aparecido en el noveno.
+
+### Smoke dirigido: 11/11, cero errores de runtime
+
+| Caso | Resultado |
+|---|---|
+| 9 consumidos → sin cartel | PASS |
+| 9 consumidos → el 10º permitido | PASS (`quotaLocked=0 de 29`) |
+| 10 consumidos → cartel presente | PASS |
+| 10 consumidos → el 11º nuevo bloqueado | PASS (`quotaLocked=1 de 22`) |
+| en el límite → rejugada permitida | PASS (`quotaLocked=0 de 29`) |
+| carril 2 bajo el límite | PASS (`4/4 nodos, quotaLocked=0`) |
+| carril 2 en el límite | PASS (`4/4 nodos, quotaLocked=0`) |
+| `?slot=daily` sin bypass | PASS (`cartel=true`) |
+| `?slot=challenge` sin bypass | PASS (`cartel=true`) |
+| refresh conserva la cuota | PASS |
+| PLAY intacto | PASS (`cartel=false`, se queda en play) |
+
+Script: `scratchpad/smoke-quota-final.mjs`. Solo lee; lo único que escribe es
+`localStorage` en contextos de navegador efímeros. Cada caso abre contexto nuevo.
+
+**Tres cosas que el smoke descubrió y hay que saber:**
+
+- ⚠️ **Producción sirve el acceso web (Privy) y tapa `/exercises` a un navegador
+  invitado.** El smoke entra emulando `window.ethereum.isMiniPay`, que es lo
+  único que mira `isMiniPayEnv()` (`lib/minipay.ts:28`) — o sea entra por donde
+  entra el usuario real de MiniPay, sin crear una identidad en producción.
+- ⚠️ **`play.chesscito.com/exercises` REDIRIGE a `learn.chesscito.com`**, igual que
+  la URL directa del deployment. El proyecto play no sirve esa superficie; su hub
+  vive en `/`. Coherente con que la base no tenga ni un `score_attempts` con
+  `surface='play'`. El caso PLAY se mide en `/`, no en `/exercises` — apuntarlo a
+  `/exercises` medía learn dos veces y daba un falso rojo.
+- Los nodos de carril 2 se identifican por su **título autorado** (Two Turns,
+  Dead End, Two Roads, Rook Run): el drawer no expone ningún atributo que los
+  distinga de una fila de ejercicio, y "Rook Rails" no está en el DOM. Es un pin
+  de contenido aceptable en un smoke de una corrida; la aserción estructural y
+  duradera vive en `exercise-drawer.test.tsx`.
+
+### Rollback disponible
+
+Además de §5: `production-backup-2026-08-05` (en origin, `da1cc992`) permite
+restaurar la rama vieja tal cual, y §4.1 del release process (promover el
+deployment anterior desde Vercel) sigue siendo el corte más rápido.
+
+---
+
+## 6. Por qué NO desplegué (histórico — resuelto en §5-ter)
 
 Pediste desplegar si todo quedaba verde. Todo quedó verde y aun así paré, por dos
 razones que no puedo resolver yo:
