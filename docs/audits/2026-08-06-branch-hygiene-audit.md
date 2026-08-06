@@ -104,10 +104,7 @@ Piden `git worktree remove <ruta>` y después `git branch -d`.
   `archive/2026-03-minipay-gate`. Sin ese tag, `backup/main-before-author-rewrite` quedaba
   siendo la única copia de ese contenido y dejaba de ser un backup temporal para convertirse
   en archivo permanente — que es justo lo que la política manda hacer con un tag.
-- ⏸️ **Conservadas hasta publicar sus tags**: `feat/observability-lote-1`,
-  `feat/observability-lote-1-code`, `feat/observability-privacy-policy`,
-  `phase-1-ui-zone-map`, `feat/board-renderer`,
-  `feat/progression-unlocks-celebration-queue`.
+- ✅ **Las 6 viejas tageadas y borradas** (segunda pasada, ver §Archivo abajo).
 - ⏸️ **Conservadas provisionalmente**: los dos `feat/spec-1-*` (worktrees hermanos activos).
 - ⛔ **Intactas**: `main`, `production`, `backup/main-before-author-rewrite`.
 
@@ -115,10 +112,48 @@ Piden `git worktree remove <ruta>` y después `git branch -d`.
 
 ```
 main · production · backup/main-before-author-rewrite
-feat/board-renderer · feat/observability-lote-1 · feat/observability-lote-1-code
-feat/observability-privacy-policy · feat/progression-unlocks-celebration-queue
-feat/spec-1-candy-polish · feat/spec-1-hub-redesign · phase-1-ui-zone-map
+feat/spec-1-candy-polish · feat/spec-1-hub-redesign
 ```
 
-**Deuda abierta**: las 6 branches en ⏸️ esperan su tag `archive/*`. Hasta que se publiquen,
-la política no está cumplida — son exactamente las "branches eternas" que prohíbe.
+**40 branches → 5.** Las 5 que quedan tienen las cuatro una función viva.
+
+## Archivo con tags (2026-08-06, segunda pasada)
+
+Siete tags `archive/*`, **todos locales y SIN pushear** — se publican explícitamente en la
+próxima ventana de push del founder, nunca con `--tags`. Cada uno se verificó contra el tip
+de su branch **antes** de borrarla.
+
+| Tag | Commit | Origen |
+|---|---|---|
+| `archive/2026-07-observability-lote-1-code` | `68c433fe` | **punto de retoma del Lote 1** |
+| `archive/2026-07-observability-lote-1` | `6526c91f` | variante rebaseada |
+| `archive/2026-07-observability-privacy-policy` | `d324be56` | la pieza que falta |
+| `archive/2026-07-progression-unlocks-celebration-queue` | `c46a62e1` | 2026-07-12 |
+| `archive/2026-05-phase-1-ui-zone-map` | `df7fc97e` | 2026-05-01 |
+| `archive/2026-03-board-renderer` | `ec910fe8` | 2026-03-04 |
+| `archive/2026-03-minipay-gate` | (primera pasada) | ≡ `backup/main-before-author-rewrite` |
+
+### ⚠️ Observabilidad Lote 1: NINGUNA de las dos ramas estaba completa
+
+El trabajo está **en pausa, no abandonado** (founder, 2026-08-06). Al retomarlo importa esto:
+
+`feat/observability-lote-1` y `-lote-1-code` eran **el mismo trabajo rebaseado** — 11 commits
+cada una, del mismo día, con SHAs distintos y **10 de 11 con patch-id equivalente**. Pero no
+son intercambiables, y ninguna contiene a la otra:
+
+- **`-lote-1-code` es la más avanzada** (+2460): tiene
+  `docs/ops/2026-07-23-lote-1-migration-runbook.md`, 184 líneas de runbook de migración y
+  smoke de producción que la otra **no tiene**.
+- **A `-lote-1-code` le falta el commit de privacy docs.** `git cherry` lo aísla:
+  `d81ea919` es el **único** commit de `-lote-1` sin equivalente en `-lote-1-code`.
+- **`feat/observability-privacy-policy` (`d324be56`) es exactamente ese commit**: patch-id
+  `1fbc2284`, **idéntico** a `d81ea919`. Estaba contenida en `-lote-1`; **no** en `-lote-1-code`.
+
+**Retomar el Lote 1 = `archive/...-lote-1-code` + cherry-pick de `d324be56`.** Tomar
+cualquiera de las dos ramas sola pierde el runbook o pierde la declaración de privacidad, y
+en los dos casos el hueco es silencioso: el código compila igual.
+
+> **Cómo se midió, porque el método importa más que el resultado:** comparar `--stat` habría
+> dicho "son parecidas" y nada más. `git cherry <upstream> <head>` marca con `+` sólo los
+> commits **sin equivalente**, y `git patch-id --stable` prueba identidad de contenido a
+> través de un rebase, donde el SHA ya no sirve de nada.
