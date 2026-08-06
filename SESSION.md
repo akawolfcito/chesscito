@@ -1,78 +1,106 @@
-# Session Handoff — 2026-08-05 (Sesión B)
+# Session Handoff — 2026-08-05 (Sesión C — capacidad de contenido + cuota diaria)
 
-> 📌 Handoff completo: `docs/handoffs/2026-08-05-session-b-onboarding-experiment-handoff.md`
-> — el **apéndice "Ejecución"** manda sobre el cuerpo.
-> Descubrimiento: `docs/audits/2026-08-05-session-b-b0-discovery.md`
-> Por qué se reconcilió en vez de portar: `docs/audits/2026-08-05-session-b-portability-to-production.md`
+> 📌 Handoffs y auditorías de esta sesión:
+> `docs/handoffs/2026-08-05-daily-quota-slot-bypass-handoff.md` (el rollout, **manda**)
+> `docs/audits/2026-08-05-content-capacity-audit.md` (+ `-queries.sql`)
+> `docs/audits/2026-08-05-session-limit-and-ranking-integrity.md` (+ `-ranking-integrity-queries.sql`)
 >
-> **🟢 El experimento Tour → Daily está VIVO al 10 % en LEARN.**
-> Este archivo es el checklist; el detalle vive en el handoff.
+> **🟢 La cuota diaria de 10 ejercicios está VIVA en LEARN.** Antes no aplicaba a las
+> entradas más usadas de la app.
 
 ## Estado
 
 | | |
 |---|---|
-| `origin/main` | `170bf7af` |
-| `origin/production` | `da1cc992` (desplegado y sirviendo) |
-| Diferencia | 1 commit, sólo documental |
-| Flag | `NEXT_PUBLIC_ONBOARDING_FIRST_ACTIVITY_PCT=10`, Production, ambos proyectos |
-| Migración | `20260805020000` aplicada en `brsbdzpuvotxsadmcxyj` |
+| `origin/main` | `ce5b8a0a` |
+| `origin/production` | `ce5b8a0a` — **ancestro estricto de `main`, invariante restaurada** |
+| Producción sirviendo | commit `31c74ad` (`chesscito` + `lite-chesscito`, `Ready · Production`) |
+| Suite unit | **7397 passing / 0 failing** (+13 casos nuevos) |
+| `tsc` / `build` / lint `apps/web` | verdes |
+| **VR** | **🔴 11/62** — preexistente, ver Blockers |
+| Trabajo sin commitear | no |
 
-⚠️ **Producción sigue la rama `production`, NO `main`.** Pushear a `main` sólo genera
-Preview. Fue el hallazgo que destapó que el P0 del mutex nunca había llegado a producción.
+⚠️ **Producción sigue la rama `production`, NO `main`** (sigue vigente de la sesión B).
+Novedad: `production` fue **reemplazada** por el tip de `main` con `--force-with-lease`;
+tenía 2 commits con patch-id idéntico a los de `main` pero distinto SHA, lo que rompía el
+`--ff-only` del release process. Backup: `production-backup-2026-08-05` (`da1cc992`).
 
 ## Completed
 
-- **Funnel Daily/Training separado** (`20016cbd`). `ACTIVATION_FUNNEL` afirmaba que las
-  finalizaciones del Daily eran subconjunto de las de training; salen de emisores
-  disjuntos. Ahora dos funnels hermanos. `daily_tactic_started` salió de
-  `exercise_started` (era la mitad espejo del defecto). Migración `20260805020000`
-  escrita, aplicada y verificada: en prod `daily_focus_completed=901 >
-  exercise_completed=788`, forma que la definición anidada **no podía representar**.
-- **`pro_purchase_started` deja de contar taps** (`3157900c`). El mutex protegía el
-  dinero, no la medición: dos taps en el mismo tick daban dos eventos. Ahora se emite
-  desde `pay({ onAccepted })`, dentro del mutex. Cubre también `pro-extend-link`.
-- **Experimento Tour → primera actividad** (`990b527c`), LEARN-only, instrumentado.
-  Reutiliza el `dailyOpen` que el hub ya controlaba: sin superficie nueva, sin wallet,
-  sin pago. Asignación pura por hash del install id → estable ante refresh sin persistir
-  nada. Idempotencia: el latch es la propia clave del tour.
-- **P0 del mutex desplegado por fin** (`5a5e3e09` sobre `production`) — llevaba desde el
-  listing sin llegar a producción pese a que el handoff anterior lo daba por desplegado.
-- **`production` reconciliada con `main`** (`da1cc992`), merge no-op de contenido: árbol
-  byte-idéntico, tree hash `50192a75` en ambas. Levantó el bloqueo de los guards de
-  migración, que en `production` **no los colectaba nadie**.
-- **Rollout al 10 %** con rebuild real (`NEXT_PUBLIC_*` se inlinea en build).
-- **Consultas del handoff corregidas** (`170bf7af`): la columna es `props`, no `payload`;
-  y el conteo era `count(*)` sobre un lateral → contaba pares, no instalaciones.
+- **Auditoría de capacidad.** 78 niveles alcanzables (59 ejercicios + 19 de carril 2),
+  177★ que cuentan (+48 decorativas), techo de ranking **17.700**. Nadie agotó nada:
+  máximo **64/78** y **149/177**. **434 de 443 wallets jugaron un solo día** → el cuello
+  medido es retención del día 2, no inventario. 15 laberintos autorados quedaron tapados
+  por la proyección del carril 2 y hoy rinden cero.
+- **A1 resuelto.** El límite en producción era **5** (no el default 10 del código), y la
+  compuerta **nunca se aplicaba** si se entraba por `?slot=daily` / `?slot=challenge` — que
+  son el CTA principal del hub y la acción #1 del content loop. El contador seguía gastando
+  slots que nadie leía.
+- **`18f67ba3` — fix.** Quitado el bypass del único productor de `quotaDisplayState`, y
+  quitado el candado de cuota sobre carril 2 (pedía un id `labyrinth:` que **nada escribe**,
+  así que al límite bloqueaba el carril entero hasta el otro día UTC).
+- **Variables a `10`** en Production y Preview de los dos proyectos, con rebuild real.
+- **Desplegado + smoke dirigido en producción: 11/11**, cero errores de runtime.
+- **Integridad de ranking auditada** (no implementada, por diseño): el hueco resultó ser
+  **3 filas de 2 wallets**, todas del pool de 10 del alfil previo al audit B4.3. Nadie tocó
+  el headroom de 10×. Diseño de las dos opciones listo en el §C del audit.
 
 ## Next
 
-1. **Revisar el experimento** cuando haya muestra suficiente **y** cohorte D1 madura.
-   Consultas corregidas en el handoff. No declarar éxito porque suba
-   `daily_tactic_started`: manda completadas/instalaciones por brazo.
-2. **BalanceReadHealth** — nunca se implementó; diseño en
+1. **Slice de reparación del VR** (acordado, no abierto). Revisar visualmente los 47 diffs,
+   separar cambio legítimo de regresión, estabilizar los 4 timeouts, rebaselinear **sólo lo
+   aprobado**. Baselines congeladas desde 2026-07-27 (`30919b23`).
+2. **Bound de ranking por pieza (P1)** — §C.1 del audit de integridad. Techo por `level_id`
+   (2.700 el alfil, 3.000 el resto) contra los 30.000 actuales.
+   ⚠️ Derivar del **baseline compilado + headroom de overlay**, nunca del catálogo merged
+   (reintroduce el incidente del 2026-07-09), y **fallar abierto**.
+3. **Score derivado en servidor (P1 diferido)** — §C.2. Necesita spec propio: qué pasa con el
+   rail on-chain (145 filas sin `exercise_id`) y con el progreso anterior al 2026-07-29.
+4. **Contenido nuevo** — recién después de (2). Con la cuota operativa, los 78 niveles rinden
+   ~8 días por jugador; autorar volumen antes de arreglar retención no mueve la aguja.
+
+### Arrastrado de la Sesión B (sigue abierto)
+
+5. **Revisar el experimento Tour → Daily** (10 % en LEARN) con muestra suficiente y cohorte
+   D1 madura. Consultas corregidas en su handoff. ⛔ No subir de 10 % sin GO explícito.
+6. **BalanceReadHealth** — nunca se implementó; diseño en
    `docs/handoffs/2026-08-05-prod-audit-p0-verification-handoff.md`.
-3. **Fase C** — las 9 RPC `stats_*` viven en prod y **nadie las llama**;
-   `PublicStats.dailyFocusFunnel` ya existe.
-4. **`leaderboard_v`** — quinta vista fuera del historial de migraciones, con el bug de
-   overflow ya corregido en el resto. ¿Se dropea?
-5. **Baseline de `CLAUDE.md`** — dice 6515/552; el real es **7.384/595**.
+7. **Fase C** — las RPC `stats_*` viven en prod y nadie las llama.
+8. **`leaderboard_v`** — vista fuera del historial de migraciones. ¿Se dropea?
+9. **Baseline de `CLAUDE.md`** — dice 6515/552; el real ahora es **7397**.
 
 ## Blockers
 
-- Ninguno. El 10 % corre solo; la próxima revisión la gobiernan los datos, no una tarea.
+- **La suite VR está roja en `main`: 62 casos, 11 pasan, 51 fallan** (47 diffs de píxeles del
+  2 % al 50 %, 4 timeouts de `page.goto`, **0 snapshots faltantes**). **Medido como
+  preexistente**: revertir los dos archivos del fix a `cceed76b` da fallos idénticos, y los
+  rojos caen en superficies que el diff no toca (`support`, `terms`, `privacy`, arena, coach,
+  hubs). El founder autorizó desplegar con la excepción documentada. **No se rebaselineó nada.**
+- **El swap de `production` no cura la causa.** Volverá a divergir si entra contenido a
+  `production` por fuera del ff-merge.
 
 ## Notes
 
-- ⛔ **No subir de 10 %** sin GO explícito.
-- ⚠️ **El flag es de build**: cambiar el porcentaje exige redeploy. Apagar = poner `0` y
-  redeployar; nadie queda a mitad de camino porque la asignación ocurre una sola vez, al
-  terminar el tour.
-- ⚠️ Al mergear `main` → `production`, `HEAD` es `production`: la versión de `main` es
-  `--theirs`, no `--ours`. Usar `git checkout origin/main -- <archivos>`.
-- ⚠️ `supabase db query` apunta a la base **LOCAL** por defecto — pasar `--linked`.
-- ⚠️ Las migraciones se aplican desde `main`, **nunca** desde `production`.
-- 🔒 Ningún evento de onboarding lleva wallet, email ni texto libre; hay un test que lo
-  verifica serializando cada payload.
-- Abierto: `pro-sheet.tsx:453-456` (`pro-extend-link`) sigue sin gate visual — no se
-  deshabilita durante la compra. Cosmético; el mutex protege la plata.
+- ⚠️ **`vercel env update` reporta "Updated" sin aplicar el valor** (probado con pipe y con
+  redirección de archivo). `vercel env add` desde stdin guarda **cadena vacía**. En la CLI
+  58.4.4 el único camino que funciona es **`--value <v>`** — y `--value` guarda como
+  **Sensitive**, que no se puede releer (`env run` devuelve `""`). Usar siempre
+  **`--value <v> --no-sensitive --force --yes`** y **releer** para confirmar.
+- ⚠️ **Producción sirve el acceso web (Privy)** y tapa `/exercises` a un navegador invitado.
+  Para automatizar contra prod: emular `window.ethereum.isMiniPay` — lo único que mira
+  `isMiniPayEnv()` (`lib/minipay.ts:28`) — en vez de crear identidades en producción.
+- ⚠️ **`play.chesscito.com/exercises` REDIRIGE a `learn.chesscito.com`**, igual que la URL
+  directa del deployment. El hub de play vive en `/`. Encaja con que la base no tenga ni un
+  `score_attempts` con `surface='play'`. Un test de play apuntado a `/exercises` mide learn.
+- ⚠️ **Playwright 1.58.2 usa `chromium-1208`, no el 1234.** La versión a conservar es la de
+  número **MENOR**; "quedarse con la más nueva" borra el navegador en uso.
+- 💾 **Disco**: se liberaron 5 GB (`~/.npm` + `chromium-1234`). El preflight del VR exige 10 GB
+  y una corrida completa consume ~2 GB. **`~/Library/pnpm/store` no se toca**: hard links.
+- ⚠️ **El pool del alfil tiene 9 ejercicios, no 10** (audit B4.3). Su techo es 2.700 y por eso
+  hay 3 filas históricas por encima: progreso legítimo sobre un pool que existía. **No revocar.**
+- ⚠️ **El progreso por ejercicio es de DEVICE, no de cuenta.** El servidor sólo guarda un total
+  por pieza (`score_saves`) y los intentos desde 2026-07-29 (`score_attempts`). Cualquier
+  pregunta del tipo "qué ejercicios completó X" sólo tiene respuesta desde esa fecha.
+- 🔑 Backup de la protección de rama: `scratchpad/production-protection-backup.json`.
+- Sigue abierto de la sesión B: `pro-sheet.tsx:453-456` (`pro-extend-link`) sin gate visual.
+  Cosmético; el mutex protege la plata.
