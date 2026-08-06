@@ -1,12 +1,15 @@
 # Handoff — Sesión B: experimento Tour → primera actividad (2026-08-05)
 
 > **⚠️ EL CUERPO DE ESTE DOC SE ESCRIBIÓ ANTES DE DESPLEGAR. Manda el apéndice
-> "Ejecución" del final.** Desde entonces: `origin/main` = `2666a499`,
-> `origin/production` = `b3281c5c` (con el P0 del mutex, que **nunca había llegado a
-> producción**), y la migración `20260805020000` está **aplicada**.
+> "Ejecución" del final**, y dentro de él la sección más reciente.
 >
-> **⛔ PARADA VIGENTE:** la variante sigue **apagada** (flag ausente → 0 % → control).
-> La Etapa 3 (rollout al 10 %) no arrancó y necesita un **GO nuevo**.
+> **🟢 ESTADO REAL AL CIERRE (2026-08-06 ~00:45 UTC):**
+> `origin/main` = `170bf7af` · `origin/production` = `da1cc992` (desplegado y sirviendo) ·
+> migración `20260805020000` **aplicada** ·
+> **el experimento está VIVO al 10 % en LEARN**.
+>
+> **⛔ PARADA VIGENTE:** no subir de 10 %. La próxima revisión es cuando exista muestra
+> suficiente de elegibles **y** una cohorte D1 madura.
 
 **Documento madre del descubrimiento:** `docs/audits/2026-08-05-session-b-b0-discovery.md`.
 Este handoff no lo repite: sólo lo que hace falta para retomar o desplegar.
@@ -677,7 +680,10 @@ sólo-Training):
   `stats_daily_focus_funnel` **desaparece** (`to_regprocedure` → NULL).
 - `rollback;` → la base local queda sin ninguna de las dos funciones. Intacta.
 
-## Estado al cerrar
+## Estado tras la Etapa 2
+
+> ⚠️ **Superado por las dos secciones siguientes.** Se conserva como registro del punto
+> intermedio, no como estado actual.
 
 | | |
 |---|---|
@@ -691,9 +697,177 @@ sólo-Training):
 contiene las migraciones `20260805*`, pero las tres están aplicadas en la base. Quien
 deduzca el schema leyendo la rama se va a equivocar.
 
+---
+
+## Reconciliación de ramas — `da1cc992`
+
+### Por qué no se portó la Sesión B por cherry-pick
+
+Se auditó primero (`docs/audits/2026-08-05-session-b-portability-to-production.md`). Los
+tres commits funcionales **portan limpio y quedan verdes** — 2 conflictos, ambos
+`modify/delete` por archivos inexistentes, suite 7.263/7.263, `tsc` 0, build 0.
+
+**Se rechazó igual.** El `vitest.config.ts` de `production` no incluía
+`supabase/migrations/__tests__/**`, así que el guard de privilegios de RPC que el port
+arrastra **no lo colectaba nadie** (`vitest run supabase/migrations` → `No test files
+found`). Y faltaba un segundo guard: el de **prefijos de migración duplicados**, que
+existe justamente porque esa colisión rompió un despliegue de seguridad el 2026-08-05.
+Portar habría dejado dos guards que parecen estar y no corren — el modo de falla exacto
+que estas sesiones vinieron cerrando.
+
+### La reconciliación no pierde nada, y está medido
+
+```
+$ git cherry origin/main origin/production
+- 5a5e3e09…
+- b3281c5c…
+```
+
+Los dos `-` significan que **los parches de ambos commits de `production` ya están en
+`main`** por patch-id (son cherry-picks de `fbbe33ff` y `4d2d4eaf`). Ningún archivo
+existe en `production` y falta en `main`. **`main` es superconjunto estricto.**
+
+### Ejecución
+
+`git merge --no-ff origin/main` sobre `production`. Conflictos: los **dos** archivos del
+rail, porque `main` sumó el dedupe `onAccepted` encima del mismo mutex. Resueltos con la
+versión de **`origin/main`**, que lleva mutex **y** dedupe.
+
+> ⚠️ Trampa de dirección: acá `HEAD` es `production`, así que la versión de `main` es
+> `--theirs`, **no** `--ours`. Se usó `git checkout origin/main -- <archivos>` para no
+> depender de esa distinción.
+
+**Resultado: árbol byte-idéntico a `origin/main`.** `git diff --exit-code origin/main
+HEAD` → exit 0; tree hash `50192a75` en ambas ramas. El merge es un no-op de contenido:
+sólo registra en la historia que los cherry-picks quedaron incorporados.
+
+Verificado antes de pushear: `tsc` 0 · **guards de migración 44/44 (antes `No test files
+found` — bloqueo levantado)** · guard de prefijos 14/14 · script de Vercel 324 · PRO+payments
+507 · analytics+onboarding+stats+hub 1.019 · **suite 7.384/7.384** sin `Unhandled Errors` ·
+build 0 · `supabase db push --dry-run --linked` → **"Remote database is up to date"**.
+Ningún archivo sin trackear se coló en el merge.
+
+Deploys: `lite-chesscito-ivrxpkexv` y `chesscito-30g9jen5f`, ambos Ready · Production
+desde `da1cc99`, con `[should-build] BUILD`.
+
+---
+
+## Etapa 3 — Rollout al 10 %
+
+**Flag:** `NEXT_PUBLIC_ONBOARDING_FIRST_ACTIVITY_PCT="10"`, entorno **Production**
+únicamente, en `lite-chesscito` **y** `chesscito`. Sin definiciones en Preview/Development
+que puedan confundirse. Lo configuró el founder a mano; esta sesión sólo lo verificó y
+redesplegó.
+
+**Redeploy** (no un push: el commit no cambia). `vercel redeploy --target production` de
+cada deployment de `da1cc992`:
+
+| Proyecto | Deployment | Commit |
+|---|---|---|
+| learn | `lite-chesscito-jzuhesi5o` | `da1cc99` |
+| play | `chesscito-hlce47262` | `da1cc99` |
+
+⚠️ **Por qué hacía falta un rebuild y no bastaba promover:** `NEXT_PUBLIC_*` se **inlinea
+en build**, así que el build anterior lleva el flag ausente por más que la variable ya
+esté en Vercel. Confirmado en el log que fue rebuild real:
+`Skipping build cache, deployment was triggered without cache` → `[should-build] BUILD` →
+`web:build: cache bypass, force executing` → `Compiled successfully`.
+
+> Riesgo que se anticipó y no se materializó: el gate compara contra el commit del último
+> deploy exitoso, que en un redeploy es **el mismo**, así que `turbo-ignore` podía
+> reportar "no afectado" y **cancelar**. Devolvió BUILD en los dos proyectos. Si alguna
+> vez cancela, el escape está en el propio script: `force-build` en el mensaje de commit.
+
+**Configuración verificada con la función desplegada:** pct=10 → **10,46 %** sobre 5.000
+ids. Ni 0, ni 50, ni 100 — los tres errores de configuración que había que descartar.
+
+**Smoke:** learn / lite / play / `/stats` ×2 / `/exercises` / `/challenge/daily` /
+`/trophies` → 200. `/exercises` en PLAY → 307 → `learn.chesscito.com/exercises` → 200
+(mode-routing, sin cambio). APIs `leaderboard`, `peones/balance`, `pro/status`,
+`hall-of-fame` → 200.
+
+**Smoke dirigido del experimento**, con identidades cuyo bucket se calculó con la función
+real (`smoke-install-3` → bucket 0 → variante; `smoke-install-0` → bucket 57 → control) y
+`pct=10`: control no abre nada; variante abre el Daily **una sola vez**, completa, muestra
+cierre, llega al hub, y un remount **no repite**. Daily ya hecho → fallback. Replay manual
+→ no asigna. Sin PII. 7/7. El test era temporal y **se borró**; no quedó commiteado.
+
+### Primeras observaciones reales (1 h 40 min post-deploy)
+
+| | control | first-activity |
+|---|---|---|
+| instalaciones | **20** | **4** |
+| `activity_ready` | 0 | 4 |
+| `activity_failed` | 0 | **0** |
+| primera acción (`daily_tactic_started`) | 7 | 4 |
+| completadas | 5 | 2 |
+| `closure_shown` | 0 | 2 |
+| `hub_reached` | 0 | 3 |
+
+4/24 = **16,7 %**. Con n=24 y p=0,10 eso es z≈1,1: **dentro del ruido**, no una anomalía
+de configuración. El embudo de la variante cierra sin huecos y **sin un solo fallback**.
+Cero duplicados: el conteo de eventos iguala el de instalaciones en todos. **Cero eventos
+de onboarding en PLAY**, verificado por datos reales en cada ventana de 15 min.
+
+> Un susto que resultó no serlo: en la primera hora había 44 `hub_tour_finish` contra 2
+> asignaciones. La correlación por ventanas lo explica — casi toda esa hora precede al
+> deploy del código de onboarding, y **PLAY tiene más tours que LEARN** y correctamente
+> no asigna ninguno.
+
+---
+
+## ⚠️ Dos defectos en las consultas de este doc — corregidos en `170bf7af`
+
+Ambos verificados contra producción en read-only, antes y después.
+
+1. **Columna equivocada.** Las consultas leían `payload->>'variant'`; la columna `jsonb`
+   de `analytics_events` es **`props`**. Se había publicado con la advertencia de que el
+   nombre no estaba confirmado: estaba mal. El modo de falla era **silencioso** —
+   `payload` no existe, así que habría devuelto variantes en NULL sin error.
+2. **Conteo equivocado, y este era peor.** La consulta de cobertura usaba `count(*)` sobre
+   un lateral que devuelve una fila por *(instalación, evento distinto)*: contaba
+   **pares**, no instalaciones, inflando cada columna por un factor distinto. Reportó
+   **275 control / 54 variante** donde lo real era **20 / 4** — un 16 % fabricado que
+   encima parecía verosímil. Ahora usa `count(distinct a.session_id)`.
+
+También: filtrar superficie por la **columna** `surface`, no por la copia dentro de
+`props`. Las dos existen y coinciden (`learn`) en los datos reales; la columna es la que
+usa el resto del repo.
+
+---
+
+## Estado al cerrar la sesión
+
+| | |
+|---|---|
+| `origin/main` | **`170bf7af`** |
+| `origin/production` | **`da1cc992`** (desplegado y sirviendo) |
+| Diferencia entre ramas | 1 commit, **sólo documental** |
+| Migración | `20260805020000` **aplicada** en `brsbdzpuvotxsadmcxyj` |
+| Flag | **`10` en Production, ambos proyectos — EXPERIMENTO VIVO** |
+| Deploys sirviendo | `lite-chesscito-jzuhesi5o` · `chesscito-hlce47262` |
+
+⚠️ **Rama y base siguen desincronizadas por diseño del flujo:** `origin/production` ahora
+sí contiene las tres migraciones `20260805*` (llegaron con el merge), pero eso es
+coincidencia del momento — las migraciones se aplican desde `main` con
+`supabase db push --linked`, **nunca desde `production`**.
+
 ## Pendiente
 
-1. Etapa 3 — rollout al 10 % (no arrancó).
-2. Reconciliar `production` con `main` sin perder el hotfix. Los dos commits de
-   `production` son cherry-picks de commits que ya viven en `main`, así que no hay nada
-   que rescatar de ese lado.
+1. **La revisión del experimento**, cuando haya muestra suficiente **y** una cohorte D1
+   madura. Usar las consultas ya corregidas de este doc. Regla de decisión: no declarar
+   éxito porque suba `daily_tactic_started` — el par que manda es completadas/instalaciones
+   por brazo.
+2. **BalanceReadHealth** — nunca se implementó. Diseño en
+   `docs/handoffs/2026-08-05-prod-audit-p0-verification-handoff.md`.
+3. **Fase C: cablear el agregador a las RPC.** Las 9 `stats_*` viven en prod y **nadie las
+   llama**; `/stats` calcula en TypeScript. `PublicStats.dailyFocusFunnel` ya existe, así
+   que la rama Daily entra sin UI nueva.
+4. **`computeActivation` no es monótono** — cuenta pasos independientes. La RPC ya tiene
+   la forma anidada. Cambiarlo mueve números vivos.
+5. **`pro-extend-link`** (`pro-sheet.tsx:453`) — `<button>` sin gate visual: no se
+   deshabilita durante `purchasing`/`verifying`. Cosmético; el dinero está protegido.
+6. **`leaderboard_v`** — quinta vista, fuera del historial de migraciones, con el bug de
+   overflow que el resto ya corrigió. ¿Se dropea?
+7. **Baseline de `CLAUDE.md`** — dice 6515/552; el real es **7.384/595**.
+8. **El flag es de build**: cambiar el porcentaje exige redeploy. Documentado, no resuelto.
