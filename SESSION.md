@@ -104,13 +104,18 @@ Frentes de producto vivos: `docs/backlog/2026-07-10-backlog-index.md` y
 
 ## Open questions
 
-- **La convención del `--rm` no quedó escrita.** Se ofreció y no se eligió. Si se documenta,
-  el lugar es `CLAUDE.md` (sección de command hygiene) + corregir la receta del handoff de
-  junio. Sin eso, la próxima sesión que levante un Postgres suelto vuelve a dejar volúmenes.
-- **Los scripts de medición vivieron en el scratchpad de la sesión y se pierden**
-  (`chrome-snapshot.sh`, `profile-diff.sh`, `cache-age.sh`). Si el founder va a seguir
-  borrando perfiles y quiere medir el efecto, hay que promoverlos a `scripts/` como hermanos
-  de `disk-telemetry.sh` — o rehacerlos.
+**Las dos se cerraron el 2026-08-06.**
+
+- ✅ **La convención del `--rm` quedó escrita** en `CLAUDE.md` § Command hygiene: todo
+  `docker run` de probe/test lleva `--rm` y va en foreground, nunca `-d --name`. Se corrigió
+  además la receta en prosa de `docs/handoffs/2026-06-09-savescore-offchain-slices-1-3-handoff.md`
+  y se marcó resuelto el open question de `docs/audits/2026-08-06-docker-local-audit.md`.
+- ⛔ **Los scripts de medición de Chrome NO se promueven — DESCARTADOS** (founder, 2026-08-06:
+  *"realmente no lo necesitamos"*). El razonamiento: medir perfiles de Chrome es mantenimiento
+  de la máquina, **no del repo**, y una herramienta versionada que enumera dónde viven los
+  vaults de wallet no tiene por qué estar en `origin`. `disk-telemetry.sh` sí se queda: nació
+  de un problema del proyecto (las corridas de VR hacían caer el disco). Si alguna vez hace
+  falta, los tres originales estuvieron en el scratchpad de la sesión `28692572`.
 
 ## Notes
 
