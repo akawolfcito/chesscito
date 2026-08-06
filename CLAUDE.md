@@ -60,9 +60,12 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 - Commits: Conventional Commits (`feat:`, `fix:`, `style:`, `refactor:`)
 - Firma de commit: `Wolfcito 🐾 @akawolfcito`
 - Tests: Vitest + RTL (unit) + Playwright (E2E + VR); **7397 passing / 596 files**
-  (baseline 2026-08-06). ⚠️ **El VR NO está verde**: 62 casos con **11 🔴 preexistentes**
-  desde el 2026-08-05, sin diagnosticar — no tomar una corrida roja como regresión propia
-  sin comparar contra ese baseline. Un test que verifica "un solo modal a la vez" **debe contar
+  (baseline 2026-08-06). ⚠️ **El VR está 13/62** (medido 2026-08-06, no "11 rojas": eso
+  nunca tuvo respaldo). Los baselines quedaron viejos — último re-baseline 2026-07-27,
+  y después entraron nueve commits de arte (fondos + avatares). **No son regresiones y no
+  re-baselinear a ciegas**: `docs/audits/2026-08-06-vr-red-diagnosis.md`.
+  ⚠️ Correr SIEMPRE con `BASE_URL=http://localhost:3002`; el default 3000 del config pinta
+  un banner de dev sobre cada página real. Un test que verifica "un solo modal a la vez" **debe contar
   `[aria-modal="true"]`, nunca `role="dialog"`**: `LabyrinthCompleteOverlay` usa
   `role="alert"`, así que contar roles pasa en verde con dos diálogos en pantalla
 - Idioma de UI: English (ver `lib/content/editorial.ts`)
