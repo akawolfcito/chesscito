@@ -1,85 +1,78 @@
-# Session Handoff — 2026-08-06 (higiene de branches + diagnóstico del VR)
+# Session Handoff — 2026-08-06 (verificación del VR — cerrada en verde)
 
-> 📌 **La primera tarea de la próxima sesión está abajo, en §Arrancar por acá.**
-> Auditorías de esta sesión (committeadas, **mandan**):
-> `docs/audits/2026-08-06-branch-hygiene-audit.md` y
-> `docs/audits/2026-08-06-vr-red-diagnosis.md` (leer su **Addendum**).
-
-## Estado
-
-| | |
-|---|---|
-| Rama | `main` local, **8 commits SIN PUSHEAR** (el founder pushea) |
-| `origin/main` | sigue en `b32b9949` |
-| Árbol | ⚠️ **48 snapshots del VR modificados y SIN COMMITEAR** — a propósito |
-| Suite unit | 7397 passing / 596 files (no re-corrida esta sesión: los cambios son SQL, markdown, git y PNGs) |
-| VR | ⚠️ re-baselineado pero **NO verificado** |
-| Entorno | limpio al cerrar: sin procesos residuales, 3002 libre, disco 13 Gi |
-
-## Arrancar por acá — la verificación limpia del VR
-
-Es lo único pendiente con pasos definidos. **No re-generar los snapshots**: ya están escritos
-en el árbol y son deterministas. Lo que falta es comprobarlos.
-
-1. **Matar residuos ANTES de correr** — no dejar que la corrida reuse un server viejo:
-   `pkill -f "playwright test"`, y liberar 3002 (`lsof -nP -iTCP:3002 -sTCP:LISTEN -t`).
-2. Correr **sin** `--update-snapshots`:
-   `pnpm -C <abs>/apps/web exec playwright test e2e/visual-regression.spec.ts --project=minipay --reporter=list`
-   (ya no hace falta pasar `PORT`/`BASE_URL`: el config los resuelve solo desde `fad1e3d9`).
-3. ⛔ **NO leer el exit code como resultado.** Esta sesión `exit 0` significó "no corrió"
-   cuatro veces. **Confirmar por el `mtime` de `apps/web/e2e-results/report/index.html`**:
-   si no se reescribió, la corrida no pasó por su reporter y el resultado no existe.
-4. Si da verde → **commitear los 48 snapshots ahí mismo**, con el rationale que el spec exige
-   (`visual-regression.spec.ts:6-8`: los PRs que bumpean baselines en silencio se rechazan).
-   El rationale es: el founder aprobó el arte nuevo el 2026-08-06.
-5. `hub-shop-sheet-open` va a seguir roja: falla en una aserción de texto
-   (espera `"$"`, recibe `"Coming soon"`) **antes** de la foto. Es env sin treasury, no visual.
-
-⚠️ **No canalizar la salida a `tail`/`head`**: bufferiza hasta el final y deja la corrida ciega.
-Esta sesión me costó tres relanzamientos.
+> 📌 **El bloqueo de la sesión anterior está cerrado.** El VR quedó **61/62 verificado**
+> y los 48 baselines commiteados. No queda nada pendiente con pasos definidos.
 
 ## Completed
 
-- **Higiene de branches: 40 locales → 5.** Política del founder escrita en el audit
-  (`main` = desarrollo integrado · `production` = lo desplegado · temporales sólo con trabajo
-  activo · **abandonado-pero-útil va a TAGS** · backups se borran al dejar de servir).
-  Quedan `main`, `production`, `backup/main-before-author-rewrite` y los dos `feat/spec-1-*`.
-- **7 tags `archive/*`**, verificados uno por uno contra el tip antes de borrar. **LOCALES y
-  sin pushear**; se publican explícitamente, **nunca con `git push --tags`**.
-- **Observability Lote 1 (en pausa, no abandonado): ninguna rama sola servía.** Las dos eran
-  el mismo trabajo rebaseado, 10 de 11 commits con patch-id equivalente.
-  **Retomar = `archive/2026-07-observability-lote-1-code` + cherry-pick de `d324be56`.**
-  Sin eso se pierde el runbook de migración o la declaración de privacidad, y **el hueco es
-  silencioso: el código compila igual**.
-- **VR diagnosticado**: son **49 rojas de 62**, no las "11" que decía el handoff anterior (ese
-  número no tenía ningún artefacto detrás). **No son regresiones**: el último re-baseline fue
-  el 2026-07-27 y después entraron nueve commits de arte (fondos + avatares).
-- **Fix real encontrado de paso** (`fad1e3d9`): el `BASE_URL` por defecto era 3000, pero
-  `/api/pro/status` sólo acepta un origin allow-listado → `ProOriginWarning` pintaba un banner
-  fijo sobre **cada página real** en dev, que es lo que fotografiaba el VR.
-- **Re-baseline producido**: 48 snapshots re-escritos, 0 creados, 0 borrados.
+- **VR verificado limpio: 61 passed / 1 failed en 2,2 min**, corrida **sin**
+  `--update-snapshots`, a la primera. Esto es lo que faltaba desde la sesión anterior
+  (4 intentos fallidos).
+- **`44ee073f` — los 48 snapshots commiteados**, con el rationale que exige el spec
+  (`visual-regression.spec.ts:6-8`): los PRs que bumpean baselines en silencio se rechazan.
+  Verificado antes de commitear que **los 48 pertenecen a los 61 que pasaron**.
+- **`28012173` — `CLAUDE.md` corregido**: el VR pasa de "13/62" a "61/62 verificado".
+- **Memoria actualizada** (`feedback_update_snapshots_is_not_a_verification`): el paso de
+  verificación por `mtime` era incorrecto — ver Notes.
+
+## Current State
+
+| | |
+|---|---|
+| Rama | `main` local, **11 commits SIN PUSHEAR** (el founder pushea) |
+| `origin/main` | sigue en `b32b9949` |
+| Árbol | ✅ **limpio** — 0 archivos sin commitear |
+| Suite unit | 7397 passing / 596 files (baseline 2026-08-06, no re-corrida: los cambios son PNGs y markdown) |
+| VR | ✅ **61/62**, verificado sin `--update-snapshots` |
+| PRs abiertos | ninguno |
+| Entorno | limpio: sin procesos residuales, 3002 libre, **16 Gi de disco** (⚠️ 97% usado) |
+
+## Next Tasks
+
+No hay nada bloqueante. Los tres pendientes que sobreviven son de mantenimiento y **ninguno
+está en el camino crítico** — se discutieron esta sesión y la decisión fue **diferirlos**:
+
+1. **Supabase CLI v2.98.2 → v2.111.0.** El número del CLI es lo de menos: lo que arrastra es
+   que el stack local corre `gotrue` 2.188.1 vs 2.195.0 en prod y `storage-api` 1.54.0 vs
+   1.68.1 — **drift entre donde probás y lo que sirve usuarios**, con modo de falla
+   silencioso. **Hacerlo sólo cuando** (a) vayas a tocar auth o storage en serio, o (b)
+   aparezca un bug que no reproduzcas local. Y con backup verificado primero
+   (`docs/plans/2026-07-21-supabase-backup-restore-plan.md`): subir el CLI implica bajar el
+   stack y re-levantarlo, y **el `db reset` anterior fue lo que corrompió el volumen**.
+2. **`--rm` en el Postgres de tests** — los volúmenes se acumulaban ~45 MB por corrida
+   (`docs/audits/2026-08-06-docker-local-audit.md:555`).
+3. **Directorio corrupto en la VM de Docker** — el propio audit lo marca **cosmético**.
+
+Fuera de esa lista, el backlog vigente manda:
+`docs/backlog/2026-07-10-backlog-index.md` y `docs/product/2026-07-13-direction-where-we-are.md`.
 
 ## Blockers
 
-- **La pasada de verificación del VR no se completó en 4 intentos.** Causa raíz **desconocida**.
-  Medido: cada corrida dejaba vivos `node` + `next-server` en 3002, y con
-  `reuseExistingServer: true` la siguiente los reusaba — el defecto se acumula solo. La suite
-  pasó de 2,2 min a no terminar en 9.
-- Parte fue proceso mío (pipes a `tail`, timeouts de herramienta que forzaron `kill`, y un
-  Playwright muerto a `kill` **no baja a su hijo** → yo fabriqué huérfanos).
+**Ninguno.**
 
 ## Notes
 
-- ⚠️ **Un `--update-snapshots` NO verifica nada.** Cada test sobrescribe su propia referencia:
-  "61 verdes" ahí significa "se escribieron 61 archivos", no "61 coinciden".
-- ⚠️ **Los 48 PNG no son trabajo humano** — son función determinista de (código, arte, puerto,
-  viewport), todo committeado. Se reproducen en ~2,5 min. Revertirlos no perdía nada, pero
-  tampoco compraba evidencia: por eso quedan en el árbol.
-- ⚠️ **Tres puntos vs dos puntos en `git diff`**: `main...rama` mide el aporte propio de la
-  rama; `main rama` mide la diferencia. Para decidir un borrado hace falta el segundo. Con el
-  primero leí "idéntica a main" una rama que estaba 3.820 líneas atrasada.
-- 🧯 **Tres hipótesis mías se cayeron** durante el diagnóstico del VR: que `rtk` filtraba la
-  salida (refutada: el archivo redirigido dio 0 bytes), que Playwright salteaba los 62
-  (refutada: ese `62 skipped` salía de un reporte viejo) y que `exit 0` significaba éxito.
-- Sigue pendiente de antes: Supabase CLI v2.98.2 → v2.111.0 · evaluar `--rm` en el Postgres
-  de tests · el directorio corrupto dentro de la VM de Docker (cosmético).
+- ⛔ **Corrección al handoff anterior — su paso 3 pedía una confirmación imposible.** Decía
+  "confirmar la corrida por el `mtime` de `apps/web/e2e-results/report/index.html`", pero su
+  paso 2 pasaba `--reporter=list`. **Un `--reporter` en la CLI reemplaza el array entero del
+  config** (`playwright.config.ts:27-30` declara `list` **y** `html`), así que el reporte HTML
+  **no se escribe nunca** y su fecha queda vieja aunque la suite corra completa. Medido:
+  `index.html` seguía en 11:04 después de una corrida exitosa a las 11:58. Casi descarto una
+  corrida buena por esto.
+- ✅ **La evidencia que sí vale:** redirigir a archivo (`> run.log 2>&1`) y leer el **tally
+  final** (`61 passed (2.2m)`), corroborado por el `mtime` de un artefacto fresco en
+  `e2e-results/artifacts/**` — esos se escriben con cualquier reporter.
+- ✅ **Lanzar el VR en background, no en foreground.** Los 4 fracasos de la sesión anterior
+  fueron en foreground, donde el timeout de herramienta mataba Playwright a mitad — y un
+  Playwright muerto a `kill` **no baja a su hijo**, así que cada intento fabricaba el
+  `next-server` huérfano que arruinaba el siguiente. En background salió a la primera.
+- ⚠️ **`hub-shop-sheet-open` va a seguir roja y no es visual.** Muere en una aserción de
+  texto (`visual-regression.spec.ts:164`: espera `"$"`, recibe `"Coming soon"`) **antes** de
+  sacar la foto. Es entorno sin treasury. **Su baseline no está entre los 48 commiteados.**
+- ⚠️ **`git status --porcelain` bajo `rtk` reportó 47 archivos donde había 48.** El conteo
+  autoritativo salió de redirigir `git diff --staged --name-status` a un archivo y leerlo.
+  Si un conteo importa para decidir, no confíes en el `wc -l` de una salida filtrada.
+- 📌 **Del handoff anterior, sigue vigente:** retomar Observability Lote 1 exige
+  `archive/2026-07-observability-lote-1-code` **+ cherry-pick de `d324be56`** — ninguna rama
+  sola sirve, y el hueco es silencioso porque el código compila igual.
+- ⚠️ Disco al 97% (16 Gi libres). No es urgente, pero el VR hace un preflight de disco.
