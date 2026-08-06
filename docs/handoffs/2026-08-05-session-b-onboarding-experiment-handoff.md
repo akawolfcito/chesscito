@@ -371,23 +371,40 @@ dispositivo**. No se levantó dev server ni se fotografió nada.
 
 ## A 24 h — ¿la variante hace algo?
 
+> ✅ **Schema verificado contra producción el 2026-08-05.** La columna JSON de
+> `analytics_events` se llama **`props`** (`jsonb`) — **no** `payload`. Las consultas de
+> abajo ya están corregidas y **probadas contra prod en read-only**.
+>
+> `analytics_events` tiene además una **columna** `surface` (`text`), que es por donde
+> conviene filtrar la superficie. El experimento **también** escribe `surface` dentro de
+> `props`, y en los datos reales los dos coinciden (`learn`) — pero es redundante:
+> **filtrá por la columna**, que está indexada y es la que usan el resto de las consultas
+> del repo. El campo en `props` queda como autodescripción del evento, no como criterio
+> de consulta.
+
 ```sql
 -- Cobertura por brazo: quién fue asignado y qué le pasó.
 with assigned as (
   select distinct session_id,
-         payload->>'variant' as variant
+         props->>'variant' as variant
     from analytics_events
    where event = 'onboarding_variant_assigned'
+     and surface = 'learn'          -- columna, no props: el experimento es LEARN-only
      and created_at >= now() - interval '24 hours'
 )
+-- ⚠️ `count(distinct a.session_id)`, NUNCA `count(*)`. El lateral de abajo
+-- devuelve una fila por (instalación, evento distinto), así que `count(*)`
+-- cuenta PARES, no instalaciones, e infla todas las columnas de forma
+-- desigual. La primera versión publicada de esta consulta tenía ese defecto y
+-- reportó 275 control / 54 variante donde los números reales eran 20 / 4.
 select a.variant,
-       count(*)                                                as installs,
-       count(*) filter (where e.event = 'onboarding_activity_ready')   as activity_ready,
-       count(*) filter (where e.event = 'onboarding_activity_failed')  as activity_failed,
-       count(*) filter (where e.event = 'daily_tactic_started')        as first_action,
-       count(*) filter (where e.event = 'daily_tactic_completed')      as completed,
-       count(*) filter (where e.event = 'onboarding_closure_shown')    as closure_seen,
-       count(*) filter (where e.event = 'onboarding_hub_reached')      as hub_after
+       count(distinct a.session_id) as installs,
+       count(distinct a.session_id) filter (where e.event = 'onboarding_activity_ready')  as activity_ready,
+       count(distinct a.session_id) filter (where e.event = 'onboarding_activity_failed') as activity_failed,
+       count(distinct a.session_id) filter (where e.event = 'daily_tactic_started')       as first_action,
+       count(distinct a.session_id) filter (where e.event = 'daily_tactic_completed')     as completed,
+       count(distinct a.session_id) filter (where e.event = 'onboarding_closure_shown')   as closure_seen,
+       count(distinct a.session_id) filter (where e.event = 'onboarding_hub_reached')     as hub_after
   from assigned a
   left join lateral (
     select distinct event
@@ -399,14 +416,16 @@ select a.variant,
  order by a.variant;
 ```
 
-⚠️ **Verificar antes de creerle:** que `payload` sea el nombre real de la columna JSON de
-`analytics_events`. **No se confirmó en esta sesión** — no se tocó producción.
+> **Corrección histórica.** Esta consulta se publicó usando `payload->>'variant'`, con la
+> advertencia de que el nombre no estaba confirmado. **Estaba mal**: la columna es
+> `props`. Corregida y verificada el 2026-08-05 contra producción.
 
 ```sql
 -- Salud del rail: ninguna razón de fallo debería dominar.
-select payload->>'reason' as reason, count(*)
+select props->>'reason' as reason, count(*)
   from analytics_events
  where event = 'onboarding_activity_failed'
+   and surface = 'learn'
    and created_at >= now() - interval '24 hours'
  group by 1 order by 2 desc;
 ```
@@ -432,10 +451,11 @@ secciones 2a–2e**. Encima, el corte por brazo:
 ```sql
 with cohort as (
   select session_id,
-         min(payload->>'variant') as variant,
-         min(created_at)::date    as day0
+         min(props->>'variant') as variant,
+         min(created_at)::date  as day0
     from analytics_events
    where event = 'onboarding_variant_assigned'
+     and surface = 'learn'
      and created_at >= :day::timestamptz
      and created_at <  (:day::date + 1)::timestamptz
    group by session_id
