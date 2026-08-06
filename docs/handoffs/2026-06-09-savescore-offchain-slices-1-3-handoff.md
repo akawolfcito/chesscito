@@ -54,9 +54,12 @@ chesscito-payment-economy-and-coach-flow-audit-2026-06-09.md`.
 - **Nota DB local**: el repo NO tiene `config.toml` (CLI linkeado a hosted, no
   dev local). La `scores` table NO está versionada → no existe en DB local; el
   smoke lo maneja con `undefined_table`. Receta para correr el smoke en vivo:
-  `docker run -d --name pg postgres:15` → crear roles `anon/authenticated/
+  `docker run --rm -d --name pg-smoke postgres:15` → crear roles `anon/authenticated/
   service_role/authenticator` → aplicar las 4 migraciones versionadas en orden →
-  `psql -f supabase/tests/score_saves_smoke.sql`.
+  `psql -f supabase/tests/score_saves_smoke.sql` → `docker rm -f pg-smoke`.
+  🧯 **Corregido el 2026-08-06**: la receta original decía `docker run -d --name pg`
+  **sin `--rm`**, y cada corrida dejaba el contenedor y su volumen anónimo colgados.
+  Es la convención de `CLAUDE.md` § Command hygiene.
 
 ### Slice 2 — `apps/web/src/lib/scores/save-service.ts`
 - `computeScoreSaveQuota(wallet, freeUsed, proActive?)` (clamp NaN/neg/frac,

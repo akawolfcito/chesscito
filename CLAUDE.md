@@ -80,6 +80,17 @@ Estas reglas hacen que los comandos matcheen la allowlist y no disparen gates de
 - **Un comando por herramienta**; no mezcles `cd`/`cat`/`node`/pipes en una línea (no matchea un prefijo único).
 - **Sin heredocs** (`<<EOF`) ni scripts probe en `/tmp`: crea archivos con la tool Write. zsh tiene `noclobber` → `>` sobre un archivo existente falla; usa Write o `git checkout --`.
 - **Typecheck con `pnpm exec tsc --noEmit`** (matchea), NO la ruta cruda `node_modules/.bin/tsc` ni con `| grep/wc`.
+- **Todo `docker run` de probe/test lleva `--rm`.** Borra el contenedor **y sus volúmenes
+  anónimos** al salir; sin él cada corrida deja un Postgres colgado con su volumen de datos
+  (así se juntaron 17 huérfanos hasta el 2026-08-06). El defecto **no es `-d`**: es `-d --name`
+  **sin `--rm`**, que además sobrevive a la sesión y colisiona con la siguiente. Los tres
+  consumidores del repo ya cumplen y muestran las dos formas válidas —
+  `--rm -i` en foreground (`scripts/ops/verify-stats-rpcs.ts:860`,
+  `scripts/ops/collectors/supabase.ts:190`) y `--rm -d --name` cuando hace falta entrar por
+  `psql` desde otra terminal (`apps/web/scripts/privileged-views-role-probe.sql:15`, que se
+  cierra con `docker rm -f <name>`).
+  ⚠️ Excepción deliberada: el `postgres:16-alpine` **persistente** de `pnpm ops:health` — esa
+  no se toca ni se levanta a mano.
 - Al despachar **subagentes**, repite estas reglas en su prompt (hereda este archivo, pero reforzar evita el `cd`-por-default).
 
 ## Specs de features con UI
