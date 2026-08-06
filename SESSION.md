@@ -1,78 +1,134 @@
-# Session Handoff — 2026-08-06 (verificación del VR — cerrada en verde)
+# Session Handoff — 2026-08-06 (mantenimiento de disco — cerrada)
 
-> 📌 **El bloqueo de la sesión anterior está cerrado.** El VR quedó **61/62 verificado**
-> y los 48 baselines commiteados. No queda nada pendiente con pasos definidos.
+> 📌 **Sesión de mantenimiento, sin cambios de código.** Se recuperaron ~5 GB en el repo/Docker
+> y se estableció con evidencia cómo borrar perfiles de Chrome, que es donde está el volumen
+> real. El resto de los perfiles los revisa el founder a mano.
 
 ## Completed
 
-- **VR verificado limpio: 61 passed / 1 failed en 2,2 min**, corrida **sin**
-  `--update-snapshots`, a la primera. Esto es lo que faltaba desde la sesión anterior
-  (4 intentos fallidos).
-- **`44ee073f` — los 48 snapshots commiteados**, con el rationale que exige el spec
-  (`visual-regression.spec.ts:6-8`): los PRs que bumpean baselines en silencio se rechazan.
-  Verificado antes de commitear que **los 48 pertenecen a los 61 que pasaron**.
-- **`28012173` — `CLAUDE.md` corregido**: el VR pasa de "13/62" a "61/62 verificado".
-- **Memoria actualizada** (`feedback_update_snapshots_is_not_a_verification`): el paso de
-  verificación por `mtime` era incorrecto — ver Notes.
+### 1. Limpieza ejecutada — ~5 GB (16 Gi → 21,9 Gi libres, 97% → 95%)
+
+| Acción | Recuperado |
+|---|---|
+| `docker image rm postgres:15` (huérfana, resto de la receta de junio) | 467 MB / 3 capas |
+| `rm -rf apps/web/.next/cache` | 1,9 GB (`.next` quedó en 212 MB) |
+| `pnpm store prune` | 1.691 paquetes / 117.442 archivos |
+
+⚠️ El store de pnpm bajó 2,0 → 1,8 GB en `du` pese a borrar 117k archivos: es
+content-addressed con hard links, **`du` subcuenta lo liberado**. El número real sale de `df`.
+No se tocó `postgres:16-alpine` — la usa `pnpm ops:health`.
+
+### 2. El ítem del `--rm` NO tiene código que arreglar
+
+El open question del audit de Docker (`docs/audits/2026-08-06-docker-local-audit.md:555`)
+preguntaba dónde se levanta Postgres para tests sin `--rm`. **Respuesta: en ningún lado del
+código.** `scripts/ops/verify-stats-rpcs.ts`, `scripts/ops/collectors/supabase.ts` y
+`apps/web/scripts/privileged-views-role-probe.sql` **ya usan `--rm`**. La única receta sin
+`--rm` es **prosa** en `docs/handoffs/2026-06-09-savescore-offchain-slices-1-3-handoff.md:57`
+(`docker run -d --name pg postgres:15`). Docker hoy: 12 contenedores, 2 volúmenes,
+**0 huérfanos**.
+
+### 3. Diagnóstico de disco: el proyecto no es el problema
+
+`scripts/disk-telemetry.sh` (read-only) más medición manual:
+
+| Consumidor | Tamaño |
+|---|---|
+| `~/Library/Caches/Google/Chrome` | **24 GB** (caché descartable) |
+| `~/Library/Application Support/Google/Chrome` | **otros 24 GB** (perfiles reales) |
+| `/var/folders/…/T` | 5,4 GB (se recupera al reiniciar) |
+| `OptGuideOnDeviceModel` (modelo IA on-device de Chrome) | 4,0 GB, re-descargable |
+| `~/Library/Caches/pnpm` | 2,0 GB |
+| `node_modules` (root) | 1,9 GB — **no era el culpable** |
+
+Confirma `feedback_du_lies_about_pnpm_node_modules`.
+
+### 4. ✅ Verificado empíricamente: borrar un perfil de Chrome limpia LOS DOS árboles
+
+Es el resultado más útil de la sesión, porque decide la estrategia de los 38 perfiles restantes.
+
+Método: snapshot antes → el founder borra `Profile 48` desde `chrome://profile-picker/`
+(tres puntos en la tarjeta → Delete) → snapshot después → diff.
+
+```
+             antes → después
+cache_dirs      64 → 63
+data_dirs       64 → 63
+local_state     64 → 63
+```
+
+`Profile 48` desapareció de las dos ubicaciones a la vez (70,6 MB de datos + 175,7 MB de
+caché = ~246 MB; `df` se movió +0,2 GB, cuadra). **No hay que barrer la caché aparte.**
 
 ## Current State
 
 | | |
 |---|---|
-| Rama | `main` local, **11 commits SIN PUSHEAR** (el founder pushea) |
+| Rama | `main` local, **13 commits SIN PUSHEAR** (el founder pushea) |
 | `origin/main` | sigue en `b32b9949` |
-| Árbol | ✅ **limpio** — 0 archivos sin commitear |
-| Suite unit | 7397 passing / 596 files (baseline 2026-08-06, no re-corrida: los cambios son PNGs y markdown) |
-| VR | ✅ **61/62**, verificado sin `--update-snapshots` |
-| PRs abiertos | ninguno |
-| Entorno | limpio: sin procesos residuales, 3002 libre, **16 Gi de disco** (⚠️ 97% usado) |
+| Árbol | ✅ limpio |
+| Suite unit | 7397 passing / 596 files (baseline 2026-08-06, **no re-corrida: cero cambios de código esta sesión**) |
+| VR | 61/62, verificado el 2026-08-06 (`44ee073`) |
+| Disco | **21,9 Gi libres (95%)**, desde 16 Gi |
+| Docker | 12 contenedores, 2 volúmenes, 0 huérfanos |
 
 ## Next Tasks
 
-No hay nada bloqueante. Los tres pendientes que sobreviven son de mantenimiento y **ninguno
-está en el camino crítico** — se discutieron esta sesión y la decisión fue **diferirlos**:
+**Lo de Chrome queda en manos del founder** — decisión explícita del cierre. El mapa que
+dejó la medición, para cuando lo retome:
 
-1. **Supabase CLI v2.98.2 → v2.111.0.** El número del CLI es lo de menos: lo que arrastra es
-   que el stack local corre `gotrue` 2.188.1 vs 2.195.0 en prod y `storage-api` 1.54.0 vs
-   1.68.1 — **drift entre donde probás y lo que sirve usuarios**, con modo de falla
-   silencioso. **Hacerlo sólo cuando** (a) vayas a tocar auth o storage en serio, o (b)
-   aparezca un bug que no reproduzcas local. Y con backup verificado primero
-   (`docs/plans/2026-07-21-supabase-backup-restore-plan.md`): subir el CLI implica bajar el
-   stack y re-levantarlo, y **el `db reset` anterior fue lo que corrompió el volumen**.
-2. **`--rm` en el Postgres de tests** — los volúmenes se acumulaban ~45 MB por corrida
-   (`docs/audits/2026-08-06-docker-local-audit.md:555`).
-3. **Directorio corrupto en la VM de Docker** — el propio audit lo marca **cosmético**.
+| | Perfiles | Data + caché |
+|---|---|---|
+| Con wallet detectada | 25 | **28,1 GB** ⛔ no tocar |
+| Sin wallet detectada | 38 | **14,9 GB** ✅ pozo seguro |
 
-Fuera de esa lista, el backlog vigente manda:
-`docs/backlog/2026-07-10-backlog-index.md` y `docs/product/2026-07-13-direction-where-we-are.md`.
+Perfiles con wallet: `Default`, `3`, `4`, `16`, `18`, `21`, `24`, `25`, `31`, `34`, `38`,
+`39`, `41`, `44`, `45`, `49`, `53`, `59`, `60`, `67`, `71`, `72`, `79`, `81`, `82`.
+
+⚠️ **La marca "sin wallet" mira solo CUATRO extension-ids** (MetaMask
+`nkbihfbeogaeaoehlefnkodbefgpgknn`, Coinbase `hnfanknocfeofbddgcijnmhnfnkdnaad`, Phantom
+`bfnaelmomeimhlpmgjnjophhpkkoljpa`, Rabby `acmacodkjbdgmoleebolmdjonilkdbch`). Un perfil con
+Rainbow / Keplr / Backpack / Trust **saldría como seguro y no lo es**. Ampliar la lista de ids
+antes de barrer en volumen.
+
+Del backlog previo, siguen diferidos y sin cambios: Supabase CLI v2.98.2 → v2.111.0 (solo al
+tocar auth/storage, con backup verificado), y el directorio corrupto de la VM de Docker
+(el propio audit lo marca cosmético).
+
+Frentes de producto vivos: `docs/backlog/2026-07-10-backlog-index.md` y
+`docs/product/2026-07-13-direction-where-we-are.md`.
 
 ## Blockers
 
 **Ninguno.**
 
+## Open questions
+
+- **La convención del `--rm` no quedó escrita.** Se ofreció y no se eligió. Si se documenta,
+  el lugar es `CLAUDE.md` (sección de command hygiene) + corregir la receta del handoff de
+  junio. Sin eso, la próxima sesión que levante un Postgres suelto vuelve a dejar volúmenes.
+- **Los scripts de medición vivieron en el scratchpad de la sesión y se pierden**
+  (`chrome-snapshot.sh`, `profile-diff.sh`, `cache-age.sh`). Si el founder va a seguir
+  borrando perfiles y quiere medir el efecto, hay que promoverlos a `scripts/` como hermanos
+  de `disk-telemetry.sh` — o rehacerlos.
+
 ## Notes
 
-- ⛔ **Corrección al handoff anterior — su paso 3 pedía una confirmación imposible.** Decía
-  "confirmar la corrida por el `mtime` de `apps/web/e2e-results/report/index.html`", pero su
-  paso 2 pasaba `--reporter=list`. **Un `--reporter` en la CLI reemplaza el array entero del
-  config** (`playwright.config.ts:27-30` declara `list` **y** `html`), así que el reporte HTML
-  **no se escribe nunca** y su fecha queda vieja aunque la suite corra completa. Medido:
-  `index.html` seguía en 11:04 después de una corrida exitosa a las 11:58. Casi descarto una
-  corrida buena por esto.
-- ✅ **La evidencia que sí vale:** redirigir a archivo (`> run.log 2>&1`) y leer el **tally
-  final** (`61 passed (2.2m)`), corroborado por el `mtime` de un artefacto fresco en
-  `e2e-results/artifacts/**` — esos se escriben con cualquier reporter.
-- ✅ **Lanzar el VR en background, no en foreground.** Los 4 fracasos de la sesión anterior
-  fueron en foreground, donde el timeout de herramienta mataba Playwright a mitad — y un
-  Playwright muerto a `kill` **no baja a su hijo**, así que cada intento fabricaba el
-  `next-server` huérfano que arruinaba el siguiente. En background salió a la primera.
-- ⚠️ **`hub-shop-sheet-open` va a seguir roja y no es visual.** Muere en una aserción de
-  texto (`visual-regression.spec.ts:164`: espera `"$"`, recibe `"Coming soon"`) **antes** de
-  sacar la foto. Es entorno sin treasury. **Su baseline no está entre los 48 commiteados.**
-- ⚠️ **`git status --porcelain` bajo `rtk` reportó 47 archivos donde había 48.** El conteo
-  autoritativo salió de redirigir `git diff --staged --name-status` a un archivo y leerlo.
-  Si un conteo importa para decidir, no confíes en el `wc -l` de una salida filtrada.
-- 📌 **Del handoff anterior, sigue vigente:** retomar Observability Lote 1 exige
-  `archive/2026-07-observability-lote-1-code` **+ cherry-pick de `d324be56`** — ninguna rama
-  sola sirve, y el hueco es silencioso porque el código compila igual.
-- ⚠️ Disco al 97% (16 Gi libres). No es urgente, pero el VR hace un preflight de disco.
+- ⛔ **Las seeds NO están en `Caches`.** Los vaults viven en
+  `Application Support/Google/Chrome/<Profile>/Local Extension Settings/<extension-id>/`.
+  `Caches/Google/Chrome/<Profile>` contiene **únicamente** `Cache` y `Code Cache`. Verificado
+  directorio por directorio.
+- ⚠️ **El camino peligroso no es borrar la carpeta `Caches`, es "Borrar datos de navegación"
+  de Chrome con "Cookies y datos de sitios" tildado** — eso sí puede vaciar el storage de
+  extensiones.
+- ⚠️ **Copiar la carpeta del perfil NO es un respaldo de wallet**: el vault está cifrado con
+  la contraseña de la extensión, y copiado con Chrome abierto el LevelDB puede quedar
+  corrupto. Un respaldo solo cuenta como probado si se restauró la frase en una wallet limpia
+  y salió la misma dirección.
+- ⚠️ **"Close This Profile" ≠ borrar.** Solo cierra las ventanas. El borrado vive únicamente
+  en `chrome://profile-picker/`, y Chrome **no deja borrar un perfil abierto** — de ahí que
+  cerrarlo sea el paso previo, no el borrado.
+- 📊 **Regeneración del caché de Chrome, medida por `mtime`:** de los 64 caches, 24 se
+  escribieron en 2026, 39 en 2025 y 2 en 2024. Los activos suman **2,5 GB**; los 52 dormidos,
+  **21,9 GB**. Borrar el caché entero recupera 24 GB y solo vuelven ~2,5 en semanas de uso —
+  los 21,9 tardaron **~2 años** en acumularse.
