@@ -3,6 +3,7 @@
 import { HubLiteScaffold } from "@/components/hub/hub-lite-scaffold";
 import { HubDailyTrigger } from "@/components/hub/hub-daily-trigger";
 import type { RewardTile } from "@/components/kingdom/reward-column";
+import type { ContentLoopAction } from "@/lib/hub/content-loop";
 import type { PeonesBalanceState } from "@/lib/peones/use-peones-balance";
 import type { ChallengeProgressView } from "@/lib/season-pass/focus-days";
 import type { ChallengeCardSeasonPass } from "@/components/hub/challenge-card";
@@ -70,7 +71,34 @@ type VariantShape = {
   shields?: { count: number };
   /** null when the pass is active (no purchase CTA). */
   hasJoinCta: boolean;
+  /** The next-best-action this variant hands the CTA slot.
+   *
+   *  ⚠️ This used to be `null` for all three, which made every shot photograph
+   *  the pre-hydration fallback — a status — and gave the VR no coverage at all
+   *  of the action presentation. A `/dev` fixture photographs only what it is
+   *  handed. It must stay COHERENT with `passport.todayDone`: the loop returns
+   *  `daily-pending` before anything else while the Daily is pending, so a
+   *  pending day paired with a terminal variant is a state the product cannot
+   *  reach. */
+  contentLoop: ContentLoopAction;
 };
+
+/** Minimal action for the probe. The copy fields are never read by the slot
+ *  (labels resolve through next-intl by key), so they carry the loop's own
+ *  strings unchanged rather than a second set to keep in sync. */
+function loopAction(
+  variant: ContentLoopAction["variant"],
+  destination: string | null,
+): ContentLoopAction {
+  return {
+    variant,
+    destination,
+    ctaEN: "",
+    ctaES: "",
+    subEN: "",
+    subES: "",
+  };
+}
 
 const VARIANTS: Record<LearnHubVariant, VariantShape> = {
   // No wallet: the Peones chip is absent and the Connect chip takes its place.
@@ -90,6 +118,9 @@ const VARIANTS: Record<LearnHubVariant, VariantShape> = {
       lastCompletedDate: null,
     },
     hasJoinCta: true,
+    // Never reached: without an active pass the slot is the $0.99 banner. Kept
+    // coherent anyway so the fixture never encodes an impossible state.
+    contentLoop: loopAction("daily-pending", "/exercises?slot=daily"),
   },
   // The widest ordinary case, and the row most likely to break at 390px: a
   // two-digit progress, a two-digit countdown and a two-digit streak, all in
@@ -115,6 +146,10 @@ const VARIANTS: Record<LearnHubVariant, VariantShape> = {
     },
     shields: { count: 3 },
     hasJoinCta: false,
+    // Day done and nothing actionable left: the TERMINAL presentation. This is
+    // the shot that proves the legend keeps the button's reserved box — the
+    // anchor where the CLS 0,179 lived until 2026-08-07.
+    contentLoop: loopAction("come-back-tomorrow", null),
   },
   // PRO reaches the challenge without buying a window: `unbounded` renders no
   // countdown at all, and the crowned badge is the only thing that says why
@@ -140,6 +175,9 @@ const VARIANTS: Record<LearnHubVariant, VariantShape> = {
     },
     shields: { count: 2 },
     hasJoinCta: false,
+    // Daily still pending → the ACTION presentation, a real button. Coherent
+    // with `todayDone: false` above.
+    contentLoop: loopAction("daily-pending", "/exercises?slot=daily"),
   },
 };
 
@@ -172,7 +210,7 @@ export function LearnHubFixture({ variant }: { variant: LearnHubVariant }) {
       // is defined, so without it the baseline is blind to the chip.
       onReplayTour={noop}
       shields={v.shields}
-      primaryFocus={{ onPress: noop, contentLoop: null, isHydrated: true }}
+      primaryFocus={{ onPress: noop, contentLoop: v.contentLoop, isHydrated: true }}
       rewardTiles={REWARD_TILES}
       isPro={variant === "pro"}
       onAccountTap={noop}
