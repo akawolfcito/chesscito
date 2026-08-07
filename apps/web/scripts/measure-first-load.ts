@@ -75,15 +75,131 @@ type Sample = {
   privyUrls: string[];
 };
 
+/**
+ * Web Vitals as the PAGE reports them, not as a lab tool estimates them.
+ *
+ * ⚠️ `tbtMs` is an APPROXIMATION and is named so on purpose: real TBT is
+ * measured between FCP and Time to Interactive, and TTI is not observable from
+ * a `PerformanceObserver`. This sums the blocking part of every long task from
+ * FCP to the last milestone — comparable between runs of THIS instrument, not
+ * comparable with a Lighthouse number.
+ */
+/** One layout shift, with WHICH nodes moved — a CLS number alone cannot tell a
+ *  late image from a shell swap, and those need opposite fixes. */
+type LayoutShiftRecord = {
+  atMs: number;
+  value: number;
+  sources: { tag: string; className: string; testid: string | null }[];
+};
+
+type Vitals = {
+  fcpMs: number | null;
+  lcpMs: number | null;
+  cls: number;
+  longTasks: { startMs: number; durationMs: number }[];
+  shifts: LayoutShiftRecord[];
+  tbtApproxMs: number;
+  /** Entry types this browser refused, if any. */
+  failed: string[];
+  /** The paint timeline, kept as the cross-check that caught the instrument
+   *  reporting `n/a` for a page that had painted. */
+  paintEntries: { name: string; startMs: number }[];
+};
+
 type Run = {
   label: string;
   persona: Persona;
   url: string;
   measuredAt: string;
+  /** Network/CPU profile, so a number is never compared across profiles by
+   *  accident. */
+  profile: string;
   samples: Sample[];
+  vitals: Vitals;
   /** Everything downloaded by T3, for auditing a surprising number. */
   allJs: { url: string; bytes: number }[];
 };
+
+/**
+ * Lighthouse's mobile profile, reproduced by hand so runs are reproducible and
+ * the numbers are recognisable: 150 ms RTT, 1.6 Mbps down, 750 kbps up, and a
+ * 4× CPU slowdown. ⚠️ The CPU multiplier matters more than the bandwidth on a
+ * hydration-bound page — dropping it would flatter every result.
+ */
+const SLOW_4G = {
+  latencyMs: 150,
+  downloadKbps: 1_638.4,
+  uploadKbps: 750,
+  cpuSlowdown: 4,
+};
+
+/**
+ * Collected in the page, before any app code runs, with `buffered: true` so
+ * entries that fired before this executed are not lost.
+ *
+ * ⛔ PLAIN STRING, NOT A FUNCTION — and this is not style.
+ * `addInitScript(fn)` serialises `fn.toString()`, and tsx/esbuild compiles named
+ * inner functions with a `__name(...)` call that only exists inside the bundle.
+ * In the page that is `__name is not defined`: the script dies after creating
+ * the store and before registering a single observer. The run then reported
+ * `FCP n/a · LCP n/a · CLS 0 · 0 long tasks` for a page that had painted at
+ * 576 ms — four values that all read as data and were all absence. A string is
+ * immune to every transpiler helper.
+ *
+ * ⚠️ Each observer is also kept in `observers`: one with no strong reference can
+ * be collected, and a collected observer stops delivering entries silently.
+ */
+const VITALS_INIT_SCRIPT = `
+(function () {
+  var store = {
+    fcpMs: null,
+    lcpMs: null,
+    cls: 0,
+    longTasks: [],
+    shifts: [],
+    failed: [],
+    observers: []
+  };
+  window.__chesscitoVitals = store;
+
+  function observe(type, handle) {
+    try {
+      var observer = new PerformanceObserver(function (list) {
+        list.getEntries().forEach(handle);
+      });
+      observer.observe({ type: type, buffered: true });
+      store.observers.push(observer);
+    } catch (error) {
+      store.failed.push(type + ": " + error);
+    }
+  }
+
+  observe("paint", function (entry) {
+    if (entry.name === "first-contentful-paint") store.fcpMs = entry.startTime;
+  });
+  observe("largest-contentful-paint", function (entry) {
+    store.lcpMs = entry.startTime;
+  });
+  observe("layout-shift", function (entry) {
+    if (entry.hadRecentInput) return;
+    store.cls += entry.value;
+    // WHICH element moved, not just how much. A CLS number alone cannot tell a
+    // late-loading image from the shell swap, and those need opposite fixes.
+    var sources = (entry.sources || []).map(function (source) {
+      var node = source.node;
+      return {
+        tag: node && node.tagName ? node.tagName.toLowerCase() : "unknown",
+        className: node && typeof node.className === "string" ? node.className.slice(0, 80) : "",
+        testid: node && node.getAttribute ? node.getAttribute("data-testid") : null
+      };
+    });
+    store.shifts.push({ atMs: entry.startTime, value: entry.value, sources: sources });
+  });
+  observe("longtask", function (entry) {
+    store.longTasks.push({ startMs: entry.startTime, durationMs: entry.duration });
+  });
+})();
+`;
 
 function arg(name: string, fallback?: string): string {
   const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
@@ -108,7 +224,17 @@ async function emulateMiniPay(context: BrowserContext): Promise<void> {
   });
 }
 
-async function measure(page: Page, cdp: Awaited<ReturnType<BrowserContext["newCDPSession"]>>, url: string, persona: Persona): Promise<{ samples: Sample[]; allJs: { url: string; bytes: number }[] }> {
+async function measure(
+  page: Page,
+  cdp: Awaited<ReturnType<BrowserContext["newCDPSession"]>>,
+  url: string,
+  persona: Persona,
+  filmstripDir: string | null,
+): Promise<{
+  samples: Sample[];
+  vitals: Vitals;
+  allJs: { url: string; bytes: number }[];
+}> {
   const urlByRequest = new Map<string, string>();
   const bytesByUrl = new Map<string, number>();
   const privyUrls = new Set<string>();
@@ -144,6 +270,34 @@ async function measure(page: Page, cdp: Awaited<ReturnType<BrowserContext["newCD
   // `commit`: start the clock when navigation actually begins, not when some
   // arbitrary load event decides the page is done.
   await page.goto(url, { waitUntil: "commit", timeout: 60_000 });
+
+  // ⚠️ A filmstrip run is QUALITATIVE ONLY. Screenshotting costs main-thread
+  // time, which is the very thing being measured under CPU throttling — so its
+  // timings are never the ones reported. It answers one question the numbers
+  // cannot: is the player looking at a blank screen or at something.
+  let filmstripStop: (() => void) | null = null;
+  if (filmstripDir) {
+    mkdirSync(filmstripDir, { recursive: true });
+    let frame = 0;
+    let stopped = false;
+    const shoot = async (): Promise<void> => {
+      while (!stopped) {
+        const at = Date.now() - started;
+        try {
+          await page.screenshot({
+            path: path.join(filmstripDir, `${String(frame++).padStart(3, "0")}-${at}ms.png`),
+          });
+        } catch {
+          /* the page may be navigating; a missing frame is not a failure */
+        }
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+    };
+    void shoot();
+    filmstripStop = () => {
+      stopped = true;
+    };
+  }
 
   const samples: Sample[] = [];
   const snapshot = async (milestone: MilestoneName): Promise<void> => {
@@ -182,14 +336,66 @@ async function measure(page: Page, cdp: Awaited<ReturnType<BrowserContext["newCD
   // this is the number that tells whether the split moved bytes or removed them.
   await page.waitForTimeout(2_000);
   await snapshot("T3");
+  filmstripStop?.();
+
+  const raw = await page.evaluate(() => {
+    const collected = (
+      window as unknown as {
+        __chesscitoVitals: {
+          fcpMs: number | null;
+          lcpMs: number | null;
+          cls: number;
+          longTasks: { startMs: number; durationMs: number }[];
+          shifts: LayoutShiftRecord[];
+          failed: string[];
+        };
+      }
+    ).__chesscitoVitals;
+    return {
+      fcpMs: collected.fcpMs,
+      lcpMs: collected.lcpMs,
+      cls: collected.cls,
+      longTasks: collected.longTasks,
+      shifts: collected.shifts,
+      failed: collected.failed,
+      // Cross-check from the timeline itself. If the observer missed FCP but the
+      // entry exists, the run is reporting absence as data and must say so.
+      paintEntries: performance
+        .getEntriesByType("paint")
+        .map((entry) => ({ name: entry.name, startMs: entry.startTime })),
+    };
+  });
+
+  if (raw.fcpMs == null && raw.paintEntries.some((e) => e.name === "first-contentful-paint")) {
+    throw new Error(
+      "The page recorded a first-contentful-paint but the observer did not. " +
+        "The instrument is broken; the numbers would be absence dressed as data.\n" +
+        JSON.stringify(raw),
+    );
+  }
+
+  // TBT approximation: the blocking share (over 50 ms) of every long task after
+  // FCP. Named `approx` because the real definition ends at TTI, which is not
+  // observable here — see the type's comment.
+  const fcp = raw.fcpMs ?? 0;
+  const tbtApproxMs = raw.longTasks
+    .filter((task) => task.startMs >= fcp)
+    .reduce((total, task) => total + Math.max(0, task.durationMs - 50), 0);
 
   void persona;
   return {
     samples,
+    vitals: { ...raw, tbtApproxMs },
     allJs: [...bytesByUrl.entries()]
       .map(([url, bytes]) => ({ url, bytes }))
       .sort((a, b) => b.bytes - a.bytes),
   };
+}
+
+/** `null` prints as `n/a`, never as `0` — a missing metric and a zero metric are
+ *  different facts and only one of them is good news. */
+function fmt(ms: number | null): string {
+  return ms == null ? "n/a" : `${Math.round(ms)} ms`;
 }
 
 function isJs(url: string): boolean {
@@ -205,6 +411,12 @@ async function main(): Promise<void> {
     path.resolve(process.cwd(), "../../docs/measurements/first-load-minipay.json"),
   );
 
+  // ⚠️ Default is UNTHROTTLED so the byte comparison against the stored baseline
+  // stays apples-to-apples. Throttling changes timings, never bytes — but a run
+  // labelled without its profile is a number nobody can reproduce, so the
+  // profile travels inside the record.
+  const throttle = arg("throttle", "none");
+
   const browser = await chromium.launch();
   const context = await browser.newContext({
     ...devices["Pixel 5"],
@@ -213,14 +425,35 @@ async function main(): Promise<void> {
     viewport: { width: 390, height: 844 },
   });
   if (persona === "minipay") await emulateMiniPay(context);
+  await context.addInitScript({ content: VITALS_INIT_SCRIPT });
 
   const page = await context.newPage();
+  // A page error during a measurement run is not noise: the `__name is not
+  // defined` that killed the vitals init script was invisible until this line
+  // existed, and the run happily reported four metrics that were all absence.
+  page.on("pageerror", (error) => console.log("  ⚠️ pageerror:", error.message));
   const cdp = await context.newCDPSession(page);
   await cdp.send("Network.enable");
   // A warm cache measures the second visit. Every player has a first one.
   await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
 
-  const { samples, allJs } = await measure(page, cdp, url, persona);
+  if (throttle === "slow4g") {
+    await cdp.send("Network.emulateNetworkConditions", {
+      offline: false,
+      latency: SLOW_4G.latencyMs,
+      downloadThroughput: (SLOW_4G.downloadKbps * 1024) / 8,
+      uploadThroughput: (SLOW_4G.uploadKbps * 1024) / 8,
+    });
+    // The CPU multiplier is not decoration: this page is hydration-bound, so
+    // leaving it at 1× would flatter every timing on a developer machine.
+    await cdp.send("Emulation.setCPUThrottlingRate", { rate: SLOW_4G.cpuSlowdown });
+  }
+
+  const filmstripDir = process.argv.includes("--filmstrip")
+    ? path.resolve(process.cwd(), `e2e-results/filmstrip/${label}`)
+    : null;
+
+  const { samples, vitals, allJs } = await measure(page, cdp, url, persona, filmstripDir);
   await browser.close();
 
   const run: Run = {
@@ -228,7 +461,9 @@ async function main(): Promise<void> {
     persona,
     url,
     measuredAt: new Date().toISOString(),
+    profile: throttle === "slow4g" ? "slow4g+4xCPU" : "unthrottled",
     samples,
+    vitals,
     allJs,
   };
 
@@ -244,13 +479,27 @@ async function main(): Promise<void> {
     JSON.stringify([...history.filter((r) => r.label !== label), run], null, 2),
   );
 
-  console.log(`\n${persona} · ${url}`);
+  console.log(`\n${persona} · ${run.profile} · ${url}`);
   for (const sample of samples) {
     console.log(
       `  ${sample.milestone.padEnd(7)} ${String(sample.atMs).padStart(6)} ms  ` +
         `${(sample.jsEncodedBytes / 1024).toFixed(1).padStart(8)} kB  ` +
         `${String(sample.jsRequests).padStart(3)} js  ` +
         `privy: ${sample.privyUrls.length}`,
+    );
+  }
+  const blocking = vitals.longTasks.filter((t) => t.durationMs > 50);
+  console.log(
+    `\n  FCP ${fmt(vitals.fcpMs)}  LCP ${fmt(vitals.lcpMs)}  CLS ${vitals.cls.toFixed(4)}  ` +
+      `TBT~ ${Math.round(vitals.tbtApproxMs)} ms  long tasks ${blocking.length}` +
+      (blocking.length
+        ? ` (max ${Math.round(Math.max(...blocking.map((t) => t.durationMs)))} ms)`
+        : ""),
+  );
+  for (const shift of vitals.shifts) {
+    console.log(
+      `  shift ${shift.value.toFixed(4)} @ ${Math.round(shift.atMs)} ms → ` +
+        shift.sources.map((s) => `${s.tag}.${s.className.split(" ")[0]}`).join(", "),
     );
   }
   console.log(`\n  → ${outFile}\n`);
