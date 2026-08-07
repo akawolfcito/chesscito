@@ -1,16 +1,17 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 
 import { WalletBranchErrorBoundary } from "@/components/wallet-branch-error-boundary";
-import { WalletProvider } from "@/components/wallet-provider";
-import { WebWalletProvider } from "@/components/web-wallet-provider";
+import { walletBranchLoaders } from "@/components/wallet-branch-loaders";
+import { WalletShell } from "@/components/wallet-shell";
 import { isMiniPayEnv } from "@/lib/minipay";
-import { resolveWalletBranch } from "@/lib/wallet/wallet-branch";
+import { resolveWalletBranch, type MountedWalletBranch } from "@/lib/wallet/wallet-branch";
 
 /** `NEXT_PUBLIC_PRIVY_ENABLED === "true"`. Read in render so it stays inline for
- *  Next and stubbable in tests. Off in production. */
+ *  Next and stubbable in tests. ON in production on both projects — verified by
+ *  rendering, 2026-08-06. Neither branch is dead code. */
 function isPrivyEnabled(): boolean {
   return process.env.NEXT_PUBLIC_PRIVY_ENABLED === "true";
 }
@@ -18,24 +19,25 @@ function isPrivyEnabled(): boolean {
 /**
  * Chooses the wallet provider tree on the client and mounts exactly one of
  * `WalletProvider` (MiniPay / injected), `WebWalletProvider` (Privy web), or a
- * stable `undecided` shell.
+ * stable `WalletShell`.
  *
  * The environment can only be read after hydration — `isMiniPayEnv()` reads
  * `window`, so on the server it is `false` for everyone. Committing to a branch
  * there would strand MiniPay users in a hydration mismatch and remount wagmi.
- * So this refuses to decide until `hydrated`, feeding that fact to
- * `resolveWalletBranch`, and `isMiniPayEnv()` is only ever called on the client.
  *
- * With the flag off `resolveWalletBranch` returns `injected` even before
- * hydration, so the tree renders exactly as it does today — no shell, no
- * remount.
+ * ⚠️ BOTH BRANCHES ARE LAZY, AND THAT CHANGES THE SERVER OUTPUT.
+ * Before this, the flag being off meant the server rendered the injected
+ * provider outright. It cannot any more: the branch's code is behind an
+ * `import()` that only a browser fires, so every server render emits the shell
+ * (spec AC2 / E1 — a deliberate change, not a regression). That is the price of
+ * not shipping 2.2 MB of wallet code to a player who runs one of the branches.
  */
 export function WalletProviderBoundary({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
-  /** Bumped by a retry. Used as the boundary's `key`, so a retry REMOUNTS the
-   *  subtree instead of re-rendering it — the only way a fresh attempt can
-   *  happen at all (spec C2c). Re-rendering would land on the same cached
-   *  rejection without touching the network. */
+  /** Bumped by a retry. Part of the lazy component's memo key, so a retry builds
+   *  a BRAND NEW lazy identity — the only way a fresh attempt can happen at all
+   *  (spec C2c). Re-rendering the same one lands on the cached rejection without
+   *  ever touching the network, which would make the button a lie. */
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
@@ -48,20 +50,40 @@ export function WalletProviderBoundary({ children }: { children: ReactNode }) {
     isMiniPay: hydrated ? isMiniPayEnv() : false,
   });
 
-  if (branch !== "undecided") {
-    const Branch = branch === "injected" ? WalletProvider : WebWalletProvider;
-    return (
-      <WalletBranchErrorBoundary
-        key={attempt}
-        onRetry={() => setAttempt((n) => n + 1)}
-      >
-        <Branch>{children}</Branch>
-      </WalletBranchErrorBoundary>
-    );
+  // `hydrated` gates the branch as well as `resolveWalletBranch` does, and it is
+  // not redundant: with the flag OFF that function answers `injected` even
+  // before hydration, which was right while the tree was static and is wrong now
+  // that mounting means firing an import().
+  const mounted: MountedWalletBranch | null =
+    hydrated && branch !== "undecided" ? branch : null;
+
+  const LazyBranch = useMemo(
+    () => (mounted ? lazy(() => walletBranchLoaders[mounted]()) : null),
+    // `attempt` is load-bearing: a new value must produce a NEW lazy component,
+    // because React memoizes the outcome — success and failure alike — per lazy
+    // identity. Same identity, same rejection, no network.
+    [mounted, attempt],
+  );
+
+  if (!LazyBranch) {
+    // `undecided`, or the server. A stable shell shared by SSR and the first
+    // client render — no children and no wagmi hooks: mounting the app tree here
+    // just to swap it is the double-mount this design exists to avoid.
+    return <WalletShell />;
   }
 
-  // `undecided` — a stable shell shared by SSR and the first client render.
-  // No children and no wagmi hooks: mounting a provider here just to swap it
-  // is the double-mount this whole design exists to avoid.
-  return <div data-wallet-shell="undecided" />;
+  return (
+    <WalletBranchErrorBoundary
+      key={attempt}
+      onRetry={() => setAttempt((n) => n + 1)}
+    >
+      {/* Three owners, one each: Suspense owns the wait, the error boundary owns
+          the terminal failure, the branch owns being mounted. `children` sits
+          under the lazy component only — never under the fallback — so it mounts
+          exactly once across shell → branch (AC7). */}
+      <Suspense fallback={<WalletShell />}>
+        <LazyBranch>{children}</LazyBranch>
+      </Suspense>
+    </WalletBranchErrorBoundary>
+  );
 }

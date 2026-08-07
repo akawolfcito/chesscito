@@ -44,18 +44,26 @@ afterEach(() => {
 });
 
 describe("WalletProviderBoundary — flag OFF", () => {
-  it("mounts WalletProvider", () => {
+  it("mounts WalletProvider", async () => {
     vi.stubEnv("NEXT_PUBLIC_PRIVY_ENABLED", "false");
     render(<WalletProviderBoundary>{child}</WalletProviderBoundary>);
-    expect(screen.getByText("app tree")).toBeInTheDocument();
+    // `await`, not a synchronous read: the branch arrives behind an import()
+    // now, so the first frame is the shell for everyone.
+    expect(await screen.findByText("app tree")).toBeInTheDocument();
     expect(document.querySelector('[data-provider="injected"]')).not.toBeNull();
   });
 
-  it("shows no undecided shell, even before hydration", () => {
+  it("emits the shell before hydration — the branch is a client-only fact", () => {
+    // ⚠️ REWRITTEN ON PURPOSE (spec 2026-08-07-wallet-branch-lazy-load, AC2/E1).
+    // This used to assert the exact opposite: with the flag off the server
+    // rendered the injected provider outright, shell-free. Once the branch sits
+    // behind a lazy import that is no longer possible — and keeping the old
+    // assertion would have meant keeping the branch in the server payload,
+    // which is the 2.2 MB defect itself.
     vi.stubEnv("NEXT_PUBLIC_PRIVY_ENABLED", "false");
     const html = ssr(<WalletProviderBoundary>{child}</WalletProviderBoundary>);
-    expect(html).not.toMatch(/data-wallet-shell/);
-    expect(html).toContain("app tree");
+    expect(html).toMatch(/data-wallet-shell/);
+    expect(html).not.toContain("app tree");
   });
 });
 
@@ -66,25 +74,27 @@ describe("WalletProviderBoundary — flag ON", () => {
     expect(html).toMatch(/data-wallet-shell/);
   });
 
-  it("mounts WalletProvider inside MiniPay once hydrated", () => {
+  it("mounts WalletProvider inside MiniPay once hydrated", async () => {
     vi.stubEnv("NEXT_PUBLIC_PRIVY_ENABLED", "true");
     minipayMock.mockReturnValue(true);
     render(<WalletProviderBoundary>{child}</WalletProviderBoundary>);
+    await screen.findByText("app tree");
     expect(document.querySelector('[data-provider="injected"]')).not.toBeNull();
     expect(document.querySelector('[data-provider="privy"]')).toBeNull();
   });
 
-  it("mounts WebWalletProvider on the web once hydrated", () => {
+  it("mounts WebWalletProvider on the web once hydrated", async () => {
     vi.stubEnv("NEXT_PUBLIC_PRIVY_ENABLED", "true");
     minipayMock.mockReturnValue(false);
     render(<WalletProviderBoundary>{child}</WalletProviderBoundary>);
+    await screen.findByText("app tree");
     expect(document.querySelector('[data-provider="privy"]')).not.toBeNull();
     expect(document.querySelector('[data-provider="injected"]')).toBeNull();
   });
 });
 
 describe("WalletProviderBoundary — invariants", () => {
-  it("never mounts both providers", () => {
+  it("never mounts both providers", async () => {
     for (const flag of ["true", "false"]) {
       for (const miniPay of [true, false]) {
         vi.stubEnv("NEXT_PUBLIC_PRIVY_ENABLED", flag);
@@ -92,19 +102,23 @@ describe("WalletProviderBoundary — invariants", () => {
         const { unmount } = render(
           <WalletProviderBoundary>{child}</WalletProviderBoundary>,
         );
+        // Settle the import() first: counting providers mid-flight would pass
+        // for the wrong reason — zero mounted is not "exactly one".
+        await screen.findByText("app tree");
         expect(document.querySelectorAll("[data-provider]")).toHaveLength(1);
         unmount();
       }
     }
   });
 
-  it("never reaches the Privy provider from inside MiniPay", () => {
+  it("never reaches the Privy provider from inside MiniPay", async () => {
     for (const flag of ["true", "false"]) {
       vi.stubEnv("NEXT_PUBLIC_PRIVY_ENABLED", flag);
       minipayMock.mockReturnValue(true);
       const { unmount } = render(
         <WalletProviderBoundary>{child}</WalletProviderBoundary>,
       );
+      await screen.findByText("app tree");
       expect(document.querySelector('[data-provider="privy"]')).toBeNull();
       unmount();
     }

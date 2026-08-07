@@ -13,11 +13,14 @@
  *          which is why the boundary has to be a class component.
  */
 import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { renderToStaticMarkup } from "react-dom/server";
 
 import { renderWithIntl as render } from "@/test-utils/render-with-intl";
 import { useEffect, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { walletBranchLoaders } from "@/components/wallet-branch-loaders";
 import { WALLET_BRANCH_ATTR } from "@/lib/wallet/wallet-branch";
 
 /** Counts MOUNTS, never decremented on unmount: a remount must be visible as a
@@ -52,15 +55,21 @@ vi.mock("@/components/web-wallet-provider", () => ({
 vi.mock("@/lib/minipay", () => ({ isMiniPayEnv: vi.fn(() => true) }));
 
 import { WalletProviderBoundary } from "@/components/wallet-provider-boundary";
+import { isMiniPayEnv } from "@/lib/minipay";
+
+const minipayMock = vi.mocked(isMiniPayEnv);
 
 beforeEach(() => {
   childMounts = 0;
   injectedShouldThrow = false;
+  minipayMock.mockReturnValue(true);
   vi.stubEnv("NEXT_PUBLIC_PRIVY_ENABLED", "true");
 });
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  // The loader spies wrap a module-level object shared by every test here.
+  vi.restoreAllMocks();
 });
 
 describe("lazy wallet branch — AC7: children mount exactly once", () => {
@@ -102,6 +111,104 @@ describe("lazy wallet branch — AC21: a throwing branch is terminal, not eterna
 
     // And the shell must be GONE: "still loading" next to an error is the
     // ambiguous state the three-owner composition is meant to remove.
-    expect(screen.queryByTestId("wallet-shell")).toBeNull();
+    expect(document.querySelector("[data-wallet-shell]")).toBeNull();
+  });
+});
+
+describe("lazy wallet branch — AC2/AC3: nothing loads on the server", () => {
+  // renderToStaticMarkup runs no effects, so the component stays UNHYDRATED —
+  // exactly the SSR and first-client-render state.
+  function ssr(node: ReactNode) {
+    return renderToStaticMarkup(<>{node}</>);
+  }
+
+  it("emits the shell and fires no loader before hydration", () => {
+    const injected = vi.spyOn(walletBranchLoaders, "injected");
+    const privy = vi.spyOn(walletBranchLoaders, "privy");
+
+    const html = ssr(
+      <WalletProviderBoundary>
+        <InstrumentedChild />
+      </WalletProviderBoundary>,
+    );
+
+    expect(html).toMatch(/data-wallet-shell/);
+    expect(html).not.toMatch(new RegExp(WALLET_BRANCH_ATTR));
+    // The whole point of the split: a request that never reaches a browser must
+    // not pull a wallet chunk into the payload.
+    expect(injected).not.toHaveBeenCalled();
+    expect(privy).not.toHaveBeenCalled();
+  });
+
+  it("emits the shell with the flag OFF too — the branch is a client fact", () => {
+    // ⚠️ DELIBERATE CHANGE (spec AC2, E1). This used to assert the opposite:
+    // with the flag off the server rendered the injected provider outright. Once
+    // the branch is lazy that is no longer possible, and pretending otherwise
+    // would mean shipping the branch in the server payload again.
+    vi.stubEnv("NEXT_PUBLIC_PRIVY_ENABLED", "false");
+
+    const html = ssr(
+      <WalletProviderBoundary>
+        <InstrumentedChild />
+      </WalletProviderBoundary>,
+    );
+
+    expect(html).toMatch(/data-wallet-shell/);
+    expect(html).not.toContain("app tree");
+  });
+});
+
+describe("lazy wallet branch — AC4/AC5: the other branch is never requested", () => {
+  it("inside MiniPay, the Privy chunk is never asked for", async () => {
+    const privy = vi.spyOn(walletBranchLoaders, "privy");
+    minipayMock.mockReturnValue(true);
+
+    render(
+      <WalletProviderBoundary>
+        <InstrumentedChild />
+      </WalletProviderBoundary>,
+    );
+
+    await screen.findByTestId("app-tree");
+    // This is the saving, stated as an assertion: a MiniPay player must not pay
+    // for a single byte of the branch they will never run.
+    expect(privy).not.toHaveBeenCalled();
+  });
+
+  it("on the web, the injected chunk is never asked for", async () => {
+    const injected = vi.spyOn(walletBranchLoaders, "injected");
+    minipayMock.mockReturnValue(false);
+
+    render(
+      <WalletProviderBoundary>
+        <InstrumentedChild />
+      </WalletProviderBoundary>,
+    );
+
+    await screen.findByTestId("app-tree");
+    expect(injected).not.toHaveBeenCalled();
+  });
+});
+
+describe("lazy wallet branch — AC23: retry produces a NEW attempt", () => {
+  it("invokes the loader a second time, not just re-renders the error", async () => {
+    // A `Retry` that hands back the same rejected promise without touching the
+    // network is a LIE (spec C2c). The only honest assertion is a second
+    // invocation, so that is what this counts.
+    const injected = vi.spyOn(walletBranchLoaders, "injected");
+    injectedShouldThrow = true;
+
+    render(
+      <WalletProviderBoundary>
+        <InstrumentedChild />
+      </WalletProviderBoundary>,
+    );
+
+    const retry = await screen.findByRole("button", { name: /retry|reintentar/i });
+    expect(injected).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(retry);
+
+    expect(injected).toHaveBeenCalledTimes(2);
   });
 });
