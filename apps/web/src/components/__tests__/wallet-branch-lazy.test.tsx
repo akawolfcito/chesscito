@@ -112,6 +112,10 @@ describe("lazy wallet branch — AC21: a throwing branch is terminal, not eterna
     // And the shell must be GONE: "still loading" next to an error is the
     // ambiguous state the three-owner composition is meant to remove.
     expect(document.querySelector("[data-wallet-shell]")).toBeNull();
+    // Including the hub silhouette (AC6 del spec del skeleton): un esqueleto
+    // "cargando" al lado de un error terminal es la misma ambigüedad con otra
+    // ropa, y ahora hay una silueta que puede quedarse pegada.
+    expect(document.querySelector(".wallet-shell-skeleton")).toBeNull();
   });
 });
 
