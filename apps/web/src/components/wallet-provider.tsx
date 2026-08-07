@@ -53,16 +53,22 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   return (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <WalletProviderInner>
-          {/* Outside the product contexts: the mismatch it reports is what a
-              DISCONNECTED visitor hits, and wagmi answers them with
-              `chains[0]` — Celo mainnet. */}
-          <ChainConfigWarning defaultChainId={celo.id} />
-          <ProductContextProviders>{children}</ProductContextProviders>
-        </WalletProviderInner>
-      </QueryClientProvider>
-    </WagmiProvider>
+    /* `display: contents` so this node names the branch without existing for
+       layout — every descendant keeps its parent's box. The attribute is
+       load-bearing twice over (lib/wallet/wallet-branch.ts): tests assert one
+       branch mounts, and the literal proves in which chunk this branch landed. */
+    <div data-wallet-branch="injected" style={{ display: "contents" }}>
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <WalletProviderInner>
+            {/* Outside the product contexts: the mismatch it reports is what a
+                DISCONNECTED visitor hits, and wagmi answers them with
+                `chains[0]` — Celo mainnet. */}
+            <ChainConfigWarning defaultChainId={celo.id} />
+            <ProductContextProviders>{children}</ProductContextProviders>
+          </WalletProviderInner>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </div>
   );
 }

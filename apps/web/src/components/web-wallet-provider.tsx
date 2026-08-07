@@ -95,41 +95,47 @@ export function WebWalletProvider({ children }: { children: ReactNode }) {
   const wordmarkBase = useCurrentThemeAsset("brand.title-login");
 
   return (
-    <PrivyProvider
-      appId={requirePrivyAppId()}
-      config={{
-        // Styling only. Privy renders its login modal in its own portal, so
-        // globals.css cannot reach it and this prop is the only way in.
-        appearance: buildWebAccessAppearance(resolveWebAccessSurface(), wordmarkBase),
-        loginMethods: ["email", "google"],
-        defaultChain: celo,
-        supportedChains: [celo],
-        embeddedWallets: {
-          ethereum: {
-            createOnLogin: "users-without-wallets",
+    /* `display: contents` so this node names the branch without existing for
+       layout — every descendant keeps its parent's box. The attribute is
+       load-bearing twice over (lib/wallet/wallet-branch.ts): tests assert one
+       branch mounts, and the literal proves in which chunk this branch landed. */
+    <div data-wallet-branch="privy" style={{ display: "contents" }}>
+      <PrivyProvider
+        appId={requirePrivyAppId()}
+        config={{
+          // Styling only. Privy renders its login modal in its own portal, so
+          // globals.css cannot reach it and this prop is the only way in.
+          appearance: buildWebAccessAppearance(resolveWebAccessSurface(), wordmarkBase),
+          loginMethods: ["email", "google"],
+          defaultChain: celo,
+          supportedChains: [celo],
+          embeddedWallets: {
+            ethereum: {
+              createOnLogin: "users-without-wallets",
+            },
           },
-        },
-      }}
-    >
-      <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={webWagmiConfig}>
-          <PrivyWalletSession>
-            {/* Above the gate on purpose: the gate IS the screen that needs
-                these wallpapers, and the app-wide ThemeCssVariables mounts
-                behind it. */}
-            <WebAccessThemeVariables />
-            {/* Above the gate too: a misconfigured chain id degrades the UI
-                for a DISCONNECTED visitor, who never reaches the contexts
-                inside. `chains[0]` here is Celo mainnet only. */}
-            <ChainConfigWarning defaultChainId={celo.id} />
-            <WebAccessGate>
-              {/* Inside the gate: the product contexts are wallet-scoped, so
-                  they mount only in `authenticated + wallet ready`. */}
-              <ProductContextProviders>{children}</ProductContextProviders>
-            </WebAccessGate>
-          </PrivyWalletSession>
-        </WagmiProvider>
-      </QueryClientProvider>
-    </PrivyProvider>
+        }}
+      >
+        <QueryClientProvider client={queryClient}>
+          <WagmiProvider config={webWagmiConfig}>
+            <PrivyWalletSession>
+              {/* Above the gate on purpose: the gate IS the screen that needs
+                  these wallpapers, and the app-wide ThemeCssVariables mounts
+                  behind it. */}
+              <WebAccessThemeVariables />
+              {/* Above the gate too: a misconfigured chain id degrades the UI
+                  for a DISCONNECTED visitor, who never reaches the contexts
+                  inside. `chains[0]` here is Celo mainnet only. */}
+              <ChainConfigWarning defaultChainId={celo.id} />
+              <WebAccessGate>
+                {/* Inside the gate: the product contexts are wallet-scoped, so
+                    they mount only in `authenticated + wallet ready`. */}
+                <ProductContextProviders>{children}</ProductContextProviders>
+              </WebAccessGate>
+            </PrivyWalletSession>
+          </WagmiProvider>
+        </QueryClientProvider>
+      </PrivyProvider>
+    </div>
   );
 }
