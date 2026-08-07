@@ -8215,9 +8215,26 @@ button.hud-resource-chip:active:not(:disabled) {
   line-height: 1;
 }
 
+/* ⛔ `align-self: stretch` NO es cosmético — sin él vuelve un CLS de 0,179.
+ * `.hub-scaffold-center` es `flex-direction: column` + `align-items: center`, así
+ * que sus items se dimensionan POR CONTENIDO en el eje transversal. El contenido
+ * de este nodo es el portal (`<picture>` → `<img>`), que no aporta ancho hasta
+ * tener tamaño intrínseco: contenido 0 → item 0 → el `width: 100%` de
+ * `.kingdom-anchor` resuelve contra 0 → su `aspect-ratio` da altura 0. Cuando la
+ * imagen declara su tamaño, la fila del hub crece +153 px de golpe.
+ *
+ * Con `stretch`, el ancho lo da el track de la grilla y el alto el
+ * `aspect-ratio` que `KingdomAnchor` fija por variante — dos contratos que ya
+ * existían. Por eso acá no hay ni un número.
+ *
+ * Medido: docs/audits/2026-08-07-minipay-cls-discovery.md
+ * Spec:   docs/specs/2026-08-07-hub-anchor-cls-fix.md
+ * ⚠️ jsdom no calcula layout y el VR fotografía el estado final (hoy idéntico),
+ * así que lo único que delata su borrado es el guard de `hub-anchor-cls-guard`. */
 .hub-scaffold-anchor {
   position: relative;
   display: flex;
+  align-self: stretch;
   align-items: center;
   justify-content: center;
   min-width: 0;
