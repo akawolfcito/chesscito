@@ -62,6 +62,13 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 - Tests: Vitest + RTL (unit) + Playwright (E2E + VR); **7404 passing / 598 files**
   (baseline 2026-08-06). ✅ **El VR está 62/62** — verde entero, **verificado sin
   `--update-snapshots`** el 2026-08-06 (`2b6dee4`, 62 passed en 2.0m).
+  ⛔ **Ese 62/62 es del proyecto `minipay` y SÓLO de él.** `desktop`, `iphone-safari` y
+  `minipay-360` **no tienen baselines**, y Playwright **graba el que falta y da el test por
+  PASADO** (`updateSnapshots: "missing"` es su default, sin pasar ninguna flag). Una corrida
+  completa reportó **69 passed** el 2026-08-07 habiendo **creado 118 baselines** y comparado
+  casi nada. **Correr siempre `--project=minipay --update-snapshots=none`**: `none` no puede
+  grabar, así que un verde ahí sí comparó. Si aparecen PNG nuevos en
+  `e2e/visual-regression.spec.ts-snapshots/`, son grabaciones, no cobertura: `git clean`.
   Diagnóstico de por qué había 49 rojas: `docs/audits/2026-08-06-vr-red-diagnosis.md`.
   ⛔ **El `webServer.env` del config PINEA `NEXT_PUBLIC_CHAIN_ID=42220` — no lo saques.**
   En Next las variables **del shell ganan sobre `.env*`**, y un shell con
