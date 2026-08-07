@@ -1,16 +1,23 @@
-# Sesión 2026-08-07 (cont.) — el split de wallet, implementado y medido
+# Sesión 2026-08-07 (cont.) — el split de wallet: implementado, medido y ARBITRADO
 
-> 📌 **Lo que se construyó está cerrado y verde. Lo que NO está cerrado es si sirve.**
-> Las dos varas de medir dan respuestas distintas y la sesión termina sin arbitrarlas.
-> Ver «Parte 3 — la medición honesta»: es lo primero que hay que resolver.
+> ✅ **RESUELTO.** La duda de la primera mitad de la sesión —dos varas que se contradecían—
+> la arbitró el browser: un jugador de MiniPay baja **1.048 kB → 420 kB** de JavaScript hasta
+> que el hub es usable (**−60%**) y **0 requests** con código de Privy (antes: 1).
+> Informe completo: `docs/audits/2026-08-07-minipay-first-load-report.md`.
 
-**Estado:** `main` local = `708992b3` · **8 commits nuevos** esta sesión, **30 sin pushear**
-en total · suite **7414 passing / 601 files** · `pnpm exec tsc --noEmit` limpio en `apps/web`
-· `next build` compila sin errores ni warnings nuevos.
+**Estado:** `main` = `a480585` (sincronizado con origin) · **11 commits** esta sesión ·
+suite **7.432 passing / 603 files** · `tsc --noEmit` limpio · **VR 62/62 sin actualizar
+baselines** · guard de bundle verde (75 chunks, 0 rastro de Privy).
+
+## ⛔ Alcance fijado (founder, 2026-08-07)
+
+**La superficie web está cerrada como puerta de entrada de producto. El foco es MiniPay.**
+No hay presupuesto, baseline ni criterio de éxito para web, y ninguna diferencia web bloquea
+el cierre de este frente. Si algún día se mide, es diagnóstico.
 
 ---
 
-## Parte 1 — Lo que entró (8 commits atómicos)
+## Parte 1 — Lo que entró (11 commits atómicos)
 
 | Commit | Qué |
 |---|---|
@@ -22,6 +29,18 @@ en total · suite **7414 passing / 601 files** · `pnpm exec tsc --noEmit` limpi
 | `caf96110` | `data-wallet-branch` renderizado por las **dos** ramas |
 | `a27f72cd` | **El lazy**: `React.lazy` + `Suspense` + `WalletShell` |
 | `708992b3` | El `eslint-disable` de `attempt` con la razón escrita al lado |
+| `e30873d1` | El handoff con las dos varas enfrentadas (superado por la Parte 4) |
+| `c7883e5…` | **Guard de bundle** + sello de contenido en `next.config.js` |
+| `e4fb8e6c` | **El instrumento de medición** + baseline por worktree + JSON histórico |
+| `a480585…` | El informe: `docs/audits/2026-08-07-minipay-first-load-report.md` |
+
+### Herramientas nuevas que quedan en el repo
+
+| Comando | Qué hace |
+|---|---|
+| `pnpm -C apps/web bundle:guard` | Falla si código de Privy entra al grafo estático de MiniPay. **Exige build fresco por sello de contenido**, no por `mtime`. |
+| `pnpm -C apps/web measure:first-load -- --label=X` | Bytes reales hasta que el hub es usable, persona MiniPay. |
+| `pnpm -C apps/web measure:first-load:baseline [commit]` | Lo mismo contra un commit viejo, por worktree temporal. |
 
 ### Decisiones que quedaron tomadas durante el TDD
 
@@ -52,15 +71,16 @@ que la rama pre-hidratación ya era `undecided`.
 **Cerrados y verdes:** AC1 · AC2 · AC3 · AC4 · AC5 · AC6 · AC7 · AC15 · AC16 · AC19 · AC21 ·
 AC23 · AC24 · AC25.
 
-**Abiertos:**
+**Cerrados en la segunda mitad:** AC9–AC14 (guard automatizado, `pnpm bundle:guard`) ·
+**AC17 (VR 62/62)** · AC18 (medición, arbitrada por el browser).
 
-- **AC8** — `WalletShell` NO ocupa el espacio final: sigue siendo `<div>` vacío. Y ahora la
-  espera **incluye una ida a la red**, así que la ventana en blanco se alarga de verdad. Es la
-  open question E7 y subió de prioridad.
-- **AC9–AC14** — el guard de bundle **no está automatizado**. Lo verifiqué a mano (ver abajo).
-- **AC17** — **el VR no se corrió.** Aplica entera la política fijada la sesión pasada.
-- **AC20** — el retry se ejerce una vez en test; falta el caso "el segundo intento resuelve y
-  la rama monta".
+**Abiertos — los dos únicos:**
+
+- **AC8 / E7** — `WalletShell` sigue siendo un `<div>` vacío, y ahora la espera **incluye una
+  ida a la red**. Es el único costo real que dejó este cambio (T1 +9,7 kB y ~200 ms en
+  localhost; en la red de MiniPay, más). **Es lo próximo.**
+- **AC20** — el retry se ejerce una vez; falta el caso "el segundo intento **resuelve** y la
+  rama monta".
 
 ---
 
@@ -107,28 +127,40 @@ Es decir: la tabla de `next build` **no estaba atribuyendo al first load** ~700 
 estaban en el grafo de la ruta. Después del split, no queda nada sin atribuir. Eso sugiere que
 **la vara B era la que mentía**, no la A — pero es una inferencia, no una medición.
 
-### ⛔ Lo primero de la próxima sesión: que arbitre el browser
+### ✅ El browser arbitró — Parte 4
 
-Ninguna de las dos varas es la verdad. La verdad es **cuántos bytes de JS baja un device
-antes de ser interactivo**. Se mide con Playwright/CDP contando `response.body()` de los `.js`
-hasta `networkidle`, en las dos versiones, en `/[locale]` y en `/terms`.
+Instrumento: `pnpm -C apps/web measure:first-load`. Persona MiniPay emulada, caché off por CDP,
+`encodedDataLength`, cortes de producto (**nunca `networkidle`**), sobre `next start`. El
+baseline lo mide **el mismo script** contra un worktree temporal de `cd380e7f`
+(`pnpm measure:first-load:baseline`).
 
-⚠️ Y hay una pregunta que la medición debe responder explícitamente: **la rama se descarga
-igual, un tick después**. El ahorro real sólo existe si el jugador de MiniPay nunca baja el
-chunk de Privy — no porque el primer load sea más chico.
+| Corte | Baseline | Actual | Δ |
+|---|---|---|---|
+| T1 (`main`) | 410,4 kB · 297 ms | 420,1 kB · 501 ms | +9,7 kB |
+| **T2 (hub usable)** | **1.048,0 kB** | **420,1 kB** | **−627,9 kB (−60%)** |
+| T3 (T2 + 2 s) | 1.058,8 kB | 420,1 kB | −638,7 kB |
+| **Requests con Privy** | **1** | **0** | ✅ |
+
+**No son bytes diferidos.** T3 = T2 en el build nuevo: nada llega después de que el hub es
+usable. Esa era la pregunta que podía invalidar todo el frente, y quedó respondida con datos.
+
+⚠️ Y lo que empeoró, sin maquillar: **T1 sube** y la ventana en blanco es real, porque
+`WalletShell` sigue vacío. Además esto se midió en `localhost`, sin latencia: en la red de
+MiniPay el salto extra cuesta más tiempo (los 628 kB de ahorro no se mueven).
+
+**Sobre la vara vieja:** `next build` reportó −2 kB para el mismo cambio. En este repo **no
+sirve como árbitro de performance** — queda escrito en el informe y en memoria.
 
 ---
 
 ## Next steps
 
-1. **La medición del browser** (arriba). Sin eso, no se decide si esto se mergea, se ajusta o
-   se revierte.
-2. **AC8 / E7** — decidir el contenido de `WalletShell` **midiendo**: sólo si no mete descarga
-   nueva en el camino crítico y mantiene CLS 0. Si no, se queda el `<div>`.
-3. **Guard de bundle (AC9–AC14)** — automatizar lo que verifiqué a mano. ⚠️ Debe excluirse de
-   `pnpm test` explícitamente, o corre sin build sobre un `.next` viejo.
-4. **VR 62/62** con la política de la sesión pasada, sin `--update-snapshots`.
-5. **AC20** — el caso "el segundo intento resuelve".
+1. **AC8 / E7 — `WalletShell`.** Es el único costo que dejó este cambio y ya está medido.
+   Decidir su contenido **midiendo**: sólo si no mete descarga nueva en el camino crítico y
+   mantiene CLS 0. Si no, se queda el `<div>`.
+2. **AC20** — el caso "el segundo intento resuelve y la rama monta".
+3. **Opcional, barato:** una corrida del script contra `preview`/`learn-preview` para tener el
+   número con red real. Diagnóstico, no gate.
 
 ## Open questions (heredadas, siguen abiertas)
 
