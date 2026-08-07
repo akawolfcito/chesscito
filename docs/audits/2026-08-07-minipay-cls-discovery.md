@@ -124,3 +124,78 @@ una causa concreta reproducible"*. La causa **próxima** está señalada y es re
 
 **Siguiente paso propuesto:** una sonda de ancestros en la ventana sin caja. Después de eso,
 spec + red team. Sin implementar nada.
+
+---
+
+# ADDENDUM — sonda de ancestros: **causa raíz cerrada**
+
+**El nodo que colapsa NO es la imagen. Es `div.hub-scaffold-anchor`.**
+
+## Tabla before/after de la cadena (t = 3.969 → 4.021 ms)
+
+| Nodo | `rect` antes | `rect` después | ¿Colapsado antes? |
+|---|---|---|---|
+| `section.hub-scaffold-body` | 390 × **369** | 390 × **521,8** | no (crece de alto) |
+| `div.hub-scaffold-center` | **234** × 158 | **234** × 521,8 | **NO — su ancho es 234 todo el tiempo** |
+| **`div.hub-scaffold-anchor`** | **0 × 0** | **234 × 363,8** | ⚡ **SÍ — primer nodo colapsado** |
+| `div.kingdom-anchor` | 0 × 0 | 234 × 363,8 | sí (heredado) |
+| `picture.kingdom-anchor-picture` | 0 × 0 | 234 × 363,8 | sí (heredado) |
+| `img.kingdom-anchor-img` | 0 × 0 · `naturalWidth 0` | 234 × 363,8 · `naturalWidth 256` | sí (heredado) |
+
+`hub-scaffold-anchor` tenía un containing block de **234 × 158** y aun así medía **0 px de
+ancho**. Ése es el punto exacto donde la cadena se rompe.
+
+## El mecanismo
+
+```css
+.hub-scaffold-center {          .hub-scaffold-anchor {
+  display: flex;                  position: relative;
+  flex-direction: column;         display: flex;
+  align-items: center;   ⚡       align-items: center;
+  justify-content: center;        justify-content: center;
+}                                 min-width: 0;
+                                }
+```
+
+`align-items: center` en la columna hace que sus items **se dimensionen al contenido**
+(shrink-to-fit) en el eje transversal, en vez de estirarse a los 234 px disponibles. El
+contenido de `hub-scaffold-anchor` es el portal → `<picture>` → `<img>`, que **no aporta ancho
+hasta que llega su tamaño intrínseco**. Contenido de 0 px ⇒ item de 0 px ⇒ el `width: 100%` de
+`.kingdom-anchor` resuelve a 0 ⇒ su `aspect-ratio` da alto 0.
+
+Cuando `naturalWidth` pasa a 256, el item toma 234, el `aspect-ratio` da 363,8 de alto, la
+columna crece 158 → 521,8 y la fila del hub 369 → 521,8. **Ése es el +153 px del shift.**
+
+## Verificación en vivo (diagnóstico, no implementación)
+
+Inyectando `.hub-scaffold-anchor { align-self: stretch }` antes del render:
+
+| | Sin la inyección | Con `align-self: stretch` |
+|---|---|---|
+| Primera caja del anchor | 4.024 ms, **junto con** `naturalWidth` | **3.767 ms** |
+| `naturalWidth ≠ 0` | 4.024 ms | 3.931 ms |
+| ¿Caja antes que la imagen? | **no** | **sí, 164 ms antes** |
+| Ventana colapsada | 210–264 ms | **ninguna** |
+
+✅ **El anchor obtiene su caja completa (234 × 363,8) con `naturalWidth = 0`.** La causa está
+confirmada en el ancestro, y el fix pertenece ahí.
+
+## Opciones
+
+| # | Opción | Riesgo | Contra los límites que fijaste |
+|---|---|---|---|
+| **1** | **`align-self: stretch` en `.hub-scaffold-anchor`** | **Bajo.** Una declaración. **Verificado en vivo** | ✅ Va **en el ancestro que colapsa** · ✅ el ancho lo da el track de 234 px y el alto el `aspect-ratio` — **dos contratos que ya existen**, nada copiado · ✅ sin `min-height` arbitrario · ✅ sin transform · ✅ 0 requests, 0 assets · ✅ no toca imágenes |
+| **2** | `width: 100%` en `.hub-scaffold-anchor` | Bajo. Efecto equivalente | ✅ Igual, pero fija el ancho en vez de delegarlo al alineamiento; menos idiomático dentro de un flex |
+| **3** | `width`/`height` en el `<img>` | Bajo-medio | ⚠️ **Contradice tu gate**: el ancestro colapsa, así que el fix no va en el replaced element. Y entra en el frente de imágenes que excluiste |
+
+**Recomendación: opción 1.**
+
+### Riesgo a verificar en el spec
+
+`align-self: stretch` cambia el alineamiento transversal de ese item. El estado **final** es el
+mismo (234 × 363,8 en los dos casos), así que no debería haber diferencia visual — **pero eso
+lo decide el VR, no yo**. Y por lo medido arriba: **validar el fix mirando el CLS una sola vez
+no sirve**; hay que asertar sobre la ventana colapsada (`hub-scaffold-anchor` con ancho 0),
+que es determinista.
+
+⛔ **Me detengo acá, antes del spec**, como pediste.
