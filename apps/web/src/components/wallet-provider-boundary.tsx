@@ -72,17 +72,25 @@ export function WalletProviderBoundary({ children }: { children: ReactNode }) {
     [mounted, attempt],
   );
 
+  // The route decides WHICH shell: the hub gets a silhouette, everything else
+  // keeps the empty hole. `usePathname()` works during the prerender, so the
+  // silhouette travels in the server HTML — measured, it paints ~2,2 s before
+  // the branch. Deciding this after hydration would deliver it at ~4 s, which
+  // is exactly when it stops being useful.
+  //
+  // ⚠️ ONE variable for BOTH shells, and that is the whole point. The first
+  // version passed it only to the pre-hydration shell and left the Suspense
+  // fallback bare: the silhouette painted early, then vanished at hydration and
+  // the player watched an empty screen through the ~2 s chunk wait — the exact
+  // window this front exists to fill. The FCP number looked great and the
+  // filmstrip was flat. Two shells, one answer.
+  const shellVariant = resolveWalletShellVariant(pathname);
+
   if (!LazyBranch) {
     // `undecided`, or the server. A stable shell shared by SSR and the first
     // client render — no children and no wagmi hooks: mounting the app tree here
     // just to swap it is the double-mount this design exists to avoid.
-    //
-    // The route decides WHICH shell: the hub gets a silhouette, everything else
-    // keeps the empty hole. `usePathname()` works during the prerender, so the
-    // silhouette travels in the server HTML — measured, it paints ~2,2 s before
-    // the branch. Deciding this after hydration would deliver it at ~4 s, which
-    // is exactly when it stops being useful.
-    return <WalletShell variant={resolveWalletShellVariant(pathname)} />;
+    return <WalletShell variant={shellVariant} />;
   }
 
   return (
@@ -94,7 +102,7 @@ export function WalletProviderBoundary({ children }: { children: ReactNode }) {
           the terminal failure, the branch owns being mounted. `children` sits
           under the lazy component only — never under the fallback — so it mounts
           exactly once across shell → branch (AC7). */}
-      <Suspense fallback={<WalletShell />}>
+      <Suspense fallback={<WalletShell variant={shellVariant} />}>
         <LazyBranch>{children}</LazyBranch>
       </Suspense>
     </WalletBranchErrorBoundary>

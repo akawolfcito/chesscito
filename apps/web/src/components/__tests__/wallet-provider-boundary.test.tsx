@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -28,6 +28,7 @@ vi.mock("next/navigation", () => ({ usePathname: vi.fn(() => "/") }));
 
 import { WebWalletProvider } from "@/components/web-wallet-provider";
 import { WalletProvider } from "@/components/wallet-provider";
+import { walletBranchLoaders } from "@/components/wallet-branch-loaders";
 import { WalletProviderBoundary } from "@/components/wallet-provider-boundary";
 import { isMiniPayEnv } from "@/lib/minipay";
 import { usePathname } from "next/navigation";
@@ -47,6 +48,10 @@ afterEach(() => {
   vi.unstubAllEnvs();
   minipayMock.mockReturnValue(false);
   pathnameMock.mockReturnValue("/");
+  // ⚠️ Un `spyOn` sobre el loader que nunca resuelve se filtra al resto del
+  // archivo si el test falla antes de restaurarlo, y los siguientes mueren por
+  // timeout en vez de por su propia causa. Restaurar acá lo hace imposible.
+  vi.restoreAllMocks();
 });
 
 describe("WalletProviderBoundary — qué shell recibe cada ruta", () => {
@@ -71,6 +76,30 @@ describe("WalletProviderBoundary — qué shell recibe cada ruta", () => {
 
     expect(html).toMatch(/data-wallet-shell/);
     expect(html).not.toMatch(/wallet-shell-skeleton/);
+  });
+
+  it("la silueta SIGUE en pantalla mientras viaja el chunk, no sólo antes de hidratar", async () => {
+    // ⚠️ ESTE TEST NACIÓ DE UNA MEDICIÓN, no de una idea. El FCP mejoró 2,2 s
+    // pero el filmstrip a los 2 s seguía plano: la silueta se pintaba antes de
+    // hidratar y desaparecía justo en la ventana larga —la espera del chunk—,
+    // que es la que este frente existe para llenar. La causa: un
+    // `<WalletShell />` sin variante en el fallback de `Suspense`.
+    vi.stubEnv("NEXT_PUBLIC_PRIVY_ENABLED", "true");
+    pathnameMock.mockReturnValue("/");
+    minipayMock.mockReturnValue(true);
+    // El chunk que nunca llega: deja el árbol clavado en el fallback, que es
+    // exactamente la ventana que el jugador de MiniPay mira durante ~2 s.
+    const pending = vi
+      .spyOn(walletBranchLoaders, "injected")
+      .mockReturnValue(new Promise(() => {}));
+
+    render(<WalletProviderBoundary>{child}</WalletProviderBoundary>);
+
+    await waitFor(() => expect(pending).toHaveBeenCalled());
+
+    expect(document.querySelector(".wallet-shell-skeleton")).not.toBeNull();
+    expect(document.querySelector("[data-provider]")).toBeNull();
+    pending.mockRestore();
   });
 
   it("con la flag apagada el hub también recibe la silueta", () => {
