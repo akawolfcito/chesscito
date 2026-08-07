@@ -151,3 +151,29 @@ masiva, bajo retorno; y el unused 32KB es del CSS custom, no de Tailwind (que ya
   split es visual, no funcional)
 - MiniPay Stage-2 form: packet completo, founder debe enviarlo.
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` en Vercel: founder decidió dejarla (2026-06-12).
+
+---
+
+## ⛔ ADDENDUM 2026-08-07 — la palanca #1 de este handoff está DESACTUALIZADA
+
+**`experimental.optimizeCss` (critters) NO transforma el CSS de este repo.** Probado y medido
+en EXP-CSS1 (`docs/audits/2026-08-07-expcss1-results.md`):
+
+- flag activa y confirmada en la salida del build;
+- **0 CSS inline**, **0 defer real**;
+- el HTML servido y los 9 prerenderizados conservan sus 2 `<link>` render-blocking;
+- FCP idéntico: 1.728 ms con la flag vs 1.736 ms sin ella.
+
+**Causa:** los estilos llegan como `<link data-precedence="next">` — los inyecta React durante
+el streaming del App Router, no viven en un `<head>` estático que critters pueda
+post-procesar. La flag es de la era del Pages Router.
+
+⚠️ **Cualquier plan que liste `optimizeCss` como palanca de render-blocking parte de una
+premisa falsa.** El frente de critical CSS quedó **CERRADO como NO ACTION**: el piso de FCP es
+**~1.736 ms** y ésa es la decisión vigente hasta nueva evidencia. ⛔ No se retoma con una
+extracción manual de critical CSS sin una hipótesis nueva: sería una copia de reglas sin guard
+observable, más plomería sobre el `<head>` que Next controla.
+
+📌 Lo que sí se cumplió de este handoff: la palanca #3 («lazy-load del wagmi provider hasta el
+primer wallet intent, spec propia») se ejecutó el 2026-08-07 y quitó **628 kB** del camino de
+un jugador de MiniPay.
