@@ -2494,6 +2494,12 @@ const messages = {
       "piece-badge-eligible": "Tu insignia está lista para reclamar.",
     },
   },
+
+  WALLET_LOAD_ERROR_COPY: {
+    title: "No se pudo cargar la wallet",
+    body: "Revisa tu conexión e inténtalo de nuevo.",
+    retry: "Reintentar",
+  },
 };
 
 export default messages;

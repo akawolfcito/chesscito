@@ -3769,3 +3769,21 @@ export const PROGRESSION_COPY = {
    *  shell renders one close affordance regardless of which step is up. */
   closeLabel: "Close dialog",
 } as const;
+
+/**
+ * The wallet branch failed to load (spec 2026-08-07-wallet-branch-lazy-load, E3).
+ *
+ * This state DID NOT EXIST before the branches became lazy: we created it, and
+ * we created it in the worst network there is, MiniPay's. The rule it encodes is
+ * that a `loading` which never ends is not a valid state — the player gets a
+ * terminal message and a way out, never an eternal shell.
+ *
+ * ⚠️ Both locales are mandatory and neither is exempt from the translation
+ * guard: the ES bundle is a top-level spread, NOT a deep merge, so a key added
+ * on one side only makes next-intl print the raw path.
+ */
+export const WALLET_LOAD_ERROR_COPY = {
+  title: "Wallet couldn't load",
+  body: "Check your connection and try again.",
+  retry: "Retry",
+} as const;
