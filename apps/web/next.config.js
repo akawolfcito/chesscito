@@ -49,13 +49,36 @@ const nextConfig = {
       },
     ];
   },
-  webpack: (config) => {
+  webpack: (config, { isServer, dir }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       "@react-native-async-storage": false,
       "@react-native-async-storage/async-storage": false,
     }
     config.externals.push('pino-pretty', 'lokijs', 'encoding')
+
+    // Seal the build with a fingerprint of the sources that produced it, so
+    // `pnpm bundle:guard` can refuse to audit a stale `.next` instead of
+    // reporting green about a bundle nobody built. Client compilation only —
+    // the server pass would just rewrite the same file.
+    // ⛔ Deliberately NOT mtime: a checkout rewrites timestamps without
+    // changing content, and a `touch` changes them without changing anything.
+    if (!isServer) {
+      const { writeFileSync, mkdirSync } = require('node:fs')
+      const path = require('node:path')
+      const {
+        computeSourceFingerprint,
+        STAMP_FILE,
+      } = require('./scripts/lib/source-fingerprint.cjs')
+      const { fingerprint, files } = computeSourceFingerprint()
+      const outDir = path.join(dir, '.next')
+      mkdirSync(outDir, { recursive: true })
+      writeFileSync(
+        path.join(outDir, STAMP_FILE),
+        JSON.stringify({ fingerprint, files, stampedAt: new Date().toISOString() }, null, 2),
+      )
+    }
+
     return config
   },
 };

@@ -24,6 +24,8 @@
     "theme:responsive-audit": "tsx scripts/audit-responsive-asset-families.ts",
     "theme:responsive-regenerate-avatars": "tsx scripts/regenerate-responsive-avatar-families.ts",
     "theme:coverage": "node scripts/audit-theme-runtime-coverage.mjs --check",
+    "bundle:guard": "tsx scripts/check-minipay-bundle.ts",
+    "measure:first-load": "tsx scripts/measure-first-load.ts",
     "art:sync-landing": "tsx scripts/sync-landing-shared-art.ts",
     "art:sync-landing:check": "tsx scripts/sync-landing-shared-art.ts --check",
     "icons:generate": "tsx scripts/generate-brand-icons.ts",
