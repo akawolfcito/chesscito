@@ -35,6 +35,79 @@
 // for details.
 
 import { test, expect, type Page } from "@playwright/test";
+import { decodeFunctionData, encodeFunctionResult, multicall3Abi } from "viem";
+
+import { shopAbi } from "../src/lib/contracts/shop";
+
+// $0.99 in USD-6. Fixed on purpose: the shop baseline must not move when a
+// real on-chain price changes, and must not depend on the public RPC being
+// reachable from wherever the suite runs.
+const STUB_PRICE_USD6 = 990_000n;
+
+/** Answers the shop catalog's `getItem` reads locally.
+ *
+ *  Without this the test depends on live mainnet: `useReadContracts` calls
+ *  the public Celo RPC, so an unreachable network or a repriced SKU turns a
+ *  visual baseline red for reasons that have nothing to do with pixels.
+ *  wagmi batches the N reads through multicall3 when the chain supports it,
+ *  so both shapes are handled — the batched one is detected by decoding, not
+ *  by a hand-written selector (hashing a literal is how you get garbage). */
+async function stubShopCatalogRpc(page: Page): Promise<void> {
+  const itemResult = encodeFunctionResult({
+    abi: shopAbi,
+    functionName: "getItem",
+    result: [STUB_PRICE_USD6, true],
+  });
+
+  await page.route(
+    (url) => url.hostname !== "localhost" && url.hostname !== "127.0.0.1",
+    async (route) => {
+      const request = route.request();
+      if (request.method() !== "POST") return route.continue();
+
+      let payload: unknown;
+      try {
+        payload = JSON.parse(request.postData() ?? "");
+      } catch {
+        return route.continue();
+      }
+
+      const answer = (msg: { id?: unknown; method?: string; params?: unknown[] }) => {
+        if (msg.method !== "eth_call") {
+          return { jsonrpc: "2.0", id: msg.id ?? null, result: "0x" };
+        }
+        const data = (msg.params?.[0] as { data?: `0x${string}` } | undefined)?.data;
+        if (data) {
+          try {
+            const decoded = decodeFunctionData({ abi: multicall3Abi, data });
+            if (decoded.functionName === "aggregate3") {
+              const calls = decoded.args?.[0] as readonly unknown[];
+              return {
+                jsonrpc: "2.0",
+                id: msg.id ?? null,
+                result: encodeFunctionResult({
+                  abi: multicall3Abi,
+                  functionName: "aggregate3",
+                  result: calls.map(() => ({ success: true, returnData: itemResult })),
+                }),
+              };
+            }
+          } catch {
+            /* not a multicall — fall through to the direct shape */
+          }
+        }
+        return { jsonrpc: "2.0", id: msg.id ?? null, result: itemResult };
+      };
+
+      const body = Array.isArray(payload) ? payload.map(answer) : answer(payload as never);
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(body),
+      });
+    },
+  );
+}
 
 // Frozen UTC midpoint that locks getDailyPuzzle() to a deterministic
 // puzzle index regardless of when the test runs. Pinned to a date that
@@ -115,19 +188,26 @@ test.describe("visual regression — Step 1 baselines", () => {
     );
   });
 
-  // Re-enabled 2026-05-10. Prior failure was caused by a synchronous
-  // `page.evaluate(() => document.querySelector(...)?.click())` racing
-  // RainbowKitGate's intentional Fragment→Provider remount (see
-  // `wallet-provider.tsx`). The native click landed in the ~300ms gap
-  // when the dock subtree was briefly unmounted and silently no-op'd,
-  // leaving the dialog never opened. Fixed by switching to a
-  // Playwright locator with auto-wait — same pattern as
+  // Re-enabled 2026-05-10. The 2026-05 failure was a synchronous
+  // `page.evaluate(() => document.querySelector(...)?.click())` racing a
+  // provider remount: the native click landed in a ~300ms gap when the dock
+  // subtree was briefly unmounted and silently no-op'd. Fixed by switching to
+  // a Playwright locator with auto-wait — same pattern as
   // `hub-daily-tactic-open` above.
+  // ⚠️ That remount was RainbowKitGate's, and RainbowKit was DELETED in the
+  // P2 JS cluster (2026-06-12, see `wallet-provider.tsx`). The component named
+  // in the old comment no longer exists; the auto-waiting locator stays
+  // because it is the right pattern, not because that gate is still there.
+  //
+  // The long-standing red here was NOT this race and NOT a missing treasury:
+  // it was an inherited `NEXT_PUBLIC_CHAIN_ID` from the operator's shell.
+  // See the `webServer.env` comment in `playwright.config.ts`.
   test("hub-shop-sheet-open — ShopSheet from dock (anonymous, no wallet)", async ({
     page,
   }) => {
     await bypassFirstVisit(page);
     await freezeDate(page, FROZEN_DATE);
+    await stubShopCatalogRpc(page);
     await page.goto("/exercises", { waitUntil: "load", timeout: 30_000 });
     await expect(page.locator(".playhub-intro-overlay")).toBeHidden({
       // 30s covers cold dev-server compile (Next.js first request to a

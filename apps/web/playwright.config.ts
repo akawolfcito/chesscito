@@ -68,6 +68,21 @@ export default defineConfig({
     // "content" entry only revalidates on write, so a persisted `.next/cache`
     // from a prior run would otherwise serve stale boards after a catalog
     // regen. Prod never sets this — caching strategy there is untouched.
-    env: { CONTENT_CACHE_DISABLED: "1", PORT: BASE_URL_PORT },
+    // NEXT_PUBLIC_CHAIN_ID is pinned, not inherited. Shell exports WIN over
+    // `.env*` in Next, so a developer with `NEXT_PUBLIC_CHAIN_ID=11142220`
+    // (Celo Sepolia) exported in their profile silently reconfigured the app
+    // under test: `getConfiguredChainId()` returned Sepolia while wagmi —
+    // whose config is hardcoded `chains: [celo, celoSepolia]` — reported
+    // mainnet 42220 for a disconnected visitor. The two can never agree, so
+    // `getShopAddress()` returned null, the catalog read was never enabled,
+    // and every buy pill stayed on "Coming soon". That is the whole story of
+    // the long-red `hub-shop-sheet-open` baseline (diagnosed 2026-08-06):
+    // the same commit went green or red depending on the operator's shell.
+    // Must stay 42220 to match wagmi's `chains[0]`.
+    env: {
+      CONTENT_CACHE_DISABLED: "1",
+      PORT: BASE_URL_PORT,
+      NEXT_PUBLIC_CHAIN_ID: "42220",
+    },
   },
 });
