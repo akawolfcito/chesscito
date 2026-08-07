@@ -1,6 +1,11 @@
 # Spec — AC8: `WalletShell` deja de ser una pantalla vacía
 
-**Fecha:** 2026-08-07 · **Estado:** ✅ **READY — gates cerrados, en implementación (`/tdd`)**
+**Fecha:** 2026-08-07 · **Estado:** ✅ **CERRADO — PASS. No se reabre.**
+
+> **Resultado:** FCP **3.974 → 1.736 ms (−2.238 ms)** · pantalla con silueta a los 2 s en vez
+> de color plano · **0 requests nuevos** · +0,2 kB · T2 −37 ms · LCP −62 ms · **VR 62/62 sin
+> re-baselinear** · suite 7.468 / 606 · `bundle:guard` verde.
+> Evidencia: `docs/audits/2026-08-07-ac8-skeleton-results.md`.
 
 | # | Experimento | Resultado |
 |---|---|---|
@@ -222,26 +227,26 @@ con su medición de long tasks antes y después. ⛔ No se agrega "porque queda 
 
 **Comportamiento (unit)**
 
-- [ ] AC1 — `isHubRoute` acepta `/`, `/en`, `/es` y rechaza `/terms`, `/en/terms`, `/exercises`,
+- [x] AC1 — `isHubRoute` acepta `/`, `/en`, `/es` y rechaza `/terms`, `/en/terms`, `/exercises`,
       `/stats`, `/arena`. Función pura, casos explícitos en las dos direcciones.
-- [ ] AC2 — En el hub sin hidratar, el SSR emite la silueta.
-- [ ] AC3 — Fuera del hub sin hidratar, el SSR emite el shell vacío y **ninguna** clase de
+- [x] AC2 — En el hub sin hidratar, el SSR emite la silueta.
+- [x] AC3 — Fuera del hub sin hidratar, el SSR emite el shell vacío y **ninguna** clase de
       silueta.
-- [ ] AC4 — El skeleton es `aria-hidden="true"` y no expone ningún elemento enfocable.
-- [ ] AC5 — Cuando la rama monta, no queda ningún nodo del skeleton en el DOM.
-- [ ] AC6 — En el estado terminal de error, no queda ningún nodo del skeleton (E2).
-- [ ] AC7 — `children` sigue montando **exactamente una vez** (guard heredado, no debe
+- [x] AC4 — El skeleton es `aria-hidden="true"` y no expone ningún elemento enfocable.
+- [x] AC5 — Cuando la rama monta, no queda ningún nodo del skeleton en el DOM.
+- [x] AC6 — En el estado terminal de error, no queda ningún nodo del skeleton (E2).
+- [x] AC7 — `children` sigue montando **exactamente una vez** (guard heredado, no debe
       regresar).
 
 **Fuente**
 
-- [ ] AC8 — Guard: el ancho de riel de la silueta y el de `.hub-scaffold-body` son el mismo
+- [x] AC8 — Guard: el ancho de riel de la silueta y el de `.hub-scaffold-body` son el mismo
       valor. Falla si uno cambia sin el otro (C5).
-- [ ] AC9 — Guard: el CSS de la silueta no contiene `url(`. Cero assets, verificable.
+- [x] AC9 — Guard: el CSS de la silueta no contiene `url(`. Cero assets, verificable.
 
 **Medición — mismo instrumento, mismo perfil (Slow 4G + CPU 4×)**
 
-- [ ] AC10 — **FCP mediana < 2.000 ms** bajo Slow 4G + CPU 4×, y se registra **el valor real y
+- [x] AC10 — **FCP mediana < 2.000 ms** bajo Slow 4G + CPU 4×, y se registra **el valor real y
       el delta** contra el baseline de 3.974 ms.
       ⚠️ **El umbral original era < 1.500 ms y quedó invalidado por una dependencia externa al
       skeleton** (founder, 2026-08-07). EXP1b lo midió: con el primitivo correcto el FCP da
@@ -252,23 +257,25 @@ con su medición de long tasks antes y después. ⛔ No se agrega "porque queda 
       ⛔ **Bajar ese piso NO pertenece a este spec.** Es el frente siguiente (CSS
       render-blocking), que ahora tiene una hipótesis cuantificada: ~1.679 ms de piso de FCP.
       No se optimiza CSS acá para perseguir 1.500 ms.
-- [ ] AC11 — El filmstrip a ~1,0 s y ~2,0 s muestra la silueta, **no** color plano. ⚠️ Se mira
+- [x] AC11 — El filmstrip a ~1,0 s y ~2,0 s muestra la silueta, **no** color plano. ⚠️ Se mira
       **también el frame inmediatamente posterior a T2**: CLS 0 no garantiza que el swap no se
       lea como un corte brusco, y eso ningún número lo mide.
-- [ ] AC12 — `encoded bytes` no aumentan materialmente (tolerancia: **+2 kB**, que es CSS).
+- [x] AC12 — `encoded bytes` no aumentan materialmente (tolerancia: **+2 kB**, que es CSS).
       ⚠️ Esos bytes entran en `globals.css`, que ya es render-blocking y es el frente #4: si el
       skeleton necesitara más de 2 kB, deja de ser "sin costo" y vuelve a discusión.
-- [ ] AC13 — **Requests nuevos atribuibles al skeleton = 0.** Se compara la lista de URLs
+- [x] AC13 — **Requests nuevos atribuibles al skeleton = 0.** Se compara la lista de URLs
       antes/después, no sólo el total.
-- [ ] AC14 — **Reformulado tras el red team** (un número global de CLS no es comprobable acá:
-      el 0,179 conocido llega ~10 ms después de T2). El criterio es, sobre los registros de
-      shift que el instrumento ya captura con sus nodos:
-      **ningún `layout-shift` con `startMs ≤ T2`, y ninguno cuyos `sources` incluyan un nodo
-      con clase `wallet-shell-*`.** El shift de `hub-scaffold-body` / `kingdom-anchor-tagline`
-      se reporta aparte y **no** cuenta contra este AC.
-- [ ] AC15 — T2 no empeora materialmente (tolerancia: +150 ms).
-- [ ] AC16 — LCP final **no empeora** (tolerancia: +150 ms). No se exige que mejore.
-- [ ] AC17 — Long tasks no aumentan (skeleton estático, C7).
+- [x] AC14 — **Ningún `layout-shift` cuyos `sources` incluyan un nodo con clase
+      `wallet-shell-*`.** El shift conocido de `hub-scaffold-body` /
+      `kingdom-anchor-tagline` se reporta aparte y **no** cuenta contra este AC.
+      ⛔ **DEPRECADA la cláusula "ningún shift con `startMs ≤ T2`"** (founder, 2026-08-07).
+      Medido: ese shift cae de un lado o del otro del umbral según la corrida —4159 vs T2
+      4163; 4106 vs 4114—, así que el AC cambiaba de PASS a FAIL por 8 ms de ruido. **Un
+      criterio que se decide por azar es una trampa futura, no un criterio.** Lo que hace el
+      trabajo es la atribución por nodo, que es determinista.
+- [x] AC15 — T2 no empeora materialmente (tolerancia: +150 ms).
+- [x] AC16 — LCP final **no empeora** (tolerancia: +150 ms). No se exige que mejore.
+- [x] AC17 — Long tasks no aumentan (skeleton estático, C7).
 
 ⛔ **AC15/AC16 se deciden por la MEDIANA de 3 corridas antes y 3 después.** Medido: T2 osciló
 4.136–4.199 ms y LCP 4.324–4.568 ms en cinco corridas del **mismo** build. Una sola corrida
@@ -277,10 +284,10 @@ me favorece.
 
 **Regresión**
 
-- [ ] AC18 — Suite completa verde (baseline al abrir: **7.432 / 603**).
-- [ ] AC19 — `tsc --noEmit` limpio.
-- [ ] AC20 — VR **62/62 sin re-baselinear**, salvo cambio visual deliberado y revisado uno por uno.
-- [ ] AC21 — `pnpm bundle:guard` sigue verde: el skeleton no arrastra código de rama.
+- [x] AC18 — Suite completa verde (baseline al abrir: **7.432 / 603**).
+- [x] AC19 — `tsc --noEmit` limpio.
+- [x] AC20 — VR **62/62 sin re-baselinear**, salvo cambio visual deliberado y revisado uno por uno.
+- [x] AC21 — `pnpm bundle:guard` sigue verde: el skeleton no arrastra código de rama.
 
 ## Out of scope
 
