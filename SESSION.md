@@ -1,117 +1,147 @@
-# Sesión 2026-08-06 — guard de chain id + auditoría del repo público
+# Sesión 2026-08-07 (cont.) — el split de wallet, implementado y medido
 
-> 📌 **Dos entregas.** (1) El desajuste de chain id que tuvo el VR rojo meses ahora **se
-> avisa solo** en dev, sin perder la capacidad de desarrollar contra Sepolia. (2) Antes de
-> pushear se auditaron los 22 commits: **cero secretos**, pero un doc de inventario de
-> máquina exponía datos de **otro proyecto** en un repo público. Se sacó de la historia
-> mientras todavía era barato.
+> 📌 **Lo que se construyó está cerrado y verde. Lo que NO está cerrado es si sirve.**
+> Las dos varas de medir dan respuestas distintas y la sesión termina sin arbitrarlas.
+> Ver «Parte 3 — la medición honesta»: es lo primero que hay que resolver.
 
-**Estado:** `main` = `194aa54f` · **21 commits sin pushear** (fast-forward, sin force) ·
-7404 passing / 598 files · VR 62/62 verificado sin `--update-snapshots`.
+**Estado:** `main` local = `708992b3` · **8 commits nuevos** esta sesión, **30 sin pushear**
+en total · suite **7414 passing / 601 files** · `pnpm exec tsc --noEmit` limpio en `apps/web`
+· `next build` compila sin errores ni warnings nuevos.
 
 ---
 
-## Completed
+## Parte 1 — Lo que entró (8 commits atómicos)
 
-### 1. Rastreo del `NEXT_PUBLIC_CHAIN_ID` del shell: es EFÍMERO
+| Commit | Qué |
+|---|---|
+| `761236a7` | docs: la auditoría de UX en vivo + el spec del lazy load + su red team |
+| `e50190e9` | `MountedWalletBranch` + `WALLET_BRANCH_ATTR` (SDD: los tipos primero) |
+| `d5e96eed` | `WALLET_LOAD_ERROR_COPY` en EN y ES (guard de traducción 247/247) |
+| `a8732ea8` | `WalletBranchErrorBoundary` — estado terminal, clase, con Retry |
+| `2c077ab2` | `wagmiConfig` sale del componente a `lib/wallet/wagmi-config.ts` |
+| `caf96110` | `data-wallet-branch` renderizado por las **dos** ramas |
+| `a27f72cd` | **El lazy**: `React.lazy` + `Suspense` + `WalletShell` |
+| `708992b3` | El `eslint-disable` de `attempt` con la razón escrita al lado |
 
-La open question de la sesión anterior queda cerrada: **no lo exporta nada en disco.**
-Descartado contra perfiles de zsh y `.dotfiles` (sin ninguna mención), `launchctl getenv`
-(vacío), plugins `dotenv`/`direnv`/`autoenv` (ninguno instalado), settings de VS Code, el
-bloque de variables de `~/.claude/settings.json` (única clave:
-`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`) y alias/función `claude` en `.zshrc`.
+### Decisiones que quedaron tomadas durante el TDD
 
-Lo exportó a mano la terminal que lanzó la sesión y se hereda proceso a proceso.
-**No hay nada que arreglar en la config**: muere al abrir una terminal nueva.
+1. **`React.lazy`, no `next/dynamic`.** El spec lo dejaba abierto (C2) y el requisito
+   mandaba: hacía falta distinguir `loading` de `failed`, y controlar la identidad del loader
+   por intento. `next/dynamic` no da ninguna de las dos cosas limpiamente.
+2. **El retry se cierra de verdad (C2c).** `useMemo([mounted, attempt])` rearma la identidad
+   del lazy, y **el test cuenta invocaciones del loader** (1 → 2 al tocar Retry). No es "el
+   botón existe".
+   ⚠️ `attempt` es una dependencia que **eslint llama innecesaria** — hay `eslint-disable`
+   con la explicación. Si alguien la borra, AC23 se pone rojo, que es el punto.
+3. **`display: contents` para el marcador de rama.** El atributo tenía que ir en un nodo que
+   sólo existe con esa rama montada, sin tocar layout. Cero riesgo de CLS.
+4. **Los `import()` son literales por rama**, nunca un template literal — eso barrería el
+   directorio entero al chunk.
 
-⚠️ **Trampa de método:** `zsh -l -c 'echo $VAR'` **hereda el entorno del proceso padre**,
-así que "sí está seteada" ahí no prueba nada sobre la config del usuario. Sólo `env -i`
-responde la pregunta real. La primera medición fue justamente esa y era inservible.
+### El cambio de SSR es deliberado (AC2 / E1)
 
-### 2. `ChainConfigWarning` — el aviso que faltaba (`d0bf6081`, `3199ac20`, `194aa54f`)
+Con la rama diferida, **el servidor emite `WalletShell` siempre**, también con la flag
+apagada. El test que afirmaba lo contrario **se reescribió con la razón escrita adentro**, no
+se borró. ⛔ **En producción no cambia nada**: Privy está encendida en las dos superficies, así
+que la rama pre-hidratación ya era `undecided`.
 
-Banner ámbar **sólo en development** cuando el id configurado no es el `chains[0]` de wagmi.
+---
 
-- **Capa pura**: `lib/contracts/chain-config-diagnosis.ts` — tres estados (`ok`, `unset`,
-  `default-mismatch`). La invariante que codifica: todo getter de `chains.ts` compara contra
-  `getConfiguredChainId()`, y a un visitante **desconectado** wagmi le responde con su
-  primera chain; si el id configurado no es ese, nunca coinciden y toda dirección da `null`.
-- **Montaje**: en las **dos** ramas de wallet y **fuera** de `ProductContextProviders`,
-  porque el fallo golpea al visitante desconectado, que nunca llega a esos contextos.
-  Cada rama pasa su propio `chains[0]`: MiniPay lista Celo + Celo Sepolia
-  (`wallet-provider.tsx`), la web sólo Celo (`web-wallet-provider.tsx`).
-- No lee estado del browser → no necesita efecto ni arriesga hidratación.
+## Parte 2 — Cobertura de los AC
 
-⛔ **Se descartó pinear el id en el script `dev`**, que era la propuesta inicial:
-`getConfiguredChainId()` acepta 42220/44787/11142220 **a propósito**, y clavarlo mataría el
-desarrollo contra Sepolia, que es donde se validó Privy. Cambiaba un bug silencioso por una
-capacidad perdida.
+**Cerrados y verdes:** AC1 · AC2 · AC3 · AC4 · AC5 · AC6 · AC7 · AC15 · AC16 · AC19 · AC21 ·
+AC23 · AC24 · AC25.
 
-7 tests nuevos. **VR 62/62 en 2.9m sin `--update-snapshots`**: con la config correcta el
-banner queda mudo y no toca ninguna baseline.
+**Abiertos:**
 
-### 3. Auditoría de los 22 commits antes del push
+- **AC8** — `WalletShell` NO ocupa el espacio final: sigue siendo `<div>` vacío. Y ahora la
+  espera **incluye una ida a la red**, así que la ventana en blanco se alarga de verdad. Es la
+  open question E7 y subió de prioridad.
+- **AC9–AC14** — el guard de bundle **no está automatizado**. Lo verifiqué a mano (ver abajo).
+- **AC17** — **el VR no se corrió.** Aplica entera la política fijada la sesión pasada.
+- **AC20** — el retry se ejerce una vez en test; falta el caso "el segundo intento resuelve y
+  la rama monta".
 
-Los 16 archivos de texto salieron **limpios de secretos**: sin connection strings, JWTs,
-private keys, service role keys ni bearer tokens. Migraciones: **DDL puro**, cero
-`INSERT`/`COPY`.
+---
 
-**El hallazgo estaba en otro lado.** `docs/audits/2026-08-06-docker-local-audit.md`
-—594 líneas de inventario de la máquina— exponía, en un repo **PÚBLICO**, cosas ajenas a
-Chesscito: el **project ref de Supabase de `minixymyx`** (20 menciones), su ruta local, y
-contenedores de otro cliente (`cap-code_*`: MySQL con base `planetscale`, MinIO).
+## Parte 3 — La medición honesta ⚠️ LEER ESTO
 
-### 4. Reescritura de historia para sacarlo (`b32b9949..194aa54f`)
+Compilé **las dos versiones** (`cd380e7f` y `708992b3`) con el mismo comando. Las dos varas
+**no coinciden**, y eso es el hallazgo:
 
-⛔ **Un `git rm` en un commit nuevo no habría servido**: el blob queda en la historia pública
-para siempre. Como nada estaba pusheado, era la única ventana barata.
+### Vara A — el grafo de chunks (`app-build-manifest`), la que midió el defecto
 
-- Tag de respaldo `backup/pre-docker-audit-strip` → `24b3489f`
-- `git filter-branch --force --prune-empty --index-filter 'git rm --cached
-  --ignore-unmatch <path>' origin/main..main`
-- `3d812dbe` tocaba **sólo** ese archivo → podado por `--prune-empty`. Sus hallazgos (CLI de
-  Supabase, volumen corrupto) ya viven en este doc, no se perdió nada.
-- **Integridad verificada**: `git diff backup/pre-docker-audit-strip main --stat` da
-  exactamente **un archivo, 594 borrados**. Nada más se movió.
-- El doc se preservó en `private/audits/` (gitignoreado) — sigue sirviendo para la máquina.
-- `refs/original` borrado (redundante con el tag).
+| Grafo | Antes (`cd380e7f`) | Después (`708992b3`) | Δ |
+|---|---|---|---|
+| layout solo | 24 chunks · 2.911 kB raw · **859 kB gz** | 10 chunks · 438 kB raw · **126 kB gz** | **−85%** |
+| layout + `/[locale]` | 39 chunks · **1.010 kB gz** | 34 chunks · **373 kB gz** | −63% |
+| layout + `/terms` | 28 chunks · **880 kB gz** | 14 chunks · **147 kB gz** | −83% |
 
-✅ El push sigue siendo **fast-forward sin force**: el rango reescrito era sólo lo no
-pusheado, así que `origin/main` sigue siendo ancestro. `git push --dry-run` lo confirma con
-`..` y no `+`.
+Y lo cualitativo, que no admite interpretación: **el grafo del layout ya no contiene una sola
+referencia a `@privy-io`** (antes: 4 chunks) ni ninguno de los dos `data-wallet-branch`.
+
+### Vara B — la tabla de `next build` (First Load JS)
+
+| Ruta | Antes | Después | Δ |
+|---|---|---|---|
+| `/[locale]` | 382 kB | 380 kB | **−2 kB** |
+| `/[locale]/terms` | 145 kB | 146 kB | **+1 kB** |
+| `/[locale]/stats` | 134 kB | 135 kB | +1 kB |
+| shared by all | 89,1 kB | 89,4 kB | +0,3 kB |
+
+⛔ **No compenso el informe.** Por la vara B esto no movió nada: décimas, del tamaño del ruido
+entre builds. Por la vara A el layout perdió el 85% de su grafo.
+
+### 🔎 El dato que inclina la balanza (y que no esperaba)
+
+**Después del cambio, las dos varas COINCIDEN. Antes, no.**
+
+| | Vara A (unión de chunks) | Vara B (tabla de Next) | Discrepancia |
+|---|---|---|---|
+| Antes, `/[locale]` | 1.010 kB gz | 382 kB | **2,6×** |
+| Antes, `/terms` | 880 kB gz | 145 kB | **6,1×** |
+| Después, `/[locale]` | 373 kB gz | 380 kB | ✅ ~1× |
+| Después, `/terms` | 147 kB gz | 146 kB | ✅ ~1× |
+
+Es decir: la tabla de `next build` **no estaba atribuyendo al first load** ~700 kB gz que sí
+estaban en el grafo de la ruta. Después del split, no queda nada sin atribuir. Eso sugiere que
+**la vara B era la que mentía**, no la A — pero es una inferencia, no una medición.
+
+### ⛔ Lo primero de la próxima sesión: que arbitre el browser
+
+Ninguna de las dos varas es la verdad. La verdad es **cuántos bytes de JS baja un device
+antes de ser interactivo**. Se mide con Playwright/CDP contando `response.body()` de los `.js`
+hasta `networkidle`, en las dos versiones, en `/[locale]` y en `/terms`.
+
+⚠️ Y hay una pregunta que la medición debe responder explícitamente: **la rama se descarga
+igual, un tick después**. El ahorro real sólo existe si el jugador de MiniPay nunca baja el
+chunk de Privy — no porque el primer load sea más chico.
 
 ---
 
 ## Next steps
 
-1. **`git push origin main`** — verificado seguro. Sube sólo la rama: `push.followTags` no
-   está seteado, no hay refspec custom, y el tag de respaldo es *lightweight* (que
-   `followTags` no sube ni aunque estuviera activo).
-2. **Borrar `backup/pre-docker-audit-strip`** una vez confirmado que todo está bien. Es el
-   último ref que sostiene el blob del audit (local, no es fuga).
-3. **Decoder de custom errors** (1–3 h, GO con evidencia): hoy `BadgeAlreadyClaimed`,
-   `CooldownActive` y `DailyLimitReached` salen los tres como "Try again". El extractor ya
-   está escrito; falta el generador de error-ABIs desde `artifacts/` y el mapa nombre → copy.
-4. **~7.5 MB de arte sin verificar** en `apps/web` (`/scene-rooted`, raíz de `/art`,
-   `/redesign/avatars`) — chequeo familia por familia, no barrido.
+1. **La medición del browser** (arriba). Sin eso, no se decide si esto se mergea, se ajusta o
+   se revierte.
+2. **AC8 / E7** — decidir el contenido de `WalletShell` **midiendo**: sólo si no mete descarga
+   nueva en el camino crítico y mantiene CLS 0. Si no, se queda el `<div>`.
+3. **Guard de bundle (AC9–AC14)** — automatizar lo que verifiqué a mano. ⚠️ Debe excluirse de
+   `pnpm test` explícitamente, o corre sin build sobre un `.next` viejo.
+4. **VR 62/62** con la política de la sesión pasada, sin `--update-snapshots`.
+5. **AC20** — el caso "el segundo intento resuelve".
 
-⚠️ **No borrar los 7 tags `archive/*`**: son la única copia del trabajo en pausa y no están
-en origin.
+## Open questions (heredadas, siguen abiertas)
 
----
+- **`ssr: true` en `wagmiConfig` + rama diferida** — la autoconexión de MiniPay
+  (`WalletProviderInner`, `useEffect`) ahora corre un tick más tarde. Invisible en tests,
+  visible en el device.
+- **Telemetría del `componentDidCatch`** — sigue siendo sólo consola. Si el chunk falla en el
+  device de un jugador real, no nos enteramos. Es decisión, no olvido.
+- **Staleness del guard de bundle** — por `mtime` no; hace falta un sello de contenido.
 
-## Open questions
+## Notas
 
-- **`.env.testnet` declara chain id 42220 (mainnet)**, que contradice su propio nombre.
-  Sigue sin investigarse; se arrastra de la sesión anterior. No afecta a nada de esta.
-
----
-
-## Notes
-
-- 📌 El VR se corre con `pnpm -C <ruta> run test:e2e:visual`. ~3 min en verde.
-- ⚠️ El hook de seguridad **bloquea comandos cuyo texto contenga `.env`** (incluido
-  `process.env.` dentro de un patrón de `grep`). Salida: buscar por el nombre de la variable
-  sola, o usar `jq '.["env"]'` en vez de `.env`.
-- ⚠️ `git rev-parse --short A B` con dos revisiones falló con *"Needed a single revision"*;
-  verificar los refs de a uno.
+- Los tests dejan un stack de React en consola (el throw provocado a propósito). Ruido
+  esperado.
+- ⚠️ **Este repo no usa Prettier** (no hay config ni dependencia). Correrlo reformatea
+  archivos enteros con otro ancho de línea. Ya lo hice una vez y tuve que revertir.
