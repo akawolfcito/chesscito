@@ -22,13 +22,18 @@ vi.mock("@/components/web-wallet-provider", () => ({
 vi.mock("@/lib/minipay", () => ({
   isMiniPayEnv: vi.fn(() => false),
 }));
+// The boundary reads the route to decide WHICH shell to render: the hub
+// silhouette only on the hub (spec 2026-08-07-wallet-shell-skeleton, C1).
+vi.mock("next/navigation", () => ({ usePathname: vi.fn(() => "/") }));
 
 import { WebWalletProvider } from "@/components/web-wallet-provider";
 import { WalletProvider } from "@/components/wallet-provider";
 import { WalletProviderBoundary } from "@/components/wallet-provider-boundary";
 import { isMiniPayEnv } from "@/lib/minipay";
+import { usePathname } from "next/navigation";
 
 const minipayMock = vi.mocked(isMiniPayEnv);
+const pathnameMock = vi.mocked(usePathname);
 
 const child = <span>app tree</span>;
 
@@ -41,6 +46,43 @@ function ssr(node: ReactNode) {
 afterEach(() => {
   vi.unstubAllEnvs();
   minipayMock.mockReturnValue(false);
+  pathnameMock.mockReturnValue("/");
+});
+
+describe("WalletProviderBoundary — qué shell recibe cada ruta", () => {
+  it("en el hub, el HTML del servidor ya trae la silueta", () => {
+    // ⚠️ Este es el punto entero del frente: medido, el shell llega en el HTML
+    // inicial y se pinta ~2,2 s antes que la rama. Si la silueta dependiera de
+    // la hidratación llegaría a los ~4 s, justo cuando ya no hace falta.
+    vi.stubEnv("NEXT_PUBLIC_PRIVY_ENABLED", "true");
+    pathnameMock.mockReturnValue("/");
+
+    const html = ssr(<WalletProviderBoundary>{child}</WalletProviderBoundary>);
+
+    expect(html).toMatch(/wallet-shell-skeleton/);
+  });
+
+  it("fuera del hub, el HTML trae el hueco vacío y NINGUNA silueta", () => {
+    // Pintar el hub en `/terms` sería prometer una pantalla que nunca llega.
+    vi.stubEnv("NEXT_PUBLIC_PRIVY_ENABLED", "true");
+    pathnameMock.mockReturnValue("/terms");
+
+    const html = ssr(<WalletProviderBoundary>{child}</WalletProviderBoundary>);
+
+    expect(html).toMatch(/data-wallet-shell/);
+    expect(html).not.toMatch(/wallet-shell-skeleton/);
+  });
+
+  it("con la flag apagada el hub también recibe la silueta", () => {
+    // Con `ssr: false` toda ruta emite el shell, así que la silueta no puede
+    // depender de que Privy esté encendida.
+    vi.stubEnv("NEXT_PUBLIC_PRIVY_ENABLED", "false");
+    pathnameMock.mockReturnValue("/es");
+
+    expect(ssr(<WalletProviderBoundary>{child}</WalletProviderBoundary>)).toMatch(
+      /wallet-shell-skeleton/,
+    );
+  });
 });
 
 describe("WalletProviderBoundary — flag OFF", () => {

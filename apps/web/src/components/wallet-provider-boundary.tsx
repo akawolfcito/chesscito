@@ -2,12 +2,14 @@
 
 import type { ReactNode } from "react";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 
 import { WalletBranchErrorBoundary } from "@/components/wallet-branch-error-boundary";
 import { walletBranchLoaders } from "@/components/wallet-branch-loaders";
 import { WalletShell } from "@/components/wallet-shell";
 import { isMiniPayEnv } from "@/lib/minipay";
 import { resolveWalletBranch, type MountedWalletBranch } from "@/lib/wallet/wallet-branch";
+import { resolveWalletShellVariant } from "@/lib/wallet/wallet-shell-variant";
 
 /** `NEXT_PUBLIC_PRIVY_ENABLED === "true"`. Read in render so it stays inline for
  *  Next and stubbable in tests. ON in production on both projects — verified by
@@ -39,6 +41,7 @@ export function WalletProviderBoundary({ children }: { children: ReactNode }) {
    *  (spec C2c). Re-rendering the same one lands on the cached rejection without
    *  ever touching the network, which would make the button a lie. */
   const [attempt, setAttempt] = useState(0);
+  const pathname = usePathname();
 
   useEffect(() => {
     setHydrated(true);
@@ -73,7 +76,13 @@ export function WalletProviderBoundary({ children }: { children: ReactNode }) {
     // `undecided`, or the server. A stable shell shared by SSR and the first
     // client render — no children and no wagmi hooks: mounting the app tree here
     // just to swap it is the double-mount this design exists to avoid.
-    return <WalletShell />;
+    //
+    // The route decides WHICH shell: the hub gets a silhouette, everything else
+    // keeps the empty hole. `usePathname()` works during the prerender, so the
+    // silhouette travels in the server HTML — measured, it paints ~2,2 s before
+    // the branch. Deciding this after hydration would deliver it at ~4 s, which
+    // is exactly when it stops being useful.
+    return <WalletShell variant={resolveWalletShellVariant(pathname)} />;
   }
 
   return (
