@@ -82,6 +82,13 @@
 
     --radius: 1rem;
     --app-max-width: 390px;
+    /* Ancho de los rieles laterales del hub. Vive acá, y no como literal en
+       `.hub-scaffold-body`, porque el skeleton de `WalletShell` espeja esa
+       grilla: dos literales iguales en dos archivos no los delata NINGÚN test
+       de comportamiento — el original cambia, la copia no, y nadie se entera
+       hasta ver el salto. Una sola fuente para los dos.
+       (spec 2026-08-07-wallet-shell-skeleton, C5.) */
+    --hub-rail-width: 78px;
     --surface-frosted: rgba(10, 20, 36, 0.92);
     --surface-frosted-solid: #0a1424;
     /* Scrim token — same ~60% black the Radix Sheet overlay uses, so
@@ -7816,7 +7823,9 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .hub-scaffold-body {
   display: grid;
-  grid-template-columns: 78px minmax(0, 1fr) 78px;
+  /* `--hub-rail-width`, no el literal: el skeleton de `WalletShell` espeja esta
+     grilla y las dos tienen que moverse juntas (C5 del spec del skeleton). */
+  grid-template-columns: var(--hub-rail-width) minmax(0, 1fr) var(--hub-rail-width);
   align-items: center;
   /* gap: 8px; */
   flex: 0 0 auto;
@@ -16813,4 +16822,111 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+/* ── WalletShell skeleton ──────────────────────────────────────────────────
+ * La silueta que ocupa la espera del hub mientras la rama de wallet viaja.
+ * Spec: docs/specs/2026-08-07-wallet-shell-skeleton.md
+ *
+ * ⛔ EL RELLENO ES UN `data:` SVG, NUNCA UN GRADIENTE. Medido (EXP1/EXP1b):
+ * con `linear-gradient` el bloque estaba pintado a los 194 ms y el FCP seguía
+ * marcando 3.928 ms — Chromium cuenta RECURSOS de imagen, no pintura. Con el
+ * `data:` URI el FCP bajó a 1.728 ms (−2.246 ms) sin un solo request nuevo.
+ *
+ * ⚠️ CAPA FIJA, FUERA DEL FLUJO. El hub calcula su layout como si esto no
+ * existiera, así que al desaparecer no puede mover ni un elemento: el CLS del
+ * swap es 0 POR CONSTRUCCIÓN, no porque las medidas coincidan. Eso también
+ * libera a la silueta de tener que calcar: comunica una forma, no la traza.
+ *
+ * Sin animación, a propósito: bajo CPU 4× ya hay long tasks antes del FCP y un
+ * pulse competiría con la hidratación. Si algún día entra, entra con su propia
+ * medición.
+ */
+.wallet-shell-skeleton {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  /* Mismo ritmo vertical que `.hub-scaffold`. */
+  padding: 14px 0 18px;
+  gap: 6px;
+  pointer-events: none;
+  --wallet-shell-fill: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='120'%3E%3Crect width='320' height='120' fill='%23ffffff' fill-opacity='0.07'/%3E%3C/svg%3E");
+}
+
+.wallet-shell-skeleton-hud,
+.wallet-shell-skeleton-cta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+/* Insets asimétricos heredados de `.hub-scaffold-hud-top`. */
+.wallet-shell-skeleton-hud {
+  padding: 4px 8px 0 20px;
+}
+
+.wallet-shell-skeleton-body {
+  display: grid;
+  grid-template-columns: var(--hub-rail-width) minmax(0, 1fr) var(--hub-rail-width);
+  align-items: center;
+}
+
+.wallet-shell-skeleton-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 5px 5px;
+}
+
+.wallet-shell-skeleton-cta {
+  gap: 10px;
+  padding: 0 16px;
+}
+
+/* Los bloques pintados. `background-size: 100% 100%` deja que un solo `data:`
+   URI sirva a todos; el redondeo lo pone CSS, no el SVG. */
+.wallet-shell-skeleton-chip,
+.wallet-shell-skeleton-slot,
+.wallet-shell-skeleton-panel,
+.wallet-shell-skeleton-button {
+  background-image: var(--wallet-shell-fill);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  display: block;
+}
+
+.wallet-shell-skeleton-chip {
+  width: 64px;
+  height: 36px;
+  border-radius: 999px;
+}
+
+.wallet-shell-skeleton-chip--wide {
+  width: 94px;
+}
+
+.wallet-shell-skeleton-slot {
+  height: 62px;
+  border-radius: 14px;
+}
+
+/* ⚠️ El panel NO ocupa la pantalla. Un bloque dominante se volvería candidato a
+   LCP y "mejoraría" la métrica sin que el jugador vea nada antes — el gaming
+   que el spec prohíbe (C4). */
+.wallet-shell-skeleton-panel {
+  height: 300px;
+  margin: 0 6px;
+  border-radius: 22px;
+}
+
+.wallet-shell-skeleton-button {
+  flex: 1 1 0;
+  height: 64px;
+  border-radius: 18px;
 }
