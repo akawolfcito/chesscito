@@ -2,7 +2,7 @@ import { readContract } from "wagmi/actions";
 
 import { badgesAbi } from "@/lib/contracts/badges";
 import { getBadgesAddress, getConfiguredChainId } from "@/lib/contracts/chains";
-import { wagmiConfig } from "@/components/wallet-provider";
+import { wagmiConfig } from "@/lib/wallet/wagmi-config";
 
 /** Aggregates the raw inputs that computePendingClaims needs.
  *  Server/client agnostic — caller decides where to invoke. */

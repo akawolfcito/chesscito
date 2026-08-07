@@ -2,28 +2,19 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { WagmiProvider, createConfig, http, useConnect } from "wagmi";
-import { celo, celoSepolia } from "wagmi/chains";
-import { injected } from "wagmi/connectors";
+import { WagmiProvider, useConnect } from "wagmi";
+import { celo } from "wagmi/chains";
 
 import { ChainConfigWarning } from "@/components/dev/chain-config-warning";
 import { ProductContextProviders } from "@/components/product-context-providers";
 import { getInjectedProvider, isMiniPayEnv } from "@/lib/minipay";
+import { wagmiConfig } from "@/lib/wallet/wagmi-config";
 
-/** Plain wagmi `injected()` connector (id: "injected") — the only wallet
- *  this app ever offered. RainbowKit was removed in the P2 JS cluster
- *  (2026-06-12): its modal listed a single "Browser wallet" entry while
- *  its package put ~64KB gz into every route's first load. Connect CTAs
- *  now use `useConnectWallet()` (src/lib/wallet/use-connect-wallet.ts). */
-export const wagmiConfig = createConfig({
-  chains: [celo, celoSepolia],
-  connectors: [injected()],
-  transports: {
-    [celo.id]: http(),
-    [celoSepolia.id]: http(),
-  },
-  ssr: true,
-});
+// ⛔ Do NOT re-export `wagmiConfig` from here. It moved to
+// `lib/wallet/wagmi-config` so that code needing only the config object never
+// pulls this branch into its graph; a re-export would keep the old import path
+// alive and quietly undo the code split
+// (spec 2026-08-07-wallet-branch-lazy-load).
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -6,7 +6,7 @@ import { WagmiProvider } from "wagmi";
 import enMessages from "@/lib/content/messages/en";
 import esMessages from "@/lib/content/messages/es";
 import { routing, type Locale } from "@/i18n/routing";
-import { wagmiConfig } from "@/components/wallet-provider";
+import { wagmiConfig } from "@/lib/wallet/wagmi-config";
 
 const BUNDLES: Record<Locale, Record<string, unknown>> = {
   en: enMessages as Record<string, unknown>,
