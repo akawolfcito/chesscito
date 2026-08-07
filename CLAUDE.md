@@ -60,11 +60,20 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 - Commits: Conventional Commits (`feat:`, `fix:`, `style:`, `refactor:`)
 - Firma de commit: `Wolfcito 🐾 @akawolfcito`
 - Tests: Vitest + RTL (unit) + Playwright (E2E + VR); **7397 passing / 596 files**
-  (baseline 2026-08-06). ✅ **El VR está 61/62** — re-baselineado y **verificado sin
-  `--update-snapshots`** el 2026-08-06 (`44ee073`, 48 snapshots). La única roja es
-  `hub-shop-sheet-open`: muere en una aserción de texto (espera `$`, recibe `Coming soon`)
-  **antes** de la foto — es entorno sin treasury, no visual.
+  (baseline 2026-08-06). ✅ **El VR está 62/62** — verde entero, **verificado sin
+  `--update-snapshots`** el 2026-08-06 (`2b6dee4`, 62 passed en 2.0m).
   Diagnóstico de por qué había 49 rojas: `docs/audits/2026-08-06-vr-red-diagnosis.md`.
+  ⛔ **El `webServer.env` del config PINEA `NEXT_PUBLIC_CHAIN_ID=42220` — no lo saques.**
+  En Next las variables **del shell ganan sobre `.env*`**, y un shell con
+  `NEXT_PUBLIC_CHAIN_ID=11142220` (Celo Sepolia) exportado reconfigura la app bajo test:
+  `getConfiguredChainId()` da Sepolia mientras wagmi —hardcodeado `chains: [celo,
+  celoSepolia]`— reporta 42220 para un visitante desconectado. Nunca coinciden →
+  `getShopAddress()` null → el catálogo no se lee → todo pill en "Coming soon".
+  Eso tuvo roja `hub-shop-sheet-open` durante meses, atribuido a "entorno sin treasury",
+  que era **falso**: el address estaba bien y no se llegaba a mirar. El valor debe seguir
+  siendo 42220 porque es el `chains[0]` de wagmi.
+  ⚠️ Ese mismo shell afecta a `pnpm dev` normal: si el Shop se ve en "Coming soon" en
+  local, mirá `echo $NEXT_PUBLIC_CHAIN_ID` antes de tocar código.
   ⚠️ El config ya resuelve `BASE_URL` a 3002 solo (`fad1e3d9`); en 3000 `ProOriginWarning`
   pinta un banner de dev sobre cada página real. ⛔ Si pasás `--reporter=list`, el reporte
   HTML **no se escribe** — no uses su `mtime` como prueba de que la suite corrió.
