@@ -59,7 +59,7 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 ## Convenciones
 - Commits: Conventional Commits (`feat:`, `fix:`, `style:`, `refactor:`)
 - Firma de commit: `Wolfcito 🐾 @akawolfcito`
-- Tests: Vitest + RTL (unit) + Playwright (E2E + VR); **7397 passing / 596 files**
+- Tests: Vitest + RTL (unit) + Playwright (E2E + VR); **7404 passing / 598 files**
   (baseline 2026-08-06). ✅ **El VR está 62/62** — verde entero, **verificado sin
   `--update-snapshots`** el 2026-08-06 (`2b6dee4`, 62 passed en 2.0m).
   Diagnóstico de por qué había 49 rojas: `docs/audits/2026-08-06-vr-red-diagnosis.md`.
@@ -73,7 +73,12 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
   que era **falso**: el address estaba bien y no se llegaba a mirar. El valor debe seguir
   siendo 42220 porque es el `chains[0]` de wagmi.
   ⚠️ Ese mismo shell afecta a `pnpm dev` normal: si el Shop se ve en "Coming soon" en
-  local, mirá `echo $NEXT_PUBLIC_CHAIN_ID` antes de tocar código.
+  local, mirá `echo $NEXT_PUBLIC_CHAIN_ID` antes de tocar código. Desde el 2026-08-06 eso
+  **se avisa solo**: `ChainConfigWarning` (`components/dev/chain-config-warning.tsx`) pinta
+  un banner ámbar en dev cuando el id configurado no es el `chains[0]` de wagmi. Se monta en
+  las dos ramas de wallet y **fuera** de `ProductContextProviders`, porque a quien golpea es
+  al visitante desconectado. ⛔ No es un pin: el override a Sepolia sigue siendo posible a
+  propósito (ahí se validó Privy), sólo que ahora se ve.
   ⚠️ El config ya resuelve `BASE_URL` a 3002 solo (`fad1e3d9`); en 3000 `ProOriginWarning`
   pinta un banner de dev sobre cada página real. ⛔ Si pasás `--reporter=list`, el reporte
   HTML **no se escribe** — no uses su `mtime` como prueba de que la suite corrió.
