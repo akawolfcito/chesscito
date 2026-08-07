@@ -237,12 +237,17 @@ describe("<HubLiteScaffold>", () => {
             todayDone: false,
             isLoading: false,
           },
-          primaryFocus: { onPress, contentLoop: action("daily-limit-reached"), isHydrated: true },
+          // Sprint 1: the fixture used to say `daily-limit-reached` while the
+          // passport said the Daily was still pending, and the card rendered a
+          // live START FOCUS anyway — the passport outranked the loop. That
+          // divergence is the defect this sprint removed, so the fixture is now
+          // coherent: pending Daily ⇒ `daily-pending`.
+          primaryFocus: { onPress, contentLoop: action("daily-pending"), isHydrated: true },
         })}
       />,
     );
     const cta = screen.getByTestId("challenge-cta");
-    expect(cta).toHaveAttribute("data-cta-state", "start");
+    expect(cta).toHaveAttribute("data-cta-kind", "action");
     fireEvent.click(cta);
     expect(onPress).toHaveBeenCalledTimes(1);
   });
@@ -357,12 +362,19 @@ describe("<HubLiteScaffold>", () => {
             todayDone: true,
             isLoading: false,
           },
+          // The terminal state is the LOOP's verdict now, not the passport's.
+          // The passport still owns the flames; it stopped owning the CTA.
+          primaryFocus: {
+            onPress: vi.fn(),
+            contentLoop: action("come-back-tomorrow"),
+            isHydrated: true,
+          },
         })}
       />,
     );
     expect(screen.getByTestId("challenge-cta")).toHaveAttribute(
-      "data-cta-state",
-      "tomorrow",
+      "data-cta-kind",
+      "status",
     );
 
     const path = screen.getByRole("region", { name: /training path/i });

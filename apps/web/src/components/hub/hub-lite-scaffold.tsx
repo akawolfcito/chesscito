@@ -14,6 +14,7 @@ import {
   type ChallengeCardSeasonPass,
 } from "@/components/hub/challenge-card";
 import type { ContentLoopAction } from "@/lib/hub/content-loop";
+import { toCtaSlotPresentation } from "@/lib/hub/cta-slot";
 import type { ChallengeProgressView } from "@/lib/season-pass/focus-days";
 import type {
   HubFocusPassport,
@@ -55,8 +56,13 @@ export type HubLiteScaffoldProps = {
   shields?: { count: number };
   // ── Start Focus (primary daily action) ──
   primaryFocus: {
-    onPress: () => void;
-    /** Drives the label intent (P1-C). null = pre-hydration → safe default. */
+    /** Navigates. Receives the slot's destination as an ARGUMENT: the adapter
+     *  above owns routing (including the `daily-pending` legacy exception), and
+     *  a `() => void` here is how that ownership leaks back down. */
+    onPress: (destination: string) => void;
+    /** The next-best-action. `null` = pre-hydration → the slot renders a status,
+     *  never a button: a button before hydration promises a destination nobody
+     *  has computed yet. */
     contentLoop: ContentLoopAction | null;
     isHydrated: boolean;
   };
@@ -212,6 +218,16 @@ export function HubLiteScaffold({
           // keeps its piece-specific Exercises route.
           onPassportTap={onPassportTap}
           onFocusTap={primaryFocus.onPress}
+          // Hydration — not the variant — decides whether the slot may be a
+          // button. `view-progress` fires both when the catalog is genuinely
+          // empty and while it is still loading; treating "I don't know yet"
+          // and "I know, and there's nothing" alike is what produced a
+          // confident button over unloaded data.
+          ctaSlot={
+            primaryFocus.isHydrated && primaryFocus.contentLoop
+              ? toCtaSlotPresentation(primaryFocus.contentLoop)
+              : null
+          }
           onReplayTour={onReplayTour}
         />
       </div>

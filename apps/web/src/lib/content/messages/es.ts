@@ -1937,7 +1937,19 @@ const messages = {
     ctaTomorrowAriaLabel: "Tu foco de hoy está hecho. El entrenamiento sigue abierto.",
     ctaComplete: "Reto completado",
     ctaCompleteAriaLabel: "Completaste el Reto Mental de 21 Días",
-    tomorrowNote: "El entrenamiento sigue abierto. Sigue mejorando tus marcas.",
+    // Modo imperativo en todas: siete etiquetas que se ven de a una pero en la
+    // misma caja, así que un solo registro gramatical.
+    ctaClaimGift: "Reclama tu regalo",
+    ctaKeepTraining: "Sigue entrenando",
+    // 19 caracteres: es el techo de la caja a 390px. Si parte, el fallback
+    // aprobado es "Al laberinto" — no inventar otro registro para acortar.
+    ctaTryLabyrinth: "Prueba el laberinto",
+    ctaBeatScore: "Mejora tu marca",
+    ctaNewPiece: "Empieza otra pieza",
+    ctaViewProgress: "Mira tu progreso",
+    // "Diaria", nunca "Diario" (se lee como periódico).
+    noteDailyReturns: "Tu Diaria vuelve mañana",
+    noteTrainingResumes: "El entrenamiento sigue mañana",
     dotFilledAria: "Día {index} hecho",
     dotEmptyAria: "Día {index}",
     focusTapAria: "Abrir la táctica diaria de hoy",

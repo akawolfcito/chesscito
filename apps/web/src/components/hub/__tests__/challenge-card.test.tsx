@@ -41,8 +41,21 @@ function focusDays(): number {
  *  explicitly — the inference here is a test convenience and deliberately NOT
  *  what the product does: the real view comes from the ledger, never from the
  *  pass or the streak. */
+/** The pending-Daily presentation, which is what most of these tests assume
+ *  when they are about something else. Explicit because the card no longer
+ *  derives it: the Content Loop does, and passing nothing now means "not
+ *  hydrated", which correctly renders a status. */
+const DAILY_PENDING_SLOT: ChallengeCardProps['ctaSlot'] = {
+  kind: 'action',
+  variant: 'daily-pending',
+  destination: '/exercises?piece=rook',
+  labelKey: 'ctaStartToday',
+  noteKey: null,
+}
+
 function Card({
   progress,
+  ctaSlot,
   ...props
 }: Omit<ChallengeCardProps, 'progress'> & {
   progress?: ChallengeProgressView
@@ -58,7 +71,13 @@ function Card({
     : props.seasonPass.isLoading
       ? { state: 'loading' }
       : { state: 'offer' }
-  return <ChallengeCard {...props} progress={progress ?? inferred} />
+  return (
+    <ChallengeCard
+      {...props}
+      progress={progress ?? inferred}
+      ctaSlot={ctaSlot === undefined ? DAILY_PENDING_SLOT : ctaSlot}
+    />
+  )
 }
 
 afterEach(() => {
@@ -102,7 +121,10 @@ describe('<ChallengeCard> — Focus Days states', () => {
     expect(card).not.toHaveAttribute('aria-busy', 'true')
     expect(screen.getByTestId('challenge-window').textContent).toMatch(/9 days left/i)
     expect(screen.getByTestId('challenge-streak').textContent).toMatch(/4-day streak/i)
-    expect(screen.getByTestId('challenge-cta')).toHaveAttribute('data-cta-state', 'start')
+    // The CTA is a live action. `start` as a card-owned state is gone: the slot
+    // now renders whatever the Content Loop resolved, and `daily-pending` is
+    // just one of its actionable variants.
+    expect(screen.getByTestId('challenge-cta')).toHaveAttribute('data-cta-kind', 'action')
   })
 
   it('degraded: says the metric is missing, and never substitutes the streak for it', () => {
@@ -118,7 +140,10 @@ describe('<ChallengeCard> — Focus Days states', () => {
     expect(focusDays()).toBe(0)
     // Access and the action survive OUR failure.
     expect(screen.getByTestId('challenge-window').textContent).toMatch(/9 days left/i)
-    expect(screen.getByTestId('challenge-cta')).toHaveAttribute('data-cta-state', 'start')
+    // The CTA is a live action. `start` as a card-owned state is gone: the slot
+    // now renders whatever the Content Loop resolved, and `daily-pending` is
+    // just one of its actionable variants.
+    expect(screen.getByTestId('challenge-cta')).toHaveAttribute('data-cta-kind', 'action')
   })
 
   it('neither disabled nor degraded revives the retired "Day N of 21" ordinal', () => {
@@ -163,7 +188,10 @@ describe('<ChallengeCard> — Focus Days states', () => {
       /12 of 21 Focus Days/i,
     )
     expect(screen.getByTestId('challenge-window').textContent).toMatch(/4 days left/i)
-    expect(screen.getByTestId('challenge-cta')).toHaveAttribute('data-cta-state', 'start')
+    // The CTA is a live action. `start` as a card-owned state is gone: the slot
+    // now renders whatever the Content Loop resolved, and `daily-pending` is
+    // just one of its actionable variants.
+    expect(screen.getByTestId('challenge-cta')).toHaveAttribute('data-cta-kind', 'action')
     // Never defeatist, never "you already lost".
     expect(screen.getByTestId('challenge-card').textContent).not.toMatch(
       /failed|lost|too late|no longer possible/i,
@@ -542,7 +570,7 @@ describe('<ChallengeCard>', () => {
           onFocusTap={onFocusTap}
         />,
       )
-      expect(cta()).toHaveAttribute('data-cta-state', 'start')
+      expect(cta()).toHaveAttribute('data-cta-kind', 'action')
       expect(cta()).toHaveClass('challenge-card-cta')
       expect(cta()).toHaveTextContent(/^Start Focus$/)
       fireEvent.click(cta())
@@ -559,7 +587,7 @@ describe('<ChallengeCard>', () => {
           onFocusTap={() => {}}
         />,
       )
-      expect(cta()).toHaveAttribute('data-cta-state', 'start')
+      expect(cta()).toHaveAttribute('data-cta-kind', 'action')
       expect(cta().textContent).not.toMatch(/Join Challenge/i)
       // One CTA always exists; what must disappear is the JOIN state.
     expect(screen.getByTestId('challenge-cta')).not.toHaveAttribute(
@@ -568,7 +596,13 @@ describe('<ChallengeCard>', () => {
     )
     })
 
-    it('shows COME BACK TOMORROW once today is done, as information and not a block', () => {
+    /* Rewritten for Sprint 1 (AC-16), not deleted. The invariant this test has
+       always protected is still true and still asserted: the terminal slot
+       INFORMS, it never re-enters the Daily and never gates the card.
+       What changed is who decides it — the card used to derive `tomorrow` from
+       `focusPassport.todayDone`; now the Content Loop resolves it and the card
+       only renders what it is handed. */
+    it('shows a terminal status once the loop has nothing actionable, and it grants nothing', () => {
       const onFocusTap = vi.fn()
       render(
         <Card
@@ -581,18 +615,25 @@ describe('<ChallengeCard>', () => {
           }}
           onJoinChallenge={null}
           onFocusTap={onFocusTap}
+          ctaSlot={{
+            kind: 'status',
+            variant: 'come-back-tomorrow',
+            destination: null,
+            labelKey: 'ctaTomorrow',
+            noteKey: 'noteDailyReturns',
+          }}
         />,
       )
-      expect(cta()).toHaveAttribute('data-cta-state', 'tomorrow')
+      expect(cta()).toHaveAttribute('data-cta-kind', 'status')
       expect(cta().textContent).toMatch(/Come Back Tomorrow/i)
       // Not a button: it claims nothing and grants nothing. Tapping it must not
       // re-enter the daily (a second entry is what would double-claim a reward).
       expect(cta().tagName).not.toBe('BUTTON')
       fireEvent.click(cta())
       expect(onFocusTap).not.toHaveBeenCalled()
-      // The card still says training remains open.
+      // The card still tells the player when the activity returns.
       expect(screen.getByTestId('challenge-card').textContent).toMatch(
-        /Training stays open/i,
+        /Your Daily returns tomorrow/i,
       )
     })
 
@@ -1220,5 +1261,192 @@ describe('<ChallengeCard> — the Season Pass banner', () => {
 
     expect(screen.getByTestId('challenge-cta')).not.toHaveClass('season-pass-banner')
     expect(screen.queryByTestId('challenge-cta-price')).not.toBeInTheDocument()
+  })
+})
+
+/** Sprint 1 — docs/specs/2026-08-07-daily-cta-content-loop.md
+ *
+ *  The slot stopped fabricating its own post-Daily state. It now renders a
+ *  `CtaSlotPresentation` resolved upstream, and the ONLY thing it reads is
+ *  `kind` / `labelKey` / `noteKey` / `destination`. It must never ask which
+ *  variant it is looking at: that is business logic and it lives in the loop.
+ *
+ *  Presentations are built by hand here (not through `toCtaSlotPresentation`)
+ *  so a bug in the mapper cannot make these pass or fail for the wrong reason.
+ */
+describe('<ChallengeCard> — CTA slot driven by the Content Loop', () => {
+  const ACTIVE_PASS: ChallengeCardProps['seasonPass'] = {
+    active: true,
+    source: 'season_pass',
+    shieldsCredited: 3,
+  }
+
+  /** Deliberately NOT the destination any default would produce. An
+   *  implementation that ignores the argument and recomputes a route still
+   *  compiles and still navigates — this value is what exposes it. */
+  const ODD_DESTINATION = '/exercises?piece=bishop&probe=cta-slot'
+
+  const ACTION_SLOT: ChallengeCardProps['ctaSlot'] = {
+    kind: 'action',
+    variant: 'labyrinth-ready',
+    destination: ODD_DESTINATION,
+    labelKey: 'ctaTryLabyrinth',
+    noteKey: null,
+  }
+
+  const STATUS_SLOT: ChallengeCardProps['ctaSlot'] = {
+    kind: 'status',
+    variant: 'come-back-tomorrow',
+    destination: null,
+    labelKey: 'ctaTomorrow',
+    noteKey: 'noteDailyReturns',
+  }
+
+  const QUOTA_SLOT: ChallengeCardProps['ctaSlot'] = {
+    kind: 'status',
+    variant: 'daily-limit-reached',
+    destination: null,
+    labelKey: 'ctaTomorrow',
+    noteKey: 'noteTrainingResumes',
+  }
+
+  function renderSlot(
+    ctaSlot: ChallengeCardProps['ctaSlot'],
+    onFocusTap?: ChallengeCardProps['onFocusTap'],
+  ) {
+    render(
+      <Card
+        focusPassport={passport({ streak: 5, todayDone: true })}
+        challenge={CHALLENGE}
+        seasonPass={ACTIVE_PASS}
+        onJoinChallenge={null}
+        ctaSlot={ctaSlot}
+        onFocusTap={onFocusTap}
+      />,
+    )
+    return screen.getByTestId('challenge-cta')
+  }
+
+  // AC-3
+  it('renders an action slot as a real button and hands the destination back verbatim', () => {
+    const onFocusTap = vi.fn()
+    const cta = renderSlot(ACTION_SLOT, onFocusTap)
+
+    expect(cta.tagName).toBe('BUTTON')
+    expect(cta).toHaveAttribute('data-cta-kind', 'action')
+    expect(cta.textContent).toMatch(/Try the labyrinth/i)
+
+    fireEvent.click(cta)
+    expect(onFocusTap).toHaveBeenCalledTimes(1)
+    // Not `expect.any(String)`: the whole point is that the ARGUMENT survives.
+    expect(onFocusTap).toHaveBeenCalledWith(ODD_DESTINATION)
+  })
+
+  // AC-4 — the defect this sprint exists to remove.
+  it('renders a status slot with no button anywhere in the CTA row', () => {
+    const onFocusTap = vi.fn()
+    const cta = renderSlot(STATUS_SLOT, onFocusTap)
+
+    expect(cta.tagName).not.toBe('BUTTON')
+    expect(cta).toHaveAttribute('role', 'status')
+    expect(cta).toHaveAttribute('data-cta-kind', 'status')
+
+    const row = document.querySelector('.challenge-card-cta-row')
+    expect(row).not.toBeNull()
+    expect(row!.querySelector('button')).toBeNull()
+
+    fireEvent.click(cta)
+    expect(onFocusTap).not.toHaveBeenCalled()
+  })
+
+  // AC-5 — a desaturated button-shaped slab reads as BROKEN, not as "nothing
+  // to do". The status must not wear the skin at all.
+  it('never dresses a status slot in the button skin', () => {
+    const cta = renderSlot(STATUS_SLOT)
+
+    expect(cta).toHaveClass('challenge-card-cta--quiet')
+    expect(cta).not.toHaveClass('principal-button')
+    expect(cta).not.toHaveClass('challenge-card-cta--info')
+    expect(cta).not.toHaveClass('season-pass-banner')
+  })
+
+  // AC-7
+  it('shows no note beside an action, and the mapped note beside a status', () => {
+    renderSlot(ACTION_SLOT, vi.fn())
+    expect(screen.queryByTestId('challenge-cta-note')).toBeNull()
+    cleanup()
+
+    renderSlot(STATUS_SLOT)
+    expect(screen.getByTestId('challenge-cta-note').textContent).toMatch(
+      /Your Daily returns tomorrow/i,
+    )
+    cleanup()
+
+    // The quota wall is NOT the Daily: that one was already completed today.
+    renderSlot(QUOTA_SLOT)
+    expect(screen.getByTestId('challenge-cta-note').textContent).toMatch(
+      /Training resumes tomorrow/i,
+    )
+    expect(screen.getByTestId('challenge-cta-note').textContent).not.toMatch(
+      /Daily/i,
+    )
+  })
+
+  // AC-9 — a button before hydration would promise a destination nobody computed.
+  it('falls back to a status when the presentation has not hydrated yet', () => {
+    const onFocusTap = vi.fn()
+    const cta = renderSlot(null, onFocusTap)
+
+    expect(cta.tagName).not.toBe('BUTTON')
+    expect(cta).toHaveAttribute('data-cta-kind', 'status')
+    fireEvent.click(cta)
+    expect(onFocusTap).not.toHaveBeenCalled()
+  })
+
+  // Edge case from the spec: an actionable slot with no handler wired (the
+  // `/dev` probes mount the card without a router). Rendering a button here
+  // would recreate the original defect — a control that promises a tap and
+  // does nothing.
+  it('degrades an action slot to a status when no handler is wired', () => {
+    const cta = renderSlot(ACTION_SLOT, undefined)
+
+    expect(cta.tagName).not.toBe('BUTTON')
+    expect(cta).toHaveAttribute('data-cta-kind', 'status')
+  })
+
+  // AC-16 — the invariant the old `tomorrow` test protected is still true and
+  // still asserted: this slot informs, it never gates the training path.
+  it('never blocks the rest of the card while showing a status', () => {
+    renderSlot(STATUS_SLOT)
+
+    const card = screen.getByTestId('challenge-card')
+    expect(card).not.toHaveAttribute('aria-disabled', 'true')
+    expect(screen.getByTestId('challenge-progress')).toBeInTheDocument()
+    expect(screen.getByTestId('challenge-streak')).toBeInTheDocument()
+  })
+
+  // The `complete` state is out of scope for this sprint and must not drift.
+  it('leaves the CHALLENGE COMPLETE state on its own class', () => {
+    render(
+      <Card
+        focusPassport={passport({ streak: 21, todayDone: true })}
+        challenge={CHALLENGE}
+        seasonPass={ACTIVE_PASS}
+        progress={{
+          state: 'completed',
+          progress: { completed: 21, goal: 21 },
+          window: { kind: 'expiring', daysRemaining: 3 },
+          streak: 21,
+        }}
+        onJoinChallenge={null}
+        ctaSlot={ACTION_SLOT}
+        onFocusTap={vi.fn()}
+      />,
+    )
+
+    const cta = screen.getByTestId('challenge-cta')
+    expect(cta).toHaveAttribute('data-cta-state', 'complete')
+    expect(cta).toHaveClass('challenge-card-cta--info')
+    expect(cta).not.toHaveClass('challenge-card-cta--quiet')
   })
 })

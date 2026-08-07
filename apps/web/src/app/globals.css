@@ -8846,10 +8846,41 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* COME BACK TOMORROW / CHALLENGE COMPLETE — the CTA skin on a status element.
    Muted and not interactive: it reports state, it never gates anything. */
+/* `complete` only (21-day challenge finished). Out of scope for Sprint 1 and
+   deliberately untouched. The Content Loop's terminal state uses `--quiet`
+   below; do NOT merge these two rules. */
 .challenge-card-cta--info {
   cursor: default;
   filter: saturate(0.55) brightness(0.94);
   opacity: 0.92;
+}
+
+/* The Content Loop's terminal state: a LEGEND, not a disabled button.
+
+   The old treatment kept the button skin and dimmed it — desaturated, lowered
+   opacity, same rounded slab — which is the universal vocabulary of "this
+   control is broken", delivered in the second right after a success. No
+   background, no border, no shadow, no filter: nothing here may promise a tap.
+
+   ⛔ `min-height` is NOT cosmetic. It matches the button's box so the card
+   keeps one height across presentations. This anchor is where the CLS 0,179
+   closed on 2026-08-07 lived; letting the terminal collapse to text height
+   reopens it. */
+.challenge-card-cta--quiet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Mirrors `.principal-button-medium`'s min-height. There is no shared token
+     for it, so a source guard compares the two declared values and fails if
+     they drift — see challenge-card-cta-css.test.ts. */
+  min-height: 52px;
+  margin: 0;
+  padding: 0 0.75rem;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #7d5a2a;
+  cursor: default;
 }
 
 .challenge-card-cta-note {

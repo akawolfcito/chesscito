@@ -6,9 +6,22 @@ import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import type { PassportSlotKind } from "@/lib/daily/passport";
 import { todayUtc } from "@/lib/daily/progress";
 import { focusWeek, type FocusWeekDayState } from "@/lib/daily/week";
+import type { CtaLabelKey, CtaSlotPresentation } from "@/lib/hub/cta-slot";
 import type { ChallengeProgressView } from "@/lib/season-pass/focus-days";
 import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 import type { HubFocusPassport, SeasonChallengeMeta } from "@/components/hub/use-hub-data";
+
+/** Label → richer accessible name, where one exists.
+ *
+ *  The visible labels are compact by design (one line at 390px), and a compact
+ *  label must not shorten the accessible name — "Comenzar foco" reads fine on
+ *  screen but "Comienza tu foco de hoy" is what a screen reader should say.
+ *  Keyed by LABEL, not by variant: the card presents, it does not interpret the
+ *  product's priority ladder. Absent an entry the visible text is the accessible
+ *  name, which is the correct default for an already-explicit action. */
+const CTA_ARIA_LABEL: Partial<Record<CtaLabelKey, string>> = {
+  ctaStartToday: "ctaStartAriaLabel",
+};
 
 /** Flame sprites by catalog slot — same slots the standalone FocusPassport
  *  uses, so a theme re-skins the streak on both surfaces at once. */
@@ -49,7 +62,10 @@ export function ShieldIcon() {
 }
 
 /** The four states the single primary CTA can be in. */
-type CtaState = "join" | "start" | "tomorrow" | "complete";
+/** `start` and `tomorrow` are gone: both were the card deciding on its own what
+ *  the player should do next. Everything that is neither a purchase nor a
+ *  finished challenge is now `loop`, and the Content Loop says what it holds. */
+type CtaState = "join" | "complete" | "loop";
 
 /** Season-pass slice the card needs. Discriminated so the `active` branch
  *  carries the day-of-challenge + shields it must render, and the offer
@@ -70,9 +86,18 @@ export type ChallengeCardProps = {
   progress: ChallengeProgressView;
   /** null when the pass is active (no purchase CTA, no glow). */
   onJoinChallenge: (() => void) | null;
-  /** Optional: makes the flame/streak block a tap target into today's focus
-   *  exercise route. Reserved for the state-driven primary CTA. */
-  onFocusTap?: () => void;
+  /** Navigates to the slot's destination. Takes the destination as an ARGUMENT
+   *  on purpose: a `() => void` that recomputes the route is how the card ends
+   *  up owning navigation again, and it compiles clean. */
+  onFocusTap?: (destination: string) => void;
+  /** The primary CTA's presentation, resolved upstream from the Content Loop.
+   *
+   *  The card reads `kind`, `labelKey`, `noteKey` and `destination` — never
+   *  `variant`. Asking which variant this is would put the product's priority
+   *  ladder back inside a leaf component, which is the defect Sprint 1 removes.
+   *
+   *  `null` = not hydrated yet → the slot renders a status, never a button. */
+  ctaSlot?: CtaSlotPresentation | null;
   /** Opens the Hub's canonical Daily Tactic sheet from the Focus Passport.
    *  Loading/completed passports remain static even when this is provided. */
   onPassportTap?: () => void;
@@ -148,6 +173,7 @@ export function ChallengeCard({
   progress,
   onJoinChallenge,
   onFocusTap,
+  ctaSlot,
   onPassportTap,
   onReplayTour,
   today,
@@ -208,13 +234,31 @@ export function ChallengeCard({
   // `disabled` and `degraded` keep the ordinary Daily CTA: neither is a reason
   // to take the action away. `unreachable` keeps it too -- replacing the CTA
   // would turn a warning into a dead end, and the habit is the product.
+  //
+  // ⛔ `focusPassport.todayDone` is NOT consulted here any more. It is a second
+  // reading of the same fact the Content Loop already decided with
+  // `isCompletedToday(today, daily)`, and two readings hydrated by different
+  // paths are exactly how the label and the destination drift apart. The
+  // passport still owns the flames; it no longer owns the CTA.
   const ctaState: CtaState = !isActive
     ? "join"
     : progress.state === "completed"
       ? "complete"
-      : focusPassport.todayDone
-        ? "tomorrow"
-        : "start";
+      : "loop";
+
+  // A presentation that says "action" but has no handler wired (the `/dev`
+  // probes mount this card without a router) must NOT render a button: that is
+  // the original defect — a control that promises a tap and does nothing.
+  const slot: CtaSlotPresentation =
+    ctaSlot && !(ctaSlot.kind === "action" && !onFocusTap)
+      ? ctaSlot
+      : {
+          kind: "status",
+          variant: ctaSlot?.variant ?? "come-back-tomorrow",
+          destination: null,
+          labelKey: "ctaTomorrow",
+          noteKey: "noteDailyReturns",
+        };
   // Daily availability belongs to the passport, not to the commercial pass
   // request. A resolved pending Daily must stay tappable while Season Pass
   // status is still loading.
@@ -556,35 +600,51 @@ export function ChallengeCard({
                 <ChevronIcon />
               </button>
             </>
-          ) : ctaState === "start" ? (
+          ) : ctaState === "complete" ? (
+            /* Out of scope for Sprint 1 and deliberately untouched, class
+               included: whoever finished the 21 days deserves their own moment,
+               and it is not this sprint's to design. */
+            <p
+              className="principal-button principal-button-medium challenge-card-cta challenge-card-cta--info"
+              data-testid="challenge-cta"
+              data-cta-state="complete"
+              role="status"
+              aria-label={t("ctaCompleteAriaLabel")}
+            >
+              {t("ctaComplete")}
+            </p>
+          ) : slot.kind === "action" ? (
             <button
               type="button"
               className="principal-button principal-button-medium challenge-card-cta"
               data-testid="challenge-cta"
-              data-cta-state="start"
-              aria-label={t("ctaStartAriaLabel")}
-              onClick={onFocusTap}
-              disabled={!onFocusTap}
+              data-cta-state="loop"
+              data-cta-kind="action"
+              aria-label={t(CTA_ARIA_LABEL[slot.labelKey] ?? slot.labelKey)}
+              onClick={() => onFocusTap?.(slot.destination)}
             >
-              {t("ctaStartToday")}
+              {t(slot.labelKey)}
             </button>
           ) : (
+            /* A LEGEND, not a disabled button. The old treatment kept the
+               button skin and dimmed it (`saturate(.55)` + `opacity`), which is
+               the universal vocabulary of "this control is broken" — delivered
+               in the second right after a success. */
             <p
-              className="principal-button principal-button-medium challenge-card-cta challenge-card-cta--info"
+              className="challenge-card-cta challenge-card-cta--quiet"
               data-testid="challenge-cta"
-              data-cta-state={ctaState}
+              data-cta-state="loop"
+              data-cta-kind="status"
               role="status"
-              aria-label={
-                ctaState === "tomorrow" ? t("ctaTomorrowAriaLabel") : t("ctaCompleteAriaLabel")
-              }
+              aria-label={t("ctaTomorrowAriaLabel")}
             >
-              {ctaState === "tomorrow" ? t("ctaTomorrow") : t("ctaComplete")}
+              {t(slot.labelKey)}
             </p>
           )}
         </div>
-        {ctaState === "tomorrow" ? (
+        {ctaState === "loop" && slot.kind === "status" ? (
           <p className="challenge-card-cta-note" data-testid="challenge-cta-note">
-            {t("tomorrowNote")}
+            {t(slot.noteKey)}
           </p>
         ) : null}
       </div>

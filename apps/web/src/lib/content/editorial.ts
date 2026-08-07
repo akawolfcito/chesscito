@@ -3168,7 +3168,24 @@ export const CHALLENGE_CARD_COPY = {
   ctaTomorrowAriaLabel: "Today's focus is done. Training stays open.",
   ctaComplete: "Challenge Complete",
   ctaCompleteAriaLabel: "You finished the 21-Day Mind Challenge",
-  tomorrowNote: "Training stays open. Keep improving your scores.",
+  /* Content Loop labels (Sprint 1). The button NAMES THE THING, not the mood:
+     with one line at 390px this label is everything the player has to know what
+     is on the other side, and a concrete noun outperforms a motivational verb.
+     ⛔ Do not read `ContentLoopAction.ctaEN/ctaES` instead — those travel
+     outside next-intl and the whole-bundle parity guard cannot see them. */
+  ctaClaimGift: "Claim your gift",
+  ctaKeepTraining: "Keep training",
+  ctaTryLabyrinth: "Try the labyrinth",
+  ctaBeatScore: "Beat your score",
+  ctaNewPiece: "Start a new piece",
+  ctaViewProgress: "See your progress",
+  /* Two notes, because the three destination-less variants do NOT mean the same
+     thing. `come-back-tomorrow` is having finished everything; the quota
+     variants are hitting the session wall with content still left — naming the
+     Daily at someone who just hit the training quota answers a question they
+     did not ask, since they already completed the Daily today. */
+  noteDailyReturns: "Your Daily returns tomorrow",
+  noteTrainingResumes: "Training resumes tomorrow",
   dotFilledAria: "Day {index} done",
   dotEmptyAria: "Day {index}",
   focusTapAria: "Open today's Daily Tactic",

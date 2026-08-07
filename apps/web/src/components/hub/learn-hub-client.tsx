@@ -46,6 +46,7 @@ import type { PieceId } from "@/lib/game/types";
 import { useLabyrinthCatalog } from "@/lib/content/catalog-context";
 import { SPECIAL_TRAINING_ROOK_STARS } from "@/lib/progression/milestones";
 import { startFocusExerciseDestination } from "@/lib/hub/content-loop";
+import { resolveCtaTap } from "@/lib/hub/cta-tap";
 import {
   isMilestoneSeedReady,
   useMilestoneSeeding,
@@ -645,11 +646,21 @@ export function LearnHubClient({
               : null
           }
           primaryFocus={{
-            onPress: () => {
-              track("hub_start_focus_tap", {
-                variant: contentLoopAction?.variant ?? null,
+            // Where it goes and what it reports are decided in `resolveCtaTap`,
+            // not here: two copies of those rules is two chances to disagree,
+            // and this container cannot be unit-tested without the whole hub.
+            onPress: (destination: string) => {
+              const variant = contentLoopAction?.variant;
+              if (!variant) return;
+
+              const tap = resolveCtaTap({
+                variant,
+                destination,
+                legacyDestination: startFocusExerciseDestination(contentLoopPrimaryPiece),
               });
-              router.push(startFocusExerciseDestination(contentLoopPrimaryPiece));
+
+              track(tap.event, tap.props);
+              router.push(tap.target);
             },
             contentLoop: contentLoopAction,
             isHydrated: isContentLoopHydrated,
