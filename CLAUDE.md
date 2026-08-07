@@ -69,6 +69,20 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
   casi nada. **Correr siempre `--project=minipay --update-snapshots=none`**: `none` no puede
   grabar, así que un verde ahí sí comparó. Si aparecen PNG nuevos en
   `e2e/visual-regression.spec.ts-snapshots/`, son grabaciones, no cobertura: `git clean`.
+  ⛔ **El `webServer.env` NO protege a un server REUSADO.** `reuseExistingServer: !CI` hace
+  que Playwright adopte el `pnpm dev` que ya tengas en 3002, y ese proceso **nunca recibe el
+  pin de `NEXT_PUBLIC_CHAIN_ID`** — salió de tu shell, con lo que tu shell tenga. Ahí
+  `hub-shop-sheet-open` y `hub-clean` se ponen rojas por el motivo de siempre y **parece**
+  una regresión de código. Antes de correr el VR: **bajá tu dev server** y dejá que
+  Playwright levante el suyo.
+  ⛔ **Un `pnpm dev` (o un túnel) arriba INVALIDA la suite de Vitest, y no de forma honesta.**
+  No la pone roja: hace que **algunos workers no arranquen** (`Failed to start forks worker`
+  / `Timeout waiting for worker to respond`), y esos archivos **no corren**. El resumen dice
+  "todo verde" con `exit 1`, y el error vive en `Unhandled Errors`, en la **cola** del log.
+  El síntoma que lo delata es el **conteo de ARCHIVOS**, no el de tests: el 2026-08-07 fue
+  bajando 610 → 605 → 604 mientras la duración subía de 142 s a 506 s; con la máquina libre
+  volvió a **610 / 7504 en 142 s**. **Si el conteo de archivos no da 610, no confíes en la
+  corrida** — y nunca la reportes como número de commit.
   Diagnóstico de por qué había 49 rojas: `docs/audits/2026-08-06-vr-red-diagnosis.md`.
   ⛔ **El `webServer.env` del config PINEA `NEXT_PUBLIC_CHAIN_ID=42220` — no lo saques.**
   En Next las variables **del shell ganan sobre `.env*`**, y un shell con

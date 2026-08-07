@@ -11,10 +11,11 @@
 
 | | |
 |---|---|
-| Suite web | **7503 passing / 610 files, EXIT=0** (baseline previa: 7471 / 607) |
+| Suite web | **7504 passing / 610 files, EXIT=0, cero `Unhandled Errors`** (baseline previa: 7471 / 607) |
 | `tsc --noEmit` | limpio |
 | VR | **minipay 62/62**, corrido con `--update-snapshots=none` |
 | 390 px | **medido**: las 8 etiquetas en una línea, `overflow=0`, altura 53,2 px |
+| Contraste banda | **4,74:1** subtítulo · **7,27:1** título (piso AA 4,50) |
 | Árbol | limpio |
 
 ### Commits
@@ -24,6 +25,8 @@
 | `3e6db69` | `lib/hub/cta-slot.ts` — módulo puro + tabla de verdad (15 tests) + spec/red-team/UX/roadmap |
 | `74fd2e4` | card, scaffold, adapter, copy EN/ES, CSS, source guards, `resolveCtaTap` |
 | `2235ac0` | probe de `/dev/learn-hub` + un baseline VR regenerado |
+| `59a0060` | handoff + regla de VR en `CLAUDE.md` |
+| `479168b` | **banda de aviso hundida** (pedido del founder tras ver el device) |
 
 ---
 
@@ -81,6 +84,56 @@ puede afirmar es exposición, y eso lo cuenta `hub_content_loop_cta_tap`.
 
 ---
 
+## Adenda — la banda de aviso (`479168b`, tras la revisión en device)
+
+El founder vio el terminal en el teléfono y pidió que ese espacio tuviera **aspecto de
+banner**, para que más adelante pueda alojar un tip, un anuncio o un enlace. **Sólo estilo**:
+la vitrina rotativa ya había sido descartada y sigue descartada.
+
+**La decisión la tomó Sally y es mejor que ir quitando señales una por una.** El banner del
+Season Pass es un objeto **ELEVADO** (`box-shadow: 0 3px 0` hacia afuera): viene hacia vos y
+se presiona. La banda va **HUNDIDA** (sombra `inset`, degradé oscuro arriba para que la luz
+caiga dentro del hueco). Eso vuelve el contrato de tap **físico, no leído**: elevado se toca,
+hundido informa — se siente antes de razonar si hay chevron.
+
+### El guard se REENCUADRÓ, no se aflojó
+
+El guard AC-5 original prohibía `background`, `border` y `box-shadow` en
+`.challenge-card-cta--quiet`, y **habría bloqueado esta banda**. Pero la superficie nunca fue
+el defecto: lo que decía "roto" era el **atenuado sobre forma de botón**. Ahora prohíbe el
+contrato de tap — relieve `0 3px 0`, `is-pulsing`, `cursor: pointer` — y las sombras `inset`
+quedan permitidas.
+
+🆕 Y se agregó un guard que **lee el markup**, porque el chevron es un componente y no una
+regla CSS: sin él, alguien lo agregaba al terminal y el guard de CSS pasaba en verde con la
+banda prometiendo un tap igual.
+
+> **CONTRATO: el chevron y el relieve entran el día que entre el `onClick`, en el mismo
+> commit. Nunca uno sin el otro.** Eso es lo que impide que esta banda se vuelva la regresión
+> que el sprint acaba de borrar.
+
+### Tres cosas de Sally que evitaron bugs
+
+- **Un `<p>` no puede contener un `<p>`.** El subtítulo pasó a `<span>`; si no, el navegador
+  cierra el externo y renderiza un markup que nadie escribió.
+- **`min-height: 52px`, NO los 54 del banner.** El guard lo compara contra
+  `.principal-button-medium`; copiar el banner rompía el anti-CLS.
+- **Sin icono en v1, con el hueco dejado en el markup.** Ningún slot de tema significa
+  "noche / descanso"; los más cercanos dicen *"hay algo que hacer"*, lo contrario de este
+  estado. Acuñar uno cuesta tres baselines pineados + `tsc`, para decorar el único estado que
+  significa "no hay nada que hacer".
+
+### ⚠️ Riesgo abierto que encontró Sally y NO se tocó
+
+**El paso `challenge` del mini-tour es incondicional** (`hub-tour.ts:85`), así que su
+spotlight puede iluminar la banda. La flecha animada vive sólo en la rama `join`, así que
+**no hay flecha** — pero el spotlight sí. Es **preexistente** (hoy ilumina la leyenda plana) y
+la banda lo **agrava**, porque una superficie propia atrae el gesto mucho más que texto
+suelto. Fuera del alcance cerrado por el founder. Si se retoma: que el ancla se saltee la fila
+cuando `kind === "status"`.
+
+---
+
 ## Dos hallazgos que valen más que el sprint
 
 ### ⛔ Playwright graba los baselines que faltan y da el test por PASADO
@@ -93,6 +146,31 @@ nada. Se borraron con `git clean` y se repitió todo con `--update-snapshots=non
 ⇒ **El "VR 62/62" del repo es del proyecto `minipay` y sólo de él.** Regla ya escrita en
 `CLAUDE.md`: correr `--project=minipay --update-snapshots=none`. PNG nuevos en el directorio
 de snapshots son grabaciones, no cobertura.
+
+### ⛔ El `webServer.env` no protege a un server REUSADO
+
+`reuseExistingServer: !CI` hace que Playwright **adopte el `pnpm dev` que ya tengas en 3002**,
+y ese proceso **nunca recibe el pin de `NEXT_PUBLIC_CHAIN_ID=42220`** — salió de tu shell, con
+lo que tu shell tenga. Así se pusieron rojas `hub-shop-sheet-open` y `hub-clean` durante esta
+sesión, en dos superficies que este diff **no toca**, y parecía una regresión de código.
+**Bajá tu dev server antes de correr el VR.**
+
+### ⛔ Un dev server arriba invalida la suite de Vitest, y no de forma honesta
+
+No la pone roja: hace que **algunos workers no arranquen** (`Failed to start forks worker`),
+y esos archivos **no corren**. El resumen dice "todo verde" con `exit 1`, y el error vive en
+`Unhandled Errors`, en la **cola** del log.
+
+**El síntoma que lo delata es el conteo de ARCHIVOS, no el de tests.** Medido hoy:
+
+| | archivos | tests | duración |
+|---|---|---|---|
+| Con dev server + túnel | 610 → 605 → **604** | 7448 | **506 s** |
+| Máquina libre | **610** | **7504** | **142 s** |
+
+Una de esas corridas reportó "1 failed" que **no volvió a aparecer**: no era flake del test,
+era un worker muriendo. ⛔ **Si el conteo de archivos no da 610, no confíes en la corrida** —
+y nunca la reportes como número de commit. Ambas reglas quedaron en `CLAUDE.md`.
 
 ### ⚠️ El probe de `/dev/learn-hub` fotografiaba el fallback, no la feature
 
@@ -126,9 +204,9 @@ original. El único diff real era el slot del CTA.
 
 ## Próximos pasos
 
-1. ▶️ **Del founder: mirar el hub en device.** Es lo único que nadie vio renderizado en la
-   app real (el 390 px está medido, pero sobre el probe de `/dev`).
-2. ▶️ **Del founder: push de la rama y merge a `main`.**
+1. ✅ **Revisado en device por el founder** (2026-08-07, vía quick tunnel de cloudflared).
+   De ahí salió el pedido de la banda (`479168b`), ya implementado y revisado.
+2. ▶️ **Del founder: push de la rama y merge a `main`.** Cinco commits, árbol limpio.
 3. Al cerrar el sprint: **re-medir los pases activos** y leer `hub_content_loop_cta_tap`.
 4. Sprint 2 del roadmap: **identidad propia de Labyrinths**, que arrastra una decisión de
    modelo — hoy `path.ts:34` dice *"exercise stars ONLY — labyrinth stars never count"*, así
@@ -139,7 +217,14 @@ original. El único diff real era el slot del CTA.
 - **OQ-1 (decidida, escrita):** `role="status"` es una live region; al pasar a `<button>` se
   pierde el anuncio automático. Se acepta — ese anuncio pertenece al flujo de celebración,
   no al hub. Queda deliberado, no como efecto lateral.
-- **Estado `complete`** (21 días terminados): sigue compartiendo la leyenda gris con quien
-  sólo hizo su Diaria de hoy. Fuera de alcance a propósito; merece su propia ronda.
+- **Estado `complete`** (21 días terminados): sigue con `.challenge-card-cta--info`, la regla
+  vieja con `saturate()` + `opacity`. Ahora que el terminal es una banda, `complete` es **el
+  único estado que sigue vistiendo el botón atenuado** — o sea el defecto original, acotado a
+  quien terminó las tres semanas. Fuera de alcance a propósito, pero ya no es simetría: es
+  deuda visible.
+- **El spotlight del mini-tour sobre la banda** (ver adenda). Preexistente, agravado.
+- **¿Qué aloja la banda cuando llegue el primer tip?** Hoy es sólo geometría preparada. El
+  contenido, su origen y su cadencia no están decididos — y la vitrina ROTATIVA está
+  descartada.
 - **¿Los otros tres proyectos VR merecen baselines?** Hoy no los tienen y cualquier corrida
   completa los "pasa" grabándolos. Generarlos son ~118 PNG que nadie revisó nunca.
