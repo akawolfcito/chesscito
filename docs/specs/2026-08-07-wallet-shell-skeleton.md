@@ -103,9 +103,22 @@ Lo que sí cuenta como contentful sin pedir un archivo:
 - Texto (⛔ descartado: el founder pidió sin texto real, y un texto de relleno traducible es
   deuda de i18n por nada).
 
-**Decisión: los bloques del skeleton se pintan con `linear-gradient`,** no con
-`background-color`. No es decoración: es la única forma de que el FCP se adelante sin sumar
-bytes.
+~~**Decisión: los bloques del skeleton se pintan con `linear-gradient`.**~~
+
+⛔ **REFUTADO POR MEDICIÓN (EXP1, 2026-08-07).** Un `linear-gradient` **tampoco** adelanta el
+FCP: el bloque estaba pintado a los 194 ms y la métrica seguía marcando 3.928 ms.
+**Chromium cuenta RECURSOS de imagen, no pintura** — y un gradiente es contenido generado, no un
+recurso.
+
+✅ **Decisión vigente (EXP1b): `background-image: url("data:image/svg+xml,…")`.** Es un recurso
+de imagen real **sin request de red**. Medido: FCP **3.974 → 1.728 ms (−2.246 ms)**, con 0
+requests nuevos, T2 mejorando 82 ms y LCP sin cambio.
+
+⚠️ **El piso lo pone otra cosa, y está medido:** el CSS render-blocking de 55 kB termina de
+bajar a 1.679 ms y el FCP ocurre 61 ms después. **El skeleton no puede pintar antes que la hoja
+de estilos que lo estiliza**, así que el umbral original de AC10 (< 1.500 ms) sólo se vuelve
+alcanzable si avanza el frente de CSS. Detalle completo en
+`docs/audits/2026-08-07-ac8-exp1b-results.md`.
 
 ### C4. Cómo NO se secuestra el LCP
 
@@ -226,9 +239,12 @@ con su medición de long tasks antes y después. ⛔ No se agrega "porque queda 
 
 **Medición — mismo instrumento, mismo perfil (Slow 4G + CPU 4×)**
 
-- [ ] AC10 — **FCP se adelanta materialmente** frente a ~3,98 s. Umbral: **< 1,5 s**.
-      ⛔ "Bajó algo" no es criterio; si no baja de 1,5 s, la hipótesis de C3 era falsa y se
-      reporta como tal.
+- [ ] AC10 — **FCP se adelanta materialmente** frente a ~3,98 s.
+      ⚠️ **UMBRAL PENDIENTE DE DECISIÓN.** El original era **< 1.500 ms**; medido con el
+      primitivo correcto da **1.728 ms**, y los 228 ms que faltan **no son del skeleton**: el
+      CSS render-blocking de 55 kB termina a 1.679 ms y el FCP ocurre 61 ms después.
+      Opciones sobre la mesa: (A) bajar el umbral a < 2.000 ms, (B) mantener 1.500 ms y
+      secuenciar después del frente de CSS. ⛔ No se implementa hasta elegir.
 - [ ] AC11 — El filmstrip a ~1,0 s y ~2,0 s muestra la silueta, **no** color plano. ⚠️ Se mira
       **también el frame inmediatamente posterior a T2**: CLS 0 no garantiza que el swap no se
       lea como un corte brusco, y eso ningún número lo mide.
