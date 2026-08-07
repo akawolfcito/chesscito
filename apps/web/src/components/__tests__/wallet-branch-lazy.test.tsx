@@ -212,3 +212,49 @@ describe("lazy wallet branch — AC23: retry produces a NEW attempt", () => {
     expect(injected).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("lazy wallet branch — AC20: the retry RECOVERS, and more than once", () => {
+  it("mounts the branch when a later attempt succeeds", async () => {
+    // AC23 proves a new attempt happens. AC20 is a different claim and needs its
+    // own test: that the attempt which SUCCEEDS actually lands the player in the
+    // app. A retry that faithfully re-requests a chunk and then fails to mount it
+    // is still a dead end for the player.
+    const injected = vi.spyOn(walletBranchLoaders, "injected");
+    injectedShouldThrow = true;
+
+    render(
+      <WalletProviderBoundary>
+        <InstrumentedChild />
+      </WalletProviderBoundary>,
+    );
+
+    // First failure.
+    await userEvent.click(
+      await screen.findByRole("button", { name: /retry|reintentar/i }),
+    );
+    // Still broken — the retry must survive being used AGAIN, which a
+    // one-shot recovery flag would not.
+    await userEvent.click(
+      await screen.findByRole("button", { name: /retry|reintentar/i }),
+    );
+    expect(injected).toHaveBeenCalledTimes(3);
+
+    // Now the branch works — the network came back, the deploy settled.
+    injectedShouldThrow = false;
+    await userEvent.click(
+      await screen.findByRole("button", { name: /retry|reintentar/i }),
+    );
+
+    await screen.findByTestId("app-tree");
+    expect(
+      document.querySelector(`[${WALLET_BRANCH_ATTR}="injected"]`),
+    ).not.toBeNull();
+    // And no error state left behind next to a working app.
+    expect(
+      screen.queryByRole("button", { name: /retry|reintentar/i }),
+    ).toBeNull();
+    // The app tree mounted exactly once even across three failed attempts:
+    // recovery must not leave a second copy of the app behind.
+    expect(childMounts).toBe(1);
+  });
+});
