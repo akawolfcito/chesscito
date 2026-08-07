@@ -626,10 +626,19 @@ export function ChallengeCard({
               {t(slot.labelKey)}
             </button>
           ) : (
-            /* A LEGEND, not a disabled button. The old treatment kept the
-               button skin and dimmed it (`saturate(.55)` + `opacity`), which is
-               the universal vocabulary of "this control is broken" — delivered
-               in the second right after a success. */
+            /* A NOTICE BAND, not a disabled button.
+
+               It borrows the Season Pass banner's geometry so a future tip or
+               announcement drops in without a re-layout — but it is SUNKEN
+               (inset shadow) where the banner is RAISED (`0 3px 0` outward).
+               That makes the tap contract physical instead of read: raised
+               comes toward you and is pressed, sunken is carved into the card
+               and contains something. A player feels it before deciding whether
+               there is a chevron.
+
+               ⛔ The children are `<span>`, not `<p>`: a `<p>` cannot contain a
+               `<p>`, and the browser would close the outer one, silently
+               rendering markup nobody wrote. */
             <p
               className="challenge-card-cta challenge-card-cta--quiet"
               data-testid="challenge-cta"
@@ -638,15 +647,20 @@ export function ChallengeCard({
               role="status"
               aria-label={t("ctaTomorrowAriaLabel")}
             >
-              {t(slot.labelKey)}
+              {/* Icon slot deliberately empty in v1: no theme slot means
+                  "night / rest / tomorrow", and the closest ones all say
+                  "there is something to do" — the opposite of this state.
+                  The hook stays so a tip with its own art is a prop, not a
+                  re-layout. */}
+              <span className="challenge-card-cta-copy">
+                <span className="challenge-card-cta-title">{t(slot.labelKey)}</span>
+                <span className="challenge-card-cta-note" data-testid="challenge-cta-note">
+                  {t(slot.noteKey)}
+                </span>
+              </span>
             </p>
           )}
         </div>
-        {ctaState === "loop" && slot.kind === "status" ? (
-          <p className="challenge-card-cta-note" data-testid="challenge-cta-note">
-            {t(slot.noteKey)}
-          </p>
-        ) : null}
       </div>
     </section>
   );

@@ -8869,26 +8869,56 @@ button.hud-resource-chip:active:not(:disabled) {
 .challenge-card-cta--quiet {
   display: flex;
   align-items: center;
-  justify-content: center;
-  /* Mirrors `.principal-button-medium`'s min-height. There is no shared token
-     for it, so a source guard compares the two declared values and fails if
-     they drift — see challenge-card-cta-css.test.ts. */
+  gap: 8px;
+  width: 100%;
+  /* ⛔ 52px, NOT the banner's 54px: the source guard compares this against
+     `.principal-button-medium`, because the card must not change height between
+     presentations. This anchor is where the CLS 0,179 lived until 2026-08-07. */
   min-height: 52px;
   margin: 0;
-  padding: 0 0.75rem;
-  text-align: center;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #7d5a2a;
+  padding: 6px 10px;
+  border-radius: 14px;
+  /* Inverted against the card (dark at the TOP): the light falls INSIDE the
+     hollow. A light-at-top gradient would make the band float. */
+  background: linear-gradient(180deg, #f0dca6 0%, #f6e6bd 100%);
+  /* Hairline, not the banner's `2px solid #f6c94f` — that thick gold edge is
+     the signal for "object / chip", i.e. something you press. */
+  border: 1px solid rgba(160, 116, 38, 0.3);
+  /* ⛔ INSET ONLY. No `0 3px 0`: that outward relief is the Season Pass
+     banner's tap contract, and this band must never borrow it. */
+  box-shadow: inset 0 2px 3px rgba(120, 82, 16, 0.16);
+  text-align: left;
   cursor: default;
 }
 
+.challenge-card-cta--quiet .challenge-card-cta-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* Mirrors `.season-pass-banner-title`. */
+.challenge-card-cta--quiet .challenge-card-cta-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.05;
+  color: #5c3d12;
+}
+
+/* Lives INSIDE the notice band now (it used to be a sibling `<p>` below the
+   CTA row). The old `margin: -2px` and `text-align: center` were for that
+   position; kept here they would pull the subtitle up and centre it inside the
+   niche. Mirrors `.season-pass-banner-benefits` so a future tip needs no
+   typography of its own. */
 .challenge-card-cta-note {
-  margin: -2px 0 0;
-  text-align: center;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #7d5a2a;
+  margin: 0;
+  text-align: left;
+  font-size: 0.62rem;
+  font-weight: 650;
+  line-height: 1.15;
+  color: rgba(92, 61, 18, 0.82);
 }
 
 /* Benefits row — same hairline-divided band as `.kingdom-card-benefits`, so a

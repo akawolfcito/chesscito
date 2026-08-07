@@ -41,10 +41,27 @@ describe("CTA slot — terminal state styling (AC-5)", () => {
     expect(quiet).not.toMatch(/\bopacity\s*:/);
   });
 
-  it("wears no button surface", () => {
-    expect(quiet).not.toMatch(/\bbackground(-color|-image)?\s*:/);
-    expect(quiet).not.toMatch(/\bbox-shadow\s*:/);
-    expect(quiet).not.toMatch(/\bborder\s*:/);
+  /* REENCUADRADO 2026-08-07. Antes esto prohibía `background`, `border` y
+     `box-shadow`, y con eso habría bloqueado la banda de aviso que el founder
+     pidió. Pero la superficie NUNCA fue el defecto: lo que decía "roto" era el
+     ATENUADO sobre forma de botón, y eso lo cubre el test de arriba.
+
+     Lo que de verdad hay que impedir es que la banda prometa un tap que no
+     existe. En este panel la tocabilidad la comunican tres señales concretas,
+     tomadas del banner del Season Pass:
+       - el chevron `›`
+       - el relieve `box-shadow: 0 3px 0` (el borde inferior de botón)
+       - la clase `is-pulsing`
+
+     CONTRATO: el chevron y el relieve son el contrato de tap. El día que esta
+     banda aloje un enlace real, los gana EN EL MISMO COMMIT en que gana su
+     handler. Nunca uno sin el otro. Este test es lo que lo obliga. */
+  it("carries no tap contract: no raised edge, no pulse, no pointer", () => {
+    // El relieve de botón. Las sombras `inset` siguen permitidas: dan volumen
+    // a una superficie sin prometer que se hunde al tocarla.
+    expect(quiet).not.toMatch(/box-shadow\s*:[^;]*(?<!inset\s)0\s+3px\s+0/);
+    expect(quiet).not.toMatch(/is-pulsing/);
+    expect(quiet).not.toMatch(/cursor\s*:\s*pointer/);
   });
 
   // `complete` (21 days finished) is out of scope for Sprint 1 and keeps its own
@@ -54,6 +71,22 @@ describe("CTA slot — terminal state styling (AC-5)", () => {
     const info = ruleBody(".challenge-card-cta--info");
     expect(info).toMatch(/saturate\(/);
     expect(info).toMatch(/opacity\s*:/);
+  });
+});
+
+describe("CTA slot — the tap contract lives in the markup too", () => {
+  // El guard de CSS no alcanza: el chevron es un componente, no una regla.
+  // Si alguien lo agrega al render del estado terminal, el CSS de arriba pasa
+  // en verde y la banda igual promete un tap.
+  it("the terminal branch renders no chevron", () => {
+    const card = readFileSync(
+      join(process.cwd(), "src/components/hub/challenge-card.tsx"),
+      "utf8",
+    );
+    // El bloque del status, desde su marca hasta el cierre del ternario.
+    const status = card.slice(card.indexOf('data-cta-kind="status"'));
+    const block = status.slice(0, status.indexOf("</p>"));
+    expect(block).not.toMatch(/ChevronIcon/);
   });
 });
 
