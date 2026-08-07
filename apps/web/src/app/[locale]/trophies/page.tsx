@@ -23,7 +23,7 @@ export default function TrophiesPage() {
   const router = useRouter();
   const t = useTranslations("TROPHY_VITRINE_COPY");
   return (
-    <main className="trophies-candy-page mission-shell flex min-h-[100dvh] justify-center">
+    <div className="trophies-candy-page mission-shell flex min-h-[100dvh] justify-center">
       <div className="flex w-full max-w-[var(--app-max-width,390px)] flex-col">
         <header className="border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
@@ -52,6 +52,6 @@ export default function TrophiesPage() {
           </div>
         </TrophiesDataProvider>
       </div>
-    </main>
+    </div>
   );
 }

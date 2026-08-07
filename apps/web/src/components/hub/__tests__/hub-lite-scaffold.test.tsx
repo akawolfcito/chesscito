@@ -79,7 +79,12 @@ describe("<HubLiteScaffold>", () => {
   it("exposes Learn branding without changing the training composition", () => {
     render(<HubLiteScaffold {...baseProps()} />);
 
-    expect(screen.getByRole("main", { name: "Chesscito Learn home" })).toBeInTheDocument();
+        // ⚠️ `region`, no `main`: el landmark `<main>` del documento es el del
+    // layout. Estos scaffolds pasaron a `<section aria-label>` para que haya UN
+    // solo `<main>` por documento, conservando su nombre accesible.
+    expect(
+      screen.getByRole("region", { name: "Chesscito Learn home" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("21-Day Mind Challenge")).toBeInTheDocument();
     expect(screen.getByTestId("challenge-cta")).toBeInTheDocument();
   });
@@ -87,7 +92,9 @@ describe("<HubLiteScaffold>", () => {
   it("owns the canonical shared home/header geometry", () => {
     const { container } = render(<HubLiteScaffold {...baseProps()} />);
 
-    expect(screen.getByRole("main")).toHaveClass("hub-home-scaffold");
+    expect(
+      screen.getByRole("region", { name: "Chesscito Learn home" }),
+    ).toHaveClass("hub-home-scaffold");
     expect(container.querySelector(".hub-lite-hud")).toHaveClass("hub-home-hud");
     expect(container.querySelector(".hub-lite-hud-left")).toHaveClass(
       "hub-home-hud-left",

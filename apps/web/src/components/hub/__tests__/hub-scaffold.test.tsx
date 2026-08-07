@@ -175,7 +175,10 @@ describe("HubScaffold", () => {
 
   it("uses the canonical play-hub aria-label on the main region", () => {
     render(<HubScaffold {...baseProps} />);
-    expect(screen.getByRole("main", { name: "Chesscito Hub" })).toBeInTheDocument();
+        // ⚠️ `region`, no `main`: el landmark `<main>` del documento es el del
+    // layout. Estos scaffolds pasaron a `<section aria-label>` para que haya UN
+    // solo `<main>` por documento, conservando su nombre accesible.
+    expect(screen.getByRole("region", { name: "Chesscito Hub" })).toBeInTheDocument();
   });
 
   describe("secondaryAction", () => {

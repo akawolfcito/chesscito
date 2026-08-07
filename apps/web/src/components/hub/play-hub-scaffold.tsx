@@ -65,7 +65,7 @@ export function PlayHubScaffold({
   const tPlay = useTranslations("PLAY_HUB_COPY");
 
   return (
-    <main
+    <section
       className="hub-scaffold play-hub-scaffold hub-home-scaffold"
       aria-label={tPlay("rootAriaLabel")}
     >
@@ -207,6 +207,6 @@ export function PlayHubScaffold({
           />
         </div>
       </section>
-    </main>
+    </section>
   );
 }

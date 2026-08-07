@@ -101,7 +101,7 @@ export function HubLiteScaffold({
   const tHud = useTranslations("HUD_COPY");
 
   return (
-    <main
+    <section
       className="hub-lite-scaffold hub-home-scaffold"
       aria-label={t("rootAriaLabel")}
     >
@@ -232,6 +232,6 @@ export function HubLiteScaffold({
           tourTargetId="rook"
         />
       </section>
-    </main>
+    </section>
   );
 }

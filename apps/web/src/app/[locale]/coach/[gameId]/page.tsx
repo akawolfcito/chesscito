@@ -24,7 +24,7 @@ export default async function CoachGamePage({ params, searchParams }: PageProps)
   // No wallet -> render reconnect prompt path. Client wrapper handles the toast.
   if (!wallet) {
     return (
-      <main className="arena-bg arena-scroll-screen h-[100dvh]">
+      <div className="arena-bg arena-scroll-screen h-[100dvh]">
         <ContextualHeader
           variant="back-control"
           iconSlot={<TileIconSlot slot="hub.training" />}
@@ -32,7 +32,7 @@ export default async function CoachGamePage({ params, searchParams }: PageProps)
           subtitle={t("reconnectSubtitle")}
         />
         <CoachGameClient gameRecord={null} walletAddress={undefined} />
-      </main>
+      </div>
     );
   }
 
@@ -40,14 +40,14 @@ export default async function CoachGamePage({ params, searchParams }: PageProps)
   // surfaces the same in-page 404 fallback instead of leaking a 500.
   if (!isAddress(wallet) || !UUID_RE.test(gameId)) {
     return (
-      <main className="arena-bg arena-scroll-screen h-[100dvh]">
+      <div className="arena-bg arena-scroll-screen h-[100dvh]">
         <ContextualHeader
           variant="back-control"
           iconSlot={<TileIconSlot slot="hub.training" />}
           title={t("notFoundMessage")}
         />
         <CoachGameClient gameRecord={null} walletAddress={wallet as `0x${string}`} />
-      </main>
+      </div>
     );
   }
 
@@ -66,7 +66,7 @@ export default async function CoachGamePage({ params, searchParams }: PageProps)
       error: err instanceof Error ? err.message : "unknown",
     });
     return (
-      <main className="arena-bg arena-scroll-screen h-[100dvh]">
+      <div className="arena-bg arena-scroll-screen h-[100dvh]">
         <ContextualHeader
           variant="back-control"
           iconSlot={<TileIconSlot slot="hub.training" />}
@@ -74,20 +74,20 @@ export default async function CoachGamePage({ params, searchParams }: PageProps)
           subtitle={t("loadErrorSubtitle")}
         />
         <CoachGameClient gameRecord={null} walletAddress={wallet as `0x${string}`} />
-      </main>
+      </div>
     );
   }
 
   if (!gameRecord) {
     return (
-      <main className="arena-bg arena-scroll-screen h-[100dvh]">
+      <div className="arena-bg arena-scroll-screen h-[100dvh]">
         <ContextualHeader
           variant="back-control"
           iconSlot={<TileIconSlot slot="hub.training" />}
           title={t("notFoundMessage")}
         />
         <CoachGameClient gameRecord={null} walletAddress={wallet as `0x${string}`} />
-      </main>
+      </div>
     );
   }
 
@@ -97,8 +97,8 @@ export default async function CoachGamePage({ params, searchParams }: PageProps)
   // Error/no-record branches still render ContextualHeader for shell
   // consistency, since they don't reach the redesigned actions stack.
   return (
-    <main className="arena-bg arena-scroll-screen h-[100dvh]">
+    <div className="arena-bg arena-scroll-screen h-[100dvh]">
       <CoachGameClient gameRecord={gameRecord} walletAddress={wallet as `0x${string}`} />
-    </main>
+    </div>
   );
 }

@@ -3583,7 +3583,7 @@ export function ExercisesScreen({
           <p className="text-xs text-white/70 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{tSplash("subtitle")}</p>
         </div>
       )}
-      <main className="mission-shell relative mx-auto flex h-[100dvh] w-full max-w-[var(--app-max-width)] flex-col px-0 py-0 sm:px-0">
+      <div className="mission-shell relative mx-auto flex h-[100dvh] w-full max-w-[var(--app-max-width)] flex-col px-0 py-0 sm:px-0">
         {/* Header — canonical <ContextualHeader back-control> envelope
          *  (52–64 px). Title = "Exercises"; PRO chip in the trailing
          *  slot.
@@ -4463,7 +4463,7 @@ export function ExercisesScreen({
             onOpenDaily={streakNudge.handleOpenDaily}
           />
         )}
-      </main>
+      </div>
     </div>
   );
 }

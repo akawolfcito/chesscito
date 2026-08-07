@@ -186,7 +186,7 @@ export function HubScaffold({
   );
 
   return (
-    <main
+    <section
       className="hub-scaffold"
       aria-label={tScaffold("rootAriaLabel")}
     >
@@ -422,6 +422,6 @@ export function HubScaffold({
           </div>
         ) : null}
       </footer>
-    </main>
+    </section>
   );
 }

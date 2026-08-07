@@ -111,7 +111,7 @@ export function ArenaSelectScaffold({
   )
 
   return (
-    <main
+    <section
       className="arena-scaffold"
       aria-label={t('scaffoldPageAriaFormat', { title: arenaTitle })}
     >
@@ -268,6 +268,6 @@ export function ArenaSelectScaffold({
           </div>,
         )}
       </footer>
-    </main>
+    </section>
   )
 }

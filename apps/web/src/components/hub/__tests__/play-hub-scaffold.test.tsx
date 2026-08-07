@@ -101,7 +101,13 @@ describe("PlayHubScaffold", () => {
   it("opts into the canonical LEARN home/header geometry", () => {
     const { container } = render(<PlayHubScaffold {...props} />);
 
-    expect(screen.getByRole("main")).toHaveClass("hub-home-scaffold");
+        // ⚠️ `region`, no `main`: el landmark `<main>` del documento es el del
+    // layout. Estos scaffolds pasaron a `<section aria-label>` para que haya UN
+    // solo `<main>` por documento, conservando su nombre accesible.
+    // El nombre es obligatorio: el documento tiene más de una `region`.
+    expect(
+      screen.getByRole("region", { name: "Chesscito Play Hub" }),
+    ).toHaveClass("hub-home-scaffold");
     expect(container.querySelector(".hub-scaffold-hud-top")).toHaveClass(
       "hub-home-hud",
     );

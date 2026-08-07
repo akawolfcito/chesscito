@@ -36,7 +36,7 @@ export function VictoryLandingCard({ v }: { v: VictoryLandingInfo }) {
     : t("metaComplete", { moves: v.moves });
 
   return (
-    <main
+    <div
       className="arena-bg flex min-h-[100dvh] items-center justify-center px-4 py-6 animate-in fade-in duration-500"
     >
       <div
@@ -109,6 +109,6 @@ export function VictoryLandingCard({ v }: { v: VictoryLandingInfo }) {
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

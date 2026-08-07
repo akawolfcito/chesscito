@@ -65,7 +65,7 @@ export default function CoachHistoryPage() {
       // instead, this branch IS the connect funnel — the copy states the gate,
       // and the button has to open it. Without the button we'd have traded a
       // paywall for a dead end (red team P0, 2026-07-13).
-      <main className="tj-root">
+      <div className="tj-root">
         <PageHeader onBack={() => router.push("/")} />
         <p className="tj-no-wallet-text">{t("connectWalletForHistory")}</p>
         <PrincipalButton
@@ -75,7 +75,7 @@ export default function CoachHistoryPage() {
         >
           {t("connectWalletButton")}
         </PrincipalButton>
-      </main>
+      </div>
     );
   }
 
@@ -103,7 +103,7 @@ export default function CoachHistoryPage() {
   }
 
   return (
-    <main className="tj-root">
+    <div className="tj-root">
       <PageHeader onBack={() => router.push("/")} />
       <div className="tj-content">
         {/* Review F6 (2026-06-13): a PLAY shortcut so the Journal is a fluid
@@ -127,6 +127,6 @@ export default function CoachHistoryPage() {
         />
         <CoachHistoryDeletePanel />
       </div>
-    </main>
+    </div>
   );
 }

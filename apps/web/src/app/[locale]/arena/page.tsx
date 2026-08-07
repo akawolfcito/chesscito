@@ -1112,7 +1112,7 @@ function ArenaPageInner() {
     // intact below as the default until the flag flips.
     if (arenaScaffoldEnabled) {
       return (
-        <main
+        <div
           className="arena-select-route flex h-[100dvh] min-h-0 flex-col items-center overflow-hidden arena-bg"
           data-testid="arena-difficulty-selector"
         >
@@ -1238,12 +1238,12 @@ function ArenaPageInner() {
               />
             ) : null}
           </div>
-        </main>
+        </div>
       );
     }
 
     return (
-      <main className="flex min-h-[100dvh] flex-col arena-bg" data-testid="arena-difficulty-selector">
+      <div className="flex min-h-[100dvh] flex-col arena-bg" data-testid="arena-difficulty-selector">
         <div className="flex flex-1 flex-col items-center justify-center">
           {(
             <ArenaEntryPanel
@@ -1320,7 +1320,7 @@ function ArenaPageInner() {
           <PurchaseConfirmSheet {...shopSheet.confirmProps} />
           <ProSheet {...proSheet.sheetProps} />
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -1338,7 +1338,7 @@ function ArenaPageInner() {
     !willRedirectToCoachRoute
   ) {
     return (
-      <main className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
+      <div className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
         <div className="mx-auto min-h-full w-full max-w-[var(--app-max-width,390px)]">
           <CandyGlassShell
             title={tCoach("coachAnalysisTitle")}
@@ -1367,7 +1367,7 @@ function ArenaPageInner() {
             />
           </CandyGlassShell>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -1378,7 +1378,7 @@ function ArenaPageInner() {
     !willRedirectToCoachRoute
   ) {
     return (
-      <main className="arena-bg min-h-[100dvh] overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
+      <div className="arena-bg min-h-[100dvh] overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
         <div className="mx-auto w-full max-w-[var(--app-max-width,390px)]">
           <CandyGlassShell
             title={coach.serverError ? tCoach("reviewRetryTitle") : tCoach("quickReviewTitle")}
@@ -1403,13 +1403,13 @@ function ArenaPageInner() {
             />
           </CandyGlassShell>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (ENABLE_COACH && coach.phase === "history" && address) {
     return (
-      <main className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
+      <div className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
         <div className="mx-auto min-h-full w-full max-w-[var(--app-max-width,390px)]">
           <CandyGlassShell
             title={tCoach("yourSessions")}
@@ -1430,13 +1430,13 @@ function ArenaPageInner() {
             />
           </CandyGlassShell>
         </div>
-      </main>
+      </div>
     );
   }
 
   // Playing + end states
   return (
-    <main className="flex h-[100dvh] flex-col items-center arena-bg">
+    <div className="flex h-[100dvh] flex-col items-center arena-bg">
       <div className="flex w-full max-w-[var(--app-max-width,390px)] flex-1 flex-col min-h-0">
         <ArenaHud
           onBack={handleBack}
@@ -1650,6 +1650,6 @@ function ArenaPageInner() {
           <ProSheet {...proSheet.sheetProps} />
         </>
       )}
-    </main>
+    </div>
   );
 }

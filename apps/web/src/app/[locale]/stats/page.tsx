@@ -72,7 +72,7 @@ export default async function StatsRoute({
   // with a cream/amber wash so the forest body bg stays visible (brand
   // continuity) but stops competing with the dashboard content.
   return (
-    <main
+    <div
       className="mission-shell stats-page-scrim min-h-[100dvh] w-full"
       style={{ color: "var(--paper-text)" }}
     >
@@ -83,6 +83,6 @@ export default async function StatsRoute({
           nicknameTokens={nicknameTokens}
         />
       </div>
-    </main>
+    </div>
   );
 }

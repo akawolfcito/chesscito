@@ -134,7 +134,7 @@ export default async function ShareDailyPage({
     : t("ctaChallenge");
 
   return (
-    <main className="mission-shell secondary-page-scrim flex min-h-[100dvh] items-center justify-center px-6">
+    <div className="mission-shell secondary-page-scrim flex min-h-[100dvh] items-center justify-center px-6">
       {/* Candy mission panel — cream wood frame + grass border via the
           screen-mission/panel-mision-icon.png asset (same vocabulary as
           MissionBriefing). Stretched 100% 100% so it fills the panel; the
@@ -200,6 +200,6 @@ export default async function ShareDailyPage({
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

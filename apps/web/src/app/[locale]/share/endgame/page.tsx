@@ -137,7 +137,7 @@ export default async function ShareEndgamePage({
     : t("ctaChallenge");
 
   return (
-    <main className="mission-shell secondary-page-scrim flex min-h-[100dvh] items-center justify-center px-6">
+    <div className="mission-shell secondary-page-scrim flex min-h-[100dvh] items-center justify-center px-6">
       <div
         className="candy-page-panel flex w-full max-w-[var(--app-max-width)] flex-col items-center gap-4 rounded-3xl px-6 py-10 text-center"
         style={{ background: "var(--paper-bg)" }}
@@ -172,6 +172,6 @@ export default async function ShareEndgamePage({
           {tShare("playCta")}
         </Link>
       </div>
-    </main>
+    </div>
   );
 }
