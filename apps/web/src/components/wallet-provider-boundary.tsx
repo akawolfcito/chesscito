@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
+import { WalletBranchErrorBoundary } from "@/components/wallet-branch-error-boundary";
 import { WalletProvider } from "@/components/wallet-provider";
 import { WebWalletProvider } from "@/components/web-wallet-provider";
 import { isMiniPayEnv } from "@/lib/minipay";
@@ -31,6 +32,11 @@ function isPrivyEnabled(): boolean {
  */
 export function WalletProviderBoundary({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
+  /** Bumped by a retry. Used as the boundary's `key`, so a retry REMOUNTS the
+   *  subtree instead of re-rendering it — the only way a fresh attempt can
+   *  happen at all (spec C2c). Re-rendering would land on the same cached
+   *  rejection without touching the network. */
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     setHydrated(true);
@@ -42,12 +48,16 @@ export function WalletProviderBoundary({ children }: { children: ReactNode }) {
     isMiniPay: hydrated ? isMiniPayEnv() : false,
   });
 
-  if (branch === "injected") {
-    return <WalletProvider>{children}</WalletProvider>;
-  }
-
-  if (branch === "privy") {
-    return <WebWalletProvider>{children}</WebWalletProvider>;
+  if (branch !== "undecided") {
+    const Branch = branch === "injected" ? WalletProvider : WebWalletProvider;
+    return (
+      <WalletBranchErrorBoundary
+        key={attempt}
+        onRetry={() => setAttempt((n) => n + 1)}
+      >
+        <Branch>{children}</Branch>
+      </WalletBranchErrorBoundary>
+    );
   }
 
   // `undecided` — a stable shell shared by SSR and the first client render.
