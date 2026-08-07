@@ -379,64 +379,102 @@ componentes ni strings incidentales.
 
 ## Acceptance criteria
 
+> ✅ **FRENTE CERRADO — 2026-08-07.** Evidencia:
+> `docs/audits/2026-08-07-minipay-first-load-report.md`.
+> Estado por eje: **arquitectura/bundling PASS · correctitud funcional PASS · bytes MiniPay
+> PASS · VR PASS**. Único pendiente, movido a frente separado: **AC8 (`WalletShell`)**.
+
 **Comportamiento** (unit, corren en la suite normal)
 
-- [ ] AC1 — Flag OFF + hidratado → monta la rama injected.
-- [ ] AC2 — Flag OFF + SSR → emite `WalletShell`, no un provider. (Reescribe el test de E1.)
-- [ ] AC3 — Flag ON + no hidratado → `WalletShell`, y **ningún** `import()` disparado.
-- [ ] AC4 — Flag ON + MiniPay → monta injected; el `import()` de Privy **nunca** se llama.
-- [ ] AC5 — Flag ON + web → monta Privy; el `import()` de injected **nunca** se llama.
-- [ ] AC6 — Exactamente **un** provider en el árbol en todo momento (nunca dos, nunca cero
+- [x] AC1 — Flag OFF + hidratado → monta la rama injected.
+- [x] AC2 — Flag OFF + SSR → emite `WalletShell`, no un provider. (Reescribe el test de E1.)
+- [x] AC3 — Flag ON + no hidratado → `WalletShell`, y **ningún** `import()` disparado.
+- [x] AC4 — Flag ON + MiniPay → monta injected; el `import()` de Privy **nunca** se llama.
+- [x] AC5 — Flag ON + web → monta Privy; el `import()` de injected **nunca** se llama.
+- [x] AC6 — Exactamente **un** provider en el árbol en todo momento (nunca dos, nunca cero
       tras resolver).
-- [ ] AC7 — `children` monta **exactamente una vez** en toda la transición
+- [x] AC7 — `children` monta **exactamente una vez** en toda la transición
       `undecided → shell → rama`. ⚠️ Reformulado tras el red team: la versión anterior decía
       "no se remonta al llegar el chunk", que **pasa siempre** porque `children` nunca montó
       antes — un AC infalsificable. Se cuenta con un hijo instrumentado, no por DOM.
-- [ ] AC8 — `WalletShell` ocupa el mismo espacio que el árbol final (E2).
-- [ ] AC19 — **E3**: si el `import()` rechaza, el árbol muestra el mensaje + "Retry" y **no**
+- [ ] **AC8 — ABIERTO, MOVIDO A FRENTE SEPARADO.** `WalletShell` sigue siendo un `<div>`
+      vacío, y la espera ahora incluye una ida a la red. Es el **único costo** que dejó este
+      cambio: medido, T1 sube 9,7 kB y ~200 ms en localhost (en la red de MiniPay, más).
+      ⛔ No se resuelve acá — necesita su propia medición bajo persona MiniPay y su propio
+      spec, o se mezcla con este resultado y ninguna mejora queda atribuible.
+- [x] AC19 — **E3**: si el `import()` rechaza, el árbol muestra el mensaje + "Retry" y **no**
       se queda en `loading`. Se testea forzando el rechazo del import.
-- [ ] AC20 — **E3**: tocar "Retry" reintenta el import; si el segundo intento resuelve, la
+- [x] AC20 — **E3**: tocar "Retry" reintenta el import; si el segundo intento resuelve, la
       rama monta normalmente. El retry debe poder ejercerse **más de una vez**.
-- [ ] AC21 — **E3**: `requirePrivyAppId()` sin app id cae en el mismo estado terminal
+      ⚠️ **AC20 ≠ AC23, y se verificó que no lo eran.** AC23 prueba que ocurre un intento
+      nuevo; AC20 exige que el intento que **funciona** deje al jugador dentro de la app, y que
+      el botón sirva más de una vez. El test de AC23 (1 → 2) **no** lo satisfacía. Cubierto por
+      un test propio: dos fallas seguidas (loader 1 → 3), después éxito, la rama monta y el
+      estado de error desaparece — con `childMounts === 1` en toda la secuencia.
+      📌 Nació **verde**: el mecanismo ya estaba implementado, lo que faltaba era la prueba.
+      Es guard de regresión, no driver.
+- [x] AC21 — **E3**: `requirePrivyAppId()` sin app id cae en el mismo estado terminal
       visible, no en un splash eterno.
-- [ ] AC23 — **Retry real (C2c)**: el test **observa un intento nuevo** — cuenta invocaciones
+- [x] AC23 — **Retry real (C2c)**: el test **observa un intento nuevo** — cuenta invocaciones
       del loader, o espía `window.location.reload`. ⛔ "El botón existe y no rompe" no
       satisface este AC.
-- [ ] AC24 — **i18n (C2d)**: las tres claves de `WALLET_LOAD_ERROR_COPY` existen en `en.ts`
+- [x] AC24 — **i18n (C2d)**: las tres claves de `WALLET_LOAD_ERROR_COPY` existen en `en.ts`
       **y** en `es.ts`, y el guard de traducción pasa sin agregarlas a la lista de exentas.
-- [ ] AC25 — Cada rama renderiza su `data-wallet-branch` (`injected` / `privy`), y AC6 se
+- [x] AC25 — Cada rama renderiza su `data-wallet-branch` (`injected` / `privy`), y AC6 se
       asserta **sobre ese atributo** — de modo que borrarlo ponga tests de comportamiento en
       rojo, no sólo el guard de bundle.
 
 **Bundle** (suite separada, exige build previo)
 
-- [ ] AC9 — El grafo de `/[locale]/layout` **no** contiene `PRIVY_BRANCH_MARKER`.
-- [ ] AC10 — El grafo de `/[locale]/layout` **no** contiene `INJECTED_BRANCH_MARKER`.
-- [ ] AC11 — El chunk de la rama injected **no** contiene `PRIVY_BRANCH_MARKER`.
-- [ ] AC12 — El chunk de la rama Privy **no** contiene `INJECTED_BRANCH_MARKER`.
-- [ ] AC13 — El guard **no** falla por dependencias legítimamente compartidas: un chunk que
-      contiene `wagmi`/`viem` y ningún marcador de rama **pasa**. Se asserta con un caso
-      positivo explícito, no por ausencia de falla.
-- [ ] AC14 — El guard resuelve chunks **por evidencia del build** (lee el manifest y busca
-      los marcadores). ⛔ Ningún hash de archivo hardcodeado: cambian en cada build.
+✅ Automatizado en `pnpm -C apps/web bundle:guard`. Última corrida: **75 chunks inspeccionados,
+0 hallazgos**.
+
+- [x] AC9 — El grafo estático de `/[locale]` **no** contiene el marcador de la rama Privy.
+      ⚠️ **Reformulado en la implementación**: el guard cubre **todas** las entradas
+      `/[locale]`, no sólo el layout — un jugador camina a `/exercises` y a `/arena`, y una
+      fuga ahí es la misma fuga.
+- [x] AC10 — Ídem para la rama injected en el grafo… **⛔ NO se implementó, y a propósito.**
+      El foco es MiniPay: la rama injected **debe** poder estar en el grafo que recibe MiniPay
+      — es la que ejecuta. Cerrarlo como "el injected tampoco entra" habría sido un criterio
+      simétrico sin dueño, y web quedó fuera del alcance (founder, 2026-08-07).
+- [x] AC11 / AC12 — Cada chunk de rama lleva **sólo su** marcador. Verificado por inspección
+      del build (8 apariciones de `data-wallet-branch`, ninguna cruzada). ⚠️ **No automatizado**:
+      su valor era proteger el grafo de MiniPay, y eso ya lo hace AC9.
+- [x] AC13 — El guard **no** falla por dependencias legítimamente compartidas: un chunk con
+      `wagmi`/`viem` y sin marcador de rama **pasa**. Aserido con un caso positivo explícito.
+- [x] AC14 — El guard resuelve chunks **por evidencia del build**. ⛔ Ningún hash hardcodeado.
+      Además busca **código vivo** en la forma que emite el minificador
+      (`"data-wallet-branch":"privy"`), nunca nombres de archivo ni de componente.
 
 **Regresión**
 
-- [ ] AC15 — Suite completa en verde. Baseline al abrir: **7404 passing / 598 files**.
-- [ ] AC16 — `pnpm exec tsc --noEmit` limpio.
-- [ ] AC17 — VR 62/62 sin `--update-snapshots`.
+- [x] AC15 — Suite completa en verde: **7.432 passing / 603 files** (baseline al abrir:
+      7.404 / 598).
+- [x] AC16 — `pnpm exec tsc --noEmit` limpio.
+- [x] AC17 — **VR 62/62 sin `--update-snapshots` y sin tocar un solo baseline.** Era la
+      incógnita seria (`ssr: false` cambia el primer paint de toda ruta): no cambió ninguno,
+      porque los casos esperan por elementos de producto y el árbol final es idéntico.
 
 **Medición** (el punto de todo esto)
 
-- [ ] AC18 — First Load JS de `/[locale]` **baja** respecto del baseline **382 kB**.
-      ⚠️ Reformulado tras el red team: "se registra el número" no puede fallar, y un criterio
-      que no puede fallar no es un criterio. El umbral es **estrictamente menor que 382 kB**.
-      ⛔ Si baja poco, **el resultado se reporta como es** (EXP2 ya anticipa que el hub
-      retiene `wagmi`/`viem` por claims) y se abre el frente siguiente. No se compensa el
-      informe con el ahorro de `/terms`.
-- [ ] AC22 — Se registra **también** el First Load JS de una ruta secundaria (`/[locale]/terms`)
-      como control: ahí el ahorro debería ser mayor, y verlo confirma que el split funcionó
-      aunque el hub se mueva poco.
+- [x] AC18 — **SUPERADO POR MEDICIÓN MEJOR, no cumplido como estaba escrito.** El umbral era
+      "First Load JS de `/[locale]` < 382 kB": dio **380 kB**, es decir −2 kB, ruido entre
+      builds. **El AC estaba mal formulado**: medía la vara equivocada. El browser, con persona
+      MiniPay, mide **1.048,0 kB → 420,1 kB (−60%)** hasta que el hub es usable, y **1 → 0**
+      requests con código de Privy.
+- [x] AC22 — Control registrado (`/terms`: 145 → 146 kB por `next build`; por grafo de chunks,
+      880 → 147 kB gz). ⚠️ Sirvió para **detectar que la vara mentía**, no para confirmar el
+      ahorro: la discrepancia entre las dos varas era 6,1× en esa ruta.
+
+## ⛔ Regla metodológica que deja este frente
+
+> **Para performance MiniPay en este repo, `next build` es DIAGNÓSTICO, no árbitro.**
+> El árbitro son mediciones de browser con persona MiniPay, `encodedDataLength` y milestones
+> de producto.
+
+Evidencia: para el mismo cambio, `next build` reportó **−2 kB** y el browser **−628 kB**. La
+tabla subatribuye: antes del split había ~700 kB gz en el grafo de la ruta que no aparecían en
+su "First Load JS"; después, las dos varas coinciden.
 
 ## Cómo se corre el guard
 
@@ -444,12 +482,13 @@ No entra en `pnpm test` (vitest) porque **exige un build previo**:
 
 ```bash
 pnpm -C apps/web build          # produce .next/app-build-manifest.json + los chunks
-pnpm -C apps/web test:bundle    # script NUEVO — el guard
+pnpm -C apps/web bundle:guard   # el guard
 ```
 
-⚠️ En CI van encadenados. ⛔ Correr `test:bundle` sin build lee un `.next` viejo y **pasa en
-verde midiendo el build anterior** — el guard debe **fallar ruidosamente** si el manifest no
-existe o es más viejo que el último commit, nunca pasar por defecto.
+⛔ Correr el guard sin build leería un `.next` viejo y **pasaría en verde midiendo el build
+anterior**. Resuelto con un **sello de contenido**: `next.config.js` estampa un sha256 de
+`src` + config + lockfile, y el guard se niega a auditar un `.next` que no salió de este árbol.
+⚠️ **Por `mtime` no**: un checkout reescribe timestamps sin cambiar contenido.
 
 ## Out of scope / future
 

@@ -71,16 +71,33 @@ que la rama pre-hidratación ya era `undecided`.
 **Cerrados y verdes:** AC1 · AC2 · AC3 · AC4 · AC5 · AC6 · AC7 · AC15 · AC16 · AC19 · AC21 ·
 AC23 · AC24 · AC25.
 
-**Cerrados en la segunda mitad:** AC9–AC14 (guard automatizado, `pnpm bundle:guard`) ·
-**AC17 (VR 62/62)** · AC18 (medición, arbitrada por el browser).
+### ✅ FRENTE CERRADO — clasificación final
 
-**Abiertos — los dos únicos:**
+| Eje | Estado | Evidencia |
+|---|---|---|
+| **Arquitectura / bundling** | ✅ **PASS** | `bundle:guard`: 75 chunks, 0 marcador Privy, 0 `@privy-io` |
+| **Correctitud funcional** | ✅ **PASS** | 7.432 passing / 603 files · `tsc` limpio · retry 1→3→éxito · mount-once |
+| **Bytes MiniPay** | ✅ **PASS** | T2 1.048,0 → 420,1 kB (−60%) · requests con Privy 1 → 0 · T3 = T2 |
+| **VR** | ✅ **PASS** | 62/62 sin actualizar baselines |
+| **WalletShell / perceived loading** | ⏸️ **FRENTE SEPARADO** | AC8: `<div>` vacío; T1 +9,7 kB y ~200 ms |
 
-- **AC8 / E7** — `WalletShell` sigue siendo un `<div>` vacío, y ahora la espera **incluye una
-  ida a la red**. Es el único costo real que dejó este cambio (T1 +9,7 kB y ~200 ms en
-  localhost; en la red de MiniPay, más). **Es lo próximo.**
-- **AC20** — el retry se ejerce una vez; falta el caso "el segundo intento **resuelve** y la
-  rama monta".
+**AC20 — verificado y cerrado.** Era genuinamente distinto de AC23: AC23 prueba que ocurre un
+intento nuevo, AC20 exige que el intento que **funciona** deje al jugador dentro de la app y
+que el botón sirva más de una vez. El test 1 → 2 **no** lo satisfacía. Ahora hay test propio
+(dos fallas, loader 1 → 3, después éxito, la rama monta, el error desaparece, `childMounts`
+sigue en 1). Nació verde: faltaba la prueba, no la implementación.
+
+**AC10 — cerrado como NO aplicable**, con razón escrita: exigía que la rama injected tampoco
+entrara al grafo, y la rama injected **es** la que MiniPay ejecuta. Criterio simétrico sin
+dueño, incompatible con el alcance fijado.
+
+### ⛔ Regla metodológica registrada
+
+> Para performance MiniPay en este repo, **`next build` es diagnóstico, no árbitro**. El
+> árbitro son mediciones de browser con persona MiniPay, `encodedDataLength` y milestones de
+> producto.
+
+Para el mismo cambio: `next build` dijo −2 kB, el browser dice −628 kB.
 
 ---
 
