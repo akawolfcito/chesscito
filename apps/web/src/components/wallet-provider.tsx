@@ -6,6 +6,7 @@ import { WagmiProvider, createConfig, http, useConnect } from "wagmi";
 import { celo, celoSepolia } from "wagmi/chains";
 import { injected } from "wagmi/connectors";
 
+import { ChainConfigWarning } from "@/components/dev/chain-config-warning";
 import { ProductContextProviders } from "@/components/product-context-providers";
 import { getInjectedProvider, isMiniPayEnv } from "@/lib/minipay";
 
@@ -64,6 +65,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <WalletProviderInner>
+          {/* Outside the product contexts: the mismatch it reports is what a
+              DISCONNECTED visitor hits, and wagmi answers them with
+              `chains[0]` — Celo mainnet. */}
+          <ChainConfigWarning defaultChainId={celo.id} />
           <ProductContextProviders>{children}</ProductContextProviders>
         </WalletProviderInner>
       </QueryClientProvider>

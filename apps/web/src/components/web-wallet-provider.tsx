@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useCallback, type ReactNode } from "react";
 import { celo } from "wagmi/chains";
 
+import { ChainConfigWarning } from "@/components/dev/chain-config-warning";
 import { ProductContextProviders } from "@/components/product-context-providers";
 import { WebAccessThemeVariables } from "@/components/themes/theme-css-variables";
 import { WebAccessGate } from "@/components/web-access-gate";
@@ -117,6 +118,10 @@ export function WebWalletProvider({ children }: { children: ReactNode }) {
                 these wallpapers, and the app-wide ThemeCssVariables mounts
                 behind it. */}
             <WebAccessThemeVariables />
+            {/* Above the gate too: a misconfigured chain id degrades the UI
+                for a DISCONNECTED visitor, who never reaches the contexts
+                inside. `chains[0]` here is Celo mainnet only. */}
+            <ChainConfigWarning defaultChainId={celo.id} />
             <WebAccessGate>
               {/* Inside the gate: the product contexts are wallet-scoped, so
                   they mount only in `authenticated + wallet ready`. */}
