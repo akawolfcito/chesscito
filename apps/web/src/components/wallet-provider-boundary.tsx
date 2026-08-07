@@ -59,9 +59,13 @@ export function WalletProviderBoundary({ children }: { children: ReactNode }) {
 
   const LazyBranch = useMemo(
     () => (mounted ? lazy(() => walletBranchLoaders[mounted]()) : null),
-    // `attempt` is load-bearing: a new value must produce a NEW lazy component,
-    // because React memoizes the outcome — success and failure alike — per lazy
-    // identity. Same identity, same rejection, no network.
+    // ⛔ `attempt` is LOAD-BEARING and eslint cannot see why: it calls the
+    // dependency "unnecessary" because the factory never reads it. Deleting it
+    // turns Retry into a no-op — React memoizes a lazy component's outcome,
+    // success and failure alike, per identity, so the same identity replays the
+    // same rejection without touching the network. The disable stays, and
+    // AC23 (which counts loader invocations) is what turns red if it goes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [mounted, attempt],
   );
 
