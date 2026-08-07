@@ -9635,15 +9635,15 @@
           "file": "src/app/globals.css",
           "occurrences": [
             {
-              "line": 427,
+              "line": 434,
               "raw": "/art/chesscito-board.avif"
             },
             {
-              "line": 428,
+              "line": 435,
               "raw": "/art/chesscito-board.webp"
             },
             {
-              "line": 429,
+              "line": 436,
               "raw": "/art/chesscito-board.png"
             }
           ],
