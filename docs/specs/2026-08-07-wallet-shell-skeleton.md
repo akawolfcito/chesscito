@@ -1,12 +1,14 @@
 # Spec — AC8: `WalletShell` deja de ser una pantalla vacía
 
-**Fecha:** 2026-08-07 · **Estado:** ✅ **READY** — red team en 2 pases
-(`…-redteam.md`), con **dos experimentos bloqueantes antes de implementar**:
+**Fecha:** 2026-08-07 · **Estado:** ✅ **READY — gates cerrados, en implementación (`/tdd`)**
 
-| # | Experimento | Qué decide |
+| # | Experimento | Resultado |
 |---|---|---|
-| **EXP1** | Un solo bloque con `linear-gradient` en el shell actual → build → medir FCP | Si el frente mueve la métrica o sólo la percepción. **Si el FCP no baja de 1,5 s, el frente se para y se reporta.** |
-| **EXP2** | `curl` al HTML servido de `/` y de `/terms` | Si la silueta llega por SSR o recién al hidratar — y en ese caso llega a los ~4 s, justo cuando ya no sirve |
+| **EXP1** | Bloque con `linear-gradient` → medir FCP | 🔴 **FAIL** — 3.928 ms. El bloque estaba pintado a 194 ms y la métrica no se movió: Chromium cuenta **recursos** de imagen, no pintura. |
+| **EXP1b** | Mismo bloque con `data:image/svg+xml` | 🟢 **Hipótesis validada** — FCP **3.974 → 1.728 ms (−2.246 ms)**, 0 requests nuevos, T2 −82 ms, LCP sin cambio, sin CLS propio. |
+| **EXP2** | `curl` al HTML servido | 🟢 **PASS parcial** — el shell está en el HTML inicial de `/`, `/es`, `/terms`; no depende de hidratación. ⚠️ `/en` responde 307 → `/` (routing `as-needed`, correcto). **Pendiente**: validar `isHubRoute`/`usePathname()` en prerender cuando se implemente. |
+
+Evidencia: `docs/audits/2026-08-07-ac8-exp1-exp2-results.md` y `…-ac8-exp1b-results.md`.
 
 **Origen:** AC8 del spec `2026-08-07-wallet-branch-lazy-load`, movido a frente propio.
 **Evidencia:** `docs/audits/2026-08-07-minipay-perceived-load-report.md`
@@ -239,12 +241,17 @@ con su medición de long tasks antes y después. ⛔ No se agrega "porque queda 
 
 **Medición — mismo instrumento, mismo perfil (Slow 4G + CPU 4×)**
 
-- [ ] AC10 — **FCP se adelanta materialmente** frente a ~3,98 s.
-      ⚠️ **UMBRAL PENDIENTE DE DECISIÓN.** El original era **< 1.500 ms**; medido con el
-      primitivo correcto da **1.728 ms**, y los 228 ms que faltan **no son del skeleton**: el
-      CSS render-blocking de 55 kB termina a 1.679 ms y el FCP ocurre 61 ms después.
-      Opciones sobre la mesa: (A) bajar el umbral a < 2.000 ms, (B) mantener 1.500 ms y
-      secuenciar después del frente de CSS. ⛔ No se implementa hasta elegir.
+- [ ] AC10 — **FCP mediana < 2.000 ms** bajo Slow 4G + CPU 4×, y se registra **el valor real y
+      el delta** contra el baseline de 3.974 ms.
+      ⚠️ **El umbral original era < 1.500 ms y quedó invalidado por una dependencia externa al
+      skeleton** (founder, 2026-08-07). EXP1b lo midió: con el primitivo correcto el FCP da
+      **1.728 ms (−2.246 ms)**, y los 228 ms que faltaban para 1.500 ms **no son del skeleton**.
+      **El piso actual es ~1,7 s y lo impone el critical CSS**: la hoja de 55 kB termina de
+      bajar a **1.679 ms** y el FCP ocurre **61 ms después**. El skeleton no puede pintar antes
+      que la hoja que lo estiliza.
+      ⛔ **Bajar ese piso NO pertenece a este spec.** Es el frente siguiente (CSS
+      render-blocking), que ahora tiene una hipótesis cuantificada: ~1.679 ms de piso de FCP.
+      No se optimiza CSS acá para perseguir 1.500 ms.
 - [ ] AC11 — El filmstrip a ~1,0 s y ~2,0 s muestra la silueta, **no** color plano. ⚠️ Se mira
       **también el frame inmediatamente posterior a T2**: CLS 0 no garantiza que el swap no se
       lea como un corte brusco, y eso ningún número lo mide.
