@@ -8,6 +8,27 @@
  */
 export type WalletBranch = "injected" | "privy" | "undecided";
 
+/**
+ * The value of the `data-wallet-branch` attribute each provider renders.
+ *
+ * Derived from `WalletBranch` minus `undecided`: the shell is not a branch, it
+ * is the absence of one, and it must never carry this attribute.
+ *
+ * ⚠️ This attribute is LOAD-BEARING in two independent ways, and that is the
+ * point (spec 2026-08-07-wallet-branch-lazy-load, C4):
+ *   1. Behaviour — tests assert that exactly one branch is mounted by querying
+ *      it, so deleting it turns unit tests red.
+ *   2. Bundle — the literal travels into that branch's chunk and survives
+ *      minification, so the bundle guard can prove the chunk did NOT reach the
+ *      root layout. An orphan `export const` would be tree-shaken and leave the
+ *      guard green by absence, which is the failure mode this replaces.
+ */
+export type MountedWalletBranch = Exclude<WalletBranch, "undecided">;
+
+/** The attribute name. One spelling, shared by the providers, the tests and the
+ *  bundle guard — three readers that must never drift apart. */
+export const WALLET_BRANCH_ATTR = "data-wallet-branch";
+
 export type WalletBranchInput = {
   /** `NEXT_PUBLIC_PRIVY_ENABLED`. Baked at build time (`NEXT_PUBLIC_*`), so
    *  flipping it in the host's env needs a redeploy to take effect. */
