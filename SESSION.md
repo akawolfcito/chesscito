@@ -170,14 +170,53 @@ sirve como árbitro de performance** — queda escrito en el informe y en memori
 
 ---
 
+---
+
+## Parte 5 — Frente nuevo: carga percibida de MiniPay (MEDIDO, sin implementar)
+
+Informe: `docs/audits/2026-08-07-minipay-perceived-load-report.md`.
+El instrumento ahora mide FCP, LCP, CLS **con los nodos que se mueven**, long tasks, TBT
+aproximado, y saca filmstrip. Perfil Slow 4G + CPU 4×.
+
+| | Sin throttling | Slow 4G + CPU 4× |
+|---|---|---|
+| FCP / LCP | 572 / 572 ms | **~3.980 / ~4.410 ms** |
+| T2 (hub usable) | 1.003 ms | **~4.150 ms** |
+| CLS | 0,0000 | **0,000 ó 0,179 (bimodal)** |
+| Long tasks | 0 | 3–5, máx 65–127 ms, **todas antes de FCP** |
+
+**La ventana en blanco dura ~4 s** y el filmstrip muestra azul plano `#0b1220` sin esqueleto
+hasta que el hub aparece entero a los 4,66 s.
+
+⛔ **Dos correcciones a la lectura de Lighthouse:**
+
+1. **CLS 0,179 NO es el WalletShell.** Ocurre a ~4.150 ms, **después** de que el hub montó, en
+   `section.hub-scaffold-body` + `div.kingdom-anchor-tagline`. Frente separado — mezclarlo con
+   el shell haría que ninguna mejora sea atribuible.
+2. **El landmark `<main>` no falta: sobra.** Hay **dos, uno anidado**, en las dos personas. Lo
+   que ve Lighthouse es artefacto de la persona web con Privy, donde `<main>` vive dentro de
+   `WebAccessGate` y no se renderiza sin autenticar.
+
+⛔ **El viewport sin zoom no se toca.** La dependencia de gesto existe y está documentada en
+`layout.tsx:99-123` (drag-to-move vs pinch, doble-tap de iOS) con su mitigación de
+accesibilidad (zoom del OS). La condición que habilitaba cambiarlo no se cumple.
+
+⚠️ **El instrumento casi miente y quedó blindado.** `addInitScript(fn)` serializa
+`fn.toString()`; tsx/esbuild inyecta `__name(...)`, que en la página no existe → el init moría
+antes de registrar un observer y la corrida reportaba `FCP n/a · LCP n/a · CLS 0 · 0 long
+tasks` para una página que había pintado a 576 ms. Ahora el init va como **string**, hay
+cross-check contra `getEntriesByType("paint")` que **aborta**, y un listener de `pageerror`.
+
 ## Next steps
 
-1. **AC8 / E7 — `WalletShell`.** Es el único costo que dejó este cambio y ya está medido.
-   Decidir su contenido **midiendo**: sólo si no mete descarga nueva en el camino crítico y
-   mantiene CLS 0. Si no, se queda el `<div>`.
-2. **AC20** — el caso "el segundo intento resuelve y la rama monta".
-3. **Opcional, barato:** una corrida del script contra `preview`/`learn-preview` para tener el
-   número con red real. Diagnóstico, no gate.
+1. **Spec de AC8 / `WalletShell`** — está demostrado que es relevante (~4 s de pantalla vacía,
+   y es lo que define FCP/LCP). ⚠️ Falta **una decisión de producto**: qué muestra el shell.
+2. **CLS 0,179** — frente separado, con el nodo ya identificado.
+3. **`<main>` anidado** — commit chico y semántico.
+4. **CSS render-blocking bajo MiniPay** — todavía sin medir. Se mide antes de decidir nada.
+5. **AC20** ✅ cerrado.
+6. **Opcional, barato:** correr el script contra `preview`/`learn-preview` para el número con
+   red real. Diagnóstico, no gate.
 
 ## Open questions (heredadas, siguen abiertas)
 
