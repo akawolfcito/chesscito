@@ -1,0 +1,718 @@
+[
+  {
+    "label": "baseline-cd380e7f",
+    "persona": "minipay",
+    "url": "http://localhost:3003/",
+    "measuredAt": "2026-08-07T12:55:19.764Z",
+    "samples": [
+      {
+        "milestone": "T1",
+        "atMs": 297,
+        "jsRequests": 38,
+        "jsEncodedBytes": 420201,
+        "urls": [
+          "http://localhost:3003/_next/static/chunks/main-app-cc74c80fe9f5a682.js",
+          "http://localhost:3003/_next/static/chunks/webpack-d90cb46f44e7133d.js",
+          "http://localhost:3003/_next/static/chunks/4376-9302661062efa304.js",
+          "http://localhost:3003/_next/static/chunks/1392-be4855fa1c8513f6.js",
+          "http://localhost:3003/_next/static/chunks/3898-5c2e1571a6f9b2a0.js",
+          "http://localhost:3003/_next/static/chunks/6668-00416fc65397d9e4.js",
+          "http://localhost:3003/_next/static/chunks/7d8e9695-68200d7dbd873c20.js",
+          "http://localhost:3003/_next/static/chunks/8008-c59d19c018a3b47d.js",
+          "http://localhost:3003/_next/static/chunks/4315-5899b91bdd91b285.js",
+          "http://localhost:3003/_next/static/chunks/1928-ad776f9ed48796d3.js",
+          "http://localhost:3003/_next/static/chunks/8009-f541555e4d1f7104.js",
+          "http://localhost:3003/_next/static/chunks/5691-9927bc51bdd8903b.js",
+          "http://localhost:3003/_next/static/chunks/7644-6c1828f034061ca2.js",
+          "http://localhost:3003/_next/static/chunks/9640-7b48e2f27e078bde.js",
+          "http://localhost:3003/_next/static/chunks/7739-93640b14e5486d52.js",
+          "http://localhost:3003/_next/static/chunks/4460-2e8093ef9948a739.js",
+          "http://localhost:3003/_next/static/chunks/205-d3bb84ca49742097.js",
+          "http://localhost:3003/_next/static/chunks/7485-b21be930822dc059.js",
+          "http://localhost:3003/_next/static/chunks/3579-eb0aff8905cc83e5.js",
+          "http://localhost:3003/_next/static/chunks/427-05e621eaf89a6991.js",
+          "http://localhost:3003/_next/static/chunks/8823-f1fb946ed19c6759.js",
+          "http://localhost:3003/_next/static/chunks/8628-bf8ba9c5e13f89e2.js",
+          "http://localhost:3003/_next/static/chunks/2110-c7d4a6bf0e5215e9.js",
+          "http://localhost:3003/_next/static/chunks/9954-0f6dd0d4a67412ea.js",
+          "http://localhost:3003/_next/static/chunks/7794-500597ce576e378b.js",
+          "http://localhost:3003/_next/static/chunks/2548-93acd629f8fd684e.js",
+          "http://localhost:3003/_next/static/chunks/9187-31b20fb9704e988e.js",
+          "http://localhost:3003/_next/static/chunks/3664-e191ea9fbd705279.js",
+          "http://localhost:3003/_next/static/chunks/8036-7df60debbf3bc5fd.js",
+          "http://localhost:3003/_next/static/chunks/3509-79e06cbddda2a2f0.js",
+          "http://localhost:3003/_next/static/chunks/3596-545b39d40a667bd7.js",
+          "http://localhost:3003/_next/static/chunks/8415-f3bb0aeb0b76e1b9.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/not-found-94e071c04e400909.js",
+          "http://localhost:3003/_next/static/chunks/89b3b69d-b0fba34a72ec36f2.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/layout-bc9cd825d394a684.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/page-8bc11d31422fbbf7.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/template-b057230cc7f07bd5.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/error-ff4d15e4bc7edbff.js"
+        ],
+        "privyUrls": []
+      },
+      {
+        "milestone": "T2",
+        "atMs": 502,
+        "jsRequests": 40,
+        "jsEncodedBytes": 1073105,
+        "urls": [
+          "http://localhost:3003/_next/static/chunks/main-app-cc74c80fe9f5a682.js",
+          "http://localhost:3003/_next/static/chunks/webpack-d90cb46f44e7133d.js",
+          "http://localhost:3003/_next/static/chunks/4376-9302661062efa304.js",
+          "http://localhost:3003/_next/static/chunks/1392-be4855fa1c8513f6.js",
+          "http://localhost:3003/_next/static/chunks/3898-5c2e1571a6f9b2a0.js",
+          "http://localhost:3003/_next/static/chunks/6668-00416fc65397d9e4.js",
+          "http://localhost:3003/_next/static/chunks/7d8e9695-68200d7dbd873c20.js",
+          "http://localhost:3003/_next/static/chunks/8008-c59d19c018a3b47d.js",
+          "http://localhost:3003/_next/static/chunks/4315-5899b91bdd91b285.js",
+          "http://localhost:3003/_next/static/chunks/1928-ad776f9ed48796d3.js",
+          "http://localhost:3003/_next/static/chunks/8009-f541555e4d1f7104.js",
+          "http://localhost:3003/_next/static/chunks/5691-9927bc51bdd8903b.js",
+          "http://localhost:3003/_next/static/chunks/7644-6c1828f034061ca2.js",
+          "http://localhost:3003/_next/static/chunks/9640-7b48e2f27e078bde.js",
+          "http://localhost:3003/_next/static/chunks/7739-93640b14e5486d52.js",
+          "http://localhost:3003/_next/static/chunks/4460-2e8093ef9948a739.js",
+          "http://localhost:3003/_next/static/chunks/205-d3bb84ca49742097.js",
+          "http://localhost:3003/_next/static/chunks/7485-b21be930822dc059.js",
+          "http://localhost:3003/_next/static/chunks/3579-eb0aff8905cc83e5.js",
+          "http://localhost:3003/_next/static/chunks/427-05e621eaf89a6991.js",
+          "http://localhost:3003/_next/static/chunks/8823-f1fb946ed19c6759.js",
+          "http://localhost:3003/_next/static/chunks/8628-bf8ba9c5e13f89e2.js",
+          "http://localhost:3003/_next/static/chunks/2110-c7d4a6bf0e5215e9.js",
+          "http://localhost:3003/_next/static/chunks/9954-0f6dd0d4a67412ea.js",
+          "http://localhost:3003/_next/static/chunks/7794-500597ce576e378b.js",
+          "http://localhost:3003/_next/static/chunks/2548-93acd629f8fd684e.js",
+          "http://localhost:3003/_next/static/chunks/9187-31b20fb9704e988e.js",
+          "http://localhost:3003/_next/static/chunks/3664-e191ea9fbd705279.js",
+          "http://localhost:3003/_next/static/chunks/8036-7df60debbf3bc5fd.js",
+          "http://localhost:3003/_next/static/chunks/3509-79e06cbddda2a2f0.js",
+          "http://localhost:3003/_next/static/chunks/3596-545b39d40a667bd7.js",
+          "http://localhost:3003/_next/static/chunks/8415-f3bb0aeb0b76e1b9.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/not-found-94e071c04e400909.js",
+          "http://localhost:3003/_next/static/chunks/89b3b69d-b0fba34a72ec36f2.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/layout-bc9cd825d394a684.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/page-8bc11d31422fbbf7.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/template-b057230cc7f07bd5.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/error-ff4d15e4bc7edbff.js",
+          "http://localhost:3003/_next/static/chunks/beef1686-e0eee8d4a20fd37e.js",
+          "http://localhost:3003/_next/static/chunks/6299-220cb329f23f418d.js"
+        ],
+        "privyUrls": [
+          "http://localhost:3003/_next/static/chunks/6299-220cb329f23f418d.js"
+        ]
+      },
+      {
+        "milestone": "T3",
+        "atMs": 47508,
+        "jsRequests": 43,
+        "jsEncodedBytes": 1084240,
+        "urls": [
+          "http://localhost:3003/_next/static/chunks/main-app-cc74c80fe9f5a682.js",
+          "http://localhost:3003/_next/static/chunks/webpack-d90cb46f44e7133d.js",
+          "http://localhost:3003/_next/static/chunks/4376-9302661062efa304.js",
+          "http://localhost:3003/_next/static/chunks/1392-be4855fa1c8513f6.js",
+          "http://localhost:3003/_next/static/chunks/3898-5c2e1571a6f9b2a0.js",
+          "http://localhost:3003/_next/static/chunks/6668-00416fc65397d9e4.js",
+          "http://localhost:3003/_next/static/chunks/7d8e9695-68200d7dbd873c20.js",
+          "http://localhost:3003/_next/static/chunks/8008-c59d19c018a3b47d.js",
+          "http://localhost:3003/_next/static/chunks/4315-5899b91bdd91b285.js",
+          "http://localhost:3003/_next/static/chunks/1928-ad776f9ed48796d3.js",
+          "http://localhost:3003/_next/static/chunks/8009-f541555e4d1f7104.js",
+          "http://localhost:3003/_next/static/chunks/5691-9927bc51bdd8903b.js",
+          "http://localhost:3003/_next/static/chunks/7644-6c1828f034061ca2.js",
+          "http://localhost:3003/_next/static/chunks/9640-7b48e2f27e078bde.js",
+          "http://localhost:3003/_next/static/chunks/7739-93640b14e5486d52.js",
+          "http://localhost:3003/_next/static/chunks/4460-2e8093ef9948a739.js",
+          "http://localhost:3003/_next/static/chunks/205-d3bb84ca49742097.js",
+          "http://localhost:3003/_next/static/chunks/7485-b21be930822dc059.js",
+          "http://localhost:3003/_next/static/chunks/3579-eb0aff8905cc83e5.js",
+          "http://localhost:3003/_next/static/chunks/427-05e621eaf89a6991.js",
+          "http://localhost:3003/_next/static/chunks/8823-f1fb946ed19c6759.js",
+          "http://localhost:3003/_next/static/chunks/8628-bf8ba9c5e13f89e2.js",
+          "http://localhost:3003/_next/static/chunks/2110-c7d4a6bf0e5215e9.js",
+          "http://localhost:3003/_next/static/chunks/9954-0f6dd0d4a67412ea.js",
+          "http://localhost:3003/_next/static/chunks/7794-500597ce576e378b.js",
+          "http://localhost:3003/_next/static/chunks/2548-93acd629f8fd684e.js",
+          "http://localhost:3003/_next/static/chunks/9187-31b20fb9704e988e.js",
+          "http://localhost:3003/_next/static/chunks/3664-e191ea9fbd705279.js",
+          "http://localhost:3003/_next/static/chunks/8036-7df60debbf3bc5fd.js",
+          "http://localhost:3003/_next/static/chunks/3509-79e06cbddda2a2f0.js",
+          "http://localhost:3003/_next/static/chunks/3596-545b39d40a667bd7.js",
+          "http://localhost:3003/_next/static/chunks/8415-f3bb0aeb0b76e1b9.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/not-found-94e071c04e400909.js",
+          "http://localhost:3003/_next/static/chunks/89b3b69d-b0fba34a72ec36f2.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/layout-bc9cd825d394a684.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/page-8bc11d31422fbbf7.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/template-b057230cc7f07bd5.js",
+          "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/error-ff4d15e4bc7edbff.js",
+          "http://localhost:3003/_next/static/chunks/beef1686-e0eee8d4a20fd37e.js",
+          "http://localhost:3003/_next/static/chunks/6299-220cb329f23f418d.js",
+          "http://localhost:3003/_next/static/chunks/6431.6e366b6a70bfb61f.js",
+          "http://localhost:3003/_next/static/chunks/3065.4b8865157f0ae9cf.js",
+          "http://localhost:3003/_next/static/chunks/5157.9da9a113d881bbda.js"
+        ],
+        "privyUrls": [
+          "http://localhost:3003/_next/static/chunks/6299-220cb329f23f418d.js"
+        ]
+      }
+    ],
+    "allJs": [
+      {
+        "url": "http://localhost:3003/_next/static/chunks/6299-220cb329f23f418d.js",
+        "bytes": 444453
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/beef1686-e0eee8d4a20fd37e.js",
+        "bytes": 208451
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/7d8e9695-68200d7dbd873c20.js",
+        "bytes": 54448
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/427-05e621eaf89a6991.js",
+        "bytes": 47180
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/6668-00416fc65397d9e4.js",
+        "bytes": 32677
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/page-8bc11d31422fbbf7.js",
+        "bytes": 29699
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/2548-93acd629f8fd684e.js",
+        "bytes": 28016
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/4460-2e8093ef9948a739.js",
+        "bytes": 14776
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/205-d3bb84ca49742097.js",
+        "bytes": 14450
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/3509-79e06cbddda2a2f0.js",
+        "bytes": 13578
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/1392-be4855fa1c8513f6.js",
+        "bytes": 12506
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/4376-9302661062efa304.js",
+        "bytes": 11925
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/8415-f3bb0aeb0b76e1b9.js",
+        "bytes": 11888
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/5691-9927bc51bdd8903b.js",
+        "bytes": 11600
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/9187-31b20fb9704e988e.js",
+        "bytes": 11325
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/3596-545b39d40a667bd7.js",
+        "bytes": 11217
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/9640-7b48e2f27e078bde.js",
+        "bytes": 10785
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/3664-e191ea9fbd705279.js",
+        "bytes": 9908
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/8628-bf8ba9c5e13f89e2.js",
+        "bytes": 9470
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/3898-5c2e1571a6f9b2a0.js",
+        "bytes": 9404
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/8008-c59d19c018a3b47d.js",
+        "bytes": 7439
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/1928-ad776f9ed48796d3.js",
+        "bytes": 6799
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/4315-5899b91bdd91b285.js",
+        "bytes": 6698
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/8036-7df60debbf3bc5fd.js",
+        "bytes": 6083
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/layout-bc9cd825d394a684.js",
+        "bytes": 5332
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/6431.6e366b6a70bfb61f.js",
+        "bytes": 5058
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/8009-f541555e4d1f7104.js",
+        "bytes": 4417
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/webpack-d90cb46f44e7133d.js",
+        "bytes": 3999
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/8823-f1fb946ed19c6759.js",
+        "bytes": 3914
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/3579-eb0aff8905cc83e5.js",
+        "bytes": 3599
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/7739-93640b14e5486d52.js",
+        "bytes": 3470
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/not-found-94e071c04e400909.js",
+        "bytes": 3310
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/7794-500597ce576e378b.js",
+        "bytes": 3272
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/89b3b69d-b0fba34a72ec36f2.js",
+        "bytes": 3267
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/3065.4b8865157f0ae9cf.js",
+        "bytes": 3105
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/5157.9da9a113d881bbda.js",
+        "bytes": 2972
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/7485-b21be930822dc059.js",
+        "bytes": 2916
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/2110-c7d4a6bf0e5215e9.js",
+        "bytes": 2493
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/9954-0f6dd0d4a67412ea.js",
+        "bytes": 2450
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/7644-6c1828f034061ca2.js",
+        "bytes": 1786
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/error-ff4d15e4bc7edbff.js",
+        "bytes": 1582
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/app/%5Blocale%5D/template-b057230cc7f07bd5.js",
+        "bytes": 1435
+      },
+      {
+        "url": "http://localhost:3003/_next/static/chunks/main-app-cc74c80fe9f5a682.js",
+        "bytes": 1088
+      }
+    ]
+  },
+  {
+    "label": "current",
+    "persona": "minipay",
+    "url": "http://localhost:3002/",
+    "measuredAt": "2026-08-07T12:56:08.911Z",
+    "samples": [
+      {
+        "milestone": "T1",
+        "atMs": 501,
+        "jsRequests": 42,
+        "jsEncodedBytes": 430232,
+        "urls": [
+          "http://localhost:3002/_next/static/chunks/webpack-a904bbda68f3f4f8.js",
+          "http://localhost:3002/_next/static/chunks/main-app-17ff9a1aab692abf.js",
+          "http://localhost:3002/_next/static/chunks/1462-0c995c157989bd9f.js",
+          "http://localhost:3002/_next/static/chunks/9267-c261d2d9593866b1.js",
+          "http://localhost:3002/_next/static/chunks/3660-06a71cd26ed90f4b.js",
+          "http://localhost:3002/_next/static/chunks/8129-c3240fb19ce49e21.js",
+          "http://localhost:3002/_next/static/chunks/5ce7412c-5a81ca7e4ea21818.js",
+          "http://localhost:3002/_next/static/chunks/4675-2a9154adefffc617.js",
+          "http://localhost:3002/_next/static/chunks/4233-cf5375e17673d17d.js",
+          "http://localhost:3002/_next/static/chunks/9747-3d3c50dc5a1eb4e1.js",
+          "http://localhost:3002/_next/static/chunks/1344-ef300f88532244e6.js",
+          "http://localhost:3002/_next/static/chunks/6837-bfe34a780dd2d958.js",
+          "http://localhost:3002/_next/static/chunks/6557-c1c6103b06a0ba2f.js",
+          "http://localhost:3002/_next/static/chunks/4087-c2a2489f8052da16.js",
+          "http://localhost:3002/_next/static/chunks/810-a5eb4d74adc67084.js",
+          "http://localhost:3002/_next/static/chunks/3603-871d3a224b1dac09.js",
+          "http://localhost:3002/_next/static/chunks/3526-d0dea250b0fcc54c.js",
+          "http://localhost:3002/_next/static/chunks/6976-3817a543aebda570.js",
+          "http://localhost:3002/_next/static/chunks/3785-499f895c2b00e5b3.js",
+          "http://localhost:3002/_next/static/chunks/8006-bd67782f66ea1d42.js",
+          "http://localhost:3002/_next/static/chunks/4500-cad91b60e7208309.js",
+          "http://localhost:3002/_next/static/chunks/4673-b937552dc747feb0.js",
+          "http://localhost:3002/_next/static/chunks/4923-8d22122312c829c5.js",
+          "http://localhost:3002/_next/static/chunks/2985-7213fda6e92a61de.js",
+          "http://localhost:3002/_next/static/chunks/3360-b1acffa686baeaad.js",
+          "http://localhost:3002/_next/static/chunks/4547-e9624f8ab524d88e.js",
+          "http://localhost:3002/_next/static/chunks/9263-06b916bc7bef8202.js",
+          "http://localhost:3002/_next/static/chunks/361-a9de59a7782c2e4c.js",
+          "http://localhost:3002/_next/static/chunks/3143-08ba13927661f2e2.js",
+          "http://localhost:3002/_next/static/chunks/8616-810ca2c1e0dfe817.js",
+          "http://localhost:3002/_next/static/chunks/6528-21e69f49b03fc105.js",
+          "http://localhost:3002/_next/static/chunks/6345-158a33df8b637955.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/not-found-377ef8f56da8a3dd.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/error-9c9fd2d00bb06a20.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/layout-2d02f2034662c45f.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/page-eca5460bbae9cb3b.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/template-32dd76ab9d15ce8f.js",
+          "http://localhost:3002/_next/static/chunks/39.1fa050b2d4441b0f.js",
+          "http://localhost:3002/_next/static/chunks/2121-df45a4a37e2dc838.js",
+          "http://localhost:3002/_next/static/chunks/5182.1b909f488ee5f1ac.js",
+          "http://localhost:3002/_next/static/chunks/8279.318117a0427e0857.js",
+          "http://localhost:3002/_next/static/chunks/5856.142f2b80e12d91a7.js"
+        ],
+        "privyUrls": []
+      },
+      {
+        "milestone": "T2",
+        "atMs": 519,
+        "jsRequests": 42,
+        "jsEncodedBytes": 430232,
+        "urls": [
+          "http://localhost:3002/_next/static/chunks/webpack-a904bbda68f3f4f8.js",
+          "http://localhost:3002/_next/static/chunks/main-app-17ff9a1aab692abf.js",
+          "http://localhost:3002/_next/static/chunks/1462-0c995c157989bd9f.js",
+          "http://localhost:3002/_next/static/chunks/9267-c261d2d9593866b1.js",
+          "http://localhost:3002/_next/static/chunks/3660-06a71cd26ed90f4b.js",
+          "http://localhost:3002/_next/static/chunks/8129-c3240fb19ce49e21.js",
+          "http://localhost:3002/_next/static/chunks/5ce7412c-5a81ca7e4ea21818.js",
+          "http://localhost:3002/_next/static/chunks/4675-2a9154adefffc617.js",
+          "http://localhost:3002/_next/static/chunks/4233-cf5375e17673d17d.js",
+          "http://localhost:3002/_next/static/chunks/9747-3d3c50dc5a1eb4e1.js",
+          "http://localhost:3002/_next/static/chunks/1344-ef300f88532244e6.js",
+          "http://localhost:3002/_next/static/chunks/6837-bfe34a780dd2d958.js",
+          "http://localhost:3002/_next/static/chunks/6557-c1c6103b06a0ba2f.js",
+          "http://localhost:3002/_next/static/chunks/4087-c2a2489f8052da16.js",
+          "http://localhost:3002/_next/static/chunks/810-a5eb4d74adc67084.js",
+          "http://localhost:3002/_next/static/chunks/3603-871d3a224b1dac09.js",
+          "http://localhost:3002/_next/static/chunks/3526-d0dea250b0fcc54c.js",
+          "http://localhost:3002/_next/static/chunks/6976-3817a543aebda570.js",
+          "http://localhost:3002/_next/static/chunks/3785-499f895c2b00e5b3.js",
+          "http://localhost:3002/_next/static/chunks/8006-bd67782f66ea1d42.js",
+          "http://localhost:3002/_next/static/chunks/4500-cad91b60e7208309.js",
+          "http://localhost:3002/_next/static/chunks/4673-b937552dc747feb0.js",
+          "http://localhost:3002/_next/static/chunks/4923-8d22122312c829c5.js",
+          "http://localhost:3002/_next/static/chunks/2985-7213fda6e92a61de.js",
+          "http://localhost:3002/_next/static/chunks/3360-b1acffa686baeaad.js",
+          "http://localhost:3002/_next/static/chunks/4547-e9624f8ab524d88e.js",
+          "http://localhost:3002/_next/static/chunks/9263-06b916bc7bef8202.js",
+          "http://localhost:3002/_next/static/chunks/361-a9de59a7782c2e4c.js",
+          "http://localhost:3002/_next/static/chunks/3143-08ba13927661f2e2.js",
+          "http://localhost:3002/_next/static/chunks/8616-810ca2c1e0dfe817.js",
+          "http://localhost:3002/_next/static/chunks/6528-21e69f49b03fc105.js",
+          "http://localhost:3002/_next/static/chunks/6345-158a33df8b637955.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/not-found-377ef8f56da8a3dd.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/error-9c9fd2d00bb06a20.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/layout-2d02f2034662c45f.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/page-eca5460bbae9cb3b.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/template-32dd76ab9d15ce8f.js",
+          "http://localhost:3002/_next/static/chunks/39.1fa050b2d4441b0f.js",
+          "http://localhost:3002/_next/static/chunks/2121-df45a4a37e2dc838.js",
+          "http://localhost:3002/_next/static/chunks/5182.1b909f488ee5f1ac.js",
+          "http://localhost:3002/_next/static/chunks/8279.318117a0427e0857.js",
+          "http://localhost:3002/_next/static/chunks/5856.142f2b80e12d91a7.js"
+        ],
+        "privyUrls": []
+      },
+      {
+        "milestone": "Tbranch",
+        "atMs": 522,
+        "jsRequests": 42,
+        "jsEncodedBytes": 430232,
+        "urls": [
+          "http://localhost:3002/_next/static/chunks/webpack-a904bbda68f3f4f8.js",
+          "http://localhost:3002/_next/static/chunks/main-app-17ff9a1aab692abf.js",
+          "http://localhost:3002/_next/static/chunks/1462-0c995c157989bd9f.js",
+          "http://localhost:3002/_next/static/chunks/9267-c261d2d9593866b1.js",
+          "http://localhost:3002/_next/static/chunks/3660-06a71cd26ed90f4b.js",
+          "http://localhost:3002/_next/static/chunks/8129-c3240fb19ce49e21.js",
+          "http://localhost:3002/_next/static/chunks/5ce7412c-5a81ca7e4ea21818.js",
+          "http://localhost:3002/_next/static/chunks/4675-2a9154adefffc617.js",
+          "http://localhost:3002/_next/static/chunks/4233-cf5375e17673d17d.js",
+          "http://localhost:3002/_next/static/chunks/9747-3d3c50dc5a1eb4e1.js",
+          "http://localhost:3002/_next/static/chunks/1344-ef300f88532244e6.js",
+          "http://localhost:3002/_next/static/chunks/6837-bfe34a780dd2d958.js",
+          "http://localhost:3002/_next/static/chunks/6557-c1c6103b06a0ba2f.js",
+          "http://localhost:3002/_next/static/chunks/4087-c2a2489f8052da16.js",
+          "http://localhost:3002/_next/static/chunks/810-a5eb4d74adc67084.js",
+          "http://localhost:3002/_next/static/chunks/3603-871d3a224b1dac09.js",
+          "http://localhost:3002/_next/static/chunks/3526-d0dea250b0fcc54c.js",
+          "http://localhost:3002/_next/static/chunks/6976-3817a543aebda570.js",
+          "http://localhost:3002/_next/static/chunks/3785-499f895c2b00e5b3.js",
+          "http://localhost:3002/_next/static/chunks/8006-bd67782f66ea1d42.js",
+          "http://localhost:3002/_next/static/chunks/4500-cad91b60e7208309.js",
+          "http://localhost:3002/_next/static/chunks/4673-b937552dc747feb0.js",
+          "http://localhost:3002/_next/static/chunks/4923-8d22122312c829c5.js",
+          "http://localhost:3002/_next/static/chunks/2985-7213fda6e92a61de.js",
+          "http://localhost:3002/_next/static/chunks/3360-b1acffa686baeaad.js",
+          "http://localhost:3002/_next/static/chunks/4547-e9624f8ab524d88e.js",
+          "http://localhost:3002/_next/static/chunks/9263-06b916bc7bef8202.js",
+          "http://localhost:3002/_next/static/chunks/361-a9de59a7782c2e4c.js",
+          "http://localhost:3002/_next/static/chunks/3143-08ba13927661f2e2.js",
+          "http://localhost:3002/_next/static/chunks/8616-810ca2c1e0dfe817.js",
+          "http://localhost:3002/_next/static/chunks/6528-21e69f49b03fc105.js",
+          "http://localhost:3002/_next/static/chunks/6345-158a33df8b637955.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/not-found-377ef8f56da8a3dd.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/error-9c9fd2d00bb06a20.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/layout-2d02f2034662c45f.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/page-eca5460bbae9cb3b.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/template-32dd76ab9d15ce8f.js",
+          "http://localhost:3002/_next/static/chunks/39.1fa050b2d4441b0f.js",
+          "http://localhost:3002/_next/static/chunks/2121-df45a4a37e2dc838.js",
+          "http://localhost:3002/_next/static/chunks/5182.1b909f488ee5f1ac.js",
+          "http://localhost:3002/_next/static/chunks/8279.318117a0427e0857.js",
+          "http://localhost:3002/_next/static/chunks/5856.142f2b80e12d91a7.js"
+        ],
+        "privyUrls": []
+      },
+      {
+        "milestone": "T3",
+        "atMs": 2523,
+        "jsRequests": 42,
+        "jsEncodedBytes": 430232,
+        "urls": [
+          "http://localhost:3002/_next/static/chunks/webpack-a904bbda68f3f4f8.js",
+          "http://localhost:3002/_next/static/chunks/main-app-17ff9a1aab692abf.js",
+          "http://localhost:3002/_next/static/chunks/1462-0c995c157989bd9f.js",
+          "http://localhost:3002/_next/static/chunks/9267-c261d2d9593866b1.js",
+          "http://localhost:3002/_next/static/chunks/3660-06a71cd26ed90f4b.js",
+          "http://localhost:3002/_next/static/chunks/8129-c3240fb19ce49e21.js",
+          "http://localhost:3002/_next/static/chunks/5ce7412c-5a81ca7e4ea21818.js",
+          "http://localhost:3002/_next/static/chunks/4675-2a9154adefffc617.js",
+          "http://localhost:3002/_next/static/chunks/4233-cf5375e17673d17d.js",
+          "http://localhost:3002/_next/static/chunks/9747-3d3c50dc5a1eb4e1.js",
+          "http://localhost:3002/_next/static/chunks/1344-ef300f88532244e6.js",
+          "http://localhost:3002/_next/static/chunks/6837-bfe34a780dd2d958.js",
+          "http://localhost:3002/_next/static/chunks/6557-c1c6103b06a0ba2f.js",
+          "http://localhost:3002/_next/static/chunks/4087-c2a2489f8052da16.js",
+          "http://localhost:3002/_next/static/chunks/810-a5eb4d74adc67084.js",
+          "http://localhost:3002/_next/static/chunks/3603-871d3a224b1dac09.js",
+          "http://localhost:3002/_next/static/chunks/3526-d0dea250b0fcc54c.js",
+          "http://localhost:3002/_next/static/chunks/6976-3817a543aebda570.js",
+          "http://localhost:3002/_next/static/chunks/3785-499f895c2b00e5b3.js",
+          "http://localhost:3002/_next/static/chunks/8006-bd67782f66ea1d42.js",
+          "http://localhost:3002/_next/static/chunks/4500-cad91b60e7208309.js",
+          "http://localhost:3002/_next/static/chunks/4673-b937552dc747feb0.js",
+          "http://localhost:3002/_next/static/chunks/4923-8d22122312c829c5.js",
+          "http://localhost:3002/_next/static/chunks/2985-7213fda6e92a61de.js",
+          "http://localhost:3002/_next/static/chunks/3360-b1acffa686baeaad.js",
+          "http://localhost:3002/_next/static/chunks/4547-e9624f8ab524d88e.js",
+          "http://localhost:3002/_next/static/chunks/9263-06b916bc7bef8202.js",
+          "http://localhost:3002/_next/static/chunks/361-a9de59a7782c2e4c.js",
+          "http://localhost:3002/_next/static/chunks/3143-08ba13927661f2e2.js",
+          "http://localhost:3002/_next/static/chunks/8616-810ca2c1e0dfe817.js",
+          "http://localhost:3002/_next/static/chunks/6528-21e69f49b03fc105.js",
+          "http://localhost:3002/_next/static/chunks/6345-158a33df8b637955.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/not-found-377ef8f56da8a3dd.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/error-9c9fd2d00bb06a20.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/layout-2d02f2034662c45f.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/page-eca5460bbae9cb3b.js",
+          "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/template-32dd76ab9d15ce8f.js",
+          "http://localhost:3002/_next/static/chunks/39.1fa050b2d4441b0f.js",
+          "http://localhost:3002/_next/static/chunks/2121-df45a4a37e2dc838.js",
+          "http://localhost:3002/_next/static/chunks/5182.1b909f488ee5f1ac.js",
+          "http://localhost:3002/_next/static/chunks/8279.318117a0427e0857.js",
+          "http://localhost:3002/_next/static/chunks/5856.142f2b80e12d91a7.js"
+        ],
+        "privyUrls": []
+      }
+    ],
+    "allJs": [
+      {
+        "url": "http://localhost:3002/_next/static/chunks/5ce7412c-5a81ca7e4ea21818.js",
+        "bytes": 54448
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/4500-cad91b60e7208309.js",
+        "bytes": 47182
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/9267-c261d2d9593866b1.js",
+        "bytes": 32681
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/page-eca5460bbae9cb3b.js",
+        "bytes": 29289
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/4547-e9624f8ab524d88e.js",
+        "bytes": 27995
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/3603-871d3a224b1dac09.js",
+        "bytes": 14449
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/6345-158a33df8b637955.js",
+        "bytes": 13579
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/8129-c3240fb19ce49e21.js",
+        "bytes": 12505
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/1462-0c995c157989bd9f.js",
+        "bytes": 11936
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/1344-ef300f88532244e6.js",
+        "bytes": 11899
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/6528-21e69f49b03fc105.js",
+        "bytes": 11829
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/6976-3817a543aebda570.js",
+        "bytes": 11679
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/9263-06b916bc7bef8202.js",
+        "bytes": 11323
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/8616-810ca2c1e0dfe817.js",
+        "bytes": 11221
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/810-a5eb4d74adc67084.js",
+        "bytes": 10784
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/361-a9de59a7782c2e4c.js",
+        "bytes": 9922
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/4923-8d22122312c829c5.js",
+        "bytes": 9470
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/3660-06a71cd26ed90f4b.js",
+        "bytes": 9406
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/9747-3d3c50dc5a1eb4e1.js",
+        "bytes": 7438
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/4675-2a9154adefffc617.js",
+        "bytes": 6701
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/6837-bfe34a780dd2d958.js",
+        "bytes": 6546
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/3143-08ba13927661f2e2.js",
+        "bytes": 6081
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/5856.142f2b80e12d91a7.js",
+        "bytes": 5060
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/2121-df45a4a37e2dc838.js",
+        "bytes": 4424
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/webpack-a904bbda68f3f4f8.js",
+        "bytes": 4257
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/4233-cf5375e17673d17d.js",
+        "bytes": 4091
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/8006-bd67782f66ea1d42.js",
+        "bytes": 3914
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/4087-c2a2489f8052da16.js",
+        "bytes": 3810
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/3785-499f895c2b00e5b3.js",
+        "bytes": 3718
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/3526-d0dea250b0fcc54c.js",
+        "bytes": 3602
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/layout-2d02f2034662c45f.js",
+        "bytes": 3450
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/3360-b1acffa686baeaad.js",
+        "bytes": 3350
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/not-found-377ef8f56da8a3dd.js",
+        "bytes": 3311
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/5182.1b909f488ee5f1ac.js",
+        "bytes": 3107
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/8279.318117a0427e0857.js",
+        "bytes": 2974
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/4673-b937552dc747feb0.js",
+        "bytes": 2494
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/2985-7213fda6e92a61de.js",
+        "bytes": 2453
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/39.1fa050b2d4441b0f.js",
+        "bytes": 1970
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/6557-c1c6103b06a0ba2f.js",
+        "bytes": 1785
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/error-9c9fd2d00bb06a20.js",
+        "bytes": 1582
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/app/%5Blocale%5D/template-32dd76ab9d15ce8f.js",
+        "bytes": 1431
+      },
+      {
+        "url": "http://localhost:3002/_next/static/chunks/main-app-17ff9a1aab692abf.js",
+        "bytes": 1086
+      }
+    ]
+  }
+]
