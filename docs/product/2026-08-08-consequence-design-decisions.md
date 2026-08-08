@@ -133,8 +133,21 @@ el overlay es el peor lugar posible para esa acción.
 insignia, en texto. "Está lista" sin destino es exactamente el callejón que AC-4 prohíbe.
 
 **Dónde sí va la acción: Paso 2.** La baldosa del hub ya modela `claimable`
-(`reward-column.tsx:10`) y **ya es la puerta** — cero taps agregados, cero superficie nueva,
-cero transacción dentro de una celebración. Ahí el tap se lo gana.
+(`reward-column.tsx:10`) — cero superficie nueva, cero transacción dentro de una celebración.
+Ahí el tap se lo gana.
+
+> ⚠️ **Corrección (2026-08-08, al escribir el copy).** Arriba decía que la baldosa "ya es la
+> puerta". **No lo es para reclamar.** Tocar una baldosa `claimable` sólo hace
+> `router.push('/exercises?piece=…')` (`learn-hub-client.tsx:415-426`); el único botón
+> **Claim Badge** vive en el drawer de Exercises (`exercise-drawer.tsx:620-637`).
+>
+> Consecuencias:
+> 1. El copy de `badge_ready` apunta a **Exercises**, no al hub. Apuntar al hub mandaba al
+>    jugador de viaje redondo al lugar del que salió.
+> 2. **El Paso 2 hereda trabajo que no estaba contado**: si la baldosa va a ofrecer la acción,
+>    primero tiene que *tener* la acción. Hoy no la tiene.
+> 3. ⛔ **`Continue` tampoco abre el drawer** (`exercises-screen.tsx:3315-3333`): va a próximo
+>    ejercicio, próximo desafío, o PieceComplete. El puntero de texto no es redundante.
 
 ---
 

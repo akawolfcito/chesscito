@@ -1640,6 +1640,49 @@ export const LABYRINTH_COPY = {
   layerToggleAriaLabel: "Layer toggle",
 } as const;
 
+/**
+ * The consequence line on the completion overlays (Paso 1 of the progress
+ * visibility brief). One line, below the move narrative, above the buttons.
+ * Shared by BOTH overlays: the labyrinth one and the exercise one. The rung
+ * comes from `resolveConsequence`; this is only how it is said.
+ *
+ * ⛔ Every line NAMES ITS PRIZE. "3 of 4" alone is a number the player has no
+ * reason to care about; "3 of 4, the crown is at the end" is a reason to come
+ * back. Exercises pay the badge, challenges pay the crown, and a line that
+ * names neither is the line nobody reads.
+ *
+ * ⛔ None of these may read as a dead end. "You finished everything" is the
+ * highest-risk state in the product (it is the shape of the bug fixed
+ * 2026-08-07), so `mastery` and `laneComplete` both point somewhere.
+ *
+ * ⚠️ `badgeReady` names the hub because the overlay deliberately has NO claim
+ * button: claiming is a wallet transaction, and a failed one would turn the
+ * celebration into an error (OQ-1, closed NO). The text has to carry the whole
+ * hand-off on its own.
+ */
+export const CONSEQUENCE_COPY = {
+  /** The crown. Achieved, never "within reach". */
+  mastery: "Crown earned · pick your next piece",
+  /** Badge earned and unclaimed. Says WHERE, since no button does.
+   *  ⛔ It says Exercises, NOT the hub. The hub tile does not claim: tapping a
+   *  `claimable` tile routes to `/exercises?piece=…` (learn-hub-client.tsx:415).
+   *  The only Claim Badge button lives in the Exercises drawer
+   *  (exercise-drawer.tsx:620), which is on the screen the player is already
+   *  standing on. Pointing at the hub would send them on a round trip back to
+   *  where they started. */
+  badgeReady: "Badge unlocked · claim it in Exercises",
+  /** Does NOT promise where Continue goes: it lands on a pending exercise
+   *  first when there is one, so "Continue takes you there" would be a lie
+   *  about half the time. */
+  challengeUnlocked: "New challenge unlocked · it is on your path now",
+  /** Counted against the badge GATE, never the pool size. */
+  badgeProgress: "{done} of {required} toward your badge",
+  laneProgress: "{done} of {total} challenges · the crown is at the end",
+  /** The lane finished but the crown did not land, which can only mean the
+   *  badge is still unclaimed. Says exactly what is missing. */
+  laneComplete: "Every challenge cleared · your badge is waiting in Exercises",
+} as const;
+
 export const DOCK_LABELS = {
   /** v1 5-slot taxonomy (SPEC 1 D7). The dock is destination-shaped
    *  not action-shaped: each slot is a route or hub sheet. */
