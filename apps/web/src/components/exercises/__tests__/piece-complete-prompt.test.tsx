@@ -1,4 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { act } from "@testing-library/react";
 
 vi.mock("@/lib/telemetry", () => ({
   track: vi.fn(),
@@ -32,9 +33,25 @@ const baseProps = {
   onPracticeAgain: vi.fn(),
 };
 
+/* ⚠️ Every CTA and the X go through `handleAction`, which plays a 250ms exit
+ * animation BEFORE running the callback. A test that clicks and asserts
+ * immediately reads the state before the handler ever fired — so a bare
+ * `expect(fn).not.toHaveBeenCalled()` passes on any implementation, including
+ * one that calls it. Drain the animation, then assert both directions. */
+function drainExitAnimation() {
+  act(() => {
+    vi.advanceTimersByTime(300);
+  });
+}
+
 describe("PieceCompletePrompt — CTA hierarchy", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("primary = Try Labyrinth even when nextPiece exists (Slice 3E sequence fix)", () => {
@@ -77,6 +94,55 @@ describe("PieceCompletePrompt — CTA hierarchy", () => {
     // The shell's close affordance carries the closeLabel aria-label
     // ("Practice Again" for this prompt).
     screen.getByRole("button", { name: /Practice Again/i }).click();
+    drainExitAnimation();
+    expect(onPracticeAgain).toHaveBeenCalledTimes(1);
+    expect(onNextPiece).not.toHaveBeenCalled();
+  });
+
+  /* ⛔ Founder decision 2026-08-08. Without a pending labyrinth the X used to
+   * call `onNextPiece` — closing the bishop's panel deposited you on the
+   * knight, abandoning a badge the same panel had just called ready to claim.
+   *
+   * The old rationale ("avoids the stuck on the last level") no longer holds:
+   * the persistent dock, the exercise drawer and the contextual claimBadge pin
+   * are all on screen behind this panel, so closing strands nobody — it leaves
+   * the player on the one screen that carries the Claim. And the X already
+   * announces itself as "Practice Again" (`closeLabel`), so the jump also
+   * contradicted its own accessible name. */
+  it("dismiss WITHOUT a pending labyrinth also stays on the piece", () => {
+    const onNextPiece = vi.fn();
+    const onPracticeAgain = vi.fn();
+    render(
+      <PieceCompletePrompt
+        {...baseProps}
+        pieceType="bishop"
+        nextPiece="knight"
+        hasClaimedBadge={false}
+        hasEarnedBadge
+        onNextPiece={onNextPiece}
+        onPracticeAgain={onPracticeAgain}
+      />,
+    );
+    screen.getByRole("button", { name: /Practice Again/i }).click();
+    drainExitAnimation();
+    expect(onPracticeAgain).toHaveBeenCalledTimes(1);
+    expect(onNextPiece).not.toHaveBeenCalled();
+  });
+
+  it("dismiss on the final piece stays too (no next piece to jump to)", () => {
+    const onNextPiece = vi.fn();
+    const onPracticeAgain = vi.fn();
+    render(
+      <PieceCompletePrompt
+        {...baseProps}
+        onNextPiece={onNextPiece}
+        onPracticeAgain={onPracticeAgain}
+        onChoosePiece={vi.fn()}
+      />,
+    );
+    screen.getByRole("button", { name: /Practice Again/i }).click();
+    drainExitAnimation();
+    expect(onPracticeAgain).toHaveBeenCalledTimes(1);
     expect(onNextPiece).not.toHaveBeenCalled();
   });
 

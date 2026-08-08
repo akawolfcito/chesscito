@@ -763,18 +763,25 @@ export function PieceCompletePrompt({
     setTimeout(cb, 250);
   }
 
-  // Dismissing the popup (X close OR scrim tap): with a pending
-  // labyrinth the player STAYS on the piece (Slice 3E) — jumping pieces
-  // here was exactly how players never met the labyrinths; the "Enter
-  // Labyrinth" contextual pin guides them after dismissal. Without a
-  // pending lab, close advances to the next piece when one exists
-  // (avoids the "stuck on the last level" report); on the final piece
-  // it falls back to practice-again.
-  const handleDismiss = onTryLabyrinth
-    ? onPracticeAgain
-    : nextPiece
-      ? onNextPiece
-      : onPracticeAgain;
+  /* Dismissing the popup (X close OR scrim tap) NEVER navigates: it closes the
+   * menu and leaves the player on the piece they were on. Jumping pieces here
+   * was exactly how players never met the labyrinths (Slice 3E), and the branch
+   * that survived that fix — "no pending lab AND a next piece → advance" —
+   * turned out to do something worse: closing the bishop's panel deposited you
+   * on the knight, abandoning a badge the same panel had just called ready to
+   * claim (playtest 2026-08-08).
+   *
+   * ⛔ The "avoids the stuck on the last level" rationale that branch carried no
+   * longer holds. Behind this panel the persistent dock, the exercise drawer and
+   * the contextual `claimBadge` pin (`exercises-screen.tsx`, `contextAction`)
+   * are all on screen, so closing strands nobody — it leaves the player on the
+   * one surface that carries the Claim. Sending them to the hub would be worse
+   * still: the hub's piece tile only routes, it does not claim.
+   *
+   * And the X already announces itself as "Practice Again" — `closeLabel` below
+   * is its accessible name — so the jump contradicted what it told the player
+   * it would do. Staying is not a new contract; it is the one already written. */
+  const handleDismiss = onPracticeAgain;
 
   /* Primary CTA priority (drives both label and handler) — Slice 3E
    * sequence fix: a pending labyrinth is the natural continuation of
