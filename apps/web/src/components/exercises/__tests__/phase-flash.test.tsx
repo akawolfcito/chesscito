@@ -3,6 +3,9 @@ import { act, fireEvent } from "@testing-library/react";
 
 import { renderWithIntl, screen } from "@/test-utils/render-with-intl";
 import { PhaseFlash } from "../mission-panel-candy";
+import { track } from "@/lib/telemetry";
+
+vi.mock("@/lib/telemetry", () => ({ track: vi.fn() }));
 
 // Lottie + confetti don't paint under jsdom and are irrelevant to the
 // text/timing assertions here.
@@ -61,6 +64,97 @@ describe("PhaseFlash", () => {
       vi.advanceTimersByTime(800);
     });
     expect(screen.queryByText(/Move along the rank/)).toBeNull();
+  });
+
+  describe("the consequence line (Paso 1, slice 1C)", () => {
+    /** Reveal the flash — everything below only exists after the entry beat. */
+    function reveal() {
+      act(() => {
+        vi.advanceTimersByTime(800);
+      });
+    }
+
+    it("says what the solve moved, counted against the badge gate", () => {
+      vi.useFakeTimers();
+      renderWithIntl(
+        <PhaseFlash
+          phase="success"
+          lessonTitle="Move along the rank"
+          consequence={{ kind: "badge_progress", done: 7, required: 8 }}
+        />,
+      );
+      reveal();
+
+      expect(screen.getByTestId("consequence-line")).toHaveTextContent(
+        "7 of 8 toward your badge",
+      );
+    });
+
+    it("announces the challenge a solve opened — the rung that sews the two lanes", () => {
+      vi.useFakeTimers();
+      renderWithIntl(
+        <PhaseFlash
+          phase="success"
+          consequence={{ kind: "challenge_unlocked", nodeId: "rook-rail-1" }}
+        />,
+      );
+      reveal();
+
+      expect(screen.getByTestId("consequence-line")).toHaveTextContent(
+        "New challenge unlocked · it is on your path now",
+      );
+    });
+
+    it("renders NOTHING new without a consequence (AC-2)", () => {
+      vi.useFakeTimers();
+      renderWithIntl(<PhaseFlash phase="success" lessonTitle="Move along the rank" />);
+      reveal();
+
+      expect(screen.queryByTestId("consequence-line")).not.toBeInTheDocument();
+    });
+
+    it("never announces progress on a failed attempt", () => {
+      vi.useFakeTimers();
+      // A failure changes nothing in the piece. The host should not pass one,
+      // and the surface refuses it anyway: this is the celebration channel.
+      renderWithIntl(
+        <PhaseFlash
+          phase="failure"
+          consequence={{ kind: "badge_progress", done: 7, required: 8 }}
+        />,
+      );
+      reveal();
+
+      expect(screen.queryByTestId("consequence-line")).not.toBeInTheDocument();
+    });
+
+    it("reports the kind on the exercise surface (AC-10)", () => {
+      vi.useFakeTimers();
+      vi.mocked(track).mockClear();
+      renderWithIntl(
+        <PhaseFlash
+          phase="success"
+          consequence={{ kind: "challenge_unlocked", nodeId: "rook-rail-1" }}
+        />,
+      );
+      reveal();
+
+      expect(track).toHaveBeenCalledWith("consequence_shown", {
+        kind: "challenge_unlocked",
+        surface: "exercise",
+      });
+    });
+
+    it("stays quiet when there is nothing to announce (AC-10)", () => {
+      vi.useFakeTimers();
+      vi.mocked(track).mockClear();
+      renderWithIntl(<PhaseFlash phase="success" />);
+      reveal();
+
+      expect(
+        vi.mocked(track).mock.calls.filter(([n]) => n === "consequence_shown"),
+      ).toEqual([]);
+    });
   });
 
   describe("tap to continue", () => {

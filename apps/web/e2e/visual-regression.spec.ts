@@ -1017,6 +1017,27 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     );
   });
 
+  /* The EXERCISE completion surface (slice 1C) — the success flash, which is
+   * where `badge_ready` actually lives, since only exercises move that gate.
+   * The pair proves AC-2 on this surface too: `success-plain` is the flash as
+   * it shipped before the feature, `success-consequence` adds only the line. */
+  for (const variant of ["success-plain", "success-consequence"] as const) {
+    test(`vr13-phase-flash-${variant} — success flash`, async ({ page }) => {
+      await page.goto(`/dev/phase-flash?variant=${variant}`, {
+        waitUntil: "load",
+        timeout: 45_000,
+      });
+      await page.evaluate(() => document.fonts.ready);
+      // Past the 600ms entry beat AND the 550ms tap-arm beat, so the flash is
+      // fully settled: `awaitTap` keeps it from ever fading out.
+      await settle(page, 2000);
+      await expect(page).toHaveScreenshot(
+        `vr13-phase-flash-${variant}.png`,
+        FIXTURE_OPTS,
+      );
+    });
+  }
+
   // vr13 — SaveScore off-chain (Slice 5). The base save now POSTs
   // /api/scores/save: no tx, no CeloScan chip. Two states: a free save and
   // a paid save (1 Peón past the 5 free saves, cost pill beside the stars).

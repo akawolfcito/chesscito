@@ -18,6 +18,11 @@ import { PiecePickerTrigger } from '@/components/exercises/piece-picker-trigger'
 import { MissionDetailSheet } from '@/components/exercises/mission-detail-sheet'
 import { PinStatusMarker } from '@/components/redesign/pin-status-marker'
 import type { TrainingNode } from '@/lib/training/path'
+import {
+  consequenceMessage,
+  type TrainingConsequence,
+} from '@/lib/training/consequence'
+import { track } from '@/lib/telemetry'
 
 type PieceKey = 'rook' | 'bishop' | 'knight' | 'pawn' | 'queen' | 'king'
 
@@ -158,6 +163,9 @@ type MissionPanelProps = {
    *  host arms this only on the paths where it also defers the continuation. */
   awaitTapToContinue?: boolean
   onFlashContinue?: () => void
+  /** What the just-finished solve changed in the piece (Paso 1). Forwarded
+   *  untouched to PhaseFlash, which shows it on success only. */
+  consequence?: TrainingConsequence | null
 }
 
 type FlashConfig = { textKey: 'success' | 'failure'; accent: string; stroke: string }
@@ -187,6 +195,7 @@ export function PhaseFlash({
   lessonTitle,
   awaitTap,
   onContinue,
+  consequence = null,
 }: {
   phase: MissionPanelProps['phase']
   /** Optional failure-only overlay slot. When supplied AND phase ===
@@ -219,8 +228,15 @@ export function PhaseFlash({
   /** Fired when the player taps a tap-to-continue overlay. The host runs the
    *  deferred continuation (advance / retry) here. Ignored unless awaitTap. */
   onContinue?: () => void
+  /** What this solve changed in the piece (Paso 1). Success-only: a failed
+   *  attempt moved nothing, and this is the celebration channel. `null` renders
+   *  nothing at all, which is the common case and leaves the flash exactly as
+   *  it was — announcing progress when none happened is how a surface teaches
+   *  the player to stop reading it. */
+  consequence?: TrainingConsequence | null
 }) {
   const tFlash = useTranslations('PHASE_FLASH_COPY')
+  const tConsequence = useTranslations('CONSEQUENCE_COPY')
   const [visible, setVisible] = useState(false)
   const [fading, setFading] = useState(false)
   // Tap is armed a beat AFTER reveal so an eager tap can't skip the
@@ -292,6 +308,17 @@ export function PhaseFlash({
     }
   }, [phase, flash, isSuccess, hasRescue, entryBeat, awaitTap])
 
+  /* The consequence rides the SUCCESS flash only, and only once it is actually
+     on screen — the flash holds back an entry beat, so firing on mount would
+     count an announcement the player never saw. AC-10: with 443 players there
+     is no power for an A/B, so frequency by kind is the only signal there is. */
+  const announcedKind =
+    isSuccess && visible ? (consequence?.kind ?? null) : null
+  useEffect(() => {
+    if (!announcedKind) return
+    track('consequence_shown', { kind: announcedKind, surface: 'exercise' })
+  }, [announcedKind])
+
   function handleTapContinue() {
     if (!awaitTap || !tapArmed) return
     setFading(true)
@@ -310,6 +337,14 @@ export function PhaseFlash({
   const avatarSlot = isSuccess
     ? ('exercises.avatar-fun' as const)
     : ('exercises.avatar-try-again' as const)
+
+  const consequenceLine =
+    isSuccess && consequence
+      ? (() => {
+          const message = consequenceMessage(consequence)
+          return tConsequence(message.key, message.values)
+        })()
+      : null
 
   /* Wolf block extracted so both layouts (rescue + non-rescue) can
      render it without JSX duplication. The headline is LIVE Rowdies text
@@ -409,6 +444,18 @@ export function PhaseFlash({
       <div className="flex flex-col items-center gap-3 px-4">
         {wolfBlock}
         {rewardPills}
+        {/* THE CONSEQUENCE (Paso 1) — last, and below the reward pills on
+            purpose: the pills are the celebration ("+2 Stars"), this is the
+            information ("7 of 8 toward your badge"). Reading order follows
+            that: what you won, then what it moved. */}
+        {consequenceLine ? (
+          <p
+            data-testid="consequence-line"
+            className="playhub-phase-flash-consequence"
+          >
+            {consequenceLine}
+          </p>
+        ) : null}
       </div>
       {/* Tap-to-continue prompt — glowing Rowdies text near the bottom, armed a
           beat after the flash appears (founder reference 2026-07-17). */}
@@ -467,6 +514,7 @@ export function MissionPanelCandy({
   missionStatus,
   awaitTapToContinue,
   onFlashContinue,
+  consequence,
 }: MissionPanelProps) {
   const tMission = useTranslations('MISSION_BRIEFING_COPY')
   const tHud = useTranslations('HUD_COPY')
@@ -743,6 +791,7 @@ export function MissionPanelCandy({
         lessonTitle={exerciseTitle}
         awaitTap={awaitTapToContinue}
         onContinue={onFlashContinue}
+        consequence={consequence}
       />
     </section>
   )

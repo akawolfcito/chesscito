@@ -3217,6 +3217,27 @@
      whatever sat under it — the HUD icons, the board — and read as a smudge
      on the screen rather than as emphasis. The outline + pulse carry it. */
 
+  /* The consequence line on the success flash (Paso 1). Deliberately QUIETER
+     than the headline and the reward pills: those are the celebration, this is
+     the information underneath it. It sits in the normal flow under the pills
+     rather than pinned like the tap prompt, so a long line wraps instead of
+     colliding with the avatar at 390px. */
+  .playhub-phase-flash-consequence {
+    max-width: 19rem;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    line-height: 1.35;
+    color: #fff8ea;
+    text-shadow:
+      -1px -1px 0 rgba(63, 34, 8, 0.85),
+      1px -1px 0 rgba(63, 34, 8, 0.85),
+      -1px 1px 0 rgba(63, 34, 8, 0.85),
+      1px 1px 0 rgba(63, 34, 8, 0.85),
+      0 2px 4px rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+  }
+
   @keyframes playhub-tap-pulse {
 
     0%,

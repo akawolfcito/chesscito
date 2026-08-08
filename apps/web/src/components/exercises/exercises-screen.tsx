@@ -3729,6 +3729,7 @@ export function ExercisesScreen({
           phase={storeOpen ? "ready" : phase}
           awaitTapToContinue={awaitFlashTap}
           onFlashContinue={handleFlashContinue}
+          consequence={consequence}
           targetLabel={targetLabel}
           pieceHint={pieceHint}
           exercisePrompt={runPrompt ?? currentExercise.playerPrompt}
