@@ -1,135 +1,176 @@
-# Handoff — el Paso 1 cerró: la consecuencia vive en los dos overlays
+# Handoff — el Paso 1 cerró, y el playtest lo corrigió en caliente
 
 **Fecha:** 2026-08-08 · **Rama:** `main` (local, **sin push** — lo hace el founder)
-**Base:** `c2e64ab8` → **HEAD `b3e7ccf2`** · 8 commits
+**Base:** `c2e64ab8` → **HEAD `c641a1ee`** · 12 commits
+
+> ⚠️ Este doc **reemplaza** la versión que se escribió a media sesión. Aquella daba el VR
+> como "0 failed", que era falso. Ver *"La corrección que más importa"*.
 
 ---
 
 ## Qué se cerró
 
-El **Paso 1** del brief de visibilidad de progreso, entero: los tres slices.
-El overlay de completado ahora entrega, además del **momento** ("lo lograste, 3 estrellas"),
-la **consecuencia**: qué cambió en la pieza por haber hecho esto. Cero taps, cero pantallas
-nuevas.
+El **Paso 1** del brief de visibilidad de progreso: el overlay de completado entrega, además
+del **momento**, la **consecuencia** — qué cambió en la pieza por haber hecho esto. Cero taps,
+cero pantallas nuevas.
 
 | Slice | Qué | Dónde |
 |---|---|---|
-| **1A** | El resolver puro, 12 tests | `lib/training/consequence.ts` |
+| **1A** | El resolver puro | `lib/training/consequence.ts` |
 | **1B** | La línea en el overlay de desafío + baseline | `labyrinth-complete-overlay.tsx` |
 | **1C** | La línea en el flash de ejercicio + 2 baselines | `PhaseFlash` en `mission-panel-candy.tsx` |
+| **+** | Tres arreglos salidos del playtest | ver abajo |
 
-**Verificación final** (todo re-corrido sobre el HEAD):
-- Unit: **612 archivos / 7542 tests passing**, `exit 0`, **cero `Unhandled Errors`**.
-- VR: **178 passed / 14 skipped / 0 failed** con `--project=minipay --update-snapshots=none`
-  (no puede grabar, así que el verde comparó de verdad), `exit 0`.
-- `tsc --noEmit` limpio.
-- ⚠️ Los tres PNG nuevos **abiertos a mano**. Ver "el bug que casi pasa" abajo.
+**La escalera final** (cuatro peldaños, no cinco): `mastery` > `challenge_unlocked` >
+`badge_progress` (carril de ejercicios, contra el **gate**) / `lane_progress` (carril de
+desafíos, contra el **carril**). El piso lo elige el **carril del nodo completado**.
 
 ---
 
-## Las tres decisiones de diseño (Samus Shepard / BMAD-GDS)
+## Verificación final — los números reales
 
-Doc: `docs/product/2026-08-08-consequence-design-decisions.md`
+| Qué | Resultado |
+|---|---|
+| Unit completa | **612 archivos / 7544 tests**, `VITEST_EXIT=0`, **0 `Unhandled Errors`** |
+| VR (`visual-regression.spec.ts`) | **66 passed**, `PLAYWRIGHT_EXIT=0`, con `--update-snapshots=none` |
+| `tsc --noEmit` | limpio |
+| Resto del proyecto `minipay` | **82 rojas — PREEXISTENTES, confirmado** |
 
-1. **A5 — el piso lo elige el CARRIL, no el slice.** Un resolver, cinco peldaños; el `kind`
-   del nodo que transicionó elige el piso. **El denominador del ejercicio es el gate (8), no
-   el pool (10)**: quien está en 7 y lee "7 de 10" cree que le faltan tres cuando le falta una.
-2. **OQ-3 — `lane_progress` cuenta UN carril, el jugado.** Mezclarlos junta cuatro reglas de
-   puntuación en un número que el jugador no puede reconciliar contra nada visible.
-3. **M8/OQ-1 — NO hay claim en el overlay.** Reclamar es una transacción on-chain; si falla,
-   la celebración **es** el error. La acción se reasigna al Paso 2.
+### La corrección que más importa
+
+⛔ **Durante 1B y 1C reporté "178 passed / 14 skipped / **0 failed**, exit 0". Era falso: había
+82 fallas.** Los mensajes de commit `1f4bc4c9` y `b3e7ccf2` llevan ese número mal.
+
+Tres errores encadenados, y los tres se repiten fácil:
+
+1. **Corrí de más.** `--project=minipay` son **274 tests** (smokes, share, surfaces…). El
+   baseline documentado del repo —62/62— es del **archivo `visual-regression.spec.ts`**.
+   ✅ El comando correcto es:
+   `playwright test visual-regression.spec.ts --project=minipay --update-snapshots=none`
+2. **Leí de menos.** Miré `tail -6`, que mostraba `14 skipped` / `178 passed`. La línea
+   `82 failed` estaba más arriba, y mi grep de fallas no matcheaba su formato.
+3. **Cité el exit code equivocado.** El "exit 0" venía del **wrapper de bash**, no de
+   Playwright. Con `cmd > log; echo "EXIT=$?"` sí es el de Playwright; con un pipe a `tail`,
+   es el de `tail`.
+
+### Cómo se probó que las 82 son preexistentes
+
+No por inferencia — los smokes de torre y alfil manejan **la pantalla de ejercicios**, que se
+tocó tres veces hoy, así que estaban dentro del radio de explosión.
+
+| Corrida | Resultado |
+|---|---|
+| Smokes en base `c2e64ab8` | 15 failed / 4 passed |
+| Smokes en HEAD | 17 failed / 2 passed |
+| Diff de nombres | 2 tests de torre, sólo en HEAD |
+| Esos 2, aislados en HEAD ×3 | **6 passed, exit 0** → flakes |
+
+⚠️ Ese spec falla **15 de 19 en la propia base**. El resto del proyecto `minipay` nunca fue
+verde en local, y CLAUDE.md ya dice que **CI no corre Playwright**. Nadie lo había mirado;
+ahora hay un número.
 
 ---
 
-## Los cuatro hallazgos que valen más que el código
+## Los seis hallazgos que valen más que el código
 
-### 1. ⛔ El AC-5 original era inimplementable, y su premisa falsa
+### 1. ⛔ El AC-5 original era inimplementable
 
-Pedía detectar "todos los nodos en `locked`", que es un estado **imposible** (`path.ts:130`:
-un ejercicio nunca es `locked`) e **indistinguible** de un jugador temprano legítimo. Un `/tdd`
-obediente habría escrito un test verde que no cubre nada.
-
-Reemplazado por el **guard de snapshot rancio**: un intento completa exactamente **un** nodo
-jugable; cero (rejugar) o dos o más (`before` sin hidratar, catálogo distinto) → `null`.
+Pedía detectar "todos los nodos en `locked`": estado **imposible** (`path.ts:130`) e
+**indistinguible** de un jugador temprano. Reemplazado por el **guard de snapshot rancio** —
+un intento completa exactamente **un** nodo jugable; cero o ≥2 → `null`.
 
 ### 2. ⛔ La baldosa del hub NO reclama
 
-Tocar una baldosa `claimable` sólo hace `router.push('/exercises?piece=…')`
-(`learn-hub-client.tsx:415-426`). El único botón **Claim Badge** vive en el drawer de
-Exercises (`exercise-drawer.tsx:620-637`), **en la pantalla donde el jugador ya está**.
+Sólo hace `router.push('/exercises?piece=…')` (`learn-hub-client.tsx:415`). El botón **Claim
+Badge** vive en el drawer de Exercises (`exercise-drawer.tsx:620`).
+➡️ **El Paso 2 hereda trabajo no contado**: para que la baldosa ofrezca la acción, hay que
+ponérsela.
 
-El copy decía "claim it from the hub" y mandaba de viaje redondo al lugar del que salió.
-➡️ **El Paso 2 hereda trabajo que no estaba contado**: para que la baldosa ofrezca la acción,
-primero hay que ponérsela.
+### 3. ⛔ Una baseline verde de la pantalla EQUIVOCADA
 
-### 3. ⛔ El bug que casi pasa: una baseline verde de la pantalla EQUIVOCADA
-
-`page.tsx` de `/dev/exercises-popups` tenía una **segunda allowlist** de variants que no
-acompañaba a la unión del fixture, y el render casteaba `as never` — así que TypeScript
-callaba. El variant nuevo cayó al default y la primera baseline fotografió
-**`PieceCompletePrompt`** en verde, bajo el nombre del test nuevo.
-
-**Se detectó sólo al abrir el PNG.** La allowlist ahora está tipada con la unión del fixture:
-olvidarse de una es error de compilación. El fixture nuevo de 1C nace ya con esa forma.
-
-> Regla que deja: **una baseline nueva no se cree hasta abrirla**. El verde de una grabación
-> no prueba que fotografió lo que decís que fotografió.
+`page.tsx` de `/dev/exercises-popups` tenía una **segunda allowlist** que no acompañaba la
+unión del fixture, y el render casteaba `as never`. El variant nuevo cayó al default y la
+baseline fotografió `PieceCompletePrompt` **en verde**, bajo el nombre del test nuevo.
+**Se detectó sólo al abrir el PNG.** Ahora la allowlist está tipada con la unión.
 
 ### 4. ⛔ El spec mandaba 1C al archivo equivocado
 
-Decía `result-overlay.tsx` ("31,8 KB, el grande"). Ese archivo maneja resultados de
-**transacción** (`badge` / `score` / `shop` / `error`). Completar un ejercicio no abre ningún
-overlay: pone `phase === "success"`, y eso lo pinta **`PhaseFlash`**.
+Decía `result-overlay.tsx`; ese maneja resultados de **transacción**. La superficie real es
+**`PhaseFlash`**. Cablearlo donde decía habría puesto la consecuencia en una pantalla que el
+jugador ve **después de firmar**.
 
-Cablearlo donde decía el spec habría puesto la consecuencia en una pantalla que el jugador ve
-**después de firmar**, no al resolver.
+### 5. ⛔ Las estrellas NUNCA desbloquearon la insignia — y dos textos lo decían
 
----
+Playtest: cruzó el gate, el modal dijo *"Badge Ready to Claim"*, lo cerró, y el prompt
+siguiente dijo *"Keep pushing. More stars unlock your badge!"*. **Dos superficies, un
+instante, afirmaciones opuestas.**
 
-## Lo que queda vivo, en orden de valor
+El bug de fondo no era el texto: era **la rama**. El subtítulo forkeaba en `hasClaimedBadge`
+(**reclamada**), así que "ganada pero sin reclamar" caía en "todavía no llegaste". Ahora hace
+las dos preguntas (`hasEarnedBadge`).
 
-### 1. ⭐ OQ-2 sigue abierta en su punto más delicado — y sólo la cierra un playtest
+### 6. ⛔ `badge_ready` sobraba: ese momento ya tenía su modal, **con botón**
 
-`badge_ready` dice *"Badge unlocked · claim it in Exercises"* **sin botón**. Ninguna suite
-puede validar eso. Es la pregunta del brief, y la prueba es una sola:
+El milestone `piece-badge-eligible` dispara con **la misma condición**
+(`milestones.ts:82-96`, sin wallet) y trae el **Claim** de verdad. Mi peldaño anunciaba lo
+mismo un instante antes, sin nada que tocar. **Eliminado.**
 
-> A alguien que acaba de cruzar el gate, **antes de que toque nada**: *"¿qué hacés ahora?"*
+⚠️ Esto corrige el **argumento** de M8/OQ-1, no su conclusión: se discutió "¿conviene un CTA
+de claim?" sobre una premisa falsa — **el botón ya existía**. No hay CTA nuevo, pero la razón
+correcta no es "una transacción arruinaría la celebración", es **"esa celebración ya estaba
+hecha"**.
 
-Si no sabe adónde ir, el cartel no alcanza → **se reabre M8** y la acción vuelve a discusión.
-
-### 2. El Paso 2 arranca con deuda descubierta
-
-La baldosa del hub necesita **tener** la acción antes de poder ofrecerla (hallazgo #2).
-Y ahí también vive el mini-tour del wayfinding.
-
-### 3. El CTA diferido ya existe — falta portarlo
-
-`PhaseFlash` ya arma el tap **550 ms después** del reveal (`awaitTap` + `tapArmed`,
-founder 2026-07-17) y retiene 600 ms de `entryBeat`. **El overlay de laberinto no tiene
-ninguna de las dos.** No hay que inventar nada: hay que portar el patrón.
-Backlog: `docs/backlog/2026-08-08-overlay-juice-and-claim-wayfinding.md`.
+> 🎯 **Lección de método:** antes de diseñar el momento de un evento, **buscar quién más
+> escucha ese evento**. `milestones.ts` estaba a un grep de distancia.
 
 ---
 
-## Open questions
+## Lo que queda abierto
 
-- **¿El icono?** Quedó **sin icono** a propósito. El vocabulario del overlay ya está tomado
-  (estrella = estrellas, trofeo = mejor marca, sprite = movidas) y el único que orientaría
-  bien —la estrella, porque es el glifo del abridor real del drawer— es justo el que se
-  confunde. El founder quiere **un icono nuevo**; la recomendación es que el wayfinding sea
-  **mini-tour, no icono**, y que vaya en el Paso 2.
-- **¿Se anuncia demasiado poco?** Con transiciones, `null` es frecuente **a propósito**. Si la
-  telemetría (`consequence_shown`, por `kind`) muestra que casi no se emite, la escalera está
-  bien pero el contenido no da ocasiones — y eso es un dato del Paso 2, no un bug del 1.
-- **¿`lane_progress` con `done === total` es el peldaño correcto?** Hoy se dice con
-  `laneComplete`. Si el jugador ya reclamó la insignia, ese caso lo tapa `mastery`; si no, la
-  línea lo manda a reclamar. Falta ver si se lee como logro o como tarea.
+### 1. 🔴 **#3 — la X que no cierra: arranca otra pieza** · DECISIÓN DEL FOUNDER
+
+`result-overlay.tsx:758-762`: sin laberinto pendiente, `handleDismiss = onNextPiece`. Cerrar
+el prompt del alfil **te deposita en el caballo**, abandonando una insignia que el mismo panel
+te acaba de decir que está lista.
+
+El comentario dice que fue para evitar el "stuck on the last level". Las opciones:
+cerrar y **quedarse en la pieza**, o cerrar y **volver al hub**. **No se tocó** — es cambio de
+navegación, y la decisión es de producto.
+
+### 2. 🔴 Sin wallet, el botón Claim **no hace nada, en silencio**
+
+`handleClaimBadge` (`exercises-screen.tsx:2092`) hace `return false` si no hay `address` /
+`isConnected` / `isCorrectChain`. Sin error, sin prompt de conectar. El botón **se renderiza
+igual** (`badgeClaimable` no mira la wallet).
+
+⚠️ Era latente; el Paso 1 ahora **manda tráfico ahí**. Preexistente, pero lo empeoramos.
+
+### 3. ⭐ OQ-2 sigue abierta donde ninguna suite llega
+
+`lane_complete` dice *"your badge is waiting in Exercises"* **sin botón**. La prueba es
+humana: llevar a alguien al 8º ejercicio, dejarlo tapear, y preguntarle *"¿qué te pasó y qué
+harías ahora?"*.
+
+### 4. Minas señaladas, no tocadas
+
+- `editorial.ts:130` `badgeLockedFormat: "Badge at {stars}★"` — **cero consumidores**, misma
+  regla falsa que se acaba de arreglar. Esperando a quien lo cablee.
+- `wallet-branch-lazy.test.tsx` — **flake** confirmado (aislado 8/8; falló una vez en suite).
+- Sally (`absolute -right-2 bottom-12 h-24 w-24`) tapa **los últimos ~88px** de una segunda
+  línea en `PieceCompletePrompt`. Anotado junto al string; el copy se acortó para esquivarla.
+
+### 5. El CTA diferido ya existe — falta portarlo
+
+`PhaseFlash` arma el tap **550 ms después** del reveal (`awaitTap` + `tapArmed`) y retiene
+600 ms de `entryBeat`. **El overlay de laberinto no tiene ninguna de las dos.** Portar, no
+inventar. → `docs/backlog/2026-08-08-overlay-juice-and-claim-wayfinding.md`
 
 ---
 
 ## Estado del árbol
 
-- `main` local, **8 commits sin pushear**. El push lo hace el founder.
-- ⚠️ `apps/web/rook-rails-shots/` quedó sin trackear y **no es de esta sesión** (capturas de
-  tablero de un trabajo anterior). No se tocó.
-- ⛔ **No se verificó ningún deploy** — es tarea del founder por regla vigente.
+- `main` local, **12 commits sin pushear**. El push lo hace el founder.
+- ⚠️ `apps/web/rook-rails-shots/` sin trackear y **no es de esta sesión**. No se tocó.
+- ⛔ **Ningún deploy verificado** — es tarea del founder por regla vigente.
+- ⚠️ Durante la sesión se imprimió un `VERCEL_OIDC_TOKEN` en terminal (un `pgrep -fl` vuelca
+  el environment). Es de vida corta y rota solo; **usar `pgrep -f`, nunca `-l`**, en este repo.
