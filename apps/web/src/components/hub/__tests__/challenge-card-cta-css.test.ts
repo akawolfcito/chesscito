@@ -76,6 +76,43 @@ describe("CTA slot — terminal state styling (AC-5)", () => {
   });
 });
 
+describe("CTA slot — action banner (2026-08-07)", () => {
+  const action = ruleBody(".challenge-card-cta--action");
+
+  /* ⛔ There is no hover on a phone. Sinking on press is the ONLY confirmation
+     the tap registered, and it must land before the navigation does because
+     /exercises is not light. Drop this and the player taps, sees nothing, and
+     taps again — a double tap on a CTA that navigates is how duplicate entries
+     get made. Omitting it breaks nothing visible, which is exactly why it needs
+     a guard and not a comment. */
+  it("sinks on press, so a slow navigation cannot read as a dead tap", () => {
+    const pressed = ruleBody(".challenge-card-cta--action:active");
+    expect(pressed).toMatch(/bevel-pressed/);
+    expect(pressed).toMatch(/translateY/);
+  });
+
+  // The separator from the $0.99 offer is an inversion of VALUE, not of hue:
+  // green and gold collapse into the same hue under deuteranopia/protanopia,
+  // and ~8% of men would lose the difference between training and paying.
+  it("inverts value against the offer: dark surface, light text", () => {
+    expect(action).toMatch(/background:\s*var\(--cta-primary-green-grad\)/);
+    expect(action).toMatch(/color:\s*#fff8ed/i);
+  });
+
+  // Reuses the app's primary-action tokens, so refining the green refines this
+  // banner too. A hardcoded gradient here is silent drift.
+  it("takes its green from the shared tokens, never a literal", () => {
+    expect(action).not.toMatch(/linear-gradient\(/);
+    expect(action).toMatch(/var\(--cta-primary-green-/);
+  });
+
+  it("reserves the same box as every other state", () => {
+    expect(declaredValue(action, "min-height")).toBe(
+      declaredValue(ruleBody(".principal-button-medium"), "min-height"),
+    );
+  });
+});
+
 describe("CTA slot — the tap contract lives in the markup too", () => {
   // El guard de CSS no alcanza: el chevron es un componente, no una regla.
   // Si alguien lo agrega al render del estado terminal, el CSS de arriba pasa

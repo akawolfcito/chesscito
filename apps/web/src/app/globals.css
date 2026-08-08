@@ -8865,6 +8865,60 @@ button.hud-resource-chip:active:not(:disabled) {
    keeps one height across presentations. This anchor is where the CLS 0,179
    closed on 2026-08-07 lived; letting the terminal collapse to text height
    reopens it. */
+/* The `action` state in BANNER form (2026-08-07). Same geometry as the offer
+   banner and the notice band — one slot, one shape, three states — and the
+   PHYSICS carries the meaning: raised is tapped, sunken informs.
+
+   Keeps the green: it is the app's primary-action language everywhere else and
+   it is already tokenized, so refining the green refines this banner too. The
+   founder's discomfort was with the PILL, not with the colour.
+
+   What separates it from the $0.99 offer BEFORE reading: an inversion of
+   VALUE, not of hue. The offer is pale with dark text; this is dark and
+   saturated with white text. That survives deuteranopia and protanopia, where
+   green and gold collapse into the same hue — a separator built on "green is
+   not gold" would leave ~8% of men unable to tell training from paying. */
+.challenge-card-cta--action {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  /* ⛔ 52px, NOT the offer banner's 54: the guard compares this against
+     `.principal-button-medium` so the card never changes height. */
+  min-height: 52px;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 14px;
+  background: var(--cta-primary-green-grad);
+  border: 2px solid var(--cta-primary-green-border);
+  box-shadow: var(--cta-primary-green-bevel);
+  color: #fff8ed;
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-shadow: var(--cta-primary-green-text-shadow);
+  cursor: pointer;
+}
+
+/* ⛔ DO NOT DROP THIS RULE. There is no hover on a phone, so sinking on press
+   is the ONLY confirmation the tap registered — and it has to land before the
+   navigation does, because /exercises is not light. Without it the player taps,
+   sees nothing happen, and taps again: a double tap on a CTA that navigates is
+   exactly how duplicate entries are produced. A source guard enforces it. */
+.challenge-card-cta--action:active {
+  box-shadow: var(--cta-primary-green-bevel-pressed);
+  transform: translateY(2px);
+}
+
+.challenge-card-cta--action .season-pass-banner-chevron {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: rgba(255, 248, 237, 0.9);
+}
+
 .challenge-card-cta--quiet {
   display: flex;
   align-items: center;

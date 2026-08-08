@@ -613,16 +613,28 @@ export function ChallengeCard({
               </button>
             </>
           ) : slot.kind === "action" ? (
+            /* Banner form, not a pill (founder, 2026-08-07). The slot now has
+               ONE geometry across its three states and the physics carries the
+               meaning: raised is tapped, sunken informs. Each state still has a
+               distinct composition signature — the offer is left-aligned with
+               icon and price badge, this one is centred on a single line, the
+               notice band is left-aligned over two lines. */
             <button
               type="button"
-              className="principal-button principal-button-medium challenge-card-cta"
+              className="challenge-card-cta challenge-card-cta--action"
               data-testid="challenge-cta"
               data-cta-state="loop"
               data-cta-kind="action"
               aria-label={t(CTA_ARIA_LABEL[slot.labelKey] ?? slot.labelKey)}
               onClick={() => onFocusTap?.(slot.destination)}
             >
+              {/* No icon: seven different meanings share this slot (gift,
+                  labyrinth, stars, piece…). One fixed icon that fits both
+                  "Claim your gift" and "Beat your score" says nothing, and one
+                  per variant costs seven theme slots plus three pinned
+                  baselines each. The label already names the thing. */}
               {t(slot.labelKey)}
+              <ChevronIcon />
             </button>
           ) : (
             /* A NOTICE BAND, not a disabled button.
