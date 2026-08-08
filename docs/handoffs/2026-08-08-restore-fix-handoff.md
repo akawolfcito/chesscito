@@ -1,7 +1,11 @@
-# Handoff — el fix del restore cerró, verificado en device
+# Handoff — el fix del restore cerró, y el Sprint 2 cambió de dirección
 
-**Fecha:** 2026-08-08 · **Rama:** `main` local, **ahead 16 de `origin/main`** (sin pushear)
+**Fecha:** 2026-08-08 · **Rama:** `main` local, **ahead 19 de `origin/main`** (sin pushear)
 **Handoff previo:** `2026-08-07-cta-slot-and-restore-bug-handoff.md`
+
+> La sesión tuvo **dos mitades**: cerrar el bug del restore (código, verificado en device) y
+> **revertir la dirección del Sprint 2** tras consultar al Game Designer de BMAD/GDS. La
+> segunda mitad no dejó código — dejó un brief aprobado, un spec y su red team.
 
 ---
 
@@ -112,6 +116,71 @@ con una pantalla que reabría lo ya terminado.
   `labyrinthBests`. Con el Path como hogar de la progresión, **el mapa mentiría sobre qué está
   desbloqueado**. Pide guard.
 - Seis iconos firma = seis slots de tema = **tres baselines pineados + `tsc`** cada uno.
+
+---
+
+## 🎲 La segunda mitad — cómo cambió la dirección
+
+Se consultó al **Game Designer de BMAD/GDS** (Samus Shepard) por una decisión de producto:
+¿el PATH debe ser siempre la puerta de entrada a la pieza? Recomendó **sí, siempre**.
+
+**El founder la falsificó con una frase**, y tenía razón:
+
+> *"Si pudiera mostrar el progreso sin el tap del mapa, para mí sería el éxito."*
+
+El objetivo nunca fue el mapa: era **que el progreso se vea**. El mapa era el vehículo. De ahí
+salió el brief aprobado (`docs/product/2026-08-08-progress-visibility-design-brief.md`) y los
+tres pasos, con el mapa degradado a Paso 3 condicional.
+
+⚠️ **Aprendizaje que conviene no perder:** los mapas de Candy Crush / Mario World existen porque
+esos juegos tienen **cientos de niveles** y necesitan una columna vertebral. Chesscito tiene 78
+niveles y sesiones de ~2 min: **no tiene un problema de columna vertebral, tiene un problema de
+aviso.** Copiar la función, nunca la forma.
+
+### Estado del Paso 1
+
+| Artefacto | Estado |
+|---|---|
+| Brief | ✅ aprobado (`e146c45`) |
+| Spec | ✅ escrito (`708f096`) — ⛔ **NO listo para `/tdd`** |
+| Red team | ✅ hecho (`e7977f0`) — **3 bloqueantes + 5 hallazgos** |
+| Correcciones | ⏳ **pendientes — es el arranque de la próxima sesión** |
+
+⛔ **El bloqueante que manda (B1):** la firma `resolveConsequence(path)` no sirve. Un snapshot
+dice **estado**, no **transición**, y tres de los cuatro peldaños son transiciones — el jugador
+vería *"¡tu insignia está lista!"* en cada overlay hasta reclamarla. Tiene que recibir
+`before`/`after`. **El `before` ya existe** en la pantalla (el path pre-completación que
+documenta el comentario de QA G1, `exercises-screen.tsx:3158-3161`); no hace falta estado nuevo.
+
+---
+
+## ▶️ Cómo arrancar la próxima sesión
+
+**Prompt sugerido:**
+
+> Retomamos el Paso 1 del brief de visibilidad de progreso. Está todo en
+> `docs/specs/2026-08-08-consequence-in-completion-overlay.md` y su red team
+> `-redteam.md`, con 3 bloqueantes y 8 correcciones pedidas.
+>
+> Antes de tocar el spec: **dos de las correcciones son decisiones de diseño, no técnicas**
+> (A5: qué peldaños corresponden a cada slice, porque `lane_progress` no significa lo mismo en
+> desafíos que en ejercicios; y M8: OQ-1 pide reclamar la insignia desde el overlay mientras
+> AC-6 congela los botones). **Consultalas con el Game Designer de BMAD/GDS** antes de escribir
+> nada. También OQ-3 (qué cuenta `lane_progress`).
+>
+> Después: aplicá las 8 correcciones, marcá el spec READY y arrancá `/tdd` por el slice 1A (el
+> resolver puro, sin UI).
+
+**Agente BMAD a usar:** `gds-agent-game-designer` (Samus Shepard) — es diseño de progresión y
+legibilidad, su terreno. ⚠️ **No** para las correcciones técnicas (B1, B2, B3, A4): esas salen
+del red team y del código, y ya están resueltas en el doc.
+
+> 📌 **Práctica adoptada el 2026-08-08:** toda feature/fix con decisión de diseño detrás se
+> contrasta primero con el agente BMAD/GDS especializado, y se vuelve con una **recomendación
+> fuerte**, no con un menú. Decidir a dedo ya costó tiempo. Ruteo: progresión → Game Designer ·
+> flujo/fricción → UX (Sally) · alcance → PM (John) · estructura técnica → Game Architect.
+
+---
 
 ## Open questions
 
