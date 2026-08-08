@@ -115,6 +115,18 @@ uno más y la corona" sí. El brief ya escribió el patrón. El copy exacto sigu
 
 ## M8 / OQ-1 — NO se reclama la insignia desde el overlay. **AC-6 gana.**
 
+> ⛔ **Corrección (2026-08-08, tras el playtest).** Las tres razones de abajo son ciertas pero
+> **respondían a la pregunta equivocada**. El momento ya tenía su superficie: el modal de
+> milestone `piece-badge-eligible`, que dispara con la misma condición del gate
+> (`milestones.ts:82-96`, sin wallet) y **ya trae el botón Claim**.
+>
+> No había que decidir si agregar un CTA: había que **no duplicar un modal que ya existía**.
+> El peldaño `badge_ready` se eliminó de la escalera. La conclusión no cambia, el argumento sí:
+> no es "una transacción arruinaría la celebración", es **"esa celebración ya está hecha"**.
+>
+> ⚠️ Lección de método: antes de diseñar el momento de un evento, **buscar quién más escucha
+> ese evento**. `milestones.ts` estaba a un grep de distancia.
+
 **Decisión: OQ-1 se cierra en NO para el Paso 1.** No es una postergación por tiempo; es que
 el overlay es el peor lugar posible para esa acción.
 

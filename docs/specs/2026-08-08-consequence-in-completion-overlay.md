@@ -60,7 +60,21 @@ caballo 5; ninguno de los dos es lo que el jugador ve.
 ### La escalera — precedencia, no acumulación
 
 > ⛔ **Se anuncia UNA SOLA, la más alta que aplique.**
-> `mastery` > `badge_ready` > `challenge_unlocked` > piso del carril.
+> `mastery` > `challenge_unlocked` > piso del carril.
+
+> ⛔ **`badge_ready` fue ELIMINADO el 2026-08-08, después del playtest.** Cruzar el gate ya
+> abre el modal de milestone `piece-badge-eligible`, que dispara con **la misma condición**
+> (`milestones.ts:82-96`: `pieceCompletedExercises >= pieceRequiredExercises`, sin wallet) y
+> **tiene el botón Claim de verdad**. La línea decía lo mismo un instante antes, sin nada que
+> tocar: era "celebrar dos veces lo mismo", el anti-objetivo del brief, en su versión débil.
+>
+> Consecuencia sobre **M8/OQ-1**: la pregunta "¿debería el overlay ofrecer reclamar?" se
+> discutió sobre una **premisa falsa**. El botón ya existía, en un modal cuyo disparo no
+> habíamos mirado. La decisión de no poner un CTA sigue en pie; el argumento correcto no es
+> "una transacción arruinaría la celebración", es **"esa superficie ya existe"**.
+>
+> Al cruzar el gate la escalera cae al piso del ejercicio, que con `done === required` da
+> `null`. El modal queda solo, que es lo que corresponde.
 
 | Peldaño | Transición que lo dispara | De dónde sale |
 |---|---|---|

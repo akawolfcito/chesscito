@@ -1742,7 +1742,6 @@ const messages = {
   },
   CONSEQUENCE_COPY: {
     mastery: "Corona ganada · elige tu próxima pieza",
-    badgeReady: "Insignia desbloqueada · reclámala en Ejercicios",
     challengeUnlocked: "Nuevo desafío desbloqueado · ya está en tu camino",
     badgeProgress: "{done} de {required} para tu insignia",
     laneProgress: "{done} de {total} desafíos · la corona está al final",

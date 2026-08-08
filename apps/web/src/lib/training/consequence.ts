@@ -10,9 +10,16 @@ import type { TrainingNode } from "@/lib/training/path";
 
 /** What the overlay announces BESIDES the attempt's result. One per overlay:
  *  it is a moment, not a list, and 390px do not stretch. */
+/* ⛔ There is deliberately NO `badge_ready` rung. Crossing the completion gate
+ * already has its own surface: the `piece-badge-eligible` milestone modal,
+ * which fires on the SAME condition (`milestones.ts:82-96`:
+ * `pieceCompletedExercises >= pieceRequiredExercises`, no wallet involved) and
+ * carries the actual Claim button. A line here would announce the same news a
+ * beat earlier, in weaker form, with nothing to tap — the "celebrate the same
+ * thing twice" the brief forbids. Shipped that way for a few hours on
+ * 2026-08-08 and a playtest caught it immediately. */
 export type TrainingConsequence =
   | { kind: "mastery" }
-  | { kind: "badge_ready" }
   | { kind: "challenge_unlocked"; nodeId: string }
   /** Floor of the EXERCISE lane. `required` is the badge GATE, never the pool
    *  size: a player on 7 reading "7 of 10" thinks three are left when one is. */
@@ -25,7 +32,6 @@ export type TrainingConsequence =
 export type ConsequenceMessage = {
   key:
     | "mastery"
-    | "badgeReady"
     | "challengeUnlocked"
     | "badgeProgress"
     | "laneProgress"
@@ -49,8 +55,6 @@ export function consequenceMessage(
   switch (consequence.kind) {
     case "mastery":
       return { key: "mastery" };
-    case "badge_ready":
-      return { key: "badgeReady" };
     case "challenge_unlocked":
       return { key: "challengeUnlocked" };
     case "badge_progress":
@@ -75,12 +79,11 @@ export function consequenceMessage(
  * Resolve the one consequence to announce, or `null` when there is nothing.
  *
  * ⛔ Takes the TRANSITION, not the state. A path snapshot says STATE, and three
- * of the five rungs are transitions: `badge_ready` is true from the moment the
- * badge is earned until it is claimed, and an available challenge stays
- * available until it is beaten. Read off a snapshot they would fire in EVERY
- * overlay for the whole period — the player would see "your badge is ready"
- * five times, and by the third would stop reading the overlay, which is the
- * exact channel this feature exists to open.
+ * of the four rungs are transitions: an unlocked challenge stays `available`
+ * until it is beaten, and the crown stays earned forever. Read off a snapshot
+ * they would fire in EVERY overlay for the whole period — the player would see
+ * "new challenge unlocked" five times, and by the third would stop reading the
+ * overlay, which is the exact channel this feature exists to open.
  *
  * `null` is not an edge case, it is half the design: with transitions, replaying
  * something already finished changes nothing, so the overlay stays byte-identical
@@ -88,7 +91,7 @@ export function consequenceMessage(
  * once it lies the player stops reading it.
  *
  * The LADDER — precedence, never accumulation. One rung, the highest that
- * applies: `mastery` > `badge_ready` > `challenge_unlocked` > the lane floor.
+ * applies: `mastery` > `challenge_unlocked` > the lane floor.
  * Which floor is decided by the LANE of the node that just completed, not by
  * which overlay is asking — one resolver serves both.
  *
@@ -132,14 +135,6 @@ export function resolveConsequence(
       was.get(node.id) !== "complete",
   );
   if (crowned) return { kind: "mastery" };
-
-  const badgeEarned = after.find(
-    (node) =>
-      node.kind === "badge" &&
-      node.status === "available" &&
-      was.get(node.id) === "locked",
-  );
-  if (badgeEarned) return { kind: "badge_ready" };
 
   const unlocked = after.find(
     (node) =>

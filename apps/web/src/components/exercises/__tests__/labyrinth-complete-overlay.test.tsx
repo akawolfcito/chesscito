@@ -117,11 +117,11 @@ describe("LabyrinthCompleteOverlay — the consequence line (Paso 1, slice 1B)",
     );
   });
 
-  it("points at Exercises for the badge, because no button does (OQ-1)", () => {
-    renderOverlay({ consequence: { kind: "badge_ready" } });
+  it("names the crown when the attempt earned it", () => {
+    renderOverlay({ consequence: { kind: "mastery" } });
 
     expect(screen.getByTestId("consequence-line")).toHaveTextContent(
-      "Badge unlocked · claim it in Exercises",
+      "Crown earned · pick your next piece",
     );
   });
 
@@ -160,10 +160,10 @@ describe("LabyrinthCompleteOverlay — the consequence line (Paso 1, slice 1B)",
   });
 
   it("reports the announced kind, and stays quiet when nothing is announced (AC-10)", () => {
-    renderOverlay({ consequence: { kind: "badge_ready" } });
+    renderOverlay({ consequence: { kind: "mastery" } });
 
     expect(track).toHaveBeenCalledWith("consequence_shown", {
-      kind: "badge_ready",
+      kind: "mastery",
       surface: "labyrinth",
     });
 

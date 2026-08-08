@@ -1674,14 +1674,12 @@ export const LABYRINTH_COPY = {
 export const CONSEQUENCE_COPY = {
   /** The crown. Achieved, never "within reach". */
   mastery: "Crown earned · pick your next piece",
-  /** Badge earned and unclaimed. Says WHERE, since no button does.
-   *  ⛔ It says Exercises, NOT the hub. The hub tile does not claim: tapping a
-   *  `claimable` tile routes to `/exercises?piece=…` (learn-hub-client.tsx:415).
-   *  The only Claim Badge button lives in the Exercises drawer
-   *  (exercise-drawer.tsx:620), which is on the screen the player is already
-   *  standing on. Pointing at the hub would send them on a round trip back to
-   *  where they started. */
-  badgeReady: "Badge unlocked · claim it in Exercises",
+  /* ⛔ No `badgeReady` line, deliberately. Crossing the completion gate already
+     opens the `piece-badge-eligible` milestone modal on the same trigger, and
+     that one has the Claim button. A line here said the same thing a beat
+     earlier with nothing to tap. Deleted rather than left unused: an orphan
+     string is what `badgeLockedFormat` ("Badge at {stars}★", zero consumers,
+     still quoting a gate the game dropped) turned into. */
   /** Does NOT promise where Continue goes: it lands on a pending exercise
    *  first when there is one, so "Continue takes you there" would be a lie
    *  about half the time. */

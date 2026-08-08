@@ -283,8 +283,15 @@ describe("resolveConsequence — mastery (AC-3, AC-4)", () => {
   });
 });
 
-describe("resolveConsequence — badge_ready", () => {
-  it("fires on the solve that crosses the gate, and only that one", () => {
+describe("resolveConsequence — the gate belongs to the milestone modal", () => {
+  /* Playtest 2026-08-08: crossing the gate fired BOTH this line and the
+   * `piece-badge-eligible` milestone modal — which announces the same thing a
+   * beat later AND carries the real Claim button. `milestones.ts:82-96` proves
+   * they share one trigger (`pieceCompletedExercises >= pieceRequiredExercises`,
+   * no wallet condition), so this rung was never adding information: it was the
+   * "celebrate the same thing twice" the brief forbids, in its weaker form. */
+
+  it("stays silent on the solve that crosses the gate", () => {
     const piece: PieceId = "rook";
     const exercises = exerciseIds(piece);
     const gate = buildPath(piece).find((node) => node.kind === "badge")?.unlock;
@@ -297,10 +304,12 @@ describe("resolveConsequence — badge_ready", () => {
       completedExercises: exercises.slice(0, required),
     });
 
-    expect(resolveConsequence(before, after)).toEqual({ kind: "badge_ready" });
+    // The floor does not cover it either: at `done === required` the exercise
+    // lane is above its gate, so the line is null and the modal stands alone.
+    expect(resolveConsequence(before, after)).toBeNull();
   });
 
-  it("never fires from a challenge — only exercises move the badge gate", () => {
+  it("announces the challenge a lane solve opened, gate crossed or not", () => {
     const piece: PieceId = "rook";
     const exercises = exerciseIds(piece);
     const lane = laneIds(piece);
