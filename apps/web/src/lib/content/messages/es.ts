@@ -1346,7 +1346,7 @@ const messages = {
     subtitleWithNext: "¡Has dominado esta pieza! Te espera {next}.",
     subtitleFinal: "¡Has conquistado cada pieza. Ahora demuéstralo en la Arena!",
     subtitleKeepPracticing: "Sigue adelante. ¡Completar más ejercicios te gana la insignia!",
-    subtitleBadgeWaiting: "Tu insignia está lista. Reclámala cuando quieras.",
+    subtitleBadgeWaiting: "Tu insignia está lista para reclamar.",
     tryArena: "ARENA",
     nextPiece: "Comenzar {piece}",
     practiceAgain: "Practicar de nuevo",

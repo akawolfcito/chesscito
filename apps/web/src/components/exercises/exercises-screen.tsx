@@ -4220,8 +4220,18 @@ export function ExercisesScreen({
          *  at once and stack two `aria-modal` surfaces. Yielding to each of
          *  them defers the menu; it never swallows it, because none of these
          *  clears `showPieceComplete`. The player still lands on it, alone,
-         *  once the last one is closed. */}
+         *  once the last one is closed.
+         *
+         *  ⛔ `awaitFlashTap` belongs in that list and was missing until
+         *  2026-08-08. The WELL DONE flash in tap-to-continue mode NEVER
+         *  auto-dismisses — it holds for the player — while `showPieceComplete`
+         *  is armed by a ~15s timer. A player who simply looked at their own
+         *  celebration for fifteen seconds got the continuation menu mounted on
+         *  top of it. The celebration queue two hundred lines below already
+         *  yields the same way (`celebration.current && !awaitFlashTap`); this
+         *  gate was the only one that had not been told. */}
         {showPieceComplete &&
+        !awaitFlashTap &&
         !showBadgeEarned &&
         !resultOverlay &&
         !unlockedPiece &&

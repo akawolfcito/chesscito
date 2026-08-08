@@ -361,8 +361,14 @@ export const PIECE_COMPLETE_COPY = {
   /** Earned but not claimed. Before 2026-08-08 this case fell into
    *  `subtitleKeepPracticing`, because the branch forked on CLAIMED rather
    *  than EARNED — so the prompt told a player to keep pushing seconds after
-   *  the milestone modal had told them the badge was ready. */
-  subtitleBadgeWaiting: "Your badge is ready. Claim it whenever you like.",
+   *  the milestone modal had told them the badge was ready.
+   *
+   *  ⚠️ Keep it SHORT. Sally sits `absolute -right-2 bottom-12 h-24 w-24`
+   *  inside this panel, so roughly the last 88px of any second line are
+   *  covered by her. The first version of this string ("Your badge is ready.
+   *  Claim it whenever you like.") wrapped and lost its last word behind her.
+   *  Same wording as the milestone modal's own subtitle, on purpose. */
+  subtitleBadgeWaiting: "Your badge is ready to claim.",
   tryArena: "ARENA",
   nextPiece: (piece: string) => `Start ${piece}`,
   practiceAgain: "Practice Again",
