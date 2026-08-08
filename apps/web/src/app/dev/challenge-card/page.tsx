@@ -4,6 +4,7 @@ import { useState } from "react";
 import { NextIntlClientProvider } from "next-intl";
 
 import { ChallengeCard, type ChallengeCardProps } from "@/components/hub/challenge-card";
+import type { CtaSlotPresentation } from "@/lib/hub/cta-slot";
 import enMessages from "@/lib/content/messages/en";
 import esMessages from "@/lib/content/messages/es";
 import type { ChallengeProgressView } from "@/lib/season-pass/focus-days";
@@ -46,6 +47,34 @@ type Scenario = {
   note: string;
   props: Omit<ChallengeCardProps, "today">;
 };
+
+/** The CTA slot each scenario should be handed, derived from its OWN passport.
+ *
+ *  ⚠️ Without this every card fell back to the un-hydrated status — the same
+ *  trap the `/dev/learn-hub` probe had: a fixture photographs only what it is
+ *  handed, so all nine states rendered the same terminal band and the page
+ *  showed a picture the product cannot produce.
+ *
+ *  Coherence rule: the Content Loop returns `daily-pending` before anything
+ *  else while the Daily is pending, so a pending day may never be paired with a
+ *  terminal variant. A scenario can still override this explicitly. */
+function slotFor(scenario: Scenario): CtaSlotPresentation {
+  return scenario.props.focusPassport.todayDone
+    ? {
+        kind: "status",
+        variant: "come-back-tomorrow",
+        destination: null,
+        labelKey: "ctaTomorrow",
+        noteKey: "noteDailyReturns",
+      }
+    : {
+        kind: "action",
+        variant: "daily-pending",
+        destination: "/exercises?piece=rook",
+        labelKey: "ctaStartToday",
+        noteKey: null,
+      };
+}
 
 const SCENARIOS: Scenario[] = [
   {
@@ -135,7 +164,8 @@ const SCENARIOS: Scenario[] = [
   {
     id: "completed",
     label: "completed — 21 of 21",
-    note: "Goal met. The CTA changes; no credit or reward is triggered by reaching it.",
+    note:
+      "Goal met. The CHIP says COMPLETED and the slot keeps offering work — announcing it in the slot used to cost this player their next action permanently, since `completed` is terminal. No credit or reward is triggered by reaching it.",
     props: {
       focusPassport: passport(21, true, TODAY),
       challenge: CHALLENGE,
@@ -147,6 +177,16 @@ const SCENARIOS: Scenario[] = [
         streak: 21,
       },
       onJoinChallenge: null,
+      // Explicit override: the day is done, but the loop still has work for
+      // someone who finished the challenge. That is the whole point of the fix,
+      // so this scenario must not fall back to the terminal band.
+      ctaSlot: {
+        kind: "action",
+        variant: "improve-stars",
+        destination: "/exercises?piece=rook",
+        labelKey: "ctaBeatScore",
+        noteKey: null,
+      },
     },
   },
   {
@@ -240,7 +280,12 @@ export default function ChallengeCardDevPage() {
                 {scenario.label}
               </p>
               <p className="text-xs leading-snug text-[#c9a97a]">{scenario.note}</p>
-              <ChallengeCard {...scenario.props} today={TODAY} />
+              <ChallengeCard
+                {...scenario.props}
+                today={TODAY}
+                ctaSlot={scenario.props.ctaSlot ?? slotFor(scenario)}
+                onFocusTap={scenario.props.onFocusTap ?? (() => {})}
+              />
             </section>
           ))}
         </div>
