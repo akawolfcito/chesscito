@@ -94,18 +94,61 @@ describe("CTA slot — action banner (2026-08-07)", () => {
   // The separator from the $0.99 offer is an inversion of VALUE, not of hue:
   // green and gold collapse into the same hue under deuteranopia/protanopia,
   // and ~8% of men would lose the difference between training and paying.
-  it("inverts value against the offer: dark surface, light text", () => {
-    expect(action).toMatch(/var\(--cta-primary-green-grad\)/);
-    expect(action).toMatch(/color:\s*#f4ffe4/i);
+  it("inverts value against the offer: saturated surface, light text", () => {
+    // The offer is a PALE gold fill with dark text; this is a saturated green
+    // fill with light text. Value, not hue — green and gold collapse into the
+    // same hue under deuteranopia and protanopia.
+    expect(action).toMatch(/linear-gradient\(180deg, #6fc42a/);
+    expect(ruleBody(".challenge-card-cta--action .challenge-card-cta-title")).toMatch(
+      /color:\s*#ffffff/i,
+    );
   });
 
   // The base green comes from the shared primary-action tokens, so refining the
   // green refines this banner too. The sheen layers on top are decoration and
   // may be literal; the SURFACE colour may not.
-  it("takes its green from the shared tokens, never a literal", () => {
-    expect(action).toMatch(/var\(--cta-primary-green-grad\)/);
-    expect(action).toMatch(/var\(--cta-primary-green-border\)/);
-    expect(action).toMatch(/var\(--cta-primary-green-bevel\)/);
+  /* This banner is a FAITHFUL PORT of the PRO banner in PLAY, in green: every
+     geometric value is that rule's, only the colours differ. An earlier attempt
+     re-derived them — 52px instead of 54, its own padding, its own bevel — and
+     the result read as close but a few pixels off, which is worse than either
+     matching or clearly differing. These assertions keep the two in step. */
+  it("keeps the PRO banner's geometry, value for value", () => {
+    const pro = ruleBody(".kingdom-card-pro-cta");
+    for (const prop of ["min-height", "border-radius", "gap"]) {
+      expect(declaredValue(action, prop)).toBe(declaredValue(pro, prop));
+    }
+  });
+
+  /* The ONE deliberate deviation, kept visible instead of hidden: PRO's
+     `padding-left: 5px` exists because a 66px icon block sits there. This
+     banner has no icon (seven meanings share the slot), so at 5px the copy
+     would touch the border. Top, right and bottom stay identical. */
+  it("differs from PRO only in the padding the missing icon frees", () => {
+    const pro = declaredValue(ruleBody(".kingdom-card-pro-cta"), "padding")!.split(/\s+/);
+    const mine = declaredValue(action, "padding")!.split(/\s+/);
+
+    expect(mine.slice(0, 3)).toEqual(pro.slice(0, 3));
+    expect(Number.parseInt(mine[3], 10)).toBeGreaterThan(
+      Number.parseInt(pro[3], 10),
+    );
+  });
+
+  it("keeps the PRO banner's shadow structure, only recoloured", () => {
+    const pro = ruleBody(".kingdom-card-pro-cta");
+    const shape = (body: string) =>
+      (body.match(/box-shadow\s*:([^;]*)/)?.[1] ?? "")
+        // Strip every colour, leaving offsets and the inset keyword.
+        .replace(/(#[0-9a-f]{3,8}|rgba?\([^)]*\))/gi, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    expect(shape(action)).toBe(shape(pro));
+  });
+
+  /* ⛔ This styling is for THIS family of banners only. Lifting it into the
+     shared tokens would push it onto every green control in the app, which the
+     founder explicitly did not ask for. */
+  it("does not touch the shared primary-action tokens", () => {
+    expect(action).not.toMatch(/var\(--cta-primary-green-/);
   });
 
   /* ⛔ `action` and `status` are the two states that ALTERNATE for the same
@@ -148,6 +191,6 @@ describe("CTA slot — reserved box (AC-6a)", () => {
     // terminal never collapses to text height.
     const quiet = declaredValue(ruleBody(".challenge-card-cta--quiet"), "min-height");
     expect(quiet).not.toBeNull();
-    expect(quiet).toBe("52px");
+    expect(quiet).toBe("54px");
   });
 });

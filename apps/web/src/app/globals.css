@@ -8884,26 +8884,37 @@ button.hud-resource-chip:active:not(:disabled) {
    panel and not as a button someone dropped into it. No icon: seven meanings
    share this slot and one fixed glyph fitting both "Claim your gift" and "Beat
    your score" says nothing. */
+/* FAITHFUL PORT of `.kingdom-card-pro-cta` (the PRO banner in PLAY), in green.
+   Every geometric value below is that rule's, unchanged — min-height, padding,
+   radius, gaps, gold border, shadow structure. ONLY the colours differ.
+
+   ⛔ Do not "improve" these numbers. An earlier attempt re-derived them (52px
+   instead of 54, its own padding, its own bevel) and the result read as close
+   but a few pixels off — which is worse than either matching or clearly
+   differing. If the PRO banner is retuned, port the change; do not diverge.
+   ⛔ And do not lift these values into the shared tokens: this styling is for
+   THIS family of banners only and must not reach the rest of the app. */
 .challenge-card-cta--action {
   position: relative;
+  width: 100%;
+  min-height: 54px;
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
-  /* ⛔ Matches `--quiet`, NOT the 54px of the PRO/offer banners. These two are
-     the states that ALTERNATE for the same player render after render, so they
-     are the pair that must never shift. A guard compares the two. */
-  min-height: 52px;
   margin: 0;
-  padding: 5px 10px 6px 12px;
-  border: 2px solid var(--cta-primary-green-border);
+  padding: 4px 9px 5px 12px;
+  border: 2px solid #f6c94f;
   border-radius: 14px;
   background:
-    radial-gradient(circle at 20% 0%, rgba(214, 255, 160, 0.2), transparent 38%),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 200, 0.18), transparent 38%),
     linear-gradient(110deg, rgba(255, 255, 255, 0.16), transparent 45%),
-    var(--cta-primary-green-grad);
-  box-shadow: var(--cta-primary-green-bevel);
-  color: #f4ffe4;
+    linear-gradient(180deg, #6fc42a 0%, #55a11d 48%, #3d7f12 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -2px 0 rgba(20, 60, 8, 0.25),
+    0 4px 0 #2c5c0d,
+    0 8px 14px rgba(40, 90, 20, 0.3);
+  color: #f7ffe9;
   text-align: left;
   cursor: pointer;
   transition:
@@ -8920,25 +8931,27 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 1px;
 }
 
-/* Mirrors `.kingdom-card-pro-title`. */
+/* `.kingdom-card-pro-title`, colours swapped. Same size, weight and leading. */
 .challenge-card-cta--action .challenge-card-cta-title {
   font-family: var(--font-game-action);
   font-size: 0.82rem;
   font-weight: 800;
   line-height: 1.05;
-  color: #f6ffe8;
-  text-shadow: var(--cta-primary-green-text-shadow);
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(18, 52, 6, 0.65);
 }
 
 /* Mirrors `.kingdom-card-pro-subtitle`, ellipsis included: these labels are
    authored, and one long translation must truncate rather than wrap and push
    the banner past the height the other state reserves. */
+/* `.kingdom-card-pro-subtitle`, colours swapped. Same size, weight and leading,
+   ellipsis included: a long translation must truncate, never wrap. */
 .challenge-card-cta--action .challenge-card-cta-sub {
   overflow: hidden;
   font-size: 0.62rem;
   font-weight: 650;
   line-height: 1.15;
-  color: rgba(246, 255, 232, 0.88);
+  color: rgba(255, 255, 255, 0.92);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -8953,14 +8966,14 @@ button.hud-resource-chip:active:not(:disabled) {
   transform: translateY(2px);
 }
 
-/* Discreet on purpose: it marks the tap contract, it does not compete with the
-   copy. Narrower than the offer banner's, which also carries a price badge. */
+/* `.kingdom-card-pro-chevron`'s job and weight, drawn with the SVG this card
+   already uses. Gold, tying it to the border, same as the PRO banner does. */
 .challenge-card-cta--action .season-pass-banner-chevron {
   flex: 0 0 auto;
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
   margin-left: auto;
-  color: rgba(246, 255, 232, 0.82);
+  color: #ffd45a;
 }
 
 .challenge-card-cta--quiet {
@@ -8968,12 +8981,14 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   gap: 8px;
   width: 100%;
-  /* ⛔ 52px, NOT the banner's 54px: the source guard compares this against
-     `.principal-button-medium`, because the card must not change height between
-     presentations. This anchor is where the CLS 0,179 lived until 2026-08-07. */
-  min-height: 52px;
+  /* ⛔ 54px, tracking the ACTION banner — the state this one ALTERNATES with,
+     render after render, for the same player. That pair is what can produce a
+     shift, and this anchor is where the CLS 0,179 lived until 2026-08-07.
+     (It used to track `.principal-button-medium`; the slot stopped using that
+     class the day the CTA became a banner.) A guard compares the two. */
+  min-height: 54px;
   margin: 0;
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 14px;
   /* Inverted against the card (dark at the TOP): the light falls INSIDE the
      hollow. A light-at-top gradient would make the band float. */
