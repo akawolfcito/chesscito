@@ -31,6 +31,32 @@ export type TrainingContentRequestResult =
     }
   | { action: "missing" };
 
+/**
+ * What the SCREEN settles a content request into. It is the resolver's result
+ * plus one outcome the resolver cannot reach.
+ *
+ * `completed`: the content exists and is UNLOCKED, but the player already
+ * finished it and the request is an implicit restore — not a tap, a deep link,
+ * or automatic continuation. It settles exactly like `missing`; not an error.
+ *
+ * ⛔ Deliberately NOT a member of `TrainingContentRequestResult`. Completion
+ * lives in the training path, which `resolveTrainingContentRequest` does not
+ * receive and should not: it is a pure access resolver. Widening its union
+ * would make every caller narrow against an action it can never return — the
+ * compiler said so the moment it was tried.
+ *
+ * ⛔ PRECEDENCE: `pending` > `missing`/`locked` > `completed` > `start`.
+ * A labyrinth that is finished AND pass-gated settles as `locked`: the unlock
+ * CTA is worth more to the player than "you already did this".
+ * ⚠️ This ordering has no observable consequence TODAY — both branches settle
+ * to the path, and the drawer routes checkout itself — so it is pinned here
+ * and by the branch position, not by a test. See the note in
+ * `__tests__/restore-completed-content.test.tsx`.
+ */
+export type TrainingContentSettlement =
+  | TrainingContentRequestResult
+  | { action: "completed" };
+
 export function resolveContentAccess(
   content: Pick<Exercise, "access">,
   trainingPass: EffectiveTrainingPassSnapshot,

@@ -242,6 +242,7 @@ import {
   type ContentAccessState,
   type EffectiveTrainingPassSnapshot,
   type TrainingContentRequestSource,
+  type TrainingContentSettlement,
 } from "@/lib/training/content-access";
 import { resolveCoverageStars } from "@/lib/training/content-stars";
 
@@ -3172,7 +3173,10 @@ export function ExercisesScreen({
    *  restoration. It resolves commercial access first, then the existing
    *  curricular node status. Only `explicit_tap` may open checkout. */
   const requestTrainingContent = useCallback(
-    (contentId: string, source: TrainingContentRequestSource) => {
+    (
+      contentId: string,
+      source: TrainingContentRequestSource,
+    ): TrainingContentSettlement => {
       const result = resolveTrainingContentRequest({
         contentId,
         catalog: labyrinthList,
@@ -3202,15 +3206,44 @@ export function ExercisesScreen({
         return result;
       }
 
-      const node = trainingPathRef.current.find(
-        (entry) => entry.kind === "labyrinth" && entry.id === contentId,
-      );
-      if (!node || node.status === "locked") {
+      const settleToPath = () => {
         setLabyrinthMode(false);
         setSelectedLabyrinthId(null);
         setTrainingAttemptGrantId(null);
         setExerciseDrawerOpen(true);
+      };
+
+      const node = trainingPathRef.current.find(
+        (entry) => entry.kind === "labyrinth" && entry.id === contentId,
+      );
+      if (!node || node.status === "locked") {
+        settleToPath();
         return { action: "missing" as const };
+      }
+
+      /* An implicit restore must not re-serve a labyrinth the player already
+         finished. Reported on prod 2026-08-07 on two accounts: the rook's last
+         labyrinth reopened on every visit, which reads as "my progress is not
+         saving" even though every best was stored.
+
+         ⛔ The check lives HERE, on the RESULT, and never before the call. The
+         restore effect does double duty — it also settles the screen's initial
+         hydration — so skipping `requestTrainingContent` leaves a pass-gated
+         labyrinth with its locked node unrendered. That regression already
+         happened once.
+
+         ⛔ It also lives BELOW the `locked` branch above and the access branch
+         at the top, and the order is a contract: a labyrinth that is finished
+         AND pass-gated answers `locked`, because the unlock CTA is worth more
+         to the player than "you already did this".
+
+         Only `restore` filters. A tap, a deep link and automatic continuation
+         all open what they name — replaying a finished labyrinth on purpose is
+         legitimate. "Finished" means `status === "complete"`, which is any
+         recorded best, not the optimum. */
+      if (source === "restore" && node.status === "complete") {
+        settleToPath();
+        return { action: "completed" as const };
       }
 
       implicitContentRequestRef.current = `${selectedPiece}:${contentId}`;
