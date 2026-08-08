@@ -64,13 +64,15 @@ describe("CTA slot — terminal state styling (AC-5)", () => {
     expect(quiet).not.toMatch(/cursor\s*:\s*pointer/);
   });
 
-  // `complete` (21 days finished) is out of scope for Sprint 1 and keeps its own
-  // rule. If someone merges the two, the state that was deliberately left alone
-  // silently changes.
-  it("leaves the --info rule (used by `complete`) untouched", () => {
-    const info = ruleBody(".challenge-card-cta--info");
-    expect(info).toMatch(/saturate\(/);
-    expect(info).toMatch(/opacity\s*:/);
+  /* Sprint 1.5: `.challenge-card-cta--info` was DELETED. It was the last dimmed
+     button-shaped slab in the product, and its only consumer (`complete`) now
+     says its state in the status chip instead of spending the CTA slot on it.
+     Reintroducing the rule would bring the original defect back for the player
+     who finished the whole challenge. */
+  it("has no dimmed-button rule left anywhere in the sheet", () => {
+    // A RULE, not a mention: the tombstone comment above the deletion names the
+    // class on purpose, and a bare name match would flag its own gravestone.
+    expect(CSS).not.toMatch(/\.challenge-card-cta--info\s*[,{]/);
   });
 });
 

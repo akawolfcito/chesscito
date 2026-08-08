@@ -657,8 +657,15 @@ describe('<ChallengeCard>', () => {
           onFocusTap={() => {}}
         />,
       )
-      expect(cta()).toHaveAttribute('data-cta-state', 'complete')
-      expect(cta().textContent).toMatch(/Challenge Complete/i)
+      /* Sprint 1.5: the finished challenge is announced by the STATUS CHIP, not
+         by the CTA slot. Saying it in the slot cost the player their next action
+         permanently, because `completed` is terminal. The ledger-driven
+         assertion this test exists for is unchanged — only where the card says
+         it moved. */
+      expect(screen.getByTestId('challenge-active-badge').textContent).toMatch(
+        /complet/i,
+      )
+      expect(cta().textContent).not.toMatch(/Challenge Complete/i)
     })
 
     it('renders exactly one primary CTA in every state', () => {
@@ -1425,8 +1432,42 @@ describe('<ChallengeCard> — CTA slot driven by the Content Loop', () => {
     expect(screen.getByTestId('challenge-streak')).toBeInTheDocument()
   })
 
-  // The `complete` state is out of scope for this sprint and must not drift.
-  it('leaves the CHALLENGE COMPLETE state on its own class', () => {
+  /* Sprint 1.5 — `complete` SWALLOWED the CTA. It rendered its own dimmed `<p>`
+     and never consulted the slot, and `completed` is terminal by contract
+     (founder, 2026-07-27). So the player who finished 21 days — the most
+     committed person in the product — never got a next action from this card
+     again, while the Content Loop kept computing one nobody rendered. Same
+     defect Sprint 1 removed, aimed at the best player.
+
+     The achievement moves to the status chip, which already exists. */
+  function completed(slot: ChallengeCardProps['ctaSlot']) {
+    render(
+      <Card
+        focusPassport={passport({ streak: 21, todayDone: true })}
+        challenge={CHALLENGE}
+        seasonPass={ACTIVE_PASS}
+        progress={{
+          state: 'completed',
+          progress: { completed: 21, goal: 21 },
+          window: { kind: 'expiring', daysRemaining: 3 },
+          streak: 21,
+        }}
+        onJoinChallenge={null}
+        ctaSlot={slot}
+        onFocusTap={vi.fn()}
+      />,
+    )
+  }
+
+  it('announces COMPLETED in the status chip, not in the CTA slot', () => {
+    completed(ACTION_SLOT)
+    expect(screen.getByTestId('challenge-active-badge').textContent).toMatch(
+      /complet/i,
+    )
+  })
+
+  it('keeps offering the next action after the challenge is finished', () => {
+    const onFocusTap = vi.fn()
     render(
       <Card
         focusPassport={passport({ streak: 21, todayDone: true })}
@@ -1440,13 +1481,21 @@ describe('<ChallengeCard> — CTA slot driven by the Content Loop', () => {
         }}
         onJoinChallenge={null}
         ctaSlot={ACTION_SLOT}
-        onFocusTap={vi.fn()}
+        onFocusTap={onFocusTap}
       />,
     )
 
     const cta = screen.getByTestId('challenge-cta')
-    expect(cta).toHaveAttribute('data-cta-state', 'complete')
-    expect(cta).toHaveClass('challenge-card-cta--info')
-    expect(cta).not.toHaveClass('challenge-card-cta--quiet')
+    expect(cta.tagName).toBe('BUTTON')
+    expect(cta).toHaveAttribute('data-cta-kind', 'action')
+    fireEvent.click(cta)
+    expect(onFocusTap).toHaveBeenCalledWith(ODD_DESTINATION)
+  })
+
+  it('shows the terminal band when the finished player has nothing left', () => {
+    completed(STATUS_SLOT)
+    const cta = screen.getByTestId('challenge-cta')
+    expect(cta).toHaveAttribute('data-cta-kind', 'status')
+    expect(cta).toHaveClass('challenge-card-cta--quiet')
   })
 })

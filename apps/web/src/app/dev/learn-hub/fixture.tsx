@@ -27,7 +27,7 @@ import type { ChallengeCardSeasonPass } from "@/components/hub/challenge-card";
  *  catalog, so a tile state — and the photo — would belong to the content
  *  authors. Every handler is a no-op: this probe photographs, it never
  *  navigates. */
-export type LearnHubVariant = "guest" | "active" | "pro";
+export type LearnHubVariant = "guest" | "active" | "pro" | "completed";
 
 const noop = () => {};
 
@@ -178,6 +178,35 @@ const VARIANTS: Record<LearnHubVariant, VariantShape> = {
     // Daily still pending → the ACTION presentation, a real button. Coherent
     // with `todayDone: false` above.
     contentLoop: loopAction("daily-pending", "/exercises?slot=daily"),
+  },
+  /* The finished 21-day challenge (Sprint 1.5). This state used to spend the
+     CTA slot announcing itself, and `completed` is terminal — so the most
+     committed player in the product lost their next action permanently. The
+     shot exists to prove two things at once: the chip says COMPLETED, and the
+     slot still offers something to do. */
+  completed: {
+    isWalletConnected: true,
+    trophies: 7,
+    peones: PEONES_SETTLED,
+    seasonPass: { active: true, source: "season_pass", shieldsCredited: 3 },
+    progress: {
+      state: "completed",
+      progress: { completed: 21, goal: 21 },
+      window: { kind: "expiring", daysRemaining: 4 },
+      streak: 21,
+    },
+    passport: {
+      streak: 21,
+      totalCompleted: 21,
+      todayDone: true,
+      isLoading: false,
+      lastCompletedDate: "2026-04-25",
+    },
+    shields: { count: 3 },
+    hasJoinCta: false,
+    // Day done, challenge finished, stars still improvable: the loop keeps
+    // producing work. Coherent with `todayDone: true`.
+    contentLoop: loopAction("improve-stars", "/exercises?piece=rook"),
   },
 };
 

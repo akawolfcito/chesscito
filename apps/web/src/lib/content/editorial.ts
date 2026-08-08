@@ -3168,6 +3168,10 @@ export const CHALLENGE_CARD_COPY = {
   ctaTomorrowAriaLabel: "Today's focus is done. Training stays open.",
   ctaComplete: "Challenge Complete",
   ctaCompleteAriaLabel: "You finished the 21-Day Mind Challenge",
+  /* Finishing the challenge is a STATE, so it lives in the status chip next to
+     the title — not in the CTA slot, where announcing it cost the player their
+     next action permanently (`completed` is terminal). */
+  completedBadge: "COMPLETED",
   /* Content Loop labels (Sprint 1). The button NAMES THE THING, not the mood:
      with one line at 390px this label is everything the player has to know what
      is on the other side, and a concrete noun outperforms a motivational verb.

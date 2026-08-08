@@ -1937,6 +1937,7 @@ const messages = {
     ctaTomorrowAriaLabel: "Tu foco de hoy está hecho. El entrenamiento sigue abierto.",
     ctaComplete: "Reto completado",
     ctaCompleteAriaLabel: "Completaste el Reto Mental de 21 Días",
+    completedBadge: "COMPLETADO",
     // Modo imperativo en todas: siete etiquetas que se ven de a una pero en la
     // misma caja, así que un solo registro gramatical.
     ctaClaimGift: "Reclama tu regalo",

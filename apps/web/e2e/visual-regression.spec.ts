@@ -1319,6 +1319,22 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
   // PRO reaches the challenge without buying a window, so no countdown renders
   // at all — the crowned badge is the single place that says why. A number
   // appearing here would read as an expired pass to a subscriber who has none.
+  // The finished 21-day challenge. This state used to spend the CTA slot
+  // announcing itself, and `completed` is terminal — so the most committed
+  // player lost their next action permanently. The shot proves both halves of
+  // the fix at once: the chip says COMPLETED, and the slot still offers work.
+  test("vr18-learn-hub-completed — chip says COMPLETED and the CTA still offers work", async ({
+    page,
+  }) => {
+    await page.goto("/dev/learn-hub?variant=completed", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot("vr18-learn-hub-completed.png", LEARN_HUB_OPTS);
+  });
+
   test("vr18-learn-hub-pro — unbounded window: the crowned badge, and no countdown", async ({
     page,
   }) => {

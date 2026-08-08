@@ -62,10 +62,12 @@ export function ShieldIcon() {
 }
 
 /** The four states the single primary CTA can be in. */
-/** `start` and `tomorrow` are gone: both were the card deciding on its own what
- *  the player should do next. Everything that is neither a purchase nor a
- *  finished challenge is now `loop`, and the Content Loop says what it holds. */
-type CtaState = "join" | "complete" | "loop";
+/** `start`, `tomorrow` and `complete` are all gone: every one of them was the
+ *  card deciding on its own what the player should do next. Anything that is
+ *  not a purchase is now `loop`, and the Content Loop says what it holds.
+ *  Finishing the challenge is a STATE (it lives in the chip), never an
+ *  answer to "what now". */
+type CtaState = "join" | "loop";
 
 /** Season-pass slice the card needs. Discriminated so the `active` branch
  *  carries the day-of-challenge + shields it must render, and the offer
@@ -240,11 +242,8 @@ export function ChallengeCard({
   // `isCompletedToday(today, daily)`, and two readings hydrated by different
   // paths are exactly how the label and the destination drift apart. The
   // passport still owns the flames; it no longer owns the CTA.
-  const ctaState: CtaState = !isActive
-    ? "join"
-    : progress.state === "completed"
-      ? "complete"
-      : "loop";
+  const isCompleted = progress.state === "completed";
+  const ctaState: CtaState = !isActive ? "join" : "loop";
 
   // A presentation that says "action" but has no handler wired (the `/dev`
   // probes mount this card without a router) must NOT render a button: that is
@@ -294,16 +293,29 @@ export function ChallengeCard({
               {isActive ? t("joinedTitle") : t("notJoinedTitle")}
             </h2>
             {isActive ? (
+              /* The chip is where this card says WHAT STATE the player is in,
+                 so finishing the challenge says it here too. It used to be
+                 announced by the CTA slot instead, which meant the achievement
+                 cost the player their next action — permanently, because
+                 `completed` is terminal. Completion outranks the PRO label: it
+                 is the bigger and rarer news, and it keeps the crown. */
               <span
                 className={`challenge-card-active-chip${
-                  seasonPass.source === "pro"
+                  isCompleted
                     ? " challenge-card-active-chip--pro text-center"
-                    : ""
+                    : seasonPass.source === "pro"
+                      ? " challenge-card-active-chip--pro text-center"
+                      : ""
                 }`}
                 data-testid="challenge-active-badge"
+                data-challenge-completed={isCompleted ? "true" : undefined}
               >
-                {seasonPass.source === "pro" ? <CrownIcon /> : null}
-                {seasonPass.source === "pro" ? t("includedWithPro") : t("activeBadge")}
+                {isCompleted || seasonPass.source === "pro" ? <CrownIcon /> : null}
+                {isCompleted
+                  ? t("completedBadge")
+                  : seasonPass.source === "pro"
+                    ? t("includedWithPro")
+                    : t("activeBadge")}
               </span>
             ) : null}
           </header>
@@ -600,19 +612,6 @@ export function ChallengeCard({
                 <ChevronIcon />
               </button>
             </>
-          ) : ctaState === "complete" ? (
-            /* Out of scope for Sprint 1 and deliberately untouched, class
-               included: whoever finished the 21 days deserves their own moment,
-               and it is not this sprint's to design. */
-            <p
-              className="principal-button principal-button-medium challenge-card-cta challenge-card-cta--info"
-              data-testid="challenge-cta"
-              data-cta-state="complete"
-              role="status"
-              aria-label={t("ctaCompleteAriaLabel")}
-            >
-              {t("ctaComplete")}
-            </p>
           ) : slot.kind === "action" ? (
             <button
               type="button"

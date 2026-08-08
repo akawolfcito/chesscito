@@ -8846,14 +8846,13 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* COME BACK TOMORROW / CHALLENGE COMPLETE — the CTA skin on a status element.
    Muted and not interactive: it reports state, it never gates anything. */
-/* `complete` only (21-day challenge finished). Out of scope for Sprint 1 and
-   deliberately untouched. The Content Loop's terminal state uses `--quiet`
-   below; do NOT merge these two rules. */
-.challenge-card-cta--info {
-  cursor: default;
-  filter: saturate(0.55) brightness(0.94);
-  opacity: 0.92;
-}
+/* `.challenge-card-cta--info` DELETED (Sprint 1.5, 2026-08-07).
+   It was the last dimmed button-shaped slab in the product: `saturate(.55)` +
+   `opacity` on button classes, i.e. the vocabulary of a broken control. Its one
+   consumer was the `complete` state, which announced the finished challenge by
+   spending the CTA slot — permanently, since `completed` is terminal. The
+   achievement moved to the status chip and the slot went back to the Content
+   Loop. ⛔ Do not reintroduce this rule; the source guard forbids it. */
 
 /* The Content Loop's terminal state: a LEGEND, not a disabled button.
 
