@@ -84,14 +84,25 @@ entrada**: en modo laberinto la banda cambia ese chip por el título
 
 ---
 
-## ▶️ Siguiente: Sprint 2 — desenterrar el Path
+## ▶️ Siguiente: hacer visible el progreso — ⛔ NO desenterrar el Path
 
-Dirección ya **decidida** (handoff del 2026-08-07): `HUB → PATH de la pieza → TABLERO`, con los
-desafíos distinguidos por iconografía dentro del mismo camino. No mover los juegos, no tocar
-estrellas, no crear un índice de seis.
+⛔ **REVERTIDO el mismo día.** La dirección "desenterrar el Path" (handoff del 2026-08-07) quedó
+**degradada a Paso 3, condicional**. Brief aprobado:
+`docs/product/2026-08-08-progress-visibility-design-brief.md`.
 
-Este fix era el prerrequisito: con el mapa a la vista, el bug pasaba de "me repite un nivel" a
-"mi mapa me miente".
+**Por qué:** el objetivo nunca fue el mapa, era que **el progreso se vea**. El mapa era un
+vehículo. Chesscito tiene 78 niveles y sesiones de ~2 min: no tiene un problema de columna
+vertebral (que es para lo que sirven los mapas de Candy Crush / Mario World), tiene un
+**problema de aviso**. El progreso va donde el jugador ya está.
+
+1. **Paso 1** — la consecuencia en el **overlay de completado** ("3 de 4 · uno más abre la
+   insignia"). Cero taps, cero pantallas nuevas, en el momento de máxima atención.
+2. **Paso 2** — progreso fino en la **baldosa del hub** (hoy sólo cuatro estados). Cubre al que
+   vuelve a los tres días.
+3. **Paso 3** — promover el mapa, **sólo si 1 y 2 no alcanzan**.
+
+El fix del restore sigue siendo prerrequisito: sin él, cualquier anuncio de progreso convivía
+con una pantalla que reabría lo ya terminado.
 
 ### Lo que el Sprint 2 va a encontrar (medido, del handoff previo)
 
