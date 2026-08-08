@@ -8,6 +8,10 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { track } from "@/lib/telemetry";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import {
+  consequenceMessage,
+  type TrainingConsequence,
+} from "@/lib/training/consequence";
 
 type Props = {
   /** Number of moves the player took to reach the target. */
@@ -35,6 +39,12 @@ type Props = {
    *  finishing the King training cascade and the natural next step is
    *  another lap, not the Arena. */
   onEnterArena?: () => void;
+  /** What this attempt changed in the piece, resolved by the screen from the
+   *  path BEFORE and AFTER (`resolveConsequence`). `null`/absent is the common
+   *  case and renders NOTHING — the overlay stays byte-identical to the one
+   *  that shipped before this feature. An overlay that announces progress when
+   *  nothing happened lies, and once it lies nobody reads it. */
+  consequence?: TrainingConsequence | null;
 };
 
 
@@ -56,8 +66,10 @@ export function LabyrinthCompleteOverlay({
   onContinue,
   onRetry,
   onEnterArena,
+  consequence = null,
 }: Props) {
   const t = useTranslations("LABYRINTH_COPY");
+  const tConsequence = useTranslations("CONSEQUENCE_COPY");
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
@@ -76,10 +88,27 @@ export function LabyrinthCompleteOverlay({
     });
   }, [moves, optimalMoves, stars, isNewBest]);
 
+  // AC-10: which rung was announced, and how often. With 443 players there is
+  // no statistical power for an A/B, so this frequency is the ONLY signal on
+  // whether the feature works. Keyed on `kind` alone so a parent rebuilding the
+  // object inline cannot re-fire it; `null` emits nothing at all.
+  const consequenceKind = consequence?.kind ?? null;
+  useEffect(() => {
+    if (!consequenceKind) return;
+    track("consequence_shown", { kind: consequenceKind, surface: "labyrinth" });
+  }, [consequenceKind]);
+
   function handleAction(cb: () => void) {
     setExiting(true);
     setTimeout(cb, 250);
   }
+
+  const consequenceLine = consequence
+    ? (() => {
+        const message = consequenceMessage(consequence);
+        return tConsequence(message.key, message.values);
+      })()
+    : null;
 
   const isOptimal = moves <= optimalMoves;
   const starsLabel = `${stars}/3`;
@@ -160,6 +189,23 @@ export function LabyrinthCompleteOverlay({
             style={{ color: "rgba(110, 65, 15, 0.75)" }}
           >
             {t("perfectPath")}
+          </p>
+        ) : null}
+
+        {/* THE CONSEQUENCE (Paso 1). Its own line, below the attempt's story
+            and above the buttons: it never competes with the personal record,
+            and it never touches the CTAs. Absent when there is nothing to say,
+            which is the common case and leaves the overlay as it was. */}
+        {consequenceLine ? (
+          <p
+            data-testid="consequence-line"
+            className="px-3 text-center text-xs font-bold"
+            style={{
+              color: "rgba(63, 34, 8, 0.9)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.6)",
+            }}
+          >
+            {consequenceLine}
           </p>
         ) : null}
 

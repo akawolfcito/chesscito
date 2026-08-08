@@ -3,6 +3,7 @@ import { fireEvent } from "@testing-library/react";
 import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 
 import { LabyrinthCompleteOverlay } from "../labyrinth-complete-overlay";
+import { track } from "@/lib/telemetry";
 
 vi.mock("@/lib/telemetry", () => ({ track: vi.fn() }));
 
@@ -89,5 +90,87 @@ describe("LabyrinthCompleteOverlay — continue-first (QA F3 2026-06-11)", () =>
     expect(screen.queryByText("0/3")).not.toBeInTheDocument();
     expect(screen.getByText("20")).toBeInTheDocument();
     expect(screen.getByText("24")).toBeInTheDocument();
+  });
+});
+
+describe("LabyrinthCompleteOverlay — the consequence line (Paso 1, slice 1B)", () => {
+  beforeEach(() => {
+    vi.clearAllTimers();
+    vi.mocked(track).mockClear();
+  });
+
+  it("says what the attempt changed, and names the prize", () => {
+    renderOverlay({ consequence: { kind: "lane_progress", done: 3, total: 4 } });
+
+    expect(screen.getByTestId("consequence-line")).toHaveTextContent(
+      "3 of 4 challenges · the crown is at the end",
+    );
+  });
+
+  it("swaps to the lane-complete line rather than saying 4 of 4 (AC-4)", () => {
+    // "4 of 4 · the crown is at the end" is false at the exact moment the
+    // player clears the lane. Same rung, different sentence.
+    renderOverlay({ consequence: { kind: "lane_progress", done: 4, total: 4 } });
+
+    expect(screen.getByTestId("consequence-line")).toHaveTextContent(
+      "Every challenge cleared · your badge is waiting in Exercises",
+    );
+  });
+
+  it("points at Exercises for the badge, because no button does (OQ-1)", () => {
+    renderOverlay({ consequence: { kind: "badge_ready" } });
+
+    expect(screen.getByTestId("consequence-line")).toHaveTextContent(
+      "Badge unlocked · claim it in Exercises",
+    );
+  });
+
+  it("counts the exercise lane against the gate", () => {
+    renderOverlay({
+      consequence: { kind: "badge_progress", done: 7, required: 8 },
+    });
+
+    expect(screen.getByTestId("consequence-line")).toHaveTextContent(
+      "7 of 8 toward your badge",
+    );
+  });
+
+  it("renders NOTHING new when there is no consequence (AC-2)", () => {
+    renderOverlay();
+
+    expect(screen.queryByTestId("consequence-line")).not.toBeInTheDocument();
+  });
+
+  it("leaves the buttons untouched (AC-9)", () => {
+    const { onContinue, onRetry } = renderOverlay({
+      consequence: { kind: "mastery" },
+    });
+
+    const primary = screen
+      .getAllByRole("button", { name: "Continue" })
+      .find((b) => !b.className.includes("candy-close-asset-button"));
+    fireEvent.click(primary!);
+    vi.runAllTimers();
+    expect(onContinue).toHaveBeenCalledTimes(1);
+    expect(onRetry).not.toHaveBeenCalled();
+    // No claim CTA smuggled in alongside the badge copy.
+    expect(
+      screen.queryByRole("button", { name: /claim/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("reports the announced kind, and stays quiet when nothing is announced (AC-10)", () => {
+    renderOverlay({ consequence: { kind: "badge_ready" } });
+
+    expect(track).toHaveBeenCalledWith("consequence_shown", {
+      kind: "badge_ready",
+      surface: "labyrinth",
+    });
+
+    vi.mocked(track).mockClear();
+    renderOverlay();
+    expect(
+      vi.mocked(track).mock.calls.filter(([name]) => name === "consequence_shown"),
+    ).toEqual([]);
   });
 });

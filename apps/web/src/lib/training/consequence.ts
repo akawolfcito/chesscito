@@ -21,6 +21,56 @@ export type TrainingConsequence =
    *  (`projectSpecialTrainingLane`), never the raw labyrinth catalog. */
   | { kind: "lane_progress"; done: number; total: number };
 
+/** A key in `CONSEQUENCE_COPY` plus the numbers it interpolates. */
+export type ConsequenceMessage = {
+  key:
+    | "mastery"
+    | "badgeReady"
+    | "challengeUnlocked"
+    | "badgeProgress"
+    | "laneProgress"
+    | "laneComplete";
+  values?: Record<string, number>;
+};
+
+/**
+ * Which sentence a rung is said with. Pure and translator-agnostic so BOTH
+ * overlays (challenge in 1B, exercise in 1C) resolve it the same way.
+ *
+ * ⛔ It lives here, and not inline in a component, for one rule: a finished
+ * lane does NOT say "4 of 4, the crown is at the end" — that sentence is false
+ * at the exact moment the player clears it, which is the dead-end reading AC-4
+ * forbids. Duplicated across two overlays that rule would drift, and the drift
+ * would only show on the last level of a lane, in one of the two surfaces.
+ */
+export function consequenceMessage(
+  consequence: TrainingConsequence,
+): ConsequenceMessage {
+  switch (consequence.kind) {
+    case "mastery":
+      return { key: "mastery" };
+    case "badge_ready":
+      return { key: "badgeReady" };
+    case "challenge_unlocked":
+      return { key: "challengeUnlocked" };
+    case "badge_progress":
+      return {
+        key: "badgeProgress",
+        values: {
+          done: consequence.done,
+          required: consequence.required,
+        },
+      };
+    case "lane_progress":
+      return consequence.done >= consequence.total
+        ? { key: "laneComplete" }
+        : {
+            key: "laneProgress",
+            values: { done: consequence.done, total: consequence.total },
+          };
+  }
+}
+
 /**
  * Resolve the one consequence to announce, or `null` when there is nothing.
  *

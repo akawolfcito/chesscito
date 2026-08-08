@@ -201,6 +201,10 @@ import {
   resolvePostLabContinue,
 } from "@/lib/training/path";
 import {
+  resolveConsequence,
+  type TrainingConsequence,
+} from "@/lib/training/consequence";
+import {
   coverageLaneIds,
   projectSpecialTrainingLane,
   starlessLaneIds,
@@ -3161,8 +3165,23 @@ export function ExercisesScreen({
    *  otherwise see the pre-completion path where the just-unlocked
    *  labyrinth still reads as locked (QA G1). */
   const trainingPathRef = useRef(trainingPath);
+  /** What this attempt changed in the piece (Paso 1). Resolved from the path
+   *  BEFORE and AFTER, never from a snapshot: `badge available` stays true from
+   *  the moment the badge is won until it is claimed, so a snapshot would
+   *  re-announce it on every overlay of that period.
+   *
+   *  The `before` costs no new state — it is the value `trainingPathRef` held
+   *  until this very effect, the same pre-completion path QA G1 documents
+   *  above. `resolveConsequence` returns null for anything that is not one
+   *  attempt (a replay, a piece switch, an unhydrated first pass), so this
+   *  settles to null on its own rather than needing to be cleared. */
+  const [consequence, setConsequence] = useState<TrainingConsequence | null>(
+    null,
+  );
   useEffect(() => {
+    const before = trainingPathRef.current;
     trainingPathRef.current = trainingPath;
+    setConsequence(resolveConsequence(before, trainingPath));
   }, [trainingPath]);
 
   const implicitContentRequestRef = useRef<string | null>(null);
@@ -4260,6 +4279,7 @@ export function ExercisesScreen({
             awardsStars={labyrinthCompleted.awardsStars}
             previousBest={labyrinthCompleted.previousBest}
             isNewBest={labyrinthCompleted.isNewBest}
+            consequence={consequence}
             onContinue={handleLabyrinthContinue}
             onRetry={() => {
               if (selectedLabyrinthId) {

@@ -997,6 +997,26 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     );
   });
 
+  /* The consequence line's worst case: personal record AND consequence, the
+   * longest of the six lines, on the King finale's two-button stack. Its pair
+   * is the variant above, which passes NO consequence — together they are the
+   * proof of AC-2 (without one, the overlay does not move) and of AC-11 (with
+   * one, the CTA stays in view at 390px). */
+  test("vr13-labyrinth-consequence — record + consequence, CTA still in view", async ({
+    page,
+  }) => {
+    await page.goto(
+      "/dev/exercises-popups?variant=labyrinth-consequence-worst-case",
+      { waitUntil: "load", timeout: 45_000 },
+    );
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr13-labyrinth-consequence.png",
+      FIXTURE_OPTS,
+    );
+  });
+
   // vr13 — SaveScore off-chain (Slice 5). The base save now POSTs
   // /api/scores/save: no tx, no CeloScan chip. Two states: a free save and
   // a paid save (1 Peón past the 5 free saves, cost pill beside the stars).

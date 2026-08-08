@@ -6,9 +6,10 @@ import { SavedChip } from "@/components/exercises/saved-chip";
 import { ActionPin } from "@/components/redesign/action-pin";
 import { ContextualActionSlot } from "@/components/exercises/contextual-action-slot";
 
-type Variant =
+export type ExercisesPopupsVariant =
   | "piece-complete-final"
   | "labyrinth-king-solved"
+  | "labyrinth-consequence-worst-case"
   | "score-saved"
   | "score-saved-peones"
   | "saved-chip"
@@ -38,7 +39,11 @@ const noop = () => {};
  *   4. score-saved-peones      — same, but the save cost 1 Peón (past the
  *      5 free saves) so the cost pill renders beside the stars.
  */
-export function ExercisesPopupsFixture({ variant }: { variant: Variant }) {
+export function ExercisesPopupsFixture({
+  variant,
+}: {
+  variant: ExercisesPopupsVariant;
+}) {
   return (
     <main
       data-testid="dev-exercises-popups-root"
@@ -65,6 +70,29 @@ export function ExercisesPopupsFixture({ variant }: { variant: Variant }) {
           stars={2}
           previousBest={6}
           isNewBest={true}
+          onContinue={noop}
+          onRetry={noop}
+          onEnterArena={noop}
+        />
+      )}
+
+      {/* AC-11 / AC-12: the TALLEST the overlay can get. Personal record AND
+          consequence together (the spec allows both), the longest of the six
+          consequence lines, and the King finale's two-button stack. The paired
+          `labyrinth-king-solved` variant above passes no consequence, so the
+          two baselines together prove AC-2: without one, nothing moves.
+
+          ⚠️ A fixture that forgets a prop photographs less than what ships —
+          `vr13-labyrinth-king-solved` would have stayed green through this
+          whole feature. That is why the consequence is passed HERE. */}
+      {variant === "labyrinth-consequence-worst-case" && (
+        <LabyrinthCompleteOverlay
+          moves={4}
+          optimalMoves={3}
+          stars={2}
+          previousBest={6}
+          isNewBest={true}
+          consequence={{ kind: "lane_progress", done: 3, total: 3 }}
           onContinue={noop}
           onRetry={noop}
           onEnterArena={noop}
