@@ -572,7 +572,12 @@ describe('<ChallengeCard>', () => {
       )
       expect(cta()).toHaveAttribute('data-cta-kind', 'action')
       expect(cta()).toHaveClass('challenge-card-cta')
-      expect(cta()).toHaveTextContent(/^Start Focus$/)
+      // The banner now carries a title AND a small subtitle, so the exact-match
+      // assertion moves to the TITLE node. What it protects is unchanged: the
+      // compact label is not silently reworded or lengthened.
+      expect(cta().querySelector('.challenge-card-cta-title')?.textContent).toBe(
+        'Start Focus',
+      )
       fireEvent.click(cta())
       expect(onFocusTap).toHaveBeenCalledTimes(1)
     })
@@ -1147,8 +1152,16 @@ describe('<ChallengeCard>', () => {
       { locale: 'es' },
     )
 
-    expect(screen.getByTestId('challenge-cta')).toHaveTextContent(
-      /^Comenzar foco$/,
+    // Title node, not the whole banner: the subtitle line lives beside it now.
+    // The point of this test is unchanged — a compact visible label must not
+    // shorten the ACCESSIBLE name, which is asserted right below.
+    expect(
+      screen
+        .getByTestId('challenge-cta')
+        .querySelector('.challenge-card-cta-title')?.textContent,
+    ).toBe('Comenzar foco')
+    expect(screen.getByTestId('challenge-cta-sub').textContent).toBe(
+      'Completa tu táctica diaria',
     )
     expect(
       screen.getByRole('button', { name: 'Comienza tu foco de hoy' }),

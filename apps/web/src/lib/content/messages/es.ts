@@ -1948,6 +1948,13 @@ const messages = {
     ctaBeatScore: "Mejora tu marca",
     ctaNewPiece: "Empieza otra pieza",
     ctaViewProgress: "Mira tu progreso",
+    subStartToday: "Completa tu táctica diaria",
+    subClaimGift: "Tienes una recompensa esperando",
+    subKeepTraining: "Tu camino sigue creciendo",
+    subTryLabyrinth: "Siguiente reto desbloqueado",
+    subBeatScore: "¿Puedes hacerlo mejor?",
+    subNewPiece: "Nuevos movimientos te esperan",
+    subViewProgress: "Mira lo que has logrado",
     // "Diaria", nunca "Diario" (se lee como periódico).
     noteDailyReturns: "Tu Diaria vuelve mañana",
     noteTrainingResumes: "El entrenamiento sigue mañana",

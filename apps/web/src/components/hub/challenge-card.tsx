@@ -23,6 +23,19 @@ const CTA_ARIA_LABEL: Partial<Record<CtaLabelKey, string>> = {
   ctaStartToday: "ctaStartAriaLabel",
 };
 
+/** Second line of the action banner, keyed by LABEL — same reason as above:
+ *  the card presents, it does not read the product's priority ladder.
+ *  `ctaTomorrow` has no entry because it never renders as an action. */
+const CTA_SUBTITLE: Partial<Record<CtaLabelKey, string>> = {
+  ctaStartToday: "subStartToday",
+  ctaClaimGift: "subClaimGift",
+  ctaKeepTraining: "subKeepTraining",
+  ctaTryLabyrinth: "subTryLabyrinth",
+  ctaBeatScore: "subBeatScore",
+  ctaNewPiece: "subNewPiece",
+  ctaViewProgress: "subViewProgress",
+};
+
 /** Flame sprites by catalog slot — same slots the standalone FocusPassport
  *  uses, so a theme re-skins the streak on both surfaces at once. */
 const FLAME_SLOT: Record<PassportSlotKind, ThemeAssetKey> = {
@@ -633,7 +646,14 @@ export function ChallengeCard({
                   "Claim your gift" and "Beat your score" says nothing, and one
                   per variant costs seven theme slots plus three pinned
                   baselines each. The label already names the thing. */}
-              {t(slot.labelKey)}
+              <span className="challenge-card-cta-copy">
+                <span className="challenge-card-cta-title">{t(slot.labelKey)}</span>
+                {CTA_SUBTITLE[slot.labelKey] ? (
+                  <span className="challenge-card-cta-sub" data-testid="challenge-cta-sub">
+                    {t(CTA_SUBTITLE[slot.labelKey]!)}
+                  </span>
+                ) : null}
+              </span>
               <ChevronIcon />
             </button>
           ) : (

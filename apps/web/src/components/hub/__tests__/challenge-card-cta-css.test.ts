@@ -95,20 +95,26 @@ describe("CTA slot — action banner (2026-08-07)", () => {
   // green and gold collapse into the same hue under deuteranopia/protanopia,
   // and ~8% of men would lose the difference between training and paying.
   it("inverts value against the offer: dark surface, light text", () => {
-    expect(action).toMatch(/background:\s*var\(--cta-primary-green-grad\)/);
-    expect(action).toMatch(/color:\s*#fff8ed/i);
+    expect(action).toMatch(/var\(--cta-primary-green-grad\)/);
+    expect(action).toMatch(/color:\s*#f4ffe4/i);
   });
 
-  // Reuses the app's primary-action tokens, so refining the green refines this
-  // banner too. A hardcoded gradient here is silent drift.
+  // The base green comes from the shared primary-action tokens, so refining the
+  // green refines this banner too. The sheen layers on top are decoration and
+  // may be literal; the SURFACE colour may not.
   it("takes its green from the shared tokens, never a literal", () => {
-    expect(action).not.toMatch(/linear-gradient\(/);
-    expect(action).toMatch(/var\(--cta-primary-green-/);
+    expect(action).toMatch(/var\(--cta-primary-green-grad\)/);
+    expect(action).toMatch(/var\(--cta-primary-green-border\)/);
+    expect(action).toMatch(/var\(--cta-primary-green-bevel\)/);
   });
 
-  it("reserves the same box as every other state", () => {
+  /* ⛔ `action` and `status` are the two states that ALTERNATE for the same
+     player, render after render, so they are the pair whose heights must match
+     — not `.principal-button-medium`, which this slot no longer uses at all
+     since the CTA became a banner. This anchor is where the CLS 0,179 lived. */
+  it("reserves the same box as the state it alternates with", () => {
     expect(declaredValue(action, "min-height")).toBe(
-      declaredValue(ruleBody(".principal-button-medium"), "min-height"),
+      declaredValue(ruleBody(".challenge-card-cta--quiet"), "min-height"),
     );
   });
 });
@@ -136,12 +142,12 @@ describe("CTA slot — reserved box (AC-6a)", () => {
   //
   // There is no shared token for the button's height, so the two declared
   // values are compared directly: drift in either one fails here.
-  it("reserves the same min-height the button declares", () => {
+  it("declares a reserved min-height at all", () => {
+    // The pairing against `--action` is asserted in the action-banner block:
+    // that is the state this one alternates with. Here we only pin that the
+    // terminal never collapses to text height.
     const quiet = declaredValue(ruleBody(".challenge-card-cta--quiet"), "min-height");
-    const button = declaredValue(ruleBody(".principal-button-medium"), "min-height");
-
     expect(quiet).not.toBeNull();
-    expect(button).not.toBeNull();
-    expect(quiet).toBe(button);
+    expect(quiet).toBe("52px");
   });
 });

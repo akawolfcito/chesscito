@@ -8878,29 +8878,69 @@ button.hud-resource-chip:active:not(:disabled) {
    saturated with white text. That survives deuteranopia and protanopia, where
    green and gold collapse into the same hue — a separator built on "green is
    not gold" would leave ~8% of men unable to tell training from paying. */
+/* Anatomy copied from `.kingdom-card-pro-cta` (the PRO banner in PLAY), in
+   green. Same structure to the pixel — title + small subtitle on the left, a
+   discreet chevron on the right — so the slot reads as a uniform zone of the
+   panel and not as a button someone dropped into it. No icon: seven meanings
+   share this slot and one fixed glyph fitting both "Claim your gift" and "Beat
+   your score" says nothing. */
 .challenge-card-cta--action {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
   width: 100%;
-  /* ⛔ 52px, NOT the offer banner's 54: the guard compares this against
-     `.principal-button-medium` so the card never changes height. */
+  /* ⛔ Matches `--quiet`, NOT the 54px of the PRO/offer banners. These two are
+     the states that ALTERNATE for the same player render after render, so they
+     are the pair that must never shift. A guard compares the two. */
   min-height: 52px;
   margin: 0;
-  padding: 6px 12px;
-  border-radius: 14px;
-  background: var(--cta-primary-green-grad);
+  padding: 5px 10px 6px 12px;
   border: 2px solid var(--cta-primary-green-border);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(214, 255, 160, 0.2), transparent 38%),
+    linear-gradient(110deg, rgba(255, 255, 255, 0.16), transparent 45%),
+    var(--cta-primary-green-grad);
   box-shadow: var(--cta-primary-green-bevel);
-  color: #fff8ed;
-  font-family: var(--font-game-action, system-ui, sans-serif);
-  font-size: 0.95rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  text-shadow: var(--cta-primary-green-text-shadow);
+  color: #f4ffe4;
+  text-align: left;
   cursor: pointer;
+  transition:
+    transform 120ms ease-out,
+    filter 120ms ease-out;
+  overflow: visible;
+}
+
+.challenge-card-cta--action .challenge-card-cta-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* Mirrors `.kingdom-card-pro-title`. */
+.challenge-card-cta--action .challenge-card-cta-title {
+  font-family: var(--font-game-action);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.05;
+  color: #f6ffe8;
+  text-shadow: var(--cta-primary-green-text-shadow);
+}
+
+/* Mirrors `.kingdom-card-pro-subtitle`, ellipsis included: these labels are
+   authored, and one long translation must truncate rather than wrap and push
+   the banner past the height the other state reserves. */
+.challenge-card-cta--action .challenge-card-cta-sub {
+  overflow: hidden;
+  font-size: 0.62rem;
+  font-weight: 650;
+  line-height: 1.15;
+  color: rgba(246, 255, 232, 0.88);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ⛔ DO NOT DROP THIS RULE. There is no hover on a phone, so sinking on press
@@ -8913,10 +8953,14 @@ button.hud-resource-chip:active:not(:disabled) {
   transform: translateY(2px);
 }
 
+/* Discreet on purpose: it marks the tap contract, it does not compete with the
+   copy. Narrower than the offer banner's, which also carries a price badge. */
 .challenge-card-cta--action .season-pass-banner-chevron {
   flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
   margin-left: auto;
-  color: rgba(255, 248, 237, 0.9);
+  color: rgba(246, 255, 232, 0.82);
 }
 
 .challenge-card-cta--quiet {

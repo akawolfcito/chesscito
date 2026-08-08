@@ -3183,6 +3183,19 @@ export const CHALLENGE_CARD_COPY = {
   ctaBeatScore: "Beat your score",
   ctaNewPiece: "Start a new piece",
   ctaViewProgress: "See your progress",
+  /* Subtitles for the action banner's second line. The Content Loop already
+     carries `subEN`/`subES` per variant, but those travel OUTSIDE next-intl and
+     the whole-bundle parity guard cannot see them — so the wording is reused,
+     the channel is not. One line each: the banner truncates with an ellipsis
+     rather than wrapping, because wrapping would push it past the height the
+     terminal band reserves. */
+  subStartToday: "Complete your daily tactic",
+  subClaimGift: "A reward is waiting for you",
+  subKeepTraining: "Your path is growing",
+  subTryLabyrinth: "Next challenge unlocked",
+  subBeatScore: "Can you do better?",
+  subNewPiece: "New moves await",
+  subViewProgress: "See what you've achieved",
   /* Two notes, because the three destination-less variants do NOT mean the same
      thing. `come-back-tomorrow` is having finished everything; the quota
      variants are hitting the session wall with content still left — naming the
