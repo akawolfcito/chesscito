@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { CandyIcon } from '@/components/redesign/candy-icon'
@@ -242,6 +242,25 @@ export function PhaseFlash({
   // Tap is armed a beat AFTER reveal so an eager tap can't skip the
   // celebration the instant it appears. Only meaningful when awaitTap.
   const [tapArmed, setTapArmed] = useState(false)
+  /* ⛔ `awaitTap` is read through a ref, and is NOT in the effect's dependency
+   *  array. It decides how a flash BEHAVES while it is on screen; it must not
+   *  be able to start a new one.
+   *
+   *  The host lowers it and opens the continuation menu in the same commit
+   *  (`handleFlashContinue` → `setAwaitFlashTap(false)`, then the held closure's
+   *  `setShowPieceComplete(true)`), and on the last exercise it never calls
+   *  `resetBoard()`, so `phase` stays `"success"`. As a dependency, that prop
+   *  change re-ran the setup, took the auto-dismiss branch, and REPLAYED the
+   *  whole celebration — confetti and lottie — underneath the menu that had
+   *  just mounted (playtest 2026-08-08). A moment does not come back.
+   *
+   *  Safe because the value is always correct on the run that matters: the host
+   *  arms `awaitTap` in the SAME commit that sets the phase, so the first run
+   *  for a given flash already sees it. And the only other way it drops is
+   *  `resetBoard()`, which also sets `phase = "ready"` — that DOES re-run the
+   *  effect, through `flash`, and hides the overlay via the `!flash` branch. */
+  const awaitTapRef = useRef(awaitTap)
+  awaitTapRef.current = awaitTap
   const flash = PHASE_FLASH[phase]
   const isSuccess = phase === 'success'
   const flashText = flash ? tFlash(flash.textKey) : ''
@@ -278,7 +297,7 @@ export function PhaseFlash({
       return () => clearTimeout(revealTimer)
     }
 
-    if (awaitTap) {
+    if (awaitTapRef.current) {
       /* Tap-to-continue: no auto-dismiss at all — the overlay holds until the
          player taps (the host defers the advance to that same tap). Arm the tap
          a beat after reveal so the celebration is seen and an eager tap can't
@@ -306,7 +325,7 @@ export function PhaseFlash({
       clearTimeout(fadeTimer)
       clearTimeout(hideTimer)
     }
-  }, [phase, flash, isSuccess, hasRescue, entryBeat, awaitTap])
+  }, [phase, flash, isSuccess, hasRescue, entryBeat])
 
   /* The consequence rides the SUCCESS flash only, and only once it is actually
      on screen — the flash holds back an entry beat, so firing on mount would

@@ -195,6 +195,50 @@ describe("PhaseFlash", () => {
       expect(onContinue).toHaveBeenCalledTimes(1);
     });
 
+    /* ⛔ Playtest 2026-08-08: the WELL DONE flash came BACK — confetti, lottie
+     * and all — underneath the "All Exercises Complete!" menu.
+     *
+     * The host lowers `awaitTap` and opens the continuation menu in the SAME
+     * commit (`handleFlashContinue` → `setAwaitFlashTap(false)` then the held
+     * closure's `setShowPieceComplete(true)`), and on the last exercise it
+     * never calls `resetBoard()`, so `phase` stays `"success"`. With `awaitTap`
+     * in the effect's dependency array that prop change re-ran the whole setup,
+     * which took the auto-dismiss branch and REPLAYED the celebration from
+     * scratch. The flash is a moment; a moment does not come back. */
+    it("does not replay when the host lowers awaitTap after the tap", () => {
+      vi.useFakeTimers();
+      const onContinue = vi.fn();
+      const { rerender } = renderWithIntl(
+        <PhaseFlash phase="success" lessonTitle="Move along the rank" awaitTap onContinue={onContinue} />,
+      );
+      act(() => {
+        vi.advanceTimersByTime(2000); // reveal + arm
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Tap to Continue" }));
+      act(() => {
+        vi.advanceTimersByTime(300); // fade-out, then onContinue fires
+      });
+      expect(onContinue).toHaveBeenCalledTimes(1);
+
+      // The host's continuation: awaitTap drops, but the phase is untouched —
+      // the board was not reset, because the continuation menu takes over.
+      rerender(
+        <PhaseFlash phase="success" lessonTitle="Move along the rank" awaitTap={false} onContinue={onContinue} />,
+      );
+      // ⚠️ The window that matters is 600ms (the entry beat) to 3700ms (the
+      // auto-dismiss). A replay is INVISIBLE to a test that jumps past 3700 —
+      // it re-reveals and hides itself again, and the assertion passes on a
+      // broken build. Sample inside the window, and at the far end.
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(screen.queryByText("Well Done!")).toBeNull();
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+      expect(screen.queryByText("Well Done!")).toBeNull();
+    });
+
     it("ignores an eager tap before the arm beat", () => {
       vi.useFakeTimers();
       const onContinue = vi.fn();
