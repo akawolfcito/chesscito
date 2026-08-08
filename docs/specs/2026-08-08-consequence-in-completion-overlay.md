@@ -116,9 +116,18 @@ que miente el jugador deja de leerlo.
 - **1A — el resolver puro.** `resolveConsequence` + tests. Sin UI.
 - **1B — cableado al overlay de desafío.** `LabyrinthCompleteOverlay` + fixture `/dev` con dos
   variantes + baselines VR.
-- **1C — cableado al overlay de ejercicio.** `result-overlay.tsx` (31,8 KB, el grande).
+- **1C — cableado al flash de ejercicio.** `PhaseFlash`, en `mission-panel-candy.tsx`.
   ⚠️ Los ejercicios son los que mueven el gate de la insignia, así que 1C es donde vive
   `badge_ready` en la práctica. **Slice aparte a propósito**, no se mezcla con 1B.
+
+  > ⛔ **Corrección (2026-08-08, al empezar 1C).** El spec decía `result-overlay.tsx`
+  > ("31,8 KB, el grande"). **Ese archivo no es el overlay de completado de ejercicio**:
+  > maneja resultados de TRANSACCIÓN (`badge` / `score` / `shop` / `error`), es decir la
+  > insignia ya reclamada o el score ya guardado. Completar un ejercicio no abre ningún
+  > overlay: pone `phase === "success"`, y eso lo pinta **`PhaseFlash`** — el "Well Done!"
+  > con las píldoras de estrellas y combo. Un `/tdd` contra el archivo del spec habría
+  > cableado la consecuencia a una superficie que el jugador ve **después de firmar**,
+  > no al resolver.
 
 ## Acceptance criteria
 
