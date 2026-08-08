@@ -4231,6 +4231,7 @@ export function ExercisesScreen({
             pieceType={selectedPiece}
             nextPiece={nextPiece ?? null}
             hasClaimedBadge={!!hasClaimedBadge}
+            hasEarnedBadge={badgeEarned}
             totalStars={totalStars}
             maxPossibleStars={maxPossibleStars}
             onNextPiece={() => {

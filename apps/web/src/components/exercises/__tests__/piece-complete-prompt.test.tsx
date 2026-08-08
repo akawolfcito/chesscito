@@ -155,3 +155,50 @@ describe("PieceCompletePrompt — CTA hierarchy", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe("PieceCompletePrompt — the subtitle must not contradict the badge modal", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /* Playtest 2026-08-08: the player cleared the gate, the milestone modal said
+   * "Badge Ready to Claim", they dismissed it, and THIS prompt said "Keep
+   * pushing. More stars unlock your badge!" seconds later. Two surfaces, one
+   * moment, opposite claims — and the second one is false twice over, because
+   * stars have never been what unlocks the badge (the gate is 80% COMPLETION;
+   * `BADGE_THRESHOLD` was removed). The bug is the branch: it forked on
+   * CLAIMED, so "earned but unclaimed" fell into the not-yet bucket. */
+
+  it("tells a player who EARNED the badge that it is waiting, not to keep pushing", () => {
+    render(
+      <PieceCompletePrompt
+        {...baseProps}
+        hasClaimedBadge={false}
+        hasEarnedBadge
+      />,
+    );
+
+    expect(screen.getByText(/badge is ready/i)).toBeInTheDocument();
+    expect(screen.queryByText(/keep pushing/i)).not.toBeInTheDocument();
+  });
+
+  it("never tells anyone that STARS unlock the badge", () => {
+    // The genuine not-yet-earned case still gets an encouragement — it just
+    // has to name the real gate, which is exercises completed.
+    render(
+      <PieceCompletePrompt
+        {...baseProps}
+        hasClaimedBadge={false}
+        hasEarnedBadge={false}
+      />,
+    );
+
+    // The invariant is the NEGATIVE one: whatever the encouragement says, it
+    // must not teach a gate the game does not have. Pinning the sentence
+    // itself would make this test a second place to edit copy.
+    expect(screen.queryByText(/stars unlock/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/more stars/i)).not.toBeInTheDocument();
+    // …and it must not claim a badge that has not been earned.
+    expect(screen.queryByText(/badge is ready/i)).not.toBeInTheDocument();
+  });
+});

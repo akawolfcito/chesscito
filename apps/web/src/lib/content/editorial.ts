@@ -350,8 +350,19 @@ export const PIECE_COMPLETE_COPY = {
     `You've mastered this piece! The ${next} awaits.`,
   subtitleFinal:
     "You've conquered every piece. Now prove it in the Arena!",
+  /** ⛔ STARS HAVE NEVER UNLOCKED THE BADGE. The gate is 80% COMPLETION
+   *  (`badgeRequiredCount`); `BADGE_THRESHOLD` was removed when the founder
+   *  decided the badge proves constancy, not skill. This line used to read
+   *  "More stars unlock your badge!" and taught the player a rule the game
+   *  does not have. Named without a number on purpose: the pool is dynamic
+   *  (the Supabase overlay appends exercises) and the gate scales with it. */
   subtitleKeepPracticing:
-    "Keep pushing. More stars unlock your badge!",
+    "Keep going. Completing more exercises earns your badge!",
+  /** Earned but not claimed. Before 2026-08-08 this case fell into
+   *  `subtitleKeepPracticing`, because the branch forked on CLAIMED rather
+   *  than EARNED — so the prompt told a player to keep pushing seconds after
+   *  the milestone modal had told them the badge was ready. */
+  subtitleBadgeWaiting: "Your badge is ready. Claim it whenever you like.",
   tryArena: "ARENA",
   nextPiece: (piece: string) => `Start ${piece}`,
   practiceAgain: "Practice Again",
@@ -3821,7 +3832,10 @@ export const PROGRESSION_COPY = {
   },
   "piece-badge-eligible": {
     title: "Badge Ready to Claim",
-    body: "Ten stars. The badge is yours.",
+    /** ⛔ Read "Ten stars. The badge is yours." until 2026-08-08 — a rule the
+     *  game has not had since the gate moved to 80% COMPLETION. A player with
+     *  24 stars and 8 solves saw it and it matched nothing on their screen. */
+    body: "Enough exercises cleared. The badge is yours.",
     primary: "Claim Badge",
     dismiss: "Later",
   },

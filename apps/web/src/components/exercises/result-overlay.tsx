@@ -694,6 +694,13 @@ type PieceCompletePromptProps = {
   pieceType: PieceKey;
   nextPiece: PieceKey | null;
   hasClaimedBadge: boolean;
+  /** Whether the completion GATE is met (`isBadgeEarned`), which is a different
+   *  question from whether the badge was claimed — claiming is an on-chain
+   *  step the player can defer forever. Without this the prompt cannot tell
+   *  "earned, waiting for you" from "not there yet", and it told both the same
+   *  thing. Defaults false so an un-updated call site keeps the old copy
+   *  rather than silently claiming a badge exists. */
+  hasEarnedBadge?: boolean;
   totalStars: number;
   /** The piece's real star ceiling — `getMaxPossibleStars(piece, catalog)`. */
   maxPossibleStars: number;
@@ -720,6 +727,7 @@ export function PieceCompletePrompt({
   pieceType,
   nextPiece,
   hasClaimedBadge,
+  hasEarnedBadge = false,
   totalStars,
   maxPossibleStars,
   onNextPiece,
@@ -737,11 +745,18 @@ export function PieceCompletePrompt({
     track("modal_open", { id: "piece-complete", piece: pieceType, stars: totalStars, next_piece: nextPiece ?? null });
   }, [pieceType, totalStars, nextPiece]);
 
+  /* ⛔ The middle branch used to be `!hasClaimedBadge → keep practicing`, which
+   * lumped "earned but not claimed" together with "not there yet". A player who
+   * had just cleared the gate got told to keep pushing SECONDS after the
+   * milestone modal told them the badge was ready (playtest 2026-08-08). Earned
+   * and claimed are different questions; the prompt now asks both. */
   const subtitle = nextPiece && hasClaimedBadge
     ? tComplete("subtitleWithNext", { next: tPiece(nextPiece) })
-    : !hasClaimedBadge
-      ? tComplete("subtitleKeepPracticing")
-      : tComplete("subtitleFinal");
+    : hasEarnedBadge && !hasClaimedBadge
+      ? tComplete("subtitleBadgeWaiting")
+      : !hasClaimedBadge
+        ? tComplete("subtitleKeepPracticing")
+        : tComplete("subtitleFinal");
 
   function handleAction(cb: () => void) {
     setExiting(true);

@@ -1345,7 +1345,8 @@ const messages = {
     title: "¡Todos los ejercicios completos!",
     subtitleWithNext: "¡Has dominado esta pieza! Te espera {next}.",
     subtitleFinal: "¡Has conquistado cada pieza. Ahora demuéstralo en la Arena!",
-    subtitleKeepPracticing: "Sigue empujando. ¡Más estrellas desbloquean tu insignia!",
+    subtitleKeepPracticing: "Sigue adelante. ¡Completar más ejercicios te gana la insignia!",
+    subtitleBadgeWaiting: "Tu insignia está lista. Reclámala cuando quieras.",
     tryArena: "ARENA",
     nextPiece: "Comenzar {piece}",
     practiceAgain: "Practicar de nuevo",
@@ -2499,7 +2500,7 @@ const messages = {
     },
     "piece-badge-eligible": {
       title: "Insignia Lista para Reclamar",
-      body: "Diez estrellas. La insignia es tuya.",
+      body: "Suficientes ejercicios completados. La insignia es tuya.",
       primary: "Reclamar Insignia",
       dismiss: "Después",
     },
