@@ -59,9 +59,13 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 ## Convenciones
 - Commits: Conventional Commits (`feat:`, `fix:`, `style:`, `refactor:`)
 - Firma de commit: `Wolfcito 🐾 @akawolfcito`
-- Tests: Vitest + RTL (unit) + Playwright (E2E + VR); **7404 passing / 598 files**
-  (baseline 2026-08-06). ✅ **El VR está 62/62** — verde entero, **verificado sin
-  `--update-snapshots`** el 2026-08-06 (`2b6dee4`, 62 passed en 2.0m).
+- Tests: Vitest + RTL (unit) + Playwright (E2E + VR); **7565 passing / 614 files**
+  (medido en `main` limpio el 2026-08-09, `38b9d6c`). ⚠️ Este número **envejece con cada
+  commit**: medilo vos en `main` limpio ANTES de empezar y compará contra esa medición,
+  no contra lo que dice acá. Lo que NO envejece es la regla: **si el conteo de archivos
+  BAJA respecto de tu propia medición, la corrida no vale** (ver más abajo por qué).
+  ✅ **El VR está 66/66** — verde entero, **verificado con `--update-snapshots=none`**
+  el 2026-08-09 (`e569d5f`, 66 passed en 2.1m).
   ⛔ **Ese 62/62 es del proyecto `minipay` y SÓLO de él.** `desktop`, `iphone-safari` y
   `minipay-360` **no tienen baselines**, y Playwright **graba el que falta y da el test por
   PASADO** (`updateSnapshots: "missing"` es su default, sin pasar ninguna flag). Una corrida
@@ -81,8 +85,11 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
   "todo verde" con `exit 1`, y el error vive en `Unhandled Errors`, en la **cola** del log.
   El síntoma que lo delata es el **conteo de ARCHIVOS**, no el de tests: el 2026-08-07 fue
   bajando 610 → 605 → 604 mientras la duración subía de 142 s a 506 s; con la máquina libre
-  volvió a **610 / 7504 en 142 s**. **Si el conteo de archivos no da 610, no confíes en la
-  corrida** — y nunca la reportes como número de commit.
+  volvió al conteo entero en 142 s. **Si el conteo de archivos baja respecto de tu propia
+  medición en `main` limpio, no confíes en la corrida** — y nunca la reportes como número de
+  commit. ⛔ **No pinees la constante acá**: este archivo llegó a declarar 598 en un lado y
+  610 en otro estando el real en 614, y en disco hay 647 archivos de test (los patrones de
+  `include` no coinciden con un `find`). Ningún número se deriva estáticamente: se mide.
   Diagnóstico de por qué había 49 rojas: `docs/audits/2026-08-06-vr-red-diagnosis.md`.
   ⛔ **El `webServer.env` del config PINEA `NEXT_PUBLIC_CHAIN_ID=42220` — no lo saques.**
   En Next las variables **del shell ganan sobre `.env*`**, y un shell con
