@@ -76,6 +76,23 @@ afterEach(() => {
 });
 
 describe("<HubLiteScaffold>", () => {
+  // The weekly row anchors on `todayUtc()` by default, which makes any
+  // screenshot of this scaffold rot at UTC midnight — that is how the four
+  // `vr18-learn-hub-*` baselines went red on their own (recorded Aug 8 UTC,
+  // read back on Aug 9 UTC). `ChallengeCard` already accepts a pinned
+  // `today`; the scaffold has to forward it or fixtures cannot reach it.
+  it("forwards a pinned `today` so the weekly row stops following the clock", () => {
+    const { container } = render(
+      <HubLiteScaffold {...baseProps({ today: "2026-08-08" })} />,
+    );
+
+    const marked = container.querySelector(
+      '[data-testid="challenge-week-day"][data-state="today-pending"], [data-testid="challenge-week-day"][data-state="today-done"]',
+    );
+    expect(marked).not.toBeNull();
+    expect(marked).toHaveAttribute("data-date", "2026-08-08");
+  });
+
   it("exposes Learn branding without changing the training composition", () => {
     render(<HubLiteScaffold {...baseProps()} />);
 

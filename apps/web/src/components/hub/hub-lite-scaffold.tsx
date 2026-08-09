@@ -71,6 +71,15 @@ export type HubLiteScaffoldProps = {
   /** Re-launches the intro mini-tour from the Focus Passport `?`. Optional so
    *  the scaffold still mounts in `/dev` probes that don't wire the tour. */
   onReplayTour?: () => void;
+  /** UTC "YYYY-MM-DD" anchoring the weekly row. Forwarded to `ChallengeCard`,
+   *  which defaults to `todayUtc()` when omitted — production omits it.
+   *
+   *  ⚠️ Fixtures that get SCREENSHOTTED must pin it. Left on the real clock,
+   *  the "today" column advances at UTC midnight and every baseline of this
+   *  scaffold goes red on its own: that is exactly how the four
+   *  `vr18-learn-hub-*` baselines rotted (recorded Aug 8 UTC, read back on
+   *  Aug 9 UTC) with no code change behind it. */
+  today?: string;
   /** Effective PRO subscriber flag from the global entitlement decision. */
   isPro: boolean;
   /** Opens the account surface. Routes to /exercises?sheet=account (the
@@ -102,6 +111,7 @@ export function HubLiteScaffold({
   primaryFocus,
   rewardTiles,
   onReplayTour,
+  today,
 }: HubLiteScaffoldProps) {
   const t = useTranslations("HUB_LITE_COPY");
   const tHud = useTranslations("HUD_COPY");
@@ -212,6 +222,7 @@ export function HubLiteScaffold({
           progress={progress}
           onJoinChallenge={onJoinChallenge}
           shields={shields}
+          today={today}
           // Tapping the flame/streak block opens today's Daily, same as the
           // corner gift, through the SAME mounted HubDailyTile — the container
           // owns that instance and wires both. The primary CTA intentionally

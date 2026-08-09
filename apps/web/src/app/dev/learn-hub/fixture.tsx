@@ -46,10 +46,29 @@ const PEONES_SETTLED: PeonesBalanceState = {
 
 /** One tile per state the rail can show, so a regression in any of the four
  *  skins breaks a photo. Hand-written on purpose (see the note above). */
+/** ⛔ The weekly row anchors on `todayUtc()` unless pinned, and this fixture
+ *  exists to be PHOTOGRAPHED. Left on the real clock the "today" column walks
+ *  one step every UTC midnight and each `vr18-learn-hub-*` baseline goes red
+ *  with no code change behind it — which is exactly what happened between
+ *  Aug 8 and Aug 9 2026 UTC, one day after they were recorded.
+ *
+ *  A Wednesday on purpose: mid-week leaves days on BOTH sides of "today", so
+ *  one screenshot covers the past and future columns as well as today's. Any
+ *  date works for pinning — what matters is that it never moves again. */
+const PINNED_TODAY = "2026-08-05";
+
 const REWARD_TILES: RewardTile[] = [
   { id: "rook", state: "claimed", onTap: noop },
   { id: "bishop", state: "claimable", onTap: noop },
-  { id: "knight", state: "progress", onTap: noop },
+  // The only tile that carries a counter — `progress` is the only state that
+  // can. Hand-written numbers on purpose: this fixture must not read the
+  // authored catalog, or the baseline moves every time content grows.
+  {
+    id: "knight",
+    state: "progress",
+    progress: { completed: 3, required: 8 },
+    onTap: noop,
+  },
   { id: "pawn", state: "locked", onTap: noop },
   { id: "queen", state: "locked", onTap: noop },
   { id: "king", state: "locked", onTap: noop },
@@ -243,6 +262,7 @@ export function LearnHubFixture({ variant }: { variant: LearnHubVariant }) {
       rewardTiles={REWARD_TILES}
       isPro={variant === "pro"}
       onAccountTap={noop}
+      today={PINNED_TODAY}
     />
   );
 }
