@@ -259,6 +259,50 @@ desaparición del chip al cruzar el gate es intencional (Behavior 5).
 
 ---
 
+## Resultado de la implementación (2026-08-09, `46f31f9` + `e569d5f`)
+
+**Entregado y verde**: 614 archivos / 7565 tests, `exit 0`, mismo conteo de archivos que el
+baseline medido en `main` limpio antes de empezar (614/7557). `tsc --noEmit` limpio. VR
+**66 passed** con `--project=minipay --update-snapshots=none`.
+
+### Lo que el spec dijo mal
+
+- **AC-2, el blast radius estaba equivocado.** Predije `hub-scaffold.test.tsx`,
+  `mastery-dashboard.test.tsx` y `hub-lite-scaffold.test.tsx`. No rompió ninguno: reciben
+  `RewardTile[]` ya armado y no pasan por la derivación. Los 13 reales fueron
+  `learn-hub-client.tsx:416`, `catalog-injection.test.ts:79` y 11 en el test de la derivación.
+- **AC-12 pedía trabajo que no hacía falta.** No hubo variant nuevo ni cambio de allowlist: el
+  fixture ya tenía una baldosa en `progress` (knight) y `REWARD_TILES` es el mismo const para
+  los cuatro variants, así que el chip entró en las cuatro baselines de una.
+- **AC-14 no podía pinear un número, y con razón.** El real es **614**; CLAUDE.md declaraba 598
+  y 610, y en disco hay 647 archivos de test. Ninguno de los tres era el correcto.
+
+### Desvíos deliberados
+
+- **⛔ No se implementó el clamp** que pedía Edge cases. Es inalcanzable: para que el conteo
+  estrecho supere el gate, el amplio tendría que superarlo también (amplio ≥ estrecho), y ahí
+  el estado ya es `claimable` y no hay chip. Sería código muerto que ningún test puede tocar.
+  Queda documentado en el tipo en vez de escrito.
+- **La clave i18n NO pudo ir dentro de `REWARD_COPY`.** `RewardTileId = keyof typeof
+  REWARD_COPY`: cualquier clave agregada ahí se vuelve un id de baldosa válido. Vive en
+  `REWARD_PROGRESS_COPY`, y es **una** clave compartida con `{piece}` en vez de siete — las
+  siete `ariaLabel` existentes son per-pieza porque su frase difiere de verdad; ésta no.
+
+### Un caso que el spec no contempló
+
+`loadStarsByIdPerPiece` **ignora la forma array** del storage. `loadCompletedPerPiece` acepta
+array u objeto, pero un array no trae ids con los que intersectar: contarlo daría exactamente
+el número irreconciliable que la decisión del founder vino a evitar. Esa pieza se queda sin
+contador en vez de mostrar uno inventado.
+
+### Hallazgo aparte, ya arreglado (`e569d5f`)
+
+Las cuatro baselines `vr18-learn-hub-*` **seguían el reloj real** y se pudrían cada medianoche
+UTC — defecto preexistente, no del Paso 2. Ver el commit; el fix pinea la fecha en el fixture y
+`HubLiteScaffold` ahora reenvía el `today` que `ChallengeCard` ya exponía para eso.
+
+---
+
 ## Cómo se valida (del brief, no negociable)
 
 ⛔ **No con métricas** — 443 jugadores no dan poder estadístico; sería ruido con forma de
