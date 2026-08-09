@@ -1,2 +1,5 @@
 .vercel
 .playwright-cli/
+
+# Screenshot output of e2e/rook-rails-shots.spec.ts — regenerable, ~3 MB per run.
+rook-rails-shots/
