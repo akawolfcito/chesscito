@@ -181,6 +181,47 @@ simple vista. Lo resolvió medir (`getBoundingClientRect` + ancestro que recorta
 el elemento** con `locator.screenshot()`. Mirar la foto entera no alcanza para elementos
 chicos; hay que recortar.
 
+### El banner de guardado — cerrado (`37c0baf`)
+
+El founder lo reencuadró más fuerte de lo que había propuesto Sally: no era sólo *dónde* va,
+era *qué es*.
+
+> *"el save no debería ser obligatorio para pasar, sino un premio"*
+
+Eran **dos** problemas y sólo uno era posición:
+
+1. **Estaba en el flujo normal**, así que corría el tablero hacia abajo cada vez que la red
+   hipaba. Es un mensaje que **no bloquea nada** — el intento vive seguro en la cola. Ahora
+   `fixed`. (`fixed` y no `absolute` porque el dock vive DENTRO del panel de misión; y `fixed`
+   se comporta dentro del bezel porque `.desktop-app-frame` lleva `translateZ(0)`.)
+2. **Redactaba una victoria como una deuda.** *"Your last attempt hasn't been saved yet"* le
+   dice al jugador que debe algo por haber ganado. Ahora nombra lo ganado y ofrece cobrarlo:
+   *"2 plays ready to save"*, con botón **Save** — *Retry* nombra un fallo que él no cometió.
+
+⚠️ **El `bottom: 168px` es una estimación, no una medición.** El banner sólo aparece con cola
+pendiente y ningún fixture del VR la tiene, así que **no hay foto que lo cubra**. Verificar en
+device (modo avión un segundo al completar un ejercicio).
+
+⚠️ De paso apareció que `attempt-assemblers.test.tsx` buscaba el botón por
+`/retry saving/` — un test del **contrato de replay** pineando la redacción. Ahora llega por
+el `testid` de la línea.
+
+### ⛔ La lección de método más cara de la sesión
+
+Una corrida intermedia del VR dio **3 rojas**: `hub-clean`, `hub-shop-sheet-open` y
+`frame-tablet-600`. Ninguna era del cambio: el founder había vuelto a levantar su `pnpm dev`
+en 3002 y Playwright lo **adoptó** (`reuseExistingServer: !CI`), sin el pin de
+`NEXT_PUBLIC_CHAIN_ID`.
+
+Con el 3002 libre: **67 verdes**.
+
+> Lo que evitó romper código sano persiguiendo un fantasma **no fue saber la respuesta**: fue
+> negarse a diagnosticar con datos que se sabían contaminados. Con un server adoptado, ni el
+> rojo prueba una regresión ni un verde probaría lo contrario.
+
+(Error propio asociado: capturé el log con `tail -12` y me quedé sin el detalle de las rojas.
+Cuando una corrida puede fallar, capturar el log entero.)
+
 ---
 
 ## Open questions
@@ -196,7 +237,10 @@ chicos; hay que recortar.
 - **El chip dice `0/8` a un jugador nuevo.** En el hub evitamos `0/N` porque seis ceros leen
   como deuda; acá es uno solo, sobre la pieza que está por jugar, y lee más como meta. Queda
   mostrándose. Si se prefiere que aparezca recién con el primer ejercicio hecho, es una línea.
-- **⛔ PENDIENTE — el banner de guardado.** Es el hallazgo del founder que NO se atendió.
+- ~~**PENDIENTE — el banner de guardado.**~~ ✅ **Cerrado en `37c0baf`** (ver arriba). Se fue
+  más lejos que la recomendación de Sally: el founder lo reencuadró de *dónde ponerlo* a *qué
+  es*, y el resultado no fue un punto discreto sino una línea flotante que **ofrece**. La
+  recomendación original queda acá como referencia de lo que se descartó: Es el hallazgo del founder que NO se atendió.
   `.attempt-save-status` (`globals.css:17041`) es `display:flex` en el flujo normal, así que
   empuja toda la pantalla hacia abajo. Sally recomendó: **nada** mientras guarda (no pide
   acción y se resuelve solo) y un **punto rojo en la píldora de estrellas** cuando falla —

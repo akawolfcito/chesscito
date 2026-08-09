@@ -90,6 +90,16 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
   commit. ⛔ **No pinees la constante acá**: este archivo llegó a declarar 598 en un lado y
   610 en otro estando el real en 614, y en disco hay 647 archivos de test (los patrones de
   `include` no coinciden con un `find`). Ningún número se deriva estáticamente: se mide.
+  ⛔ **La tolerancia de píxeles esconde todo elemento chico — un verde NO significa "no
+  cambió nada".** `hub-clean` corre con `maxDiffPixelRatio: 0.005`, que sobre 390×844 son
+  **~1.646 píxeles**. Un chip/punto/badge típico mide ~450: la tolerancia es **3,7× el
+  elemento entero**. El 2026-08-09 se agregó un contador visible a `/exercises` y la suite
+  dio **67 passed** con la pantalla genuinamente cambiada; `--update-snapshots` **ni siquiera
+  regrabó** la baseline, porque sólo reescribe cuando la comparación falla y ésta nunca
+  falló. **Todo chip, punto o badge se ancla con una ASERCIÓN DE DOM, nunca con la foto.**
+  ⚠️ Y para juzgar un elemento chico no alcanza con mirar la captura completa (23 px en
+  390×844 no se distinguen): medir con `getBoundingClientRect` y recortar con
+  `locator.screenshot()`.
   Diagnóstico de por qué había 49 rojas: `docs/audits/2026-08-06-vr-red-diagnosis.md`.
   ⛔ **El `webServer.env` del config PINEA `NEXT_PUBLIC_CHAIN_ID=42220` — no lo saques.**
   En Next las variables **del shell ganan sobre `.env*`**, y un shell con
