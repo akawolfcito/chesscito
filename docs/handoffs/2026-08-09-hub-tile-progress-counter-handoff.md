@@ -129,6 +129,60 @@ faltaba era que `HubLiteScaffold` lo reenviara. El fixture ahora fija `2026-08-0
 
 ---
 
+## Segunda mitad — lo que salió de que el founder abriera la app
+
+Después de entregar el Paso 2 el founder recorrió la app y encontró tres cosas. Las tres eran
+reales, y **ninguna la habría encontrado un test** — de ahí
+[[feedback_validate_it_yourself_dont_defer_to_the_founder]].
+
+| Commit | Qué |
+|---|---|
+| `e259a13` | `docs(claude)` — el baseline de tests se mide, no se pinea |
+| `dc88581` | `fix(layout)` — el marco de la app desaparecía entre 391 y 767 px |
+| `643c80d` | `feat(exercises)` — el contador viaja con el jugador hasta la pieza |
+
+### El marco que desaparecía
+
+`DesktopAppFrame` monta sus divs en toda ruta de app, pero **sólo el media query les daba
+forma, y arrancaba en 768px**. Entre 391 y 767 los divs existían sin estilo y el
+`background-size: cover` del body estiraba el arte a pantalla completa detrás de una columna
+clavada en 390px. Parecía layout roto; era un hueco de breakpoint. Ahora 481px.
+
+⚠️ **Esa banda no la medía ningún proyecto de VR** (todos corren a ancho de teléfono). Se
+agregó `frame-tablet-600` con `test.use({ viewport })` **dentro del proyecto `minipay`** — el
+único con baselines reales — y **afirma** que el bezel existe y mide < 600px, no sólo lo
+fotografía.
+
+### El contador en `/exercises`
+
+Chip flotante sobre la píldora de pieza, no texto adentro. La razón la encontró el founder:
+esa píldora **ya no sostiene el texto que tiene** — su label rinde con `min-w-0 truncate` en
+una fila que compite con estrellas/escudo/racha/peones, así que al crecer esos números el
+nombre de la pieza es el que cede. El look vive en **una clase compartida**
+(`progress-count-chip`) con la baldosa del hub; cada contexto pone sólo su posición.
+
+### ⛔ El punto ciego del VR que esto destapó
+
+`hub-clean` tolera `maxDiffPixelRatio: 0.005` → sobre 390×844 son **~1.646 píxeles**. El chip
+mide **~448**. La tolerancia es **3,7× el elemento entero**.
+
+Consecuencias medidas, no supuestas:
+
+1. La corrida dio **67 passed** con la pantalla genuinamente cambiada.
+2. `--update-snapshots` **ni siquiera regrabó** la baseline: sólo reescribe cuando la
+   comparación falla, y ésta nunca falló.
+
+> **Todo chip, punto o badge de ese tamaño vive en ese punto ciego.** Anclarlo con una
+> aserción de DOM, nunca con la foto. Así quedó el chip en `hub-clean`.
+
+⚠️ Y un tropiezo propio que vale la pena recordar: al ver la captura completa dije "el chip no
+se ve" y estaba equivocado — un elemento de 23px en una captura de 390×844 no se distingue a
+simple vista. Lo resolvió medir (`getBoundingClientRect` + ancestro que recorta) y **recortar
+el elemento** con `locator.screenshot()`. Mirar la foto entera no alcanza para elementos
+chicos; hay que recortar.
+
+---
+
 ## Open questions
 
 - **¿El chip debería llamar la atención cuando cambia?** Hoy no anima, a propósito: el Paso 1
@@ -139,3 +193,14 @@ faltaba era que `HubLiteScaffold` lo reenviara. El fixture ahora fija `2026-08-0
   retrocede en términos relativos sin que el jugador haya perdido nada.
 - **¿Hay otros fixtures de VR atados al reloj?** Se arregló el de `learn-hub`. No se auditaron
   los demás; `vr17-play-hub-*` es el candidato obvio a mirar.
+- **El chip dice `0/8` a un jugador nuevo.** En el hub evitamos `0/N` porque seis ceros leen
+  como deuda; acá es uno solo, sobre la pieza que está por jugar, y lee más como meta. Queda
+  mostrándose. Si se prefiere que aparezca recién con el primer ejercicio hecho, es una línea.
+- **⛔ PENDIENTE — el banner de guardado.** Es el hallazgo del founder que NO se atendió.
+  `.attempt-save-status` (`globals.css:17041`) es `display:flex` en el flujo normal, así que
+  empuja toda la pantalla hacia abajo. Sally recomendó: **nada** mientras guarda (no pide
+  acción y se resuelve solo) y un **punto rojo en la píldora de estrellas** cuando falla —
+  ahí y no en Account, porque lo que no se guardó es exactamente ese número. El vocabulario de
+  puntos ya existe (`globals.css:3616-3631`). ⚠️ El trade: se pierde prominencia frente al
+  banner actual, y el doc original lo eligió persistente justamente porque un intento fallido
+  antes era invisible.
