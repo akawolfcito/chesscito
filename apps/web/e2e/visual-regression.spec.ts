@@ -155,6 +155,18 @@ test.describe("visual regression — Step 1 baselines", () => {
       timeout: 30_000,
     });
     await settle(page, 600);
+
+    /* ⚠️ ASSERTED, because the screenshot CANNOT see it.
+     *
+     * `maxDiffPixelRatio: 0.005` on a 390x844 shot tolerates ~1,646 changed
+     * pixels. The piece-trigger progress chip is roughly 28x16 = ~448 px —
+     * less than a third of the tolerance. Adding it moved this baseline by an
+     * amount the comparison is designed to ignore, so the case stayed green
+     * while the screen genuinely changed. Any small chip, dot or badge lives
+     * in that same blind spot: lock it with the DOM, not with pixels. */
+    const chip = page.getByTestId("piece-picker-progress");
+    await expect(chip).toHaveText(/^\d+\/\d+$/);
+
     await expect(page).toHaveScreenshot("hub-clean.png", HUB_CLEAN_OPTS);
   });
 

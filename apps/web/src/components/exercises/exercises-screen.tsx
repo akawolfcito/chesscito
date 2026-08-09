@@ -847,6 +847,7 @@ export function ExercisesScreen({
     isLastExercise,
     totalStars,
     badgeEarned,
+    badgeProgress,
     isReplay,
     visibleExerciseIds,
     completeExercise,
@@ -3772,6 +3773,7 @@ export function ExercisesScreen({
         <MissionPanelCandy
           selectedPiece={selectedPiece}
           onOpenPieceSheet={() => setBadgeSheetOpen(true)}
+          pieceProgress={badgeProgress}
           phase={storeOpen ? "ready" : phase}
           awaitTapToContinue={awaitFlashTap}
           onFlashContinue={handleFlashContinue}

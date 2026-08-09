@@ -6066,10 +6066,15 @@ button.hud-resource-chip:active:not(:disabled) {
    would announce 0/N on first paint) never changes the tile's height.
    No entry animation on purpose: the completion overlay already celebrated
    this consequence, and the brief forbids celebrating the same thing twice. */
-.reward-tile-progress {
+/* THE LOOK, in one place. Two surfaces wear this chip — the hub reward tile and
+   the /exercises piece trigger — and the whole point is that the player sees
+   the SAME object in both: he taps a tile showing 3/8 and the 3/8 is still
+   there when he arrives. Two copies of these declarations would be invisible
+   to every behavioural test: the original changes, the copy does not, and
+   nobody finds out until the two screens visibly disagree.
+   Position is NOT here — each context anchors it. */
+.progress-count-chip {
   position: absolute;
-  top: -3px;
-  right: -3px;
   z-index: 3;
   display: flex;
   align-items: center;
@@ -6086,6 +6091,25 @@ button.hud-resource-chip:active:not(:disabled) {
   /* Tabular figures so 3/4 and 8/10 do not jitter the chip width. */
   font-variant-numeric: tabular-nums;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.reward-tile-progress {
+  top: -3px;
+  right: -3px;
+}
+
+/* The trigger is a pill in a row that clips nothing, so the chip can sit proud
+   of its top-right corner the same way it does on the tile. `relative` here
+   because the pill does not otherwise establish a containing block. */
+.piece-picker-trigger {
+  position: relative;
+  overflow: visible;
+}
+
+.piece-picker-progress {
+  top: -6px;
+  right: -6px;
 }
 
 .reward-tile.is-compact .reward-tile-progress {

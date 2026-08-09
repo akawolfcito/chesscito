@@ -16,6 +16,15 @@ type Props = {
   onClick: () => void
   /** Optional compact label for larger integrated header slots. */
   showLabel?: boolean
+  /** How far this piece is toward its badge. Renders the same corner chip the
+   *  hub tile shows, so the player recognises it instead of learning it.
+   *
+   *  ⚠️ A FLOATING chip, not more text inside the pill: the pill's own label
+   *  already renders `min-w-0 truncate` in a row competing with the
+   *  stars/shield/streak/peones pills, so as those numbers grow the piece NAME
+   *  is what gives way. Adding the count inside would hand it to the same
+   *  squeeze. Omitted → no chip. */
+  progress?: { completed: number; required: number }
 }
 
 /**
@@ -28,20 +37,31 @@ export function PiecePickerTrigger({
   selectedPiece,
   onClick,
   showLabel = false,
+  progress,
 }: Props) {
   const tPiece = useTranslations('PIECE_LABELS')
   const tRail = useTranslations('PIECE_RAIL_COPY')
+  const tProgress = useTranslations('REWARD_PROGRESS_COPY')
   const pieceLabel = tPiece(selectedPiece)
+  // The chip is aria-hidden, so the count has to reach assistive tech here or
+  // not at all. Same shared message the hub tile uses.
+  const ariaLabel = progress
+    ? tProgress('ariaLabel', {
+        piece: pieceLabel,
+        completed: progress.completed,
+        required: progress.required,
+      })
+    : tRail('triggerAriaFormat', { piece: pieceLabel })
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={tRail('triggerAriaFormat', { piece: pieceLabel })}
+      aria-label={ariaLabel}
       aria-haspopup="dialog"
       className={
         showLabel
-          ? 'candy-tray-pill min-h-[36px]'
-          : 'flex h-11 w-11 items-center justify-center rounded-full border transition-all active:scale-[0.97]'
+          ? 'candy-tray-pill min-h-[36px] piece-picker-trigger'
+          : 'flex h-11 w-11 items-center justify-center rounded-full border transition-all active:scale-[0.97] piece-picker-trigger'
       }
       style={
         showLabel
@@ -81,6 +101,15 @@ export function PiecePickerTrigger({
           ▾
         </span>
       )}
+      {progress ? (
+        <span
+          aria-hidden="true"
+          data-testid="piece-picker-progress"
+          className="progress-count-chip piece-picker-progress"
+        >
+          {progress.completed}/{progress.required}
+        </span>
+      ) : null}
     </button>
   )
 }

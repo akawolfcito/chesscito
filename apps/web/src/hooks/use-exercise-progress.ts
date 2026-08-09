@@ -266,10 +266,23 @@ export function useExerciseProgress(
   const total = calculateTotalStarsFromIdMap(piece, progress.stars, catalog);
   // Badge gate is COMPLETION, not stars: 80% of the pool with ≥1★ each.
   // `total` stays for reward/tiebreak display only.
-  const badgeEarned = isBadgeEarned(
-    completedExerciseCount(piece, progress.stars, catalog),
-    pool.length,
-  );
+  const completedCount = completedExerciseCount(piece, progress.stars, catalog);
+  const badgeEarned = isBadgeEarned(completedCount, pool.length);
+  /** The visible counter, same numbers the hub tile shows. `required` is the
+   *  GATE, not the pool size — "8/10" with the badge already earned is a
+   *  number the player cannot reconcile with anything on screen.
+   *
+   *  ⛔ `undefined` until `hydrated`. `progress` starts at `emptyProgress`
+   *  and the real stars arrive in a post-mount effect, so an ungated counter
+   *  paints "0/8" on a player who has done 3 and then snaps — the same visible
+   *  lie the hub tile guards against with `isProgressHydrated`. A state can
+   *  survive being wrong for one frame; a NUMBER cannot. */
+  const badgeProgress = hydrated
+    ? {
+        completed: completedCount,
+        required: badgeRequiredCount(pool.length),
+      }
+    : undefined;
   const isReplay = (progress.stars[currentExercise.id] ?? 0) > 0;
 
   /** Rotation Engine (slice E) — the set of exerciseIds to surface today,
@@ -612,6 +625,7 @@ export function useExerciseProgress(
     isLastExercise,
     totalStars: total,
     badgeEarned,
+    badgeProgress,
     isReplay,
     /** Rotation Engine (slice E) — exerciseIds to surface today, or null
      *  when rotation is disabled (legacy full-pool navigation). */

@@ -32,6 +32,9 @@ type MissionPanelProps = {
    *  no longer opens a local picker — it asks the host to open the
    *  badges sheet, which owns the journey + switch grid. */
   onOpenPieceSheet: () => void
+  /** Forwarded to the piece trigger's corner chip — the same "3/8" the hub
+   *  tile shows, so the number survives the trip between screens. */
+  pieceProgress?: { completed: number; required: number }
   phase: 'ready' | 'success' | 'failure'
   targetLabel: string
   score: string
@@ -490,6 +493,7 @@ export function PhaseFlash({
 export function MissionPanelCandy({
   selectedPiece,
   onOpenPieceSheet,
+  pieceProgress,
   phase,
   targetLabel,
   score,
@@ -674,6 +678,7 @@ export function MissionPanelCandy({
               selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
               onClick={onOpenPieceSheet}
               showLabel
+              progress={pieceProgress}
             />
           </div>
           <div className="shrink-0 min-w-[4.5rem]">

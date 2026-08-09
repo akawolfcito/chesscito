@@ -176,7 +176,7 @@ function RewardTileButton({
         <span
           aria-hidden="true"
           data-testid="reward-tile-progress"
-          className="reward-tile-progress"
+          className="progress-count-chip reward-tile-progress"
         >
           {tile.progress.completed}/{tile.progress.required}
         </span>
