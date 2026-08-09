@@ -167,6 +167,16 @@ test.describe("visual regression — Step 1 baselines", () => {
     const chip = page.getByTestId("piece-picker-progress");
     await expect(chip).toHaveText(/^\d+\/\d+$/);
 
+    /* ⛔ And the numerator must not pass the denominator. The shape regex above
+     * was green on "9/8" — the counter's denominator is the badge GATE (80% of
+     * the pool) while its numerator counted the whole pool, so every piece
+     * overshot once past the gate (bishop 9/8, the rest 10/8). A fraction is
+     * the one thing a shape check cannot verify by shape. */
+    const [done, gate] = ((await chip.textContent()) ?? "")
+      .split("/")
+      .map(Number);
+    expect(done).toBeLessThanOrEqual(gate);
+
     await expect(page).toHaveScreenshot("hub-clean.png", HUB_CLEAN_OPTS);
   });
 

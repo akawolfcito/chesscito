@@ -278,10 +278,22 @@ export function useExerciseProgress(
    *  lie the hub tile guards against with `isProgressHydrated`. A state can
    *  survive being wrong for one frame; a NUMBER cannot. */
   const badgeProgress = hydrated
-    ? {
-        completed: completedCount,
-        required: badgeRequiredCount(pool.length),
-      }
+    ? (() => {
+        const required = badgeRequiredCount(pool.length);
+        /** ⛔ The NUMERATOR stops at the gate too. `completedCount` counts the
+         *  whole pool, and the gate is 80% of it, so a player past the gate
+         *  rendered "9/8" (bishop, pool 9) or "10/8" (every other piece, pool
+         *  10) — a fraction that reads as broken (founder screenshot,
+         *  2026-08-09). The hub tile never showed it because its counter only
+         *  renders in the `progress` state and the tile flips to `claimable`
+         *  at the gate; `/exercises` has no such cut.
+         *
+         *  Clamping instead of hiding: 8/8 pairs with the CLAIM dot already in
+         *  the dock and keeps the chip where the player learned to find it.
+         *  ⚠️ Display only — `completedCount` and `badgeEarned` above still
+         *  read the true pool, so the gate itself does not move. */
+        return { completed: Math.min(completedCount, required), required };
+      })()
     : undefined;
   const isReplay = (progress.stars[currentExercise.id] ?? 0) > 0;
 
