@@ -1,5 +1,10 @@
 import type { RewardTile } from "@/components/kingdom/reward-column";
-import { EXERCISES, isBadgeEarned } from "@/lib/game/exercises";
+import {
+  EXERCISES,
+  badgeRequiredCount,
+  completedExerciseCount,
+  isBadgeEarned,
+} from "@/lib/game/exercises";
 import type { ExerciseCatalog } from "@/lib/game/rotation";
 import type { PieceId } from "@/lib/game/types";
 
@@ -21,8 +26,18 @@ export type RewardDerivationInput = {
    *  (loading state). */
   badgesClaimed: Partial<Record<PieceId, boolean>>;
   /** Distinct exercises completed (≥1★) per piece. Missing keys default to 0.
-   *  The badge gate is COMPLETION, not stars (founder 2026-07-17). */
+   *  The badge gate is COMPLETION, not stars (founder 2026-07-17).
+   *
+   *  ⚠️ This is the WIDE count — every positive entry in storage, retired ids
+   *  included, because mastery is never revoked when internal ids change. It
+   *  drives the STATE only. The visible counter uses `starsByIdPerPiece`. */
   completedPerPiece: Partial<Record<PieceId, number>>;
+  /** Raw id→stars map per piece. Feeds the visible counter through
+   *  `completedExerciseCount`, which intersects with the live catalog — the
+   *  same function the drawer uses, so the tile and the drawer agree by
+   *  construction (founder 2026-08-09: "the tile says what the drawer says").
+   *  Missing keys mean no stored progress for that piece. */
+  starsByIdPerPiece: Partial<Record<PieceId, Record<string, number>>>;
   /** Tap handler forwarded onto each tile. The container decides routing
    *  per `(piece, state)`. */
   onTileTap?: (piece: PieceId) => void;
@@ -30,6 +45,12 @@ export type RewardDerivationInput = {
    *  (80% of the pool) and gates the `hasExercises` check so a live overlay
    *  addition can flip a "soon" piece on. */
   catalog?: ExerciseCatalog;
+  /** ⛔ REQUIRED, no default. `completedPerPiece` starts `{}` and fills in a
+   *  mount effect (`use-hub-data.ts:283-291`), so on first paint every piece
+   *  reads 0. States survived that because a state asserts nothing numeric —
+   *  a counter does, and "0/4" on a piece with 3 done is a visible lie.
+   *  No default so `tsc` points at every call site that forgot it. */
+  isHydrated: boolean;
 };
 
 /** Pure derivation: reduces wallet+local state into the up-to-N reward
@@ -50,8 +71,10 @@ export function deriveRewardTiles(input: RewardDerivationInput): RewardTile[] {
   const {
     badgesClaimed,
     completedPerPiece,
+    starsByIdPerPiece,
     onTileTap,
     catalog = EXERCISES,
+    isHydrated,
   } = input;
 
   const tiles: RewardTile[] = [];
@@ -90,6 +113,20 @@ export function deriveRewardTiles(input: RewardDerivationInput): RewardTile[] {
       id: piece,
       state,
       onTap: onTileTap ? () => onTileTap(piece) : undefined,
+      // Only `progress` carries a counter, and only once hydrated. `claimed`
+      // has its check, `claimable` its dot, and `locked` has nothing honest
+      // to count.
+      progress:
+        state === "progress" && isHydrated
+          ? {
+              completed: completedExerciseCount(
+                piece,
+                starsByIdPerPiece[piece] ?? {},
+                catalog,
+              ),
+              required: badgeRequiredCount(catalog[piece].length),
+            }
+          : undefined,
     });
 
     priorMastered = mastered;

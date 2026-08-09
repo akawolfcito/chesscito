@@ -9,12 +9,33 @@ import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 export type RewardTileId = keyof typeof REWARD_COPY;
 export type RewardTileState = "claimed" | "claimable" | "progress" | "locked";
 
+/** How far the player is toward this piece's badge.
+ *
+ *  ⚠️ `required` is the GATE — `badgeRequiredCount(poolSize)`, 80% rounded up —
+ *  NOT the pool size. A pool of 10 gates at 8: showing "8/10" while the badge
+ *  is already earned is a number the player cannot reconcile with anything.
+ *
+ *  ⚠️ `completed` counts only exercises that exist in the CURRENT catalog
+ *  (`completedExerciseCount`), which is what the drawer lets the player count
+ *  with their finger. The badge gate deliberately counts wider — retired ids
+ *  never revoke mastery — and that gap is never visible: once the wide count
+ *  crosses the gate the tile is `claimable` and this chip is gone. */
+export type RewardTileProgress = {
+  completed: number;
+  required: number;
+};
+
 export type RewardTile = {
   id: RewardTileId;
   state: RewardTileState;
   /** Fires on tile tap regardless of state. The parent decides what to do
    *  per state (claim flow for `claimable`, unlock-hint sheet for `locked`). */
   onTap?: () => void;
+  /** ⚠️ Named `progress` like the STATE of the same name, and like the
+   *  `ariaState` that `claimed` maps to below. They coexist on purpose: this
+   *  is present ONLY when `state === "progress"` and the source data has
+   *  hydrated. `undefined` means there is nothing honest to say yet. */
+  progress?: RewardTileProgress;
 };
 
 type Props = {
@@ -83,11 +104,22 @@ function RewardTileButton({
 }) {
   const tReward = useTranslations("REWARD_COPY");
   const tPieces = useTranslations("PIECE_LABELS");
+  const tProgress = useTranslations("REWARD_PROGRESS_COPY");
   const label = isPieceTile(tile.id)
     ? tPieces(tile.id)
     : tReward(`${tile.id}.label`);
   const ariaState: Exclude<RewardTileState, "claimed"> =
     tile.state === "claimed" ? "progress" : tile.state;
+  // A separate message, not a new argument on the shared `ariaLabel`: that
+  // one is consumed by 6 pieces across 4 states, and `tsc` does not see ICU
+  // arguments — adding one there compiles green and degrades at runtime.
+  const ariaLabel = tile.progress
+    ? tProgress("ariaLabel", {
+        piece: label,
+        completed: tile.progress.completed,
+        required: tile.progress.required,
+      })
+    : tReward(`${tile.id}.ariaLabel`, { state: ariaState });
   const classes = [
     "reward-tile",
     `is-${tile.state}`,
@@ -103,7 +135,7 @@ function RewardTileButton({
     <button
       type="button"
       onClick={tile.onTap}
-      aria-label={tReward(`${tile.id}.ariaLabel`, { state: ariaState })}
+      aria-label={ariaLabel}
       className={classes}
       data-tour-target={tourTarget}
     >
@@ -137,6 +169,17 @@ function RewardTileButton({
       ) : null}
       {tile.state === "locked" ? (
         <CandyIcon name="lock" className="reward-tile-lock" />
+      ) : null}
+      {tile.progress ? (
+        // Absolutely positioned so a late-arriving counter (it waits for
+        // hydration) never changes the tile's height.
+        <span
+          aria-hidden="true"
+          data-testid="reward-tile-progress"
+          className="reward-tile-progress"
+        >
+          {tile.progress.completed}/{tile.progress.required}
+        </span>
       ) : null}
     </button>
   );

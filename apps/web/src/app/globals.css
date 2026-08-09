@@ -6055,6 +6055,48 @@ button.hud-resource-chip:active:not(:disabled) {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+/* Paso 2 — the "3/4" counter chip.
+   docs/specs/2026-08-09-hub-tile-progress-counter.md
+
+   It shares the top-right corner with the claimed check and the claimable
+   dot, and that is safe by construction: only a `progress` tile carries a
+   counter, and `progress` is mutually exclusive with both of those states.
+
+   Absolute so a counter that arrives late (it waits for hydration, or it
+   would announce 0/N on first paint) never changes the tile's height.
+   No entry animation on purpose: the completion overlay already celebrated
+   this consequence, and the brief forbids celebrating the same thing twice. */
+.reward-tile-progress {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #4e2c05 0%, #2f1a02 100%);
+  color: #ffe26d;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1;
+  /* Tabular figures so 3/4 and 8/10 do not jitter the chip width. */
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.reward-tile.is-compact .reward-tile-progress {
+  top: -2px;
+  right: -2px;
+  min-width: 15px;
+  height: 13px;
+  padding: 0 4px;
+  font-size: 0.5rem;
+}
+
 @keyframes reward-tile-notif-pulse {
 
   0%,

@@ -1,7 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 
 import { useHubData } from "@/components/hub/use-hub-data";
+import { EXERCISES } from "@/lib/game/exercises";
+import { pieceProgressStorageKey } from "@/lib/lite-progress-storage";
 
 // useHubData fans out to wagmi reads + two app hooks. Stub them so the hook
 // mounts in isolation; localStorage-backed loaders return their natural
@@ -21,6 +23,31 @@ vi.mock("@/lib/welcome-package/use-welcome-package", () => ({
 }));
 
 describe("useHubData", () => {
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  // Paso 2 — docs/specs/2026-08-09-hub-tile-progress-counter.md
+  it("exposes the id-keyed stars map and flags hydration once mounted", () => {
+    const firstRookId = EXERCISES.rook[0].id;
+    window.localStorage.setItem(
+      pieceProgressStorageKey("rook"),
+      JSON.stringify({ stars: { [firstRookId]: 2 } }),
+    );
+
+    const { result } = renderHook(() => useHubData());
+
+    // The counter must not assert a number before the mount effect ran; by
+    // the time renderHook returns, effects have flushed.
+    expect(result.current.shared.isProgressHydrated).toBe(true);
+    // Raw id→stars, NOT a total: the count is taken later by
+    // `completedExerciseCount`, which intersects with the live catalog so the
+    // tile agrees with the drawer.
+    expect(result.current.shared.starsByIdPerPiece.rook).toEqual({
+      [firstRookId]: 2,
+    });
+  });
+
   it("returns shared guest defaults and the season challenge meta", () => {
     const { result } = renderHook(() => useHubData());
 

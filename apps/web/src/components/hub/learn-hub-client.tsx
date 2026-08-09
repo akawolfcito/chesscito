@@ -147,7 +147,7 @@ export function LearnHubClient({
   // are unchanged. `shared.hero` / `lite.challenge` are produced for the Lite
   // presenter (PR B) and intentionally not consumed by the Full render here.
   const { shared, lite } = useHubData();
-  const { address, isConnected, trophies, badgesClaimed, starsPerPiece, completedPerPiece, shieldCount } = shared;
+  const { address, isConnected, trophies, badgesClaimed, starsPerPiece, completedPerPiece, starsByIdPerPiece, isProgressHydrated, shieldCount } = shared;
   const { focusPassport, contentLoop, sessionQuota } = lite;
   const seasonPassStatus = lite.seasonPass;
   const contentLoopAction = contentLoop.action;
@@ -413,7 +413,12 @@ export function LearnHubClient({
   ]);
 
   const rewardTiles = useMemo(() => {
-    const tiles = deriveRewardTiles({ badgesClaimed, completedPerPiece });
+    const tiles = deriveRewardTiles({
+      badgesClaimed,
+      completedPerPiece,
+      starsByIdPerPiece,
+      isHydrated: isProgressHydrated,
+    });
     return tiles.map((tile) => ({
       ...tile,
       onTap: () => {
@@ -424,7 +429,7 @@ export function LearnHubClient({
         router.push(`/exercises?piece=${tile.id}`);
       },
     }));
-  }, [badgesClaimed, completedPerPiece, router]);
+  }, [badgesClaimed, completedPerPiece, starsByIdPerPiece, isProgressHydrated, router]);
   // The shields chip is the home for shop conversion (the user's primary
   // monetization surface). Always visible whether the count is 0 or N —
   // a depleted "Shield ×0" is the strongest replenishment cue.

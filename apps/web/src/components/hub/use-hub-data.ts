@@ -160,6 +160,53 @@ function loadCompletedPerPiece(): Partial<Record<PieceId, number>> {
   return completed;
 }
 
+/** Raw id→stars map per piece, deliberately NOT aggregated.
+ *
+ *  `loadCompletedPerPiece` above returns a total, and that total is the WIDE
+ *  count — it sums every positive entry in storage, retired ids included,
+ *  because mastery is never revoked when internal ids change. Correct for the
+ *  badge gate, wrong for anything the player can count on screen.
+ *
+ *  The visible counter takes this map through `completedExerciseCount`, which
+ *  intersects it with the live catalog — the same function the drawer uses.
+ *  Paso 2: `docs/specs/2026-08-09-hub-tile-progress-counter.md`. */
+function loadStarsByIdPerPiece(): Partial<
+  Record<PieceId, Record<string, number>>
+> {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  const byPiece: Partial<Record<PieceId, Record<string, number>>> = {};
+  for (const piece of REWARD_TILE_ORDER) {
+    try {
+      const raw = window.localStorage.getItem(pieceProgressStorageKey(piece));
+      if (!raw) continue;
+      const parsed = JSON.parse(raw) as { stars?: unknown };
+      // Only the id-keyed object shape is usable here. A legacy array has no
+      // ids to intersect with, so it contributes nothing rather than a number
+      // that cannot be reconciled with the drawer.
+      if (
+        !parsed.stars ||
+        typeof parsed.stars !== "object" ||
+        Array.isArray(parsed.stars)
+      ) {
+        continue;
+      }
+      const entries = Object.entries(parsed.stars).filter(
+        ([, s]) => typeof s === "number" && Number.isFinite(s) && s > 0 && s <= 3,
+      ) as [string, number][];
+      if (entries.length > 0) {
+        byPiece[piece] = Object.fromEntries(entries);
+      }
+    } catch {
+      // ignore corrupt entries; a missing piece simply has no counter.
+    }
+  }
+
+  return byPiece;
+}
+
 function formatUsd6(value: bigint): string {
   return `$${(Number(value) / 1_000_000).toFixed(2)}`;
 }
@@ -201,8 +248,15 @@ export type HubSharedData = {
   trophies: number;
   badgesClaimed: Partial<Record<PieceId, boolean>>;
   starsPerPiece: Partial<Record<PieceId, number>>;
-  /** Distinct exercises completed (≥1★) per piece — drives the badge gate. */
+  /** Distinct exercises completed (≥1★) per piece — drives the badge gate.
+   *  The WIDE count: retired ids included, so mastery is never revoked. */
   completedPerPiece: Partial<Record<PieceId, number>>;
+  /** Raw id→stars per piece — drives the VISIBLE counter, which intersects
+   *  with the live catalog so the tile agrees with the drawer. */
+  starsByIdPerPiece: Partial<Record<PieceId, Record<string, number>>>;
+  /** `true` once the mount effect read localStorage. Any consumer that
+   *  asserts a number must wait for it. */
+  isProgressHydrated: boolean;
   shieldCount: number;
   hero: ReturnType<typeof getHeroContextAction>;
 };
@@ -284,10 +338,19 @@ export function useHubData(): HubData {
     Partial<Record<PieceId, number>>
   >({});
   const [shieldCount, setShieldCount] = useState<number>(0);
+  const [starsByIdPerPiece, setStarsByIdPerPiece] = useState<
+    Partial<Record<PieceId, Record<string, number>>>
+  >({});
+  // Gates every consumer that asserts a NUMBER. States survived the first
+  // paint reading `{}` because a state asserts nothing numeric; a counter
+  // does, and "0/4" on a piece with 3 done is a visible lie.
+  const [isProgressHydrated, setIsProgressHydrated] = useState(false);
   useEffect(() => {
     setStarsPerPiece(loadStarsPerPiece());
     setCompletedPerPiece(loadCompletedPerPiece());
+    setStarsByIdPerPiece(loadStarsByIdPerPiece());
     setShieldCount(loadShieldCount());
+    setIsProgressHydrated(true);
   }, []);
 
   // Re-read shields on the in-tab CustomEvent bus after `buyItem` confirms.
@@ -473,6 +536,8 @@ export function useHubData(): HubData {
       badgesClaimed,
       starsPerPiece,
       completedPerPiece,
+      starsByIdPerPiece,
+      isProgressHydrated,
       shieldCount,
       hero,
     },

@@ -2848,6 +2848,23 @@ export const MISSION_RIBBON_COPY = {
   ariaLabel: "Mission statement",
 } as const;
 
+/** Aria-label for a reward tile that carries a progress counter (Paso 2 —
+ *  `docs/specs/2026-08-09-hub-tile-progress-counter.md`).
+ *
+ *  ⛔ Deliberately a SIBLING of `REWARD_COPY`, never a key inside it:
+ *  `RewardTileId` is `keyof typeof REWARD_COPY` (`reward-column.tsx`), so
+ *  anything added there silently becomes a valid tile id.
+ *
+ *  One shared message instead of seven per-piece ones. The seven `ariaLabel`
+ *  entries below are per-piece because their phrasing genuinely differs
+ *  ("Claim Rook mastery badge" vs "Save victory ready"); this one does not,
+ *  and `<RewardColumn>` already has the piece name from `PIECE_LABELS`.
+ *  Seven copies of a uniform string is seven chances to drift. */
+export const REWARD_PROGRESS_COPY = {
+  ariaLabel: (piece: string, completed: number, required: number) =>
+    `${piece} mastery: ${completed} of ${required} toward the badge`,
+} as const;
+
 /** Per-tile reward column copy. Consumed by `<RewardColumn>` (Step 11 §4 of
  *  UX spec). Tiles cover the 6 chess pieces (per game-brief §7 progression
  *  order) plus a victory tile for Arena wins ready to mint. Aria-label is a

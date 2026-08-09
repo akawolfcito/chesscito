@@ -102,6 +102,8 @@ m.REWARD_COPY.pawn.ariaLabel =
   "{state, select, claimable {Claim Pawn mastery badge: ready} progress {Pawn mastery: in progress} other {Pawn mastery: locked}}";
 m.REWARD_COPY.victory.ariaLabel =
   "{state, select, claimable {Save victory ready: tap to save} progress {Victory in progress} other {No victory ready: win an Arena match}}";
+m.REWARD_PROGRESS_COPY.ariaLabel =
+  "{piece} mastery: {completed} of {required} toward the badge";
 m.PRO_COPY.statusActiveSuffix =
   "{daysLeft, plural, =1 {Expires tomorrow} other {# days left}}";
 m.PRO_COPY.daysLeftActiveLabel =

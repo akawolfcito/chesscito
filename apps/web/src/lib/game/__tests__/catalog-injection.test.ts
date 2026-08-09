@@ -80,6 +80,9 @@ describe("derive-reward-tiles — injected catalog", () => {
       badgesClaimed: {},
       completedPerPiece: { rook: 99 },
       catalog: { ...INJECTED, rook: [] }, // rook now empty → cannot be claimable
+      // State-only case; the visible counter is not under test here.
+      starsByIdPerPiece: {},
+      isHydrated: false,
     });
     expect(tiles.find((t) => t.id === "rook")?.state).toBe("locked");
   });

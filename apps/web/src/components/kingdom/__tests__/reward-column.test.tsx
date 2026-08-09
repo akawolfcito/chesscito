@@ -4,7 +4,7 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { RewardColumn } from "../reward-column";
-import { REWARD_COPY } from "@/lib/content/editorial";
+import { REWARD_COPY, REWARD_PROGRESS_COPY } from "@/lib/content/editorial";
 
 describe("RewardColumn", () => {
   it("renders a claimable tile with full-opacity gold gradient and a pulsing notif badge", () => {
@@ -181,6 +181,41 @@ describe("RewardColumn", () => {
         name: REWARD_COPY.king.ariaLabel("locked"),
       }),
     ).toBeInTheDocument();
+  });
+
+  // Paso 2 — docs/specs/2026-08-09-hub-tile-progress-counter.md
+  describe("progress counter", () => {
+    it("renders the chip and moves the count into the aria-label", () => {
+      render(
+        <RewardColumn
+          tiles={[
+            {
+              id: "rook",
+              state: "progress",
+              progress: { completed: 3, required: 4 },
+            },
+          ]}
+        />,
+      );
+
+      const tile = screen.getByRole("button", {
+        name: REWARD_PROGRESS_COPY.ariaLabel("Rook", 3, 4),
+      });
+      const chip = within(tile).getByTestId("reward-tile-progress");
+      expect(chip.textContent).toBe("3/4");
+      // Hidden from the a11y tree: the count already travels in the label,
+      // and a loose node would be announced twice.
+      expect(chip).toHaveAttribute("aria-hidden", "true");
+    });
+
+    it("keeps the plain aria-label when the tile carries no counter", () => {
+      render(<RewardColumn tiles={[{ id: "rook", state: "progress" }]} />);
+
+      const tile = screen.getByRole("button", {
+        name: REWARD_COPY.rook.ariaLabel("progress"),
+      });
+      expect(within(tile).queryByTestId("reward-tile-progress")).toBeNull();
+    });
   });
 
   it("merges a custom className alongside the base classes on the column wrapper", () => {

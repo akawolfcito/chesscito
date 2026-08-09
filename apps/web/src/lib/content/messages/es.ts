@@ -1187,6 +1187,10 @@ const messages = {
         "{state, select, claimable {Victoria lista: toca para guardar} progress {Victoria en progreso} other {Sin victoria lista: gana una partida en Arena}}",
     },
   },
+  REWARD_PROGRESS_COPY: {
+    ariaLabel:
+      "Maestría de {piece}: {completed} de {required} para la insignia",
+  },
   ROADMAP_COPY: {
     sectionTitle: "Próximamente",
     sectionDescription: "Lo que viene a Chesscito.",
