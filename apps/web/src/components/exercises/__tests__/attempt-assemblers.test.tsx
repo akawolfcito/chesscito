@@ -526,10 +526,13 @@ describe("the queue is visible, and the retry is the player's (4C-3)", () => {
     await waitFor(() => expect(attemptCalls()).toHaveLength(1));
     const firstId = attemptCalls()[0]!.attemptId;
 
-    const cta = await screen.findByRole("button", {
-      name: /reintentar el guardado|retry saving/i,
-    });
-    expect(screen.getByTestId("attempt-save-status")).toBeInTheDocument();
+    // Reached through the status line, not by its label. This used to match
+    // /reintentar el guardado|retry saving/ and broke the day the copy stopped
+    // saying "retry" — a word that named a failure the player did not cause.
+    // What this test is about is the REPLAY contract, not the wording, so it
+    // must not be the thing that pins the wording.
+    const line = await screen.findByTestId("attempt-save-status");
+    const cta = within(line).getByRole("button");
 
     fireEvent.click(cta);
 

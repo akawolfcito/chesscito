@@ -17092,6 +17092,34 @@ button.hud-resource-chip:active:not(:disabled) {
   text-align: center;
 }
 
+/* OUT OF FLOW (founder 2026-08-09).
+   In normal flow this line pushed the whole screen down — the board, the
+   mission panel, everything — every time the network hiccuped. It is a
+   NON-BLOCKING message: the attempt is safe in the queue and the player can
+   keep going. A message that blocks nothing must not cost a row of the thing
+   he came for.
+
+   `fixed`, not `absolute`: the dock lives inside the mission panel, so
+   anchoring to the shell's bottom would put this underneath it. Fixed also
+   behaves inside the desktop bezel — `.desktop-app-frame` carries
+   `transform: translateZ(0)`, which contains fixed descendants (see
+   desktop-app-frame.tsx), so it stays in the phone frame instead of escaping
+   to the viewport. */
+.attempt-save-status.is-floating {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  /* Clears the dock and the action row beneath the board. */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 168px);
+  z-index: 55;
+  width: max-content;
+  max-width: calc(var(--app-max-width) - 32px);
+  margin: 0;
+  /* Opaque enough to stay legible over the board art it now overlays. */
+  background: rgba(12, 24, 20, 0.88);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
 /* Failure is a state to notice, not an alarm: the attempt is safe in the queue
    and the retry costs the player nothing. Warm, not red. */
 .attempt-save-status.is-failed {

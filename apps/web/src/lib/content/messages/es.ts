@@ -1270,10 +1270,10 @@ const messages = {
   ATTEMPT_SAVE_COPY: {
     saving: "Guardando progreso…",
     savingCountFormat: "Guardando progreso… ({count})",
-    failed: "Tu último intento todavía no se guardó.",
-    failedCountFormat: "{count} intentos todavía no se guardaron.",
-    retryCta: "Reintentar",
-    retryAriaLabel: "Reintentar el guardado de tu progreso",
+    failed: "Tu jugada está lista para guardar.",
+    failedCountFormat: "{count} jugadas listas para guardar.",
+    retryCta: "Guardar",
+    retryAriaLabel: "Guardar tu progreso ahora",
   },
   BADGE_TITLES: {
     rook: "Torre Ascendente",

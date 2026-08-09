@@ -16,8 +16,20 @@
  * A toast expires — usually while the player is mid-move, which is exactly when
  * the network is bad and this state exists. A modal takes the board away to
  * report something the player did not do wrong and cannot fix by stopping. So
- * it is a line that stays until the queue drains, above the mission panel,
- * where the daily-limit banner already lives.
+ * it is a line that stays until the queue drains.
+ *
+ * WHY IT FLOATS, AND WHY IT OFFERS (founder 2026-08-09)
+ * ----------------------------------------------------
+ * It used to sit in normal flow above the mission panel, which meant it SHOVED
+ * the board down the screen every time the network hiccuped — a non-blocking
+ * message charging the player 60px of the thing he came for. It is fixed now:
+ * same persistence, zero layout cost.
+ *
+ * And it stopped accusing. "Your last attempt hasn't been saved yet" words a
+ * WIN as a debt. Nothing here blocks him — the attempt is safe in the queue and
+ * he can keep playing either way — so the line names what he earned and offers
+ * to bank it. The CTA is "Save", not "Retry": retry names a failure he did not
+ * cause.
  *
  * `aria-live="polite"` and no `role="alert"`: it is worth announcing, not worth
  * interrupting. (And `role="alert"` is precisely what made a previous overlay
@@ -53,7 +65,7 @@ export function AttemptSaveStatus({ status, pendingCount, onRetry }: Props) {
 
   return (
     <div
-      className={`attempt-save-status${failed ? " is-failed" : ""}`}
+      className={`attempt-save-status is-floating${failed ? " is-failed" : ""}`}
       aria-live="polite"
       data-testid="attempt-save-status"
     >

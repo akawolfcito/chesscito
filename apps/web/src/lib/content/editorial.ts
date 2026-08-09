@@ -206,13 +206,20 @@ export const ATTEMPT_SAVE_COPY = {
   saving: "Saving progress…",
   /** Same state with more than one waiting. */
   savingCountFormat: "Saving progress… ({count})",
-  /** Persistent, after a retryable failure. Not an error the player caused. */
-  failed: "Your last attempt hasn’t been saved yet.",
-  failedCountFormat: "{count} attempts haven’t been saved yet.",
-  /** The manual retry. Re-sends the SAME attempt, which the server answers as a
-   *  replay — it costs the player nothing and cannot double-count. */
-  retryCta: "Retry",
-  retryAriaLabel: "Retry saving your progress",
+  /** Persistent, after a retryable failure.
+   *
+   *  ⚠️ Worded as something EARNED, never as a debt (founder 2026-08-09:
+   *  "el save no debería ser obligatorio para pasar, sino un premio"). It used
+   *  to read "Your last attempt hasn't been saved yet", which accuses the
+   *  player of owing something for having won — and nothing here blocks him:
+   *  the attempt is safe in the queue and he can keep playing either way. */
+  failed: "Your play is ready to save.",
+  failedCountFormat: "{count} plays ready to save.",
+  /** The manual save. Re-sends the SAME attempt, which the server answers as a
+   *  replay — it costs the player nothing and cannot double-count. Called
+   *  "Save", not "Retry": retry names a failure he did not cause. */
+  retryCta: "Save",
+  retryAriaLabel: "Save your progress now",
 } as const;
 
 const PIECE_BASE = THEME_CONFIG.piecesBase;
