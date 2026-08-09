@@ -55,6 +55,16 @@ export function useRotationSteering({
     if (!enabled || !visibleExerciseIds) return;
     if (visibleExerciseIds.size === 0) return;
     if (visibleExerciseIds.has(currentExerciseId)) return;
+    /* ⛔ Never evict a player from an exercise they already SOLVED. Steering
+     * exists for the returning player whose stale slot points at content
+     * today's rotation does not offer — not to undo a replay the player just
+     * chose on purpose.
+     *
+     * This was the second half of the same disagreement `goToExercise` had
+     * with the drawer (2026-08-08): even once navigation allowed a solved
+     * exercise through, this effect yanked the player straight back out and
+     * PERSISTED it, so the two fixes only work as a pair. */
+    if ((stars[currentExerciseId] ?? 0) > 0) return;
     const pool = catalog[piece];
     const firstIncomplete = pool.findIndex(
       (ex) => visibleExerciseIds.has(ex.id) && (stars[ex.id] ?? 0) === 0,

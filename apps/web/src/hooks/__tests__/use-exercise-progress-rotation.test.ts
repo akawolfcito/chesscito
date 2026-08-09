@@ -30,9 +30,23 @@ vi.mock("wagmi", () => ({
 import { act, renderHook } from "@testing-library/react";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
 import { EXERCISES } from "@/lib/game/exercises";
+import { pieceProgressStorageKey } from "@/lib/lite-progress-storage";
+import type { PieceId } from "@/lib/game/types";
 
 const ROTATION = { enabled: true, dateUtc: "2026-06-08" };
 const rookId = (i: number) => EXERCISES.rook[i].id;
+
+/** A player who finished the piece: every exercise at 3★. This is the state
+ *  the bug needs — the sort key ties, so the visible cut is pure hash. */
+function seedSolvedPiece(piece: PieceId) {
+  const stars = Object.fromEntries(
+    EXERCISES[piece].map((ex) => [ex.id, 3]),
+  );
+  localStorage.setItem(
+    pieceProgressStorageKey(piece),
+    JSON.stringify({ piece, currentId: EXERCISES[piece][0].id, stars }),
+  );
+}
 
 async function mount(piece: "rook", rotation?: typeof ROTATION) {
   const view = renderHook(() => useExerciseProgress(piece, rotation));
@@ -78,6 +92,47 @@ describe("flag ON — rotation visible set (guest canonical = rook-1..5)", () =>
     // Blocked → currentId stays null; currentExercise stays at rook-1.
     expect(result.current.progress.currentId).toBeNull();
     expect(result.current.currentExercise.id).toBe(rookId(0));
+  });
+
+  /* ⛔ Playtest 2026-08-08. A player who finished a whole piece could not
+   * replay 4 of its exercises, and the tap gave NO signal — it just did
+   * nothing. `DAILY_VISIBLE_LIMIT` is 5 and the pieces hold 8-10, so with
+   * every exercise at 3★ the sort key ties and the cut falls to the daily
+   * hash: there are ALWAYS solved exercises outside today's set, and which
+   * ones changes every UTC day.
+   *
+   * The drawer already promises the opposite in so many words — "Rotation
+   * gates only fresh exercises. Solved ones stay open forever." — so it
+   * painted those nodes open and `goToExercise` refused them. The tap died
+   * between two rules that disagreed.
+   *
+   * Rotation exists to bound what is NEW per day. It was never meant to take
+   * back what the player already earned. */
+  it("navigates to a SOLVED exercise outside today's visible set", async () => {
+    seedSolvedPiece("rook");
+    const { result } = await mount("rook", ROTATION);
+
+    const visible = result.current.visibleExerciseIds!;
+    // Derived, never pinned: the catalog can grow and this must still find
+    // the case it is testing (or fail loudly for the right reason).
+    const outsideIndex = EXERCISES.rook.findIndex((ex) => !visible.has(ex.id));
+    expect(outsideIndex).toBeGreaterThanOrEqual(0);
+    expect(result.current.progress.stars[EXERCISES.rook[outsideIndex].id]).toBe(3);
+
+    act(() => result.current.goToExercise(outsideIndex));
+    expect(result.current.progress.currentId).toBe(rookId(outsideIndex));
+  });
+
+  it("still blocks a FRESH exercise outside the visible set", async () => {
+    // The rule only relaxes for what the player already earned; rotation
+    // keeps its whole job over unplayed content.
+    const { result } = await mount("rook", ROTATION);
+    const visible = result.current.visibleExerciseIds!;
+    const outsideIndex = EXERCISES.rook.findIndex((ex) => !visible.has(ex.id));
+    expect(outsideIndex).toBeGreaterThanOrEqual(0);
+
+    act(() => result.current.goToExercise(outsideIndex));
+    expect(result.current.progress.currentId).toBeNull();
   });
 
   it("writes stars to the real pool index, not a visible slot index", async () => {

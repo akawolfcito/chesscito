@@ -569,10 +569,27 @@ export function useExerciseProgress(
       if (!targetId) return prev;
       const visibleIds = visibleIdsRef.current;
       if (visibleIds) {
-        // Rotation mode: gate by today's visible (tier-unlocked) set, not
-        // the legacy linear senda. The clamped value is always a real pool
-        // index, so progress writes still target the correct exerciseId.
-        if (!visibleIds.has(targetId)) return prev;
+        /* Rotation mode: gate by today's visible (tier-unlocked) set, not
+         * the legacy linear senda. The clamped value is always a real pool
+         * index, so progress writes still target the correct exerciseId.
+         *
+         * ⛔ SOLVED exercises are exempt, and were not until 2026-08-08. The
+         * drawer already states this rule in so many words — "Rotation gates
+         * only fresh exercises. Solved ones stay open forever." — and painted
+         * those nodes open, while this function refused them in silence. The
+         * tap died between two rules that disagreed.
+         *
+         * It was not an edge case. `DAILY_VISIBLE_LIMIT` is 5 and the pieces
+         * hold 8-10, so once a player finishes a piece every star ties on the
+         * sort key and the cut falls to the daily hash: there are ALWAYS
+         * solved exercises outside the set, and which ones changes every UTC
+         * day. A player who finished the bishop simply could not replay four
+         * of it, differently each day, with no feedback (playtest).
+         *
+         * Rotation bounds what is NEW per day. It was never meant to take
+         * back what the player already earned. */
+        const isSolved = (prev.stars[targetId] ?? 0) > 0;
+        if (!isSolved && !visibleIds.has(targetId)) return prev;
       } else {
         // Legacy: navigate to any completed exercise or one past the last.
         // "Completed" = the highest pool index with ≥1★ in the id-map.

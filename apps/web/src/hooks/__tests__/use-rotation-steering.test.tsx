@@ -61,6 +61,35 @@ describe("useRotationSteering", () => {
     expect(options.goToExercise).not.toHaveBeenCalled();
   });
 
+  /* ⛔ Playtest 2026-08-08. A player who finished a piece and tapped one of
+   * its exercises to replay it got yanked straight back out — and the jump
+   * was PERSISTED. This is the second half of the disagreement fixed in
+   * `goToExercise`: letting navigation through is useless while this effect
+   * undoes it, so the two only work as a pair.
+   *
+   * Steering is for the returning player whose stale slot points at content
+   * today's rotation does not offer. A deliberate replay is not that. */
+  it("NEVER evicts the player from an exercise they already solved", () => {
+    const options = makeOptions({
+      // Outside today's set, and solved — a replay the player chose.
+      currentExerciseId: ROOK_IDS[0],
+      stars: { [ROOK_IDS[0]]: 3 },
+    });
+    renderHook(() => useRotationSteering(options));
+    expect(options.goToExercise).not.toHaveBeenCalled();
+  });
+
+  it("still steers off an UNSOLVED exercise outside the set", () => {
+    // The relaxation is only for earned content; the returning-player case
+    // steering was built for keeps working.
+    const options = makeOptions({
+      currentExerciseId: ROOK_IDS[0],
+      stars: { [ROOK_IDS[6]]: 3 },
+    });
+    renderHook(() => useRotationSteering(options));
+    expect(options.goToExercise).toHaveBeenCalledWith(1);
+  });
+
   it("does nothing when rotation is disabled (OFF path, no regression)", () => {
     const options = makeOptions({ enabled: false });
     renderHook(() => useRotationSteering(options));
