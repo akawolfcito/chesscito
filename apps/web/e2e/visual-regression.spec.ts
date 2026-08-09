@@ -262,6 +262,46 @@ test.describe("visual regression — Step 1 baselines", () => {
 // settle for paper-tray hover transitions to land at rest.
 const STATIC_PAGE_OPTS = { maxDiffPixelRatio: 0.005 } as const;
 
+/*
+ * The band no project measures.
+ *
+ * Every VR project runs at a phone width (minipay 390, minipay-360 360), so the
+ * range between "wider than a phone" and the old 768px frame breakpoint was
+ * photographed by nobody. That is exactly where the app frame used to vanish:
+ * the wrapper divs mounted unstyled, the content column stayed at 390px, and
+ * the body's `background-size: cover` art stretched behind it edge to edge.
+ *
+ * `test.use` overrides the viewport for this block only, so the case lives in
+ * the `minipay` project — the ONLY project with real baselines — instead of in
+ * a project that would record whatever it sees and report PASSED.
+ */
+test.describe("visual regression — tablet-width app frame", () => {
+  test.use({ viewport: { width: 600, height: 900 } });
+
+  test("frame-tablet-600 — the bezel holds at 600px, art does not stretch", async ({
+    page,
+  }) => {
+    await bypassFirstVisit(page);
+    await freezeDate(page, FROZEN_DATE);
+    await page.goto("/exercises", { waitUntil: "load", timeout: 30_000 });
+    await expect(page.locator(".playhub-intro-overlay")).toBeHidden({
+      timeout: 30_000,
+    });
+    await settle(page, 600);
+
+    // Asserted, not just photographed: a baseline alone would happily lock in
+    // the stretched look if this ever regresses and someone re-records.
+    const shell = page.locator(".desktop-app-frame-shell");
+    await expect(shell).toBeVisible();
+    const frameWidth = await page
+      .locator(".desktop-app-frame")
+      .evaluate((el) => el.getBoundingClientRect().width);
+    expect(frameWidth).toBeLessThan(600);
+
+    await expect(page).toHaveScreenshot("frame-tablet-600.png", HUB_CLEAN_OPTS);
+  });
+});
+
 test.describe("visual regression — Step 2 baselines", () => {
   test("support-page — Telegram + Email + GitHub channels", async ({ page }) => {
     await bypassFirstVisit(page);

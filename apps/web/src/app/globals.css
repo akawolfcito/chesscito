@@ -13856,7 +13856,21 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 100%;
 }
 
-@media (min-width: 768px) {
+/*
+ * ⚠️ 481px, NOT 768px. `DesktopAppFrame` mounts its wrapper divs on every app
+ * route (`desktop-app-frame.tsx`), but only this media query gives them shape.
+ * Gated at 768 there was a dead band from 391px to 767px — tablets in portrait,
+ * split-screen, a desktop window "resized a little" — where the divs existed
+ * unstyled, the content column stayed pinned at 390px, and the body's
+ * `background-size: cover` game art stretched edge to edge behind it. It read
+ * as a broken layout; it was a gap in the breakpoint range.
+ *
+ * 481 because every mainstream phone reports ≤ 430 CSS px (iPhone Pro Max is
+ * 430), with margin for odd Android devices near 480. Below it, MiniPay and
+ * every real phone pass through untouched — which is the whole point of the
+ * pass-through, and the reason this threshold must never drop to ~390.
+ */
+@media (min-width: 481px) {
 
   /*
    * Shell paints the graphite gradient AROUND the frame. Body bg stays
