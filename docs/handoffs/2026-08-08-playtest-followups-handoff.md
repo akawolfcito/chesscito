@@ -13,7 +13,7 @@
 | Qué | Resultado |
 |---|---|
 | Unit completa | **614 archivos / 7557 tests**, `VITEST_EXIT=0`, **0 `Unhandled Errors`**, 134 s |
-| VR (`visual-regression.spec.ts`) | **66 passed**, `PLAYWRIGHT_EXIT=0`, `--update-snapshots=none`, **0 PNG nuevos** — ⛔ **corrido ANTES del arreglo de rotación; falta rehacerlo** |
+| VR (`visual-regression.spec.ts`) | **66 passed**, `PLAYWRIGHT_EXIT=0`, `--update-snapshots=none`, **0 PNG nuevos** — rehecho **después** del arreglo de rotación, con el 3002 libre |
 | `tsc --noEmit` | limpio |
 | `content:audit` | sin menciones de `badgeLocked`, sin `ES_ORPHAN_KEY` |
 
@@ -189,17 +189,18 @@ dejar un guard que los camine.
 
 ---
 
-## ⛔ Lo único que falta verificar
+## ✅ El VR, rehecho después del arreglo de rotación
 
-**El VR no se rehizo después del arreglo de rotación.** El dev server del founder ocupaba el
-**3002** cuando tocaba correrlo, y `reuseExistingServer: !CI` lo habría **adoptado** — sin el
-pin de `NEXT_PUBLIC_CHAIN_ID` y encima con `ENABLE_EXERCISE_ROTATION=false`. Eso fotografía
-otra app y las rojas parecen regresión.
+Primero **no** se corrió: el dev server del founder ocupaba el **3002** y
+`reuseExistingServer: !CI` lo habría **adoptado** — sin el pin de `NEXT_PUBLIC_CHAIN_ID` y
+encima con `ENABLE_EXERCISE_ROTATION=false`. Eso fotografía otra app y las rojas parecen
+regresión. Con el 3002 libre, Playwright levantó el suyo y dio **66/66, exit 0**, sin PNG
+nuevos. `hub-clean` fotografía `/exercises`, así que el arreglo de rotación **estaba** en su
+radio y no movió nada.
 
-✅ Con el 3002 libre, correr:
-`pnpm -C apps/web exec playwright test visual-regression.spec.ts --project=minipay --update-snapshots=none`
-
-`hub-clean` fotografía `/exercises`, así que el arreglo de rotación **está en su radio**.
+⚠️ El log contiene la palabra `failed` dos veces y **ninguna es una falla**: son los nombres
+`vr7-persist-overlay-failed` y `vr9-arena-end-state-win-error — TX failed`, ambos en verde.
+Un `grep -c failed` sobre este spec da 2 en una corrida perfecta.
 
 ---
 
