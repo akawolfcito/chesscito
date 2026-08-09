@@ -12,8 +12,8 @@
 
 | Qué | Resultado |
 |---|---|
-| Unit completa | **614 archivos / 7553 tests**, `VITEST_EXIT=0`, **0 `Unhandled Errors`**, 132 s |
-| VR (`visual-regression.spec.ts`) | **66 passed**, `PLAYWRIGHT_EXIT=0`, `--update-snapshots=none`, **0 PNG nuevos** |
+| Unit completa | **614 archivos / 7557 tests**, `VITEST_EXIT=0`, **0 `Unhandled Errors`**, 134 s |
+| VR (`visual-regression.spec.ts`) | **66 passed**, `PLAYWRIGHT_EXIT=0`, `--update-snapshots=none`, **0 PNG nuevos** — ⛔ **corrido ANTES del arreglo de rotación; falta rehacerlo** |
 | `tsc --noEmit` | limpio |
 | `content:audit` | sin menciones de `badgeLocked`, sin `ES_ORPHAN_KEY` |
 
@@ -117,6 +117,37 @@ corrección es aseverar **comportamiento** (¿se remontó?), no conteos.
 
 ---
 
+## 6. 🔴 El bug que el playtest destapó al final: la rotación se quedaba con lo ganado
+
+Con el alfil completo, tapear sus nodos **no hacía nada**. El founder lo confirmó
+empíricamente: con `NEXT_PUBLIC_ENABLE_EXERCISE_ROTATION=false` funciona.
+
+**Dos reglas que se contradecían**, y el tap moría entre las dos:
+
+| Dónde | Qué decía |
+|---|---|
+| `exercise-drawer.tsx:168` | *"Rotation gates only fresh exercises. Solved ones stay open forever"* — y pintaba los nodos **abiertos** |
+| `use-exercise-progress.ts:571` | Los rechazaba **en silencio** si no estaban en el set de hoy |
+| `use-rotation-steering.ts:57` | Y si igual entrabas, te **expulsaba** — y lo persistía |
+
+Los dos arreglos **sólo sirven juntos**: dejar pasar la navegación es inútil mientras el
+steering la deshace.
+
+**No era un edge case, es aritmética.** `DAILY_VISIBLE_LIMIT = 5` y las piezas tienen 8-10.
+Cuando un jugador termina una pieza **todas** sus estrellas empatan en la clave de orden
+(`rotation.ts:142`), así que el corte lo decide el hash del día: **siempre** hay resueltos
+fuera del set, y **cuáles cambia cada día UTC**. Con el alfil eran 4 de 9, distintos cada día,
+sin ninguna señal.
+
+⚠️ **Y dejaba inalcanzable lo que acabábamos de construir:** el overlay de la consecuencia
+dispara en el **último ejercicio del pool**. Si ese cae fuera del set — 4 de cada 9 días — la
+superficie del Paso 1 sencillamente no existe, y nadie se entera de por qué.
+
+⚠️ Los ids del catálogo **no son secuenciales** (`rook-1,2,4,6,7,8,9,10` y también
+`rook-distance-*`), así que los tests **derivan** cuál está fuera del set en vez de pinearlo.
+
+---
+
 ## Las tres lecciones de método
 
 ### 1. ⛔ Un test que avanza el reloj **de más** pasa en verde con el bug puesto
@@ -158,8 +189,22 @@ dejar un guard que los camine.
 
 ---
 
+## ⛔ Lo único que falta verificar
+
+**El VR no se rehizo después del arreglo de rotación.** El dev server del founder ocupaba el
+**3002** cuando tocaba correrlo, y `reuseExistingServer: !CI` lo habría **adoptado** — sin el
+pin de `NEXT_PUBLIC_CHAIN_ID` y encima con `ENABLE_EXERCISE_ROTATION=false`. Eso fotografía
+otra app y las rojas parecen regresión.
+
+✅ Con el 3002 libre, correr:
+`pnpm -C apps/web exec playwright test visual-regression.spec.ts --project=minipay --update-snapshots=none`
+
+`hub-clean` fotografía `/exercises`, así que el arreglo de rotación **está en su radio**.
+
+---
+
 ## Estado del árbol
 
-- `main` local, **18 commits sin pushear**. El push lo hace el founder.
+- `main` local, **20 commits sin pushear**. El push lo hace el founder.
 - ⚠️ `apps/web/rook-rails-shots/` sin trackear, **no es de esta sesión**. No se tocó.
 - ⛔ **Ningún deploy verificado** — es tarea del founder por regla vigente.
