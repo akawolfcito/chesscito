@@ -12,7 +12,7 @@
  *          not in an eternal shell. This is a RENDER error, not a load error,
  *          which is why the boundary has to be a class component.
  */
-import { screen } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -67,6 +67,25 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  /* ⛔ Unmount FIRST, and explicitly. `vitest.setup.ts` also calls `cleanup()`,
+   * but hooks run LIFO: this file's `afterEach` registers later, so it ran
+   * BEFORE the setup's — tearing down the env stubs and the loader spies while
+   * a React tree was still mounted. A render triggered during that window
+   * (an error boundary retry, a resolving lazy) read a different branch than
+   * the test had set up, on an unstubbed `NEXT_PUBLIC_PRIVY_ENABLED`.
+   *
+   * `cleanup()` is idempotent, so the setup's later call is a no-op. This makes
+   * the ordering explicit instead of load-bearing on hook registration order.
+   *
+   * ⚠️ This is hygiene, not a reproduced fix: the reported flake did NOT
+   * reproduce (10/10 isolated, 3/3 inside `src/components/__tests__`). The
+   * residual risk is elsewhere and is NOT addressed here — AC23 and AC20 assert
+   * exact loader call counts (`toHaveBeenCalledTimes`), which depend on the
+   * `useMemo([mounted, attempt])` in `wallet-provider-boundary.tsx` never being
+   * recomputed. React does not guarantee that: a recompute makes a new `lazy`
+   * identity and one extra loader call. If this file goes red again, the fix is
+   * to assert BEHAVIOUR (did it remount?) rather than counts. */
+  cleanup();
   vi.unstubAllEnvs();
   // The loader spies wrap a module-level object shared by every test here.
   vi.restoreAllMocks();
