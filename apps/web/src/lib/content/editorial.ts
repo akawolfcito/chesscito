@@ -127,7 +127,11 @@ export const TRAINING_PATH_COPY = {
   starsFormat: "{stars}★",
   milestonesLabel: "Milestones",
   badgeLabel: "Badge",
-  badgeLockedFormat: "Badge at {stars}★",
+  /* ⛔ `badgeLockedFormat: "Badge at {stars}★"` lived here with ZERO consumers
+   * while stating a gate the game dropped — the badge is earned by COMPLETION,
+   * not stars. Deleted 2026-08-08 rather than left "preserved": an orphan that
+   * is also wrong is a landmine, not an asset. The live version of this
+   * sentence is `EXERCISE_DRAWER_COPY.badgeThresholdHint`. */
   badgeReady: "Badge ready",
   badgeConnect: "Connect to claim",
   badgeClaimed: "Claimed",
@@ -469,8 +473,12 @@ export const INVITE_COPY = {
 
 export const SHARE_COPY = {
   button: "Share",
-  badge: (piece: string, stars: number) =>
-    `I earned the ${piece} Ascendant badge on Chesscito! ${stars}/15 stars. Saved on Celo forever.`,
+  /* ⛔ The denominator was the literal 15 until 2026-08-08. Star pools are per
+   * piece and move with the catalog (`getMaxPossibleStars`), so a bishop at
+   * 27/27 published "27/15 stars" — contradicted by the panel it was shared
+   * from, which prints the real ceiling two lines above the button. */
+  badge: (piece: string, stars: number, maxStars: number) =>
+    `I earned the ${piece} Ascendant badge on Chesscito! ${stars}/${maxStars} stars. Saved on Celo forever.`,
   score: (stars: number) =>
     `I just landed ${stars}★ on the Chesscito leaderboard. Can you beat it?`,
   shop: (item: string) =>
@@ -1684,8 +1692,9 @@ export const CONSEQUENCE_COPY = {
      opens the `piece-badge-eligible` milestone modal on the same trigger, and
      that one has the Claim button. A line here said the same thing a beat
      earlier with nothing to tap. Deleted rather than left unused: an orphan
-     string is what `badgeLockedFormat` ("Badge at {stars}★", zero consumers,
-     still quoting a gate the game dropped) turned into. */
+     string is what `badgeLockedFormat` ("Badge at {stars}★") had turned into —
+     zero consumers, still quoting a gate the game dropped. That one is gone
+     too now (2026-08-08); this comment is the reason it was found. */
   /** Does NOT promise where Continue goes: it lands on a pending exercise
    *  first when there is one, so "Continue takes you there" would be a lie
    *  about half the time. */

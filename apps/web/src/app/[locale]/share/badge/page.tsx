@@ -38,7 +38,7 @@ export async function generateMetadata({
   const pieceLabel = tPiece(piece);
   const origin = getShareOrigin();
   const title = tBadge("metaTitleFormat", { piece: pieceLabel });
-  const description = tShare("badge", { piece: pieceLabel, stars });
+  const description = tShare("badge", { piece: pieceLabel, stars, maxStars });
   const ogImage = `${origin}/api/og/exercise?piece=${piece}&stars=${stars}&max=${maxStars}&type=badge-earned`;
   const canonical = `${origin}/share/badge?piece=${piece}&stars=${stars}&max=${maxStars}`;
 
@@ -68,7 +68,9 @@ export default async function ShareBadgePage({
 }: {
   searchParams: SearchParams;
 }) {
-  const { piece, stars } = normalize(searchParams);
+  // `maxStars` was already normalized here — it fed the OG image and the
+  // canonical URL — while the sentence beneath them still said "/15".
+  const { piece, stars, maxStars } = normalize(searchParams);
   const tPiece = await getTranslations("PIECE_LABELS");
   const tBadge = await getTranslations("BADGE_SHARE_COPY");
   const tShare = await getTranslations("SHARE_COPY");
@@ -96,7 +98,7 @@ export default async function ShareBadgePage({
           className="text-sm leading-snug"
           style={{ color: "rgba(110, 65, 15, 0.75)" }}
         >
-          {tShare("badge", { piece: pieceLabel, stars })}
+          {tShare("badge", { piece: pieceLabel, stars, maxStars })}
         </p>
         <Link
           href="/play-hub"

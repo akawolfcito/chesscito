@@ -151,12 +151,25 @@ function StarsRow({
   );
 }
 
-function useShareText(variant: SuccessVariant, pieceType?: PieceKey, itemLabel?: string, totalStars?: number): string {
+function useShareText(
+  variant: SuccessVariant,
+  pieceType?: PieceKey,
+  itemLabel?: string,
+  totalStars?: number,
+  /* The piece's real ceiling. Runs through the SAME `clampMaxStars` the panel's
+   * own "{n}/{max}" label uses, so the shared sentence and the number on screen
+   * behind it can never disagree — which is exactly what a hardcoded 15 did. */
+  maxPossibleStars?: number,
+): string {
   const tShare = useTranslations("SHARE_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
   switch (variant) {
     case "badge":
-      return tShare("badge", { piece: tPiece(pieceType ?? "rook"), stars: totalStars ?? 0 });
+      return tShare("badge", {
+        piece: tPiece(pieceType ?? "rook"),
+        stars: totalStars ?? 0,
+        maxStars: clampMaxStars(maxPossibleStars),
+      });
     case "score":
       return tShare("score", { stars: totalStars ?? 0 });
     case "shop":
@@ -210,7 +223,7 @@ function ShareRow({ variant, pieceType, itemLabel, totalStars, maxPossibleStars 
 }) {
   const tShare = useTranslations("SHARE_COPY");
   const [open, setOpen] = useState(false);
-  const text = useShareText(variant, pieceType, itemLabel, totalStars);
+  const text = useShareText(variant, pieceType, itemLabel, totalStars, maxPossibleStars);
   const cardUrl = getCardUrl(variant, pieceType, totalStars, maxPossibleStars);
   const shareUrl = getShareUrl(variant, pieceType, totalStars, maxPossibleStars);
   return (
@@ -290,6 +303,7 @@ export function ResultOverlay({
     pieceType,
     itemLabel,
     totalStars,
+    maxPossibleStars,
   );
   const shareCardUrl = !isError ? getCardUrl(variant, pieceType, totalStars, maxPossibleStars) : null;
   const shareCanonicalUrl = !isError ? getShareUrl(variant, pieceType, totalStars, maxPossibleStars) : undefined;

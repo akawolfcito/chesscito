@@ -75,7 +75,7 @@ const m = messages as any;
 m.HUD_COPY.proRemainingFormat = "{days}d";
 m.TX_PROGRESS_COPY.stepCounter = "Step {current} of {total}";
 m.SHARE_COPY.badge =
-  "I earned the {piece} Ascendant badge on Chesscito! {stars}/15 stars. Saved on Celo forever.";
+  "I earned the {piece} Ascendant badge on Chesscito! {stars}/{maxStars} stars. Saved on Celo forever.";
 m.SHARE_COPY.score =
   "I just landed {stars}★ on the Chesscito leaderboard. Can you beat it?";
 m.SHARE_COPY.shop = "I just got {item} on Chesscito!";

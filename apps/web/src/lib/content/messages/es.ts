@@ -819,7 +819,6 @@ const messages = {
     starsFormat: "{stars}★",
     milestonesLabel: "Logros",
     badgeLabel: "Insignia",
-    badgeLockedFormat: "Insignia a {stars}★",
     badgeReady: "Insignia lista",
     badgeConnect: "Conecta y reclama",
     badgeClaimed: "Reclamada",
@@ -851,7 +850,7 @@ const messages = {
     ...en.SHARE_COPY,
     button: "Compartir",
     badge:
-      "¡Gané la insignia Ascendente de {piece} en Chesscito! {stars}/15 estrellas. Guardado en Celo para siempre.",
+      "¡Gané la insignia Ascendente de {piece} en Chesscito! {stars}/{maxStars} estrellas. Guardado en Celo para siempre.",
     score:
       "¡Acabo de llegar a {stars}★ en la tabla de líderes de Chesscito! ¿Puedes superarme?",
     shop: "¡Acabo de obtener {item} en Chesscito!",
