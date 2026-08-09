@@ -416,6 +416,11 @@ export function ExercisesScreen({
   const tHud = useTranslations("HUD_COPY");
   const tFooter = useTranslations("FOOTER_CTA_COPY");
   const tResult = useTranslations("RESULT_OVERLAY_COPY");
+  // Why the claim CANNOT run. Reused, not written: `badgesSubline` was authored
+  // for exactly this ("Badges are ready to claim. Connect your wallet to keep
+  // them.") and `switchNetwork` for the other half.
+  const tConnectPrompt = useTranslations("CONNECT_PROMPT_COPY");
+  const tStrip = useTranslations("STATUS_STRIP_COPY");
   const router = useRouter();
   const { address, isConnected, status: accountStatus } = useAccount();
   // Slice 0.1: the off-chain save is authored by a write SESSION bought with
@@ -2089,11 +2094,52 @@ export function ExercisesScreen({
    *  recognition it was opened from. */
   async function handleClaimBadge(piece?: PieceKey): Promise<boolean> {
     const claimLevelId = piece ? getLevelId(piece) : levelId;
-    if (!address || !badgesAddress || !isConnected || !isCorrectChain || claimLevelId <= 0n) {
+    const targetPiece = piece ?? selectedPiece;
+
+    /* ⛔ This used to be one guard that returned false in silence: no toast, no
+     *  track, no connect attempt. The player tapped Claim Badge and NOTHING
+     *  happened — the drawer even closed itself on the way out. It was latent
+     *  until the completion overlay started pointing at the badge, which sends
+     *  traffic straight here.
+     *
+     *  It is now split by what the player can DO about it. Not connected / wrong
+     *  chain is fixable, so say it and offer the fix. The dock already made this
+     *  distinction (`getContextAction` swaps in a connectWallet/switchNetwork
+     *  pin); the drawer, the badge sheet and the UnlockOverlay CTA all funnel
+     *  through this function, so one branch here covers the three of them.
+     *
+     *  ⚠️ Deliberately a toast and not `<ConnectPromptToast>`: `useConnectPrompt`
+     *  is one-shot per browser (localStorage, and `dismiss()` does not reset it),
+     *  so as the answer to an explicit tap the SECOND tap would be silent again
+     *  — the same bug wearing a nudge. The badge sheet's own ConnectPrompt stays
+     *  where it is; that one is ambient context, not a reply. */
+    if (!isConnected || !isCorrectChain) {
+      track("badge_claim_tx", {
+        stage: "blocked",
+        reason: !isConnected ? "not_connected" : "wrong_chain",
+        piece: targetPiece,
+      });
+      if (!isConnected) {
+        // MiniPay auto-connects before any CTA paints, so this is mostly the
+        // desktop/extension path. `connectWallet` no-ops in silence when there
+        // is no injected connector — which is why the toast fires either way,
+        // not instead.
+        connectWallet();
+        showToast(tConnectPrompt("badgesSubline"), 2600);
+      } else if (configuredChainId != null) {
+        switchChain({ chainId: configuredChainId });
+        showToast(tStrip("switchNetwork"), 2600);
+      }
+      return false;
+    }
+
+    // What the player cannot act on, and the UI should not have offered:
+    // a missing signer address, no contract for this chain, or a piece with no
+    // level id. Still silent — there is nothing to tell them to do.
+    if (!address || !badgesAddress || claimLevelId <= 0n) {
       return false;
     }
     // Prevent double-claim (stale cache or rapid taps)
-    const targetPiece = piece ?? selectedPiece;
     if (badgesClaimed[targetPiece] || isClaimBusy) return false;
 
     setLastError(null);
