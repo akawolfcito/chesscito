@@ -32,6 +32,14 @@ export const SOURCES = [
   "share_whatsapp",
   "share_generic",
   "qr",
+  /** Chesscito Web's controlled Early Access channel. Purely ADDITIVE: no
+   *  existing value changes meaning, and nothing starts resolving here that
+   *  did not carry the token — an unrecognized source still becomes `unknown`.
+   *  It exists so Web Early Access players can never blend silently into
+   *  MiniPay retention metrics. Note that `container` (minipay | browser)
+   *  already separates the two runtimes; this names the CAMPAIGN that brought
+   *  them, which is a different question. */
+  "web_early_access",
   "unknown",
 ] as const;
 export type Source = (typeof SOURCES)[number];
@@ -49,6 +57,8 @@ const SOURCE_ALIASES: Record<string, Source> = {
   share: "share_generic",
   share_generic: "share_generic",
   qr: "qr",
+  early_access: "web_early_access",
+  web_early_access: "web_early_access",
 };
 
 function asString(raw: unknown): string | null {
