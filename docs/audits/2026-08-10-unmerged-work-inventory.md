@@ -104,16 +104,34 @@ la red de seguridad; no cuesta nada dejarla.
 
 ## 6. 🟡 STASHES (2)
 
-- **`stash@{0}` — "builder test experiments (rook-lab-4 etc)", 2026-06-16.** +71/-2, JSON de
-  posiciones de tablero (`file`/`rank`). Experimentos del builder de contenido.
-  **Veredicto:** el contenido se autora hoy por el builder y el catálogo; esto es un scratch de
-  hace dos meses. Descartar salvo que reconozcas `rook-lab-4` como algo que falte.
-- **`stash@{1}` — sobre `288ef3a`, "gold/silver/bronze text color to top-3 leaderboard ranks
-  (M25)".** Toca `ARENA_COPY` (agrega `engineError: "Engine error — please restart the match"`)
-  y `lib/game/use-chess-game.ts`. **No es** el color del leaderboard que dice el mensaje: el
-  mensaje es del commit sobre el que se guardó, no del contenido.
-  **Veredicto:** el contenido real es un manejo de error del motor de ajedrez. Chico y
-  posiblemente útil; vale mirarlo antes de tirarlo.
+### `stash@{1}` — ⚪ YA ESTÁ TODO EN `main`
+
+Guardado sobre `288ef3a`. ⚠️ **Su mensaje miente**: dice "gold/silver/bronze text color to
+top-3 leaderboard ranks (M25)" porque ése es el commit sobre el que se guardó, **no** lo que
+contiene. Toca 7 archivos y son tres cosas distintas:
+
+1. **Pausa de 800 ms antes del overlay de fin de partida**, para que el jugador vea la posición
+   final del mate antes de que se la tape (`arena/page.tsx` + `isCheckmatePause` en
+   `arena-board.tsx`).
+2. **`engineError`** en `ARENA_COPY` + su manejo en `use-chess-game.ts`.
+3. Retoques en tres sheets de play-hub.
+
+**Veredicto: descartar.** `main` ya tiene las tres — `isCheckmatePause` (2 archivos),
+`showEndOverlay` (1) y `engineError` (2). Además su archivo base, `app/arena/page.tsx`, **ya no
+existe**: el árbol se movió a `app/[locale]/`, así que ni siquiera aplicaría.
+
+### `stash@{0}` — 🟡 CONTENIDO AUTORADO, decisión del founder
+
+"builder test experiments (rook-lab-4 etc)", 2026-06-16. Modifica el FEN del primer laberinto
+de torre por uno sembrado de caballos, agrega un quinto (`rook-lab-4`) con ese mismo FEN, y
+regenera `puzzles.generated.ts` (`optimalMoves` 3 → 5).
+
+`main` tiene hoy **4 laberintos de torre** y `rook-lab-4` **no está**.
+
+**Veredicto: descartar, pero lo decidís vos.** El contenido se autora por el builder y el
+catálogo, y `puzzles.generated.ts` se regenera solo, así que reaplicarlo sería pisar contenido
+vigente con un scratch de hace dos meses. Es la única pieza que toca **contenido autorado**, y
+la regla del repo es confirmar antes de borrar ese tipo de artefacto.
 
 ## 7. ✅ TAGS `archive/*` (8)
 
@@ -169,10 +187,63 @@ público, esta es la puerta que quedó.
 
 ---
 
-## ORDEN SUGERIDO
+## CÓMO SE CIERRA CADA COSA
 
-1. **Mergear `security/peones-spend-authz`.** Es lo único con consecuencia real.
-2. Mirar `stash@{1}` (el manejo de error del motor) y descartar `stash@{0}`.
-3. Borrar `feat/spec-1-*` y sus dos worktrees.
-4. Confirmar si `is_verified` público en el top-10 es intencional.
-5. `docs/2026-08-10-audit-and-experiment-design` cuando cierres E0.
+El principio: **nada se borra sin dejarlo recuperable primero.** El repo ya tiene la convención
+—tags `archive/*` locales— y se usa acá también. Un tag pesa cero y revive el trabajo entero.
+
+### 1. ✅ `security/peones-spend-authz` — HECHO
+
+Mergeado a `main` local el 2026-08-10 (`353d17f0`, merge sin fast-forward, cero conflictos).
+820 tests verdes, `tsc` limpio. La branch ya se puede borrar.
+
+⚠️ **El merge NO activó el fix.** Sigue pendiente, y es lo único de toda esta lista con
+consecuencia de seguridad real:
+
+1. que el cliente adjunte el token de sesión al llamar `/api/peones/spend`;
+2. aplicar la migración del grantor de `docs/security/2026-08-10-peones-spend-authz.md`;
+3. prender `PEONES_SPEND_REQUIRE_SESSION=true`.
+
+**Hasta el paso 3, el agujero sigue abierto en producción.**
+
+### 2. Las dos branches de spec-1 y sus worktrees
+
+```bash
+git tag archive/2026-05-spec-1-hub-redesign  feat/spec-1-hub-redesign
+git tag archive/2026-05-spec-1-candy-polish  feat/spec-1-candy-polish
+git worktree remove ../chesscito-spec-1-hub-redesign
+git worktree remove ../chesscito-spec-1-candy-polish
+git branch -D feat/spec-1-hub-redesign feat/spec-1-candy-polish
+```
+
+Recupera cualquiera con `git switch -c <nombre> archive/<tag>`. Libera además dos copias
+enteras del repo en disco.
+
+### 3. Los stashes
+
+Un stash **es un commit**, así que un tag lo preserva igual de bien y deja de ocupar la lista:
+
+```bash
+git tag archive/2026-06-builder-rook-lab-experiments 'stash@{0}'
+git tag archive/2026-05-arena-end-overlay-pause      'stash@{1}'
+git stash drop 'stash@{1}'   # ya esta todo en main
+git stash drop 'stash@{0}'   # solo despues de confirmar el contenido
+```
+
+### 4. `backup/main-before-author-rewrite`
+
+De marzo, dos commits, es la foto previa a reescribir autores. No se mergea nunca. Dejala o
+convertila en tag y borrá la branch — cuesta lo mismo.
+
+### 5. `docs/2026-08-10-audit-and-experiment-design`
+
+Se mergea cuando cierre el ciclo de E0. No hay nada que resolver.
+
+### 6. `leaderboard_v` — una confirmación, no una acción
+
+Confirmar si exponer `passport_cache.is_verified` de los top-10 a `anon` es intencional. Si lo
+es, no se toca nada. Si no, hay que revocarle el `SELECT` a `anon`.
+
+### 7. Tags `archive/*`
+
+No se tocan. Son trabajo pausado a propósito.
