@@ -6,8 +6,10 @@ import { useEffect, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 
 import { DesktopAppFrame } from "@/components/chrome/desktop-app-frame";
+import { EarlyAccessRequest } from "@/components/early-access-request";
 import { trackWebAccess, WEB_ACCESS_EVENTS } from "@/lib/wallet/web-access-analytics";
 import {
+  EARLY_ACCESS_COPY,
   resolveWebAccessSurface,
   WEB_ACCESS_COPY,
   type ProductSurface,
@@ -46,6 +48,14 @@ export function WebAccessGate({
   const { address } = useAccount();
   const [authenticating, setAuthenticating] = useState(false);
   const [error, setError] = useState(false);
+  /** Whether the visitor asked to see the Early Access intake.
+   *
+   *  A view toggle, NOT a sixth access state: it changes which of OUR screens a
+   *  visitor is looking at while they remain `unauthenticated`, and it decides
+   *  nothing about access. Keeping it out of `deriveWebAccessState` is what
+   *  stops that reducer — the one thing standing between a web user and the
+   *  product — from growing a branch that has no bearing on access. */
+  const [requestingAccess, setRequestingAccess] = useState(false);
 
   const { login } = useLogin({
     onComplete: () => {
@@ -188,6 +198,21 @@ export function WebAccessGate({
     );
   }
 
+  // The Early Access intake. Reachable ONLY from `unauthenticated`: once a
+  // login is in flight or a session exists, asking for a key is not the
+  // question on screen. It renders in place of the gate, inside the same frame,
+  // and touches no Privy hook (see `early-access-request.tsx`).
+  if (state === "unauthenticated" && requestingAccess) {
+    return (
+      <DesktopAppFrame>
+        <EarlyAccessRequest
+          surface={surface}
+          onBack={() => setRequestingAccess(false)}
+        />
+      </DesktopAppFrame>
+    );
+  }
+
   // `unauthenticated` / `authenticating` — the gate itself.
   return (
     <DesktopAppFrame>
@@ -220,6 +245,18 @@ export function WebAccessGate({
             {WEB_ACCESS_COPY.cta}
           </button>
           <p className="web-access-note">{WEB_ACCESS_COPY.note}</p>
+          {/* Secondary and BELOW the CTA on purpose. A player who already has a
+              key must keep seeing the screen they have always seen, so this is
+              a link rather than a permanent email field competing with ENTER.
+              It is also the reason the intake works whether or not the Privy
+              allowlist is on: it never depends on a login being refused. */}
+          <button
+            type="button"
+            className="web-access-note web-access-link"
+            onClick={() => setRequestingAccess(true)}
+          >
+            {EARLY_ACCESS_COPY.requestLink}
+          </button>
           {/* No `Continue as Guest`: web access is mandatory by product decision. */}
         </div>
       </div>

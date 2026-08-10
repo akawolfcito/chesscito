@@ -17064,6 +17064,74 @@ button.hud-resource-chip:active:not(:disabled) {
   text-underline-offset: 3px;
 }
 
+/* The same tertiary link rendered as a <button>. Early Access is an in-place
+   view swap, not a navigation, so it must not be an <a href> — a link with no
+   destination is a lie to assistive tech and to a long-press. These are the
+   resets a button needs to sit inside `.web-access-note` type without the UA
+   stylesheet fighting it. */
+button.web-access-link {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ── Early Access intake (2026-08-10) ────────────────────────────────────────
+   The ONE form in the web access surface. It reuses the gate's two-block
+   layout and type so moving gate → request shifts nothing on screen. */
+.web-access-label {
+  align-self: flex-start;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 246, 219, 0.9);
+  text-shadow:
+    0 1px 2px rgba(6, 18, 34, 0.9),
+    0 0 9px rgba(6, 18, 34, 0.6);
+}
+
+/* Solid, not translucent — for exactly the reason `.web-access-cta--cream`
+   exists: a glass field over bright wallpaper is unreadable, and a field the
+   player cannot see is a field they cannot fill. 16px minimum keeps iOS Safari
+   from zooming the viewport on focus. */
+.web-access-input {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 16px;
+  border: 2px solid var(--cta-secondary-cream-border);
+  border-radius: 14px;
+  background: rgba(255, 248, 237, 0.96);
+  font-family: inherit;
+  font-size: 1rem;
+  color: #3a2a18;
+}
+
+.web-access-input::placeholder {
+  color: rgba(58, 42, 24, 0.5);
+}
+
+.web-access-input:disabled {
+  opacity: 0.7;
+}
+
+.web-access-input[aria-invalid="true"] {
+  border-color: #d8552f;
+}
+
+/* Warm, not alarming: this reports a typo or a lost request, never a verdict
+   on the player. Still contrast-safe over the wallpaper. */
+.web-access-error {
+  margin: 0;
+  align-self: flex-start;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #ffd9c7;
+  text-shadow:
+    0 1px 2px rgba(6, 18, 34, 0.95),
+    0 0 9px rgba(6, 18, 34, 0.7);
+}
+
 /* Interstitials (preparing / error) reuse the wallpaper so the transition
    from gate to Hub never flashes a bare background. */
 .web-access-screen--centered {
