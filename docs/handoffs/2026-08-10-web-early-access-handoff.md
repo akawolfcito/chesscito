@@ -174,7 +174,34 @@ otorga, y las dos listas se concilian mirándolas. La seguridad la da Privy.
 
 ## 9. MIGRACIONES
 
-Una: **`20260810000000_web_early_access.sql`**.
+Una: **`20260810000000_web_early_access.sql`**. ✅ **APLICADA en local y en hosted.**
+
+⚠️ **Cómo se aplicó a hosted, y por qué NO con `supabase db push`.** El ledger hospedado
+estaba en 40 migraciones (última `20260805020000`): faltaban **tres**, no una. Las otras dos
+son backfills de drift del 2026-08-06 cuyo efecto ya estaba en prod desde abril — verificado
+objeto por objeto, no leyendo sus comentarios: RLS en `analytics_events`/`passport_cache`/
+`scores` (21/21 tablas), `victories` y `sync_state` con su RLS, policy e índice.
+
+Lo único que esas dos habrían EJECUTADO sobre hosted es un `drop policy` + `create policy`
+sobre `scores_select_public` y `victories_select_public` — las dos tablas de lectura pública
+(leaderboard y hall of fame). Se comprobó que las policies vivas son idénticas a lo que
+declaran (`cmd=SELECT`, `permissive`, `roles=public`, `qual=true`, `with_check=null`), así que
+recrearlas no cambia nada; pero si el CLI no envolviera cada archivo en una transacción
+—**no se verificó**— habría una ventana de milisegundos con RLS activo y sin policy de
+lectura, y esas dos superficies devolverían vacío.
+
+Como esas dos migraciones **no aportan nada en hosted**, se evitó el riesgo por completo:
+se ejecutó SOLO el SQL de `20260810000000` y se registraron las **tres** versiones en
+`supabase_migrations.schema_migrations`, todo en UNA transacción
+(`BEGIN / CREATE TABLE / CREATE INDEX / ALTER TABLE / REVOKE / COMMENT ×2 / INSERT 0 3 /
+COMMIT`). Marcar las del 08-06 como aplicadas registra la realidad de la base; su efecto ya
+estaba ahí y el ledger nunca lo dijo.
+
+**Verificación posterior en hosted** (siembra dentro de una transacción cerrada con
+`ROLLBACK`, para no escribir producción): tabla ✅, índice ✅, RLS ✅, cero policies ✅, cero
+grants para `anon`/`authenticated` ✅, `anon` SELECT e INSERT → `permission denied` ✅,
+`authenticated` SELECT → `permission denied` ✅, `service_role` ve la fila ✅, ledger 3/3 ✅,
+tabla vacía en prod ✅.
 
 Crea la tabla y el índice parcial, activa RLS **sin policies** (deny total para `anon` y
 `authenticated`; sólo `service_role` escribe, igual que `analytics_events` y `passport_cache`)
@@ -390,7 +417,7 @@ separador primario ya existía y no se tocó: **`container` = `browser` | `minip
 
 | Cosa | Por qué |
 |---|---|
-| **Notificación por email** | No hay proveedor en el repo y agregarlo era infra nueva. El jugador descubre su acceso en el próximo login, que es suficiente para n≈25. Mejora futura: un mail *"Your Chesscito key is ready"* disparado a mano tras el paso 1 de la aprobación |
+| **Notificación por email o a Slack** | ✅ **Decidido explícitamente: se queda manual** (founder, 2026-08-10). No hay proveedor en el repo y agregarlo era infra nueva. El jugador descubre su acceso en el próximo login, que alcanza para n≈25. Si algún día hace falta: (a) avisar AL FOUNDER de una solicitud nueva es un **Database Webhook** de Supabase sobre `insert` en la tabla, cero código en el repo; (b) avisar AL JUGADOR de que su key está lista sí necesita proveedor de email |
 | **Admin UI** | 25 filas se operan con 4 queries. Un dashboard es más código que la feature |
 | **Automatizar el allowlist de Privy** | Existe la API (`POST /api/v1/apps/<id>/allowlist`, Basic auth) y requiere `PRIVY_APP_SECRET`. No hace falta para 25 personas, y meter el secret para eso agranda la superficie |
 | **`PRIVY_APP_SECRET`** | Innecesario: el allowlist nativo preserva legacy solo, así que no hay grandfathering que verificar server-side |
@@ -405,36 +432,33 @@ separador primario ya existía y no se tocó: **`container` = `browser` | `minip
 
 ## 15. RIESGOS PENDIENTES
 
-**🔴 P0 — La premisa del diseño no está verificada empíricamente.**
-> ¿Un intento de login rechazado por el allowlist crea usuario / consume MAU?
+**✅ CERRADO — comportamiento de Privy al bloquear nuevos usuarios.** El founder confirmó
+(2026-08-10) que ya se validó cuando se cerró Web para proteger el límite de MAU. La premisa
+del diseño se sostiene.
 
-La doc de Privy no lo afirma textualmente. La deducción (rechazo ⇒ no hay sesión ⇒ no hay MAU)
-es fuerte pero es una deducción, y todo el mecanismo depende de ella. **Prueba en curso del
-lado del founder** (app de dev: prender allowlist → anotar conteo → login con email no
-allowlisted → releer). **El allowlist de producción queda bloqueado hasta cerrarla.** Si el
-conteo sube, A4 no protege el límite — y entonces ninguna alternativa cliente-side sirve
-tampoco, y la conversación pasa a ser con el soporte de Privy.
+**✅ CERRADO — LEARN y PLAY comparten la MISMA app de Privy** (login transversal, founder
+2026-08-10). No hay dos allowlists que coordinar: se prende una sola vez.
 
-**🟠 P1 — Verificar la RLS con `set role anon`.** Es la única tabla con emails en claro. El
-comentario de la migración no es un control.
+**✅ CERRADO — RLS verificada con `set role`,** en local y en hosted. `anon` y `authenticated`
+reciben `permission denied` en SELECT e INSERT; `service_role` opera. Ver §9.
 
-**🟠 P1 — ¿LEARN y PLAY comparten `NEXT_PUBLIC_PRIVY_APP_ID`?** Si son apps de Privy
-distintas, el allowlist hay que prenderlo **en las dos**. Sin esto, prender una sola deja la
-otra abierta y el límite igual de expuesto.
-
-**🟡 P2 — VR sin correr.** La pantalla nueva no tiene baseline. Correr
-`--project=minipay --update-snapshots=none` con el dev server BAJADO; si aparecen PNG nuevos
-en `e2e/visual-regression.spec.ts-snapshots/`, son grabaciones, no cobertura → `git clean`.
-Recordar que la tolerancia esconde elementos chicos: el enlace bajo ENTER se ancla con
-aserción de DOM (ya está), nunca con la foto.
+**✅ CERRADO — VR corrido** con `--project=minipay --update-snapshots=none`: 67 passed, cero
+snapshots nuevos (diff de la lista de baselines vacío, 81 = 81). Las pantallas nuevas NO están
+cubiertas por esa suite y no pueden estarlo sin agregar casos: el VR corre como MiniPay, que
+resuelve a la rama `injected` y nunca renderiza el gate. Se validaron aparte con sonda propia a
+390×844 (22/22 checks + revisión de las capturas), sin grabar baselines.
 
 **🟡 P2 — Emails sin verificar en la cola.** Alguien puede pedir con el email de otro. No es
 un agujero (pedir no otorga nada, aprobar es manual y el founder ve el address), pero sí
 ruido operativo posible. Mitigado con rate limit de 5/hora/IP y `on conflict do nothing`.
 
-**🟡 P2 — Estabilidad de identidad.** Si un jugador pide con `ana@gmail.com` y después entra
-con Google usando `ana.p@gmail.com`, son dos identidades y el allowlist no lo va a dejar
-pasar. Con 25 personas se resuelve mirando; a escala haría falta pedir el mismo método.
+**🟠 P1 — Estabilidad de identidad, y ya apareció en la primera prueba real.** La primera
+solicitud registrada es `guffenix+chess@gmail.com`. El `+chess` se conserva en la
+normalización (correcto: es parte de la dirección), así que **en el allowlist de Privy hay
+que cargar ese string exacto** — para Privy `guffenix+chess@gmail.com` y `guffenix@gmail.com`
+son identidades distintas aunque Gmail entregue las dos al mismo buzón. Lo mismo con los
+puntos en Gmail (`ana.p@` vs `anap@`) y con pedir por email pero entrar con Google. Con 25
+personas se resuelve mirando; a escala habría que pedir el mismo método de login.
 
 **🟡 P2 — Diferencias Web/MiniPay de estado.** Ya existían (runtime, auth, device) y no
 cambian. Sólo importa para no comparar las cohortes: ver §16.
@@ -468,13 +492,20 @@ Con ~25 usuarios web admitidos **PODEMOS** legítimamente:
 
 ## PRÓXIMOS PASOS
 
-| # | Quién | Qué |
-|---|---|---|
-| 1 | **Founder** | Cerrar la prueba empírica de MAU (§15 P0). **Bloquea todo lo demás** |
-| 2 | Founder | Confirmar si LEARN y PLAY comparten app de Privy |
-| 3 | — | Aplicar la migración (local → prod) y verificar la RLS con `set role anon` |
-| 4 | — | Correr el VR con `--project=minipay --update-snapshots=none`, dev server abajo |
-| 5 | Founder | Recién entonces: prender el allowlist en producción |
-| 6 | Founder | Aprobar la primera cohorte, en el orden Privy → DB |
+| # | Quién | Qué | Estado |
+|---|---|---|---|
+| 1 | Founder | Comportamiento de Privy al bloquear nuevos usuarios | ✅ ya validado |
+| 2 | Founder | LEARN y PLAY comparten app de Privy | ✅ confirmado: una sola |
+| 3 | — | Aplicar la migración y verificar la RLS con `set role` | ✅ local y hosted |
+| 4 | — | VR sin actualizar snapshots | ✅ 67 passed, 0 nuevos |
+| 5 | — | Intake probado end-to-end en preview | ✅ 1 fila `waiting` |
+| 6 | **Founder** | Prender el allowlist en Privy (una sola app) | ⏳ pendiente |
+| 7 | **Founder** | Aprobar la primera cohorte, **en el orden Privy → DB** | ⏳ pendiente |
 
-**Nada se deployó. Nada se aprobó. E0 no se tocó.**
+**Estado al cierre de la sesión (2026-08-10):** el intake está vivo en preview y escribe en la
+base compartida con producción. La cola tiene **1 fila en `waiting`** (la prueba del founder).
+**El allowlist de Privy sigue APAGADO**, así que Web sigue abierta como siempre: hasta que se
+prenda, el intake recoge solicitudes pero no protege el límite de MAU. Ese es el único paso
+que falta para que la feature cumpla su propósito.
+
+**No se deployó a producción. Nadie fue aprobado. E0 no se tocó.**
