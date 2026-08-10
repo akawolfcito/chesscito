@@ -35,6 +35,11 @@ import {
   SPEND_COST_BY_TARGET,
   type PeonesSpendTarget,
 } from "@/lib/peones/spend-service";
+import {
+  isSpendSessionRequired,
+  readSpendBearerToken,
+  resolveSpendSessionWallet,
+} from "@/lib/scores/spend-session-guard";
 import { enforceOrigin, getRequestIp } from "@/lib/server/demo-signing";
 import { enforceReadRateLimit } from "@/lib/server/rate-limit";
 import { createLogger } from "@/lib/server/logger";
@@ -171,6 +176,37 @@ export async function POST(req: Request) {
   if (!supabase) {
     log.error("supabase_unavailable", { wallet, target });
     return NextResponse.json({ error: "ledger_unavailable" }, { status: 500 });
+  }
+
+  // 9b. CALLER AUTHORIZATION (P0, 2026-08-10). The debited wallet must be
+  //     PROVEN, not taken from the body. A score write-session — the same
+  //     capability the score save path signs — resolves to a wallet server
+  //     side; the caller must hold one for exactly the wallet it is spending.
+  //     Gated for staged rollout: with the flag off this block is a no-op and
+  //     the route keeps its legacy behaviour, so the token-carrying client can
+  //     ship first (see spend-session-guard + docs/security/2026-08-10-...).
+  if (isSpendSessionRequired()) {
+    const sessionToken = readSpendBearerToken(req);
+    const resolved = await resolveSpendSessionWallet(
+      supabase,
+      sessionToken,
+      Date.now(),
+    );
+    if (resolved.status === "unavailable") {
+      log.error("spend_session_store_unavailable", { target });
+      return NextResponse.json(
+        { error: "ledger_unavailable" },
+        { status: 503 },
+      );
+    }
+    if (resolved.status !== "ok" || resolved.wallet !== wallet) {
+      // No proof, or proof for a DIFFERENT wallet than the one being debited.
+      log.warn("spend_unauthorized", {
+        target,
+        reason: resolved.status === "ok" ? "wallet_mismatch" : resolved.reason,
+      });
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
   }
 
   // 10. Attestation hash — deterministic SHA-256 over the canonical

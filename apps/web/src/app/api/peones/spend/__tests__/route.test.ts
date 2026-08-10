@@ -53,10 +53,13 @@ const mockedResolveBypass = vi.mocked(resolveProBypass);
 
 const W = "0xabcdef0123456789abcdef0123456789abcdef01";
 
-function makeRequest(body: unknown | string): Request {
+function makeRequest(
+  body: unknown | string,
+  extraHeaders: Record<string, string> = {},
+): Request {
   return new Request("http://localhost/api/peones/spend", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...extraHeaders },
     body: typeof body === "string" ? body : JSON.stringify(body),
   });
 }
@@ -554,5 +557,129 @@ describe("POST /api/peones/spend — PRO bypass (Sprint 4 commit G)", () => {
     );
     expect(res.status).toBe(200);
     expect(captured[0]?.p_apply_pro_bypass).toBe(false);
+  });
+});
+
+// P0 (2026-08-10): caller authorization. With PEONES_SPEND_REQUIRE_SESSION on,
+// the debited wallet must be proven by a score write-session bearer token; the
+// body wallet is no longer trusted on its own. Flag OFF (every test above) keeps
+// the legacy behaviour byte-for-byte — those tests are the regression guard that
+// the default path is unchanged.
+describe("POST /api/peones/spend — caller authorization (flag ON)", () => {
+  const TOKEN = "b".repeat(64);
+  const prev = process.env.PEONES_SPEND_REQUIRE_SESSION;
+
+  beforeEach(() => {
+    process.env.PEONES_SPEND_REQUIRE_SESSION = "true";
+  });
+  afterEach(() => {
+    if (prev === undefined) delete process.env.PEONES_SPEND_REQUIRE_SESSION;
+    else process.env.PEONES_SPEND_REQUIRE_SESSION = prev;
+  });
+
+  /** Supabase stub answering BOTH the session read (`.from`) and the spend
+   *  (`.rpc`). `sessionRow` null models "no matching session". */
+  function buildSupabaseWithSession(sessionRow: Record<string, unknown> | null) {
+    const captured: RpcArgs[] = [];
+    const rpc = vi.fn().mockImplementation((_fn: string, args: RpcArgs) => {
+      captured.push(args);
+      return Promise.resolve({
+        data: [
+          {
+            ledger_id: 42,
+            debited: 1,
+            new_balance: 9,
+            duplicate: false,
+            pro_bypass_applied: false,
+          },
+        ],
+        error: null,
+      });
+    });
+    const maybeSingle = vi.fn(async () => ({ data: sessionRow, error: null }));
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ select }));
+    const client = { rpc, from } as unknown as ReturnType<
+      typeof getSupabaseServer
+    >;
+    return { client, captured };
+  }
+
+  const activeSession = {
+    wallet: W,
+    surface: "learn",
+    authorized_at: "2026-08-10T00:00:00.000Z",
+    revoked_at: null,
+    expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+  };
+
+  it("200 and debits when a valid token proves the SAME wallet", async () => {
+    const { client, captured } = buildSupabaseWithSession(activeSession);
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(baseBody(), { authorization: `Bearer ${TOKEN}` }),
+    );
+    expect(res.status).toBe(200);
+    expect(captured.length).toBe(1);
+    expect(captured[0]?.p_wallet).toBe(W);
+  });
+
+  it("401 and NO debit when the Authorization token is absent", async () => {
+    const { client, captured } = buildSupabaseWithSession(activeSession);
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorized" });
+    expect(captured.length).toBe(0); // debit never attempted
+  });
+
+  it("401 and NO debit when the token proves a DIFFERENT wallet than the body", async () => {
+    // Attacker holds a session for their own wallet, tries to debit a victim's.
+    const attackerSession = {
+      ...activeSession,
+      wallet: "0x1111111111111111111111111111111111111111",
+    };
+    const { client, captured } = buildSupabaseWithSession(attackerSession);
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(baseBody(), { authorization: `Bearer ${TOKEN}` }),
+    );
+    expect(res.status).toBe(401);
+    expect(captured.length).toBe(0);
+  });
+
+  it("401 when the token matches no session row", async () => {
+    const { client, captured } = buildSupabaseWithSession(null);
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(baseBody(), { authorization: `Bearer ${TOKEN}` }),
+    );
+    expect(res.status).toBe(401);
+    expect(captured.length).toBe(0);
+  });
+
+  it("503 (fail-closed) when the session store read errors", async () => {
+    const rpc = vi.fn();
+    const maybeSingle = vi.fn(async () => ({
+      data: null,
+      error: { code: "08006" },
+    }));
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ select }));
+    mockedSupabase.mockReturnValue({ rpc, from } as unknown as ReturnType<
+      typeof getSupabaseServer
+    >);
+
+    const res = await POST(
+      makeRequest(baseBody(), { authorization: `Bearer ${TOKEN}` }),
+    );
+    expect(res.status).toBe(503);
+    expect(rpc).not.toHaveBeenCalled();
   });
 });
