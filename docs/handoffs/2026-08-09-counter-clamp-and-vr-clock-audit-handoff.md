@@ -1,8 +1,8 @@
 # Handoff — el contador que se pasaba de su meta, y la auditoría de relojes del VR
 
 **Fecha:** 2026-08-09
-**Rama:** `main` local (56 commits sin pushear a `origin/main`)
-**Commit de cierre:** `831053b`
+**Rama:** `main` local (⚠️ medir con `git log origin/main..main`, no heredar de acá)
+**Commits de esta sesión:** `831053b` (el tope) · `1a84cf3` (el `+`) · este doc
 **Handoff anterior:** `docs/handoffs/2026-08-09-hub-tile-progress-counter-handoff.md`
 
 ---
@@ -11,13 +11,14 @@
 
 | Verificación | Resultado | Cómo se midió |
 | --- | --- | --- |
-| Suite web | **7577 passing / 617 files, EXIT=0** | `pnpm test` con la máquina libre (sin `pnpm dev` arriba), salida a archivo y `echo $?` |
+| Suite web | **7580 passing / 617 files, EXIT=0** | `pnpm test` con la máquina libre (sin `pnpm dev` arriba), salida a archivo y `echo $?` |
 | `Unhandled Errors` | **0** | `grep -c "Unhandled Error"` sobre el log completo, no sobre el resumen |
 | `tsc` | limpio | `pnpm exec tsc --noEmit` |
 | VR | **no se recorrió esta sesión** | ver "Lo que NO se verificó" |
 
-El conteo de archivos **subió** de 616 a 617 (el test nuevo). Esa es la dirección
-correcta: si hubiera bajado, la corrida no valía.
+El conteo de archivos **subió** de 616 a 617 (el test nuevo) y el de tests de
+7573 a 7580. Esa es la dirección correcta: si el de archivos hubiera **bajado**,
+la corrida no valía (workers que no arrancan, resumen verde con `exit 1`).
 
 ---
 
@@ -47,7 +48,8 @@ y **sólo** ahí.
 
 **El arreglo:** topear el numerador, no esconder el chip.
 `apps/web/src/hooks/use-exercise-progress.ts` — `badgeProgress` ahora devuelve
-`{ completed: Math.min(completedCount, required), required }`.
+`{ completed: Math.min(completedCount, required), required, extra }` — ver §1b
+para `extra`.
 
 Se eligió topear sobre esconder porque `8/8` acompaña al punto rojo del CLAIM
 que **ya está** en el dock, y deja el chip donde el jugador aprendió a buscarlo.
@@ -65,21 +67,51 @@ que el tope no se convierta en el gate por un refactor futuro.
   pieza es lo que se comprime a 390px) y rompe el reconocimiento con la baldosa,
   que era el punto del Paso 2. La forma larga **ya existe donde importa**: el
   `aria-label` dice *"8 of 8 toward your badge"*.
-- ❌ `8/8 + START` — descartado. Ese momento ya se anuncia dos veces (el modal de
-  milestone con su botón Claim, y el punto rojo del CLAIM en el dock). Un tercer
-  aviso repite el problema ya cerrado en
-  `[[project_the_badge_gate_moment_belongs_to_the_milestone_modal]]`.
-  ⚠️ Queda **abierto** si con START se pensaba en otra cosa (arrancar el
-  ejercicio que falta, no reclamar) — ver Open questions.
+- ✅ **Marcar al que se pasó del gate — resuelto con un `+`** (ver §1b).
+  Primero se leyó "START" y se descartó por duplicar el momento del Claim; era
+  **STAR**, el ícono. La intención detrás era correcta y se implementó.
+
+### 1b. …pero topear borró una distinción, y el `+` la devuelve
+
+Commit `1a84cf3`. Topear en `8/8` arregla la fracción rota, pero deja al que
+resolvió **8** y al que resolvió **10** viendo exactamente el mismo número. Eso
+era justo lo que el founder quería marcar.
+
+El hook expone ahora un tercer campo, `extra` = lo que queda más allá del gate
+(**1** para el alfil, **2** para las otras cinco), y el chip lo dice con un `+`:
+
+| Resolvió | Chip |
+| --- | --- |
+| 3 | `3/8` |
+| 8 (justo en el gate) | `8/8` |
+| 9 o 10 | `8/8+` |
+
+**⛔ Un `+` y NO el ícono de estrella** (propuesta original del founder,
+conversada y acordada). La estrella ya significa otra cosa en el producto: el
+`★ 27` del HUD es `totalStars`, la métrica de **recompensa**, y este gate se
+sacó a propósito de las estrellas para ponerlo en **completación**
+(`BADGE_THRESHOLD` se eliminó por eso; el drawer lo dice explícito: *"Badge
+progress bar tracks COMPLETION, not stars"*). Una estrella sobre este chip
+vuelve a mezclar las dos cosas que se separaron.
+
+⚠️ **El `+` no es un número, así que un lector de pantalla no puede leerlo.** La
+cuenta llega por `aria-label` con una clave nueva, `ariaLabelExceeded`, en los
+dos bundles (`en.ts` con `plural`, `es.ts` con `plural`). La clave sale marcada
+por `content:audit` igual que la `ariaLabel` que ya existía — mismo shape,
+warn-only, exit 0: no es una regresión.
+
+⚠️ La baldosa del hub **no** pasa `extra` y no le hace falta: su contador sólo
+existe por debajo del gate. Por eso `extra` es opcional en el tipo del chip.
 
 ### 2. La aserción del VR daba verde con `9/8`
 
 `hub-clean` afirmaba el chip con `toHaveText(/^\d+\/\d+$/)`. Esa regex es lo
 único que un regex puede ver de una fracción: **la forma**. `9/8` la satisface.
 
-Ahora el caso parsea los dos lados y afirma `done <= gate`. La foto no podía
-verlo (el chip son ~450 px sobre una tolerancia de ~1.646) y la aserción de forma
-tampoco: entre las dos, el defecto viajó hasta el device.
+Ahora el caso parsea los dos lados y afirma `done <= gate` (descartando el `+`
+antes de parsear, o `Number("8+")` daría `NaN` y el guard se rompería solo). La
+foto no podía verlo (el chip son ~450 px sobre una tolerancia de ~1.646) y la
+aserción de forma tampoco: entre las dos, el defecto viajó hasta el device.
 
 ### 3. Auditoría de fixtures atados al reloj — **cerrada, no queda ninguno suelto**
 
@@ -171,9 +203,9 @@ Paso 2**.
 
 ## Open questions
 
-1. **¿El `START` del founder era otra cosa?** Se descartó entendido como "otro
-   botón de Claim". Si la idea era *arrancar el ejercicio que falta* desde el
-   chip, es una propuesta distinta y no evaluada.
+1. **El `8/8+` no se vio en device todavía.** Sólo existe para un jugador que se
+   pasó del gate, y el `+` suma ~4 px al chip en la fila más apretada de la
+   pantalla. Vale una mirada con una pieza terminada.
 2. **¿La divergencia ancho/angosto del gate es alcanzable por un jugador real?**
    Antes de tratarla como bug hay que confirmar que existe alguien con ids
    retirados en storage.
