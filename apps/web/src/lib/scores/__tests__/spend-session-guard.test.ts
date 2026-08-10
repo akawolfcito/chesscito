@@ -5,6 +5,7 @@
  * wallet is resolved from a proven session row, never trusted from the caller.
  */
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 import {
@@ -34,8 +35,12 @@ function supabaseReturning(
   const eq = vi.fn(() => ({ maybeSingle }));
   const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { from } as any;
+  // `as unknown as SupabaseClient`, NOT `as any` with a disable comment: the
+  // rule `@typescript-eslint/no-explicit-any` is not registered in this
+  // project's ESLint config, so the disable line itself was the error that
+  // broke the Vercel build ("Definition for rule ... was not found").
+  // Naming the real type also keeps the stub honest about what it stands in for.
+  return { from } as unknown as SupabaseClient;
 }
 
 describe("readSpendBearerToken", () => {
