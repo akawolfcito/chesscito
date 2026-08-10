@@ -51,6 +51,19 @@ export type ScoreSaveClientInput = {
   surface: ScoreSaveSurface;
   signMessage: SignMessageFn;
   /**
+   * ¿Este guardado tiene derecho a interrumpir al jugador con una firma?
+   *
+   * ⛔ REQUERIDO. Se reenvía a las DOS llamadas a `ensureScoreSession` — la
+   * inicial y la re-autorización tras un rechazo del server. Cubrir sólo la
+   * primera deja abierta la fuga del jugador que vuelve al día siguiente: su
+   * token persistido puede seguir dentro de su ventana local (así que la caché
+   * lo sirve sin firmar) mientras el server ya lo dio de baja, y ahí la
+   * re-auth abría la wallet.
+   *
+   * Spec: docs/specs/2026-08-09-attempt-save-never-ambushes-v3.md §3
+   */
+  promptPolicy: "allow" | "deny";
+  /**
    * ── SLICE 3 (attempt identity) ─────────────────────────────────────────
    * All three are OPTIONAL, and that is the deploy order, not laziness. The
    * endpoint and the migration ship first; a bundle older than them sends
@@ -166,6 +179,7 @@ export async function postScoreSave(
     signMessage: input.signMessage,
     fetchImpl,
     now,
+    promptPolicy: input.promptPolicy,
   });
 
   if (!session.ok) {
@@ -182,6 +196,14 @@ export async function postScoreSave(
   }
 
   // The token was dead server-side. Re-authorize ONCE and replay the save.
+  //
+  // ⛔ Sin derecho a interrumpir, esto termina acá — y sin limpiar. Borrar la
+  // sesión costaría un prompt EVITABLE en el próximo tap del jugador, por un
+  // intento de fondo que él no inició: si el rechazo fue transitorio, el token
+  // que tenía servía. El intento vuelve como error retryable y espera a la
+  // próxima completación, que sí puede firmar.
+  if (input.promptPolicy === "deny") return first;
+
   clearScoreSession();
   const refreshed = await ensureScoreSession({
     wallet: input.player,
@@ -190,6 +212,7 @@ export async function postScoreSave(
     fetchImpl,
     now,
     forceRefresh: true,
+    promptPolicy: input.promptPolicy,
   });
   if (!refreshed.ok) {
     return {

@@ -656,6 +656,26 @@ export function ExercisesScreen({
   // so the mission sheet surfaces a free manual "Retry save" fallback instead
   // of leaving the player stuck. Reset when a fresh pending score appears.
   const [autoSaveFailed, setAutoSaveFailed] = useState(false);
+  /**
+   * ¿El jugador completó algo en ESTA visita?
+   *
+   * Es la señal que separa "la máquina hablando de sí misma" de "el jugador
+   * acaba de ganar algo", y decide si un guardado tiene derecho a abrir la
+   * wallet. Entrar con una cola vieja no lo prende; ganar un ejercicio sí.
+   *
+   * ⛔ Vive ACÁ, en el host, y NO dentro de `report()`: ese sale temprano por
+   * el latch de completación —un ejercicio repetido no volvería a prenderlo— y
+   * también si la lane de intentos está apagada, lo que dejaría el auto-save
+   * del score en "deny" permanente y rompería el guardado entero.
+   *
+   * ⚠️ Es estado y no ref a propósito: el efecto de auto-save lo necesita en
+   * sus deps para reintentar cuando se prende.
+   *
+   * Spec: docs/specs/2026-08-09-attempt-save-never-ambushes-v3.md §3.3
+   */
+  const [earnedThisSession, setEarnedThisSession] = useState(false);
+  /** El permiso que corresponde a un guardado disparado por la máquina. */
+  const autoPromptPolicy = earnedThisSession ? "allow" : "deny";
   // Get Peones recovery sheet — opened from the insufficient-save overlay.
   const [getPeonesOpen, setGetPeonesOpen] = useState(false);
 
@@ -1134,12 +1154,16 @@ export function ExercisesScreen({
         timeMs: snapshot.timeMs,
         surface: resolveDeploymentSurface(),
         signMessage: ({ message }) => signMessageAsync({ message }),
+        // El drenado de la cola corre SOLO al montar (la cola rehidratada
+        // arranca despareada), así que sin este permiso una cola vieja abría
+        // la wallet apenas se entraba a la pantalla.
+        promptPolicy: autoPromptPolicy,
         attemptId: snapshot.attemptId,
         exerciseId: snapshot.exerciseId,
         measurement: snapshot.measurement,
       });
     },
-    [address, signMessageAsync],
+    [address, signMessageAsync, autoPromptPolicy],
   );
 
   const attempts = useAttemptOutbox({
@@ -2343,7 +2367,17 @@ export function ExercisesScreen({
     // primary is "Continue" — closing IS returning to the experience.
   }
 
-  async function handleSubmitScore(opts?: { silent?: boolean }) {
+  async function handleSubmitScore(opts: {
+    silent?: boolean;
+    /**
+     * ⛔ Eje SEPARADO de `silent`, y con nombre propio. `silent` es una
+     * decisión de PRESENTACIÓN (si se popea la celebración); esto es el derecho
+     * a interrumpir al jugador con una firma. Derivar uno del otro ata el
+     * permiso a la UI — la misma confusión de categorías que produjo el bug
+     * original, donde un guardado de fondo abría la wallet al montar.
+     */
+    promptPolicy: "allow" | "deny";
+  }) {
     // SaveScore off-chain: the base save no longer signs (/api/sign-score),
     // never broadcasts `submitScoreSigned`, never prompts approve/send, and
     // never enters the signer 429 loop. It POSTs /api/scores/save (ALWAYS
@@ -2357,7 +2391,7 @@ export function ExercisesScreen({
     //
     // `canSaveScore` (no badgeEarned requirement) gates the surface; the
     // scoreboard address is no longer a precondition.
-    const silent = opts?.silent ?? false;
+    const silent = opts.silent ?? false;
     if (!canSaveScore || !address || isSubmitBusy) {
       return;
     }
@@ -2389,6 +2423,7 @@ export function ExercisesScreen({
         // Slice 0.1: this prompts ONCE per write session (2h / 25 saves), not
         // once per save. Subsequent saves ride the cached bearer token.
         signMessage: ({ message }) => signMessageAsync({ message }),
+        promptPolicy: opts.promptPolicy,
       });
 
       // Slice 6: exactly one telemetry event per response, fired only
@@ -2403,13 +2438,30 @@ export function ExercisesScreen({
         source: "exercises",
       });
 
+      // ⛔ `session_required` NO es un fallo: es "ahora no". Nada salió mal y
+      // nadie rechazó nada — sólo que acuñar la sesión habría costado un prompt
+      // que el jugador no pidió. Vestirlo de error haría que una ENTRADA EN
+      // FRÍO pintara un estado de fallo con botón de reintento dentro de la
+      // hoja de misión: el cartel que sacamos del tablero, mudado adentro.
+      // El score sigue local y se reintenta en la próxima completación.
+      const deniedForNow =
+        result.status === "error" &&
+        "reason" in result &&
+        result.reason === "session_required";
+
       // Silent auto-save (B2): never throw an error overlay at the player in
       // the background. Any non-success flips the inline fallback so the
       // mission sheet offers a free manual "Retry save".
-      if (silent && result.status !== "saved" && result.status !== "duplicate") {
+      if (
+        silent &&
+        !deniedForNow &&
+        result.status !== "saved" &&
+        result.status !== "duplicate"
+      ) {
         setAutoSaveFailed(true);
         return;
       }
+      if (deniedForNow) return;
 
       switch (result.status) {
         case "saved":
@@ -2485,7 +2537,9 @@ export function ExercisesScreen({
           setResultOverlay({
             variant: "error",
             errorMessage: tResult("error.unknown"),
-            retryAction: () => void handleSubmitScore(),
+            // "Try again" es un tap del jugador sobre un overlay que él está
+            // mirando: la firma acá es esperada.
+            retryAction: () => void handleSubmitScore({ promptPolicy: "allow" }),
           });
           break;
         }
@@ -2505,13 +2559,24 @@ export function ExercisesScreen({
   useEffect(() => {
     if (!scorePendingNew || isSubmitBusy) return;
     if (autoSavedScoreRef.current === localScoreNum) return;
-    autoSavedScoreRef.current = localScoreNum;
+    // ⛔ El latch se consuma SOLO cuando el intento va en serio. Con "deny" no
+    // llega a pedir sesión, así que marcar el score como ya-intentado quemaría
+    // el turno: cuando el jugador gane y el permiso cambie, este efecto
+    // volvería a salir por la guarda de arriba y no reintentaría nunca.
+    if (autoPromptPolicy === "allow") {
+      autoSavedScoreRef.current = localScoreNum;
+    }
     setAutoSaveFailed(false);
-    void handleSubmitScore({ silent: true });
+    void handleSubmitScore({ silent: true, promptPolicy: autoPromptPolicy });
     // handleSubmitScore is a stable closure recreated each render; gating on
     // the score value + the ref makes the effect idempotent without it in deps.
+    //
+    // ⚠️ `autoPromptPolicy` SÍ va en las deps: sin él, prender el gate al ganar
+    // no re-ejecutaría este efecto, y un replay que no mejora el score dejaría
+    // la jugada sin guardar durante toda la visita — en silencio, porque este
+    // camino no tiene superficie propia que lo diga.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scorePendingNew, isSubmitBusy, localScoreNum]);
+  }, [scorePendingNew, isSubmitBusy, localScoreNum, autoPromptPolicy]);
 
   /** QA round 2 (2026-06-11): the ORIGINAL on-chain SAVE, revived as an
    *  explicit second action (gas-only, no Peones). Faithful to the
@@ -3168,6 +3233,10 @@ export function ExercisesScreen({
     timeMs?: number;
   }): void {
     const family = input.family ?? attemptFamily;
+    // ⛔ ANTES de `attempts.report`, que puede salir temprano (latch de
+    // completación, o lane apagada). El jugador completó algo: eso es cierto
+    // aunque la cola decida no encolarlo.
+    setEarnedThisSession(true);
     attempts.report({
       // D19: `${contentId}:${runKey}`. The run key is the value React already
       // uses as the board's key, so nothing parallel can drift from what the
@@ -3823,7 +3892,8 @@ export function ExercisesScreen({
           // failure) instead of a competing green CTA.
           scoreSaved={isSavedAtParity}
           saveFailed={autoSaveFailed}
-          onRetrySave={() => void handleSubmitScore()}
+          // Tap explícito del jugador: acá la firma es legible y esperada.
+          onRetrySave={() => void handleSubmitScore({ promptPolicy: "allow" })}
           canSaveOnChain={canSaveOnChain}
           onSaveOnChain={() => void handleSaveScoreOnChain()}
           isSavingOnChain={saveWrite.isBusy}

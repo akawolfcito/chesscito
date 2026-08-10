@@ -78,7 +78,7 @@ describe("persistencia", () => {
     // maxSaves queda afuera a propósito: el servidor lleva la cuenta real, y
     // un segundo lugar donde el presupuesto puede mentir no ayuda a nadie.
     const fetchImpl = serverStub();
-    await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage: signer(), fetchImpl, now: NOW });
+    await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage: signer(), fetchImpl, now: NOW });
 
     const stored = readStored();
     expect(Object.keys(stored!).sort()).toEqual(["expiresAt", "surface", "token", "wallet"]);
@@ -92,9 +92,9 @@ describe("persistencia", () => {
     const fetchImpl = serverStub();
     const signMessage = signer();
 
-    await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
     // Desmontar una pantalla no toca la sesión — solo deja de haber consumidor.
-    const again = await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    const again = await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
 
     expect(signMessage).toHaveBeenCalledTimes(1);
     expect(again.ok).toBe(true);
@@ -104,10 +104,10 @@ describe("persistencia", () => {
     // EL caso que motivó todo esto: MiniPay cerrada y vuelta a abrir.
     const fetchImpl = serverStub();
     const signMessage = signer();
-    await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
 
     const reopened = await simulateReload();
-    const after = await reopened.ensureScoreSession({
+    const after = await reopened.ensureScoreSession({ promptPolicy: "allow",
       wallet: WALLET_A, surface: "learn", signMessage, fetchImpl,
       now: NOW + 30 * 60 * 1000, // media hora después
     });
@@ -124,8 +124,8 @@ describe("persistencia", () => {
     const fetchImpl = serverStub();
     const signMessage = signer();
 
-    const a = await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
-    const b = await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    const a = await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    const b = await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
 
     expect(signMessage).toHaveBeenCalledTimes(1);
     if (a.ok && b.ok) expect(a.session.token).toBe(b.session.token);
@@ -135,8 +135,8 @@ describe("persistencia", () => {
     const fetchImpl = serverStub();
     const signMessage = signer();
 
-    await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
-    await ensureScoreSession({
+    await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    await ensureScoreSession({ promptPolicy: "allow",
       wallet: WALLET_A.toUpperCase().replace("0X", "0x"),
       surface: "learn", signMessage, fetchImpl, now: NOW,
     });
@@ -149,10 +149,10 @@ describe("persistencia", () => {
   it("descarta la sesión cuando cambia la wallet, incluso tras reabrir", async () => {
     const fetchImpl = serverStub();
     const signMessage = signer();
-    await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
 
     const reopened = await simulateReload();
-    const b = await reopened.ensureScoreSession({ wallet: WALLET_B, surface: "learn", signMessage, fetchImpl, now: NOW });
+    const b = await reopened.ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_B, surface: "learn", signMessage, fetchImpl, now: NOW });
 
     expect(signMessage).toHaveBeenCalledTimes(2);
     if (b.ok) expect(b.session.wallet).toBe(WALLET_B.toLowerCase());
@@ -163,8 +163,8 @@ describe("persistencia", () => {
   it("nunca entrega el token de A a la wallet B", async () => {
     const fetchImpl = serverStub();
     const signMessage = signer();
-    const a = await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
-    const b = await ensureScoreSession({ wallet: WALLET_B, surface: "learn", signMessage, fetchImpl, now: NOW });
+    const a = await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    const b = await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_B, surface: "learn", signMessage, fetchImpl, now: NOW });
 
     if (a.ok && b.ok) expect(a.session.token).not.toBe(b.session.token);
   });
@@ -172,10 +172,10 @@ describe("persistencia", () => {
   it("descarta la sesión cuando cambia la surface", async () => {
     const fetchImpl = serverStub();
     const signMessage = signer();
-    await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
 
     const reopened = await simulateReload();
-    await reopened.ensureScoreSession({ wallet: WALLET_A, surface: "play", signMessage, fetchImpl, now: NOW });
+    await reopened.ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "play", signMessage, fetchImpl, now: NOW });
 
     expect(signMessage).toHaveBeenCalledTimes(2);
     expect(readStored()!.surface).toBe("play");
@@ -186,7 +186,7 @@ describe("persistencia", () => {
   it("Disconnect borra la sesión de memoria Y de disco", async () => {
     const fetchImpl = serverStub();
     const signMessage = signer();
-    await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
     expect(readStored()).not.toBeNull();
 
     clearScoreSession();
@@ -198,11 +198,11 @@ describe("persistencia", () => {
   it("tras Disconnect, reabrir la app no resucita el token", async () => {
     const fetchImpl = serverStub();
     const signMessage = signer();
-    await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
     clearScoreSession();
 
     const reopened = await simulateReload();
-    await reopened.ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    await reopened.ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
 
     expect(signMessage).toHaveBeenCalledTimes(2);
   });
@@ -210,7 +210,7 @@ describe("persistencia", () => {
   it("sin wallet no acuña ni lee nada", async () => {
     const fetchImpl = serverStub();
     const signMessage = signer();
-    const r = await ensureScoreSession({ wallet: "", surface: "learn", signMessage, fetchImpl, now: NOW });
+    const r = await ensureScoreSession({ promptPolicy: "allow", wallet: "", surface: "learn", signMessage, fetchImpl, now: NOW });
     expect(r).toEqual({ ok: false, error: "no_wallet" });
     expect(signMessage).not.toHaveBeenCalled();
   });
@@ -220,10 +220,10 @@ describe("persistencia", () => {
   it("descarta la sesión expirada y borra la entrada", async () => {
     const fetchImpl = serverStub(NOW_SECONDS + 100);
     const signMessage = signer();
-    await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
 
     const reopened = await simulateReload();
-    await reopened.ensureScoreSession({
+    await reopened.ensureScoreSession({ promptPolicy: "allow",
       wallet: WALLET_A, surface: "learn", signMessage, fetchImpl,
       now: NOW + 200_000, // pasado el expiresAt
     });
@@ -236,8 +236,8 @@ describe("persistencia", () => {
     // se ve como un save que falló al azar.
     const fetchImpl = serverStub(NOW_SECONDS + 100);
     const signMessage = signer();
-    await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
-    await ensureScoreSession({
+    await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    await ensureScoreSession({ promptPolicy: "allow",
       wallet: WALLET_A, surface: "learn", signMessage, fetchImpl,
       now: NOW + 50_000, // aún válido, pero dentro del margen de 60s
     });
@@ -262,7 +262,7 @@ describe("persistencia", () => {
     const signMessage = signer();
 
     const reopened = await simulateReload();
-    const r = await reopened.ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    const r = await reopened.ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
 
     expect(r.ok).toBe(true);
     expect(signMessage).toHaveBeenCalledTimes(1);
@@ -275,8 +275,8 @@ describe("persistencia", () => {
   it("forceRefresh acuña un token nuevo y reemplaza el guardado", async () => {
     const fetchImpl = serverStub();
     const signMessage = signer();
-    const a = await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
-    const b = await ensureScoreSession({
+    const a = await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW });
+    const b = await ensureScoreSession({ promptPolicy: "allow",
       wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW, forceRefresh: true,
     });
 
@@ -289,7 +289,7 @@ describe("persistencia", () => {
 
   it("una firma rechazada no deja nada persistido", async () => {
     const fetchImpl = serverStub();
-    const r = await ensureScoreSession({
+    const r = await ensureScoreSession({ promptPolicy: "allow",
       wallet: WALLET_A, surface: "learn", fetchImpl, now: NOW,
       signMessage: vi.fn().mockRejectedValue(new Error("User rejected")),
     });
@@ -303,7 +303,7 @@ describe("persistencia", () => {
       return jsonResponse(400, { error: "invalid_challenge" });
     }) as unknown as typeof fetch;
 
-    const r = await ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage: signer(), fetchImpl, now: NOW });
+    const r = await ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage: signer(), fetchImpl, now: NOW });
     expect(r).toEqual({ ok: false, error: "authorize_failed" });
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
@@ -312,8 +312,8 @@ describe("persistencia", () => {
     const fetchImpl = serverStub();
     const signMessage = signer();
     await Promise.all([
-      ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW }),
-      ensureScoreSession({ wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW }),
+      ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW }),
+      ensureScoreSession({ promptPolicy: "allow", wallet: WALLET_A, surface: "learn", signMessage, fetchImpl, now: NOW }),
     ]);
     expect(signMessage).toHaveBeenCalledTimes(1);
   });

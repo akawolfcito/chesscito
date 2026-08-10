@@ -68,6 +68,12 @@ export type ScoreSessionError =
   | "challenge_failed"
   | "signature_rejected"
   | "authorize_failed"
+  /** Haría falta una firma y este llamador no tiene derecho a pedirla.
+   *  ⛔ NO es un fallo: es "ahora no". Nada salió mal, nadie rechazó nada y el
+   *  intento sigue entero — sólo que acuñar la sesión habría costado un prompt
+   *  que el jugador no pidió. Los consumidores deben tratarlo distinto de un
+   *  error (no encender estados de "falló el guardado"). */
+  | "session_required"
   | "network";
 
 export type ScoreSessionResult =
@@ -207,6 +213,19 @@ export type EnsureScoreSessionInput = {
   /** Force a fresh authorization even if a token is cached. Used exactly once
    *  after the server rejects a token, never in a loop. */
   forceRefresh?: boolean;
+  /**
+   * ¿Este llamador tiene derecho a interrumpir al jugador con una firma?
+   *
+   * ⛔ REQUERIDO, sin default. Un default convierte "nadie lo pensó" en
+   * "permitido", que es exactamente cómo nacieron los dos caminos automáticos
+   * que abrían la wallet al montar `/exercises`: el drenado de la cola de
+   * intentos y el auto-save del score. Siendo obligatorio, todo llamador nuevo
+   * —presente o futuro— está forzado por `tsc` a decidir, y el agujero no se
+   * puede reabrir en silencio.
+   *
+   * Spec: docs/specs/2026-08-09-attempt-save-never-ambushes-v3.md §3
+   */
+  promptPolicy: "allow" | "deny";
 };
 
 /**
@@ -223,6 +242,7 @@ export async function ensureScoreSession(
     fetchImpl = fetch,
     now = Date.now(),
     forceRefresh = false,
+    promptPolicy,
   } = input;
 
   if (!wallet) return { ok: false, error: "no_wallet" };
@@ -250,6 +270,15 @@ export async function ensureScoreSession(
       removePersisted();
     }
   }
+
+  // A partir de acá sólo queda acuñar, y acuñar cuesta una firma.
+  //
+  // ⛔ El guard va ANTES del coalescing, no después. Si un llamador `deny`
+  // recibiera la promesa en vuelo de un `allow`, quedaría bloqueado todo el
+  // tiempo que el modal de la wallet siga abierto — y con él el `inFlightRef`
+  // del outbox, que serializa la cola entera. Un `deny` no genera prompts y
+  // tampoco espera los ajenos.
+  if (promptPolicy === "deny") return { ok: false, error: "session_required" };
 
   // Coalesce concurrent callers onto one prompt.
   if (inFlight) return inFlight;

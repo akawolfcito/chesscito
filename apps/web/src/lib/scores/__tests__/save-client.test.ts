@@ -91,6 +91,10 @@ function baseInput(signMessage: ReturnType<typeof stubSigner>) {
     timeMs: 5000,
     surface: "learn" as const,
     signMessage,
+    // Estas suites fijan el comportamiento de un guardado CON derecho a firmar,
+    // que es lo que siempre midieron. El caso "deny" tiene su propio archivo
+    // (`prompt-policy.test.ts`) porque prueba lo contrario: que no firme.
+    promptPolicy: "allow" as const,
   };
 }
 
