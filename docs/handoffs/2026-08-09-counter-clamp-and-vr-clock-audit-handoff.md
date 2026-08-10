@@ -193,11 +193,42 @@ Paso 2**.
 1. **PUSH a `origin/main`** — 56 commits sin publicar. Es del founder, no mío.
 2. **Cluster Closure Protocol** — sin correr para este cluster: issues de GitHub,
    milestone, sync del README si cambió "What's live", branch hygiene.
-3. **La validación del Paso 2 sigue siendo un playtest, una pregunta**: a alguien
-   que jugó hace ~3 días, antes de que toque nada, *"¿qué hiciste la última
-   vez?"*. ⛔ No con métricas — 443 jugadores no dan poder estadístico.
+3. ⛔ **La "validación del Paso 2" queda CERRADA sin ejecutarse — el test estaba
+   mal planteado.** Ver la sección siguiente.
 4. **Opcional, hueco latente:** el source guard que impida que un fixture VR
    nuevo monte un lector de reloj.
+
+---
+
+## La validación del Paso 2 se cierra sin ejecutarse
+
+Arrastramos varias sesiones un ítem que decía: *"preguntarle a alguien que jugó
+hace ~3 días, antes de que toque nada: ¿qué hiciste la última vez?"*. Nunca se
+corrió, y no por falta de agenda. **El test es inejecutable, por dos razones
+distintas:**
+
+1. **No hay quién lo responda de forma válida.** Pide una persona **ingenua** —
+   que no sepa dónde está el contador ni qué significa. Los únicos que juegan
+   somos los dos que lo construimos. Podemos jugarlo; no podemos *no saber*
+   dónde mirar, que es exactamente lo que el test mide.
+2. **La población que necesita casi no existe.** De 443 jugadores, **434 jugaron
+   un solo día** → [[project_content_capacity_and_ranking_ceiling]]. "Alguien que
+   jugó hace tres días y volvió" es justo el jugador que el producto todavía no
+   tiene. El Paso 2 es una apuesta a que esa retención **aparezca**; no se puede
+   validar antes de que exista.
+
+**Decisión (founder, 2026-08-09):** el Paso 2 se da por bueno con el juicio del
+device — *"lo estoy probando y veo que está muy bien"*. No queda tarea de
+validación pendiente.
+
+⚠️ **Lo que queda no es una tarea, es algo a notar:** si alguna vez hay retención
+real, la señal a mirar es si un jugador que vuelve sabe dónde estaba sin abrir
+nada. Hasta entonces, ponerlo en una lista de pendientes sólo hace que la lista
+mienta.
+
+⛔ **Y la regla que deja para la próxima:** un ítem de validación que exige un
+sujeto que no tenemos no es un pendiente — es un deseo. Detectarlo cuando se
+escribe, no tres handoffs después.
 
 ---
 
