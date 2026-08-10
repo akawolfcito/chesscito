@@ -1,62 +1,29 @@
-# Session Handoff — 2026-08-09
+# Session Handoff — 2026-08-10
 
 ## Completed
-
-**Cluster A — el contador que se pasaba de su meta** (`831053b`, `1a84cf3`)
-- El chip de `/exercises` mostraba `9/8` (alfil) y `10/8` (el resto): el denominador es el
-  GATE de la insignia (80% del pool = 8) y el numerador contaba el pool entero.
-- Topeado en `8/8`, con un `+` para quien se pasó → `8/8+`. ⛔ Un `+` y NO una estrella:
-  el ★ del HUD es la métrica de recompensa y este gate se sacó a propósito de las estrellas.
-- La aserción del VR (`/^\d+\/\d+$/`) daba verde con `9/8`. Ahora compara los dos lados.
-- ✅ Verificado en device por el founder.
-
-**Cluster B — el guardado que emboscaba** (`77202ac`, `5f9deba`, `22c3600`, `0b6fc61`)
-- Dos caminos disparaban un guardado SOLO al montar `/exercises` y llegaban a `signMessage`
-  sin gesto del jugador. Lectura del founder: *"se siente una app insegura que trata de
-  sacarte los fondos"* — que es la forma exacta de un phishing.
-- Violaba una invariante ESCRITA en `session-client.ts:44` (*"NUNCA pide firma al montar"*).
-- El candado quedó en `ensureScoreSession` —la única función que puede abrir la wallet—
-  como campo **requerido**: un camino nuevo no compila sin decidir.
-- ⛔ **El banner de guardado se eliminó** (−310 líneas): pedir el reintento costaba una
-  firma, no pedir nada costaba cero.
-- ✅ Verificado en device por el founder.
-
-**Auditoría de fixtures VR atados al reloj** — cerrada, ninguno suelto.
-**Cluster Closure Protocol** — completo: 0 issues, README sin cambios, memoria sincronizada,
-branch `production-backup-2026-08-05` borrada (tag local `archive/production-backup-2026-08-05`
-→ `da1cc992`), handoffs escritos.
+- **Deep product/data/business audit** (7 parallel agents) → `docs/audits/2026-08-10-deep-product-data-business-audit.md` + published artifact (https://claude.ai/code/artifact/3be2e5fa-1214-4be4-9284-9e39ab970b41). Finding: the one problem is **Day-1 retention (~2.6%, motivational not mechanical)**; not content, not monetization, not conversion.
+- **Falsifiable activation/retention experiment design** (6 parallel agents) → `docs/experiments/2026-08-10-activation-retention-experiment-design.md`. Commit `9c402b59` on branch `docs/2026-08-10-audit-and-experiment-design`.
+- **Security P0 fixed** — `/api/peones/spend` unauthorized debit. Gated by `PEONES_SPEND_REQUIRE_SESSION` (default OFF = no-op). Guard + route + 45 tests; blast-radius 754 tests green; tsc clean. Commit `4641de1c` on branch **`security/peones-spend-authz`** + `docs/security/2026-08-10-peones-spend-authz.md`.
+- **E0 pre-flight closed + ramp runbook** → `docs/experiments/2026-08-10-e0-ramp-runbook.md` (commit `345e0eb1`).
+- **Telemetry health warning interpreted** (not a regression) → memory `feedback_events_per_session_is_heavy_tail_not_a_regression`. No analytics refactor.
+- **Founder manually ran the E0 ramp 10→50** on `lite-chesscito` production (redeploy at **2026-08-10 17:23:56 UTC**). Verified: assignment NOT broken (works post-deploy). Confirmed: `NEXT_PUBLIC_ONBOARDING_FIRST_ACTIVITY_PCT`=10 (pre-ramp, deployed behavior), `NEXT_PUBLIC_CHESSCITO_SESSION_LIMIT`=5 (empirical+prior read); E0's auto-opened Daily does **not** consume the session quota (`session-quota.ts:10`).
 
 ## Current State
-- **Branch**: `main` (local, **64 commits SIN PUSHEAR** a `origin/main`)
-- **Build**: passing — 7582 tests / 617 files, EXIT=0, cero `Unhandled Errors`; `tsc` limpio;
-  `content:audit` en 147 hallazgos (los mismos de antes, sin regresión)
-- **VR**: 67 passed con `--project=minipay --update-snapshots=none`, cero PNG nuevos
-- **Uncommitted work**: no — árbol limpio
-- **PRs abiertos**: ninguno
+- **Branch**: `docs/2026-08-10-audit-and-experiment-design` (clean). P0 work isolated on `security/peones-spend-authz`.
+- **Build**: passing (targeted: 754 tests green on peones+scores+api/peones; tsc clean). Full suite not run this session.
+- **Uncommitted work**: none. **Nothing pushed** — founder pushes to origin/main and runs deploys/ramps manually.
 
 ## Next Tasks
-1. **PUSH a `origin/main`** — 64 commits. Es del founder, no mío.
-2. Libre para tareas nuevas. Nada bloqueado.
-3. (Opcional, sin prioridad) La línea de la cola en **Account** + tick pasivo "Saved" en el
-   `PhaseFlash` — destino acordado si alguna vez hay que hablar de la cola. **NO** volver a
-   poner un banner en el tablero.
-4. (Opcional) Source guard que impida que un fixture VR nuevo monte un lector de reloj.
+1. **E0 ramp verification (waiting on sample, ~2026-08-11).** Founder pastes the split + guardrail rows once **≥15 post-deploy assignments** accrue (~1 LEARN tour-finish/hour → ~a day). Then do ONLY: (a) confirm `first-activity` ≈ 40-50% → bundle took the 50 (if stuck ~10% with 15+ → it didn't); (b) `onboarding_activity_failed` < 5%; (c) first **mechanical** readout (counts by arm) — **no statistical T2 interpretation until ~750 assigned**. Queries in the runbook use `::timestamptz`, deploy = `'2026-08-10 17:23:56+00'`. psql wrapper: `scratchpad/psql.mjs`.
+2. **P0 rollout (needs founder decisions):** ship the client token-attach (spec'd in `docs/security/2026-08-10-peones-spend-authz.md`) BEFORE flipping `PEONES_SPEND_REQUIRE_SESSION=true`; the durable grantor-side migration is drafted but **NOT applied** — needs founder OK for a prod migration.
+3. **Attribution producers (DO NOW candidate):** tag owned outbound links (`editorial.ts:2370` + `es.ts:69` + `/share/*`) with the allow-list tokens already wired — content change; enables the real acquisition-vs-retention split.
 
 ## Blockers
-- Ninguno.
+- **E0 readout blocked on traffic volume, not code** — decayed to ~1 LEARN tour-finisher/hour. Powered T2 (~750 assigned) ≈ 2 weeks; a powered D1 read is unreachable at this traffic (would need bought traffic).
+- `SESSION_LIMIT` exact value not re-decrypted (token lacks decrypt perm; `apps/web/.vercel` links `chesscito`=PLAY, not `lite-chesscito`=LEARN). =5 by converging evidence; non-blocking for T2.
 
 ## Notes
-- ⛔ **`retry()` del outbox quedó sin consumidores** en el producto. Se mantuvo a propósito:
-  es lo que usaría la línea de Account. Si esa superficie no se construye, es código muerto
-  y hay que decidirlo explícitamente.
-- ⚠️ **El VR necesitó dos corridas**: 4 casos de `/dev` fallaron por `page.goto` timeout de
-  45 s (compilación en frío del dev server), NO por píxeles. Re-corridos solos, verdes.
-  **No confundir ese modo de falla con una regresión visual** — el log dice `TimeoutError`.
-- ⛔ **Paso 3 del brief de visibilidad (promover el mapa) está DESCARTADO** por decisión del
-  founder tras jugarlo. No reaparece como pendiente.
-- ⛔ **La "validación del Paso 2" se cerró sin ejecutarse**: exigía un jugador ingenuo que
-  volviera a los 3 días, y ese sujeto no existe (434 de 443 jugaron un solo día).
-- 📌 El aprendizaje que sobrevive a la sesión: **el candado va en quien OTORGA la capacidad,
-  como campo requerido** — dos versiones del spec taparon llamadores y siempre quedó otra
-  puerta. Al implementarlo, `tsc` señaló 4 call sites, 2 de ellos fuera de todo análisis.
-- Índice de memoria compactado de 19,6 KB → 16,2 KB (llegaba al límite de lectura).
+- **E0 was already live at ~10% since 08-05** before the ramp — never truly dark. The ramp is 10→50.
+- Metric discipline: T2 = **existence of ≥1 canonical completion per `account_ref`** (never SUM). Render events (`peones_balance_viewed` = 9% of all telemetry) and the `exercise_complete`/`training_exercise_completed` alias double-fire must not inflate it. No sub-1-min filter in contrasts (collider).
+- Sequencing: E0 alone → freeze → E1 (ship as truth-restoration, don't A/B for D1). **E2 impossible** (MiniPay origination ceiling = zero, per official docs). **Web EA = RUN SEPARATELY** (channel/research, not experiment).
+- Agent evidence ledgers (13) live in the session scratchpad `.../scratchpad/{agent-*,phase2-*}.md`.
