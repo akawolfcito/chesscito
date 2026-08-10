@@ -55,6 +55,30 @@ const focusDayWalletLimiter = new Ratelimit({
   prefix: "rl:focus-day:wallet",
 });
 
+/** Per-IP limit for POST /api/early-access/request. DEDICATED bucket so a
+ *  burst against the intake queue can never consume the signing or score
+ *  budgets, and vice versa.
+ *
+ *  Keyed by IP because the route is deliberately UNAUTHENTICATED — asking for a
+ *  key must not cost a Privy MAU, so there is no wallet or session to key on.
+ *  Five per hour is far above any honest use (a person asks once, and the
+ *  idempotent upsert makes a retry free) while capping how fast a script can
+ *  fill a queue meant for ~25 people. Idempotency does NOT depend on this: the
+ *  email primary key guarantees it. */
+const MAX_EARLY_ACCESS_REQUESTS_PER_IP = 5;
+
+const earlyAccessIpLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(MAX_EARLY_ACCESS_REQUESTS_PER_IP, "3600s"),
+  prefix: "rl:early-access:ip",
+});
+
+/** Throws "Rate limit exceeded" on overflow; the route maps it to 429. */
+export async function enforceEarlyAccessRateLimit(ip: string) {
+  const { success: ok } = await earlyAccessIpLimiter.limit(ip);
+  if (!ok) throw new Error("Rate limit exceeded");
+}
+
 /** Throws "Rate limit exceeded" on overflow; the route maps it to 429. */
 export async function enforceFocusDayRateLimit(wallet: string) {
   const { success: ok } = await focusDayWalletLimiter.limit(wallet);
