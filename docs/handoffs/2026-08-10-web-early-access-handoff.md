@@ -499,13 +499,18 @@ Con ~25 usuarios web admitidos **PODEMOS** legítimamente:
 | 3 | — | Aplicar la migración y verificar la RLS con `set role` | ✅ local y hosted |
 | 4 | — | VR sin actualizar snapshots | ✅ 67 passed, 0 nuevos |
 | 5 | — | Intake probado end-to-end en preview | ✅ 1 fila `waiting` |
-| 6 | **Founder** | Prender el allowlist en Privy (una sola app) | ⏳ pendiente |
+| 6 | Founder | Allowlist de Privy prendido | ✅ **ya estaba, desde días antes** |
 | 7 | **Founder** | Aprobar la primera cohorte, **en el orden Privy → DB** | ⏳ pendiente |
 
 **Estado al cierre de la sesión (2026-08-10):** el intake está vivo en preview y escribe en la
 base compartida con producción. La cola tiene **1 fila en `waiting`** (la prueba del founder).
-**El allowlist de Privy sigue APAGADO**, así que Web sigue abierta como siempre: hasta que se
-prenda, el intake recoge solicitudes pero no protege el límite de MAU. Ese es el único paso
-que falta para que la feature cumpla su propósito.
+
+⚠️ **CORRECCIÓN — el allowlist de Privy YA ESTABA PRENDIDO** (founder, 2026-08-10). Se activó
+días antes, al detectar el riesgo de agotar los slots de MAU, y ESA es la razón por la que Web
+estaba cerrada. Una versión previa de este handoff lo daba por apagado y ponía "prenderlo" como
+paso pendiente: era falso. La consecuencia importa para leer todo lo anterior — el límite ya
+estaba protegido antes de esta sesión; **lo que faltaba, y es lo que agrega este trabajo, era
+una puerta para que un desconocido pueda PEDIR entrar sin gastar un MAU.** Antes de esto, quien
+tocaba ENTER sin estar en la lista recibía el rechazo de Privy y no tenía adónde ir.
 
 **No se deployó a producción. Nadie fue aprobado. E0 no se tocó.**
