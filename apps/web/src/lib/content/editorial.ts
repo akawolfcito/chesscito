@@ -2870,6 +2870,17 @@ export const MISSION_RIBBON_COPY = {
 export const REWARD_PROGRESS_COPY = {
   ariaLabel: (piece: string, completed: number, required: number) =>
     `${piece} mastery: ${completed} of ${required} toward the badge`,
+  /** Past the gate. The counter's denominator is the GATE (80% of the pool),
+   *  so a player who solved more than that has done something the fraction
+   *  cannot express — the chip says it with a "+", which is not a number.
+   *  A screen reader gets the count from here or not at all. */
+  ariaLabelExceeded: (
+    piece: string,
+    completed: number,
+    required: number,
+    extra: number,
+  ) =>
+    `${piece} mastery: ${completed} of ${required} toward the badge, plus ${extra} more solved`,
 } as const;
 
 /** Per-tile reward column copy. Consumed by `<RewardColumn>` (Step 11 §4 of

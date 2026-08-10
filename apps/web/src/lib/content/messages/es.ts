@@ -1190,6 +1190,8 @@ const messages = {
   REWARD_PROGRESS_COPY: {
     ariaLabel:
       "Maestría de {piece}: {completed} de {required} para la insignia",
+    ariaLabelExceeded:
+      "Maestría de {piece}: {completed} de {required} para la insignia, más {extra, plural, =1 {1 resuelto} other {# resueltos}} de más",
   },
   ROADMAP_COPY: {
     sectionTitle: "Próximamente",

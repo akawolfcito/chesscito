@@ -104,6 +104,8 @@ m.REWARD_COPY.victory.ariaLabel =
   "{state, select, claimable {Save victory ready: tap to save} progress {Victory in progress} other {No victory ready: win an Arena match}}";
 m.REWARD_PROGRESS_COPY.ariaLabel =
   "{piece} mastery: {completed} of {required} toward the badge";
+m.REWARD_PROGRESS_COPY.ariaLabelExceeded =
+  "{piece} mastery: {completed} of {required} toward the badge, plus {extra, plural, =1 {1 more solved} other {# more solved}}";
 m.PRO_COPY.statusActiveSuffix =
   "{daysLeft, plural, =1 {Expires tomorrow} other {# days left}}";
 m.PRO_COPY.daysLeftActiveLabel =

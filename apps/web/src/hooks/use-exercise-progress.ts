@@ -291,8 +291,20 @@ export function useExerciseProgress(
          *  Clamping instead of hiding: 8/8 pairs with the CLAIM dot already in
          *  the dock and keeps the chip where the player learned to find it.
          *  ⚠️ Display only — `completedCount` and `badgeEarned` above still
-         *  read the true pool, so the gate itself does not move. */
-        return { completed: Math.min(completedCount, required), required };
+         *  read the true pool, so the gate itself does not move.
+         *
+         *  `extra` is what the clamped fraction can no longer say: how many
+         *  solved exercises live beyond the gate (1 for bishop's pool of 9, 2
+         *  for the other five pools of 10). The chip turns it into a "+", so a
+         *  player who solved everything is not shown the same 8/8 as one who
+         *  stopped exactly at the gate. ⛔ A "+" and not a star: ★ is the
+         *  reward metric in the HUD, and this gate was deliberately moved off
+         *  stars onto completion (founder, 2026-08-09). */
+        return {
+          completed: Math.min(completedCount, required),
+          required,
+          extra: Math.max(0, completedCount - required),
+        };
       })()
     : undefined;
   const isReplay = (progress.stars[currentExercise.id] ?? 0) > 0;

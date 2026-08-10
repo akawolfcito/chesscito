@@ -165,7 +165,9 @@ test.describe("visual regression — Step 1 baselines", () => {
      * while the screen genuinely changed. Any small chip, dot or badge lives
      * in that same blind spot: lock it with the DOM, not with pixels. */
     const chip = page.getByTestId("piece-picker-progress");
-    await expect(chip).toHaveText(/^\d+\/\d+$/);
+    // The trailing "+" marks a player past the gate; this visitor is fresh, but
+    // the shape check has to admit it or it fails on the wrong screen someday.
+    await expect(chip).toHaveText(/^\d+\/\d+\+?$/);
 
     /* ⛔ And the numerator must not pass the denominator. The shape regex above
      * was green on "9/8" — the counter's denominator is the badge GATE (80% of
@@ -173,6 +175,7 @@ test.describe("visual regression — Step 1 baselines", () => {
      * overshot once past the gate (bishop 9/8, the rest 10/8). A fraction is
      * the one thing a shape check cannot verify by shape. */
     const [done, gate] = ((await chip.textContent()) ?? "")
+      .replace("+", "")
       .split("/")
       .map(Number);
     expect(done).toBeLessThanOrEqual(gate);

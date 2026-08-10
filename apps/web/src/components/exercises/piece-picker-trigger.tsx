@@ -23,8 +23,13 @@ type Props = {
    *  already renders `min-w-0 truncate` in a row competing with the
    *  stars/shield/streak/peones pills, so as those numbers grow the piece NAME
    *  is what gives way. Adding the count inside would hand it to the same
-   *  squeeze. Omitted → no chip. */
-  progress?: { completed: number; required: number }
+   *  squeeze. Omitted → no chip.
+   *
+   *  `extra` > 0 renders a trailing "+": the denominator is the badge GATE, so
+   *  a player past it has solved more than the fraction can express (that is
+   *  where "9/8" came from). Optional — the hub tile omits it because its
+   *  counter only exists BELOW the gate. */
+  progress?: { completed: number; required: number; extra?: number }
 }
 
 /**
@@ -45,12 +50,22 @@ export function PiecePickerTrigger({
   const pieceLabel = tPiece(selectedPiece)
   // The chip is aria-hidden, so the count has to reach assistive tech here or
   // not at all. Same shared message the hub tile uses.
+  const beyondGate = (progress?.extra ?? 0) > 0
   const ariaLabel = progress
-    ? tProgress('ariaLabel', {
-        piece: pieceLabel,
-        completed: progress.completed,
-        required: progress.required,
-      })
+    ? beyondGate
+      ? // The "+" the chip renders is not a number; this is the only place the
+        // count beyond the gate can reach assistive tech.
+        tProgress('ariaLabelExceeded', {
+          piece: pieceLabel,
+          completed: progress.completed,
+          required: progress.required,
+          extra: progress.extra ?? 0,
+        })
+      : tProgress('ariaLabel', {
+          piece: pieceLabel,
+          completed: progress.completed,
+          required: progress.required,
+        })
     : tRail('triggerAriaFormat', { piece: pieceLabel })
   return (
     <button
@@ -108,6 +123,7 @@ export function PiecePickerTrigger({
           className="progress-count-chip piece-picker-progress"
         >
           {progress.completed}/{progress.required}
+          {beyondGate ? '+' : ''}
         </span>
       ) : null}
     </button>

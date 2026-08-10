@@ -60,4 +60,60 @@ describe("<PiecePickerTrigger> — progress chip", () => {
     const chip = screen.getByTestId("piece-picker-progress");
     expect(chip.className).toMatch(/progress-count-chip\b/);
   });
+
+  /**
+   * PAST THE GATE, THE FRACTION STOPS AND A "+" TAKES OVER
+   * -----------------------------------------------------
+   * The denominator is the badge GATE (80% of the pool), so a player who solves
+   * the whole pool has done MORE than the fraction can express — that is where
+   * "9/8" came from. The numerator now stops at the gate, and `extra` carries
+   * what is beyond it.
+   *
+   * ⛔ A "+" and not a star icon: ★ is already the reward metric in the HUD
+   * (`totalStars`), and this gate was deliberately moved OFF stars onto
+   * completion. A star here would put the two meanings on one chip.
+   */
+  it("appends a + when the player is past the gate", () => {
+    render(
+      <PiecePickerTrigger
+        selectedPiece="bishop"
+        onClick={vi.fn()}
+        showLabel
+        progress={{ completed: 8, required: 8, extra: 1 }}
+      />,
+    );
+
+    const chip = screen.getByTestId("piece-picker-progress");
+    expect(chip.textContent).toBe("8/8+");
+  });
+
+  it("shows no + when the player landed exactly on the gate", () => {
+    render(
+      <PiecePickerTrigger
+        selectedPiece="bishop"
+        onClick={vi.fn()}
+        showLabel
+        progress={{ completed: 8, required: 8, extra: 0 }}
+      />,
+    );
+
+    expect(screen.getByTestId("piece-picker-progress").textContent).toBe("8/8");
+  });
+
+  it("tells assistive tech how much is beyond the gate, since the + cannot", () => {
+    render(
+      <PiecePickerTrigger
+        selectedPiece="bishop"
+        onClick={vi.fn()}
+        showLabel
+        progress={{ completed: 8, required: 8, extra: 2 }}
+      />,
+    );
+
+    // The chip is aria-hidden, so a screen reader gets the count from here or
+    // not at all — and "+" is not a number.
+    expect(screen.getByRole("button").getAttribute("aria-label")).toMatch(
+      /\b2\b/,
+    );
+  });
 });

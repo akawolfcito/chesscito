@@ -66,7 +66,11 @@ describe("badgeProgress — the counter never overshoots its gate", () => {
     const { result } = renderHook(() => useExerciseProgress("rook"));
     await act(async () => {});
 
-    expect(result.current.badgeProgress).toEqual({ completed: 3, required: 8 });
+    expect(result.current.badgeProgress).toEqual({
+      completed: 3,
+      required: 8,
+      extra: 0,
+    });
   });
 
   it("caps the numerator at the gate once the pool runs past it", async () => {
@@ -84,6 +88,8 @@ describe("badgeProgress — the counter never overshoots its gate", () => {
     expect(result.current.badgeProgress).toEqual({
       completed: badgeRequiredCount(pool),
       required: badgeRequiredCount(pool),
+      // What the fraction can no longer express: pool 9 minus a gate of 8.
+      extra: pool - badgeRequiredCount(pool),
     });
   });
 
@@ -99,6 +105,9 @@ describe("badgeProgress — the counter never overshoots its gate", () => {
 
     expect(result.current.badgeProgress?.completed).toBe(
       badgeRequiredCount(pool),
+    );
+    expect(result.current.badgeProgress?.extra).toBe(
+      pool - badgeRequiredCount(pool),
     );
   });
 
