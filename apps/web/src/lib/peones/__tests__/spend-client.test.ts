@@ -17,6 +17,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { submitPeonesSpend } from "@/lib/peones/spend-client";
 import { subscribeToPeonesChanges } from "@/lib/peones/peones-events";
+import { readSpendBearerToken } from "@/lib/scores/spend-session-guard";
 
 const W = "0xabcdef0123456789abcdef0123456789abcdef01";
 
@@ -68,6 +69,125 @@ afterEach(() => {
   localStorageSpy?.mockRestore();
   localStorageSetSpy?.mockRestore();
   vi.restoreAllMocks();
+});
+
+/**
+ * P0 rollout step 1 (2026-08-10) — the spend must PROVE the wallet it debits.
+ *
+ * The server stops trusting `wallet` from the body and resolves it from a
+ * signed score write-session instead. It can only do that if this helper sends
+ * the token, so the client ships FIRST, with the flag still off. The token is
+ * one the player already holds: no new signature, no prompt.
+ *
+ * It is attached HERE, in the single choke point all three sinks (hint, coach,
+ * shield) funnel through, for the same reason the peones-changed dispatch lives
+ * here — so no sink can forget it.
+ */
+describe("submitPeonesSpend — session token (P0 rollout step 1)", () => {
+  /** REAL shape, not a placeholder: `createSessionToken()` is
+   *  `randomBytes(32).toString("hex")`, and the server's reader only accepts
+   *  `/^Bearer ([0-9a-f]{64})$/`. A test token of any other shape would pass
+   *  here and still be rejected in production the moment the flag flips. */
+  const TOKEN = "a".repeat(64);
+  const session = { token: TOKEN, wallet: W, surface: "learn" as const, expiresAt: 9e9, maxSaves: 5 };
+
+  function headersOf(fetchImpl: ReturnType<typeof vi.fn>): Record<string, string> {
+    return (fetchImpl.mock.calls[0][1] as RequestInit).headers as Record<string, string>;
+  }
+
+  it("attaches Authorization: Bearer <token> when a session is cached", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, happyBody()));
+
+    await submitPeonesSpend(baseArgs({ fetchImpl, peekSessionImpl: () => session }));
+
+    expect(headersOf(fetchImpl).Authorization).toBe(`Bearer ${TOKEN}`);
+  });
+
+  it("OMITS the header entirely when there is no session", async () => {
+    // Not an empty string, not "Bearer undefined": with the flag off the route
+    // must stay byte-for-byte its old self, and a header that exists but is
+    // meaningless is not that.
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, happyBody()));
+
+    await submitPeonesSpend(baseArgs({ fetchImpl, peekSessionImpl: () => null }));
+
+    expect(headersOf(fetchImpl)).not.toHaveProperty("Authorization");
+  });
+
+  it("keeps Content-Type in both cases", async () => {
+    const withToken = vi.fn().mockResolvedValue(jsonResponse(200, happyBody()));
+    const without = vi.fn().mockResolvedValue(jsonResponse(200, happyBody()));
+
+    await submitPeonesSpend(baseArgs({ fetchImpl: withToken, peekSessionImpl: () => session }));
+    await submitPeonesSpend(baseArgs({ fetchImpl: without, peekSessionImpl: () => null }));
+
+    expect(headersOf(withToken)["Content-Type"]).toBe("application/json");
+    expect(headersOf(without)["Content-Type"]).toBe("application/json");
+  });
+
+  it("sends a token whose wallet differs — the SERVER decides, not us", async () => {
+    // Silently withholding it would turn a 401 into a legacy-path debit the
+    // moment the flag flips. The route compares and answers 401; that is the
+    // trust boundary, and it does not live in the client.
+    const other = { ...session, wallet: "0x0000000000000000000000000000000000000001" };
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, happyBody()));
+
+    await submitPeonesSpend(baseArgs({ fetchImpl, peekSessionImpl: () => other }));
+
+    expect(headersOf(fetchImpl).Authorization).toBe(`Bearer ${TOKEN}`);
+  });
+
+  it("NEVER throws if reading the session throws", async () => {
+    // "Never throws" is this module's stated invariant. A broken session store
+    // must not become an exception on a spend.
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, happyBody()));
+
+    const result = await submitPeonesSpend(
+      baseArgs({
+        fetchImpl,
+        peekSessionImpl: () => {
+          throw new Error("session store exploded");
+        },
+      }),
+    );
+
+    expect(result.kind).toBe("success");
+    expect(headersOf(fetchImpl)).not.toHaveProperty("Authorization");
+  });
+
+  /**
+   * THE TEST THAT MATTERS FOR THE FLAG FLIP.
+   *
+   * Everything above proves the client SENDS a header. This proves the server
+   * ACCEPTS the exact header it sends. The two live in different modules with
+   * no shared type between them — the client forwards an opaque string and the
+   * server parses it with a regex — so nothing but this assertion would catch a
+   * drift in token shape. The failure mode it prevents is the expensive one:
+   * green tests, a clean deploy, and every spend 401ing the moment the flag
+   * turns on.
+   */
+  it("sends a header the SERVER's own reader accepts", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, happyBody()));
+
+    await submitPeonesSpend(baseArgs({ fetchImpl, peekSessionImpl: () => session }));
+
+    const sent = headersOf(fetchImpl).Authorization;
+    const reconstructed = new Request("https://example.test/api/peones/spend", {
+      method: "POST",
+      headers: { authorization: sent },
+    });
+
+    expect(readSpendBearerToken(reconstructed)).toBe(TOKEN);
+  });
+
+  it("does not send the token in the body — it is a header, not a payload field", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, happyBody()));
+
+    await submitPeonesSpend(baseArgs({ fetchImpl, peekSessionImpl: () => session }));
+
+    const body = JSON.parse((fetchImpl.mock.calls[0][1] as RequestInit).body as string);
+    expect(JSON.stringify(body)).not.toContain(TOKEN);
+  });
 });
 
 describe("submitPeonesSpend — happy path", () => {

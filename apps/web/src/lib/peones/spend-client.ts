@@ -25,6 +25,7 @@
 import { normalizeWallet } from "@/lib/peones/ledger-service";
 import { dispatchPeonesChange } from "@/lib/peones/peones-events";
 import type { PeonesSpendTarget } from "@/lib/peones/spend-service";
+import { peekScoreSession, type ScoreSession } from "@/lib/scores/session-client";
 
 export type PeonesSpendResult =
   | {
@@ -72,6 +73,9 @@ export type SubmitPeonesSpendArgs = {
   metadata?: Record<string, string | number | boolean>;
   /** Override for testing. Defaults to the global `fetch`. */
   fetchImpl?: typeof fetch;
+  /** Override for testing. Defaults to `peekScoreSession` — an in-memory read
+   *  that mints nothing and never prompts for a signature. */
+  peekSessionImpl?: () => ScoreSession | null;
 };
 
 type SpendResponse = {
@@ -109,8 +113,10 @@ export async function submitPeonesSpend(
     idempotencyKey,
     metadata,
     fetchImpl,
+    peekSessionImpl,
   } = args;
   const doFetch = fetchImpl ?? fetch;
+  const peekSession = peekSessionImpl ?? peekScoreSession;
 
   let wallet: string;
   try {
@@ -119,11 +125,42 @@ export async function submitPeonesSpend(
     return { kind: "error", error: "invalid_wallet" };
   }
 
+  // CALLER AUTHORIZATION (P0, 2026-08-10 — rollout step 1).
+  //
+  // The route must stop trusting `wallet` from the body and resolve it from a
+  // signed score write-session instead. It can only do that if this request
+  // CARRIES the token, so the client ships first with the server flag still
+  // off, and the flag flips only once these headers are observed arriving.
+  //
+  // Attached here rather than in each sink for the same reason the
+  // `peones-changed` dispatch lives here: this is the one place hint, coach and
+  // shield all funnel through, so no sink can forget it.
+  //
+  // Costs the player NOTHING: `peekScoreSession` reads what is already in
+  // memory — it mints no session and never prompts for a signature. A spend
+  // already happens inside a play session that holds one.
+  //
+  // Wrapped because "NEVER throws" is this module's invariant (see header): a
+  // broken session store must degrade to "no token" — which the flag-off route
+  // ignores and the flag-on route answers with a clean 401 — never to an
+  // exception on a spend.
+  let sessionToken: string | undefined;
+  try {
+    sessionToken = peekSession()?.token;
+  } catch {
+    sessionToken = undefined;
+  }
+
   let res: Response;
   try {
     res = await doFetch("/api/peones/spend", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      // The header is OMITTED, not emptied, when there is no session: with the
+      // flag off the request must stay byte-for-byte what it always was.
+      headers: {
+        "Content-Type": "application/json",
+        ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+      },
       body: JSON.stringify({
         wallet,
         amount,

@@ -185,6 +185,21 @@ export async function POST(req: Request) {
   //     Gated for staged rollout: with the flag off this block is a no-op and
   //     the route keeps its legacy behaviour, so the token-carrying client can
   //     ship first (see spend-session-guard + docs/security/2026-08-10-...).
+  // 9a. ROLLOUT STEP 2 INSTRUMENT — measured BEFORE, and independently of, the
+  //     flag. This is the number that decides whether it is safe to flip:
+  //     what fraction of real spends already carry a usable token. It has to be
+  //     logged while enforcement is still OFF, because that is the only state
+  //     in which a missing token is silent instead of fatal. Once the flag is
+  //     on everywhere and the rate is 100%, this line has done its job.
+  //
+  //     Only a boolean and the target are recorded — never the token, never the
+  //     wallet.
+  log.info("spend_session_token", {
+    present: readSpendBearerToken(req) !== null,
+    enforced: isSpendSessionRequired(),
+    target,
+  });
+
   if (isSpendSessionRequired()) {
     const sessionToken = readSpendBearerToken(req);
     const resolved = await resolveSpendSessionWallet(
