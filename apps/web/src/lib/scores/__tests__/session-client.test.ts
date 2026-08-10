@@ -20,6 +20,7 @@ import {
   clearScoreSession,
   ensureScoreSession,
   peekScoreSession,
+  peekUsableScoreSession,
 } from "../session-client";
 
 const STORAGE_KEY = "chesscito:score-write-session:v1";
@@ -63,6 +64,125 @@ function readStored(): Record<string, unknown> | null {
   const raw = localStorage.getItem(STORAGE_KEY);
   return raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
 }
+
+/**
+ * `peekUsableScoreSession` — la lectura que usa el camino que GASTA Peones.
+ *
+ * Existe por un bug medido en preview el 2026-08-10: el gasto leía sólo memoria
+ * (`peekScoreSession`), así que al cerrar y reabrir MiniPay la primera pista
+ * fallaba con 401 aunque la sesión siguiera intacta en disco, y empezaba a
+ * andar sola en cuanto cualquier ejercicio llamaba a `ensureScoreSession`. Un
+ * bug que aparece al reabrir la app y se cura jugando es el que nadie reporta
+ * bien.
+ *
+ * La condición que fija esta suite: memoria y disco valen igual, y NINGUNA de
+ * las dos puede costar una firma.
+ */
+describe("peekUsableScoreSession — memoria, disco, o nada", () => {
+  beforeEach(() => {
+    clearScoreSession();
+    localStorage.clear();
+  });
+  afterEach(() => {
+    clearScoreSession();
+    localStorage.clear();
+  });
+
+  it("devuelve la sesión que está en MEMORIA", async () => {
+    await ensureScoreSession({
+      wallet: WALLET_A,
+      surface: "learn",
+      signMessage: signer(),
+      fetchImpl: serverStub(),
+      now: NOW,
+      promptPolicy: "allow",
+    });
+
+    const session = peekUsableScoreSession(WALLET_A, "learn", NOW);
+
+    expect(session?.token).toBe(peekScoreSession()?.token);
+  });
+
+  it("EL CASO DEL BUG: la levanta del DISCO con la memoria vacía", async () => {
+    await ensureScoreSession({
+      wallet: WALLET_A,
+      surface: "learn",
+      signMessage: signer(),
+      fetchImpl: serverStub(),
+      now: NOW,
+      promptPolicy: "allow",
+    });
+
+    // Cerrar y reabrir MiniPay: la memoria del módulo se va, el disco queda.
+    const fresh = await simulateReload();
+    expect(fresh.peekScoreSession()).toBeNull(); // memoria vacía, como en device
+
+    const session = fresh.peekUsableScoreSession(WALLET_A, "learn", NOW);
+
+    expect(session).not.toBeNull();
+    expect(session?.wallet).toBe(WALLET_A.toLowerCase());
+  });
+
+  it("no acuña ni pide firma cuando no hay nada — devuelve null", () => {
+    const signMessage = signer();
+
+    expect(peekUsableScoreSession(WALLET_A, "learn", NOW)).toBeNull();
+    // La invariante que hace que esto se pueda llamar desde un tap de HINT.
+    expect(signMessage).not.toHaveBeenCalled();
+  });
+
+  it("ignora la sesión de OTRA wallet y la borra del disco", async () => {
+    await ensureScoreSession({
+      wallet: WALLET_A,
+      surface: "learn",
+      signMessage: signer(),
+      fetchImpl: serverStub(),
+      now: NOW,
+      promptPolicy: "allow",
+    });
+
+    const fresh = await simulateReload();
+
+    expect(fresh.peekUsableScoreSession(WALLET_B, "learn", NOW)).toBeNull();
+    // Credencial de otra identidad: no se queda acumulando en disco.
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+  });
+
+  it("ignora la sesión de OTRA superficie", async () => {
+    await ensureScoreSession({
+      wallet: WALLET_A,
+      surface: "learn",
+      signMessage: signer(),
+      fetchImpl: serverStub(),
+      now: NOW,
+      promptPolicy: "allow",
+    });
+
+    const fresh = await simulateReload();
+
+    expect(fresh.peekUsableScoreSession(WALLET_A, "play", NOW)).toBeNull();
+  });
+
+  it("ignora la sesión EXPIRADA", async () => {
+    await ensureScoreSession({
+      wallet: WALLET_A,
+      surface: "learn",
+      signMessage: signer(),
+      fetchImpl: serverStub(NOW_SECONDS + 60),
+      now: NOW,
+      promptPolicy: "allow",
+    });
+
+    const fresh = await simulateReload();
+
+    // Dos horas después: vencida, y el margen de expiry la descarta igual.
+    expect(fresh.peekUsableScoreSession(WALLET_A, "learn", NOW + 7_200_000)).toBeNull();
+  });
+
+  it("devuelve null sin wallet, en vez de mirar el disco", () => {
+    expect(peekUsableScoreSession("", "learn", NOW)).toBeNull();
+  });
+});
 
 describe("persistencia", () => {
   beforeEach(() => {

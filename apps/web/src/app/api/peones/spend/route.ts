@@ -178,13 +178,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "ledger_unavailable" }, { status: 500 });
   }
 
-  // 9b. CALLER AUTHORIZATION (P0, 2026-08-10). The debited wallet must be
-  //     PROVEN, not taken from the body. A score write-session — the same
-  //     capability the score save path signs — resolves to a wallet server
-  //     side; the caller must hold one for exactly the wallet it is spending.
-  //     Gated for staged rollout: with the flag off this block is a no-op and
-  //     the route keeps its legacy behaviour, so the token-carrying client can
-  //     ship first (see spend-session-guard + docs/security/2026-08-10-...).
   // 9a. ROLLOUT STEP 2 INSTRUMENT — measured BEFORE, and independently of, the
   //     flag. This is the number that decides whether it is safe to flip:
   //     what fraction of real spends already carry a usable token. It has to be
@@ -199,6 +192,14 @@ export async function POST(req: Request) {
     enforced: isSpendSessionRequired(),
     target,
   });
+
+  // 9b. CALLER AUTHORIZATION (P0, 2026-08-10). The debited wallet must be
+  //     PROVEN, not taken from the body. A score write-session — the same
+  //     capability the score save path signs — resolves to a wallet server
+  //     side; the caller must hold one for exactly the wallet it is spending.
+  //     Gated for staged rollout: with the flag off this block is a no-op and
+  //     the route keeps its legacy behaviour, so the token-carrying client can
+  //     ship first (see spend-session-guard + docs/security/2026-08-10-...).
 
   if (isSpendSessionRequired()) {
     const sessionToken = readSpendBearerToken(req);

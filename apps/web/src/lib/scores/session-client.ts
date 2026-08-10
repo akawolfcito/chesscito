@@ -204,6 +204,54 @@ export function peekScoreSession(): ScoreSession | null {
   return cached;
 }
 
+/**
+ * La sesión usable para esta wallet+superficie: memoria, y si no, DISCO.
+ * Nunca acuña, nunca pide una firma, nunca abre la wallet.
+ *
+ * ⚠️ ESTA ES LA QUE HAY QUE USAR, NO `peekScoreSession`, en cualquier camino
+ * que necesite el token sin derecho a interrumpir al jugador.
+ *
+ * `peekScoreSession` lee SÓLO memoria, y la memoria se vacía cada vez que la
+ * app se cierra. En MiniPay eso pasa todo el tiempo. Medido en preview el
+ * 2026-08-10: cerrar y reabrir MiniPay dejaba la sesión intacta en disco y aun
+ * así la primera pista fallaba con 401, porque nadie la leía; después de hacer
+ * un ejercicio —que sí llama a `ensureScoreSession` y por eso hidrata la
+ * memoria— la misma pista funcionaba. Un bug que sólo aparece tras reabrir la
+ * app y se cura solo al jugar es exactamente el que nadie reporta bien.
+ *
+ * Extraída de `ensureScoreSession`, que ahora la usa: memoria→disco se decide
+ * en UN solo lugar, así el camino que gasta y el que guarda no pueden divergir
+ * sobre qué sesión es válida.
+ */
+export function peekUsableScoreSession(
+  wallet: string,
+  surface: ScoreSaveSurface,
+  now: number = Date.now(),
+): ScoreSession | null {
+  if (!wallet) return null;
+
+  const nowSeconds = Math.floor(now / 1000);
+
+  if (isUsable(cached, wallet, surface, nowSeconds)) {
+    return cached;
+  }
+
+  // Memoria vacía (pestaña nueva, app reabierta) — probar disco.
+  const stored = readPersisted();
+  if (stored) {
+    if (isUsable(stored, wallet, surface, nowSeconds)) {
+      // `maxSaves` no se persiste; el servidor es quien lleva la cuenta real.
+      cached = { ...stored, maxSaves: 0 };
+      return cached;
+    }
+    // Expirada, o de otra wallet/superficie: se borra en vez de quedar
+    // acumulando credenciales muertas de identidades pasadas.
+    removePersisted();
+  }
+
+  return null;
+}
+
 export type EnsureScoreSessionInput = {
   wallet: string;
   surface: ScoreSaveSurface;
@@ -253,22 +301,11 @@ export async function ensureScoreSession(
     cached = null;
     removePersisted();
   } else {
-    if (isUsable(cached, wallet, surface, nowSeconds)) {
-      return { ok: true, session: cached! };
-    }
-
-    // Memoria vacía (pestaña nueva, app reabierta) — probar disco.
-    const stored = readPersisted();
-    if (stored) {
-      if (isUsable(stored, wallet, surface, nowSeconds)) {
-        // `maxSaves` no se persiste; el servidor es quien lleva la cuenta real.
-        cached = { ...stored, maxSaves: 0 };
-        return { ok: true, session: cached };
-      }
-      // Expirada, o de otra wallet/superficie: se borra en vez de quedar
-      // acumulando credenciales muertas de identidades pasadas.
-      removePersisted();
-    }
+    // Memoria→disco vive en `peekUsableScoreSession`, y se llama desde acá para
+    // que exista UNA sola definición de "sesión usable" — la misma que consulta
+    // el camino que gasta Peones.
+    const usable = peekUsableScoreSession(wallet, surface, now);
+    if (usable) return { ok: true, session: usable };
   }
 
   // A partir de acá sólo queda acuñar, y acuñar cuesta una firma.

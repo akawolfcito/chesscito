@@ -26,6 +26,17 @@ function req(headers: Record<string, string>): Request {
   });
 }
 
+/**
+ * The `.eq()` mock of the most recently built stub.
+ *
+ * Exposed here instead of on the returned client because the client is typed as
+ * a real `SupabaseClient`, whose `from()` demands a table name — so a test
+ * cannot reach the inner mocks by re-invoking the chain. Only one test asserts
+ * HOW the row is looked up; the other ten just use the client, and they stay
+ * plain because of this.
+ */
+let lastEqMock: ReturnType<typeof vi.fn>;
+
 /** Minimal Supabase stub for the single-row session read. */
 function supabaseReturning(
   row: Record<string, unknown> | null,
@@ -35,6 +46,7 @@ function supabaseReturning(
   const eq = vi.fn(() => ({ maybeSingle }));
   const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));
+  lastEqMock = eq;
   // `as unknown as SupabaseClient`, NOT `as any` with a disable comment: the
   // rule `@typescript-eslint/no-explicit-any` is not registered in this
   // project's ESLint config, so the disable line itself was the error that
@@ -98,8 +110,7 @@ describe("resolveSpendSessionWallet", () => {
   it("looks the row up by the HASH of the token, never the raw token", async () => {
     const supabase = supabaseReturning(authorized);
     await resolveSpendSessionWallet(supabase, TOKEN, NOW);
-    const eq = supabase.from().select().eq;
-    expect(eq).toHaveBeenCalledWith("token_hash", hashSessionToken(TOKEN));
+    expect(lastEqMock).toHaveBeenCalledWith("token_hash", hashSessionToken(TOKEN));
     // and that is not the raw token
     expect(hashSessionToken(TOKEN)).not.toBe(TOKEN);
   });

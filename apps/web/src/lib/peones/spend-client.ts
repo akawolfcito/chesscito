@@ -25,7 +25,11 @@
 import { normalizeWallet } from "@/lib/peones/ledger-service";
 import { dispatchPeonesChange } from "@/lib/peones/peones-events";
 import type { PeonesSpendTarget } from "@/lib/peones/spend-service";
-import { peekScoreSession, type ScoreSession } from "@/lib/scores/session-client";
+import { resolveDeploymentSurface } from "@/lib/scores/deployment-surface";
+import {
+  peekUsableScoreSession,
+  type ScoreSession,
+} from "@/lib/scores/session-client";
 
 export type PeonesSpendResult =
   | {
@@ -73,8 +77,8 @@ export type SubmitPeonesSpendArgs = {
   metadata?: Record<string, string | number | boolean>;
   /** Override for testing. Defaults to the global `fetch`. */
   fetchImpl?: typeof fetch;
-  /** Override for testing. Defaults to `peekScoreSession` — an in-memory read
-   *  that mints nothing and never prompts for a signature. */
+  /** Override for testing. Defaults to `peekUsableScoreSession` — memory, then
+   *  DISK, minting nothing and never prompting for a signature. */
   peekSessionImpl?: () => ScoreSession | null;
 };
 
@@ -116,7 +120,6 @@ export async function submitPeonesSpend(
     peekSessionImpl,
   } = args;
   const doFetch = fetchImpl ?? fetch;
-  const peekSession = peekSessionImpl ?? peekScoreSession;
 
   let wallet: string;
   try {
@@ -136,9 +139,20 @@ export async function submitPeonesSpend(
   // `peones-changed` dispatch lives here: this is the one place hint, coach and
   // shield all funnel through, so no sink can forget it.
   //
-  // Costs the player NOTHING: `peekScoreSession` reads what is already in
-  // memory — it mints no session and never prompts for a signature. A spend
-  // already happens inside a play session that holds one.
+  // Costs the player NOTHING: `peekUsableScoreSession` reads memory and then
+  // DISK, minting nothing and never prompting for a signature.
+  //
+  // ⚠️ MEMORY ALONE IS NOT ENOUGH, and that is not a theoretical worry. With
+  // the earlier `peekScoreSession` (memory only), closing and reopening MiniPay
+  // — which players do constantly — emptied the cache while the session sat
+  // intact on disk, so the first hint after reopening 401'd and then started
+  // working once any exercise happened to call `ensureScoreSession`. Measured in
+  // preview, 2026-08-10.
+  //
+  // The surface comes from `resolveDeploymentSurface()`, the SAME function the
+  // save path passes when the session is minted (`exercises-screen.tsx`).
+  // Resolving it any other way here would look up a session keyed to a surface
+  // we never issued and silently find nothing.
   //
   // Wrapped because "NEVER throws" is this module's invariant (see header): a
   // broken session store must degrade to "no token" — which the flag-off route
@@ -146,6 +160,9 @@ export async function submitPeonesSpend(
   // exception on a spend.
   let sessionToken: string | undefined;
   try {
+    const peekSession =
+      peekSessionImpl ??
+      (() => peekUsableScoreSession(wallet, resolveDeploymentSurface()));
     sessionToken = peekSession()?.token;
   } catch {
     sessionToken = undefined;
