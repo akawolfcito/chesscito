@@ -1,73 +1,62 @@
-# Sesión 2026-08-07 — BLOQUE DE PERFORMANCE MiniPay: **CERRADO**
+# Session Handoff — 2026-08-09
 
-> ⛔ **No se abren frentes nuevos de optimización.** Lo que quedaba eran décimas; el bloque ya
-> dio lo suyo. **Siguiente: producto.**
+## Completed
 
-**Estado:** `main` local = `81f2781` · suite **7.471 passing / 607 files** · `tsc --noEmit`
-limpio · **VR 62/62 sin re-baselinear** · `bundle:guard` verde.
+**Cluster A — el contador que se pasaba de su meta** (`831053b`, `1a84cf3`)
+- El chip de `/exercises` mostraba `9/8` (alfil) y `10/8` (el resto): el denominador es el
+  GATE de la insignia (80% del pool = 8) y el numerador contaba el pool entero.
+- Topeado en `8/8`, con un `+` para quien se pasó → `8/8+`. ⛔ Un `+` y NO una estrella:
+  el ★ del HUD es la métrica de recompensa y este gate se sacó a propósito de las estrellas.
+- La aserción del VR (`/^\d+\/\d+$/`) daba verde con `9/8`. Ahora compara los dos lados.
+- ✅ Verificado en device por el founder.
 
----
+**Cluster B — el guardado que emboscaba** (`77202ac`, `5f9deba`, `22c3600`, `0b6fc61`)
+- Dos caminos disparaban un guardado SOLO al montar `/exercises` y llegaban a `signMessage`
+  sin gesto del jugador. Lectura del founder: *"se siente una app insegura que trata de
+  sacarte los fondos"* — que es la forma exacta de un phishing.
+- Violaba una invariante ESCRITA en `session-client.ts:44` (*"NUNCA pide firma al montar"*).
+- El candado quedó en `ensureScoreSession` —la única función que puede abrir la wallet—
+  como campo **requerido**: un camino nuevo no compila sin decidir.
+- ⛔ **El banner de guardado se eliminó** (−310 líneas): pedir el reintento costaba una
+  firma, no pedir nada costaba cero.
+- ✅ Verificado en device por el founder.
 
-## Resultados finales
+**Auditoría de fixtures VR atados al reloj** — cerrada, ninguno suelto.
+**Cluster Closure Protocol** — completo: 0 issues, README sin cambios, memoria sincronizada,
+branch `production-backup-2026-08-05` borrada (tag local `archive/production-backup-2026-08-05`
+→ `da1cc992`), handoffs escritos.
 
-| Frente | Resultado |
-|---|---|
-| **Wallet split** | **−60% de JS** hasta que el hub es usable: 1.048,0 → **420,1 kB** |
-| **WalletShell** | **FCP 3.974 → 1.736 ms** (−2.238 ms); la pantalla deja de estar vacía a los ~2 s |
-| **CLS** | **0,179 → 0,0000** (5 de 5 corridas, cero shifts) |
-| **VR** | **62/62**, sin re-baselinear en ninguno de los tres frentes |
-| **MiniPay sin Privy** | **0 requests** con código de Privy (antes: 1) |
-| **Critical CSS** | **NO ACTION** por ahora — piso de FCP en ~1.736 ms |
-| **Viewport** | **NO ACTION** — dependencia de gesto documentada |
-| **Web / Privy** | **fuera de criterio** por decisión de producto |
-| **`<main>` anidado** | corregido: un solo landmark por documento |
+## Current State
+- **Branch**: `main` (local, **64 commits SIN PUSHEAR** a `origin/main`)
+- **Build**: passing — 7582 tests / 617 files, EXIT=0, cero `Unhandled Errors`; `tsc` limpio;
+  `content:audit` en 147 hallazgos (los mismos de antes, sin regresión)
+- **VR**: 67 passed con `--project=minipay --update-snapshots=none`, cero PNG nuevos
+- **Uncommitted work**: no — árbol limpio
+- **PRs abiertos**: ninguno
 
-## Lo que quedó en el repo
+## Next Tasks
+1. **PUSH a `origin/main`** — 64 commits. Es del founder, no mío.
+2. Libre para tareas nuevas. Nada bloqueado.
+3. (Opcional, sin prioridad) La línea de la cola en **Account** + tick pasivo "Saved" en el
+   `PhaseFlash` — destino acordado si alguna vez hay que hablar de la cola. **NO** volver a
+   poner un banner en el tablero.
+4. (Opcional) Source guard que impida que un fixture VR nuevo monte un lector de reloj.
 
-| Comando | Qué hace |
-|---|---|
-| `pnpm -C apps/web bundle:guard` | Falla si código de Privy entra al grafo estático de MiniPay. Exige build fresco por **sello de contenido**, no por `mtime` |
-| `pnpm -C apps/web measure:first-load -- --label=X` | Bytes reales + Web Vitals + filmstrip, persona MiniPay, `encodedDataLength`, cortes de producto |
-| `pnpm -C apps/web measure:first-load:baseline [commit]` | Lo mismo contra un commit viejo, por worktree temporal |
+## Blockers
+- Ninguno.
 
-Informes: `docs/audits/2026-08-07-*` · Specs: `docs/specs/2026-08-07-*`
-
----
-
-## Las cinco cosas que este bloque enseñó (y que valen más que los números)
-
-1. **⛔ En este repo `next build` NO es árbitro de performance.** Para el mismo cambio reportó
-   **−2 kB** donde el browser midió **−628 kB**. El árbitro es una medición de browser con
-   persona MiniPay, `encodedDataLength` y milestones de producto.
-2. **⚠️ Chromium cuenta RECURSOS de imagen, no pintura.** Mismo bloque, mismos píxeles en
-   pantalla: con `linear-gradient` el FCP no se movió; con `data:image/svg+xml` bajó 2,2 s.
-3. **⛔ `experimental.optimizeCss` no hace nada en App Router.** Los estilos llegan como
-   `<link data-precedence="next">`, inyectados por React durante el streaming; critters
-   post-procesa HTML terminado y no tiene sobre qué trabajar. El handoff de junio que la
-   listaba como palanca #1 quedó marcado como desactualizado.
-4. **⚠️ Un número puede dar verde por la razón equivocada.** El CLS sólo se registra si el
-   estado previo llegó a pintarse: el baseline daba 0,0000 en 2 de 5 corridas **con el defecto
-   presente**. Por eso la causa determinista manda sobre el outcome.
-5. **⚠️ Un instrumento puede mentir con cuatro cifras a la vez.** La primera corrida de Web
-   Vitals reportó `FCP n/a · LCP n/a · CLS 0 · 0 long tasks` para una página que había pintado
-   a 576 ms — `__name is not defined` mataba el init script. Ahora hay cross-check que **aborta**
-   y un listener de `pageerror`.
-
-## Deuda declarada (no agendada)
-
-- **Piso de FCP ~1.736 ms** por el CSS render-blocking de 55,5 kB encoded. Discovery hecho con
-  los porcentajes reales (el shell usa 4,7% de la hoja; el hub 10,8%). Retomarlo exige una
-  **hipótesis nueva**, no otro intento.
-- **`align-self: stretch` del hub**: hoy converge con el comportamiento anterior porque la
-  columna (234 px) es menor que el ancho intrínseco del portal (256 px). **Revalidar** si
-  cambia `--app-max-width`, la geometría de tracks o el asset. ⛔ `234 × 363,8` no es una
-  constante universal.
-- **Telemetría del `componentDidCatch`** de la rama de wallet: sigue siendo sólo consola. Si el
-  chunk falla en el device de un jugador real, no nos enteramos. Es decisión, no olvido.
-
-## Próximo paso
-
-**Producto.** El backlog canónico vive en `docs/backlog/2026-07-10-backlog-index.md` y la
-directriz vigente en `docs/product/2026-07-13-direction-where-we-are.md`.
-
-⚠️ Nada de esto está pusheado: son commits locales sobre `main`.
+## Notes
+- ⛔ **`retry()` del outbox quedó sin consumidores** en el producto. Se mantuvo a propósito:
+  es lo que usaría la línea de Account. Si esa superficie no se construye, es código muerto
+  y hay que decidirlo explícitamente.
+- ⚠️ **El VR necesitó dos corridas**: 4 casos de `/dev` fallaron por `page.goto` timeout de
+  45 s (compilación en frío del dev server), NO por píxeles. Re-corridos solos, verdes.
+  **No confundir ese modo de falla con una regresión visual** — el log dice `TimeoutError`.
+- ⛔ **Paso 3 del brief de visibilidad (promover el mapa) está DESCARTADO** por decisión del
+  founder tras jugarlo. No reaparece como pendiente.
+- ⛔ **La "validación del Paso 2" se cerró sin ejecutarse**: exigía un jugador ingenuo que
+  volviera a los 3 días, y ese sujeto no existe (434 de 443 jugaron un solo día).
+- 📌 El aprendizaje que sobrevive a la sesión: **el candado va en quien OTORGA la capacidad,
+  como campo requerido** — dos versiones del spec taparon llamadores y siempre quedó otra
+  puerta. Al implementarlo, `tsc` señaló 4 call sites, 2 de ellos fuera de todo análisis.
+- Índice de memoria compactado de 19,6 KB → 16,2 KB (llegaba al límite de lectura).
