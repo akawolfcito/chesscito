@@ -211,7 +211,6 @@ import {
 } from "@/lib/training/special-training-lane";
 import { attemptShieldSpendWithPeones } from "@/lib/peones/shield-spend-fallback";
 import { ActionPin } from "@/components/redesign/action-pin";
-import { AttemptSaveStatus } from "@/components/exercises/attempt-save-status";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { computeStars } from "@/lib/game/scoring";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
@@ -3830,15 +3829,16 @@ export function ExercisesScreen({
             onBack={() => router.push("/")}
           />
         )}
-        {/* Slice 3 (4C-3): the attempt queue, said out loud. Sits with the
-            daily-limit banner because it is the same KIND of thing — a
-            persistent line about state the player cannot act on from the
-            board. Silent while the queue is empty. */}
-        <AttemptSaveStatus
-          status={attempts.status}
-          pendingCount={attempts.pendingCount}
-          onRetry={attempts.retry}
-        />
+        {/* ⛔ ACÁ NO VA NINGUNA SUPERFICIE DE GUARDADO. (2026-08-09)
+            Vivió un banner de cola de intentos entre el 2026-07-28 y hoy. Se
+            eliminó por decisión del founder, y el motivo no es estético: pedir
+            el reintento le cuesta al jugador UNA FIRMA, mientras que no hacer
+            nada le cuesta cero — la cola se drena sola en la próxima
+            completación. Era un cartel permanente sobre el tablero que cobraba
+            por un servicio que el sistema ya prestaba gratis.
+            Si vuelve a hacer falta decir algo sobre la cola, va en Account:
+            un lugar que el jugador VISITA, no un cartel que lo visita a él.
+            Spec: docs/specs/2026-08-09-attempt-save-never-ambushes-v3.md §4 */}
         <MissionPanelCandy
           selectedPiece={selectedPiece}
           onOpenPieceSheet={() => setBadgeSheetOpen(true)}

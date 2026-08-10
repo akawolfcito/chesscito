@@ -17070,78 +17070,13 @@ button.hud-resource-chip:active:not(:disabled) {
   justify-content: center;
 }
 
-/* ── Attempt save status (Slice 3, 4C-3) ─────────────────────────────────────
-   The persistent line that says an attempt is still waiting to be recorded.
-   Deliberately NOT a toast or a modal: it stays until the queue drains, and it
-   never takes the board away to report something the player did not cause.
-   Sits in the same stack slot as the daily-limit banner, above the mission
-   panel, at the app's 390px width. */
-.attempt-save-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin: 0 auto 6px;
-  padding: 6px 12px;
-  max-width: var(--app-max-width);
-  border-radius: 12px;
-  background: rgba(12, 24, 20, 0.55);
-  color: rgba(240, 246, 240, 0.86);
-  font-size: 12px;
-  line-height: 1.3;
-  text-align: center;
-}
-
-/* OUT OF FLOW (founder 2026-08-09).
-   In normal flow this line pushed the whole screen down — the board, the
-   mission panel, everything — every time the network hiccuped. It is a
-   NON-BLOCKING message: the attempt is safe in the queue and the player can
-   keep going. A message that blocks nothing must not cost a row of the thing
-   he came for.
-
-   `fixed`, not `absolute`: the dock lives inside the mission panel, so
-   anchoring to the shell's bottom would put this underneath it. Fixed also
-   behaves inside the desktop bezel — `.desktop-app-frame` carries
-   `transform: translateZ(0)`, which contains fixed descendants (see
-   desktop-app-frame.tsx), so it stays in the phone frame instead of escaping
-   to the viewport. */
-.attempt-save-status.is-floating {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  /* Clears the dock and the action row beneath the board. */
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 168px);
-  z-index: 55;
-  width: max-content;
-  max-width: calc(var(--app-max-width) - 32px);
-  margin: 0;
-  /* Opaque enough to stay legible over the board art it now overlays. */
-  background: rgba(12, 24, 20, 0.88);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-}
-
-/* Failure is a state to notice, not an alarm: the attempt is safe in the queue
-   and the retry costs the player nothing. Warm, not red. */
-.attempt-save-status.is-failed {
-  background: rgba(72, 44, 12, 0.72);
-  color: rgba(255, 236, 205, 0.95);
-}
-
-.attempt-save-status__message {
-  flex: 1 1 auto;
-}
-
-.attempt-save-status__cta {
-  flex: 0 0 auto;
-  padding: 4px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 236, 205, 0.5);
-  background: rgba(255, 236, 205, 0.12);
-  color: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
+/* ── Attempt save status: ELIMINADO (2026-08-09) ─────────────────────────────
+   Acá vivió el banner de la cola de intentos, entre el 2026-07-28 y esa fecha.
+   Se borró junto con su componente y su copy: pedir el reintento le costaba al
+   jugador una FIRMA de wallet, y no pedir nada le costaba cero — la cola se
+   drena sola en la próxima completación. El cartel cobraba por un servicio que
+   el sistema ya prestaba gratis, y encima aparecía al ENTRAR.
+   Spec: docs/specs/2026-08-09-attempt-save-never-ambushes-v3.md §4 */
 
 /* ── WalletShell skeleton ──────────────────────────────────────────────────
  * La silueta que ocupa la espera del hub mientras la rama de wallet viaja.

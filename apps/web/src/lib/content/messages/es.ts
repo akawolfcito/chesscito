@@ -1269,14 +1269,6 @@ const messages = {
     scoreAtMax: "{stars}★ / {maxStars}★ · Máximo",
     closeLabelFormat: "Cerrar {title}",
   },
-  ATTEMPT_SAVE_COPY: {
-    saving: "Guardando progreso…",
-    savingCountFormat: "Guardando progreso… ({count})",
-    failed: "Tu jugada está lista para guardar.",
-    failedCountFormat: "{count} jugadas listas para guardar.",
-    retryCta: "Guardar",
-    retryAriaLabel: "Guardar tu progreso ahora",
-  },
   BADGE_TITLES: {
     rook: "Torre Ascendente",
     bishop: "Alfil Ascendente",

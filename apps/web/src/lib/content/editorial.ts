@@ -190,37 +190,22 @@ export const MISSION_DETAIL_COPY = {
   closeLabelFormat: "Close {title}",
 } as const;
 
-/**
- * The attempt queue, said out loud (Slice 3, stage 4C-3).
+/* ⛔ `ATTEMPT_SAVE_COPY` se ELIMINÓ el 2026-08-09. No reponerlo sin leer esto.
  *
- * An attempt that failed to deliver used to be invisible: it sat in the outbox
- * waiting for the next completion to drain it, and the player had no way to
- * know or to ask. This is the surface for that — persistent, in place, never a
- * modal and never a toast that expires while the player is mid-move.
+ * Existió entre el 2026-07-28 y esa fecha para darle voz a la cola de intentos:
+ * un intento que fallaba al entregarse era invisible y el jugador "no tenía
+ * forma de saber ni de pedir". Se eliminó porque esa premisa se dio vuelta al
+ * descubrir qué cuesta PEDIR: el reintento manual exige una firma de wallet,
+ * mientras que no hacer nada no cuesta nada — la cola se drena sola en la
+ * próxima completación, con el mismo attemptId.
  *
- * It says PROGRESS, not "score": what is waiting is the record that the attempt
- * happened, and on carril 2 the score genuinely does not move.
- */
-export const ATTEMPT_SAVE_COPY = {
-  /** Discreet, while a delivery is in flight. */
-  saving: "Saving progress…",
-  /** Same state with more than one waiting. */
-  savingCountFormat: "Saving progress… ({count})",
-  /** Persistent, after a retryable failure.
-   *
-   *  ⚠️ Worded as something EARNED, never as a debt (founder 2026-08-09:
-   *  "el save no debería ser obligatorio para pasar, sino un premio"). It used
-   *  to read "Your last attempt hasn't been saved yet", which accuses the
-   *  player of owing something for having won — and nothing here blocks him:
-   *  the attempt is safe in the queue and he can keep playing either way. */
-  failed: "Your play is ready to save.",
-  failedCountFormat: "{count} plays ready to save.",
-  /** The manual save. Re-sends the SAME attempt, which the server answers as a
-   *  replay — it costs the player nothing and cannot double-count. Called
-   *  "Save", not "Retry": retry names a failure he did not cause. */
-  retryCta: "Save",
-  retryAriaLabel: "Save your progress now",
-} as const;
+ * O sea que el botón no era un servicio: era una forma de que el jugador pagara
+ * por algo que el sistema ya hacía gratis. Y el cartel que lo alojaba aparecía
+ * al ENTRAR, sobre el área de juego, por un estado que él no causó.
+ *
+ * Si alguna vez hay que decir algo sobre la cola, va en Account — un lugar que
+ * el jugador visita, no un cartel que lo visita a él.
+ * Spec: docs/specs/2026-08-09-attempt-save-never-ambushes-v3.md §4 */
 
 const PIECE_BASE = THEME_CONFIG.piecesBase;
 

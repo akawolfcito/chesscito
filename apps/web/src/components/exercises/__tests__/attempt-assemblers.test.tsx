@@ -512,11 +512,17 @@ describe("the queue is visible, and the retry is the player's (4C-3)", () => {
     },
   };
 
-  it("parks on a retryable failure, offers RETRY, and re-sends the SAME id", async () => {
+  it("parks on a retryable failure and la próxima completación re-envía el MISMO id", async () => {
     // Retryable is "not now", not "no". The attempt keeps its place and its
-    // identity, so the server answers the retry as a REPLAY: it inserts
-    // nothing and consumes no budget. That is what makes a visible retry safe
-    // to hand to a player who might tap it twice.
+    // identity, so the server answers it as a REPLAY: it inserts nothing and
+    // consumes no budget.
+    //
+    // ⛔ Esto se probaba tapeando el CTA del banner. El banner se eliminó el
+    // 2026-08-09 y con él la única forma de PEDIR el reintento — que costaba
+    // una firma de wallet. Lo que queda es el camino que siempre fue gratis y
+    // que el jugador no tiene que descubrir: la próxima completación arrastra
+    // lo parkeado. El contrato bajo test (mismo attemptId) no cambió; sí el
+    // gesto que lo dispara, y ahora el gesto es simplemente seguir jugando.
     postScoreSave.mockImplementationOnce(
       async () => ({ status: "error", reason: "network" }) as never,
     );
@@ -526,24 +532,18 @@ describe("the queue is visible, and the retry is the player's (4C-3)", () => {
     await waitFor(() => expect(attemptCalls()).toHaveLength(1));
     const firstId = attemptCalls()[0]!.attemptId;
 
-    // Reached through the status line, not by its label. This used to match
-    // /reintentar el guardado|retry saving/ and broke the day the copy stopped
-    // saying "retry" — a word that named a failure the player did not cause.
-    // What this test is about is the REPLAY contract, not the wording, so it
-    // must not be the thing that pins the wording.
-    const line = await screen.findByTestId("attempt-save-status");
-    const cta = within(line).getByRole("button");
-
-    fireEvent.click(cta);
-
-    await waitFor(() => expect(attemptCalls()).toHaveLength(2));
-    expect(attemptCalls()[1]!.attemptId).toBe(firstId);
-
-    // Settled: the queue is empty, so the line goes away entirely. A permanent
-    // "all saved" chip would train the player to stop reading this spot.
+    // Seguir jugando: eso solo drena la cola.
+    postScoreSave.mockImplementationOnce(async () => SAVED as never);
+    await screen.findByText("Tap to Continue", undefined, { timeout: 2500 });
+    fireEvent.click(screen.getByRole("button", { name: "Tap to Continue" }));
     await waitFor(() =>
-      expect(screen.queryByTestId("attempt-save-status")).not.toBeInTheDocument(),
+      expect(screen.queryByText("Tap to Continue")).not.toBeInTheDocument(),
     );
+    fireEvent.click(screen.getByText("mock-complete-board"));
+
+    await waitFor(() => expect(attemptCalls().length).toBeGreaterThanOrEqual(2));
+    // El parkeado sale primero y con su identidad intacta (FIFO).
+    expect(attemptCalls()[1]!.attemptId).toBe(firstId);
   });
 
   it("shows nothing to retry on a terminal rejection, and the next attempt still goes out", async () => {
@@ -558,13 +558,6 @@ describe("the queue is visible, and the retry is the player's (4C-3)", () => {
     fireEvent.click(await screen.findByText("mock-complete-board"));
     await waitFor(() => expect(attemptCalls()).toHaveLength(1));
 
-    await waitFor(() =>
-      expect(screen.queryByTestId("attempt-save-status")).not.toBeInTheDocument(),
-    );
-    expect(
-      screen.queryByRole("button", { name: /reintentar el guardado|retry saving/i }),
-    ).not.toBeInTheDocument();
-
     // The queue moved on: the next completion is delivered normally.
     postScoreSave.mockImplementationOnce(async () => SAVED as never);
     await screen.findByText("Tap to Continue", undefined, { timeout: 2500 });
@@ -578,19 +571,16 @@ describe("the queue is visible, and the retry is the player's (4C-3)", () => {
     expect(attemptCalls()[1]!.exerciseId).toBe("t-rook-2");
   });
 
-  it("shows the discreet line and NO retry while a delivery is in flight", async () => {
-    // There is nothing to retry while the server is still answering, and a
-    // button there would invite a second POST of an attempt already in flight.
+  it("no dice NADA mientras una entrega está en vuelo", async () => {
+    // Antes acá había una línea discreta ("Saving progress…"). Se eliminó con
+    // el banner: el guardado es plomería, y la plomería no se anuncia.
     postScoreSave.mockImplementationOnce(() => new Promise(() => {}) as never);
     renderScreen();
 
     fireEvent.click(await screen.findByText("mock-complete-board"));
+    await waitFor(() => expect(attemptCalls()).toHaveLength(1));
 
-    const line = await screen.findByTestId("attempt-save-status");
-    expect(line.textContent ?? "").toMatch(/guardando progreso|saving progress/i);
-    expect(
-      screen.queryByRole("button", { name: /reintentar el guardado|retry saving/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("attempt-save-status")).not.toBeInTheDocument();
   });
 
   it("survives a reload and re-sends the SAME attempt for the same wallet", async () => {
@@ -619,6 +609,45 @@ describe("the queue is visible, and the retry is the player's (4C-3)", () => {
   it("says nothing at all while the queue is empty", async () => {
     renderScreen();
     await screen.findByText("mock-complete-board");
+    expect(screen.queryByTestId("attempt-save-status")).not.toBeInTheDocument();
+  });
+
+  /**
+   * El guardado NO tiene superficie en el tablero (2026-08-09).
+   *
+   * ⚠️ Es un test de AUSENCIA, y la ausencia es lo único que una captura de VR
+   * nunca puede afirmar: una foto sin banner y una foto donde el banner no se
+   * distingue del fondo son el mismo PNG. Va por DOM o no va.
+   *
+   * Cubre los tres estados que antes tenían pill —vacía, en vuelo, parkeada—
+   * porque el riesgo real no es que alguien reponga el componente a propósito,
+   * sino que un merge lo reviva en uno solo de ellos.
+   */
+  it("no monta ninguna superficie de guardado en NINGÚN estado de la cola", async () => {
+    // 1. Cola vacía.
+    renderScreen();
+    await screen.findByText("mock-complete-board");
+    expect(screen.queryByTestId("attempt-save-status")).not.toBeInTheDocument();
+
+    // 2. Entrega en vuelo.
+    postScoreSave.mockImplementationOnce(() => new Promise(() => {}) as never);
+    fireEvent.click(screen.getByText("mock-complete-board"));
+    await waitFor(() => expect(attemptCalls()).toHaveLength(1));
+    expect(screen.queryByTestId("attempt-save-status")).not.toBeInTheDocument();
+
+    // 3. Cola parkeada tras un fallo retryable — el estado que MÁS ruido hacía:
+    //    era el que traía el cartel persistente y su CTA.
+    cleanup();
+    postScoreSave.mockClear();
+    postScoreSave.mockImplementationOnce(
+      async () => ({ status: "error", reason: "network" }) as never,
+    );
+    renderScreen();
+    fireEvent.click(await screen.findByText("mock-complete-board"));
+    // ⚠️ Sin conteo exacto: al re-montar, la cola de los pasos anteriores
+    // rehidrata desde localStorage y suma envíos. Lo que este caso afirma es la
+    // AUSENCIA de superficie, no cuántos intentos salieron.
+    await waitFor(() => expect(attemptCalls().length).toBeGreaterThanOrEqual(1));
     expect(screen.queryByTestId("attempt-save-status")).not.toBeInTheDocument();
   });
 });
