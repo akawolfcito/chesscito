@@ -212,7 +212,7 @@ import {
 import { attemptShieldSpendWithPeones } from "@/lib/peones/shield-spend-fallback";
 import { ActionPin } from "@/components/redesign/action-pin";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
-import { computeStars } from "@/lib/game/scoring";
+import { gradeExerciseRun } from "@/lib/game/scoring";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
 import {
   registerDockSheetCloser,
@@ -1791,7 +1791,7 @@ export function ExercisesScreen({
       // exercises. `isReplay` comes from useExerciseProgress and
       // is true when the active exercise already has stars in
       // progress.stars[index].
-      setLastEarnedStars(computeStars(movesCount, currentExercise.optimalMoves));
+      setLastEarnedStars(gradeExerciseRun(movesCount, currentExercise));
       if (!isReplay) {
         bumpStreak();
       }
@@ -1835,7 +1835,7 @@ export function ExercisesScreen({
       // nothing, so it credits nothing.
       let badgeMomentOwnedByQueue = false;
       {
-        const earnedStars = computeStars(movesCount, currentExercise.optimalMoves);
+        const earnedStars = gradeExerciseRun(movesCount, currentExercise);
         const previousBest = progress.stars[currentExercise.id] ?? 0;
         const starsAfterSolve = scoringFrozen
           ? progress.stars
@@ -1863,7 +1863,7 @@ export function ExercisesScreen({
         shouldFireStarsConnectPrompt({
           isConnected,
           liteMode: CHESSCITO_LITE_MODE,
-          stars: computeStars(movesCount, currentExercise.optimalMoves),
+          stars: gradeExerciseRun(movesCount, currentExercise),
         })
       ) {
         starsConnectPrompt.show();
