@@ -146,6 +146,13 @@ export type PuzzleInput = {
    *  destination — see `targetPos` on MappedPuzzle. Required for every other
    *  kind: without it the puzzle has no win condition. */
   target?: string;
+  /** Star Sweep — EVERY square to collect, in algebraic notation, any order.
+   *  Absent means a single-goal exercise (the whole catalog before 2026-08-10).
+   *
+   *  `target` stays REQUIRED alongside it and must equal `targets[0]`: a hundred
+   *  call sites read `targetPos`, so the sweep keeps feeding them a real square
+   *  instead of making every one of them answer for an Optional. */
+  targets?: string[];
   mover?: string;
   /** `promotion-run` only: the piece to crown. Carried through the round-trip
    *  untouched — the FEN cannot express it, because it is not a position. */
@@ -176,6 +183,9 @@ export type MappedPuzzle = {
    *  in their own path reads it — the board and host use the coverage handler,
    *  never a target check. */
   targetPos: BoardPosition;
+  /** Star Sweep — the decoded goal squares. Invariant, enforced at map time:
+   *  `targets[0]` is `targetPos`, so every pre-Sweep reader stays correct. */
+  targets?: BoardPosition[];
   obstacles?: BoardPosition[];
   captureTargets?: BoardPosition[];
   /** Static black pieces that project attacked squares. ADDITIVE: only the
@@ -229,6 +239,33 @@ export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
     throw new FenError("target equals start");
   }
 
+  // Star Sweep goal squares. Validated hard rather than normalised: a sweep whose
+  // authored order disagrees with `target` would grade against one square while
+  // the board highlights another, and both would look right in review.
+  let sweepTargets: BoardPosition[] | undefined;
+  const authoredTargets = input.targets?.filter((s) => s?.trim());
+  if (authoredTargets && authoredTargets.length > 0) {
+    if (isTargetless) {
+      throw new FenError(`'${input.kind}' has no destination; 'targets' is meaningless here`);
+    }
+    if (authoredTargets.length < 2) {
+      throw new FenError("'targets' needs at least two squares — one target is a plain exercise");
+    }
+    const decoded = authoredTargets.map((s) => squareToPos(s.trim()));
+    const seen = new Set(decoded.map((p) => `${p.file},${p.rank}`));
+    if (seen.size !== decoded.length) throw new FenError("'targets' repeats a square");
+    if (decoded.some((p) => samePos(p, startPos))) {
+      throw new FenError("'targets' includes the start square");
+    }
+    if (!samePos(decoded[0], targetPos)) {
+      throw new FenError(
+        `'target' (${input.target}) must equal targets[0] (${authoredTargets[0]}) — ` +
+          `every legacy reader resolves the goal through targetPos`,
+      );
+    }
+    sweepTargets = decoded;
+  }
+
   const obstacles: BoardPosition[] = [];
   const captureTargets: BoardPosition[] = [];
   const enemies: TypedEnemy[] = [];
@@ -254,6 +291,7 @@ export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
     piece: input.piece,
     startPos,
     targetPos,
+    targets: sweepTargets,
     obstacles: obstacles.length ? obstacles : undefined,
     captureTargets: captureTargets.length ? captureTargets : undefined,
     enemies: enemies.length ? enemies : undefined,

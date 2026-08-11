@@ -9,6 +9,7 @@
 import type { BoardPosition, ContentAccess, Exercise, ExerciseTier, PieceId } from "@/lib/game/types";
 import { mapFenPuzzle, parseFenBoard, puzzleId, posToSquare, isCoverageKind, usesOwnSolver, type PuzzleInput, type MappedPuzzle } from "@/lib/game/fen-puzzle";
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
+import { computeSweepOptimal } from "@/lib/game/sweep-optimal";
 import { pivotBfs } from "@/lib/game/diagonal-run";
 import { reachableSquares } from "@/lib/game/knight-tour";
 import { maxQueens } from "@/lib/game/queens";
@@ -57,6 +58,11 @@ export type LabyrinthRecord = {
   /** Required except on the TARGETLESS kinds (`knight-tour`, `queens`, which have
    *  no destination, and `promotion-run`, whose destination is a rank). */
   target?: string;
+  /** Star Sweep — EVERY square to collect, algebraic, any order. Two or more, and
+   *  `target` must equal `targets[0]`. Absent = a single-goal exercise.
+   *  `optimalMoves` for these is COMPUTED (cheapest order) at build time, never
+   *  authored. Validated in `mapFenPuzzle`. */
+  targets?: string[];
   tier?: ExerciseTier; tags?: string[]; explanation?: string; order: number;
   /** Additive content entitlement. Missing stays backwards-compatible base. */
   access?: ContentAccess;
@@ -322,6 +328,21 @@ export function buildCatalog(
     }
     const probe: Exercise = { id: "probe", optimalMoves: 0, ...toExerciseFields(mapped) };
     const bfs = usesOwnSolver(input.kind) ? null : computeExerciseBfs(input.piece, probe);
+    // Star Sweep — the optimum is the cheapest ORDER over all targets, not the
+    // single-target BFS. COMPUTED here and never authored: a hand-written optimum
+    // one move too high makes the "perfect run" trivially reachable and the whole
+    // experiment measures a lie; one move too low makes it unreachable.
+    let sweepOptimal: number | null = null;
+    if (mapped.targets && mapped.targets.length > 1) {
+      sweepOptimal = computeSweepOptimal(input.piece, probe);
+      if (sweepOptimal === null) {
+        errors.push(
+          `${label}: sweep has no route that collects every target — ` +
+            `at least one of ${mapped.targets.map(posToSquare).join(", ")} is unreachable`,
+        );
+        return;
+      }
+    }
     // Lint BEFORE the solvability bail-out: a target buried under a blocker is
     // ALSO unsolvable, and "no path" alone sends the author hunting for a routing
     // bug instead of the one square at fault.
@@ -427,7 +448,10 @@ export function buildCatalog(
       warnings.push(`${label}: duplicate position (same piece+fen+target as an earlier puzzle)`);
     }
     seenPositions.add(positionKey);
-    const exercise = { id, optimalMoves: coverageCeiling ?? safePathOptimal ?? promotionRunOptimal ?? diagonalRunOptimal ?? bfs!.optimalMoves, ...toExerciseFields(mapped) } as Exercise & { __order?: number };
+    // `sweepOptimal` sits ahead of `bfs` because the single-target BFS answers a
+    // DIFFERENT question for a sweep (the route to targets[0] only) and would
+    // understate the optimum without any symptom.
+    const exercise = { id, optimalMoves: coverageCeiling ?? safePathOptimal ?? promotionRunOptimal ?? diagonalRunOptimal ?? sweepOptimal ?? bfs!.optimalMoves, ...toExerciseFields(mapped) } as Exercise & { __order?: number };
     exercise.__order = order;
     if (input.kind === "promotion-run") promotionRun[input.piece].push(exercise);
     else if (input.kind === "safe-path") safePath[input.piece].push(exercise);
@@ -479,7 +503,8 @@ export function buildCatalog(
     if (!PIECES.includes(rec.piece)) { errors.push(`exercises.json '${rec.id ?? rec.fen}': bad piece`); continue; }
     addPuzzle({
       kind: "exercise", piece: rec.piece, tier: rec.tier ?? "medium", fen: rec.fen,
-      target: rec.target, mover: rec.mover, tags: rec.tags, explanation: rec.explanation,
+      target: rec.target, targets: rec.targets, mover: rec.mover, tags: rec.tags,
+      explanation: rec.explanation,
       access: rec.access,
       principle: rec.principle, title: rec.title,
       playerPrompt: rec.playerPrompt, learningObjective: rec.learningObjective,
