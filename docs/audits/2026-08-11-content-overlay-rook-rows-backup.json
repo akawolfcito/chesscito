@@ -1,0 +1,56 @@
+[
+  {
+    "id": "rook-1",
+    "kind": "exercise",
+    "piece": "rook",
+    "fen": "8/8/8/8/1R6/8/8/8 w - - 0 1",
+    "target": "h4",
+    "mover": "b4",
+    "tier": "easy",
+    "tags": [
+      "straight-line"
+    ],
+    "explanation": null,
+    "order": 0,
+    "disabled": false,
+    "optimal_moves": 1,
+    "updated_at": "2026-07-18T16:58:33.826+00:00",
+    "stage": "draft"
+  },
+  {
+    "id": "rook-2",
+    "kind": "exercise",
+    "piece": "rook",
+    "fen": "8/8/8/8/8/8/4R3/8 w - - 0 1",
+    "target": "e8",
+    "mover": "e2",
+    "tier": "easy",
+    "tags": [
+      "straight-line"
+    ],
+    "explanation": null,
+    "order": 1,
+    "disabled": false,
+    "optimal_moves": 1,
+    "updated_at": "2026-07-18T16:59:03.802+00:00",
+    "stage": "draft"
+  },
+  {
+    "id": "rook-distance-1",
+    "kind": "exercise",
+    "piece": "rook",
+    "fen": "8/8/1R6/8/8/8/8/8 w - - 0 1",
+    "target": "b3",
+    "mover": "b6",
+    "tier": "easy",
+    "tags": [
+      "variable-distance"
+    ],
+    "explanation": null,
+    "order": 2,
+    "disabled": false,
+    "optimal_moves": 1,
+    "updated_at": "2026-07-18T17:02:29.806+00:00",
+    "stage": "draft"
+  }
+]
