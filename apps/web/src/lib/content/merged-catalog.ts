@@ -18,6 +18,7 @@
  */
 import { unstable_cache } from "next/cache";
 import type { Exercise, PieceId } from "@/lib/game/types";
+import { isSweep } from "@/lib/game/targets";
 import {
   GENERATED_EXERCISES,
   GENERATED_LABYRINTHS,
@@ -180,6 +181,10 @@ export function mergeOverlay(
   // overlay rows cannot collide with each other either.
   const { owner } = indexExerciseIds(baseline);
   let applied = 0;
+  /** Overlay rows dropped because they would have shadowed a Star Sweep. Not
+   *  silent: this is a live authoring conflict — someone edited a board the
+   *  overlay schema cannot represent, and they should be told, not guessed at. */
+  const skippedSweeps: string[] = [];
 
   for (const row of overlay) {
     try {
@@ -209,11 +214,37 @@ export function mergeOverlay(
         continue;
       }
 
+      const idx = list.findIndex((e) => e.exercise.id === row.id);
+
+      /* ⛔ An overlay row CANNOT express a Star Sweep, so it is not a valid
+       * override of one. The table has no `targets` (nor `starFloor`) column, so
+       * a row built from it always carries them as undefined — and replacing the
+       * baseline wholesale downgraded the level to a single goal with
+       * `optimalMoves: 1`, while still inheriting the sweep's title.
+       *
+       * That produced, in production (2026-08-11): the new title, ONE star, no
+       * counter, and — because the screen treats `optimalMoves === 1` as "any
+       * non-target move is an instant loss" — a board that FAILED the player for
+       * trying to play it. Every unit test stayed green throughout, because they
+       * all read the baseline.
+       *
+       * The baseline wins. Inheriting `targets` from it instead would be worse:
+       * the row may carry a different fen/mover/target, and grafting the
+       * baseline's goal squares onto a different board yields a level nobody
+       * authored and the trust-but-verify check cannot catch.
+       *
+       * Narrow on purpose — `disabled` is handled ABOVE this point, so retiring
+       * a sweep still works. The overlay may say "not this one"; it may not say
+       * "this one, but broken". */
+      const baselineEntry = idx >= 0 ? list[idx].exercise : undefined;
+      if (baselineEntry && isSweep(baselineEntry)) {
+        skippedSweeps.push(row.id);
+        continue;
+      }
+
       const built = buildOverlayRow(row);
       if (!built) continue; // dropped (unsolvable / optimal_moves mismatch)
       owner.set(row.id, targetPool);
-
-      const idx = list.findIndex((e) => e.exercise.id === row.id);
       // The Supabase table has no columns for the pedagogy fields, so a row
       // built from it always carries them as undefined. Replacing the baseline
       // entry wholesale therefore ERASED the authored copy on every edit —
@@ -267,6 +298,7 @@ export function mergeOverlay(
     descriptions,
     source: "baseline+overlay",
     overlayCount: applied,
+    skippedSweepOverrides: skippedSweeps,
   };
 }
 
