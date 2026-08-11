@@ -80,8 +80,18 @@ export function CelebrationStack({
           The explicit viewport width IS load-bearing: the containing block
           here is the wolf's frame, so an auto-width absolute child can never
           get wider than that however big its own max-width is, and the lesson
-          wrapped early with half the screen empty beside it. */}
-      <div className="pointer-events-none absolute bottom-full left-1/2 flex w-[92vw] -translate-x-1/2 flex-col items-center gap-1">
+          wrapped early with half the screen empty beside it.
+
+          ⚠️ CAPPED at the app frame. `92vw` is 92% of the VIEWPORT, not of the
+          390px frame the app renders inside. On a phone the two are the same
+          number, so nobody saw it; on desktop web the viewport is far wider, the
+          block grew past the frame, and the frame clipped it — the lesson line
+          read "u learned: Move along the ra", cut off at BOTH ends (device
+          report 2026-08-11).
+
+          `min()` and not a plain cap: below ~424px viewport the 92vw term still
+          wins, so mobile — the only channel that ships — is byte-identical. */}
+      <div className="pointer-events-none absolute bottom-full left-1/2 flex w-[min(92vw,var(--app-max-width))] -translate-x-1/2 flex-col items-center gap-1">
         <ArchedHeadline
           text={text}
           stroke={stroke}

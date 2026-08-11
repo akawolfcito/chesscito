@@ -15591,8 +15591,10 @@ button.hud-resource-chip:active:not(:disabled) {
      (its SVG viewBox includes the sagitta and the extrusion), so this is a
      gap, not a correction for glyphs hanging outside the box. */
   margin-top: 0.375rem;
-  /* The wrapper already carries the viewport width; capping in vw here as
-     well would just re-impose the early wrap it was widened to avoid. */
+  /* The wrapper already carries the width; capping in vw here as well would
+     just re-impose the early wrap it was widened to avoid. ⚠️ That wrapper is
+     `min(92vw, var(--app-max-width))` — the bare 92vw overflowed the 390px app
+     frame on desktop web and got clipped at both ends. */
   max-width: 100%;
   color: #fff8ea;
   font-family: var(--font-game-action);
@@ -15608,8 +15610,8 @@ button.hud-resource-chip:active:not(:disabled) {
      position a constant instead of a function of how long the lesson title
      happens to be: `min-height` holds the second line open when the copy only
      needs one, `line-clamp` refuses a third.
-     Two lines at 92vw is ~60 characters — comfortably more than any authored
-     lesson title, so the clamp is a guard rail, not a truncator. */
+     Two lines at the frame width are ~60 characters — comfortably more than any
+     authored lesson title, so the clamp is a guard rail, not a truncator. */
   min-height: 2.4em;
   display: -webkit-box;
   -webkit-box-orient: vertical;
