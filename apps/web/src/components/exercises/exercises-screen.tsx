@@ -3939,7 +3939,21 @@ export function ExercisesScreen({
             Spec: docs/specs/2026-08-09-attempt-save-never-ambushes-v3.md §4 */}
         <MissionPanelCandy
           selectedPiece={selectedPiece}
-          onOpenPieceSheet={() => setBadgeSheetOpen(true)}
+          /* The piece chip opens the piece's PATH, not the Badges sheet.
+           *
+           * It pointed at Badges because that sheet doubles as the piece
+           * SELECTOR — but the dock's BADGES item already opens the very same
+           * sheet, so the chip was a second door to one room while the thing it
+           * actually names (this piece's path) was reached from the star chip
+           * instead. Nothing is lost: choosing a piece still lives one tap away
+           * in the dock. The star chip keeps its numbers and stops being a door
+           * (`showTrigger={false}` below).
+           *
+           * Routed through the SAME streak-nudge intercept the drawer's own
+           * trigger used, so the exit it guards still fires from this entry. */
+          onOpenPieceSheet={() =>
+            streakNudge.interceptExit(() => setExerciseDrawerOpen(true))
+          }
           pieceProgress={badgeProgress}
           phase={storeOpen ? "ready" : phase}
           awaitTapToContinue={awaitFlashTap}
@@ -4291,6 +4305,9 @@ export function ExercisesScreen({
           }
           exerciseDrawer={
             <ExerciseDrawer
+              // The star chip is a readout now, not a door — the piece chip
+              // above owns opening the path.
+              showTrigger={false}
               open={exerciseDrawerOpen}
               // Exit #2: opening the drawer to pick what is next is the other
               // decision moment. Closing it is not an exit and passes through.

@@ -802,10 +802,16 @@ export function MissionPanelCandy({
       <div className="mt-0.5 px-3 py-1.5">
         <div className="flex items-center gap-1">
           <div className="flex-1 min-w-0">
+            {/* No caret here: in this HUD the chip opens the piece's PATH, not
+                a picker. Choosing a piece lives in the Badges sheet, which the
+                dock already opens — the chip pointing there too was the same
+                door twice. A caret would keep promising a choice this tap does
+                not make. */}
             <PiecePickerTrigger
               selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
               onClick={onOpenPieceSheet}
               showLabel
+              showCaret={false}
               progress={pieceProgress}
             />
           </div>

@@ -16,6 +16,15 @@ type Props = {
   onClick: () => void
   /** Optional compact label for larger integrated header slots. */
   showLabel?: boolean
+  /** Whether to render the ▾ caret. Defaults to `showLabel`, which is what it
+   *  was tied to before it became a prop.
+   *
+   *  A caret is a PROMISE of choice — "tap me and pick another one". It belongs
+   *  wherever this trigger really opens a picker. In the /exercises HUD it no
+   *  longer does: that chip opens the piece's PATH, and choosing a piece lives
+   *  in the Badges sheet the dock already opens. A caret there promises
+   *  something the tap does not deliver. */
+  showCaret?: boolean
   /** How far this piece is toward its badge. Renders the same corner chip the
    *  hub tile shows, so the player recognises it instead of learning it.
    *
@@ -42,6 +51,7 @@ export function PiecePickerTrigger({
   selectedPiece,
   onClick,
   showLabel = false,
+  showCaret = showLabel,
   progress,
 }: Props) {
   const tPiece = useTranslations('PIECE_LABELS')
@@ -73,6 +83,11 @@ export function PiecePickerTrigger({
       onClick={onClick}
       aria-label={ariaLabel}
       aria-haspopup="dialog"
+      /* Stable anchor for the tests that need to OPEN whatever this chip opens.
+         They used to click the star chip by its accessible name ("Exercises");
+         when the path moved to this chip that query broke in three files at
+         once. A name is authored copy and will move again — a testid will not. */
+      data-testid="piece-chip-trigger"
       className={
         showLabel
           ? 'candy-tray-pill min-h-[36px] piece-picker-trigger'
@@ -111,7 +126,7 @@ export function PiecePickerTrigger({
           {pieceLabel}
         </span>
       )}
-      {showLabel && (
+      {showCaret && (
         <span aria-hidden="true" className="candy-tray-pill-caret">
           ▾
         </span>

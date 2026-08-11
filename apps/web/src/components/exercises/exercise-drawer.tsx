@@ -42,6 +42,14 @@ type QuotaState = {
 type ExerciseDrawerProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** Whether the star chip is the drawer's trigger. Defaults to true, which is
+   *  what it was before this became a prop.
+   *
+   *  In the /exercises HUD it is now false: opening the path MOVED to the piece
+   *  chip, which names what the drawer holds. The star chip stays exactly where
+   *  it is and keeps showing stars / shield / combo — it just stops being a
+   *  door. Two doors to one sheet is the duplication this removes. */
+  showTrigger?: boolean
   piece: PieceId
   exercises: Exercise[]
   stars: PieceProgress['stars']
@@ -81,6 +89,7 @@ function StarDisplay({ count }: { count: number }) {
 export function ExerciseDrawer({
   open,
   onOpenChange,
+  showTrigger = true,
   piece,
   exercises,
   stars,
@@ -196,15 +205,11 @@ export function ExerciseDrawer({
   const layout = pathLayout(orderedRows.length)
   const nodePositions = layout.positions
 
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetTrigger asChild>
-        <button
-          type="button"
-          aria-label={t('ariaLabel')}
-          className="candy-tray-pill min-h-[36px]"
-        >
-          <CandyIcon
+  /* The chip's CONTENTS, hoisted so the same pills render whether or not this
+     chip is the thing that opens the drawer. */
+  const chipContent = (
+    <>
+      <CandyIcon
             name="star"
             className="candy-tray-pill-icon candy-tray-pill-icon--floating"
           />
@@ -236,9 +241,31 @@ export function ExerciseDrawer({
                 {streakCount}
               </span>
             </>
-          ) : null}
-        </button>
-      </SheetTrigger>
+      ) : null}
+    </>
+  )
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      {/* ⚠️ The star chip used to BE the trigger. That role MOVED to the piece
+          chip, which is the thing that actually names what the drawer contains —
+          the piece's path. Here the chip stays as pure HUD readout: stars,
+          shield and combo, which is what the player comes to it for.
+          `showTrigger={false}` mirrors the pattern the badge sheet already uses
+          for the same reason. */}
+      {showTrigger ? (
+        <SheetTrigger asChild>
+          <button
+            type="button"
+            aria-label={t('ariaLabel')}
+            className="candy-tray-pill min-h-[36px]"
+          >
+            {chipContent}
+          </button>
+        </SheetTrigger>
+      ) : (
+        <div className="candy-tray-pill min-h-[36px]">{chipContent}</div>
+      )}
 
       <SheetContent
         side="bottom"

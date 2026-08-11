@@ -128,7 +128,7 @@ function solve(exercise: Exercise) {
  *  (The contextual "Enter Labyrinth" pin is not reachable here — the Welcome
  *  Pack CTA legitimately owns the idle action slot until it is claimed.) */
 async function enterLabyrinth() {
-  fireEvent.click(screen.getByRole("button", { name: "Exercises" }));
+  fireEvent.click(screen.getByTestId("piece-chip-trigger"));
   const node = await screen.findByRole("button", { name: "Special Training 1" });
   fireEvent.click(node);
   // The exit pin only exists inside the labyrinth layer — proof we are in.

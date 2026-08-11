@@ -161,7 +161,7 @@ function renderScreen(slot?: string, withLab = false) {
 }
 
 async function openDrawer() {
-  const trigger = await screen.findByRole("button", { name: "Exercises" });
+  const trigger = await screen.findByTestId("piece-chip-trigger");
   fireEvent.click(trigger);
 }
 
