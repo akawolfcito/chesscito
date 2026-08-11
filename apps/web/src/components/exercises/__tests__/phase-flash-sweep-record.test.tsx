@@ -157,6 +157,21 @@ describe("the CTA is a real control", () => {
     expect(onContinue).toHaveBeenCalledTimes(1);
   });
 
+  it("does NOT report 'shown' on a perfect run — there is no CTA to see", () => {
+    // Caught in production data: real `sweep_replay_cta_shown` rows carried
+    // `gap_to_perfect: 0`, which is by definition a run that renders no button.
+    // Counting those impressions inflates the denominator of the very
+    // conversion rate the event exists to measure.
+    const { onSweepCtaShown } = renderFlash({
+      runMoves: 7,
+      previousBest: 9,
+      optimal: 7,
+    });
+
+    expect(screen.queryByTestId("sweep-replay-cta")).not.toBeInTheDocument();
+    expect(onSweepCtaShown).not.toHaveBeenCalled();
+  });
+
   it("reports 'shown' exactly once per success", () => {
     // A render-time report would fire on every re-render of the same flash and
     // inflate the denominator of the conversion rate the experiment reads.

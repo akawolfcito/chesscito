@@ -373,10 +373,17 @@ export function PhaseFlash({
    * every re-render of the same success and would inflate the denominator of
    * the conversion rate this experiment exists to read. */
   const sweepRecordVisible = visible && isSuccess && sweepResult !== undefined
+  /* ⛔ Gated on `showReplayCta`, NOT merely on the record being visible.
+   * A perfect run shows the record and NO call to action, and firing
+   * `sweep_replay_cta_shown` there counts an impression of a button that does
+   * not exist — inflating the denominator of the exact conversion rate this
+   * event exists to measure. Caught in production data, not in tests: real rows
+   * carried `gap_to_perfect: 0`, which is by definition a run with no CTA. */
+  const sweepCtaVisible = sweepRecordVisible && sweepResult?.showReplayCta === true
   useEffect(() => {
-    if (sweepRecordVisible && sweepResult) onSweepCtaShown?.(sweepResult)
+    if (sweepCtaVisible && sweepResult) onSweepCtaShown?.(sweepResult)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sweepRecordVisible, sweepResult?.bestMoves, sweepResult?.optimalMoves])
+  }, [sweepCtaVisible, sweepResult?.bestMoves, sweepResult?.optimalMoves])
 
   function handleTapContinue() {
     if (!awaitTap || !tapArmed) return
