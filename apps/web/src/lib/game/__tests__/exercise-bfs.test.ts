@@ -15,6 +15,8 @@ import { describe, expect, it } from "vitest";
 
 import { canReachFrom, computeExerciseBfs } from "@/lib/game/exercise-bfs";
 import { EXERCISES, PLAYABLE_PIECES } from "@/lib/game/exercises";
+import { computeSweepOptimal } from "@/lib/game/sweep-optimal";
+import { isSweep } from "@/lib/game/targets";
 import type { Exercise } from "@/lib/game/types";
 
 describe("computeExerciseBfs — optimalMoves regression net", () => {
@@ -22,6 +24,20 @@ describe("computeExerciseBfs — optimalMoves regression net", () => {
     describe(`piece: ${piece}`, () => {
       EXERCISES[piece].forEach((ex) => {
         it(`${ex.id} computed optimalMoves matches declared`, () => {
+          // ⚠️ On a Star Sweep, `computeExerciseBfs` measures the route to
+          // `targetPos` — which is only `targets[0]`. That is one leg, not the
+          // level, so it must be verified by `computeSweepOptimal` instead.
+          if (isSweep(ex)) {
+            const sweep = computeSweepOptimal(piece, ex);
+            expect(sweep, `${ex.id} sweep unreachable`).not.toBeNull();
+            expect(sweep).toBe(ex.optimalMoves);
+            // And the single-target BFS must be STRICTLY cheaper, which is the
+            // whole reason this branch exists: if they ever agreed, the level
+            // would have collapsed back to a one-goal board.
+            const leg = computeExerciseBfs(piece, ex);
+            expect(leg?.optimalMoves ?? 0).toBeLessThan(ex.optimalMoves);
+            return;
+          }
           const result = computeExerciseBfs(piece, ex);
           expect(result, `${ex.id} BFS returned null`).not.toBeNull();
           expect(result?.optimalMoves).toBe(ex.optimalMoves);

@@ -31,7 +31,7 @@ import type { BuiltCatalog } from "@/lib/content/catalog";
 import { getLevelId } from "@/lib/contracts/scoreboard";
 import { labyrinthStars } from "@/lib/game/exercises";
 import { promotionRunStars } from "@/lib/game/promotion-run";
-import { computeStars } from "@/lib/game/scoring";
+import { gradeExerciseRun } from "@/lib/game/scoring";
 import { tourStars } from "@/lib/game/tour-score";
 import type { Exercise, PieceId } from "@/lib/game/types";
 
@@ -128,7 +128,11 @@ export const ATTEMPT_BUCKETS: Record<AttemptFamily, AttemptBucket> = {
     family: "exercise",
     poolKey: "exercises",
     measureKind: "moves",
-    stars: (movesUsed, exercise) => computeStars(movesUsed, exercise.optimalMoves),
+    // `gradeExerciseRun`, not `computeStars`: a Star Sweep level grades on
+    // relative bands (and can award 0), a plain one keeps the legacy scale. The
+    // dispatch lives in ONE function that the screen calls too, so the grade the
+    // player is shown and the grade this row persists cannot drift apart.
+    stars: (movesUsed, exercise) => gradeExerciseRun(movesUsed, exercise),
   },
   labyrinth: {
     family: "labyrinth",

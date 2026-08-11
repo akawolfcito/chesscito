@@ -16,8 +16,8 @@
     "order": 0
   },
   {
-    "title": "Move along the file",
-    "playerPrompt": "Now go straight up the file.",
+    "title": "Sweep the file",
+    "playerPrompt": "Collect every star. Plan the order — some routes are shorter.",
     "id": "rook-2",
     "piece": "rook",
     "fen": "8/8/8/8/8/8/4R3/8 w - - 0 1",
@@ -25,15 +25,23 @@
     "mover": "e2",
     "tier": "easy",
     "tags": [
-      "straight-line"
+      "straight-line",
+      "sweep",
+      "route-order"
     ],
     "principle": "file-movement",
-    "learningObjective": "The player recognises the rook's vertical movement along a file.",
-    "order": 1
+    "learningObjective": "The player recognises the rook's vertical movement along a file, and that the ORDER of the goals changes how many moves the route costs.",
+    "order": 1,
+    "targets": [
+      "e8",
+      "b8",
+      "b4"
+    ],
+    "starFloor": 1
   },
   {
-    "title": "One square is a move too",
-    "playerPrompt": "A rook may move just one square. Take it.",
+    "title": "Every distance counts",
+    "playerPrompt": "One square or seven — both cost one move. Find the short route.",
     "id": "rook-distance-1",
     "piece": "rook",
     "fen": "8/8/1R6/8/8/8/8/8 w - - 0 1",
@@ -41,11 +49,19 @@
     "mover": "b6",
     "tier": "easy",
     "tags": [
-      "variable-distance"
+      "variable-distance",
+      "sweep",
+      "route-order"
     ],
     "principle": "variable-distance",
-    "learningObjective": "The player learns the rook chooses its distance: one square is as legal as seven. Replaces rook-3 (d7 to d2), which only repeated rook-2's file movement.",
-    "order": 2
+    "learningObjective": "The player learns the rook chooses its distance: one square is as legal as seven, and a well-ordered tour costs no more than the longest leg.",
+    "order": 2,
+    "targets": [
+      "b3",
+      "g3",
+      "g7",
+      "b7"
+    ]
   },
   {
     "id": "rook-4",
@@ -55,13 +71,20 @@
     "mover": "g7",
     "tier": "easy",
     "tags": [
-      "corner-turn"
+      "corner-turn",
+      "sweep",
+      "route-order"
     ],
     "order": 4,
     "principle": "direction-change",
-    "title": "Turn the corner",
-    "playerPrompt": "Change direction between moves — never inside one.",
-    "learningObjective": "The player learns the rook turns BETWEEN moves: an L-shaped route costs two moves, not one."
+    "title": "Turn, and turn again",
+    "playerPrompt": "Change direction between moves — never inside one. Get all three.",
+    "learningObjective": "The player learns the rook turns BETWEEN moves, and that a multi-goal route is a sequence of turns to be planned, not improvised.",
+    "targets": [
+      "b2",
+      "b7",
+      "g2"
+    ]
   },
   {
     "id": "rook-no-diagonal-1",

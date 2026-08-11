@@ -7,6 +7,17 @@ import { GENERATED_EXERCISE_DESCRIPTIONS } from "@/lib/game/generated/puzzles.ge
 import { ContentCatalogProvider } from "@/lib/content/catalog-context";
 import { buildTrainingPath } from "@/lib/training/path";
 
+/** Resolve a title from the CATALOG, never a literal.
+ *  Pinning authored copy here made five tests fail the moment three rook
+ *  exercises were re-authored as Star Sweeps — the exercises were fine, the
+ *  assertions were not. A test must not break because a builder edited a
+ *  string it does not own. */
+const titleOf = (id: string): string => {
+  const found = EXERCISES.rook.find((e) => e.id === id);
+  if (!found?.title) throw new Error(`no authored title for '${id}'`);
+  return found.title;
+};
+
 /** Build an id-keyed best-stars map from a positional star count per pool
  *  slot (the legacy fixture shape) so each test keeps expressing intent by
  *  position while the component reads by exerciseId. Sparse: zero entries
@@ -41,7 +52,7 @@ describe("ExerciseDrawer — legacy (no visibleExerciseIds)", () => {
   it("renders the full pool and locks beyond the linear senda", () => {
     render(<ExerciseDrawer {...baseProps} onNavigate={vi.fn()} />);
     // Full list present.
-    expect(screen.getByText("Move along the rank")).toBeInTheDocument(); // rook-1
+    expect(screen.getByText(titleOf("rook-1"))).toBeInTheDocument(); // rook-1
     expect(screen.getByText("The boxed star")).toBeInTheDocument(); // rook-8
     // Fresh progress → only index 0 unlocked; a later one is path-locked.
     const locked = screen.getByText("The rook is not a bishop").closest("button"); // rook-no-diagonal-1
@@ -51,7 +62,7 @@ describe("ExerciseDrawer — legacy (no visibleExerciseIds)", () => {
   it("navigates by pool index for an unlocked row", () => {
     const onNavigate = vi.fn();
     render(<ExerciseDrawer {...baseProps} onNavigate={onNavigate} />);
-    clickRow("Move along the rank"); // rook-1, pool index 0
+    clickRow(titleOf("rook-1")); // rook-1, pool index 0
     expect(onNavigate).toHaveBeenCalledWith(0);
   });
 });
@@ -67,12 +78,12 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
         visibleExerciseIds={visible}
       />,
     );
-    expect(screen.getByText("One square is a move too")).toBeInTheDocument(); // rook-distance-1
+    expect(screen.getByText(titleOf("rook-distance-1"))).toBeInTheDocument(); // rook-distance-1
     expect(screen.getByText("Find the shortest route")).toBeInTheDocument(); // rook-6
     expect(screen.getByText("The boxed star")).toBeInTheDocument(); // rook-8
     // Outside the set → not rendered.
-    expect(screen.queryByText("Move along the rank")).not.toBeInTheDocument(); // rook-1
-    expect(screen.queryByText("Move along the file")).not.toBeInTheDocument(); // rook-2
+    expect(screen.queryByText(titleOf("rook-1"))).not.toBeInTheDocument(); // rook-1
+    expect(screen.queryByText(titleOf("rook-2"))).not.toBeInTheDocument(); // rook-2
   });
 
   /* Regression (2026-07-09): rotation hid every exercise the player had
@@ -89,10 +100,10 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
         visibleExerciseIds={visible}
       />,
     );
-    expect(screen.getByText("Move along the rank")).toBeInTheDocument(); // rook-1
-    expect(screen.getByText("Move along the file")).toBeInTheDocument(); // rook-2
+    expect(screen.getByText(titleOf("rook-1"))).toBeInTheDocument(); // rook-1
+    expect(screen.getByText(titleOf("rook-2"))).toBeInTheDocument(); // rook-2
     // Unplayed and unrotated stays hidden.
-    expect(screen.queryByText("Turn the corner")).not.toBeInTheDocument(); // rook-4
+    expect(screen.queryByText(titleOf("rook-4"))).not.toBeInTheDocument(); // rook-4
   });
 
   it("a completed exercise surfaced by the rotation fix is replayable", () => {
@@ -106,7 +117,7 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
         visibleExerciseIds={visible}
       />,
     );
-    clickRow("Move along the rank"); // rook-1 → pool index 0
+    clickRow(titleOf("rook-1")); // rook-1 → pool index 0
     expect(onNavigate).toHaveBeenCalledWith(0);
   });
 
@@ -254,17 +265,17 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
     expect(screen.queryByText("Labyrinths")).not.toBeInTheDocument();
     // Special Training 1's anchor is floored to LABYRINTH_MIN_EXERCISES (3), not
     // the stars-only ceil(6/3)=2 — so it renders AFTER the third exercise
-    // ("One square is a move too", rook-3) and BEFORE the fourth ("Turn the corner",
+    // (titleOf("rook-distance-1"), rook-3) and BEFORE the fourth (titleOf("rook-4"),
     // rook-4), never earlier than the floor allows.
     const texts = screen
       .getAllByRole("button", { hidden: true })
       .map((b) => b.textContent ?? "");
     const labAt = texts.findIndex((t) => t.includes("Special Training 1"));
     const thirdExerciseAt = texts.findIndex((t) =>
-      t.includes("One square is a move too"),
+      t.includes(titleOf("rook-distance-1")),
     );
     const fourthExerciseAt = texts.findIndex((t) =>
-      t.includes("Turn the corner"),
+      t.includes(titleOf("rook-4")),
     );
     expect(labAt).toBeGreaterThan(-1);
     expect(thirdExerciseAt).toBeGreaterThan(-1);
@@ -276,7 +287,7 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
 
 describe("ExerciseDrawer — overlay descriptions (db-content)", () => {
   it("renders an overlay description from ContentCatalogProvider over the baseline text", () => {
-    // rook-1 resolves to "Move along the rank" from the baseline generated map.
+    // rook-1 resolves to titleOf("rook-1") from the baseline generated map.
     // An overlay description for rook-1 must win when the drawer threads the
     // injected descriptions map from context.
     const overlay = {
@@ -293,12 +304,12 @@ describe("ExerciseDrawer — overlay descriptions (db-content)", () => {
       </ContentCatalogProvider>,
     );
     expect(screen.getByText("Overlay rook description")).toBeInTheDocument();
-    expect(screen.queryByText("Move along the rank")).not.toBeInTheDocument();
+    expect(screen.queryByText(titleOf("rook-1"))).not.toBeInTheDocument();
   });
 
   it("falls back to the baseline description with no provider", () => {
     render(<ExerciseDrawer {...baseProps} onNavigate={vi.fn()} />);
-    expect(screen.getByText("Move along the rank")).toBeInTheDocument();
+    expect(screen.getByText(titleOf("rook-1"))).toBeInTheDocument();
   });
 });
 
@@ -325,7 +336,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
         quotaState={quotaAtLimit}
       />,
     );
-    const row = screen.getByText("Move along the rank").closest("button");
+    const row = screen.getByText(titleOf("rook-1")).closest("button");
     expect(row).toBeEnabled();
   });
 
@@ -341,7 +352,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
       />,
     );
     // rook-1 should be enabled (consumed today)
-    const row = screen.getByText("Move along the rank").closest("button");
+    const row = screen.getByText(titleOf("rook-1")).closest("button");
     expect(row).toBeEnabled();
   });
 
@@ -355,7 +366,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
         quotaState={quotaAtLimit}
       />,
     );
-    const row = screen.getByText("Move along the file").closest("button"); // rook-2
+    const row = screen.getByText(titleOf("rook-2")).closest("button"); // rook-2
     expect(row).toHaveAttribute("data-locked", "true");
   });
 
@@ -370,7 +381,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
         quotaState={quotaAtLimit}
       />,
     );
-    const row = screen.getByText("Move along the file").closest("button"); // rook-2
+    const row = screen.getByText(titleOf("rook-2")).closest("button"); // rook-2
     expect(row).toHaveAttribute("data-quota-locked", "true");
   });
 
@@ -384,7 +395,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
       />,
     );
     // rook-1 (index 0) is always unlocked in legacy mode
-    const row = screen.getByText("Move along the rank").closest("button");
+    const row = screen.getByText(titleOf("rook-1")).closest("button");
     expect(row).toBeEnabled();
   });
 

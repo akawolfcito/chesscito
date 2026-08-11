@@ -64,9 +64,26 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
   commit**: medilo vos en `main` limpio ANTES de empezar y compará contra esa medición,
   no contra lo que dice acá. Lo que NO envejece es la regla: **si el conteo de archivos
   BAJA respecto de tu propia medición, la corrida no vale** (ver más abajo por qué).
-  ✅ **El VR está 66/66** — verde entero, **verificado con `--update-snapshots=none`**
-  el 2026-08-09 (`e569d5f`, 66 passed en 2.1m).
-  ⛔ **Ese 62/62 es del proyecto `minipay` y SÓLO de él.** `desktop`, `iphone-safari` y
+  ✅ **El VR está 67/67** — verde entero, **verificado con `--update-snapshots=none`**
+  el 2026-08-11 (`9b2f0bba`, 67 passed en 2.9m, baselines en 81 antes y después).
+  ⛔ **Este número también envejece, y NO sólo por código: lo baja tu propio entorno.**
+  El 2026-08-11 estaba en **59/67**, y las 8 rojas no tenían regresión ninguna —
+  eran `hub-clean`, `hub-shop-sheet-open`, `hub-daily-tactic-open` y **cuatro
+  páginas legales/marketing**, que no comparten un solo componente. Todas tenían
+  encima el mismo banner ámbar `fixed`: **"DEV: PRO origin mismatch"**.
+  `ProOriginWarning` compara `window.location.origin` contra `NEXT_PUBLIC_APP_URL` /
+  `NEXT_PUBLIC_PREVIEW_URL`; quien prueba en el teléfono las apunta a un túnel
+  (`…-fwd-maybe.trycloudflare.com`), bajo test la app corre en `localhost:3002`, no
+  se reconoce, y el banner tapa el tope de **cada** página. Se arregló pineándolas en
+  `webServer.env` — misma familia que el incidente de `NEXT_PUBLIC_CHAIN_ID` de más
+  abajo: **lo que `webServer.env` no pinea lo aporta el shell del operador.**
+  ⛔ **Ante varias rojas que no comparten código, mirá el `-actual.png` ANTES de tocar
+  código o regrabar** (`apps/web/e2e-results/artifacts/<caso>/`). Un `-diff.png` con un
+  bloque rojo sólido arriba es la firma de un banner, no de un cambio de layout. Un
+  `--update-snapshots` ahí hubiera **horneado el banner adentro de las fotos** y dado
+  verde para siempre fotografiando un error.
+  ⛔ **Ese verde es del proyecto `minipay` y SÓLO de él** (sea 62, 66 o 67 el número del
+  día — por eso no se cita uno acá). `desktop`, `iphone-safari` y
   `minipay-360` **no tienen baselines**, y Playwright **graba el que falta y da el test por
   PASADO** (`updateSnapshots: "missing"` es su default, sin pasar ninguna flag). Una corrida
   completa reportó **69 passed** el 2026-08-07 habiendo **creado 118 baselines** y comparado

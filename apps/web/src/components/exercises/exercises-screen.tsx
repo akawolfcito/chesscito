@@ -212,7 +212,10 @@ import {
 import { attemptShieldSpendWithPeones } from "@/lib/peones/shield-spend-fallback";
 import { ActionPin } from "@/components/redesign/action-pin";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
-import { computeStars } from "@/lib/game/scoring";
+import { gradeExerciseRun } from "@/lib/game/scoring";
+import { collectAt, startSweepRun, type SweepRunState } from "@/lib/game/sweep-run";
+import { toSweepResultPresentation } from "@/lib/game/sweep-result-cta";
+import { isSweep } from "@/lib/game/targets";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
 import {
   registerDockSheetCloser,
@@ -943,6 +946,36 @@ export function ExercisesScreen({
     catalog[selectedPiece].findIndex((ex) => ex.id === currentExercise.id),
   );
 
+  /* ── Star Sweep collection state ─────────────────────────────────────────
+   * ONE path for both shapes: a plain exercise is a one-target sweep, so
+   * nothing below branches on `isSweep`. A branch here would send the 56
+   * unconverted exercises and the converted ones through different code to the
+   * same completion, and only one of the two would keep being exercised.
+   *
+   * The REF is the source of truth during a run, not the state. `handleMove`
+   * both reads and writes it, and two landings inside one React batch would
+   * otherwise both read the pre-batch value — the second star silently lost on
+   * a fast player. State exists only so the board re-renders. */
+  const [sweepRun, setSweepRun] = useState<SweepRunState>(() =>
+    startSweepRun(currentExercise),
+  );
+  const sweepRunRef = useRef(sweepRun);
+  // `boardKey` covers every reset path (`resetBoard` dispatches `board_reset`,
+  // which bumps it); the id covers navigating to a different board.
+  //
+  // ⛔ Depends on `currentExercise.id`, NEVER on `currentExercise`. It is
+  // `pool[safeIndex]` — an element of an array the catalog can rebuild — so its
+  // identity is not stable across renders. Keyed on the object, this effect
+  // re-runs mid-route and wipes the collected stars, leaving a sweep literally
+  // unwinnable. The hook's own effects use `.id` for exactly this reason
+  // (`use-exercise-progress.ts:429,446`).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const fresh = startSweepRun(currentExercise);
+    sweepRunRef.current = fresh;
+    setSweepRun(fresh);
+  }, [currentExercise.id, boardKey]);
+
   // Rotation steering, extracted to a unit-tested hook in Slice 3B.
   // Suspended while the labyrinth layer is on (spec B8 / red-team
   // P0-2): steering must never yank the player back to an exercise
@@ -1565,6 +1598,12 @@ export function ExercisesScreen({
   // value (no manual reset needed — pill only shows in success
   // phase).
   const [lastEarnedStars, setLastEarnedStars] = useState(0);
+  /** Star Sweep — the record BEFORE the run that just completed. Captured in
+   *  `handleMove` because `completeExercise` overwrites it, and the CTA's whole
+   *  promise ("beat 9") is built from the record, not from the attempt. */
+  const [sweepPreviousBest, setSweepPreviousBest] = useState<number | undefined>(
+    undefined,
+  );
 
   // Fail-rescue host. The hook owns the modal state machine
   // (variant A/B/C/D + shield-spend + ignore counters). Handlers
@@ -1763,15 +1802,23 @@ export function ExercisesScreen({
   resolveMilestonesRef.current = resolveMilestones;
 
   function handleMove(position: BoardPosition, movesCount: number) {
-    const isTarget =
-      position.file === currentExercise.targetPos.file &&
-      position.rank === currentExercise.targetPos.rank;
+    // ⛔ NOT `position === currentExercise.targetPos`. `targetPos` IS `targets[0]`
+    // on a sweep, so that check ends the level on the FIRST star with one of
+    // three collected — and `sweepStars(1, 3)` would award three stars for one
+    // move, leaving the board easier than before it was made harder.
+    const run = collectAt(sweepRunRef.current, currentExercise, position);
+    if (run !== sweepRunRef.current) {
+      sweepRunRef.current = run;
+      setSweepRun(run);
+    }
 
     setMoves(movesCount);
     if (movesCount === 1) timerStart.current = Date.now();
 
-    if (isTarget) {
+    if (run.isComplete) {
       hapticSuccess();
+      // Read BEFORE `completeExercise` writes the new record over it.
+      setSweepPreviousBest(progress.bestMoves?.[currentExercise.id]);
       // Session-over freeze: once the daily limit is reached the player can
       // keep replaying completed exercises as practice, but no stars are
       // persisted. A fresh solve always persists — see shouldFreezeScoring.
@@ -1791,7 +1838,25 @@ export function ExercisesScreen({
       // exercises. `isReplay` comes from useExerciseProgress and
       // is true when the active exercise already has stars in
       // progress.stars[index].
-      setLastEarnedStars(computeStars(movesCount, currentExercise.optimalMoves));
+      /* The pill says "+N Stars", and the row it lives in exists to surface
+       * "what the player just GAINED". So this is the NET improvement, not the
+       * run's raw grade.
+       *
+       * It used to be the raw grade, which made a replay announce a reward that
+       * never arrived: a player whose best was already 3★ replayed, scored 1★ on
+       * that run, and the screen said "+1 STARS" beside "YOUR BEST 3 · PERFECT
+       * RUN" (device report 2026-08-11). Nothing was added — a star map only ever
+       * keeps the MAX — so the number was a lie the player could audit, and the
+       * cheapest way to teach someone to stop reading a surface is to have it
+       * announce a gain they can see they did not get.
+       *
+       * Frozen scoring persists nothing, so it gains nothing either. Zero hides
+       * the pill (`showStarPill` requires > 0). */
+      const starsThisRun = gradeExerciseRun(movesCount, currentExercise);
+      const bestStarsBeforeRun = progress.stars[currentExercise.id] ?? 0;
+      setLastEarnedStars(
+        scoringFrozen ? 0 : Math.max(0, starsThisRun - bestStarsBeforeRun),
+      );
       if (!isReplay) {
         bumpStreak();
       }
@@ -1835,7 +1900,7 @@ export function ExercisesScreen({
       // nothing, so it credits nothing.
       let badgeMomentOwnedByQueue = false;
       {
-        const earnedStars = computeStars(movesCount, currentExercise.optimalMoves);
+        const earnedStars = gradeExerciseRun(movesCount, currentExercise);
         const previousBest = progress.stars[currentExercise.id] ?? 0;
         const starsAfterSolve = scoringFrozen
           ? progress.stars
@@ -1863,7 +1928,7 @@ export function ExercisesScreen({
         shouldFireStarsConnectPrompt({
           isConnected,
           liteMode: CHESSCITO_LITE_MODE,
-          stars: computeStars(movesCount, currentExercise.optimalMoves),
+          stars: gradeExerciseRun(movesCount, currentExercise),
         })
       ) {
         starsConnectPrompt.show();
@@ -2901,6 +2966,35 @@ export function ExercisesScreen({
       : null;
   const effectiveLabyrinthMode = activeLabyrinth !== null;
   const activeExercise = activeLabyrinth ?? currentExercise;
+
+  /* Star Sweep board props, gated on "no labyrinth active".
+   * `activeExercise` is `activeLabyrinth ?? currentExercise`, but `sweepRun` only
+   * ever tracks the EXERCISE — a labyrinth is played through
+   * `handleLabyrinthMove` and never has `targets`. Passing the run unguarded
+   * would let a square collected during the exercise DIM the labyrinth's goal
+   * whenever the two happen to share a square, hiding the only star on screen. */
+  const sweepBoardTargets = activeLabyrinth ? undefined : activeExercise.targets;
+  const sweepBoardCollected = activeLabyrinth ? undefined : sweepRun.collectedKeys;
+
+  /* The live counter. PRESENTATION ONLY: `sweepRun` models a plain exercise as a
+   * one-target sweep so no game logic branches, but "1 / 1" on the 56 legacy
+   * boards is noise — a counter that never moves teaches nothing. */
+  const sweepCounter =
+    !activeLabyrinth && sweepRun.totalCount > 1
+      ? { collected: sweepRun.collectedCount, total: sweepRun.totalCount }
+      : undefined;
+
+  /* The record block, only for the boards in the experiment and only on success.
+   * Built from `sweepPreviousBest` (captured before the write) so the CTA
+   * promises "beat your record", never "fix the run you just played". */
+  const sweepResult =
+    !activeLabyrinth && phase === "success" && isSweep(currentExercise)
+      ? toSweepResultPresentation({
+          exercise: currentExercise,
+          runMoves: moves,
+          previousBest: sweepPreviousBest,
+        })
+      : undefined;
   // Pivot mode is derived from the runtime catalog (not an id-set/prefix): the
   // active Special-Training node is a Pivot Challenge iff it lives in the pivot
   // pool for this piece. Only then does the board intercept taps.
@@ -3845,7 +3939,21 @@ export function ExercisesScreen({
             Spec: docs/specs/2026-08-09-attempt-save-never-ambushes-v3.md §4 */}
         <MissionPanelCandy
           selectedPiece={selectedPiece}
-          onOpenPieceSheet={() => setBadgeSheetOpen(true)}
+          /* The piece chip opens the piece's PATH, not the Badges sheet.
+           *
+           * It pointed at Badges because that sheet doubles as the piece
+           * SELECTOR — but the dock's BADGES item already opens the very same
+           * sheet, so the chip was a second door to one room while the thing it
+           * actually names (this piece's path) was reached from the star chip
+           * instead. Nothing is lost: choosing a piece still lives one tap away
+           * in the dock. The star chip keeps its numbers and stops being a door
+           * (`showTrigger={false}` below).
+           *
+           * Routed through the SAME streak-nudge intercept the drawer's own
+           * trigger used, so the exit it guards still fires from this entry. */
+          onOpenPieceSheet={() =>
+            streakNudge.interceptExit(() => setExerciseDrawerOpen(true))
+          }
           pieceProgress={badgeProgress}
           phase={storeOpen ? "ready" : phase}
           awaitTapToContinue={awaitFlashTap}
@@ -3902,8 +4010,38 @@ export function ExercisesScreen({
           onSaveOnChain={() => void handleSaveScoreOnChain()}
           isSavingOnChain={saveWrite.isBusy}
           shieldCount={shieldCount}
-          streakCount={streakCount}
+          /* Same contract as the star pill: this row is "what you just gained".
+           * `bumpStreak()` only runs on a FRESH solve, so on a replay the combo
+           * did not move — showing it there dresses an unchanged number as a
+           * reward, right next to a star pill that now correctly shows nothing.
+           * The combo still lives in the HUD, where it is state rather than a
+           * prize. */
+          streakCount={isReplay ? undefined : streakCount}
           lastEarnedStars={lastEarnedStars}
+          sweepCounter={sweepCounter}
+          sweepResult={sweepResult}
+          onSweepCtaShown={(p) =>
+            track("sweep_replay_cta_shown", {
+              exercise_id: currentExercise.id,
+              best_moves: p.bestMoves,
+              optimal_moves: p.optimalMoves,
+              gap_to_perfect: p.gapToPerfect,
+            })
+          }
+          onSweepReplay={() => {
+            // Separated from `_shown` on purpose: the pair is what turns the
+            // experiment's question ("does a beatable goal produce a replay?")
+            // into a conversion rate instead of a feeling.
+            if (sweepResult) {
+              track("sweep_replay_started", {
+                exercise_id: currentExercise.id,
+                best_moves: sweepResult.bestMoves,
+                optimal_moves: sweepResult.optimalMoves,
+                gap_to_perfect: sweepResult.gapToPerfect,
+              });
+            }
+            resetBoard();
+          }}
           failureRescueSlot={
             phase === "failure" &&
             (streakCount >= 1 ||
@@ -4153,6 +4291,8 @@ export function ExercisesScreen({
                 startPosition={activeExercise.startPos}
                 mode={activeLabyrinth ? "labyrinth" : "practice"}
                 targetPosition={activeExercise.targetPos}
+                targetPositions={sweepBoardTargets}
+                collectedTargetKeys={sweepBoardCollected}
                 obstacles={activeExercise.obstacles}
                 captureTargets={activeExercise.captureTargets}
                 isLocked={!activeLabyrinth ? (phase === "failure" || phase === "success") : labyrinthCompleted !== null}
@@ -4165,6 +4305,9 @@ export function ExercisesScreen({
           }
           exerciseDrawer={
             <ExerciseDrawer
+              // The star chip is a readout now, not a door — the piece chip
+              // above owns opening the path.
+              showTrigger={false}
               open={exerciseDrawerOpen}
               // Exit #2: opening the drawer to pick what is next is the other
               // decision moment. Closing it is not an exit and passes through.

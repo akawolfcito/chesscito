@@ -2954,6 +2954,74 @@
       drop-shadow(0 0 10px rgba(255, 200, 80, 0.55)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
   }
 
+  /* Star Sweep — a star already collected this run. DIMMED and still, never
+     removed: a star that vanishes reads as a bug, and the player needs to see
+     what is done against what is left. The pulse is dropped so only the LIVE
+     stars draw the eye. Reuses the same asset — no new art. */
+  .playhub-board-target.is-collected {
+    animation: none;
+    opacity: 0.28;
+    filter: grayscale(1) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+  }
+
+  /* Star Sweep record — ONE muted pill, read as a phrase.
+     Deliberately NOT gold: in this overlay gold already means "you just gained
+     this" (`.overlay-reward-label`), and the record is state that outlives the
+     run. It borrows that pill's radius and type family so it joins the existing
+     grammar rather than introducing a third one — the previous version was a
+     two-axis table on a dark card, which read as a debug panel dropped onto a
+     celebration. Scoped to the experiment; nothing else in the overlay changed. */
+  .sweep-record {
+    margin-top: 0.15rem;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(20, 12, 4, 0.5);
+    border: 1.5px solid rgba(255, 245, 215, 0.28);
+    color: rgba(255, 248, 234, 0.92);
+    font-family: var(--font-game-action);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sweep-record b {
+    color: #ffd873;
+    font-weight: 900;
+  }
+
+  /* The choice, as TEXT and a sibling of the tap prompt — same family, same
+     treatment, one size down. It was a gold button, which put two gold objects
+     in competition and told the player which exit was the right one. */
+  .sweep-record-cta-row {
+    position: absolute;
+    bottom: 23%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+  }
+
+  .sweep-record-cta {
+    font-family: var(--font-game-action);
+    font-weight: 700;
+    font-size: clamp(0.95rem, 4.4vw, 1.35rem);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    color: #ffe9a8;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    text-decoration-thickness: 2px;
+    text-shadow:
+      -1.5px -1.5px 0 rgba(63, 34, 8, 0.9),
+      1.5px -1.5px 0 rgba(63, 34, 8, 0.9),
+      -1.5px 1.5px 0 rgba(63, 34, 8, 0.9),
+      1.5px 1.5px 0 rgba(63, 34, 8, 0.9),
+      0 2px 5px rgba(0, 0, 0, 0.55);
+    /* The scrim swallows taps to advance; this must stay tappable. */
+    pointer-events: auto;
+  }
+
   @keyframes chesscito-target-pulse {
 
     0%,
@@ -15525,8 +15593,10 @@ button.hud-resource-chip:active:not(:disabled) {
      (its SVG viewBox includes the sagitta and the extrusion), so this is a
      gap, not a correction for glyphs hanging outside the box. */
   margin-top: 0.375rem;
-  /* The wrapper already carries the viewport width; capping in vw here as
-     well would just re-impose the early wrap it was widened to avoid. */
+  /* The wrapper already carries the width; capping in vw here as well would
+     just re-impose the early wrap it was widened to avoid. ⚠️ That wrapper is
+     `min(92vw, var(--app-max-width))` — the bare 92vw overflowed the 390px app
+     frame on desktop web and got clipped at both ends. */
   max-width: 100%;
   color: #fff8ea;
   font-family: var(--font-game-action);
@@ -15542,8 +15612,8 @@ button.hud-resource-chip:active:not(:disabled) {
      position a constant instead of a function of how long the lesson title
      happens to be: `min-height` holds the second line open when the copy only
      needs one, `line-clamp` refuses a third.
-     Two lines at 92vw is ~60 characters — comfortably more than any authored
-     lesson title, so the clamp is a guard rail, not a truncator. */
+     Two lines at the frame width are ~60 characters — comfortably more than any
+     authored lesson title, so the clamp is a guard rail, not a truncator. */
   min-height: 2.4em;
   display: -webkit-box;
   -webkit-box-orient: vertical;

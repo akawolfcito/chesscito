@@ -26,7 +26,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "rook-2",
-      "optimalMoves": 1,
+      "optimalMoves": 3,
       "startPos": {
         "file": 4,
         "rank": 1
@@ -35,18 +35,35 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "file": 4,
         "rank": 7
       },
+      "targets": [
+        {
+          "file": 4,
+          "rank": 7
+        },
+        {
+          "file": 1,
+          "rank": 7
+        },
+        {
+          "file": 1,
+          "rank": 3
+        }
+      ],
+      "starFloor": 1,
       "tier": "easy",
       "tags": [
-        "straight-line"
+        "straight-line",
+        "sweep",
+        "route-order"
       ],
       "principle": "file-movement",
-      "title": "Move along the file",
-      "playerPrompt": "Now go straight up the file.",
-      "learningObjective": "The player recognises the rook's vertical movement along a file."
+      "title": "Sweep the file",
+      "playerPrompt": "Collect every star. Plan the order — some routes are shorter.",
+      "learningObjective": "The player recognises the rook's vertical movement along a file, and that the ORDER of the goals changes how many moves the route costs."
     },
     {
       "id": "rook-distance-1",
-      "optimalMoves": 1,
+      "optimalMoves": 4,
       "startPos": {
         "file": 1,
         "rank": 5
@@ -55,14 +72,34 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "file": 1,
         "rank": 2
       },
+      "targets": [
+        {
+          "file": 1,
+          "rank": 2
+        },
+        {
+          "file": 6,
+          "rank": 2
+        },
+        {
+          "file": 6,
+          "rank": 6
+        },
+        {
+          "file": 1,
+          "rank": 6
+        }
+      ],
       "tier": "easy",
       "tags": [
-        "variable-distance"
+        "variable-distance",
+        "sweep",
+        "route-order"
       ],
       "principle": "variable-distance",
-      "title": "One square is a move too",
-      "playerPrompt": "A rook may move just one square. Take it.",
-      "learningObjective": "The player learns the rook chooses its distance: one square is as legal as seven. Replaces rook-3 (d7 to d2), which only repeated rook-2's file movement."
+      "title": "Every distance counts",
+      "playerPrompt": "One square or seven — both cost one move. Find the short route.",
+      "learningObjective": "The player learns the rook chooses its distance: one square is as legal as seven, and a well-ordered tour costs no more than the longest leg."
     },
     {
       "id": "rook-no-diagonal-1",
@@ -86,7 +123,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "rook-4",
-      "optimalMoves": 2,
+      "optimalMoves": 3,
       "startPos": {
         "file": 6,
         "rank": 6
@@ -95,14 +132,30 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "file": 1,
         "rank": 1
       },
+      "targets": [
+        {
+          "file": 1,
+          "rank": 1
+        },
+        {
+          "file": 1,
+          "rank": 6
+        },
+        {
+          "file": 6,
+          "rank": 1
+        }
+      ],
       "tier": "easy",
       "tags": [
-        "corner-turn"
+        "corner-turn",
+        "sweep",
+        "route-order"
       ],
       "principle": "direction-change",
-      "title": "Turn the corner",
-      "playerPrompt": "Change direction between moves — never inside one.",
-      "learningObjective": "The player learns the rook turns BETWEEN moves: an L-shaped route costs two moves, not one."
+      "title": "Turn, and turn again",
+      "playerPrompt": "Change direction between moves — never inside one. Get all three.",
+      "learningObjective": "The player learns the rook turns BETWEEN moves, and that a multi-goal route is a sequence of turns to be planned, not improvised."
     },
     {
       "id": "rook-9",
@@ -4413,9 +4466,9 @@ export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "pawn-promotion-2": "Pay for Every File",
   "pawn-promotion-3": "Not Every Meal Is Free",
   "rook-1": "Move along the rank",
-  "rook-2": "Move along the file",
-  "rook-distance-1": "One square is a move too",
-  "rook-4": "Turn the corner",
+  "rook-2": "Sweep the file",
+  "rook-distance-1": "Every distance counts",
+  "rook-4": "Turn, and turn again",
   "rook-no-diagonal-1": "The rook is not a bishop",
   "rook-6": "Find the shortest route",
   "rook-7": "Plan the whole route",

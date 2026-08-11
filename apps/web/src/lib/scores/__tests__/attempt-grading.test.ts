@@ -38,7 +38,7 @@ import {
 } from "@/lib/game/generated/puzzles.generated";
 import type { Exercise, PieceId } from "@/lib/game/types";
 import { getLevelId } from "@/lib/contracts/scoreboard";
-import { computeStars } from "@/lib/game/scoring";
+import { gradeExerciseRun } from "@/lib/game/scoring";
 import { labyrinthStars } from "@/lib/game/exercises";
 import { tourStars } from "@/lib/game/tour-score";
 import { promotionRunStars } from "@/lib/game/promotion-run";
@@ -121,7 +121,18 @@ const CASES: BucketCase[] = [
     starless: false,
     starRange: [1, 3],
     sweep: movesSweep,
-    expectedStars: (e, m) => computeStars(movesOf(m), e.optimalMoves),
+    // ⚠️ `gradeExerciseRun`, not `computeStars`. Since Star Sweep the exercise
+    // family has TWO scales — the legacy one for single-goal boards and relative
+    // bands (0★ reachable) for sweeps — plus the per-board `starFloor` policy.
+    // Naming `computeStars` here would re-type one branch of the dispatch and
+    // silently stop testing the other, which is exactly what this file's header
+    // forbids: call the canonical grader, never a formula rewritten here.
+    //
+    // `starRange` stays [1, 3] because it is swept over `firstLevelOf`, which is
+    // `rook-1` — deliberately left unconverted as the experiment's control. If
+    // that ever becomes a floorless sweep this assertion fails loudly, and it
+    // should: it would mean the first board a player meets can score zero.
+    expectedStars: (e, m) => gradeExerciseRun(movesOf(m), e),
     wrongKind: { kind: "failures", failures: 0 },
     outOfRange: (e) => ({ kind: "moves", movesUsed: movesCeiling(e.optimalMoves) + 1 }),
   },

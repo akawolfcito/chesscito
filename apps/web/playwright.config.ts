@@ -79,10 +79,27 @@ export default defineConfig({
     // the long-red `hub-shop-sheet-open` baseline (diagnosed 2026-08-06):
     // the same commit went green or red depending on the operator's shell.
     // Must stay 42220 to match wagmi's `chains[0]`.
+    // The PRO origin URLs are pinned for the SAME reason, one incident later
+    // (2026-08-11). `ProOriginWarning` compares `window.location.origin` against
+    // `NEXT_PUBLIC_APP_URL` / `NEXT_PUBLIC_PREVIEW_URL`, and a developer testing
+    // on a phone points those at a tunnel host
+    // (`…-fwd-maybe.trycloudflare.com`). Under test the app then runs on
+    // localhost:3002, does not recognise itself, and paints a fixed amber
+    // "DEV: PRO origin mismatch" banner across the TOP OF EVERY PAGE.
+    //
+    // That banner is what turned EIGHT baselines red at once — hub-clean,
+    // hub-shop-sheet-open, hub-daily-tactic-open and the four legal/marketing
+    // pages — none of which had a code regression. The reds tracked whoever
+    // last ran a tunnel, exactly like the CHAIN_ID story above, and they are
+    // the reason `CLAUDE.md`'s "66/66 green" claim stopped being true.
+    //
+    // Must equal the URL Playwright actually serves, or the banner comes back.
     env: {
       CONTENT_CACHE_DISABLED: "1",
       PORT: BASE_URL_PORT,
       NEXT_PUBLIC_CHAIN_ID: "42220",
+      NEXT_PUBLIC_APP_URL: BASE_URL,
+      NEXT_PUBLIC_PREVIEW_URL: BASE_URL,
     },
   },
 });

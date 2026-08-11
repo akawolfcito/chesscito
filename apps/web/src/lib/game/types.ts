@@ -34,7 +34,13 @@ export type SquareState = {
   isHighlighted: boolean;
   isEndpoint: boolean;
   isSelected: boolean;
+  /** An UNcollected goal square. On a sweep this is true for several squares at
+   *  once; a collected one flips to `isCollectedTarget` instead. */
   isTarget: boolean;
+  /** Star Sweep — a goal square already taken this run. Rendered dimmed rather
+   *  than removed: a star that vanishes reads as a bug, and the player needs to
+   *  see what is left against what is done. Always false on single-goal boards. */
+  isCollectedTarget: boolean;
   piece: BoardPiece | null;
 };
 
@@ -117,6 +123,40 @@ export type Exercise = {
    *  does not depend on it. */
   mission?: MissionSpec;
 
+  /** Star Sweep — the COMPLETE set of squares to collect, in ANY order. Absent
+   *  means a single-goal exercise, which is what the whole catalog was until
+   *  2026-08-10; those are still read through `targetPos`.
+   *
+   *  ⛔ Never read this field directly — go through `exerciseTargets()` in
+   *  `lib/game/targets.ts`, which is total over both shapes. A direct reader sees
+   *  `undefined` on the 56 unconverted exercises and falls back to "no goal",
+   *  which renders fine and grades wrong.
+   *
+   *  INVARIANT (enforced by the content linter): `targetPos === targets[0]`, so
+   *  every pre-Sweep reader — board, BFS, Peones hint — keeps working unchanged.
+   *  `optimalMoves` for a sweep is the cheapest ORDER, computed by
+   *  `computeSweepOptimal` at import time, never hand-authored. */
+  targets?: BoardPosition[];
+
+  /** Minimum stars a COMPLETED run of THIS board can be worth. Absent = no floor,
+   *  which is the default and what every exercise should normally have.
+   *
+   *  A per-exercise POLICY, deliberately not a grader change: it exists for the
+   *  handful of boards that sit at the very front of the funnel, where the
+   *  measured bottleneck is activation rather than difficulty. `rook-2` is the
+   *  second board a new player ever touches (520 wallets); earning 0★ there while
+   *  still learning how a rook moves punishes exactly the player we cannot afford
+   *  to lose. Its neighbours keep 0★ reachable.
+   *
+   *  ⛔ Typed `1 | 2`, never 3: a floor of 3 would make the board unfailable, which
+   *  is precisely the flatness this system exists to remove — 21 exercises already
+   *  award 3★ to 100% of players. It must not be expressible.
+   *
+   *  Raises a grade, never lowers one, and NEVER moves `optimalMoves` — so a
+   *  floored run still reads as "not perfect" and the replay CTA keeps telling the
+   *  truth about what is left to beat. */
+  starFloor?: 1 | 2;
+
   /* ── Labyrinth System v0.2 — mint metadata (all optional, additive).
    *  Spec: docs/superpowers/specs/2026-06-02-labyrinth-system-v0.2.md §4.1
    *  Defaults are applied by `resolveLabyrinthMintPolicy` — never read
@@ -158,6 +198,15 @@ export type PieceProgress = {
    *  the legacy positional `number[]` shape to this map by current catalog
    *  order, dropping ids not in the pool and clamping values to [0,3]. */
   stars: Record<string, number>;
+  /** Star Sweep — best (MINIMUM) move count per exercise, keyed by exerciseId.
+   *  Sparse: an absent id means "never completed". Lower is better, so this is
+   *  only overwritten when a run BEATS it — the number the replay CTA promises
+   *  the player they are chasing.
+   *
+   *  Optional because every record written before 2026-08-10 lacks it; readers
+   *  must tolerate its absence rather than treat it as zero (a zero here would
+   *  read as an unbeatable perfect run). */
+  bestMoves?: Record<string, number>;
 };
 
 /* ── Arena (full chess) types ── */

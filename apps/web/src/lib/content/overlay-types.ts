@@ -72,6 +72,14 @@ export interface MergedCatalog extends BaselineCatalog {
   source: "baseline+overlay" | "baseline-only";
   /** How many overlay rows were actually applied (post-validation). */
   overlayCount: number;
+  /** Ids of overlay rows dropped because they would have shadowed a Star Sweep.
+   *  The table has no `targets`/`starFloor` columns, so such a row cannot express
+   *  the level — it downgrades it to a single goal with `optimalMoves: 1`, which
+   *  the screen then treats as "any non-target move loses". The baseline wins and
+   *  the conflict is REPORTED rather than swallowed: someone edited a board the
+   *  overlay schema cannot represent, and that is a live authoring problem.
+   *  Absent on the baseline-only fallback paths. */
+  skippedSweepOverrides?: string[];
 }
 
 /**

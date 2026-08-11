@@ -75,7 +75,12 @@ describe("celebration geometry is not re-declared by its consumers", () => {
   /** Measurements that belong to CelebrationStack alone. Each one is a class
    *  the two copies actually disagreed on. */
   const OWNED_GEOMETRY = [
-    "w-[92vw]",
+    // ⚠️ Was a bare `w-[92vw]` until 2026-08-11. That is 92% of the VIEWPORT,
+    // not of the 390px app frame, so on desktop web the block grew past the
+    // frame and the lesson line was clipped at both ends. Capped with `min()`,
+    // which is a no-op below ~424px — mobile, the only channel that ships, is
+    // unchanged.
+    "w-[min(92vw,var(--app-max-width))]",
     "h-[13.5rem]",
     "h-[12.5rem]",
     "h-80",
@@ -97,7 +102,10 @@ describe("celebration geometry is not re-declared by its consumers", () => {
       join(process.cwd(), "src/components/ui/celebration-stack.tsx"),
       "utf8",
     );
-    expect(source).toContain("w-[92vw]");
+    expect(source).toContain("w-[min(92vw,var(--app-max-width))]");
+    // The bare form must not come back: it is the exact bug that clipped the
+    // lesson line on web, and it reads as correct next to the capped one.
+    expect(source).not.toContain("w-[92vw]");
     expect(source).toContain("h-[13.5rem]");
     expect(source).toContain("h-[12.5rem]");
   });

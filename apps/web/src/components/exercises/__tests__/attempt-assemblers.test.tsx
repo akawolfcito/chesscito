@@ -291,7 +291,7 @@ function seedUnlockedTraining() {
  * what it is looking for.
  */
 async function enterTraining(name: string | RegExp = "Special Training 1") {
-  fireEvent.click(screen.getByRole("button", { name: "Exercises" }));
+  fireEvent.click(screen.getByTestId("piece-chip-trigger"));
   const node = await screen.findByRole("button", { name });
   fireEvent.click(node);
   await screen.findByRole("button", { name: "Exit Training" });
