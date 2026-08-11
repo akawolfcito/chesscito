@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { useAccount, useChainId } from "wagmi";
+import { useAccount, useChainId, useSignMessage } from "wagmi";
 import { useLocale } from "next-intl";
 import type { CoachResponse, BasicCoachResponse } from "./types";
 import { generateQuickReview } from "./fallback-engine";
@@ -104,6 +104,7 @@ export type CoachAnalysisState = {
 export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState {
   // --- wagmi / intl reads with injected overrides ---
   const wagmiAccount = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const wagmiChainId = useChainId();
   const activeLocaleHook = useLocale() as "en" | "es";
   const proActiveHook = useIsProActive();
@@ -213,6 +214,10 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
         const attempt = await attemptCoachSpendWithPeones({
           wallet: address.toLowerCase(),
           gameId: analyzeGameId ?? "",
+          // `startCoachAnalysis` only runs from `askCoach`, which is the
+          // player's own request — this module imports no `useEffect` at all.
+          // So the spend may sign for its session. See `spend-client.ts`.
+          signMessage: ({ message }) => signMessageAsync({ message }),
         });
         if (attempt.kind === "paid") {
           peonesIdempotencyKey = attempt.peonesIdempotencyKey;

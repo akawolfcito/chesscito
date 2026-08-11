@@ -25,6 +25,7 @@
 
 import { submitPeonesSpend } from "@/lib/peones/spend-client";
 import { SPEND_COST_BY_TARGET } from "@/lib/peones/spend-service";
+import type { SignMessageFn } from "@/lib/scores/session-client";
 import {
   emitPeonesSpendBlocked,
   emitPeonesSpendBypassed,
@@ -43,6 +44,10 @@ export type CoachPeonesAttemptArgs = {
    *  same gameId across retries collapses onto the same ledger row
    *  via the idempotency key. */
   gameId: string;
+  /** How the spend signs for a score session when it has none. Required all the
+   *  way down: an analysis the player asked for must be able to authorize
+   *  itself. See `spend-client.ts`. */
+  signMessage: SignMessageFn;
   /** Test seam. */
   submitImpl?: typeof submitPeonesSpend;
 };
@@ -85,7 +90,7 @@ export function buildCoachIdempotencyKey(
 export async function attemptCoachSpendWithPeones(
   args: CoachPeonesAttemptArgs,
 ): Promise<CoachPeonesAttempt> {
-  const { wallet, gameId, submitImpl } = args;
+  const { wallet, gameId, signMessage, submitImpl } = args;
   const submit = submitImpl ?? submitPeonesSpend;
   const idempotencyKey = buildCoachIdempotencyKey(wallet, gameId);
   const targetId = gameId;
@@ -96,6 +101,7 @@ export async function attemptCoachSpendWithPeones(
     target: "coach",
     targetId,
     idempotencyKey,
+    signMessage,
     metadata: {
       gameId,
       surface: "coach",

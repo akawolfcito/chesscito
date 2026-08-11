@@ -27,8 +27,9 @@ import { dispatchPeonesChange } from "@/lib/peones/peones-events";
 import type { PeonesSpendTarget } from "@/lib/peones/spend-service";
 import { resolveDeploymentSurface } from "@/lib/scores/deployment-surface";
 import {
-  peekUsableScoreSession,
+  ensureScoreSession,
   type ScoreSession,
+  type SignMessageFn,
 } from "@/lib/scores/session-client";
 
 export type PeonesSpendResult =
@@ -75,11 +76,20 @@ export type SubmitPeonesSpendArgs = {
   targetId: string;
   idempotencyKey: string;
   metadata?: Record<string, string | number | boolean>;
+  /**
+   * How this spend signs for a score session when it does not have one.
+   *
+   * ⛔ REQUIRED, no default, on purpose. Spending debits a real balance and the
+   * server now demands proof of the wallet, so a caller that cannot sign cannot
+   * spend. Making it required means every sink — present and future — is forced
+   * by `tsc` to supply it, and no new spend path can quietly ship unable to
+   * authorize itself. Same reasoning as `promptPolicy` on `ensureScoreSession`.
+   */
+  signMessage: SignMessageFn;
   /** Override for testing. Defaults to the global `fetch`. */
   fetchImpl?: typeof fetch;
-  /** Override for testing. Defaults to `peekUsableScoreSession` — memory, then
-   *  DISK, minting nothing and never prompting for a signature. */
-  peekSessionImpl?: () => ScoreSession | null;
+  /** Override for testing. Replaces the whole session acquisition. */
+  ensureSessionImpl?: () => Promise<ScoreSession | null>;
 };
 
 type SpendResponse = {
@@ -116,8 +126,9 @@ export async function submitPeonesSpend(
     targetId,
     idempotencyKey,
     metadata,
+    signMessage,
     fetchImpl,
-    peekSessionImpl,
+    ensureSessionImpl,
   } = args;
   const doFetch = fetchImpl ?? fetch;
 
@@ -139,44 +150,82 @@ export async function submitPeonesSpend(
   // `peones-changed` dispatch lives here: this is the one place hint, coach and
   // shield all funnel through, so no sink can forget it.
   //
-  // Costs the player NOTHING: `peekUsableScoreSession` reads memory and then
-  // DISK, minting nothing and never prompting for a signature.
+  // CALLER AUTHORIZATION — reuse a session, or MINT one, right here.
   //
-  // ⚠️ MEMORY ALONE IS NOT ENOUGH, and that is not a theoretical worry. With
-  // the earlier `peekScoreSession` (memory only), closing and reopening MiniPay
-  // — which players do constantly — emptied the cache while the session sat
-  // intact on disk, so the first hint after reopening 401'd and then started
-  // working once any exercise happened to call `ensureScoreSession`. Measured in
-  // preview, 2026-08-10.
+  // ⛔ `promptPolicy` is fixed to "allow" and is deliberately NOT a parameter.
+  //
+  // The rule is: a Peones spend may always ask for the signature, because a
+  // Peones spend is ALWAYS something the player asked for. Verified 2026-08-10
+  // across all three sinks — hint is an `onClick`, the shield runs inside
+  // `onUseShield`, and the coach inside `startCoachAnalysis` (that module does
+  // not even import `useEffect`). There is no machine-triggered spend, so this
+  // cannot become the kind of ambush `never-ambushes-v3` exists to prevent.
+  //
+  // It is a rule and not a flag on purpose: an optional policy is a door to get
+  // it wrong, and reasoning per-sink about "this one runs after gameplay so a
+  // session will already exist" is a fact about today's UX, not an invariant —
+  // move a sink earlier and the hole reopens with nothing turning red.
+  //
+  // Why minting is REQUIRED and reading was not enough: the session lives 2h
+  // (`SCORE_SESSION_TTL_SECONDS`). Anyone returning the next day has an expired
+  // one, so "no usable session" is the ordinary state of a returning player,
+  // not an edge case. Reading memory-then-disk only fixed the reopen-within-2h
+  // case (measured in preview, 2026-08-10); this fixes the daily one.
+  //
+  // `ensureScoreSession` still short-circuits on memory and then disk, so the
+  // prompt appears only when there is genuinely nothing to reuse — at most once
+  // every 2h, on an action the player just took.
   //
   // The surface comes from `resolveDeploymentSurface()`, the SAME function the
   // save path passes when the session is minted (`exercises-screen.tsx`).
-  // Resolving it any other way here would look up a session keyed to a surface
-  // we never issued and silently find nothing.
-  //
-  // Wrapped because "NEVER throws" is this module's invariant (see header): a
-  // broken session store must degrade to "no token" — which the flag-off route
-  // ignores and the flag-on route answers with a clean 401 — never to an
-  // exception on a spend.
-  let sessionToken: string | undefined;
+  // Resolving it any other way would look up a session keyed to a surface we
+  // never issued and silently find nothing.
+  let session: ScoreSession | null = null;
+  let sessionFailure: string | null = null;
   try {
-    const peekSession =
-      peekSessionImpl ??
-      (() => peekUsableScoreSession(wallet, resolveDeploymentSurface()));
-    sessionToken = peekSession()?.token;
+    if (ensureSessionImpl) {
+      session = await ensureSessionImpl();
+    } else {
+      const result = await ensureScoreSession({
+        wallet,
+        surface: resolveDeploymentSurface(),
+        signMessage,
+        promptPolicy: "allow",
+      });
+      if (result.ok) {
+        session = result.session;
+      } else {
+        sessionFailure = result.error;
+      }
+    }
   } catch {
-    sessionToken = undefined;
+    // "NEVER throws" is this module's invariant (see header): a broken session
+    // store degrades to a result branch, never to an exception on a spend.
+    sessionFailure = "session_required";
   }
+
+  if (!session) {
+    // Do NOT fire a request we already know the server will reject. A declined
+    // signature is a DECISION, not a failure, and it deserves its own reason so
+    // the UI can tell "you cancelled" apart from "something broke" instead of
+    // both arriving as an opaque 401.
+    return {
+      kind: "error",
+      error: sessionFailure ?? "session_required",
+    };
+  }
+
+  const sessionToken = session.token;
 
   let res: Response;
   try {
     res = await doFetch("/api/peones/spend", {
       method: "POST",
-      // The header is OMITTED, not emptied, when there is no session: with the
-      // flag off the request must stay byte-for-byte what it always was.
+      // Always present now: the request does not leave without a session, so
+      // there is no header-less spend to reason about any more.
       headers: {
         "Content-Type": "application/json",
-        ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+        Authorization: `Bearer ${sessionToken}`,
       },
       body: JSON.stringify({
         wallet,

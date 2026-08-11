@@ -18,6 +18,14 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 vi.mock("wagmi", () => ({
   useAccount: vi.fn(() => ({ isConnected: false, address: undefined })),
+  // The spend signs for its own score session (P0, 2026-08-10). These tests
+  // stub the spend itself via `submitImpl`, so the signer is never reached —
+  // it rejects so that reaching it would fail loudly rather than pass quietly.
+  useSignMessage: vi.fn(() => ({
+    signMessageAsync: vi.fn(async () => {
+      throw new Error("signer must not be reached in these tests");
+    }),
+  })),
 }));
 
 vi.mock("@/lib/peones/telemetry", () => ({
@@ -178,6 +186,7 @@ describe("PeonesHintButton — connected happy path", () => {
       target: "hint",
       targetId: "rook:r-1:1",
       idempotencyKey: `spend:hint:${W}:rook:r-1:1`,
+      signMessage: expect.any(Function),
       metadata: {
         piece: "rook",
         exerciseId: "r-1",
@@ -228,6 +237,7 @@ describe("PeonesHintButton — connected happy path", () => {
       // shipped with).
       targetId: "rook:r-1:3",
       idempotencyKey: `spend:hint:${W}:rook:r-1:3`,
+      signMessage: expect.any(Function),
       metadata: {
         piece: "rook",
         exerciseId: "r-1",

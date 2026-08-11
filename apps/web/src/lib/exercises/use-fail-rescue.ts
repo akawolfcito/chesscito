@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useSignMessage } from "wagmi";
 
 import { useShieldsCount } from "@/lib/shop/use-shields-count";
 import { dispatchShieldChange } from "@/lib/shop/shield-events";
@@ -153,6 +153,7 @@ export function useFailRescue(
   options: UseFailRescueOptions,
 ): UseFailRescueReturn {
   const { address } = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const shieldsCount = useShieldsCount();
   const [isSpending, setIsSpending] = useState(false);
 
@@ -213,6 +214,9 @@ export function useFailRescue(
           const attempt = await attemptShieldSpendWithPeones({
             wallet: address,
             attemptSeq: optionsRef.current.attemptSeq,
+            // `onUseShield` is the player's own tap, so the spend may ask for
+            // the signature it needs. See `spend-client.ts`.
+            signMessage: ({ message }) => signMessageAsync({ message }),
           });
           if (attempt.kind === "paid") {
             const peonesRes = await fetch("/api/shields/spend", {
@@ -247,7 +251,10 @@ export function useFailRescue(
         setIsSpending(false);
       }
     })();
-  }, [address, isSpending, shieldsCount]);
+    // `signMessageAsync` belongs here: it is captured by the Peones fallback
+    // above, and a stale closure would sign with a signer from a previous
+    // wallet. wagmi memoizes it, so including it does not churn the memo.
+  }, [address, isSpending, shieldsCount, signMessageAsync]);
 
   const onRetryAnyway = useCallback(() => {
     bumpIgnoreCount();

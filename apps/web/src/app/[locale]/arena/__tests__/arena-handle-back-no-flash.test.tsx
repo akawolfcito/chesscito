@@ -93,6 +93,8 @@ vi.mock("wagmi", () => ({
   useAccount: () => ({ address: undefined, isConnected: false }),
   useDisconnect: () => ({ disconnect: vi.fn() }),
   useChainId: () => 42220,
+  // El gasto de Peones firma su propia sesion de score (P0, 2026-08-10).
+  useSignMessage: () => ({ signMessageAsync: async () => "0x" }),
   useReadContract: () => ({ data: undefined, isLoading: false }),
   useReadContracts: () => ({ data: [], isLoading: false }),
   useWriteContract: () => ({ writeContractAsync: vi.fn(), isPending: false }),

@@ -21,6 +21,7 @@
 
 import { submitPeonesSpend } from "@/lib/peones/spend-client";
 import { SPEND_COST_BY_TARGET } from "@/lib/peones/spend-service";
+import type { SignMessageFn } from "@/lib/scores/session-client";
 import {
   emitPeonesSpendBlocked,
   emitPeonesSpendBypassed,
@@ -42,6 +43,10 @@ export type ShieldPeonesAttemptArgs = {
    *  DIFFERENT value for a genuinely new rescue attempt — never a
    *  timestamp, never a bare exercise id (see module doc). */
   attemptSeq: number;
+  /** How the spend signs for a score session when it has none. Required all the
+   *  way down: a rescue the player asked for must be able to authorize itself.
+   *  See `spend-client.ts`. */
+  signMessage: SignMessageFn;
   /** Test seam. */
   submitImpl?: typeof submitPeonesSpend;
 };
@@ -82,7 +87,7 @@ export function buildShieldIdempotencyKey(
 export async function attemptShieldSpendWithPeones(
   args: ShieldPeonesAttemptArgs,
 ): Promise<ShieldPeonesAttempt> {
-  const { wallet, attemptSeq, submitImpl } = args;
+  const { wallet, attemptSeq, signMessage, submitImpl } = args;
   const submit = submitImpl ?? submitPeonesSpend;
   const idempotencyKey = buildShieldIdempotencyKey(wallet, attemptSeq);
   const targetId = String(attemptSeq);
@@ -93,6 +98,7 @@ export async function attemptShieldSpendWithPeones(
     target: "shield",
     targetId,
     idempotencyKey,
+    signMessage,
     metadata: {
       attemptSeq,
       surface: "shield",

@@ -6,6 +6,13 @@ import { useCoachAnalysis } from "../use-coach-analysis";
 vi.mock("wagmi", () => ({
   useAccount: () => ({ address: undefined, isConnected: false }),
   useChainId: () => 42220,
+  // The Peones fallback signs for its own score session (P0, 2026-08-10).
+  // Rejects on purpose: no test here should reach the signer.
+  useSignMessage: () => ({
+    signMessageAsync: async () => {
+      throw new Error("signer must not be reached in these tests");
+    },
+  }),
 }));
 
 // Stub next-intl hooks
@@ -446,6 +453,9 @@ describe("useCoachAnalysis — Peones fallback (Sprint 4 commit F)", () => {
     expect(mockedAttemptCoach).toHaveBeenCalledWith({
       wallet: PEONES_WALLET,
       gameId: PEONES_GAME,
+      // The spend signs for its own score session (P0, 2026-08-10). The
+      // analysis is a request the player made, so it may ask.
+      signMessage: expect.any(Function),
     });
     expect(captured.peonesIdempotencyKey).toBe(
       `spend:coach:${PEONES_WALLET}:${PEONES_GAME}`,

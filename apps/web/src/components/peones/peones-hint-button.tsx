@@ -33,7 +33,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useAccount } from "wagmi";
+import { useAccount, useSignMessage } from "wagmi";
 
 import { submitPeonesSpend } from "@/lib/peones/spend-client";
 import { SPEND_COST_BY_TARGET } from "@/lib/peones/spend-service";
@@ -121,6 +121,10 @@ export function PeonesHintButton({
 }: Props) {
   const t = useTranslations("PEONES_HINT_COPY");
   const { address, isConnected } = useAccount();
+  /** Tapping HINT is an explicit request to spend, so it is allowed to ask for
+   *  the signature the server needs. `ensureScoreSession` reuses memory and then
+   *  disk first, so this prompts at most once every 2h (the session TTL). */
+  const { signMessageAsync } = useSignMessage();
   const [state, setState] = useState<HintState>({ kind: "idle" });
   /** Track the active TTL timer so navigation + remount cleans up
    *  reliably — otherwise a stale setTimeout could fire `onReveal(null)`
@@ -215,6 +219,7 @@ export function PeonesHintButton({
     const result = await submit({
       wallet,
       amount: HINT_PEONES_COST,
+      signMessage: ({ message }) => signMessageAsync({ message }),
       target: "hint",
       targetId,
       idempotencyKey,

@@ -40,6 +40,13 @@ const mockedBypassed = vi.mocked(emitPeonesSpendBypassed);
 const mockedFailed = vi.mocked(emitPeonesSpendFailed);
 
 const W = "0xabcdef0123456789abcdef0123456789abcdef01";
+
+/** These tests replace the whole spend via `submitImpl`, so the signer is never
+ *  reached. It THROWS rather than resolving: a test that somehow does reach it
+ *  should fail loudly instead of quietly pretending a signature happened. */
+const neverSigns = async (): Promise<string> => {
+  throw new Error("signer must not be reached in these tests");
+};
 const G = "550e8400-e29b-41d4-a716-446655440000";
 
 beforeEach(() => {
@@ -84,6 +91,7 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
     const result = await attemptCoachSpendWithPeones({
       wallet: W,
       gameId: G,
+      signMessage: neverSigns,
       submitImpl,
     });
 
@@ -102,6 +110,9 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
       target: "coach",
       targetId: G,
       idempotencyKey: `spend:coach:${W}:${G}`,
+      // Threaded straight through: the fallback does not get to decide whether
+      // the spend can authorize itself.
+      signMessage: neverSigns,
       metadata: { gameId: G, surface: "coach" },
     });
   });
@@ -126,6 +137,7 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
     await attemptCoachSpendWithPeones({
       wallet: W,
       gameId: G,
+      signMessage: neverSigns,
       submitImpl,
     });
 
@@ -162,6 +174,7 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
     const result = await attemptCoachSpendWithPeones({
       wallet: W,
       gameId: G,
+      signMessage: neverSigns,
       submitImpl,
     });
 
@@ -195,6 +208,7 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
     const result = await attemptCoachSpendWithPeones({
       wallet: W,
       gameId: G,
+      signMessage: neverSigns,
       submitImpl,
     });
 
@@ -217,6 +231,7 @@ describe("attemptCoachSpendWithPeones — failure paths", () => {
     const result = await attemptCoachSpendWithPeones({
       wallet: W,
       gameId: G,
+      signMessage: neverSigns,
       submitImpl,
     });
 
@@ -241,6 +256,7 @@ describe("attemptCoachSpendWithPeones — failure paths", () => {
     const result = await attemptCoachSpendWithPeones({
       wallet: W,
       gameId: G,
+      signMessage: neverSigns,
       submitImpl,
     });
 
@@ -278,6 +294,7 @@ describe("attemptCoachSpendWithPeones — PRO bypass (Sprint 4 commit G)", () =>
     const result = await attemptCoachSpendWithPeones({
       wallet: W,
       gameId: G,
+      signMessage: neverSigns,
       submitImpl,
     });
 
@@ -320,6 +337,7 @@ describe("attemptCoachSpendWithPeones — PRO bypass (Sprint 4 commit G)", () =>
     await attemptCoachSpendWithPeones({
       wallet: W,
       gameId: G,
+      signMessage: neverSigns,
       submitImpl,
     });
 

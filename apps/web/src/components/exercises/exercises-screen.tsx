@@ -2039,6 +2039,10 @@ export function ExercisesScreen({
         const attempt = await attemptShieldSpendWithPeones({
           wallet: address,
           attemptSeq: shieldRescueAttemptIdRef.current,
+          // A rescue the player just tapped may sign for the session the spend
+          // needs — unlike the auto-save above, which uses `autoPromptPolicy`
+          // precisely because the machine triggers it. See `spend-client.ts`.
+          signMessage: ({ message }) => signMessageAsync({ message }),
         });
         if (attempt.kind === "paid") {
           const peonesRes = await fetch("/api/shields/spend", {

@@ -129,6 +129,7 @@ describe("useFailRescue — onUseShield Peones fallback", () => {
     expect(attemptShieldSpendWithPeonesMock).toHaveBeenCalledWith({
       wallet: WALLET,
       attemptSeq: 1,
+      signMessage: expect.any(Function),
     });
 
     const spendCalls = fetchMock.mock.calls.filter(
@@ -209,6 +210,7 @@ describe("useFailRescue — onUseShield Peones fallback", () => {
     expect(attemptShieldSpendWithPeonesMock).toHaveBeenCalledWith({
       wallet: WALLET,
       attemptSeq: 1,
+      signMessage: expect.any(Function),
     });
 
     const spendCalls = fetchMock.mock.calls.filter(

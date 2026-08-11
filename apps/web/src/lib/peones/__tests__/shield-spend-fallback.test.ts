@@ -37,6 +37,13 @@ const mockedFailed = vi.mocked(emitPeonesSpendFailed);
 const W = "0xabcdef0123456789abcdef0123456789abcdef01";
 const SEQ = 7;
 
+/** These tests replace the whole spend via `submitImpl`, so the signer is never
+ *  reached. It THROWS rather than resolving: a test that somehow does reach it
+ *  should fail loudly instead of quietly pretending a signature happened. */
+const neverSigns = async (): Promise<string> => {
+  throw new Error("signer must not be reached in these tests");
+};
+
 beforeEach(() => {
   mockedSpent.mockReset();
   mockedBlocked.mockReset();
@@ -87,6 +94,7 @@ describe("attemptShieldSpendWithPeones — paid path", () => {
     const result = await attemptShieldSpendWithPeones({
       wallet: W,
       attemptSeq: SEQ,
+      signMessage: neverSigns,
       submitImpl,
     });
 
@@ -105,6 +113,9 @@ describe("attemptShieldSpendWithPeones — paid path", () => {
       target: "shield",
       targetId: String(SEQ),
       idempotencyKey: `spend:shield:${W}:${SEQ}`,
+      // Threaded straight through: the fallback does not get to decide whether
+      // the spend can authorize itself.
+      signMessage: neverSigns,
       metadata: { attemptSeq: SEQ, surface: "shield" },
     });
     expect(mockedSpent).toHaveBeenCalledTimes(1);
@@ -130,6 +141,7 @@ describe("attemptShieldSpendWithPeones — paid path", () => {
     const result = await attemptShieldSpendWithPeones({
       wallet: W,
       attemptSeq: SEQ,
+      signMessage: neverSigns,
       submitImpl,
     });
 
@@ -148,6 +160,7 @@ describe("attemptShieldSpendWithPeones — failure paths", () => {
     const result = await attemptShieldSpendWithPeones({
       wallet: W,
       attemptSeq: SEQ,
+      signMessage: neverSigns,
       submitImpl,
     });
 
@@ -169,6 +182,7 @@ describe("attemptShieldSpendWithPeones — failure paths", () => {
     const result = await attemptShieldSpendWithPeones({
       wallet: W,
       attemptSeq: SEQ,
+      signMessage: neverSigns,
       submitImpl,
     });
 
