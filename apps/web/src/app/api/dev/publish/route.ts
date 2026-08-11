@@ -69,11 +69,33 @@ async function publishToOverlay(
       // `kind:` here is the ADMIN wire's name for the bucket — see the note above.
       body: JSON.stringify({ kind: bucket, record }),
     });
-    if (!res.ok) return { ok: false, errors: [overlayErrorForStatus(res.status)] };
     const data = (await res.json().catch(() => null)) as
-      | { ok?: boolean; revalidated?: boolean }
+      | { ok?: boolean; revalidated?: boolean; errors?: unknown }
       | null;
-    if (!data?.ok) return { ok: false, errors: [overlayErrorForStatus(res.status)] };
+    // ⚠️ Forward the route's own message ONLY on 400, and map every other status
+    // to the fixed blurb.
+    //
+    // A 400 body is VALIDATION text we authored — the Star Sweep refusal names
+    // the level, says why the table cannot hold it, and points at
+    // `content/exercises.json` + `pnpm import-puzzles`. Flattening it to "record
+    // rejected by validation" was true and useless, and hid the instructions
+    // from the one person who needed them.
+    //
+    // ⛔ Any OTHER status must keep the blurb. A 500 body is
+    // `[error.message]` straight from Supabase, which can carry a connection
+    // string or a host — forwarding that verbatim is a leak, and the existing
+    // "never surfaces credentials" test caught exactly that when this passed
+    // every status through.
+    const detail =
+      res.status === 400 && Array.isArray(data?.errors)
+        ? data.errors.filter((e): e is string => typeof e === "string")
+        : [];
+    if (!res.ok || !data?.ok) {
+      return {
+        ok: false,
+        errors: detail.length ? detail : [overlayErrorForStatus(res.status)],
+      };
+    }
     return { ok: true, revalidated: Boolean(data.revalidated), errors: [] };
   } catch {
     // Network/abort — never surface the underlying error object.
