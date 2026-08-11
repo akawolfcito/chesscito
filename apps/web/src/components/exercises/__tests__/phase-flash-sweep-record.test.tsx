@@ -68,15 +68,19 @@ describe("the two anchored cases, rendered", () => {
     const cta = screen.getByTestId("sweep-replay-cta");
     // ⛔ 2, never 3: measured from the record, not from the run just played.
     expect(cta).toHaveAttribute("data-gap", "2");
-    expect(cta).toHaveTextContent("2 TO GO");
+    expect(cta).toHaveTextContent("2 to go");
     expect(cta.textContent).not.toContain("3");
   });
 
   it("a perfect run takes the record and offers NO replay", () => {
     renderFlash({ runMoves: 7, previousBest: 9, optimal: 7 });
 
+    // The best number survives — it is what the player owns — and the right-hand
+    // term switches from the goal to the achievement, so the pill never says
+    // "PERFECT RUN · PERFECT 7".
     expect(screen.getByTestId("sweep-best")).toHaveTextContent("7");
     expect(screen.getByTestId("sweep-perfect-run")).toBeInTheDocument();
+    expect(screen.queryByTestId("sweep-perfect")).not.toBeInTheDocument();
     expect(screen.queryByTestId("sweep-replay-cta")).not.toBeInTheDocument();
   });
 });

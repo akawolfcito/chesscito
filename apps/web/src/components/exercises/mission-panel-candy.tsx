@@ -479,45 +479,55 @@ export function PhaseFlash({
      rather than routed through `editorial.ts` — matching the surrounding
      overlay. If this graduates past the experiment it should move into the
      bundle, and the ES bundle guard covers the whole bundle. */
+  /* ONE muted pill, read as a phrase rather than a two-axis table, and NOT gold:
+     in this overlay gold already means "you gained this" (the reward pills), and
+     the record is state that outlives the run. Same radius and type family as
+     `.overlay-reward-label` so it joins the existing grammar instead of adding a
+     third one. The replay CTA is NOT here — it is a choice, and it renders as
+     text beside "Tap to Continue" (see below). */
   const sweepRecord = sweepRecordVisible && sweepResult ? (
-    <div className="sweep-record" data-testid="sweep-record">
-      <div className="sweep-record-row">
-        <span className="sweep-record-label">YOUR BEST</span>
-        <span className="sweep-record-value" data-testid="sweep-best">
-          {sweepResult.bestMoves}
-        </span>
-      </div>
-      <div className="sweep-record-row">
-        <span className="sweep-record-label">PERFECT</span>
-        <span className="sweep-record-value" data-testid="sweep-perfect">
-          {sweepResult.optimalMoves}
-        </span>
-      </div>
-      {sweepResult.showReplayCta ? (
-        <button
-          type="button"
-          className="sweep-record-cta"
-          data-testid="sweep-replay-cta"
-          data-gap={sweepResult.gapToPerfect}
-          /* ⛔ stopPropagation is load-bearing, not hygiene. The scrim above
-             carries `onClick={handleTapContinue}` whenever `awaitTap` is armed —
-             which is every success path. Without this the tap does BOTH: replays
-             the board AND advances to the next exercise, so the player asks to
-             beat their record and gets moved somewhere else. */
-          onClick={(e) => {
-            e.stopPropagation()
-            onSweepReplay?.()
-          }}
-        >
-          TRY AGAIN — {sweepResult.gapToPerfect} TO GO
-        </button>
-      ) : (
-        <span className="sweep-record-perfect" data-testid="sweep-perfect-run">
+    <span className="sweep-record" data-testid="sweep-record">
+      BEST <b data-testid="sweep-best">{sweepResult.bestMoves}</b>
+      {' · '}
+      {/* The right-hand term is the goal while there is one, and the achievement
+          once there is not. "PERFECT RUN · PERFECT 3" would say it twice; the
+          best number stays either way, because it is what the player owns. */}
+      {sweepResult.isPerfect ? (
+        <b data-testid="sweep-perfect-run" className="is-perfect">
           PERFECT RUN
-        </span>
+        </b>
+      ) : (
+        <>
+          PERFECT <b data-testid="sweep-perfect">{sweepResult.optimalMoves}</b>
+        </>
       )}
-    </div>
+    </span>
   ) : null
+
+  /* The choice, as TEXT and as a sibling of the tap prompt. It was a gold button,
+     which made two gold objects compete at different priorities and told the
+     player which exit was "right" — while gold, in this overlay, had already come
+     to mean "reward". Two doors out of the same moment: keep going, or go back. */
+  const sweepReplayCta =
+    sweepRecordVisible && sweepResult?.showReplayCta ? (
+      <button
+        type="button"
+        className="sweep-record-cta"
+        data-testid="sweep-replay-cta"
+        data-gap={sweepResult.gapToPerfect}
+        /* ⛔ stopPropagation is load-bearing, not hygiene. The scrim carries
+           `onClick={handleTapContinue}` whenever `awaitTap` is armed — which is
+           every success path. Without it the tap does BOTH: replays the board AND
+           advances, so the player asks to beat their record and is moved
+           somewhere else. */
+        onClick={(e) => {
+          e.stopPropagation()
+          onSweepReplay?.()
+        }}
+      >
+        Try again — {sweepResult.gapToPerfect} to go
+      </button>
+    ) : null
 
 
   /* Rescue path: the FailRescueModal is a fully self-contained
@@ -572,7 +582,13 @@ export function PhaseFlash({
         ) : null}
       </div>
       {/* Tap-to-continue prompt — glowing Rowdies text near the bottom, armed a
-          beat after the flash appears (founder reference 2026-07-17). */}
+          beat after the flash appears (founder reference 2026-07-17).
+          The replay CTA rides ABOVE it as its sibling: two ways out of the same
+          moment, presented at the same weight so the player picks rather than
+          being told which one is right. */}
+      {sweepReplayCta ? (
+        <div className="sweep-record-cta-row">{sweepReplayCta}</div>
+      ) : null}
       {awaitTap && tapArmed ? (
         <div className="playhub-phase-flash-tap" aria-hidden="true">
           {tFlash('tapToContinue')}
