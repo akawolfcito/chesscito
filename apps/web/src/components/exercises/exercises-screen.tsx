@@ -214,6 +214,8 @@ import { ActionPin } from "@/components/redesign/action-pin";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { gradeExerciseRun } from "@/lib/game/scoring";
 import { collectAt, startSweepRun, type SweepRunState } from "@/lib/game/sweep-run";
+import { toSweepResultPresentation } from "@/lib/game/sweep-result-cta";
+import { isSweep } from "@/lib/game/targets";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
 import {
   registerDockSheetCloser,
@@ -1596,6 +1598,12 @@ export function ExercisesScreen({
   // value (no manual reset needed — pill only shows in success
   // phase).
   const [lastEarnedStars, setLastEarnedStars] = useState(0);
+  /** Star Sweep — the record BEFORE the run that just completed. Captured in
+   *  `handleMove` because `completeExercise` overwrites it, and the CTA's whole
+   *  promise ("beat 9") is built from the record, not from the attempt. */
+  const [sweepPreviousBest, setSweepPreviousBest] = useState<number | undefined>(
+    undefined,
+  );
 
   // Fail-rescue host. The hook owns the modal state machine
   // (variant A/B/C/D + shield-spend + ignore counters). Handlers
@@ -1809,6 +1817,8 @@ export function ExercisesScreen({
 
     if (run.isComplete) {
       hapticSuccess();
+      // Read BEFORE `completeExercise` writes the new record over it.
+      setSweepPreviousBest(progress.bestMoves?.[currentExercise.id]);
       // Session-over freeze: once the daily limit is reached the player can
       // keep replaying completed exercises as practice, but no stars are
       // persisted. A fresh solve always persists — see shouldFreezeScoring.
@@ -2947,6 +2957,26 @@ export function ExercisesScreen({
    * whenever the two happen to share a square, hiding the only star on screen. */
   const sweepBoardTargets = activeLabyrinth ? undefined : activeExercise.targets;
   const sweepBoardCollected = activeLabyrinth ? undefined : sweepRun.collectedKeys;
+
+  /* The live counter. PRESENTATION ONLY: `sweepRun` models a plain exercise as a
+   * one-target sweep so no game logic branches, but "1 / 1" on the 56 legacy
+   * boards is noise — a counter that never moves teaches nothing. */
+  const sweepCounter =
+    !activeLabyrinth && sweepRun.totalCount > 1
+      ? { collected: sweepRun.collectedCount, total: sweepRun.totalCount }
+      : undefined;
+
+  /* The record block, only for the boards in the experiment and only on success.
+   * Built from `sweepPreviousBest` (captured before the write) so the CTA
+   * promises "beat your record", never "fix the run you just played". */
+  const sweepResult =
+    !activeLabyrinth && phase === "success" && isSweep(currentExercise)
+      ? toSweepResultPresentation({
+          exercise: currentExercise,
+          runMoves: moves,
+          previousBest: sweepPreviousBest,
+        })
+      : undefined;
   // Pivot mode is derived from the runtime catalog (not an id-set/prefix): the
   // active Special-Training node is a Pivot Challenge iff it lives in the pivot
   // pool for this piece. Only then does the board intercept taps.
@@ -3950,6 +3980,30 @@ export function ExercisesScreen({
           shieldCount={shieldCount}
           streakCount={streakCount}
           lastEarnedStars={lastEarnedStars}
+          sweepCounter={sweepCounter}
+          sweepResult={sweepResult}
+          onSweepCtaShown={(p) =>
+            track("sweep_replay_cta_shown", {
+              exercise_id: currentExercise.id,
+              best_moves: p.bestMoves,
+              optimal_moves: p.optimalMoves,
+              gap_to_perfect: p.gapToPerfect,
+            })
+          }
+          onSweepReplay={() => {
+            // Separated from `_shown` on purpose: the pair is what turns the
+            // experiment's question ("does a beatable goal produce a replay?")
+            // into a conversion rate instead of a feeling.
+            if (sweepResult) {
+              track("sweep_replay_started", {
+                exercise_id: currentExercise.id,
+                best_moves: sweepResult.bestMoves,
+                optimal_moves: sweepResult.optimalMoves,
+                gap_to_perfect: sweepResult.gapToPerfect,
+              });
+            }
+            resetBoard();
+          }}
           failureRescueSlot={
             phase === "failure" &&
             (streakCount >= 1 ||

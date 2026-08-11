@@ -8,6 +8,7 @@ import { ThemeAssetPicture } from '@/components/themes/theme-asset-picture'
 import { ConfettiBurst } from '@/components/redesign/confetti-burst'
 import { HudResourceChip } from '@/components/hud/hud-resource-chip'
 import type { PIECE_LABELS } from '@/lib/content/editorial'
+import type { SweepResultPresentation } from '@/lib/game/sweep-result-cta'
 import { LottieAnimation } from '@/components/ui/lottie-animation'
 import {
   CELEBRATION_ACCENT,
@@ -77,6 +78,15 @@ type MissionPanelProps = {
    *  "+N STAR" pill in the WELL DONE flash. Only consumed when
    *  phase === 'success'. */
   lastEarnedStars?: number
+  /** Star Sweep live counter, e.g. 2 of 3. PRESENTATION ONLY: the machine
+   *  models a plain exercise as a one-target sweep, but printing "1 / 1" on the
+   *  56 legacy boards is noise — a counter that never changes teaches nothing.
+   *  The host passes this only when the board has more than one goal. */
+  sweepCounter?: { collected: number; total: number }
+  /** Star Sweep record + replay CTA for the WELL DONE flash. Success-only. */
+  sweepResult?: SweepResultPresentation
+  onSweepReplay?: () => void
+  onSweepCtaShown?: (p: SweepResultPresentation) => void
   /** Integrated per-piece path, forwarded to the mission detail sheet
    *  for its "Now: X" line (surface redistribution D1). */
   trainingPath?: TrainingNode[]
@@ -195,6 +205,9 @@ export function PhaseFlash({
   failureRescueSlot,
   streakCount,
   lastEarnedStars,
+  sweepResult,
+  onSweepReplay,
+  onSweepCtaShown,
   lessonTitle,
   awaitTap,
   onContinue,
@@ -218,6 +231,16 @@ export function PhaseFlash({
   /** Stars earned on this exercise for the WELL DONE "+N STAR"
    *  pill. Only shown when phase === 'success' AND > 0. */
   lastEarnedStars?: number
+  /** Star Sweep record block: YOUR BEST / PERFECT, plus the replay CTA.
+   *  Success-only. Absent on boards outside the experiment.
+   *  ⛔ Every number here is derived from the BEST, never from the run just
+   *  played — the promise is "beat your record", not "fix this attempt". */
+  sweepResult?: SweepResultPresentation
+  /** Tapping the replay CTA. Required whenever `sweepResult.showReplayCta`. */
+  onSweepReplay?: () => void
+  /** Fired once per success where the CTA is actually rendered, so
+   *  "saw it" can be separated from "chose to come back". */
+  onSweepCtaShown?: (p: SweepResultPresentation) => void
   /** Curated title of the just-finished exercise — the lesson line under the
    *  success banner ("You learned: {title}"). Success-only; absent on games
    *  that carry no title. */
@@ -341,6 +364,20 @@ export function PhaseFlash({
     track('consequence_shown', { kind: announcedKind, surface: 'exercise' })
   }, [announcedKind])
 
+  /* Star Sweep — "the CTA was seen".
+   * ⛔ Must live ABOVE the `!visible || !flash` early return: a hook below it
+   * runs on some renders and not others, which is a hooks-order crash, not a
+   * subtle bug. Gated on `visible` instead, so it reports when the block is
+   * genuinely on screen rather than when the component merely mounted.
+   * Reported from an effect and not from render: a render-time call fires on
+   * every re-render of the same success and would inflate the denominator of
+   * the conversion rate this experiment exists to read. */
+  const sweepRecordVisible = visible && isSuccess && sweepResult !== undefined
+  useEffect(() => {
+    if (sweepRecordVisible && sweepResult) onSweepCtaShown?.(sweepResult)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sweepRecordVisible, sweepResult?.bestMoves, sweepResult?.optimalMoves])
+
   function handleTapContinue() {
     if (!awaitTap || !tapArmed) return
     setFading(true)
@@ -432,6 +469,49 @@ export function PhaseFlash({
       </div>
     ) : null
 
+  /* Star Sweep record — the experiment's whole surface.
+     The player is told what the RECORD is and how far it sits from the
+     theoretical minimum, so the invitation is "beat 9", not "you played 10".
+     A perfect record renders as an achievement with NO call to action:
+     inviting someone to beat the unbeatable is the kind of number a player
+     reads as a lie.
+     ⚠️ Copy is hardcoded English like its neighbours (`+N Stars`, `×N Combo`)
+     rather than routed through `editorial.ts` — matching the surrounding
+     overlay. If this graduates past the experiment it should move into the
+     bundle, and the ES bundle guard covers the whole bundle. */
+  const sweepRecord = sweepRecordVisible && sweepResult ? (
+    <div className="sweep-record" data-testid="sweep-record">
+      <div className="sweep-record-row">
+        <span className="sweep-record-label">YOUR BEST</span>
+        <span className="sweep-record-value" data-testid="sweep-best">
+          {sweepResult.bestMoves}
+        </span>
+      </div>
+      <div className="sweep-record-row">
+        <span className="sweep-record-label">PERFECT</span>
+        <span className="sweep-record-value" data-testid="sweep-perfect">
+          {sweepResult.optimalMoves}
+        </span>
+      </div>
+      {sweepResult.showReplayCta ? (
+        <button
+          type="button"
+          className="sweep-record-cta"
+          data-testid="sweep-replay-cta"
+          data-gap={sweepResult.gapToPerfect}
+          onClick={onSweepReplay}
+        >
+          TRY AGAIN — {sweepResult.gapToPerfect} TO GO
+        </button>
+      ) : (
+        <span className="sweep-record-perfect" data-testid="sweep-perfect-run">
+          PERFECT RUN
+        </span>
+      )}
+    </div>
+  ) : null
+
+
   /* Rescue path: the FailRescueModal is a fully self-contained
      overlay (its own scrim + panel + wolf inside the panel asset).
      PhaseFlash hands rendering entirely over to it — no wrapping
@@ -466,6 +546,10 @@ export function PhaseFlash({
       <div className="flex flex-col items-center gap-3 px-4">
         {wolfBlock}
         {rewardPills}
+        {/* The record sits between the celebration and the consequence: the
+            pills say what was won, this says what is left to beat, and the
+            consequence says what it moved. */}
+        {sweepRecord}
         {/* THE CONSEQUENCE (Paso 1) — last, and below the reward pills on
             purpose: the pills are the celebration ("+2 Stars"), this is the
             information ("7 of 8 toward your badge"). Reading order follows
@@ -530,6 +614,10 @@ export function MissionPanelCandy({
   shieldCount,
   streakCount,
   lastEarnedStars,
+  sweepCounter,
+  sweepResult,
+  onSweepReplay,
+  onSweepCtaShown,
   pieceHint,
   exercisePrompt,
   exerciseTitle,
@@ -633,6 +721,22 @@ export function MissionPanelCandy({
       >
         {visibleMissionLabel}
       </span>
+      {/* Star Sweep live counter. Rendered only when the host passes one, which
+          it does only for boards with more than one goal — see `sweepCounter`.
+          ⚠️ Anchored by a DOM assertion, never by the VR: `hub-clean` tolerates
+          ~1.646 px and a chip this size is ~450, so a photo cannot tell whether
+          it rendered at all. */}
+      {sweepCounter ? (
+        <span
+          className="shrink-0 text-xs font-extrabold leading-tight tabular-nums"
+          style={candyChipTextStyle}
+          data-testid="sweep-counter"
+          data-collected={sweepCounter.collected}
+          data-total={sweepCounter.total}
+        >
+          {sweepCounter.collected} / {sweepCounter.total}
+        </span>
+      ) : null}
       {/* The tail: the live Diagonal Run line, a level's move cost, or the
           exercise's lesson. One band, two facts — where to go, and what this
           is about. Carries the `dr-band-msg` hook (only when a game owns the
@@ -812,6 +916,9 @@ export function MissionPanelCandy({
         failureRescueSlot={failureRescueSlot}
         streakCount={streakCount}
         lastEarnedStars={lastEarnedStars}
+        sweepResult={sweepResult}
+        onSweepReplay={onSweepReplay}
+        onSweepCtaShown={onSweepCtaShown}
         lessonTitle={exerciseTitle}
         awaitTap={awaitTapToContinue}
         onContinue={onFlashContinue}
