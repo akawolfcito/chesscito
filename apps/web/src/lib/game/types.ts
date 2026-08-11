@@ -117,6 +117,21 @@ export type Exercise = {
    *  does not depend on it. */
   mission?: MissionSpec;
 
+  /** Star Sweep — the COMPLETE set of squares to collect, in ANY order. Absent
+   *  means a single-goal exercise, which is what the whole catalog was until
+   *  2026-08-10; those are still read through `targetPos`.
+   *
+   *  ⛔ Never read this field directly — go through `exerciseTargets()` in
+   *  `lib/game/targets.ts`, which is total over both shapes. A direct reader sees
+   *  `undefined` on the 56 unconverted exercises and falls back to "no goal",
+   *  which renders fine and grades wrong.
+   *
+   *  INVARIANT (enforced by the content linter): `targetPos === targets[0]`, so
+   *  every pre-Sweep reader — board, BFS, Peones hint — keeps working unchanged.
+   *  `optimalMoves` for a sweep is the cheapest ORDER, computed by
+   *  `computeSweepOptimal` at import time, never hand-authored. */
+  targets?: BoardPosition[];
+
   /* ── Labyrinth System v0.2 — mint metadata (all optional, additive).
    *  Spec: docs/superpowers/specs/2026-06-02-labyrinth-system-v0.2.md §4.1
    *  Defaults are applied by `resolveLabyrinthMintPolicy` — never read
@@ -158,6 +173,15 @@ export type PieceProgress = {
    *  the legacy positional `number[]` shape to this map by current catalog
    *  order, dropping ids not in the pool and clamping values to [0,3]. */
   stars: Record<string, number>;
+  /** Star Sweep — best (MINIMUM) move count per exercise, keyed by exerciseId.
+   *  Sparse: an absent id means "never completed". Lower is better, so this is
+   *  only overwritten when a run BEATS it — the number the replay CTA promises
+   *  the player they are chasing.
+   *
+   *  Optional because every record written before 2026-08-10 lacks it; readers
+   *  must tolerate its absence rather than treat it as zero (a zero here would
+   *  read as an unbeatable perfect run). */
+  bestMoves?: Record<string, number>;
 };
 
 /* ── Arena (full chess) types ── */
