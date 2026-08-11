@@ -34,7 +34,13 @@ export type SquareState = {
   isHighlighted: boolean;
   isEndpoint: boolean;
   isSelected: boolean;
+  /** An UNcollected goal square. On a sweep this is true for several squares at
+   *  once; a collected one flips to `isCollectedTarget` instead. */
   isTarget: boolean;
+  /** Star Sweep — a goal square already taken this run. Rendered dimmed rather
+   *  than removed: a star that vanishes reads as a bug, and the player needs to
+   *  see what is left against what is done. Always false on single-goal boards. */
+  isCollectedTarget: boolean;
   piece: BoardPiece | null;
 };
 

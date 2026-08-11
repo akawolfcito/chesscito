@@ -83,12 +83,28 @@ export function buildBoardSquares({
   piece,
   validTargets,
   targetPosition = null,
+  targetPositions,
+  collectedTargetKeys,
 }: {
   selectedPosition: BoardPosition | null;
   piece: BoardPiece;
   validTargets: BoardPosition[];
   targetPosition?: BoardPosition | null;
+  /** Star Sweep — EVERY goal square. Absent = single-goal, read from
+   *  `targetPosition` exactly as before. Passing it makes each uncollected
+   *  member `isTarget`, with no precedence for `targets[0]`: the player must not
+   *  see one star as more important than the others. */
+  targetPositions?: BoardPosition[];
+  /** Keys (`sweepTargetKey`) of stars already taken this run. They stop being
+   *  `isTarget` and become `isCollectedTarget`, so the board can dim them
+   *  instead of dropping them — a star that vanishes reads as a bug. */
+  collectedTargetKeys?: ReadonlySet<string>;
 }): SquareState[] {
+  const goals = targetPositions?.length
+    ? targetPositions
+    : targetPosition
+      ? [targetPosition]
+      : [];
   // Compute endpoints: highlighted cells with no adjacent highlighted neighbor
   // further from origin in the same direction (farthest in each ray)
   const endpointSet = computeEndpoints(validTargets, selectedPosition);
@@ -99,6 +115,9 @@ export function buildBoardSquares({
     for (let file = 0; file < BOARD_SIZE; file++) {
       const position = { file, rank };
       const isHighlighted = validTargets.some((t) => arePositionsEqual(t, position));
+      const isGoal = goals.some((t) => arePositionsEqual(t, position));
+      const isCollectedTarget =
+        isGoal && (collectedTargetKeys?.has(`${file},${rank}`) ?? false);
       squares.push({
         file,
         rank,
@@ -107,7 +126,10 @@ export function buildBoardSquares({
         isHighlighted,
         isEndpoint: isHighlighted && endpointSet.has(`${file},${rank}`),
         isSelected: selectedPosition ? arePositionsEqual(selectedPosition, position) : false,
-        isTarget: targetPosition ? arePositionsEqual(targetPosition, position) : false,
+        // A collected star is no longer a goal: leaving it `isTarget` would let
+        // the board keep inviting a landing that does nothing.
+        isTarget: isGoal && !isCollectedTarget,
+        isCollectedTarget,
         piece: arePositionsEqual(piece.position, position) ? piece : null,
       });
     }

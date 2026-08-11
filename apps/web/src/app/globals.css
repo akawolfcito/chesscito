@@ -2954,6 +2954,16 @@
       drop-shadow(0 0 10px rgba(255, 200, 80, 0.55)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
   }
 
+  /* Star Sweep — a star already collected this run. DIMMED and still, never
+     removed: a star that vanishes reads as a bug, and the player needs to see
+     what is done against what is left. The pulse is dropped so only the LIVE
+     stars draw the eye. Reuses the same asset — no new art. */
+  .playhub-board-target.is-collected {
+    animation: none;
+    opacity: 0.28;
+    filter: grayscale(1) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+  }
+
   @keyframes chesscito-target-pulse {
 
     0%,

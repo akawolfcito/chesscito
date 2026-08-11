@@ -58,6 +58,13 @@ type BoardProps = {
   startPosition?: BoardPosition;
   mode?: "tutorial" | "practice" | "labyrinth";
   targetPosition?: BoardPosition | null;
+  /** Star Sweep — every goal square, so the board shows all the stars at once
+   *  instead of one. Absent = single-goal, identical to before. `targetPosition`
+   *  must still be passed (it is `targets[0]`): `getValidTargets` reads it to
+   *  resolve the capture allowlist. */
+  targetPositions?: BoardPosition[];
+  /** Keys of the stars already collected this run — rendered dimmed. */
+  collectedTargetKeys?: ReadonlySet<string>;
   /** L2 labyrinth obstacles — friendly blocker pieces. Cannot be moved
    *  through or captured. Forwarded to the rules layer as blockers. */
   obstacles?: BoardPosition[];
@@ -82,6 +89,8 @@ export function Board({
   startPosition = { file: 0, rank: 0 },
   mode = "practice",
   targetPosition = null,
+  targetPositions,
+  collectedTargetKeys,
   obstacles,
   captureTargets,
   isLocked = false,
@@ -205,8 +214,17 @@ export function Board({
         piece,
         validTargets,
         targetPosition,
+        targetPositions,
+        collectedTargetKeys,
       }),
-    [piece, selectedPosition, targetPosition, validTargets]
+    [
+      piece,
+      selectedPosition,
+      targetPosition,
+      targetPositions,
+      collectedTargetKeys,
+      validTargets,
+    ]
   );
 
   // Keyed lookup for the procedural board's renderCell (file,rank → square).
@@ -722,6 +740,11 @@ export function Board({
         {square.isHighlighted ? <span className="playhub-board-dot" /> : null}
         {square.isTarget && !square.piece && !isCapture ? (
           <span className="playhub-board-target" />
+        ) : null}
+        {/* A collected star is DIMMED, never removed: one that vanishes reads as
+            a bug, and the player needs to see what is done against what is left. */}
+        {square.isCollectedTarget && !square.piece && !isCapture ? (
+          <span className="playhub-board-target is-collected" aria-hidden="true" />
         ) : null}
         {isPeones ? (
           <span className="playhub-board-peones-hint" aria-hidden="true" />
