@@ -8,7 +8,8 @@ import {
   isBadgeEarned,
 } from "@/lib/game/exercises";
 import { useExerciseCatalog } from "@/lib/content/catalog-context";
-import { computeStars } from "@/lib/game/scoring";
+import { gradeExerciseRun, isPerfectRun } from "@/lib/game/scoring";
+import { isSweep } from "@/lib/game/targets";
 import {
   calculateTotalStarsFromIdMap,
   starsIdMapToArray,
@@ -159,7 +160,23 @@ function loadProgress(piece: PieceId, pool: Exercise[]): PieceProgress {
       const clamped = clampStars(value);
       if (clamped > 0) stars[id] = clamped;
     }
-    return { piece, currentId: rawCurrentId, stars };
+
+    // Star Sweep best-move counts. Absent on every record written before
+    // 2026-08-10, so this must degrade to "no best yet" and never to 0 — a zero
+    // would render as an already-perfect run the player can never beat.
+    // Non-positive and non-integer entries are dropped for the same reason.
+    const bestMovesObj =
+      parsed.bestMoves && typeof parsed.bestMoves === "object"
+        ? (parsed.bestMoves as Record<string, unknown>)
+        : {};
+    const bestMoves: Record<string, number> = {};
+    for (const [id, value] of Object.entries(bestMovesObj)) {
+      if (typeof value === "number" && Number.isSafeInteger(value) && value > 0) {
+        bestMoves[id] = value;
+      }
+    }
+
+    return { piece, currentId: rawCurrentId, stars, bestMoves };
   } catch {
     return emptyProgress(piece);
   }
@@ -441,7 +458,11 @@ export function useExerciseProgress(
             )
           : 0;
         const exercise = pool[idx];
-        const starsForAttempt = computeStars(movesUsed, exercise.optimalMoves);
+        // `gradeExerciseRun`, never `computeStars`: this is the call that
+        // PERSISTS the star, so a Star Sweep graded here on the legacy scale
+        // would store a different number than the one the screen showed and the
+        // server row recorded.
+        const starsForAttempt = gradeExerciseRun(movesUsed, exercise);
         const bestStarsBefore = prev.stars[exercise.id] ?? 0;
         const bestStarsAfter = Math.max(
           bestStarsBefore,
@@ -450,6 +471,18 @@ export function useExerciseProgress(
         // Write best stars by exerciseId. Sparse map: only set when >0.
         const newStars: Record<string, number> = { ...prev.stars };
         if (bestStarsAfter > 0) newStars[exercise.id] = bestStarsAfter;
+
+        // Star Sweep best — MINIMUM moves, so it only moves when beaten. Kept
+        // separate from the star map because the star saturates at 3 while the
+        // move count keeps improving: a player going 11 → 9 → 8 sees progress
+        // here that the star cannot express, and that gradient is the whole
+        // point of the replay CTA.
+        const prevBestMoves = prev.bestMoves ?? {};
+        const bestMovesBefore = prevBestMoves[exercise.id];
+        const improvedBest =
+          bestMovesBefore === undefined || movesUsed < bestMovesBefore;
+        const newBestMoves: Record<string, number> = { ...prevBestMoves };
+        if (improvedBest) newBestMoves[exercise.id] = movesUsed;
 
         const prevTotal = calculateTotalStarsFromIdMap(piece, prev.stars, catalog);
         const newTotal = calculateTotalStarsFromIdMap(piece, newStars, catalog);
@@ -477,6 +510,38 @@ export function useExerciseProgress(
             exerciseId: exercise.id,
             delta,
             newPieceTotal: newTotal,
+          });
+        }
+
+        // ── Star Sweep experiment instrumentation ───────────────────────────
+        // The experiment asks ONE question: does a beatable goal produce a
+        // replay? These three fields answer it without a new table —
+        // `attemptNumber` + `bestMovesBefore` + `improved` reconstruct
+        // first_result → replay → improvement per wallet from the event stream.
+        //
+        // ⛔ Emitted as its OWN event and `training_exercise_completed` is left
+        // untouched: that event is the baseline the result gets compared
+        // against, and adding a field to it would break the historical series.
+        //
+        // Fires only for sweeps. A plain exercise has no beatable goal, so a row
+        // here would dilute the denominator with levels the experiment does not
+        // cover — `rook-1` is deliberately unconverted as the control.
+        if (isSweep(exercise)) {
+          track("sweep_result", {
+            piece,
+            exerciseId: exercise.id,
+            moves: movesUsed,
+            optimal: exercise.optimalMoves,
+            stars: starsForAttempt,
+            isPerfect: isPerfectRun(movesUsed, exercise),
+            // NOT an attempt counter — deliberately named for what it can
+            // actually prove. `bestMoves` is written on every completion, so its
+            // absence is exact evidence of first contact; a numeric "attempt 2"
+            // would be a guess dressed as a count, and a telemetry field that
+            // overstates what it knows is how a funnel starts lying.
+            isFirstContact: bestMovesBefore === undefined,
+            bestMovesBefore: bestMovesBefore ?? null,
+            improved: improvedBest && bestMovesBefore !== undefined,
           });
         }
 
@@ -526,7 +591,11 @@ export function useExerciseProgress(
             ? getExercisesCompletedCount()
             : 0;
 
-        const next: PieceProgress = { ...prev, stars: newStars };
+        const next: PieceProgress = {
+          ...prev,
+          stars: newStars,
+          bestMoves: newBestMoves,
+        };
         saveProgress(next);
 
         // Fire and forget, AFTER the save: local progress, persistence
