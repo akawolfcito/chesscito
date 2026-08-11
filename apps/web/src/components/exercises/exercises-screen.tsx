@@ -1838,7 +1838,25 @@ export function ExercisesScreen({
       // exercises. `isReplay` comes from useExerciseProgress and
       // is true when the active exercise already has stars in
       // progress.stars[index].
-      setLastEarnedStars(gradeExerciseRun(movesCount, currentExercise));
+      /* The pill says "+N Stars", and the row it lives in exists to surface
+       * "what the player just GAINED". So this is the NET improvement, not the
+       * run's raw grade.
+       *
+       * It used to be the raw grade, which made a replay announce a reward that
+       * never arrived: a player whose best was already 3★ replayed, scored 1★ on
+       * that run, and the screen said "+1 STARS" beside "YOUR BEST 3 · PERFECT
+       * RUN" (device report 2026-08-11). Nothing was added — a star map only ever
+       * keeps the MAX — so the number was a lie the player could audit, and the
+       * cheapest way to teach someone to stop reading a surface is to have it
+       * announce a gain they can see they did not get.
+       *
+       * Frozen scoring persists nothing, so it gains nothing either. Zero hides
+       * the pill (`showStarPill` requires > 0). */
+      const starsThisRun = gradeExerciseRun(movesCount, currentExercise);
+      const bestStarsBeforeRun = progress.stars[currentExercise.id] ?? 0;
+      setLastEarnedStars(
+        scoringFrozen ? 0 : Math.max(0, starsThisRun - bestStarsBeforeRun),
+      );
       if (!isReplay) {
         bumpStreak();
       }
@@ -3978,7 +3996,13 @@ export function ExercisesScreen({
           onSaveOnChain={() => void handleSaveScoreOnChain()}
           isSavingOnChain={saveWrite.isBusy}
           shieldCount={shieldCount}
-          streakCount={streakCount}
+          /* Same contract as the star pill: this row is "what you just gained".
+           * `bumpStreak()` only runs on a FRESH solve, so on a replay the combo
+           * did not move — showing it there dresses an unchanged number as a
+           * reward, right next to a star pill that now correctly shows nothing.
+           * The combo still lives in the HUD, where it is state rather than a
+           * prize. */
+          streakCount={isReplay ? undefined : streakCount}
           lastEarnedStars={lastEarnedStars}
           sweepCounter={sweepCounter}
           sweepResult={sweepResult}
