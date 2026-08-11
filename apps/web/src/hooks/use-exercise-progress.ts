@@ -171,9 +171,30 @@ function loadProgress(piece: PieceId, pool: Exercise[]): PieceProgress {
         : {};
     const bestMoves: Record<string, number> = {};
     for (const [id, value] of Object.entries(bestMovesObj)) {
-      if (typeof value === "number" && Number.isSafeInteger(value) && value > 0) {
-        bestMoves[id] = value;
+      if (!(typeof value === "number" && Number.isSafeInteger(value) && value > 0)) {
+        continue;
       }
+      /* ⛔ A best BELOW the exercise's optimum is not a great record — it is
+       * proof the board changed underneath it. `optimalMoves` is the theoretical
+       * minimum, so no legitimate run can beat it.
+       *
+       * This happened for real (2026-08-11): `rook-2` shipped for months as a
+       * one-move exercise, players stored `bestMoves: 1`, and then it became a
+       * three-star sweep with an optimum of 3. The stale 1 made the completion
+       * screen announce PERFECT RUN — a run the player never had — and withdraw
+       * the replay CTA, which is the entire experiment, while the same screen
+       * showed "+1 STARS" from the run they actually just played.
+       *
+       * Dropped rather than clamped: we know the number is not theirs, and we do
+       * not know what is. "No record yet" is the honest state, and the next
+       * completion writes a real one.
+       *
+       * ⚠️ Only when the id is IN the pool. An unknown id may be retired OR may
+       * simply not have loaded yet, and this is not the place that can tell the
+       * difference — the same trap the stars migration above documents. */
+      const known = pool.find((ex) => ex.id === id);
+      if (known && value < known.optimalMoves) continue;
+      bestMoves[id] = value;
     }
 
     return { piece, currentId: rawCurrentId, stars, bestMoves };

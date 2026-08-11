@@ -92,6 +92,68 @@ describe("bestMoves persistence", () => {
     expect(result.current.progress.stars[firstRookId()]).toBe(3);
   });
 
+  it("drops a best that is BELOW the exercise's optimum", async () => {
+    // Not a great record — proof the board changed underneath it. `rook-2`
+    // shipped for months as a one-move exercise; players stored `bestMoves: 1`,
+    // and then it became a three-star sweep with an optimum of 3. The stale 1
+    // made the screen announce PERFECT RUN for a run nobody had, and withdraw
+    // the replay CTA — the whole experiment — while showing "+1 STARS" from the
+    // run actually played. Seen on device 2026-08-11.
+    const { EXERCISES } = await import("@/lib/game/exercises");
+    const rook2 = EXERCISES.rook.find((e) => e.id === "rook-2")!;
+    expect(rook2.optimalMoves).toBeGreaterThan(1); // guards the guard
+
+    localStorage.setItem(
+      key("rook"),
+      JSON.stringify({
+        piece: "rook",
+        currentId: null,
+        stars: {},
+        bestMoves: { "rook-2": 1 },
+      }),
+    );
+    const { result } = await mountRook();
+
+    expect(result.current.progress.bestMoves?.["rook-2"]).toBeUndefined();
+  });
+
+  it("keeps a best that EQUALS the optimum", async () => {
+    // The perfect run is a legitimate record and must survive the guard.
+    const { EXERCISES } = await import("@/lib/game/exercises");
+    const rook2 = EXERCISES.rook.find((e) => e.id === "rook-2")!;
+
+    localStorage.setItem(
+      key("rook"),
+      JSON.stringify({
+        piece: "rook",
+        currentId: null,
+        stars: {},
+        bestMoves: { "rook-2": rook2.optimalMoves },
+      }),
+    );
+    const { result } = await mountRook();
+
+    expect(result.current.progress.bestMoves?.["rook-2"]).toBe(rook2.optimalMoves);
+  });
+
+  it("keeps a best for an id the pool does not know", async () => {
+    // "Retired" and "not loaded yet" look identical to a membership check, and
+    // dropping on that ambiguity is how progress gets destroyed — the same trap
+    // the stars migration documents.
+    localStorage.setItem(
+      key("rook"),
+      JSON.stringify({
+        piece: "rook",
+        currentId: null,
+        stars: {},
+        bestMoves: { "rook-from-a-future-catalog": 1 },
+      }),
+    );
+    const { result } = await mountRook();
+
+    expect(result.current.progress.bestMoves?.["rook-from-a-future-catalog"]).toBe(1);
+  });
+
   it("drops corrupt best entries instead of trusting them", async () => {
     localStorage.setItem(
       key("rook"),
