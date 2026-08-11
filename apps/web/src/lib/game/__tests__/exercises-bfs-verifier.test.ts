@@ -1,5 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { EXERCISES, PLAYABLE_PIECES } from "@/lib/game/exercises";
+import { computeSweepOptimal } from "@/lib/game/sweep-optimal";
+import { isSweep } from "@/lib/game/targets";
 import { bfsOptimal } from "@/test-utils/bfs-optimal";
 
 /**
@@ -28,14 +30,22 @@ describe("BFS verifier — exercise optimalMoves", () => {
     describe(`piece: ${piece}`, () => {
       EXERCISES[piece].forEach((ex) => {
         it(`${ex.id} optimalMoves matches BFS`, () => {
-          const bfs = bfsOptimal(piece, ex);
+          // ⚠️ A Star Sweep is verified by a DIFFERENT solver. `bfsOptimal`
+          // answers "shortest path to targetPos", and on a sweep `targetPos` is
+          // merely `targets[0]` — so it measures one leg of a route and would
+          // report a minimum far below the real one. Comparing against it here
+          // would not catch drift; it would MANUFACTURE it.
+          const declared = ex.optimalMoves;
+          const solved = isSweep(ex)
+            ? computeSweepOptimal(piece, ex)
+            : bfsOptimal(piece, ex);
           // Reachability: every exercise must be solvable from the
           // declared startPos under the declared obstacles/captureTargets.
-          expect(bfs, `${ex.id} unreachable per BFS`).not.toBeNull();
-          // Optimality: the declared optimalMoves MUST equal the BFS
+          expect(solved, `${ex.id} unreachable per solver`).not.toBeNull();
+          // Optimality: the declared optimalMoves MUST equal the solver's
           // minimum. Hard fail mode — any drift breaks the suite.
-          if (bfs !== ex.optimalMoves) allPassed = false;
-          expect(bfs).toBe(ex.optimalMoves);
+          if (solved !== declared) allPassed = false;
+          expect(solved).toBe(declared);
         });
       });
     });

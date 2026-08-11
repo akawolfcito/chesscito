@@ -72,6 +72,32 @@ describe("starFloor is a policy of ONE exercise, not of the grader", () => {
     expect(isPerfectRun(3, floored)).toBe(true);
   });
 
+  it("is actually carried by the SHIPPED rook-2, and only by it", async () => {
+    // Asserted against the generated catalog, not a fixture: the policy only
+    // protects a player if the content declares it, and a verification script
+    // that re-derives the bands proves nothing about what shipped.
+    const { EXERCISES } = await import("@/lib/game/exercises");
+    const rook2 = EXERCISES.rook.find((e) => e.id === "rook-2")!;
+    expect(rook2.starFloor).toBe(1);
+
+    // A run far past the last band still earns a star on this board...
+    expect(gradeExerciseRun(rook2.optimalMoves + 20, rook2)).toBe(1);
+
+    // ...and its neighbours keep 0★ reachable, which is the point of scoping it.
+    for (const id of ["rook-distance-1", "rook-4"]) {
+      const ex = EXERCISES.rook.find((e) => e.id === id)!;
+      expect(ex.starFloor).toBeUndefined();
+      expect(gradeExerciseRun(ex.optimalMoves + 20, ex)).toBe(0);
+    }
+
+    // And nothing else in the whole catalog quietly acquired a floor.
+    const floored = Object.values(EXERCISES)
+      .flat()
+      .filter((e) => e.starFloor !== undefined)
+      .map((e) => e.id);
+    expect(floored).toEqual(["rook-2"]);
+  });
+
   it("stays inside the 0..3 scale over a wide domain", () => {
     for (const floor of [undefined, 1, 2] as const) {
       for (let moves = 1; moves <= 60; moves += 1) {
