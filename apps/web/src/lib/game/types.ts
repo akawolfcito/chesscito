@@ -132,6 +132,25 @@ export type Exercise = {
    *  `computeSweepOptimal` at import time, never hand-authored. */
   targets?: BoardPosition[];
 
+  /** Minimum stars a COMPLETED run of THIS board can be worth. Absent = no floor,
+   *  which is the default and what every exercise should normally have.
+   *
+   *  A per-exercise POLICY, deliberately not a grader change: it exists for the
+   *  handful of boards that sit at the very front of the funnel, where the
+   *  measured bottleneck is activation rather than difficulty. `rook-2` is the
+   *  second board a new player ever touches (520 wallets); earning 0★ there while
+   *  still learning how a rook moves punishes exactly the player we cannot afford
+   *  to lose. Its neighbours keep 0★ reachable.
+   *
+   *  ⛔ Typed `1 | 2`, never 3: a floor of 3 would make the board unfailable, which
+   *  is precisely the flatness this system exists to remove — 21 exercises already
+   *  award 3★ to 100% of players. It must not be expressible.
+   *
+   *  Raises a grade, never lowers one, and NEVER moves `optimalMoves` — so a
+   *  floored run still reads as "not perfect" and the replay CTA keeps telling the
+   *  truth about what is left to beat. */
+  starFloor?: 1 | 2;
+
   /* ── Labyrinth System v0.2 — mint metadata (all optional, additive).
    *  Spec: docs/superpowers/specs/2026-06-02-labyrinth-system-v0.2.md §4.1
    *  Defaults are applied by `resolveLabyrinthMintPolicy` — never read

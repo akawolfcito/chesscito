@@ -63,6 +63,9 @@ export type LabyrinthRecord = {
    *  `optimalMoves` for these is COMPUTED (cheapest order) at build time, never
    *  authored. Validated in `mapFenPuzzle`. */
   targets?: string[];
+  /** Minimum stars a completed run of THIS board is worth (1 or 2). Per-board
+   *  policy for the front of the funnel; 3 is rejected at map time. */
+  starFloor?: number;
   tier?: ExerciseTier; tags?: string[]; explanation?: string; order: number;
   /** Additive content entitlement. Missing stays backwards-compatible base. */
   access?: ContentAccess;
@@ -503,7 +506,8 @@ export function buildCatalog(
     if (!PIECES.includes(rec.piece)) { errors.push(`exercises.json '${rec.id ?? rec.fen}': bad piece`); continue; }
     addPuzzle({
       kind: "exercise", piece: rec.piece, tier: rec.tier ?? "medium", fen: rec.fen,
-      target: rec.target, targets: rec.targets, mover: rec.mover, tags: rec.tags,
+      target: rec.target, targets: rec.targets, starFloor: rec.starFloor,
+      mover: rec.mover, tags: rec.tags,
       explanation: rec.explanation,
       access: rec.access,
       principle: rec.principle, title: rec.title,

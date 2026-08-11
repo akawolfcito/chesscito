@@ -153,6 +153,10 @@ export type PuzzleInput = {
    *  call sites read `targetPos`, so the sweep keeps feeding them a real square
    *  instead of making every one of them answer for an Optional. */
   targets?: string[];
+  /** Minimum stars a completed run of THIS board is worth (1 or 2). A per-board
+   *  policy for the front of the funnel — see `Exercise.starFloor`. 3 is rejected:
+   *  an unfailable board is the flatness this system removes. */
+  starFloor?: number;
   mover?: string;
   /** `promotion-run` only: the piece to crown. Carried through the round-trip
    *  untouched — the FEN cannot express it, because it is not a position. */
@@ -186,6 +190,8 @@ export type MappedPuzzle = {
   /** Star Sweep — the decoded goal squares. Invariant, enforced at map time:
    *  `targets[0]` is `targetPos`, so every pre-Sweep reader stays correct. */
   targets?: BoardPosition[];
+  /** Validated star floor (1 or 2), absent when the board has no policy. */
+  starFloor?: 1 | 2;
   obstacles?: BoardPosition[];
   captureTargets?: BoardPosition[];
   /** Static black pieces that project attacked squares. ADDITIVE: only the
@@ -266,6 +272,19 @@ export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
     sweepTargets = decoded;
   }
 
+  // Star floor. Validated rather than coerced: a typo'd floor silently dropped
+  // would leave the front-of-funnel board unprotected with nothing to notice.
+  let starFloor: 1 | 2 | undefined;
+  if (input.starFloor !== undefined) {
+    if (input.starFloor !== 1 && input.starFloor !== 2) {
+      throw new FenError(
+        `starFloor must be 1 or 2, got ${input.starFloor} — a floor of 3 makes the ` +
+          `board unfailable, which is the flatness this system exists to remove`,
+      );
+    }
+    starFloor = input.starFloor;
+  }
+
   const obstacles: BoardPosition[] = [];
   const captureTargets: BoardPosition[] = [];
   const enemies: TypedEnemy[] = [];
@@ -292,6 +311,7 @@ export function mapFenPuzzle(input: PuzzleInput): MappedPuzzle {
     startPos,
     targetPos,
     targets: sweepTargets,
+    starFloor,
     obstacles: obstacles.length ? obstacles : undefined,
     captureTargets: captureTargets.length ? captureTargets : undefined,
     enemies: enemies.length ? enemies : undefined,

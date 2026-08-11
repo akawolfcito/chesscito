@@ -82,3 +82,25 @@ describe("mapFenPuzzle — targets", () => {
     expect(mapped.targets).toHaveLength(2);
   });
 });
+
+describe("mapFenPuzzle — starFloor", () => {
+  it("is absent when the board declares no policy", () => {
+    expect(mapFenPuzzle(input()).starFloor).toBeUndefined();
+  });
+
+  it("carries a valid floor through", () => {
+    expect(mapFenPuzzle(input({ starFloor: 1 })).starFloor).toBe(1);
+    expect(mapFenPuzzle(input({ starFloor: 2 })).starFloor).toBe(2);
+  });
+
+  it("rejects a floor of 3 — an unfailable board is the flatness we removed", () => {
+    expect(() => mapFenPuzzle(input({ starFloor: 3 }))).toThrow(/must be 1 or 2/i);
+  });
+
+  it("rejects a nonsense floor instead of dropping it", () => {
+    // Silently dropping a typo would leave the front-of-funnel board unprotected
+    // with nothing to notice.
+    expect(() => mapFenPuzzle(input({ starFloor: 0 }))).toThrow(FenError);
+    expect(() => mapFenPuzzle(input({ starFloor: 1.5 }))).toThrow(FenError);
+  });
+});

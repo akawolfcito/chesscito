@@ -93,11 +93,16 @@ export function sweepStars(
  */
 export function gradeExerciseRun(
   movesUsed: number,
-  exercise: Pick<Exercise, "optimalMoves" | "targetPos" | "targets">,
+  exercise: Pick<Exercise, "optimalMoves" | "targetPos" | "targets" | "starFloor">,
 ): 0 | 1 | 2 | 3 {
-  return isSweep(exercise as Exercise)
+  const earned = isSweep(exercise as Exercise)
     ? sweepStars(movesUsed, exercise.optimalMoves)
     : computeStars(movesUsed, exercise.optimalMoves);
+  // The floor is applied HERE rather than inside either grader, so both stay pure
+  // functions of (moves, optimum) and the policy of one board never becomes the
+  // scale of every board. `Math.max` because it raises and never lowers.
+  const floor = exercise.starFloor;
+  return (floor === undefined ? earned : Math.max(earned, floor)) as 0 | 1 | 2 | 3;
 }
 
 /**
