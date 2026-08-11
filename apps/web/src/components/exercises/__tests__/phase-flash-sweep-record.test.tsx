@@ -92,6 +92,67 @@ describe("the CTA is a real control", () => {
     expect(onSweepReplay).toHaveBeenCalledTimes(1);
   });
 
+  it("does NOT also advance to the next exercise", () => {
+    // The scrim carries `onClick={handleTapContinue}` whenever `awaitTap` is
+    // armed — which is every success path — and the CTA sits inside it. Without
+    // stopPropagation the tap replays the board AND advances, so the player asks
+    // to beat their record and gets moved somewhere else.
+    // ⚠️ Asserting only that `onSweepReplay` fired passes with the bug present:
+    // it takes asserting the thing that must NOT happen.
+    const onContinue = vi.fn();
+    const onSweepReplay = vi.fn();
+    const sweepResult = toSweepResultPresentation({
+      exercise: sweep(7),
+      runMoves: 10,
+      previousBest: 9,
+    });
+    render(
+      <PhaseFlash
+        phase="success"
+        awaitTap
+        onContinue={onContinue}
+        sweepResult={sweepResult}
+        onSweepReplay={onSweepReplay}
+      />,
+    );
+    revealFlash();
+
+    fireEvent.click(screen.getByTestId("sweep-replay-cta"));
+    act(() => void vi.advanceTimersByTime(600)); // past the fade that calls onContinue
+
+    expect(onSweepReplay).toHaveBeenCalledTimes(1);
+    expect(onContinue).not.toHaveBeenCalled();
+  });
+
+  it("still advances when the player taps the scrim itself", () => {
+    // The guard must be scoped to the button: tap-to-continue is the normal way
+    // out of the flash and stopping it everywhere would trap the player.
+    const onContinue = vi.fn();
+    const sweepResult = toSweepResultPresentation({
+      exercise: sweep(7),
+      runMoves: 10,
+      previousBest: 9,
+    });
+    render(
+      <PhaseFlash
+        phase="success"
+        awaitTap
+        onContinue={onContinue}
+        sweepResult={sweepResult}
+        onSweepReplay={vi.fn()}
+      />,
+    );
+    // Tap-to-continue is armed a beat AFTER the reveal, on purpose, so an eager
+    // tap cannot skip the celebration. Wait past both beats before tapping.
+    revealFlash();
+    act(() => void vi.advanceTimersByTime(3000));
+
+    fireEvent.click(screen.getByTestId("sweep-record").parentElement!);
+    act(() => void vi.advanceTimersByTime(600));
+
+    expect(onContinue).toHaveBeenCalledTimes(1);
+  });
+
   it("reports 'shown' exactly once per success", () => {
     // A render-time report would fire on every re-render of the same flash and
     // inflate the denominator of the conversion rate the experiment reads.

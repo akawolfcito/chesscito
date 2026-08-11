@@ -499,7 +499,15 @@ export function PhaseFlash({
           className="sweep-record-cta"
           data-testid="sweep-replay-cta"
           data-gap={sweepResult.gapToPerfect}
-          onClick={onSweepReplay}
+          /* ⛔ stopPropagation is load-bearing, not hygiene. The scrim above
+             carries `onClick={handleTapContinue}` whenever `awaitTap` is armed —
+             which is every success path. Without this the tap does BOTH: replays
+             the board AND advances to the next exercise, so the player asks to
+             beat their record and gets moved somewhere else. */
+          onClick={(e) => {
+            e.stopPropagation()
+            onSweepReplay?.()
+          }}
         >
           TRY AGAIN — {sweepResult.gapToPerfect} TO GO
         </button>
