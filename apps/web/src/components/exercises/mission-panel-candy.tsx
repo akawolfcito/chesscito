@@ -494,18 +494,20 @@ export function PhaseFlash({
      text beside "Tap to Continue" (see below). */
   const sweepRecord = sweepRecordVisible && sweepResult ? (
     <span className="sweep-record" data-testid="sweep-record">
-      BEST <b data-testid="sweep-best">{sweepResult.bestMoves}</b>
+      {tFlash('sweepBest')}{' '}
+      <b data-testid="sweep-best">{sweepResult.bestMoves}</b>
       {' · '}
       {/* The right-hand term is the goal while there is one, and the achievement
           once there is not. "PERFECT RUN · PERFECT 3" would say it twice; the
           best number stays either way, because it is what the player owns. */}
       {sweepResult.isPerfect ? (
         <b data-testid="sweep-perfect-run" className="is-perfect">
-          PERFECT RUN
+          {tFlash('sweepPerfectRun')}
         </b>
       ) : (
         <>
-          PERFECT <b data-testid="sweep-perfect">{sweepResult.optimalMoves}</b>
+          {tFlash('sweepPerfect')}{' '}
+          <b data-testid="sweep-perfect">{sweepResult.optimalMoves}</b>
         </>
       )}
     </span>
@@ -532,7 +534,7 @@ export function PhaseFlash({
           onSweepReplay?.()
         }}
       >
-        Try again — {sweepResult.gapToPerfect} to go
+        {tFlash('sweepTryAgain', { gap: sweepResult.gapToPerfect })}
       </button>
     ) : null
 

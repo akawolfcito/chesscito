@@ -603,6 +603,27 @@ export const PHASE_FLASH_COPY = {
   /** The tap-to-continue prompt at the bottom of the flash. The overlay holds
    *  until the player taps, so the celebration/lesson is never missed. */
   tapToContinue: "Tap to Continue",
+
+  /* ── Star Sweep record (the mastery experiment's surface) ────────────────
+   * Shipped hardcoded in the component first, while this was still framed as a
+   * temporary experiment. It is not temporary, so it lives here now — and the
+   * whole-bundle ES guard makes that a translation obligation rather than a
+   * hope.
+   *
+   * `sweepBest` / `sweepPerfect` are LABELS, rendered beside their numbers as
+   * one phrase ("BEST 6 · PERFECT 3"), not sentences with a placeholder: the
+   * pill puts the digits in their own element so they can carry the accent
+   * colour. */
+  sweepBest: "BEST",
+  sweepPerfect: "PERFECT",
+  /** Replaces the goal term once the record IS the theoretical minimum, so the
+   *  pill never reads "PERFECT RUN · PERFECT 3". */
+  sweepPerfectRun: "PERFECT RUN",
+  /** The replay invitation. `{gap}` is measured from the RECORD, never from the
+   *  run just played: the promise is "beat your record", not "fix that".
+   *  ⚠️ Comma, not an em dash. The anti-AI-prose guard holds this file at a
+   *  ceiling of ZERO em dashes and caught the first draft of this line. */
+  sweepTryAgain: "Try again, {gap} to go",
 } as const;
 
 export const SHOP_SHEET_COPY = {

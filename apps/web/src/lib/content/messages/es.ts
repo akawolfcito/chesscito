@@ -1438,6 +1438,14 @@ const messages = {
     failure: "Reintenta",
     lesson: "Aprendiste: {title}",
     tapToContinue: "Toca para continuar",
+    // Etiquetas de la pastilla de récord: se leen como frase junto a sus
+    // números ("TU MEJOR 6 · PERFECTA 3"), no como oraciones sueltas.
+    sweepBest: "TU MEJOR",
+    sweepPerfect: "PERFECTA",
+    sweepPerfectRun: "CORRIDA PERFECTA",
+    // {gap} se mide contra el RÉCORD, no contra la corrida recién jugada.
+    // Coma, no raya: el guard anti-AI-prose deja este archivo en cero rayas.
+    sweepTryAgain: "Volver a intentar, te faltan {gap}",
   },
   SHOP_SHEET_COPY: {
     title: "TIENDA",

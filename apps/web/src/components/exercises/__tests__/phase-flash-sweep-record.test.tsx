@@ -13,8 +13,13 @@ import { PhaseFlash } from "@/components/exercises/mission-panel-candy";
 import { toSweepResultPresentation } from "@/lib/game/sweep-result-cta";
 import type { BoardPosition, Exercise } from "@/lib/game/types";
 
+/** Echoes the KEY plus its ICU arguments. The copy itself now lives in the
+ *  bundle, so asserting on English text here would pin authored strings — the
+ *  anti-pattern that broke 21 assertions in the drawer tests. Echoing the args
+ *  still proves the gap reaches the message, which is the part that can lie. */
 vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string) => key,
+  useTranslations: () => (key: string, params?: Record<string, unknown>) =>
+    params ? `${key}(${JSON.stringify(params)})` : key,
 }));
 
 const at = (file: number, rank: number): BoardPosition => ({ file, rank });
@@ -68,7 +73,9 @@ describe("the two anchored cases, rendered", () => {
     const cta = screen.getByTestId("sweep-replay-cta");
     // ⛔ 2, never 3: measured from the record, not from the run just played.
     expect(cta).toHaveAttribute("data-gap", "2");
-    expect(cta).toHaveTextContent("2 to go");
+    // The gap the COPY receives, not the copy itself: 2, and never the 3 the
+    // run just played would have suggested.
+    expect(cta).toHaveTextContent('sweepTryAgain({"gap":2})');
     expect(cta.textContent).not.toContain("3");
   });
 
