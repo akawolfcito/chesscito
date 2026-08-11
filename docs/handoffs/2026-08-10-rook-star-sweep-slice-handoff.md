@@ -8,12 +8,18 @@
 
 ## Estado en una línea
 
-**La máquina está construida y verde; el contenido y la pantalla no.** Las etapas 1–6 del
-plan (tipos, grader, solver, persistencia, telemetría, decodificador de contenido) están
-commiteadas y con suite verde. Las etapas 7–9 (condición de victoria multi-objetivo, CTA de
-replay, eventos del CTA) **no están empezadas**, y sin la 7 el slice no es jugable.
+> **ACTUALIZADO 2026-08-11.** El slice **ya es jugable**: las etapas 1–7 están commiteadas con
+> suite verde y el contenido reintroducido. Falta la **8** (CTA de replay + contador `2/3`) y la
+> **9** (los dos eventos del CTA). Sin la 8 el jugador recoge las estrellas y ve su nota, pero
+> **nadie le dice qué tiene que superar** — que es literalmente la hipótesis del experimento,
+> así que no tiene sentido medir nada hasta que exista.
 
-⛔ **NO mergear esta rama todavía.** Ver §"La trampa" abajo.
+**Verificación al cierre:** **632 archivos / 7772 tests, exit 0** · `tsc` limpio ·
+VR **no corrido** (el contador y el CTA todavía no existen; cuando existan van con
+aserciones de DOM, nunca con la foto).
+
+⚠️ **La sección "La trampa" de abajo quedó RESUELTA** — se conserva porque explica por qué el
+contenido se separó de la capacidad, y esa es la razón por la que el bug no llegó a producción.
 
 ---
 
@@ -112,24 +118,43 @@ toca**: es el control (543 de 545 wallets pasan por él).
 
 ---
 
-## Lo que falta (etapas 7–9)
+## Lo que se cerró el 2026-08-11 (etapas del piso y la 7)
 
-7. **Condición de victoria multi-objetivo** en `exercises-screen.tsx`. Recoger todas las
-   casillas de `exerciseTargets(ex)`, contador vivo `2/3`, y completar sólo en la última.
-   Es la etapa que desbloquea todo lo demás.
+- **`52b9360b` — `starFloor`, piso como POLÍTICA del ejercicio.** Se aplica en
+  `gradeExerciseRun`, nunca dentro de un grader: `sweepStars` y `computeStars` siguen siendo
+  puros y la política de UN tablero no se vuelve la escala de todos. Tipado **`1 | 2`, nunca 3**
+  — un tablero infallable es la planitud que sacamos. `rook-2` lleva `1`; sus vecinos llegan a 0★.
+- **`bcd529ff` — victoria sweep-aware.** `lib/game/sweep-run.ts`, máquina de estados pura:
+  orden libre, dedup por `Set`, `isComplete` sólo al último. Un ejercicio plano es un sweep de
+  un objetivo, así que la pantalla **nunca ramifica por `isSweep`**.
+- **`635e10b4` — contenido reintroducido** + los 12 tests arreglados en su causa.
+
+### Dos bugs que aparecieron al conectar (y que valen para la próxima)
+
+1. **`useEffect` con `currentExercise` en las deps.** Es `pool[safeIndex]` — un elemento de un
+   array que el catálogo puede reconstruir, **sin identidad estable**. Se re-ejecutaba a mitad
+   de ruta, borraba las estrellas recogidas y dejaba el sweep **literalmente inganable**. Va por
+   `.id`, como ya hacían los effects del propio hook (`use-exercise-progress.ts:429,446`).
+2. **El tablero recibe `activeExercise` (= `activeLabyrinth ?? currentExercise`)** pero el run
+   sólo sigue al ejercicio. Sin aislar, una casilla recogida en el ejercicio **apagaba el
+   objetivo del laberinto** cuando compartían cuadro.
+
+## Lo que falta (etapas 8–9)
+
 8. **CTA de replay** en el `PhaseFlash` (⛔ no es un overlay —
-   [[project_exercise_completion_surface_is_phaseflash]]): "Tu mejor: 9 · Perfecta: 7".
-   Una corrida perfecta **no** invita a repetir.
-9. **Eventos del CTA**: `sweep_replay_cta_shown`, `sweep_replay_started`.
+   [[project_exercise_completion_surface_is_phaseflash]]): "Tu mejor: 9 · Perfecta: 7", más el
+   contador vivo `2/3` durante la corrida. Una corrida perfecta **no** invita a repetir.
+   `bestMoves` y `isPerfectRun` ya existen; falta sólo la superficie.
+9. **Eventos del CTA**: `sweep_replay_cta_shown`, `sweep_replay_started`. `sweep_result` ya
+   emite y ya trae `isFirstContact` / `bestMovesBefore` / `improved`.
 
 ---
 
 ## Preguntas abiertas (necesitan decisión del founder)
 
-1. **¿0★ en el segundo ejercicio del juego es demasiado?** `rook-2` lo ven 520 wallets y es de
-   lo primero que toca alguien que recién aprende cómo se mueve la torre. Con óptimo 3, seis
-   movimientos ya dan **0★**. Protegimos `rook-1` por la activación; puede que `rook-2` merezca
-   un piso de 1★ por el mismo motivo. **No lo decidí solo.**
+1. ~~**¿0★ en el segundo ejercicio del juego es demasiado?**~~ **RESUELTA** (founder,
+   2026-08-11): `rook-2` lleva `starFloor: 1`, expresado como política del ejercicio y **no**
+   como cambio del grader global. `rook-distance-1` y `rook-4` conservan el 0★.
 2. **El VR no va a ver nada de esto.** El contador `2/3` y el CTA miden mucho menos que la
    tolerancia de `hub-clean` (~1.646 px contra un chip de ~450). Se anclan con **aserciones de
    DOM**, nunca con la foto — [[feedback_vr_tolerance_hides_small_elements]].
