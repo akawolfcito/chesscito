@@ -501,7 +501,25 @@ Con ~25 usuarios web admitidos **PODEMOS** legítimamente:
 | 4 | — | VR sin actualizar snapshots | ✅ 67 passed, 0 nuevos |
 | 5 | — | Intake probado end-to-end en preview | ✅ 1 fila `waiting` |
 | 6 | Founder | Allowlist de Privy prendido | ✅ **ya estaba, desde días antes** |
-| 7 | **Founder** | Aprobar la primera cohorte, **en el orden Privy → DB** | ⏳ pendiente |
+| 7 | Founder | Aprobar, **en el orden Privy → DB** | ✅ validado en prod |
+
+⛔ **HAY DOS APPS DE PRIVY Y CADA UNA TIENE SU PROPIO ALLOWLIST.** Dar de alta un email en una
+NO lo habilita en la otra:
+
+| App id | Sirve | `allowed_domains` |
+|---|---|---|
+| `cms022hew02bz0cjsq4fmd5gu` | **producción**: learn y play | `learn.chesscito.com`, `play.chesscito.com` |
+| `cmrxs5c28004v0dlcm5rn4mgw` | **preview** y local | incluye `learn-preview.chesscito.com`, `localhost` |
+
+`allowed_domains` es la forma fiable de distinguirlas — el banner "development mode" del
+dashboard lo muestran las dos. Cargar el email en la de producción y probar en
+`learn-preview` da *"You don't have access to this app"* aunque la fila de la DB ya diga
+`allowlisted`. Eso pasó el 2026-08-10 y es exactamente por qué el orden es **Privy → DB**: la
+tabla puede afirmar un acceso que no existe.
+
+**El bucle de aprobación se validó end-to-end en producción el 2026-08-10**: solicitud →
+alta en el allowlist de Privy → `update` a `allowlisted` → acceso. El allowlist de preview
+quedó prendido y vacío a propósito; se habilita si hace falta probar ahí.
 
 **Estado al cierre de la sesión (2026-08-10):** el intake está vivo en preview y escribe en la
 base compartida con producción. La cola tiene **1 fila en `waiting`** (la prueba del founder).
