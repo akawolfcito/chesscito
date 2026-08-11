@@ -18,6 +18,11 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { revalidateTag } from "next/cache";
 import { buildCatalog, type LabyrinthRecord } from "@/lib/content/catalog";
 import { exceedsPoolCap, projectedPoolSize } from "@/lib/content/pool-capacity";
+// The compiled baseline pools, NOT `getBaseline()` from merged-catalog: that
+// module pulls `unstable_cache` and the Supabase reader in at import time, and
+// this route needs one lookup, not the read path's machinery.
+import { EXERCISES } from "@/lib/game/exercises";
+import { exerciseTargets, isSweep } from "@/lib/game/targets";
 import { MAX_EXERCISES_PER_PIECE } from "@/lib/game/score";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
@@ -128,6 +133,37 @@ export async function POST(request: Request) {
             `over the ${MAX_EXERCISES_PER_PIECE} allowed per piece. ` +
             `Raise MAX_EXERCISES_PER_PIECE in lib/game/score.ts (it also raises the ` +
             `score ceiling the signer validates), or disable an exercise first.`,
+        ],
+        400,
+      );
+    }
+  }
+
+  // 5c. Star Sweep. The table has no `targets`/`starFloor` columns, so a row
+  //     written from this form CANNOT represent a multi-goal board: it would
+  //     store a single target with `optimal_moves` measured to that one square.
+  //
+  //     The read path already refuses such a row (`mergeOverlay` keeps the
+  //     baseline), so the game is safe either way. But refusing only there makes
+  //     the SAVE a silent no-op: the builder reports success, the row lands, and
+  //     the edit never appears — the author is left debugging their own content.
+  //     Guard the grantor: fail here, where somebody reads the reason.
+  //
+  //     Checked against the BASELINE, not a hardcoded id list, so every sweep
+  //     authored from now on is covered without touching this route again.
+  if (kind === "exercise") {
+    const baselineEntry = EXERCISES[record.piece]?.find(
+      (e) => e.id === record.id,
+    );
+    if (baselineEntry && isSweep(baselineEntry) && !record.disabled) {
+      return err(
+        [
+          `"${record.id}" is a Star Sweep (${exerciseTargets(baselineEntry).length} goals, ` +
+            `optimal ${baselineEntry.optimalMoves}) and this table cannot store one: ` +
+            `it has no columns for multiple targets. Saving would silently downgrade ` +
+            `the level to a single goal, so the read path ignores it and your edit ` +
+            `would never appear. Edit it in content/exercises.json and run ` +
+            `\`pnpm import-puzzles\`. Disabling it from here still works.`,
         ],
         400,
       );
