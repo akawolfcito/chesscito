@@ -66,20 +66,21 @@
   {
     "id": "rook-4",
     "piece": "rook",
-    "fen": "8/6R1/8/8/8/8/8/8 w - - 0 1",
+    "fen": "8/3N2R1/8/8/1N6/8/4N3/8",
     "target": "b2",
     "mover": "g7",
     "tier": "easy",
     "tags": [
       "corner-turn",
+      "blocked-file",
       "sweep",
       "route-order"
     ],
-    "order": 4,
+    "order": 7,
     "principle": "direction-change",
-    "title": "Turn, and turn again",
-    "playerPrompt": "Change direction between moves — never inside one. Get all three.",
-    "learningObjective": "The player learns the rook turns BETWEEN moves, and that a multi-goal route is a sequence of turns to be planned, not improvised.",
+    "title": "Turn around the walls",
+    "playerPrompt": "Three stars, and no straight line reaches any of them.",
+    "learningObjective": "The player combines direction changes with blocked files: the cheap order is no longer the obvious one once walls decide which turns are available.",
     "targets": [
       "b2",
       "b7",
@@ -94,17 +95,23 @@
     "mover": "d4",
     "tier": "easy",
     "tags": [
-      "no-diagonal"
+      "no-diagonal",
+      "sweep",
+      "route-order"
     ],
     "order": 3,
     "principle": "no-diagonal",
-    "title": "The rook is not a bishop",
-    "playerPrompt": "The star is one diagonal step away. The rook still needs two moves.",
-    "learningObjective": "The player learns the rook never moves diagonally: the nearest-looking square is not the cheapest. Replaces rook-5, which was rook-4's corner turn a second time."
+    "title": "Not a bishop",
+    "playerPrompt": "Both stars sit on a diagonal. Each one costs you two moves.",
+    "learningObjective": "The player learns the rook cannot travel a diagonal: a star one square diagonally away is two moves, not one, and a line of them multiplies that cost.",
+    "targets": [
+      "e5",
+      "f6"
+    ]
   },
   {
-    "title": "Find the shortest route",
-    "playerPrompt": "The file is shut. Many roads work — find the shortest.",
+    "title": "The long way round",
+    "playerPrompt": "Three stars in a maze. The order you pick decides the cost.",
     "id": "rook-6",
     "piece": "rook",
     "fen": "N6N/1RN2N2/1NN2NN1/3N4/4N3/1NN2NN1/2N2N2/N6N w - - 0 1",
@@ -113,15 +120,21 @@
     "tier": "medium",
     "tags": [
       "detour",
-      "blocked-file"
+      "sweep",
+      "route-order"
     ],
     "principle": "route-planning",
-    "learningObjective": "The player plans around a blocked file instead of pushing into it.",
-    "order": 8
+    "learningObjective": "The player plans a multi-goal route through a dense board, where the nearest star first is not the cheapest route overall.",
+    "order": 8,
+    "targets": [
+      "g2",
+      "d6",
+      "h5"
+    ]
   },
   {
-    "title": "Plan the whole route",
-    "playerPrompt": "Look before you move. Plan all four.",
+    "title": "Plan the whole tour",
+    "playerPrompt": "Every star is far. Plan all three before you move.",
     "id": "rook-7",
     "piece": "rook",
     "fen": "3R4/2NNN3/3N2NN/NN3NN1/1NN3N1/1N2N3/3NNN2/8 w - - 0 1",
@@ -129,12 +142,18 @@
     "mover": "d8",
     "tier": "medium",
     "tags": [
-      "detour",
-      "blocked-file"
+      "long-route",
+      "sweep",
+      "route-order"
     ],
     "principle": "route-planning-advanced",
-    "learningObjective": "The player plans a multi-leg route ahead of the first move rather than improvising.",
-    "order": 9
+    "learningObjective": "The player commits to a full route before the first move, on the board where improvising costs the most.",
+    "order": 9,
+    "targets": [
+      "e1",
+      "f6",
+      "h4"
+    ]
   },
   {
     "title": "The boxed star",
@@ -151,7 +170,7 @@
     ],
     "principle": "no-diagonal-advanced",
     "learningObjective": "The advanced form of no-diagonal: with the two adjacent squares blocked, the one-step diagonal costs four moves. Follows rook-no-diagonal-1, which teaches the clean case in two.",
-    "order": 7
+    "order": 6
   },
   {
     "title": "Your own piece blocks the way",
@@ -186,7 +205,7 @@
     ],
     "principle": "blocked-file",
     "learningObjective": "The player learns to leave a blocked file, travel on a free one, and re-enter above the blocker.",
-    "order": 6
+    "order": 4
   },
   {
     "id": "bishop-1",

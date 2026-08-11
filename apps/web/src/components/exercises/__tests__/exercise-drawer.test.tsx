@@ -53,9 +53,9 @@ describe("ExerciseDrawer — legacy (no visibleExerciseIds)", () => {
     render(<ExerciseDrawer {...baseProps} onNavigate={vi.fn()} />);
     // Full list present.
     expect(screen.getByText(titleOf("rook-1"))).toBeInTheDocument(); // rook-1
-    expect(screen.getByText("The boxed star")).toBeInTheDocument(); // rook-8
+    expect(screen.getByText(titleOf("rook-8"))).toBeInTheDocument(); // rook-8
     // Fresh progress → only index 0 unlocked; a later one is path-locked.
-    const locked = screen.getByText("The rook is not a bishop").closest("button"); // rook-no-diagonal-1
+    const locked = screen.getByText(titleOf("rook-no-diagonal-1")).closest("button"); // rook-no-diagonal-1
     expect(locked).toHaveAttribute("data-locked", "true");
   });
 
@@ -68,7 +68,12 @@ describe("ExerciseDrawer — legacy (no visibleExerciseIds)", () => {
 });
 
 describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
-  const visible = new Set(["rook-distance-1", "rook-6", "rook-8"]); // pool idx 2, 5, 7
+  /* Three ids that are NOT the first rows, so "only today's set" is a real
+   * claim. Deliberately by id and not by index: this set stands for "whatever
+   * the rotation picked", which is arbitrary by nature — unlike the canonical
+   * FIRST FIVE in the rotation hook's test, which is a position and must be
+   * read as one. */
+  const visible = new Set(["rook-distance-1", "rook-6", "rook-8"]);
 
   it("renders ONLY today's visible set", () => {
     render(
@@ -79,8 +84,8 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
       />,
     );
     expect(screen.getByText(titleOf("rook-distance-1"))).toBeInTheDocument(); // rook-distance-1
-    expect(screen.getByText("Find the shortest route")).toBeInTheDocument(); // rook-6
-    expect(screen.getByText("The boxed star")).toBeInTheDocument(); // rook-8
+    expect(screen.getByText(titleOf("rook-6"))).toBeInTheDocument(); // rook-6
+    expect(screen.getByText(titleOf("rook-8"))).toBeInTheDocument(); // rook-8
     // Outside the set → not rendered.
     expect(screen.queryByText(titleOf("rook-1"))).not.toBeInTheDocument(); // rook-1
     expect(screen.queryByText(titleOf("rook-2"))).not.toBeInTheDocument(); // rook-2
@@ -131,7 +136,7 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
         visibleExerciseIds={visible}
       />,
     );
-    expect(screen.getByText("The boxed star").closest("button")).toHaveAttribute("data-locked", "true");
+    expect(screen.getByText(titleOf("rook-8")).closest("button")).toHaveAttribute("data-locked", "true");
   });
 
   it("navigates with the REAL pool index, not the visible-slot index", () => {
@@ -146,9 +151,15 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
         visibleExerciseIds={visible}
       />,
     );
-    // "The boxed star" = rook-8 = pool index 7 (the 3rd visible row).
-    clickRow("The boxed star");
-    expect(onNavigate).toHaveBeenCalledWith(7);
+    // The claim is "navigates with the REAL pool index, not the visible-slot
+    // one": this row is the 3rd VISIBLE, and must report its pool position.
+    // Both the title and that position are read from the catalog — pinning
+    // either broke when the rook curriculum was reordered (rook-8 moved from
+    // slot 8 to slot 7, and the literal title had already drifted once).
+    const poolIndex = EXERCISES.rook.findIndex((e) => e.id === "rook-8");
+    expect(poolIndex).toBeGreaterThan(2); // not the 3rd row, or the test is vacuous
+    clickRow(titleOf("rook-8"));
+    expect(onNavigate).toHaveBeenCalledWith(poolIndex);
   });
 });
 

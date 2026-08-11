@@ -70,14 +70,17 @@ describe("flag OFF — legacy linear senda", () => {
   });
 });
 
-describe("flag ON — rotation visible set (guest canonical = rook-1..5)", () => {
+describe("flag ON — rotation visible set (guest canonical = first 5 of the pool)", () => {
   it("exposes the canonical 5 as the visible set", async () => {
     const { result } = await mount("rook", ROTATION);
     const visible = result.current.visibleExerciseIds;
     expect(visible).not.toBeNull();
     expect(visible!.size).toBe(5);
-    expect(visible!.has("rook-4")).toBe(true);
-    expect(visible!.has("rook-8")).toBe(false);
+    // ⚠️ By POOL INDEX, never by id. The canonical set is "the first five",
+    // which is a position; ids move whenever the curriculum is reordered, and
+    // pinning `rook-4` here broke the moment it went from slot 5 to slot 8.
+    expect(visible!.has(rookId(3))).toBe(true);
+    expect(visible!.has(rookId(7))).toBe(false);
   });
 
   it("navigates to a visible exercise beyond the linear senda", async () => {

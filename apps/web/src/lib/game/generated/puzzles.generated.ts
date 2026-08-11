@@ -103,7 +103,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "rook-no-diagonal-1",
-      "optimalMoves": 2,
+      "optimalMoves": 4,
       "startPos": {
         "file": 3,
         "rank": 3
@@ -112,97 +112,26 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "file": 4,
         "rank": 4
       },
-      "tier": "easy",
-      "tags": [
-        "no-diagonal"
-      ],
-      "principle": "no-diagonal",
-      "title": "The rook is not a bishop",
-      "playerPrompt": "The star is one diagonal step away. The rook still needs two moves.",
-      "learningObjective": "The player learns the rook never moves diagonally: the nearest-looking square is not the cheapest. Replaces rook-5, which was rook-4's corner turn a second time."
-    },
-    {
-      "id": "rook-4",
-      "optimalMoves": 3,
-      "startPos": {
-        "file": 6,
-        "rank": 6
-      },
-      "targetPos": {
-        "file": 1,
-        "rank": 1
-      },
       "targets": [
         {
-          "file": 1,
-          "rank": 1
+          "file": 4,
+          "rank": 4
         },
         {
-          "file": 1,
-          "rank": 6
-        },
-        {
-          "file": 6,
-          "rank": 1
+          "file": 5,
+          "rank": 5
         }
       ],
       "tier": "easy",
       "tags": [
-        "corner-turn",
+        "no-diagonal",
         "sweep",
         "route-order"
       ],
-      "principle": "direction-change",
-      "title": "Turn, and turn again",
-      "playerPrompt": "Change direction between moves — never inside one. Get all three.",
-      "learningObjective": "The player learns the rook turns BETWEEN moves, and that a multi-goal route is a sequence of turns to be planned, not improvised."
-    },
-    {
-      "id": "rook-9",
-      "optimalMoves": 5,
-      "startPos": {
-        "file": 0,
-        "rank": 0
-      },
-      "targetPos": {
-        "file": 7,
-        "rank": 7
-      },
-      "obstacles": [
-        {
-          "file": 5,
-          "rank": 7
-        },
-        {
-          "file": 1,
-          "rank": 6
-        },
-        {
-          "file": 7,
-          "rank": 5
-        },
-        {
-          "file": 0,
-          "rank": 2
-        },
-        {
-          "file": 6,
-          "rank": 1
-        },
-        {
-          "file": 2,
-          "rank": 0
-        }
-      ],
-      "tier": "medium",
-      "tags": [
-        "friendly-blocker",
-        "detour"
-      ],
-      "principle": "friendly-blocker",
-      "title": "Your own piece blocks the way",
-      "playerPrompt": "You cannot jump over your own piece. Go around it.",
-      "learningObjective": "The player learns a friendly piece stops the rook's ray and cannot be captured."
+      "principle": "no-diagonal",
+      "title": "Not a bishop",
+      "playerPrompt": "Both stars sit on a diagonal. Each one costs you two moves.",
+      "learningObjective": "The player learns the rook cannot travel a diagonal: a star one square diagonally away is two moves, not one, and a line of them multiplies that cost."
     },
     {
       "id": "rook-10",
@@ -267,6 +196,53 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "title": "The file is closed",
       "playerPrompt": "The file is shut. Step out, climb, and come back.",
       "learningObjective": "The player learns to leave a blocked file, travel on a free one, and re-enter above the blocker."
+    },
+    {
+      "id": "rook-9",
+      "optimalMoves": 5,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 7
+      },
+      "obstacles": [
+        {
+          "file": 5,
+          "rank": 7
+        },
+        {
+          "file": 1,
+          "rank": 6
+        },
+        {
+          "file": 7,
+          "rank": 5
+        },
+        {
+          "file": 0,
+          "rank": 2
+        },
+        {
+          "file": 6,
+          "rank": 1
+        },
+        {
+          "file": 2,
+          "rank": 0
+        }
+      ],
+      "tier": "medium",
+      "tags": [
+        "friendly-blocker",
+        "detour"
+      ],
+      "principle": "friendly-blocker",
+      "title": "Your own piece blocks the way",
+      "playerPrompt": "You cannot jump over your own piece. Go around it.",
+      "learningObjective": "The player learns a friendly piece stops the rook's ray and cannot be captured."
     },
     {
       "id": "rook-8",
@@ -360,8 +336,59 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "learningObjective": "The advanced form of no-diagonal: with the two adjacent squares blocked, the one-step diagonal costs four moves. Follows rook-no-diagonal-1, which teaches the clean case in two."
     },
     {
+      "id": "rook-4",
+      "optimalMoves": 7,
+      "startPos": {
+        "file": 6,
+        "rank": 6
+      },
+      "targetPos": {
+        "file": 1,
+        "rank": 1
+      },
+      "targets": [
+        {
+          "file": 1,
+          "rank": 1
+        },
+        {
+          "file": 1,
+          "rank": 6
+        },
+        {
+          "file": 6,
+          "rank": 1
+        }
+      ],
+      "obstacles": [
+        {
+          "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 1,
+          "rank": 3
+        },
+        {
+          "file": 4,
+          "rank": 1
+        }
+      ],
+      "tier": "easy",
+      "tags": [
+        "corner-turn",
+        "blocked-file",
+        "sweep",
+        "route-order"
+      ],
+      "principle": "direction-change",
+      "title": "Turn around the walls",
+      "playerPrompt": "Three stars, and no straight line reaches any of them.",
+      "learningObjective": "The player combines direction changes with blocked files: the cheap order is no longer the obvious one once walls decide which turns are available."
+    },
+    {
       "id": "rook-6",
-      "optimalMoves": 6,
+      "optimalMoves": 8,
       "startPos": {
         "file": 1,
         "rank": 6
@@ -370,6 +397,20 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "file": 6,
         "rank": 1
       },
+      "targets": [
+        {
+          "file": 6,
+          "rank": 1
+        },
+        {
+          "file": 3,
+          "rank": 5
+        },
+        {
+          "file": 7,
+          "rank": 4
+        }
+      ],
       "obstacles": [
         {
           "file": 0,
@@ -447,16 +488,17 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tier": "medium",
       "tags": [
         "detour",
-        "blocked-file"
+        "sweep",
+        "route-order"
       ],
       "principle": "route-planning",
-      "title": "Find the shortest route",
-      "playerPrompt": "The file is shut. Many roads work — find the shortest.",
-      "learningObjective": "The player plans around a blocked file instead of pushing into it."
+      "title": "The long way round",
+      "playerPrompt": "Three stars in a maze. The order you pick decides the cost.",
+      "learningObjective": "The player plans a multi-goal route through a dense board, where the nearest star first is not the cheapest route overall."
     },
     {
       "id": "rook-7",
-      "optimalMoves": 9,
+      "optimalMoves": 10,
       "startPos": {
         "file": 3,
         "rank": 7
@@ -465,6 +507,20 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "file": 4,
         "rank": 0
       },
+      "targets": [
+        {
+          "file": 4,
+          "rank": 0
+        },
+        {
+          "file": 5,
+          "rank": 5
+        },
+        {
+          "file": 7,
+          "rank": 3
+        }
+      ],
       "obstacles": [
         {
           "file": 2,
@@ -541,13 +597,14 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       ],
       "tier": "medium",
       "tags": [
-        "detour",
-        "blocked-file"
+        "long-route",
+        "sweep",
+        "route-order"
       ],
       "principle": "route-planning-advanced",
-      "title": "Plan the whole route",
-      "playerPrompt": "Look before you move. Plan all four.",
-      "learningObjective": "The player plans a multi-leg route ahead of the first move rather than improvising."
+      "title": "Plan the whole tour",
+      "playerPrompt": "Every star is far. Plan all three before you move.",
+      "learningObjective": "The player commits to a full route before the first move, on the board where improvising costs the most."
     }
   ],
   "bishop": [
@@ -4468,10 +4525,10 @@ export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "rook-1": "Move along the rank",
   "rook-2": "Sweep the file",
   "rook-distance-1": "Every distance counts",
-  "rook-4": "Turn, and turn again",
-  "rook-no-diagonal-1": "The rook is not a bishop",
-  "rook-6": "Find the shortest route",
-  "rook-7": "Plan the whole route",
+  "rook-4": "Turn around the walls",
+  "rook-no-diagonal-1": "Not a bishop",
+  "rook-6": "The long way round",
+  "rook-7": "Plan the whole tour",
   "rook-8": "The boxed star",
   "rook-9": "Your own piece blocks the way",
   "rook-10": "The file is closed",
