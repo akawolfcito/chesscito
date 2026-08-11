@@ -8,15 +8,17 @@
 
 ## Estado en una línea
 
-> **ACTUALIZADO 2026-08-11.** El slice **ya es jugable**: las etapas 1–7 están commiteadas con
-> suite verde y el contenido reintroducido. Falta la **8** (CTA de replay + contador `2/3`) y la
-> **9** (los dos eventos del CTA). Sin la 8 el jugador recoge las estrellas y ve su nota, pero
-> **nadie le dice qué tiene que superar** — que es literalmente la hipótesis del experimento,
-> así que no tiene sentido medir nada hasta que exista.
+> **ACTUALIZADO 2026-08-11 (2).** **Las nueve etapas están cerradas.** El slice es jugable y
+> ya es un experimento: el jugador recibe una meta explícita (`YOUR BEST` / `PERFECT` / el CTA)
+> y los dos eventos que separan "lo vio" de "decidió volver" están emitiendo.
+>
+> **Lo único que falta es el smoke manual en preview.**
 
-**Verificación al cierre:** **632 archivos / 7772 tests, exit 0** · `tsc` limpio ·
-VR **no corrido** (el contador y el CTA todavía no existen; cuando existan van con
-aserciones de DOM, nunca con la foto).
+**Verificación al cierre:** **634 archivos / 7787 tests, exit 0** · `tsc` limpio ·
+VR **no corrido a propósito**: el contador y el CTA miden ~450 px contra una tolerancia de
+~1.646, así que una foto verde no probaría que renderizaron. Van anclados por **aserción de
+DOM** — 15 tests, incluidos los dos casos que fijó el founder, verificados dos veces (en la
+lógica pura y renderizados).
 
 ⚠️ **La sección "La trampa" de abajo quedó RESUELTA** — se conserva porque explica por qué el
 contenido se separó de la capacidad, y esa es la razón por la que el bug no llegó a producción.
@@ -139,14 +141,43 @@ toca**: es el control (543 de 545 wallets pasan por él).
    sólo sigue al ejercicio. Sin aislar, una casilla recogida en el ejercicio **apagaba el
    objetivo del laberinto** cuando compartían cuadro.
 
-## Lo que falta (etapas 8–9)
+## Etapas 8–9, cerradas el 2026-08-11 (`c8091d8e`)
 
-8. **CTA de replay** en el `PhaseFlash` (⛔ no es un overlay —
-   [[project_exercise_completion_surface_is_phaseflash]]): "Tu mejor: 9 · Perfecta: 7", más el
-   contador vivo `2/3` durante la corrida. Una corrida perfecta **no** invita a repetir.
-   `bestMoves` y `isPerfectRun` ya existen; falta sólo la superficie.
-9. **Eventos del CTA**: `sweep_replay_cta_shown`, `sweep_replay_started`. `sweep_result` ya
-   emite y ya trae `isFirstContact` / `bestMovesBefore` / `improved`.
+**El gap se mide contra el RECORD, no contra la corrida.** Jugaste 10, tu mejor es 9, la
+perfecta es 7 → **`TRY AGAIN — 2 TO GO`**, no 3. La promesa es "superá tu récord"; un gap
+medido desde una corrida descartable se movería en cada intento mientras la meta no. Un
+récord perfecto **no ofrece replay**, y el gap se topea en 0 (un best bajo el óptimo significa
+que el **óptimo** está mal, y el CTA no puede decir "te faltan −1" mientras se investiga).
+
+El contador es **condición de presentación, no de lógica**: la máquina modela un ejercicio
+plano como sweep de un objetivo para que nada ramifique, pero `1 / 1` en los 56 tableros
+legacy es ruido.
+
+Eventos (criterio de aceptación, no telemetría opcional): `sweep_replay_cta_shown` y
+`sweep_replay_started`, ambos con `exercise_id`, `best_moves`, `optimal_moves`,
+`gap_to_perfect`. El `_shown` sale de un **effect**, no del render — en render disparaba en
+cada re-render del mismo success e inflaba el denominador de la conversión que mide.
+
+⚠️ **Tercer bug de orden de hooks:** el effect quedó bajo el early return `!visible || !flash`.
+Un hook que corre en algunos renders y no en otros es un crash, no un detalle. Es el tercero
+de la misma familia en este slice (identidad inestable → contaminación por `activeExercise` →
+este): **la lección es que la lógica pura se prueba sola y el pegamento con React es donde
+aparecen los errores.**
+
+⚠️ La copy va **hardcodeada en inglés** como sus vecinas (`+N Stars`, `×N Combo`) en vez de
+pasar por `editorial.ts`. Si sobrevive al experimento, va al bundle — y el guard del ES cubre
+todo el bundle.
+
+## Lo único que falta
+
+**Smoke manual en preview** (founder). Qué mirar, en orden:
+
+1. `rook-2` muestra **tres** estrellas y el contador `0 / 3` → `1 / 3` → `2 / 3`.
+2. No completa hasta la tercera; volver a pisar una ya recogida **no** suma.
+3. Al completar: `YOUR BEST` / `PERFECT` y el CTA con el número correcto.
+4. Rejugar y **empeorar**: el best NO baja y el gap no cambia.
+5. Llegar a la perfecta: aparece `PERFECT RUN` y **desaparece** el CTA.
+6. `rook-1` (el control) sigue **sin** contador y sin bloque de récord.
 
 ---
 
