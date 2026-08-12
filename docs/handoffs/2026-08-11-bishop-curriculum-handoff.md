@@ -1,7 +1,8 @@
 # Handoff — el currículo del alfil (segunda pieza del patrón)
 
-**Fecha:** 2026-08-11 · **Rama:** `main` LOCAL, **sin pushear** · **5 commits** de esta sesión
-**Estado:** ✅ verificado de punta a punta · ⏳ **falta el smoke manual del founder**
+**Fecha:** 2026-08-11 · **Rama:** `main` LOCAL, **sin pushear** · **8 commits** de esta sesión
+**Estado:** ✅ jugado por el founder, y **corregido con lo que encontró jugando**
+Siguiente trabajo, ya especificado: `docs/specs/2026-08-11-sweeps-in-the-builder-and-labyrinths-spec.md`
 
 Antecedente y patrón: `docs/handoffs/2026-08-11-rook-curriculum-and-sweep-close-handoff.md` §3
 Medición y diseño: `docs/audits/2026-08-11-bishop-curriculum-measurement.md`
@@ -12,25 +13,33 @@ Medición y diseño: `docs/audits/2026-08-11-bishop-curriculum-measurement.md`
 
 | | |
 |---|---|
-| Vitest | **638 archivos / 7823 tests · EXIT=0** (129 s, máquina libre, 0 `Unhandled Errors`) |
-| `pnpm exec tsc --noEmit` | limpio |
+| Vitest | **638 archivos / 7825 tests · EXIT=0** (máquina libre, 0 `Unhandled Errors`) |
+| `pnpm exec tsc --noEmit` | limpio (EXIT=0) |
 | `pnpm build` | **EXIT=0** |
-| E2E smoke del alfil | **10/10 · 55,5 s** (`--project=minipay`) |
+| E2E smoke del alfil | **10/10 · 33,9 s** (`--project=minipay`) |
 | VR | **67/67 · exit 0** (`--project=minipay --update-snapshots=none`, baselines 81 antes y después) |
-| Smoke manual | ⏳ **pendiente** |
+| Smoke manual | ✅ **hecho por el founder** — encontró tres cosas, todas arregladas (§4bis) |
 
 El conteo de archivos (638) coincide con la medición del cierre anterior, así que la corrida
-vale. Los tests suben de 7819 a 7823: el ejercicio nuevo aporta sus casos parametrizados y el
-alfil gana una aserción de color.
+vale. Los tests suben de 7819 a 7825: el ejercicio nuevo aporta sus casos parametrizados, el
+alfil gana una aserción de color y la celebración gana dos casos.
 
 ⚠️ **Bajé tu `pnpm dev` del 3002** (lo autorizaste) para que la suite y el VR no mintieran.
 Levantalo cuando quieras.
+
+⚠️ **Y un tropiezo propio que vale anotar:** encadené `build` y VR en una sola corrida de fondo
+y el VR salió rojo con `Timed out waiting from config.webServer`. No era código: la corrida
+anterior había dejado un `next-server` **huérfano** en el 3002, y el webServer de Playwright no
+podía levantar. Suelto el puerto y da 67/67. Es la misma familia que el gotcha ya escrito en
+CLAUDE.md ("bajá tu dev server"), sólo que el server colgado lo dejé yo. **No encadenar el VR
+detrás de otra cosa que levante el 3002.**
 
 ---
 
 ## 2. Qué quedó vivo
 
-**El currículo del alfil en cuatro escalones**, 10 tableros (era 9):
+**El currículo del alfil en cuatro escalones**, 10 tableros (era 9), ya con los tres ajustes
+del playtest:
 
 | # | id | escalón | ★ | óptimo | muros |
 |---:|---|---|---:|---:|---:|
@@ -41,11 +50,11 @@ Levantalo cuando quieras.
 | 5 | `bishop-7` | obstáculos | 1 | 4 | 15 |
 | 6 | `bishop-6` | obstáculos | 1 | 5 | 1 |
 | 7 | `bishop-10` | obstáculos | 1 | 7 | 16 |
-| 8 | `bishop-8` | ambos | 2 | 8 | 10 |
-| 9 | `bishop-3` | ambos | 2 | 9 | 5 |
-| 10 | `bishop-fence-1` | ambos | 3 | 10 | 3 |
+| 8 | `bishop-8` | ambos | 2 | 9 | 10 |
+| 9 | `bishop-3` | ambos | 2 | 11 | 5 |
+| 10 | `bishop-fence-1` | ambos | 4 | 12 | 3 |
 
-Curva **1, 3, 4, 4, 4, 5, 7, 8, 9, 10**: monótona, sin saltos > 2, **cero avisos** (venía con
+Curva **1, 3, 4, 4, 4, 5, 7, 9, 11, 12**: monótona, sin saltos > 2, **cero avisos** (venía con
 cuatro, la peor de las seis piezas).
 
 ⛔ **`bishop-1` no se convierte nunca** — control within-subject del alfil, igual que `rook-1`.
@@ -95,15 +104,54 @@ la ve `locked`. El techo de estrellas del ranking pasa de **177 a 180**.
 
 ---
 
+## 4bis. Lo que encontró el playtest (y los tests no)
+
+Otra vez: los tests no encontraron **ninguna** de las tres. Las encontró jugar.
+
+### ⛔ El bug grande: el camino de la insignia salteaba el flash, en las SEIS piezas
+
+El founder vio su propia celebración **a través de un diálogo**: WELL DONE detrás y el modal de
+la insignia encima, en el último tablero del alfil.
+
+`completeExercise` hace un **return temprano** cuando la insignia se gana, y ese return nunca
+pasaba por `holdForTap`. El flash quedaba en modo automático mientras el modal montaba de
+inmediato. La regla del 2026-07-17 —*mientras el flash espera el toque, su modal se queda
+atrás*— estaba escrita, comentada y probada para todos los otros finales; esta rama la
+esquivaba entera porque salía antes de prender el flag que la gobierna.
+
+⛔ **No era del alfil.** La rama no sabe de piezas: toda pieza termina ahí. El alfil sólo fue
+donde el founder llegó primero.
+
+Y los tests que cubrían la rama afirmaban el diálogo **en el tick siguiente a la jugada** — o
+sea, medido desde ARRIBA del flash — así que codificaban el bug en vez de detectarlo.
+→ `feedback_an_early_return_can_bypass_a_proven_rule`
+
+Arreglado sosteniendo el flash y preparando el reconocimiento dentro de la continuación, lo que
+cubre los dos dueños del momento (la cola y el prompt legacy). El timer de 13,5 s ahora cuenta
+desde el toque y no desde la jugada: antes corría mientras el jugador leía, o firmaba el claim.
+
+### Los dos ajustes de contenido
+
+- **`bishop-8` regalaba la primera estrella**: estaba a UN movimiento. Pasó de `b2` a `g1` —
+  ahora cuesta 4 y el nivel sube de 8 a 9.
+- **`bishop-fence-1` suma `d1`**, la única estrella del lado equivocado del cerco: obliga a
+  cruzar por la única casilla que cruza, y volver. 10 → 12.
+- ⚠️ Eso abría un salto de 3 al final. Lo tapa **un caballo más** en `bishop-3`: sube de 9 a 11
+  y su decisión de orden **mejora** (el peor orden pasa de +7 a +9 sobre el óptimo).
+
 ## 5. Lo que sigue
 
-1. **Smoke manual del alfil.** En la torre, los tests no encontraron **ninguno** de los cinco
-   defectos de producto; los encontró jugar. Mirar sobre todo los cuatro sweeps y los dos
-   tableros nuevos.
-2. **Pushear `main`.** Son 5 commits de esta sesión sobre los 26 de la anterior. Es del founder.
-3. **Repetir el patrón** en la tercera pieza. Quedan caballo, peón, dama y rey — y los cuatro
+1. **Volver a jugar el alfil** con los tres tableros corregidos, y comprobar en device que la
+   insignia ya no monta sobre el WELL DONE.
+2. **Pushear `main`.** Son 8 commits de esta sesión sobre los 26 de la anterior. Es del founder.
+3. **Sweeps en el builder, y después los laberintos** — el pedido del founder es dejar de
+   depender de que los autore yo por JSON. Spec completo, con alcance, riesgos y orden:
+   `docs/specs/2026-08-11-sweeps-in-the-builder-and-labyrinths-spec.md`.
+   ⛔ Ahí queda anotado que **el peón no puede tener sweeps** hasta que exista un solver que lo
+   conozca, y que los 15 juegos firma quedan fuera.
+4. **Repetir el patrón** en la tercera pieza. Quedan caballo, peón, dama y rey — y los cuatro
    tienen avisos de curva hoy (el rey, tres saltos y un retroceso).
-4. **Leer el experimento** cuando haya muestra: ahora hay dos piezas con sweeps y dos controles
+5. **Leer el experimento** cuando haya muestra: ahora hay dos piezas con sweeps y dos controles
    sin convertir (`rook-1`, `bishop-1`).
 
 **Abiertas, sin urgencia:**
