@@ -20,6 +20,9 @@ describe("labyrinth-builder/state", () => {
         piece: "rook",
         start: null,
         goal: null,
+        // Empty, not absent: a fresh draft is a one-goal board, and the paint
+        // handler pushes into this list without having to create it first.
+        extraGoals: [],
         walls: [],
         enemies: [],
         order: 0,

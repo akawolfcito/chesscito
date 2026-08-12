@@ -35,6 +35,16 @@ export type BuilderState = {
   /** `null` is a LEGAL final state when isTargetlessKind(kind); elsewhere it is
    *  an incomplete draft. buildFenBlock and the validator both branch on kind. */
   goal: string | null;
+  /** Star Sweep — the stars AFTER `goal`, in presentation order (the player may
+   *  collect them in any order). Empty/absent = a plain one-goal board.
+   *
+   *  ⚠️ Deliberately NOT a `goals: string[]` replacing `goal`: the runtime keeps
+   *  `targets[0] === targetPos` so every pre-sweep reader stays correct, and a
+   *  builder holding the same square in two places would have to keep them in
+   *  sync forever. Here `goal` IS the first star, and it is the only one whose
+   *  position in the list means anything: it must be the CHEAP one, or the
+   *  validator rejects the board as collapsed. */
+  extraGoals?: string[];
   walls: string[];
   /** Black pieces on the board. Typed (see AuthoredEnemy). Whether they are
    *  capture targets (pawn) or static threats (safe-path) is decided downstream
@@ -63,7 +73,17 @@ export type BuilderState = {
 };
 
 export function emptyState(piece: PieceId = "rook", kind: PuzzleKind = "labyrinth"): BuilderState {
-  return { kind, piece, start: null, goal: null, walls: [], enemies: [], order: 0 };
+  return { kind, piece, start: null, goal: null, extraGoals: [], walls: [], enemies: [], order: 0 };
+}
+
+/** The draft's stars, `goal` first — the exact `targets` a record would carry,
+ *  or `null` when this is a plain one-goal board. ONE place decides what a sweep
+ *  is (more than one star), so the record writer, the board paint and the
+ *  counter cannot disagree about whether a draft is one. */
+export function sweepTargets(s: BuilderState): string[] | null {
+  const extra = s.extraGoals?.filter(Boolean) ?? [];
+  if (!s.goal || extra.length === 0) return null;
+  return [s.goal, ...extra];
 }
 
 /** The record fields the builder UI owns and re-derives on every save. Anything
@@ -85,6 +105,11 @@ const UI_OWNED_FIELDS = new Set([
   "explanation",
   "tier",
   "tags",
+  // The stars. UI-owned since the builder can paint them (sweeps-in-the-builder
+  // stage 2) — and it MUST be, or the loaded copy would win over the edit and
+  // removing a star would silently do nothing. `starFloor` stays OUT: no control
+  // sets it, so it rides extraFields like the rest of what the UI cannot draw.
+  "targets",
   // The teaching guide — editable in the builder now, so its edit must win
   // over the loaded copy. `title` and `playerPrompt` stay OUT: they are
   // player-facing copy the builder cannot express, and still ride extraFields.
@@ -138,6 +163,10 @@ export function toPuzzleInput(s: BuilderState): PuzzleInput {
   return {
     kind: s.kind, piece: s.piece, tier: s.tier ?? "medium",
     fen, target, mover, explanation: s.explanation,
+    // So the LIVE verdict is the same one Save gets: the sweep's optimum, the
+    // collapse rule, the bishop's colour and the labyrinth refusal all come out
+    // of the shared validator, and only if it is handed the stars.
+    targets: sweepTargets(s) ?? undefined,
     // promotion-run carries its win condition here; the FEN cannot express it.
     mission: s.promoteTo ? { promoteTo: s.promoteTo } : undefined,
   };
@@ -157,6 +186,9 @@ export function toLabyrinthRecord(s: BuilderState, id = "draft"): LabyrinthRecor
     fen,
     mover,
     target,
+    // `goal` first, always: `target === targets[0]` is the invariant the runtime
+    // leans on, so the sweep follows the main goal instead of shadowing it.
+    targets: sweepTargets(s) ?? undefined,
     promoteTo: s.promoteTo,
     tier: s.tier,
     tags: s.tags,
@@ -164,6 +196,43 @@ export function toLabyrinthRecord(s: BuilderState, id = "draft"): LabyrinthRecor
     // Authoring-only teaching guide (never shown to players).
     principle: s.principle,
     learningObjective: s.learningObjective,
+    order: s.order,
+  };
+}
+
+/**
+ * The exact record Save posts to /api/dev/publish.
+ *
+ * Lived inline in the page's `handleSave`, which made the rule it encodes
+ * untestable: a field the UI OWNS reaches the wire only if it is listed here,
+ * and everything else rides `editExtras` verbatim. Get that wrong in either
+ * direction and the failure is silent — an owned field that is missing means the
+ * loaded copy wins and the author's edit does nothing (removing the last star
+ * would appear to work and change nothing); an unowned field that is listed gets
+ * dropped from every record that carries it.
+ *
+ * `extras` FIRST so the explicit fields below win.
+ */
+export function buildSaveRecord(
+  s: BuilderState,
+  extras: Record<string, unknown>,
+  fenBlock: { fen: string; target: string | undefined; mover: string },
+): Record<string, unknown> {
+  return {
+    ...extras,
+    id: s.id || undefined,
+    piece: s.piece,
+    ...fenBlock,
+    // The stars. `undefined` when the draft is a plain one-goal board, which is
+    // how the un-sweep travels: JSON drops the key, the baseline writer replaces
+    // the record whole, and the overlay column goes NULL.
+    targets: sweepTargets(s) ?? undefined,
+    promoteTo: s.promoteTo,
+    explanation: s.explanation || undefined,
+    tier: s.tier || undefined,
+    tags: s.tags && s.tags.length ? s.tags : undefined,
+    principle: s.principle || undefined,
+    learningObjective: s.learningObjective || undefined,
     order: s.order,
   };
 }

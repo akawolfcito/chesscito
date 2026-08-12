@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 import {
   buildFenBlock,
+  buildSaveRecord,
   deriveStateFromFen,
   emptyState,
   extraFields,
@@ -154,7 +155,10 @@ const CELL_OVERLAY: Record<string, CSSProperties> = {
   },
 };
 
-type Brush = "start" | "goal" | "wall" | "capture" | "trace";
+/** `star` paints the EXTRA goals of a Star Sweep (the ones after `goal`), so the
+ *  first star stays the `goal` brush and `target === targets[0]` holds by
+ *  construction rather than by a rule someone has to remember. */
+type Brush = "start" | "goal" | "star" | "wall" | "capture" | "trace";
 /** WHICH FILE the record lives in. Not the game — that is the record's `kind`. */
 type Bucket = "exercise" | "labyrinth";
 
@@ -307,6 +311,16 @@ export default function LabyrinthBuilderPage() {
       case "goal":
         update({ goal: state.goal === sq ? null : sq });
         break;
+      case "star":
+        // The main goal is already star #1. Silently adding a duplicate would
+        // land on the validator's "'targets' repeats a square", which is a true
+        // message about a mistake the UI could simply not allow.
+        if (sq === state.goal) {
+          say("warn", `${sq} is already the first star — paint the others elsewhere.`);
+          break;
+        }
+        update({ extraGoals: toggleIn(state.extraGoals ?? [], sq) });
+        break;
       case "wall":
         update({ walls: toggleIn(state.walls, sq) });
         break;
@@ -347,12 +361,17 @@ export default function LabyrinthBuilderPage() {
       ...prev,
       start: derived.start,
       goal: target || prev.goal,
+      // A FEN carries no stars, and this is a NEW position: keeping the previous
+      // ones would leave them pointing at squares of the board that just got
+      // replaced — stars nobody placed, on a level nobody authored.
+      extraGoals: [],
       walls: derived.walls,
       enemies: isThreatKind(prev.kind) || piece === "pawn" ? derived.enemies : [],
     }));
     setTracedPath([]);
     const notes = [...derived.notes];
     if (!target) notes.push("no target given — kept previous goal");
+    if (state.extraGoals?.length) notes.push("sweep stars cleared (a FEN carries none)");
     setLoadNote(
       `Loaded: start=${derived.start}, ${derived.walls.length} wall(s)` +
         (notes.length ? ` — ${notes.join("; ")}` : ""),
@@ -384,6 +403,9 @@ export default function LabyrinthBuilderPage() {
       start: derived.start,
       // A knight-tour record carries no target — it has no goal square to load.
       goal: rec.target ?? null,
+      // The sweep's other stars. `targets[0]` is `target`, already loaded above,
+      // so re-adding it here would paint a duplicate the validator then refuses.
+      extraGoals: rec.targets?.slice(1) ?? [],
       walls: derived.walls,
       // A threat kind KEEPS its typed enemies (the knight that IS a safe-path
       // level); a pawn keeps its capture targets. This is the load that used to
@@ -437,30 +459,13 @@ export default function LabyrinthBuilderPage() {
       const res = await fetch("/api/dev/publish", {
         method: "POST",
         headers: { "content-type": "application/json" },
+        // ⚠️ Assembled in lib/labyrinth-builder/state.ts, not inline here: which
+        // fields the UI OWNS (they win over the loaded copy) and which merely
+        // ride `editExtras` verbatim is a rule with silent failure modes in both
+        // directions, and inline it was untestable.
         body: JSON.stringify({
           bucket,
-          record: {
-            // Preserved exercise-only / unknown fields (pedagogy, `kind`, …)
-            // first, so an edit never drops them; explicit fields below win.
-            // `kind` still rides here — the UI holds it in state but does not
-            // re-author it, so editExtras stays its faithful carrier.
-            ...editExtras,
-            id: state.id || undefined,
-            piece: state.piece,
-            ...fenBlock,
-            // The UI now OWNS promoteTo (the promotion-run selector), so it wins
-            // over the loaded copy in editExtras. Undefined for every other kind
-            // → dropped by JSON, leaving their records untouched.
-            promoteTo: state.promoteTo,
-            explanation: state.explanation || undefined,
-            tier: state.tier || undefined,
-            tags: state.tags && state.tags.length ? state.tags : undefined,
-            // The teaching guide the UI now owns wins over the loaded copy in
-            // editExtras (undefined → dropped by JSON, clearing it on purpose).
-            principle: state.principle || undefined,
-            learningObjective: state.learningObjective || undefined,
-            order: state.order,
-          },
+          record: buildSaveRecord(state, editExtras, fenBlock),
         }),
       });
       const data = (await res.json()) as PublishResultLike;
@@ -610,6 +615,12 @@ export default function LabyrinthBuilderPage() {
             renderCell={(_file, _rank, sq) => {
               const isStart = state.start === sq;
               const isGoal = state.goal === sq;
+              // The extra stars of a sweep. Numbered from 2 because the goal is
+              // star 1 — an unnumbered field of identical stars would hide WHICH
+              // one is `targets[0]`, and that one is the only one whose position
+              // in the list means anything (it must be the cheap star).
+              const extraStar = (state.extraGoals ?? []).indexOf(sq);
+              const isExtraStar = extraStar >= 0;
               const isWall = state.walls.includes(sq);
               const enemy = state.enemies.find((e) => e.square === sq);
               const isCapture = !!enemy;
@@ -635,11 +646,18 @@ export default function LabyrinthBuilderPage() {
                   {isStart ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={PIECE_SRC[state.piece]} alt="" style={CELL_OVERLAY.sprite} />
-                  ) : isGoal ? (
+                  ) : isGoal || isExtraStar ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={STAR_SRC} alt="" style={CELL_OVERLAY.star} />
                   ) : null}
-                  {inPath && !isStart && !isGoal && !isWall && (
+                  {/* Only numbered once it IS a sweep: a lone "1" on a plain
+                      one-goal board would announce a mechanic that is not on. */}
+                  {(state.extraGoals?.length ?? 0) > 0 && (isGoal || isExtraStar) && (
+                    <span style={CELL_OVERLAY.trace}>
+                      {isGoal ? 1 : extraStar + 2}
+                    </span>
+                  )}
+                  {inPath && !isStart && !isGoal && !isExtraStar && !isWall && (
                     <span style={CELL_OVERLAY.dot} />
                   )}
                   {traceOrder !== undefined && (
@@ -652,14 +670,22 @@ export default function LabyrinthBuilderPage() {
 
           {/* Brushes */}
           <div className="flex flex-wrap gap-2">
-            {(["start", "goal", "wall", "capture", "trace"] as Brush[]).map((b) => {
+            {(["start", "goal", "star", "wall", "capture", "trace"] as Brush[]).map((b) => {
               const disabled =
                 // The enemy brush is for a pawn's captures OR a threat kind's
                 // typed pieces; hidden for the kinds that have neither.
                 (b === "capture" && state.piece !== "pawn" && !isThreatKind(state.kind)) ||
                 // The targetless kinds (queens, knight-tour, promotion-run) have
                 // no goal square to paint — hide the brush so it can't be set.
-                (b === "goal" && isTargetlessKind(state.kind));
+                (b === "goal" && isTargetlessKind(state.kind)) ||
+                // A sweep runs in the EXERCISE bucket only. The labyrinth runtime
+                // ends the level on the first star and grades that half-run
+                // against the full sweep optimum (3 stars for half a board), and
+                // the pawn has no sweep solver at all — it never retreats, so its
+                // legs are not independent. Both are refused by the validator;
+                // hiding the brush means the author never paints a board that is
+                // going to be rejected on save.
+                (b === "star" && (state.kind !== "exercise" || state.piece === "pawn"));
               if (disabled) return null;
               const label = b === "capture" && isThreatKind(state.kind) ? "enemy" : b;
               return (
@@ -708,7 +734,8 @@ export default function LabyrinthBuilderPage() {
             </div>
           ) : null}
           <p className="text-xs text-neutral-500">
-            piece=start · ★=goal · dark tile=wall · red ring/black piece=enemy ·
+            piece=start · ★=goal · ★2…★5=sweep stars (★1 is the goal, and it must
+            be the CHEAP one) · dark tile=wall · red ring/black piece=enemy ·
             red wash=watched by an enemy · blue dot=BFS path · number=traced order
           </p>
             </>
@@ -881,11 +908,26 @@ export default function LabyrinthBuilderPage() {
           {/* Validation */}
           <div className="rounded border border-neutral-800 bg-neutral-900 p-3 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-neutral-400">Optimal moves</span>
+              <span className="text-neutral-400">
+                {(state.extraGoals?.length ?? 0) > 0
+                  ? `Optimal moves (best order, ${(state.extraGoals?.length ?? 0) + 1} stars)`
+                  : "Optimal moves"}
+              </span>
               <span className="font-mono text-base">
                 {result.optimalMoves ?? "—"}
               </span>
             </div>
+            {/* Naming what the number measures, because it changes meaning under
+                the author's hands: on a sweep it is the cheapest ORDER over every
+                star, not the route to the goal — and the board deliberately
+                stops drawing a path, so there is nothing on screen to read it
+                off. An unexplained number that jumped is read as a bug. */}
+            {(state.extraGoals?.length ?? 0) > 0 && result.ok ? (
+              <p className="mt-1 text-xs text-neutral-500">
+                The cheapest order that collects all of them. No path is drawn: the
+                BFS route would only reach ★1.
+              </p>
+            ) : null}
             {result.errors.map((e, i) => (
               <p key={`e-${i}`} className="mt-1 text-red-400">
                 ✗ {e}

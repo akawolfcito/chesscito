@@ -79,8 +79,16 @@ export function validateBuilder(s: BuilderState, tracedPath?: string[]): Validat
   // Route highlight + shortcut warning only where the generic BFS is the real
   // solver. For the own-solver kinds the route is not a single path (a coverage
   // ceiling, an arrival under threats), so drawing one would lie.
+  //
+  // ⛔ A SWEEP is excluded for the same reason, and it is the easiest one to get
+  // wrong: `computeExerciseBfsPath` walks to `targetPos`, which on a sweep is
+  // only `targets[0]`. Drawing that leg under a multi-star board reads as "this
+  // is how the level is solved" — a different, shorter level than the one being
+  // authored — and the shortcut warning below would compare the author's traced
+  // route against one leg and demand walls for a route that is already optimal.
   let path: BoardPosition[] = [];
-  if ((s.kind === "exercise" || s.kind === "labyrinth") && built) {
+  const isSweepDraft = (built?.targets?.length ?? 0) > 1;
+  if ((s.kind === "exercise" || s.kind === "labyrinth") && built && !isSweepDraft) {
     const bfs = computeExerciseBfsPath(s.piece, built);
     path = bfs?.path ?? [];
     if (tracedPath && bfs && tracedPath.length - 1 > bfs.optimalMoves) {
