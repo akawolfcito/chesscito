@@ -83,6 +83,14 @@ export async function POST(request: Request) {
     piece: record.piece,
     fen: record.fen,
     target: record.target,
+    // Star Sweep. Every rule about them — two to five squares, no repeats, none
+    // on the start, `target === targets[0]`, the bishop's colour, the cheap
+    // first leg, the pawn's refusal, the labyrinth bucket's refusal — is
+    // enforced by `buildCatalog` below, which is the SAME validator
+    // `pnpm import-puzzles` runs. A second copy of them here is how the JSON
+    // path and the builder start disagreeing months later, in a published row.
+    targets: record.targets ?? undefined,
+    starFloor: record.starFloor ?? undefined,
     mover: record.mover ?? undefined,
     tier: record.tier,
     tags: record.tags ?? undefined,
@@ -139,15 +147,19 @@ export async function POST(request: Request) {
     }
   }
 
-  // 5c. Star Sweep. The table has no `targets`/`starFloor` columns, so a row
-  //     written from this form CANNOT represent a multi-goal board: it would
-  //     store a single target with `optimal_moves` measured to that one square.
+  // 5c. Star Sweep DEGRADATION. The table can now store a multi-goal board
+  //     (`targets`, `star_floor`), so an edit that carries its stars is a
+  //     legitimate save and falls through. What is refused is a ONE-GOAL row
+  //     landing on a multi-goal baseline: it would store a single target with
+  //     `optimal_moves` measured to that one square, and the screen treats
+  //     `optimalMoves === 1` as "any non-target move is an instant loss" — the
+  //     level ships unplayable and fails the player for trying.
   //
-  //     The read path already refuses such a row (`mergeOverlay` keeps the
-  //     baseline), so the game is safe either way. But refusing only there makes
-  //     the SAVE a silent no-op: the builder reports success, the row lands, and
-  //     the edit never appears — the author is left debugging their own content.
-  //     Guard the grantor: fail here, where somebody reads the reason.
+  //     The read path refuses it too (`mergeOverlay` keeps the baseline), so the
+  //     game is safe either way. But refusing only there makes the SAVE a silent
+  //     no-op: the builder reports success, the row lands, and the edit never
+  //     appears — the author is left debugging their own content against a
+  //     system that ignored them. Guard the grantor: fail where somebody reads.
   //
   //     Checked against the BASELINE, not a hardcoded id list, so every sweep
   //     authored from now on is covered without touching this route again.
@@ -155,15 +167,17 @@ export async function POST(request: Request) {
     const baselineEntry = EXERCISES[record.piece]?.find(
       (e) => e.id === record.id,
     );
-    if (baselineEntry && isSweep(baselineEntry) && !record.disabled) {
+    const rowIsSweep = (record.targets?.length ?? 0) > 1;
+    if (baselineEntry && isSweep(baselineEntry) && !record.disabled && !rowIsSweep) {
+      const goals = exerciseTargets(baselineEntry);
       return err(
         [
-          `"${record.id}" is a Star Sweep (${exerciseTargets(baselineEntry).length} goals, ` +
-            `optimal ${baselineEntry.optimalMoves}) and this table cannot store one: ` +
-            `it has no columns for multiple targets. Saving would silently downgrade ` +
-            `the level to a single goal, so the read path ignores it and your edit ` +
-            `would never appear. Edit it in content/exercises.json and run ` +
-            `\`pnpm import-puzzles\`. Disabling it from here still works.`,
+          `"${record.id}" is a Star Sweep (${goals.length} goals, optimal ` +
+            `${baselineEntry.optimalMoves}) and this row carries one target. Saving it ` +
+            `would downgrade the level to a single goal with an optimum of 1, which the ` +
+            `screen plays as "any non-target move loses" — so the read path ignores the ` +
+            `row and your edit would never appear. Send all ${goals.length} squares in ` +
+            `\`targets\` (the builder's multi-star mode), or disable it, which still works.`,
         ],
         400,
       );
@@ -184,6 +198,15 @@ export async function POST(request: Request) {
     explanation: record.explanation ?? null,
     order: record.order ?? 0,
     disabled: Boolean(record.disabled),
+    // NULL, never `[]` and never the single target repeated: a one-goal board is
+    // what every row written before the migration is, and it has to keep meaning
+    // exactly that. `isSweep` reads "more than one", so an empty array would be
+    // harmless here and a lie in the table.
+    targets: record.targets?.length ? record.targets : null,
+    star_floor: record.starFloor ?? null,
+    // ⛔ Always the SERVER's number. For a sweep it is the cheapest ORDER over
+    //    every target (`computeSweepOptimal`), not the leg to the first star:
+    //    the client's `optimalMoves`, if it sent one, is ignored right here.
     optimal_moves: built.optimalMoves,
     updated_at,
     // Save always lands at `draft` (content-staging-model Behavior 1); promotion

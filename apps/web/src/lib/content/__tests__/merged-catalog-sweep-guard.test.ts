@@ -1,5 +1,10 @@
 /**
- * An overlay row must never shadow a Star Sweep.
+ * An overlay row without `targets` must never shadow a Star Sweep.
+ *
+ * ⚠️ The rule NARROWED on 2026-08-11 (sweeps-in-the-builder): `content_overlay`
+ * now has a `targets` column, so a row CAN express a multi-goal board and is a
+ * valid override of one. What stays forbidden is the degradation — a one-goal
+ * row landing on a multi-goal baseline — which is the incident below.
  *
  * THE INCIDENT THIS ENCODES (2026-08-11)
  * --------------------------------------
@@ -109,5 +114,58 @@ describe("mergeOverlay — a row cannot shadow a sweep", () => {
     // expressing "not this one", not a broken version of it.
     const merged = mergeOverlay(getBaseline(), [shadowRow({ disabled: true })]);
     expect(merged.exercises.rook.some((e) => e.id === "rook-2")).toBe(false);
+  });
+});
+
+/** The same board carrying its stars: a1 -> a8 -> h1 is 3, the leg to a8 is 1. */
+const sweepRow = (over: Record<string, unknown> = {}) =>
+  shadowRow({
+    fen: "8/8/8/8/8/8/8/R7 w - - 0 1",
+    mover: "a1",
+    target: "a8",
+    targets: ["a8", "h1"],
+    optimal_moves: 3,
+    ...over,
+  });
+
+describe("mergeOverlay — a row WITH targets is a valid override", () => {
+  it("applies it, sweep and all", () => {
+    const merged = mergeOverlay(getBaseline(), [sweepRow()]);
+    const rook2 = rook2Of(merged);
+
+    expect(isSweep(rook2)).toBe(true);
+    expect(rook2.targets).toHaveLength(2);
+    expect(rook2.optimalMoves).toBe(3);
+    expect(merged.overlayCount).toBe(1);
+    expect(merged.skippedSweepOverrides).toEqual([]);
+  });
+
+  it("carries the row's own star floor", () => {
+    const merged = mergeOverlay(getBaseline(), [sweepRow({ star_floor: 2 })]);
+    expect(rook2Of(merged).starFloor).toBe(2);
+  });
+
+  it("drops a row whose stored optimum disagrees with the ORDER optimum", () => {
+    // Trust-but-verify, and the number that matters most: `optimal_moves` is the
+    // denominator the grader divides by. A row claiming the leg's 1 would make
+    // every completed run perfect — the same field that made the 2026-08-11
+    // incident unplayable rather than merely wrong.
+    const merged = mergeOverlay(getBaseline(), [sweepRow({ optimal_moves: 1 })]);
+
+    expect(rook2Of(merged).optimalMoves).toBeGreaterThan(1);
+    expect(merged.overlayCount).toBe(0);
+  });
+
+  it("creates a brand-new sweep the baseline never had", () => {
+    const merged = mergeOverlay(getBaseline(), [
+      sweepRow({ id: "rook-overlay-new-sweep", order: 99 }),
+    ]);
+    const created = merged.exercises.rook.find(
+      (e) => e.id === "rook-overlay-new-sweep",
+    )!;
+
+    expect(created).toBeDefined();
+    expect(isSweep(created)).toBe(true);
+    expect(created.optimalMoves).toBe(3);
   });
 });

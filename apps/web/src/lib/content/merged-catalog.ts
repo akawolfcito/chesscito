@@ -124,6 +124,13 @@ function buildOverlayRow(
     piece: row.piece,
     fen: row.fen,
     target: row.target,
+    // A sweep's optimum is RECOMPUTED from these below, like every other row's:
+    // the stored `optimal_moves` is checked against it, never adopted. Reading
+    // the targets is what makes that check ask the right question — without
+    // them the builder measures the leg to the first star and disagrees with
+    // itself on every multi-goal row.
+    targets: row.targets ?? undefined,
+    starFloor: row.star_floor ?? undefined,
     mover: row.mover ?? undefined,
     tier: row.tier,
     tags: row.tags ?? undefined,
@@ -216,11 +223,17 @@ export function mergeOverlay(
 
       const idx = list.findIndex((e) => e.exercise.id === row.id);
 
-      /* ⛔ An overlay row CANNOT express a Star Sweep, so it is not a valid
-       * override of one. The table has no `targets` (nor `starFloor`) column, so
-       * a row built from it always carries them as undefined — and replacing the
-       * baseline wholesale downgraded the level to a single goal with
-       * `optimalMoves: 1`, while still inheriting the sweep's title.
+      /* ⛔ A row WITHOUT targets is not a valid override of a board WITH them.
+       *
+       * ⚠️ The rule narrowed on 2026-08-11: the table now HAS `targets` and
+       * `star_floor`, so a multi-goal row is a legitimate edit and falls through
+       * to the merge below. What is still forbidden is the degradation — and
+       * that is what the incident was.
+       *
+       * Before the column existed, a row built from this table always carried
+       * them as undefined, and replacing the baseline wholesale downgraded the
+       * level to a single goal with `optimalMoves: 1`, while still inheriting
+       * the sweep's title.
        *
        * That produced, in production (2026-08-11): the new title, ONE star, no
        * counter, and — because the screen treats `optimalMoves === 1` as "any
@@ -237,7 +250,8 @@ export function mergeOverlay(
        * a sweep still works. The overlay may say "not this one"; it may not say
        * "this one, but broken". */
       const baselineEntry = idx >= 0 ? list[idx].exercise : undefined;
-      if (baselineEntry && isSweep(baselineEntry)) {
+      const rowIsSweep = (row.targets?.length ?? 0) > 1;
+      if (baselineEntry && isSweep(baselineEntry) && !rowIsSweep) {
         skippedSweeps.push(row.id);
         continue;
       }

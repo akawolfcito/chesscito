@@ -101,8 +101,23 @@ export interface ContentOverlayRow {
   /** Soft-delete (already a builder concept). A disabled row removes its
    *  puzzle from the merged pool in Phase 2. */
   disabled: boolean;
+  /** Star Sweep — every square to collect, algebraic, any order. Two to five,
+   *  and `target` MUST equal `targets[0]` (the validator enforces it; the column
+   *  cannot, it never sees the board). Absent/null = a one-goal puzzle, which is
+   *  what every row written before 2026-08-11 is.
+   *
+   *  ⚠️ OPTIONAL, not just nullable, and the difference is a deployment: an
+   *  environment whose migration has not run yet returns rows with no such KEY,
+   *  so a required field would be a type that lies on the very day it ships. */
+  targets?: string[] | null;
+  /** Minimum stars a completed run of this board is worth (1 or 2). Per-board
+   *  reward policy; 3 is rejected — a floor of 3 makes every run perfect and the
+   *  grader stops measuring. Same optionality story as `targets`. */
+  star_floor?: number | null;
   /** BFS-verified at write time; stored so the read path can trust it without
-   *  re-running BFS per request. */
+   *  re-running BFS per request. For a sweep this is the cheapest ORDER over all
+   *  targets — never the leg to the first star, which is a different question
+   *  with a smaller answer. */
   optimal_moves: number;
   /** ISO timestamp; audit + cache-key hint. Server-assigned on upsert. */
   updated_at: string;
@@ -118,8 +133,16 @@ export interface ContentOverlayRow {
 export interface ContentWriteRequest {
   kind: ContentBucket;
   /** Save always lands at `draft`; the server assigns stage, so the client never
-   *  supplies it (nor the BFS-derived / audit fields). */
-  record: Omit<ContentOverlayRow, "optimal_moves" | "updated_at" | "stage">;
+   *  supplies it (nor the BFS-derived / audit fields).
+   *
+   *  ⚠️ `starFloor` is camelCase here and snake_case on the row, on purpose: the
+   *  builder posts a `LabyrinthRecord` (the same shape it writes to
+   *  content/*.json), and the column names are the table's, not the author's.
+   *  The seam is this type and the route that reads it. */
+  record: Omit<
+    ContentOverlayRow,
+    "optimal_moves" | "updated_at" | "stage" | "star_floor"
+  > & { starFloor?: number | null };
 }
 
 export type ContentWriteResult =
