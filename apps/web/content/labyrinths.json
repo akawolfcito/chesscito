@@ -76,6 +76,11 @@
     "fen": "NB2N3/2NN1N1N/N1N2N2/2N2N1N/N1N2N2/2N2N1N/N1N1NN2/3N3N w - - 0 1",
     "target": "h8",
     "mover": "b8",
+    "targets": [
+      "h8",
+      "a1",
+      "d8"
+    ],
     "order": 1
   },
   {
