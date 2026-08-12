@@ -55,16 +55,31 @@ describe("buildCatalog — Star Sweep validation", () => {
     expect(cat.exercises.rook[0].targets).toHaveLength(2);
   });
 
-  it("rejects `targets` in the LABYRINTH bucket instead of dropping them", () => {
-    // ⛔ The labyrinth runtime compares the square against `targetPos` and ends
-    //    the level there — `targets[0]`. Authoring a sweep here today gives away
-    //    three stars for half a level, with no error anywhere.
+  it("ACCEPTS a sweep in the labyrinth bucket, since the runtime learned them", () => {
+    // Until 2026-08-12 this was a 400: the maze handler ended the level on the
+    // first star and graded that half-run against the full sweep optimum.
     const cat = buildCatalog([], [rookSweep({ kind: "labyrinth" })], []);
 
+    expect(cat.errors).toEqual([]);
+    expect(cat.labyrinths.rook).toHaveLength(1);
+    expect(cat.labyrinths.rook[0].optimalMoves).toBe(3);
+    expect(cat.labyrinths.rook[0].targets).toHaveLength(2);
+  });
+
+  it("still rejects `targets` on a signature game, naming its own solver", () => {
+    // ⛔ Each of the five answers its own question: a tour has no destination,
+    //    Promotion Run grades failures, Safe Path's route needs the attack map.
+    //    A generic-BFS sweep optimum there is a confident number about another
+    //    game.
+    const cat = buildCatalog(
+      [],
+      [rookSweep({ kind: "diagonal-run", piece: "bishop", fen: "8/8/8/8/8/8/8/2B5 w - - 0 1", mover: "c1", target: "e3", targets: ["e3", "g5"] })],
+      [],
+    );
+
     expect(cat.errors).toHaveLength(1);
-    expect(cat.errors[0]).toMatch(/labyrinth/i);
-    expect(cat.errors[0]).toMatch(/first (star|target)|not sweep-aware/i);
-    expect(cat.labyrinths.rook).toHaveLength(0);
+    expect(cat.errors[0]).toMatch(/diagonal-run/);
+    expect(cat.errors[0]).toMatch(/own solver|different game/i);
   });
 
   it("reports the pawn as a RULE, never as a throw", () => {

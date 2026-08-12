@@ -11,7 +11,8 @@ import {
   getRequestIp,
   parseAddress,
 } from "@/lib/server/demo-signing";
-import { LABYRINTHS, labyrinthStars } from "@/lib/game/exercises";
+import { LABYRINTHS } from "@/lib/game/exercises";
+import { gradeLabyrinthRun } from "@/lib/game/scoring";
 import { resolveLabyrinthMintPolicy } from "@/lib/game/labyrinth-mint-policy";
 import type { Exercise } from "@/lib/game/types";
 
@@ -58,7 +59,10 @@ export async function POST(request: Request) {
       throw new Error("Invalid moves");
     }
 
-    const stars = labyrinthStars(moves, optimal);
+    // The dispatch, not the raw scale: a maze that asks for several stars is
+    // graded on relative bands. Grading it here with the fixed ones would sign a
+    // star count the player never saw.
+    const stars = gradeLabyrinthRun(moves, exercise);
     const policy = resolveLabyrinthMintPolicy(exercise);
 
     if (!policy.mintable) {

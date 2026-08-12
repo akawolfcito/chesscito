@@ -183,7 +183,6 @@ import {
   badgeRequiredCount,
   completedExerciseCount,
   isBadgeEarned,
-  labyrinthStars,
 } from "@/lib/game/exercises";
 import { promotionRunStars } from "@/lib/game/promotion-run";
 import { getMaxPossibleStars } from "@/lib/game/progress-adapter";
@@ -212,7 +211,7 @@ import {
 import { attemptShieldSpendWithPeones } from "@/lib/peones/shield-spend-fallback";
 import { ActionPin } from "@/components/redesign/action-pin";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
-import { gradeExerciseRun } from "@/lib/game/scoring";
+import { gradeExerciseRun, gradeLabyrinthRun } from "@/lib/game/scoring";
 import { collectAt, startSweepRun, type SweepRunState } from "@/lib/game/sweep-run";
 import { toSweepResultPresentation } from "@/lib/game/sweep-result-cta";
 import { isSweep } from "@/lib/game/targets";
@@ -2978,21 +2977,48 @@ export function ExercisesScreen({
   const effectiveLabyrinthMode = activeLabyrinth !== null;
   const activeExercise = activeLabyrinth ?? currentExercise;
 
-  /* Star Sweep board props, gated on "no labyrinth active".
-   * `activeExercise` is `activeLabyrinth ?? currentExercise`, but `sweepRun` only
-   * ever tracks the EXERCISE — a labyrinth is played through
-   * `handleLabyrinthMove` and never has `targets`. Passing the run unguarded
-   * would let a square collected during the exercise DIM the labyrinth's goal
-   * whenever the two happen to share a square, hiding the only star on screen. */
-  const sweepBoardTargets = activeLabyrinth ? undefined : activeExercise.targets;
-  const sweepBoardCollected = activeLabyrinth ? undefined : sweepRun.collectedKeys;
+  /* The labyrinth lane's OWN collection state.
+   *
+   * ⚠️ Separate from `sweepRun` on purpose, not for symmetry. The two lanes have
+   * their own handlers, their own best store and their own grader, and a single
+   * shared run would have to be reset on entering and leaving the maze — a reset
+   * that lands mid-route wipes the collected stars and leaves a sweep literally
+   * unwinnable. Same ref-is-the-truth discipline as lane 1: two landings inside
+   * one React batch would otherwise both read the pre-batch value and silently
+   * lose the second star on a fast player. */
+  const [labyrinthRun, setLabyrinthRun] = useState<SweepRunState>(() =>
+    startSweepRun(activeLabyrinth ?? currentExercise),
+  );
+  const labyrinthRunRef = useRef(labyrinthRun);
+  // ⛔ Keyed on the ID, never on the object: `activeLabyrinth` is an element of a
+  // list the catalog can rebuild, so its identity is not stable across renders.
+  // Keyed on the object this re-runs mid-route and wipes the run.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!activeLabyrinth) return;
+    const fresh = startSweepRun(activeLabyrinth);
+    labyrinthRunRef.current = fresh;
+    setLabyrinthRun(fresh);
+  }, [activeLabyrinth?.id, boardKey]);
 
-  /* The live counter. PRESENTATION ONLY: `sweepRun` models a plain exercise as a
-   * one-target sweep so no game logic branches, but "1 / 1" on the 56 legacy
-   * boards is noise — a counter that never moves teaches nothing. */
+  /* Star Sweep board props. Both lanes draw their stars from the run that is
+   * actually being played.
+   *
+   * ⚠️ The lanes must not cross: passing lane 1's run while a maze is mounted
+   * would let a square collected during the exercise DIM the labyrinth's goal
+   * whenever the two happen to share a square — hiding the only star on screen. */
+  const sweepBoardTargets = activeExercise.targets;
+  const sweepBoardCollected = activeLabyrinth
+    ? labyrinthRun.collectedKeys
+    : sweepRun.collectedKeys;
+
+  /* The live counter. PRESENTATION ONLY: both runs model a one-goal board as a
+   * one-target sweep so no game logic branches, but "1 / 1" on a legacy board is
+   * noise — a counter that never moves teaches nothing. */
+  const activeRun = activeLabyrinth ? labyrinthRun : sweepRun;
   const sweepCounter =
-    !activeLabyrinth && sweepRun.totalCount > 1
-      ? { collected: sweepRun.collectedCount, total: sweepRun.totalCount }
+    activeRun.totalCount > 1
+      ? { collected: activeRun.collectedCount, total: activeRun.totalCount }
       : undefined;
 
   /* The record block, only for the boards in the experiment and only on success.
@@ -3583,8 +3609,8 @@ export function ExercisesScreen({
       position: BoardPosition,
       movesCount: number,
       /**
-       * Promotion Run only. Everything else grades MOVES with `labyrinthStars`
-       * and leaves this alone.
+       * Promotion Run only. Everything else grades MOVES through
+       * `gradeLabyrinthRun` and leaves this alone.
        *
        * ⚠️ Why it exists: that game cannot be graded by moves at all. A pawn
        * advances exactly one rank per move, so every winning run measures
@@ -3606,14 +3632,27 @@ export function ExercisesScreen({
       // chip. Fires on every move; the completion check below only
       // runs when the player lands on the target square.
       setLabyrinthMoves(movesCount);
-      const reached =
-        position.file === activeLabyrinth.targetPos.file &&
-        position.rank === activeLabyrinth.targetPos.rank;
-      if (!reached) return;
+      // ⛔ NOT `position === activeLabyrinth.targetPos`. On a sweep `targetPos`
+      // IS `targets[0]`, so that check ended the level on the FIRST star and
+      // then graded the half-run against the optimum of the WHOLE sweep: three
+      // stars for half a maze, in silence, with the best persisted. It is the
+      // very mistake lane 1 has documented in capitals over its own handler
+      // (`handleMove`), and this handler used to make it literally.
+      //
+      // A plain maze is a one-target sweep (`exerciseTargets` returns
+      // `[targetPos]`), so nothing here branches on `isSweep` and the 19
+      // existing labyrinths plus the five signature games take exactly the same
+      // path to completion they always did.
+      const run = collectAt(labyrinthRunRef.current, activeLabyrinth, position);
+      if (run !== labyrinthRunRef.current) {
+        labyrinthRunRef.current = run;
+        setLabyrinthRun(run);
+      }
+      if (!run.isComplete) return;
       const metric = grading ? grading.metric : movesCount;
       const starsFor =
         grading?.starsFor ??
-        ((m: number) => labyrinthStars(m, activeLabyrinth.optimalMoves));
+        ((m: number) => gradeLabyrinthRun(m, activeLabyrinth));
       const stars = starsFor(metric);
       // Labyrinths sit outside the daily session: they never spend a quota
       // slot and their best is never frozen. They feed no score, so there is

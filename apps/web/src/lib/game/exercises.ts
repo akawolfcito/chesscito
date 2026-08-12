@@ -224,10 +224,10 @@ export function resolveExerciseDescription(
   return fallback(index + 1);
 }
 
-/** Compute stars earned in a labyrinth. */
-export function labyrinthStars(moves: number, optimal: number): number {
-  if (moves <= optimal) return 3;
-  if (moves <= optimal + 2) return 2;
-  if (moves <= optimal + 4) return 1;
-  return 0;
-}
+/* `labyrinthStars` MOVED to lib/game/scoring.ts, where the other three graders
+ * live, and is re-exported here so its existing importers keep working.
+ *
+ * ⛔ It is no longer the thing a caller should reach for: a labyrinth can be a
+ * Star Sweep now, and this scale is wrong for one. Call `gradeLabyrinthRun`,
+ * which dispatches — the same rule lane 1 learned as `gradeExerciseRun`. */
+export { labyrinthStars } from "@/lib/game/scoring";

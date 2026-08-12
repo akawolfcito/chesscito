@@ -155,12 +155,13 @@ describe("validateBuilder — the live verdict knows about sweeps", () => {
     expect(res.errors.join(" ")).toMatch(/repeats/i);
   });
 
-  it("refuses a sweep on a LABYRINTH draft, in the author's own words", () => {
-    const res = validateBuilder(
-      draft({ kind: "labyrinth", extraGoals: ["h1"] }),
-    );
+  it("ACCEPTS a sweep on a labyrinth draft, and measures it the same way", () => {
+    // The maze runtime learned sweeps on 2026-08-12; before that this draft was
+    // a 400 and the brush was hidden.
+    const res = validateBuilder(draft({ kind: "labyrinth", extraGoals: ["h1"] }));
 
-    expect(res.ok).toBe(false);
-    expect(res.errors.join(" ")).toMatch(/labyrinth/i);
+    expect(res.ok).toBe(true);
+    expect(res.optimalMoves).toBe(3);
+    expect(res.path).toEqual([]);
   });
 });

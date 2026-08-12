@@ -201,14 +201,14 @@ describe("POST /api/admin/content — a row may not degrade a sweep", () => {
 });
 
 describe("POST /api/admin/content — the validator's rules reach the author", () => {
-  it("refuses a sweep in the LABYRINTH bucket, with the runtime's reason", async () => {
-    // The labyrinth runtime ends the level on the first star and then grades
-    // that half-run against the full sweep optimum: 3 stars for half a board.
+  it("accepts a sweep in the LABYRINTH bucket now that the runtime knows them", async () => {
+    // Refused until 2026-08-12, when the maze handler stopped ending the level
+    // on the first star. The optimum stored is the sweep's, not the leg's.
     const res = await post(sweepRecord("lab-sweep-new", { order: 9 }), "labyrinth");
 
-    expect(res.status).toBe(400);
-    expect(await errorsOf(res)).toMatch(/labyrinth/i);
-    expect(supabaseMock.upsert).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(savedRow().targets).toEqual(["a8", "h1"]);
+    expect(savedRow().optimal_moves).toBe(3);
   });
 
   it("refuses a sweep that COLLAPSED into a one-goal board", async () => {

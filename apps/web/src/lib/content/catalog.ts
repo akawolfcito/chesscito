@@ -340,19 +340,23 @@ export function buildCatalog(
     // experiment measures a lie; one move too low makes it unreachable.
     let sweepOptimal: number | null = null;
     if (mapped.targets && mapped.targets.length > 1) {
-      // ⛔ ONLY the exercise bucket runs a sweep. The labyrinth runtime compares
-      //    the landed square against `targetPos` — which in a sweep IS
-      //    `targets[0]` — and ends the level there, then hands that half-run to
-      //    `labyrinthStars` against the FULL sweep optimum computed below. The
-      //    result is three stars for half a board, in silence, with a poisoned
-      //    best persisted. Dropping the extra targets quietly (what this builder
-      //    used to do) hides the same level; say the rule instead.
-      if (input.kind !== "exercise") {
+      // Sweeps run in the `exercise` and `labyrinth` buckets. The labyrinth
+      // runtime became sweep-aware on 2026-08-12 (it collects through
+      // `sweep-run.ts` and grades through `gradeLabyrinthRun`); until then this
+      // rejected every one of them, because its handler ended the level on the
+      // FIRST star and then graded that half-run against the full sweep optimum.
+      //
+      // ⛔ The five signature games stay OUT, and not as a formality: each has
+      //    its own solver answering its own question. A tour and N-Queens have no
+      //    destination at all; Promotion Run grades failures; Safe Path's route
+      //    is measured by the only solver that reads the attack map. A sweep
+      //    optimum computed by the generic BFS would be a confident number about
+      //    a different game.
+      if (input.kind !== "exercise" && input.kind !== "labyrinth") {
         errors.push(
-          `${label}: 'targets' is an EXERCISE-only field — the '${input.kind}' runtime is not ` +
-            `sweep-aware. It ends the level on the FIRST star (targets[0]) and then grades ` +
-            `that half-run against the full sweep optimum, awarding 3 stars for half a board. ` +
-            `Move the puzzle to content/exercises.json, or drop the extra targets.`,
+          `${label}: 'targets' belongs to the exercise and labyrinth buckets — '${input.kind}' ` +
+            `has its own solver and its own win condition, so a sweep optimum measured by the ` +
+            `generic BFS would describe a different game. Drop the extra targets.`,
         );
         return;
       }

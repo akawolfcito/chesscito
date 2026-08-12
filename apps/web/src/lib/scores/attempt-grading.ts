@@ -31,7 +31,7 @@ import type { BuiltCatalog } from "@/lib/content/catalog";
 import { getLevelId } from "@/lib/contracts/scoreboard";
 import { labyrinthStars } from "@/lib/game/exercises";
 import { promotionRunStars } from "@/lib/game/promotion-run";
-import { gradeExerciseRun } from "@/lib/game/scoring";
+import { gradeExerciseRun, gradeLabyrinthRun } from "@/lib/game/scoring";
 import { tourStars } from "@/lib/game/tour-score";
 import type { Exercise, PieceId } from "@/lib/game/types";
 
@@ -138,7 +138,10 @@ export const ATTEMPT_BUCKETS: Record<AttemptFamily, AttemptBucket> = {
     family: "labyrinth",
     poolKey: "labyrinths",
     measureKind: "moves",
-    stars: (movesUsed, exercise) => labyrinthStars(movesUsed, exercise.optimalMoves),
+    // `gradeLabyrinthRun`, not `labyrinthStars`: a maze can ask for several stars
+    // now, and those grade on relative bands. Same dispatch the screen calls, so
+    // the grade shown and the grade persisted cannot drift.
+    stars: (movesUsed, exercise) => gradeLabyrinthRun(movesUsed, exercise),
   },
   "diagonal-run": {
     family: "diagonal-run",

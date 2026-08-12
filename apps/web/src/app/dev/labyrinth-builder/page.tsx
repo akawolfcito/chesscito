@@ -679,14 +679,15 @@ export default function LabyrinthBuilderPage() {
                 // The targetless kinds (queens, knight-tour, promotion-run) have
                 // no goal square to paint — hide the brush so it can't be set.
                 (b === "goal" && isTargetlessKind(state.kind)) ||
-                // A sweep runs in the EXERCISE bucket only. The labyrinth runtime
-                // ends the level on the first star and grades that half-run
-                // against the full sweep optimum (3 stars for half a board), and
-                // the pawn has no sweep solver at all — it never retreats, so its
-                // legs are not independent. Both are refused by the validator;
-                // hiding the brush means the author never paints a board that is
-                // going to be rejected on save.
-                (b === "star" && (state.kind !== "exercise" || state.piece === "pawn"));
+                // Sweeps run in exercises and labyrinths. The five signature
+                // games each have their own solver answering their own question,
+                // and the pawn has no sweep solver at all — it never retreats, so
+                // its legs are not independent and the pairwise sum is not the
+                // optimum. Both are refused by the validator; hiding the brush
+                // means the author never paints a board bound for a 400.
+                (b === "star" &&
+                  ((state.kind !== "exercise" && state.kind !== "labyrinth") ||
+                    state.piece === "pawn"));
               if (disabled) return null;
               const label = b === "capture" && isThreatKind(state.kind) ? "enemy" : b;
               return (

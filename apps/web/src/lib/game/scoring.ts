@@ -106,6 +106,53 @@ export function gradeExerciseRun(
 }
 
 /**
+ * Stars for a labyrinth run on the LEGACY fixed bands (+2 → 2★, +4 → 1★).
+ *
+ * ⛔ Not the entry point. Call `gradeLabyrinthRun`, which decides between this
+ * and the relative bands. Lived in `lib/game/exercises.ts` until a labyrinth
+ * could be a sweep; it sits with the other graders now.
+ */
+export function labyrinthStars(moves: number, optimal: number): number {
+  if (moves <= optimal) return 3;
+  if (moves <= optimal + 2) return 2;
+  if (moves <= optimal + 4) return 1;
+  return 0;
+}
+
+/**
+ * THE single dispatch point for grading a LABYRINTH run — the screen, the
+ * attempt bucket and the signing route all call this and nothing else.
+ *
+ * The twin of `gradeExerciseRun`, and it exists for the same reason: three call
+ * sites graded labyrinths with `labyrinthStars` directly, and a maze that asks
+ * for several stars must not be graded on the fixed bands. A sweep's optimum is
+ * several times larger, so +2/+4 is proportionally far harsher — 16 moves on a
+ * 12-move sweep is a decent run (2★ relative) and a total failure (0★ fixed).
+ *
+ * ⛔ Migrating some call sites and not others type-checks perfectly: both scales
+ * are `(number, number) => number`. That is why this is a dispatch and not a
+ * conditional at each site.
+ *
+ * ⚠️ The five signature games do NOT come through here for their own scale:
+ * Knight's Tour and N-Queens grade coverage (`tourStars`) and Promotion Run
+ * grades failures. They are graded by arrival like a labyrinth only where they
+ * already were, and none of them can carry `targets`.
+ */
+export function gradeLabyrinthRun(
+  movesUsed: number,
+  labyrinth: Pick<Exercise, "optimalMoves" | "targetPos" | "targets" | "starFloor">,
+): 0 | 1 | 2 | 3 {
+  const earned = isSweep(labyrinth as Exercise)
+    ? sweepStars(movesUsed, labyrinth.optimalMoves)
+    : (labyrinthStars(movesUsed, labyrinth.optimalMoves) as 0 | 1 | 2 | 3);
+  // Same placement as lane 1's: the floor is policy, not scale, so neither
+  // grader knows about it. No labyrinth authors one today; the day one does, it
+  // must mean here what it means there.
+  const floor = labyrinth.starFloor;
+  return (floor === undefined ? earned : Math.max(earned, floor)) as 0 | 1 | 2 | 3;
+}
+
+/**
  * Whether this run is the theoretical best — the "perfect run" the replay CTA
  * names. Deliberately derived from the same optimum the grader uses rather than
  * from "did it score 3★": the two agree today, and a future band change must not
