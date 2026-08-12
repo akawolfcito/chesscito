@@ -131,11 +131,33 @@ en ese request se revierte si el crédito no aterriza.
   conviven; evita la ventana de `PGRST202` en que TODO gasto falla.
   Prerrequisitos: (1) sign-off del founder — **pendiente**; (2) cliente con token — ✅ cumplido;
   (3) ruta y migración en el mismo deploy — lo resuelve el overload.
-- ⚠️ **`/api/sign-badge` firma cualquier `levelId` 1..10000 sin verificar estrellas**
-  (`route.ts:23`). El gate de 10★ es **client-only**. El contrato bloquea reclamar *dos veces*,
-  no reclamar *sin merecerlo*. Cierra con server-verified progress.
-- **Server-verified progress** — el único anti-cheat real. Requerido antes de que haya dinero
-  colgando de un score. **Feature, no un `if`.**
+- 🅿️ **`/api/sign-badge` y `/api/sign-score` firman sin verificar lo ganado. RIESGO ACEPTADO**
+  (founder, 2026-08-12). `sign-badge` acepta cualquier `levelId` 1..10000 (`route.ts:23`) y
+  `sign-score` cualquier score dentro de `MAX_SUBMITTABLE_SCORE` (`route.ts:33`). El gate del
+  80% es **client-only**: el contrato bloquea reclamar *dos veces*, no reclamar *sin merecerlo*.
+
+  **La razón del founder, y es de producto:** la insignia **evidencia participación, no la
+  premia sola**. Hacer trampa exige igual firmar y pagar la tx, así que deja wallet y traza; la
+  medalla es **una parte** del criterio de premiación en el roadmap, nunca el todo; y las
+  métricas internas cruzan si alguien entró, jugó y su ritmo es coherente — una medalla suelta
+  sin actividad detrás se nota. Ese cruce es más barato que rediseñar el progreso.
+
+  Lo medido que respalda la decisión: las insignias son **soulbound** (`BadgesUpgradeable.sol`
+  revierte toda transferencia que no sea el mint), **no acreditan Peones** y **el leaderboard no
+  las mira** (ninguna migración las menciona). El premio de hacer trampa es una medalla
+  intransferible en la propia wallet.
+
+  ⚠️ **Corrección para quien lo relea:** NO se puede reclamar "directo por la cadena". El
+  contrato exige la firma EIP-712 del signer (`recovered != signer → revert InvalidSignature`,
+  línea 207), así que el backend es la ÚNICA fuente de insignias y validar ahí sería un candado
+  real, no un cartel. La decisión es de costo/beneficio, no de imposibilidad.
+
+  ⛔ **Disparador para reabrir — el día que una insignia o un score DECIDA SOLO un premio con
+  valor** (airdrop, torneo, descuento, prioridad). Las ya emitidas son **irrevocables**:
+  soulbound, y `hasClaimedBadge` impide re-reclamar pero no des-reclamar. Ese día se estaría
+  premiando lo firmado hoy, sin forma de limpiarlo.
+- **Server-verified progress** — el cierre técnico de lo anterior, **no agendado** por la
+  decisión de arriba. Sigue siendo el único anti-cheat real y **feature, no un `if`**.
   Diseño ya decidido: un umbral proporcional evaluado en vivo **des-califica retroactivamente**
   a medida que crece el pool. Usar un bit monótono `qualified(player, piece)` escrito al cruzar
   por primera vez; `sign-badge` lee el bit, no el catálogo vivo. Guardar el mapa disperso
