@@ -59,9 +59,41 @@ Más barato y más rápido; el escalón "ambos" queda con dos peldaños en vez d
 En las dos: ⛔ **`bishop-1` no se convierte nunca** — es el control within-subject del alfil,
 igual que `rook-1`. Y sólo el primer sweep lleva `starFloor: 1`.
 
-## 5. Pendiente antes de autorar
+## 5. Lo que se construyó
 
-1. Elegir A o B (decisión del founder).
-2. Correr el solver de conjuntos candidatos **respetando el color** antes de escribir un
-   objetivo. No elegir a ojo — en la torre elegir por alcance medido dio alternancia, no
-   currículo, y hubo que rehacerlo.
+**Elegida la opción A** (founder, 2026-08-11). Resultado, con los óptimos ya verificados por
+`import-puzzles`:
+
+| # | id | escalón | óptimo | muros | estrellas | nota |
+|--:|---|---|--:|--:|--:|---|
+| 1 | `bishop-1` | entrada | 1 | 0 | 1 | ⛔ no se convierte nunca |
+| 2 | `bishop-2` | sweep | 3 | 0 | 3 | `starFloor: 1`, las tres en casilla clara |
+| 3 | `bishop-5` | sweep | 4 | 0 | 3 | |
+| 4 | `bishop-4` | sweep | 4 | 0 | 3 | |
+| 5 | `bishop-7` | obstáculos | 4 | 15 | 1 | sin cambios, sólo reorden |
+| 6 | `bishop-6` | obstáculos | 5 | 1 | 1 | sin cambios |
+| 7 | `bishop-10` | obstáculos | 7 | 16 | 1 | sin cambios, sólo reorden |
+| 8 | `bishop-8` | ambos | 8 | 10 | 2 | |
+| 9 | `bishop-3` | ambos | 9 | 5 | 2 | tablero nuevo sobre el mismo id |
+| 10 | `bishop-fence-1` | ambos | 10 | 3 | 3 | **tablero nuevo** |
+
+**Curva 1, 3, 4, 4, 4, 5, 7, 8, 9, 10** — monótona, sin saltos > 2, **cero avisos** del linter
+(venía con cuatro).
+
+⚠️ **`target` de `bishop-8` pasó de `g7` a `b2`,** y no por gusto: `exercise-bfs.test.ts` exige
+que la pierna a `targets[0]` sea **estrictamente** más barata que el óptimo del sweep, o el
+nivel colapsó a un tablero de un solo objetivo. Con `g7` primero, las dos medían 8.
+
+⚠️ **El cerco de `bishop-fence-1` tiene una sola casilla de cruce y es demostrable:** en la
+columna del cerco, las únicas casillas del color del alfil son `c2 c4 c6 c8`, y las tres
+primeras están ocupadas. Toda diagonal que cruce esa columna pasa por una de ellas.
+
+### Lo que costó, y no estaba en el patrón
+
+1. **El audit de muros decorativos mentía sobre los sweeps.** `decisionProfile` rutea hasta
+   `targetPos`, que en un sweep es sólo `targets[0]`: dijo "óptimo 1, 9 de 10 muros
+   decorativos" de `bishop-8`. Quedó exento, igual que los kinds con solver propio.
+2. **Seis tests pineaban contenido autorado** (pool 9, total 59, denominador 177, la lista
+   literal de ids, `starFloor` atado a un id). Ninguno falló por una regresión.
+3. **El smoke E2E del alfil llevaba meses muerto** fotografiando tableros que ya no existían.
+   Reescrito derivando del catálogo: 10/10 en 55,5 s.
