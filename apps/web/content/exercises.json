@@ -224,8 +224,8 @@
     "order": 0
   },
   {
-    "title": "The other diagonal",
-    "playerPrompt": "This bishop lives on light squares and always will. Take its diagonal to the star.",
+    "title": "All on light squares",
+    "playerPrompt": "Collect every star. They all sit on light squares, and so does this bishop.",
     "id": "bishop-2",
     "piece": "bishop",
     "fen": "B7/8/8/8/8/8/8/8 w - - 0 1",
@@ -234,32 +234,46 @@
     "tier": "easy",
     "tags": [
       "long-diagonal",
-      "same-color"
+      "same-color",
+      "sweep",
+      "route-order"
     ],
     "principle": "both-diagonals",
-    "learningObjective": "The bishop uses both diagonal directions. This one starts on a light square and, like every bishop, never leaves its colour.",
-    "order": 1
+    "learningObjective": "The bishop uses both diagonal directions and never leaves its colour: every star sits on a light square, and the ORDER of the goals changes how many moves the route costs.",
+    "order": 1,
+    "targets": [
+      "h1",
+      "d5",
+      "g8"
+    ],
+    "starFloor": 1
   },
   {
-    "id": "bishop-3",
+    "title": "Choose the turn",
+    "playerPrompt": "Collect every star. Each one needs a turn, and the order decides how many turns you spend.",
+    "id": "bishop-5",
     "piece": "bishop",
-    "fen": "8/8/8/8/3B4/8/8/8 w - - 0 1",
-    "target": "g7",
-    "mover": "d4",
+    "fen": "8/8/8/8/8/8/6B1/8 w - - 0 1",
+    "target": "b3",
+    "mover": "g2",
     "tier": "easy",
     "tags": [
-      "short-diagonal",
-      "ray-choice"
+      "pivot",
+      "sweep",
+      "route-order"
     ],
-    "title": "Pick the diagonal",
-    "principle": "diagonal-choice",
-    "learningObjective": "From the centre four diagonals open up; the player chooses the one that reaches the star, a short hop this time.",
-    "playerPrompt": "Four diagonals leave this square. Choose the one that reaches the star.",
-    "order": 2
+    "principle": "pivot-choice",
+    "learningObjective": "Two different squares let the bishop turn toward a star, so the turning point is a choice; with three stars the player also chooses the order that keeps the route short.",
+    "order": 2,
+    "targets": [
+      "b3",
+      "h3",
+      "c8"
+    ]
   },
   {
     "title": "The bishop is not a rook",
-    "playerPrompt": "The bishop cannot slide straight along the row. Turn on a diagonal to reach the star.",
+    "playerPrompt": "One star sits on this row and the bishop cannot slide along it. Turn on a diagonal, then collect the rest.",
     "id": "bishop-4",
     "piece": "bishop",
     "fen": "5B2/8/8/8/8/8/8/8 w - - 0 1",
@@ -268,27 +282,18 @@
     "tier": "easy",
     "tags": [
       "pivot",
-      "no-straight-line"
+      "no-straight-line",
+      "sweep",
+      "route-order"
     ],
     "principle": "no-straight-line",
-    "learningObjective": "The bishop can never move along a rank or file: to reach a square on its own row it must turn on a diagonal, two moves instead of one.",
-    "order": 3
-  },
-  {
-    "title": "Choose the turn",
-    "playerPrompt": "There are two squares where you can turn toward the star. Pick either one.",
-    "id": "bishop-5",
-    "piece": "bishop",
-    "fen": "8/8/8/8/8/8/6B1/8 w - - 0 1",
-    "target": "b3",
-    "mover": "g2",
-    "tier": "easy",
-    "tags": [
-      "pivot"
-    ],
-    "principle": "pivot-choice",
-    "learningObjective": "Two different squares let the bishop turn and reach the star; the turning point is a choice, not a fixed spot.",
-    "order": 4
+    "learningObjective": "The bishop can never move along a rank or file: to reach a square on its own row it must turn on a diagonal. With three stars, which one it visits first decides how long the tour is.",
+    "order": 3,
+    "targets": [
+      "g1",
+      "g7",
+      "a1"
+    ]
   },
   {
     "title": "Your own piece blocks the turn",
@@ -322,25 +327,79 @@
     ],
     "principle": "friendly-blocker-advanced",
     "learningObjective": "With both natural turning squares blocked, the player has to find the longer third route.",
-    "order": 6
+    "order": 4
   },
   {
     "title": "Blocked on the long diagonal",
-    "playerPrompt": "A knight sits on your diagonal. Step off, go around, and rejoin the diagonal past it.",
+    "playerPrompt": "Knights sit on your diagonal. Two stars now, and the order you take them decides how far you walk.",
     "id": "bishop-8",
     "piece": "bishop",
     "fen": "8/3N4/2N2N2/2N2N2/2N2N2/2N2N2/4N3/B7 w - - 0 1",
-    "target": "g7",
+    "target": "b2",
     "mover": "a1",
     "tier": "medium",
     "tags": [
       "blocked-diagonal",
       "detour",
-      "long-diagonal"
+      "long-diagonal",
+      "sweep",
+      "route-order"
     ],
     "principle": "blocked-diagonal",
-    "learningObjective": "A piece sitting on the bishop's diagonal stops the ray; the player leaves the diagonal and rejoins it beyond the blocker.",
-    "order": 7
+    "learningObjective": "A piece sitting on the bishop's diagonal stops the ray, so the player leaves the diagonal and rejoins it beyond the blocker. With two stars, taking the near one on the way costs nothing and taking it first costs the whole trip twice.",
+    "order": 7,
+    "targets": [
+      "b2",
+      "g7"
+    ]
+  },
+  {
+    "title": "Three diagonals shut",
+    "playerPrompt": "Knights close three of the four diagonals. The one that is left has to carry the whole route.",
+    "id": "bishop-3",
+    "piece": "bishop",
+    "fen": "8/2N5/3N4/4N3/3B4/2N1N3/8/8 w - - 0 1",
+    "target": "h8",
+    "mover": "d4",
+    "tier": "medium",
+    "tags": [
+      "ray-choice",
+      "blocked-diagonal",
+      "detour",
+      "sweep",
+      "route-order"
+    ],
+    "principle": "diagonal-choice",
+    "learningObjective": "From the centre four diagonals open up, but friendly knights shut three of them. The player reads which ray survives and plans a two star route through it.",
+    "order": 8,
+    "targets": [
+      "h8",
+      "a7"
+    ]
+  },
+  {
+    "title": "The fence",
+    "playerPrompt": "A line of knights splits the board. Find the one square where you can cross, and plan the whole tour before you move.",
+    "id": "bishop-fence-1",
+    "piece": "bishop",
+    "fen": "8/8/2N5/8/2N5/8/2N5/1B6 w - - 0 1",
+    "target": "h7",
+    "mover": "b1",
+    "tier": "medium",
+    "tags": [
+      "detour",
+      "route-planning",
+      "sweep",
+      "route-order"
+    ],
+    "principle": "crossing-point",
+    "learningObjective": "A line of friendly pieces cuts the bishop's colour in two, and only one square is left to cross on. The player finds that crossing and orders the three stars around it instead of walking back and forth.",
+    "order": 9,
+    "targets": [
+      "h7",
+      "a4",
+      "e8"
+    ]
   },
   {
     "title": "The long way around",
@@ -359,7 +418,7 @@
     ],
     "principle": "route-planning",
     "learningObjective": "The full-board detour: the player plans the whole multi-leg route around a blocker on the long diagonal before moving.",
-    "order": 8
+    "order": 6
   },
   {
     "id": "knight-1",
