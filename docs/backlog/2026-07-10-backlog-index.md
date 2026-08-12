@@ -4,7 +4,9 @@
 > Antes de trabajar un item, verificá que siga vivo: dos entradas ya estaban muertas la
 > última vez que alguien miró.
 
-**Estado:** `main` = `827e7cfe` · 4853 passing / 401 files · smoke de MiniPay cerrado en device.
+**Estado:** no se pinea acá — el commit y el conteo de la suite envejecen con cada merge.
+Fuente viva: `SESSION.md` + `git log`. (Esta línea decía `827e7cfe` / 4853 passing / 401 files
+hasta el 2026-08-10, con el real en 7691 / 623: cuatro meses de deriva.)
 
 ---
 
@@ -114,6 +116,21 @@ en ese request se revierte si el crédito no aterriza.
 
 ## 4. Deuda con consecuencias — decidir, no postergar
 
+- 🅿️ **P0 paso 5 — guardar al que OTORGA en `peones_spend`. APARCADO** (founder, 2026-08-10).
+  Doc: `docs/security/2026-08-10-peones-spend-authz.md` (trae el sketch SQL fiel al cuerpo
+  actual). **No hay exposición viva**: los pasos 1-4 cerraron el agujero y el flag
+  `PEONES_SPEND_REQUIRE_SESSION` está en `true` en prod. Lo que queda es **dónde** vive el
+  candado, y son dos riesgos futuros:
+  1. La firma es `p_wallet text` — un segundo llamador con `service_role` reabre el agujero y
+     `tsc` no lo ve. Hoy hay **un solo** llamador (`api/peones/spend/route.ts:250`).
+  2. El flag es un interruptor sin deploy: ponerlo en `false` (el rollback documentado)
+     devuelve el estado vulnerable. Tras el paso 5 el flag desaparece.
+  **Costo medido: ~1h20 míos + 15 min de founder en device**, rango honesto 2h–media jornada.
+  **Forma recomendada: overload transitorio** (firma nueva al lado de la vieja → deploy de la
+  ruta → borrar `p_wallet` días después). PostgREST resuelve por nombre de parámetro, así que
+  conviven; evita la ventana de `PGRST202` en que TODO gasto falla.
+  Prerrequisitos: (1) sign-off del founder — **pendiente**; (2) cliente con token — ✅ cumplido;
+  (3) ruta y migración en el mismo deploy — lo resuelve el overload.
 - ⚠️ **`/api/sign-badge` firma cualquier `levelId` 1..10000 sin verificar estrellas**
   (`route.ts:23`). El gate de 10★ es **client-only**. El contrato bloquea reclamar *dos veces*,
   no reclamar *sin merecerlo*. Cierra con server-verified progress.
