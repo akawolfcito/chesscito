@@ -76,7 +76,29 @@ export function SlideShell({
           'radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 60%), linear-gradient(135deg, #2a2a2e 0%, #141416 100%)',
       }}
     >
-      <div className="relative h-full w-full max-w-[420px] overflow-hidden">
+      {/* ⚠️ The column is capped in HEIGHT as well as width, from `md` up.
+       *
+       * Width alone is not a frame. `cover` scales the art by whichever side
+       * falls short, so on a tall desktop window the 420px column stretched to
+       * the full viewport height (1300px is ordinary on a laptop) and the art
+       * had to grow to 732px wide to cover it — 312px of it, 43%, cropped off
+       * the sides. The wolf lost his staff and the footer sat on the art's
+       * edge. On a phone this never showed: 390x844 is close enough to the
+       * art's own proportion that the crop is a few pixels.
+       *
+       * 820, NOT the 746 that would match the art's ratio exactly. ⚠️ The asset
+       * carries its own white passe-partout (~50px a side on 941x1672), which a
+       * phone never sees because its 18% crop eats it. At 746 the column shows
+       * the art WHOLE — margin included — and the slide reads as a poster in a
+       * frame instead of a full-bleed scene. 820 keeps ~9% of crop: enough to
+       * swallow the top margin and the sides, while the wolf keeps his staff.
+       *
+       * Gated at `md` because below it the column already spans the screen and
+       * the letterbox has nowhere to sit; a phone is untouched by this rule.
+       * Rounded for the same reason the backdrop above exists: at that size it
+       * reads as the frame around the phone, and a floating square would read
+       * as a mistake. */}
+      <div className="relative h-full w-full max-w-[420px] overflow-hidden md:max-h-[820px] md:rounded-[28px]">
         {/* All four illustrations stay mounted, three of them transparent.
             Mounting only the active one makes each tap decode a fresh image
             and flash the blue underneath — a cost that did not exist when the
