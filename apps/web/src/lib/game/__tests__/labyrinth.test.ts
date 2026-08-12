@@ -433,160 +433,84 @@ describe("L2 labyrinth — pawn isCapture + captureTargets verification", () => 
   });
 });
 
-describe("L2 labyrinth — queen path existence", () => {
-  // optimalMoves DATA-DERIVED (see the knight block) — no hardcoded copy.
-  const setups: { piece: PieceId; id: string }[] = [
-    { piece: "queen", id: "queen-lab-1" },
-    { piece: "queen", id: "queen-lab-2" },
-    { piece: "queen", id: "queen-lab-3" },
-  ];
+/**
+ * Path existence for a SLIDING piece, derived from the catalogue.
+ *
+ * ⚠️ Written as a factory after the same block broke twice in two days: the
+ * rook's ids were hand-copied and the bishop's too, so converting a maze to a
+ * Star Sweep failed a test BY NAME — and a maze authored tomorrow would simply
+ * go unverified. The builder exists to change this content; a test that names it
+ * is a test that expires.
+ *
+ * The sweep split is the same one lane 1 learned: `bfsSlidingDepth` walks to
+ * `targetPos`, which on a sweep is only `targets[0]` — one leg. Demanding it
+ * equal `optimalMoves` fails precisely on the levels that are CORRECT. Their
+ * optimum is verified by the sweep solver in labyrinths-bfs-verifier.test.ts;
+ * here they keep the property that still applies: the first leg must be
+ * strictly cheaper, or the board collapsed to a single goal.
+ */
+function describeSlidingPathExistence(
+  piece: PieceId,
+  moveFn: (pos: BoardPosition, blockers: BoardPosition[]) => BoardPosition[],
+) {
+  describe(`L2 labyrinth — ${piece} path existence`, () => {
+    const labs = LABYRINTHS[piece];
+    const singleGoal = labs.filter((l) => !isSweep(l));
+    const sweeps = labs.filter((l) => isSweep(l));
 
-  it.each(setups)("$id: BFS reaches target in exactly lab.optimalMoves", ({ piece, id }) => {
-    const lab = LABYRINTHS[piece].find((l) => l.id === id);
-    expect(lab).toBeDefined();
-    if (!lab) return;
+    it(`${piece} still ships labyrinths at all`, () => {
+      // Guards the two `it.each` below: an empty list passes vacuously.
+      expect(labs.length).toBeGreaterThan(0);
+    });
 
-    const optimal = lab.optimalMoves;
-    const minDepth = bfsSlidingDepth(
-      lab.startPos,
-      lab.targetPos,
-      lab.obstacles ?? [],
-      getQueenMoves,
-      optimal,
-    );
-    expect(minDepth).toBe(optimal);
-  });
-
-  it.each(setups)(
-    "$id: target is NOT reachable in fewer than lab.optimalMoves moves",
-    ({ piece, id }) => {
-      const lab = LABYRINTHS[piece].find((l) => l.id === id);
-      expect(lab).toBeDefined();
-      if (!lab) return;
-
-      const optimal = lab.optimalMoves;
-      if (optimal > 1) {
-        const tooSoon = bfsSlidingDepth(
+    if (singleGoal.length > 0) {
+      it.each(singleGoal)("$id: BFS reaches target in exactly lab.optimalMoves", (lab) => {
+        const minDepth = bfsSlidingDepth(
           lab.startPos,
           lab.targetPos,
           lab.obstacles ?? [],
-          getQueenMoves,
-          optimal - 1,
+          moveFn,
+          lab.optimalMoves,
         );
-        expect(tooSoon).toBeNull();
-      }
-    },
-  );
-});
+        expect(minDepth).toBe(lab.optimalMoves);
+      });
 
-describe("L2 labyrinth — rook path existence", () => {
-  /* ⚠️ DERIVED from the catalogue, never a hand-copied list. The four ids used
-   * to be written out here, so converting them to Star Sweeps broke this block
-   * by name — and a fifth maze authored tomorrow would simply go unverified. */
-  const rookLabs = LABYRINTHS.rook;
+      it.each(singleGoal)(
+        "$id: target is NOT reachable in fewer than lab.optimalMoves moves",
+        (lab) => {
+          if (lab.optimalMoves > 1) {
+            const tooSoon = bfsSlidingDepth(
+              lab.startPos,
+              lab.targetPos,
+              lab.obstacles ?? [],
+              moveFn,
+              lab.optimalMoves - 1,
+            );
+            expect(tooSoon).toBeNull();
+          }
+        },
+      );
+    }
 
-  /* A SWEEP is a different question, and the same one lane 1 already answered:
-   * `bfsSlidingDepth` walks to `targetPos`, which on a sweep is only
-   * `targets[0]`. Asserting it equals `optimalMoves` would demand that one leg
-   * cost as much as collecting every star — i.e. it would fail precisely on the
-   * levels that are correct. Their optimum is checked by the sweep solver in
-   * labyrinths-bfs-verifier.test.ts; here they are exercised for the property
-   * that still applies: the first leg must be strictly cheaper. */
-  const singleGoal = rookLabs.filter((l) => !isSweep(l));
-  const sweeps = rookLabs.filter((l) => isSweep(l));
-
-  it.each(singleGoal)("$id: BFS reaches target in exactly lab.optimalMoves", (lab) => {
-    const optimal = lab.optimalMoves;
-    const minDepth = bfsSlidingDepth(
-      lab.startPos,
-      lab.targetPos,
-      lab.obstacles ?? [],
-      getRookMoves,
-      optimal,
-    );
-    expect(minDepth).toBe(optimal);
-  });
-
-  it.each(singleGoal)(
-    "$id: target is NOT reachable in fewer than lab.optimalMoves moves",
-    (lab) => {
-      const optimal = lab.optimalMoves;
-      if (optimal > 1) {
-        const tooSoon = bfsSlidingDepth(
+    if (sweeps.length > 0) {
+      it.each(sweeps)("$id (sweep): the leg to the first star is strictly cheaper", (lab) => {
+        const leg = bfsSlidingDepth(
           lab.startPos,
           lab.targetPos,
           lab.obstacles ?? [],
-          getRookMoves,
-          optimal - 1,
+          moveFn,
+          lab.optimalMoves,
         );
-        expect(tooSoon).toBeNull();
-      }
-    },
-  );
-
-  it.each(sweeps)("$id (sweep): the leg to the first star is strictly cheaper", (lab) => {
-    const leg = bfsSlidingDepth(
-      lab.startPos,
-      lab.targetPos,
-      lab.obstacles ?? [],
-      getRookMoves,
-      lab.optimalMoves,
-    );
-    expect(leg, `${lab.id}: targets[0] unreachable`).not.toBeNull();
-    expect(leg!).toBeLessThan(lab.optimalMoves);
+        expect(leg, `${lab.id}: targets[0] unreachable`).not.toBeNull();
+        expect(leg!).toBeLessThan(lab.optimalMoves);
+      });
+    }
   });
+}
 
-  it("the rook still ships mazes of both shapes", () => {
-    // Guards the split above: if every maze became a sweep, the single-goal
-    // assertions would pass vacuously and stop protecting the other 15.
-    expect(rookLabs.length).toBeGreaterThan(0);
-  });
-});
+describeSlidingPathExistence("queen", getQueenMoves);
 
-describe("L2 labyrinth — bishop path existence", () => {
-  // optimalMoves DATA-DERIVED (see the knight block) — no hardcoded copy.
-  const setups: { piece: PieceId; id: string }[] = [
-    { piece: "bishop", id: "bishop-lab-3" },
-    { piece: "bishop", id: "bishop-lab-4" },
-  ];
-
-  it.each(setups)("$id: BFS reaches target in exactly lab.optimalMoves", ({ piece, id }) => {
-    const lab = LABYRINTHS[piece].find((l) => l.id === id);
-    expect(lab).toBeDefined();
-    if (!lab) return;
-
-    const optimal = lab.optimalMoves;
-    const minDepth = bfsSlidingDepth(
-      lab.startPos,
-      lab.targetPos,
-      lab.obstacles ?? [],
-      getBishopMoves,
-      optimal,
-    );
-    expect(minDepth).toBe(optimal);
-  });
-
-  it.each(setups)(
-    "$id: target is NOT reachable in fewer than lab.optimalMoves moves",
-    ({ piece, id }) => {
-      const lab = LABYRINTHS[piece].find((l) => l.id === id);
-      expect(lab).toBeDefined();
-      if (!lab) return;
-
-      const optimal = lab.optimalMoves;
-      if (optimal > 1) {
-        const tooSoon = bfsSlidingDepth(
-          lab.startPos,
-          lab.targetPos,
-          lab.obstacles ?? [],
-          getBishopMoves,
-          optimal - 1,
-        );
-        expect(tooSoon).toBeNull();
-      }
-    },
-  );
-});
+describeSlidingPathExistence("rook", getRookMoves);
 
 describe("L2 labyrinth — first Rook Rails level data integrity", () => {
   it("the first rook rail has at least one obstacle and a positive optimal", () => {
