@@ -19,6 +19,7 @@ import {
   buildFenBlock,
   buildSaveRecord,
   emptyState,
+  exportBlock,
   extraFields,
   toLabyrinthRecord,
   type BuilderState,
@@ -95,6 +96,21 @@ describe("buildSaveRecord — what Save actually posts", () => {
     );
 
     expect(record.targets).toBeUndefined();
+  });
+
+  it("the Export block carries the stars too", () => {
+    // Found by playing the builder, not by a test: the copy block showed
+    // fen/target/mover only, so pasting a sweep into the JSON by hand pasted a
+    // one-goal board that looked right and played as a different level.
+    const s = draft({ extraGoals: ["h1"] });
+
+    expect(exportBlock(s, buildFenBlock(s))).toContain("targets=a8,h1");
+  });
+
+  it("the Export block stays quiet on a one-goal board", () => {
+    const s = draft();
+
+    expect(exportBlock(s, buildFenBlock(s))).not.toContain("targets=");
   });
 
   it("still carries the fields the UI cannot draw", () => {

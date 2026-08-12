@@ -8,6 +8,7 @@ import {
   buildSaveRecord,
   deriveStateFromFen,
   emptyState,
+  exportBlock,
   extraFields,
   type AuthoredEnemy,
   type BuilderState,
@@ -1079,9 +1080,7 @@ export default function LabyrinthBuilderPage() {
             <p className="mb-1 font-semibold text-neutral-300">Export (copy)</p>
             {fenBlock ? (
               <pre className="overflow-x-auto whitespace-pre-wrap break-all font-mono text-xs text-neutral-200" data-allow-select="true">
-{`fen=${fenBlock.fen}
-target=${fenBlock.target}
-mover=${fenBlock.mover}`}
+{exportBlock(state, fenBlock)}
               </pre>
             ) : (
               <p className="text-neutral-500">Set start + goal to generate FEN.</p>

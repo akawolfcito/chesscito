@@ -237,6 +237,27 @@ export function buildSaveRecord(
   };
 }
 
+/**
+ * The copy-paste block the builder shows under "Export".
+ *
+ * ⚠️ A THIRD path the stars can fall out of, after the save record and the live
+ * validator — and the quietest, because what it produces is pasted by hand into
+ * content/exercises.json. A block that omits `targets` pastes a one-goal board
+ * that looks right and plays as a different level.
+ */
+export function exportBlock(
+  s: BuilderState,
+  fenBlock: { fen: string; target: string | undefined; mover: string },
+): string {
+  const targets = sweepTargets(s);
+  return (
+    `fen=${fenBlock.fen}\n` +
+    `target=${fenBlock.target}\n` +
+    `mover=${fenBlock.mover}` +
+    (targets ? `\ntargets=${targets.join(",")}` : "")
+  );
+}
+
 export type FenLoadResult =
   | { ok: true; start: string; walls: string[]; enemies: AuthoredEnemy[]; notes: string[] }
   | { ok: false; error: string };
