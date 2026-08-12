@@ -104,6 +104,43 @@ Para reproducir el tablero de prueba en 20 segundos: builder → **Labyrinth** �
 a1, `goal` a8, `star` h1 → Save draft. Óptimo 3. Después `git checkout -- apps/web/content
 apps/web/src/lib/game/generated`.
 
+### Cierre del 2026-08-12 — el builder en manos del founder
+
+La torre quedó convertida por él, no por mí: `rook-9` como sweep y **los cuatro laberintos**
+(óptimos recalculados 10, 8, 20, 13). Eso es la prueba end-to-end que el smoke no alcanzaba.
+
+⚠️ **Cuatro defectos aparecieron USÁNDOLO, ninguno lo vio un test:**
+
+1. **El bloque Export perdía las estrellas** — el texto que se pega a mano en el JSON llevaba
+   `fen/target/mover` y nada más (`538c84a5`).
+2. **El toast se borraba solo**: guardar escribe en el árbol que Next dev observa → Fast Refresh
+   → el `useState` del veredicto se iba con la recarga. La acción destruía su propio resultado, y
+   la única forma de leer los 37 avisos era fotografiar la pantalla (`b5f6dc56`).
+3. **El juego servía el catálogo viejo**: la invalidación del tag `content` vivía sólo en la ruta
+   del overlay, que en local está apagada a propósito — así que el builder escribía bien y el
+   juego mostraba lo anterior, sin decir nada (`8a175e47`).
+   ⛔ Que el módulo compilado cambie en disco **no** invalida una entrada cacheada.
+4. **Los verificadores de laberinto fallaban en los niveles CORRECTOS** — exigían que el BFS a
+   `targetPos` fuera `optimalMoves`, y en un sweep eso es una pierna. Deuda de la Etapa 0: el
+   carril 1 ya tenía esa rama y no se llevó al carril 2 (`9feccb6f`).
+
+**Decisión de producto (founder):** la curva de dificultad **no es un criterio estricto**. Un
+tablero más fácil después de uno duro es un respiro deliberado. Los avisos de pacing quedan como
+información —nunca bloquearon un save— y no se van a "arreglar" reordenando contenido.
+
+**Alcance real del sweep hoy**, medido del catálogo: ejercicios y laberintos de **cinco piezas**.
+Fuera el **peón** (`computeSweepOptimal` lo rechaza: nunca retrocede) y los **15 juegos firma**
+(cada uno con su solver y su pregunta). Quedan 11 laberintos convertibles: alfil 2, caballo 5,
+dama 3, rey 1.
+
+⛔ **Capturas como objetivo NO son un sweep con otro sprite** (consultado 2026-08-12): una pieza
+negra bloquea la línea hasta que se la come, así que el tablero de la segunda pierna no es el de
+la primera — y `computeSweepOptimal` mide todas las piernas contra el MISMO tablero
+(`sweep-optimal.ts:78`). El óptimo saldría sobreestimado. Mismo motivo que el peón, misma
+consecuencia: una corrida perfecta inalcanzable. Sería un juego firma nuevo, con su propio solver.
+
+**Suite al cierre: 643 archivos / 7873 tests, exit 0**, con el contenido nuevo adentro.
+
 ## Qué sigue, en orden
 
 1. **Trabajo en LOCAL, sin base** (decidido con el founder): `pnpm dev` con `CONTENT_STAGE`
