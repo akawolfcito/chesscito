@@ -141,21 +141,54 @@ consecuencia: una corrida perfecta inalcanzable. Sería un juego firma nuevo, co
 
 **Suite al cierre: 643 archivos / 7873 tests, exit 0**, con el contenido nuevo adentro.
 
+### ✅ Listo para push y deploy (2026-08-12, verificado pieza por pieza)
+
+| check | resultado |
+|---|---|
+| Vitest | **643 archivos / 7870 tests**, exit 0, máquina libre |
+| `tsc --noEmit` | limpio |
+| `next lint` | 2 warnings benignos (uno preexistente; el nuevo es el mismo patrón) |
+| `next build` | exit 0 |
+| `icons:generate:check` | `drifted: []` |
+| **VR** | **67/67** con `--update-snapshots=none`, 81 baselines antes y después |
+
+⚠️ El CI rojo que se vio en GitHub (`icons:generate:check`, 5 iconos drifted) es de `origin/main`,
+**61 commits atrás**. Lo arregla el commit local `a1cb5fc8`; no hay nada que tocar.
+
+### ✅ MIGRACIÓN APLICADA A PRODUCCIÓN (2026-08-12)
+
+`20260811150000_content_overlay_sweeps.sql`, con autorización explícita del founder, por `psql`
+en Docker contra el pooler `aws-1` en session mode.
+
+- **Antes**: 14 columnas, 32 filas — **todas en `draft`**, así que en prod (piso `published`)
+  ninguna se aplicaba: el riesgo real era menor que el estimado.
+- **Después**: 16 columnas. `targets` (ARRAY, nullable) y `star_floor` (smallint, nullable).
+  Las 32 filas, intactas.
+- **Reversible**: `alter table content_overlay drop column targets, drop column star_floor;`
+  mientras nadie las haya escrito.
+- El orden quedó bien: **schema primero, deploy después**.
+
 ## Qué sigue, en orden
 
-1. **Trabajo en LOCAL, sin base** (decidido con el founder): `pnpm dev` con `CONTENT_STAGE`
-   vacío. El save escribe `content/exercises.json` + regenera el módulo **primero**; el overlay
-   es el paso 2 y su fallo es parcial. Un sweep autorado así llega a prod **por el baseline**,
-   en el commit. La migración se aplica al final, antes del push.
-   ⚠️ Con `ADMIN_TOKEN` apuntando a prod, ese paso 2 intenta escribir en prod: dejalo vacío.
-2. **Guardar un sweep de verdad y jugarlo** en el teléfono. En la torre jugar encontró 5
-   defectos que los tests no vieron; en el alfil, 3; en el builder, 1 (el Export).
-3. ✅ **Etapa 0 hecha** (`09d406af`) — pero **jugá la victoria**: que la primera estrella NO
-   complete y la última sí es el único tramo que no pude ejercitar.
-3. **Medir los 15 laberintos convertibles** (densidad, óptimos, alcance) y recién ahí convertir,
-   con el builder. Los 4 del peón y los 15 juegos firma quedan fuera.
-4. **Tercera pieza** con el patrón de 9 pasos. Caballo, peón, dama y rey tienen avisos de curva;
-   el rey es el peor.
+1. **PUSH a `origin/main` y deploy.** Todo verde, migración aplicada, VR incluido. Es del
+   founder → [[feedback_founder_pushes_main_not_server_merge]]
+2. **Seguir convirtiendo, con el builder.** Quedan **11 laberintos** (alfil 2, caballo 5, dama 3,
+   rey 1) y los ejercicios de caballo, dama y rey, más lo que falte de alfil.
+   - Flujo local: `NEXT_PUBLIC_CHAIN_ID=42220 CONTENT_STAGE= ADMIN_TOKEN= PORT=3002 pnpm dev`.
+     Ya NO hace falta `CONTENT_CACHE_DISABLED=1`: el save invalida el catálogo solo (`8a175e47`).
+   - Commitear siempre los DOS archivos: el `content/*.json` y `puzzles.generated.ts`.
+3. **Spec del sweep para Diagonal Run** (pedido del founder, 2026-08-12). Es el más viable de los
+   cinco juegos firma, pero antes hay una decisión de DISEÑO que ningún solver puede tomar:
+   ⛔ `resolvePivot(from, pivot, blockers, **target**)` — la dirección de salida del alfil se
+   elige por la heurística "el exit cuyo aterrizaje queda más cerca de la estrella"
+   (`diagonal-run.ts:126-128`). Con varias estrellas hay que decidir **hacia cuál se orienta**
+   (¿la más cercana sin recoger? ¿la siguiente autorada? ¿elige el jugador?), y eso cambia el
+   movimiento, no sólo el conteo.
+   ⚠️ `computeSweepOptimal` NO sirve tal cual: mide cada pierna con `computeExerciseBfs`, que
+   mueve el alfil libremente, no por pivotes → optimum bajo → corrida perfecta inalcanzable.
+   ✅ La forma correcta es más simple que la actual: BFS sobre el estado `(casilla, recogidas)`,
+   exacto y sin permutaciones. Sirve igual para el caso de las capturas.
+4. **Tercera pieza** con el patrón de 9 pasos, si se retoma el currículo.
 
 ## Preguntas abiertas
 
