@@ -77,6 +77,33 @@ sobre el goal, el **un-sweep** al quitar la última estrella, el colapso rechaza
 Arreglado en `538c84a5` (`exportBlock()` en `state.ts`, con test). Tercer camino paralelo por el
 que se caían los `targets` — después del record de Save y del validador en vivo.
 
+### Etapa 0 — el runtime del laberinto ya es sweep-aware (2026-08-12, `09d406af`)
+
+`handleLabyrinthMove` terminaba el nivel al pisar `targetPos`, que en un sweep **es
+`targets[0]`**. Ahora colecciona por `sweep-run.ts` y completa sólo en la última estrella. Un
+laberinto normal es un sweep de UN objetivo, así que los 19 existentes y los cinco juegos firma
+toman el mismo camino de siempre — nada ramifica por `isSweep`.
+
+⚠️ **El hallazgo del día: TRES sitios gradaban laberintos por su cuenta** — la pantalla, el
+bucket de intentos y la ruta de firma —, los tres llamando `labyrinthStars` directo. Migrar dos
+de tres tipa perfecto y deja al jugador mirando una nota mientras la tabla guarda otra: las dos
+escalas son `(number, number) => number`. Con óptimo 12, una corrida de 15 vale **2★ relativas
+y 1★ fija**. Ahora hay un despacho único, `gradeLabyrinthRun`, gemelo de `gradeExerciseRun`.
+
+**Verificado jugando** (Playwright, proyecto minipay, laberinto de prueba autorado con el
+builder y revertido después): el laberinto **monta con las dos estrellas pintadas**, el HUD dice
+`optimal path 3 moves` (el óptimo del sweep, no la pierna de 1) y el contador vivo existe con
+`data-total="2"`.
+
+⛔ **Lo que NO pude verificar: la victoria en la última estrella.** Los clicks del tablero no
+prosperan por Playwright (timeout al mover la pieza), así que el tramo "primera estrella no
+completa → segunda sí" quedó sin ejercitar de punta a punta. La lógica es `collectAt`, probada
+en el carril 1, pero **eso no es lo mismo que haberlo jugado**. Es el primer punto del playtest.
+
+Para reproducir el tablero de prueba en 20 segundos: builder → **Labyrinth** → rook → `start`
+a1, `goal` a8, `star` h1 → Save draft. Óptimo 3. Después `git checkout -- apps/web/content
+apps/web/src/lib/game/generated`.
+
 ## Qué sigue, en orden
 
 1. **Trabajo en LOCAL, sin base** (decidido con el founder): `pnpm dev` con `CONTENT_STAGE`
@@ -86,10 +113,8 @@ que se caían los `targets` — después del record de Save y del validador en v
    ⚠️ Con `ADMIN_TOKEN` apuntando a prod, ese paso 2 intenta escribir en prod: dejalo vacío.
 2. **Guardar un sweep de verdad y jugarlo** en el teléfono. En la torre jugar encontró 5
    defectos que los tests no vieron; en el alfil, 3; en el builder, 1 (el Export).
-2. **Etapa 0 — el runtime del laberinto sweep-aware** (spec §2.3). Hoy está tapado por el
-   validador (un laberinto con `targets` es un 400), así que ya no regala estrellas en silencio;
-   pero mientras no exista, **ningún laberinto puede pedir dos estrellas**, que era la mitad del
-   pedido original. El carril 1 ya tiene todas las piezas escritas y probadas: es conectarlas.
+3. ✅ **Etapa 0 hecha** (`09d406af`) — pero **jugá la victoria**: que la primera estrella NO
+   complete y la última sí es el único tramo que no pude ejercitar.
 3. **Medir los 15 laberintos convertibles** (densidad, óptimos, alcance) y recién ahí convertir,
    con el builder. Los 4 del peón y los 15 juegos firma quedan fuera.
 4. **Tercera pieza** con el patrón de 9 pasos. Caballo, peón, dama y rey tienen avisos de curva;
