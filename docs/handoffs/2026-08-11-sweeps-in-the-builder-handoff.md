@@ -64,11 +64,28 @@ builder ahora es legítimo; degradarlos sigue prohibido, en la lectura **y** en 
 
 ---
 
+### Smoke del builder — hecho, 13/13
+
+Recorrido con Playwright contra la página real (`localhost:3002`, sin base, sin `ADMIN_TOKEN`,
+`CONTENT_STAGE` vacío → baseline-only, cero escrituras). Verificado: el óptimo del sweep (3, no
+la pierna de 1), el rótulo que dice qué mide, que no se dibuja ruta, el rechazo del duplicado
+sobre el goal, el **un-sweep** al quitar la última estrella, el colapso rechazado en vivo con
+`Save draft` deshabilitado, y que el brush desaparece en el peón. Sin errores de consola.
+
+⚠️ **Y encontró un defecto que ningún test tenía:** el bloque **Export (copy)** mostraba
+`fen/target/mover` y nada más, así que copiarlo pegaba un sweep como tablero de un objetivo.
+Arreglado en `538c84a5` (`exportBlock()` en `state.ts`, con test). Tercer camino paralelo por el
+que se caían los `targets` — después del record de Save y del validador en vivo.
+
 ## Qué sigue, en orden
 
-1. **Aplicar la migración** (arriba) y **jugar el builder**: pintar un sweep de dos estrellas en
-   un ejercicio nuevo, guardarlo, promoverlo y abrirlo en el teléfono. En la torre y en el alfil,
-   jugar encontró lo que los tests no: cinco defectos y tres. No hay motivo para creer que acá no.
+1. **Trabajo en LOCAL, sin base** (decidido con el founder): `pnpm dev` con `CONTENT_STAGE`
+   vacío. El save escribe `content/exercises.json` + regenera el módulo **primero**; el overlay
+   es el paso 2 y su fallo es parcial. Un sweep autorado así llega a prod **por el baseline**,
+   en el commit. La migración se aplica al final, antes del push.
+   ⚠️ Con `ADMIN_TOKEN` apuntando a prod, ese paso 2 intenta escribir en prod: dejalo vacío.
+2. **Guardar un sweep de verdad y jugarlo** en el teléfono. En la torre jugar encontró 5
+   defectos que los tests no vieron; en el alfil, 3; en el builder, 1 (el Export).
 2. **Etapa 0 — el runtime del laberinto sweep-aware** (spec §2.3). Hoy está tapado por el
    validador (un laberinto con `targets` es un 400), así que ya no regala estrellas en silencio;
    pero mientras no exista, **ningún laberinto puede pedir dos estrellas**, que era la mitad del
