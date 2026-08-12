@@ -103,10 +103,20 @@ const savedRow = () =>
 const errorsOf = async (res: Response) =>
   ((await res.json()) as { errors: string[] }).errors.join(" ");
 
+/** A shipped rook exercise that is NOT a sweep, DERIVED from the catalogue.
+ *
+ * ⚠️ This used to be the literal id `rook-9`, and the day the founder converted
+ * that board to a sweep in the builder, two tests about plain exercises started
+ * failing for a reason that had nothing to do with them. Authored content is not
+ * a fixture: it changes, by design, from a tool built for changing it. */
+const PLAIN_ROOK_ID = EXERCISES.rook.find((e) => !isSweep(e))!.id;
+/** …and one that IS, for the degradation guard. */
+const SWEEP_ROOK_ID = EXERCISES.rook.find((e) => isSweep(e))!.id;
+
 describe("POST /api/admin/content — authoring a sweep", () => {
   it("the baseline it guards really is a sweep", () => {
     // Guards the guard: if the content is reverted these pass vacuously.
-    expect(isSweep(EXERCISES.rook.find((e) => e.id === "rook-2")!)).toBe(true);
+    expect(isSweep(EXERCISES.rook.find((e) => e.id === SWEEP_ROOK_ID)!)).toBe(true);
   });
 
   it("accepts a multi-goal row and stores its targets", async () => {
@@ -141,15 +151,15 @@ describe("POST /api/admin/content — authoring a sweep", () => {
   it("writes NULL targets for a plain single-goal exercise", async () => {
     // Not `[]` and not the one target repeated: a one-goal board is what every
     // row written before today is, and it must keep meaning exactly that.
-    await post(record("rook-9", { order: 5 }));
+    await post(record(PLAIN_ROOK_ID, { order: 5 }));
 
     expect(savedRow().targets).toBeNull();
     expect(savedRow().star_floor).toBeNull();
   });
 
   it("lets a multi-goal row edit an existing sweep", async () => {
-    // The whole point of the migration: the founder edits rook-2 in the builder.
-    const res = await post(sweepRecord("rook-2"));
+    // The whole point of the migration: the founder edits a shipped sweep in the builder.
+    const res = await post(sweepRecord(SWEEP_ROOK_ID));
 
     expect(res.status).toBe(200);
     expect(savedRow().targets).toEqual(["a8", "h1"]);
@@ -158,7 +168,7 @@ describe("POST /api/admin/content — authoring a sweep", () => {
 
 describe("POST /api/admin/content — a row may not degrade a sweep", () => {
   it("refuses a single-goal row over a sweep, and never writes it", async () => {
-    const res = await post(record("rook-2"));
+    const res = await post(record(SWEEP_ROOK_ID));
 
     expect(res.status).toBe(400);
     expect(supabaseMock.upsert).not.toHaveBeenCalled();
@@ -166,7 +176,7 @@ describe("POST /api/admin/content — a row may not degrade a sweep", () => {
 
   it("says WHY, and what to send instead", async () => {
     // A bare 400 would send the author hunting through their own puzzle.
-    const message = await errorsOf(await post(record("rook-2")));
+    const message = await errorsOf(await post(record(SWEEP_ROOK_ID)));
 
     expect(message).toMatch(/star sweep/i);
     expect(message).toMatch(/targets/);
@@ -175,7 +185,7 @@ describe("POST /api/admin/content — a row may not degrade a sweep", () => {
   it("still allows DISABLING a sweep", async () => {
     // Retiring content is a decision the overlay IS allowed to make: it says
     // "not this one", not "this one, but broken".
-    const res = await post(record("rook-2", { disabled: true }));
+    const res = await post(record(SWEEP_ROOK_ID, { disabled: true }));
 
     expect(res.status).toBe(200);
     expect(supabaseMock.upsert).toHaveBeenCalled();
@@ -183,9 +193,9 @@ describe("POST /api/admin/content — a row may not degrade a sweep", () => {
 
   it("leaves normal single-goal exercises writable", async () => {
     // The guard must be narrow, or it breaks the builder's whole purpose.
-    expect(isSweep(EXERCISES.rook.find((e) => e.id === "rook-9")!)).toBe(false);
+    expect(isSweep(EXERCISES.rook.find((e) => e.id === PLAIN_ROOK_ID)!)).toBe(false);
 
-    const res = await post(record("rook-9", { order: 5 }));
+    const res = await post(record(PLAIN_ROOK_ID, { order: 5 }));
 
     expect(res.status).toBe(200);
     expect(supabaseMock.upsert).toHaveBeenCalled();

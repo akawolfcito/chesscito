@@ -1,5 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { LABYRINTHS, PLAYABLE_PIECES } from "@/lib/game/exercises";
+import { computeSweepOptimal } from "@/lib/game/sweep-optimal";
+import { isSweep } from "@/lib/game/targets";
 import { GENERATED_LABYRINTHS } from "@/lib/game/generated/puzzles.generated";
 import { bfsOptimal } from "@/test-utils/bfs-optimal";
 
@@ -45,6 +47,28 @@ describe("BFS verifier — labyrinth solvability + optimalMoves", () => {
         it(`${lab.id} is solvable and optimalMoves matches BFS`, () => {
           const bfs = bfsOptimal(piece, lab);
           rows.push({ piece, id: lab.id, declared: lab.optimalMoves, bfs });
+
+          // ⚠️ A Star Sweep maze is measured by a DIFFERENT question. `bfsOptimal`
+          // walks to `targetPos`, which on a sweep is only `targets[0]` — one
+          // leg. Held to the checks below it would report every converted maze as
+          // "declared 10 but BFS minimum is 2", which is not drift: it is two
+          // solvers answering different things. The sweep's own optimum is the
+          // cheapest ORDER, and the leg must be strictly cheaper or the level
+          // collapsed to a single goal. Same branch `exercise-bfs.test.ts` grew
+          // when lane 1 was converted; the labyrinth verifiers were left behind.
+          if (isSweep(lab)) {
+            const sweep = computeSweepOptimal(piece, lab);
+            expect(sweep, `${lab.id} sweep unreachable`).not.toBeNull();
+            expect(
+              sweep,
+              `${lab.id} declared optimalMoves=${lab.optimalMoves} but the sweep optimum is ${sweep}`,
+            ).toBe(lab.optimalMoves);
+            expect(
+              bfs ?? 0,
+              `${lab.id} leg to targets[0] costs as much as the whole sweep — the maze collapsed to one goal`,
+            ).toBeLessThan(lab.optimalMoves);
+            return;
+          }
 
           // 1. Reachability — a dead labyrinth is a dead end in the path.
           expect(bfs, `${lab.id} unreachable per BFS`).not.toBeNull();

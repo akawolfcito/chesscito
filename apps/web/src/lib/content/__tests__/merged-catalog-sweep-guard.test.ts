@@ -94,9 +94,15 @@ describe("mergeOverlay — a row cannot shadow a sweep", () => {
 
   it("still applies overlay rows for NON-sweep exercises", () => {
     // The guard must be narrow: the builder's normal edits keep working.
+    //
+    // ⚠️ The id is DERIVED, not written out. It was the literal `rook-9`, and the
+    // day that board was converted to a sweep in the builder this test failed —
+    // claiming the narrow guard was broken when all that had changed was which
+    // board the founder picked. Authored content is not a fixture.
+    const plainId = getBaseline().exercises.rook.find((e) => !isSweep(e))!.id;
     const merged = mergeOverlay(getBaseline(), [
       shadowRow({
-        id: "rook-9",
+        id: plainId,
         order: 5,
         fen: "8/8/8/8/8/8/4R3/8 w - - 0 1",
         target: "e8",
@@ -104,8 +110,8 @@ describe("mergeOverlay — a row cannot shadow a sweep", () => {
         optimal_moves: 1,
       }),
     ]);
-    const rook9 = merged.exercises.rook.find((e) => e.id === "rook-9")!;
-    expect(rook9.optimalMoves).toBe(1);
+    const edited = merged.exercises.rook.find((e) => e.id === plainId)!;
+    expect(edited.optimalMoves).toBe(1);
     expect(merged.overlayCount).toBe(1);
   });
 

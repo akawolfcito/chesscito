@@ -38,7 +38,9 @@ import {
 } from "@/lib/game/generated/puzzles.generated";
 import type { Exercise, PieceId } from "@/lib/game/types";
 import { getLevelId } from "@/lib/contracts/scoreboard";
-import { gradeExerciseRun } from "@/lib/game/scoring";
+import { gradeExerciseRun, gradeLabyrinthRun } from "@/lib/game/scoring";
+// The raw scale, still canonical for the two buckets that can never carry
+// `targets` (the validator refuses a sweep outside exercises and labyrinths).
 import { labyrinthStars } from "@/lib/game/exercises";
 import { tourStars } from "@/lib/game/tour-score";
 import { promotionRunStars } from "@/lib/game/promotion-run";
@@ -143,7 +145,11 @@ const CASES: BucketCase[] = [
     starless: false,
     starRange: [0, 3],
     sweep: movesSweep,
-    expectedStars: (e, m) => labyrinthStars(movesOf(m), e.optimalMoves),
+    // `gradeLabyrinthRun`, not `labyrinthStars`: a maze can be a Star Sweep now,
+    // and those grade on relative bands. This row named the raw scale, so the
+    // day the first rook maze was converted the oracle and the grader disagreed
+    // by a star — which is exactly what this file exists to catch.
+    expectedStars: (e, m) => gradeLabyrinthRun(movesOf(m), e),
     wrongKind: { kind: "failures", failures: 0 },
     outOfRange: (e) => ({ kind: "moves", movesUsed: movesCeiling(e.optimalMoves) + 1 }),
   },
