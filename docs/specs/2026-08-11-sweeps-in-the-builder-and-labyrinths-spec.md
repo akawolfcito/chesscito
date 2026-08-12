@@ -73,9 +73,46 @@ pide dejar de delegarme. **El builder primero; los laberintos después, con él.
   hasta que exista un solver que conozca el peón. Quedan **15** convertibles.
 - **Antes de convertir, medir**, igual que en las piezas: densidad, óptimos y alcance por
   laberinto. El orden de los escalones sale de la medición, no del gusto.
-- **Verificación**: el runtime del laberinto tiene que estar probado como sweep-aware **antes**
-  de convertir contenido — victoria con orden libre, dedup, y completion sólo en la última
-  estrella. Si hoy no lo es, esa es la primera tarea y no el contenido.
+### 2.3 ⛔ ETAPA 0 — el runtime del laberinto NO es sweep-aware (verificado 2026-08-11)
+
+La tarea 1 se corrió, y la respuesta cambia el orden del trabajo: **hoy autorar `targets` en un
+laberinto no es "no soportado", es una falla SILENCIOSA que además regala estrellas.**
+
+Cuatro evidencias, todas en el código actual:
+
+1. **La victoria termina en la PRIMERA estrella.** `handleLabyrinthMove`
+   (`exercises-screen.tsx:3581`) compara la casilla contra `activeLabyrinth.targetPos`:
+   ```ts
+   const reached = position.file === activeLabyrinth.targetPos.file &&
+                   position.rank === activeLabyrinth.targetPos.rank;
+   if (!reached) return;
+   ```
+   Y en un sweep **`targetPos` ES `targets[0]`**. Es exactamente el error que el carril 1 tiene
+   documentado en mayúsculas sobre su propio handler (`exercises-screen.tsx:1805`:
+   *"⛔ NOT `position === currentExercise.targetPos` […] ends the level on the FIRST star"*).
+   El laberinto hace literalmente eso.
+2. **El tablero no pinta las otras estrellas**: `sweepBoardTargets` y `sweepBoardCollected` se
+   pasan como `undefined` cuando hay laberinto activo (línea 2987), a propósito y por una razón
+   buena (que una casilla del ejercicio no atenúe la meta del laberinto).
+3. **El contador vivo está apagado**: `!activeLabyrinth && sweepRun.totalCount > 1`.
+4. **El grader es otro**: `labyrinthStars(moves, activeLabyrinth.optimalMoves)`, no las bandas
+   relativas de `sweepStars`.
+
+**Y la capa de CONTENIDO sí sabría.** `catalog.ts:339` calcula `computeSweepOptimal` para
+cualquier entrada con `targets.length > 1`, sin mirar el bucket — así que un laberinto con dos
+estrellas quedaría con el óptimo **alto y correcto**, la pantalla mostraría **una**, el nivel
+terminaría al pisarla, y `labyrinthStars` compararía los movimientos contra un óptimo que el
+jugador nunca tuvo que recorrer: **3★ por medio nivel, en silencio, y el best guardado
+envenenado**. Sin un solo error en consola.
+
+⛔ **Por eso la Etapa 0 va antes que la migración y antes que todo contenido**: hacer el runtime
+del laberinto sweep-aware (colección con orden libre + dedup vía `sweep-run.ts`, completion sólo
+en la última estrella, tablero con todas las metas y las recogidas atenuadas, contador, y el
+grader correcto). El carril 1 ya tiene todas esas piezas escritas y probadas; el trabajo es
+**conectarlas**, no inventarlas.
+
+⚠️ Mientras la Etapa 0 no exista, el guard barato es que el validador **rechace `targets` en el
+bucket `labyrinth`**. Un 400 explícito es infinitamente mejor que 3★ regaladas en silencio.
 
 ## 3. Lo que NO entra
 
@@ -95,10 +132,16 @@ pide dejar de delegarme. **El builder primero; los laberintos después, con él.
 3. **El linter de muros decorativos ya está exento de sweeps** — si el builder muestra ese
    audit, tiene que respetar la exención o volverá a mentir con seguridad.
 
-## 5. Orden sugerido
+## 5. Orden
 
-1. Runtime del laberinto: ¿es sweep-aware? Probarlo antes que nada.
-2. Migración + validador compartido + API.
-3. Formulario multi-estrella.
-4. Medir los 15 laberintos convertibles.
-5. Convertir, **con el builder**, y jugar.
+0. ⛔ **ETAPA 0 — hacer sweep-aware el runtime del laberinto** (§2.3). Ya no es una pregunta:
+   se verificó que no lo es, y que autorar `targets` ahí hoy regala estrellas en silencio.
+   Guard barato mientras tanto: el validador rechaza `targets` en el bucket `labyrinth`.
+1. Migración (`targets`, `star_floor`) + validador compartido + API.
+2. Formulario multi-estrella.
+3. Medir los 15 laberintos convertibles.
+4. Convertir, **con el builder**, y jugar.
+
+⚠️ Las etapas 1 y 2 (el builder) **no dependen** de la Etapa 0 si el validador rechaza
+`targets` en laberintos: se puede construir el builder para EJERCICIOS y abrir los laberintos
+después. Es la forma de que el founder empiece a autorar sweeps sin esperar al runtime.

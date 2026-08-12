@@ -141,14 +141,21 @@ desde el toque y no desde la jugada: antes corría mientras el jugador leía, o 
 
 ## 5. Lo que sigue
 
-1. **Volver a jugar el alfil** con los tres tableros corregidos, y comprobar en device que la
-   insignia ya no monta sobre el WELL DONE.
-2. **Pushear `main`.** Son 8 commits de esta sesión sobre los 26 de la anterior. Es del founder.
+1. ✅ **Alfil re-jugado por el founder** (2026-08-11): la insignia ya no monta sobre el
+   WELL DONE. El arreglo está confirmado en device.
+2. **Pushear `main`.** El founder decidió pushear **al terminar el builder**, no ahora: los
+   commits de esta sesión viajan con ese cluster.
 3. **Sweeps en el builder, y después los laberintos** — el pedido del founder es dejar de
    depender de que los autore yo por JSON. Spec completo, con alcance, riesgos y orden:
    `docs/specs/2026-08-11-sweeps-in-the-builder-and-labyrinths-spec.md`.
    ⛔ Ahí queda anotado que **el peón no puede tener sweeps** hasta que exista un solver que lo
    conozca, y que los 15 juegos firma quedan fuera.
+   ⛔ **Y la tarea 1 ya se corrió, con mala noticia: el runtime del laberinto NO es sweep-aware,
+   y autorar `targets` ahí hoy REGALA 3★ en silencio** — el nivel termina en la primera estrella
+   mientras el óptimo se calcula sobre todas. Es una Etapa 0 antes de la migración, y mientras
+   tanto el validador debe rechazar `targets` en el bucket `labyrinth` (§2.3 del spec).
+   ✅ Lo bueno: **el builder para EJERCICIOS no depende de esa etapa** — se puede construir y
+   empezar a autorar sweeps sin esperar al runtime del laberinto.
 4. **Repetir el patrón** en la tercera pieza. Quedan caballo, peón, dama y rey — y los cuatro
    tienen avisos de curva hoy (el rey, tres saltos y un retroceso).
 5. **Leer el experimento** cuando haya muestra: ahora hay dos piezas con sweeps y dos controles
