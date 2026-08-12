@@ -30,7 +30,10 @@ import {
 import { PROMOTABLE_PIECES } from "@/lib/game/promotion-run";
 import { BuilderPreview, isPreviewable } from "@/components/dev/builder-preview";
 import {
+  clearStoredToast,
   formatPublishResult,
+  readStoredToast,
+  storeToast,
   type PublishResultLike,
   type PublishToast,
 } from "@/lib/labyrinth-builder/publish-toast";
@@ -199,12 +202,28 @@ export default function LabyrinthBuilderPage() {
   // duplicate silently dropped `warnings` when the mapper started carrying
   // them, which is exactly how they went unread in the first place.
   const [toast, setToast] = useState<PublishToast | null>(null);
+  /* ⚠️ Saving RELOADS this page: it writes content/*.json and the generated
+   * catalog module, both inside the tree Next dev watches, so Fast Refresh wipes
+   * the state above. The verdict — including every save-time linter warning —
+   * was computed, rendered and destroyed in the same beat, and the only way to
+   * read it was to photograph the screen before it vanished (founder, 2026-08-12).
+   * So the toast is parked before the write and picked up on the way back in. */
+  useEffect(() => {
+    const restored = readStoredToast();
+    if (restored) setToast(restored);
+  }, []);
   /** Ad-hoc status line (loaded a record, bad id, network threw…). Only the
    *  catalog linter produces warnings, and it only runs on Save, so everything
    *  else reports an empty list rather than leaving the field undefined —
    *  which is what let these go unrendered before. */
   const say = (kind: PublishToast["kind"], text: string) =>
     setToast({ kind, text, warnings: [] });
+  /** Set a toast that must SURVIVE the reload the save triggers. Only the write
+   *  paths use it; `say` is for messages whose cause did not touch disk. */
+  const sayPersisted = (next: PublishToast) => {
+    setToast(next);
+    storeToast(next);
+  };
   /** Debounce: block re-entrant Save while a publish round-trip is in flight
    *  (a double-click would otherwise race two read-modify-write passes). */
   const [isSaving, setIsSaving] = useState(false);
@@ -435,6 +454,7 @@ export default function LabyrinthBuilderPage() {
     setTracedPath([]);
     setLoadNote(null);
     setToast(null);
+    clearStoredToast();
   }
 
   function handleBucketChange(next: Bucket) {
@@ -447,6 +467,7 @@ export default function LabyrinthBuilderPage() {
     setTracedPath([]);
     setLoadNote(null);
     setToast(null);
+    clearStoredToast();
   }
 
   async function handleSave() {
@@ -470,7 +491,7 @@ export default function LabyrinthBuilderPage() {
         }),
       });
       const data = (await res.json()) as PublishResultLike;
-      setToast(formatPublishResult(data));
+      sayPersisted(formatPublishResult(data));
       if (data?.baseline?.ok) void refreshRecords();
     } catch (e) {
       say("err", (e as Error).message);
@@ -522,7 +543,7 @@ export default function LabyrinthBuilderPage() {
       });
       const data = (await res.json()) as PublishResultLike;
       if (!data?.baseline?.ok) {
-        setToast(formatPublishResult(data));
+        sayPersisted(formatPublishResult(data));
         return;
       }
       const verb = rec.disabled ? "enabled" : "disabled";
@@ -1021,7 +1042,10 @@ export default function LabyrinthBuilderPage() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setToast({ ...toast, warnings: [] })}
+                  onClick={() => {
+                    setToast({ ...toast, warnings: [] });
+                    clearStoredToast();
+                  }}
                   className="shrink-0 text-xs text-neutral-400 underline hover:text-neutral-200"
                 >
                   dismiss

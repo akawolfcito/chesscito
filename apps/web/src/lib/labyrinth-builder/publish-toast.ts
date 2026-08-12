@@ -26,6 +26,53 @@ export interface PublishResultLike {
 
 const COMMIT_NUDGE = "Remember to commit content/*.json.";
 
+/* ── Surviving the reload the save itself causes ──────────────────────────────
+ *
+ * A save writes content/*.json AND src/lib/game/generated/puzzles.generated.ts,
+ * both inside the tree Next dev watches, so Fast Refresh reloads the page and
+ * wipes the state the toast lives in. The verdict — including every save-time
+ * linter warning — was computed, rendered and destroyed in the same beat; the
+ * only way to read it was to photograph the screen in time.
+ *
+ * `sessionStorage`, not `localStorage`: this is a message about what just
+ * happened in THIS tab, and greeting a fresh session with an hour-old verdict is
+ * how a surface stops being believed. Read-once, for the same reason.
+ *
+ * Every access is wrapped: storage throws in private-mode Safari, and hand-edited
+ * JSON must not take down the only tool that can author content. Losing the toast
+ * is acceptable — losing the builder is not. */
+const TOAST_KEY = "chesscito:builder-toast";
+
+export function storeToast(toast: PublishToast): void {
+  try {
+    window.sessionStorage.setItem(TOAST_KEY, JSON.stringify(toast));
+  } catch {
+    /* no storage → the toast is simply lost, as before */
+  }
+}
+
+/** Read AND consume the stored toast. `null` when there is none or it is junk. */
+export function readStoredToast(): PublishToast | null {
+  try {
+    const raw = window.sessionStorage.getItem(TOAST_KEY);
+    if (!raw) return null;
+    window.sessionStorage.removeItem(TOAST_KEY);
+    const parsed = JSON.parse(raw) as PublishToast;
+    if (!parsed || typeof parsed.text !== "string") return null;
+    return { ...parsed, warnings: parsed.warnings ?? [] };
+  } catch {
+    return null;
+  }
+}
+
+export function clearStoredToast(): void {
+  try {
+    window.sessionStorage.removeItem(TOAST_KEY);
+  } catch {
+    /* nothing to clear */
+  }
+}
+
 export function formatPublishResult(r: PublishResultLike): PublishToast {
   // The route has always sent these (api/dev/publish/route.ts); this mapper
   // used to drop them, so every save-time linter warning died unread.
