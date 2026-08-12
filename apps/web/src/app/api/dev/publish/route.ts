@@ -16,6 +16,7 @@
  *    (which may carry DB connection strings) and the token are never echoed.
  */
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import type { LabyrinthRecord } from "@/lib/labyrinth-builder/store";
 import type { ContentBucket } from "@/lib/content/overlay-types";
 import { writeBaselineRecord } from "@/lib/content/baseline-write";
@@ -146,6 +147,26 @@ export async function POST(req: Request) {
       },
       { status: 400 },
     );
+  }
+
+  // Step 1b — the baseline write IS a content change, so it invalidates the
+  // catalog cache on its own.
+  //
+  // ⚠️ This used to live only inside the overlay write route, and locally the
+  // overlay is deliberately off (no ADMIN_TOKEN) — so the invalidation went down
+  // with a step that had nothing to do with it. The founder converted four mazes
+  // to Star Sweeps, JSON and generated module both correct, and the game kept
+  // serving the previous catalog: one star, the old optimum, no error anywhere
+  // (2026-08-12). The compiled module changing on disk does NOT invalidate a
+  // tagged cache entry; only this call does.
+  //
+  // Wrapped: `revalidateTag` throws outside a request store, and the content is
+  // already written — losing the invalidation must not turn a good save into a
+  // 500. A stale cache expires on its own within the TTL; a 500 loses the work.
+  try {
+    revalidateTag("content");
+  } catch {
+    /* cache untouched; the TTL still refreshes it */
   }
 
   // Step 2 — overlay (network). The id comes off the result (the writer does not
