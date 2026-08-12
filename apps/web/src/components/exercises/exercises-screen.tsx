@@ -1957,22 +1957,33 @@ export function ExercisesScreen({
         );
 
         if (badgeEarnedNow && !hasClaimedBadge) {
-          // Only the loser of the ownership contest primes its prompt. The
-          // timers below run either way, so the piece-complete hand-off keeps
-          // its existing 1.5s + 13.5s shape.
-          if (!badgeMomentOwnedByQueue) setShowBadgeEarned(true);
-          // Spec: local-save toast fires at t=1500ms (same window as normal path),
-          // AFTER the WELL DONE flash. Safety-net schedules 13.5s later so the
-          // total auto-dismiss delay from exercise completion stays ~15s.
-          autoReset.schedule(() => {
+          // ⛔ THE BADGE PATH USED TO SKIP THE FLASH. It returned here without
+          // ever calling `holdForTap`, so the WELL DONE flash played on its own
+          // timer while the badge modal mounted straight over it — the founder
+          // watched his own celebration through a dialog (2026-08-11, the
+          // bishop's last board). Nothing about it was piece-specific: EVERY
+          // piece ends on this branch.
+          //
+          // Holding fixes both owners at once. The queue's `<UnlockOverlay>`
+          // already yields to `awaitFlashTap`, and the legacy prompt is now
+          // primed inside the continuation, so neither can mount until the
+          // player has had their moment and tapped.
+          holdForTap(() => {
+            // Only the loser of the ownership contest primes its prompt.
+            if (!badgeMomentOwnedByQueue) setShowBadgeEarned(true);
+            // Local-save toast fires on the tap, exactly like the normal path.
             if (shouldFireLocalSavedToast({ labyrinthMode })) {
               showToast(tFooter("localSaved"), 1200);
             }
+            // Safety net: hand over to the piece-complete menu 13.5s after the
+            // recognition is actually on screen. Timing it from the solve (the
+            // old shape) meant it counted down while the player was still
+            // reading, or still signing a claim.
             autoReset.schedule(() => {
               setShowBadgeEarned(false);
               setShowPieceComplete(true);
             }, 13_500);
-          }, 1500);
+          });
           return;
         }
       }
@@ -4618,7 +4629,12 @@ export function ExercisesScreen({
           />
         ) : null}
 
-        {showBadgeEarned && celebration.current === null ? (
+        {/* `!awaitFlashTap` is not redundant with priming this inside the
+         *  continuation: it is the same yield every other celebration on this
+         *  screen makes, written where the rule is read. Without it, any future
+         *  path that sets `showBadgeEarned` outside `holdForTap` re-opens the
+         *  stack silently. */}
+        {showBadgeEarned && !awaitFlashTap && celebration.current === null ? (
           <BadgeEarnedPrompt
             pieceType={selectedPiece}
             totalStars={totalStars}

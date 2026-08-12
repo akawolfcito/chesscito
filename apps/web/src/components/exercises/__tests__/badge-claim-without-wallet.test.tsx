@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, screen } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 
 import { renderWithAppProviders } from "@/test-utils/render-with-app-providers";
 import { ContentCatalogProvider } from "@/lib/content/catalog-context";
@@ -147,6 +147,17 @@ function solve(exercise: Exercise) {
   fireEvent.click(screen.getByRole("gridcell", { name: to }));
 }
 
+/** The badge path holds the WELL DONE flash for the player's tap (2026-08-11),
+ *  so the badge overlay only exists after it. Before that fix the modal mounted
+ *  over the flash and these cases could assert it on the next tick. */
+async function tapPastWellDone() {
+  await screen.findByText("Tap to Continue", undefined, { timeout: 2500 });
+  fireEvent.click(screen.getByRole("button", { name: "Tap to Continue" }));
+  await waitFor(() => {
+    expect(screen.queryByText("Tap to Continue")).not.toBeInTheDocument();
+  });
+}
+
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -195,12 +206,13 @@ afterEach(() => {
 });
 
 describe("Claim Badge with no wallet says why, instead of nothing", () => {
-  it("tells the player to connect, and never reaches the write", () => {
+  it("tells the player to connect, and never reaches the write", async () => {
     seedCelebrated("first-reward", "first-labyrinth:rook", "special-training");
     seedNearBadge();
     renderScreen();
 
     solve(ROOK_POOL[4]);
+    await tapPastWellDone();
     expect(screen.getByText("Badge Ready to Claim")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Claim Badge" }));
@@ -218,12 +230,13 @@ describe("Claim Badge with no wallet says why, instead of nothing", () => {
     expect(claim.run).not.toHaveBeenCalled();
   });
 
-  it("reports the refusal, so a dead tap is countable", () => {
+  it("reports the refusal, so a dead tap is countable", async () => {
     seedCelebrated("first-reward", "first-labyrinth:rook", "special-training");
     seedNearBadge();
     renderScreen();
 
     solve(ROOK_POOL[4]);
+    await tapPastWellDone();
     fireEvent.click(screen.getByRole("button", { name: "Claim Badge" }));
 
     expect(track).toHaveBeenCalledWith("badge_claim_tx", {

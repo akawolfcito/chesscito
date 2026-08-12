@@ -235,9 +235,23 @@ describe("a badge claim that CONFIRMS still leaves exactly one modal", () => {
     seedNearBadge();
     renderScreen();
 
-    // Fake timers only from here: the 15s auto-reset is armed by THIS solve.
+    // Fake timers only from here: the auto-reset is armed by THIS solve.
     vi.useFakeTimers();
     solve(ROOK_POOL[4]);
+
+    // The badge path holds the WELL DONE flash for the player's tap
+    // (2026-08-11); the recognition only mounts after it, and its 13.5s
+    // safety-net now counts from the tap rather than from the solve.
+    act(() => {
+      vi.advanceTimersByTime(2_000);
+    });
+    expect(modalCount()).toBe(0);
+    fireEvent.click(screen.getByRole("button", { name: "Tap to Continue" }));
+    // The flash plays its exit before the recognition takes the stage; with the
+    // clock frozen it has to be driven, or the assertion lands mid-transition.
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
 
     expect(modalCount()).toBe(1);
     expect(screen.getByText("Badge Ready to Claim")).toBeInTheDocument();

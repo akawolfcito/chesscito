@@ -279,7 +279,7 @@ describe("one dialog per drain (composition)", () => {
    *  mount `<UnlockOverlay>` AND the legacy `<BadgeEarnedPrompt>`: two
    *  `VictoryPopupShell`s, both `role="dialog"`, both `z-[70]`, the later one
    *  in JSX painting over the other. */
-  it("renders exactly ONE dialog on the solve that crosses the badge threshold", () => {
+  it("renders exactly ONE dialog on the solve that crosses the badge threshold", async () => {
     seedCelebrated("first-reward", "first-labyrinth:rook", "special-training");
     // Badge gate is COMPLETION: a 5-exercise pool needs 4 (80%). Four already
     // done; the fifth (last) solve is the first resolve to recognize the badge,
@@ -295,6 +295,11 @@ describe("one dialog per drain (composition)", () => {
     renderScreen();
 
     solve(ROOK_POOL[4]);
+    // The badge path holds for the tap like every other ending (2026-08-11).
+    // It used to skip the flash entirely, and this case asserted the dialog on
+    // the tick after the solve — which is precisely the stack it was written to
+    // forbid, only measured from above the flash instead of beside it.
+    await tapPastWellDone();
 
     expect(screen.getAllByRole("dialog")).toHaveLength(1);
     expect(modalCount()).toBe(1);
@@ -302,6 +307,72 @@ describe("one dialog per drain (composition)", () => {
     // can actually CLAIM. The legacy prompt only said "Continue".
     expect(screen.getByText("Badge Ready to Claim")).toBeInTheDocument();
     expect(document.querySelector("#badge-earned-title")).toBeNull();
+  });
+
+  /** ⛔ THE BADGE PATH SKIPPED THE FLASH ENTIRELY (founder, 2026-08-11, on the
+   *  bishop's last board). `completeExercise` returns EARLY when the badge is
+   *  earned, so `holdForTap` never ran: the WELL DONE flash played on its own
+   *  timer while the badge modal mounted straight over it. The founder watched
+   *  his own celebration through a dialog, exactly the stacking the 2026-07-17
+   *  rule forbids — and being on the badge path, it was never about the rook or
+   *  the bishop. Every piece ends this way.
+   *
+   *  Both owners of the badge moment are covered below, because the early return
+   *  bypassed the flash for both. */
+  it("holds the WELL DONE flash before the LEGACY badge prompt, never under it", async () => {
+    // The queue does NOT own the badge moment here: `piece-badge-eligible` was
+    // already celebrated on an earlier visit, so the machine has nothing left to
+    // emit and the legacy prompt is the one that gets primed. This is the exact
+    // state a returning player is in — badge earned, still unclaimed.
+    seedCelebrated(
+      "first-reward",
+      "first-labyrinth:rook",
+      "special-training",
+      "piece-badge-eligible:rook",
+    );
+    seedRookProgress("t-rook-5", {
+      "t-rook-1": 3,
+      "t-rook-2": 3,
+      "t-rook-3": 3,
+      "t-rook-4": 3,
+    });
+    renderScreen();
+
+    solve(ROOK_POOL[4]);
+
+    // The flash owns the moment ALONE: nothing is stacked over it.
+    await screen.findByText("Tap to Continue", undefined, { timeout: 2500 });
+    expect(modalCount()).toBe(0);
+    expect(document.querySelector("#badge-earned-title")).toBeNull();
+
+    // And the recognition is not lost — it takes the stage on the tap.
+    fireEvent.click(screen.getByRole("button", { name: "Tap to Continue" }));
+    await waitFor(() => {
+      expect(document.querySelector("#badge-earned-title")).not.toBeNull();
+    });
+    expect(modalCount()).toBe(1);
+  });
+
+  it("holds the WELL DONE flash before the QUEUE's badge overlay too", async () => {
+    seedCelebrated("first-reward", "first-labyrinth:rook", "special-training");
+    seedRookProgress("t-rook-5", {
+      "t-rook-1": 3,
+      "t-rook-2": 3,
+      "t-rook-3": 3,
+      "t-rook-4": 3,
+    });
+    renderScreen();
+
+    solve(ROOK_POOL[4]);
+
+    await screen.findByText("Tap to Continue", undefined, { timeout: 2500 });
+    expect(modalCount()).toBe(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Tap to Continue" }));
+    await waitFor(() => {
+      expect(screen.getByText("Badge Ready to Claim")).toBeInTheDocument();
+    });
+    expect(modalCount()).toBe(1);
   });
 
   /** CRITICAL 1, labyrinth path — `labyrinthCompleted` + the overlay from
@@ -350,6 +421,7 @@ describe("one dialog per drain (composition)", () => {
     renderScreen();
 
     solve(ROOK_POOL[4]);
+    await tapPastWellDone();
 
     // The badge is the closer; the Great Focus Session is absorbed INTO it.
     expect(screen.getByText("Badge Ready to Claim")).toBeInTheDocument();
