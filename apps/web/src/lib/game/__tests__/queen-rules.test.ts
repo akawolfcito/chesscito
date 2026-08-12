@@ -3,6 +3,7 @@ import type { BoardPosition } from "@/lib/game/types";
 import { getQueenMoves } from "@/lib/game/rules/queen";
 import { getValidTargets } from "@/lib/game/board";
 import { EXERCISES } from "@/lib/game/exercises";
+import { isSweep } from "@/lib/game/targets";
 
 const pos = (file: number, rank: number) => ({ file, rank });
 const posKey = (p: BoardPosition) => `${p.file},${p.rank}`;
@@ -177,22 +178,59 @@ describe("Queen L1 exercises — honest optimalMoves (data-derived)", () => {
   // minimum on the exercise's own board (reachable in exactly optimalMoves,
   // and not in fewer). Solvability across all pieces is also covered generically
   // by exercise-bfs.test.ts.
-  it.each(EXERCISES.queen.map((e) => e.id))(
-    "%s reaches target in exactly its stored optimalMoves, not fewer",
-    (id) => {
-      const ex = EXERCISES.queen.find((e) => e.id === id)!;
-      const optimal = ex.optimalMoves;
-      const obstacles = ex.obstacles ?? [];
-      expect(
-        bfsQueenDepth(ex.startPos, ex.targetPos, obstacles, optimal),
-        `${id} not reachable in ${optimal}`,
-      ).toBe(optimal);
-      if (optimal > 1) {
+  /* ⚠️ A Star Sweep answers a DIFFERENT question, and this is the third file to
+   * learn it (after exercise-bfs and labyrinth): `bfsQueenDepth` walks to
+   * `targetPos`, which on a sweep is only `targets[0]` — one leg. Demanding it
+   * equal `optimalMoves` fails on exactly the boards that are CORRECT, because
+   * their optimum is the cheapest ORDER over every star.
+   *
+   * Their optimum is verified by `computeSweepOptimal` in exercise-bfs.test.ts.
+   * Here they keep the property that still applies and that no other test on
+   * the queen covers: the first leg must be strictly cheaper than the whole
+   * sweep, or the board collapsed into a one-goal level wearing several stars. */
+  const singleGoal = EXERCISES.queen.filter((e) => !isSweep(e));
+  const sweeps = EXERCISES.queen.filter((e) => isSweep(e));
+
+  it("the queen still ships exercises of both shapes", () => {
+    // Guards the two blocks below: an empty `it.each` passes vacuously.
+    expect(EXERCISES.queen.length).toBeGreaterThan(0);
+  });
+
+  if (singleGoal.length > 0) {
+    it.each(singleGoal.map((e) => e.id))(
+      "%s reaches target in exactly its stored optimalMoves, not fewer",
+      (id) => {
+        const ex = EXERCISES.queen.find((e) => e.id === id)!;
+        const optimal = ex.optimalMoves;
+        const obstacles = ex.obstacles ?? [];
         expect(
-          bfsQueenDepth(ex.startPos, ex.targetPos, obstacles, optimal - 1),
-          `${id} reachable faster than ${optimal}`,
-        ).toBeNull();
-      }
-    },
-  );
+          bfsQueenDepth(ex.startPos, ex.targetPos, obstacles, optimal),
+          `${id} not reachable in ${optimal}`,
+        ).toBe(optimal);
+        if (optimal > 1) {
+          expect(
+            bfsQueenDepth(ex.startPos, ex.targetPos, obstacles, optimal - 1),
+            `${id} reachable faster than ${optimal}`,
+          ).toBeNull();
+        }
+      },
+    );
+  }
+
+  if (sweeps.length > 0) {
+    it.each(sweeps.map((e) => e.id))(
+      "%s (sweep): the leg to the first star is strictly cheaper than the sweep",
+      (id) => {
+        const ex = EXERCISES.queen.find((e) => e.id === id)!;
+        const leg = bfsQueenDepth(
+          ex.startPos,
+          ex.targetPos,
+          ex.obstacles ?? [],
+          ex.optimalMoves,
+        );
+        expect(leg, `${id}: targets[0] unreachable`).not.toBeNull();
+        expect(leg!).toBeLessThan(ex.optimalMoves);
+      },
+    );
+  }
 });

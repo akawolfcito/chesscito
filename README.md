@@ -51,7 +51,7 @@ path.
 
 ## Gameplay
 
-All six pieces. 59 exercises plus a second lane of longer challenges. Stars awarded by precision.
+All six pieces. 60 exercises plus a second lane of longer challenges. Stars awarded by precision.
 
 Every piece trains on two lanes: short **exercises** (move one piece to a target square), and
 **Special Training** — a longer challenge built around what makes that piece itself. All six pieces
@@ -60,7 +60,7 @@ now have their signature game; for the Rook, that game is its rail labyrinths.
 | Piece            | Exercises | Special Training                 |
 | ---------------- | --------- | -------------------------------- |
 | Rook (Torre)     | 10        | **Rail labyrinths** (4)          |
-| Bishop (Alfil)   | 9         | **Diagonal Run** (3)             |
+| Bishop (Alfil)   | 10        | **Diagonal Run** (3)             |
 | Knight (Caballo) | 10        | **Knight's Tour** (3)            |
 | Pawn (Peón)      | 10        | **Promotion Run** (3)            |
 | Queen (Dama)     | 10        | **N-Queens** (3)                 |
@@ -71,13 +71,28 @@ visit a share of the board, N-Queens asks you to place queens that cannot see ea
 break a queen's rays, which is why one board fits nine queens where a bare 8×8 fits eight), and the
 Promotion Run scores by how few times the pawn is caught on its way to promoting.
 
-Stars are awarded based on move efficiency:
+Many boards ask for **more than one star**: two to five squares to collect, in any order you like.
+Choosing a cheap order *is* the puzzle — the shortest route to the nearest star is rarely the
+shortest route through all of them. The board keeps a live count, and a run only completes on the
+last star, never the first.
+
+Stars are awarded on move efficiency, and a board's own shape decides the scale:
+
+**One goal** — the classic scale, which never scores zero:
 
 - **3 stars** — solved in the optimal number of moves
 - **2 stars** — one extra move used
-- **1 star** — two extra moves used
+- **1 star** — any longer route that still arrives
 
-Complete 80% of a piece's exercises to unlock its on-chain badge — the badge rewards constancy, not perfection, so a 1-star run and a 3-star run both count and no one is stranded below a star ceiling. Stars are a reward and tiebreak metric, not the gate. Completing exercises and labyrinths also earns **Peones**, the in-game soft currency, which can additionally be purchased with stablecoins (cUSD / USDT / USDC) via a direct payment — no token approvals.
+**Several goals** — graded in bands proportional to the board, because a 20-move route and a
+4-move route cannot forgive the same slack. The band is a quarter of the optimum (at least 1):
+
+- **3 stars** — the cheapest order, exactly
+- **2 stars** — within one band of it
+- **1 star** — within two bands
+- **0 stars** — beyond that: the level was completed, but wandered
+
+Complete 80% of a piece's exercises to unlock its on-chain badge — the badge rewards constancy, not perfection, so a 1-star run and a 3-star run both count and no one is stranded below a star ceiling. Stars are a reward and tiebreak metric, not the gate. An exercise counts as completed once it has scored at least one star, so a multi-goal board finished by wandering (0 stars) is replayable and does not count until a tighter run lands. Completing exercises and labyrinths also earns **Peones**, the in-game soft currency, which can additionally be purchased with stablecoins (cUSD / USDT / USDC) via a direct payment — no token approvals.
 
 ### Progression & Economy
 
