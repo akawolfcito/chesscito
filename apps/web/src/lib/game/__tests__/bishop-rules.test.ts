@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { getBishopMoves } from "@/lib/game/rules/bishop";
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
+import { computeSweepOptimal } from "@/lib/game/sweep-optimal";
+import { exerciseTargets, isSweep } from "@/lib/game/targets";
 import { EXERCISES } from "@/lib/game/exercises";
 import type { BoardPosition, Exercise } from "@/lib/game/types";
 
@@ -62,15 +64,24 @@ describe("getBishopMoves", () => {
 });
 
 describe("bishop curriculum BFS", () => {
-  it("every exercise is solvable and its stored optimalMoves is the true BFS minimum", () => {
-    // The declared optimalMoves is validated AGAINST the real BFS, not a
+  /** The honest cost of the level: the sweep solver when there are several stars,
+   *  the plain BFS when there is one. ⛔ `computeExerciseBfs` alone measures the
+   *  route to `targetPos`, which on a sweep is only `targets[0]` — one leg, not
+   *  the level. On `bishop-8` that leg is 1 move and the level is 8. */
+  const trueOptimal = (ex: Exercise): number | null =>
+    isSweep(ex)
+      ? computeSweepOptimal("bishop", ex)
+      : (computeExerciseBfs("bishop", ex)?.optimalMoves ?? null);
+
+  it("every exercise is solvable and its stored optimalMoves is the true minimum", () => {
+    // The declared optimalMoves is validated AGAINST the real solver, not a
     // hardcoded parallel copy. Intentional position/difficulty edits (via the
     // builder, which recomputes optimalMoves) stay green as long as the stored
     // value is honest — the only property that actually matters.
     for (const ex of EXERCISES.bishop) {
-      const bfs = computeExerciseBfs("bishop", ex);
-      expect(bfs, `${ex.id} is unsolvable`).not.toBeNull();
-      expect(bfs!.optimalMoves, `${ex.id} optimalMoves drift`).toBe(ex.optimalMoves);
+      const optimal = trueOptimal(ex);
+      expect(optimal, `${ex.id} is unsolvable`).not.toBeNull();
+      expect(optimal, `${ex.id} optimalMoves drift`).toBe(ex.optimalMoves);
     }
   });
 
@@ -78,12 +89,26 @@ describe("bishop curriculum BFS", () => {
     for (const ex of EXERCISES.bishop) {
       if (!ex.obstacles?.length) continue;
       const cleared: Exercise = { ...ex, obstacles: [] };
-      const withOut = computeExerciseBfs("bishop", cleared);
+      const withOut = trueOptimal(cleared);
       expect(withOut, `${ex.id} unsolvable without obstacles`).not.toBeNull();
-      expect(
-        withOut!.optimalMoves,
-        `${ex.id} obstacles are decorative`,
-      ).toBeLessThan(ex.optimalMoves);
+      expect(withOut!, `${ex.id} obstacles are decorative`).toBeLessThan(
+        ex.optimalMoves,
+      );
+    }
+  });
+
+  it("never asks for a square the bishop cannot stand on — every star is its colour", () => {
+    // The pedagogy test guards `targetPos`; a sweep adds squares it never sees,
+    // and an opposite-colour star is not a hard level, it is an impossible one:
+    // `computeSweepOptimal` returns null and the perfect run does not exist.
+    for (const ex of EXERCISES.bishop) {
+      const colour = (ex.startPos.file + ex.startPos.rank) % 2;
+      for (const t of exerciseTargets(ex)) {
+        expect(
+          (t.file + t.rank) % 2,
+          `${ex.id} has a star on the opposite colour`,
+        ).toBe(colour);
+      }
     }
   });
 

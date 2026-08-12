@@ -9,7 +9,7 @@
  * ⚠️ Real fs, NOT mocked — `root` is injected to a tmpdir. Without the injected
  * root these writes would land on the working tree (spec AC-2).
  */
-import { cpSync, mkdtempSync, mkdirSync, rmSync } from "node:fs";
+import { cpSync, mkdtempSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -52,7 +52,15 @@ describe("readBaselineRecords (AC-3)", () => {
   it("tags the exercise bucket without inventing a kind", () => {
     const records = readBaselineRecords("exercise", root);
 
-    expect(records).toHaveLength(59);
+    // Counted from the catalog, not pinned: 59 went stale the day the bishop got
+    // its tenth board. What this case is about is the BUCKET and the absent kind,
+    // and a frozen total only ever fails for authoring.
+    const authored = (
+      JSON.parse(
+        readFileSync(join(root, "content", "exercises.json"), "utf8"),
+      ) as unknown[]
+    ).length;
+    expect(records).toHaveLength(authored);
     expect(records.every((r) => r.bucket === "exercise")).toBe(true);
     expect(records.every((r) => r.kind === undefined)).toBe(true);
   });

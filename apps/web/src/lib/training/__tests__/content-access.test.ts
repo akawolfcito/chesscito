@@ -145,7 +145,10 @@ describe("Training content access", () => {
 
   it("does not gate any existing curricular exercise", () => {
     const exercises = Object.values(EXERCISES).flat();
-    expect(exercises).toHaveLength(59);
+    // Not pinned to a total (was 59, stale the day the bishop got a tenth board):
+    // the claim is that NO curricular exercise is behind the pass, whatever the
+    // catalog grows to. A non-empty catalog keeps the assertion meaningful.
+    expect(exercises.length).toBeGreaterThan(0);
     expect(exercises.every((exercise) => exercise.access !== "training_pass")).toBe(true);
   });
 });

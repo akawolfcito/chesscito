@@ -30,12 +30,15 @@ function masteryMap(piece: PieceId, totalStars: number): ExerciseStarsById {
 describe("rotation — getExercisePool", () => {
   it("returns the full pool (content-sourced from GENERATED_EXERCISES) for every piece", () => {
     for (const piece of PLAYABLE_PIECES) {
-      // Exercises are now fully content-sourced (migrated into
-      // content/exercises.json 2026-06-16), so EXERCISES[piece] ===
-      // GENERATED_EXERCISES[piece]. 10 per piece in wave 1; the bishop dropped
-      // to 9 in B4.3 (bishop-9 retired as a duplicate).
+      // Exercises are fully content-sourced (migrated into content/exercises.json
+      // 2026-06-16), so EXERCISES[piece] === GENERATED_EXERCISES[piece]. That
+      // equality is the invariant here.
+      //
+      // The pool SIZE is not: it was pinned at `bishop ? 9 : 10` and went stale
+      // the day the bishop got its tenth board (2026-08-11). Authoring a board is
+      // not a regression, so all that is enforced is that a pool is never empty.
       expect(getExercisePool(piece)).toHaveLength(GENERATED_EXERCISES[piece].length);
-      expect(GENERATED_EXERCISES[piece]).toHaveLength(piece === "bishop" ? 9 : 10);
+      expect(GENERATED_EXERCISES[piece].length).toBeGreaterThan(0);
     }
   });
 

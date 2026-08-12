@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { BadgeSheet } from "../badge-sheet";
+import { EXERCISES } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
 import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 import { seedProgress } from "@/hooks/__tests__/helpers/seed-progress";
@@ -247,10 +248,15 @@ describe("BadgeSheet — ContextualHeader canary", () => {
   it("renders the HERO BAND stats line (pieces + stars) below the header", () => {
     setStars("rook", [3, 3, 3, 3, 3]);
     renderBadgeSheet();
-    // The denominator is the real catalog: 5 pieces × 10 + bishop × 9 = 59
-    // exercises × 3★ = 177 (bishop-9 retired in B4.3). The legacy 5-slot fixture
-    // fills rook's first five exercises → 15★. Bishop is claimed → piecesClaimed = 1.
+    // The denominator is the real catalog (every exercise × 3★), so it MOVES when
+    // a board is authored: it read 177 until the bishop's tenth board landed on
+    // 2026-08-11. Counting it here instead of pinning it keeps this case about the
+    // stats line, not about how much content exists.
+    const maxStars =
+      Object.values(EXERCISES).reduce((n, pool) => n + pool.length, 0) * 3;
+    // The legacy 5-slot fixture fills rook's first five exercises → 15★.
+    // Bishop is claimed → piecesClaimed = 1.
     expect(screen.getByText(/1\/6 PIECES/i)).toBeInTheDocument();
-    expect(screen.getByText(/15\/177 ★/)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`15/${maxStars} ★`))).toBeInTheDocument();
   });
 });

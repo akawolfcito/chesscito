@@ -90,12 +90,18 @@ describe("starFloor is a policy of ONE exercise, not of the grader", () => {
       expect(gradeExerciseRun(ex.optimalMoves + 20, ex)).toBe(0);
     }
 
-    // And nothing else in the whole catalog quietly acquired a floor.
-    const floored = Object.values(EXERCISES)
-      .flat()
-      .filter((e) => e.starFloor !== undefined)
-      .map((e) => e.id);
-    expect(floored).toEqual(["rook-2"]);
+    // And nothing else in the catalog quietly acquired a floor. The invariant is
+    // NOT the list of ids — that pins content the curriculum is allowed to grow
+    // (the bishop earned its own floored board on 2026-08-11). It is the POLICY:
+    // a floor exists only on the SECOND board a newcomer touches, at most one per
+    // piece, and never on a later one where 0★ has to stay reachable.
+    for (const [piece, pool] of Object.entries(EXERCISES)) {
+      const floored = pool.filter((e) => e.starFloor !== undefined);
+      expect(floored.length, `${piece} floors more than one board`).toBeLessThanOrEqual(1);
+      for (const ex of floored) {
+        expect(pool.indexOf(ex), `${piece}: ${ex.id} is floored but is not the 2nd board`).toBe(1);
+      }
+    }
   });
 
   it("stays inside the 0..3 scale over a wide domain", () => {
