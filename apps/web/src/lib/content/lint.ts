@@ -180,7 +180,19 @@ export function lintPuzzle(
   // and the level stops being the game. The BFS said so because it routes a pawn
   // like a piece that can move diagonally onto an empty square, which is the one
   // thing a pawn cannot do, and the whole lesson.
-  if (!usesOwnSolver(mapped.kind) && obstacles.length > 0 && optimalMoves > 0) {
+  // ⛔ A Star Sweep is exempt for exactly the reason above: it HAS its own solver
+  // (`computeSweepOptimal`), and `decisionProfile` routes to `targetPos`, which on
+  // a sweep is only `targets[0]`. Asking it about `bishop-8` — whose first star is
+  // one move away and whose second is eight — got the confident answer "optimal 1,
+  // 9 of 10 obstacles decorative" about walls that quadruple the real route. Wrong
+  // question, confidently answered.
+  const isSweepBoard = (mapped.targets?.length ?? 0) > 1;
+  if (
+    !usesOwnSolver(mapped.kind) &&
+    !isSweepBoard &&
+    obstacles.length > 0 &&
+    optimalMoves > 0
+  ) {
     const shipped = decisionProfile(piece, mapped, obstacles);
     if (shipped) {
       let kept = [...obstacles];
