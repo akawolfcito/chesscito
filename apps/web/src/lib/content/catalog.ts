@@ -329,7 +329,10 @@ export function buildCatalog(
       );
       promotionRunOptimal = promotionRunPath?.length ?? null;
     }
-    const probe: Exercise = { id: "probe", optimalMoves: 0, ...toExerciseFields(mapped) };
+    // The real id when there is one: the sweep solver names the level in its own
+    // throws ("sweep 'x' authors 6 targets"), and "probe" names nothing an author
+    // can find.
+    const probe: Exercise = { id: idOverride ?? "probe", optimalMoves: 0, ...toExerciseFields(mapped) };
     const bfs = usesOwnSolver(input.kind) ? null : computeExerciseBfs(input.piece, probe);
     // Star Sweep — the optimum is the cheapest ORDER over all targets, not the
     // single-target BFS. COMPUTED here and never authored: a hand-written optimum
@@ -337,11 +340,75 @@ export function buildCatalog(
     // experiment measures a lie; one move too low makes it unreachable.
     let sweepOptimal: number | null = null;
     if (mapped.targets && mapped.targets.length > 1) {
-      sweepOptimal = computeSweepOptimal(input.piece, probe);
+      // ⛔ ONLY the exercise bucket runs a sweep. The labyrinth runtime compares
+      //    the landed square against `targetPos` — which in a sweep IS
+      //    `targets[0]` — and ends the level there, then hands that half-run to
+      //    `labyrinthStars` against the FULL sweep optimum computed below. The
+      //    result is three stars for half a board, in silence, with a poisoned
+      //    best persisted. Dropping the extra targets quietly (what this builder
+      //    used to do) hides the same level; say the rule instead.
+      if (input.kind !== "exercise") {
+        errors.push(
+          `${label}: 'targets' is an EXERCISE-only field — the '${input.kind}' runtime is not ` +
+            `sweep-aware. It ends the level on the FIRST star (targets[0]) and then grades ` +
+            `that half-run against the full sweep optimum, awarding 3 stars for half a board. ` +
+            `Move the puzzle to content/exercises.json, or drop the extra targets.`,
+        );
+        return;
+      }
+      // A bishop never leaves its colour, so a star on the other one is not a
+      // hard star — it does not exist for this piece. The generic "unreachable"
+      // below is TRUE and useless: it sends the author hunting for a blocker
+      // that is not on the board.
+      if (input.piece === "bishop") {
+        const startColour = (mapped.startPos.file + mapped.startPos.rank) % 2;
+        const offColour = mapped.targets.filter(
+          (t) => (t.file + t.rank) % 2 !== startColour,
+        );
+        if (offColour.length) {
+          errors.push(
+            `${label}: bishop sweep has ${offColour.length} star(s) on the opposite COLOUR to ` +
+              `the start ${posToSquare(mapped.startPos)} — ${offColour.map(posToSquare).join(", ")}. ` +
+              `A bishop never changes colour, so they are not hard to reach, they are ` +
+              `impossible. No wall is in the way: move the star(s) to a ` +
+              `${startColour === 0 ? "dark" : "light"} square.`,
+          );
+          return;
+        }
+      }
+      try {
+        sweepOptimal = computeSweepOptimal(input.piece, probe);
+      } catch (e) {
+        // `computeSweepOptimal` THROWS on the pawn (it never retreats, so its legs
+        // are not independent and the pairwise sum is not the optimum) and above
+        // its target cap. Both are authoring rules, and a throw is the one shape
+        // that cannot reach an author: through the builder's write route it
+        // becomes a 500, which carries Supabase's message and never the reason.
+        errors.push(`${label}: ${(e as Error).message}`);
+        return;
+      }
       if (sweepOptimal === null) {
         errors.push(
           `${label}: sweep has no route that collects every target — ` +
             `at least one of ${mapped.targets.map(posToSquare).join(", ")} is unreachable`,
+        );
+        return;
+      }
+      // ⛔ The leg to `targets[0]` must be STRICTLY cheaper than the whole sweep,
+      //    or the level COLLAPSED back into a one-goal board: a player walking
+      //    the shortest route to the first star pays the sweep's full price
+      //    anyway, so the extra stars are decoration. The board still plays, and
+      //    that is exactly why it has to fail here — the experiment would report
+      //    on a difficulty step that was never taken. Same rule the shipped
+      //    catalog is held to by exercise-bfs.test.ts; this makes it an
+      //    AUTHORING rule, so the builder cannot write one in the first place.
+      const leg = bfs?.optimalMoves ?? null;
+      if (leg !== null && leg >= sweepOptimal) {
+        errors.push(
+          `${label}: sweep COLLAPSED — reaching targets[0] ${posToSquare(mapped.targets[0])} ` +
+            `costs ${leg} move(s) and collecting all ${mapped.targets.length} costs ` +
+            `${sweepOptimal}. The extra star(s) cost the player nothing, so this is a ` +
+            `one-goal board wearing ${mapped.targets.length}. Make targets[0] the CHEAP star.`,
         );
         return;
       }
@@ -490,7 +557,13 @@ export function buildCatalog(
     if (!PIECES.includes(rec.piece)) { errors.push(`labyrinths.json '${rec.id ?? rec.fen}': bad piece`); continue; }
     addPuzzle({
       kind: rec.kind ?? "labyrinth", piece: rec.piece, tier: rec.tier ?? "medium", fen: rec.fen,
-      target: rec.target, mover: rec.mover, tags: rec.tags, explanation: rec.explanation,
+      // `targets` is forwarded even though NO kind in this file may carry one:
+      // that is the point. Leaving it out here made an authored sweep vanish on
+      // the way in, so the row built as a plain one-goal level and no error was
+      // ever raised. The rule that rejects it lives in `addPuzzle`, and it can
+      // only speak about a field it receives.
+      target: rec.target, targets: rec.targets, starFloor: rec.starFloor,
+      mover: rec.mover, tags: rec.tags, explanation: rec.explanation,
       access: rec.access,
       // Flat in the JSON, typed from here on. A missing one is not defaulted to a
       // queen: promotion-run REQUIRES a mission, and a silent default would make
