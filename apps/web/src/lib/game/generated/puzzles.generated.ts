@@ -199,7 +199,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "rook-9",
-      "optimalMoves": 5,
+      "optimalMoves": 8,
       "startPos": {
         "file": 0,
         "rank": 0
@@ -208,6 +208,16 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "file": 7,
         "rank": 7
       },
+      "targets": [
+        {
+          "file": 7,
+          "rank": 7
+        },
+        {
+          "file": 7,
+          "rank": 0
+        }
+      ],
       "obstacles": [
         {
           "file": 5,
@@ -246,7 +256,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "rook-8",
-      "optimalMoves": 5,
+      "optimalMoves": 12,
       "startPos": {
         "file": 1,
         "rank": 5
@@ -255,6 +265,20 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "file": 7,
         "rank": 2
       },
+      "targets": [
+        {
+          "file": 7,
+          "rank": 2
+        },
+        {
+          "file": 6,
+          "rank": 6
+        },
+        {
+          "file": 2,
+          "rank": 6
+        }
+      ],
       "obstacles": [
         {
           "file": 1,
@@ -645,10 +669,6 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
           "rank": 0
         },
         {
-          "file": 3,
-          "rank": 4
-        },
-        {
           "file": 6,
           "rank": 7
         }
@@ -668,7 +688,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "bishop-5",
-      "optimalMoves": 4,
+      "optimalMoves": 6,
       "startPos": {
         "file": 6,
         "rank": 1
@@ -683,12 +703,12 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
           "rank": 2
         },
         {
-          "file": 7,
-          "rank": 2
-        },
-        {
           "file": 2,
           "rank": 7
+        },
+        {
+          "file": 7,
+          "rank": 6
         }
       ],
       "tier": "easy",
@@ -704,7 +724,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "bishop-4",
-      "optimalMoves": 4,
+      "optimalMoves": 6,
       "startPos": {
         "file": 5,
         "rank": 7
@@ -719,12 +739,12 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
           "rank": 0
         },
         {
-          "file": 6,
-          "rank": 6
-        },
-        {
           "file": 0,
           "rank": 0
+        },
+        {
+          "file": 1,
+          "rank": 7
         }
       ],
       "tier": "easy",
@@ -824,7 +844,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "bishop-6",
-      "optimalMoves": 5,
+      "optimalMoves": 7,
       "startPos": {
         "file": 0,
         "rank": 0
@@ -833,6 +853,16 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         "file": 7,
         "rank": 7
       },
+      "targets": [
+        {
+          "file": 7,
+          "rank": 7
+        },
+        {
+          "file": 6,
+          "rank": 0
+        }
+      ],
       "obstacles": [
         {
           "file": 3,
@@ -1016,7 +1046,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "bishop-3",
-      "optimalMoves": 11,
+      "optimalMoves": 13,
       "startPos": {
         "file": 3,
         "rank": 3
@@ -1033,6 +1063,10 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         {
           "file": 0,
           "rank": 6
+        },
+        {
+          "file": 6,
+          "rank": 0
         }
       ],
       "obstacles": [
@@ -2334,7 +2368,7 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
   "rook": [
     {
       "id": "rook-rail-two-turns",
-      "optimalMoves": 8,
+      "optimalMoves": 10,
       "startPos": {
         "file": 2,
         "rank": 5
@@ -2343,6 +2377,16 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
         "file": 4,
         "rank": 0
       },
+      "targets": [
+        {
+          "file": 4,
+          "rank": 0
+        },
+        {
+          "file": 1,
+          "rank": 6
+        }
+      ],
       "obstacles": [
         {
           "file": 0,
@@ -2431,7 +2475,7 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "rook-rail-dead-end",
-      "optimalMoves": 6,
+      "optimalMoves": 8,
       "startPos": {
         "file": 0,
         "rank": 3
@@ -2440,6 +2484,16 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
         "file": 4,
         "rank": 3
       },
+      "targets": [
+        {
+          "file": 4,
+          "rank": 3
+        },
+        {
+          "file": 7,
+          "rank": 7
+        }
+      ],
       "obstacles": [
         {
           "file": 1,
@@ -2548,7 +2602,7 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "rook-rail-two-roads",
-      "optimalMoves": 6,
+      "optimalMoves": 13,
       "startPos": {
         "file": 6,
         "rank": 0
@@ -2557,6 +2611,20 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
         "file": 1,
         "rank": 6
       },
+      "targets": [
+        {
+          "file": 1,
+          "rank": 6
+        },
+        {
+          "file": 5,
+          "rank": 6
+        },
+        {
+          "file": 0,
+          "rank": 1
+        }
+      ],
       "obstacles": [
         {
           "file": 0,
@@ -2647,7 +2715,7 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
           "rank": 2
         },
         {
-          "file": 0,
+          "file": 2,
           "rank": 1
         },
         {
@@ -2663,10 +2731,6 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
           "rank": 0
         },
         {
-          "file": 1,
-          "rank": 0
-        },
-        {
           "file": 7,
           "rank": 0
         }
@@ -2677,7 +2741,7 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "rook-rail-rook-run",
-      "optimalMoves": 10,
+      "optimalMoves": 20,
       "startPos": {
         "file": 4,
         "rank": 6
@@ -2686,6 +2750,24 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
         "file": 4,
         "rank": 4
       },
+      "targets": [
+        {
+          "file": 4,
+          "rank": 4
+        },
+        {
+          "file": 1,
+          "rank": 1
+        },
+        {
+          "file": 2,
+          "rank": 6
+        },
+        {
+          "file": 5,
+          "rank": 3
+        }
+      ],
       "obstacles": [
         {
           "file": 7,
@@ -2796,7 +2878,7 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
   "bishop": [
     {
       "id": "bishop-lab-3",
-      "optimalMoves": 5,
+      "optimalMoves": 8,
       "startPos": {
         "file": 1,
         "rank": 7
@@ -2805,6 +2887,16 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
         "file": 7,
         "rank": 7
       },
+      "targets": [
+        {
+          "file": 7,
+          "rank": 7
+        },
+        {
+          "file": 1,
+          "rank": 1
+        }
+      ],
       "obstacles": [
         {
           "file": 1,

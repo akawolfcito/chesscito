@@ -6,8 +6,12 @@
     "fen": "N4NNN/2N5/1NR3N1/2NNNN2/6N1/N2NN3/7N/1NN2NN1 w - - 0 1",
     "target": "e1",
     "mover": "c6",
-    "order": 0,
-    "principle": "chaining-turns"
+    "targets": [
+      "e1",
+      "b7"
+    ],
+    "principle": "chaining-turns",
+    "order": 0
   },
   {
     "title": "Dead End",
@@ -16,28 +20,43 @@
     "fen": "1N6/3N3N/1NNNNN2/3N4/R2N2N1/N2NNNN1/N7/NNNNNNNN w - - 0 1",
     "target": "e4",
     "mover": "a4",
-    "order": 1,
-    "principle": "anticipating-dead-ends"
+    "targets": [
+      "e4",
+      "h8"
+    ],
+    "principle": "anticipating-dead-ends",
+    "order": 1
   },
   {
     "title": "Rook Run",
-    "principle": "route-mastery",
     "id": "rook-rail-rook-run",
     "piece": "rook",
     "fen": "7N/1N1NRN2/1NNNNNN1/1N3N2/1N1NN2N/1N3N1N/2NN3N/N5NN w - - 0 1",
     "target": "e5",
     "mover": "e7",
+    "targets": [
+      "e5",
+      "b2",
+      "c7",
+      "f4"
+    ],
+    "principle": "route-mastery",
     "order": 3
   },
   {
     "title": "Two Roads",
     "id": "rook-rail-two-roads",
     "piece": "rook",
-    "fen": "NN1NNNNN/N2N3N/N4N1N/2N5/NNN1NNN1/N5N1/N2NN3/NN4RN w - - 0 1",
+    "fen": "NN1NNNNN/N2N3N/N4N1N/2N5/NNN1NNN1/N5N1/2NNN3/N5RN w - - 0 1",
     "target": "b7",
     "mover": "g1",
-    "order": 2,
-    "principle": "comparing-routes"
+    "targets": [
+      "b7",
+      "f7",
+      "a2"
+    ],
+    "principle": "comparing-routes",
+    "order": 2
   },
   {
     "id": "bishop-lab-3",
@@ -45,6 +64,10 @@
     "fen": "1B6/1NN5/4NN2/5N2/2N5/2NN4/5NN1/N5N1 w - - 0 1",
     "target": "h8",
     "mover": "b8",
+    "targets": [
+      "h8",
+      "b2"
+    ],
     "order": 0
   },
   {

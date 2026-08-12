@@ -163,6 +163,11 @@
     "fen": "8/1N1N1N2/1RN2NN1/2N1N3/2N1N1NN/1N6/2N2NN1/5N2 w - - 0 1",
     "target": "h3",
     "mover": "b6",
+    "targets": [
+      "h3",
+      "g7",
+      "c7"
+    ],
     "tier": "medium",
     "tags": [
       "detour",
@@ -180,6 +185,10 @@
     "fen": "5N2/1N6/7N/8/8/N7/6N1/R1N5 w - - 0 1",
     "target": "h8",
     "mover": "a1",
+    "targets": [
+      "h8",
+      "h1"
+    ],
     "tier": "medium",
     "tags": [
       "friendly-blocker",
@@ -226,11 +235,16 @@
   {
     "title": "All on light squares",
     "playerPrompt": "Collect every star. They all sit on light squares, and so does this bishop.",
+    "starFloor": 1,
     "id": "bishop-2",
     "piece": "bishop",
     "fen": "B7/8/8/8/8/8/8/8 w - - 0 1",
     "target": "h1",
     "mover": "a8",
+    "targets": [
+      "h1",
+      "g8"
+    ],
     "tier": "easy",
     "tags": [
       "long-diagonal",
@@ -240,13 +254,7 @@
     ],
     "principle": "both-diagonals",
     "learningObjective": "The bishop uses both diagonal directions and never leaves its colour: every star sits on a light square, and the ORDER of the goals changes how many moves the route costs.",
-    "order": 1,
-    "targets": [
-      "h1",
-      "d5",
-      "g8"
-    ],
-    "starFloor": 1
+    "order": 1
   },
   {
     "title": "Choose the turn",
@@ -256,6 +264,11 @@
     "fen": "8/8/8/8/8/8/6B1/8 w - - 0 1",
     "target": "b3",
     "mover": "g2",
+    "targets": [
+      "b3",
+      "c8",
+      "h7"
+    ],
     "tier": "easy",
     "tags": [
       "pivot",
@@ -264,12 +277,7 @@
     ],
     "principle": "pivot-choice",
     "learningObjective": "Two different squares let the bishop turn toward a star, so the turning point is a choice; with three stars the player also chooses the order that keeps the route short.",
-    "order": 2,
-    "targets": [
-      "b3",
-      "h3",
-      "c8"
-    ]
+    "order": 2
   },
   {
     "title": "The bishop is not a rook",
@@ -279,6 +287,11 @@
     "fen": "5B2/8/8/8/8/8/8/8 w - - 0 1",
     "target": "g1",
     "mover": "f8",
+    "targets": [
+      "g1",
+      "a1",
+      "b8"
+    ],
     "tier": "easy",
     "tags": [
       "pivot",
@@ -288,12 +301,7 @@
     ],
     "principle": "no-straight-line",
     "learningObjective": "The bishop can never move along a rank or file: to reach a square on its own row it must turn on a diagonal. With three stars, which one it visits first decides how long the tour is.",
-    "order": 3,
-    "targets": [
-      "g1",
-      "g7",
-      "a1"
-    ]
+    "order": 3
   },
   {
     "title": "Your own piece blocks the turn",
@@ -303,6 +311,10 @@
     "fen": "8/8/8/8/3N4/8/8/B7 w - - 0 1",
     "target": "h8",
     "mover": "a1",
+    "targets": [
+      "h8",
+      "g1"
+    ],
     "tier": "medium",
     "tags": [
       "friendly-blocker",
@@ -361,6 +373,11 @@
     "fen": "8/4N3/5N2/4N3/3B4/2N1N3/8/8 w - - 0 1",
     "target": "h8",
     "mover": "d4",
+    "targets": [
+      "h8",
+      "a7",
+      "g1"
+    ],
     "tier": "medium",
     "tags": [
       "ray-choice",
@@ -371,11 +388,7 @@
     ],
     "principle": "diagonal-choice",
     "learningObjective": "From the centre four diagonals open up, but friendly knights shut three of them. The player reads which ray survives and plans a two star route through it.",
-    "order": 8,
-    "targets": [
-      "h8",
-      "a7"
-    ]
+    "order": 8
   },
   {
     "title": "The fence",
