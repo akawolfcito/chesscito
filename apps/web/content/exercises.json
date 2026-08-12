@@ -331,11 +331,11 @@
   },
   {
     "title": "Blocked on the long diagonal",
-    "playerPrompt": "Knights sit on your diagonal. Two stars now, and the order you take them decides how far you walk.",
+    "playerPrompt": "Knights sit on your diagonal. Neither star is close, and the order you take them decides how far you walk.",
     "id": "bishop-8",
     "piece": "bishop",
     "fen": "8/3N4/2N2N2/2N2N2/2N2N2/2N2N2/4N3/B7 w - - 0 1",
-    "target": "b2",
+    "target": "g1",
     "mover": "a1",
     "tier": "medium",
     "tags": [
@@ -346,10 +346,10 @@
       "route-order"
     ],
     "principle": "blocked-diagonal",
-    "learningObjective": "A piece sitting on the bishop's diagonal stops the ray, so the player leaves the diagonal and rejoins it beyond the blocker. With two stars, taking the near one on the way costs nothing and taking it first costs the whole trip twice.",
+    "learningObjective": "A piece sitting on the bishop's diagonal stops the ray, so the player leaves the diagonal and rejoins it beyond the blocker. Both stars sit past a blocker, so the route has to be planned before the first move rather than found on the way.",
     "order": 7,
     "targets": [
-      "b2",
+      "g1",
       "g7"
     ]
   },
@@ -358,7 +358,7 @@
     "playerPrompt": "Knights close three of the four diagonals. The one that is left has to carry the whole route.",
     "id": "bishop-3",
     "piece": "bishop",
-    "fen": "8/2N5/3N4/4N3/3B4/2N1N3/8/8 w - - 0 1",
+    "fen": "8/4N3/5N2/4N3/3B4/2N1N3/8/8 w - - 0 1",
     "target": "h8",
     "mover": "d4",
     "tier": "medium",
@@ -398,7 +398,8 @@
     "targets": [
       "h7",
       "a4",
-      "e8"
+      "e8",
+      "d1"
     ]
   },
   {

@@ -940,19 +940,19 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "bishop-8",
-      "optimalMoves": 8,
+      "optimalMoves": 9,
       "startPos": {
         "file": 0,
         "rank": 0
       },
       "targetPos": {
-        "file": 1,
-        "rank": 1
+        "file": 6,
+        "rank": 0
       },
       "targets": [
         {
-          "file": 1,
-          "rank": 1
+          "file": 6,
+          "rank": 0
         },
         {
           "file": 6,
@@ -1011,12 +1011,12 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       ],
       "principle": "blocked-diagonal",
       "title": "Blocked on the long diagonal",
-      "playerPrompt": "Knights sit on your diagonal. Two stars now, and the order you take them decides how far you walk.",
-      "learningObjective": "A piece sitting on the bishop's diagonal stops the ray, so the player leaves the diagonal and rejoins it beyond the blocker. With two stars, taking the near one on the way costs nothing and taking it first costs the whole trip twice."
+      "playerPrompt": "Knights sit on your diagonal. Neither star is close, and the order you take them decides how far you walk.",
+      "learningObjective": "A piece sitting on the bishop's diagonal stops the ray, so the player leaves the diagonal and rejoins it beyond the blocker. Both stars sit past a blocker, so the route has to be planned before the first move rather than found on the way."
     },
     {
       "id": "bishop-3",
-      "optimalMoves": 9,
+      "optimalMoves": 11,
       "startPos": {
         "file": 3,
         "rank": 3
@@ -1037,11 +1037,11 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       ],
       "obstacles": [
         {
-          "file": 2,
+          "file": 4,
           "rank": 6
         },
         {
-          "file": 3,
+          "file": 5,
           "rank": 5
         },
         {
@@ -1072,7 +1072,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
     },
     {
       "id": "bishop-fence-1",
-      "optimalMoves": 10,
+      "optimalMoves": 12,
       "startPos": {
         "file": 1,
         "rank": 0
@@ -1093,6 +1093,10 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
         {
           "file": 4,
           "rank": 7
+        },
+        {
+          "file": 3,
+          "rank": 0
         }
       ],
       "obstacles": [
