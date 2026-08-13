@@ -31,6 +31,7 @@ import {
   type AuthoredEnemy,
   type BuilderState,
 } from "@/lib/labyrinth-builder/state";
+import { isDirty, type DraftBaseline } from "@/lib/labyrinth-builder/dirty";
 import type { LabyrinthRecord } from "@/lib/labyrinth-builder/store";
 // `import type` ONLY: baseline-write imports node:fs, and this is a client
 // component. The type is erased at compile time, so nothing follows it into the
@@ -188,6 +189,13 @@ type Brush = "start" | "goal" | "star" | "wall" | "capture" | "trace";
 /** WHICH FILE the record lives in. Not the game — that is the record's `kind`. */
 type Bucket = "exercise" | "labyrinth";
 
+/** An action that would THROW AWAY the current draft, parked until the author
+ *  says yes. Every one of these used to run immediately and silently. */
+type PendingAction =
+  | { kind: "edit"; rec: BucketedRecord }
+  | { kind: "new" }
+  | { kind: "bucket"; to: Bucket };
+
 /** Icons for the tool palette. `capture` is the enemy brush; `trace` walks a
  *  route by hand. Decoration only — the written label under each icon is what
  *  names the tool, so nothing here has to be guessed from a glyph. */
@@ -227,6 +235,15 @@ export default function LabyrinthBuilderPage() {
   // Exercise-only (or otherwise non-UI) fields of the record being edited, so
   // a save round-trips them instead of dropping them.
   const [editExtras, setEditExtras] = useState<Record<string, unknown>>({});
+  /** The last draft that agreed with disk. Everything that REPLACES the draft
+   *  (open another record, New, switch bucket) is measured against this, and
+   *  Discard restores it — which is why it holds the whole state, not a hash. */
+  const [baseline, setBaseline] = useState<DraftBaseline>(() => ({
+    state: emptyState("rook", "exercise"),
+    extras: {},
+  }));
+  /** A draft-destroying action waiting for a yes. `null` = nothing pending. */
+  const [pending, setPending] = useState<PendingAction | null>(null);
   const [brush, setBrush] = useState<Brush>("start");
   /** Paint = author the position; Preview = play the real board on the draft.
    *  Only one board is mounted at a time (behavior 11). */
@@ -340,18 +357,40 @@ export default function LabyrinthBuilderPage() {
     [records, state.piece],
   );
 
+  /** Is there work on screen that disk does not have? */
+  const dirty = useMemo(
+    () => isDirty(baseline, state, editExtras),
+    [baseline, state, editExtras],
+  );
+
+  /** Mark the current draft as agreeing with disk. Called on load, on New, on
+   *  bucket switch, and after a save that actually landed. */
+  const rebaseline = useCallback(
+    (next: BuilderState, extras: Record<string, unknown>) => {
+      setBaseline({ state: next, extras });
+      setPending(null);
+    },
+    [],
+  );
+
   function update(patch: Partial<BuilderState>) {
     setState((prev) => ({ ...prev, ...patch }));
   }
 
   function handlePieceChange(piece: PieceId) {
-    setState((prev) => ({
-      ...prev,
+    const next: BuilderState = {
+      ...state,
       piece,
       // A threat kind keeps its enemies across a piece swap; elsewhere only a
       // pawn has any (its capture targets).
-      enemies: isThreatKind(prev.kind) || piece === "pawn" ? prev.enemies : [],
-    }));
+      enemies: isThreatKind(state.kind) || piece === "pawn" ? state.enemies : [],
+    };
+    setState(next);
+    // ⚠️ The piece picker is ALSO the record list's filter — it is how you browse
+    // to another piece's exercises. On a draft with nothing to lose that is
+    // navigation, not an edit, so re-baseline instead of raising a false alarm
+    // on every click. On a dirty draft it stays an edit, because it is one.
+    if (!dirty) rebaseline(next, editExtras);
     if (brush === "capture" && piece !== "pawn" && !isThreatKind(state.kind)) setBrush("start");
   }
 
@@ -440,7 +479,7 @@ export default function LabyrinthBuilderPage() {
     );
   }
 
-  function handleEditRecord(rec: LabyrinthRecord) {
+  function doEditRecord(rec: LabyrinthRecord) {
     const recKind = rec.kind ?? (bucket === "exercise" ? "exercise" : "labyrinth");
     // Behavior 12 — a game the builder cannot safely edit yet stays closed. Today
     // that is Safe Path: loading it would drop the typed threats that ARE the
@@ -457,7 +496,7 @@ export default function LabyrinthBuilderPage() {
       say("err", `Cannot edit ${rec.id ?? "record"}: ${derived.error}`);
       return;
     }
-    setState({
+    const loaded: BuilderState = {
       // The record's real kind rides the state now, so the live validator judges
       // it as the game it is (recKind above defaults an absent kind to the bucket).
       kind: recKind,
@@ -483,33 +522,82 @@ export default function LabyrinthBuilderPage() {
       principle: rec.principle,
       learningObjective: rec.learningObjective,
       id: rec.id,
-    });
-    setEditExtras(extraFields(rec));
+    };
+    const extras = extraFields(rec);
+    setState(loaded);
+    setEditExtras(extras);
+    // What just came off disk IS the baseline — an edit is measured from here.
+    rebaseline(loaded, extras);
     setTracedPath([]);
     setLoadNote(null);
     say("ok", `Editing ${rec.id ?? "(no id)"}`);
   }
 
-  function handleNew() {
-    setState(emptyState(state.piece, bucket === "exercise" ? "exercise" : "labyrinth"));
+  function doNew() {
+    const fresh = emptyState(state.piece, bucket === "exercise" ? "exercise" : "labyrinth");
+    setState(fresh);
     setEditExtras({});
+    rebaseline(fresh, {});
     setTracedPath([]);
     setLoadNote(null);
     setToast(null);
     clearStoredToast();
   }
 
-  function handleBucketChange(next: Bucket) {
-    if (next === bucket) return;
+  function doBucketChange(next: Bucket) {
     setBucket(next);
     // Switching surfaces discards any in-progress edit so we never save a
     // record into the wrong bucket.
-    setState(emptyState(state.piece, next === "exercise" ? "exercise" : "labyrinth"));
+    const fresh = emptyState(state.piece, next === "exercise" ? "exercise" : "labyrinth");
+    setState(fresh);
     setEditExtras({});
+    rebaseline(fresh, {});
     setTracedPath([]);
     setLoadNote(null);
     setToast(null);
     clearStoredToast();
+  }
+
+  /* ── The guard ────────────────────────────────────────────────────────────
+     Every action that REPLACES the draft goes through here. On a clean draft
+     they run exactly as before; on a dirty one they are parked in `pending`
+     and the banner asks. This is the whole fix: these three used to fire
+     immediately and the edit was gone with no prompt, no undo and no trace. */
+
+  function requestEdit(rec: BucketedRecord) {
+    if (dirty) return setPending({ kind: "edit", rec });
+    doEditRecord(rec);
+  }
+
+  function requestNew() {
+    if (dirty) return setPending({ kind: "new" });
+    doNew();
+  }
+
+  function requestBucketChange(next: Bucket) {
+    if (next === bucket) return;
+    if (dirty) return setPending({ kind: "bucket", to: next });
+    doBucketChange(next);
+  }
+
+  /** Yes — throw the draft away and do the thing. */
+  function confirmPending() {
+    const action = pending;
+    setPending(null);
+    if (!action) return;
+    if (action.kind === "edit") doEditRecord(action.rec);
+    else if (action.kind === "new") doNew();
+    else doBucketChange(action.to);
+  }
+
+  /** Put the draft back to the last state that agreed with disk. The reason
+   *  `baseline` holds the whole state instead of a hash. */
+  function handleDiscard() {
+    setState(baseline.state);
+    setEditExtras(baseline.extras);
+    setPending(null);
+    setTracedPath([]);
+    setLoadNote(null);
   }
 
   async function handleSave() {
@@ -534,7 +622,13 @@ export default function LabyrinthBuilderPage() {
       });
       const data = (await res.json()) as PublishResultLike;
       sayPersisted(formatPublishResult(data));
-      if (data?.baseline?.ok) void refreshRecords();
+      if (data?.baseline?.ok) {
+        // It is on disk now, so this IS the new baseline. ⚠️ Only on a baseline
+        // that actually landed: a failed write must leave the draft dirty, or
+        // the banner would go quiet on work that is still only in the browser.
+        rebaseline(state, editExtras);
+        void refreshRecords();
+      }
     } catch (e) {
       say("err", (e as Error).message);
     } finally {
@@ -609,6 +703,17 @@ export default function LabyrinthBuilderPage() {
     bucket === "exercise" ? GENERATED_EXERCISES : GENERATED_LABYRINTHS;
   const existing = generatedByBucket[state.piece] ?? [];
   const bucketNoun = bucket === "exercise" ? "exercises" : "labyrinths";
+  /** What the draft is called in a sentence: its id, or what it would become. */
+  const draftLabel = state.id?.trim() || `a new ${bucket}`;
+  /** What the parked action would do, in the same sentence. */
+  const pendingLabel =
+    pending?.kind === "edit"
+      ? `open ${pending.rec.id ?? "that record"}`
+      : pending?.kind === "new"
+        ? `start a new ${bucket}`
+        : pending?.kind === "bucket"
+          ? `switch to ${pending.to}`
+          : "";
   const enabledCount = pieceRecords.filter((r) => !r.disabled).length;
   const toastColor =
     toast?.kind === "ok"
@@ -652,7 +757,7 @@ export default function LabyrinthBuilderPage() {
           <Segmented
             ariaLabel="Content bucket"
             value={bucket}
-            onChange={(v) => handleBucketChange(v as Bucket)}
+            onChange={(v) => requestBucketChange(v as Bucket)}
             options={[
               { value: "exercise", label: "Exercise" },
               { value: "labyrinth", label: "Labyrinth" },
@@ -664,21 +769,38 @@ export default function LabyrinthBuilderPage() {
                 the controls column, where it scrolled out of sight — and the
                 one thing you must never be unsure of while painting is WHICH
                 record you are painting. */}
+            {/* The dot is the only unsaved-work signal that is ALWAYS on screen:
+                the banner lives in a column that scrolls, and the header does
+                not. */}
             {state.id ? (
-              <span className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs text-neutral-400">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs text-neutral-400">
+                {dirty && (
+                  <span
+                    aria-hidden
+                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400"
+                  />
+                )}
                 Editing{" "}
                 <span className="font-mono font-semibold text-neutral-100">
                   {state.id}
                 </span>
+                {dirty && <span className="sr-only">(unsaved changes)</span>}
               </span>
             ) : (
-              <span className="rounded-full border border-dashed border-neutral-800 px-3 py-1 text-xs text-neutral-500">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-neutral-800 px-3 py-1 text-xs text-neutral-500">
+                {dirty && (
+                  <span
+                    aria-hidden
+                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400"
+                  />
+                )}
                 New {bucket}
+                {dirty && <span className="sr-only">(unsaved changes)</span>}
               </span>
             )}
             <button
               type="button"
-              onClick={handleNew}
+              onClick={requestNew}
               title={`Start a fresh ${bucket} (discard current edit)`}
               className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs font-medium text-neutral-200 hover:bg-neutral-800"
             >
@@ -975,6 +1097,71 @@ export default function LabyrinthBuilderPage() {
 
               ⚠️ Not a <Section>: it is transient, and a heading here would
               wedge itself into the panel order the test pins. */}
+          {/* ── Unsaved work ──────────────────────────────────────────────
+              ⚠️ Before this existed you could open another record on top of an
+              edit and it was simply GONE — no prompt, no undo, and nothing on
+              screen had ever said work was pending, so there was not even a
+              moment where you could have noticed.
+
+              Two states, one place: a standing "unsaved changes" notice with a
+              Discard, and — when a draft-destroying action is parked — the same
+              strip turned into the question. Deliberately NOT a <Section>: it is
+              transient, and a heading here would wedge itself into the panel
+              order that panel-order.test.tsx pins. */}
+          {dirty && (
+            <div
+              data-testid="lb-unsaved"
+              /* ⚠️ `sticky`, and the background is OPAQUE, both for the same
+                 reason: found by using it. Clicking Edit on another row scrolls
+                 that row into view, which pushed this strip off the top of the
+                 column — so the guard fired, the draft was saved from being
+                 destroyed, and on screen absolutely nothing appeared to happen.
+                 A question you cannot see is the same as no question. */
+              className="sticky top-0 z-10 rounded-xl border border-sky-500/50 bg-sky-950 p-3 text-sm shadow-lg shadow-black/60"
+            >
+              {pending ? (
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-sky-100">
+                    Discard unsaved changes in{" "}
+                    <span className="font-mono font-semibold">{draftLabel}</span>{" "}
+                    and {pendingLabel}?
+                  </span>
+                  <span className="flex shrink-0 gap-2">
+                    <button
+                      type="button"
+                      onClick={confirmPending}
+                      className="rounded-md bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-500"
+                    >
+                      Discard and continue
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPending(null)}
+                      className="rounded-md border border-neutral-700 px-3 py-1 text-xs font-semibold text-neutral-100 hover:bg-neutral-800"
+                    >
+                      Keep editing
+                    </button>
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-sky-100">
+                    Unsaved changes in{" "}
+                    <span className="font-mono font-semibold">{draftLabel}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleDiscard}
+                    title="Put the draft back to the last state that agreed with disk"
+                    className="shrink-0 rounded-md border border-neutral-700 px-3 py-1 text-xs font-semibold text-neutral-100 hover:bg-neutral-800"
+                  >
+                    Discard
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {toast && toast.warnings.length > 0 && (
             <div
               data-testid="lb-save-warnings"
@@ -1085,7 +1272,7 @@ export default function LabyrinthBuilderPage() {
                       {editable ? (
                         <button
                           type="button"
-                          onClick={() => handleEditRecord(rec)}
+                          onClick={() => requestEdit(rec)}
                           className="inline-flex items-center gap-1 rounded-md border border-neutral-700 px-2 py-1 text-[11px] font-semibold text-neutral-100 hover:bg-neutral-800"
                         >
                           <Pencil className="h-3 w-3" aria-hidden /> Edit
