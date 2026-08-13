@@ -93,6 +93,58 @@ async function editSaveAndReload(saveLands: boolean) {
   return user;
 }
 
+describe("the draft is parked BEFORE the request goes out", () => {
+  it("is already in storage while the save is still in flight", async () => {
+    /* ⛔ The race, and the reason the first attempt at this feature did not work
+       for the founder. The server writes content/*.json DURING the fetch, so
+       Next's watcher can fire Fast Refresh before the response is ever read —
+       every statement after `await` may simply never run. Parking the draft
+       there loses it. (The toast was parked one statement earlier, which is
+       exactly why the message kept coming back and the board did not.) */
+    let release!: () => void;
+    const inFlight = new Promise<void>((r) => (release = r));
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (typeof url === "string" && url.includes("/api/dev/publish")) {
+          await inFlight; // the save hangs — as if the reload beat the response
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              baseline: { ok: true, warnings: [] },
+              overlay: { ok: true },
+            }),
+            { headers: { "content-type": "application/json" } },
+          );
+        }
+        return new Response(
+          JSON.stringify({ ok: true, records: RECORDS, canWrite: true }),
+          { headers: { "content-type": "application/json" } },
+        );
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(<LabyrinthBuilderPage />);
+    await waitFor(() =>
+      expect(screen.getAllByRole("button", { name: /Edit$/ })).toHaveLength(1),
+    );
+    await user.click(screen.getByRole("button", { name: /Edit$/ }));
+    await waitFor(() => expect(description()).toHaveValue("First probe record"));
+    await user.click(screen.getByRole("button", { name: /Save draft/ }));
+
+    // The response has NOT arrived, and the draft is already safe.
+    const parked = window.sessionStorage.getItem("chesscito:builder-draft");
+    expect(parked).toBeTruthy();
+    expect(JSON.parse(parked!).state.id).toBe("probe-first");
+    // …and marked unsaved, because at this instant nothing has landed on disk.
+    expect(JSON.parse(parked!).savedOk).toBe(false);
+
+    release();
+  });
+});
+
 describe("the draft survives the reload a save causes", () => {
   it("comes back on the SAME record, not a blank board", async () => {
     await editSaveAndReload(true);

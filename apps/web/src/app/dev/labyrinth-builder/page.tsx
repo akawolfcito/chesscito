@@ -580,7 +580,13 @@ export default function LabyrinthBuilderPage() {
     rebaseline(loaded, extras);
     setTracedPath([]);
     setLoadNote(null);
-    say("ok", `Editing ${rec.id ?? "(no id)"}`);
+    /* ⛔ No toast here. It used to say `Editing rook-1` in the status strip,
+       which the chip beside +New / Save draft ALREADY says — better placed and
+       far more visible (founder, 2026-08-13). Two copies of one fact is one copy
+       too many, and the status strip is for things that happened, not for state
+       something else is already showing. */
+    setToast(null);
+    clearStoredToast();
   }
 
   function doNew() {
@@ -659,6 +665,19 @@ export default function LabyrinthBuilderPage() {
   async function handleSave() {
     if (!result.ok || !fenBlock || isSaving || !canWrite) return;
     setIsSaving(true);
+    /* ⛔ Park the draft BEFORE the request, not after — this is a RACE, and
+       parking it afterwards loses it.
+       The server writes content/*.json DURING the fetch, so Next's watcher can
+       fire Fast Refresh at any moment from then on: potentially before the
+       response is even read on the client. Everything below `await` is code that
+       may simply never run. (That is also why the toast, parked one statement
+       earlier than the draft was, kept surviving while the draft did not — the
+       founder saw exactly that: the message came back, the board did not.)
+       `savedOk: false` is the honest value here: nothing has landed yet. If the
+       response does arrive it overwrites this with the truth; if the reload wins
+       the race, the draft comes back marked as unsaved, which is the safe
+       direction — the work is on screen and visibly not on disk. */
+    storeDraft({ bucket, state, extras: editExtras, savedOk: false });
     try {
       // "Todo en 1": the publish proxy writes the baseline content/*.json AND
       // writes the overlay at stage='draft' in one call (the ADMIN_TOKEN stays
@@ -677,16 +696,16 @@ export default function LabyrinthBuilderPage() {
         }),
       });
       const data = (await res.json()) as PublishResultLike;
-      sayPersisted(formatPublishResult(data));
-      // ⚠️ Park the draft BEFORE the reload this write is about to trigger, the
-      // same way the toast is parked. `savedOk` decides whether it comes back
-      // clean or still dirty — a failed save must not look saved.
+      // Upgrade the parked draft with the verdict, IF the reload has not already
+      // taken the page. Same order as the toast, so neither can win over the
+      // other.
       storeDraft({
         bucket,
         state,
         extras: editExtras,
         savedOk: !!data?.baseline?.ok,
       });
+      sayPersisted(formatPublishResult(data));
       if (data?.baseline?.ok) {
         // It is on disk now, so this IS the new baseline. ⚠️ Only on a baseline
         // that actually landed: a failed write must leave the draft dirty, or
