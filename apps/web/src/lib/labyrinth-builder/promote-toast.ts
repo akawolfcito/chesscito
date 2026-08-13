@@ -21,10 +21,17 @@ export function formatPromoteResult(
   if (r.ok) {
     return {
       kind: "ok",
+      summary: `Promoted ${id} → ${r.to}`,
       text: `Promoted ${id}: ${r.from} → ${r.to}. Visible on the ${r.to} env within ~60s (TTL).`,
       warnings: [],
     };
   }
   const errs = (r.errors ?? ["unknown error"]).join("; ");
-  return { kind: "err", text: `Promote failed: ${errs}`, warnings: [] };
+  return {
+    kind: "err",
+    // Same reason as a failed save: the error list has no upper bound.
+    summary: `Promote failed for ${id}`,
+    text: `Promote failed: ${errs}`,
+    warnings: [],
+  };
 }

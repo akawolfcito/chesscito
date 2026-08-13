@@ -10,7 +10,22 @@
  */
 export type PublishToast = {
   kind: "ok" | "warn" | "err";
+  /** The FULL account of what happened. Belongs in the popup, not in the header
+   *  strip: it already runs to two sentences when the overlay fails, and an
+   *  error list makes it longer still. */
   text: string;
+  /**
+   * The one-line version for the header strip.
+   *
+   * ⚠️ Present only on results that came from a WRITE (publish / promote). The
+   * ad-hoc `say()` messages carry no summary because they are already one short
+   * line, and the strip renders `summary ?? text`.
+   *
+   * The split exists because the strip sits above a layout the founder called
+   * stable and wants kept that way: a status line that can grow to several
+   * sentences is the same problem the warnings panel had, one surface over.
+   */
+  summary?: string;
   /** Save-time linter warnings, kept OUT of `text` on purpose: a toast is
    *  transient and these need somewhere durable to be read. Always an array —
    *  the caller renders `.length`, and an undefined here would crash the
@@ -80,12 +95,23 @@ export function formatPublishResult(r: PublishResultLike): PublishToast {
 
   if (!r.baseline.ok) {
     const errs = (r.baseline.errors ?? ["unknown error"]).join("; ");
-    return { kind: "err", text: `Save failed: ${errs}`, warnings };
+    return {
+      kind: "err",
+      // ⚠️ The error list is the part that grows without bound — one entry per
+      // validation failure — so it stays out of the summary entirely.
+      summary: "Save failed — nothing was written",
+      text: `Save failed: ${errs}`,
+      warnings,
+    };
   }
   if (r.overlay.ok) {
     const note = r.overlay.revalidated ? "visible in dev now" : "propagating";
     return {
       kind: "ok",
+      // The commit nudge rides the summary: it is the one thing on the happy
+      // path that needs doing, and burying it in a popup nobody opens on a
+      // successful save would lose it.
+      summary: `Saved as draft — ${COMMIT_NUDGE.toLowerCase()}`,
       text: `Saved as draft (${note}) + baseline. Promote to publish for players. ${COMMIT_NUDGE}`,
       warnings,
     };
@@ -93,6 +119,7 @@ export function formatPublishResult(r: PublishResultLike): PublishToast {
   const errs = (r.overlay.errors ?? ["unknown error"]).join("; ");
   return {
     kind: "warn",
+    summary: "Saved to baseline — the draft overlay failed",
     text: `Saved to baseline, but the draft overlay save failed: ${errs}. ${COMMIT_NUDGE}`,
     warnings,
   };

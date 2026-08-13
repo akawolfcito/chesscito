@@ -804,6 +804,10 @@ export default function LabyrinthBuilderPage() {
     warningFilter === "all"
       ? classifiedWarnings
       : classifiedWarnings.filter((w) => w.kind === warningFilter);
+  /** Is there anything worth opening? Notes, or a write whose full account the
+   *  header strip is deliberately not showing. A clean save with nothing to add
+   *  still offers it, because "Remember to commit" lives in that account. */
+  const hasSaveDetail = classifiedWarnings.length > 0 || !!toast?.summary;
   /** What the draft is called in a sentence: its id, or what it would become. */
   const draftLabel = state.id?.trim() || `a new ${bucket}`;
   /** What the parked action would do, in the same sentence. */
@@ -905,20 +909,23 @@ export default function LabyrinthBuilderPage() {
                 — to say something that is advisory in two kinds out of three.
                 Now it costs one chip of space until you ask for it, and it goes
                 quiet (neutral, no count) when the last save was clean. */}
-            {classifiedWarnings.length > 0 && (
+            {hasSaveDetail && (
               <button
                 type="button"
                 data-testid="lb-warnings-button"
                 onClick={() => setShowWarnings(true)}
-                title="Advice from the last save"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-300 hover:bg-amber-500/20"
+                title="What the last save said"
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold ${
+                  toast?.kind === "err"
+                    ? "border-red-500/50 bg-red-500/10 text-red-300 hover:bg-red-500/20"
+                    : classifiedWarnings.length > 0 || toast?.kind === "warn"
+                      ? "border-amber-500/50 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
+                      : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
+                }`}
               >
                 <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-                {classifiedWarnings.length}
-                <span className="sr-only">
-                  {" "}
-                  notes from the last save — open
-                </span>
+                {classifiedWarnings.length > 0 ? classifiedWarnings.length : "Details"}
+                <span className="sr-only"> from the last save — open</span>
               </button>
             )}
             <button
@@ -957,7 +964,15 @@ export default function LabyrinthBuilderPage() {
                 Read-only here — baseline write is local-only.
               </span>
             )}
-            {toast && <span className={toastColor}>{toast.text}</span>}
+            {/* ⚠️ `summary`, not `text`. The full account already runs to two
+                sentences when the overlay fails and grows with every extra
+                validation error — and this strip sits above a layout the
+                founder asked to keep stable. A status line that can grow to
+                several lines is the same problem the warnings panel had, one
+                surface over. The full text is one click away, in the popup. */}
+            {toast && (
+              <span className={toastColor}>{toast.summary ?? toast.text}</span>
+            )}
           </div>
         )}
       </header>
@@ -1685,7 +1700,7 @@ export default function LabyrinthBuilderPage() {
           treatment and the decorative audit carries its known limit. A warning
           whose standing you cannot look up is a warning you learn to skip, and
           that is exactly what had happened. */}
-      {showWarnings && classifiedWarnings.length > 0 && (
+      {showWarnings && hasSaveDetail && (
         <div
           className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-4 pt-16"
           onClick={() => setShowWarnings(false)}
@@ -1700,8 +1715,9 @@ export default function LabyrinthBuilderPage() {
           >
             <div className="flex flex-wrap items-center gap-3 border-b border-neutral-800 p-4">
               <h2 className="text-sm font-semibold text-neutral-100">
-                {classifiedWarnings.length} note
-                {classifiedWarnings.length === 1 ? "" : "s"} from the last save
+                {classifiedWarnings.length > 0
+                  ? `${classifiedWarnings.length} note${classifiedWarnings.length === 1 ? "" : "s"} from the last save`
+                  : "What the last save said"}
               </h2>
               <div className="ml-auto flex items-center gap-2">
                 <button
@@ -1725,9 +1741,11 @@ export default function LabyrinthBuilderPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    // Clearing the toast's warnings is what makes the header
-                    // button disappear until the next save.
-                    if (toast) setToast({ ...toast, warnings: [] });
+                    // The WHOLE toast, not just its notes: you have read it, so
+                    // the header strip and the chip both go quiet until the next
+                    // save. Clearing only the notes used to leave a "Details"
+                    // chip behind, which is not what "dismiss" means.
+                    setToast(null);
                     clearStoredToast();
                     setShowWarnings(false);
                   }}
@@ -1777,6 +1795,25 @@ export default function LabyrinthBuilderPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">
+              {/* The full account, which the header strip deliberately trims to
+                  one line. It leads, because when a save goes wrong THIS is what
+                  the author needs — the notes are advice, this is what happened. */}
+              {toast?.summary && (
+                <div
+                  data-testid="lb-save-outcome"
+                  className="mb-5 rounded-lg border border-neutral-800 bg-neutral-900/60 p-3"
+                >
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-300">
+                    What happened
+                  </h3>
+                  <p
+                    data-allow-select="true"
+                    className={`mt-1 text-xs leading-relaxed ${toastColor}`}
+                  >
+                    {toast.text}
+                  </p>
+                </div>
+              )}
               {(["pacing", "decorative", "other"] as WarningKind[]).map((k) => {
                 const items = shownWarnings.filter((w) => w.kind === k);
                 if (!items.length) return null;
