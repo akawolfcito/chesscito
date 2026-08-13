@@ -81,6 +81,11 @@ import {
   formatPromoteResult,
   type PromoteResultLike,
 } from "@/lib/labyrinth-builder/promote-toast";
+import {
+  clearStoredDraft,
+  readStoredDraft,
+  storeDraft,
+} from "@/lib/labyrinth-builder/draft-restore";
 import type { ContentStage } from "@/lib/content/overlay-types";
 // The constant only — importing lint.ts here would drag the BFS solver and the
 // FEN mapper toward the client bundle just to print a number.
@@ -302,6 +307,26 @@ export default function LabyrinthBuilderPage() {
   useEffect(() => {
     const restored = readStoredToast();
     if (restored) setToast(restored);
+    /* ⚠️ And the DRAFT, for the same reason and the same reload. Without this,
+     * Save threw you out of the record you had just saved — blank board, back to
+     * the piece picker to hunt for it again — on the most repeated action in the
+     * tool (founder, 2026-08-13). */
+    const draft = readStoredDraft();
+    if (draft) {
+      setBucket(draft.bucket);
+      setState(draft.state);
+      setEditExtras(draft.extras);
+      // ⛔ Only a save that LANDED makes the restored draft agree with disk. If
+      // it failed, leaving the baseline at empty keeps the draft visibly dirty,
+      // so the unsaved-changes guard still protects work that is only in the
+      // browser — calling it clean here would hand the next click the right to
+      // destroy it.
+      setBaseline(
+        draft.savedOk
+          ? { state: draft.state, extras: draft.extras }
+          : { state: emptyState(draft.state.piece, draft.state.kind), extras: {} },
+      );
+    }
   }, []);
   /** Ad-hoc status line (loaded a record, bad id, network threw…). Only the
    *  catalog linter produces warnings, and it only runs on Save, so everything
@@ -567,6 +592,9 @@ export default function LabyrinthBuilderPage() {
     setLoadNote(null);
     setToast(null);
     clearStoredToast();
+    // Also drop any parked restore: this draft was discarded ON PURPOSE, and
+    // resurrecting it on the next reload would undo that.
+    clearStoredDraft();
   }
 
   function doBucketChange(next: Bucket) {
@@ -581,6 +609,9 @@ export default function LabyrinthBuilderPage() {
     setLoadNote(null);
     setToast(null);
     clearStoredToast();
+    // Also drop any parked restore: this draft was discarded ON PURPOSE, and
+    // resurrecting it on the next reload would undo that.
+    clearStoredDraft();
   }
 
   /* ── The guard ────────────────────────────────────────────────────────────
@@ -647,6 +678,15 @@ export default function LabyrinthBuilderPage() {
       });
       const data = (await res.json()) as PublishResultLike;
       sayPersisted(formatPublishResult(data));
+      // ⚠️ Park the draft BEFORE the reload this write is about to trigger, the
+      // same way the toast is parked. `savedOk` decides whether it comes back
+      // clean or still dirty — a failed save must not look saved.
+      storeDraft({
+        bucket,
+        state,
+        extras: editExtras,
+        savedOk: !!data?.baseline?.ok,
+      });
       if (data?.baseline?.ok) {
         // It is on disk now, so this IS the new baseline. ⚠️ Only on a baseline
         // that actually landed: a failed write must leave the draft dirty, or
@@ -703,6 +743,10 @@ export default function LabyrinthBuilderPage() {
         body: JSON.stringify({ bucket, record: { ...rec, disabled: !rec.disabled } }),
       });
       const data = (await res.json()) as PublishResultLike;
+      // Enable/Disable writes to disk too, so it triggers the same reload — and
+      // it operates on a LIST ROW, never on the draft. Parking the draft
+      // unchanged is what stops a toggle from wiping the board you are editing.
+      storeDraft({ bucket, state, extras: editExtras, savedOk: !dirty });
       if (!data?.baseline?.ok) {
         sayPersisted(formatPublishResult(data));
         return;
