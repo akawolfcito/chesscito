@@ -32,6 +32,11 @@ import {
   type BuilderState,
 } from "@/lib/labyrinth-builder/state";
 import { isDirty, type DraftBaseline } from "@/lib/labyrinth-builder/dirty";
+import {
+  recordDisplayName,
+  sortLibrary,
+  type LibrarySort,
+} from "@/lib/labyrinth-builder/library";
 import type { LabyrinthRecord } from "@/lib/labyrinth-builder/store";
 // `import type` ONLY: baseline-write imports node:fs, and this is a client
 // component. The type is erased at compile time, so nothing follows it into the
@@ -210,6 +215,14 @@ const BRUSH_ICON: Record<Brush, LucideIcon> = {
 
 const TIERS: ExerciseTier[] = ["easy", "medium", "hard"];
 
+/** Tier badge colours. Green→amber→red reads as difficulty without needing the
+ *  word, but the word is there anyway — colour alone is not a label. */
+const TIER_BADGE: Record<ExerciseTier, string> = {
+  easy: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+  medium: "border-amber-500/40 bg-amber-500/10 text-amber-300",
+  hard: "border-red-500/40 bg-red-500/10 text-red-300",
+};
+
 /** The colour key under the board. Matches the CELL_OVERLAY values above. */
 const BOARD_LEGEND = [
   { swatch: "bg-neutral-700", label: "Wall" },
@@ -244,6 +257,11 @@ export default function LabyrinthBuilderPage() {
   }));
   /** A draft-destroying action waiting for a yes. `null` = nothing pending. */
   const [pending, setPending] = useState<PendingAction | null>(null);
+  /** ⚠️ Defaults to `order` on purpose: that is the real in-game sequence, the
+   *  only view a curriculum can be judged in (does board 2 follow from board 1?).
+   *  `tier` answers a different question — "where are my hard boards?" — and the
+   *  mockup asked for it, so both exist and neither is hidden. */
+  const [librarySort, setLibrarySort] = useState<LibrarySort>("order");
   const [brush, setBrush] = useState<Brush>("start");
   /** Paint = author the position; Preview = play the real board on the draft.
    *  Only one board is mounted at a time (behavior 11). */
@@ -346,15 +364,8 @@ export default function LabyrinthBuilderPage() {
   }, [tracedPath]);
 
   const pieceRecords = useMemo(
-    () =>
-      records
-        .filter((r) => r.piece === state.piece)
-        // Show the real in-game sequence: authored order, id as tie-break.
-        .sort(
-          (a, b) =>
-            a.order - b.order || (a.id ?? "").localeCompare(b.id ?? ""),
-        ),
-    [records, state.piece],
+    () => sortLibrary(records.filter((r) => r.piece === state.piece), librarySort),
+    [records, state.piece, librarySort],
   );
 
   /** Is there work on screen that disk does not have? */
@@ -1219,7 +1230,20 @@ export default function LabyrinthBuilderPage() {
               picker sits directly above it. ── */}
           <Section
             title={`Existing ${state.piece} ${bucketNoun}`}
-            hint={`${enabledCount} enabled`}
+            hint={
+              <span className="flex items-center gap-2">
+                <span>{enabledCount} enabled</span>
+                <Segmented
+                  ariaLabel="Sort records"
+                  value={librarySort}
+                  onChange={(v) => setLibrarySort(v as LibrarySort)}
+                  options={[
+                    { value: "order", label: "order" },
+                    { value: "tier", label: "tier" },
+                  ]}
+                />
+              </span>
+            }
           >
             {pieceRecords.length ? (
               <ul className="divide-y divide-neutral-800 overflow-hidden rounded-lg border border-neutral-800">
@@ -1235,16 +1259,55 @@ export default function LabyrinthBuilderPage() {
                         active ? "bg-emerald-500/10" : "bg-neutral-950/40"
                       } ${isDisabled ? "opacity-50" : ""}`}
                     >
+                      {/* ⚠️ The NAME leads and the id follows. The list used to
+                          show `rook-9` alone, which says where a board sits in a
+                          file and nothing about what it is — and picking the
+                          board you meant is the single most repeated act in this
+                          tool. Falls back to the id, because plenty of records
+                          genuinely have no description. */}
+                      <span className="font-medium text-neutral-100">
+                        {recordDisplayName(rec)}
+                      </span>
                       <span className="rounded bg-neutral-800 px-1.5 py-0.5 text-[11px] text-neutral-300">
                         {kindLabel(recKind)}
                       </span>
-                      <span className="font-mono text-xs text-neutral-100">
-                        {rec.id ?? "(no id)"}
+                      {/* Named as well as coloured: colour alone is not a label. */}
+                      <span
+                        className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                          TIER_BADGE[rec.tier ?? "medium"]
+                        }`}
+                        title={rec.tier ? undefined : "No tier authored — the catalog treats it as medium."}
+                      >
+                        {rec.tier ?? "medium"}
+                        {rec.tier ? "" : "?"}
                       </span>
+                      {/* ⚠️ Only when it ADDS something. Today not one authored
+                          exercise carries a description, so the name falls back
+                          to the id — and printing it again beside itself put
+                          `rook-1 … rook-1` on every single row. */}
+                      {recordDisplayName(rec) !== rec.id && rec.id ? (
+                        <span className="font-mono text-xs text-neutral-500">
+                          {rec.id}
+                        </span>
+                      ) : null}
                       <span className="text-xs text-neutral-500">
                         target{" "}
                         <span className="font-mono text-neutral-300">{rec.target}</span>
                       </span>
+                      {/* ⚠️ Says it in WORDS. The row already tinted, but a tint
+                          is not a statement — on a list of ten near-identical
+                          rows it is easy to believe you are editing the one your
+                          cursor is over. The dot repeats the header's unsaved
+                          signal right where the decision gets made. */}
+                      {active ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/50 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+                          {dirty && (
+                            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+                          )}
+                          Editing
+                          {dirty && <span className="sr-only">(unsaved changes)</span>}
+                        </span>
+                      ) : null}
                       {isDisabled ? (
                         <span className="rounded bg-amber-900/70 px-1.5 py-0.5 text-[11px] text-amber-300">
                           disabled

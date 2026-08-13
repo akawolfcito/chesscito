@@ -72,11 +72,10 @@ const editButtons = () => screen.getAllByRole("button", { name: /Edit$/ });
 async function openBuilder() {
   const user = userEvent.setup();
   render(<LabyrinthBuilderPage />);
-  await waitFor(() =>
-    expect(
-      screen.getByRole("heading", { name: /^Existing / }),
-    ).toBeInTheDocument(),
-  );
+  // ⚠️ Wait for the ROWS, not the heading: the panel renders its heading whether
+  // or not the record fetch has resolved, so waiting on it returns while the
+  // list is still empty and every later query races the fetch.
+  await waitFor(() => expect(editButtons().length).toBe(RECORDS.length));
   return user;
 }
 
