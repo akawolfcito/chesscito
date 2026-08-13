@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   BrickWall,
   CheckCircle2,
+  Copy,
   Crown,
   Download,
   Eye,
@@ -37,6 +38,13 @@ import {
   sortLibrary,
   type LibrarySort,
 } from "@/lib/labyrinth-builder/library";
+import {
+  countByKind,
+  groupWarnings,
+  warningsAsText,
+  WARNING_GUIDANCE,
+  type WarningKind,
+} from "@/lib/labyrinth-builder/warnings";
 import type { LabyrinthRecord } from "@/lib/labyrinth-builder/store";
 // `import type` ONLY: baseline-write imports node:fs, and this is a client
 // component. The type is erased at compile time, so nothing follows it into the
@@ -262,6 +270,12 @@ export default function LabyrinthBuilderPage() {
    *  `order` (the real in-game sequence, the view a curriculum is judged in) is
    *  one tap away and stays for that. */
   const [librarySort, setLibrarySort] = useState<LibrarySort>("tier");
+  /** The last save's advice lives behind a button now. ⚠️ It used to be a panel
+   *  wedged into the panel column, where it pushed a stable layout around on
+   *  every save to say something that is advisory in two cases out of three. */
+  const [showWarnings, setShowWarnings] = useState(false);
+  const [warningFilter, setWarningFilter] = useState<WarningKind | "all">("all");
+  const [copied, setCopied] = useState(false);
   const [brush, setBrush] = useState<Brush>("start");
   /** Paint = author the position; Preview = play the real board on the draft.
    *  Only one board is mounted at a time (behavior 11). */
@@ -714,6 +728,19 @@ export default function LabyrinthBuilderPage() {
     bucket === "exercise" ? GENERATED_EXERCISES : GENERATED_LABYRINTHS;
   const existing = generatedByBucket[state.piece] ?? [];
   const bucketNoun = bucket === "exercise" ? "exercises" : "labyrinths";
+  /** The last save's advice, tagged by kind. */
+  const classifiedWarnings = useMemo(
+    () => groupWarnings(toast?.warnings ?? []),
+    [toast],
+  );
+  const warningCounts = useMemo(
+    () => countByKind(classifiedWarnings),
+    [classifiedWarnings],
+  );
+  const shownWarnings =
+    warningFilter === "all"
+      ? classifiedWarnings
+      : classifiedWarnings.filter((w) => w.kind === warningFilter);
   /** What the draft is called in a sentence: its id, or what it would become. */
   const draftLabel = state.id?.trim() || `a new ${bucket}`;
   /** What the parked action would do, in the same sentence. */
@@ -808,6 +835,28 @@ export default function LabyrinthBuilderPage() {
                 New {bucket}
                 {dirty && <span className="sr-only">(unsaved changes)</span>}
               </span>
+            )}
+            {/* ── The last save's advice ──────────────────────────────────
+                A BUTTON, not a panel. It used to be a block wedged into the
+                panel column, which shoved a stable layout around on every save
+                — to say something that is advisory in two kinds out of three.
+                Now it costs one chip of space until you ask for it, and it goes
+                quiet (neutral, no count) when the last save was clean. */}
+            {classifiedWarnings.length > 0 && (
+              <button
+                type="button"
+                data-testid="lb-warnings-button"
+                onClick={() => setShowWarnings(true)}
+                title="Advice from the last save"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-300 hover:bg-amber-500/20"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+                {classifiedWarnings.length}
+                <span className="sr-only">
+                  {" "}
+                  notes from the last save — open
+                </span>
+              </button>
             )}
             <button
               type="button"
@@ -1170,48 +1219,6 @@ export default function LabyrinthBuilderPage() {
                   </button>
                 </div>
               )}
-            </div>
-          )}
-
-          {toast && toast.warnings.length > 0 && (
-            <div
-              data-testid="lb-save-warnings"
-              className="rounded-xl border border-amber-500/40 bg-amber-950/30 p-3 text-sm"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <span className="font-semibold text-amber-300">
-                  {toast.warnings.length} warning
-                  {toast.warnings.length === 1 ? "" : "s"} from the last save
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setToast({ ...toast, warnings: [] });
-                    clearStoredToast();
-                  }}
-                  className="shrink-0 text-xs text-neutral-400 underline hover:text-neutral-200"
-                >
-                  dismiss
-                </button>
-              </div>
-              <ul className="mt-2 space-y-1">
-                {toast.warnings.map((w, i) => (
-                  <li key={`sw-${i}`} className="text-amber-400">
-                    ⚠ {w}
-                  </li>
-                ))}
-              </ul>
-              {/* Names the knob so the panel is closed over itself. Every
-                  warning already carries what it found and what to do about
-                  it; the one thing it could not say without repeating itself
-                  on every line is that the threshold is yours to move. Without
-                  this the author has to remember where it lives, which is the
-                  failure this whole panel exists to prevent. */}
-              <p className="mt-2 text-xs text-neutral-400">
-                These never block a save — they are advice, and you are the one
-                who decides. Pacing warns past a {MAX_DIFFICULTY_STEP}-move step
-                (<code>MAX_DIFFICULTY_STEP</code>, <code>lib/content/pacing.ts</code>).
-              </p>
             </div>
           )}
 
@@ -1605,6 +1612,151 @@ export default function LabyrinthBuilderPage() {
           </Section>
         </div>
       </div>
+
+      {/* ── The last save's advice, on demand ─────────────────────────────────
+          ⚠️ Filtered by KIND, not by severity, and that is not a style choice:
+          this channel contains no errors at all — they block the save and never
+          arrive here — so a severity filter would sort one bucket into itself.
+          What was missing was never a filter. It was an answer to "what
+          treatment does this deserve?", which is why every group leads with its
+          treatment and the decorative audit carries its known limit. A warning
+          whose standing you cannot look up is a warning you learn to skip, and
+          that is exactly what had happened. */}
+      {showWarnings && classifiedWarnings.length > 0 && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-4 pt-16"
+          onClick={() => setShowWarnings(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Notes from the last save"
+            data-testid="lb-warnings-popup"
+            onClick={(e) => e.stopPropagation()}
+            className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-xl border border-neutral-700 bg-neutral-950 shadow-2xl"
+          >
+            <div className="flex flex-wrap items-center gap-3 border-b border-neutral-800 p-4">
+              <h2 className="text-sm font-semibold text-neutral-100">
+                {classifiedWarnings.length} note
+                {classifiedWarnings.length === 1 ? "" : "s"} from the last save
+              </h2>
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(
+                        warningsAsText(shownWarnings),
+                      );
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1500);
+                    } catch {
+                      /* dev tool — a blocked clipboard is not worth an error */
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-neutral-700 px-2.5 py-1 text-xs font-medium text-neutral-200 hover:bg-neutral-800"
+                >
+                  <Copy className="h-3.5 w-3.5" aria-hidden />
+                  {copied ? "Copied" : "Copy"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Clearing the toast's warnings is what makes the header
+                    // button disappear until the next save.
+                    if (toast) setToast({ ...toast, warnings: [] });
+                    clearStoredToast();
+                    setShowWarnings(false);
+                  }}
+                  className="rounded-md border border-neutral-700 px-2.5 py-1 text-xs font-medium text-neutral-400 hover:bg-neutral-800"
+                >
+                  Dismiss all
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowWarnings(false)}
+                  aria-label="Close"
+                  className="rounded-md px-2 py-1 text-sm text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Filter chips. Each carries its count, so a kind with none is
+                visibly empty rather than a dead-end click. */}
+            <div
+              className="flex flex-wrap gap-2 border-b border-neutral-800 px-4 py-3"
+              role="group"
+              aria-label="Filter notes"
+            >
+              {(["all", "pacing", "decorative", "other"] as const).map((k) => {
+                const n =
+                  k === "all" ? classifiedWarnings.length : warningCounts[k];
+                if (k !== "all" && n === 0) return null;
+                const active = warningFilter === k;
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setWarningFilter(k)}
+                    className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                      active
+                        ? "border-neutral-100 bg-neutral-100 text-black"
+                        : "border-neutral-700 text-neutral-300 hover:bg-neutral-800"
+                    }`}
+                  >
+                    {k === "all" ? "All" : WARNING_GUIDANCE[k].label} ({n})
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {(["pacing", "decorative", "other"] as WarningKind[]).map((k) => {
+                const items = shownWarnings.filter((w) => w.kind === k);
+                if (!items.length) return null;
+                const guidance = WARNING_GUIDANCE[k];
+                return (
+                  <div key={k} className="mb-5 last:mb-0">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-300">
+                      {guidance.label}
+                    </h3>
+                    {/* The answer to "what do I do with this?", which is the one
+                        thing the old panel never said. */}
+                    <p className="mt-1 text-xs leading-relaxed text-neutral-500">
+                      {guidance.treatment}
+                    </p>
+                    {guidance.caveat ? (
+                      <p className="mt-1 text-xs leading-relaxed text-amber-400/90">
+                        {guidance.caveat}
+                      </p>
+                    ) : null}
+                    <ul className="mt-2 space-y-2">
+                      {items.map((w, i) => (
+                        <li
+                          key={`${k}-${i}`}
+                          data-allow-select="true"
+                          className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-2.5 text-xs leading-relaxed text-neutral-300"
+                        >
+                          {w.text}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+
+            <p className="border-t border-neutral-800 px-4 py-3 text-xs text-neutral-500">
+              None of these block a save. Pacing warns past a{" "}
+              {MAX_DIFFICULTY_STEP}-move step (<code>MAX_DIFFICULTY_STEP</code>,{" "}
+              <code>lib/content/pacing.ts</code>) — the threshold is yours to move.
+            </p>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
