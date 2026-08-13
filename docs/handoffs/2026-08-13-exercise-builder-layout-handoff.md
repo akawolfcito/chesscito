@@ -104,6 +104,67 @@ del tablero que juzga**; las herramientas pasan a grid con icono y leyenda.
 
 ---
 
+### 3. `style(dev)` — cada columna scrollea sola (`77d01b0e`)
+
+Pedido del founder, y describe su día: lo que sube y baja constantemente es la columna de
+controles; en la del tablero ya está todo a la vista. Con un scroll de página compartido,
+mover los paneles arrastra el tablero, y volver a pintar arrastra los paneles.
+
+La página ya **no scrollea**: `h-screen` + `overflow-hidden`, header como fila flex
+`shrink-0` (no `sticky` — está **fuera** de los contenedores de scroll, así que está
+siempre visible por construcción), y cada columna con su `overflow-y-auto` de `lg` para
+arriba. Debajo de `lg` vuelve a ser un scroll único.
+
+⚠️ **`min-h-0` en los dos tracks no es decorativo**: sin él un hijo de grid/flex se planta
+en la altura de su contenido y el overflow **se escapa a la página** — el bug exacto que
+esto arregla.
+
+### 4. `feat(dev)` — `Unsaved changes` + Discard (`330f3561`)
+
+El ⭐ del mockup, y el único de los cuatro que arreglaba **pérdida de trabajo real**.
+
+Las tres acciones que **reemplazan** el borrador (abrir otro record, `New`, cambiar de
+bucket) pasan ahora por una guarda: sobre un borrador limpio corren igual que antes; sobre
+uno sucio quedan parqueadas y el cartel pregunta. Más un `Unsaved changes in <id>`
+permanente con `Discard`, que **restaura** — por eso el baseline guarda el estado entero y
+no un hash.
+
+**La asimetría que decide todo** en `lib/labyrinth-builder/dirty.ts`: un falso **positivo**
+cuesta un click de más; un falso **negativo** destruye la edición. Así que sólo cuenta como
+cosmético lo **demostrablemente** cosmético, y eso son exactamente dos cosas:
+
+| se normaliza | por qué |
+| --- | --- |
+| orden de `walls` | `buildFenBlock` los escribe en una grilla 8×8 → el orden no llega al FEN |
+| orden de `enemies` | ídem — pero se comparan **con su pieza**, no sólo su casilla |
+| ⛔ `extraGoals` **NO** | viaja a `targets` como array ordenado; reordenar sí cambia los bytes |
+
+⛔ Los enemies se comparan `casilla:pieza`. Comparar sólo casillas llamaría *"limpio"* a una
+torre negra retipada a peón — la reescritura silenciosa que `AuthoredEnemy` existe para
+frenar.
+
+⚠️ **Elegir pieza sobre un borrador limpio NO ensucia.** El selector de pieza es también el
+filtro de la lista: es navegación. Si cada browse diera alarma, la guarda quedaría
+desentrenada en un día. Sobre un borrador sucio sí cuenta, porque ahí reescribe la pieza
+del record.
+
+⚠️ **Sólo se re-baseline si el write al baseline realmente aterrizó.** Un save fallido debe
+dejar el borrador sucio, o el cartel se callaría sobre trabajo que sigue viviendo
+únicamente en el browser.
+
+⚠️ **El cartel es `sticky` y su fondo es OPACO, y las dos cosas salieron de usarlo**: hacer
+click en `Edit` de otra fila la scrollea a la vista, lo que empujaba el cartel fuera del
+tope de la columna. La guarda disparaba, el borrador se salvaba, y en pantalla **no parecía
+pasar absolutamente nada**. Una pregunta que no se ve es lo mismo que ninguna pregunta. El
+punto celeste del chip del header es la única señal **siempre** visible, porque el header
+no scrollea.
+
+**El test de flujo prueba INTERCEPCIÓN, no decoración**: cada caso verifica que el borrador
+**sobrevivió** (el valor editado sigue en su campo). Verificado con un **mutante** — sacar
+la guarda de `requestEdit` mata 3 de los 9. Los records del test son sintéticos.
+
+---
+
 ## Open questions
 
 1. **¿Agrandamos el tablero?** Hoy son 349 px de grilla en una pantalla de 1440. Es el
@@ -111,8 +172,10 @@ del tablero que juzga**; las herramientas pasan a grid con icono y leyenda.
    tocando 64 casillas, y agrandarla es **una línea** (`maxWidth` a `ProceduralBoard`).
 2. **¿Se extiende el chrome al resto de `/dev/*`?** Las primitivas ya están y hay ~35
    páginas. No es urgente y no lo empecé sin pedido.
-3. **Los cuatro ítems del mockup que quedaron sin hacer** siguen siendo funcionalidad
-   nueva, no presentación, y por eso no entraron en esta sesión:
-   `Unsaved changes in <id>` + Discard, nombre en vez de id en la librería, badge de TIER,
-   y fila en estado `Editing`. El ⭐ de esa lista sigue siendo el primero: **hoy se puede
-   cargar otro record encima de una edición y perderla sin ningún aviso.**
+3. **Quedan TRES ítems del mockup**, todos funcionalidad nueva y ninguno urgente ahora que
+   el ⭐ está cerrado: nombre en vez de id en la librería, badge de TIER con la tabla
+   ordenada por dificultad, y fila en estado `Editing` (hoy la fila activa se tiñe, pero no
+   lo dice con palabras).
+4. **La fila activa de la lista NO indica que tiene cambios sin guardar.** El punto celeste
+   vive en el chip del header y el cartel arriba de la columna; la fila de la tabla no
+   participa. Si en el uso resulta confuso, es un punto más.
