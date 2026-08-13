@@ -1,34 +1,35 @@
-# Session Handoff — 2026-08-13
+# Session Handoff — 2026-08-13 (tarde)
 
 ## Completed
-- **Star Sweep de punta a punta** — el builder autora 1–3 estrellas sin tocar JSON, el runtime
-  del laberinto es sweep-aware (Etapa 0, `09d406af`), y `gradeLabyrinthRun` unificó los TRES
-  sitios que graduaban laberintos por su cuenta.
-- **Migración aplicada a producción** — `content_overlay` 14 → 16 columnas, 32 filas intactas.
-- **Contenido: 49 de 79 tableros piden varias estrellas** (`ba002e9d`, `c6d40dc0`) — caballo
-  9/10, dama 9/10, rey 9/10, torre 8/10, alfil 7/10; laberintos de torre 4/4, alfil 2/2, rey 1/1.
-  El peón queda en 0 por diseño.
-- **README alineado** (`8462cca8`) — las dos escalas de estrellas, 60 ejercicios, alfil 10.
-- **Riesgo de `sign-badge` ACEPTADO** (`f0c9c5dc`) con la razón del founder y su disparador.
-- **Landing** (`9dad8b2c`) — la slide dejaba fuera el 43% del arte en desktop.
-- **Medición `/dev` + backlog de las tres siguientes** (`ffe3614b`).
-- **Seis defectos encontrados USÁNDOLO**, ninguno visto por un test.
+- **El builder abre por PIEZA y por su TABLA** (`6f15978d`) — el bucle real de autoría
+  (elegir pieza → abrir un record) eran los dos paneles más separados de la página, con la
+  tabla **al fondo** de una columna de varias pantallas. Ahora son los dos primeros y son
+  contiguos; todo lo demás baja.
+- **Primitivas de chrome para `/dev`** (`ea000d0a`) — `Section`/`Field`/`Segmented`/
+  `Legend`/`Mono`. Encodean estructura (h2 real, label real, `aria-pressed`), no estética.
+- **Barra fija** con `Save draft` + `Editing <id>`, columna de tablero **sticky**,
+  **validación debajo del tablero**, herramientas en grid con icono y leyenda.
+- **Cero funcionalidad agregada o removida** — verificado por diff de identificadores
+  contra `HEAD`: los 12 handlers idénticos, cero perdidos, cero agregados.
+- **Validado a mano en `localhost:3002`**, no sólo por tests (ver handoff).
 
 ## Current State
-- **Branch**: `main` — **6 commits sin pushear**
-- **Build**: passing. Vitest web **643 archivos / 7871 tests**; landing **25 / 258**;
-  `tsc` limpio; `next build` exit 0 en ambas apps; **VR 67/67** con `--update-snapshots=none`
-- **Uncommitted work**: no
+- **Branch**: `main` — **8 commits sin pushear**
+- **Build**: `tsc` exit 0; lint sin avisos nuevos; Vitest web **645 archivos / 7883 tests**
+  (baseline medida hoy en `main` limpio: **643 / 7871** — el delta son mis 2 archivos y 12
+  tests). El VR **no se corrió, y no aplica**: `visual-regression.spec.ts` tiene **0**
+  referencias a `labyrinth-builder`.
+- **Uncommitted work**: `SESSION.md` + el handoff nuevo
 - **PRs abiertos**: ninguno
 
 ## Next Tasks
-1. 🎯 **BUILDER DE EJERCICIOS — el tema de esta sesión** (decidido con el founder). Propuesta y
-   mockups en `docs/backlog/2026-08-13-next-three-initiatives.md` §3. Lo que más cambia el día
-   a día, y no es cosmético: **`Unsaved changes in <id>` + Discard** — hoy se puede cargar otro
-   record encima y perder la edición sin ningún aviso. Después: nombre en la librería (no sólo
-   id), badge de TIER con la tabla ordenada, fila en estado `Editing`, y un `Erase` explícito.
-   ⚠️ Respetar: `targets` es **UI-owned** (en `extraFields` la copia cargada gana y quitar una
-   estrella no hace nada) y el brush `Star` **se esconde** donde el sweep no corre.
+1. 🎯 **Los cuatro ítems del mockup que SON funcionalidad nueva** (por eso no entraron hoy).
+   El orden por valor sigue igual, y el ⭐ es el primero:
+   ⭐ **`Unsaved changes in <id>` + Discard** — hoy se carga otro record encima de una
+   edición y se pierde **sin ningún aviso**. Después: nombre en vez de id en la librería,
+   badge de TIER con la tabla ordenada por dificultad, y fila en estado `Editing`.
+   ⚠️ Respetar: `targets` es **UI-owned**, y el brush `Star` **se esconde** donde el sweep
+   no corre (fuera de exercise/labyrinth, y en el peón) — ambas siguen vivas y verificadas.
 2. **P2P** — sin spec. ⚠️ Si va a tener algo de valor en juego, su spec debe incluir
    server-verified progress: hoy el riesgo está aceptado *porque* nada vale.
 3. **Theme builder** — marketplace de creadores; el más grande y el que menos urge.
@@ -37,19 +38,26 @@
 ## Blockers
 - None.
 
+## Open questions
+- **¿Agrandamos el tablero del builder?** Son 349 px de grilla en 1440. Es el tamaño de
+  siempre, así que no lo toqué — pero se opera tocando 64 casillas y es **una línea**
+  (`maxWidth` a `ProceduralBoard`).
+- **¿El chrome nuevo se extiende al resto de `/dev/*`?** Las primitivas ya están; hay ~35
+  páginas. No lo empecé sin pedido.
+
 ## Notes
-- ⛔ **`/dev/*` NO se extrae a otra app todavía — MEDIDO**: build con `/dev` 90 s / 147 rutas,
-  sin `/dev` 81 s / 108. Es el 26% de las rutas y el **10%** del tiempo (~$0.62 de los $6.20).
-  Y **cero** beneficio de bundle: Next parte por ruta. El costo de separarlas es partir
-  `buildCatalog` en dos copias — exigiría un `packages/core` primero.
-  **La palanca del gasto es la FRECUENCIA de builds, no su tamaño**: medir si Vercel saltea el
-  build del landing cuando sólo cambia `apps/web`.
-- **Un tablero cuenta como completado con AL MENOS 1★**; 0★ es posible en sweeps y no suma
-  (el tablero queda rejugable). Aceptado; la palanca sería `starFloor: 1`.
-- **Rejugar mejora**: estrellas al MÁXIMO, récord de movimientos aparte al MÍNIMO. Agotada la
-  cuota diaria, el replay ya no persiste.
-- **La curva de dificultad NO es un criterio estricto** — no reordenar contenido por esos avisos.
+- ⛔ **El tablero del builder es `ProceduralBoard`, intacto.** El mock del founder dibujaba
+  uno propio y no entró. Si alguien lo "simplifica" a divs de colores, se pierde la
+  paridad con lo que ve el jugador.
+- ⚠️ **La columna del tablero en `26rem` no es un número al azar**: `GameBoard` se capea
+  solo en `maxWidth = "23.5rem"`. Los `35rem` viejos **no agrandaban nada**, sólo aire
+  muerto. Para agrandarlo hay que pasar `maxWidth`, no ensanchar el track.
+- ⚠️ **Un orden de paneles no lo delata NADA** (sin comportamiento, `tsc` ciego, fuera del
+  VR). Queda pineado en `__tests__/panel-order.test.tsx` **por heading**, y ese test
+  stubea la lista **vacía** para no leer contenido autorado.
+- ⚠️ **El nombre accesible de los botones de pieza es MINÚSCULA** (`rook`, `pawn`…); el
+  `Rook` visible es `capitalize` de CSS. Una sonda que busque `"Pawn"` timeoutea.
+- ⚠️ **Un `pnpm dev` arriba invalida la suite de Vitest** — bajarlo antes de medir. El
+  síntoma es que BAJA el conteo de ARCHIVOS, no que se ponga roja.
 - **Verificar el deploy es del founder**, salvo pedido explícito.
-- **Contenido autorado no es un fixture**: TRES tandas de tests se rompieron por pinear ids.
-  Los verificadores por pieza ya derivan del catálogo — por eso el rey entró sin romper nada.
-- Handoff largo: `docs/handoffs/2026-08-11-sweeps-in-the-builder-handoff.md`
+- Handoff largo: `docs/handoffs/2026-08-13-exercise-builder-layout-handoff.md`
