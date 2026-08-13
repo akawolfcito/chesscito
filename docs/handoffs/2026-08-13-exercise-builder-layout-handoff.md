@@ -163,6 +163,39 @@ no scrollea.
 **sobrevivió** (el valor editado sigue en su campo). Verificado con un **mutante** — sacar
 la guarda de `requestEdit` mata 3 de los 9. Los records del test son sintéticos.
 
+### 5. `feat(dev)` — nombre, TIER y `Editing` en la lista (`77481f8e`)
+
+Los tres ítems que quedaban del mockup. Lógica pura en `lib/labyrinth-builder/library.ts`.
+
+**Nombre.** Manda la descripción; el id queda al lado como etiqueta técnica.
+⚠️ El fallback al id **no es defensivo**: hoy **ni un** ejercicio autorado tiene
+descripción, así que es el caso común. Por eso el id sólo se imprime **cuando agrega
+algo** — sin esa regla cada fila leía `rook-1 … rook-1`, que es exactamente como se veía
+hasta que lo abrí en el navegador.
+
+> 💡 Consecuencia para el founder: escribir la **description** de un ejercicio ahora paga
+> dos veces — deja de mostrar el genérico *"Exercise N"* en el juego **y** le pone nombre
+> a la fila en el builder.
+
+**TIER.** Badge con nombre y color, más un toggle de orden en el encabezado.
+⚠️ El default sigue siendo **`order`** a propósito: es la secuencia real del juego, la
+única vista en la que se puede juzgar un curriculum. `tier` contesta otra pregunta —
+*"¿dónde están mis difíciles?"* — y el mockup la pedía. **Cambiar el default es una línea**
+en el `useState` de `librarySort`.
+
+⚠️ Un tier **ausente** rankea como `medium`, porque es lo que el catálogo le pone
+downstream (`toPuzzleInput`: `tier ?? "medium"`). Se muestra como **`medium?`** para que
+una suposición no se confunda con una decisión cuando la tabla está ordenada por tier.
+
+**Editing.** La fila activa lo dice **en palabras**. Ya se teñía, pero un tinte no es una
+afirmación: sobre diez filas casi idénticas es fácil creer que estás editando la que tenés
+bajo el cursor. Y repite el punto de "sin guardar" justo donde se decide abrir otra.
+
+⚠️ **Un flake real de mis propios tests, arreglado**: `openBuilder` esperaba el HEADING, y
+el panel lo renderiza haya llegado o no el fetch de records — así que volvía con la lista
+todavía vacía y toda query posterior corría carrera contra el fetch. Ahora espera las
+**filas**. Costó una corrida roja encontrarlo; después, cinco corridas seguidas en verde.
+
 ---
 
 ## Open questions
@@ -172,10 +205,10 @@ la guarda de `requestEdit` mata 3 de los 9. Los records del test son sintéticos
    tocando 64 casillas, y agrandarla es **una línea** (`maxWidth` a `ProceduralBoard`).
 2. **¿Se extiende el chrome al resto de `/dev/*`?** Las primitivas ya están y hay ~35
    páginas. No es urgente y no lo empecé sin pedido.
-3. **Quedan TRES ítems del mockup**, todos funcionalidad nueva y ninguno urgente ahora que
-   el ⭐ está cerrado: nombre en vez de id en la librería, badge de TIER con la tabla
-   ordenada por dificultad, y fila en estado `Editing` (hoy la fila activa se tiñe, pero no
-   lo dice con palabras).
-4. **La fila activa de la lista NO indica que tiene cambios sin guardar.** El punto celeste
-   vive en el chip del header y el cartel arriba de la columna; la fila de la tabla no
-   participa. Si en el uso resulta confuso, es un punto más.
+3. ✅ **El mockup está cerrado entero** — los seis ítems entraron.
+4. **¿El default de la lista debería ser `tier` en vez de `order`?** Lo dejé en `order`
+   porque es la secuencia real del juego, pero el mockup mostraba la tabla por dificultad.
+   Es **una línea** (`useState<LibrarySort>("order")`).
+5. **Ninguna descripción autorada existe todavía**, así que la columna de nombre muestra
+   ids en todas las filas hasta que se empiecen a escribir. No es un bug: es contenido que
+   falta, y ahora rinde el doble escribirlo.

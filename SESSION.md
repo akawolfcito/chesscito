@@ -1,46 +1,44 @@
 # Session Handoff — 2026-08-13 (tarde)
 
-## Completed
-- **El builder abre por PIEZA y por su TABLA** (`6f15978d`) — el bucle real de autoría
-  (elegir pieza → abrir un record) eran los dos paneles más separados de la página, con la
-  tabla **al fondo**. Ahora son los dos primeros y son contiguos.
+## Completed — el mockup del builder está cerrado entero
+- **Abre por PIEZA y por su TABLA** (`6f15978d`) — el bucle real de autoría eran los dos
+  paneles más separados de la página, con la tabla al fondo. Ahora son los dos primeros.
 - **Primitivas de chrome para `/dev`** (`ea000d0a`) — `Section`/`Field`/`Segmented`/
   `Legend`/`Mono`. Encodean estructura (h2 real, label real, `aria-pressed`), no estética.
-- **Cada columna scrollea sola y el header no se mueve** (`77d01b0e`) — la página ya no
-  scrollea; el header está **fuera** de los contenedores de scroll.
+- **Cada columna scrollea sola, el header no se mueve** (`77d01b0e`).
 - **⭐ `Unsaved changes in <id>` + Discard** (`330f3561`) — las tres acciones que reemplazan
-  el borrador (abrir otro record, `New`, cambiar de bucket) pasan por una guarda. Antes la
-  edición desaparecía sin aviso, sin undo y sin rastro.
-- **Validado a mano en `localhost:3002` en cada paso**, no sólo por tests — así aparecieron
-  dos defectos que ningún test veía (ver Notes).
+  el borrador pasan por una guarda. Antes la edición desaparecía sin aviso ni rastro.
+- **Nombre, badge de TIER y `Editing` en la lista** (`77481f8e`), con toggle de orden.
+- **Validado a mano en `localhost:3002` en cada paso** — de ahí salieron TRES defectos que
+  ningún test veía (ver Notes).
 
 ## Current State
-- **Branch**: `main` — **11 commits sin pushear**
-- **Build**: `tsc` exit 0; lint sin avisos nuevos; Vitest web **647 archivos / 7916 tests**
-  (baseline medida hoy en `main` limpio: **643 / 7871**; el delta son mis 4 archivos y 45
+- **Branch**: `main` — **13 commits sin pushear**
+- **Build**: `tsc` exit 0; lint sin avisos nuevos; Vitest web **649 archivos / 7937 tests**
+  (baseline medida hoy en `main` limpio: **643 / 7871**; el delta son mis 6 archivos y 66
   tests). El VR **no aplica**: `visual-regression.spec.ts` tiene **0** referencias a
   `labyrinth-builder`.
 - **Uncommitted work**: `SESSION.md` + el handoff
 - **PRs abiertos**: ninguno
 
 ## Next Tasks
-1. **Tres ítems del mockup**, ninguno urgente ahora que el ⭐ cerró: nombre en vez de id en
-   la librería, badge de TIER con la tabla ordenada por dificultad, fila en estado
-   `Editing`.
-2. **P2P** — sin spec. ⚠️ Si va a tener algo de valor en juego, su spec debe incluir
-   server-verified progress: hoy el riesgo está aceptado *porque* nada vale.
-3. **Theme builder** — marketplace de creadores; el más grande y el que menos urge.
-4. **Terminar de convertir**: 30 tableros, sobre todo laberintos de caballo (5) y dama (3).
+1. **P2P** — sin spec, y es la apuesta grande. ⚠️ Si va a tener algo de valor en juego, su
+   spec **debe** incluir server-verified progress: hoy ese riesgo está aceptado *porque*
+   nada vale.
+2. **Theme builder** — marketplace de creadores; el más grande y el que menos urge.
+3. **Terminar de convertir**: 30 tableros, sobre todo laberintos de caballo (5) y dama (3).
+4. **Escribir descripciones** — ahora rinde el doble: quita el genérico "Exercise N" del
+   juego **y** le pone nombre a la fila del builder.
 
 ## Blockers
 - None.
 
 ## Open questions
-- **¿Agrandamos el tablero del builder?** 349 px de grilla en 1440. Es el tamaño de siempre,
-  así que no lo toqué — es **una línea** (`maxWidth` a `ProceduralBoard`).
+- **¿El default de la lista debería ser `tier` en vez de `order`?** Lo dejé en `order` (la
+  secuencia real del juego); el mockup la mostraba por dificultad. Es **una línea**.
+- **¿Agrandamos el tablero?** 349 px de grilla en 1440 — el tamaño de siempre. Una línea
+  (`maxWidth` a `ProceduralBoard`).
 - **¿El chrome nuevo se extiende al resto de `/dev/*`?** Las primitivas ya están; ~35 páginas.
-- **La fila activa de la lista no dice que tiene cambios sin guardar** — el punto celeste
-  vive en el chip del header. Si en el uso confunde, es un punto más.
 
 ## Notes
 - ⛔ **El tablero del builder es `ProceduralBoard`, intacto.** El mock del founder dibujaba
@@ -55,10 +53,15 @@
   Los enemies se comparan `casilla:pieza`, o una torre negra retipada a peón daría "limpio".
 - ⚠️ **Elegir pieza sobre un borrador limpio NO ensucia** — el selector es también el filtro
   de la lista. Si cada browse diera alarma, la guarda quedaría desentrenada en un día.
-- ⚠️ **Dos defectos que sólo aparecieron USÁNDOLO**: (1) el cartel de la guarda se scrolleaba
-  fuera de vista al hacer click en `Edit` — disparaba, salvaba el borrador, y en pantalla no
-  parecía pasar nada (por eso es `sticky` y opaco); (2) los `35rem` de columna no agrandaban
-  el tablero, sólo dejaban aire muerto.
+- ⚠️ **Un tier ausente rankea como `medium`** (es lo que el catálogo le pone downstream) y se
+  muestra `medium?`, para que una suposición no pase por decisión al ordenar por tier.
+- ⚠️ **TRES defectos que sólo aparecieron USÁNDOLO**, ninguno visible para un test:
+  (1) el cartel de la guarda se scrolleaba fuera de vista al hacer click en `Edit` —
+  disparaba, salvaba el borrador, y en pantalla no parecía pasar nada (por eso es `sticky`
+  y opaco); (2) los `35rem` de columna no agrandaban el tablero, sólo aire muerto;
+  (3) sin descripciones autoradas, cada fila imprimía el id **dos veces**.
+- ⚠️ **Un flake de tests, con causa encontrada**: esperar el HEADING de la lista no espera al
+  fetch — el panel lo renderiza con la lista vacía. Esperar las **filas**.
 - ⚠️ **Un orden de paneles no lo delata NADA** (sin comportamiento, `tsc` ciego, fuera del
   VR). Pineado en `__tests__/panel-order.test.tsx` **por heading**, con la lista stubeada
   **vacía** para no leer contenido autorado.
