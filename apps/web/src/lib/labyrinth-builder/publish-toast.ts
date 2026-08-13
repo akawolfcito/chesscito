@@ -88,6 +88,34 @@ export function clearStoredToast(): void {
   }
 }
 
+/**
+ * The verdict to park BEFORE the request goes out.
+ *
+ * ⚠️ The save is a RACE and both halves of it need covering. The server writes
+ * content/*.json DURING the fetch, so Next's watcher can fire Fast Refresh
+ * before the response is ever read — everything after `await` may not run.
+ * The DRAFT was moved ahead of the request for exactly this reason; the toast
+ * was left behind, and when the reload won you got the board back with no
+ * message and no chip at all: the save looked like it had done nothing.
+ *
+ * So a provisional verdict is parked first and overwritten by the real one if
+ * the response arrives in time. It says `warn`, not `ok`, because the honest
+ * position is that nobody read the answer: the reload is itself evidence the
+ * write happened (nothing else touches those files), but "probably landed" is
+ * not "landed", and the draft is deliberately restored as unsaved to match.
+ */
+export const IN_FLIGHT_TOAST: PublishToast = {
+  kind: "warn",
+  summary: "The page reloaded before the save answered",
+  text:
+    "The save was still in flight when the page reloaded. The write almost " +
+    "certainly landed — that reload is triggered by the content files being " +
+    "written, and nothing else touches them — but the result was never read, " +
+    "so nothing here can confirm it. The draft is kept as unsaved on purpose: " +
+    `check the record in the list, or just save again. ${COMMIT_NUDGE}`,
+  warnings: [],
+};
+
 export function formatPublishResult(r: PublishResultLike): PublishToast {
   // The route has always sent these (api/dev/publish/route.ts); this mapper
   // used to drop them, so every save-time linter warning died unread.

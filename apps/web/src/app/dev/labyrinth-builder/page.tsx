@@ -74,6 +74,7 @@ import {
   formatPublishResult,
   readStoredToast,
   storeToast,
+  IN_FLIGHT_TOAST,
   type PublishResultLike,
   type PublishToast,
 } from "@/lib/labyrinth-builder/publish-toast";
@@ -678,6 +679,12 @@ export default function LabyrinthBuilderPage() {
        the race, the draft comes back marked as unsaved, which is the safe
        direction — the work is on screen and visibly not on disk. */
     storeDraft({ bucket, state, extras: editExtras, savedOk: false });
+    /* ⛔ And the TOAST, for the same race and in the same breath. Parking the
+       draft alone left the other half of the bug alive: when the reload won, the
+       board came back with no message and no Details chip, so the save looked
+       like it had simply done nothing (founder, 2026-08-13). Overwritten by the
+       real verdict below if the response arrives in time. */
+    storeToast(IN_FLIGHT_TOAST);
     try {
       // "Todo en 1": the publish proxy writes the baseline content/*.json AND
       // writes the overlay at stage='draft' in one call (the ADMIN_TOKEN stays

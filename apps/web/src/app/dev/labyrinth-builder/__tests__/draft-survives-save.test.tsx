@@ -143,6 +143,56 @@ describe("the draft is parked BEFORE the request goes out", () => {
 
     release();
   });
+
+  it("parks a VERDICT too, so a won race is not a silent save", async () => {
+    /* ⛔ The half of this bug that survived the first fix. With only the draft
+       parked, a reload that beat the response brought the board back with no
+       message and no Details chip — the save looked like it had done nothing
+       at all (founder, 2026-08-13). */
+    let release!: () => void;
+    const inFlight = new Promise<void>((r) => (release = r));
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (typeof url === "string" && url.includes("/api/dev/publish")) {
+          await inFlight;
+          return new Response(JSON.stringify({ ok: true, baseline: { ok: true, warnings: [] }, overlay: { ok: true } }), {
+            headers: { "content-type": "application/json" },
+          });
+        }
+        return new Response(
+          JSON.stringify({ ok: true, records: RECORDS, canWrite: true }),
+          { headers: { "content-type": "application/json" } },
+        );
+      }),
+    );
+
+    const user = userEvent.setup();
+    const view = render(<LabyrinthBuilderPage />);
+    await waitFor(() =>
+      expect(screen.getAllByRole("button", { name: /Edit$/ })).toHaveLength(1),
+    );
+    await user.click(screen.getByRole("button", { name: /Edit$/ }));
+    await waitFor(() => expect(description()).toHaveValue("First probe record"));
+    await user.click(screen.getByRole("button", { name: /Save draft/ }));
+
+    // The reload wins: remount with the response still hanging.
+    view.unmount();
+    render(<LabyrinthBuilderPage />);
+
+    // The board is back AND there is something to read about what happened.
+    await waitFor(() =>
+      expect(description()).toHaveValue("First probe record"),
+    );
+    expect(screen.getByTestId("lb-warnings-button")).toBeInTheDocument();
+    await user.click(screen.getByTestId("lb-warnings-button"));
+    expect(screen.getByTestId("lb-save-outcome")).toHaveTextContent(
+      /still in flight when the page reloaded/i,
+    );
+
+    release();
+  });
 });
 
 describe("the draft survives the reload a save causes", () => {
