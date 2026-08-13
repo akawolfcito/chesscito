@@ -1064,6 +1064,10 @@
     "fen": "8/8/8/8/3K4/8/8/8 w - - 0 1",
     "target": "e5",
     "mover": "d4",
+    "targets": [
+      "e5",
+      "a2"
+    ],
     "tier": "easy",
     "tags": [
       "one-step",
@@ -1074,21 +1078,26 @@
     "order": 1
   },
   {
+    "title": "Step by step",
+    "playerPrompt": "The star is a few squares away. Walk there, one step at a time.",
     "id": "king-3",
     "piece": "king",
     "fen": "8/8/8/8/3K4/8/8/8 w - - 0 1",
     "target": "b6",
     "mover": "d4",
+    "targets": [
+      "b6",
+      "f6",
+      "b2"
+    ],
     "tier": "easy",
     "tags": [
       "one-step",
       "short-route"
     ],
-    "order": 2,
     "principle": "chain-steps",
-    "title": "Step by step",
-    "playerPrompt": "The star is a few squares away. Walk there, one step at a time.",
-    "learningObjective": "The player learns to cover ground with the king by chaining single steps."
+    "learningObjective": "The player learns to cover ground with the king by chaining single steps.",
+    "order": 2
   },
   {
     "title": "The other diagonal step",
@@ -1098,6 +1107,12 @@
     "fen": "8/6K1/8/8/8/8/8/8 w - - 0 1",
     "target": "d4",
     "mover": "g7",
+    "targets": [
+      "d4",
+      "c6",
+      "e2",
+      "g3"
+    ],
     "tier": "easy",
     "tags": [
       "one-step",
@@ -1112,9 +1127,13 @@
     "playerPrompt": "Head toward the corner, one step per move.",
     "id": "king-5",
     "piece": "king",
-    "fen": "8/8/8/4K3/8/8/8/8 w - - 0 1",
+    "fen": "7N/1N6/8/3NK1N1/8/4N3/N7/2N5 w - - 0 1",
     "target": "a8",
     "mover": "e5",
+    "targets": [
+      "a8",
+      "h6"
+    ],
     "tier": "medium",
     "tags": [
       "diagonal-step",
@@ -1126,39 +1145,47 @@
     "order": 4
   },
   {
+    "title": "The long walk",
+    "playerPrompt": "Cross the whole board, one step at a time, to the far corner.",
     "id": "king-6",
     "piece": "king",
-    "fen": "7K/8/8/8/8/8/8/8 w - - 0 1",
+    "fen": "7K/NNN2NNN/8/8/1NNN1NN1/N2N1N2/3N1NN1/8 w - - 0 1",
     "target": "a1",
     "mover": "h8",
+    "targets": [
+      "a1",
+      "g3"
+    ],
     "tier": "hard",
     "tags": [
       "diagonal-step",
       "edge-control"
     ],
-    "order": 5,
     "principle": "long-walk",
-    "title": "The long walk",
-    "playerPrompt": "Cross the whole board, one step at a time, to the far corner.",
-    "learningObjective": "The player plans a long king journey and feels how slowly the king travels."
+    "learningObjective": "The player plans a long king journey and feels how slowly the king travels.",
+    "order": 5
   },
   {
+    "title": "Step around your piece",
+    "playerPrompt": "Your own piece blocks the way up. Step around it.",
     "id": "king-7",
     "piece": "king",
-    "fen": "8/8/4N3/8/4K3/8/8/8 w - - 0 1",
+    "fen": "8/3NNN2/4N3/3N1N2/2N1K1N1/3N1N2/1N2N3/1N6 w - - 0 1",
     "target": "e8",
     "mover": "e4",
+    "targets": [
+      "e8",
+      "a1"
+    ],
     "tier": "medium",
     "tags": [
       "orthogonal-step",
       "detour",
       "blocked-square"
     ],
-    "order": 6,
     "principle": "around-the-blocker",
-    "title": "Step around your piece",
-    "playerPrompt": "Your own piece blocks the way up. Step around it.",
-    "learningObjective": "The player learns to route the king around a square it cannot enter."
+    "learningObjective": "The player learns to route the king around a square it cannot enter.",
+    "order": 6
   },
   {
     "title": "Corner to corner",
@@ -1170,7 +1197,8 @@
     "mover": "a8",
     "targets": [
       "h1",
-      "a1"
+      "a1",
+      "f8"
     ],
     "tier": "hard",
     "tags": [
