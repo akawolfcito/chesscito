@@ -8,54 +8,54 @@
   `sweep-run.ts` y completa sólo en la última estrella. Antes terminaba en la primera y
   graduaba media corrida contra el óptimo entero: 3★ por medio laberinto, en silencio.
 - **`gradeLabyrinthRun`** — un único despacho para los TRES sitios que graduaban laberintos
-  por su cuenta (pantalla, bucket de intentos, ruta de firma). Migrar dos de tres compila
-  perfecto y muestra al jugador una nota mientras la tabla guarda otra.
-- **Migración APLICADA a producción** — `content_overlay` 14 → 16 columnas (`targets`,
-  `star_floor`), 32 filas intactas. Schema antes del deploy, en ese orden.
-- **Contenido** (`47320e92`) — torre completa (4 laberintos + ejercicios) y parte del alfil.
-- **Cinco defectos encontrados USÁNDOLO**, ninguno visto por un test:
-  - `538c84a5` el bloque Export perdía las estrellas al copiarlo.
-  - `b5f6dc56` el toast se borraba solo (el save recarga la página que lo muestra).
-  - `8a175e47` el juego servía el catálogo viejo (la invalidación colgaba del overlay, que
-    en local está apagado a propósito).
-  - `9feccb6f` + `276b8913` los verificadores fallaban en los niveles CORRECTOS.
-  - `9dad8b2c` el landing recortaba el **43%** del arte en desktop.
+  por su cuenta (pantalla, bucket de intentos, ruta de firma).
+- **Migración APLICADA a producción** — `content_overlay` 14 → 16 columnas.
+- **Contenido: 42 de 79 tableros piden varias estrellas** (`ba002e9d`) — caballo 9/10,
+  dama 9/10, torre 8/10, alfil 7/10, rey 3/10; laberintos de torre 4/4 y alfil 2/2.
+- **README alineado** (`8462cca8`) — las dos escalas de estrellas, 60 ejercicios, alfil 10.
+- **Riesgo de `sign-badge` ACEPTADO** (`f0c9c5dc`) con la razón y su disparador en el backlog.
+- **Landing** (`9dad8b2c`) — la slide dejaba fuera el 43% del arte en desktop.
+- **Seis defectos encontrados USÁNDOLO**, ninguno visto por un test: el Export perdía las
+  estrellas, el toast se borraba solo, el catálogo servía datos viejos, y tres tandas de
+  verificadores que fallaban en los niveles CORRECTOS (torre, alfil, dama).
 
 ## Current State
-- **Branch**: `main` — **ya pusheado** (`origin/main` en `9dad8b2c`, 0 pendientes)
-- **Build**: passing. Vitest web **643 archivos / 7870 tests**; landing **25 / 258**;
-  `tsc` limpio; `next build` exit 0 en ambas apps; iconos sin drift;
-  **VR 67/67** con `--update-snapshots=none` (81 baselines antes y después)
+- **Branch**: `main` — **3 commits sin pushear**
+- **Build**: passing. Vitest web **643 archivos / 7871 tests**; landing **25 / 258**;
+  `tsc` limpio; `next build` exit 0 en ambas apps; **VR 67/67** con `--update-snapshots=none`
 - **Uncommitted work**: no
 - **PRs abiertos**: ninguno
 
 ## Next Tasks
-1. **Convertir el contenido que falta**, con el builder: **11 laberintos** (alfil 2,
-   caballo 5, dama 3, rey 1) + ejercicios de caballo, dama y rey.
+1. **P2P** — el tema de la próxima sesión. Sin spec todavía.
+2. **Terminar de convertir a sweep**: rey 3/10 es el más flojo; quedan 11 laberintos
+   (alfil 0 pendientes, caballo 5, dama 3, rey 1) y los ejercicios sueltos de cada pieza.
    Local: `NEXT_PUBLIC_CHAIN_ID=42220 CONTENT_STAGE= ADMIN_TOKEN= PORT=3002 pnpm dev`.
    Commitear SIEMPRE los dos archivos: el `content/*.json` **y** `puzzles.generated.ts`.
-2. **Spec del sweep para Diagonal Run** (pedido, no construido). Bloqueado por una decisión
-   de diseño: `resolvePivot(from, pivot, blockers, target)` elige la dirección de salida por
-   cercanía **a la estrella**, así que con varias hay que decidir hacia cuál se orienta.
-   ⚠️ `computeSweepOptimal` no sirve ahí (mide piernas con el BFS libre, no con pivotes).
-   La forma correcta es un BFS sobre `(casilla, recogidas)` — también resuelve las capturas.
-3. **Opcional, landing**: el pie de la slide cae sobre el margen blanco del asset y la torre
-   lo cruza. Se resuelve cambiando el anclaje sólo en desktop. Cosmético.
+3. **Spec del sweep para Diagonal Run** — bloqueado por una decisión de diseño: la dirección
+   del pivote se elige por cercanía **a la estrella**, así que con varias hay que decidir
+   hacia cuál se orienta. ⚠️ `computeSweepOptimal` no sirve ahí; la forma correcta es un BFS
+   sobre `(casilla, recogidas)`, que también resolvería las capturas como objetivo.
+4. **Decoder de custom errors** (1–3 h) — `BadgeAlreadyClaimed`, `CooldownActive` y
+   `DailyLimitReached` salen los tres como "Try again". El extractor ya está escrito.
 
 ## Blockers
 - None.
 
 ## Notes
+- **Un tablero cuenta como completado con AL MENOS 1★** (`completedExerciseCount` filtra
+  `stars > 0`). Con el sweep, 0★ es posible y 34 de 36 ejercicios sweep no tienen `starFloor`:
+  terminar dando vueltas **no suma** al 80% de la insignia y el tablero queda rejugable.
+  **Aceptado por el founder** — la palanca, si alguna vez molesta, es `starFloor: 1`.
+- **Rejugar mejora**: las estrellas guardan el MÁXIMO, y el récord de movimientos va aparte
+  como MÍNIMO, porque la estrella satura en 3 y el conteo no. ⚠️ `shouldFreezeScoring` es
+  `liteMode && isReplay && isSessionOver`: agotada la cuota del día, el replay no persiste.
 - **La curva de dificultad NO es un criterio estricto** (decisión del founder): un tablero
-  más fácil después de uno duro es un respiro. Los avisos de pacing son información y nunca
-  bloquearon un guardado — no reordenar contenido por ellos.
+  más fácil después de uno duro es un respiro. No reordenar contenido por esos warnings.
 - **Verificar el deploy es del founder**, no mío, salvo pedido explícito.
-- **Reglas al autorar un sweep**: ★1 (`goal`) tiene que ser la estrella BARATA o el
-  validador lo rechaza por colapso; en el alfil, todas del color de la salida.
-- **El brush `Star` se esconde solo** donde el sweep no corre: si no aparece, ese tablero no
-  lo admite. No hay nada que recordar.
-- **Apagar un paso en local apaga lo que colgaba de él** — causa de dos de los cinco
-  defectos de hoy. Al apagar algo, preguntar qué más vivía en esa rama sin pertenecerle.
-- **Contenido autorado no es un fixture**: dos tests se rompieron por pinear `rook-9` y los
-  ids de los laberintos. El builder existe para cambiarlos; los tests ya derivan del catálogo.
-- Handoff largo con el detalle: `docs/handoffs/2026-08-11-sweeps-in-the-builder-handoff.md`
+- **Reglas al autorar un sweep**: ★1 (`goal`) tiene que ser la estrella BARATA o el validador
+  lo rechaza por colapso; en el alfil, todas del color de la salida. El brush `Star` se
+  esconde solo donde el sweep no corre.
+- **Contenido autorado no es un fixture**: TRES tandas de tests se rompieron por pinear ids
+  del catálogo. Los verificadores por pieza ya derivan del catálogo y separan las dos formas.
+- Handoff largo: `docs/handoffs/2026-08-11-sweeps-in-the-builder-handoff.md`
