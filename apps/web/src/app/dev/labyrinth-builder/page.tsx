@@ -618,11 +618,21 @@ export default function LabyrinthBuilderPage() {
         : "text-red-400";
 
   return (
-    <main className="min-h-screen bg-black text-neutral-100">
+    /* ⚠️ The page itself NEVER scrolls: `h-screen` + `overflow-hidden`, with the
+       header pinned as a flex row that cannot shrink and each column owning its
+       own scrollbar below `lg`. That is deliberate and it is what the founder
+       actually works in — the panel column is scrolled constantly, the board
+       column is not (everything on it fits), and a shared page scroll drags the
+       board away while you are reading a panel, then drags the panels away when
+       you go back to paint. `min-h-0` on the tracks is what lets a grid child
+       scroll at all: without it a flex/grid item floors at its content height
+       and the overflow silently escapes to the page. */
+    <main className="flex h-screen flex-col overflow-hidden bg-black text-neutral-100">
       {/* ── Top bar: what record am I on, and the two verbs that act on it ──
-          Sticky because Save and the edit identity have to stay reachable from
-          anywhere in a column that scrolls for several screens. */}
-      <header className="sticky top-0 z-30 border-b border-neutral-800 bg-black/85 backdrop-blur">
+          `shrink-0`, not `sticky`: it is a flex row outside the scroll
+          containers, so it is always on screen by construction rather than by
+          a scroll position that a nested overflow could break. */}
+      <header className="shrink-0 border-b border-neutral-800 bg-black/85 backdrop-blur">
         <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-3 px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/15 text-emerald-400">
@@ -712,10 +722,11 @@ export default function LabyrinthBuilderPage() {
           been and a wider column would only add dead air (the old 35rem column
           did exactly that). Widening the board means passing `maxWidth`, not
           widening this track. */}
-      <div className="mx-auto grid max-w-[1500px] grid-cols-1 gap-5 px-4 py-5 lg:grid-cols-[26rem_1fr]">
-        {/* ── Board column. Sticky so it stays in view while the panel column
-            scrolls: painting a square and reading the verdict are one act. ── */}
-        <aside className="flex flex-col gap-3 lg:sticky lg:top-[4.75rem] lg:h-fit">
+      <div className="mx-auto grid w-full min-h-0 max-w-[1500px] flex-1 grid-cols-1 gap-5 overflow-y-auto px-4 lg:grid-cols-[26rem_1fr] lg:overflow-hidden">
+        {/* ── Board column. Its OWN scroll: on a short viewport the tool palette
+            and the verdict still have somewhere to go, without ever moving the
+            panel column. In practice it rarely scrolls — everything fits. ── */}
+        <aside className="flex flex-col gap-3 py-5 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
           <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
               {/* Paint = author the position; Preview = play the real board. */}
@@ -947,7 +958,7 @@ export default function LabyrinthBuilderPage() {
             month and used to sit ABOVE the record list, which put the most
             frequent action at the bottom of the longest scroll. The order is
             pinned by __tests__/panel-order.test.tsx — nothing else can see it. */}
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-5 py-5 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
           {/* Save-time linter warnings — deliberately NOT part of the toast.
               These arrive from the catalog linter on Save (curve pacing,
               duplicate positions, decorative obstacles…), and the founder
