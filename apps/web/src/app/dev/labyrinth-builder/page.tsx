@@ -2,6 +2,24 @@
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { notFound } from "next/navigation";
+import {
+  AlertTriangle,
+  BrickWall,
+  CheckCircle2,
+  Crown,
+  Download,
+  Eye,
+  Flag,
+  Footprints,
+  Grid2x2,
+  Pencil,
+  Plus,
+  Save,
+  Skull,
+  Star,
+  Upload,
+  type LucideIcon,
+} from "lucide-react";
 import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
 import {
   buildFenBlock,
@@ -30,6 +48,14 @@ import {
 import { PROMOTABLE_PIECES } from "@/lib/game/promotion-run";
 import { BuilderPreview, isPreviewable } from "@/components/dev/builder-preview";
 import {
+  Field,
+  Legend,
+  Mono,
+  Section,
+  Segmented,
+  devInputClass,
+} from "@/components/dev/ui";
+import {
   clearStoredToast,
   formatPublishResult,
   readStoredToast,
@@ -45,11 +71,7 @@ import type { ContentStage } from "@/lib/content/overlay-types";
 // The constant only — importing lint.ts here would drag the BFS solver and the
 // FEN mapper toward the client bundle just to print a number.
 import { MAX_DIFFICULTY_STEP } from "@/lib/content/pacing";
-import {
-  parseFenBoard,
-  posToSquare,
-  squareToPos,
-} from "@/lib/game/fen-puzzle";
+import { posToSquare } from "@/lib/game/fen-puzzle";
 import {
   GENERATED_EXERCISES,
   GENERATED_LABYRINTHS,
@@ -166,7 +188,27 @@ type Brush = "start" | "goal" | "star" | "wall" | "capture" | "trace";
 /** WHICH FILE the record lives in. Not the game — that is the record's `kind`. */
 type Bucket = "exercise" | "labyrinth";
 
+/** Icons for the tool palette. `capture` is the enemy brush; `trace` walks a
+ *  route by hand. Decoration only — the written label under each icon is what
+ *  names the tool, so nothing here has to be guessed from a glyph. */
+const BRUSH_ICON: Record<Brush, LucideIcon> = {
+  start: Crown,
+  goal: Flag,
+  star: Star,
+  wall: BrickWall,
+  capture: Skull,
+  trace: Footprints,
+};
+
 const TIERS: ExerciseTier[] = ["easy", "medium", "hard"];
+
+/** The colour key under the board. Matches the CELL_OVERLAY values above. */
+const BOARD_LEGEND = [
+  { swatch: "bg-neutral-700", label: "Wall" },
+  { swatch: "bg-red-400/40 ring-2 ring-inset ring-red-400/80", label: "Enemy / watched" },
+  { swatch: "bg-amber-400", label: "Star / goal" },
+  { swatch: "bg-sky-300", label: "BFS path" },
+];
 
 function posKey(p: BoardPosition): string {
   return posToSquare(p);
@@ -566,377 +608,306 @@ export default function LabyrinthBuilderPage() {
   const generatedByBucket =
     bucket === "exercise" ? GENERATED_EXERCISES : GENERATED_LABYRINTHS;
   const existing = generatedByBucket[state.piece] ?? [];
+  const bucketNoun = bucket === "exercise" ? "exercises" : "labyrinths";
+  const enabledCount = pieceRecords.filter((r) => !r.disabled).length;
+  const toastColor =
+    toast?.kind === "ok"
+      ? "text-emerald-400"
+      : toast?.kind === "warn"
+        ? "text-amber-400"
+        : "text-red-400";
 
   return (
-    <main className="min-h-screen bg-black p-4 text-neutral-100 lg:h-screen lg:overflow-hidden">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 lg:h-full lg:min-h-0 lg:max-w-none lg:flex-row">
-        {/* ── Board column (stays put; the panel on the right scrolls) ── */}
-        <section className="flex flex-col gap-3 lg:min-h-0 lg:w-[35rem] lg:shrink-0 lg:overflow-y-auto lg:pr-1">
-          <h1 className="text-lg font-bold tracking-tight text-neutral-100">
-            {bucket === "exercise" ? "Exercise" : "Labyrinth"} Builder{" "}
-            <span className="text-xs font-medium uppercase tracking-widest text-neutral-500">
-              dev
+    <main className="min-h-screen bg-black text-neutral-100">
+      {/* ── Top bar: what record am I on, and the two verbs that act on it ──
+          Sticky because Save and the edit identity have to stay reachable from
+          anywhere in a column that scrolls for several screens. */}
+      <header className="sticky top-0 z-30 border-b border-neutral-800 bg-black/85 backdrop-blur">
+        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-3 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/15 text-emerald-400">
+              <Grid2x2 className="h-4 w-4" aria-hidden />
             </span>
-          </h1>
+            <div className="leading-tight">
+              <h1 className="text-sm font-semibold tracking-tight text-neutral-100">
+                {bucket === "exercise" ? "Exercise" : "Labyrinth"} Builder
+              </h1>
+              <p className="text-[11px] uppercase tracking-widest text-neutral-500">
+                dev
+              </p>
+            </div>
+          </div>
 
           {/* Bucket toggle — same editor authors both files. */}
-          <div className="flex gap-2" role="group" aria-label="Content bucket">
-            {(["exercise", "labyrinth"] as Bucket[]).map((k) => (
-              <button
-                key={k}
-                type="button"
-                onClick={() => handleBucketChange(k)}
-                className={`rounded px-3 py-1 text-sm capitalize transition-colors ${
-                  bucket === k
-                    ? "bg-neutral-100 font-semibold text-black"
-                    : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800"
-                }`}
-              >
-                {k}
-              </button>
-            ))}
-          </div>
-
-          {/* Paint = author the position; Preview = play the real board. */}
-          <div className="flex gap-2" role="group" aria-label="Board mode">
-            {(["paint", "preview"] as const).map((m) => {
-              const disabled = m === "preview" && !canPreview;
-              // Highlight what is actually shown, not the stale mode flag.
-              const activeStyle = m === "preview" ? showPreview : !showPreview;
-              return (
-                <button
-                  key={m}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => setMode(m)}
-                  title={
-                    disabled
-                      ? "Preview needs a valid draft of a game with its own board (queens, tour, diagonal-run, promotion-run, safe-path)."
-                      : undefined
-                  }
-                  className={`rounded px-3 py-1 text-sm capitalize transition-colors ${
-                    activeStyle
-                      ? "bg-neutral-100 font-semibold text-black"
-                      : disabled
-                        ? "cursor-not-allowed bg-neutral-900 text-neutral-600"
-                        : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800"
-                  }`}
-                >
-                  {m}
-                </button>
-              );
-            })}
-          </div>
-
-          {showPreview && result.preview ? (
-            <BuilderPreview exercise={result.preview} kind={state.kind} />
-          ) : (
-            <>
-          <ProceduralBoard
-            onCellClick={(_file, _rank, sq) => handleCell(sq)}
-            renderCell={(_file, _rank, sq) => {
-              const isStart = state.start === sq;
-              const isGoal = state.goal === sq;
-              // The extra stars of a sweep. Numbered from 2 because the goal is
-              // star 1 — an unnumbered field of identical stars would hide WHICH
-              // one is `targets[0]`, and that one is the only one whose position
-              // in the list means anything (it must be the cheap star).
-              const extraStar = (state.extraGoals ?? []).indexOf(sq);
-              const isExtraStar = extraStar >= 0;
-              const isWall = state.walls.includes(sq);
-              const enemy = state.enemies.find((e) => e.square === sq);
-              const isCapture = !!enemy;
-              const inPath = pathSquares.has(sq);
-              const traceOrder = traceIndex.get(sq);
-              const isWatched = watched.has(sq);
-              return (
-                <>
-                  {isWatched && !isStart && !isCapture && (
-                    <span style={CELL_OVERLAY.watched} />
-                  )}
-                  {isWall && !isStart && !isGoal && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src="/art/labyrinths/wall.png" alt="" style={CELL_OVERLAY.wall} />
-                  )}
-                  {enemy && !isStart && (
-                    <>
-                      <span style={CELL_OVERLAY.capture} />
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={ENEMY_SRC[enemy.piece]} alt="" style={CELL_OVERLAY.sprite} />
-                    </>
-                  )}
-                  {isStart ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={PIECE_SRC[state.piece]} alt="" style={CELL_OVERLAY.sprite} />
-                  ) : isGoal || isExtraStar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={STAR_SRC} alt="" style={CELL_OVERLAY.star} />
-                  ) : null}
-                  {/* Only numbered once it IS a sweep: a lone "1" on a plain
-                      one-goal board would announce a mechanic that is not on. */}
-                  {(state.extraGoals?.length ?? 0) > 0 && (isGoal || isExtraStar) && (
-                    <span style={CELL_OVERLAY.trace}>
-                      {isGoal ? 1 : extraStar + 2}
-                    </span>
-                  )}
-                  {inPath && !isStart && !isGoal && !isExtraStar && !isWall && (
-                    <span style={CELL_OVERLAY.dot} />
-                  )}
-                  {traceOrder !== undefined && (
-                    <span style={CELL_OVERLAY.trace}>{traceOrder}</span>
-                  )}
-                </>
-              );
-            }}
+          <Segmented
+            ariaLabel="Content bucket"
+            value={bucket}
+            onChange={(v) => handleBucketChange(v as Bucket)}
+            options={[
+              { value: "exercise", label: "Exercise" },
+              { value: "labyrinth", label: "Labyrinth" },
+            ]}
           />
 
-          {/* Brushes */}
-          <div className="flex flex-wrap gap-2">
-            {(["start", "goal", "star", "wall", "capture", "trace"] as Brush[]).map((b) => {
-              const disabled =
-                // The enemy brush is for a pawn's captures OR a threat kind's
-                // typed pieces; hidden for the kinds that have neither.
-                (b === "capture" && state.piece !== "pawn" && !isThreatKind(state.kind)) ||
-                // The targetless kinds (queens, knight-tour, promotion-run) have
-                // no goal square to paint — hide the brush so it can't be set.
-                (b === "goal" && isTargetlessKind(state.kind)) ||
-                // Sweeps run in exercises and labyrinths. The five signature
-                // games each have their own solver answering their own question,
-                // and the pawn has no sweep solver at all — it never retreats, so
-                // its legs are not independent and the pairwise sum is not the
-                // optimum. Both are refused by the validator; hiding the brush
-                // means the author never paints a board bound for a 400.
-                (b === "star" &&
-                  ((state.kind !== "exercise" && state.kind !== "labyrinth") ||
-                    state.piece === "pawn"));
-              if (disabled) return null;
-              const label = b === "capture" && isThreatKind(state.kind) ? "enemy" : b;
-              return (
-                <button
-                  key={b}
-                  type="button"
-                  onClick={() => setBrush(b)}
-                  className={`rounded px-3 py-1 text-sm capitalize ${
-                    brush === b
-                      ? "bg-neutral-100 text-black"
-                      : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            {/* Which record the board belongs to. It used to live halfway down
+                the controls column, where it scrolled out of sight — and the
+                one thing you must never be unsure of while painting is WHICH
+                record you are painting. */}
+            {state.id ? (
+              <span className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs text-neutral-400">
+                Editing{" "}
+                <span className="font-mono font-semibold text-neutral-100">
+                  {state.id}
+                </span>
+              </span>
+            ) : (
+              <span className="rounded-full border border-dashed border-neutral-800 px-3 py-1 text-xs text-neutral-500">
+                New {bucket}
+              </span>
+            )}
             <button
               type="button"
-              onClick={() => setTracedPath([])}
-              className="rounded bg-neutral-800 px-3 py-1 text-sm text-neutral-300 hover:bg-neutral-700"
+              onClick={handleNew}
+              title={`Start a fresh ${bucket} (discard current edit)`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs font-medium text-neutral-200 hover:bg-neutral-800"
             >
-              clear trace
+              <Plus className="h-3.5 w-3.5" aria-hidden /> New
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={!result.ok || isSaving || !canWrite}
+              title={
+                canWrite
+                  ? undefined
+                  : "Baseline write is local-only: this deploy's filesystem is read-only."
+              }
+              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-neutral-800 disabled:text-neutral-500"
+            >
+              <Save className="h-3.5 w-3.5" aria-hidden />
+              {isSaving ? "Saving draft…" : "Save draft"}
             </button>
           </div>
-          {isThreatKind(state.kind) ? (
-            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Enemy piece">
-              <span className="text-xs text-neutral-500">enemy:</span>
-              {KIND_CAPABILITY[state.kind].enemyPieces.map((p) => (
+        </div>
+
+        {/* Status line, full width under the bar: the toast plus the reason Save
+            is off where it is off. Says WHY, instead of letting the founder
+            press a dead button — the probes are useful on preview; Save can
+            never be. */}
+        {(toast || !canWrite) && (
+          <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-3 px-4 pb-2 text-xs">
+            {!canWrite && (
+              <span className="text-amber-400" data-testid="lb-readonly-note">
+                Read-only here — baseline write is local-only.
+              </span>
+            )}
+            {toast && <span className={toastColor}>{toast.text}</span>}
+          </div>
+        )}
+      </header>
+
+      {/* ⚠️ 26rem is not a guess: `GameBoard` caps itself at its default
+          `maxWidth` of 23.5rem, so the board is the SAME size it has always
+          been and a wider column would only add dead air (the old 35rem column
+          did exactly that). Widening the board means passing `maxWidth`, not
+          widening this track. */}
+      <div className="mx-auto grid max-w-[1500px] grid-cols-1 gap-5 px-4 py-5 lg:grid-cols-[26rem_1fr]">
+        {/* ── Board column. Sticky so it stays in view while the panel column
+            scrolls: painting a square and reading the verdict are one act. ── */}
+        <aside className="flex flex-col gap-3 lg:sticky lg:top-[4.75rem] lg:h-fit">
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              {/* Paint = author the position; Preview = play the real board. */}
+              <Segmented
+                ariaLabel="Board mode"
+                value={showPreview ? "preview" : "paint"}
+                onChange={(v) => setMode(v as "paint" | "preview")}
+                options={[
+                  { value: "paint", label: "Paint", icon: Pencil },
+                  {
+                    value: "preview",
+                    label: "Preview",
+                    icon: Eye,
+                    disabled: !canPreview,
+                    title: canPreview
+                      ? undefined
+                      : "Preview needs a valid draft of a game with its own board (queens, tour, diagonal-run, promotion-run, safe-path).",
+                  },
+                ]}
+              />
+              {!showPreview && (
                 <button
-                  key={p}
                   type="button"
-                  onClick={() => {
-                    setEnemyPiece(p);
-                    setBrush("capture");
-                  }}
-                  className={`rounded px-2 py-1 text-xs capitalize ${
-                    enemyPiece === p
-                      ? "bg-neutral-100 text-black"
-                      : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"
-                  }`}
+                  onClick={() => setTracedPath([])}
+                  className="rounded-md px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-800 hover:text-neutral-200"
                 >
-                  {p}
+                  clear trace
                 </button>
-              ))}
+              )}
             </div>
-          ) : null}
-          <p className="text-xs text-neutral-500">
-            piece=start · ★=goal · ★2…★5=sweep stars (★1 is the goal, and it must
-            be the CHEAP one) · dark tile=wall · red ring/black piece=enemy ·
-            red wash=watched by an enemy · blue dot=BFS path · number=traced order
-          </p>
-            </>
-          )}
-        </section>
 
-        {/* ── Controls column (its own scroll; the board stays fixed) ── */}
-        <section className="flex flex-1 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
-          <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col text-sm">
-              <span className="text-neutral-400">Piece</span>
-              <select
-                value={state.piece}
-                onChange={(e) => handlePieceChange(e.target.value as PieceId)}
-                className="rounded bg-neutral-800 px-2 py-1"
-              >
-                {PIECES.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col text-sm">
-              <span className="text-neutral-400">Order</span>
-              <input
-                type="number"
-                value={state.order}
-                onChange={(e) => update({ order: Number(e.target.value) || 0 })}
-                className="rounded bg-neutral-800 px-2 py-1"
-              />
-            </label>
-            <label className="col-span-2 flex flex-col text-sm">
-              <span className="text-neutral-400">id (optional)</span>
-              <input
-                type="text"
-                value={state.id ?? ""}
-                onChange={(e) => update({ id: e.target.value || undefined })}
-                placeholder="auto if blank"
-                className="rounded bg-neutral-800 px-2 py-1"
-              />
-            </label>
-            <label className="flex flex-col text-sm">
-              <span className="text-neutral-400">tier</span>
-              <select
-                value={state.tier ?? "medium"}
-                onChange={(e) =>
-                  update({ tier: e.target.value as ExerciseTier })
-                }
-                className="rounded bg-neutral-800 px-2 py-1 capitalize"
-              >
-                {TIERS.map((tr) => (
-                  <option key={tr} value={tr}>
-                    {tr}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col text-sm">
-              <span className="text-neutral-400">tags (comma-sep)</span>
-              <input
-                type="text"
-                value={(state.tags ?? []).join(", ")}
-                onChange={(e) => {
-                  const tags = e.target.value
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean);
-                  update({ tags: tags.length ? tags : undefined });
-                }}
-                placeholder="straight-line"
-                className="rounded bg-neutral-800 px-2 py-1"
-              />
-            </label>
-            {state.kind === "promotion-run" ? (
-              <label className="col-span-2 flex flex-col text-sm">
-                <span className="text-neutral-400">
-                  promote to (win condition — the pawn must crown this)
-                </span>
-                <select
-                  value={state.promoteTo ?? ""}
-                  onChange={(e) =>
-                    update({ promoteTo: (e.target.value || undefined) as PieceId | undefined })
-                  }
-                  className="rounded bg-neutral-800 px-2 py-1 capitalize"
-                >
-                  <option value="">— choose a piece —</option>
-                  {PROMOTABLE_PIECES.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-            <label className="col-span-2 flex flex-col text-sm">
-              <span className="text-neutral-400">
-                description (shown in-game)
-              </span>
-              <input
-                type="text"
-                value={state.explanation ?? ""}
-                onChange={(e) =>
-                  update({ explanation: e.target.value || undefined })
-                }
-                placeholder={
-                  bucket === "exercise"
-                    ? "e.g. Move your Rook straight to h8"
-                    : undefined
-                }
-                className="rounded bg-neutral-800 px-2 py-1"
-              />
-              {bucket === "exercise" && !state.explanation ? (
-                <span className="mt-1 text-xs text-amber-400/80">
-                  Empty → shows the generic “Exercise N” label in-game.
-                </span>
-              ) : null}
-            </label>
+            {showPreview && result.preview ? (
+              <BuilderPreview exercise={result.preview} kind={state.kind} />
+            ) : (
+              <>
+                {/* ⛔ The REAL game board, untouched. Every overlay below is the
+                    same one the player sees; nothing here is a drawing of a
+                    board, and it must not become one. */}
+                <ProceduralBoard
+                  onCellClick={(_file, _rank, sq) => handleCell(sq)}
+                  renderCell={(_file, _rank, sq) => {
+                    const isStart = state.start === sq;
+                    const isGoal = state.goal === sq;
+                    // The extra stars of a sweep. Numbered from 2 because the goal is
+                    // star 1 — an unnumbered field of identical stars would hide WHICH
+                    // one is `targets[0]`, and that one is the only one whose position
+                    // in the list means anything (it must be the cheap star).
+                    const extraStar = (state.extraGoals ?? []).indexOf(sq);
+                    const isExtraStar = extraStar >= 0;
+                    const isWall = state.walls.includes(sq);
+                    const enemy = state.enemies.find((e) => e.square === sq);
+                    const isCapture = !!enemy;
+                    const inPath = pathSquares.has(sq);
+                    const traceOrder = traceIndex.get(sq);
+                    const isWatched = watched.has(sq);
+                    return (
+                      <>
+                        {isWatched && !isStart && !isCapture && (
+                          <span style={CELL_OVERLAY.watched} />
+                        )}
+                        {isWall && !isStart && !isGoal && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src="/art/labyrinths/wall.png" alt="" style={CELL_OVERLAY.wall} />
+                        )}
+                        {enemy && !isStart && (
+                          <>
+                            <span style={CELL_OVERLAY.capture} />
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={ENEMY_SRC[enemy.piece]} alt="" style={CELL_OVERLAY.sprite} />
+                          </>
+                        )}
+                        {isStart ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={PIECE_SRC[state.piece]} alt="" style={CELL_OVERLAY.sprite} />
+                        ) : isGoal || isExtraStar ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={STAR_SRC} alt="" style={CELL_OVERLAY.star} />
+                        ) : null}
+                        {/* Only numbered once it IS a sweep: a lone "1" on a plain
+                            one-goal board would announce a mechanic that is not on. */}
+                        {(state.extraGoals?.length ?? 0) > 0 && (isGoal || isExtraStar) && (
+                          <span style={CELL_OVERLAY.trace}>
+                            {isGoal ? 1 : extraStar + 2}
+                          </span>
+                        )}
+                        {inPath && !isStart && !isGoal && !isExtraStar && !isWall && (
+                          <span style={CELL_OVERLAY.dot} />
+                        )}
+                        {traceOrder !== undefined && (
+                          <span style={CELL_OVERLAY.trace}>{traceOrder}</span>
+                        )}
+                      </>
+                    );
+                  }}
+                />
+
+                {/* Tools */}
+                <div className="mt-4">
+                  <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-neutral-500">
+                    Tools
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["start", "goal", "star", "wall", "capture", "trace"] as Brush[]).map((b) => {
+                      const disabled =
+                        // The enemy brush is for a pawn's captures OR a threat kind's
+                        // typed pieces; hidden for the kinds that have neither.
+                        (b === "capture" && state.piece !== "pawn" && !isThreatKind(state.kind)) ||
+                        // The targetless kinds (queens, knight-tour, promotion-run) have
+                        // no goal square to paint — hide the brush so it can't be set.
+                        (b === "goal" && isTargetlessKind(state.kind)) ||
+                        // Sweeps run in exercises and labyrinths. The five signature
+                        // games each have their own solver answering their own question,
+                        // and the pawn has no sweep solver at all — it never retreats, so
+                        // its legs are not independent and the pairwise sum is not the
+                        // optimum. Both are refused by the validator; hiding the brush
+                        // means the author never paints a board bound for a 400.
+                        (b === "star" &&
+                          ((state.kind !== "exercise" && state.kind !== "labyrinth") ||
+                            state.piece === "pawn"));
+                      if (disabled) return null;
+                      const label = b === "capture" && isThreatKind(state.kind) ? "enemy" : b;
+                      const Icon = BRUSH_ICON[b];
+                      const active = brush === b;
+                      return (
+                        <button
+                          key={b}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => setBrush(b)}
+                          className={`flex flex-col items-center gap-1 rounded-lg border px-2 py-2.5 text-xs capitalize transition-colors ${
+                            active
+                              ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-300"
+                              : "border-neutral-800 bg-neutral-950/60 text-neutral-400 hover:border-neutral-700 hover:text-neutral-100"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" aria-hidden />
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {isThreatKind(state.kind) ? (
+                  <div
+                    className="mt-3 flex flex-wrap items-center gap-2"
+                    role="group"
+                    aria-label="Enemy piece"
+                  >
+                    <span className="text-xs text-neutral-500">enemy:</span>
+                    {KIND_CAPABILITY[state.kind].enemyPieces.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => {
+                          setEnemyPiece(p);
+                          setBrush("capture");
+                        }}
+                        className={`rounded px-2 py-1 text-xs capitalize ${
+                          enemyPiece === p
+                            ? "bg-neutral-100 text-black"
+                            : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+                <Legend items={BOARD_LEGEND} className="mt-4" />
+                <p className="mt-2 text-[11px] leading-relaxed text-neutral-500">
+                  piece=start · ★=goal · ★2…★5=sweep stars (★1 is the goal, and it
+                  must be the CHEAP one) · dark tile=wall · red ring/black
+                  piece=enemy · red wash=watched by an enemy · blue dot=BFS path ·
+                  number=traced order
+                </p>
+              </>
+            )}
           </div>
 
-          {/* Teaching guide — authoring-only pedagogy the player never sees.
-              It answers "what is this level meant to teach?" so the founder can
-              review and improve every exercise/game. Pre-filled on Edit; saved
-              on Save. `principle` is a stable one-lesson slug; learningObjective
-              is the plain-language takeaway. */}
-          <div className="rounded border border-sky-900/60 bg-sky-950/30 p-3 text-sm">
-            <p className="mb-2 font-semibold text-sky-200">
-              Teaching guide{" "}
-              <span className="font-normal text-sky-400/70">
-                — authoring only, never shown to players
-              </span>
-            </p>
-            <label className="mb-2 flex flex-col">
-              <span className="text-neutral-400">
-                learning objective (what the player should walk away knowing)
-              </span>
-              <textarea
-                value={state.learningObjective ?? ""}
-                onChange={(e) =>
-                  update({ learningObjective: e.target.value || undefined })
-                }
-                rows={2}
-                placeholder="e.g. The rook travels any distance along one rank."
-                className="rounded bg-neutral-800 px-2 py-1"
-                data-allow-select="true"
-              />
-            </label>
-            <label className="flex flex-col">
-              <span className="text-neutral-400">
-                principle (one-lesson slug)
-              </span>
-              <input
-                type="text"
-                value={state.principle ?? ""}
-                onChange={(e) =>
-                  update({ principle: e.target.value || undefined })
-                }
-                placeholder="e.g. rank-movement"
-                className="rounded bg-neutral-800 px-2 py-1 font-mono text-xs"
-              />
-            </label>
-            {!state.learningObjective && !state.principle ? (
-              <p className="mt-2 text-xs text-sky-400/70">
-                No teaching guide authored yet — write what this{" "}
-                {bucket === "exercise" ? "exercise" : "game"} is meant to teach.
-              </p>
-            ) : null}
-          </div>
-
-          {/* Validation */}
-          <div className="rounded border border-neutral-800 bg-neutral-900 p-3 text-sm">
+          {/* Validation — now directly under the board it judges. It used to sit
+              in the far column, so the answer to "is this level legal?" was
+              nowhere near the squares that decide it. */}
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-neutral-400">
+              <span className="text-xs text-neutral-400">
                 {(state.extraGoals?.length ?? 0) > 0
                   ? `Optimal moves (best order, ${(state.extraGoals?.length ?? 0) + 1} stars)`
                   : "Optimal moves"}
               </span>
-              <span className="font-mono text-base">
+              <span className="font-mono text-base text-neutral-100">
                 {result.optimalMoves ?? "—"}
               </span>
             </div>
@@ -951,72 +922,32 @@ export default function LabyrinthBuilderPage() {
                 BFS route would only reach ★1.
               </p>
             ) : null}
+            {result.ok && !result.errors.length && !result.warnings.length ? (
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-emerald-400">
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden /> Ready
+                to save.
+              </p>
+            ) : null}
             {result.errors.map((e, i) => (
-              <p key={`e-${i}`} className="mt-1 text-red-400">
-                ✗ {e}
+              <p key={`e-${i}`} className="mt-1 flex items-start gap-1.5 text-xs text-red-400">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden /> {e}
               </p>
             ))}
             {result.warnings.map((w, i) => (
-              <p key={`w-${i}`} className="mt-1 text-amber-400">
-                ⚠ {w}
+              <p key={`w-${i}`} className="mt-1 flex items-start gap-1.5 text-xs text-amber-400">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden /> {w}
               </p>
             ))}
           </div>
+        </aside>
 
-          {/* Edit-mode banner */}
-          {state.id ? (
-            <div className="flex items-center justify-between rounded border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm">
-              <span className="text-neutral-300">
-                Editing <span className="font-mono font-semibold text-neutral-100">{state.id}</span>
-              </span>
-              <button
-                type="button"
-                onClick={handleNew}
-                title={`Start a fresh ${bucket} (discard current edit)`}
-                className="rounded bg-neutral-700 px-3 py-1 text-xs hover:bg-neutral-600"
-              >
-                + New {bucket}
-              </button>
-            </div>
-          ) : null}
-
-          {/* Save */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!result.ok || isSaving || !canWrite}
-              title={
-                canWrite
-                  ? undefined
-                  : "Baseline write is local-only: this deploy's filesystem is read-only."
-              }
-              className="rounded bg-emerald-600 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:text-neutral-500"
-            >
-              {isSaving ? "Saving draft…" : "Save draft"}
-            </button>
-            {/* Says WHY, instead of letting the founder press a dead button. The
-                probes are useful on preview; Save can never be. */}
-            {!canWrite && (
-              <span className="text-xs text-amber-400" data-testid="lb-readonly-note">
-                Read-only here — baseline write is local-only.
-              </span>
-            )}
-            {toast && (
-              <span
-                className={
-                  toast.kind === "ok"
-                    ? "text-emerald-400"
-                    : toast.kind === "warn"
-                      ? "text-amber-400"
-                      : "text-red-400"
-                }
-              >
-                {toast.text}
-              </span>
-            )}
-          </div>
-
+        {/* ── Panel column, ordered by how often the author touches it ──
+            The loop is: pick a piece → open one of its records. Those two are
+            first and adjacent. Everything below is used a handful of times a
+            month and used to sit ABOVE the record list, which put the most
+            frequent action at the bottom of the longest scroll. The order is
+            pinned by __tests__/panel-order.test.tsx — nothing else can see it. */}
+        <div className="flex flex-col gap-5">
           {/* Save-time linter warnings — deliberately NOT part of the toast.
               These arrive from the catalog linter on Save (curve pacing,
               duplicate positions, decorative obstacles…), and the founder
@@ -1029,11 +960,14 @@ export default function LabyrinthBuilderPage() {
               warnings until the next Save replaces them, or until dismissed
               by hand. A warning nobody can finish reading is the same as no
               warning, and the whole point of choosing WARNING over ERROR for
-              the difficulty curve was that the author would actually see it. */}
+              the difficulty curve was that the author would actually see it.
+
+              ⚠️ Not a <Section>: it is transient, and a heading here would
+              wedge itself into the panel order the test pins. */}
           {toast && toast.warnings.length > 0 && (
             <div
               data-testid="lb-save-warnings"
-              className="rounded border border-amber-500/40 bg-amber-950/30 p-3 text-sm"
+              className="rounded-xl border border-amber-500/40 bg-amber-950/30 p-3 text-sm"
             >
               <div className="flex items-start justify-between gap-3">
                 <span className="font-semibold text-amber-300">
@@ -1072,101 +1006,25 @@ export default function LabyrinthBuilderPage() {
             </div>
           )}
 
-          {/* Set the current record's stage. Save lands it at draft; pick where
-              it should live and "Set stage" moves it there (the route detects the
-              current version automatically). draft = localhost · preview =
-              preview.chesscito.com · published = chesscito.com (players). */}
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="font-semibold text-neutral-400">
-              Stage {state.id ? `for ${state.id}` : "(load a record)"} →
-            </span>
-            <select
-              value={stageTarget}
-              onChange={(e) => setStageTarget(e.target.value as ContentStage)}
-              disabled={!state.id}
-              className="rounded border border-neutral-700 bg-neutral-900 px-2 py-1 text-neutral-200 disabled:text-neutral-600"
-            >
-              <option value="draft">draft (localhost)</option>
-              <option value="preview">preview (preview.chesscito.com)</option>
-              <option value="published">published (chesscito.com)</option>
-            </select>
-            <button
-              type="button"
-              onClick={() => handleSetStage(stageTarget)}
-              disabled={!state.id}
-              className="rounded border border-neutral-700 px-3 py-1 font-semibold text-neutral-100 transition-colors hover:border-neutral-500 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:border-neutral-800 disabled:text-neutral-600"
-            >
-              Set stage
-            </button>
-          </div>
+          {/* ── 1. Pick a piece. Step one of every edit. ── */}
+          <Section title="Piece">
+            <Segmented
+              ariaLabel="Piece"
+              value={state.piece}
+              onChange={(v) => handlePieceChange(v as PieceId)}
+              options={PIECES.map((p) => ({ value: p, label: p }))}
+              className="flex-wrap"
+            />
+          </Section>
 
-          {/* Export (read-only FEN block) */}
-          <div className="rounded border border-neutral-800 bg-neutral-900 p-3 text-sm">
-            <p className="mb-1 font-semibold text-neutral-300">Export (copy)</p>
-            {fenBlock ? (
-              <pre className="overflow-x-auto whitespace-pre-wrap break-all font-mono text-xs text-neutral-200" data-allow-select="true">
-{exportBlock(state, fenBlock)}
-              </pre>
-            ) : (
-              <p className="text-neutral-500">Set start + goal to generate FEN.</p>
-            )}
-          </div>
-
-          {/* Import (best-effort) */}
-          <div className="rounded border border-neutral-800 bg-neutral-900 p-3 text-sm">
-            <p className="mb-2 font-semibold text-neutral-300">
-              Load from FEN (best-effort)
-            </p>
-            <label className="mb-2 flex flex-col">
-              <span className="text-neutral-400">FEN</span>
-              <textarea
-                value={fenInput}
-                onChange={(e) => setFenInput(e.target.value)}
-                rows={2}
-                placeholder="8/8/8/8/8/8/8/R7 w - - 0 1"
-                className="rounded bg-neutral-800 px-2 py-1 font-mono text-xs"
-                data-allow-select="true"
-              />
-            </label>
-            <div className="mb-2 grid grid-cols-2 gap-2">
-              <label className="flex flex-col">
-                <span className="text-neutral-400">target</span>
-                <input
-                  type="text"
-                  value={targetInput}
-                  onChange={(e) => setTargetInput(e.target.value)}
-                  placeholder="e4"
-                  className="rounded bg-neutral-800 px-2 py-1"
-                />
-              </label>
-              <label className="flex flex-col">
-                <span className="text-neutral-400">mover (optional)</span>
-                <input
-                  type="text"
-                  value={moverInput}
-                  onChange={(e) => setMoverInput(e.target.value)}
-                  placeholder="a1"
-                  className="rounded bg-neutral-800 px-2 py-1"
-                />
-              </label>
-            </div>
-            <button
-              type="button"
-              onClick={handleLoadFromFen}
-              className="rounded bg-neutral-700 px-3 py-1 text-sm hover:bg-neutral-600"
-            >
-              Load
-            </button>
-            {loadNote && <p className="mt-2 text-neutral-400">{loadNote}</p>}
-          </div>
-
-          {/* Existing labyrinths — load one to edit */}
-          <div className="rounded border border-neutral-800 bg-neutral-900 p-3 text-sm">
-            <p className="mb-2 font-semibold text-neutral-300">
-              Existing {state.piece} {bucket === "exercise" ? "exercises" : "labyrinths"} (load to edit)
-            </p>
+          {/* ── 2. That piece's records. Step two, and the reason the piece
+              picker sits directly above it. ── */}
+          <Section
+            title={`Existing ${state.piece} ${bucketNoun}`}
+            hint={`${enabledCount} enabled`}
+          >
             {pieceRecords.length ? (
-              <ul className="flex flex-col gap-1">
+              <ul className="divide-y divide-neutral-800 overflow-hidden rounded-lg border border-neutral-800">
                 {pieceRecords.map((rec, i) => {
                   const active = !!rec.id && rec.id === state.id;
                   const isDisabled = !!rec.disabled;
@@ -1175,73 +1033,305 @@ export default function LabyrinthBuilderPage() {
                   return (
                     <li
                       key={rec.id ?? `${rec.piece}-${rec.order}-${i}`}
-                      className={`flex items-center justify-between gap-2 rounded px-2 py-1 ${
-                        active ? "bg-neutral-800" : "bg-neutral-900/60"
+                      className={`flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm ${
+                        active ? "bg-emerald-500/10" : "bg-neutral-950/40"
                       } ${isDisabled ? "opacity-50" : ""}`}
                     >
-                      <span className="truncate font-mono text-xs text-neutral-300">
-                        <span className="mr-1 rounded bg-neutral-700 px-1 not-italic text-neutral-200">
-                          {kindLabel(recKind)}
-                        </span>
-                        {rec.id ?? "(no id)"} · target {rec.target} · order {rec.order}
-                        {isDisabled ? (
-                          <span className="ml-1 rounded bg-amber-900/70 px-1 text-amber-300">
-                            disabled
-                          </span>
-                        ) : null}
+                      <span className="rounded bg-neutral-800 px-1.5 py-0.5 text-[11px] text-neutral-300">
+                        {kindLabel(recKind)}
                       </span>
-                      <div className="flex shrink-0 gap-1">
+                      <span className="font-mono text-xs text-neutral-100">
+                        {rec.id ?? "(no id)"}
+                      </span>
+                      <span className="text-xs text-neutral-500">
+                        target{" "}
+                        <span className="font-mono text-neutral-300">{rec.target}</span>
+                      </span>
+                      {isDisabled ? (
+                        <span className="rounded bg-amber-900/70 px-1.5 py-0.5 text-[11px] text-amber-300">
+                          disabled
+                        </span>
+                      ) : null}
+                      <span className="ml-auto text-[11px] text-neutral-500">
+                        order {rec.order}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleDisabled(rec)}
+                        title={
+                          isDisabled
+                            ? "Re-enable (show in-game again)"
+                            : "Soft-delete (hide from the game, keep the record)"
+                        }
+                        className={`rounded-md px-2 py-1 text-[11px] font-semibold ${
+                          isDisabled
+                            ? "text-emerald-400 hover:bg-emerald-500/10"
+                            : "text-amber-400 hover:bg-amber-500/10"
+                        }`}
+                      >
+                        {isDisabled ? "Enable" : "Disable"}
+                      </button>
+                      {editable ? (
                         <button
                           type="button"
-                          onClick={() => handleToggleDisabled(rec)}
-                          title={
-                            isDisabled
-                              ? "Re-enable (show in-game again)"
-                              : "Soft-delete (hide from the game, keep the record)"
-                          }
-                          className={`rounded px-2 py-0.5 text-xs font-semibold text-white ${
-                            isDisabled
-                              ? "bg-emerald-600 hover:bg-emerald-500"
-                              : "bg-amber-700 hover:bg-amber-600"
-                          }`}
+                          onClick={() => handleEditRecord(rec)}
+                          className="inline-flex items-center gap-1 rounded-md border border-neutral-700 px-2 py-1 text-[11px] font-semibold text-neutral-100 hover:bg-neutral-800"
                         >
-                          {isDisabled ? "Enable" : "Disable"}
+                          <Pencil className="h-3 w-3" aria-hidden /> Edit
                         </button>
-                        {editable ? (
-                          <button
-                            type="button"
-                            onClick={() => handleEditRecord(rec)}
-                            className="rounded border border-neutral-700 bg-neutral-800 px-2 py-0.5 text-xs font-semibold text-neutral-100 hover:bg-neutral-700"
-                          >
-                            Edit
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled
-                            title={`${kindLabel(recKind)} editing lands in a later stage — loading it now would drop its threats.`}
-                            className="cursor-not-allowed rounded border border-neutral-800 bg-neutral-900 px-2 py-0.5 text-xs font-semibold text-neutral-600"
-                          >
-                            Locked
-                          </button>
-                        )}
-                      </div>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled
+                          title={`${kindLabel(recKind)} editing lands in a later stage — loading it now would drop its threats.`}
+                          className="cursor-not-allowed rounded-md border border-neutral-800 px-2 py-1 text-[11px] font-semibold text-neutral-600"
+                        >
+                          Locked
+                        </button>
+                      )}
                     </li>
                   );
                 })}
               </ul>
             ) : (
-              <p className="text-neutral-500">None saved for this piece yet.</p>
+              <p className="text-sm text-neutral-500">
+                None saved for this piece yet.
+              </p>
             )}
+          </Section>
+
+          {/* ── 3. Everything below is rare. Order among them barely matters;
+              what matters is that none of it precedes the two panels above. ── */}
+          <Section title="Identity">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Order" hint="Position within the piece's sequence.">
+                <input
+                  type="number"
+                  value={state.order}
+                  onChange={(e) => update({ order: Number(e.target.value) || 0 })}
+                  className={devInputClass}
+                />
+              </Field>
+              <Field label="id" hint="Leave blank to auto-generate.">
+                <input
+                  type="text"
+                  value={state.id ?? ""}
+                  onChange={(e) => update({ id: e.target.value || undefined })}
+                  placeholder="auto if blank"
+                  className={`${devInputClass} font-mono`}
+                />
+              </Field>
+              <Field label="tier">
+                <select
+                  value={state.tier ?? "medium"}
+                  onChange={(e) => update({ tier: e.target.value as ExerciseTier })}
+                  className={`${devInputClass} capitalize`}
+                >
+                  {TIERS.map((tr) => (
+                    <option key={tr} value={tr}>
+                      {tr}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="tags" hint="Comma-separated.">
+                <input
+                  type="text"
+                  value={(state.tags ?? []).join(", ")}
+                  onChange={(e) => {
+                    const tags = e.target.value
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+                    update({ tags: tags.length ? tags : undefined });
+                  }}
+                  placeholder="straight-line"
+                  className={devInputClass}
+                />
+              </Field>
+              {state.kind === "promotion-run" ? (
+                <Field
+                  label="promote to"
+                  hint="Win condition — the pawn must crown this."
+                  className="sm:col-span-2"
+                >
+                  <select
+                    value={state.promoteTo ?? ""}
+                    onChange={(e) =>
+                      update({ promoteTo: (e.target.value || undefined) as PieceId | undefined })
+                    }
+                    className={`${devInputClass} capitalize`}
+                  >
+                    <option value="">— choose a piece —</option>
+                    {PROMOTABLE_PIECES.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              ) : null}
+              <Field
+                label="description"
+                hint={
+                  bucket === "exercise" && !state.explanation ? (
+                    <span className="text-amber-400/80">
+                      Empty → shows the generic “Exercise N” label in-game.
+                    </span>
+                  ) : (
+                    "Shown in-game."
+                  )
+                }
+                className="sm:col-span-2"
+              >
+                <input
+                  type="text"
+                  value={state.explanation ?? ""}
+                  onChange={(e) => update({ explanation: e.target.value || undefined })}
+                  placeholder={
+                    bucket === "exercise"
+                      ? "e.g. Move your Rook straight to h8"
+                      : undefined
+                  }
+                  className={devInputClass}
+                />
+              </Field>
+            </div>
+          </Section>
+
+          {/* Teaching guide — authoring-only pedagogy the player never sees.
+              It answers "what is this level meant to teach?" so the founder can
+              review and improve every exercise/game. Pre-filled on Edit; saved
+              on Save. `principle` is a stable one-lesson slug; learningObjective
+              is the plain-language takeaway. */}
+          <Section
+            title="Teaching guide"
+            hint="authoring only — never shown to players"
+          >
+            <div className="flex flex-col gap-4">
+              <Field
+                label="learning objective"
+                hint="What the player should walk away knowing."
+              >
+                <textarea
+                  value={state.learningObjective ?? ""}
+                  onChange={(e) =>
+                    update({ learningObjective: e.target.value || undefined })
+                  }
+                  rows={2}
+                  placeholder="e.g. The rook travels any distance along one rank."
+                  className={devInputClass}
+                  data-allow-select="true"
+                />
+              </Field>
+              <Field label="principle" hint="One-lesson slug.">
+                <input
+                  type="text"
+                  value={state.principle ?? ""}
+                  onChange={(e) => update({ principle: e.target.value || undefined })}
+                  placeholder="e.g. rank-movement"
+                  className={`${devInputClass} font-mono`}
+                />
+              </Field>
+              {!state.learningObjective && !state.principle ? (
+                <p className="text-xs text-sky-400/70">
+                  No teaching guide authored yet — write what this{" "}
+                  {bucket === "exercise" ? "exercise" : "game"} is meant to teach.
+                </p>
+              ) : null}
+            </div>
+          </Section>
+
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+            {/* Set the current record's stage. Save lands it at draft; pick where
+                it should live and "Set stage" moves it there (the route detects the
+                current version automatically). draft = localhost · preview =
+                preview.chesscito.com · published = chesscito.com (players). */}
+            <Section title="Stage" hint={state.id ?? "load a record"}>
+              <div className="flex items-end gap-2">
+                <Field label="Publish stage" className="flex-1">
+                  <select
+                    value={stageTarget}
+                    onChange={(e) => setStageTarget(e.target.value as ContentStage)}
+                    disabled={!state.id}
+                    className={`${devInputClass} disabled:text-neutral-600`}
+                  >
+                    <option value="draft">draft (localhost)</option>
+                    <option value="preview">preview (preview.chesscito.com)</option>
+                    <option value="published">published (chesscito.com)</option>
+                  </select>
+                </Field>
+                <button
+                  type="button"
+                  onClick={() => handleSetStage(stageTarget)}
+                  disabled={!state.id}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-700 px-3 py-1.5 text-sm font-semibold text-neutral-100 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:border-neutral-800 disabled:text-neutral-600"
+                >
+                  <Upload className="h-4 w-4" aria-hidden /> Set stage
+                </button>
+              </div>
+            </Section>
+
+            <Section title="Export" hint="copy">
+              {fenBlock ? (
+                <Mono>{exportBlock(state, fenBlock)}</Mono>
+              ) : (
+                <p className="text-sm text-neutral-500">
+                  Set start + goal to generate FEN.
+                </p>
+              )}
+            </Section>
           </div>
 
-          {/* Generated catalog reference */}
-          <div className="rounded border border-neutral-800 bg-neutral-900 p-3 text-sm">
-            <p className="mb-1 font-semibold text-neutral-300">
-              Generated {state.piece} catalog (pick a non-colliding order)
-            </p>
+          <Section title="Load from FEN" hint="best-effort import">
+            <div className="flex flex-col gap-3">
+              <Field label="FEN">
+                <textarea
+                  value={fenInput}
+                  onChange={(e) => setFenInput(e.target.value)}
+                  rows={2}
+                  placeholder="8/8/8/8/8/8/8/R7 w - - 0 1"
+                  className={`${devInputClass} font-mono text-xs`}
+                  data-allow-select="true"
+                />
+              </Field>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                <Field label="target">
+                  <input
+                    type="text"
+                    value={targetInput}
+                    onChange={(e) => setTargetInput(e.target.value)}
+                    placeholder="e4"
+                    className={devInputClass}
+                  />
+                </Field>
+                <Field label="mover" hint="Optional.">
+                  <input
+                    type="text"
+                    value={moverInput}
+                    onChange={(e) => setMoverInput(e.target.value)}
+                    placeholder="a1"
+                    className={devInputClass}
+                  />
+                </Field>
+                <button
+                  type="button"
+                  onClick={handleLoadFromFen}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-neutral-700 px-4 py-1.5 text-sm font-medium text-neutral-100 hover:bg-neutral-800"
+                >
+                  <Download className="h-4 w-4" aria-hidden /> Load
+                </button>
+              </div>
+              {loadNote && <p className="text-xs text-neutral-400">{loadNote}</p>}
+            </div>
+          </Section>
+
+          <Section
+            title={`Generated ${state.piece} catalog`}
+            hint="pick a non-colliding order"
+          >
             {existing.length ? (
-              <ul className="font-mono text-xs text-neutral-400">
+              <ul className="font-mono text-xs text-neutral-500">
                 {existing.map((e) => (
                   <li key={e.id}>
                     {e.id} (opt {e.optimalMoves})
@@ -1249,10 +1339,10 @@ export default function LabyrinthBuilderPage() {
                 ))}
               </ul>
             ) : (
-              <p className="text-neutral-500">None yet.</p>
+              <p className="text-sm text-neutral-500">None yet.</p>
             )}
-          </div>
-        </section>
+          </Section>
+        </div>
       </div>
     </main>
   );
