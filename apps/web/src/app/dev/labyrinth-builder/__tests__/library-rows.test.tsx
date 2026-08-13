@@ -101,10 +101,22 @@ const rowIds = () =>
     (li) => li.textContent?.match(/probe-(?:nameless|named|untiered)/)?.[0],
   );
 
+/** The row for a record, BY IDENTITY.
+ *
+ *  ⚠️ Not by position. These cases are about what a row SAYS, which has nothing
+ *  to do with what order the rows come in — and indexing them coupled every one
+ *  of them to the default sort, so flipping that default to `tier` turned five
+ *  content assertions red for no reason at all. */
+function rowFor(id: string): HTMLElement {
+  const row = rows().find((li) => li.textContent?.includes(id));
+  if (!row) throw new Error(`no row for ${id}`);
+  return row;
+}
+
 describe("builder — what a record row says", () => {
   it("leads with the NAME, and keeps the id beside it", async () => {
     await openBuilder();
-    const row = rows()[0];
+    const row = rowFor("probe-named");
     expect(within(row).getByText("Friendly blocker")).toBeInTheDocument();
     // The id is still there — it is what you type into the id field and what
     // every error message names.
@@ -115,7 +127,7 @@ describe("builder — what a record row says", () => {
     await openBuilder();
     // Not a defensive fallback: today NOT ONE authored exercise carries a
     // description, so this is the common case, not the edge one.
-    expect(rows()[1]).toHaveTextContent("probe-nameless");
+    expect(rowFor("probe-nameless")).toHaveTextContent("probe-nameless");
   });
 
   it("does not print the id TWICE when it is also the name", async () => {
@@ -123,52 +135,50 @@ describe("builder — what a record row says", () => {
     // Found by using it: with no descriptions authored anywhere, every row read
     // `rook-1 … rook-1`. The id is a SECOND label, so it earns its place only
     // when it says something the name does not.
-    const nameless = rows()[1].textContent ?? "";
+    const nameless = rowFor("probe-nameless").textContent ?? "";
     expect(nameless.match(/probe-nameless/g)).toHaveLength(1);
     // …and it is still printed where it does add something.
-    const named = rows()[0].textContent ?? "";
+    const named = rowFor("probe-named").textContent ?? "";
     expect(named).toContain("Friendly blocker");
     expect(named).toContain("probe-named");
   });
 
   it("badges the authored tier", async () => {
     await openBuilder();
-    expect(within(rows()[0]).getByText("hard")).toBeInTheDocument();
-    expect(within(rows()[1]).getByText("easy")).toBeInTheDocument();
+    expect(within(rowFor("probe-named")).getByText("hard")).toBeInTheDocument();
+    expect(within(rowFor("probe-nameless")).getByText("easy")).toBeInTheDocument();
   });
 
   it("marks an ASSUMED tier so it is not mistaken for an authored one", async () => {
     await openBuilder();
-    // It sorts and plays as medium, but nobody chose that — and when the list is
-    // sorted by tier, an unmarked assumption is indistinguishable from a decision.
-    expect(within(rows()[2]).getByText("medium?")).toBeInTheDocument();
+    // It sorts and plays as medium, but nobody chose that — and now that the list
+    // OPENS grouped by tier, an unmarked assumption sits in a difficulty band it
+    // was never assigned to, indistinguishable from a decision.
+    expect(
+      within(rowFor("probe-untiered")).getByText("medium?"),
+    ).toBeInTheDocument();
   });
 
   it("says Editing in WORDS on the row being edited, and only there", async () => {
     const user = await openBuilder();
     expect(screen.queryByText("Editing")).not.toBeInTheDocument();
 
-    await user.click(screen.getAllByRole("button", { name: /Edit$/ })[0]);
+    await user.click(
+      within(rowFor("probe-named")).getByRole("button", { name: /Edit$/ }),
+    );
 
     await waitFor(() =>
-      expect(within(rows()[0]).getByText("Editing")).toBeInTheDocument(),
+      expect(within(rowFor("probe-named")).getByText("Editing")).toBeInTheDocument(),
     );
-    expect(within(rows()[1]).queryByText("Editing")).not.toBeInTheDocument();
+    expect(
+      within(rowFor("probe-nameless")).queryByText("Editing"),
+    ).not.toBeInTheDocument();
   });
 });
 
 describe("builder — record sort", () => {
-  it("opens in the real in-game sequence", async () => {
+  it("opens grouped by difficulty (founder's call), sequence kept inside each band", async () => {
     await openBuilder();
-    expect(rowIds()).toEqual(["probe-named", "probe-nameless", "probe-untiered"]);
-  });
-
-  it("regroups by difficulty on demand, without losing the sequence inside a band", async () => {
-    const user = await openBuilder();
-    const sort = screen.getByRole("group", { name: "Sort records" });
-
-    await user.click(within(sort).getByRole("button", { name: "tier" }));
-
     // easy → medium (the untiered one) → hard
     expect(rowIds()).toEqual([
       "probe-nameless",
@@ -177,11 +187,26 @@ describe("builder — record sort", () => {
     ]);
   });
 
-  it("goes back to the sequence view", async () => {
+  it("switches to the real in-game sequence on demand", async () => {
+    // The view a curriculum is judged in — does board 2 follow from board 1? —
+    // so it stays one tap away rather than being dropped.
     const user = await openBuilder();
     const sort = screen.getByRole("group", { name: "Sort records" });
-    await user.click(within(sort).getByRole("button", { name: "tier" }));
+
     await user.click(within(sort).getByRole("button", { name: "order" }));
+
     expect(rowIds()).toEqual(["probe-named", "probe-nameless", "probe-untiered"]);
+  });
+
+  it("goes back to the difficulty view", async () => {
+    const user = await openBuilder();
+    const sort = screen.getByRole("group", { name: "Sort records" });
+    await user.click(within(sort).getByRole("button", { name: "order" }));
+    await user.click(within(sort).getByRole("button", { name: "tier" }));
+    expect(rowIds()).toEqual([
+      "probe-nameless",
+      "probe-untiered",
+      "probe-named",
+    ]);
   });
 });

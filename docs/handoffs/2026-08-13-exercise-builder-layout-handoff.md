@@ -178,10 +178,14 @@ hasta que lo abrí en el navegador.
 > a la fila en el builder.
 
 **TIER.** Badge con nombre y color, más un toggle de orden en el encabezado.
-⚠️ El default sigue siendo **`order`** a propósito: es la secuencia real del juego, la
-única vista en la que se puede juzgar un curriculum. `tier` contesta otra pregunta —
-*"¿dónde están mis difíciles?"* — y el mockup la pedía. **Cambiar el default es una línea**
-en el `useState` de `librarySort`.
+La lista **abre en `tier`** (decisión del founder, 2026-08-13): es donde vas a elegir el
+próximo tablero a escribir, y esa elección se juega en la dificultad. `order` —la secuencia
+real del juego, la vista en la que se juzga un curriculum— queda a un tap.
+
+⚠️ **Los tests de CONTENIDO de una fila no deben indexar por posición.** Los escribí con
+`rows()[0]`, y eso ató cinco aserciones sobre *lo que una fila dice* al orden por defecto
+de la lista: cambiar ese default las puso rojas sin que nada del comportamiento se hubiera
+roto. Ahora buscan la fila **por identidad** (`rowFor(id)`).
 
 ⚠️ Un tier **ausente** rankea como `medium`, porque es lo que el catálogo le pone
 downstream (`toPuzzleInput`: `tier ?? "medium"`). Se muestra como **`medium?`** para que
@@ -206,9 +210,7 @@ todavía vacía y toda query posterior corría carrera contra el fetch. Ahora es
 2. **¿Se extiende el chrome al resto de `/dev/*`?** Las primitivas ya están y hay ~35
    páginas. No es urgente y no lo empecé sin pedido.
 3. ✅ **El mockup está cerrado entero** — los seis ítems entraron.
-4. **¿El default de la lista debería ser `tier` en vez de `order`?** Lo dejé en `order`
-   porque es la secuencia real del juego, pero el mockup mostraba la tabla por dificultad.
-   Es **una línea** (`useState<LibrarySort>("order")`).
+4. ✅ **Resuelto**: la lista abre en `tier` (founder, 2026-08-13).
 5. **Ninguna descripción autorada existe todavía**, así que la columna de nombre muestra
    ids en todas las filas hasta que se empiecen a escribir. No es un bug: es contenido que
    falta, y ahora rinde el doble escribirlo.

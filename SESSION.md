@@ -9,6 +9,7 @@
 - **⭐ `Unsaved changes in <id>` + Discard** (`330f3561`) — las tres acciones que reemplazan
   el borrador pasan por una guarda. Antes la edición desaparecía sin aviso ni rastro.
 - **Nombre, badge de TIER y `Editing` en la lista** (`77481f8e`), con toggle de orden.
+  La lista **abre en `tier`**; `order` (la secuencia real del juego) queda a un tap.
 - **Validado a mano en `localhost:3002` en cada paso** — de ahí salieron TRES defectos que
   ningún test veía (ver Notes).
 
@@ -34,8 +35,6 @@
 - None.
 
 ## Open questions
-- **¿El default de la lista debería ser `tier` en vez de `order`?** Lo dejé en `order` (la
-  secuencia real del juego); el mockup la mostraba por dificultad. Es **una línea**.
 - **¿Agrandamos el tablero?** 349 px de grilla en 1440 — el tamaño de siempre. Una línea
   (`maxWidth` a `ProceduralBoard`).
 - **¿El chrome nuevo se extiende al resto de `/dev/*`?** Las primitivas ya están; ~35 páginas.
@@ -62,6 +61,9 @@
   (3) sin descripciones autoradas, cada fila imprimía el id **dos veces**.
 - ⚠️ **Un flake de tests, con causa encontrada**: esperar el HEADING de la lista no espera al
   fetch — el panel lo renderiza con la lista vacía. Esperar las **filas**.
+- ⚠️ **Los tests de CONTENIDO de una fila no indexan por posición** (`rowFor(id)`, no
+  `rows()[0]`): indexar ató cinco aserciones sobre *lo que una fila dice* al orden por
+  defecto, y cambiar ese default las puso rojas sin que se rompiera nada.
 - ⚠️ **Un orden de paneles no lo delata NADA** (sin comportamiento, `tsc` ciego, fuera del
   VR). Pineado en `__tests__/panel-order.test.tsx` **por heading**, con la lista stubeada
   **vacía** para no leer contenido autorado.

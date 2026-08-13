@@ -257,11 +257,11 @@ export default function LabyrinthBuilderPage() {
   }));
   /** A draft-destroying action waiting for a yes. `null` = nothing pending. */
   const [pending, setPending] = useState<PendingAction | null>(null);
-  /** ⚠️ Defaults to `order` on purpose: that is the real in-game sequence, the
-   *  only view a curriculum can be judged in (does board 2 follow from board 1?).
-   *  `tier` answers a different question — "where are my hard boards?" — and the
-   *  mockup asked for it, so both exist and neither is hidden. */
-  const [librarySort, setLibrarySort] = useState<LibrarySort>("order");
+  /** Opens on `tier` — founder's call, 2026-08-13. The list is where you go to
+   *  pick the next board to WRITE, and difficulty is what that choice turns on.
+   *  `order` (the real in-game sequence, the view a curriculum is judged in) is
+   *  one tap away and stays for that. */
+  const [librarySort, setLibrarySort] = useState<LibrarySort>("tier");
   const [brush, setBrush] = useState<Brush>("start");
   /** Paint = author the position; Preview = play the real board on the draft.
    *  Only one board is mounted at a time (behavior 11). */
