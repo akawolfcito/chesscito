@@ -13,15 +13,30 @@
 
 ### P0 — Bloqueantes
 
-- **[Identidad] El spec asume que el invitado juega sin login, y eso contradice lo que el founder
-  dijo.** El founder cerró la aclaración con *"lo de wallet ahora ya se puede… el ingreso al app
-  está dado por el social login, ya estaría cubierto"*. El spec hace lo contrario: `JOIN` sin login
-  (comportamientos 2–3). **No es una desobediencia, es una colisión real** —
-  `project_web_early_access_is_privy_allowlist` dice que el acceso web lo concede el **allowlist
-  nativo de Privy**, así que un desconocido con el enlace **no puede loguearse**, y si pudiera,
-  quemaría un MAU del cupo gratis de 499. **Why blocking:** las dos lecturas producen specs
-  distintos, y una de ellas hace que el enlace sólo funcione entre gente ya habilitada — es decir,
-  que no sirva para lo único que un enlace sirve.
+- ~~**[Identidad] ¿el invitado se loguea?**~~ **RESUELTO** (founder, 2026-08-13): sí, pasa por el
+  gate; MiniPay por defecto, el resto por waitlist, más un tope por código. **Pero el finding se
+  transforma, no desaparece** — ver el siguiente.
+
+- **[Producto] El enlace ya no es un canal de juego: es un embudo de waitlist, y el gate del frente
+  no puede medir eso.** Con el gate obligatorio, un invitado frío fuera de MiniPay aterriza en un
+  formulario. El gate declarado del frente es **"uso real del duelo"**
+  (`direction-where-we-are.md` §10) y §14 dice que los umbrales se fijan **antes** del experimento.
+  **Why blocking:** si el invitado promedio no puede jugar, la métrica mide el gate de acceso y no
+  el duelo — y el frente se declara fracasado por una razón que no tiene nada que ver con el duelo.
+  Hay que decidir **antes de construir** qué población se mide (propuesta: sólo duelos donde
+  **ambos** asientos ya estaban dentro) y qué número cuenta como éxito.
+
+- **[Seguridad] El tope por código es un presupuesto disfrazado de candado, y el spec lo dice pero
+  el nombre no.** Vive en nuestro cliente (`web-access-gate.tsx:116-121`): protege el gasto de MAU,
+  **no** concede ni niega acceso — eso lo hace el allowlist de Privy, server-side. **Why blocking:**
+  si alguien lo lee como control de acceso, se apaga el allowlist "porque ya tenemos el tope" y el
+  acceso queda abierto de par en par. El spec debe nombrarlo **presupuesto**, nunca gate.
+
+- **[Estado] El enlace tiene que sobrevivir al login, y eso no es gratis.** El invitado abre
+  `/arena?duel=<id>`, lo manda el gate a Privy, vuelve… ¿a dónde? Si el parámetro se pierde,
+  aterriza en el hub sin saber a qué lo invitaron, y el duelo queda `awaiting-opponent` para
+  siempre. **Why blocking:** es el camino principal del feature para todo invitado web, y el
+  comportamiento 2 lo menciona en una advertencia sin especificar el mecanismo.
 
 - **[Alcance] Ajedrez completo asume que el jugador sabe jugar ajedrez, y el producto enseña a mover
   piezas.** El founder lo decidió explícitamente ("en este momento el p2p es para PLAY, una partida
@@ -135,11 +150,27 @@ colgadas; el spec no dice si se pueden purgar ni cómo.
 
 ## Verdict
 
-**NEEDS REVISION.**
+**NEEDS REVISION** (2ª pasada, 2026-08-13 — tras la decisión del founder sobre el acceso).
 
-Los P0 no son de implementación: son **cuatro decisiones de producto y de arquitectura** que cambian
-el spec, no el código. Escribir tests contra este documento hoy sería fijar en tests una pregunta
-sin responder — el login del invitado.
+La pregunta que bloqueaba está resuelta y **la mitad del camino ya está construido**: MiniPay entra
+por defecto sin tocar Privy, la waitlist existe y vive **delante** del `login()`, y el tope tiene un
+lugar obvio donde ir. Eso baja el costo de la capa de acceso a casi cero.
+
+Lo que queda son **seis P0**, y ninguno es de implementación:
+
+1. La métrica del gate del frente, que hoy mediría el gate de acceso y no el duelo.
+2. Que el tope se llame **presupuesto** y no candado, para que nadie apague el allowlist por él.
+3. La preservación del enlace a través del login.
+4. Qué pasa cuando el invitado **no sabe jugar ajedrez** — la base actual se formó en LEARN.
+5. El costo del árbitro reconstruyendo la partida entera en cada jugada.
+6. La incoherencia entre los comportamientos 12 y 13 sobre inventar un ganador por inactividad.
+
+⚠️ Y la observación que sigue en pie, porque es la que más ha costado: **es el tercer spec de este
+feature**. Los dos anteriores eran técnicamente correctos y no se construyeron. La pregunta que
+ninguno de los tres contesta es **cuál es la versión más chica que se puede poner frente a dos
+jugadores esta semana** — y con el acceso resuelto, esa versión probablemente sea *"dos personas que
+ya están dentro se pasan un enlace y juegan"*, sin waitlist, sin tope y sin embudo. Eso se puede
+construir y medir antes de decidir nada sobre contactos fríos.
 
 ⚠️ Y una observación que no es un finding pero condiciona todo: **es el tercer spec de este mismo
 feature**. Los dos anteriores eran técnicamente correctos y no se construyeron. Antes de resolver

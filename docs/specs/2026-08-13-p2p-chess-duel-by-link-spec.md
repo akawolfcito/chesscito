@@ -64,6 +64,49 @@ candidato natural para colgarle valor más adelante — pero recién cuando se d
 
 ---
 
+## Quién puede entrar (resuelto — founder, 2026-08-13)
+
+El invitado **sí pasa por el gate de acceso**. No hay `JOIN` anónimo: el gate ya decidió que el
+acceso web es obligatorio y **no existe "Continue as Guest"**
+(`components/web-access-gate.tsx:260`). Este spec se somete a esa decisión.
+
+Tres piezas, y **las tres ya existen o son un cambio chico**:
+
+| pieza | quién entra | estado |
+| --- | --- | --- |
+| **MiniPay** | entra **por defecto**, sin Privy y sin gastar MAU | ✅ ya es así — `WebAccessGate` **nunca se monta** en MiniPay; el resolver de rama lo deja en el árbol `injected` |
+| **Waitlist** | quien no está en MiniPay se registra y espera | ✅ ya construida — `EarlyAccessRequest`, alcanzable desde `unauthenticated`, y **no toca ningún hook de Privy** |
+| **Tope por código** | corta login/registro al llegar al umbral | ⬜ por construir — es el seguro |
+
+### El tope: dónde va, y por qué ahí
+
+⛔ **El tope tiene que evaluarse ANTES de llamar a `login()`**, en `startLogin()`
+(`web-access-gate.tsx:116-121`, justo encima de la línea 120).
+
+**Why:** Privy define MAU como *"a user who has had their session refreshed in the past thirty
+days"*. **El login ya consume el recurso que el tope quiere proteger**, así que un tope que viva
+después de `login()` **llega tarde por construcción** — ese error se cometió en la v1 del diseño de
+acceso web y lo corrigió el founder. Un contador que se consulta después no protege nada: sólo
+informa de lo que ya se gastó.
+
+⚠️ **Y el tope NO es control de acceso: es un presupuesto.** Vive en nuestro cliente, así que es
+evitable en principio. Quien **concede** el acceso sigue siendo el **allowlist nativo de Privy**,
+que es server-side y sin bypass. Los dos juntos son cinturón y tirantes, que es exactamente lo que
+el founder pidió: *"otra opción que es un seguro"*.
+
+### La consecuencia, dicha de frente
+
+Con el gate obligatorio, **un enlace de duelo enviado a un contacto frío que NO esté en MiniPay
+aterriza en la waitlist, no en un tablero**. Durante esta fase el enlace funciona como **embudo de
+waitlist**, no como canal de *jugá ahora*.
+
+Es una decisión defendible antes del lanzamiento y no la discute este spec — pero hay que **medirla
+como lo que es**: el gate del frente es "uso real del duelo", y si el invitado promedio no puede
+jugar, esa métrica mide el gate, no el duelo. **El duelo entre dos personas que YA están dentro
+(MiniPay ↔ MiniPay, o dos allowlisted) sí se juega entero, y es el que hay que medir.**
+
+---
+
 ## Contracts (SDD)
 
 ### La regla dura, primero
@@ -182,10 +225,14 @@ body**, para que el cliente pueda guardarla y recuperar el asiento si la cookie 
 1. Dado un jugador en PLAY, cuando toca *"Jugar con un amigo"*, entonces el servidor crea un duelo
    en `awaiting-opponent`, le asigna un color, le emite su `SeatToken` y devuelve un enlace
    `/[locale]/arena?duel=<id>`.
-2. Dado un duelo en `awaiting-opponent`, cuando alguien abre el enlace **sin credencial**, entonces
-   ve el tablero, quién invita y un CTA `JOIN` — sin login, sin wallet, sin registro.
-3. Dado ese mismo caso, cuando toca `JOIN`, entonces el servidor ocupa el asiento libre, emite su
-   `SeatToken`, y el duelo pasa a `active`.
+2. Dado un duelo en `awaiting-opponent`, cuando alguien abre el enlace, entonces **pasa primero por
+   el gate de acceso**: MiniPay entra directo; en web, una sesión existente entra directo y quien no
+   la tenga ve el gate (con la waitlist un tap abajo). ⚠️ El enlace **se preserva a través del
+   login**, o el invitado aterriza en el hub sin saber a qué lo invitaron.
+3. Dado un visitante que **pasó el gate**, cuando toca `JOIN`, entonces el servidor ocupa el asiento
+   libre, emite su `SeatToken`, y el duelo pasa a `active`.
+3b. Dado un visitante que **no** pasa el gate, entonces ve de qué duelo se trata y quién lo invitó,
+   y la waitlist. **Nunca ocupa un asiento.**
 4. Dado un duelo `active`, cuando el asiento de turno manda una jugada legal con el `version`
    correcto, entonces el servidor la aplica, incrementa `version`, recomputa `expiresAt` y devuelve
    el `DuelPublic` nuevo.
@@ -277,14 +324,14 @@ body**, para que el cliente pueda guardarla y recuperar el asiento si la cookie 
 
 ## Open questions
 
-1. ⛔ **La más importante — ¿el invitado tiene que loguearse?** El founder dice que la entrada está
-   cubierta por social login. Pero el acceso web lo concede **el allowlist nativo de Privy**
-   (`project_web_early_access_is_privy_allowlist`): **un desconocido que reciba el enlace NO puede
-   loguearse si no está en el allowlist**, y cada login consume un MAU (gratis hasta 499).
-   **Este spec asume `JOIN` SIN login** (comportamiento 2 y 3) precisamente para esquivar las dos
-   cosas. Si se exige login, el enlace sólo funciona entre gente ya habilitada y deja de ser un
-   canal de crecimiento. **Necesita confirmación del founder.**
-2. **¿Cuánto dura la ventana de expiración?** Propuesta: **48 h** por jugada. Sin medición detrás;
+1. ✅ **RESUELTO** (founder, 2026-08-13): el invitado pasa por el gate. MiniPay entra por defecto,
+   el resto por waitlist, y un tope por código corta el login al llegar al umbral. Ver
+   §"Quién puede entrar".
+2. **¿Cuál es el umbral del tope, y qué pasa al llegar?** Privy es gratis hasta **499 MAU**. Un tope
+   en 499 no deja margen: hay que decidir el número **y** qué ve quien llega tarde — la waitlist
+   otra vez, o una pantalla propia. Y si el contador es por MAU (ventana móvil de 30 días) o por
+   cuentas totales, que **no son lo mismo**.
+3. **¿Cuánto dura la ventana de expiración?** Propuesta: **48 h** por jugada. Sin medición detrás;
    es una perilla, no una verdad.
 3. **¿Dónde se guarda el duelo?** Supabase encaja con el resto, pero un duelo no es contenido y no
    necesita RLS por usuario si toda la autorización pasa por el token. Decidir antes de la migración.
