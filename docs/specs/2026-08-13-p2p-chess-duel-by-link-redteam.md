@@ -148,9 +148,47 @@ colgadas; el spec no dice si se pueden purgar ni cómo.
 
 ---
 
+## 3ª pasada — 2026-08-13, contra la versión MÍNIMA
+
+El spec se recortó a *"dos personas que ya están dentro se pasan un enlace y juegan"*, y eso
+**cierra o saca de alcance cuatro de los seis P0**:
+
+| P0 anterior | estado |
+| --- | --- |
+| Login del invitado | ✅ resuelto (gate existente, sin cambios) |
+| Métrica que mide el gate y no el duelo | ✅ disuelto — la versión mínima **sólo** admite a los que ya están dentro, así que la métrica mide el duelo |
+| Tope llamado candado | ➡️ movido a `2026-08-13-login-capacity-cap-spec.md`, donde se llama **presupuesto** |
+| Árbitro reconstruyendo la partida | ✅ resuelto — `fen` se guarda junto a `moves` y `applyMove` valida contra él |
+| Incoherencia 12 vs 13 | ✅ resuelto — se acepta a sabiendas, con la razón escrita y un disparador para re-decidir |
+| Enlace a través del login | ⬜ **sigue P0**, y ahora es lo único de acceso que hay que construir |
+
+### Lo que el recorte NO arregla
+
+- **[Alcance] Sigue siendo ajedrez completo, y la base se formó en LEARN.** El recorte lo hace menos
+  grave (los dos ya están dentro, o sea que son usuarios reales, no curiosos) pero no lo elimina.
+  *Riesgo:* el duelo se mide contra gente que no sabe jugar y el resultado se lee como desinterés.
+- **[Producto] "Sin guardar la partida" es una decisión fuerte y no está justificada en el spec.**
+  Dos personas juegan 40 movidas y al terminar no queda nada. Que sea D2 explica el orden, no la
+  experiencia. *Riesgo:* la versión mínima se siente descartable y nadie la usa dos veces — lo que
+  haría fracasar el gate por una razón que no es el duelo.
+- **[UX] Sin notificación de turno, la ventana de 48 h es optimista.** Está en Open questions, pero
+  para un duelo asincrónico es el mecanismo que lo hace funcionar, no un extra.
+
 ## Verdict
 
-**NEEDS REVISION** (2ª pasada, 2026-08-13 — tras la decisión del founder sobre el acceso).
+**READY para `/tdd`** (3ª pasada, contra la versión mínima) — **con una condición**: resolver
+*"el enlace sobrevive al login"* como parte del trabajo, no después. Es el único P0 vivo y sin él
+todo invitado web sin sesión cae en el hub sin saber a qué lo invitaron.
+
+Los tres findings que quedan (ajedrez completo, no guardar la partida, notificación de turno) son
+**riesgos de producto asumidos**, no defectos del spec: cada uno está escrito con su razón y su
+disparador. Se pueden construir sabiendo que existen.
+
+---
+
+### Veredicto anterior — 2ª pasada, tras la decisión sobre el acceso
+
+**NEEDS REVISION.**
 
 La pregunta que bloqueaba está resuelta y **la mitad del camino ya está construido**: MiniPay entra
 por defecto sin tocar Privy, la waitlist existe y vive **delante** del `login()`, y el tope tiene un
