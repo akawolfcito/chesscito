@@ -202,6 +202,82 @@ todavía vacía y toda query posterior corría carrera contra el fetch. Ahora es
 
 ---
 
+## Segunda mitad: lo que salió de USARLO
+
+Los cinco commits de arriba salieron del mockup. Los cinco de abajo salieron del founder
+autorando de verdad, y ninguno lo habría encontrado un test.
+
+### 6. `feat(dev)` — los avisos del save salen de la columna (`82dbdc81`)
+
+El founder los leía como decoración: *"si todo sale en warning ya sabemos que eso se obvia;
+no sé qué trato debo darle"*. Tenía razón en las dos mitades.
+
+⛔ **Y por eso el filtro NO es por severidad, que era lo pedido y lo obvio.** Ese canal no
+contiene **ni un error**: los errores bloquean el save y jamás llegan ahí. Un filtro
+warning/error/info habría ordenado un solo balde dentro de sí mismo. El eje que sí los
+separa es el **tipo**, porque los tipos cargan obligaciones distintas:
+
+| tipo | tratamiento |
+| --- | --- |
+| curva de dificultad (2 de los 3 productores) | **Consejo** por decisión de producto. No reordenar contenido por esto. |
+| obstáculos decorativos | Leer, pero mirar el tablero antes de borrar. ⚠️ **Poco fiable en Star Sweep**: juzga la ruta a UN objetivo, y ya llamó decorativos a 9 de 10 muros que cuadruplicaban la ruta. |
+| desconocido | Verbatim, sin archivar bajo una guía que quizá no le aplica. |
+
+Lo que faltaba nunca fue un filtro: era la respuesta a *"¿qué trato merece esto?"*.
+
+⚠️ El clasificador se prueba **corriendo el linter real** y clasificando lo que devuelve, no
+copy recordado — si alguien reescribe un mensaje, se pone rojo en vez de mandar el aviso a
+`other` en silencio.
+
+### 7–9. La carrera del save — dos mitades, dos intentos (`c7a8684d`, `7120eb2e`, `3be103e8`)
+
+**Reporte:** cambiar un tablero → Save draft → **tablero completamente en blanco**, y para
+volver a editarlo había que ir a buscar la pieza otra vez. En la acción más repetida del tool.
+
+**Causa:** un save escribe `content/*.json` y `puzzles.generated.ts`, los dos dentro del
+árbol que Next dev vigila, así que **Fast Refresh remonta la página**. `publish-toast.ts` ya
+documentaba esto para el toast. El borrador no lo tenía.
+
+⛔ **Y el arreglo obvio no alcanza, porque es una CARRERA.** El servidor escribe los archivos
+**durante** el `fetch`: desde ese instante el watcher puede disparar en cualquier momento,
+incluso antes de que la respuesta se lea. **Todo lo que está después del `await` puede no
+ejecutarse nunca.**
+
+Me costó dos intentos y el founder encontró las dos fallas:
+
+1. Estacioné el borrador **después** del fetch → seguía en blanco. (Mi sonda no lo vio
+   porque interceptaba `/api/dev/publish`: sin escritura no hay Fast Refresh, y yo
+   simulaba la recarga con `page.reload()`.)
+2. Lo moví antes del fetch pero **dejé el toast atrás** → el tablero volvía y el mensaje no,
+   así que tampoco había chip y el save parecía no haber hecho nada.
+
+Ahora **las dos cosas** se estacionan antes del request, y la respuesta las pisa con el
+veredicto real si llega a tiempo.
+
+⚠️ **`savedOk` es load-bearing.** Un save que falló no dejó nada en disco: llamarlo "limpio"
+le diría al guard de cambios sin guardar que no hay nada que perder, y el próximo click
+destruiría el trabajo en silencio. Un flag ausente cae en **NO-guardado**, nunca al revés.
+
+⚠️ El veredicto provisional dice **`warn`, no `ok`**, y lo explica: la recarga *es* evidencia
+de que la escritura ocurrió (nada más toca esos archivos), pero "casi seguro aterrizó" no es
+"aterrizó". Las dos mitades apuntan al mismo lado.
+
+### 10. `feat(dev)` — la franja de estado dice una línea (`02e4bbf7`)
+
+Pregunta del founder: el mensaje del overlay caído *"no molesta mucho ahora, pero no sé si
+habrá algún momento en el que salgan muchas líneas"*. **Va a pasar**: el texto de un save
+fallido es `Save failed: ${errors.join("; ")}` — una entrada por fallo de validación, **sin
+cota superior**.
+
+Un toast lleva ahora dos textos: `summary` (una línea, para la franja) y `text` (el relato
+entero, que abre el popup bajo *"What happened"*).
+
+⚠️ El **commit nudge** viaja en el `summary` del camino feliz a propósito: es lo único que
+queda por hacer cuando todo salió bien, y enterrarlo en un popup que nadie abre tras un save
+exitoso sería perderlo.
+
+---
+
 ## Open questions
 
 1. **¿Agrandamos el tablero?** Hoy son 349 px de grilla en una pantalla de 1440. Es el
