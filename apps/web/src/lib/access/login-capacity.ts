@@ -104,3 +104,21 @@ export function resolveCapacityLimit(raw: string | undefined): number {
   const parsed = Number(raw);
   return isUsableLimit(parsed) ? parsed : DEFAULT_CAPACITY_LIMIT;
 }
+
+/**
+ * El interruptor, con el default hacia el lado que cuida la plata.
+ *
+ * ⛔ **Prendido sin configuración.** Un tope que hay que acordarse de prender no
+ * es un tope: el riesgo que esto existe para atajar es un pico orgánico, que por
+ * definición ocurre cuando nadie está mirando. El límite ya tiene un default
+ * seguro, así que prender por defecto no cierra ninguna puerta que estuviera
+ * abierta — sólo le pone techo.
+ *
+ * ⚠️ Y sólo se apaga con una palabra explícita: un typo en la perilla debe
+ * dejarlo prendido, nunca abrirlo de par en par en silencio.
+ */
+export function resolveCapacityEnabled(raw: string | undefined): boolean {
+  if (!raw) return true;
+  const normalized = raw.trim().toLowerCase();
+  return normalized !== "false" && normalized !== "0";
+}

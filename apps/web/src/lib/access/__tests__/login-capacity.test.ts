@@ -18,6 +18,7 @@
 import { describe, it, expect } from "vitest";
 import {
   decideLoginCapacity,
+  resolveCapacityEnabled,
   resolveCapacityLimit,
   DEFAULT_CAPACITY_LIMIT,
   type LoginCapacityConfig,
@@ -115,5 +116,30 @@ describe("resolveCapacityLimit", () => {
     // Privy, así que N visitantes simultáneos cerca del umbral pueden entrar
     // todos. El margen ES el diseño, no un redondeo.
     expect(DEFAULT_CAPACITY_LIMIT).toBeLessThan(499);
+  });
+});
+
+describe("resolveCapacityEnabled", () => {
+  it("⛔ viene PRENDIDO sin configuración", () => {
+    // Un tope que hay que acordarse de prender no es un tope: el pico que esto
+    // existe para sobrevivir es justamente el que nadie está mirando. El default
+    // del límite ya es seguro (460), así que prender por defecto no cierra nada
+    // que estuviera abierto.
+    expect(resolveCapacityEnabled(undefined)).toBe(true);
+    expect(resolveCapacityEnabled("")).toBe(true);
+  });
+
+  it("se apaga sólo si lo dicen explícitamente", () => {
+    expect(resolveCapacityEnabled("false")).toBe(false);
+    expect(resolveCapacityEnabled("FALSE")).toBe(false);
+    expect(resolveCapacityEnabled("0")).toBe(false);
+  });
+
+  it("cualquier otro valor lo deja prendido", () => {
+    // ⚠️ Hacia el lado seguro: un typo en la perilla no debe abrir la puerta de
+    // par en par sin que nadie se entere.
+    expect(resolveCapacityEnabled("true")).toBe(true);
+    expect(resolveCapacityEnabled("sí")).toBe(true);
+    expect(resolveCapacityEnabled("nope")).toBe(true);
   });
 });
