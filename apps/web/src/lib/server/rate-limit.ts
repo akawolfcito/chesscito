@@ -85,6 +85,9 @@ import { getRedis, isRedisTimeout } from "./redis";
  * Adding a route here is a conscious act.
  */
 export type RateLimitRoute =
+  /** ⚠️ Pre-login: su bucket es el ÚNICO de esta lista que ve tráfico sin
+   *  sesión, así que comparte IP con todo visitante que aún no entró. */
+  | "access-capacity"
   | "pro-status"
   | "peones-balance"
   | "peones-earn"
