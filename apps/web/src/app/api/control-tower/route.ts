@@ -1,5 +1,5 @@
 /**
- * GET / POST /api/admin/access-capacity — el interruptor del waitlist.
+ * GET / POST /api/control-tower — el interruptor del waitlist.
  *
  * Existe para una necesidad concreta del founder: poder abrir o cerrar el acceso
  * web **desde cualquier lado, sin autenticarse en Vercel ni en Supabase, sin
@@ -36,7 +36,7 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const log = createLogger({ route: "/api/admin/access-capacity" });
+const log = createLogger({ route: "/api/control-tower" });
 
 /** El techo del plan gratis de Privy, HOY. Sólo para avisar, nunca para
  *  bloquear: es un hecho de su pricing y puede cambiar. */

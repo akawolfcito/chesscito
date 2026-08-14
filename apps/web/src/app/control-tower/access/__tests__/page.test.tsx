@@ -11,10 +11,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const fetchMock = vi.fn();
 
-import AdminAccessPage from "@/app/admin/access/page";
+import AdminAccessPage from "@/app/control-tower/access/page";
 
 const TOKEN = "s3cr3t-admin-token";
-const STORAGE_KEY = "chesscito.adminToken";
+const STORAGE_KEY = "chesscito.ct";
 
 function stateResponse(over: Record<string, unknown> = {}) {
   return {

@@ -7,16 +7,23 @@
 // es `ADMIN_TOKEN`, verificado server-side en la ruta; la página sin token no
 // muestra ni un dato.
 //
+// ⛔ EL NOMBRE NO ES UN CONTROL, Y NO DEBE CONFIARSE EN ÉL. Se eligió uno poco
+// obvio (founder, 2026-08-14) para evitar el descubrimiento casual, pero **este
+// repositorio es público**: la ruta está publicada como el nombre de este
+// directorio, la escriba alguien en un doc o no. Lo único que protege es el
+// token, que hoy son 64 hex = 256 bits de entropía. Si algún día alguien
+// justifica una decisión de seguridad con "igual nadie sabe la URL", esa
+// premisa es falsa desde el primer commit.
+//
 // ⚠️ Después de la Stage 1 de i18n no hay `app/layout.tsx`, así que este layout
 // es la raíz de facto de su subárbol y tiene que cargar los estilos él mismo.
 import "../globals.css";
 
 export const metadata = {
-  title: "Chesscito — Ops",
-  description: "Internal operations surface. Not user-facing.",
-  // ⛔ La seguridad la da el token, NUNCA la oscuridad. Esto es higiene: que la
-  // URL no aparezca en un buscador no la protege, sólo evita que invite.
-  robots: { index: false, follow: false },
+  // Sin descripción y con un título mudo, a pedido del founder: nada acá debe
+  // anunciar qué es esto ni para qué sirve.
+  title: "—",
+  robots: { index: false, follow: false, nocache: true },
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

@@ -35,7 +35,7 @@ vi.mock("@/lib/supabase/server", () => ({
   getSupabaseServer: () => getSupabaseServerMock(),
 }));
 
-import { GET, POST } from "@/app/api/admin/access-capacity/route";
+import { GET, POST } from "@/app/api/control-tower/route";
 
 const TOKEN = "s3cr3t-admin-token";
 
@@ -53,7 +53,7 @@ function supabaseDouble(row = { seat_limit: 460, enabled: true }) {
 }
 
 function req(method: "GET" | "POST", body?: unknown, token: string | null = TOKEN) {
-  return new Request("https://learn.chesscito.com/api/admin/access-capacity", {
+  return new Request("https://learn.chesscito.com/api/control-tower", {
     method,
     headers: {
       "content-type": "application/json",

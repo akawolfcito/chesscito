@@ -26,8 +26,8 @@ import { useCallback, useEffect, useState } from "react";
  * los muebles del interruptor ni al revés.
  */
 
-const STORAGE_KEY = "chesscito.adminToken";
-const ENDPOINT = "/api/admin/access-capacity";
+const STORAGE_KEY = "chesscito.ct";
+const ENDPOINT = "/api/control-tower";
 
 type CapacityState = {
   enabled: boolean;
@@ -95,7 +95,9 @@ export default function AdminAccessPage() {
   if (!token) {
     return (
       <main className="mx-auto max-w-sm p-6 text-neutral-100">
-        <h1 className="mb-6 text-lg font-semibold">Chesscito · acceso web</h1>
+        {/* ⛔ Antes de autenticar, la pantalla no dice qué es esto ni para qué
+            sirve. Después sí: a esa altura ya no hay nada que ocultarle a quien
+            está mirando, y una herramienta muda es peor de operar a las 3am. */}
         <label className="block text-sm text-neutral-400" htmlFor="admin-token">
           Admin token
         </label>
@@ -121,6 +123,9 @@ export default function AdminAccessPage() {
         <p className="mt-4 text-xs text-neutral-500">
           Se guarda en este teléfono y viaja por header. No queda en la URL.
         </p>
+        {/* ⛔ Ni un enlace de vuelta al producto: un `<a>` acá convertiría a esta
+            página en un descubrimiento a partir del sitio, que es exactamente lo
+            que el nombre poco obvio intenta evitar. */}
       </main>
     );
   }
