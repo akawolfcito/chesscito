@@ -254,6 +254,33 @@ producto sin i18n.
 
 ---
 
+## 4.d Simulacro en producción — PASADO (2026-08-14)
+
+El founder lo corrió entero, y probó más de lo que el guión pedía:
+
+| paso | resultado |
+| --- | --- |
+| El botón lee el pozo en prod | ✅ `6 / 460` leído de Supabase — **descarta el fallo silencioso** (si el conteo no llegara, diría "No se pudo contar") |
+| Tope en `1` → gate | ✅ rebota a la waitlist, Privy no se entera |
+| Tope en `6` con pozo `6` | ✅ cierra — confirma que el límite es el número **al que se corta**, no cuántos entran |
+| Vuelta a `460` | ✅ reabre, y en **bastante menos de 20 s** |
+| Login real con correo nuevo | ✅ entra, y el pozo pasa de **5 → 6** |
+
+⛔ **Ese último es el que no se podía simular: valida la cadena entera de punta a punta** —
+login real → fila en `account_first_seen` con `first_container='browser'` → el contador la ve.
+**El riesgo de sub-conteo documentado en `browser-accounts.ts` no se materializó**: la
+telemetría, que es best-effort por diseño, registró el alta.
+
+⚠️ Y también confirmó que el allowlist de Privy sigue haciendo su trabajo: un correo no
+allowlisted fue **rechazado por Privy**, no por nuestro tope. Los dos controles conviven y son
+distinguibles.
+
+📌 Sobre los ~20 s: era un **techo** (10 de memoria + 10 de CDN en el peor caso), no una
+estimación. Casi nunca se acumulan — el caché de memoria es por instancia y el del CDN sólo
+existe si alguien ya pidió esa ruta en ese PoP.
+
+---
+
 ## 5. El orden para abrir la web, que es lo que el founder preguntó
 
 ⛔ **Apagar el allowlist de Privy NO transfiere el control a nuestro código.** El tope es un
