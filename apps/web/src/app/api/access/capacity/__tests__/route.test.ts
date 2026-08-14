@@ -1,23 +1,29 @@
 /**
- * GET /api/access/capacity — the login budget, read server-side.
+ * GET /api/access/capacity — el presupuesto de logins, leído server-side.
  *
- * Two properties hold across every case below:
+ * Tres propiedades atraviesan todos los casos:
  *
- *   1. ⛔ The response says `open` and NOTHING else. Telling a visitor "3 seats
- *      left" is a race and an invitation to force it.
- *   2. ⚠️ Doubt opens the door. A missing database, a broken query, a limiter
- *      outage — none of them may lock everybody out of the product, because
- *      Privy's own allowlist is still underneath as the real gate. The only
- *      thing that closes is a count that genuinely reached the limit, or a
- *      configuration we cannot read (which is OUR bug, and visible).
+ *   1. ⛔ La respuesta dice `open` y NADA MÁS. Decirle a un visitante "quedan 3
+ *      lugares" es una carrera y una invitación a forzarla.
+ *   2. ⚠️ Ante la duda se abre. Base ausente, query rota, limitador caído: nada
+ *      de eso puede dejar a todo el mundo afuera del producto, porque el
+ *      allowlist de Privy sigue debajo como el candado real.
+ *   3. ⛔ El caché va ANTES del limitador. Un veredicto fresco no hace trabajo
+ *      de base, así que cobrarle cuota convertía al limitador en el interruptor
+ *      de apagado del tope justo durante un pico.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const countBrowserAccountsMock = vi.fn();
+const readCapacityConfigMock = vi.fn();
 const checkRateLimitMock = vi.fn();
 
 vi.mock("@/lib/access/browser-accounts", () => ({
   countBrowserAccounts: () => countBrowserAccountsMock(),
+}));
+
+vi.mock("@/lib/access/capacity-config", () => ({
+  readCapacityConfig: () => readCapacityConfigMock(),
 }));
 
 vi.mock("@/lib/server/rate-limit", () => ({
@@ -32,7 +38,7 @@ vi.mock("@/lib/server/logger", () => ({
   createLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }),
 }));
 
-import { GET } from "@/app/api/access/capacity/route";
+import { GET, __resetCapacityCache } from "@/app/api/access/capacity/route";
 
 function get() {
   return GET(new Request("https://learn.chesscito.com/api/access/capacity"));
@@ -40,14 +46,15 @@ function get() {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.unstubAllEnvs();
+  vi.useRealTimers();
+  __resetCapacityCache();
   checkRateLimitMock.mockResolvedValue({ allowed: true, outcome: "allowed", resetAt: null });
+  readCapacityConfigMock.mockResolvedValue({ limit: 460, enabled: true });
   countBrowserAccountsMock.mockResolvedValue(5);
 });
 
-describe("the verdict", () => {
-  it("is open while the count is below the limit", async () => {
-    vi.stubEnv("LOGIN_CAPACITY_LIMIT", "460");
+describe("el veredicto", () => {
+  it("abre mientras el conteo esté debajo del tope", async () => {
     countBrowserAccountsMock.mockResolvedValue(459);
 
     const res = await get();
@@ -56,8 +63,7 @@ describe("the verdict", () => {
     await expect(res.json()).resolves.toEqual({ open: true });
   });
 
-  it("is closed once the count reaches the limit", async () => {
-    vi.stubEnv("LOGIN_CAPACITY_LIMIT", "460");
+  it("cierra cuando el conteo alcanza el tope", async () => {
     countBrowserAccountsMock.mockResolvedValue(460);
 
     const res = await get();
@@ -66,79 +72,105 @@ describe("the verdict", () => {
     await expect(res.json()).resolves.toEqual({ open: false });
   });
 
-  it("never leaks the count or the limit", async () => {
-    vi.stubEnv("LOGIN_CAPACITY_LIMIT", "460");
+  it("nunca filtra el conteo ni el tope", async () => {
     countBrowserAccountsMock.mockResolvedValue(458);
 
     const body = await (await get()).json();
 
     expect(Object.keys(body)).toEqual(["open"]);
   });
-
-  it("is never cached — the knob must take effect on the next call", async () => {
-    const res = await get();
-
-    expect(res.headers.get("cache-control")).toContain("no-store");
-  });
 });
 
-describe("the switch", () => {
-  it("reopens completely when the cap is disabled", async () => {
-    vi.stubEnv("LOGIN_CAPACITY_ENABLED", "false");
-    vi.stubEnv("LOGIN_CAPACITY_LIMIT", "1");
+describe("la perilla", () => {
+  it("sale de la FILA, no de un env var", async () => {
+    // Es toda la razón de ser de la tabla: en Vercel un env var exige redeploy y
+    // un redeploy tarda 8-10 minutos, que durante un pico llega tarde.
+    readCapacityConfigMock.mockResolvedValue({ limit: 10, enabled: true });
+    countBrowserAccountsMock.mockResolvedValue(10);
+
+    await expect((await get()).json()).resolves.toEqual({ open: false });
+    expect(readCapacityConfigMock).toHaveBeenCalled();
+  });
+
+  it("reabre por completo cuando el tope está apagado", async () => {
+    readCapacityConfigMock.mockResolvedValue({ limit: 1, enabled: false });
     countBrowserAccountsMock.mockResolvedValue(9_999);
 
     await expect((await get()).json()).resolves.toEqual({ open: true });
   });
 
-  it("does not even count when the cap is disabled", async () => {
-    vi.stubEnv("LOGIN_CAPACITY_ENABLED", "false");
+  it("no cuenta siquiera cuando el tope está apagado", async () => {
+    readCapacityConfigMock.mockResolvedValue({ limit: 460, enabled: false });
 
     await get();
 
     expect(countBrowserAccountsMock).not.toHaveBeenCalled();
   });
-
-  it("is ON without any configuration", async () => {
-    // ⛔ A cap you must remember to switch on is not a cap. The default limit
-    // is safe (460), so the safe default for `enabled` is true — the spike this
-    // exists to survive is precisely the one nobody is watching for.
-    countBrowserAccountsMock.mockResolvedValue(10_000);
-
-    await expect((await get()).json()).resolves.toEqual({ open: false });
-  });
 });
 
-describe("when in doubt", () => {
-  it("opens if the count could not be taken", async () => {
+describe("ante la duda", () => {
+  it("abre si el conteo no se pudo tomar", async () => {
     countBrowserAccountsMock.mockResolvedValue(null);
 
     await expect((await get()).json()).resolves.toEqual({ open: true });
   });
 
-  it("repairs an unusable limit instead of closing on it", async () => {
-    // ⚠️ `decideLoginCapacity` CIERRA ante una config rota, y por esta ruta esa
-    // rama es inalcanzable: `resolveCapacityLimit` repara `0` / `-5` / `muchos`
-    // al default antes de que llegue. Y así debe ser — el default ya es seguro
-    // (460 < 499), así que reparar cuida la plata Y deja la puerta abierta,
-    // mientras que cerrar el producto entero por un typo en un env var es el
-    // fail-closed que el spec rechaza para el caso de la base caída.
-    // La rama fail-closed sigue viva para cualquier otro origen de config
-    // (p. ej. una fila con NaN) — se prueba en `login-capacity.test.ts`.
-    for (const broken of ["0", "-5", "muchos"]) {
-      vi.stubEnv("LOGIN_CAPACITY_LIMIT", broken);
+  it("cierra si el tope que llega es inservible", async () => {
+    // La dirección opuesta a propósito: una config rota es error nuestro, se ve
+    // enseguida, y errar hacia abierto acá es una factura recurrente.
+    // ⚠️ `readCapacityConfig` repara lo que puede antes de llegar acá; esta rama
+    // cubre lo que ni siquiera él pueda arreglar.
+    readCapacityConfigMock.mockResolvedValue({ limit: Number.NaN, enabled: true });
 
-      countBrowserAccountsMock.mockResolvedValue(459);
-      await expect((await get()).json()).resolves.toEqual({ open: true });
+    await expect((await get()).json()).resolves.toEqual({ open: false });
+  });
+});
 
-      countBrowserAccountsMock.mockResolvedValue(460);
-      await expect((await get()).json()).resolves.toEqual({ open: false });
-    }
+describe("el caché", () => {
+  it("contesta el segundo pedido sin volver a la base", async () => {
+    await get();
+    await get();
+
+    expect(countBrowserAccountsMock).toHaveBeenCalledTimes(1);
+    expect(readCapacityConfigMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("⛔ contesta con el caché SIN pasar por el limitador", async () => {
+    // El agujero que esto cierra: 60 req/min por IP, y detrás de CGNAT mucha
+    // gente comparte una IP de salida. Si el limitador corriera primero, el
+    // visitante 61 recibía 429 y el cliente falla abierto — el tope se apagaba
+    // solo justo en el pico para el que existe.
+    countBrowserAccountsMock.mockResolvedValue(460);
+    await get();
+
+    checkRateLimitMock.mockResolvedValue({ allowed: false, outcome: "limited", resetAt: 0 });
+    const res = await get();
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ open: false });
+    expect(checkRateLimitMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("vuelve a preguntar cuando el veredicto vence", async () => {
+    vi.useFakeTimers();
+    await get();
+
+    vi.advanceTimersByTime(10_001);
+    await get();
+
+    expect(countBrowserAccountsMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("deja que el CDN absorba el pico, con el mismo techo", async () => {
+    const cacheControl = (await get()).headers.get("cache-control");
+
+    expect(cacheControl).toContain("public");
+    expect(cacheControl).toContain("s-maxage=10");
   });
 });
 
 describe("rate limiting", () => {
-  it("guards the route per IP, failing open", async () => {
+  it("guarda la ruta por IP, fallando abierto", async () => {
     await get();
 
     expect(checkRateLimitMock).toHaveBeenCalledWith({
@@ -148,7 +180,7 @@ describe("rate limiting", () => {
     });
   });
 
-  it("answers 429 without counting when the limiter refuses", async () => {
+  it("contesta 429 sin contar cuando el limitador se niega", async () => {
     checkRateLimitMock.mockResolvedValue({
       allowed: false,
       outcome: "limited",
