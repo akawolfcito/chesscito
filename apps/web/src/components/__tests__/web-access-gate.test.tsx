@@ -7,7 +7,7 @@
  * (the branch resolver keeps it on the injected tree), so these tests exercise
  * only the web branch.
  */
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /** Minimal shape of the `useLogin` callbacks the component registers. Keeps the
@@ -110,9 +110,23 @@ describe("WebAccessGate", () => {
     expect(screen.queryByText(CHILD)).toBeNull();
   });
 
-  it("opens the native Privy modal from the CTA", () => {
-    renderGate();
+  /**
+   * ⚠️ El CTA es ASÍNCRONO desde el tope de capacidad (2026-08-14): consulta
+   * `/api/access/capacity` antes de llamar a `login()`. Un click sin await
+   * asierta un microtask antes de que el login ocurra.
+   *
+   * Acá no se stubea `fetch` a propósito: sin ruta que responder, el chequeo
+   * cae en su rama de fail-open, que es justo el comportamiento que estos casos
+   * necesitan y de paso lo dejan probado desde afuera.
+   */
+  async function pressEnter() {
     fireEvent.click(screen.getByText("ENTER"));
+    await waitFor(() => expect(loginMock).toHaveBeenCalled());
+  }
+
+  it("opens the native Privy modal from the CTA", async () => {
+    renderGate();
+    await pressEnter();
     expect(loginMock).toHaveBeenCalledTimes(1);
   });
 
@@ -178,16 +192,16 @@ describe("WebAccessGate", () => {
     // Founder smoke, 2026-07-27: cancelling the Privy modal landed on the error
     // screen. `onError` fired for every code, and `exited_auth_flow` — the code
     // for "the user closed it" — was one of them.
-    function cancelLogin() {
-      fireEvent.click(screen.getByText("ENTER"));
+    async function cancelLogin() {
+      await pressEnter();
       act(() => {
         capturedLoginCallbacks?.onError?.("exited_auth_flow");
       });
     }
 
-    it("returns to the gate instead of the error screen", () => {
+    it("returns to the gate instead of the error screen", async () => {
       const { container } = renderGate();
-      cancelLogin();
+      await cancelLogin();
       expect(
         container.querySelector('[data-web-access="unauthenticated"]'),
       ).not.toBeNull();
@@ -195,11 +209,11 @@ describe("WebAccessGate", () => {
       expect(screen.getByText("ENTER")).toBeTruthy();
     });
 
-    it("re-arms the CTA so the player can sign in again", () => {
+    it("re-arms the CTA so the player can sign in again", async () => {
       renderGate();
-      cancelLogin();
+      await cancelLogin();
       fireEvent.click(screen.getByText("ENTER"));
-      expect(loginMock).toHaveBeenCalledTimes(2);
+      await waitFor(() => expect(loginMock).toHaveBeenCalledTimes(2));
     });
 
     it("does not report a login failure for a deliberate cancel", () => {
@@ -290,9 +304,9 @@ describe("WebAccessGate", () => {
       expect(viewed?.[1]).toEqual({ surface: "play" });
     });
 
-    it("emits login_started on the CTA and login_succeeded on completion", () => {
+    it("emits login_started on the CTA and login_succeeded on completion", async () => {
       const { rerender } = renderGate();
-      fireEvent.click(screen.getByText("ENTER"));
+      await pressEnter();
       expect(
         trackMock.mock.calls.some(
           ([event]) => event === WEB_ACCESS_EVENTS.loginStarted,

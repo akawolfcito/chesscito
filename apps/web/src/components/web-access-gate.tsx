@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 
+import { hasLoginCapacity } from "@/lib/access/capacity-client";
 import { DesktopAppFrame } from "@/components/chrome/desktop-app-frame";
 import { EarlyAccessRequest } from "@/components/early-access-request";
 import { trackWebAccess, WEB_ACCESS_EVENTS } from "@/lib/wallet/web-access-analytics";
@@ -113,9 +114,33 @@ export function WebAccessGate({
     }
   }, [state, authenticated, walletReady, surface]);
 
-  function startLogin() {
+  /**
+   * ⛔ EL CHEQUEO DE CAPACIDAD VA ANTES DE `login()`, Y ESE ORDEN ES EL FEATURE.
+   *
+   * Privy cuenta un MAU cuando refresca la sesión, así que un tope consultado
+   * después del login ya gastó exactamente lo que venía a proteger: informa de
+   * lo que se fue, no lo evita. Ese error se cometió en la v1 del diseño de
+   * acceso web (`docs/specs/2026-08-13-login-capacity-cap-spec.md`).
+   *
+   * ⚠️ Sin lugar, el visitante va a la waitlist que YA existe, no a un error.
+   * La copia del intake ya dice lo correcto para este momento —*"opening
+   * gradually to small groups of players"*— así que estar lleno no estrena
+   * pantalla ni estrena una frase sobre haber sido rechazado.
+   */
+  async function startLogin() {
     setError(false);
     setAuthenticating(true);
+
+    if (!(await hasLoginCapacity())) {
+      // Se limpia `authenticating` ANTES de abrir el intake: la waitlist sólo
+      // se renderiza desde `unauthenticated`, y un gate que quedara en
+      // `authenticating` dejaría al visitante frente a un botón deshabilitado
+      // sin nada en vuelo.
+      setAuthenticating(false);
+      setRequestingAccess(true);
+      return;
+    }
+
     trackWebAccess(WEB_ACCESS_EVENTS.loginStarted, surface);
     login();
   }
