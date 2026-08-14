@@ -86,22 +86,51 @@ cualquier otro origen de config (una fila con `NaN`, el día que exista).
 
 ---
 
-## 3. Lo que NO quedó cubierto, y por qué
+## 3. La perilla en vivo — resuelto (segunda mitad de la sesión)
 
-Dos acceptance criteria del spec siguen abiertos, **los dos por la misma decisión pendiente**:
+**Decisión del founder: la fila en Supabase**, con el pico de MiniPay de los primeros días
+como evidencia — *"un redeploy tardó entre 8-10 minutos, en ese tiempo se subió, pasamos el
+pico y la gente que entró ya nos rompió el arnés"*. Durante un pico, una perilla que exige
+redeploy no es una perilla.
 
-- [ ] *"Cambiar `limit` cambia el comportamiento sin redeploy"*
-- [ ] *"`enabled: false` reabre por completo"* — funciona, pero también cuesta un deploy
+`51ad179` — migración `20260814000000_login_capacity_config.sql` + `lib/access/capacity-config.ts`.
 
-El spec quería la perilla en **una fila**, no en un env var. Salió con **perilla estática**
-porque la decisión es tuya y no bloqueaba lo demás:
+- ⛔ **La fila le GANA al env var.** Si no ganara, la perilla en vivo no serviría de nada en
+  cualquier entorno donde el env var esté seteado — que es justo producción. Los dos env vars
+  quedan como **fallback**.
+- ⛔ **El lector nunca devuelve "no sé"**: fila ilegible → env var → default seguro. Un lector
+  de config que puede contestar `null` obliga a cada llamador a inventar qué hacer con eso, y
+  ahí nacen los fail-closed accidentales — que acá significan "nadie entra a la app".
+- ⚠️ **Singleton por construcción** (`boolean primary key check (id)`). Una tabla de config con
+  dos filas es una tabla de config sin respuesta, y el bug se descubre el día del pico.
+- ⚠️ **El check es `seat_limit > 0`, NO `< 499`.** El techo del plan es un hecho de Privy que
+  puede cambiar con su pricing; hornearlo en un constraint haría que la migración mienta el día
+  que lo suban.
 
-1. **Tabla chica de config en Supabase** — es una migración, y por regla del repo necesita tu
-   confirmación de entorno antes de aplicarla.
-2. **Vercel Edge Config** — sin migración, agrega una dependencia de plataforma.
+### Y el bug que salió de explicárselo al founder
 
-⚠️ **El cableado no cambia con ninguna de las dos**: sólo se reemplaza el `resolveCapacity*`
-de `route.ts` por la lectura de la fila. El trabajo de hoy no se tira.
+`6433703` — **el caché va ANTES del limitador.**
+
+⛔ El limitador corta a **60 req/min por IP**, y detrás de CGNAT —el caso normal en móvil—
+mucha gente comparte una sola IP de salida. El visitante 61 de un minuto recibía 429 y el
+cliente **falla abierto**: el tope **se apagaba solo exactamente en el escenario para el que
+existe**.
+
+El arreglo no es subir el límite: un veredicto fresco **no hace trabajo de base**, así que no
+hay nada que proteger. Cobrarle cuota a una respuesta gratis era lo que convertía al limitador
+en el interruptor de apagado. Con el caché delante (10 s en memoria + `s-maxage=10` para que el
+CDN absorba), una instancia toca la base como mucho una vez cada 10 s.
+
+⚠️ **Precio: la perilla tarda hasta ~20 s** en surtir efecto (10 de memoria + 10 de CDN).
+Contra los 8-10 minutos de un redeploy, es el intercambio que se quiso hacer.
+
+### ⛔ Lo que falta antes de aplicar
+
+**La migración NO se aplicó a ningún entorno, y su SQL no se ejecutó en ninguna parte** —
+Docker no estaba levantado para el probe. El probe está escrito
+(`scratchpad/capacity-probe.sql`: verifica que parsee, que el singleton sea singleton, que
+`seat_limit = 0` se rechace, que re-aplicarla no pise una perilla ya movida, y que `anon` reciba
+permission denied). **Correrlo antes de tocar producción.**
 
 ### El riesgo que documenté y no arreglé
 
@@ -125,13 +154,35 @@ empecemos a repartirlos.**
 
 ---
 
+## 5. El orden para abrir la web, que es lo que el founder preguntó
+
+⛔ **Apagar el allowlist de Privy NO transfiere el control a nuestro código.** El tope es un
+presupuesto que vive en nuestro cliente; el candado sigue siendo el allowlist. Lo que nuestro
+código sí controla es el pico orgánico a través de nuestra UI, que es el riesgo real — hay
+**un solo `login()` en toda la app** (`web-access-gate.tsx:145`) y está guardado.
+
+Cada paso es reversible, y el 2 existe porque el modo de fallar es **silencioso**: si el conteo
+no llega a la base, la ruta contesta `open: true` para siempre y se ve idéntica a una que
+funciona.
+
+1. Aplicar la migración (probe primero) y deployar. **Nada visible cambia** — 5 de 460.
+2. **Smoke**: poner `seat_limit = 1` en la fila y pegarle a `/api/access/capacity`.
+   `{"open":false}` → el tope cuenta y cierra. `{"open":true}` → el conteo **no llegó a la
+   base** y el tope está inerte: mirar `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` de ese
+   entorno antes de seguir. ⚠️ Esperar ~20 s por el caché.
+3. Devolver `seat_limit` a su valor real.
+4. **Recién ahí** sacar el allowlist en Privy. Ese es el momento en que la web se abre.
+5. Si algo sale mal: volver a prender el allowlist. Es un toggle y **no echa a los que ya
+   entraron** (*"All existing users will still be permitted to login"*).
+
+---
+
 ## Preguntas abiertas
 
-1. **¿Cuál es tu número?** Sigue en 460 por default. Con 5 cuentas en el pozo, no urge — pero
-   el día que urja ya es tarde para pensarlo.
-2. **¿La perilla va a fila o a Edge Config?** Ver §3.
-3. **¿Privy exporta la clave del usuario?** Sigue sin verificar. La más barata y de mayor
+1. **¿Cuál es tu número?** La fila arranca en 460. Con 5 cuentas en el pozo no urge — pero el
+   día que urja ya es tarde para pensarlo.
+2. **¿Privy exporta la clave del usuario?** Sigue sin verificar. La más barata y de mayor
    impacto de todas las que arrastramos.
-4. **¿Se le avisa a quien quedó en la waitlist cuando se reabre?** Sin eso, cerrar es perderlos
+3. **¿Se le avisa a quien quedó en la waitlist cuando se reabre?** Sin eso, cerrar es perderlos
    igual — que es justo lo que querías evitar. Hoy nadie está en esa situación (el tope no
    cerró nunca), así que es una decisión que se puede tomar tranquila.
