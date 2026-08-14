@@ -88,6 +88,10 @@ export type RateLimitRoute =
   /** ⚠️ Pre-login: su bucket es el ÚNICO de esta lista que ve tráfico sin
    *  sesión, así que comparte IP con todo visitante que aún no entró. */
   | "access-capacity"
+  /** ⚠️ El interruptor del waitlist. Su bucket falla ABIERTO como el de arriba,
+   *  pero por otra razón: es el botón de emergencia, y un Redis caído no puede
+   *  dejar al founder sin él. Quien protege acá es `ADMIN_TOKEN`. */
+  | "admin-access-capacity"
   | "pro-status"
   | "peones-balance"
   | "peones-earn"
