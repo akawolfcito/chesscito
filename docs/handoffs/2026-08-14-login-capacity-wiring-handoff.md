@@ -198,6 +198,36 @@ empecemos a repartirlos.**
 
 ---
 
+## 4.b El build roto, y el hueco de verificación que lo dejó pasar
+
+El primer deploy a producción **falló en el build** (`4fecb95`, 12:00 UTC). Nada llegó a
+publicarse — Vercel corta antes.
+
+```
+Type error: Route "src/app/api/access/capacity/route.ts" does not match the
+required types of a Next.js Route.
+  "__resetCapacityCache" is not a valid Route export field.
+```
+
+Next valida los exports de un route handler contra una lista cerrada. Yo exporté un hook de
+test. Fix (`9790ff9`): el estado del caché se muda a `lib/access/verdict-cache.ts`, donde el
+hook cabe. **Cero cambio de comportamiento.**
+
+⛔ **Lo que importa es por qué no lo vi, y es una invariante del repo, no un descuido puntual:**
+la suite entera pasaba (**8.077 tests**) y `tsc --noEmit` daba **exit 0**. Esta validación **no
+es de TypeScript**: la hace `next build`, que genera tipos por ruta y los compara. El único
+comando del repo que la corre es `pnpm type-check` (`next build && tsc --noEmit`) — **no** el
+`tsc` suelto que recomienda la higiene de comandos de CLAUDE.md, que es el que usé.
+
+⚠️ **Regla que deja: en este repo, un cambio que toca `app/` no queda verificado con
+`tsc --noEmit`.** Hace falta el build, o el guard.
+
+✅ **Y el guard existe desde este incidente**: `src/app/api/__tests__/route-exports-guard.test.ts`
+recorre los **55** `route.ts` del repo y falla ante cualquier export fuera de la lista de Next.
+Compra en 40 ms lo que costaba un build de 2 minutos, en la corrida que uno sí hace siempre.
+
+---
+
 ## 5. El orden para abrir la web, que es lo que el founder preguntó
 
 ⛔ **Apagar el allowlist de Privy NO transfiere el control a nuestro código.** El tope es un
