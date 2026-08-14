@@ -25,6 +25,11 @@ import { NextResponse } from "next/server";
 import { countBrowserAccounts } from "@/lib/access/browser-accounts";
 import { readCapacityConfig } from "@/lib/access/capacity-config";
 import { decideLoginCapacity } from "@/lib/access/login-capacity";
+import {
+  readCachedVerdict,
+  VERDICT_TTL_MS,
+  writeCachedVerdict,
+} from "@/lib/access/verdict-cache";
 import { getRequestIp } from "@/lib/server/demo-signing";
 import { createLogger } from "@/lib/server/logger";
 import { checkRateLimit } from "@/lib/server/rate-limit";
@@ -33,32 +38,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const log = createLogger({ route: "/api/access/capacity" });
-
-/**
- * Cuánto vive un veredicto ya calculado, en memoria de la instancia.
- *
- * ⛔ **Esto NO es una optimización, es la corrección del agujero del pico.** El
- * limitador corta a 60 req/min por IP, y detrás de CGNAT —el caso normal en
- * móvil— mucha gente comparte una sola IP de salida. Sin caché, el visitante 61
- * de un minuto recibía 429, y el cliente falla abierto: el tope se apagaba solo
- * **exactamente en el escenario para el que existe**.
- *
- * Con el caché delante, una instancia toca la base como mucho una vez cada 10 s,
- * así que el limitador casi nunca ve tráfico y el 429 deja de ser el camino
- * frecuente.
- *
- * ⚠️ **El precio es el tiempo de reacción de la perilla**: hasta 10 s acá más
- * hasta 10 s del CDN, o sea ~20 s en el peor caso desde que se edita la fila.
- * Contra los 8–10 minutos de un redeploy, es el intercambio que se quiso hacer.
- */
-const VERDICT_TTL_MS = 10_000;
-
-let cachedVerdict: { open: boolean; expiresAt: number } | null = null;
-
-/** Test hook — tira el veredicto cacheado. */
-export function __resetCapacityCache(): void {
-  cachedVerdict = null;
-}
 
 function respond(open: boolean) {
   return NextResponse.json(
@@ -82,9 +61,8 @@ export async function GET(req: Request) {
   // una respuesta gratis es lo que convertía al limitador en el interruptor de
   // apagado del tope durante un pico.
   const now = Date.now();
-  if (cachedVerdict && now < cachedVerdict.expiresAt) {
-    return respond(cachedVerdict.open);
-  }
+  const cached = readCachedVerdict(now);
+  if (cached !== null) return respond(cached);
 
   // ⚠️ `fail-open`: si el limitador se cae, la respuesta correcta es dejar
   // entrar. El allowlist de Privy sigue debajo como red real.
@@ -118,6 +96,6 @@ export async function GET(req: Request) {
     });
   }
 
-  cachedVerdict = { open: capacity.open, expiresAt: now + VERDICT_TTL_MS };
+  writeCachedVerdict(capacity.open, now);
   return respond(capacity.open);
 }

@@ -38,7 +38,8 @@ vi.mock("@/lib/server/logger", () => ({
   createLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }),
 }));
 
-import { GET, __resetCapacityCache } from "@/app/api/access/capacity/route";
+import { GET } from "@/app/api/access/capacity/route";
+import { __resetCapacityCache } from "@/lib/access/verdict-cache";
 
 function get() {
   return GET(new Request("https://learn.chesscito.com/api/access/capacity"));
