@@ -129,3 +129,60 @@ describe("mode-aware middleware", () => {
     );
   });
 });
+
+/**
+ * ⛔ ESTE BLOQUE EXISTE POR UN INCIDENTE EN PRODUCCIÓN (2026-08-14).
+ *
+ * `/control-tower/access` —el interruptor del waitlist— **redirigía a `/`** en cuanto se
+ * deployó. La página estaba bien y su ruta también: lo que faltaba era una palabra en el
+ * matcher del middleware. Todo path que no esté excluido pasa por el routing de locale, que
+ * trata al primer segmento como un locale y manda a la raíz.
+ *
+ * ⚠️ **Y nada más lo delata.** No hay error, ni log, ni test que falle: la superficie
+ * simplemente no existe desde afuera, con la app entera en verde. Es la misma clase de bug que
+ * el export de más en un `route.ts` — el código está bien y la plataforma lo descarta.
+ *
+ * Por eso el test corre contra el matcher REAL de `config`, no contra una copia: una lista
+ * duplicada acá pasaría en verde con el middleware equivocado.
+ */
+describe("matcher del middleware", () => {
+  async function matcherRegex(): Promise<RegExp> {
+    vi.resetModules();
+    // Mismo doble que `loadMiddleware`: el módulo real de next-intl no resuelve
+    // `next/server` bajo Vitest, y acá sólo interesa el `config` exportado.
+    vi.doMock("next-intl/middleware", () => ({
+      default: () => () => NextResponse.next(),
+    }));
+    const { config } = await import("../middleware");
+    const [pattern] = (config as { matcher: string[] }).matcher;
+    return new RegExp(`^${pattern}$`);
+  }
+
+  const excluded = [
+    ["API", "/api/access/capacity"],
+    ["fixtures de dev", "/dev/labyrinth-builder"],
+    ["QA de Lite", "/lite-debug/reset"],
+    ["el interruptor", "/control-tower/access"],
+    ["internals de Next", "/_next/static/chunk.js"],
+    ["assets con extensión", "/art/board.png"],
+  ] as const;
+
+  for (const [name, path] of excluded) {
+    it(`deja pasar ${name} sin routing de locale (${path})`, async () => {
+      expect((await matcherRegex()).test(path)).toBe(false);
+    });
+  }
+
+  const routed = [
+    ["la raíz", "/"],
+    ["el hub", "/hub"],
+    ["ejercicios", "/en/exercises"],
+  ] as const;
+
+  for (const [name, path] of routed) {
+    it(`sí rutea ${name} (${path})`, async () => {
+      // La otra mitad: un matcher que excluyera de más dejaría al producto sin i18n.
+      expect((await matcherRegex()).test(path)).toBe(true);
+    });
+  }
+});

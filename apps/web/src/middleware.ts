@@ -68,11 +68,18 @@ export default function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Exclude API routes, Next internals, dev/VR fixtures and hidden Lite QA
-    // tools (kept locale-agnostic so their explicit paths remain stable), and
-    // any path
-    // with a file extension (static assets). Anything else gets
-    // locale routing.
-    "/((?!api|_next|_vercel|dev|lite-debug|.*\\..*).*)",
+    // Exclude API routes, Next internals, dev/VR fixtures, hidden Lite QA tools
+    // and the operations surface (all kept locale-agnostic so their explicit
+    // paths remain stable), and any path with a file extension (static assets).
+    // Anything else gets locale routing.
+    //
+    // ⛔ AÑADIR ACÁ TODA SUPERFICIE QUE NO SEA PRODUCTO, O NO EXISTE.
+    // `/control-tower` se deployó sin esta palabra el 2026-08-14 y **redirigía a
+    // `/`**: la página estaba bien, la ruta estaba bien, pero todo path no
+    // excluido pasa por el routing de locale, que lee el primer segmento como un
+    // locale y manda a la raíz. No hay error, ni log, ni test que falle — la
+    // superficie simplemente no existe desde afuera con la app entera en verde.
+    // `src/__tests__/middleware.test.ts` fija esta lista contra el matcher real.
+    "/((?!api|_next|_vercel|dev|lite-debug|control-tower|.*\\..*).*)",
   ],
 };
