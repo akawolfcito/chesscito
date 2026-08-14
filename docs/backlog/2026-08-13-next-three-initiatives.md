@@ -60,7 +60,15 @@ no el fin. Pendiente de spec.
 **huérfana**; un `/art/...` escrito en JS **también** pasa por el resolver; tocar un slot de tema
 rompe **tres** baselines.
 
-## 3. Builder de ejercicios — refinar (propuesta con mockups del founder)
+## 3. ✅ Builder de ejercicios — HECHO (2026-08-13)
+
+⛔ **Esta sección quedó vieja el mismo día que se escribió.** Los seis ítems del mockup
+entraron, más cinco mejoras que salieron de autorar de verdad. Ver
+`docs/handoffs/2026-08-13-exercise-builder-layout-handoff.md`.
+**El orden recomendado del final resuelve entonces a: P2P → Theme builder.**
+Lo de abajo se conserva como el registro de lo que se pidió.
+
+### (histórico) La propuesta con mockups del founder
 
 La más barata de las tres y la que **multiplica el trabajo que ya está en curso**: quedan 30
 tableros por convertir y todo el contenido futuro pasa por acá.
