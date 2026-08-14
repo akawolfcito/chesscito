@@ -124,13 +124,57 @@ CDN absorba), una instancia toca la base como mucho una vez cada 10 s.
 ⚠️ **Precio: la perilla tarda hasta ~20 s** en surtir efecto (10 de memoria + 10 de CDN).
 Contra los 8-10 minutos de un redeploy, es el intercambio que se quiso hacer.
 
+## 4. El interruptor — `/admin/access`
+
+**Lo que el founder pidió, textual:** *"mi botón de apagado o encendido del waitlist desde
+cualquier lugar sin estresarme por queries, permisos, etc"*. No un dashboard: un botón.
+
+`31a66f8` (la ruta) + `2453a7d` (la página).
+
+- ✅ **La auth ya existía**: `ADMIN_TOKEN` + header `x-admin-token`, el patrón de
+  `/api/admin/lite-stats`. **Verificado que está seteado en producción sin pedir credenciales**:
+  esa ruta contesta **403** (configurado) y no 503 (ausente) en learn y en play. Cero secretos
+  nuevos.
+- ⛔ **El radio de daño acotado es lo que permite esta ceremonia.** Con el token, lo peor que se
+  logra es apagar el tope (pagamos Privy) o ponerlo en 1 (nadie nuevo entra): **ningún dato se
+  expone y las dos cosas se revierten en un tap.** ⚠️ **El día que esta página crezca hacia
+  otras operaciones ese techo se cae, y la autenticación se rehace ANTES, no después.**
+- ⛔ **`/admin` NO lleva `isDevSurfaceEnabled()`.** `/dev` es 404 en producción a propósito;
+  esto tiene que andar justamente ahí. Lo protege el token, no la ausencia.
+- ⚠️ **Acá el conteo SÍ viaja al cliente**, y es la diferencia con `/api/access/capacity`: esa
+  la lee un visitante, ésta el founder detrás de un token. Sin el número, el botón no avisa nada
+  hasta que ya cerró — **por eso esta página es también el aviso temprano, y no hizo falta
+  construirlo aparte ni meterlo en `ops:health`.**
+- ⚠️ El token viaja **por header**, nunca por la URL (historial, logs del CDN, Referer).
+- ⚠️ Un tope por encima de 499 **se acepta y se avisa**, no se bloquea: el techo es un hecho del
+  pricing de Privy y hornearlo haría que el botón mienta el día que lo suban.
+- ⚠️ El limitador de esta ruta falla **abierto**, igual que el de la pública pero por otra razón:
+  es el botón de emergencia y un Redis caído no puede dejar al founder sin él.
+
+### El panel de ops que NO se construyó, y por qué
+
+El founder preguntó por un `apps/ops` visual. **Se descartó por ahora**, y no por pereza: el día
+que ese panel se deploya deja de ser un reporte y pasa a ser una superficie que guarda el
+service role de producción — eso obliga a autenticación real, y la auth es la parte cara, no los
+gráficos. El health en terminal se queda como está (el founder dijo que así está bien).
+⚠️ **Y "operaciones" no es "el health con CSS"**: un panel que *ejecuta* necesita auditoría de
+quién tocó qué. Es otro producto y merece su spec.
+
 ### ⛔ Lo que falta antes de aplicar
 
-**La migración NO se aplicó a ningún entorno, y su SQL no se ejecutó en ninguna parte** —
-Docker no estaba levantado para el probe. El probe está escrito
-(`scratchpad/capacity-probe.sql`: verifica que parsee, que el singleton sea singleton, que
-`seat_limit = 0` se rechace, que re-aplicarla no pise una perilla ya movida, y que `anon` reciba
-permission denied). **Correrlo antes de tocar producción.**
+✅ **RESUELTO — la migración está aplicada en producción** (2026-08-14). Probe en Postgres
+desechable primero (los cinco checks verdes), y después la aplicación real en **una
+transacción**, con verificación en la misma corrida: tabla creada (no existía), fila
+`460 / true`, RLS activo, `anon`/`authenticated` sin privilegios, `20260814000000` en el ledger.
+
+⛔ **Deliberadamente NO se usó `supabase db push`.** El ledger de hosted estaba en
+`20260810000000` y el repo tiene además **`20260811150000_content_overlay_sweeps` pendiente**;
+un push habría corrido las dos. Se aplicó **sólo** el archivo autorizado, por psql.
+
+⚠️ **Queda pendiente entonces `content_overlay_sweeps`** — también aditiva (dos columnas
+nullable, pensada para deployarse antes de la ruta que las escribe). Es la que la memoria marca
+como *"falta aplicar, o TODO guardado es 500"*. **Resolverla en su propio momento, no de
+arrastre.**
 
 ### El riesgo que documenté y no arreglé
 
@@ -165,12 +209,14 @@ Cada paso es reversible, y el 2 existe porque el modo de fallar es **silencioso*
 no llega a la base, la ruta contesta `open: true` para siempre y se ve idéntica a una que
 funciona.
 
-1. Aplicar la migración (probe primero) y deployar. **Nada visible cambia** — 5 de 460.
-2. **Smoke**: poner `seat_limit = 1` en la fila y pegarle a `/api/access/capacity`.
-   `{"open":false}` → el tope cuenta y cierra. `{"open":true}` → el conteo **no llegó a la
-   base** y el tope está inerte: mirar `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` de ese
-   entorno antes de seguir. ⚠️ Esperar ~20 s por el caché.
-3. Devolver `seat_limit` a su valor real.
+1. ✅ **Migración aplicada.** Falta **deployar** el código (36+ commits sin pushear).
+   Nada visible cambia — 5 de 460.
+2. **Smoke**: abrir `/admin/access`, pegar el `ADMIN_TOKEN` una vez, poner el tope en **1** y
+   pegarle a `/api/access/capacity`. `{"open":false}` → el tope cuenta y cierra.
+   `{"open":true}` → el conteo **no llegó a la base** y el tope está inerte: mirar
+   `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` de ese entorno antes de seguir.
+   ⚠️ Esperar ~20 s por el caché.
+3. Devolver el tope a su valor real **desde el mismo botón**.
 4. **Recién ahí** sacar el allowlist en Privy. Ese es el momento en que la web se abre.
 5. Si algo sale mal: volver a prender el allowlist. Es un toggle y **no echa a los que ya
    entraron** (*"All existing users will still be permitted to login"*).
