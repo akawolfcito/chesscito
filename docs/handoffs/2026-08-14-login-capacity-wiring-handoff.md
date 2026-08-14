@@ -228,6 +228,32 @@ Compra en 40 ms lo que costaba un build de 2 minutos, en la corrida que uno sí 
 
 ---
 
+## 4.c El interruptor deployado que redirigía a `/`
+
+Segundo incidente del deploy, reportado por el founder al abrirlo:
+`/control-tower/access` iba a parar a la raíz.
+
+**La página estaba bien y su ruta también.** Faltaba **una palabra** en el matcher del
+middleware (`middleware.ts`): excluía `api|_next|_vercel|dev|lite-debug` y no `control-tower`.
+Todo path no excluido pasa por el routing de locale, que lee el primer segmento como un idioma
+y redirige. Fix: `7021909`.
+
+⛔ **Es la MISMA FAMILIA que el build roto de arriba, y por eso van juntos acá: código correcto
+que la plataforma descarta en silencio.** En los dos casos no hubo error, ni log, ni test rojo —
+con la app entera en verde, la superficie simplemente no existía desde afuera.
+
+⚠️ **La regla que dejan las dos, y es una sola:** *un cambio que agrega una superficie no se
+verifica con la suite.* Hay que **abrirla**. Vitest y `tsc` prueban que el código hace lo que
+dice; ninguno de los dos prueba que Next se lo entregue a alguien.
+
+✅ Guard: el bloque `matcher del middleware` en `src/__tests__/middleware.test.ts` corre contra
+el `config` **real** (una lista duplicada en el test pasaría en verde con el middleware
+equivocado) y cubre las dos direcciones — que las seis superficies no-producto queden fuera, y
+que `/`, `/hub` y `/en/exercises` sigan ruteando, porque un matcher que excluya de más deja al
+producto sin i18n.
+
+---
+
 ## 5. El orden para abrir la web, que es lo que el founder preguntó
 
 ⛔ **Apagar el allowlist de Privy NO transfiere el control a nuestro código.** El tope es un
