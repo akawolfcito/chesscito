@@ -18,6 +18,28 @@ const LEGACY_LITE_HOSTS = new Set([
   "lite-preview.chesscito.com",
 ]);
 
+/**
+ * The origin a PLAY-only surface must be linked at from `current`.
+ *
+ * ⚠️ Exported so the duel's share link can be built without a second copy of
+ * `MODE_HOSTS`. Two host tables that drift is the same failure mode as two
+ * copies of the board geometry: nothing observable breaks until the day one of
+ * them is wrong.
+ *
+ * A host we do not recognise — localhost, a preview tunnel — keeps its own
+ * origin. That is deliberate: rewriting a `trycloudflare.com` tunnel to
+ * `play.chesscito.com` would hand a tester a link to PRODUCTION every time they
+ * tried a duel on their phone. There is no cross-domain bounce in dev anyway.
+ */
+export function playOriginFrom(current: URL): string {
+  const isKnownLearnHost =
+    current.hostname === MODE_HOSTS.learn.production ||
+    current.hostname === MODE_HOSTS.learn.preview;
+  if (!isKnownLearnHost) return current.origin;
+
+  return `https://${MODE_HOSTS.play[deploymentFor(current.hostname)]}`;
+}
+
 function stripLocalePrefix(
   pathname: string,
   locales: readonly string[],
