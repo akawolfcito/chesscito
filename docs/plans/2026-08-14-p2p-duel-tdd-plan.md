@@ -8,6 +8,17 @@
 > medio cablear. El orden no es de dependencia técnica: es **de riesgo**. Lo que puede
 > invalidar el diseño va primero, cuando corregirlo todavía es barato.
 
+## Estado (2026-08-15)
+
+| etapa | estado |
+| --- | --- |
+| 0 — árbitro + reloj | ✅ `lib/duel/{types,clock,referee}.ts` |
+| 1 — identidad del asiento | ✅ `lib/duel/seat-token.ts` |
+| 2 — la tabla | ✅ escrita y probada contra Postgres — ⛔ **NO aplicada a ninguna base** |
+| 3 — las rutas | ⬜ **acá se retoma** |
+| 4 — el enlace sobrevive al login | ✅ **cerrada por medición**, sin construir nada (ver abajo) |
+| 5 — la Arena | ⬜ |
+
 ---
 
 ## Etapa 0 — El árbitro, sin red ni base *(pura, sin I/O)*
@@ -83,19 +94,50 @@ Un `Omit<>` de TypeScript no borra un campo en runtime.
 
 ---
 
-## Etapa 4 — El enlace que sobrevive al login
+## Etapa 4 — El enlace que sobrevive al login → ✅ **CERRADA POR MEDICIÓN (2026-08-15)**
 
-**Es el único P0 vivo del red-team y la condición para dar el spec por READY.**
+Era **el único P0 vivo del red-team y la condición para dar el spec por READY**. No hubo que
+construir nada: se midió y ya funciona.
 
-Abrir `/arena?duel=<id>` sin sesión → gate → Privy → volver **a ese duelo**. Si el parámetro se
-pierde, el invitado cae en el hub sin saber a qué lo invitaron y el duelo queda
-`awaiting-opponent` para siempre.
+**Qué se midió**, en un teléfono, con Google — que es el camino riesgoso, porque en móvil Privy
+resuelve el OAuth con **redirect de página completa**, no con el popup que usa en desktop:
 
-⚠️ Toca `web-access-gate.tsx`, que **acabo de modificar** para el tope de logins. Releer
-`startLogin()` antes de tocarlo.
+```
+/arena?duel=test123&privy_oauth_state=…&privy_oauth_provider=google&privy_oauth_code=…
+```
 
-⛔ **Y la superficie nueva no está verificada hasta abrirla** — dos deploys rotos el 2026-08-14
-por exactamente eso ([[feedback_a_new_surface_is_not_verified_until_you_open_it]]).
+Privy **conserva la query original y anexa la suya**. El invitado aterrizó en la Arena con
+`duel=test123` intacto. También se verificó el camino de email + OTP (modal, nunca navega).
+
+⛔ **Por qué no se construyó el estacionamiento igual**: se llegó a proponerlo como seguro
+contra "Privy puede cambiar popup por redirect". Esa duda murió con la medición — el caso
+medido **ya es** el redirect. Construirlo habría sido código sin defecto que lo justifique.
+
+**La otra mitad, que sí podemos romper nosotros**, quedó fijada con un test:
+`components/__tests__/web-access-gate-preserves-url.test.tsx`. Un `router.push("/hub")` agregado
+después del login rompería el enlace del duelo **sin poner roja ninguna otra prueba**, porque
+"el usuario entró" seguiría siendo cierto. Verificado por mutación: metiéndole al gate un
+`history.replaceState` a `/hub`, 2 de 3 casos se pusieron rojos.
+
+### Lo que la medición dejó de regalo (2 hallazgos)
+
+⛔ **El enlace compartido NO se arma desde `window.location.href`.** Después del login la barra
+contiene `privy_oauth_code` y `privy_oauth_state`; un botón de compartir que copie la URL actual
+le manda al amigo el código OAuth del invitador pegado al enlace. Se arma **desde el `id` del
+duelo**. Va a la Etapa 5.
+
+⛔ **Y se arma con el host de PLAY, absoluto.** En modo `learn`, `middleware.ts` → `mode-routing.ts`
+rebota todo `/arena` al host de play (cross-domain). La query sobrevive ese salto — **la cookie
+del asiento no**, porque no cruza de dominio. Ahí el token del body deja de ser el respaldo y
+pasa a ser lo único que queda.
+
+### Lo que la medición NO cubre
+
+⚠️ El invitado que **no está en el allowlist de Privy** ve *"You don't have access to this app —
+Have you been invited?"*, y detrás nuestra pantalla dice *"Something interrupted your sign in"*
+con un **Try again** que no va a funcionar nunca. Ninguno de los dos lo lleva a la **waitlist**,
+que existe y tiene la copia correcta. Es el camino que este feature va a estrenar, y no tiene
+spec. No es del duelo, pero lo destapó el duelo.
 
 ---
 
@@ -105,6 +147,11 @@ Estados: invitando · esperando rival · tu turno · turno del rival · terminad
 Los dos relojes corriendo, con **interpolación local** entre polls.
 La elección de promoción de peón (sin ella el movimiento es irreproducible).
 La escalera `−`/`+` al crear.
+
+⛔ **El enlace para compartir se arma desde el `id` del duelo y con el host de PLAY absoluto —
+NUNCA desde `window.location.href`.** Las dos razones están medidas y viven en la Etapa 4:
+la URL post-login arrastra el `privy_oauth_code` del invitador, y un enlace relativo abierto
+desde el host de LEARN rebota cross-domain, donde la cookie del asiento no viaja.
 
 ⚠️ El poll **no** necesita ser más frecuente por el reloj: el cliente sabe `lastMoveAt` y de
 quién es el turno, así que dibuja solo. El poll es sólo para enterarse de la jugada del rival.
