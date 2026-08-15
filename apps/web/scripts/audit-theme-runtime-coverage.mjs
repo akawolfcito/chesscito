@@ -545,12 +545,15 @@ if (CHECK_MODE) {
   // (season-pass / coach / complete). They are deliberately their own slots
   // rather than a reuse of the KingdomCard trio — that trio describes hub
   // navigation, not what the subscription buys.
-  const expectedInitial = { A: 2, B: 84, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  // 2026-08-15: B 84 -> 87 por los tres arena.duel-lobby-*, el espacio de la
+  // pantalla de espera del duelo. Sin `default`: hasta que haya archivo la
+  // pantalla muestra el tablero (ver lib/duel/lobby.ts).
+  const expectedInitial = { A: 2, B: 87, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 180 ||
+    inventory.length !== 183 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

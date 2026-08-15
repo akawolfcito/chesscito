@@ -184,6 +184,9 @@ export type ThemeAssetKey =
   | "arena.rival-mara"
   | "arena.rival-frame-blue"
   | "arena.rival-frame-gold"
+  | "arena.duel-lobby-1"
+  | "arena.duel-lobby-2"
+  | "arena.duel-lobby-3"
   | "arena.rival-frame-silver"
   // PRO-only overlays: no default (free users see nothing), pro = gold frame
   | "arena.avatar-frame-you"
@@ -700,6 +703,36 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/rivals/frame-blue",
         usedIn: ["Arena — rival frame (blue)", "↳ components/arena/arena-select-scaffold.tsx"],
       },
+      // ⛔ Sin `default` a proposito: hasta que el founder suba un archivo
+      // este slot no renderiza NADA, y la pantalla de espera muestra el
+      // tablero. Es el mismo mecanismo que los marcos PRO de mas abajo.
+      "arena.duel-lobby-1": {
+        usedIn: [
+          "Arena — duelo, pantalla de espera (imagen 1 de 3)",
+          "↳ components/duel/duel-lobby.tsx",
+          "Rotan solo las que existan; sin ninguna se ve el tablero.",
+        ],
+      },
+      // ⛔ Sin `default` a proposito: hasta que el founder suba un archivo
+      // este slot no renderiza NADA, y la pantalla de espera muestra el
+      // tablero. Es el mismo mecanismo que los marcos PRO de mas abajo.
+      "arena.duel-lobby-2": {
+        usedIn: [
+          "Arena — duelo, pantalla de espera (imagen 2 de 3)",
+          "↳ components/duel/duel-lobby.tsx",
+          "Rotan solo las que existan; sin ninguna se ve el tablero.",
+        ],
+      },
+      // ⛔ Sin `default` a proposito: hasta que el founder suba un archivo
+      // este slot no renderiza NADA, y la pantalla de espera muestra el
+      // tablero. Es el mismo mecanismo que los marcos PRO de mas abajo.
+      "arena.duel-lobby-3": {
+        usedIn: [
+          "Arena — duelo, pantalla de espera (imagen 3 de 3)",
+          "↳ components/duel/duel-lobby.tsx",
+          "Rotan solo las que existan; sin ninguna se ve el tablero.",
+        ],
+      },
       "arena.rival-frame-gold": {
         default: "/art/rivals/frame-gold",
         usedIn: ["Arena — rival frame (gold)", "↳ components/arena/arena-select-scaffold.tsx"],
@@ -1092,6 +1125,9 @@ const PLAY_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "arena.rival-mara",
   "arena.rival-frame-blue",
   "arena.rival-frame-gold",
+  "arena.duel-lobby-1",
+  "arena.duel-lobby-2",
+  "arena.duel-lobby-3",
   "arena.rival-frame-silver",
   "arena.avatar-frame-you",
   "arena.avatar-frame-bot",

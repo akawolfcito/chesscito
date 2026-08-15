@@ -58,17 +58,21 @@ describe("theme runtime catalog coverage", () => {
     // 180 (2026-07-29): − daily.welldone. The retired art baked an English
     // headline into a picture; the Daily celebration renders live text now,
     // so the slot lost its only consumer: A 167 → 166, initial B 85 → 84.
-    expect(report.totalSlots).toBe(180);
+    // 183 (2026-08-15): + los tres arena.duel-lobby-*, que el duelo resuelve
+    // por useThemeAsset y muestra solo si tienen archivo.
+    expect(report.totalSlots).toBe(183);
     expect(report.initialCategoryCounts).toEqual({
       A: 2,
-      B: 84,
+      B: 87,
       C: 26,
       D: 38,
       E: 19,
       F: 11,
       G: 0,
     });
-    expect(report.connectedSlots).toBe(167);
+    // 170 (2026-08-15): + los tres arena.duel-lobby-*, conectados por
+    // useThemeAsset desde useDuelLobbySlides.
+    expect(report.connectedSlots).toBe(170);
     expect(report.excludedSlots).toBe(13);
     expect(
       report.slots.filter(

@@ -17621,3 +17621,46 @@ button.web-access-link {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+
+/* El lobby del duelo: el espacio donde se muestra contenido mientras nadie
+   contesta el enlace. ⛔ Si no hay imagen cargada esto no se renderiza y se ve
+   el tablero; un slot vacio nunca puede volverse un rectangulo vacio. */
+
+.duel-lobby {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(20, 42, 16, 0.35);
+}
+
+/* `contain` y no `cover`: la imagen la autora el founder desde el builder, y
+   recortarle los bordes le arruinaria cualquier texto que haya puesto. */
+.duel-lobby-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.duel-lobby-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.duel-lobby-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 248, 233, 0.45);
+}
+
+.duel-lobby-dot.is-active {
+  background: #fff8e9;
+}

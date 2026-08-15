@@ -11,6 +11,7 @@ import { ArenaConfirmModal } from "@/components/arena/arena-confirm-modal";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
 import { DuelClock } from "@/components/duel/duel-clock";
 import { DuelEndOverlay } from "@/components/duel/duel-end-overlay";
+import { DuelLobby, useDuelLobbySlides } from "@/components/duel/duel-lobby";
 import { isBoardInteractive, type DuelArenaState } from "@/lib/duel/arena-state";
 import { DUEL_INTRO_MS, shouldPlayIntro } from "@/lib/duel/intro";
 import { duelBoardView } from "@/lib/duel/board-view";
@@ -55,6 +56,8 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
   const [resignOpen, setResignOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [endDismissed, setEndDismissed] = useState(false);
+  /** ⛔ Vacio significa "mostra el tablero". Ver duel-lobby.tsx. */
+  const lobbySlideSources = useDuelLobbySlides();
 
   const duel = "duel" in state ? state.duel : null;
   const interactive = isBoardInteractive(state);
@@ -217,6 +220,17 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
 
   const you = state.duel.you;
 
+  /**
+   * ⛔ Only while WAITING, and only if an image actually exists.
+   *
+   * The lobby replaces the board on the one screen where no clock is running,
+   * so it costs nobody a second. ⚠️ The emptiness check is the HOOK's answer,
+   * not the component's: a component that renders `null` is still a truthy
+   * element to its caller, so asking it here is what keeps the board as the
+   * real fallback.
+   */
+  const showLobby = state.kind === "inviting" && lobbySlideSources.length > 0;
+
   return (
     <section className="duel-arena" data-duel-state={state.kind}>
       <header className="duel-header">
@@ -237,6 +251,9 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
         />
       </header>
 
+      {showLobby ? (
+        <DuelLobby slides={lobbySlideSources} alt={t("invitingTitle")} />
+      ) : (
       <ArenaBoard
         pieces={piecesOf(state.duel.fen)}
         selectedSquare={selected}
@@ -252,6 +269,7 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
         // spectator keeps white's view, which is the neutral one.
         playerColor={you ?? "w"}
       />
+      )}
 
       {notice ? (
         <p className="duel-notice" role="status">
