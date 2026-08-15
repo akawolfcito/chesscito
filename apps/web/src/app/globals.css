@@ -17326,10 +17326,12 @@ button.web-access-link {
 /* ── Duelo por enlace ────────────────────────────────────────────────
    Spec: docs/specs/2026-08-15-duel-arena-ui-states-spec.md
 
-   El duelo vive en la MISMA superficie que la partida contra la IA
-   (`/arena?duel=<id>`), asi que hereda el ancho de app y el fondo de la
-   pantalla de juego. Lo unico propio es el par de relojes y el pie que
-   cambia con el estado.
+   ⛔ NO usar --muted-foreground ni --foreground acá. Esos tokens están
+   pensados para tarjetas claras; el duelo vive sobre el MUNDO VERDE, donde
+   la Arena ya tiene su vocabulario: crema #fff8e9 con sombra para el texto,
+   y chips oscuros para los datos. El primer intento los usó y el resultado
+   fue texto gris sobre verde brillante, ilegible en el teléfono.
+   Reportado por el founder en el primer playtest, 2026-08-15.
 
    ⚠️ Mobile-first a 390px. Desktop no es prioridad. */
 
@@ -17358,51 +17360,87 @@ button.web-access-link {
   gap: 8px;
 }
 
-.duel-status {
+.duel-status,
+.duel-title {
   text-align: center;
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-weight: 900;
+  color: #fff8e9;
+  text-shadow:
+    0 1px 0 rgba(72, 42, 8, 0.55),
+    0 2px 6px rgba(24, 54, 12, 0.45);
+}
+
+.duel-status {
+  font-size: 0.95rem;
+  line-height: 1.15;
+}
+
+.duel-title {
+  font-size: 1.3rem;
+}
+
+/* El cuerpo y las pistas también van sobre el verde: crema apenas más
+   apagada que el título, nunca gris. */
+.duel-body,
+.duel-hint {
+  text-align: center;
+  color: rgba(255, 248, 233, 0.92);
+  text-shadow: 0 1px 3px rgba(24, 54, 12, 0.5);
+}
+
+.duel-body {
   font-size: 0.9375rem;
-  font-weight: 600;
-  color: hsl(var(--foreground));
+  line-height: 1.35;
+}
+
+.duel-hint {
+  font-size: 0.8125rem;
+  color: rgba(255, 248, 233, 0.78);
 }
 
 .duel-clock {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 72px;
+  min-width: 74px;
   padding: 6px 10px;
-  border-radius: 12px;
-  background: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
+  border-radius: 14px;
+  background: rgba(20, 42, 16, 0.82);
+  border: 1px solid rgba(255, 248, 233, 0.18);
+  color: rgba(255, 248, 233, 0.72);
   font-variant-numeric: tabular-nums;
 }
 
 /* Corre el del que tiene el turno, y se ve. Sin esta diferencia los dos
    numeros se leen igual y el jugador no sabe cual es el suyo bajando. */
 .duel-clock.is-running {
-  background: hsl(var(--accent));
-  color: hsl(var(--accent-foreground));
+  background: linear-gradient(180deg, #f6c445 0%, #d99a1c 100%);
+  border-color: rgba(255, 248, 233, 0.6);
+  color: #3f2208;
 }
 
 /* Ultimos 30 segundos. ⚠️ Es una senal visual, NO una regla: quien decide
    que cayo la bandera es el servidor. */
 .duel-clock.is-low {
-  background: hsl(var(--destructive));
-  color: hsl(var(--destructive-foreground));
+  background: linear-gradient(180deg, #ef5350 0%, #b3241f 100%);
+  border-color: rgba(255, 248, 233, 0.7);
+  color: #fff8e9;
 }
 
 .duel-clock-label {
   font-size: 0.6875rem;
+  font-weight: 700;
   line-height: 1.2;
-  max-width: 72px;
+  max-width: 74px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .duel-clock-time {
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-size: 1.2rem;
+  font-weight: 900;
   line-height: 1.2;
 }
 
@@ -17413,45 +17451,34 @@ button.web-access-link {
   align-items: stretch;
 }
 
-.duel-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  text-align: center;
-  color: hsl(var(--foreground));
-}
-
-.duel-body {
-  font-size: 0.9375rem;
-  text-align: center;
-  color: hsl(var(--muted-foreground));
-}
-
-.duel-hint {
-  font-size: 0.8125rem;
-  text-align: center;
-  color: hsl(var(--muted-foreground));
-}
-
+/* La accion principal toma el verde del reino, no el blanco de una tarjeta. */
 .duel-cta {
-  min-height: 52px;
-  border-radius: 14px;
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  font-size: 1rem;
-  font-weight: 700;
+  min-height: 54px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #6ec72b 0%, #3f8f14 100%);
+  border: 2px solid rgba(255, 248, 233, 0.85);
+  box-shadow: 0 3px 0 rgba(30, 62, 10, 0.55);
+  color: #fff8e9;
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(24, 54, 12, 0.6);
 }
 
 .duel-cta:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
+  box-shadow: none;
 }
 
 .duel-secondary {
   min-height: 44px;
   border-radius: 12px;
   background: transparent;
-  color: hsl(var(--muted-foreground));
+  color: rgba(255, 248, 233, 0.85);
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(24, 54, 12, 0.5);
 }
 
 /* Un aviso transitorio, no una pantalla de error: cada uno de estos es un
@@ -17459,9 +17486,11 @@ button.web-access-link {
 .duel-notice {
   padding: 8px 12px;
   border-radius: 12px;
-  background: hsl(var(--secondary));
-  color: hsl(var(--secondary-foreground));
+  background: rgba(20, 42, 16, 0.9);
+  border: 1px solid rgba(255, 248, 233, 0.22);
+  color: #fff8e9;
   font-size: 0.875rem;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -17479,6 +17508,8 @@ button.web-access-link {
   background: var(--overlay-scrim);
 }
 
+/* El panel toma el verde profundo del bosque, no el navy de las hojas de
+   sistema: esto pasa DENTRO del juego. */
 .duel-setup-panel {
   display: flex;
   flex-direction: column;
@@ -17487,35 +17518,44 @@ button.web-access-link {
   max-width: var(--app-max-width);
   padding: 20px 16px calc(24px + env(safe-area-inset-bottom, 0px));
   border-radius: 22px 22px 0 0;
-  background: var(--surface-frosted-solid);
+  background: linear-gradient(180deg, #2c5a1c 0%, #1c3d12 100%);
+  border-top: 2px solid rgba(255, 248, 233, 0.35);
 }
 
 .duel-ladder {
   display: grid;
-  grid-template-columns: 56px 1fr 56px;
+  grid-template-columns: 60px 1fr 60px;
   align-items: center;
   gap: 10px;
 }
 
 .duel-ladder-step {
-  min-height: 56px;
+  min-height: 58px;
   border-radius: 16px;
-  background: hsl(var(--secondary));
-  color: hsl(var(--secondary-foreground));
-  font-size: 1.5rem;
-  font-weight: 700;
+  background: linear-gradient(180deg, #f6c445 0%, #d99a1c 100%);
+  border: 2px solid rgba(255, 248, 233, 0.8);
+  color: #3f2208;
+  font-size: 1.6rem;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .duel-ladder-step:disabled {
-  opacity: 0.35;
+  opacity: 0.4;
 }
 
+/* ⛔ El valor del reloj, en CREMA y explicito. La primera version lo dejó en
+   un token que resolvió a un gris casi del color del panel: el founder
+   reportó "casi no se lee" en el primer playtest. El numero que el jugador
+   está eligiendo es lo mas importante de esta pantalla. */
 .duel-ladder-value {
   text-align: center;
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-size: 1.65rem;
+  font-weight: 900;
   font-variant-numeric: tabular-nums;
-  color: hsl(var(--primary-foreground));
+  color: #fff8e9;
+  text-shadow: 0 2px 4px rgba(12, 30, 6, 0.6);
 }
 
 /* La cuarta tarjeta del selector de rival. Comparte el pill de las tres

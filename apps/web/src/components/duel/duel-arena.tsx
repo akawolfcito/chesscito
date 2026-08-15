@@ -9,6 +9,7 @@ import { ArenaConfirmModal } from "@/components/arena/arena-confirm-modal";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
 import { DuelClock } from "@/components/duel/duel-clock";
 import { isBoardInteractive } from "@/lib/duel/arena-state";
+import { duelBoardView } from "@/lib/duel/board-view";
 import { duelShareUrl } from "@/lib/duel/link";
 import { outcomeCopyKey } from "@/lib/duel/outcome-copy";
 import { useDuel } from "@/lib/duel/use-duel";
@@ -63,6 +64,12 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
       return null;
     }
   }, [duel]);
+
+  /** Memoized on the position: the replay is cheap but not free. */
+  const boardView = useMemo(
+    () => (duel ? duelBoardView(duel.fen, duel.moves) : { lastMove: null, checkSquare: null }),
+    [duel],
+  );
 
   const legalMoves = useMemo(() => {
     if (!chess || !selected || !interactive) return [];
@@ -177,8 +184,11 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
         pieces={piecesOf(state.duel.fen)}
         selectedSquare={selected}
         legalMoves={legalMoves}
-        lastMove={null}
-        checkSquare={null}
+        // ⛔ The trail and the check square. Shipping these as `null` cost the
+        // duel the movement trail the AI arena already had, which is the kind
+        // of regression no test catches because nothing asserts on a tint.
+        lastMove={boardView.lastMove}
+        checkSquare={boardView.checkSquare}
         isLocked={!interactive || busy}
         onSquareClick={onSquareClick}
         // ⚠️ A player seated on black reads the board from black's side. The
