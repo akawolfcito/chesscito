@@ -17,7 +17,10 @@
 | 2 — la tabla | ✅ **APLICADA A PRODUCCIÓN el 2026-08-15** (ledger 46; ver abajo) |
 | 3 — las rutas | ✅ **CERRADA el 2026-08-15** — 5 rutas + 4 módulos, 125 tests |
 | 4 — el enlace sobrevive al login | ✅ **cerrada por medición**, sin construir nada (ver abajo) |
-| 5 — la Arena | ⬜ |
+| 5 — la Arena | ✅ **CERRADA el 2026-08-15** — spec de UI, 8 estados, la Arena y la entrada en PLAY |
+
+> ⛔ **Las cinco etapas están construidas y NADIE lo abrió todavía en un navegador.**
+> `docs/handoffs/2026-08-15-p2p-duel-stage-5-handoff.md` §1.
 
 ---
 
