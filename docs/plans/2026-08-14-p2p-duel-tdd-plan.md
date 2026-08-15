@@ -15,7 +15,7 @@
 | 0 — árbitro + reloj | ✅ `lib/duel/{types,clock,referee}.ts` |
 | 1 — identidad del asiento | ✅ `lib/duel/seat-token.ts` |
 | 2 — la tabla | ✅ **APLICADA A PRODUCCIÓN el 2026-08-15** (ledger 46; ver abajo) |
-| 3 — las rutas | ⬜ **acá se retoma** |
+| 3 — las rutas | ✅ **CERRADA el 2026-08-15** — 5 rutas + 4 módulos, 125 tests |
 | 4 — el enlace sobrevive al login | ✅ **cerrada por medición**, sin construir nada (ver abajo) |
 | 5 — la Arena | ⬜ |
 
@@ -87,21 +87,52 @@ del ledger se mide antes de afirmarlo, no se recuerda.
 
 ---
 
-## Etapa 3 — Las rutas
+## Etapa 3 — Las rutas → ✅ **CERRADA (2026-08-15)**
 
-`/api/duel` · `/api/duel/[id]` · `/join` · `/move` · `/resign`
+`/api/duel` · `/api/duel/[id]` · `/join` · `/move` · `/resign`, más cuatro módulos nuevos en
+`lib/duel/`: `row`, `lifecycle`, `operations`, `repository`, `http`, `service`.
 
-- CAS sobre `version`; el perdedor recibe `version-conflict` **con estado fresco**
-- Expiración y bandera **materializadas al leer**, sin cron
-- El token vuelve **una vez en el body**, además de la cookie
-- `enforceRateLimit` en `POST /api/duel` y `/join`
+**Todo lo que la etapa se había fijado, hecho:** CAS sobre `version` con estado fresco para el
+perdedor; expiración y bandera materializadas al leer, sin cron; el token una vez en el body
+además de la cookie; `enforceRateLimit` en create y join; y `DuelPublic` sin `tokenHash`,
+asertado sobre el **JSON** (un `Omit<>` no borra nada en runtime).
 
-⛔ **`DuelPublic` nunca serializa `tokenHash`** — aserción sobre el **JSON**, no sobre el tipo.
-Un `Omit<>` de TypeScript no borra un campo en runtime.
+### Lo que la etapa dejó escrito y no estaba en el plan
 
-⚠️ **Y el export guard aplica:** nada de helpers de test exportados desde un `route.ts`.
-`route-exports-guard.test.ts` lo va a atrapar, pero mejor no escribirlo
-([[feedback_tsc_does_not_validate_route_exports]]).
+⛔ **El orden vive en UN portón compartido** (`openWriteGate`) por move y resign: asiento →
+reloj → versión → tablero. Quien agregue un cuarto camino de escritura lo hereda; no hay tres
+copias del orden que puedan divergir.
+
+⛔ **La credencial no entra a un logger — y el ID DEL DUELO tampoco.** El id *es* el enlace de
+invitación, así que un log drain lleno de ids es un drain lleno de duelos donde alguien se puede
+sentar. Hay un test que recorre las cinco rutas en sus tres modos de falla.
+
+⛔ **La credencial no se lee NUNCA de la query string.** Un token en una URL cae en logs de
+acceso, en `Referer` a terceros y en cada enlace compartido. El test asegura que se **ignora**,
+así que agregar la comodidad después falla ruidosamente.
+
+⛔ **`invitedBy` queda en `null`, y es una decisión.** Es atribución que escribe el servidor, y
+esta app **no tiene identidad verificable server-side** (Privy se valida en el browser; no hay
+`@privy-io/server-auth` en el repo). Tomarlo del body sería el defecto de la v2 con otro nombre.
+
+⚠️ **`expired` vs `duel-not-active` es CUÁNDO pasó**: el que se venció durante *este* request se
+lleva el motivo y el estado fresco; el que ya estaba terminado, no (comportamiento 17).
+
+⚠️ **Los eventos van con el `session_id` del cliente, no con uno sintético.** Inventar una sesión
+por duelo mete filas en la tabla que leen las RPC `stats_*` e infla `events/session` y el conteo
+de sesiones de `/stats`: una métrica comprada corrompiendo otras tres.
+
+### Verificación
+
+**Suite completa: 673 archivos / 8332 tests, `EXIT=0`, 0 errores de worker, 156 s.** `tsc` limpio.
+⚠️ Una corrida intermedia dio `exit 1` con **669** archivos y 389 s: contención de máquina, no
+regresión — la única roja fue un **timeout de 234 s** en `focus-days-real-path`, que no comparte
+una línea con el duelo. Es exactamente el patrón que CLAUDE.md describe: **si el conteo de
+archivos baja respecto de tu propia medición, la corrida no vale.**
+
+Mutación en cada capa: 11 mutantes, todos muertos. Dos rondas encontraron defectos **en los
+tests**, no en el código — un guard redundante que enmascaraba la regla que duplicaba, y un test
+que aserta sobre `seats.w` cuando el color del creador **se sortea** (pasaba una de cada dos).
 
 ---
 
