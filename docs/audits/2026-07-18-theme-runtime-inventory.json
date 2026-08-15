@@ -1,9 +1,9 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 180,
+  "totalSlots": 183,
   "categoryCounts": {
-    "A": 167,
+    "A": 170,
     "B": 0,
     "C": 0,
     "D": 0,
@@ -13,21 +13,21 @@
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 84,
+    "B": 87,
     "C": 26,
     "D": 38,
     "E": 19,
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 168,
-  "fullyConnectedSlots": 167,
+  "resolverSlots": 171,
+  "fullyConnectedSlots": 170,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
   "noActiveConsumerSlots": 6,
-  "connectedSlots": 167,
+  "connectedSlots": 170,
   "excludedSlots": 13,
   "exceptions": [],
   "literalDiff": {
@@ -1896,10 +1896,21 @@
         "src/components/hub/hub-lite-scaffold.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 2,
+      "consumerCount": 3,
       "consumers": [
         {
           "file": "src/components/arena/arena-select-scaffold.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/duel/duel-arena.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -2517,7 +2528,7 @@
         "src/components/exercises/fail-rescue-modal.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 6,
+      "consumerCount": 7,
       "consumers": [
         {
           "file": "src/components/arena/arena-end-state.tsx",
@@ -2543,6 +2554,17 @@
         },
         {
           "file": "src/components/arena/victory-popup-shell.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/duel/duel-setup-sheet.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
@@ -5405,6 +5427,141 @@
       "usesCssBackground": false,
       "usesSharedMap": false,
       "buildsPathDynamically": true,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "arena.duel-lobby-1",
+      "root": "web",
+      "default": {
+        "mode": "none"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Arena — duelo, pantalla de espera (imagen 1 de 3)",
+        "↳ components/duel/duel-lobby.tsx",
+        "Rotan solo las que existan; sin ninguna se ve el tablero."
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/duel/duel-lobby.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/lib/duel/lobby.ts",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "arena.duel-lobby-2",
+      "root": "web",
+      "default": {
+        "mode": "none"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Arena — duelo, pantalla de espera (imagen 2 de 3)",
+        "↳ components/duel/duel-lobby.tsx",
+        "Rotan solo las que existan; sin ninguna se ve el tablero."
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/duel/duel-lobby.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/lib/duel/lobby.ts",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "arena.duel-lobby-3",
+      "root": "web",
+      "default": {
+        "mode": "none"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Arena — duelo, pantalla de espera (imagen 3 de 3)",
+        "↳ components/duel/duel-lobby.tsx",
+        "Rotan solo las que existan; sin ninguna se ve el tablero."
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/duel/duel-lobby.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/lib/duel/lobby.ts",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
       "noActiveConsumer": false
     },
     {
@@ -8308,10 +8465,21 @@
         "src/app/[locale]/arena/page.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 3,
+      "consumerCount": 4,
       "consumers": [
         {
           "file": "src/app/[locale]/arena/page.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/components/duel/duel-arena.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
