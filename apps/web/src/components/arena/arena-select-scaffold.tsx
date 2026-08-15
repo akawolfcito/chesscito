@@ -61,6 +61,8 @@ type Props = {
   onSelectDifficulty: (d: ArenaDifficulty) => void
   onSelectColor: (c: PlayerColor) => void
   onStart: () => void
+  /** Opens the duel clock picker. Absent means the fourth card is not shown. */
+  onSelectFriend?: () => void
   onBack?: () => void
   softGate?: SoftGate
   account?: ArenaAccountEntry
@@ -82,6 +84,7 @@ export function ArenaSelectScaffold({
   onSelectDifficulty,
   onSelectColor,
   onStart,
+  onSelectFriend,
   onBack,
   softGate,
   account,
@@ -89,7 +92,8 @@ export function ArenaSelectScaffold({
   onError,
 }: Props) {
   const t = useTranslations('ARENA_COPY')
-  const tStatus = useTranslations('GLOBAL_STATUS_BAR_COPY')
+  const tStatus = useTranslations("GLOBAL_STATUS_BAR_COPY")
+  const tDuel = useTranslations("DUEL_COPY")
   const arenaTitle = t('title')
   const colorLabels: Record<PlayerColor, string> = {
     w: t('playAsWhite'),
@@ -242,6 +246,41 @@ export function ArenaSelectScaffold({
               </li>
             )
           })}
+
+          {/*
+            The fourth option, and deliberately NOT a fourth difficulty.
+
+            ⛔ No `aria-pressed`: the three above are a toggle (which AI you
+            will face), this one is an ACTION (open the clock picker and create
+            a duel). Giving it the pressed state would tell a screen reader it
+            is a selectable rival, and it would stay "unpressed" forever.
+
+            It sits in the same list because that is where the player is already
+            choosing an opponent, and a human friend IS an opponent.
+          */}
+          {onSelectFriend ? (
+            <li>
+              <button
+                type="button"
+                aria-label={`${tDuel('opponentCardTitle')}. ${tDuel('opponentCardHint')}`}
+                onClick={onSelectFriend}
+                className="arena-scaffold-difficulty-pill arena-scaffold-friend-pill"
+                data-testid="arena-play-a-friend"
+              >
+                <span className="arena-scaffold-friend-icon" aria-hidden="true">
+                  👥
+                </span>
+                <span className="arena-scaffold-difficulty-text">
+                  <span className="arena-scaffold-rival-name">
+                    {tDuel('opponentCardTitle')}
+                  </span>
+                  <span className="arena-scaffold-difficulty-desc">
+                    {tDuel('opponentCardHint')}
+                  </span>
+                </span>
+              </button>
+            </li>
+          ) : null}
         </ul>
 
         {errorMessage ? (

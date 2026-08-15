@@ -17464,3 +17464,72 @@ button.web-access-link {
   font-size: 0.875rem;
   text-align: center;
 }
+
+/* La hoja para elegir el reloj, antes de crear el duelo.
+   ⛔ La escalera ES la validacion: siete valores, dos botones, nada que
+   escribir. Los mismos siete son un CHECK en la tabla. */
+
+.duel-setup {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: var(--overlay-scrim);
+}
+
+.duel-setup-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: var(--app-max-width);
+  padding: 20px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  border-radius: 22px 22px 0 0;
+  background: var(--surface-frosted-solid);
+}
+
+.duel-ladder {
+  display: grid;
+  grid-template-columns: 56px 1fr 56px;
+  align-items: center;
+  gap: 10px;
+}
+
+.duel-ladder-step {
+  min-height: 56px;
+  border-radius: 16px;
+  background: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.duel-ladder-step:disabled {
+  opacity: 0.35;
+}
+
+.duel-ladder-value {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--primary-foreground));
+}
+
+/* La cuarta tarjeta del selector de rival. Comparte el pill de las tres
+   dificultades a proposito, pero sin avatar ni ELO: no es una dificultad,
+   es una accion. */
+.arena-scaffold-friend-pill {
+  align-items: center;
+}
+
+.arena-scaffold-friend-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  font-size: 1.75rem;
+}

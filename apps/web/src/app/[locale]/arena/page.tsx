@@ -86,6 +86,8 @@ const ENABLE_COACH = process.env.NEXT_PUBLIC_ENABLE_COACH !== "false";
 // default export + reserved Next.js names are allowed in page files).
 import { evaluateXClose } from "./end-state-close-policy";
 import { DuelArenaRoute } from "@/components/duel/duel-arena-route";
+import { DuelSetupSheet } from "@/components/duel/duel-setup-sheet";
+import { getAnonymousId } from "@/lib/analytics/identity";
 
 export default function ArenaPage() {
   // useSearchParams() requires a Suspense boundary for static prerender
@@ -137,6 +139,7 @@ function ArenaPageInner() {
   // removes those entries from the dock itself (no user-facing trigger
   // remains on /arena), but the state setters are referenced by hooks
   // below until those sheets are torn out in a follow-up.
+  const [duelSetupOpen, setDuelSetupOpen] = useState(false);
   const [activeDockTab, setActiveDockTab] = useState<
     "badge" | "shop" | "trophies" | "leaderboard" | null
   >(null);
@@ -1158,6 +1161,10 @@ function ArenaPageInner() {
                 });
                 handleStartWithLoading();
               }}
+              onSelectFriend={() => {
+                track("duel_setup_open", { surface: "arena-select" });
+                setDuelSetupOpen(true);
+              }}
               onBack={() => {
                 track("arena_back_tap");
                 handleBackToHub();
@@ -1189,6 +1196,19 @@ function ArenaPageInner() {
               }
               errorMessage={game.errorMessage}
             />
+          {duelSetupOpen ? (
+            <DuelSetupSheet
+              sessionId={getAnonymousId()}
+              onCancel={() => setDuelSetupOpen(false)}
+              // ⛔ `replace`, not `push`: the duel takes over this same surface,
+              // so a Back tap should leave the Arena rather than land the
+              // player on an opponent picker for a duel they already created.
+              onCreated={(id) => {
+                setDuelSetupOpen(false);
+                router.replace(`${window.location.pathname}?duel=${id}`);
+              }}
+            />
+          ) : null}
           <div
             className="arena-select-dock-shell shrink-0 relative z-[60] pointer-events-auto"
             style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}

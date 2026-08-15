@@ -1393,6 +1393,7 @@ export const DUEL_COPY = {
   setupMore: "More time",
   setupCreate: "Create and share",
   setupCreating: "Creating...",
+  setupCancel: "Not now",
 
   /** S2, waiting for somebody to answer. */
   invitingTitle: "Waiting for your friend",

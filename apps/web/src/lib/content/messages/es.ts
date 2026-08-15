@@ -613,6 +613,7 @@ const messages = {
     setupMore: "Más tiempo",
     setupCreate: "Crear y compartir",
     setupCreating: "Creando...",
+    setupCancel: "Ahora no",
 
     invitingTitle: "Esperando a tu amigo",
     invitingBody: "Mándale este enlace. El tablero se abre apenas se siente.",
