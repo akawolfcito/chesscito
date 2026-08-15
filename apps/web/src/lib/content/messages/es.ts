@@ -614,6 +614,7 @@ const messages = {
     setupCreate: "Crear y compartir",
     setupCreating: "Creando...",
     setupCancel: "Ahora no",
+    rivalFallbackName: "Tu rival",
 
     invitingTitle: "Esperando a tu amigo",
     invitingBody: "Mándale este enlace. El tablero se abre apenas se siente.",

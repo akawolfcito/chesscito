@@ -1394,6 +1394,8 @@ export const DUEL_COPY = {
   setupCreate: "Create and share",
   setupCreating: "Creating...",
   setupCancel: "Not now",
+  /** Ribbon name for a human rival who never set one. */
+  rivalFallbackName: "Your rival",
 
   /** S2, waiting for somebody to answer. */
   invitingTitle: "Waiting for your friend",

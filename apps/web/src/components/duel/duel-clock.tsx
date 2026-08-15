@@ -23,6 +23,17 @@ type Props = {
   duel: DuelPublic;
   seat: DuelColor;
   label: string;
+  /**
+   * Hold the number still while a move is in flight.
+   *
+   * ⚠️ Without this the display keeps counting during the round trip and then
+   * JUMPS UP when the answer lands, because the server charged at the instant
+   * it processed and the client had already spent that time on screen. The jump
+   * is always in the player's favour and the final number is right either way,
+   * but a clock that visibly runs backwards reads as broken. Freezing at the
+   * tap and adopting the server's value is the same truth without the flinch.
+   */
+  frozen?: boolean;
   /** Fires once when a running clock first reaches zero, so the Arena can go
    *  ask the server what really happened. */
   onReachedZero?: () => void;
@@ -30,15 +41,15 @@ type Props = {
 
 const TICK_MS = 250;
 
-export function DuelClock({ duel, seat, label, onReachedZero }: Props) {
+export function DuelClock({ duel, seat, label, frozen = false, onReachedZero }: Props) {
   const [now, setNow] = useState(() => Date.now());
   const running = duel.status === "active" && duel.turnOf === seat;
 
   useEffect(() => {
-    if (!running) return;
+    if (!running || frozen) return;
     const timer = setInterval(() => setNow(Date.now()), TICK_MS);
     return () => clearInterval(timer);
-  }, [running]);
+  }, [frozen, running]);
 
   const remaining = displayedRemainingMs(duel, seat, now);
 

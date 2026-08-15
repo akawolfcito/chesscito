@@ -2,13 +2,15 @@
 
 import { Chess } from "chess.js";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ArenaBoard } from "@/components/arena/arena-board";
+import { ArenaMatchupTransition } from "@/components/arena/arena-matchup-transition";
 import { ArenaConfirmModal } from "@/components/arena/arena-confirm-modal";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
 import { DuelClock } from "@/components/duel/duel-clock";
-import { isBoardInteractive } from "@/lib/duel/arena-state";
+import { isBoardInteractive, type DuelArenaState } from "@/lib/duel/arena-state";
+import { DUEL_INTRO_MS, shouldPlayIntro } from "@/lib/duel/intro";
 import { duelBoardView } from "@/lib/duel/board-view";
 import { duelShareUrl } from "@/lib/duel/link";
 import { outcomeCopyKey } from "@/lib/duel/outcome-copy";
@@ -41,6 +43,7 @@ type PendingPromotion = { from: string; to: string };
 
 export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
   const t = useTranslations("DUEL_COPY");
+  const tArena = useTranslations("ARENA_COPY");
   const { state, notice, busy, join, move, resign, refresh } = useDuel(duelId, {
     sessionId,
   });
@@ -120,6 +123,26 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
     [busy, chess, interactive, legalMoves, selected, send],
   );
 
+  /**
+   * The matchup screen, on the transition and not on the state.
+   *
+   * ⛔ `previousKind` is what makes it fire once. Keyed on "the duel is active"
+   * instead, it would replay "Get ready!" on every reload of a game already
+   * forty moves deep, and on every poll that re-rendered.
+   */
+  const [showIntro, setShowIntro] = useState(false);
+  const previousKind = useRef<DuelArenaState["kind"] | null>(null);
+
+  useEffect(() => {
+    const previous = previousKind.current;
+    previousKind.current = state.kind;
+    if (!shouldPlayIntro(previous, state.kind)) return;
+
+    setShowIntro(true);
+    const timer = setTimeout(() => setShowIntro(false), DUEL_INTRO_MS);
+    return () => clearTimeout(timer);
+  }, [state.kind]);
+
   const shareLink = useMemo(() => {
     if (typeof window === "undefined") return "";
     // ⛔ From the ID and the PLAY host, never from the address bar. Both reasons
@@ -143,6 +166,29 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
       // refuses is not worth an error screen: the link is on screen anyway.
     }
   }, [shareLink]);
+
+  if (showIntro && duel) {
+    // Same matchup screen and the same 1.8s beat as the AI match: the duel is a
+    // second kind of rival on the same surface, so the moment two players sit
+    // down should feel like the moment PLAY already established.
+    return (
+      <ArenaMatchupTransition
+        rivalName={
+          duel.seats[topSeat(duel.you)].displayName ?? t("rivalFallbackName")
+        }
+        rivalAvatarSrc=""
+        rivalAvatarSlot="shared.avatar-small-account"
+        // ⚠️ Silver is the neutral frame. The other two are the colours of the
+        // easy and hard AI rivals, and a human is neither.
+        rivalFrame="silver"
+        playerLabel={tArena("you")}
+        playerNickname={duel.seats[bottomSeat(duel.you)].displayName ?? undefined}
+        playerAvatarSrc=""
+        playerAvatarSlot="arena.player-you"
+        getReadyLabel={tArena("getReady")}
+      />
+    );
+  }
 
   if (state.kind === "loading") {
     return <div className="duel-arena duel-arena-loading" aria-busy="true" />;
@@ -169,6 +215,7 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
           duel={state.duel}
           seat={topSeat(you)}
           label={seatName(state.duel, topSeat(you))}
+          frozen={busy}
           onReachedZero={refresh}
         />
         <p className="duel-status">{headline(state.kind, state.duel, you, t)}</p>
@@ -176,6 +223,7 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
           duel={state.duel}
           seat={bottomSeat(you)}
           label={seatName(state.duel, bottomSeat(you))}
+          frozen={busy}
           onReachedZero={refresh}
         />
       </header>
