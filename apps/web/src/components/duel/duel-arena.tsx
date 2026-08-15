@@ -10,6 +10,7 @@ import { PrimaryPlayCta } from "@/components/kingdom/primary-play-cta";
 import { ArenaConfirmModal } from "@/components/arena/arena-confirm-modal";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
 import { DuelClock } from "@/components/duel/duel-clock";
+import { DuelEndOverlay } from "@/components/duel/duel-end-overlay";
 import { isBoardInteractive, type DuelArenaState } from "@/lib/duel/arena-state";
 import { DUEL_INTRO_MS, shouldPlayIntro } from "@/lib/duel/intro";
 import { duelBoardView } from "@/lib/duel/board-view";
@@ -53,6 +54,7 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
   const [promotion, setPromotion] = useState<PendingPromotion | null>(null);
   const [resignOpen, setResignOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [endDismissed, setEndDismissed] = useState(false);
 
   const duel = "duel" in state ? state.duel : null;
   const interactive = isBoardInteractive(state);
@@ -309,6 +311,18 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
             setPromotion(null);
             setSelected(null);
           }}
+        />
+      ) : null}
+
+      {/* ⚠️ Dismissable on purpose. The board underneath is the final position,
+          and a player who wants to look at it should not have to leave the duel
+          to do it. Closing does not end anything: the duel is already over. */}
+      {state.kind === "finished" && !endDismissed ? (
+        <DuelEndOverlay
+          duel={state.duel}
+          you={you}
+          onExit={onExit}
+          onClose={() => setEndDismissed(true)}
         />
       ) : null}
 

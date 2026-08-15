@@ -1395,6 +1395,14 @@ export const DUEL_COPY = {
   setupCancel: "Not now",
   /** Ribbon name for a human rival who never set one. */
   rivalFallbackName: "Your rival",
+  /** End-of-duel overlay. ⛔ Nada de esto promete una recompensa. */
+  endTitleWin: "You win!",
+  endTitleLoss: "You lost",
+  endTitleDraw: "A draw",
+  endTitleNeutral: "Game over",
+  endMoves: "{count} moves",
+  endDuration: "{minutes}m {seconds}s",
+  endNewDuel: "New duel",
 
   /** S2, waiting for somebody to answer. */
   invitingTitle: "Waiting for your friend",

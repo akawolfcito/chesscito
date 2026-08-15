@@ -17573,3 +17573,51 @@ button.web-access-link {
   height: 52px;
   font-size: 1.75rem;
 }
+
+/* Fin del duelo. ⛔ Sobre VictoryPopupShell y NO sobre ArenaEndState: ese
+   arrastra mint, claim, Coach y share-card, que es la economia que el duelo
+   deliberadamente no tiene. Misma familia visual, ninguna promesa. */
+
+.duel-end-title {
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-size: 1.5rem;
+  font-weight: 900;
+  text-align: center;
+  color: #fff8e9;
+  text-shadow: 0 2px 4px rgba(12, 30, 6, 0.6);
+}
+
+/* El tono lo decide quien LEE, no el resultado en abstracto: una derrota
+   vestida de celebracion es la unica falla grave de esta pantalla. */
+.duel-end--win .duel-end-title {
+  color: #ffe08a;
+}
+
+.duel-end--loss .duel-end-title {
+  color: #ffd0cb;
+}
+
+.duel-end-reason {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: rgba(255, 248, 233, 0.9);
+}
+
+.duel-end-stats {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.duel-end-stat {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(20, 42, 16, 0.7);
+  border: 1px solid rgba(255, 248, 233, 0.2);
+  color: #fff8e9;
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

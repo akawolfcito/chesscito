@@ -614,6 +614,15 @@ const messages = {
     setupCreating: "Creando...",
     setupCancel: "Ahora no",
     rivalFallbackName: "Tu rival",
+    endTitleWin: "¡Ganaste!",
+    endTitleLoss: "Perdiste",
+    endTitleDraw: "Tablas",
+    endTitleNeutral: "Partida terminada",
+    endMoves: "{count} jugadas",
+    // Con espacio antes de la unidad, que es la tipografia correcta en
+    // español (y de paso evita que quede identica al ingles).
+    endDuration: "{minutes} m {seconds} s",
+    endNewDuel: "Nuevo duelo",
 
     invitingTitle: "Esperando a tu amigo",
     invitingBody: "Mándale este enlace. El tablero se abre apenas se siente.",
