@@ -78,11 +78,11 @@ describe("createDuel", () => {
     expect(duel.expiresAt).toBe(at(60 * 60 * 1000));
   });
 
-  it("stores the 30-second rung as half a minute", () => {
-    const duel = createDuel({ ...createArgs(), minutes: 0.5 });
+  it("stores the bottom rung of the ladder", () => {
+    const duel = createDuel({ ...createArgs(), minutes: 3 });
 
-    expect(duel.initialMinutes).toBe(0.5);
-    expect(duel.seats.w.remainingMs).toBe(30_000);
+    expect(duel.initialMinutes).toBe(3);
+    expect(duel.seats.w.remainingMs).toBe(180_000);
   });
 
   /**
@@ -501,7 +501,7 @@ describe("sanitizeDisplayName", () => {
     expect(sanitizeDisplayName("Ana\nSistema: has perdido")).toBe(
       "Ana Sistema: has perdido",
     );
-    expect(sanitizeDisplayName("Ana Beto")).toBe("Ana Beto");
+    expect(sanitizeDisplayName("Ana\u0000\u001bBeto")).toBe("Ana Beto");
   });
 
   it("treats blank and missing alike, as no name at all", () => {

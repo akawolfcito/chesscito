@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { ArenaMatchupTransition } from "@/components/arena/arena-matchup-transition";
+import { PrimaryPlayCta } from "@/components/kingdom/primary-play-cta";
 import { ArenaConfirmModal } from "@/components/arena/arena-confirm-modal";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
 import { DuelClock } from "@/components/duel/duel-clock";
@@ -155,7 +156,15 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
   const onShare = useCallback(async () => {
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({ url: shareLink });
+        // ⚠️ `title` and `text` alongside the url: some share targets render a
+        // bare url as an attachment rather than as a message, and a few queue
+        // it instead of sending it. It costs nothing and gives the receiving
+        // app something to show.
+        await navigator.share({
+          title: t("setupTitle"),
+          text: t("invitingBody"),
+          url: shareLink,
+        });
         return;
       }
       await navigator.clipboard.writeText(shareLink);
@@ -199,9 +208,7 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
       <section className="duel-arena">
         <h1 className="duel-title">{t("missingTitle")}</h1>
         <p className="duel-body">{t("missingBody")}</p>
-        <button type="button" className="duel-cta" onClick={onExit}>
-          {t("backToPlay")}
-        </button>
+        <PrimaryPlayCta surface="arena-entry" label={t("backToPlay")} ariaLabel={t("backToPlay")} onPress={onExit} />
       </section>
     );
   }
@@ -253,9 +260,7 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
       {state.kind === "inviting" ? (
         <footer className="duel-footer">
           <p className="duel-body">{t("invitingBody")}</p>
-          <button type="button" className="duel-cta" onClick={onShare}>
-            {copied ? t("invitingCopied") : t("invitingShare")}
-          </button>
+          <PrimaryPlayCta surface="arena-entry" label={copied ? t("invitingCopied") : t("invitingShare")} ariaLabel={t("invitingShare")} onPress={() => void onShare()} />
           <p className="duel-hint">{t("invitingExpiry")}</p>
         </footer>
       ) : null}
@@ -263,14 +268,7 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
       {state.kind === "invited" ? (
         <footer className="duel-footer">
           <p className="duel-body">{t("invitedBody")}</p>
-          <button
-            type="button"
-            className="duel-cta"
-            disabled={busy}
-            onClick={() => void join()}
-          >
-            {busy ? t("invitedJoining") : t("invitedJoin")}
-          </button>
+          <PrimaryPlayCta surface="arena-entry" label={busy ? t("invitedJoining") : t("invitedJoin")} ariaLabel={t("invitedJoin")} loading={busy} onPress={() => void join()} />
         </footer>
       ) : null}
 
@@ -293,9 +291,12 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
               ? t("expiredBody")
               : t(outcomeCopyKey(state.duel.outcome, you))}
           </p>
-          <button type="button" className="duel-cta" onClick={onExit}>
-            {t("backToPlay")}
-          </button>
+          <PrimaryPlayCta
+            surface="arena-entry"
+            label={t("backToPlay")}
+            ariaLabel={t("backToPlay")}
+            onPress={onExit}
+          />
         </footer>
       ) : null}
 

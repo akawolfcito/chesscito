@@ -16,8 +16,14 @@ const T0 = "2026-08-14T12:00:00.000Z";
 const at = (isoOffsetMs: number) => Date.parse(T0) + isoOffsetMs;
 
 describe("the ladder", () => {
-  it("offers exactly the seven values of the spec, with 30s stored as 0.5", () => {
-    expect(CLOCK_LADDER_MINUTES).toEqual([0.5, 1, 3, 5, 10, 15, 30]);
+  /**
+   * â El piso es 3 MINUTOS desde el primer playtest real. Debajo de eso los
+   * segundos que se pierden entre el join y la primera vista del tablero son
+   * una tajada visible de la partida. La tabla sigue aceptando los siete
+   * originales: ese CHECK rechaza absurdos, no codifica el gusto del producto.
+   */
+  it("offers exactly its rungs, with a floor of three minutes", () => {
+    expect(CLOCK_LADDER_MINUTES).toEqual([3, 5, 10, 15, 30]);
   });
 
   it("defaults to 10 minutes", () => {
@@ -26,7 +32,7 @@ describe("the ladder", () => {
   });
 
   it("rejects anything off the ladder — this is the whole validation of the create route", () => {
-    for (const bad of [0, 2, 7, 20, 45, 60, -10, 10.5, NaN, Infinity]) {
+    for (const bad of [0, 0.5, 1, 2, 7, 20, 45, 60, -10, 10.5, NaN, Infinity]) {
       expect(isClockMinutes(bad)).toBe(false);
     }
     for (const bad of ["10", null, undefined, {}, []]) {
@@ -38,11 +44,11 @@ describe("the ladder", () => {
     expect(clockStep(10, 1)).toBe(15);
     expect(clockStep(10, -1)).toBe(5);
     expect(clockStep(30, 1)).toBe(30);
-    expect(clockStep(0.5, -1)).toBe(0.5);
+    expect(clockStep(3, -1)).toBe(3);
   });
 
   it("turns minutes into a bank of milliseconds", () => {
-    expect(initialRemainingMs(0.5)).toBe(30_000);
+    expect(initialRemainingMs(3)).toBe(180_000);
     expect(initialRemainingMs(10)).toBe(600_000);
     expect(initialRemainingMs(30)).toBe(1_800_000);
   });

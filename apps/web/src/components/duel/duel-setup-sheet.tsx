@@ -10,14 +10,17 @@ import {
   type ClockMinutes,
 } from "@/lib/duel/clock";
 import { createDuelRequest } from "@/lib/duel/api";
+import { PrimaryPlayCta } from "@/components/kingdom/primary-play-cta";
+import { useThemeBackground } from "@/lib/themes/use-theme-background";
 import { storeSeatToken } from "@/lib/duel/seat-store";
 
 /**
  * Choosing the clock, and only then creating the duel.
  *
  * ⛔ The ladder IS the validation: seven values, two buttons, nothing to type,
- * and no way to ask for an absurd amount of time. The same seven are a CHECK
- * constraint in the table, so a `curl` gets the same answer as a thumb.
+ * ask for an absurd amount of time. â ï¸ Its FLOOR is 3 minutes since the first
+ * playtest: below that, the seconds lost between the join and the first sight
+ * of the board are a visible slice of the game. See `clock.ts`.
  *
  * ⚠️ The clock is picked BEFORE the link exists (founder, 2026-08-15), and that
  * is not a layout preference: once the duel is created the time is immutable in
@@ -38,6 +41,10 @@ export function DuelSetupSheet({ displayName, sessionId, onCreated, onCancel }: 
   const [minutes, setMinutes] = useState<ClockMinutes>(DEFAULT_CLOCK_MINUTES);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+  /** â ï¸ El mismo fondo de panel que ya usan PromotionOverlay y VictoryPopupShell.
+   *  Inventar un gradiente propio fue el error de la primera version: el jugador
+   *  lee las hojas del juego como una familia, y una que no lo es se nota. */
+  const panelBackground = useThemeBackground("shared.panel-bg");
 
   const step = useCallback(
     (direction: -1 | 1) => setMinutes((current) => clockStep(current, direction)),
@@ -67,7 +74,7 @@ export function DuelSetupSheet({ displayName, sessionId, onCreated, onCancel }: 
 
   return (
     <div className="duel-setup" role="dialog" aria-modal="true" aria-label={t("setupTitle")}>
-      <div className="duel-setup-panel">
+      <div className="duel-setup-panel" style={{ backgroundImage: panelBackground }}>
         <h2 className="duel-title">{t("setupTitle")}</h2>
 
         <p className="duel-hint">{t("setupClockLabel")}</p>
@@ -82,7 +89,7 @@ export function DuelSetupSheet({ displayName, sessionId, onCreated, onCancel }: 
             −
           </button>
           <span className="duel-ladder-value" aria-live="polite">
-            {minutes === 0.5 ? t("setupSeconds") : t("setupMinutes", { count: minutes })}
+            {t("setupMinutes", { count: minutes })}
           </span>
           <button
             type="button"
@@ -101,14 +108,7 @@ export function DuelSetupSheet({ displayName, sessionId, onCreated, onCancel }: 
           </p>
         ) : null}
 
-        <button
-          type="button"
-          className="duel-cta"
-          disabled={busy}
-          onClick={() => void create()}
-        >
-          {busy ? t("setupCreating") : t("setupCreate")}
-        </button>
+        <PrimaryPlayCta surface="arena-entry" label={busy ? t("setupCreating") : t("setupCreate")} ariaLabel={t("setupCreate")} loading={busy} onPress={() => void create()} />
         <button type="button" className="duel-secondary" onClick={onCancel} disabled={busy}>
           {t("setupCancel")}
         </button>

@@ -608,7 +608,6 @@ const messages = {
     // "min." con punto es la abreviatura correcta en español, y de paso evita
     // que la clave quede idéntica al inglés (el guard de paridad la marcaría).
     setupMinutes: "{count} min.",
-    setupSeconds: "30 seg",
     setupLess: "Menos tiempo",
     setupMore: "Más tiempo",
     setupCreate: "Crear y compartir",

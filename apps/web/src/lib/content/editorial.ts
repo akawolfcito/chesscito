@@ -1388,7 +1388,6 @@ export const DUEL_COPY = {
   setupTitle: "Game with a friend",
   setupClockLabel: "Time each",
   setupMinutes: "{count} min",
-  setupSeconds: "30 sec",
   setupLess: "Less time",
   setupMore: "More time",
   setupCreate: "Create and share",

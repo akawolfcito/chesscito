@@ -16,8 +16,22 @@
 
 import { opponentOf, type DuelColor, type DuelOutcome } from "./types";
 
-/** The seven values of the ladder. 30s is stored as 0.5. */
-export const CLOCK_LADDER_MINUTES = [0.5, 1, 3, 5, 10, 15, 30] as const;
+/**
+ * The rungs of the ladder.
+ *
+ * ⛔ THE FLOOR IS 3 MINUTES, and it was raised from 30 seconds after the first
+ * real playtest (founder, 2026-08-15). The reason is measured, not aesthetic:
+ * the clock starts when the second player sits down, but the player on move
+ * only finds out on their next poll and then watches the 1.8s matchup screen.
+ * That is a handful of seconds nobody spent thinking, and it comes out of their
+ * bank. At 30 seconds it is a quarter of the game; at 3 minutes it is under 2%.
+ *
+ * ⚠️ The table still accepts the original seven (`initial_minutes in (0.5, 1,
+ * 3, 5, 10, 15, 30)`), and that is fine: the CHECK is there to refuse absurd
+ * values, not to encode the product's current taste. Narrowing here narrows the
+ * product; the constraint stays a ceiling on nonsense.
+ */
+export const CLOCK_LADDER_MINUTES = [3, 5, 10, 15, 30] as const;
 
 export type ClockMinutes = (typeof CLOCK_LADDER_MINUTES)[number];
 

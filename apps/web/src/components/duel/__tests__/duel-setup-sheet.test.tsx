@@ -48,7 +48,7 @@ describe("the ladder is the whole validation", () => {
     expect(screen.getByText("10 min")).toBeInTheDocument();
   });
 
-  it("walks its seven rungs and no others", async () => {
+  it("walks its rungs and no others", async () => {
     serveCreated();
     renderSheet();
 
@@ -60,7 +60,7 @@ describe("the ladder is the whole validation", () => {
   });
 
   /** ⛔ Clamps instead of wrapping. Wrapping at the top would put a thumb one
-   *  extra tap away from a 30 second game it did not ask for. */
+   *  extra tap away from the shortest game it did not ask for. */
   it("stops at both ends instead of wrapping around", async () => {
     serveCreated();
     renderSheet();
@@ -70,18 +70,23 @@ describe("the ladder is the whole validation", () => {
     expect(screen.getByLabelText("More time")).toBeDisabled();
 
     for (let i = 0; i < 10; i += 1) await tap("Less time");
-    expect(screen.getByText("30 sec")).toBeInTheDocument();
+    expect(screen.getByText("3 min")).toBeInTheDocument();
     expect(screen.getByLabelText("Less time")).toBeDisabled();
   });
 
-  /** The bottom rung is half a minute, and it reads as seconds rather than as
-   *  "0.5 min", which nobody says out loud. */
-  it("says the bottom rung in seconds", async () => {
+  /**
+   * The floor is 3 minutes since the first real playtest. Below that, the
+   * seconds lost between the join and the first sight of the board are a
+   * visible slice of the game: the clock starts when the second player sits
+   * down, and the player on move only finds out on their next read.
+   */
+  it("never goes below three minutes", async () => {
     serveCreated();
     renderSheet();
 
     for (let i = 0; i < 6; i += 1) await tap("Less time");
-    expect(screen.getByText("30 sec")).toBeInTheDocument();
+    expect(screen.getByText("3 min")).toBeInTheDocument();
+    expect(screen.queryByText("30 sec")).not.toBeInTheDocument();
   });
 });
 

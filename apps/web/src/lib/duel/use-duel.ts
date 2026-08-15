@@ -27,6 +27,20 @@ import { readStoredSeatToken, storeSeatToken } from "./seat-store";
  *  whose turn it is, so it draws its own countdown. This cadence exists only to
  *  find out that the rival moved. */
 const POLL_MS = 3_000;
+
+/**
+ * ⛔ While WAITING, the poll is the clock.
+ *
+ * The chess clock starts the instant the second player sits down, but the
+ * player on move does not find out until their next read — so every second of
+ * this interval is time billed to somebody who has not seen the board yet. It
+ * showed up in the first playtest as "entré a jugar con 8 segundos menos".
+ *
+ * ⚠️ The cost is bounded and small: a duel only waits until somebody joins or
+ * until the invitation dies at one hour, and the screen it belongs to has
+ * nothing else to do.
+ */
+const WAITING_POLL_MS = 1_200;
 /** A hidden tab is a player who is not looking. Keep the duel alive, stop
  *  hammering: the flag still falls on the next read, whenever that is. */
 const HIDDEN_POLL_MS = 30_000;
@@ -147,6 +161,7 @@ export function useDuel(
   // poll that keeps running is a promise to the reader that something might
   // still change.
   const polling = shouldPoll(state);
+  const waiting = state.kind === "inviting" || state.kind === "invited";
   useEffect(() => {
     if (!duelId || !polling) return;
 
@@ -155,11 +170,16 @@ export function useDuel(
 
     const tick = () => {
       const hidden = typeof document !== "undefined" && document.hidden;
+      const delay = hidden
+        ? HIDDEN_POLL_MS
+        : waiting
+          ? WAITING_POLL_MS
+          : POLL_MS;
       timer = setTimeout(async () => {
         if (cancelled) return;
         if (!document.hidden) await refresh();
         tick();
-      }, hidden ? HIDDEN_POLL_MS : POLL_MS);
+      }, delay);
     };
     tick();
 
@@ -175,7 +195,7 @@ export function useDuel(
       clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [duelId, polling, refresh]);
+  }, [duelId, polling, refresh, waiting]);
 
   // Transient notices fade on their own; nothing here is an error the player
   // has to dismiss.
