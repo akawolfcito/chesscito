@@ -23,7 +23,24 @@ const CSS = readFileSync(
 );
 
 /** El bloque de reglas del skeleton, para no asertar sobre todo el archivo. */
-const SKELETON_CSS = CSS.slice(CSS.indexOf(".wallet-shell-skeleton {"));
+/**
+ * Sólo las reglas de la silueta.
+ *
+ * ⛔ Antes esto era `CSS.slice(indexOf(...))`, o sea DESDE la silueta HASTA EL
+ * FINAL DEL ARCHIVO. Funcionaba únicamente porque la silueta era el último
+ * bloque de `globals.css`, y el 2026-08-15 el bloque del duelo se agregó
+ * después: sus gradientes cayeron dentro de la rebanada y este guard se puso
+ * rojo acusando a la silueta de algo que no hizo.
+ *
+ * El guard tenía razón en lo que quiere proteger y estaba mal acotado. Ahora la
+ * rebanada termina donde terminan las reglas `.wallet-shell-skeleton*`, así que
+ * lo que se agregue después del bloque no puede acusarlo ni encubrirlo.
+ */
+const SKELETON_CSS = (() => {
+  const start = CSS.indexOf(".wallet-shell-skeleton {");
+  const rules = [...CSS.slice(start).matchAll(/\.wallet-shell-skeleton[\w-]*\s*\{[^}]*\}/g)];
+  return rules.map((rule) => rule[0]).join("\n");
+})();
 
 describe("AC8 — la geometría se deriva, no se copia", () => {
   it("el ancho de riel vive en un token, no en un literal", () => {
