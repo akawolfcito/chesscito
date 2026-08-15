@@ -120,7 +120,7 @@ usar**, y que llenarlo requiere primero verificación de sesión server-side.
 
 | | |
 | --- | --- |
-| `main` local | limpio, **7 commits** por delante de `origin/main` |
+| `main` local | limpio, **8 commits** por delante de `origin/main` (el founder pushea) |
 | Suite | 673 archivos / 8332 tests, `EXIT=0`, 156 s |
 | `tsc` | limpio |
 | Migración de duelos | ✅ **aplicada a producción**, ledger 46 |
