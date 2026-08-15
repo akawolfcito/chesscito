@@ -17322,3 +17322,145 @@ button.web-access-link {
   height: 64px;
   border-radius: 18px;
 }
+
+/* ── Duelo por enlace ────────────────────────────────────────────────
+   Spec: docs/specs/2026-08-15-duel-arena-ui-states-spec.md
+
+   El duelo vive en la MISMA superficie que la partida contra la IA
+   (`/arena?duel=<id>`), asi que hereda el ancho de app y el fondo de la
+   pantalla de juego. Lo unico propio es el par de relojes y el pie que
+   cambia con el estado.
+
+   ⚠️ Mobile-first a 390px. Desktop no es prioridad. */
+
+.duel-arena {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  padding: 12px 10px 24px;
+}
+
+/* El esqueleto no dibuja nada: reserva la altura del tablero para que la
+   primera lectura no empuje la pantalla hacia abajo al llegar. */
+.duel-arena-loading {
+  min-height: 60vh;
+}
+
+/* Los dos relojes con el estado en el medio. El del jugador queda abajo,
+   del mismo lado que su asiento en el tablero. */
+.duel-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.duel-status {
+  text-align: center;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.duel-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 72px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+}
+
+/* Corre el del que tiene el turno, y se ve. Sin esta diferencia los dos
+   numeros se leen igual y el jugador no sabe cual es el suyo bajando. */
+.duel-clock.is-running {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+/* Ultimos 30 segundos. ⚠️ Es una senal visual, NO una regla: quien decide
+   que cayo la bandera es el servidor. */
+.duel-clock.is-low {
+  background: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+}
+
+.duel-clock-label {
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.duel-clock-time {
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.duel-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.duel-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+  color: hsl(var(--foreground));
+}
+
+.duel-body {
+  font-size: 0.9375rem;
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+}
+
+.duel-hint {
+  font-size: 0.8125rem;
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+}
+
+.duel-cta {
+  min-height: 52px;
+  border-radius: 14px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.duel-cta:disabled {
+  opacity: 0.6;
+}
+
+.duel-secondary {
+  min-height: 44px;
+  border-radius: 12px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+/* Un aviso transitorio, no una pantalla de error: cada uno de estos es un
+   desenlace normal del juego (jugada ilegal, el rival movio primero). */
+.duel-notice {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  font-size: 0.875rem;
+  text-align: center;
+}

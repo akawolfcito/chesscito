@@ -85,16 +85,38 @@ const ENABLE_COACH = process.env.NEXT_PUBLIC_ENABLE_COACH !== "false";
 // without violating Next.js App Router's page-export constraints (only the
 // default export + reserved Next.js names are allowed in page files).
 import { evaluateXClose } from "./end-state-close-policy";
+import { DuelArenaRoute } from "@/components/duel/duel-arena-route";
 
 export default function ArenaPage() {
   // useSearchParams() requires a Suspense boundary for static prerender
   // (Next 14 App Router). Wrap the entire client tree so the read inside
-  // ArenaPageInner is safe under both SSR and hydration.
+  // ArenaSurface is safe under both SSR and hydration.
   return (
     <Suspense fallback={null}>
-      <ArenaPageInner />
+      <ArenaSurface />
     </Suspense>
   );
+}
+
+/**
+ * Which game this surface is showing.
+ *
+ * ⛔ The branch lives HERE, above `ArenaPageInner`, and not inside it. That
+ * component is the AI match: 1600+ lines with hooks spread through all of them,
+ * so an early return in the middle would break the rules of hooks. Branching
+ * above means the AI tree never mounts for a duel at all.
+ *
+ * ⚠️ And the URL stays `/[locale]/arena?duel=<id>` — that exact shape is what
+ * the only P0 of the red-team was measured against, with Privy's full-page
+ * redirect on a real phone. Moving the duel to its own route would invalidate
+ * the measurement, not just the link.
+ */
+function ArenaSurface() {
+  const params = useSearchParams();
+  const duelId = params?.get("duel");
+
+  if (duelId) return <DuelArenaRoute duelId={duelId} />;
+  return <ArenaPageInner />;
 }
 
 /** Hold time for the matchup transition between PLAY and the board.
