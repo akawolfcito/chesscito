@@ -1368,6 +1368,87 @@ export const ARENA_COPY = {
   matchEndedHint: "Try again when ready.",
 } as const;
 
+/**
+ * The duel by link (spec: 2026-08-13-p2p-chess-duel-by-link-spec.md).
+ *
+ * Its own namespace rather than a corner of ARENA_COPY: the duel is a second
+ * opponent kind on the same surface, and mixing its copy into the AI match's
+ * would make every future reader guess which strings belong to which game.
+ *
+ * ⚠️ Nothing here promises a reward. The spec is explicit that a duel result
+ * touches no Peones, no ranking and no badges, and copy that hints otherwise
+ * would be a promise the server does not keep.
+ */
+export const DUEL_COPY = {
+  /** Fourth card in the PLAY opponent picker, next to the three difficulties. */
+  opponentCardTitle: "A friend",
+  opponentCardHint: "Share a link and play",
+
+  /** The clock ladder, shown before the duel is created. */
+  setupTitle: "Game with a friend",
+  setupClockLabel: "Time each",
+  setupMinutes: "{count} min",
+  setupSeconds: "30 sec",
+  setupLess: "Less time",
+  setupMore: "More time",
+  setupCreate: "Create and share",
+  setupCreating: "Creating...",
+
+  /** S2, waiting for somebody to answer. */
+  invitingTitle: "Waiting for your friend",
+  invitingBody: "Send them this link. The board opens as soon as they sit down.",
+  invitingShare: "Share link",
+  invitingCopy: "Copy link",
+  invitingCopied: "Link copied",
+  invitingExpiry: "The link works for one hour.",
+
+  /** S3, somebody else's link. */
+  invitedTitle: "{name} wants to play",
+  invitedTitleAnonymous: "You have been invited to play",
+  invitedBody: "Take the free seat and the game starts right away.",
+  invitedJoin: "Join the game",
+  invitedJoining: "Taking your seat...",
+
+  /** S4 and S5. */
+  yourTurn: "Your move",
+  theirTurn: "Waiting for your rival",
+  watching: "You are watching this game",
+
+  /** Endings. */
+  wonCheckmate: "Checkmate. You win.",
+  lostCheckmate: "Checkmate. You lose.",
+  wonResign: "Your rival resigned. You win.",
+  lostResign: "You resigned.",
+  wonTimeout: "Your rival ran out of time. You win.",
+  lostTimeout: "You ran out of time.",
+  drawStalemate: "Draw by stalemate.",
+  drawInsufficient: "Draw. Neither side can checkmate.",
+  drawRepetition: "Draw by repetition.",
+  drawFiftyMove: "Draw by the fifty move rule.",
+  endedNeutral: "The game is over.",
+  expiredTitle: "Nobody answered",
+  expiredBody: "This invitation ran out. Nothing was lost.",
+  missingTitle: "This duel does not exist",
+  missingBody: "The link may be wrong, or the game may have been cleared.",
+
+  /** Actions available while a game runs. */
+  resign: "Resign",
+  resignConfirmTitle: "Resign this game?",
+  resignConfirmBody: "Your rival wins.",
+  resignConfirm: "Resign",
+  resignCancel: "Keep playing",
+  backToPlay: "Back to Play",
+
+  /** Transient notices. Each one is a normal outcome, never an error screen. */
+  noticeIllegalMove: "That move is not legal here.",
+  noticeNotYourTurn: "It is not your move yet.",
+  noticeVersionConflict: "Your rival moved first. Here is the real board.",
+  noticeSeatTaken: "Somebody took the seat before you.",
+  noticeExpired: "This game is already over.",
+  noticeNetwork: "No connection. Checking the board again.",
+  noticeUnavailable: "Something went wrong. Try again.",
+} as const;
+
 export const EXERCISE_DRAWER_COPY = {
   title: "Exercises",
   progressLabel: (earned: number, max: number) => `${earned}/${max}`,
