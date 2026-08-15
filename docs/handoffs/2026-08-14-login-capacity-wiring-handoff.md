@@ -306,12 +306,82 @@ funciona.
 
 ---
 
+## 6. Ledger de migraciones — alineado
+
+Estaba **44 filas contra 45 archivos**: `20260811150000_content_overlay_sweeps` tenía el esquema
+aplicado en prod (columnas + las dos constraints, verificado) pero **ninguna fila en el ledger**.
+Alguien la aplicó a mano y no registró la versión.
+
+⛔ **La nota que arrastrábamos era falsa**: decía *"falta aplicar la migración, o TODO guardado
+es 500"*. Las columnas estaban; guardar funcionaba. El problema no era el esquema sino la
+contabilidad — y con el ledger desalineado, **ningún `db push` ni `db diff` era confiable**.
+
+Registrado el 2026-08-14 con un guard que **aborta si el esquema no estuviera**: esa fila
+*afirma* que la migración corrió, y escribirla sin verificar convertiría un problema visible (la
+herramienta avisa que falta) en uno invisible (la herramienta jura que está). **45 = 45.**
+
+---
+
+## 7. P2P — arrancado, con el modelo cambiado
+
+**Spec revisado** (`docs/specs/2026-08-13-p2p-chess-duel-by-link-spec.md`) y **plan por etapas**
+(`docs/plans/2026-08-14-p2p-duel-tdd-plan.md`). Commit `acc23ed`.
+
+⚠️ **Cambia qué producto es**: de asincrónico por turnos (48 h por jugada) a **una partida de
+una sentada con reloj de ajedrez**. Decisión del founder — *"mejor que sea una partida con
+tiempo, así nos evitamos adivinar"* — y tenía razón: las tres reglas que el spec inventaba
+(ganador por vencimiento, tablas por tiempo, guarda de abandono) eran soluciones caseras a algo
+que el ajedrez resolvió hace 150 años.
+
+- Invitación **1 h**; la partida la termina el reloj. Escalera `30s·1·3·5·10·15·30`, default
+  **10**, sin incremento, con `−`/`+` en vez de campo libre.
+- ⛔ **El tiempo va POR ASIENTO**, no como campo del duelo. Hoy da igual; es la decisión que
+  habría que deshacer con una migración el día del **handicap** que el founder ya nombró.
+- ⛔ **`invitedBy` lo escribe el SERVIDOR** desde la credencial del creador. El founder quiere
+  premiar a quien trae gente: en cuanto haya premio, un dato que el cliente elige se falsifica.
+- Las **cuatro** open questions del spec quedaron cerradas. Persistencia: **Supabase**.
+
+**Dónde retomar: Etapa 0** — `lib/duel/referee.ts` + `lib/duel/clock.ts`, puro, sin base ni
+rutas. El plan está ordenado **por riesgo**: el árbitro va primero porque es el único bloque
+donde un error es *silencioso y permanente*.
+
+---
+
+## 8. Estado del repo al cerrar
+
+| | |
+| --- | --- |
+| `main` local | limpio, **46 commits** por delante de `origin/main` |
+| `origin/production` | ✅ **tiene todo el código** — sólo le faltan 2 commits, ambos de docs |
+| Suite | 661 archivos / 8142 tests, exit 0 |
+| `next build` | exit 0 |
+
+✅ **No hay riesgo de pérdida**: lo construido hoy vive en `origin/production`, que es adonde
+apunta el deploy.
+
+⚠️ **Sí hay drift**: `origin/main` va 46 atrás y `main` es la rama por defecto de un repo
+**público**. Es la misma forma del problema del ledger — el registro no coincide con la
+realidad. No rompe nada hoy; hace que mañana no puedas confiar en lo que ves. **Pushear `main`
+es un fast-forward, sin conflicto.** Lo hace el founder ([[feedback_founder_pushes_main_not_server_merge]]).
+
+---
+
 ## Preguntas abiertas
 
-1. **¿Cuál es tu número?** La fila arranca en 460. Con 5 cuentas en el pozo no urge — pero el
-   día que urja ya es tarde para pensarlo.
+1. **¿Cuál es tu número?** La fila arranca en 460. Con 6 cuentas en el pozo no urge — pero el
+   día que urja ya es tarde para pensarlo. ⚠️ Y ese día, **mirar el MAU real de Privy antes de
+   decidir**: nosotros contamos altas históricas y ellos sesiones de 30 días, así que lo más
+   probable es que corresponda **subir** el número, no asustarse.
 2. **¿Privy exporta la clave del usuario?** Sigue sin verificar. La más barata y de mayor
    impacto de todas las que arrastramos.
 3. **¿Se le avisa a quien quedó en la waitlist cuando se reabre?** Sin eso, cerrar es perderlos
    igual — que es justo lo que querías evitar. Hoy nadie está en esa situación (el tope no
    cerró nunca), así que es una decisión que se puede tomar tranquila.
+4. **Nada avisa que el pozo se está llenando.** Sólo se loguea el **cierre**, o sea que uno se
+   entera cuando ya está pasando. La única superficie que muestra el estado es
+   `/control-tower/access`, y hay que entrar a mirarla. Con 6 de 460 está lejos; lo que no está
+   lejos es olvidarse de que no avisa.
+5. **¿Se saca el allowlist de Privy?** Con el simulacro pasado, **ahora es el momento más barato
+   para hacerlo**: el pozo está en 6 de 460 y el botón revierte en segundos. ⛔ Pero sigue sin
+   ser una transferencia de control — el tope es un presupuesto en nuestro cliente y los caminos
+   de fail-open siguen ahí; sólo que **hoy no hacen daño porque el pozo está casi vacío**.
