@@ -41,9 +41,19 @@ export type DuelRow = {
   created_at: string;
   expires_at: string;
   last_move_at: string | null;
-  /** ⚠️ `numeric(3,1)`. Drivers hand numerics back as STRINGS to preserve the
-   *  precision they were stored with, so this is the one column whose runtime
-   *  type is not the one the schema suggests. */
+  /**
+   * `numeric(3,1)`, and the one column whose runtime type was worth measuring
+   * instead of assuming.
+   *
+   * ✅ MEASURED against the real table on 2026-08-15: through PostgREST it
+   * arrives as a **number**. (This comment first claimed the opposite, on the
+   * general reputation of numerics — the probe corrected it.)
+   *
+   * The union and the `Number()` in `toDuel` stay anyway, and cheaply: read
+   * over a raw postgres driver — `pg`, psql, any direct-connection tooling — a
+   * `numeric` DOES come back as a string to preserve precision, and
+   * `"10.0" === 10` is false in every comparison the ladder makes.
+   */
   initial_minutes: number | string;
   invited_by: string | null;
 };

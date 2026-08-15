@@ -63,10 +63,12 @@ describe("toDuel", () => {
   });
 
   /**
-   * ⚠️ `initial_minutes` is `numeric(3,1)`. Postgres drivers hand numerics back
-   * as STRINGS to keep the precision they were stored with, and `"10.0" === 10`
-   * is false in every comparison the ladder does. Coercing here is the whole
-   * reason this seam exists.
+   * `initial_minutes` is `numeric(3,1)`. ✅ Measured 2026-08-15: through
+   * PostgREST it arrives as a NUMBER, so this coercion is insurance rather than
+   * a fix. It is kept because a raw postgres driver returns numerics as strings
+   * to preserve precision, and `"10.0" === 10` is false in every comparison the
+   * ladder makes — the day anything reads this table without PostgREST, the
+   * ladder would silently stop recognising its own rungs.
    */
   it("coerces a numeric that arrives as a string", () => {
     expect(toDuel(awaitingRow({ initial_minutes: "10.0" })).initialMinutes).toBe(10);
