@@ -14,7 +14,7 @@
 | --- | --- |
 | 0 — árbitro + reloj | ✅ `lib/duel/{types,clock,referee}.ts` |
 | 1 — identidad del asiento | ✅ `lib/duel/seat-token.ts` |
-| 2 — la tabla | ✅ escrita y probada contra Postgres — ⛔ **NO aplicada a ninguna base** |
+| 2 — la tabla | ✅ **APLICADA A PRODUCCIÓN el 2026-08-15** (ledger 46; ver abajo) |
 | 3 — las rutas | ⬜ **acá se retoma** |
 | 4 — el enlace sobrevive al login | ✅ **cerrada por medición**, sin construir nada (ver abajo) |
 | 5 — la Arena | ⬜ |
@@ -70,9 +70,20 @@ de quién es el turno.
 - `remainingMs` **por asiento** — el handicap futuro sale gratis
 - `invitedBy` escrito por el servidor
 
-⛔ **Aplicarla con el probe primero** y **nunca con `db push` a ciegas**: hoy el ledger quedó
-alineado (45 = 45), y la forma de romperlo de nuevo es arrastrar migraciones ajenas.
-Ver `docs/handoffs/2026-08-14-login-capacity-wiring-handoff.md` §4.
+✅ **APLICADA A PRODUCCIÓN el 2026-08-15.** Probe en Postgres desechable primero (la migración
++ `supabase/tests/duels_smoke.sql`: 13 casos verdes, `anon` denegado, y un segundo pase
+probando que re-correrla es inofensiva). Después prod **en una transacción**, con el `insert`
+del ledger y la verificación en la misma corrida: tabla + índice + `purge_duels`, **17 CHECK
+constraints**, RLS activa con **0 policies**, `anon`/`authenticated` sin un solo grant, ledger
+**46**, tabla vacía.
+
+⚠️ **La negación de `anon` se probó devolviendo un VALOR (`DENIED`), no un `raise notice`: el
+pooler de Supabase se come los NOTICE** y un `DO` que sólo imprime `DO` no prueba nada.
+
+⛔ **Se aplicó sólo el archivo autorizado, por psql — no `db push`.** ⚠️ Y la razón vieja para
+prohibirlo (*"arrastraría `content_overlay_sweeps`"*) **era falsa el 2026-08-15**: medido, el
+ledger ya tenía `20260811150000` y de 46 archivos locales el único sin fila era éste. El estado
+del ledger se mide antes de afirmarlo, no se recuerda.
 
 ---
 
