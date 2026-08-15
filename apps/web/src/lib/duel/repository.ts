@@ -67,6 +67,21 @@ export type DuelRepository = {
   commit(duel: Duel, expectedVersion: number): Promise<CommitResult>;
 };
 
+/**
+ * The same repository, from the real Supabase client.
+ *
+ * ⚠️ The cast is deliberate and belongs here rather than in four routes.
+ * `SupabaseClient` is generic over the whole database schema, and structurally
+ * matching it against `DuelQueryClient` makes TypeScript unfold the PostgREST
+ * builder types until it gives up with TS2589 ("type instantiation is
+ * excessively deep"). Narrowing at this one seam keeps the routes readable and
+ * keeps `duelRepository` itself precisely typed for the tests, which are what
+ * actually pin the query shape.
+ */
+export function duelRepositoryFrom(client: unknown): DuelRepository {
+  return duelRepository(client as DuelQueryClient);
+}
+
 export function duelRepository(client: DuelQueryClient): DuelRepository {
   return {
     async find(id) {
