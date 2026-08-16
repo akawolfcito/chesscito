@@ -90,6 +90,43 @@ Esperar **~200 eventos `no-token`** (§11.1). Luego:
 
 ⛔ **No se arregla el transporte en este lote.** Arreglar y medir a la vez destruye la línea base: si la conversión se mueve, no sabremos si arreglamos un RPC o movimos un precio.
 
+### 1.5 ✅ VERIFICADO end-to-end en un build real — 2026-08-16
+
+Smoke del founder en preview (PLAY), wallet sin fondos: abrir PRO → intentar activar →
+"Insufficient stablecoin balance." Consulta de sólo lectura contra `analytics_events`
+(`scripts/ops/read-only-query.ts`). Wallets mostrados como `md5` truncado, nunca completos.
+
+| criterio | resultado |
+|---|---|
+| `event` | `pro_purchase_failed` ✅ |
+| `kind` | `no-token` ✅ |
+| `read_usdc` | **`absent`** |
+| `read_usdt` | **`absent`** |
+| `read_cusd` | **`absent`** |
+| ¿sobrevivieron a `sanitizeProps`? | ✅ las tres claves están en la fila |
+| ¿props inesperadas? | ✅ ninguna — el conjunto es exactamente `{kind, read_usdc, read_usdt, read_cusd}` |
+| ¿una vez por tap? | ✅ **una** fila para ese tap |
+
+**La prueba de que las claves son nuevas y no se descartan:** en los 10 días previos hay
+**640 filas** `no-token` y **cero** con `read_*`; el 2026-08-16 aparece **1** con las tres.
+Un `sanitizeProps` que las tirara habría dado 0 en todos los días por igual.
+
+⚠️ **`absent`, no `success:zero` — y eso ya es un hallazgo, no un defecto.** `absent` significa
+que la lectura de `balanceOf` **no había llegado** cuando se procesó el tap. Antes de este lote
+ese caso era `0n`, idéntico a un wallet vacío: **la distinción que el lote existía para hacer,
+la hizo en su primer evento.**
+
+⛔ **Lo que esto NO dice todavía.** Con n=1 no se decide nada: no responde si el 98,4% son
+lecturas fallidas o wallets realmente sin saldo. El criterio de lectura sigue siendo el de
+§1.4 — **~200 eventos**. Y ojo con la interpretación: si `absent` domina, la pregunta se
+desplaza de "¿falla el RPC?" a "¿estamos bloqueando el tap antes de que la lectura llegue?",
+que es una respuesta distinta y más barata.
+
+⚠️ **Abierto, NO introducido por este lote:** hay ráfagas históricas en el mismo call site
+—hasta 10 eventos de un wallet en un segundo el 2026-08-15— con el código viejo. El punto de
+emisión no cambió, así que el "una vez por tap" queda verificado **para este smoke**, no como
+propiedad global. Merece mirarse cuando se calcule cualquier tasa con este evento.
+
 ---
 
 ## Lote 2 — Clasificación del error del mint de victoria `[P0]`
