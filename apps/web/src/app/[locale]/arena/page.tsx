@@ -87,6 +87,7 @@ const ENABLE_COACH = process.env.NEXT_PUBLIC_ENABLE_COACH !== "false";
 import { evaluateXClose } from "./end-state-close-policy";
 import { DuelArenaRoute } from "@/components/duel/duel-arena-route";
 import { DuelSetupSheet } from "@/components/duel/duel-setup-sheet";
+import { DUEL_DISCOVERY_ENABLED } from "@/lib/duel/duel-flag";
 import { getAnonymousId } from "@/lib/analytics/identity";
 
 export default function ArenaPage() {
@@ -1161,10 +1162,10 @@ function ArenaPageInner() {
                 });
                 handleStartWithLoading();
               }}
-              onSelectFriend={() => {
+              onSelectFriend={DUEL_DISCOVERY_ENABLED ? () => {
                 track("duel_setup_open", { surface: "arena-select" });
                 setDuelSetupOpen(true);
-              }}
+              } : undefined}
               onBack={() => {
                 track("arena_back_tap");
                 handleBackToHub();
