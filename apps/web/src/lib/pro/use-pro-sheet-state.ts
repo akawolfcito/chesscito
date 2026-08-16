@@ -7,7 +7,10 @@ import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 import { useTranslations } from "next-intl";
 import { getConfiguredChainId } from "@/lib/contracts/chains";
 import { getProPack } from "@/lib/payments/rail-config";
-import { useStablecoinTokenSelection } from "@/lib/payments/use-get-peones-token-selection";
+import {
+  tokenReadProps,
+  useStablecoinTokenSelection,
+} from "@/lib/payments/use-get-peones-token-selection";
 import { hapticSuccess } from "@/lib/haptics";
 import { classifyProRailError } from "@/lib/pro/pro-rail-error";
 import { useProRail, type ProRailResult } from "@/lib/pro/use-pro-rail";
@@ -264,7 +267,14 @@ export function useProSheetState(
   const handlePurchase = useCallback(async () => {
     setPreviewErrorMessage(null);
     if (!selection.selected) {
-      track("pro_purchase_failed", { kind: "no-token" });
+      // Carry WHY. Without the reads, this event cannot tell an empty wallet
+      // from a failed `balanceOf`, and that difference decides whether the
+      // answer is a transport fix or a price. Emitted here — once per tap —
+      // and not from an effect, because `useReadContracts` re-renders.
+      track("pro_purchase_failed", {
+        kind: "no-token",
+        ...tokenReadProps(selection.reads),
+      });
       setPreviewErrorMessage(t("insufficientBalance"));
       return;
     }

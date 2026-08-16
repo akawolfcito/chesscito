@@ -421,6 +421,39 @@ describe("POST /api/telemetry — payload limits", () => {
     expect(captured.inserts.map((i) => i.row.event)).toEqual(["good"]);
   });
 
+  it("⛔ a NESTED prop value is dropped SILENTLY and the row is written anyway", async () => {
+    // This is a trap, pinned here so nobody walks into it twice. `sanitizeProps`
+    // copies string/number/boolean/null and nothing else: an array or an object
+    // simply never reaches `out`, no error, no rejection — the event lands
+    // looking recorded, missing exactly the payload it was added to carry.
+    //
+    // It cost the evidence pass a redesign: `pro_purchase_failed` was going to
+    // ship its balance reads as `reads: [{symbol, status, bucket} × 3]`, which
+    // would have arrived as `{kind: "no-token"}` and taught us nothing. The
+    // instrumentation flattens to `read_<symbol>` strings because of this test.
+    await POST(
+      makeReq({
+        events: [
+          {
+            session_id: "s1",
+            event: "nested_props",
+            dims,
+            props: {
+              kept: "yes",
+              list: [{ symbol: "USDC", status: "failure" }],
+              nested: { symbol: "USDC" },
+            },
+          },
+        ],
+      }),
+    );
+
+    expect(captured.inserts).toHaveLength(1);
+    // Written — not rejected. That is the dangerous half.
+    expect(captured.inserts[0]?.row.event).toBe("nested_props");
+    expect(captured.inserts[0]?.row.props).toEqual({ kept: "yes" });
+  });
+
   it("an oversized dimension is nulled, not fatal — dims are cosmetic", async () => {
     await POST(
       makeReq({

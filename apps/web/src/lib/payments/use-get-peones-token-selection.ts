@@ -59,6 +59,106 @@ export function selectPayableToken(
   return { tokens, autoSelected: tokens.find((t) => t.payable)?.symbol ?? null };
 }
 
+/* ------------------------------------------------------------------------- *
+ * Read instrumentation (evidence pass, lote 1 — 2026-08-16)
+ *
+ * Everything below is PURELY ADDITIVE. `selectPayableToken` above is the
+ * function that fixed the 2026-06-09 smoke bug and it stays untouched: this
+ * describes the same reads it consumes, it never feeds them.
+ *
+ * The question in production: when a MiniPay wallet taps buy and we answer
+ * "insufficient balance", is the wallet actually empty, or did `balanceOf`
+ * FAIL? Today both — plus a third case, a read that has not arrived yet —
+ * collapse into `0n` at line ~93 and are indistinguishable in the data.
+ * ------------------------------------------------------------------------- */
+
+/** `absent` is a REAL third state (read not arrived / index missing), not a
+ *  synonym for `failure`. Telling them apart is the whole point. */
+export type TokenReadStatus = "success" | "failure" | "absent";
+
+/** Bounded by construction, like every other analytics dimension.
+ *  `payable` is kept in the vocabulary even though a `no-token` event can
+ *  never legitimately carry it — so that contradiction stays EXPRESSIBLE and
+ *  therefore observable, instead of being impossible to report. */
+export type BalanceBucket = "zero" | "dust" | "under_price" | "payable";
+
+export type TokenReadOutcome = {
+  symbol: string;
+  status: TokenReadStatus;
+  /** `null` whenever `status !== "success"` — a read that did not land has no
+   *  balance to bucket, and reporting one would be a fabrication. */
+  bucket: BalanceBucket | null;
+};
+
+/** The shape `useReadContracts` returns per contract with `allowFailure`. */
+export type TokenReadResult =
+  | { status: "success"; result: unknown }
+  | { status: "failure"; error: unknown };
+
+/** Below this fraction of the price, a balance is dust: technically nonzero,
+ *  practically the same as empty. Cheap way to separate "never funded" from
+ *  "funded and spent down". */
+const DUST_FRACTION = 100n; // 1%
+
+function bucketOf(balance: bigint, expectedAmount: bigint): BalanceBucket {
+  // `payable` is tested FIRST so the bucket can never contradict
+  // `selectPayableToken`, which compares `balance >= expectedAmount` — that
+  // equivalence is asserted directly in the tests.
+  if (balance >= expectedAmount) return "payable";
+  if (balance === 0n) return "zero";
+  if (balance * DUST_FRACTION < expectedAmount) return "dust";
+  return "under_price";
+}
+
+/**
+ * Classify each balance read, per token, WITHOUT touching selection.
+ *
+ * `expectedAmount` is normalized by the token's decimals exactly as
+ * `selectPayableToken` does — cUSD at 18 decimals is where an unnormalized
+ * comparison would silently call dust "payable".
+ */
+export function describeTokenReads(
+  priceUsd6: bigint,
+  tokens: readonly { symbol: string; decimals: number }[],
+  data: readonly (TokenReadResult | undefined)[] | undefined,
+): TokenReadOutcome[] {
+  return tokens.map((t, i) => {
+    const r = data?.[i];
+    if (!r) return { symbol: t.symbol, status: "absent", bucket: null };
+    // A `success` whose result is not a bigint produced no balance, so it is
+    // reported as a failure rather than as a fourth category: an extra state
+    // that changes no decision is cardinality without information.
+    if (r.status !== "success" || typeof r.result !== "bigint") {
+      return { symbol: t.symbol, status: "failure", bucket: null };
+    }
+    return {
+      symbol: t.symbol,
+      status: "success",
+      bucket: bucketOf(r.result, normalizePrice(priceUsd6, t.decimals)),
+    };
+  });
+}
+
+/**
+ * Flatten the outcomes into telemetry props.
+ *
+ * ⛔ FLAT STRINGS ON PURPOSE. `sanitizeProps` (`app/api/telemetry/route.ts`)
+ * only copies string/number/boolean/null values; anything else — an array, a
+ * nested object — is dropped SILENTLY and the event is still written, so the
+ * row would look recorded while carrying nothing. An array of objects, the
+ * obvious shape, is exactly the shape that disappears.
+ */
+export function tokenReadProps(
+  outcomes: readonly TokenReadOutcome[],
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const o of outcomes) {
+    out[`read_${o.symbol.toLowerCase()}`] =
+      o.bucket === null ? o.status : `${o.status}:${o.bucket}`;
+  }
+  return out;
+}
+
 /**
  * Generic stablecoin balance read + payable auto-selection for ANY
  * single-tx purchase priced in USD6 (Peones packs, Season Pass, …).
@@ -96,6 +196,18 @@ export function useStablecoinTokenSelection(priceUsd6: bigint) {
     return selectPayableToken(priceUsd6, balances);
   }, [data, priceUsd6]);
 
+  // Same `data`, described instead of collapsed. Nothing downstream of the
+  // selection reads this — it exists only so a blocked purchase can say WHY.
+  const reads = useMemo(
+    () =>
+      describeTokenReads(
+        priceUsd6,
+        RAIL_ACCEPTED_STABLECOINS,
+        data as readonly (TokenReadResult | undefined)[] | undefined,
+      ),
+    [data, priceUsd6],
+  );
+
   const selectedSymbol = override ?? autoSelected;
   const selected = tokens.find((t) => t.symbol === selectedSymbol) ?? null;
   const loading = Boolean(address) && isLoading;
@@ -105,6 +217,7 @@ export function useStablecoinTokenSelection(priceUsd6: bigint) {
   return {
     loading,
     tokens,
+    reads,
     selectedSymbol,
     setSelectedSymbol: (s: string) => setOverride(s),
     selected,

@@ -21,7 +21,10 @@ const useReadContractsMock = vi.hoisted(() =>
   vi.fn(() => ({
     data: undefined as
       | undefined
-      | { result?: bigint; status?: string }[],
+      // `error` is part of the real `useReadContracts` result under
+      // `allowFailure` — the mock has to be able to express a FAILED read,
+      // which is precisely the case the balance instrumentation exists to see.
+      | { result?: bigint; status?: string; error?: unknown }[],
     isLoading: false,
   })),
 );
@@ -258,7 +261,15 @@ describe("useProSheetState — handlePurchase", () => {
       await result.current.sheetProps.onPurchase();
     });
 
-    expect(trackMock).toHaveBeenCalledWith("pro_purchase_failed", { kind: "no-token" });
+    // The reads are carried with the event (evidence pass, lote 1). The default
+    // mock returns no data at all, so all three are `absent` — which is itself
+    // the finding: today that case is indistinguishable from an empty wallet.
+    expect(trackMock).toHaveBeenCalledWith("pro_purchase_failed", {
+      kind: "no-token",
+      read_usdc: "absent",
+      read_usdt: "absent",
+      read_cusd: "absent",
+    });
     expect(
       trackMock.mock.calls.find((c) => c[0] === "pro_purchase_started"),
     ).toBeUndefined();
@@ -266,6 +277,78 @@ describe("useProSheetState — handlePurchase", () => {
       "Insufficient stablecoin balance.",
     );
     expect(writeContractAsyncMock).not.toHaveBeenCalled();
+  });
+
+  it("distinguishes a FAILED read from a genuinely empty wallet", async () => {
+    // The question the whole lote exists to answer: an RPC failure and a zero
+    // balance both blocked the purchase, and until now both were logged the same.
+    useReadContractsMock.mockReturnValue({
+      data: [
+        { status: "failure", error: new Error("rpc down") },
+        { result: 0n, status: "success" },
+        { result: 1_000n, status: "success" },
+      ],
+      isLoading: false,
+    });
+    const { result } = renderProSheetHook();
+
+    await act(async () => {
+      await result.current.sheetProps.onPurchase();
+    });
+
+    expect(trackMock).toHaveBeenCalledWith("pro_purchase_failed", {
+      kind: "no-token",
+      read_usdc: "failure",
+      read_usdt: "success:zero",
+      // 1_000 units of an 18-decimal token against a $1.99 price — dust.
+      read_cusd: "success:dust",
+    });
+  });
+
+  it("emits once per blocked tap, not once per render", async () => {
+    // `useReadContracts` re-renders on its own; an emission hung off a render
+    // would inflate the denominator of every rate computed from this event.
+    useReadContractsMock.mockReturnValue({
+      data: [
+        { result: 0n, status: "success" },
+        { result: 0n, status: "success" },
+        { result: 0n, status: "success" },
+      ],
+      isLoading: false,
+    });
+    const { result, rerender } = renderProSheetHook();
+
+    rerender();
+    rerender();
+    expect(trackMock.mock.calls.filter((c) => c[0] === "pro_purchase_failed")).toHaveLength(
+      0,
+    );
+
+    await act(async () => {
+      await result.current.sheetProps.onPurchase();
+    });
+    rerender();
+
+    expect(
+      trackMock.mock.calls.filter((c) => c[0] === "pro_purchase_failed"),
+    ).toHaveLength(1);
+  });
+
+  it("every prop it emits is a primitive sanitizeProps will keep", async () => {
+    // ⛔ The server drops non-primitive prop values SILENTLY and writes the row
+    // anyway (`app/api/telemetry/route.ts`). An array of read objects — the
+    // obvious shape — would arrive as an event with nothing in it.
+    const { result } = renderProSheetHook();
+
+    await act(async () => {
+      await result.current.sheetProps.onPurchase();
+    });
+
+    const call = trackMock.mock.calls.find((c) => c[0] === "pro_purchase_failed");
+    const props = call?.[1] as Record<string, unknown>;
+    for (const value of Object.values(props)) {
+      expect(["string", "number", "boolean"]).toContain(typeof value);
+    }
   });
 
   it("on success: sends a direct transfer (no approve), closes sheet, refetches PRO status, fires haptic + confirmed event", async () => {
