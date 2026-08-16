@@ -19,8 +19,14 @@
 | 4 — el enlace sobrevive al login | ✅ **cerrada por medición**, sin construir nada (ver abajo) |
 | 5 — la Arena | ✅ **CERRADA el 2026-08-15** — spec de UI, 8 estados, la Arena y la entrada en PLAY |
 
-> ⛔ **Las cinco etapas están construidas y NADIE lo abrió todavía en un navegador.**
-> `docs/handoffs/2026-08-15-p2p-duel-stage-5-handoff.md` §1.
+> # ⛔ P2P DUEL V0 — FROZEN (2026-08-16)
+>
+> Las cinco etapas construidas, smoke de dos dispositivos verde sobre preview, y el P0 que
+> encontro ese smoke (el Data Cache de Next sirviendo lecturas viejas) arreglado.
+> **Este plan queda como artefacto historico.** El estado real vive en
+> `docs/handoffs/2026-08-16-p2p-duel-v0-frozen.md`.
+
+
 
 ---
 

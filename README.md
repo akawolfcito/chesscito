@@ -113,6 +113,21 @@ Play a complete chess game vs AI and save the result as an on-chain NFT — any 
 - Powered by `js-chess-engine` (pure JS, runs natively in the MiniPay WebView)
 - Victory NFT mint price scales with difficulty (Easy $0.005 / Medium $0.01 / Hard $0.02)
 
+### Arena — Duel by link (P2P)
+
+Share a link and play a full chess game against a person, refereed by the server.
+
+- **The clock is the game**: a per-seat chess clock on a fixed ladder (3 · 5 · 10 · 15 · 30 min),
+  charged with the server's clock — the client only draws it
+- Authority over a seat comes from a **server-issued credential**, never from a wallet or any id
+  a client sends
+- No cron and no job: an invitation that nobody answers, and a fallen flag, are both settled by
+  the next read
+- **Nothing is at stake**: a duel result touches no Peones, no ranking and no badges
+
+> Discovery is gated by `NEXT_PUBLIC_ENABLE_DUEL`. The gate hides the entry card only — a link
+> already in somebody's hands keeps working.
+
 ### Chesscito Coach
 
 Post-game analysis powered by an LLM that identifies tactical and positional patterns in your play so you know what to train next. User-triggered per game; PRO Benefit included.
