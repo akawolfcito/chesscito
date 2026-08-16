@@ -32,20 +32,37 @@ import {
  * initial state, so there is no flash of a broken image.
  */
 
-/** The always-present member of the generated triplet. */
+/**
+ * ⚠️ `.png` is the EXISTENCE ORACLE, not what gets shown.
+ *
+ * The uploader writes the triplet together, so asking after any one member
+ * answers for all three — and `.png` is the only one every browser can be
+ * assumed to have. What the player actually downloads is chosen by `<picture>`,
+ * which will pick `.avif` or `.webp` and never this.
+ */
 const PROBE_EXTENSION = ".png";
 
-function probe(url: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    if (typeof window === "undefined" || typeof Image === "undefined") {
-      resolve(false);
-      return;
-    }
-    const image = new Image();
-    image.onload = () => resolve(true);
-    image.onerror = () => resolve(false);
-    image.src = url;
-  });
+/**
+ * Does this asset exist?
+ *
+ * ⛔ A HEAD request, NOT `new Image()`. Loading the image to find out would
+ * download the heaviest member of the triplet in full, just to throw it away
+ * and then let `<picture>` fetch the light one — paying for the big file on a
+ * screen whose whole point is that it costs nothing.
+ *
+ * ⚠️ And it checks the CONTENT TYPE, not just the status. A dev server or a
+ * rewrite happily answers `200 text/html` for a missing asset, and treating
+ * that as "the image is there" is how a broken picture ships.
+ */
+async function probe(url: string): Promise<boolean> {
+  if (typeof fetch === "undefined") return false;
+  try {
+    const response = await fetch(url, { method: "HEAD", cache: "force-cache" });
+    if (!response.ok) return false;
+    return (response.headers.get("content-type") ?? "").startsWith("image/");
+  } catch {
+    return false;
+  }
 }
 
 /**

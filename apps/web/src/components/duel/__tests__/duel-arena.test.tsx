@@ -224,6 +224,25 @@ describe("the board is playable in exactly one state", () => {
   });
 });
 
+describe("the waiting screen falls back to the board", () => {
+  /**
+   * ⛔ THE RULE THE FIRST UPLOAD BROKE. The theme resolver hands back a
+   * deterministic path for every catalogued slot whether or not a file was ever
+   * uploaded, so "does it resolve" cannot answer "does it exist". Only the
+   * network can, and a server that answers `200 text/html` for a missing asset
+   * must NOT count as an image — that is how a broken picture ships.
+   */
+  it("shows the board when the assets answer with something that is not an image", async () => {
+    serve(toPublic(invitation(), "w"));
+    const view = renderArena();
+
+    await waitFor(() =>
+      expect(view.container.querySelector('[data-square="e2"]')).toBeTruthy(),
+    );
+    expect(view.container.querySelector(".duel-lobby")).toBeNull();
+  });
+});
+
 describe("the share link", () => {
   /**
    * ⛔ THE MEASURED RULE, checked where it actually ships. The address bar in
