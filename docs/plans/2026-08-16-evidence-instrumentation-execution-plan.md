@@ -1,6 +1,10 @@
 # Plan de ejecución — pasada de instrumentación por evidencia
 
-**Fecha:** 2026-08-16 · **Estado:** pre-vuelo cerrado · Lote 1 aprobado (**sólo PRO**) · **Lote 3 anulado por evidencia**
+**Fecha:** 2026-08-16
+**Estado:** ✅ **Lote 1 IMPLEMENTADO y VERIFICADO en preview** · ✅ **Lote 2 CERRADO para esta
+pasada** · ⛔ **Lote 3 ANULADO por evidencia**
+**Siguiente paso:** desplegar a producción **buildeando la rama `production`** y **dejar de
+escribir código** hasta juntar ~200 observaciones independientes de `no-token`.
 **Fuente:** `docs/research/2026-08-15-chesscito-product-economics-evidence-pass.md` §9, §11
 **Handoff previo:** `docs/handoffs/2026-08-16-session-handoff.md` (P2P DUEL V0 congelado, Phase 0.5 completa)
 
@@ -129,9 +133,46 @@ propiedad global. Merece mirarse cuando se calcule cualquier tasa con este event
 
 ---
 
-## Lote 2 — Clasificación del error del mint de victoria `[P0]`
+## Lote 2 — Clasificación del error del mint `✅ CLOSED FOR THIS PASS` (2026-08-16)
 
 **Pregunta:** ¿por qué falla el 41% de los mints, el único producto que convierte?
+
+### 2.0 Cierre — qué se encontró y qué se hizo
+
+⛔ **El lote terminó siendo mucho más chico que el plan, y esa fue exactamente la intención de
+mirar la evidencia antes de escribir código.**
+
+| lo que el plan suponía | lo que la base dijo |
+|---|---|
+| habría que capturar el mensaje crudo | **ya se guardaba**, desde el 2026-07-21 |
+| el arreglo llegó tarde, tras el volumen | llegó **antes**: agosto es el 87% de los fallos y está **100%** cubierto |
+| habría que escribir clasificadores contra mensajes reales | **294 filas colapsan en 7 mensajes**, y **6 de las 7 familias son nuestras**, no del proveedor |
+| `insufficientFunds` quizá subcuenta | subcontaba **21×**: 7 wallets reportados contra **148** escondidos en `unknown` |
+
+**El defecto real:** el mismo `catch` clasificaba el mismo error **dos veces, distinto**. La UI
+conocía la guarda `No token with sufficient balance` y daba `insufficientFunds` con su CTA de
+cargar saldo; la telemetría re-derivaba desde `classifyTxErrorKind`, que no la conoce, y grababa
+`unknown`. **Al jugador nunca se le mintió — la rota era la medición.**
+
+**Lo que se hizo:** `classifyClaimError` decide una vez y devuelve dos renderizados (`kind` para
+la UI, `telemetryKind` para la medición). La divergencia dejó de ser algo que se arregla y pasó
+a ser **algo que no se puede escribir**: un test fija que, fuera del centinela `expired`, los dos
+consumidores coinciden para cualquier error. Detalle: `docs/audits/2026-08-16-mint-error-corpus-step0.md`.
+
+### 2.0.1 Deuda diferida a propósito, con disparador explícito
+
+⛔ Ninguna de estas es un olvido. Las tres se decidieron y ninguna se toca en esta pasada.
+
+| deuda | por qué se difiere | **disparador para retomarla** |
+|---|---|---|
+| **`rateLimited` como `TxErrorKind`** | Se leyó el clasificador entero: **no existe rama de rate limit**, `Rate limit exceeded` cae hasta `unknown`. La semántica actual **no lo trata distinto**, así que agregarlo es comportamiento nuevo (kind + copy + traducción ES), no reparación de medición. 13 wallets contra 148 | Que el volumen **crezca de forma material** con la clasificación ya arreglada — y entra junto con su copy de recuperación pensada, no improvisada |
+| **`Illegal move in transcript`** | 8 wallets. **No es un estado del jugador ni una categoría económica**: es el servidor rechazando un transcript que produjo nuestra propia Arena. Merece root cause, no una etiqueta linda | Que **siga apareciendo de forma material** o que se demuestre que **bloquea mints reales** |
+| **Duplicación de la copy amigable** | `use-mint-victory.ts` deriva las mismas dos regex una **tercera** vez para elegir el texto. Unificarla **cambiaría lo que ve el jugador** en el caso *insufficient funds de cadena* (hoy recibe `translateTxError`, no la copy de "cargá saldo"): es decisión de producto, no refactor | Una **pasada dedicada de recuperación/UX del mint** |
+
+---
+
+<details>
+<summary>Plan original del lote, conservado para trazabilidad</summary>
 
 ### 2.1 Paso 0 — leer el corpus que ya existe (sin código)
 
@@ -167,6 +208,11 @@ Archivo: `apps/web/src/lib/errors.ts` — `classifyTxErrorKind`, que ya tiene la
 ### 2.3 Anexo barato — `tx_progress_done`
 
 §9 registra que ese evento sólo tiene `outcome='success'` en 4.932 de 4.932 filas: el instrumento no puede representar el fracaso. Es **un call site** en la rama de error. No es del lote nombrado; se incluye aquí sólo si el paso 0 sale corto, para no abrir un lote por una línea.
+
+⚠️ El paso 0 **no salió corto** — salió con 7 familias limpias — así que este anexo **no se hizo**
+y no es deuda de este lote: sigue siendo una línea disponible cuando alguien la quiera.
+
+</details>
 
 ---
 
