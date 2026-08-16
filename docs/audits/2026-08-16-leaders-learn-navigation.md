@@ -106,5 +106,12 @@ Verificado por mutación: volviendo el enlace a `/arena` fijo, 2 de 3 casos se p
 - [x] No se fabrica uso de Play por un redirect accidental
 - [x] El estado ya-elegible sigue mostrando el pie de rango, no la tarjeta (condición `!ownRow`)
 
-⚠️ **Smoke en dispositivo: PENDIENTE del founder.** Verificado por tests y por lectura del
-código; la pantalla no se abrió en un build real.
+✅ **Smoke en dispositivo: VERDE (2026-08-16, founder).** La tarjeta lleva a la acción de su
+propia superficie y ya no expulsa a otro dominio.
+
+⚠️ **Y el camino hasta ese smoke dejó una lección:** la primera vez el founder no veía la
+tarjeta y parecía que la había borrado. No: la pantalla no tenía **control de pestañas**, y esas
+se dibujan con la MISMA bandera (`NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED`). Sin bandera no hay
+semanal, y sin semanal no hay tarjeta — estaba mirando el tablero all-time, que nunca la tuvo.
+**La ausencia de las pestañas es el síntoma que lo delata**, y ahorra buscar el defecto en el
+lugar equivocado.
