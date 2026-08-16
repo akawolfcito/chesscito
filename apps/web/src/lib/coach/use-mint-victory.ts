@@ -20,7 +20,7 @@ import type { TransactionReceipt } from "viem";
 import { useTranslations } from "next-intl";
 import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
 import { VICTORY_CLAIM_COPY } from "@/lib/content/editorial";
-import { describeClaimError } from "@/lib/coach/claim-telemetry";
+import { classifyClaimError, describeClaimError } from "@/lib/coach/claim-telemetry";
 import { victoryAbi } from "@/lib/contracts/victory";
 import {
   ACCEPTED_TOKENS,
@@ -723,7 +723,12 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
       }
 
       const raw = err instanceof Error ? err.message : "Claim failed";
-      const errorKind = /expired/i.test(raw) ? "expired" : String(classifyTxErrorKind(err));
+      // ONE classification, two renderings. These used to be two independent
+      // derivations a few lines apart, and they disagreed: the UI knew about
+      // the balance guard below and telemetry did not, so 148 wallets were
+      // recorded as `unknown` while the player correctly got the add-funds CTA.
+      const claimError = classifyClaimError(err);
+      const errorKind = claimError.telemetryKind;
       // Insufficient-balance check sits ABOVE translateTxError because the
       // raw contract message ("No token with sufficient balance") is too
       // opaque to surface to MiniPay/LATAM users. The friendly variant
@@ -737,21 +742,13 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
 
       setClaimError(friendly);
       // Surface the TxErrorKind consumers can act on. Both the literal
-      // "insufficient funds / exceeds balance" string (classified to
-      // "insufficientFunds") AND the VictoryNFT-specific "No token with
-      // sufficient balance" guard map to "insufficientFunds" here so
-      // popups render the AddCashCta deeplink in both code paths.
-      // "expired" is a telemetry-only sentinel (not a TxErrorKind) →
-      // emit null so consumers don't have to mirror the sentinel.
-      const isExpired = /expired/i.test(raw);
-      const isNoTokenBalance = /No token with sufficient balance/i.test(raw);
-      setClaimErrorKind(
-        isExpired
-          ? null
-          : isNoTokenBalance
-            ? "insufficientFunds"
-            : classifyTxErrorKind(err),
-      );
+      // "insufficient funds / exceeds balance" string AND the VictoryNFT-specific
+      // "No token with sufficient balance" guard map to "insufficientFunds", so
+      // popups render the AddCashCta deeplink in both code paths. "expired" is a
+      // telemetry-only sentinel (not a TxErrorKind) → `kind` is null there so
+      // consumers don't have to mirror it. All of that now lives in
+      // `classifyClaimError`, which is also what telemetry reports above.
+      setClaimErrorKind(claimError.kind);
       setClaimPhase("error");
 
       inp.onClaimTelemetry?.({

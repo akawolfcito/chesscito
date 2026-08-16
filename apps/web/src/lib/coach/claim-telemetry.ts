@@ -8,6 +8,8 @@
  *  docs/audits/2026-07-20-payments-rail-gas-regression-diagnosis.md §3).
  */
 
+import { classifyTxErrorKind, type TxErrorKind } from "@/lib/errors";
+
 /** Cap for the forwarded provider message.
  *
  *  `/api/telemetry` drops the ENTIRE props object when the serialized payload
@@ -27,6 +29,48 @@ export function truncateClaimError(
   if (!raw) return undefined;
   if (raw.length <= CLAIM_ERROR_MAX_LEN) return raw;
   return `${raw.slice(0, CLAIM_ERROR_MAX_LEN - 1)}…`;
+}
+
+/**
+ * The claim-failure classification, decided ONCE and consumed twice.
+ *
+ * It used to be decided twice, differently, inside the same `catch`: the UI
+ * branch knew about the app's own `No token with sufficient balance` guard and
+ * mapped it to `insufficientFunds` (rendering the add-funds CTA), while the
+ * telemetry branch re-derived the kind from `classifyTxErrorKind`, which does
+ * not know that guard, and recorded `unknown`.
+ *
+ * The player was never misled — only the measurement was. Production on
+ * 2026-08-16: `insufficientFunds` showed **7 wallets** while **148** sat in
+ * `unknown` carrying exactly that message. A 21× undercount of the single
+ * biggest reason the mint fails, which is the product that actually converts.
+ * (`docs/audits/2026-08-16-mint-error-corpus-step0.md`)
+ *
+ * ⛔ So this is not a new classifier and adds no vocabulary. It is one decision
+ * with two renderings, which is what makes the two answers unable to drift
+ * apart again.
+ */
+export type ClaimErrorClassification = {
+  /** What the UI acts on. `null` for the expired sentinel, which is not a
+   *  `TxErrorKind` — consumers must not mirror a sentinel meaning "no kind". */
+  kind: TxErrorKind | null;
+  /** What telemetry records: the same decision, plus that sentinel. */
+  telemetryKind: string;
+};
+
+export function classifyClaimError(err: unknown): ClaimErrorClassification {
+  const raw = err instanceof Error ? err.message : "Claim failed";
+  // `expired` outranks everything, exactly as it did before this was extracted.
+  if (/expired/i.test(raw)) return { kind: null, telemetryKind: "expired" };
+
+  // The VictoryNFT-specific guard. It is OUR message, not the provider's, and
+  // it means the same thing to the player as a chain-level insufficient-funds:
+  // get more stablecoin. Both paths therefore render the AddCashCta deeplink.
+  const kind: TxErrorKind = /No token with sufficient balance/i.test(raw)
+    ? "insufficientFunds"
+    : classifyTxErrorKind(err);
+
+  return { kind, telemetryKind: String(kind) };
 }
 
 /** viem's `BaseError` splits what it knows: `shortMessage` is the verdict and
