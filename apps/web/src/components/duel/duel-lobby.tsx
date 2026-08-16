@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { useThemeAsset } from "@/lib/themes/use-theme-asset";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 import {
   DUEL_LOBBY_ROTATION_MS,
-  lobbySlides,
   nextSlide,
   shouldRotate,
 } from "@/lib/duel/lobby";
@@ -14,27 +15,47 @@ import {
  * The waiting screen's space for something to look at.
  *
  * ⛔ THE FALLBACK IS THE DESIGN: with no image uploaded, the player sees the
- * BOARD, exactly as before. An empty slot must never become an empty rectangle.
+ * BOARD, exactly as before. An empty slot must never become an empty rectangle
+ * — nor, as it turned out, a broken one.
  *
- * ⚠️ Which is why the "are there any slides" question is answered by a HOOK the
- * PARENT calls, and not inside the component. A component that renders `null`
- * is still a truthy JSX element to its caller, so `{<DuelLobby/> ?? <Board/>}`
- * would silently drop the board forever. That mistake was made and caught here;
- * splitting the hook out is what makes it impossible to make again.
+ * ⚠️ AND THE RESOLVER CANNOT TELL US WHETHER A FILE EXISTS. Measured, not
+ * assumed: `resolveThemeAsset` answers a DETERMINISTIC path for every
+ * catalogued slot — `/art/theme-builder/<theme>/<slot>/default` — whether or
+ * not anything was ever uploaded there. The registry's "no default → renders
+ * nothing" is about the ENTRY, not about this theme's map. So an emptiness
+ * check on the resolver is always false, and the first upload attempt showed
+ * three broken images with the alt text on top.
  *
- * Three fixed slots, authored from the theme builder like every other piece of
- * art. A theme slot is ONE file, so an arbitrary list would need its own table,
- * route and builder UI — a content pipeline, not a screen.
+ * The only thing that knows is the network, so each candidate is PROBED and
+ * only the ones that actually load are shown. Until a probe comes back, the
+ * list is empty and the board holds the screen — the fallback is also the
+ * initial state, so there is no flash of a broken image.
  */
 
+/** The always-present member of the generated triplet. */
+const PROBE_EXTENSION = ".png";
+
+function probe(url: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined" || typeof Image === "undefined") {
+      resolve(false);
+      return;
+    }
+    const image = new Image();
+    image.onload = () => resolve(true);
+    image.onerror = () => resolve(false);
+    image.src = url;
+  });
+}
+
 /**
- * Which lobby images exist FOR THIS LANGUAGE. Empty means "show the board".
+ * Which lobby slots have art FOR THIS LANGUAGE that actually loads.
  *
  * ⛔ The text is baked into the artwork, so each language has its own set and
  * there is no crossing over: with the Spanish images loaded and the English
  * ones empty, an English player sees the board rather than Spanish promos.
  */
-export function useDuelLobbySlides(locale: string): string[] {
+export function useDuelLobbySlides(locale: string): ThemeAssetKey[] {
   // ⚠️ Hooks cannot be called in a loop or conditionally, so ALL SIX slots are
   // read on every render and the language picks which three count. Reading only
   // the current locale's three would change the hook order on a language
@@ -46,11 +67,51 @@ export function useDuelLobbySlides(locale: string): string[] {
   const es2 = useThemeAsset("arena.duel-lobby-es-2", "default");
   const es3 = useThemeAsset("arena.duel-lobby-es-3", "default");
 
-  const forLocale = locale === "es" ? [es1, es2, es3] : [en1, en2, en3];
-  return lobbySlides(forLocale);
+  const candidates = useMemo(
+    () =>
+      locale === "es"
+        ? [
+            { slot: "arena.duel-lobby-es-1" as ThemeAssetKey, base: es1 },
+            { slot: "arena.duel-lobby-es-2" as ThemeAssetKey, base: es2 },
+            { slot: "arena.duel-lobby-es-3" as ThemeAssetKey, base: es3 },
+          ]
+        : [
+            { slot: "arena.duel-lobby-en-1" as ThemeAssetKey, base: en1 },
+            { slot: "arena.duel-lobby-en-2" as ThemeAssetKey, base: en2 },
+            { slot: "arena.duel-lobby-en-3" as ThemeAssetKey, base: en3 },
+          ],
+    [locale, en1, en2, en3, es1, es2, es3],
+  );
+
+  // ⛔ Starts EMPTY, and that is the point: the board holds the screen until an
+  // image is confirmed to load.
+  const [loadable, setLoadable] = useState<ThemeAssetKey[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all(
+      candidates.map(async ({ slot, base }) =>
+        base && (await probe(`${base}${PROBE_EXTENSION}`)) ? slot : null,
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      setLoadable(results.filter((slot): slot is ThemeAssetKey => slot !== null));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [candidates]);
+
+  return loadable;
 }
 
-export function DuelLobby({ slides, alt }: { slides: string[]; alt: string }) {
+export function DuelLobby({
+  slides,
+  alt,
+}: {
+  slides: ThemeAssetKey[];
+  alt: string;
+}) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -70,8 +131,15 @@ export function DuelLobby({ slides, alt }: { slides: string[]; alt: string }) {
 
   return (
     <div className="duel-lobby">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="duel-lobby-image" src={current} alt={alt} />
+      {/* ⛔ `ThemeAssetPicture`, never a raw `<img>`: the registry stores a
+          BASENAME with no extension, and the `<picture>` with its
+          `.avif/.webp/.png` sources is what turns it into a file that exists. */}
+      <ThemeAssetPicture
+        slot={current}
+        alt={alt}
+        pictureClassName="duel-lobby-picture"
+        className="duel-lobby-image"
+      />
       {slides.length > 1 ? (
         <div className="duel-lobby-dots" aria-hidden="true">
           {slides.map((slide, i) => (

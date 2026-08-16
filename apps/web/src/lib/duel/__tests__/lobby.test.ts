@@ -66,27 +66,42 @@ describe("duelLobbySlots", () => {
 });
 
 describe("lobbySlides", () => {
+  const entry = (slot: string, base: string) => ({ slot, base });
+
   /**
-   * ⛔ THE FALLBACK. `useThemeAsset` answers `""` for a slot with no file, so
-   * an empty result means "nothing uploaded" and the caller shows the board.
-   * Nothing here may leave the waiting screen emptier than it already was.
+   * ⛔ THE FALLBACK. `useThemeAsset` answers "" for a slot with no file, so an
+   * empty result means "nothing uploaded" and the caller shows the board.
    */
   it("finds nothing when no image has been uploaded", () => {
-    expect(lobbySlides(["", "", ""])).toEqual([]);
+    expect(lobbySlides([entry("a", ""), entry("b", "")])).toEqual([]);
     expect(lobbySlides([])).toEqual([]);
   });
 
+  /**
+   * ⛔ It returns SLOT KEYS, not paths. What the resolver answers is a BASENAME
+   * with no extension; the <picture> that turns it into a real file is built by
+   * ThemeAssetPicture. Handing the basename to a raw <img src> renders a broken
+   * image with the alt text on top — which is what the first upload produced.
+   */
+  it("returns the slot, never the basename", () => {
+    expect(lobbySlides([entry("arena.duel-lobby-es-1", "/art/whatever/es-1")])).toEqual([
+      "arena.duel-lobby-es-1",
+    ]);
+  });
+
   it("keeps only the ones that exist, in order", () => {
-    expect(lobbySlides(["/art/a", "", "/art/c"])).toEqual(["/art/a", "/art/c"]);
+    expect(
+      lobbySlides([entry("a", "/art/a"), entry("b", ""), entry("c", "/art/c")]),
+    ).toEqual(["a", "c"]);
   });
 
   /** ⚠️ Gaps are allowed: filling only the second slot shows the second one. */
   it("does not need the first slot to be filled", () => {
-    expect(lobbySlides(["", "/art/b", ""])).toEqual(["/art/b"]);
+    expect(lobbySlides([entry("a", ""), entry("b", "/art/b")])).toEqual(["b"]);
   });
 
   it("treats a blank string as no image", () => {
-    expect(lobbySlides(["   ", "/art/b"])).toEqual(["/art/b"]);
+    expect(lobbySlides([entry("a", "   "), entry("b", "/art/b")])).toEqual(["b"]);
   });
 });
 

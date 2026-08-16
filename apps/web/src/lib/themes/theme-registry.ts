@@ -706,9 +706,10 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/rivals/frame-blue",
         usedIn: ["Arena — rival frame (blue)", "↳ components/arena/arena-select-scaffold.tsx"],
       },
-      // ⛔ Sin `default` a proposito: hasta que haya un archivo cargado este
-      // slot no renderiza NADA y la pantalla de espera muestra el tablero.
-      "arena.duel-lobby-en-1": {
+      // ⚠️ Sin `default`, pero eso NO alcanza para que no renderice: el tema le
+      // asigna una ruta deterministica igual. Quien decide si hay imagen es un
+      // probe de red en useDuelLobbySlides. Medido, no supuesto.
+      "arena.duel-lobby-en-1": { default: { mode: "asset", path: "/art/theme-builder/candy-forest/arena/duel-lobby-en-1/default" },
         // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
         // object-fit: contain, asi que otra proporcion no se recorta — se
         // encoge y deja franjas. El uploader lo RECHAZA, que es mejor que
@@ -721,9 +722,10 @@ export const THEMES: Record<string, ThemeDefinition> = {
           "Rotan solo las que existan; sin ninguna se ve el tablero.",
         ],
       },
-      // ⛔ Sin `default` a proposito: hasta que haya un archivo cargado este
-      // slot no renderiza NADA y la pantalla de espera muestra el tablero.
-      "arena.duel-lobby-en-2": {
+      // ⚠️ Sin `default`, pero eso NO alcanza para que no renderice: el tema le
+      // asigna una ruta deterministica igual. Quien decide si hay imagen es un
+      // probe de red en useDuelLobbySlides. Medido, no supuesto.
+      "arena.duel-lobby-en-2": { default: { mode: "asset", path: "/art/theme-builder/candy-forest/arena/duel-lobby-en-2/default" },
         // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
         // object-fit: contain, asi que otra proporcion no se recorta — se
         // encoge y deja franjas. El uploader lo RECHAZA, que es mejor que
@@ -736,9 +738,10 @@ export const THEMES: Record<string, ThemeDefinition> = {
           "Rotan solo las que existan; sin ninguna se ve el tablero.",
         ],
       },
-      // ⛔ Sin `default` a proposito: hasta que haya un archivo cargado este
-      // slot no renderiza NADA y la pantalla de espera muestra el tablero.
-      "arena.duel-lobby-en-3": {
+      // ⚠️ Sin `default`, pero eso NO alcanza para que no renderice: el tema le
+      // asigna una ruta deterministica igual. Quien decide si hay imagen es un
+      // probe de red en useDuelLobbySlides. Medido, no supuesto.
+      "arena.duel-lobby-en-3": { default: { mode: "asset", path: "/art/theme-builder/candy-forest/arena/duel-lobby-en-3/default" },
         // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
         // object-fit: contain, asi que otra proporcion no se recorta — se
         // encoge y deja franjas. El uploader lo RECHAZA, que es mejor que
@@ -751,9 +754,10 @@ export const THEMES: Record<string, ThemeDefinition> = {
           "Rotan solo las que existan; sin ninguna se ve el tablero.",
         ],
       },
-      // ⛔ Sin `default` a proposito: hasta que haya un archivo cargado este
-      // slot no renderiza NADA y la pantalla de espera muestra el tablero.
-      "arena.duel-lobby-es-1": {
+      // ⚠️ Sin `default`, pero eso NO alcanza para que no renderice: el tema le
+      // asigna una ruta deterministica igual. Quien decide si hay imagen es un
+      // probe de red en useDuelLobbySlides. Medido, no supuesto.
+      "arena.duel-lobby-es-1": { default: { mode: "asset", path: "/art/theme-builder/candy-forest/arena/duel-lobby-es-1/default" },
         // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
         // object-fit: contain, asi que otra proporcion no se recorta — se
         // encoge y deja franjas. El uploader lo RECHAZA, que es mejor que
@@ -766,9 +770,10 @@ export const THEMES: Record<string, ThemeDefinition> = {
           "Rotan solo las que existan; sin ninguna se ve el tablero.",
         ],
       },
-      // ⛔ Sin `default` a proposito: hasta que haya un archivo cargado este
-      // slot no renderiza NADA y la pantalla de espera muestra el tablero.
-      "arena.duel-lobby-es-2": {
+      // ⚠️ Sin `default`, pero eso NO alcanza para que no renderice: el tema le
+      // asigna una ruta deterministica igual. Quien decide si hay imagen es un
+      // probe de red en useDuelLobbySlides. Medido, no supuesto.
+      "arena.duel-lobby-es-2": { default: { mode: "asset", path: "/art/theme-builder/candy-forest/arena/duel-lobby-es-2/default" },
         // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
         // object-fit: contain, asi que otra proporcion no se recorta — se
         // encoge y deja franjas. El uploader lo RECHAZA, que es mejor que
@@ -781,9 +786,10 @@ export const THEMES: Record<string, ThemeDefinition> = {
           "Rotan solo las que existan; sin ninguna se ve el tablero.",
         ],
       },
-      // ⛔ Sin `default` a proposito: hasta que haya un archivo cargado este
-      // slot no renderiza NADA y la pantalla de espera muestra el tablero.
-      "arena.duel-lobby-es-3": {
+      // ⚠️ Sin `default`, pero eso NO alcanza para que no renderice: el tema le
+      // asigna una ruta deterministica igual. Quien decide si hay imagen es un
+      // probe de red en useDuelLobbySlides. Medido, no supuesto.
+      "arena.duel-lobby-es-3": { default: { mode: "asset", path: "/art/theme-builder/candy-forest/arena/duel-lobby-es-3/default" },
         // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
         // object-fit: contain, asi que otra proporcion no se recorta — se
         // encoge y deja franjas. El uploader lo RECHAZA, que es mejor que

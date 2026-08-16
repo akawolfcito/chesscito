@@ -57,14 +57,24 @@ export const DUEL_LOBBY_SLOTS: readonly ThemeAssetKey[] = [
 export const DUEL_LOBBY_ROTATION_MS = 6_000;
 
 /**
- * The slides that actually exist.
+ * The slots that actually have a file behind them.
  *
- * `useThemeAsset` answers `""` for a slot with no file behind it, so an empty
- * string is "nothing was uploaded here" and not a bug. Gaps are allowed: with
- * only the second slot filled, that one shows.
+ * ⛔ It returns SLOT KEYS, not paths, and that is the fix for a real bug. What
+ * `useThemeAsset` answers is a BASENAME with no extension
+ * (`/art/…/duel-lobby-es-1`); the `<picture>` with its `.avif/.webp/.png`
+ * sources is built by `ThemeAssetPicture`. Feeding that basename to a raw
+ * `<img src>` renders a broken image with the alt text on top — which is
+ * exactly what the first upload produced.
+ *
+ * ⚠️ An empty base means "nothing was uploaded here" and is not a failure.
+ * Gaps are allowed: with only the second slot filled, that one shows.
  */
-export function lobbySlides(resolved: readonly string[]): string[] {
-  return resolved.filter((src) => typeof src === "string" && src.trim() !== "");
+export function lobbySlides<K extends string>(
+  entries: ReadonlyArray<{ slot: K; base: string }>,
+): K[] {
+  return entries
+    .filter(({ base }) => typeof base === "string" && base.trim() !== "")
+    .map(({ slot }) => slot);
 }
 
 /**
