@@ -45,7 +45,10 @@ export async function POST(
       return jsonError(400, "invalid_version");
     }
 
-    const supabase = getSupabaseServer();
+    // ⛔ `freshReads`: sin esto, el select de Supabase se sirve del Data Cache
+    // de Next y la ruta contesta un snapshot viejo. Medido en preview: la fila
+    // decia active/version 2 y la ruta contestaba awaiting-opponent/version 1.
+    const supabase = getSupabaseServer({ freshReads: true });
     if (!supabase) return jsonError(503, "unavailable");
 
     const repo = duelRepositoryFrom(supabase);

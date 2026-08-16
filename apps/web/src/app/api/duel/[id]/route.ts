@@ -38,7 +38,10 @@ export async function GET(
   try {
     const { id } = await context.params;
 
-    const supabase = getSupabaseServer();
+    // ⛔ `freshReads`: sin esto, el select de Supabase se sirve del Data Cache
+    // de Next y la ruta contesta un snapshot viejo. Medido en preview: la fila
+    // decia active/version 2 y la ruta contestaba awaiting-opponent/version 1.
+    const supabase = getSupabaseServer({ freshReads: true });
     if (!supabase) {
       return NextResponse.json({ ok: false, error: "unavailable" }, { status: 503 });
     }
