@@ -31,7 +31,7 @@
   "excludedSlots": 13,
   "exceptions": [],
   "literalDiff": {
-    "registeredBasenames": 209,
+    "registeredBasenames": 215,
     "discoveredBasenames": 15,
     "unregisteredExistingAssets": []
   },
@@ -5433,7 +5433,8 @@
       "slotId": "arena.duel-lobby-en-1",
       "root": "web",
       "default": {
-        "mode": "none"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/arena/duel-lobby-en-1/default"
       },
       "pro": {
         "mode": "inherit"
@@ -5490,7 +5491,8 @@
       "slotId": "arena.duel-lobby-en-2",
       "root": "web",
       "default": {
-        "mode": "none"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/arena/duel-lobby-en-2/default"
       },
       "pro": {
         "mode": "inherit"
@@ -5547,7 +5549,8 @@
       "slotId": "arena.duel-lobby-en-3",
       "root": "web",
       "default": {
-        "mode": "none"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/arena/duel-lobby-en-3/default"
       },
       "pro": {
         "mode": "inherit"
@@ -5604,7 +5607,8 @@
       "slotId": "arena.duel-lobby-es-1",
       "root": "web",
       "default": {
-        "mode": "none"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/arena/duel-lobby-es-1/default"
       },
       "pro": {
         "mode": "inherit"
@@ -5661,7 +5665,8 @@
       "slotId": "arena.duel-lobby-es-2",
       "root": "web",
       "default": {
-        "mode": "none"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/arena/duel-lobby-es-2/default"
       },
       "pro": {
         "mode": "inherit"
@@ -5718,7 +5723,8 @@
       "slotId": "arena.duel-lobby-es-3",
       "root": "web",
       "default": {
-        "mode": "none"
+        "mode": "asset",
+        "path": "/art/theme-builder/candy-forest/arena/duel-lobby-es-3/default"
       },
       "pro": {
         "mode": "inherit"
