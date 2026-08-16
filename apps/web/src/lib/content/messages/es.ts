@@ -1576,6 +1576,7 @@ const messages = {
     weeklyEmptyHeadline: "EL RANKING SEMANAL RECIÉN EMPIEZA",
     weeklyEmptyHint: "Juega un ejercicio para poner el primer nombre.",
     weeklyCtaTitle: "JUEGA PARA ENTRAR ESTA SEMANA",
+    weeklyCtaHintPlay: "Juega una partida para entrar al ranking semanal.",
     weeklyCtaHint: "Completa un ejercicio para aparecer en el ranking semanal.",
   },
   GET_PEONES_COPY: {

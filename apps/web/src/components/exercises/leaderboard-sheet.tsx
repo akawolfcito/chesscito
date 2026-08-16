@@ -17,7 +17,7 @@ import type { LeaderboardRow } from "@/lib/server/leaderboard";
 import { PlayerIdentityPill } from "@/components/identity/player-identity-pill";
 import { PinStatusMarker } from "@/components/redesign/pin-status-marker";
 import { useNicknameTokens } from "@/lib/identity/use-nickname-tokens";
-import { isWeeklyLeadersEnabled } from "@/lib/feature-flags";
+import { isPlayMode, isWeeklyLeadersEnabled } from "@/lib/feature-flags";
 import { useDisplayName } from "@/hooks/use-display-name";
 import {
   deriveAvatarVariant,
@@ -663,13 +663,30 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refre
             data-testid="leaderboard-weekly-cta"
             className="leaderboard-own-rank-footer leaderboard-weekly-cta shrink-0"
           >
-            <Link href="/arena?fresh=1" onClick={() => onOpenChange(false)}>
+            {/*
+              ⛔ EL DESTINO Y LA PISTA SALEN DE LA SUPERFICIE, no están fijos.
+              El ranking semanal está scopeado por superficie: entra quien tiene
+              una fila en `score_attempts` con la superficie DEL DEPLOYMENT
+              dentro de la semana (`weekly_ranking`, migración 20260801000000).
+
+              Antes esta tarjeta tenía la copy de LEARN ("complete an exercise")
+              y el enlace de PLAY (`/arena?fresh=1`) al mismo tiempo, así que
+              estaba mal en las dos superficies en direcciones opuestas. En
+              LEARN además EXPULSABA a otro dominio: `mode-routing` rebota todo
+              `/arena` al host de play, así que la tarjeta creaba una visita de
+              Play desde una pantalla de Learn — y eso contamina justo la
+              comparación Learn/Play que la línea de evidencia va a mirar.
+            */}
+            <Link
+              href={isPlayMode() ? "/arena?fresh=1" : "/exercises"}
+              onClick={() => onOpenChange(false)}
+            >
               <div className="leaderboard-row-compact leaderboard-row-compact--identity flex-col items-start gap-0.5">
                 <p className="text-xs font-black uppercase tracking-wider text-[rgba(63,34,8,0.95)]">
                   {t("weeklyCtaTitle")}
                 </p>
                 <p className="text-[0.7rem] font-medium text-[rgba(63,34,8,0.70)]">
-                  {t("weeklyCtaHint")}
+                  {isPlayMode() ? t("weeklyCtaHintPlay") : t("weeklyCtaHint")}
                 </p>
               </div>
             </Link>

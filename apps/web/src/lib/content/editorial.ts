@@ -708,6 +708,10 @@ export const LEADERBOARD_SHEET_COPY = {
    *  Same height as the rank footer so switching tabs does not jump. */
   weeklyCtaTitle: "PLAY TO JOIN THIS WEEK",
   weeklyCtaHint: "Complete an exercise to enter the weekly ranking.",
+  /** ⛔ La misma tarjeta vive en las DOS superficies y el ranking semanal esta
+   *  scopeado por superficie: una partida de PLAY nunca entra al tablero de
+   *  LEARN ni al reves. Por eso hay una pista por superficie en vez de una sola. */
+  weeklyCtaHintPlay: "Play a match to enter the weekly ranking.",
 } as const;
 
 export const PURCHASE_CONFIRM_COPY = {
