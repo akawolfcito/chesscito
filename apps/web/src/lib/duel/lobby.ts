@@ -16,11 +16,40 @@
 
 import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
 
-/** ⚠️ Order matters: it is the rotation order the player sees. */
+/**
+ * ⛔ ONE SET PER LANGUAGE, because the text is BAKED INTO the image.
+ *
+ * These are not screenshots with a caption underneath: the headline, the
+ * feature copy and the price all live inside the artwork. A single set would
+ * mean showing Spanish promos to an English player, and no amount of UI
+ * translation would fix it — the words are pixels.
+ *
+ * ⚠️ Order matters: it is the rotation order the player sees.
+ */
+const SLOTS_BY_LOCALE: Record<"en" | "es", readonly ThemeAssetKey[]> = {
+  en: ["arena.duel-lobby-en-1", "arena.duel-lobby-en-2", "arena.duel-lobby-en-3"],
+  es: ["arena.duel-lobby-es-1", "arena.duel-lobby-es-2", "arena.duel-lobby-es-3"],
+};
+
+/**
+ * The three slots for a locale.
+ *
+ * ⛔ STRICTLY per language, with NO cross-language fallback, and that is a
+ * decision rather than an omission. Falling back to the other set would mean
+ * uploading a Spanish image silently changes what an English player sees — a
+ * surprise nobody could reason about from the builder. Empty means the board,
+ * which is the one fallback that is always correct.
+ *
+ * An unknown locale gets English: it is the source language of the copy.
+ */
+export function duelLobbySlots(locale: string): readonly ThemeAssetKey[] {
+  return locale === "es" ? SLOTS_BY_LOCALE.es : SLOTS_BY_LOCALE.en;
+}
+
+/** Every slot of every language, for the guards that check the catalog. */
 export const DUEL_LOBBY_SLOTS: readonly ThemeAssetKey[] = [
-  "arena.duel-lobby-1",
-  "arena.duel-lobby-2",
-  "arena.duel-lobby-3",
+  ...SLOTS_BY_LOCALE.en,
+  ...SLOTS_BY_LOCALE.es,
 ];
 
 /** How long each image holds before the next one. Long enough to read a tip,

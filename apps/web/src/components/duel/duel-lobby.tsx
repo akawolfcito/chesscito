@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { useThemeAsset } from "@/lib/themes/use-theme-asset";
 import {
   DUEL_LOBBY_ROTATION_MS,
-  DUEL_LOBBY_SLOTS,
   lobbySlides,
   nextSlide,
   shouldRotate,
@@ -28,15 +27,27 @@ import {
  * route and builder UI — a content pipeline, not a screen.
  */
 
-/** Which lobby images actually exist. Empty means "show the board". */
-export function useDuelLobbySlides(): string[] {
-  // ⚠️ Hooks cannot be called in a loop, so the three slots are read by name.
-  // It is also why the count is fixed rather than configurable.
-  const first = useThemeAsset(DUEL_LOBBY_SLOTS[0], "default");
-  const second = useThemeAsset(DUEL_LOBBY_SLOTS[1], "default");
-  const third = useThemeAsset(DUEL_LOBBY_SLOTS[2], "default");
+/**
+ * Which lobby images exist FOR THIS LANGUAGE. Empty means "show the board".
+ *
+ * ⛔ The text is baked into the artwork, so each language has its own set and
+ * there is no crossing over: with the Spanish images loaded and the English
+ * ones empty, an English player sees the board rather than Spanish promos.
+ */
+export function useDuelLobbySlides(locale: string): string[] {
+  // ⚠️ Hooks cannot be called in a loop or conditionally, so ALL SIX slots are
+  // read on every render and the language picks which three count. Reading only
+  // the current locale's three would change the hook order on a language
+  // switch, which React forbids.
+  const en1 = useThemeAsset("arena.duel-lobby-en-1", "default");
+  const en2 = useThemeAsset("arena.duel-lobby-en-2", "default");
+  const en3 = useThemeAsset("arena.duel-lobby-en-3", "default");
+  const es1 = useThemeAsset("arena.duel-lobby-es-1", "default");
+  const es2 = useThemeAsset("arena.duel-lobby-es-2", "default");
+  const es3 = useThemeAsset("arena.duel-lobby-es-3", "default");
 
-  return lobbySlides([first, second, third]);
+  const forLocale = locale === "es" ? [es1, es2, es3] : [en1, en2, en3];
+  return lobbySlides(forLocale);
 }
 
 export function DuelLobby({ slides, alt }: { slides: string[]; alt: string }) {

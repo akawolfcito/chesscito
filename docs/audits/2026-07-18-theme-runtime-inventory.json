@@ -1,9 +1,9 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 183,
+  "totalSlots": 186,
   "categoryCounts": {
-    "A": 170,
+    "A": 173,
     "B": 0,
     "C": 0,
     "D": 0,
@@ -13,21 +13,21 @@
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 87,
+    "B": 90,
     "C": 26,
     "D": 38,
     "E": 19,
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 171,
-  "fullyConnectedSlots": 170,
+  "resolverSlots": 174,
+  "fullyConnectedSlots": 173,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
   "noActiveConsumerSlots": 6,
-  "connectedSlots": 170,
+  "connectedSlots": 173,
   "excludedSlots": 13,
   "exceptions": [],
   "literalDiff": {
@@ -5430,7 +5430,7 @@
       "noActiveConsumer": false
     },
     {
-      "slotId": "arena.duel-lobby-1",
+      "slotId": "arena.duel-lobby-en-1",
       "root": "web",
       "default": {
         "mode": "none"
@@ -5439,8 +5439,9 @@
         "mode": "inherit"
       },
       "usedIn": [
-        "Arena — duelo, pantalla de espera (imagen 1 de 3)",
+        "Arena — duelo, pantalla de espera (EN, imagen 1 de 3)",
         "↳ components/duel/duel-lobby.tsx",
+        "El texto va HORNEADO en la imagen, por eso hay un juego por idioma.",
         "Rotan solo las que existan; sin ninguna se ve el tablero."
       ],
       "deprecated": null,
@@ -5450,8 +5451,19 @@
         "src/components/duel/duel-lobby.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
+        {
+          "file": "src/components/duel/duel-lobby.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/lib/duel/lobby.ts",
           "occurrences": [],
@@ -5475,7 +5487,7 @@
       "noActiveConsumer": false
     },
     {
-      "slotId": "arena.duel-lobby-2",
+      "slotId": "arena.duel-lobby-en-2",
       "root": "web",
       "default": {
         "mode": "none"
@@ -5484,8 +5496,9 @@
         "mode": "inherit"
       },
       "usedIn": [
-        "Arena — duelo, pantalla de espera (imagen 2 de 3)",
+        "Arena — duelo, pantalla de espera (EN, imagen 2 de 3)",
         "↳ components/duel/duel-lobby.tsx",
+        "El texto va HORNEADO en la imagen, por eso hay un juego por idioma.",
         "Rotan solo las que existan; sin ninguna se ve el tablero."
       ],
       "deprecated": null,
@@ -5495,8 +5508,19 @@
         "src/components/duel/duel-lobby.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
+        {
+          "file": "src/components/duel/duel-lobby.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/lib/duel/lobby.ts",
           "occurrences": [],
@@ -5520,7 +5544,7 @@
       "noActiveConsumer": false
     },
     {
-      "slotId": "arena.duel-lobby-3",
+      "slotId": "arena.duel-lobby-en-3",
       "root": "web",
       "default": {
         "mode": "none"
@@ -5529,8 +5553,9 @@
         "mode": "inherit"
       },
       "usedIn": [
-        "Arena — duelo, pantalla de espera (imagen 3 de 3)",
+        "Arena — duelo, pantalla de espera (EN, imagen 3 de 3)",
         "↳ components/duel/duel-lobby.tsx",
+        "El texto va HORNEADO en la imagen, por eso hay un juego por idioma.",
         "Rotan solo las que existan; sin ninguna se ve el tablero."
       ],
       "deprecated": null,
@@ -5540,8 +5565,190 @@
         "src/components/duel/duel-lobby.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
+        {
+          "file": "src/components/duel/duel-lobby.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/lib/duel/lobby.ts",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "arena.duel-lobby-es-1",
+      "root": "web",
+      "default": {
+        "mode": "none"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Arena — duelo, pantalla de espera (ES, imagen 1 de 3)",
+        "↳ components/duel/duel-lobby.tsx",
+        "El texto va HORNEADO en la imagen, por eso hay un juego por idioma.",
+        "Rotan solo las que existan; sin ninguna se ve el tablero."
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/duel/duel-lobby.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 2,
+      "consumers": [
+        {
+          "file": "src/components/duel/duel-lobby.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/lib/duel/lobby.ts",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "arena.duel-lobby-es-2",
+      "root": "web",
+      "default": {
+        "mode": "none"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Arena — duelo, pantalla de espera (ES, imagen 2 de 3)",
+        "↳ components/duel/duel-lobby.tsx",
+        "El texto va HORNEADO en la imagen, por eso hay un juego por idioma.",
+        "Rotan solo las que existan; sin ninguna se ve el tablero."
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/duel/duel-lobby.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 2,
+      "consumers": [
+        {
+          "file": "src/components/duel/duel-lobby.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
+        {
+          "file": "src/lib/duel/lobby.ts",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "arena.duel-lobby-es-3",
+      "root": "web",
+      "default": {
+        "mode": "none"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Arena — duelo, pantalla de espera (ES, imagen 3 de 3)",
+        "↳ components/duel/duel-lobby.tsx",
+        "El texto va HORNEADO en la imagen, por eso hay un juego por idioma.",
+        "Rotan solo las que existan; sin ninguna se ve el tablero."
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/duel/duel-lobby.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 2,
+      "consumers": [
+        {
+          "file": "src/components/duel/duel-lobby.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/lib/duel/lobby.ts",
           "occurrences": [],

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
   DUEL_LOBBY_SLOTS,
+  duelLobbySlots,
   lobbySlides,
   nextSlide,
   shouldRotate,
@@ -22,12 +23,45 @@ describe("the slots", () => {
     }
   });
 
-  it("are three, in the order they rotate", () => {
-    expect(DUEL_LOBBY_SLOTS).toEqual([
-      "arena.duel-lobby-1",
-      "arena.duel-lobby-2",
-      "arena.duel-lobby-3",
+  it("are six: three images in each of the two languages", () => {
+    expect(DUEL_LOBBY_SLOTS).toHaveLength(6);
+  });
+});
+
+describe("duelLobbySlots", () => {
+  /**
+   * ⛔ The text is BAKED INTO the artwork, so a single set would show Spanish
+   * promos to an English player and no UI translation could fix it: the words
+   * are pixels.
+   */
+  it("gives each language its own three", () => {
+    expect(duelLobbySlots("es")).toEqual([
+      "arena.duel-lobby-es-1",
+      "arena.duel-lobby-es-2",
+      "arena.duel-lobby-es-3",
     ]);
+    expect(duelLobbySlots("en")).toEqual([
+      "arena.duel-lobby-en-1",
+      "arena.duel-lobby-en-2",
+      "arena.duel-lobby-en-3",
+    ]);
+  });
+
+  /**
+   * ⛔ NO cross-language fallback, and that is a decision. Falling back to the
+   * other set would mean uploading a Spanish image silently changes what an
+   * English player sees — a surprise nobody could reason about from the
+   * builder. Empty means the board, which is always correct.
+   */
+  it("never reaches into the other language", () => {
+    for (const slot of duelLobbySlots("es")) expect(slot).toContain("-es-");
+    for (const slot of duelLobbySlots("en")) expect(slot).toContain("-en-");
+  });
+
+  /** An unknown locale gets English: it is the source language of the copy. */
+  it("falls back to English for a locale it does not know", () => {
+    expect(duelLobbySlots("pt")).toEqual(duelLobbySlots("en"));
+    expect(duelLobbySlots("")).toEqual(duelLobbySlots("en"));
   });
 });
 

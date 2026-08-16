@@ -291,10 +291,10 @@ describe("theme-registry", () => {
       // +3: the mini-tour's PRO benefit icons (2026-07-28). Separate from the
       // KingdomCard trio on purpose — that trio names hub navigation, these
       // name what the subscription buys.
-      // 35 (2026-08-15): + los tres arena.duel-lobby-*, el espacio de la
+      // 35 (2026-08-15): + los SEIS arena.duel-lobby-{en,es}-*, el espacio de la
       // pantalla de espera del duelo. Sin `default` a proposito: hasta que
       // haya un archivo cargado la pantalla muestra el tablero.
-      play: 35,
+      play: 38,
       // 3 reclassified off `unknown` (they always had a consumer — in the
       // sibling app) + 15 newly cataloged carousel slots + 3 brand/social
       // files the landing layout declares as metadata (OG card, apple-icon,

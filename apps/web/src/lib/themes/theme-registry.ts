@@ -184,9 +184,12 @@ export type ThemeAssetKey =
   | "arena.rival-mara"
   | "arena.rival-frame-blue"
   | "arena.rival-frame-gold"
-  | "arena.duel-lobby-1"
-  | "arena.duel-lobby-2"
-  | "arena.duel-lobby-3"
+  | "arena.duel-lobby-en-1"
+  | "arena.duel-lobby-en-2"
+  | "arena.duel-lobby-en-3"
+  | "arena.duel-lobby-es-1"
+  | "arena.duel-lobby-es-2"
+  | "arena.duel-lobby-es-3"
   | "arena.rival-frame-silver"
   // PRO-only overlays: no default (free users see nothing), pro = gold frame
   | "arena.avatar-frame-you"
@@ -703,48 +706,93 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/rivals/frame-blue",
         usedIn: ["Arena — rival frame (blue)", "↳ components/arena/arena-select-scaffold.tsx"],
       },
-      // ⛔ Sin `default` a proposito: hasta que el founder suba un archivo
-      // este slot no renderiza NADA, y la pantalla de espera muestra el
-      // tablero. Es el mismo mecanismo que los marcos PRO de mas abajo.
-      "arena.duel-lobby-1": {
+      // ⛔ Sin `default` a proposito: hasta que haya un archivo cargado este
+      // slot no renderiza NADA y la pantalla de espera muestra el tablero.
+      "arena.duel-lobby-en-1": {
         // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
         // object-fit: contain, asi que otra proporcion no se recorta — se
-        // encoge y deja franjas. El uploader RECHAZA lo que no mida esto, que
-        // es mejor que descubrirlo en el telefono.
+        // encoge y deja franjas. El uploader lo RECHAZA, que es mejor que
+        // descubrirlo en el telefono.
         exactSize: { width: 1024, height: 1024 },
         usedIn: [
-          "Arena — duelo, pantalla de espera (imagen 1 de 3)",
+          "Arena — duelo, pantalla de espera (EN, imagen 1 de 3)",
           "↳ components/duel/duel-lobby.tsx",
+          "El texto va HORNEADO en la imagen, por eso hay un juego por idioma.",
           "Rotan solo las que existan; sin ninguna se ve el tablero.",
         ],
       },
-      // ⛔ Sin `default` a proposito: hasta que el founder suba un archivo
-      // este slot no renderiza NADA, y la pantalla de espera muestra el
-      // tablero. Es el mismo mecanismo que los marcos PRO de mas abajo.
-      "arena.duel-lobby-2": {
+      // ⛔ Sin `default` a proposito: hasta que haya un archivo cargado este
+      // slot no renderiza NADA y la pantalla de espera muestra el tablero.
+      "arena.duel-lobby-en-2": {
         // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
         // object-fit: contain, asi que otra proporcion no se recorta — se
-        // encoge y deja franjas. El uploader RECHAZA lo que no mida esto, que
-        // es mejor que descubrirlo en el telefono.
+        // encoge y deja franjas. El uploader lo RECHAZA, que es mejor que
+        // descubrirlo en el telefono.
         exactSize: { width: 1024, height: 1024 },
         usedIn: [
-          "Arena — duelo, pantalla de espera (imagen 2 de 3)",
+          "Arena — duelo, pantalla de espera (EN, imagen 2 de 3)",
           "↳ components/duel/duel-lobby.tsx",
+          "El texto va HORNEADO en la imagen, por eso hay un juego por idioma.",
           "Rotan solo las que existan; sin ninguna se ve el tablero.",
         ],
       },
-      // ⛔ Sin `default` a proposito: hasta que el founder suba un archivo
-      // este slot no renderiza NADA, y la pantalla de espera muestra el
-      // tablero. Es el mismo mecanismo que los marcos PRO de mas abajo.
-      "arena.duel-lobby-3": {
+      // ⛔ Sin `default` a proposito: hasta que haya un archivo cargado este
+      // slot no renderiza NADA y la pantalla de espera muestra el tablero.
+      "arena.duel-lobby-en-3": {
         // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
         // object-fit: contain, asi que otra proporcion no se recorta — se
-        // encoge y deja franjas. El uploader RECHAZA lo que no mida esto, que
-        // es mejor que descubrirlo en el telefono.
+        // encoge y deja franjas. El uploader lo RECHAZA, que es mejor que
+        // descubrirlo en el telefono.
         exactSize: { width: 1024, height: 1024 },
         usedIn: [
-          "Arena — duelo, pantalla de espera (imagen 3 de 3)",
+          "Arena — duelo, pantalla de espera (EN, imagen 3 de 3)",
           "↳ components/duel/duel-lobby.tsx",
+          "El texto va HORNEADO en la imagen, por eso hay un juego por idioma.",
+          "Rotan solo las que existan; sin ninguna se ve el tablero.",
+        ],
+      },
+      // ⛔ Sin `default` a proposito: hasta que haya un archivo cargado este
+      // slot no renderiza NADA y la pantalla de espera muestra el tablero.
+      "arena.duel-lobby-es-1": {
+        // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
+        // object-fit: contain, asi que otra proporcion no se recorta — se
+        // encoge y deja franjas. El uploader lo RECHAZA, que es mejor que
+        // descubrirlo en el telefono.
+        exactSize: { width: 1024, height: 1024 },
+        usedIn: [
+          "Arena — duelo, pantalla de espera (ES, imagen 1 de 3)",
+          "↳ components/duel/duel-lobby.tsx",
+          "El texto va HORNEADO en la imagen, por eso hay un juego por idioma.",
+          "Rotan solo las que existan; sin ninguna se ve el tablero.",
+        ],
+      },
+      // ⛔ Sin `default` a proposito: hasta que haya un archivo cargado este
+      // slot no renderiza NADA y la pantalla de espera muestra el tablero.
+      "arena.duel-lobby-es-2": {
+        // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
+        // object-fit: contain, asi que otra proporcion no se recorta — se
+        // encoge y deja franjas. El uploader lo RECHAZA, que es mejor que
+        // descubrirlo en el telefono.
+        exactSize: { width: 1024, height: 1024 },
+        usedIn: [
+          "Arena — duelo, pantalla de espera (ES, imagen 2 de 3)",
+          "↳ components/duel/duel-lobby.tsx",
+          "El texto va HORNEADO en la imagen, por eso hay un juego por idioma.",
+          "Rotan solo las que existan; sin ninguna se ve el tablero.",
+        ],
+      },
+      // ⛔ Sin `default` a proposito: hasta que haya un archivo cargado este
+      // slot no renderiza NADA y la pantalla de espera muestra el tablero.
+      "arena.duel-lobby-es-3": {
+        // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
+        // object-fit: contain, asi que otra proporcion no se recorta — se
+        // encoge y deja franjas. El uploader lo RECHAZA, que es mejor que
+        // descubrirlo en el telefono.
+        exactSize: { width: 1024, height: 1024 },
+        usedIn: [
+          "Arena — duelo, pantalla de espera (ES, imagen 3 de 3)",
+          "↳ components/duel/duel-lobby.tsx",
+          "El texto va HORNEADO en la imagen, por eso hay un juego por idioma.",
           "Rotan solo las que existan; sin ninguna se ve el tablero.",
         ],
       },
@@ -1140,9 +1188,12 @@ const PLAY_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "arena.rival-mara",
   "arena.rival-frame-blue",
   "arena.rival-frame-gold",
-  "arena.duel-lobby-1",
-  "arena.duel-lobby-2",
-  "arena.duel-lobby-3",
+  "arena.duel-lobby-en-1",
+  "arena.duel-lobby-en-2",
+  "arena.duel-lobby-en-3",
+  "arena.duel-lobby-es-1",
+  "arena.duel-lobby-es-2",
+  "arena.duel-lobby-es-3",
   "arena.rival-frame-silver",
   "arena.avatar-frame-you",
   "arena.avatar-frame-bot",

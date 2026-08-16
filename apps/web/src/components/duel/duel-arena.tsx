@@ -57,7 +57,7 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
   const [copied, setCopied] = useState(false);
   const [endDismissed, setEndDismissed] = useState(false);
   /** ⛔ Vacio significa "mostra el tablero". Ver duel-lobby.tsx. */
-  const lobbySlideSources = useDuelLobbySlides();
+  const lobbySlideSources = useDuelLobbySlides(locale);
 
   const duel = "duel" in state ? state.duel : null;
   const interactive = isBoardInteractive(state);
