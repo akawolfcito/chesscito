@@ -17366,9 +17366,16 @@ button.web-access-link {
   font-family: var(--font-game-action, system-ui, sans-serif);
   font-weight: 900;
   color: #fff8e9;
+  /* ⛔ CONTORNO, no una sombra difusa. El fondo del juego es verde brillante
+     con textura, y una sombra suave debajo de texto crema se pierde contra los
+     claros. Cuatro sombras duras de 1px dibujan un borde oscuro que funciona
+     sobre cualquier parte del fondo. Reportado en el playtest 2. */
   text-shadow:
-    0 1px 0 rgba(72, 42, 8, 0.55),
-    0 2px 6px rgba(24, 54, 12, 0.45);
+    1px 1px 0 rgba(24, 54, 12, 0.85),
+    -1px 1px 0 rgba(24, 54, 12, 0.85),
+    1px -1px 0 rgba(24, 54, 12, 0.85),
+    -1px -1px 0 rgba(24, 54, 12, 0.85),
+    0 3px 6px rgba(12, 30, 6, 0.5);
 }
 
 .duel-status {
@@ -17380,23 +17387,29 @@ button.web-access-link {
   font-size: 1.3rem;
 }
 
-/* El cuerpo y las pistas también van sobre el verde: crema apenas más
-   apagada que el título, nunca gris. */
+/* El cuerpo y las pistas también viven sobre el verde, así que llevan el mismo
+   contorno que el título. ⛔ Y van en crema ENTERA: la versión anterior las
+   bajaba a 92% y 78% de opacidad, y sobre el verde brillante eso las volvía
+   grises. Fue lo que el founder reportó como "no se distingue". */
 .duel-body,
 .duel-hint {
   text-align: center;
-  color: rgba(255, 248, 233, 0.92);
-  text-shadow: 0 1px 3px rgba(24, 54, 12, 0.5);
+  color: #fff8e9;
+  text-shadow:
+    1px 1px 0 rgba(24, 54, 12, 0.8),
+    -1px 1px 0 rgba(24, 54, 12, 0.8),
+    0 2px 5px rgba(12, 30, 6, 0.55);
 }
 
 .duel-body {
   font-size: 0.9375rem;
+  font-weight: 600;
   line-height: 1.35;
 }
 
 .duel-hint {
   font-size: 0.8125rem;
-  color: rgba(255, 248, 233, 0.78);
+  font-weight: 600;
 }
 
 .duel-clock {
@@ -17503,8 +17516,12 @@ button.web-access-link {
   inset: 0;
   z-index: 80;
   display: flex;
-  align-items: flex-end;
+  /* Centrada, no pegada abajo: su arte es el mismo panel que usan
+     PromotionOverlay y las celebraciones, y esos viven en el medio. Pegado al
+     borde el marco quedaba cortado por el borde de la pantalla. */
+  align-items: center;
   justify-content: center;
+  padding: 16px;
   background: var(--overlay-scrim);
 }
 
@@ -17513,13 +17530,13 @@ button.web-access-link {
 .duel-setup-panel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  max-width: var(--app-max-width);
-  padding: 20px 16px calc(24px + env(safe-area-inset-bottom, 0px));
-  border-radius: 22px 22px 0 0;
-  background: linear-gradient(180deg, #2c5a1c 0%, #1c3d12 100%);
-  border-top: 2px solid rgba(255, 248, 233, 0.35);
+  max-width: 460px;
+  /* En % para que el contenido caiga DENTRO del marco pintado, no encima. */
+  padding: 9% 11% 10%;
+  /* ⚠️ Sin background propio: el arte llega por style inline (backgroundImage
+     + 100% 100% + no-repeat). Un gradiente acá lo taparia. */
 }
 
 .duel-ladder {

@@ -707,6 +707,11 @@ export const THEMES: Record<string, ThemeDefinition> = {
       // este slot no renderiza NADA, y la pantalla de espera muestra el
       // tablero. Es el mismo mecanismo que los marcos PRO de mas abajo.
       "arena.duel-lobby-1": {
+        // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
+        // object-fit: contain, asi que otra proporcion no se recorta — se
+        // encoge y deja franjas. El uploader RECHAZA lo que no mida esto, que
+        // es mejor que descubrirlo en el telefono.
+        exactSize: { width: 1024, height: 1024 },
         usedIn: [
           "Arena — duelo, pantalla de espera (imagen 1 de 3)",
           "↳ components/duel/duel-lobby.tsx",
@@ -717,6 +722,11 @@ export const THEMES: Record<string, ThemeDefinition> = {
       // este slot no renderiza NADA, y la pantalla de espera muestra el
       // tablero. Es el mismo mecanismo que los marcos PRO de mas abajo.
       "arena.duel-lobby-2": {
+        // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
+        // object-fit: contain, asi que otra proporcion no se recorta — se
+        // encoge y deja franjas. El uploader RECHAZA lo que no mida esto, que
+        // es mejor que descubrirlo en el telefono.
+        exactSize: { width: 1024, height: 1024 },
         usedIn: [
           "Arena — duelo, pantalla de espera (imagen 2 de 3)",
           "↳ components/duel/duel-lobby.tsx",
@@ -727,6 +737,11 @@ export const THEMES: Record<string, ThemeDefinition> = {
       // este slot no renderiza NADA, y la pantalla de espera muestra el
       // tablero. Es el mismo mecanismo que los marcos PRO de mas abajo.
       "arena.duel-lobby-3": {
+        // ⛔ Cuadrada y exacta: el contenedor es 1:1 y la imagen entra con
+        // object-fit: contain, asi que otra proporcion no se recorta — se
+        // encoge y deja franjas. El uploader RECHAZA lo que no mida esto, que
+        // es mejor que descubrirlo en el telefono.
+        exactSize: { width: 1024, height: 1024 },
         usedIn: [
           "Arena — duelo, pantalla de espera (imagen 3 de 3)",
           "↳ components/duel/duel-lobby.tsx",

@@ -74,7 +74,18 @@ export function DuelSetupSheet({ displayName, sessionId, onCreated, onCancel }: 
 
   return (
     <div className="duel-setup" role="dialog" aria-modal="true" aria-label={t("setupTitle")}>
-      <div className="duel-setup-panel" style={{ backgroundImage: panelBackground }}>
+      {/* ⚠️ Las tres propiedades juntas, como PromotionOverlay. Con sólo
+          `backgroundImage` el arte se dibuja a su tamaño natural y se repite:
+          el panel se ve cortado y con costuras. `100% 100%` es lo que lo hace
+          seguir la altura que decide el contenido. */}
+      <div
+        className="duel-setup-panel"
+        style={{
+          backgroundImage: panelBackground,
+          backgroundSize: "100% 100%",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
         <h2 className="duel-title">{t("setupTitle")}</h2>
 
         <p className="duel-hint">{t("setupClockLabel")}</p>
