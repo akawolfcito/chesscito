@@ -22,6 +22,7 @@
     "contracts:verify:celo": "turbo run verify:celo --filter=hardhat",
     "admin": "pnpm --filter admin run admin --",
     "ops:health": "pnpm -C apps/web exec tsx ../../scripts/ops/launch-health-snapshot.ts",
+    "ops:archive": "pnpm -C apps/web exec tsx ../../scripts/ops/archive.ts",
     "ops:no-token": "pnpm -C apps/web exec tsx ../../scripts/ops/no-token-observation.ts",
     "ops:query": "pnpm -C apps/web exec tsx ../../scripts/ops/read-only-query.ts",
     "ops:health:preview": "pnpm -C apps/web exec tsx ../../scripts/ops/launch-health-snapshot.ts --target preview"
