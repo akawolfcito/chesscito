@@ -88,9 +88,42 @@ export type PeonesBalanceViewedEventArgs = {
   surface: PeonesBalanceViewSurface;
 };
 
+/**
+ * Session-scoped de-amplification, keyed by (surface, balance).
+ *
+ * ⛔ It lives HERE and not in the chip because the guard has to outlive the
+ * component. The chip's own `useRef` guard was per COMPONENT INSTANCE, so every
+ * remount re-emitted a balance the session had already reported. Measured in
+ * production over 24 h: 596 rows collapsed to 305 distinct
+ * (session, surface, balance) combinations — **48.8% was re-emission**, and the
+ * Arena surface alone ran at 3.0× because its chip remounts on every state
+ * transition.
+ *
+ * ⚠️ Keyed by SURFACE on purpose. "Where the player sees their balance" is the
+ * product signal; collapsing to one event per session would destroy it.
+ *
+ * Module-level and in-memory: it costs nothing, adds no infrastructure, and
+ * dies with the page — which is exactly the intended scope.
+ */
+const seenBalanceViews = new Set<string>();
+
+/** Test seam. The set is module state, so a suite would otherwise leak across
+ *  cases and a passing test could depend on the order it ran in. */
+export function resetPeonesBalanceViewDedup(): void {
+  seenBalanceViews.clear();
+}
+
+/**
+ * Emit "the balance became visible to this session on this surface, at this
+ * value, for the first time". A repeat of the same (surface, balance) is a
+ * re-render or a remount, not a new thing the player saw.
+ */
 export function emitPeonesBalanceViewed(
   args: PeonesBalanceViewedEventArgs,
 ): void {
+  const key = `${args.surface}:${args.balance}`;
+  if (seenBalanceViews.has(key)) return;
+  seenBalanceViews.add(key);
   track("peones_balance_viewed", {
     balance: args.balance,
     dailyEarnedCapped: args.dailyEarnedCapped,

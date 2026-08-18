@@ -213,15 +213,17 @@ function ArenaPageInner() {
   const arenaCoachSignalViewedRef = useRef(false);
   const coachPreviewViewedRef = useRef<string | null>(null);
 
-  // Scaffold view event — fires once per (selecting + scaffold + not
-  // preparing) transition. Mount of the picker, not of the page; legacy
-  // panel views are excluded so the conversion ratio is comparable
-  // against /hub's hub_view baseline.
-  useEffect(() => {
-    if (!arenaScaffoldEnabled) return;
-    if (game.status !== "selecting") return;
-    track("arena_select_view");
-  }, [arenaScaffoldEnabled, game.status]);
+  // ⛔ `arena_select_view` was REMOVED here on 2026-08-18. It fired on exactly
+  // the same transition as `arena_coach_signal_viewed` below — measured over
+  // 24 h, the two were identical on every axis: 255 rows, 68 sessions, 3.8 per
+  // session, p50 2, p95 13, max 33. It carried NO props and had NO consumer:
+  // not one of the nine `stats_*` RPCs, and nothing in the repo outside this
+  // file. It was 255 write-only events a day whose count another, richer event
+  // already provides.
+  //
+  // ⚠️ If a picker-view count is ever needed again, count
+  // `arena_coach_signal_viewed` — it fires on the same transition and carries
+  // the coach payload too.
 
   // Publish the dock-driven sheet state to the shared store so the
   // <PersistentDock>'s center button can detect "overlay is open" —

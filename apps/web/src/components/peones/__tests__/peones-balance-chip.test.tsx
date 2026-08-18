@@ -26,6 +26,7 @@ vi.mock("@/components/payments/get-peones-sheet", () => ({
 }));
 
 import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
+import { resetPeonesBalanceViewDedup } from "@/lib/peones/telemetry";
 
 beforeEach(() => {
   trackMock.mockClear();
@@ -231,5 +232,100 @@ describe("PeonesBalanceChip — Get Peones entry point (payment rail)", () => {
     render(<PeonesBalanceChip />);
     expect(screen.queryByTestId("peones-balance-chip")).not.toBeInTheDocument();
     expect(screen.queryByTestId("chesito-card")).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * Telemetry de-amplification, 2026-08-18.
+ *
+ * Measured in production over 24 h: 596 `peones_balance_viewed` rows collapsed
+ * to 305 distinct (session, surface, balance) combinations — **48.8% of the
+ * event was re-emission of a balance the same session had already seen on the
+ * same surface**. Arena was the worst at 3.0×, which is what a chip that
+ * remounts on every state transition looks like.
+ *
+ * ⛔ The old guard was per COMPONENT INSTANCE (`lastEmittedBalanceRef`), so a
+ * remount re-emitted an unchanged balance. The guard has to outlive the
+ * component, and it must stay keyed by SURFACE — "where the player sees their
+ * balance" is the product signal, and collapsing surfaces would destroy it.
+ *
+ * Semantics after this change: *the balance became visible to this session on
+ * this surface, for the first time at this value.*
+ */
+describe("peones_balance_viewed — de-amplification", () => {
+  // The dedup set is module state: without this the cases would leak into one
+  // another and a green run could depend on the order they happened to run in.
+  beforeEach(() => resetPeonesBalanceViewDedup());
+
+  const viewedCalls = () =>
+    trackMock.mock.calls.filter((c) => c[0] === "peones_balance_viewed");
+
+  const success = (balance: number) => ({
+    state: {
+      kind: "success" as const,
+      balance,
+      dailyEarnedCapped: 0,
+      dailyCap: 30,
+    },
+    refetch: vi.fn(),
+  });
+
+  it("emits on the first render of a balance", () => {
+    usePeonesBalanceMock.mockReturnValue(success(12));
+    render(<PeonesBalanceChip surface="hub" />);
+    expect(viewedCalls()).toHaveLength(1);
+  });
+
+  it("⛔ does NOT re-emit after a REMOUNT with the same balance", () => {
+    // The exact production failure: 3.0× amplification on the Arena surface.
+    usePeonesBalanceMock.mockReturnValue(success(12));
+    const first = render(<PeonesBalanceChip surface="arena" />);
+    first.unmount();
+    render(<PeonesBalanceChip surface="arena" />);
+    expect(viewedCalls()).toHaveLength(1);
+  });
+
+  it("does not re-emit on a plain rerender either", () => {
+    usePeonesBalanceMock.mockReturnValue(success(12));
+    const view = render(<PeonesBalanceChip surface="hub" />);
+    view.rerender(<PeonesBalanceChip surface="hub" />);
+    expect(viewedCalls()).toHaveLength(1);
+  });
+
+  it("DOES emit again when the balance actually changes", () => {
+    usePeonesBalanceMock.mockReturnValue(success(12));
+    const view = render(<PeonesBalanceChip surface="hub" />);
+    usePeonesBalanceMock.mockReturnValue(success(18));
+    view.rerender(<PeonesBalanceChip surface="hub" />);
+    expect(viewedCalls()).toHaveLength(2);
+  });
+
+  it("DOES emit per SURFACE — where the balance is seen is the product signal", () => {
+    usePeonesBalanceMock.mockReturnValue(success(12));
+    render(<PeonesBalanceChip surface="hub" />);
+    cleanup();
+    render(<PeonesBalanceChip surface="arena" />);
+    const surfaces = viewedCalls().map((c) => (c[1] as { surface: string }).surface);
+    expect(surfaces).toEqual(["hub", "arena"]);
+  });
+
+  it("keeps the full payload — de-amplifying must not thin the event", () => {
+    usePeonesBalanceMock.mockReturnValue(success(12));
+    render(<PeonesBalanceChip surface="hub" />);
+    expect(viewedCalls()[0]?.[1]).toEqual({
+      balance: 12,
+      dailyEarnedCapped: 0,
+      dailyCap: 30,
+      surface: "hub",
+    });
+  });
+
+  it("never emits while loading or on error", () => {
+    usePeonesBalanceMock.mockReturnValue({ state: { kind: "loading" as const }, refetch: vi.fn() });
+    render(<PeonesBalanceChip surface="hub" />);
+    cleanup();
+    usePeonesBalanceMock.mockReturnValue({ state: { kind: "error" as const }, refetch: vi.fn() });
+    render(<PeonesBalanceChip surface="hub" />);
+    expect(viewedCalls()).toHaveLength(0);
   });
 });

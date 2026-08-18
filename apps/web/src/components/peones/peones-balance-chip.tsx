@@ -113,7 +113,6 @@ export function PeonesBalanceChipView({
    *  for. Re-renders with the same number do not re-emit; a real
    *  balance change does. Cleared implicitly when the component
    *  unmounts. */
-  const lastEmittedBalanceRef = useRef<number | null>(null);
 
   /** Transaction feedback (Peones V1 UX, 2026-07-21).
    *
@@ -163,8 +162,10 @@ export function PeonesBalanceChipView({
 
   useEffect(() => {
     if (state.kind !== "success") return;
-    if (lastEmittedBalanceRef.current === state.balance) return;
-    lastEmittedBalanceRef.current = state.balance;
+    // No local guard: `emitPeonesBalanceViewed` is idempotent per
+    // (surface, balance) for the session. A second guard here would duplicate
+    // that rule and hide it — and being per-instance, it was the reason a
+    // remount re-emitted at all.
     emitPeonesBalanceViewed({
       balance: state.balance,
       dailyEarnedCapped: state.dailyEarnedCapped,
