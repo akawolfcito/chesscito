@@ -879,6 +879,18 @@ export const MISSION_BRIEFING_COPY = {
   /** Short label rendered on the mission peek pill when the active
    *  exercise is a capture (vs a position move). */
   captureLabel: "Capture",
+  /**
+   * The Star Sweep live counter, said out loud.
+   *
+   * ⛔ "ON THIS BOARD" IS THE WHOLE POINT. The band renders a bare "0 / 3"
+   * beside the target and the level title, and the 2026-08-19 smoke read it as
+   * "three labyrinths" / "three rounds" — a progression through separate
+   * boards — when it is three stars to collect on the ONE board in front of
+   * you, clearable in a single play. The visible counter now carries a star
+   * icon to tie the number to the stars actually drawn on the squares; this is
+   * the same fact for a screen reader, which cannot see the icon.
+   */
+  sweepCounterAriaFormat: "{collected} of {total} stars on this board",
   /** Mission band tail for a Special Training level. The band used to read a
    *  bare "4" — the optimal-move count with nothing to say it was a count
    *  (founder, 2026-07-16). A number alone is not information. */
@@ -1739,6 +1751,17 @@ export const LABYRINTH_COPY = {
    *  needs to read as an alternative branch, not a competing primary. */
   orTryLabyrinth: "or try Labyrinth →",
   missionTitle: "Labyrinth",
+  /* ── SURFACE KICKER on the completion overlay ───────────────────────────
+   * Names WHICH surface the board that was just solved belongs to. Two boards
+   * can look almost identical — `rook-7` (lane 1, rocks, three stars) and
+   * `rook-rail-two-roads` (lane 2, featured) — and until this line existed
+   * nothing on the completion screen said which one the player had been in.
+   * That is the confusion the 2026-08-19 smoke reported: "I entered a
+   * mini-game, but the app thinks I just completed the whole Rook path."
+   * Uppercase is applied in CSS, not baked into the string: an ES translator
+   * needs the sentence-case source. */
+  surfaceMiniGame: "Mini-game",
+  surfaceExercise: "Exercise",
   missionHint: (optimal: number) => `Reach the star · optimal ${optimal} moves`,
   movesLabel: (n: number) => `${n} ${n === 1 ? "move" : "moves"}`,
   completeTitle: "Training Complete!",
@@ -1813,6 +1836,31 @@ export const CONSEQUENCE_COPY = {
   /** The lane finished but the crown did not land, which can only mean the
    *  badge is still unclaimed. Says exactly what is missing. */
   laneComplete: "Every challenge cleared · your badge is waiting in Exercises",
+
+  /* ── MINI-GAMES SURFACE VARIANTS ────────────────────────────────────────
+   * Same news, no exercise-path tail. Selected by `consequenceMessage(…,
+   * "featured_minigame")` when the player reached this board from the Learn
+   * Home Mini-games rail.
+   *
+   * ⛔ THESE ARE NOT "SHORTER". They are the same announcement with the
+   * NAVIGATION removed. The four strings above each end by pointing into the
+   * exercise path — "pick your next piece", "it is on your path now", "the
+   * crown is at the end", "waiting in Exercises" — and reading one of those
+   * after a featured mini-game is what made the 2026-08-19 smoke feel like the
+   * two surfaces were the same thing.
+   *
+   * ⛔ NOTHING IS HIDDEN HERE. A crown earned from a mini-game still says
+   * "Crown earned". Suppressing the line was the first proposal and the founder
+   * rejected it: an earned reward must never go unannounced just because of
+   * where the player came in. */
+  masteryMiniGame: "Crown earned",
+  challengeUnlockedMiniGame: "New challenge unlocked",
+  laneProgressMiniGame: "{done} of {total} challenges cleared",
+  /** Names the badge — it IS the news — without sending the player anywhere.
+   *  The Exercises surface is where it gets claimed, and the player finds it
+   *  there through the hub's own Exercises entry, not through a line in a
+   *  mini-game overlay. */
+  laneCompleteMiniGame: "Every challenge cleared · your badge is ready",
 } as const;
 
 export const DOCK_LABELS = {
@@ -3467,7 +3515,84 @@ export const HUB_LITE_COPY = {
   continue: "Continue",
   practice: "Practice",
   startFocusAriaLabel: "Start today's focus",
-  trainingPathLabel: "Training Path",
+  /**
+   * ── THE EXERCISE-PATH ENTRY (replaced the 6-piece Training Path strip) ──
+   *
+   * ⛔ `trainingPathLabel` IS GONE, and deleting it was the point. The Learn
+   * Home used to end in a roster of six piece tiles, each its own destination.
+   * Against the Mini-games rail directly above it, that read as a second
+   * navigation system competing with the first: the 2026-08-19 smoke could not
+   * tell which of the two was "the game" (founder: "el Home se siente
+   * sobrecargado… debilita la separación de superficies").
+   *
+   * The home now offers ONE entry per surface — Mini-games, and this. The
+   * per-piece progression did not move or disappear: it lives inside
+   * /exercises, where the dock's badge tab owns the piece switcher and the
+   * drawer owns the path. This entry is a door, not a summary.
+   *
+   * ⚠️ The label is "Exercises", matching `DOCK_LABELS`/`LABYRINTH_COPY`
+   * ("Back to exercises", "Your badge is waiting in Exercises") and the
+   * `surfaceExercise` kicker. One surface, one name, everywhere it is named —
+   * calling it "Training Path" here and "Exercises" in four other strings is
+   * how the two lanes started reading as three.
+   */
+  /** The rail's heading. Mirrors PLAY's "PLAY PATH" so the two home screens
+   *  read as the same product with two modes — the whole reason this rail
+   *  adopted PLAY's tile form (founder, 2026-08-19). */
+  pathRailLabel: "LEARN PATH",
+  pathRailAriaLabel: "Learn path shortcuts",
+  /** Short tile caption. The plate under a 50px tile fits ~9 characters, so
+   *  this is deliberately shorter than `exercisesEntryLabel`, which the old
+   *  full-width row could afford. */
+  exercisesTileLabel: "Exercises",
+  exercisesEntryLabel: "Exercises",
+  /** Sub-line under the label. States what the surface IS, in the vocabulary
+   *  the path itself uses (pieces → exercises → badge). No count, no promise. */
+  exercisesEntryHint: "Learn every piece, one step at a time",
+  /** Progress readout on the entry. `{done}` counts pieces MASTERED (badge
+   *  earned or claimed), `{total}` is the roster. Rendered only once the hub
+   *  has hydrated — "0 of 6" on a veteran's device is a visible lie, the same
+   *  rule `deriveRewardTiles` already enforces on the tile counters. */
+  exercisesEntryProgressFormat: "{done} of {total} pieces mastered",
+  exercisesEntryAriaLabel: "Open Exercises, the piece training path",
+} as const;
+
+/**
+ * Mini-games surface (Learn Home, Early Access).
+ *
+ * ⛔ COPY RULES THIS NAMESPACE EXISTS TO HOLD
+ *  1. NO price, NO currency, NO "unlock". Early Access is free and the surface
+ *     must not hint at a purchase that does not exist.
+ *  2. NO cadence promise. "New every week" would be a commitment the product
+ *     cannot yet sustain — 13 healthy challenges give four rotations. Every
+ *     string here stays true if a rotation lasts a week or three months.
+ *  3. NO end date and NO countdown. Whether monetization follows Early Access
+ *     is undecided, so "free until…" would be a promise nobody authorized.
+ *
+ * Engine names are product names and stay in English in both bundles, like
+ * every other feature name in the app.
+ */
+export const MINIGAMES_COPY = {
+  sectionLabel: "Mini-games",
+  sectionAriaLabel: "Mini-games, featured challenges",
+  earlyAccess: "Early Access",
+  play: "Play",
+  continueLabel: "Continue",
+  playAgain: "Play again",
+  newFlag: "New",
+  comingSoonLabel: "Coming soon",
+  /** Shown once every featured challenge is cleared. States a possibility, not
+   *  a schedule. */
+  allClearTitle: "You cleared them all",
+  allClearBody: "Featured challenges change from time to time.",
+  engines: {
+    "rook-rail": "Rook Rail",
+    "pivot-run": "Pivot Run",
+    "n-queens": "N-Queens",
+    "safe-path": "Safe Path",
+    "knight-tour": "Knight's Tour",
+    "promotion-run": "Promotion Run",
+  },
 } as const;
 
 /** Shared LEARN / PLAY mini-tour.

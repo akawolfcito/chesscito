@@ -1644,6 +1644,9 @@ const messages = {
       king: "El Rey se mueve una casilla a la vez",
     },
     captureHint: "Captura la pieza objetivo",
+    // "en este tablero" es la parte que desambigua: son 3 estrellas de ESTE
+    // tablero, no 3 niveles ni 3 rondas.
+    sweepCounterAriaFormat: "{collected} de {total} estrellas en este tablero",
     moveObjective: "Mueve tu {piece} a {target}",
     pieceHint: {
       rook: "♜ Líneas rectas",
@@ -1803,6 +1806,11 @@ const messages = {
     tryLabyrinth: "Probar Laberinto",
     orTryLabyrinth: "o prueba Laberinto →",
     missionTitle: "Laberinto",
+    // "Mini-juego" sigue a MINIGAMES_COPY.sectionLabel; "Ejercicio" sigue a
+    // la entrada Exercises del hub. Los dos rótulos deben leerse como los
+    // nombres de las dos superficies del Home, no como palabras sueltas.
+    surfaceMiniGame: "Mini-juego",
+    surfaceExercise: "Ejercicio",
     missionHint: "Alcanza la estrella · óptimo {optimal} movimientos",
     movesLabel: "{n, plural, =1 {# movimiento} other {# movimientos}}",
     completeTitle: "¡Entrenamiento completado!",
@@ -1826,6 +1834,13 @@ const messages = {
     badgeProgress: "{done} de {required} para tu insignia",
     laneProgress: "{done} de {total} desafíos · la corona está al final",
     laneComplete: "Todos los desafíos superados · tu insignia te espera en Ejercicios",
+    // Variantes de la superficie Mini-juegos: la misma noticia, sin la cola que
+    // empuja al carril de ejercicios. No se oculta nada — una corona ganada
+    // desde un mini-juego se sigue anunciando.
+    masteryMiniGame: "Corona ganada",
+    challengeUnlockedMiniGame: "Nuevo desafío desbloqueado",
+    laneProgressMiniGame: "{done} de {total} desafíos superados",
+    laneCompleteMiniGame: "Todos los desafíos superados · tu insignia está lista",
   },
   SHOP_ITEM_COPY: {
     founderBadge: {
@@ -2073,6 +2088,24 @@ const messages = {
     celebrationShieldsPending: "Escudos pronto",
     celebrationHabit: "Tu hábito mental de 21 días empieza ahora.",
   },
+  MINIGAMES_COPY: {
+    ...en.MINIGAMES_COPY,
+    sectionLabel: "Mini-juegos",
+    sectionAriaLabel: "Mini-juegos, desafíos destacados",
+    // "Early Access" se deja en inglés: es el nombre del estado del producto,
+    // como PRO o Season Pass, y "Acceso anticipado" sugiere una fecha de fin
+    // que el producto no ha decidido.
+    earlyAccess: "Early Access",
+    play: "Jugar",
+    continueLabel: "Continuar",
+    playAgain: "Jugar de nuevo",
+    newFlag: "Nuevo",
+    comingSoonLabel: "Pronto",
+    allClearTitle: "Los completaste todos",
+    allClearBody: "Los desafíos destacados cambian cada tanto.",
+    // Los nombres de los juegos son nombres de producto: no se traducen.
+    engines: { ...en.MINIGAMES_COPY.engines },
+  },
   HUB_LITE_COPY: {
     ...en.HUB_LITE_COPY,
     rootAriaLabel: "Inicio de Chesscito Learn",
@@ -2080,7 +2113,16 @@ const messages = {
     continue: "Continuar",
     practice: "Practicar",
     startFocusAriaLabel: "Comienza el foco de hoy",
-    trainingPathLabel: "Ruta de entrenamiento",
+    // "Ejercicios" — el MISMO nombre que usa el dock, `backToExercises` y el
+    // kicker `surfaceExercise`. Una superficie, un nombre.
+    // Espeja "RUTA DE JUEGO" de PLAY: mismo producto, dos modos.
+    pathRailLabel: "RUTA DE APRENDIZAJE",
+    pathRailAriaLabel: "Atajos de la ruta de aprendizaje",
+    exercisesTileLabel: "Ejercicios",
+    exercisesEntryLabel: "Ejercicios",
+    exercisesEntryHint: "Aprende cada pieza, paso a paso",
+    exercisesEntryProgressFormat: "{done} de {total} piezas dominadas",
+    exercisesEntryAriaLabel: "Abrir Ejercicios, la ruta de entrenamiento por pieza",
   },
   HUB_TOUR_COPY: {
     ...en.HUB_TOUR_COPY,

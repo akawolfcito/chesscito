@@ -42,6 +42,20 @@ const IDENTICAL_TOKENS = [
   "Season Pass",
   "Training Pass",
   "Challenge Pass",
+  /* Mini-game names. Same rule as "Knight's Tour" below: product names, not
+     descriptions — translating them would give one game two identities across
+     a screenshot, a support message and the app.
+     ⚠️ THEY MUST STAY ABOVE "PRO". `PRO` matches the first three letters of
+     `PROmotion Run` and leaves "motion Run" behind, which reads as untranslated
+     copy — the exact nibbling the longest-first ordering exists to prevent. */
+  "Promotion Run",
+  "Rook Rail",
+  "Pivot Run",
+  "N-Queens",
+  "Safe Path",
+  /* A product STATE, like PRO or Season Pass. "Acceso anticipado" would also
+     read as a promise of an end date, which this release does not make. */
+  "Early Access",
   "Chesscito",
   "Play Kingdom",
   "Mini Arena",
