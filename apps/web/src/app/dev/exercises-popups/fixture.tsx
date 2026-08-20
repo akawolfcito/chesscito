@@ -10,6 +10,7 @@ export type ExercisesPopupsVariant =
   | "piece-complete-final"
   | "labyrinth-king-solved"
   | "labyrinth-consequence-worst-case"
+  | "labyrinth-minigame-complete"
   | "score-saved"
   | "score-saved-peones"
   | "saved-chip"
@@ -96,6 +97,37 @@ export function ExercisesPopupsFixture({
           onContinue={noop}
           onRetry={noop}
           onEnterArena={noop}
+        />
+      )}
+
+      {/* THE MINI-GAMES SURFACE, same overlay, same earned consequence.
+          Its pair is `labyrinth-consequence-worst-case` directly above: SAME
+          `lane_progress` at the same numbers, so the only difference the two
+          baselines can show is the surface treatment — the "MINI-GAME" kicker,
+          the board name, and the consequence line WITHOUT its
+          "waiting in Exercises" tail.
+
+          ⛔ It is the pair that makes this a proof. A lone mini-game baseline
+          would be green whether or not the exercise-path copy had also changed,
+          and "both surfaces say the same thing" is precisely the defect this
+          pass exists to remove.
+
+          ⚠️ And it exists at all because a fixture that forgets a prop
+          photographs less than what ships: `surface` and `challengeTitle` are
+          rendered by nothing else in this file, so without this variant the
+          whole PART 2 presentation would go out unphotographed. */}
+      {variant === "labyrinth-minigame-complete" && (
+        <LabyrinthCompleteOverlay
+          moves={4}
+          optimalMoves={3}
+          stars={2}
+          previousBest={6}
+          isNewBest={true}
+          consequence={{ kind: "lane_progress", done: 3, total: 3 }}
+          surface="featured_minigame"
+          challengeTitle="Two Roads"
+          onContinue={noop}
+          onRetry={noop}
         />
       )}
 

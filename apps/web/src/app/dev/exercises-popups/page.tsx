@@ -18,6 +18,7 @@ const VARIANTS = new Set<ExercisesPopupsVariant>([
   "piece-complete-final",
   "labyrinth-king-solved",
   "labyrinth-consequence-worst-case",
+  "labyrinth-minigame-complete",
   "score-saved",
   "score-saved-peones",
   "saved-chip",

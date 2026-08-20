@@ -2,6 +2,10 @@
 
 import { HubLiteScaffold } from "@/components/hub/hub-lite-scaffold";
 import { HubDailyTrigger } from "@/components/hub/hub-daily-trigger";
+import {
+  MiniGamesSection,
+  type MiniGamesCard,
+} from "@/components/hub/minigames-section";
 import type { RewardTile } from "@/components/kingdom/reward-column";
 import type { ContentLoopAction } from "@/lib/hub/content-loop";
 import type { PeonesBalanceState } from "@/lib/peones/use-peones-balance";
@@ -56,6 +60,33 @@ const PEONES_SETTLED: PeonesBalanceState = {
  *  one screenshot covers the past and future columns as well as today's. Any
  *  date works for pinning — what matters is that it never moves again. */
 const PINNED_TODAY = "2026-08-05";
+
+/** One card per state the Mini-games rail can show, so a regression in any of
+ *  the three skins breaks a photo. `isNew` is set on exactly one so the corner
+ *  flag is covered without the whole rail wearing it. */
+const MINIGAME_CARDS: MiniGamesCard[] = [
+  {
+    challengeId: "vr-a",
+    engineId: "rook-rail",
+    piece: "rook",
+    state: "FEATURED_AVAILABLE",
+    isNew: true,
+  },
+  {
+    challengeId: "vr-b",
+    engineId: "pivot-run",
+    piece: "bishop",
+    state: "FEATURED_IN_PROGRESS",
+    isNew: false,
+  },
+  {
+    challengeId: "vr-c",
+    engineId: "n-queens",
+    piece: "queen",
+    state: "FEATURED_COMPLETED",
+    isNew: false,
+  },
+];
 
 const REWARD_TILES: RewardTile[] = [
   { id: "rook", state: "claimed", onTap: noop },
@@ -258,8 +289,26 @@ export function LearnHubFixture({ variant }: { variant: LearnHubVariant }) {
       // is defined, so without it the baseline is blind to the chip.
       onReplayTour={noop}
       shields={v.shields}
+      /* ⛔ The section is passed as the PRESENTER, never as `<MiniGamesSlot/>`.
+         The slot reads localStorage and fires telemetry; photographing it would
+         make the baseline depend on the browser profile and would write real
+         events from a screenshot run. What ships visually is this component,
+         and this is the thing under test.
+         ⚠️ Cards are a LITERAL, for the same reason `rewardTiles` is: deriving
+         them would hand the photo to whoever edits the rotation constant, and
+         a content edit would turn four baselines red with no code behind it. */
+      miniGamesSlot={
+        <MiniGamesSection
+          rotationId="vr-fixture"
+          cards={MINIGAME_CARDS}
+          comingSoon={["knight-tour", "promotion-run"]}
+          rotationComplete={false}
+          onPlay={noop}
+        />
+      }
       primaryFocus={{ onPress: noop, contentLoop: v.contentLoop, isHydrated: true }}
       rewardTiles={REWARD_TILES}
+      onOpenExercisePath={noop}
       isPro={variant === "pro"}
       onAccountTap={noop}
       today={PINNED_TODAY}

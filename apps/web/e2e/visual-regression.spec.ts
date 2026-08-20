@@ -1082,6 +1082,30 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     );
   });
 
+  /* The SAME overlay, the SAME earned consequence, entered from Mini-games.
+   * Its pair is the test directly above — identical `lane_progress` numbers —
+   * so the two baselines can differ only in the surface treatment: the
+   * "MINI-GAME" kicker, the board name, and a consequence line that keeps the
+   * news and drops the "waiting in Exercises" tail.
+   *
+   * ⛔ Read the PAIR, never this one alone. A single mini-game baseline stays
+   * green whether or not the exercise-path copy drifted to match it, and "both
+   * surfaces say the same thing" is the exact defect this pass removes. */
+  test("vr13-labyrinth-minigame — featured surface: kicker, board name, no path tail", async ({
+    page,
+  }) => {
+    await page.goto("/dev/exercises-popups?variant=labyrinth-minigame-complete", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr13-labyrinth-minigame.png",
+      FIXTURE_OPTS,
+    );
+  });
+
   /* The EXERCISE completion surface (slice 1C) — the success flash, which is
    * where `badge_ready` actually lives, since only exercises move that gate.
    * The pair proves AC-2 on this surface too: `success-plain` is the flash as
