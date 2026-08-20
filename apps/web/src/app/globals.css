@@ -17881,3 +17881,35 @@ button.web-access-link {
 .duel-lobby-dot.is-active {
   background: #fff8e9;
 }
+
+/* ── "YOU ARE HERE" on the exercise path ────────────────────────────────────
+   ⛔ A WARM GLOW DOES NOT WORK HERE, and that is why this is a ring.
+   The marker used to be `drop-shadow(... rgba(255,213,74) ...)` — amber light
+   on a green node sitting on bright green grass. It rendered, and it was
+   invisible. Worse, it was gated on `!isDone`, so a player who had finished a
+   piece had NO marker at all: every node was green, checked and 3-starred.
+   Reported from the smoke as a HANG — tapping the node you already stand on
+   closes the path and leaves the same board underneath, which is
+   indistinguishable from nothing happening.
+
+   Blue is the app's "this is the one" colour (the primary tile of the LEARN
+   rail wears the same ring) and it is the one hue absent from this wallpaper,
+   so it survives grass, path and pedestal alike. */
+.path-node-active {
+  border-radius: 999px;
+  outline: 3px solid rgba(35, 159, 220, 0.95);
+  outline-offset: 2px;
+  filter: drop-shadow(0 0 8px rgba(35, 159, 220, 0.75));
+  animation: path-node-active-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes path-node-active-pulse {
+  0%, 100% { outline-color: rgba(35, 159, 220, 0.95); }
+  50% { outline-color: rgba(120, 210, 255, 0.95); }
+}
+
+/* Anyone who asked not to be moved keeps a static ring — the ring is the
+   information, the pulse is only emphasis. */
+@media (prefers-reduced-motion: reduce) {
+  .path-node-active { animation: none; }
+}

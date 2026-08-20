@@ -565,6 +565,16 @@ export function ExerciseDrawer({
                       aria-label={description}
                       data-locked={effectiveLocked ? 'true' : undefined}
                       data-quota-locked={isQuotaLocked ? 'true' : undefined}
+                      /* ⛔ NOT `isActive && !isDone`. The glow below used that,
+                         so a player who had finished a piece had NO marker on
+                         the path at all: every node was green, checked and
+                         3-starred, and "which one am I on?" had no answer.
+                         Reported from the smoke as a HANG — the founder tapped
+                         the node they were already standing on, the path
+                         closed, and the board underneath did not change.
+                         Nothing was broken; nothing was legible either. */
+                      data-active={isActive ? 'true' : undefined}
+                      aria-current={isActive ? 'step' : undefined}
                       onClick={() => {
                         if (effectiveLocked) {
                           showLockedTooltip(description)
@@ -572,12 +582,14 @@ export function ExerciseDrawer({
                         }
                         handleSelect(exercise, index)
                       }}
-                      className="relative"
+                      className={
+                        isActive && !effectiveLocked
+                          ? 'relative path-node-active'
+                          : 'relative'
+                      }
                       style={{
                         filter: effectiveLocked
                           ? 'grayscale(1) brightness(0.85)'
-                          : isActive && !isDone
-                          ? 'drop-shadow(0 0 6px rgba(255,213,74,0.85)) drop-shadow(0 0 14px rgba(255,200,40,0.55))'
                           : undefined,
                       }}
                     >

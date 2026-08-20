@@ -554,3 +554,45 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
     });
   });
 });
+
+/* ── "YOU ARE HERE" MUST SURVIVE COMPLETION ────────────────────────────────
+ * Reported from the smoke: with every rook exercise at 3★, tapping a node did
+ * "nothing". It was doing exactly what it should — the founder was tapping the
+ * node they were ALREADY on, the path closed, and the board underneath was
+ * unchanged. Indistinguishable from a hang.
+ *
+ * The cause was here: the active glow rendered under `isActive && !isDone`, so
+ * a player who had finished a piece had NO marker anywhere on the path. Every
+ * node looked identical — green, checked, three stars — and "which one am I
+ * on?" had no answer on screen.
+ *
+ * ⛔ Asserted through `data-active`, not the CSS filter string: a glow is a
+ * design decision that will get retuned, and a test that pins a drop-shadow
+ * breaks on a palette change while saying nothing about the guarantee. */
+describe("ExerciseDrawer — the active node is marked even when it is done", () => {
+  it("marks the active node when it has NOT been solved", () => {
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        stars={starsById()}
+        activeIndex={2}
+        onNavigate={vi.fn()}
+      />,
+    );
+    const active = document.querySelectorAll('[data-active="true"]');
+    expect(active).toHaveLength(1);
+  });
+
+  it("STILL marks it when every exercise is solved — the reported case", () => {
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        stars={starsById(...EXERCISES.rook.map(() => 3))}
+        activeIndex={0}
+        onNavigate={vi.fn()}
+      />,
+    );
+    const active = document.querySelectorAll('[data-active="true"]');
+    expect(active, "a finished piece left the path with no you-are-here").toHaveLength(1);
+  });
+});
