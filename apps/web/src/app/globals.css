@@ -17900,16 +17900,15 @@ button.web-access-link {
   outline: 3px solid rgba(35, 159, 220, 0.95);
   outline-offset: 2px;
   filter: drop-shadow(0 0 8px rgba(35, 159, 220, 0.75));
-  animation: path-node-active-pulse 1.8s ease-in-out infinite;
 }
 
-@keyframes path-node-active-pulse {
-  0%, 100% { outline-color: rgba(35, 159, 220, 0.95); }
-  50% { outline-color: rgba(120, 210, 255, 0.95); }
-}
-
-/* Anyone who asked not to be moved keeps a static ring — the ring is the
-   information, the pulse is only emphasis. */
-@media (prefers-reduced-motion: reduce) {
-  .path-node-active { animation: none; }
-}
+/* ⛔ NO ANIMATION HERE, and its absence is deliberate.
+   This shipped with a 1.8s infinite `outline-color` pulse. `outline` is not a
+   compositable property, so every frame repainted a node that also carries a
+   `filter` and sits inside a transformed, absolutely-positioned canvas layered
+   over full-bleed wallpaper art — a continuous main-thread repaint of a large
+   area, on the one screen a "Page Unresponsive" was reported from.
+   It was NOT proven to be the cause (the freeze could not be reproduced), and
+   it is removed anyway: the ring is the information, the pulse was only
+   emphasis, and a permanent repaint loop is not worth keeping on suspicion
+   alone. */
