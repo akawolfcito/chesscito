@@ -53,6 +53,7 @@ import {
 } from "@/lib/progression/use-milestone-seeding";
 import { track } from "@/lib/telemetry";
 import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
+import { MiniGamesSlot } from "@/components/hub/minigames-slot";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import { useHubData } from "@/components/hub/use-hub-data";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
@@ -670,7 +671,21 @@ export function LearnHubClient({
             contentLoop: contentLoopAction,
             isHydrated: isContentLoopHydrated,
           }}
+          miniGamesSlot={<MiniGamesSlot />}
           rewardTiles={rewardTiles}
+          /* The ONE door to the exercise path. It lands on the player's primary
+             piece through `startFocusExerciseDestination` — the SAME resolver
+             the ChallengeCard's CTA uses for its legacy destination, so the two
+             ways into the path from this screen cannot disagree about which
+             piece is next. A bare `/exercises` would re-open whatever piece the
+             screen last stored, which is not the same question. */
+          onOpenExercisePath={() => {
+            track("hub_exercises_entry_tap", {
+              piece: contentLoopPrimaryPiece,
+              hydrated: isContentLoopHydrated,
+            });
+            router.push(startFocusExerciseDestination(contentLoopPrimaryPiece));
+          }}
           isPro={entitlement.active}
           onAccountTap={() => {
             track("hub_account_chip_tap");

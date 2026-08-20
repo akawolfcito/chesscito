@@ -1785,6 +1785,40 @@
     text-align: center;
   }
 
+  /* ── SURFACE KICKER on the labyrinth completion overlay ─────────────────
+     Names the surface the solved board belongs to: "MINI-GAME" or "EXERCISE".
+     Two rook boards can look nearly identical (`rook-7` in lane 1 and
+     `rook-rail-two-roads` in lane 2) and grade the same way; until this label
+     existed the completion screen said nothing about which one had just been
+     played, which is how a featured mini-game read as lane-1 progression in
+     the 2026-08-19 smoke.
+
+     ⚠️ Uppercase lives HERE, not in the copy string — an ES translator needs
+     the sentence-case source ("Mini-juego"), and `text-transform` keeps the
+     screen-reader announcement natural. */
+  .labcomplete-surface-kicker {
+    text-align: center;
+    font-size: 0.58rem;
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(110, 65, 15, 0.78);
+    text-shadow: 0 1px 0 rgba(255, 245, 215, 0.6);
+  }
+
+  /* The board's authored name, under the generic headline. The headline says
+     WHAT happened ("Training Complete!"), this says WHICH board it happened
+     on — the two together are what let a player tell "Two Roads" apart from
+     "Plan the whole tour". */
+  .labcomplete-challenge-title {
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: rgba(63, 34, 8, 0.92);
+    text-shadow: 0 1px 0 rgba(255, 245, 215, 0.6);
+  }
+
   /* Inline price after the primary CTA label. Same color/weight as the
      label, slightly smaller scale, dot-separator inside the label
      span — reads as ONE confident button label, no sticker. */
@@ -8620,6 +8654,11 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 10px;
 }
 
+/* ⛔ DO NOT SHRINK THIS TO SAVE VERTICAL SPACE — it was tried on 2026-08-19 and
+   bought exactly 0px. `challenge-card-top` is 98px tall while this icon is 72px:
+   the block's height is set by the TEXT COLUMN beside it
+   (`challenge-card-top-main`), not by the sprite. Shrinking the icon only moves
+   four VR baselines for nothing. */
 .challenge-card-icon {
   display: block;
   flex: 0 0 auto;
@@ -9471,64 +9510,173 @@ button.hud-resource-chip:active:not(:disabled) {
     0 5px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* Training Path — horizontal piece roster (reuses RewardColumn, forced row). */
-.hub-lite-training-path {
+/* ── Mini-games (Learn Home, Early Access) ─────────────────────────────────
+   Second destination of the Learn home, above the piece roster. Horizontal
+   scroller: at 390px three ~96px cards fit with a sliver of the next visible,
+   which is the affordance that says "this scrolls". No fixed height — the
+   Coming Soon strip is conditional and a reserved gap would read as a hole. */
+/* ── THE LEARN RAIL ─────────────────────────────────────────────────────────
+   One row of shortcut tiles: [Exercises] │ [mini-games…]. A 1:1 mirror of
+   `.play-hub-path` — same 50px tiles, same caption plates, same grey/gold
+   hierarchy — because the two home screens are one product in two modes and
+   were solving the same problem two different ways.
+
+   It replaced, in order: the 6-piece roster (a competing navigation), then the
+   full-width Exercises row + 96×100 mini-game cards (right hierarchy, ~185px,
+   and the home scrolled at 360×640 while PLAY did not).
+
+   ⛔ The divider and the EARLY ACCESS tag are STRUCTURE, not decoration. They
+   are the only things keeping two destinations legible now that they share a
+   rail. Delete either and the separation collapses silently — every tile would
+   still work. */
+.hub-lite-path-rail {
   width: 100%;
-  /* Pin to the bottom of the screen — pushes past the flex gap to the floor. */
-  margin-top: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 4px 4px 3px;
-  /* border-radius: 16px; */
-  /* background: rgba(60, 120, 40, 0.32);
-  border: 1px solid rgba(255, 255, 255, 0.18); */
+  gap: 7px;
+  /* PINNED TO THE FLOOR — the same one line PLAY uses on `.play-hub-path`, and
+     for the same reason: `margin-top: auto` absorbs the leftover column height
+     so the rail is the page's baseboard on any screen taller than the content.
+
+     ⚠️ It was absent for one iteration and that was right AT THE TIME: while
+     the exercise entry was a full-width 64px ROW, pinning it opened a ~100px
+     hole between the challenge card and the row that read as content which had
+     failed to load. What changed is the rail itself — 127px of compact tiles
+     that read as a floor, exactly like `.play-hub-path`. On a tall screen the
+     leftover space is now WALLPAPER between card and rail, which is the
+     design, and the rail lands back on `.hub-home-scaffold::after`, the
+     readability veil that is anchored to the bottom and was built for it. */
+  margin-top: auto;
+  padding: 4px 4px 10px;
 }
 
-.hub-lite-training-path-label {
+.hub-lite-path-rail-label {
   margin: 0;
   font-size: 0.55rem;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #f3e6c4;
+  /* No panel behind this heading — it sits on the forest wallpaper. */
+  text-shadow: 0 1px 3px rgba(6, 17, 7, 0.9), 0 0 2px rgba(6, 17, 7, 0.8);
 }
 
-/* Drop the inner dark wooden panel from RewardColumn — the lighter outer
-   container is the only backdrop; force a tight horizontal row. */
-.reward-column.hub-lite-training-path-tiles {
-  flex-direction: row;
-  flex-wrap: nowrap;
-  gap: 4px;
-  width: 100%;
-  padding: 0 0 8px;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  justify-content: space-between;
+/* Flex, not PLAY's `grid-template-columns: repeat(4, 50px)`: this rail carries
+   a divider and a variable number of mini-games, so the track count is not
+   fixed. `align-items: flex-start` keeps the tiles top-aligned when the
+   mini-games group grows a tag row underneath them. */
+/* ⛔ EVERY TILE IS A DIRECT CHILD OF THIS ROW — Exercises, the divider, and the
+   three mini-game tiles alike. That flatness is what keeps them on ONE
+   baseline; the moment the mini-games sat inside their own padded box they
+   rendered 8px lower than Exercises, and the box's width (set by the footnote,
+   not by the tiles) opened a 51px dead gap beside the divider.
+
+   `flex-wrap` stays as the safety valve for a rotation that outgrows the
+   viewport: the row wraps rather than making the page scroll sideways. It was
+   originally here to give the footnote its own line; that row is gone
+   (founder, 2026-08-20) and the wrap is worth keeping on its own merit. */
+.hub-lite-path-rail-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+  /* Clearance for the NEW badge (`top: -5px`), applied to the ROW so it shifts
+     every tile equally instead of only the ones that can carry a badge. */
+  padding-top: 6px;
+  /* Room for the caption plates, which hang 7px below their tiles. */
+  padding-bottom: 10px;
 }
 
-/* Let the piece art own the orange tile and seat its name on a small plate
-   across the lower edge. The plate remains inside the same 48px button. */
-.hub-lite-training-path-tiles .reward-tile.is-compact {
+/* ⛔ IT HAS TO BE VISIBLE TO DO ITS JOB. The first version was a 1px
+   `align-self: stretch` hairline at 0.45 alpha; over the sunlit grass it
+   simply did not render to the eye, and a separator nobody can see separates
+   nothing — the rail read as four undifferentiated tiles, which is the exact
+   state this pass exists to avoid. Fixed height (not `stretch`, which spanned
+   the tag row too), 2px, and a dark core with a light edge so it holds on both
+   the bright wallpaper and a dark one. */
+.hub-lite-path-rail-divider {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  width: 2px;
+  height: 50px;
+  margin: 0 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    180deg,
+    rgba(243, 230, 196, 0) 0%,
+    rgba(243, 230, 196, 0.85) 30%,
+    rgba(243, 230, 196, 0.85) 70%,
+    rgba(243, 230, 196, 0) 100%
+  );
+  box-shadow: 0 0 3px rgba(6, 17, 7, 0.85);
+}
+
+.hub-minigames-tiles {
+  display: flex;
+  gap: 10px;
+  /* ⛔ NO `overflow-x: auto` HERE, deliberately. It made this a scroll
+     container, and a scroll container clips the OTHER axis too — the NEW badge
+     at `top: -5px` was cut in half, and no `overflow: visible` on the badge can
+     escape a scroll port. The clearance now lives on the rail row, which is not
+     a scroll container, so the badge simply overflows.
+     The rail row wraps if a future rotation outgrows the viewport; the page
+     body still never scrolls sideways. */
+}
+
+/* ── Tile skin — the same one PLAY's rail uses ─────────────────────────────
+   `HubActionTile` ships `.reward-tile.is-locked` for historic rails, but every
+   tile here is interactive. Grey is secondary hierarchy, not a locked state. */
+.hub-lite-path-rail-grid .reward-tile,
+.hub-lite-path-rail-grid .reward-tile.is-locked {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  min-width: 50px;
+  height: 50px;
+  min-height: 50px;
+  margin: 0;
   padding: 1px;
+  gap: 0;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(180deg, #bfc2c4 0%, #aeb1b3 58%, #95999c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 2px 4px rgba(45, 47, 48, 0.22);
+  color: rgba(50, 25, 5, 0.95);
+  text-shadow: none;
+  font-size: 0.55rem;
+  filter: none;
   overflow: visible;
 }
 
-.hub-lite-training-path-tiles .reward-tile.is-compact .reward-tile-piece {
-  width: 46px;
-  height: 47px;
-  margin: -3px auto 0;
+.hub-lite-path-rail-grid .reward-tile:active {
+  transform: translateY(1px);
 }
 
-.hub-lite-training-path-tiles .reward-tile.is-compact .reward-tile-label {
+.hub-lite-path-rail-grid .reward-tile .reward-tile-piece {
+  order: 1;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  margin: -2px auto 0;
+  transform: none;
+  filter: drop-shadow(0 4px 2px rgba(61, 37, 7, 0.35));
+}
+
+.hub-lite-path-rail-grid .reward-tile .reward-tile-label {
+  order: 2;
   position: absolute;
   z-index: 2;
   left: 50%;
   bottom: -7px;
   width: max-content;
-  max-width: 64px;
+  max-width: 66px;
   min-height: 14px;
   padding: 2px 5px;
   border: 1px solid rgba(173, 104, 23, 0.55);
@@ -9537,13 +9685,65 @@ button.hud-resource-chip:active:not(:disabled) {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.72),
     0 1px 2px rgba(84, 45, 8, 0.22);
+  letter-spacing: 0;
   color: #3f2208;
+  text-shadow: none;
   font-size: 0.5rem;
   font-weight: 800;
   line-height: 1;
-  text-shadow: none;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transform: translateX(-50%);
+}
+
+/* Exercises is the rail's primary destination — the gold/blue treatment PLAY
+   gives its own primary, so "the main thing to do" is the same shape on both
+   home screens. */
+.hub-lite-path-rail-grid .reward-tile.hub-lite-path-tile--primary,
+.hub-lite-path-rail-grid .reward-tile.is-locked.hub-lite-path-tile--primary {
+  background: linear-gradient(180deg, #ffe26d 0%, #f9ce89 60%, #ffb555 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.52),
+    0 0 0 2px rgba(35, 159, 220, 0.82),
+    0 2px 5px rgba(11, 102, 154, 0.26);
+}
+
+/* NEW flag — the freshness pip, moved off the old card onto the tile corner. */
+.hub-minigame-tile-flag {
+  position: absolute;
+  z-index: 3;
+  top: -5px;
+  right: -6px;
+  padding: 1px 4px;
+  border-radius: 999px;
+  /* ⛔ CORAL, NOT GREEN — and not blue either.
+     Green (#4ea72e) was right while the mini-game tiles were GREY; once they
+     became green icons on green frames the badge sat on its own colour and
+     vanished. Blue was the first instinct and is the one hue that must NOT be
+     used here: the Exercises tile's "this is the primary" ring is blue, 10px
+     away in the same rail, and two blues with different jobs is the exact
+     collision this pass spent its time removing.
+     Amber was rendered and rejected — it competes with the caption plate below
+     and with the gold stars inside the Rook Rail icon. Coral is warm-orange,
+     not the pure red of the close button, and the word NEW removes any
+     remaining "alert" reading. */
+  background: #f4623a;
+  color: #fff3ec;
+  font-size: 0.42rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  box-shadow: 0 1px 2px rgba(10, 30, 5, 0.45);
+}
+
+.hub-minigames-all-clear {
+  margin: 2px 0 0;
+  text-align: center;
+  font-size: 0.5rem;
+  color: #f3e6c4;
+  text-shadow: 0 1px 3px rgba(6, 17, 7, 0.9);
 }
 
 /* Daily gift corner-icon (P1-B) — gift glyph + streak badge, opens daily sheet.

@@ -8,7 +8,8 @@ import { LanguageChip } from "@/components/hub/language-chip";
 import { AppModeSwitch } from "@/components/hub/app-mode-switch";
 import { PeonesBalanceChipView } from "@/components/peones/peones-balance-chip";
 import type { PeonesBalanceState } from "@/lib/peones/use-peones-balance";
-import { RewardColumn, type RewardTile } from "@/components/kingdom/reward-column";
+import type { RewardTile } from "@/components/kingdom/reward-column";
+import { LearnPathEntry } from "@/components/hub/learn-path-entry";
 import {
   ChallengeCard,
   type ChallengeCardSeasonPass,
@@ -66,8 +67,21 @@ export type HubLiteScaffoldProps = {
     contentLoop: ContentLoopAction | null;
     isHydrated: boolean;
   };
-  // ── Training Path (horizontal piece roster) ──
+  /** Mini-games (Early Access), BUILT BY THE CONTAINER. A node rather than
+   *  props for the same reason `dailySlot` is one: the container owns the
+   *  rotation, the player's bests and the telemetry, and this scaffold must
+   *  stay mountable without any of them. Null renders no section at all. */
+  miniGamesSlot?: ReactNode;
+  // ── Exercise path (ONE entry; formerly the horizontal piece roster) ──
+  /** Still the roster's array. `LearnPathEntry` reads it only to count how many
+   *  pieces are mastered — the tiles' own `onTap` handlers are no longer wired
+   *  from this surface, and that is deliberate: six destinations under the
+   *  Mini-games rail is what made the home unreadable. */
   rewardTiles: RewardTile[];
+  /** Opens the exercise path. The CONTAINER owns where that lands (it resolves
+   *  the player's primary piece through the content loop) — this scaffold only
+   *  knows "not the Mini-games rail, not the daily". */
+  onOpenExercisePath: () => void;
   /** Re-launches the intro mini-tour from the Focus Passport `?`. Optional so
    *  the scaffold still mounts in `/dev` probes that don't wire the tour. */
   onReplayTour?: () => void;
@@ -89,10 +103,18 @@ export type HubLiteScaffoldProps = {
 
 /** Chesscito Learn hub presenter — habit-first vertical stack (spec
  *  lite-hub-redesign.md). Single-screen-first at 390px: the Start Focus CTA and
- *  the challenge-card primary CTA stay above the fold (P1-A); the Training Path
- *  is secondary and may sit at/just below it. Composes existing leaves
- *  (LanguageChip, HubDailyTile corner-icon, KingdomAnchor, RewardColumn,
- *  ChallengeCard) — no data/hooks here; the container hydrates and passes props. */
+ *  the challenge-card primary CTA stay above the fold (P1-A).
+ *
+ *  THE SURFACE HIERARCHY, top to bottom and in priority order (2026-08-19):
+ *    1. season pass / daily  — the habit
+ *    2. Mini-games           — one entry, its own surface
+ *    3. Exercises            — one entry, the piece training path
+ *  Two destinations, one door each. The six-tile roster that used to close the
+ *  page was a third navigation competing with the second; see `LearnPathEntry`.
+ *
+ *  Composes existing leaves (LanguageChip, HubDailyTile corner-icon,
+ *  ChallengeCard, LearnPathEntry) — no data/hooks here; the container hydrates
+ *  and passes props. */
 export function HubLiteScaffold({
   trophies,
   isWalletConnected,
@@ -109,7 +131,9 @@ export function HubLiteScaffold({
   onPassportTap,
   shields,
   primaryFocus,
+  miniGamesSlot,
   rewardTiles,
+  onOpenExercisePath,
   onReplayTour,
   today,
 }: HubLiteScaffoldProps) {
@@ -250,15 +274,47 @@ export function HubLiteScaffold({
           flame block intentionally opens Daily. The props stay in the API so
           restoring the standalone button is a revert, not a rewrite. */}
 
-      <section className="hub-lite-training-path" aria-label={t("trainingPathLabel")}>
-        <h2 className="hub-lite-training-path-label">{t("trainingPathLabel")}</h2>
-        <RewardColumn
-          tiles={rewardTiles}
-          className="hub-lite-training-path-tiles"
-          compact
-          tourTargetId="rook"
-        />
+      {/* ── THE LEARN RAIL ────────────────────────────────────────────────
+          ONE row of shortcut tiles, mirroring PLAY's `.play-hub-path` down to
+          the component (`HubActionTile`). Two passes got here:
+
+          1. the 6-piece roster left, because six destinations under the
+             Mini-games rail read as a competing navigation;
+          2. its full-width replacement row left too — right hierarchy, wrong
+             FORM. Row + mini-game cards cost ~185px and the home scrolled at
+             360×640, while PLAY solved the same problem in ~85px and did not
+             (founder, 2026-08-19: "mira como PLAY sí lo resuelve bien").
+
+          ⛔ ONE RAIL IS NOT ONE SURFACE. The divider and the EARLY ACCESS tag
+          are load-bearing: they are what keeps "Exercises" and "Mini-games"
+          legible as two destinations after they stopped being two blocks.
+          Removing either collapses the separation this whole pass exists to
+          create — and it would collapse it invisibly, because the tiles would
+          still all work. */}
+      <section
+        className="hub-lite-path-rail"
+        aria-label={t("pathRailAriaLabel")}
+      >
+        <h2 className="hub-lite-path-rail-label">{t("pathRailLabel")}</h2>
+        <div className="hub-lite-path-rail-grid">
+          <LearnPathEntry
+            tiles={rewardTiles}
+            isHydrated={primaryFocus.isHydrated}
+            onOpen={onOpenExercisePath}
+          />
+          {/* Decorative: the groups it separates each carry their own
+              accessible name, so announcing a divider would add noise. */}
+          {miniGamesSlot ? (
+            <span
+              className="hub-lite-path-rail-divider"
+              aria-hidden="true"
+              data-testid="learn-rail-divider"
+            />
+          ) : null}
+          {miniGamesSlot}
+        </div>
       </section>
+
     </section>
   );
 }

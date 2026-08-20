@@ -63,6 +63,7 @@ function baseProps(over: Partial<HubLiteScaffoldProps> = {}): HubLiteScaffoldPro
     onJoinChallenge: vi.fn(),
     primaryFocus: { onPress: vi.fn(), contentLoop: action("daily-pending"), isHydrated: true },
     rewardTiles: TILES,
+    onOpenExercisePath: vi.fn(),
     isPro: false,
     onAccountTap: vi.fn(),
     dailySlot: <button type="button" data-testid="daily-slot-stub" />,
@@ -229,13 +230,14 @@ describe("<HubLiteScaffold>", () => {
     expect(screen.getAllByTestId("challenge-cta")).toHaveLength(1);
   });
 
-  it("exposes the Rook as the final LEARN tour target", () => {
-    render(<HubLiteScaffold {...baseProps()} />);
-    expect(screen.getByText("Rook").closest("button")).toHaveAttribute(
-      "data-tour-target",
-      "rook",
-    );
-  });
+  /* ⛔ "exposes the Rook as the final LEARN tour target" lived here and searched
+     for the literal text "Rook" — the rook TILE of the roster. The roster left
+     this surface on 2026-08-19; the tour anchor did not move, it MOVED ONTO the
+     new exercise-path entry, and it is asserted by
+     "Exercise path: the entry is the tour's `rook` anchor" below. That version
+     also asserts the anchor is UNIQUE, which the text lookup could not: two
+     elements carrying `data-tour-target="rook"` would have passed here and left
+     `document.querySelector` picking whichever came first. */
 
   it("routes into today's focus from the card CTA when the pass is active", () => {
     const onPress = vi.fn();
@@ -361,9 +363,15 @@ describe("<HubLiteScaffold>", () => {
     expect(onPress).toHaveBeenCalledTimes(2);
   });
 
-  it("a completed daily informs without disabling the piece shortcuts", () => {
-    // COME BACK TOMORROW is a status, not a gate: the Training Path stays
-    // fully interactive so the player can keep training and improving scores.
+  it("a completed daily informs without disabling the exercise-path entry", () => {
+    // COME BACK TOMORROW is a status, not a gate: the way into the exercise
+    // path stays fully interactive so the player can keep training and
+    // improving scores.
+    //
+    // ⚠️ This used to assert over the 6-piece roster's tiles. The roster left
+    // the Learn Home on 2026-08-19 (see `LearnPathEntry`); the GUARANTEE it was
+    // protecting — a terminal daily must never dead-end the page — did not, so
+    // it is re-pointed at the single door rather than deleted with the tiles.
     render(
       <HubLiteScaffold
         {...baseProps({
@@ -394,13 +402,9 @@ describe("<HubLiteScaffold>", () => {
       "status",
     );
 
-    const path = screen.getByRole("region", { name: /training path/i });
-    const tiles = path.querySelectorAll(".reward-tile");
-    expect(tiles).toHaveLength(6);
-    for (const tile of tiles) {
-      expect(tile.querySelector("[disabled]")).toBeNull();
-      expect(tile.getAttribute("aria-disabled")).not.toBe("true");
-    }
+    const entry = screen.getByTestId("learn-path-entry");
+    expect(entry).toBeEnabled();
+    expect(entry.getAttribute("aria-disabled")).not.toBe("true");
   });
 
   it("Mascot: exposes responsive AVIF/WebP candidates with intrinsic fallbacks", () => {
@@ -475,19 +479,92 @@ describe("<HubLiteScaffold>", () => {
     expect(toggle.querySelectorAll('source[type="image/webp"]')).toHaveLength(2);
   });
 
-  it("Training Path: renders all 6 piece tiles", () => {
-    render(<HubLiteScaffold {...baseProps()} />);
-    const path = screen.getByRole("region", { name: /training path/i });
-    expect(path.querySelectorAll(".reward-tile")).toHaveLength(6);
+  /* ── PART 1 (2026-08-19): ONE door to the exercise path, not six ─────────
+     The three tests below replace "Training Path: renders all 6 piece tiles".
+     That test pinned the DEFECT the smoke reported: six destinations stacked
+     under the Mini-games rail is what made the two surfaces unreadable. What is
+     pinned now is the rule that replaced it. */
+
+  it("Exercise path: exactly ONE entry, and no piece roster", () => {
+    const { container } = render(<HubLiteScaffold {...baseProps()} />);
+    expect(screen.getAllByTestId("learn-path-entry")).toHaveLength(1);
+
+    /* ⛔ The guard that matters. `rewardTiles` is still a prop (the entry counts
+       mastery off it), so a future edit could re-render the roster from data
+       that is still being passed and nobody would notice from the props alone.
+
+       ⚠️ It CANNOT count `.reward-tile` — `HubActionTile` renders that very
+       class, so after the rail adopted PLAY's tile the count is 1, not 0, and
+       a `toHaveLength(0)` here would fail for the right structure. The roster
+       was `RewardColumn`, whose root is `.reward-column`; that is the thing
+       whose absence actually means "no roster". */
+    expect(container.querySelector(".reward-column")).toBeNull();
+    // And the six piece captions the roster printed are gone with it.
+    for (const piece of ["Bishop", "Knight", "Pawn", "Queen", "King"]) {
+      expect(screen.queryByText(piece)).toBeNull();
+    }
   });
 
-  it("P1-A: the primary CTA precedes the Training Path in DOM order", () => {
+  it("Exercise path: the entry is the tour's `rook` anchor", () => {
+    // The tour's third step resolves `[data-tour-target="rook"]` from the
+    // document. It used to be the rook TILE; without this attribute here the
+    // last onboarding step would spotlight nothing.
+    const { container } = render(<HubLiteScaffold {...baseProps()} />);
+    const anchors = container.querySelectorAll('[data-tour-target="rook"]');
+    expect(anchors).toHaveLength(1);
+    expect(anchors[0]).toBe(screen.getByTestId("learn-path-entry"));
+  });
+
+  it("Exercise path: tapping the entry calls the container's handler", async () => {
+    const user = userEvent.setup();
+    const onOpenExercisePath = vi.fn();
+    render(<HubLiteScaffold {...baseProps({ onOpenExercisePath })} />);
+    await user.click(screen.getByTestId("learn-path-entry"));
+    expect(onOpenExercisePath).toHaveBeenCalledTimes(1);
+  });
+
+  it("P1-A: the primary CTA precedes the exercise-path entry in DOM order", () => {
     const { container } = render(<HubLiteScaffold {...baseProps()} />);
     const order = (sel: string) =>
       Array.prototype.indexOf.call(container.querySelectorAll("*"), container.querySelector(sel));
     const cta = order('[data-testid="challenge-cta"]');
-    const path = order(".hub-lite-training-path");
+    const path = order(".hub-lite-path-rail");
     expect(cta).toBeLessThan(path);
+  });
+
+  it("Rail order: Exercises, then the DIVIDER, then Mini-games", () => {
+    /* ⛔ THE DIVIDER IS THE ASSERTION. Once both surfaces share one rail, it
+       and the EARLY ACCESS tag are the only things left saying "these are two
+       destinations". Drop the divider and every tile still works, the layout
+       still looks fine, and the separation this pass exists to create is gone
+       — silently. So its POSITION is pinned, not just its presence.
+
+       Exercises leads because it is the rail's primary (gold + ring, like
+       PLAY's own primary tile); the mini-games group follows it. */
+    const { container } = render(
+      <HubLiteScaffold
+        {...baseProps({
+          miniGamesSlot: <div data-testid="minigames-stub" />,
+        })}
+      />,
+    );
+    const order = (sel: string) =>
+      Array.prototype.indexOf.call(container.querySelectorAll("*"), container.querySelector(sel));
+
+    const entry = order('[data-testid="learn-path-entry"]');
+    const divider = order('[data-testid="learn-rail-divider"]');
+    const minigames = order('[data-testid="minigames-stub"]');
+
+    expect(divider).toBeGreaterThan(-1);
+    expect(entry).toBeLessThan(divider);
+    expect(divider).toBeLessThan(minigames);
+  });
+
+  it("Rail: no divider when there are no mini-games to separate from", () => {
+    // A divider with nothing on its right is a line that means nothing.
+    render(<HubLiteScaffold {...baseProps({ miniGamesSlot: undefined })} />);
+    expect(screen.queryByTestId("learn-rail-divider")).toBeNull();
+    expect(screen.getByTestId("learn-path-entry")).toBeInTheDocument();
   });
 
   it("ES locale: the CTA and the weekly row are translated (i18n parity)", () => {
