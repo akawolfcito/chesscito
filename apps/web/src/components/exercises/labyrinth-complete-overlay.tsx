@@ -10,6 +10,7 @@ import { track } from "@/lib/telemetry";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import {
   consequenceMessage,
+  type ConsequenceSurface,
   type TrainingConsequence,
 } from "@/lib/training/consequence";
 
@@ -45,6 +46,19 @@ type Props = {
    *  that shipped before this feature. An overlay that announces progress when
    *  nothing happened lies, and once it lies nobody reads it. */
   consequence?: TrainingConsequence | null;
+  /** WHICH surface this board belongs to, decided by how the player entered.
+   *  Drives the kicker above the title AND the consequence copy variant.
+   *
+   *  ⛔ It does NOT gate anything. Every consequence still renders on both
+   *  surfaces; only its tail changes (see `consequenceMessage`). Defaults to
+   *  the exercise path so callers that never learned about Mini-games keep the
+   *  overlay they always had. */
+  surface?: ConsequenceSurface;
+  /** The board's authored title ("Two Roads", "Plan the whole tour"). Optional
+   *  and absent by default: an overlay that says only "Training Complete!"
+   *  cannot tell two near-identical rook boards apart, which is half of why
+   *  the smoke could not tell the surfaces apart either. */
+  challengeTitle?: string | null;
 };
 
 
@@ -67,11 +81,21 @@ export function LabyrinthCompleteOverlay({
   onRetry,
   onEnterArena,
   consequence = null,
+  surface = "exercise_path",
+  challengeTitle = null,
 }: Props) {
   const t = useTranslations("LABYRINTH_COPY");
   const tConsequence = useTranslations("CONSEQUENCE_COPY");
   const [exiting, setExiting] = useState(false);
 
+  /* ⛔ THE SECOND `labyrinth_complete` WAS REMOVED HERE (2026-08-19).
+     `exercises-screen.tsx` already emits one per completion, carrying
+     `labyrinth_id`. This overlay emitted a second one WITHOUT it, so in
+     production 2.229 of the 4.364 rows (51%) were unattributable duplicates:
+     any count of the event that did not filter on `props ? 'labyrinth_id'`
+     was inflated ~2x. Completion telemetry now has exactly one emitter, and
+     it is the one that names which challenge was completed.
+     `modal_open` stays — it is the overlay's own impression, not a duplicate. */
   useEffect(() => {
     track("modal_open", {
       id: "labyrinth-complete",
@@ -79,14 +103,7 @@ export function LabyrinthCompleteOverlay({
       optimal: optimalMoves,
       stars,
     });
-    track("labyrinth_complete", {
-      isLite: CHESSCITO_LITE_MODE,
-      moves,
-      optimalMoves,
-      stars,
-      isNewBest: isNewBest ?? false,
-    });
-  }, [moves, optimalMoves, stars, isNewBest]);
+  }, [moves, optimalMoves, stars]);
 
   // AC-10: which rung was announced, and how often. With 443 players there is
   // no statistical power for an A/B, so this frequency is the ONLY signal on
@@ -105,7 +122,7 @@ export function LabyrinthCompleteOverlay({
 
   const consequenceLine = consequence
     ? (() => {
-        const message = consequenceMessage(consequence);
+        const message = consequenceMessage(consequence, surface);
         return tConsequence(message.key, message.values);
       })()
     : null;
@@ -124,9 +141,34 @@ export function LabyrinthCompleteOverlay({
         ariaLive="assertive"
         closeLabel={t("continue")}
       >
-        {/* Hero — title centered (arena win-celebration vocabulary). */}
-        <div className="victory-popup-hero-solo">
+        {/* Hero — surface kicker, title, board name (arena win-celebration
+            vocabulary). The kicker is the FIRST thing read on the overlay
+            because "which surface am I in" is the question the smoke could not
+            answer; the board name below the title is what separates two rook
+            boards that grade the same way. */}
+        {/* `--with-kicker` is the EXISTING column modifier (used by the claim
+            error states). Reused rather than re-declared: the hero is a flex
+            ROW by default and a kicker above the headline needs the column,
+            which that class already provides. */}
+        <div className="victory-popup-hero-solo victory-popup-hero-solo--with-kicker">
+          <span
+            data-testid="labyrinth-complete-surface"
+            data-surface={surface}
+            className="labcomplete-surface-kicker"
+          >
+            {surface === "featured_minigame"
+              ? t("surfaceMiniGame")
+              : t("surfaceExercise")}
+          </span>
           <h1 className="arena-result-title">{t("completeTitle")}</h1>
+          {challengeTitle ? (
+            <p
+              data-testid="labyrinth-complete-challenge-title"
+              className="labcomplete-challenge-title"
+            >
+              {challengeTitle}
+            </p>
+          ) : null}
         </div>
 
         {/* Stats — optional stars plus moves / best candy pills. */}

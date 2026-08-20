@@ -195,12 +195,12 @@ import {
 } from "@/lib/game/labyrinth-progress";
 import {
   buildTrainingPath,
-  getLabyrinthForAutoAdvance,
   getNextChallenge,
   resolvePostLabContinue,
 } from "@/lib/training/path";
 import {
   resolveConsequence,
+  type ConsequenceSurface,
   type TrainingConsequence,
 } from "@/lib/training/consequence";
 import {
@@ -379,6 +379,12 @@ export type ExercisesScreenProps = {
   /** Known Special Training id from `?content=`. The client gate still owns
    *  authorization because the effective pass is wallet-bound. */
   initialContentId?: string;
+  /** True when the route boundary confirmed `initialContentId` is in a shipped
+   *  Mini-games rotation (`resolveMiniGameDeepLink`). Lets the request skip the
+   *  lane's PROGRESSION lock — never its commercial one. Featuring a mid-lane
+   *  level is the point of per-challenge rotation, so `rook-rail-two-roads` has
+   *  to open for a player who has never touched the rook. */
+  initialContentFeatured?: boolean;
 };
 
 /**
@@ -395,6 +401,7 @@ export function ExercisesScreen({
   initialAction,
   initialSheet,
   initialContentId,
+  initialContentFeatured = false,
 }: ExercisesScreenProps = {}) {
   const tShopItem = useTranslations("SHOP_ITEM_COPY");
   const tCapture = useTranslations("CAPTURE_COPY");
@@ -1987,29 +1994,22 @@ export function ExercisesScreen({
         }
       }
 
-      const completedExerciseId = currentExercise.id;
       holdForTap(() => {
         // Local-save feedback (spec P0-2/P0-3): fires when the player taps to
         // continue past the WELL DONE flash, not at completeExercise time.
         if (shouldFireLocalSavedToast({ labyrinthMode })) {
           showToast(tFooter("localSaved"), 1200);
         }
-        // Path sequencing: enter the next available labyrinth instead of
-        // advancing to the next exercise. Handles two cases:
-        //   1. Happy path — lab is the immediate next interleaved row.
-        //   2. Late unlock/manual selection — an available lab can sit on
-        //      either side of the completed exercise's visual position.
-        // Reads the path ref so post-completion unlocks (e.g. 6★ reached on
-        // this very exercise) are visible at fire time.
-        const pendingLab = getLabyrinthForAutoAdvance(
-          trainingPathRef.current,
-          completedExerciseId,
-        );
-        if (pendingLab) {
-          requestTrainingContent(pendingLab.id, "automatic");
-          resetBoard();
-          return;
-        }
+        /* ⛔ THE AUTO-ADVANCE INTO A LABYRINTH WAS REMOVED HERE (2026-08-19).
+           Completing an exercise used to drop the player straight into the next
+           available lane level. That jump is the interleave by another name —
+           the exercise sequence is now Ex → Ex → Ex → Badge → Mastery, and
+           mini-games are parallel content reached from the Learn Home surface
+           or from the contextual pin below (which the player TAPS).
+           It is also a measurement requirement: H1 asks whether players start
+           mini-games when they are visible, and an auto-jump starts them
+           without visibility. Restoring it is a one-line revert to
+           `getLabyrinthForAutoAdvance` — see the note in lib/training/path.ts. */
         if (!isLastExercise) {
           advanceExercise();
           resetBoard();
@@ -3434,6 +3434,31 @@ export function ExercisesScreen({
     setConsequence(resolveConsequence(before, trainingPath));
   }, [trainingPath]);
 
+  /**
+   * How the player reached the lane content that is on screen — navigation
+   * context only, never persisted.
+   *
+   * ⛔ WHY IT EXISTS: `handleLabyrinthContinue` walks the EXERCISE path (next 0★
+   * exercise → next lane level → piece-complete), and the completion overlay's
+   * X is wired to the same action. That was coherent while lane content could
+   * only be reached from inside the exercise path. Since the Mini-games surface
+   * ships, a player entering from the hub was thrown into `rook-7`, then into
+   * the lane's first level, then into "All Exercises Complete! / Start Bishop"
+   * — the exercise path behaving correctly on an entry it was never told about.
+   * Audit: docs/audits/2026-08-19-learn-minigames-smoke-remediation-audit.md
+   *
+   * ⛔ A REF, NOT STATE, AND NEVER STORAGE. It must not survive a reload (a
+   * refreshed tab is not a hub entry) and it must not re-render anything.
+   *
+   * ⚠️ `automatic` deliberately PRESERVES the current origin: it is how a replay
+   * (`onRetry`) and post-completion continuation re-enter content, not a new
+   * entry. Overwriting on `automatic` would silently demote a featured replay
+   * to the exercise path after the first Play again.
+   */
+  const completionOriginRef = useRef<"featured_minigame" | "exercise_path" | null>(
+    null,
+  );
+
   const implicitContentRequestRef = useRef<string | null>(null);
   const initialContentRequestRef = useRef(initialContentId);
   const pendingAutomaticContentRef = useRef<string | null>(null);
@@ -3485,7 +3510,18 @@ export function ExercisesScreen({
       const node = trainingPathRef.current.find(
         (entry) => entry.kind === "labyrinth" && entry.id === contentId,
       );
-      if (!node || node.status === "locked") {
+      /* ⛔ `featured` skips the PROGRESSION lock, and only that.
+         A curated Mini-games card may point at any level of an early-access
+         engine — `rook-rail-two-roads` is level 4 of the rook lane, and the
+         whole audience the surface exists to reach has never claimed a rook
+         badge. Honouring the chained lock here would make the featured card
+         bounce straight back to the path, which is the failure the surface was
+         built to remove.
+         The id is still bounded by curation (the route boundary only sets this
+         when the id is genuinely in a shipped rotation), the node must still
+         EXIST, and the commercial check above already ran and is untouched. */
+      const bypassProgressionLock = source === "featured";
+      if (!node || (node.status === "locked" && !bypassProgressionLock)) {
         settleToPath();
         return { action: "missing" as const };
       }
@@ -3513,6 +3549,13 @@ export function ExercisesScreen({
       if (source === "restore" && node.status === "complete") {
         settleToPath();
         return { action: "completed" as const };
+      }
+
+      // Record the ORIGIN of this entry. `automatic` preserves whatever is
+      // already there (replay / continuation), every other source declares one.
+      if (source !== "automatic") {
+        completionOriginRef.current =
+          source === "featured" ? "featured_minigame" : "exercise_path";
       }
 
       implicitContentRequestRef.current = `${selectedPiece}:${contentId}`;
@@ -3543,13 +3586,19 @@ export function ExercisesScreen({
     if (!contentId) return;
     const requestKey = `${selectedPiece}:${contentId}`;
     if (implicitContentRequestRef.current === requestKey) return;
-    const source: TrainingContentRequestSource = directContentId ? "direct" : "restore";
+    // A rotation-vouched deep link is `featured`, which skips the lane's
+    // progression lock. Everything else keeps the source it always had.
+    const source: TrainingContentRequestSource = directContentId
+      ? initialContentFeatured
+        ? "featured"
+        : "direct"
+      : "restore";
     const result = requestTrainingContent(contentId, source);
     if (result.action !== "pending") {
       if (directContentId) initialContentRequestRef.current = undefined;
       implicitContentRequestRef.current = requestKey;
     }
-  }, [requestTrainingContent, selectedPiece, trainingPass]);
+  }, [requestTrainingContent, selectedPiece, trainingPass, initialContentFeatured]);
 
   useEffect(() => {
     if (trainingPass.loading) return;
@@ -3576,12 +3625,51 @@ export function ExercisesScreen({
     setTrainingAttemptGrantId(null);
     setLabyrinthCompleted(null);
     setLabyrinthMoves(0);
+    // Leaving the content ends the entry. Anything opened afterwards declares
+    // its own origin through `requestTrainingContent`.
+    completionOriginRef.current = null;
   }, []);
+
+  /**
+   * WHICH SURFACE the board on screen belongs to, for the completion overlay.
+   *
+   * Read off the SAME ref `handleLabyrinthContinue` branches on, so the kicker
+   * the player reads ("Mini-game" / "Exercise") and the destination Continue
+   * actually takes can never disagree — one source of truth, not two edits that
+   * have to match.
+   *
+   * ⚠️ Reading a ref during render is safe HERE and would not be in general:
+   * this one is written only by `requestTrainingContent` and
+   * `handleExitLabyrinth`, both of which run before any completion can be
+   * recorded, and never during render. It is also not a re-render trigger —
+   * the overlay mounts on `labyrinthCompleted` flipping, which is state.
+   *
+   * ⛔ It selects COPY, never whether copy appears. See `consequenceMessage`.
+   */
+  const completionSurface: ConsequenceSurface =
+    completionOriginRef.current === "featured_minigame"
+      ? "featured_minigame"
+      : "exercise_path";
 
   /** Continue from the solved overlay — routes to the next step after a
    *  labyrinth completion. Priority: pending exercise → next available lab
    *  → piece-complete. Never leaves the player on a dead screen. */
   function handleLabyrinthContinue() {
+    /* ⛔ FEATURED ENTRY RETURNS TO ITS ORIGIN — and returns EARLY, before any
+       of the exercise-path resolution below runs.
+       This is the whole remediation: `resolvePostLabContinue` is untouched, and
+       so is every state write. Only the destination changes, and only for a
+       player who arrived from the Mini-games surface. Returning here is also
+       what makes the `piece-complete` branch — "All Exercises Complete! /
+       Start Bishop" — unreachable from a featured completion.
+       The overlay's X shares this handler, so close and continue agree by
+       construction rather than by two matching edits. */
+    if (completionOriginRef.current === "featured_minigame") {
+      handleExitLabyrinth();
+      router.push("/");
+      return;
+    }
+
     handleExitLabyrinth();
     const pool = catalog[selectedPiece];
     // First pool slot with 0★ (id-map; absent id = not played) that is
@@ -4607,6 +4695,8 @@ export function ExercisesScreen({
             previousBest={labyrinthCompleted.previousBest}
             isNewBest={labyrinthCompleted.isNewBest}
             consequence={consequence}
+            surface={completionSurface}
+            challengeTitle={activeLabyrinth?.title ?? null}
             onContinue={handleLabyrinthContinue}
             onRetry={() => {
               if (selectedLabyrinthId) {

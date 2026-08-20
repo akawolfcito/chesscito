@@ -35,9 +35,30 @@ export type ConsequenceMessage = {
     | "challengeUnlocked"
     | "badgeProgress"
     | "laneProgress"
-    | "laneComplete";
+    | "laneComplete"
+    | "masteryMiniGame"
+    | "challengeUnlockedMiniGame"
+    | "laneProgressMiniGame"
+    | "laneCompleteMiniGame";
   values?: Record<string, number>;
 };
+
+/**
+ * WHICH SURFACE the player is standing on when the line is read.
+ *
+ * ⛔ THIS IS NOT A SUPPRESSION SWITCH. Every rung still gets announced on both
+ * surfaces — an earned crown is an earned crown, and swallowing it because the
+ * player arrived from the Mini-games rail would hide a reward they genuinely
+ * won (founder, 2026-08-19: "No ocultar recompensas ganadas; sí evitar que su
+ * copy empuje al usuario hacia Exercises").
+ *
+ * What changes is the TAIL. The exercise-path copy ends by pointing INTO the
+ * path — "pick your next piece", "it is on your path now", "waiting in
+ * Exercises" — which is exactly the sentence that made a featured mini-game
+ * read as lane-1 progression during the 2026-08-19 smoke. The mini-game variant
+ * says the same news and stops there.
+ */
+export type ConsequenceSurface = "exercise_path" | "featured_minigame";
 
 /**
  * Which sentence a rung is said with. Pure and translator-agnostic so BOTH
@@ -51,13 +72,28 @@ export type ConsequenceMessage = {
  */
 export function consequenceMessage(
   consequence: TrainingConsequence,
+  /** Defaults to the exercise path so every pre-existing caller keeps the copy
+   *  it already shipped. Only the featured mini-game overlay passes the other
+   *  value, and it must pass it explicitly. */
+  surface: ConsequenceSurface = "exercise_path",
 ): ConsequenceMessage {
+  const featured = surface === "featured_minigame";
   switch (consequence.kind) {
     case "mastery":
-      return { key: "mastery" };
+      return { key: featured ? "masteryMiniGame" : "mastery" };
     case "challenge_unlocked":
-      return { key: "challengeUnlocked" };
+      return {
+        key: featured ? "challengeUnlockedMiniGame" : "challengeUnlocked",
+      };
     case "badge_progress":
+      /* ⛔ No mini-game variant, and none is missing. `resolveConsequence`
+         emits this rung ONLY for `completed.kind === "exercise"`, and a
+         featured card can only ever complete a `labyrinth` node — so this
+         branch is unreachable from the Mini-games surface. The copy names no
+         destination either ("{done} of {required} toward your badge"), so even
+         if a future rung routed here it would not push anybody into the path.
+         A duplicated string would be two things to keep in sync for zero
+         behavioural difference. */
       return {
         key: "badgeProgress",
         values: {
@@ -67,9 +103,9 @@ export function consequenceMessage(
       };
     case "lane_progress":
       return consequence.done >= consequence.total
-        ? { key: "laneComplete" }
+        ? { key: featured ? "laneCompleteMiniGame" : "laneComplete" }
         : {
-            key: "laneProgress",
+            key: featured ? "laneProgressMiniGame" : "laneProgress",
             values: { done: consequence.done, total: consequence.total },
           };
   }
