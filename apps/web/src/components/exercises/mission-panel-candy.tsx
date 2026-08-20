@@ -760,14 +760,32 @@ export function MissionPanelCandy({
           ~1.646 px and a chip this size is ~450, so a photo cannot tell whether
           it rendered at all. */}
       {sweepCounter ? (
+        /* ⛔ THE STAR IS NOT DECORATION. A bare "0 / 3" next to a level title
+           reads as "level 0 of 3" — the 2026-08-19 smoke reported exactly that
+           ("it makes it feel like three labyrinths or three rounds"). The icon
+           ties the number to the stars DRAWN ON THE SQUARES of the board in
+           front of the player, which is what it has always counted. The
+           `aria-label` says the same thing in words for anyone who cannot see
+           the icon, and it is the only place "on this board" is stated.
+           ⚠️ `aria-hidden` on the digits, or the label would be read twice. */
         <span
-          className="shrink-0 text-xs font-extrabold leading-tight tabular-nums"
+          className="inline-flex shrink-0 items-center gap-0.5 text-xs font-extrabold leading-tight tabular-nums"
           style={candyChipTextStyle}
           data-testid="sweep-counter"
           data-collected={sweepCounter.collected}
           data-total={sweepCounter.total}
+          aria-label={tMission('sweepCounterAriaFormat', {
+            collected: sweepCounter.collected,
+            total: sweepCounter.total,
+          })}
         >
-          {sweepCounter.collected} / {sweepCounter.total}
+          {/* No `aria-hidden` here: CandyIcon already defaults to hidden when
+              given no `label`, and passing it explicitly would collide with
+              the one the component sets itself. */}
+          <CandyIcon name="star" className="h-3 w-3" />
+          <span aria-hidden="true">
+            {sweepCounter.collected} / {sweepCounter.total}
+          </span>
         </span>
       ) : null}
       {/* The tail: the live Diagonal Run line, a level's move cost, or the
