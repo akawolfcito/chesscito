@@ -1,9 +1,9 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 186,
+  "totalSlots": 193,
   "categoryCounts": {
-    "A": 173,
+    "A": 180,
     "B": 0,
     "C": 0,
     "D": 0,
@@ -13,25 +13,25 @@
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 90,
+    "B": 97,
     "C": 26,
     "D": 38,
     "E": 19,
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 174,
-  "fullyConnectedSlots": 173,
+  "resolverSlots": 181,
+  "fullyConnectedSlots": 180,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
   "noActiveConsumerSlots": 6,
-  "connectedSlots": 173,
+  "connectedSlots": 180,
   "excludedSlots": 13,
   "exceptions": [],
   "literalDiff": {
-    "registeredBasenames": 215,
+    "registeredBasenames": 218,
     "discoveredBasenames": 15,
     "unregisteredExistingAssets": []
   },
@@ -1001,6 +1001,321 @@
       "consumers": [
         {
           "file": "src/components/hub/hub-tour.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "hub.learn-entry",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/hub/train-pieces"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Learn Hub — Exercises shortcut tile · LearnPathEntry · route: /",
+        "↳ components/hub/learn-path-entry.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/hub/learn-path-entry.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/hub/learn-path-entry.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "hub.minigame.rook-rail",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/minigames/rook-rail"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Learn Hub — Rook Rail mini-game tile · MiniGamesSection · route: /",
+        "↳ components/hub/minigames-section.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/hub/minigames-section.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/hub/minigames-section.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "hub.minigame.pivot-run",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/minigames/pivot-run"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Learn Hub — Pivot Run mini-game tile · MiniGamesSection · route: /",
+        "↳ components/hub/minigames-section.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/hub/minigames-section.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/hub/minigames-section.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "hub.minigame.n-queens",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/minigames/n-queens"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Learn Hub — N-Queens mini-game tile · MiniGamesSection · route: /",
+        "↳ components/hub/minigames-section.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/hub/minigames-section.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/hub/minigames-section.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "hub.minigame.safe-path",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/redesign/pieces/w-king"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Learn Hub — Safe Path mini-game tile · MiniGamesSection · route: /",
+        "↳ components/hub/minigames-section.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/hub/minigames-section.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/hub/minigames-section.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "hub.minigame.knight-tour",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/redesign/pieces/w-knight"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Learn Hub — Knight's Tour mini-game tile (coming soon) · MiniGamesSection · route: /",
+        "↳ components/hub/minigames-section.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/hub/minigames-section.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/hub/minigames-section.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "hub.minigame.promotion-run",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/redesign/pieces/w-pawn"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Learn Hub — Promotion Run mini-game tile (coming soon) · MiniGamesSection · route: /",
+        "↳ components/hub/minigames-section.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/hub/minigames-section.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/hub/minigames-section.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,

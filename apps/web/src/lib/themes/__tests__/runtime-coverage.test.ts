@@ -60,10 +60,14 @@ describe("theme runtime catalog coverage", () => {
     // so the slot lost its only consumer: A 167 → 166, initial B 85 → 84.
     // 186 (2026-08-15): + los SEIS arena.duel-lobby-{en,es}-*, que el duelo resuelve
     // por useThemeAsset y muestra solo si tienen archivo.
-    expect(report.totalSlots).toBe(186);
+    // 193 (2026-08-19): + los SIETE del rail de LEARN — hub.learn-entry y los
+    // seis hub.minigame.*. Un slot por destino, para que cambiar un icono sea
+    // una edicion del builder y nunca del codigo. Conectados por
+    // HubActionTile → ThemeAssetPicture: initial B 90 -> 97.
+    expect(report.totalSlots).toBe(193);
     expect(report.initialCategoryCounts).toEqual({
       A: 2,
-      B: 90,
+      B: 97,
       C: 26,
       D: 38,
       E: 19,
@@ -72,7 +76,10 @@ describe("theme runtime catalog coverage", () => {
     });
     // 170 (2026-08-15): + los tres arena.duel-lobby-*, conectados por
     // useThemeAsset desde useDuelLobbySlides.
-    expect(report.connectedSlots).toBe(173);
+    // 180 (2026-08-19): + los siete del rail de LEARN. Los siete estan
+    // CONECTADOS al resolver desde el dia uno — HubActionTile los pasa por
+    // ThemeAssetPicture — asi que ninguno entra como literal hardcodeado.
+    expect(report.connectedSlots).toBe(180);
     expect(report.excludedSlots).toBe(13);
     expect(
       report.slots.filter(

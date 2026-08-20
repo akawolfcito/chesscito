@@ -548,12 +548,17 @@ if (CHECK_MODE) {
   // 2026-08-15: B 84 -> 90 por los seis arena.duel-lobby-*, el espacio de la
   // pantalla de espera del duelo. Sin `default`: hasta que haya archivo la
   // pantalla muestra el tablero (ver lib/duel/lobby.ts).
-  const expectedInitial = { A: 2, B: 90, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  // 2026-08-19: B 90 -> 97 por los siete slots del rail de LEARN
+  // (hub.learn-entry + los seis hub.minigame.*). Existen para que cambiar un
+  // icono sea una edicion del builder y nunca del codigo; los seis de
+  // minijuegos incluyen los dos motores coming-soon, para que un motor que
+  // salga despues no necesite tocar el registry para tener icono.
+  const expectedInitial = { A: 2, B: 97, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 186 ||
+    inventory.length !== 193 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

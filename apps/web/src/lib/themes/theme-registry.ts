@@ -108,6 +108,25 @@ export type ThemeAssetKey =
   | "hub.pro-benefit-coach"
   | "hub.pro-benefit-complete"
   | "hub.shop-icon"
+  /* ── Learn Home shortcut rail (2026-08-19) ────────────────────────────────
+   * ONE SLOT PER DESTINATION, so swapping an icon is a builder edit and never
+   * a code edit (founder: "con su espacio en el builder para actualizarlos de
+   * manera sencilla"). The six mini-game slots exist even for the two
+   * coming-soon engines: an engine that ships later must not need a registry
+   * change to get its icon.
+   *
+   * ⚠️ The mini-game defaults are the PIECE sprites today — the piece IS each
+   * game's identity (Rook Rail = rook, Pivot Run = bishop, N-Queens = queen)
+   * and they are the only art that tells the three tiles apart. Bespoke
+   * mini-game icons are an open ART REQUEST; when they arrive, only the
+   * `default` paths below change. */
+  | "hub.learn-entry"
+  | "hub.minigame.rook-rail"
+  | "hub.minigame.pivot-run"
+  | "hub.minigame.n-queens"
+  | "hub.minigame.safe-path"
+  | "hub.minigame.knight-tour"
+  | "hub.minigame.promotion-run"
   | "hub.btn-battle"
   | "hub.btn-play"
   | "hub.principal-button"
@@ -404,6 +423,51 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "hub.pro-benefit-complete": {
         default: "/art/landing-slides/pro-suscription-icon",
         usedIn: ["Play Hub — mini-tour PRO step, Complete Experience benefit · route: /", "↳ components/hub/hub-tour.tsx"],
+      },
+      "hub.learn-entry": {
+        /* ⚠️ `/art/hub/train-pieces` — the SAME art the TRAINING side of the
+           mode switch and the dock's Pieces action already use. The rail's
+           entry and the switch that leads to it now show one face for one
+           destination (founder, 2026-08-20). It briefly shipped as
+           `new-icons-chesscito/learning`, a book, which named nothing the
+           player had seen before.
+           ⛔ THIS LINE IS THE WHOLE ICON SWAP. Nothing in `learn-path-entry.tsx`
+           changed — which is exactly what the slot was added for. */
+        default: "/art/hub/train-pieces",
+        usedIn: ["Learn Hub — Exercises shortcut tile · LearnPathEntry · route: /", "↳ components/hub/learn-path-entry.tsx"],
+      },
+      "hub.minigame.rook-rail": {
+        /* ⛔ ITS OWN PATH, NOT A PIECE SPRITE. The mechanic icons first landed
+           by OVERWRITING `/art/redesign/pieces/w-{rook,bishop,queen}` — the
+           files `board.piece.white.*` draws the actual chessboard from. For a
+           few minutes the rook on the playing board WAS a maze tile, and so
+           were the pieces in the badge sheet, the result overlay and the
+           mastery tiles. Nothing failed: the triplets were valid, every test
+           stayed green, and only opening the art file showed it.
+           Mini-game icons live under `/art/minigames/` precisely so the two
+           can never collide again. */
+        default: "/art/minigames/rook-rail",
+        usedIn: ["Learn Hub — Rook Rail mini-game tile · MiniGamesSection · route: /", "↳ components/hub/minigames-section.tsx"],
+      },
+      "hub.minigame.pivot-run": {
+        default: "/art/minigames/pivot-run",
+        usedIn: ["Learn Hub — Pivot Run mini-game tile · MiniGamesSection · route: /", "↳ components/hub/minigames-section.tsx"],
+      },
+      "hub.minigame.n-queens": {
+        default: "/art/minigames/n-queens",
+        usedIn: ["Learn Hub — N-Queens mini-game tile · MiniGamesSection · route: /", "↳ components/hub/minigames-section.tsx"],
+      },
+      "hub.minigame.safe-path": {
+        default: "/art/redesign/pieces/w-king",
+        usedIn: ["Learn Hub — Safe Path mini-game tile · MiniGamesSection · route: /", "↳ components/hub/minigames-section.tsx"],
+      },
+      "hub.minigame.knight-tour": {
+        default: "/art/redesign/pieces/w-knight",
+        usedIn: ["Learn Hub — Knight's Tour mini-game tile (coming soon) · MiniGamesSection · route: /", "↳ components/hub/minigames-section.tsx"],
+      },
+      "hub.minigame.promotion-run": {
+        default: "/art/redesign/pieces/w-pawn",
+        usedIn: ["Learn Hub — Promotion Run mini-game tile (coming soon) · MiniGamesSection · route: /", "↳ components/hub/minigames-section.tsx"],
       },
       "hub.shop-icon": {
         default: "/art/redesign/icons/shop",
@@ -1173,6 +1237,13 @@ const LEARN_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "welcome.achievement-3day",
   "welcome.achievement-7day",
   "welcome.focus-stamp",
+  "hub.learn-entry",
+  "hub.minigame.rook-rail",
+  "hub.minigame.pivot-run",
+  "hub.minigame.n-queens",
+  "hub.minigame.safe-path",
+  "hub.minigame.knight-tour",
+  "hub.minigame.promotion-run",
 ];
 
 const PLAY_SLOT_KEYS: readonly ThemeAssetKey[] = [

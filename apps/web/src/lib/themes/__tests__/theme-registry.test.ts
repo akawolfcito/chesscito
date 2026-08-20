@@ -281,7 +281,12 @@ describe("theme-registry", () => {
       // -1 (2026-07-29): daily.welldone retired. Its art baked the English
       // headline into a picture, so the Daily celebration could never
       // translate; it renders live text now, like the exercises one.
-      learn: 37,
+      // +7 (2026-08-19, 37 -> 44): the LEARN rail's own icons —
+      // hub.learn-entry plus the six hub.minigame.* slots. One slot per
+      // destination so swapping an icon is a builder edit, never a code edit;
+      // the two coming-soon engines get theirs now so shipping one later does
+      // not need a registry change.
+      learn: 44,
       // +2 over the original 21: arena.rival-mara and shop.pro, both
       // formerly uncataloged "exceptions". +1: coach.share-trophy, the
       // dedicated Match Review share icon (2026-07-22), split off shared.trophy-epic.
