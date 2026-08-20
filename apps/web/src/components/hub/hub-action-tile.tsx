@@ -27,6 +27,19 @@ type Props = {
   iconHeight?: number;
   className?: string;
   tourTarget?: string;
+  /** Stable hook for tests and the driven smoke. Optional: every tile that
+   *  existed before this prop keeps rendering no attribute at all. */
+  testId?: string;
+  /** Extra `data-*` attributes for the tile's root.
+   *
+   *  ⚠️ Exists so a caller can keep STATE readable from the DOM after moving
+   *  onto this tile. The mini-games cards carried `data-state` / `data-new` /
+   *  `data-engine`, and three assertions read them; a tile with no passthrough
+   *  would have silently dropped all three and the tests would have gone red
+   *  for a reason unrelated to the change. Keys must already be `data-`
+   *  prefixed — this does not invent the prefix, so what a caller writes is
+   *  what lands in the DOM. */
+  dataAttrs?: Record<string, string | undefined>;
 };
 
 /** Hub right-rail tile. Mirrors `.reward-tile.is-locked` exactly so the
@@ -48,6 +61,8 @@ export function HubActionTile({
   iconHeight,
   className = "",
   tourTarget,
+  testId,
+  dataAttrs,
 }: Props) {
   const dimAttrs =
     iconWidth !== undefined && iconHeight !== undefined
@@ -63,6 +78,8 @@ export function HubActionTile({
       aria-label={ariaLabel}
       className={["reward-tile", "is-locked", className].filter(Boolean).join(" ")}
       data-tour-target={tourTarget}
+      data-testid={testId}
+      {...dataAttrs}
     >
       <span className="reward-tile-label">{label}</span>
       {iconSlot ? (
