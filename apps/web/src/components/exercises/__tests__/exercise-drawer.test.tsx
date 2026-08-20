@@ -263,7 +263,16 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
     expect(screen.queryByText(/Special Training \d/)).not.toBeInTheDocument();
   });
 
-  it("interleaves labyrinths into the exercise list — no separate section (D6)", () => {
+  /* ── AC-1 (Learn IA separation, 2026-08-19) ─────────────────────────────
+   * REPLACES the D6 interleave test, which pinned the opposite contract:
+   * "Special Training 1 renders between the 3rd and the 4th exercise".
+   *
+   * The exercise sequence is now Ex → Ex → Ex → … with NOTHING spliced into
+   * it. The lane rows are not deleted — only 3 of the 13 healthy challenges
+   * are featured on the Learn Home surface at a time, so removing them here
+   * would orphan the other 10 — they move to the END of the path.
+   */
+  it("AC-1: no labyrinth splits the exercise sequence — every lane row comes after every exercise", () => {
     render(
       <ExerciseDrawer
         {...baseProps}
@@ -272,27 +281,59 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
         onLabyrinthSelect={vi.fn()}
       />,
     );
-    // Section header is gone — one continuous path.
-    expect(screen.queryByText("Labyrinths")).not.toBeInTheDocument();
-    // Special Training 1's anchor is floored to LABYRINTH_MIN_EXERCISES (3), not
-    // the stars-only ceil(6/3)=2 — so it renders AFTER the third exercise
-    // (titleOf("rook-distance-1"), rook-3) and BEFORE the fourth (titleOf("rook-4"),
-    // rook-4), never earlier than the floor allows.
     const texts = screen
       .getAllByRole("button", { hidden: true })
       .map((b) => b.textContent ?? "");
-    const labAt = texts.findIndex((t) => t.includes("Special Training 1"));
-    const thirdExerciseAt = texts.findIndex((t) =>
-      t.includes(titleOf("rook-distance-1")),
+
+    const exercisePositions = EXERCISES.rook
+      .map((ex) => texts.findIndex((t) => ex.title && t.includes(ex.title)))
+      .filter((position) => position > -1);
+    const labPositions = texts
+      .map((t, index) => (/Special Training \d/.test(t) ? index : -1))
+      .filter((position) => position > -1);
+
+    expect(exercisePositions.length).toBeGreaterThan(0);
+    expect(labPositions.length).toBeGreaterThan(0);
+    // The separation, stated as the only thing that matters: the LAST exercise
+    // row precedes the FIRST lane row. Nothing is interleaved.
+    expect(Math.max(...exercisePositions)).toBeLessThan(Math.min(...labPositions));
+  });
+
+  it("AC-1: the lane rows are still REACHABLE — separation is not deletion", () => {
+    const onLabyrinthSelect = vi.fn();
+    const nodes = rookLabNodes(sixStars);
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        stars={sixStars}
+        totalStars={6}
+        onNavigate={vi.fn()}
+        labyrinthNodes={nodes}
+        onLabyrinthSelect={onLabyrinthSelect}
+      />,
     );
-    const fourthExerciseAt = texts.findIndex((t) =>
-      t.includes(titleOf("rook-4")),
+    expect(screen.getAllByText(/Special Training \d/)).toHaveLength(nodes.length);
+    const row = screen.getByText("Special Training 1").closest("button");
+    if (row) fireEvent.click(row);
+    expect(onLabyrinthSelect).toHaveBeenCalledWith(nodes[0]?.id);
+  });
+
+  /** AC-3: the drawer's row ORDER changed; the exercise gate did not. Row N is
+   *  still locked by its pool index against the linear senda, exactly as before
+   *  the lane rows moved. */
+  it("AC-3: exercise availability is unchanged by the reorder", () => {
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        onNavigate={vi.fn()}
+        labyrinthNodes={rookLabNodes(zeros)}
+        onLabyrinthSelect={vi.fn()}
+      />,
     );
-    expect(labAt).toBeGreaterThan(-1);
-    expect(thirdExerciseAt).toBeGreaterThan(-1);
-    expect(fourthExerciseAt).toBeGreaterThan(-1);
-    expect(labAt).toBeGreaterThan(thirdExerciseAt);
-    expect(labAt).toBeLessThan(fourthExerciseAt);
+    const first = screen.getByText(titleOf("rook-1")).closest("button");
+    const far = screen.getByText(titleOf("rook-4")).closest("button");
+    expect(first).not.toHaveAttribute("data-locked", "true");
+    expect(far).toHaveAttribute("data-locked", "true");
   });
 });
 

@@ -15,7 +15,7 @@ import {
 import { useExerciseDescriptions } from '@/lib/content/catalog-context'
 import { pieceThemeSlot } from '@/lib/themes/piece-theme-assets'
 import {
-  interleaveTrainingRows,
+  appendTrainingRows,
   LABYRINTH_MIN_EXERCISES,
   type TrainingNode,
 } from '@/lib/training/path'
@@ -197,7 +197,10 @@ export function ExerciseDrawer({
         (stars[exercise.id] ?? 0) > 0,
     )
 
-  const orderedRows = interleaveTrainingRows(rows, labyrinthNodes ?? [])
+  // Learn IA separation: exercises first, Special Training after. The lane
+  // rows stay reachable here (only 3 of 13 challenges are featured on the hub
+  // at a time) but they no longer split the exercise sequence.
+  const orderedRows = appendTrainingRows(rows, labyrinthNodes ?? [])
 
   // Fixed base cap (node 0 = exercise 1) + seamless tiles repeated above it,
   // so any node count grows the trail. `layout.positions` are %coords over

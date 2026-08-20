@@ -4,10 +4,13 @@ import {
 } from "@/components/exercises/exercises-screen";
 import { ContentCatalogProvider } from "@/lib/content/catalog-context";
 import { getMergedCatalog } from "@/lib/content/merged-catalog";
+import type { MergedCatalog } from "@/lib/content/overlay-types";
 import { envStageFloor } from "@/lib/content/stage";
-import { EXERCISES, KNIGHT_TOUR } from "@/lib/game/exercises";
+import { EXERCISES } from "@/lib/game/exercises";
 import type { ExerciseCatalog } from "@/lib/game/rotation";
 import type { PieceId } from "@/lib/game/types";
+import { resolveMiniGameDeepLink } from "@/lib/minigames/deep-link";
+import { baselineMiniGamePools, type MiniGamePools } from "@/lib/minigames/pools";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 
 type SearchParams = {
@@ -25,6 +28,11 @@ type SearchParams = {
   /** Direct Special Training selection. Known ids are forwarded to the client
    *  gate; unknown ids are dropped at the route boundary. */
   content?: string | string[];
+  /** Rotation that vouches for `content`, sent by the Mini-games surface. Only
+   *  honoured when that rotation genuinely features the id — see
+   *  `resolveMiniGameDeepLink`. Anything else is dropped and the content keeps
+   *  its normal lane gate. */
+  featured?: string | string[];
 };
 
 const SUPPORTED_SHEETS = new Set<ExercisesInitialSheet>([
@@ -47,14 +55,22 @@ function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function pieceForContent(
-  contentId: string | undefined,
-  catalog: typeof KNIGHT_TOUR,
-): PieceId | undefined {
-  if (!contentId) return undefined;
-  return (Object.keys(catalog) as PieceId[]).find((piece) =>
-    catalog[piece].some((content) => content.id === contentId),
-  );
+/**
+ * The pools every mini-game lookup reads: the merged catalog when a stage floor
+ * is configured, the compiled baseline otherwise — the same contract the rest
+ * of this boundary already honours for lane 1.
+ */
+function miniGamePools(merged: MergedCatalog | null): MiniGamePools {
+  if (!merged) return baselineMiniGamePools();
+  return {
+    exercises: merged.exercises,
+    labyrinths: merged.labyrinths,
+    diagonalRun: merged.diagonalRun,
+    knightTour: merged.knightTour,
+    queens: merged.queens,
+    safePath: merged.safePath,
+    promotionRun: merged.promotionRun,
+  };
 }
 
 const LITE_BLOCKED_SHEETS = new Set<ExercisesInitialSheet>(["shop", "pro"]);
@@ -107,9 +123,14 @@ export default async function ExercisesPage({
 
   const piece = firstParam(searchParams.piece);
   const slot = firstParam(searchParams.slot);
-  const content = firstParam(searchParams.content);
-  const contentCatalog = merged?.knightTour ?? KNIGHT_TOUR;
-  const contentPiece = pieceForContent(content, contentCatalog);
+  // One resolver for every projected lane. It used to search the Knight's Tour
+  // pool alone, so `?content=bishop-run-1` was dropped here in silence.
+  const deepLink = resolveMiniGameDeepLink({
+    contentId: firstParam(searchParams.content),
+    rotationId: firstParam(searchParams.featured),
+    pools: miniGamePools(merged),
+  });
+  const contentPiece = deepLink?.piece;
   const initialPiece =
     piece && pieceHasExercises(piece, catalog)
       ? piece
@@ -123,7 +144,8 @@ export default async function ExercisesPage({
       initialPiece={initialPiece}
       initialSheet={initialSheet}
       slot={slot}
-      initialContentId={contentPiece ? content : undefined}
+      initialContentId={deepLink?.contentId}
+      initialContentFeatured={deepLink?.featured ?? false}
     />
   );
 

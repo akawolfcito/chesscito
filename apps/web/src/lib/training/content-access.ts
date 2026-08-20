@@ -19,7 +19,16 @@ export type TrainingContentRequestSource =
   | "explicit_tap"
   | "direct"
   | "restore"
-  | "automatic";
+  | "automatic"
+  /** A curated Mini-games card or its deep link, vouched for by a shipped
+   *  rotation (`resolveMiniGameDeepLink`). The SCREEN lets this source skip the
+   *  lane's progression lock — featuring a mid-lane level is the whole point of
+   *  per-challenge rotation.
+   *
+   *  ⛔ It skips PROGRESSION only. The commercial check above runs for it
+   *  exactly as for every other source, and it may NOT open checkout: a card
+   *  tap on the hub is an explicit intent to PLAY, never to buy. */
+  | "featured";
 
 export type TrainingContentRequestResult =
   | { action: "start"; content: Exercise; attemptGrantId: string | null }

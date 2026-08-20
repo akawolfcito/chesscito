@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  appendTrainingRows,
   buildTrainingPath,
   getLabyrinthForAutoAdvance,
   interleaveTrainingRows,
@@ -286,5 +287,62 @@ describe("getLabyrinthForAutoAdvance — path sequencing with late-unlock (Exerc
     expect(
       getLabyrinthForAutoAdvance(pathNoLabs, EXERCISES.rook[0].id),
     ).toBeNull();
+  });
+});
+
+/* ── Learn IA separation (2026-08-19) ────────────────────────────────────────
+ * `appendTrainingRows` is what the drawer renders now. The two suites above
+ * still pin `interleaveTrainingRows` and the auto-advance helpers because they
+ * are kept for a one-line revert — see the note in lib/training/path.ts.
+ */
+describe("appendTrainingRows — exercises first, lane content after (AC-1)", () => {
+  it("emits every exercise before every labyrinth", () => {
+    const labs = rookLabs();
+    const rows = appendTrainingRows(["a", "b", "c"], labs);
+    const kinds = rows.map((row) => row.kind);
+    expect(kinds).toEqual([
+      "exercise",
+      "exercise",
+      "exercise",
+      ...labs.map(() => "labyrinth" as const),
+    ]);
+  });
+
+  it("preserves the order of each list and drops nothing", () => {
+    const labs = rookLabs();
+    const rows = appendTrainingRows(["a", "b", "c"], labs);
+    expect(rows.filter((r) => r.kind === "exercise").map((r) => r.value)).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
+    expect(
+      rows
+        .filter((r) => r.kind === "labyrinth")
+        .map((r) => (r.value as { id: string }).id),
+    ).toEqual(labs.map((lab) => lab.id));
+    expect(rows).toHaveLength(3 + labs.length);
+  });
+
+  it("handles either list being empty", () => {
+    expect(appendTrainingRows(["a"], [])).toHaveLength(1);
+    expect(appendTrainingRows([], rookLabs())).toHaveLength(rookLabs().length);
+    expect(appendTrainingRows([], [])).toEqual([]);
+  });
+
+  /** ⛔ AC-2 / AC-3. The row order is presentation. Everything the path decides
+   *  — unlock rules, statuses, stars, the badge node and the mastery node — is
+   *  built by `buildTrainingPath` and is not touched by reordering rows. */
+  it("AC-2: reordering rows does not change the training path at all", () => {
+    const before = rookPath(LABYRINTH_UNLOCK_THRESHOLD);
+    appendTrainingRows(
+      before.filter((n) => n.kind === "exercise"),
+      before.filter((n) => n.kind === "labyrinth"),
+    );
+    const after = rookPath(LABYRINTH_UNLOCK_THRESHOLD);
+    expect(after).toEqual(before);
+    expect(after.some((node) => node.kind === "labyrinth")).toBe(true);
+    expect(after.some((node) => node.kind === "badge")).toBe(true);
+    expect(after.some((node) => node.kind === "mastery")).toBe(true);
   });
 });

@@ -255,6 +255,33 @@ export type InterleavedRow<E> =
   | { kind: "exercise"; value: E }
   | { kind: "labyrinth"; value: TrainingNode };
 
+/**
+ * Learn IA separation (2026-08-19): exercises FIRST, lane content AFTER.
+ *
+ * This replaces `interleaveTrainingRows` as the drawer's row order. The
+ * exercise sequence is now `Ex → Ex → Ex → …` with nothing spliced into it,
+ * and the piece's Special Training levels sit together at the end of the path
+ * instead of every few exercises.
+ *
+ * ⚠️ The lane rows are NOT dropped. Only 3 of the 13 healthy challenges are
+ * featured on the Learn Home surface at a time; deleting these rows would
+ * orphan the other 10 with no way back to them. This is the un-featured
+ * content's home, and it keeps its normal lane gate.
+ *
+ * Presentation ONLY, exactly like the function it replaces: it orders rows and
+ * never gates them. `buildTrainingPath` — and therefore every unlock, star,
+ * completion count and the mastery node — is untouched.
+ */
+export function appendTrainingRows<E>(
+  exercises: readonly E[],
+  labyrinths: readonly TrainingNode[],
+): InterleavedRow<E>[] {
+  return [
+    ...exercises.map((value) => ({ kind: "exercise" as const, value })),
+    ...labyrinths.map((value) => ({ kind: "labyrinth" as const, value })),
+  ];
+}
+
 /** Surface redistribution D6 (presentation-only): merge the drawer's
  *  exercise rows and labyrinth nodes into ONE continuous path. The
  *  first labyrinth lands after the earliest exercises that can reach
@@ -289,6 +316,25 @@ export function interleaveTrainingRows<E>(
   }
   return rows;
 }
+
+/* ⛔ THE TWO HELPERS BELOW ARE NO LONGER WIRED (Learn IA separation, 2026-08-19).
+ *
+ * `getLabyrinthForAutoAdvance` used to fire from `exercises-screen.tsx` on every
+ * exercise completion and drop the player straight into a labyrinth. That auto-
+ * jump IS the interleave — invisible until it fires — and it contaminates the
+ * one thing this release exists to measure: H1 asks whether players start
+ * mini-games when they are VISIBLE, and an auto-jump starts them without
+ * visibility. It was also worth 547 rook accounts, which is precisely the
+ * number the new surface has to be compared against; preserving it would make
+ * that comparison impossible.
+ *
+ * They are kept, tested and exported so restoring the bridge is a one-line
+ * revert in the screen rather than a rewrite. `interleaveTrainingRows` stays
+ * for the same reason — it is what they are built on.
+ *
+ * DO NOT re-wire either without moving the telemetry first: `minigame_start`
+ * would need a fourth `entry` value or the funnel starts lying.
+ */
 
 /** QA G1 (2026-06-11): after completing an exercise, the path flows
  *  THROUGH the labyrinths. Returns the labyrinth node when it is the

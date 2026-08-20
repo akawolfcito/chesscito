@@ -74,7 +74,7 @@ describe("Training content access", () => {
     expect(resolveContentAccess(premiumTour, LOADING)).toEqual({ pending: true });
   });
 
-  it.each(["direct", "restore", "automatic"] as const)(
+  it.each(["direct", "restore", "automatic", "featured"] as const)(
     "%s denial returns to Path without opening checkout",
     (source) => {
       expect(
@@ -97,6 +97,31 @@ describe("Training content access", () => {
         source: "explicit_tap",
       }),
     ).toMatchObject({ action: "locked", openCheckout: true });
+  });
+
+  /** ⛔ `featured` bypasses the lane's PROGRESSION gate, never its COMMERCIAL
+   *  one. A Mini-games card must not be able to hand out pass-gated content
+   *  for free — that is the one thing Early Access is not allowed to do. */
+  it("a featured request is still refused for pass-gated content", () => {
+    expect(
+      resolveTrainingContentRequest({
+        contentId: premiumTour.id,
+        catalog: KNIGHT_TOUR.knight,
+        trainingPass: INACTIVE,
+        source: "featured",
+      }),
+    ).toMatchObject({ action: "locked", reason: "training_pass_required" });
+  });
+
+  it("a featured request starts base content like any other source", () => {
+    expect(
+      resolveTrainingContentRequest({
+        contentId: baseTour.id,
+        catalog: KNIGHT_TOUR.knight,
+        trainingPass: INACTIVE,
+        source: "featured",
+      }),
+    ).toMatchObject({ action: "start", attemptGrantId: null });
   });
 
   it("rejects stale/manual ids without treating them as commercial content", () => {
