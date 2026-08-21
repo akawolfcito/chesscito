@@ -39,6 +39,7 @@ import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { childEnv } from "./lib/child-env";
 import { loadOpsEnv, parseSupabaseRef } from "./lib/env";
 
 const POOLER_HOST = "aws-1-us-east-1.pooler.supabase.com";
@@ -164,13 +165,19 @@ function psqlSource(sql: string, conn: string, extra: string[] = []): string {
     "docker",
     [
       "run", "--rm", "-i",
-      "-e", `PGCONN=${conn}`,
-      "-e", `PGQUERY=${sql}`,
+      // Names only — the VALUES go through `childEnv`, never through argv.
+      "-e", "PGCONN",
+      "-e", "PGQUERY",
       PG_IMAGE,
       "sh", "-c",
       `psql "$PGCONN" -q -v ON_ERROR_STOP=1 -t -A -F "|" ${extra.join(" ")} -c "$PGQUERY"`,
     ],
-    { encoding: "utf8", timeout: TIMEOUT_MS, stdio: ["pipe", "pipe", "pipe"] },
+    {
+      encoding: "utf8",
+      timeout: TIMEOUT_MS,
+      stdio: ["pipe", "pipe", "pipe"],
+      env: childEnv({ PGCONN: conn, PGQUERY: sql }),
+    },
   );
 }
 
@@ -303,12 +310,19 @@ function main(argv: readonly string[]): number {
       "docker",
       [
         "run", "--rm",
-        "-e", `PGCONN=${creds.conn}`,
+        // Name only — the connection string goes through `childEnv`.
+        "-e", "PGCONN",
         PG_IMAGE,
         "sh", "-c",
         `pg_dump "$PGCONN" ${buildDumpArgs(EXCLUDED_TABLES).join(" ")}`,
       ],
-      { encoding: "utf8", timeout: TIMEOUT_MS, maxBuffer: 512 * 1024 * 1024, stdio: ["pipe", "pipe", "pipe"] },
+      {
+        encoding: "utf8",
+        timeout: TIMEOUT_MS,
+        maxBuffer: 512 * 1024 * 1024,
+        stdio: ["pipe", "pipe", "pipe"],
+        env: childEnv({ PGCONN: creds.conn }),
+      },
     );
     writeFileSync(assertUnderBackupRoot(dumpPath), dump);
 

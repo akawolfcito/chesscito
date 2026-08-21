@@ -41,6 +41,7 @@ import { fileURLToPath } from "node:url";
 
 import { loadOpsEnv, parseSupabaseRef } from "./lib/env";
 import { assertReadOnlySql } from "./lib/read-only-guard";
+import { childEnv } from "./lib/child-env";
 
 const POOLER_HOST = "aws-1-us-east-1.pooler.supabase.com";
 const POOLER_PORT = 5432;
@@ -148,11 +149,12 @@ export function main(argv: readonly string[]): number {
         "run",
         "--rm",
         "-i",
-        // Connection string and query travel in the container env, never argv.
+        // ⛔ Names only. This comment used to say "never argv" while
+        // `-e NAME=value` put both there — see lib/child-env.ts.
         "-e",
-        `PGCONN=${conn}`,
+        "PGCONN",
         "-e",
-        `PGQUERY=${guarded}`,
+        "PGQUERY",
         DOCKER_PG_IMAGE,
         "sh",
         "-c",
@@ -161,7 +163,12 @@ export function main(argv: readonly string[]): number {
         // section markers would not print section by section.
         'printf %s "$PGQUERY" | psql "$PGCONN" -v ON_ERROR_STOP=1 -f -',
       ],
-      { encoding: "utf8", timeout: TIMEOUT_MS, stdio: ["pipe", "pipe", "pipe"] },
+      {
+        encoding: "utf8",
+        timeout: TIMEOUT_MS,
+        stdio: ["pipe", "pipe", "pipe"],
+        env: childEnv({ PGCONN: conn, PGQUERY: guarded }),
+      },
     );
     process.stdout.write(raw ? out : redact(out));
     return 0;

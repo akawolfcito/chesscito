@@ -35,6 +35,7 @@ import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "n
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { childEnv } from "./lib/child-env";
 import { loadOpsEnv, parseSupabaseRef } from "./lib/env";
 
 const POOLER_HOST = "aws-1-us-east-1.pooler.supabase.com";
@@ -297,12 +298,18 @@ function duckWithPg(sql: string, creds: { ref: string; password: string }): stri
     "docker",
     [
       "run", "--rm",
-      "-e", `PGPASSWORD=${creds.password}`,
+      // ⛔ BY NAME, NEVER `NAME=value`. See the note on `childEnv` below.
+      "-e", "PGPASSWORD",
       "-v", `${ARCHIVE_DIR}:/out`,
       DUCKDB_IMAGE,
       "/duckdb", "-c", `${attach}${sql}`,
     ],
-    { encoding: "utf8", timeout: TIMEOUT_MS, stdio: ["pipe", "pipe", "pipe"] },
+    {
+      encoding: "utf8",
+      timeout: TIMEOUT_MS,
+      stdio: ["pipe", "pipe", "pipe"],
+      env: childEnv({ PGPASSWORD: creds.password }),
+    },
   );
 }
 
@@ -330,13 +337,21 @@ function psql(sql: string, creds: { ref: string; password: string }): string {
     "docker",
     [
       "run", "--rm", "-i",
-      "-e", `PGCONN=${conn}`,
-      "-e", `PGQUERY=SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;\n${sql}`,
+      "-e", "PGCONN",
+      "-e", "PGQUERY",
       DOCKER_PG_IMAGE,
       "sh", "-c",
       'printf %s "$PGQUERY" | psql "$PGCONN" -q -v ON_ERROR_STOP=1 -t -A -F "|" -f -',
     ],
-    { encoding: "utf8", timeout: TIMEOUT_MS, stdio: ["pipe", "pipe", "pipe"] },
+    {
+      encoding: "utf8",
+      timeout: TIMEOUT_MS,
+      stdio: ["pipe", "pipe", "pipe"],
+      env: childEnv({
+        PGCONN: conn,
+        PGQUERY: `SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;\n${sql}`,
+      }),
+    },
   );
 }
 

@@ -26,6 +26,7 @@ import { fileURLToPath } from "node:url";
 
 import { loadOpsEnv, parseSupabaseRef } from "./lib/env";
 import { assertReadOnlySql } from "./lib/read-only-guard";
+import { childEnv } from "./lib/child-env";
 
 const POOLER_HOST = "aws-1-us-east-1.pooler.supabase.com";
 const POOLER_PORT = 5432;
@@ -241,15 +242,24 @@ function runQuery(sql: string): string {
     "docker",
     [
       "run", "--rm", "-i",
-      // Connection string and query travel in the container env, never in argv.
-      "-e", `PGCONN=${conn}`,
-      "-e", `PGQUERY=SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;\n${sql}`,
+      // ⛔ Names only. This comment used to say the values "never travel in
+      // argv" while `-e NAME=value` put them there — see lib/child-env.ts.
+      "-e", "PGCONN",
+      "-e", "PGQUERY",
       DOCKER_PG_IMAGE,
       "sh", "-c",
       // `-q` so the read-only preamble does not echo "SET" ahead of the JSON.
       'printf %s "$PGQUERY" | psql "$PGCONN" -q -v ON_ERROR_STOP=1 -t -A -f -',
     ],
-    { encoding: "utf8", timeout: TIMEOUT_MS, stdio: ["pipe", "pipe", "pipe"] },
+    {
+      encoding: "utf8",
+      timeout: TIMEOUT_MS,
+      stdio: ["pipe", "pipe", "pipe"],
+      env: childEnv({
+        PGCONN: conn,
+        PGQUERY: `SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;\n${sql}`,
+      }),
+    },
   );
 }
 

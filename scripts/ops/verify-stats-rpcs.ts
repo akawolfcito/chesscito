@@ -59,6 +59,7 @@ import { execFileSync } from "node:child_process";
 
 import { assertReadOnlySql } from "./lib/read-only-guard";
 import { loadOpsEnv, parseSupabaseRef, type OpsEnv } from "./lib/env";
+import { childEnv } from "./lib/child-env";
 
 export const POOLER_HOST = "aws-1-us-east-1.pooler.supabase.com";
 export const POOLER_PORT = 5432;
@@ -858,15 +859,21 @@ function defaultRun(conn: string, sql: string, timeoutMs: number): string {
     "docker",
     [
       "run", "--rm", "-i",
-      // Connection string in the container env, never in argv: argv is visible
-      // in `ps` on the host, container env is not.
-      "-e", `PGCONN=${conn}`,
-      "-e", `PGQUERY=${sql}`,
+      // ⛔ Names only. The reasoning below was always right and the code did
+      // not keep it: `-e NAME=value` IS argv. See lib/child-env.ts.
+      // argv is visible in `ps` on the host; the container env is not.
+      "-e", "PGCONN",
+      "-e", "PGQUERY",
       DOCKER_PG_IMAGE,
       "sh", "-c",
       'psql "$PGCONN" -v ON_ERROR_STOP=1 -t -A -c "$PGQUERY"',
     ],
-    { encoding: "utf8", timeout: timeoutMs, stdio: ["pipe", "pipe", "pipe"] },
+    {
+      encoding: "utf8",
+      timeout: timeoutMs,
+      stdio: ["pipe", "pipe", "pipe"],
+      env: childEnv({ PGCONN: conn, PGQUERY: sql }),
+    },
   );
 }
 

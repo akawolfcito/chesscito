@@ -34,6 +34,7 @@ import { createHash } from "node:crypto";
 import { assertReadOnlySql } from "../lib/read-only-guard";
 import { parseSupabaseRef, type OpsEnv } from "../lib/env";
 import { buildSnapshotSql } from "./supabase-sql";
+import { childEnv } from "../lib/child-env";
 
 export { SUPABASE_SNAPSHOT_SQL, buildSnapshotSql } from "./supabase-sql";
 
@@ -188,15 +189,21 @@ function defaultRun(conn: string, sql: string, timeoutMs: number): string {
     "docker",
     [
       "run", "--rm", "-i",
-      // Connection string travels in the container env, never in argv.
-      "-e", `PGCONN=${conn}`,
-      "-e", `PGQUERY=${sql}`,
+      // ⛔ Names only. This comment used to claim the value "never" reached
+      // argv while `-e NAME=value` put it there — see lib/child-env.ts.
+      "-e", "PGCONN",
+      "-e", "PGQUERY",
       DOCKER_PG_IMAGE,
       "sh", "-c",
       // -t tuples only, -A unaligned: stdout is exactly the JSON document.
       'psql "$PGCONN" -v ON_ERROR_STOP=1 -t -A -c "$PGQUERY"',
     ],
-    { encoding: "utf8", timeout: timeoutMs, stdio: ["pipe", "pipe", "pipe"] },
+    {
+      encoding: "utf8",
+      timeout: timeoutMs,
+      stdio: ["pipe", "pipe", "pipe"],
+      env: childEnv({ PGCONN: conn, PGQUERY: sql }),
+    },
   );
 }
 
