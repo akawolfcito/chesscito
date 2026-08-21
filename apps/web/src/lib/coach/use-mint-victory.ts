@@ -22,6 +22,7 @@ import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chai
 import { VICTORY_CLAIM_COPY } from "@/lib/content/editorial";
 import { classifyClaimError, describeClaimError } from "@/lib/coach/claim-telemetry";
 import { victoryAbi } from "@/lib/contracts/victory";
+import { withChesscitoAttribution } from "@/lib/payments/attribution";
 import {
   ACCEPTED_TOKENS,
   DIFFICULTY_TO_CHAIN,
@@ -359,9 +360,22 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
       mintPriceUsd6: priceUsd6,
       tokenBalances: balances,
       wagmiPublicClient: publicClient,
-      writeContractAsync: writeAsync,
+      writeContractAsync: rawWriteAsync,
       signTypedDataAsync: signPermitAsync,
     } = liveRef.current;
+
+    /* ⛔ ATTRIBUTION WRAPS THE WRITER, NOT THE THREE CALL SITES. This flow
+       issues up to three writes — `approve`, `mintSignedWithPermit`,
+       `mintSigned` — down two mutually exclusive branches. Tagging each one
+       would be three chances to miss one, and the permit branch is the one
+       nobody re-reads. Wrapping the writer makes every write on this path
+       attributed by construction, including any added later.
+       Own contract, server-signed attestation: nothing compares calldata
+       byte-for-byte, so a trailing suffix is inert. */
+    const writeAsync = ((request: Parameters<typeof rawWriteAsync>[0]) =>
+      rawWriteAsync(
+        withChesscitoAttribution(request) as Parameters<typeof rawWriteAsync>[0],
+      )) as typeof rawWriteAsync;
 
     // Guard: injected tests bypass normal canClaim; real path requires a
     // known outcome + address + victoryNFT. F8: any result is saveable, so

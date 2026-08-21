@@ -14,6 +14,7 @@ import { PendingClaims } from "@/components/profile/pending-claims";
 import { GeneralStats } from "@/components/profile/general-stats";
 import { DisplayNameDialog } from "@/components/profile/display-name-dialog";
 import { useProfileStats } from "@/hooks/use-profile-stats";
+import { withChesscitoAttribution } from "@/lib/payments/attribution";
 import { useClaimQueue, type PerformClaimFn } from "@/hooks/use-claim-queue";
 import { useDisplayName } from "@/hooks/use-display-name";
 import { useGuestIdentity } from "@/lib/identity/use-guest-identity";
@@ -155,15 +156,19 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
             chainId,
             account: address,
           };
+          /* Attributed once, above the try, so the no-fee RETRY below carries
+             it too. Own contract, server-signed attestation — nothing verifies
+             calldata byte-for-byte, so a trailing suffix is inert here. */
+          const attributed = withChesscitoAttribution(baseRequest);
           try {
             const feeManaged = feeCurrency
-              ? ({ ...baseRequest, feeCurrency } as unknown as typeof baseRequest)
-              : baseRequest;
+              ? ({ ...attributed, feeCurrency } as unknown as typeof baseRequest)
+              : attributed;
             const txHash = await writeContractAsync(feeManaged);
             return { ok: true as const, txHash };
           } catch (innerErr) {
             if (!feeCurrency) throw innerErr;
-            const txHash = await writeContractAsync(baseRequest);
+            const txHash = await writeContractAsync(attributed);
             return { ok: true as const, txHash };
           }
         }
@@ -220,15 +225,19 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
             chainId,
             account: address,
           };
+          /* Attributed once, above the try, so the no-fee RETRY below carries
+             it too. Own contract, server-signed attestation — nothing verifies
+             calldata byte-for-byte, so a trailing suffix is inert here. */
+          const attributed = withChesscitoAttribution(baseRequest);
           try {
             const feeManaged = feeCurrency
-              ? ({ ...baseRequest, feeCurrency } as unknown as typeof baseRequest)
-              : baseRequest;
+              ? ({ ...attributed, feeCurrency } as unknown as typeof baseRequest)
+              : attributed;
             const txHash = await writeContractAsync(feeManaged);
             return { ok: true as const, txHash };
           } catch (innerErr) {
             if (!feeCurrency) throw innerErr;
-            const txHash = await writeContractAsync(baseRequest);
+            const txHash = await writeContractAsync(attributed);
             return { ok: true as const, txHash };
           }
         }

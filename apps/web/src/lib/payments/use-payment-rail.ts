@@ -27,6 +27,7 @@ import { erc20Abi } from "@/lib/contracts/tokens";
 import { getMiniPayFeeCurrency } from "@/lib/contracts/chains";
 import { isUserCancellation } from "@/lib/errors";
 import { isMiniPayEnv } from "@/lib/minipay";
+import { withChesscitoAttribution } from "@/lib/payments/attribution";
 import {
   GET_PEONES_CANARY_CHAIN_ID,
   GET_PEONES_CANARY_SKU,
@@ -366,7 +367,7 @@ export function usePaymentRail({
         }
       : buildPeonesPackTransfer({ sku, treasury: treasury!, tokenSymbol });
     const feeCurrency = getMiniPayFeeCurrency(chainId);
-    const base = {
+    const canonical = {
       address: tx.token.address,
       abi: erc20Abi,
       functionName: "transfer" as const,
@@ -374,6 +375,29 @@ export function usePaymentRail({
       chainId: CELO_MAINNET_CHAIN_ID,
       account: address,
     };
+
+    /* ⛔ THE CANARY RAIL SHIPS UNATTRIBUTED, ON PURPOSE.
+     *
+     * `verifyCanaryTransaction` re-encodes the canonical `transfer(to, amount)`
+     * and compares it to the on-chain input with STRICT EQUALITY
+     * (`get-peones-canary-verifier.ts:68`). An ERC-8021 suffix is trailing
+     * bytes, so a tagged canary transfer would decode correctly, move the right
+     * money to the right treasury, and then be refused server-side as
+     * `wrong_selector` — the player would have PAID AND NOT BEEN CREDITED.
+     * That is the single worst failure mode this codebase has, and no amount of
+     * attribution is worth risking it.
+     *
+     * ⚠️ In practice this costs almost nothing: the canary is opt-in
+     * (`NEXT_PUBLIC_GET_PEONES_TREASURY_CANARY_ENABLED`) and covers only
+     * `peones_pack_50`. With it off — the default — every Get Peones purchase,
+     * including every flexible top-up, takes the legacy rail and IS attributed.
+     * The legacy rail verifies the ERC-20 `Transfer` EVENT, which a data suffix
+     * cannot touch.
+     *
+     * To attribute the canary too, the verifier would have to accept a
+     * canonical PREFIX rather than an exact match. That is a change to the
+     * payment-verification boundary and belongs in its own reviewed pass. */
+    const base = intent ? canonical : withChesscitoAttribution(canonical);
 
     let submittedHash: `0x${string}` | null = null;
     let providerOutcome: ReturnType<typeof classifyProviderSubmissionError> | null = null;

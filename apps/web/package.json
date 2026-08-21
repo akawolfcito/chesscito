@@ -25,6 +25,7 @@
     "theme:responsive-regenerate-avatars": "tsx scripts/regenerate-responsive-avatar-families.ts",
     "theme:coverage": "node scripts/audit-theme-runtime-coverage.mjs --check",
     "bundle:guard": "tsx scripts/check-minipay-bundle.ts",
+    "attribution:verify": "tsx scripts/verify-attribution.ts",
     "measure:first-load": "tsx scripts/measure-first-load.ts",
     "measure:first-load:baseline": "bash scripts/measure-baseline-first-load.sh",
     "art:sync-landing": "tsx scripts/sync-landing-shared-art.ts",
@@ -44,6 +45,7 @@
     "versions": "Team convention — exact pins (no ^ or ~) for every dependency to harden against malicious version-range hijacks. See feedback_exact_version_pins memory."
   },
   "dependencies": {
+    "@celo/attribution-tags": "^0.3.0",
     "@lottiefiles/dotlottie-react": "0.18.7",
     "@privy-io/react-auth": "^2.13.0",
     "@privy-io/wagmi": "^1.0.3",

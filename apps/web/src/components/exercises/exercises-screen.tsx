@@ -222,6 +222,7 @@ import {
   setDockSheet,
 } from "@/lib/ui/dock-sheet-store";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import { withChesscitoAttribution } from "@/lib/payments/attribution";
 import {
   buildContentId,
   recordExtraConsumed,
@@ -1598,20 +1599,28 @@ export function ExercisesScreen({
     writer: typeof writeScoreAsync,
     request: Parameters<typeof writeScoreAsync>[0],
   ) {
+    /* ⛔ ATTRIBUTION LIVES HERE, NOT AT THE CALL SITES. This helper is the
+       common boundary for every non-payment write on this surface — badge
+       claim, score submit, shop approve, shop buy. Adding `dataSuffix` at four
+       call sites would be a convention, and the fifth one somebody writes next
+       month would forget. Both the fee-managed request and the no-fee RETRY
+       below must carry it, which is the other reason it is applied once, above
+       the try. */
+    const attributed = withChesscitoAttribution(request);
     try {
       const feeManagedRequest = feeCurrency
         ? ({
-            ...request,
+            ...attributed,
             feeCurrency,
           } as unknown as Parameters<typeof writeScoreAsync>[0])
-        : request;
+        : attributed;
       return await writer(feeManagedRequest);
     } catch (error) {
       if (!feeCurrency) {
         throw error;
       }
 
-      return writer(request);
+      return writer(attributed);
     }
   }
 

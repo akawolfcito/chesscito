@@ -21,6 +21,7 @@ import {
   getShopAddress,
 } from "@/lib/contracts/chains";
 import { shopAbi } from "@/lib/contracts/shop";
+import { withChesscitoAttribution } from "@/lib/payments/attribution";
 import {
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
@@ -396,17 +397,21 @@ export function useShopSheetState(
 
   const writeWithOptionalFeeCurrency = useCallback(
     async (request: Parameters<typeof writeShopAsync>[0]) => {
+      /* ⛔ Attribution applied ONCE, above the try, so both the fee-managed
+         request and the no-fee retry below carry it. See the twin helper in
+         `exercises-screen.tsx`. */
+      const attributed = withChesscitoAttribution(request);
       try {
         const feeManagedRequest = feeCurrency
           ? ({
-              ...request,
+              ...attributed,
               feeCurrency,
             } as unknown as Parameters<typeof writeShopAsync>[0])
-          : request;
+          : attributed;
         return await writeShopAsync(feeManagedRequest);
       } catch (error) {
         if (!feeCurrency) throw error;
-        return writeShopAsync(request);
+        return writeShopAsync(attributed);
       }
     },
     [writeShopAsync, feeCurrency],

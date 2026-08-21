@@ -22,6 +22,7 @@ import {
   RAIL_ACCEPTED_STABLECOINS,
   type ProPackSku,
 } from "@/lib/payments/rail-config";
+import { withChesscitoAttribution } from "@/lib/payments/attribution";
 import { buildProPackTransfer } from "@/lib/payments/transfer-builder";
 
 const CELO_MAINNET_CHAIN_ID = 42220;
@@ -199,14 +200,17 @@ export function useProRail({
 
     const tx = buildProPackTransfer({ sku, treasury, tokenSymbol });
     const feeCurrency = getMiniPayFeeCurrency(chainId);
-    const base = {
+    /* Attributed. This rail is verified from the ERC-20 `Transfer` EVENT
+       (`/api/verify-payment` → `verify-transfer.ts`), which a trailing data
+       suffix cannot touch — recipient, amount and token are unchanged. */
+    const base = withChesscitoAttribution({
       address: tx.token.address,
       abi: erc20Abi,
       functionName: "transfer" as const,
       args: [treasury, tx.expectedAmount] as const,
       chainId: CELO_MAINNET_CHAIN_ID,
       account: address,
-    };
+    });
 
     try {
       setPhase("awaiting_signature");
