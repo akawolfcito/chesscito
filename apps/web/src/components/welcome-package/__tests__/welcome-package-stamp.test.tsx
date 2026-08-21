@@ -133,3 +133,50 @@ describe("<WelcomePackageStamp> claim flow without wallet", () => {
     expect(signMessageAsyncMock).not.toHaveBeenCalled();
   });
 });
+
+/* ── ⛔ A WALLET THAT NEVER ANSWERS MUST NOT LOCK THE SCREEN ────────────────
+ * The MiniPay smoke (2026-08-20) hit "Saving your gift… / Sign in your wallet…"
+ * with no way out. `signMessageAsync` had neither resolved nor rejected, so the
+ * phase never left `signing` — and BOTH the modal and this owner refused to
+ * close while it was there.
+ *
+ * ⚠️ The mock below never settles ON PURPOSE. A rejecting mock would exercise
+ * the `.catch` path, which always worked and is not the bug. */
+describe("<WelcomePackageStamp> — a signature that never answers", () => {
+  it("lets the player out, and leaves the claim reusable", async () => {
+    setWelcomePackageState({
+      ...DEFAULT_STATE,
+      unlocked: true,
+      unlockedAt: "2026-06-20T00:00:00Z",
+      autoShowCount: 2,
+    });
+    // Never settles: no `.then`, no `.catch`, phase pinned on `signing`.
+    signMessageAsyncMock.mockImplementation(() => new Promise(() => {}));
+
+    render(<WelcomePackageStamp />);
+    fireEvent.click(screen.getByTestId("welcome-package-pending"));
+    fireEvent.click(await screen.findByRole("button", { name: /^claim$/i }));
+
+    expect(await screen.findByTestId("wp-signing-title")).toBeInTheDocument();
+    // Fresh signature: still no exit, which is correct.
+    expect(screen.queryByTestId("wp-signing-escape")).toBeNull();
+
+    await waitFor(
+      () => expect(screen.getByTestId("wp-signing-escape")).toBeInTheDocument(),
+      { timeout: 20_000 },
+    );
+    fireEvent.click(screen.getByTestId("wp-signing-escape"));
+
+    // Out.
+    await waitFor(() =>
+      expect(screen.queryByTestId("welcome-package-modal")).toBeNull(),
+    );
+
+    /* ⛔ And NOT into a second trap. Re-opening must offer a working Claim:
+       `handleClaim` early-returns unless the phase is `idle`, so a stamp that
+       forgot to reset would render the button and do nothing, forever. */
+    fireEvent.click(screen.getByTestId("welcome-package-pending"));
+    expect(await screen.findByRole("button", { name: /^claim$/i })).toBeEnabled();
+    expect(screen.queryByTestId("wp-signing-title")).toBeNull();
+  }, 30_000);
+});

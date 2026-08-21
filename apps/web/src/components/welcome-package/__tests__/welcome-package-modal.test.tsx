@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { act } from "react";
 import { renderWithIntl as render, screen, fireEvent } from "@/test-utils/render-with-intl";
 import { WelcomePackageModal } from "../welcome-package-modal";
 
@@ -158,5 +159,68 @@ describe("<WelcomePackageModal> ES locale", () => {
   it("renders ES success title", () => {
     render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} phase="success" />, { locale: "es" });
     expect(screen.getByText("Welcome Gift recibido")).toBeInTheDocument();
+  });
+});
+
+/* ── ⛔ THE SIGNING PHASE MUST NEVER BE A DEAD END ──────────────────────────
+ * Reported from the MiniPay smoke (2026-08-20): "Saving your gift… / Sign in
+ * your wallet…" with no way out — it never finished and never closed.
+ *
+ * The mechanism, read from `use-lite-welcome-gift-claim.ts`: the phase only
+ * leaves `signing` through `signMessageAsync().then` or `.catch`. A wallet that
+ * neither resolves NOR rejects — a Privy/MiniPay provider in a bad state, which
+ * the founder's own console showed ("Wallet did not respond to eth_accounts",
+ * `drpc` 500s) — fires neither, so the phase is stuck forever. And the shell
+ * was mounted with `onClose={isSigning ? undefined : …}`, so there was no exit.
+ *
+ * Blocking the close DURING a signature is right; blocking it FOREVER is not.
+ * After a grace period the modal offers the way out again.
+ *
+ * ⚠️ The escape must NOT cancel the pending signature: a slow-but-valid
+ * signature that lands later still claims the gift. That is why this is an
+ * escape hatch and not a timeout-to-error — flipping to "Something went wrong"
+ * while the wallet sheet is still open would be a lie. */
+describe("<WelcomePackageModal> — the signing phase always has an exit", () => {
+  it("hides the close affordance while a signature is fresh", () => {
+    render(
+      <WelcomePackageModal phase="signing" onClaim={vi.fn()} onDismiss={vi.fn()} />,
+    );
+    expect(screen.getByTestId("wp-signing-title")).toBeInTheDocument();
+    expect(screen.queryByTestId("wp-signing-escape")).toBeNull();
+  });
+
+  it("offers a way out once the signature has clearly stalled", () => {
+    vi.useFakeTimers();
+    try {
+      const onDismiss = vi.fn();
+      render(
+        <WelcomePackageModal
+          phase="signing"
+          onClaim={vi.fn()}
+          onDismiss={onDismiss}
+        />,
+      );
+      act(() => {
+        vi.advanceTimersByTime(15_000);
+      });
+      const escape = screen.getByTestId("wp-signing-escape");
+      fireEvent.click(escape);
+      expect(onDismiss).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not arm the escape on any phase other than signing", () => {
+    vi.useFakeTimers();
+    try {
+      render(<WelcomePackageModal phase="idle" onClaim={vi.fn()} onDismiss={vi.fn()} />);
+      act(() => {
+        vi.advanceTimersByTime(15_000);
+      });
+      expect(screen.queryByTestId("wp-signing-escape")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

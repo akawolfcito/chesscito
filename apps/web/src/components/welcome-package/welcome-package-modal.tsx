@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
@@ -7,6 +8,11 @@ import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
 
 export type ClaimPhase = "idle" | "signing" | "success" | "error";
+
+/** How long a signature may sit silent before the modal offers a way out.
+ *  Long enough that a player reading a wallet sheet is never interrupted;
+ *  short enough that a dead provider does not become a locked screen. */
+const SIGNING_GRACE_MS = 12_000;
 
 type Props = {
   onClaim: () => void;
@@ -38,10 +44,42 @@ export function WelcomePackageModal({
   const isSuccess = phase === "success";
   const isError = phase === "error";
 
+  /**
+   * ⛔ THE SIGNING PHASE MUST NEVER BE A DEAD END.
+   *
+   * `claimPhase` only leaves `signing` through `signMessageAsync().then` or
+   * `.catch`. A wallet that neither resolves NOR rejects fires neither, so the
+   * phase sticks forever — and this shell used to mount with
+   * `onClose={isSigning ? undefined : …}`, which left the player with no exit
+   * at all. Reported from the MiniPay smoke on 2026-08-20 ("no tiene salida y
+   * no termina, solo se queda ahí"), on a session whose console was already
+   * showing a provider in a bad state.
+   *
+   * Blocking the close DURING a signature is right. Blocking it FOREVER is not.
+   *
+   * ⚠️ This is an ESCAPE HATCH, not a timeout-to-error. It does not cancel the
+   * pending signature: a slow-but-valid one that lands afterwards still claims
+   * the gift. Flipping to "Something went wrong" while the wallet sheet is
+   * still open would be a lie the player can disprove by finishing the signature.
+   */
+  const [signingStalled, setSigningStalled] = useState(false);
+  useEffect(() => {
+    if (!isSigning) {
+      setSigningStalled(false);
+      return;
+    }
+    const t = window.setTimeout(() => setSigningStalled(true), SIGNING_GRACE_MS);
+    return () => window.clearTimeout(t);
+  }, [isSigning]);
+
+  const canClose = !isSigning || signingStalled;
+
   return (
     <div data-testid="welcome-package-modal">
       <VictoryPopupShell
-        onClose={isSigning ? undefined : (isSuccess ? onSuccess : onDismiss)}
+        onClose={
+          canClose ? (isSuccess ? onSuccess : onDismiss) : undefined
+        }
         ariaLabel={isSuccess ? t("successTitle") : t("title")}
         closeLabel="Close"
       >
@@ -90,6 +128,22 @@ export function WelcomePackageModal({
                 steps={[{ code: "sign" }]}
                 current="sign"
               />
+              {/* ⚠️ Appears only once the signature has clearly stalled — see
+                  `SIGNING_GRACE_MS`. It uses the EXISTING `dismissCta`
+                  ("Later" / "Después"), so this fix ships no new string in
+                  either bundle and cannot go out half-translated.
+                  ⛔ It does NOT cancel the signature: if the wallet answers
+                  afterwards, the gift is still claimed. */}
+              {signingStalled ? (
+                <button
+                  type="button"
+                  data-testid="wp-signing-escape"
+                  onClick={() => onDismiss?.()}
+                  className="arena-result-secondary-action"
+                >
+                  {t("dismissCta")}
+                </button>
+              ) : null}
             </div>
           </>
         ) : isError ? (

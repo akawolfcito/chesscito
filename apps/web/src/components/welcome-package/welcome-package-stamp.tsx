@@ -26,8 +26,24 @@ export function WelcomePackageStamp() {
   }
 
   function handleModalDismiss() {
-    // Never dismiss mid-signing.
-    if (claimPhase === "signing") return;
+    /* ⛔ THIS USED TO BE `if (claimPhase === "signing") return`, and that hard
+       return was the second half of the dead end reported from the MiniPay
+       smoke: the modal offered no exit, and even when one was added here the
+       owner refused it. A signature that neither resolves nor rejects left the
+       player with a screen they could not leave.
+
+       The modal now only offers the escape once the signature has clearly
+       stalled (`SIGNING_GRACE_MS`), so honouring it here cannot interrupt a
+       real signing.
+
+       ⚠️ The phase MUST be reset with it. Leaving it on `signing` would make
+       the next open a fresh trap: `handleClaim` early-returns unless the phase
+       is `idle`, so the Claim button would render and do nothing, forever.
+
+       ⛔ The pending signature is NOT cancelled. If the wallet answers later,
+       `.then` still runs `onClaimed()` and the gift is still claimed — closing
+       the sheet costs the player nothing. */
+    if (claimPhase === "signing") handleRetry();
     setShowModal(false);
   }
 
