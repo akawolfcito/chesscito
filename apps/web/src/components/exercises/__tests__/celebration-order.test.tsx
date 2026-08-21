@@ -102,6 +102,12 @@ const ROOK_LAB: Exercise = {
   obstacles: [],
 };
 
+/* ⚠️ `showLanePathRows` is asked for EXPLICITLY. LEARN stopped drawing lane
+   rows on 2026-08-21 — mini-games live in the Library (`/minigames`) — but the
+   subject of this file is not the separation: it enters lane content through
+   the path because that is the shortest way to reach the code under test.
+   Asking for the rows keeps that entry available without weakening what LEARN
+   actually ships. */
 function renderScreen(labyrinths: Exercise[] = []) {
   return renderWithAppProviders(
     <ContentCatalogProvider
@@ -111,7 +117,7 @@ function renderScreen(labyrinths: Exercise[] = []) {
         descriptions: GENERATED_EXERCISE_DESCRIPTIONS,
       }}
     >
-      <ExercisesScreen />
+      <ExercisesScreen showLanePathRows />
     </ContentCatalogProvider>,
   );
 }

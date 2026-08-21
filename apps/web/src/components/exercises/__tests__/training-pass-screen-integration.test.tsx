@@ -120,9 +120,13 @@ function screenTree(initialContentId?: string) {
         descriptions: GENERATED_EXERCISE_DESCRIPTIONS,
       }}
     >
+      {/* ⚠️ Lane rows asked for explicitly: LEARN stopped drawing them on
+          2026-08-21, and this file asserts the PASS-GATED lane node and its
+          Unlock CTA — which live on that row. See `showLanePathRows`. */}
       <ExercisesScreen
         initialPiece="knight"
         initialContentId={initialContentId}
+        showLanePathRows
       />
     </ContentCatalogProvider>
   );

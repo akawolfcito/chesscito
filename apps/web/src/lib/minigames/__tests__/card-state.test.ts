@@ -2,17 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import { deriveFeaturedCardState } from "@/lib/minigames/card-state";
 import { baselineMiniGamePools } from "@/lib/minigames/pools";
-import { resolveRotation } from "@/lib/minigames/rotation";
+import { resolveChallengePool } from "@/lib/minigames/queue";
 
 const pools = baselineMiniGamePools();
 
 /** `rook-rail-two-roads` is level 4 of the rook lane; its engine siblings are
- *  the other three rook-rail levels. Featuring a mid-lane level is the whole
- *  point of per-challenge rotation, so IN_PROGRESS has to be reachable. */
-const featured = resolveRotation(
-  { id: "t", items: ["rook-rail-two-roads", "bishop-run-2", "queens-1"] },
-  pools,
-)[0];
+ *  the other three rook-rail levels. Any surface may offer a mid-lane level, so
+ *  IN_PROGRESS has to be reachable. */
+const featured = resolveChallengePool(pools).find(
+  (entry) => entry.challengeId === "rook-rail-two-roads",
+)!;
 
 function state(bests: Record<string, Record<string, number>>) {
   return deriveFeaturedCardState({ featured, pools, bestsByPiece: bests });
@@ -24,7 +23,7 @@ describe("deriveFeaturedCardState — Early Access has no locked state", () => {
   });
 
   /** AC-6. A recorded best is the only completion signal, and it survives
-   *  every rotation change (AC-11). */
+   *  any change to what is on screen (AC-11). */
   it("is COMPLETED when the featured challenge itself has a recorded best", () => {
     expect(state({ rook: { "rook-rail-two-roads": 6 } })).toBe("FEATURED_COMPLETED");
   });

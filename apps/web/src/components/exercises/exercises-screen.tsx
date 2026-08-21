@@ -249,6 +249,7 @@ import {
   type TrainingContentRequestSource,
   type TrainingContentSettlement,
 } from "@/lib/training/content-access";
+import type { ChallengeOrigin } from "@/lib/minigames/deep-link";
 import { resolveCoverageStars } from "@/lib/training/content-stars";
 
 // SHOP_ITEMS lives in lib/contracts/shop-catalog.ts so it's testable
@@ -379,12 +380,31 @@ export type ExercisesScreenProps = {
   /** Known Special Training id from `?content=`. The client gate still owns
    *  authorization because the effective pass is wallet-bound. */
   initialContentId?: string;
-  /** True when the route boundary confirmed `initialContentId` is in a shipped
-   *  Mini-games rotation (`resolveMiniGameDeepLink`). Lets the request skip the
-   *  lane's PROGRESSION lock — never its commercial one. Featuring a mid-lane
-   *  level is the point of per-challenge rotation, so `rook-rail-two-roads` has
-   *  to open for a player who has never touched the rook. */
-  initialContentFeatured?: boolean;
+  /** Which Mini-games surface the player arrived from, decided at the route
+   *  boundary (`resolveMiniGameDeepLink`). Drives where a completion RETURNS
+   *  to — Featured goes home, Library goes back to the Library, and a player
+   *  who never left Exercises keeps the exercise-path continuation. */
+  initialContentOrigin?: ChallengeOrigin;
+  /** True when the route boundary confirmed the id is a HEALTHY mini-game
+   *  opened from a Mini-games surface. Lets the request skip the lane's
+   *  PROGRESSION lock — never its commercial one. A mid-lane level is exactly
+   *  what both surfaces offer, so `rook-rail-two-roads` has to open for a
+   *  player who has never touched the rook. */
+  initialContentBypassLock?: boolean;
+  /**
+   * Whether the path drawer draws lane-2 (mini-game) rows.
+   *
+   * ⛔ PRESENTATION ONLY. `buildTrainingPath` always contains every lane node —
+   * mastery, unlocks, stars, stored bests and the badge chain all compute from
+   * exactly the same input either way. This decides what is DRAWN.
+   *
+   * The default is the product rule: LEARN hides them, because a mini-game
+   * sitting in the exercise trail reads as an exercise and the Library
+   * (`/minigames`) is their home. PLAY shows them, because PLAY has no
+   * Mini-games surface — hiding them there would orphan lane-2 instead of
+   * relocating it.
+   */
+  showLanePathRows?: boolean;
 };
 
 /**
@@ -401,7 +421,9 @@ export function ExercisesScreen({
   initialAction,
   initialSheet,
   initialContentId,
-  initialContentFeatured = false,
+  initialContentOrigin = "exercise_path",
+  initialContentBypassLock = false,
+  showLanePathRows = !CHESSCITO_LITE_MODE,
 }: ExercisesScreenProps = {}) {
   const tShopItem = useTranslations("SHOP_ITEM_COPY");
   const tCapture = useTranslations("CAPTURE_COPY");
@@ -3478,7 +3500,7 @@ export function ExercisesScreen({
    * entry. Overwriting on `automatic` would silently demote a featured replay
    * to the exercise path after the first Play again.
    */
-  const completionOriginRef = useRef<"featured_minigame" | "exercise_path" | null>(
+  const completionOriginRef = useRef<ChallengeOrigin | null>(
     null,
   );
 
@@ -3554,10 +3576,10 @@ export function ExercisesScreen({
          badge. Honouring the chained lock here would make the featured card
          bounce straight back to the path, which is the failure the surface was
          built to remove.
-         The id is still bounded by curation (the route boundary only sets this
-         when the id is genuinely in a shipped rotation), the node must still
-         EXIST, and the commercial check above already ran and is untouched. */
-      const bypassProgressionLock = source === "featured";
+         The id is still bounded by the route boundary — which grants these two
+         sources only for a HEALTHY challenge — the node must still EXIST, and
+         the commercial check above already ran and is untouched. */
+      const bypassProgressionLock = source === "featured" || source === "library";
       if (!node || (node.status === "locked" && !bypassProgressionLock)) {
         settleToPath();
         return { action: "missing" as const };
@@ -3592,7 +3614,7 @@ export function ExercisesScreen({
       // already there (replay / continuation), every other source declares one.
       if (source !== "automatic") {
         completionOriginRef.current =
-          source === "featured" ? "featured_minigame" : "exercise_path";
+          source === "featured" || source === "library" ? source : "exercise_path";
       }
 
       implicitContentRequestRef.current = `${selectedPiece}:${contentId}`;
@@ -3623,11 +3645,15 @@ export function ExercisesScreen({
     if (!contentId) return;
     const requestKey = `${selectedPiece}:${contentId}`;
     if (implicitContentRequestRef.current === requestKey) return;
-    // A rotation-vouched deep link is `featured`, which skips the lane's
-    // progression lock. Everything else keeps the source it always had.
+    /* ⛔ THE BYPASS STAYS EARNED AT THE BOUNDARY. The screen adopts a
+       Mini-games source ONLY when the route already granted the bypass — a
+       `?from=library` on a coming-soon or retired id arrives with
+       `initialContentBypassLock === false` and lands on `direct`, keeping its
+       gate. Reading the origin alone here would have moved the trust decision
+       from the resolver into a query string. */
     const source: TrainingContentRequestSource = directContentId
-      ? initialContentFeatured
-        ? "featured"
+      ? initialContentBypassLock && initialContentOrigin !== "exercise_path"
+        ? initialContentOrigin
         : "direct"
       : "restore";
     const result = requestTrainingContent(contentId, source);
@@ -3635,7 +3661,13 @@ export function ExercisesScreen({
       if (directContentId) initialContentRequestRef.current = undefined;
       implicitContentRequestRef.current = requestKey;
     }
-  }, [requestTrainingContent, selectedPiece, trainingPass, initialContentFeatured]);
+  }, [
+    requestTrainingContent,
+    selectedPiece,
+    trainingPass,
+    initialContentOrigin,
+    initialContentBypassLock,
+  ]);
 
   useEffect(() => {
     if (trainingPass.loading) return;
@@ -3684,7 +3716,12 @@ export function ExercisesScreen({
    * ⛔ It selects COPY, never whether copy appears. See `consequenceMessage`.
    */
   const completionSurface: ConsequenceSurface =
-    completionOriginRef.current === "featured_minigame"
+    /* COPY is per SURFACE FAMILY, not per origin: a mini-game completed from
+       the Library is still a mini-game, so both origins share the mini-game
+       wording. The DESTINATION is what differs, and that is decided separately
+       below — the two questions are kept apart on purpose. */
+    completionOriginRef.current === "featured" ||
+    completionOriginRef.current === "library"
       ? "featured_minigame"
       : "exercise_path";
 
@@ -3701,9 +3738,18 @@ export function ExercisesScreen({
        Start Bishop" — unreachable from a featured completion.
        The overlay's X shares this handler, so close and continue agree by
        construction rather than by two matching edits. */
-    if (completionOriginRef.current === "featured_minigame") {
+    if (completionOriginRef.current === "featured") {
       handleExitLabyrinth();
       router.push("/");
+      return;
+    }
+    /* ⛔ A LIBRARY PLAYER MUST NOT LAND IN EXERCISES. They opened a list of
+       mini-games and cleared one; returning them to the exercise path would
+       answer a question they never asked, and would re-create the exact
+       surface-crossing the separation exists to end. */
+    if (completionOriginRef.current === "library") {
+      handleExitLabyrinth();
+      router.push("/minigames");
       return;
     }
 
@@ -4502,7 +4548,15 @@ export function ExercisesScreen({
               shieldCount={shieldCount}
               streakCount={streakCount}
               visibleExerciseIds={visibleExerciseIds}
-              labyrinthNodes={trainingPath.filter((n) => n.kind === "labyrinth")}
+              /* ⛔ FINAL EXERCISES SEPARATION (2026-08-21). In LEARN the path
+                 draws exercises only; every mini-game lives in the Library
+                 (`/minigames`), which lists all 13, so nothing is orphaned.
+                 The rule and the reason live on `showLanePathRows` above. */
+              labyrinthNodes={
+                showLanePathRows
+                  ? trainingPath.filter((n) => n.kind === "labyrinth")
+                  : []
+              }
               labyrinthLabels={specialTrainingLabels}
               onLabyrinthSelect={handleLabyrinthSelect}
               labyrinthAccess={labyrinthAccess}

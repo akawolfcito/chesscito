@@ -9738,6 +9738,162 @@ button.hud-resource-chip:active:not(:disabled) {
   box-shadow: 0 1px 2px rgba(10, 30, 5, 0.45);
 }
 
+/* ⛔ THE LABEL CLAMP IS WHAT LETS THE PLATE CARRY A CHALLENGE TITLE.
+   The tile plate used to hold an ENGINE name — "Rook Rail", "Safe Path", two
+   short words every time. It now holds the authored CHALLENGE title, and those
+   are content: "Two Roads" is fine, "Turn to the Star" is four words. The base
+   `.reward-tile-label` has `word-break: break-word` and NO clamp, so a long
+   title would wrap to four lines and grow the tile — silently breaking the
+   50px rail geometry the founder approved, for a reason no test would report.
+   Two lines with an ellipsis holds the geometry by construction. */
+.hub-minigames-tiles .reward-tile-label {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* `anywhere` would split "Star" mid-word before it would wrap; titles are
+     prose, so break at spaces and hyphenate only when a single word cannot fit. */
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+/* Library entry — the index tile's row. Deliberately NOT a `.reward-tile`:
+   it opens a list, not a game, and giving it the challenge silhouette would
+   make it read as a fourth featured card. */
+.hub-minigames-view-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 4px auto 0;
+  padding: 3px 10px;
+  border: 1px solid rgba(243, 230, 196, 0.34);
+  border-radius: 999px;
+  background: rgba(6, 17, 7, 0.34);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #f3e6c4;
+  text-shadow: 0 1px 3px rgba(6, 17, 7, 0.9);
+}
+
+.hub-minigames-progress {
+  opacity: 0.72;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ── Mini-games Library (`/minigames`) ────────────────────────────────────
+   Mobile-first inside the 390px app frame, like every other LEARN surface. */
+.minigames-library {
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  padding: 12px 14px 96px;
+  color: #f3e6c4;
+}
+
+.minigames-library-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.minigames-library-back {
+  padding: 4px 10px;
+  border: 1px solid rgba(243, 230, 196, 0.34);
+  border-radius: 999px;
+  background: rgba(6, 17, 7, 0.34);
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: inherit;
+}
+
+.minigames-library-title {
+  flex: 1;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 3px rgba(6, 17, 7, 0.9);
+}
+
+.minigames-library-progress {
+  font-size: 0.62rem;
+  font-weight: 700;
+  opacity: 0.72;
+}
+
+.minigames-library-group {
+  margin-bottom: 14px;
+}
+
+.minigames-library-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.86;
+}
+
+.minigames-library-group-icon {
+  display: block;
+  width: 20px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.minigames-library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.minigames-library-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  /* 44px is the tap-target floor the rest of the app holds to. */
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid rgba(243, 230, 196, 0.22);
+  border-radius: 12px;
+  background: rgba(6, 17, 7, 0.4);
+  text-align: left;
+  color: inherit;
+}
+
+.minigames-library-row-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+/* A completed row is still a live, tappable row — replay is the point. The
+   marker is a quiet label, never a lock and never a dimmed state. */
+.minigames-library-row-done {
+  flex-shrink: 0;
+  font-size: 0.56rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+}
+
 .hub-minigames-all-clear {
   margin: 2px 0 0;
   text-align: center;

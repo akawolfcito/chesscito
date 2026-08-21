@@ -12,6 +12,7 @@ const CARDS: MiniGamesCard[] = [
     challengeId: "rook-rail-two-roads",
     engineId: "rook-rail",
     piece: "rook",
+    title: "Two Roads",
     state: "FEATURED_AVAILABLE",
     isNew: true,
   },
@@ -19,6 +20,7 @@ const CARDS: MiniGamesCard[] = [
     challengeId: "bishop-run-2",
     engineId: "pivot-run",
     piece: "bishop",
+    title: "Turn to the Star",
     state: "FEATURED_IN_PROGRESS",
     isNew: false,
   },
@@ -26,6 +28,7 @@ const CARDS: MiniGamesCard[] = [
     challengeId: "queens-1",
     engineId: "n-queens",
     piece: "queen",
+    title: "The Quiet Room",
     state: "FEATURED_COMPLETED",
     isNew: true,
   },
@@ -34,11 +37,13 @@ const CARDS: MiniGamesCard[] = [
 function renderSection(props: Partial<Parameters<typeof MiniGamesSection>[0]> = {}) {
   return render(
     <MiniGamesSection
-      rotationId="early-access-1"
       cards={CARDS}
       comingSoon={["knight-tour", "promotion-run"]}
-      rotationComplete={false}
+      exhausted={false}
+      completedCount={4}
+      poolSize={13}
       onPlay={vi.fn()}
+      onViewAll={vi.fn()}
       {...props}
     />,
   );
@@ -54,11 +59,11 @@ describe("MiniGamesSection — structure", () => {
     }
   });
 
-  it("carries the rotation id on the section so a screenshot can be attributed", () => {
+  it("carries the exhausted flag on the section so a screenshot can be attributed", () => {
     renderSection();
     expect(screen.getByTestId("minigames-section")).toHaveAttribute(
-      "data-rotation-id",
-      "early-access-1",
+      "data-exhausted",
+      "false",
     );
   });
 
@@ -177,7 +182,7 @@ describe("MiniGamesSection — content freshness (SLICE B.2 / PART 8)", () => {
   it("shows the all-cleared note only when every featured challenge is done", () => {
     renderSection();
     expect(screen.queryByTestId("minigames-all-clear")).not.toBeInTheDocument();
-    renderSection({ rotationComplete: true });
+    renderSection({ exhausted: true });
     expect(screen.getByTestId("minigames-all-clear")).toBeInTheDocument();
   });
 });
@@ -241,5 +246,85 @@ describe("MiniGamesSection — start classification (AC-12)", () => {
     renderSection({ onPlay });
     fireEvent.click(screen.getByTestId("minigame-card-queens-1"));
     expect(onPlay).toHaveBeenCalledTimes(1);
+  });
+});
+
+/* ── Personal queue: naming, Library entry, progress ─────────────────────── */
+
+describe("MiniGamesSection — the tile names the CHALLENGE, not the game family", () => {
+  /** ⛔ The defect this closes: the plate read "Rook Rail" — the ENGINE — while
+   *  the tile opened ONE level of it. A player who had just cleared "Two Roads"
+   *  came back to a tile still labelled "Rook Rail" and could not tell whether
+   *  it was the same thing. */
+  it("prints the challenge title on the plate", () => {
+    renderSection();
+    for (const card of CARDS) {
+      expect(
+        screen.getByTestId(`minigame-card-${card.challengeId}`),
+      ).toHaveTextContent(card.title);
+    }
+  });
+
+  it("keeps the engine as the SECOND term of the accessible name", () => {
+    renderSection();
+    const tile = screen.getByTestId("minigame-card-rook-rail-two-roads");
+    const label = tile.getAttribute("aria-label") ?? "";
+    expect(label).toContain("Two Roads");
+    expect(label).toContain("Rook Rail");
+    // Challenge first, family second — the hierarchy is the point.
+    expect(label.indexOf("Two Roads")).toBeLessThan(label.indexOf("Rook Rail"));
+  });
+
+  it("still exposes the engine to tests and CSS without printing it twice", () => {
+    renderSection();
+    expect(screen.getByTestId("minigame-card-queens-1")).toHaveAttribute(
+      "data-engine",
+      "n-queens",
+    );
+  });
+});
+
+describe("MiniGamesSection — Library entry", () => {
+  it("offers View all, which is what keeps the other ten reachable", () => {
+    const onViewAll = vi.fn();
+    renderSection({ onViewAll });
+    fireEvent.click(screen.getByTestId("minigames-view-all"));
+    expect(onViewAll).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows ONE progress signal and no dashboard", () => {
+    renderSection({ completedCount: 4, poolSize: 13 });
+    expect(screen.getByTestId("minigames-progress")).toHaveTextContent("4/13");
+  });
+
+  it("names the progress for a screen reader", () => {
+    renderSection({ completedCount: 4, poolSize: 13 });
+    expect(screen.getByTestId("minigames-progress")).toHaveAttribute(
+      "aria-label",
+      "4 of 13 mini-games completed",
+    );
+  });
+});
+
+describe("MiniGamesSection — exhausted pool", () => {
+  /** ⛔ R-7. The section returns null on zero cards, so an exhausted pool that
+   *  produced an empty list would delete the whole group from the home —
+   *  "you cleared everything" reading exactly like "mini-games were removed". */
+  it("still renders its cards and adds the all-clear line", () => {
+    renderSection({ exhausted: true });
+    expect(screen.getByTestId("minigames-all-clear")).toBeInTheDocument();
+    expect(screen.getAllByTestId(/^minigame-card-/)).toHaveLength(CARDS.length);
+  });
+
+  it("says nothing about when more content arrives", () => {
+    renderSection({ exhausted: true });
+    const text = screen.getByTestId("minigames-all-clear").textContent ?? "";
+    // ⛔ No countdown, no date, no "tomorrow": the product has not promised one.
+    expect(text).not.toMatch(/tomorrow|soon|days?|hours?|\d\s*(d|h|m)\b|next week/i);
+  });
+
+  it("shows no all-clear line while anything is left", () => {
+    renderSection({ exhausted: false });
+    expect(screen.queryByTestId("minigames-all-clear")).toBeNull();
   });
 });

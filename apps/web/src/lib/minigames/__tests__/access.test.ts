@@ -4,34 +4,31 @@ import {
   EARLY_ACCESS_POLICY,
   resolveMiniGamesAccess,
 } from "@/lib/minigames/access";
-import { getActiveRotation } from "@/lib/minigames/rotation";
 
 /**
  * AC-5 — the invariant this whole slice is built around.
  *
- * Early Access is FREE. This file is the seam a future access policy would
- * plug into (`5 Peones per rotation`, `5 Peones for 7 days`, …). Today it
- * answers `allowed` unconditionally, reads no wallet, no ledger, no balance
- * and no date, and touches no payment code.
+ * Early Access is FREE. This file is the ALLOWED/DENIED seam. Today it answers
+ * `allowed` unconditionally, reads no wallet, no ledger, no balance and no
+ * date, and touches no payment code.
+ *
+ * ⚠️ It no longer takes a rotation (2026-08-21): there are no rotations. The
+ * ALLOWANCE question — how much free content — moved to
+ * `resolveConsumptionPolicy` in `lib/minigames/queue.ts`.
  */
 describe("resolveMiniGamesAccess — the monetization seam, FREE during Early Access", () => {
-  it("allows every rotation under the early-access policy", () => {
-    const access = resolveMiniGamesAccess(getActiveRotation(), {});
+  it("allows under the early-access policy", () => {
+    const access = resolveMiniGamesAccess({});
     expect(access.allowed).toBe(true);
     expect(access.policy).toBe(EARLY_ACCESS_POLICY);
   });
 
-  it("allows an arbitrary rotation — access does not depend on WHICH rotation", () => {
-    expect(
-      resolveMiniGamesAccess({ id: "some-future-rotation", items: [] }, {}).allowed,
-    ).toBe(true);
+  it("allows with no argument at all — there is no player state to read", () => {
+    expect(resolveMiniGamesAccess().allowed).toBe(true);
   });
 
-  it("is pure: the same inputs give the same answer, and there is no player state to read", () => {
-    const rotation = getActiveRotation();
-    expect(resolveMiniGamesAccess(rotation, {})).toEqual(
-      resolveMiniGamesAccess(rotation, {}),
-    );
+  it("is pure: the same input gives the same answer", () => {
+    expect(resolveMiniGamesAccess({})).toEqual(resolveMiniGamesAccess({}));
   });
 
   /** The seam's contract: it is the ONLY place that may deny. If a future

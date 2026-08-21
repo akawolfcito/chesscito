@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveMiniGameDeepLink } from "@/lib/minigames/deep-link";
+import {
+  parseChallengeOrigin,
+  resolveMiniGameDeepLink,
+} from "@/lib/minigames/deep-link";
 import { baselineMiniGamePools } from "@/lib/minigames/pools";
-import { ACTIVE_ROTATION_ID, getActiveRotation } from "@/lib/minigames/rotation";
+import { resolveChallengePool } from "@/lib/minigames/queue";
 
 const pools = baselineMiniGamePools();
-const featuredId = getActiveRotation().items[0];
+const healthyId = resolveChallengePool(pools)[0]!.challengeId;
 
 /**
  * AC-7 / AC-8 / PART 11.
@@ -69,54 +72,79 @@ describe("resolveMiniGameDeepLink — every projected lane, not just one", () =>
   });
 });
 
-describe("resolveMiniGameDeepLink — the `featured` flag is EARNED, never asserted", () => {
-  it("marks featured only when the id is in the named rotation", () => {
-    const resolved = resolveMiniGameDeepLink({
-      contentId: featuredId,
-      rotationId: ACTIVE_ROTATION_ID,
-      pools,
+describe("origin — three destinations, not one boolean", () => {
+  it.each([
+    ["featured", "featured"],
+    ["library", "library"],
+  ])("honours ?from=%s", (raw, expected) => {
+    expect(parseChallengeOrigin(raw)).toBe(expected);
+  });
+
+  /* ⛔ `exercise_path` is the FALLBACK and the URL may never assert it. Anything
+     unrecognised — absent, empty, a typo, a forged value — lands there, which
+     is the conservative end: it keeps the lane's progression lock. */
+  it.each([undefined, "", "exercise_path", "EXERCISE_PATH", "Featured", "1", "true"])(
+    "falls back to exercise_path for %s",
+    (raw) => {
+      expect(parseChallengeOrigin(raw as string | undefined)).toBe("exercise_path");
+    },
+  );
+
+  it("defaults to exercise_path when the link names no origin", () => {
+    const resolved = resolveMiniGameDeepLink({ contentId: healthyId, pools });
+    expect(resolved).toMatchObject({
+      origin: "exercise_path",
+      bypassProgressionLock: false,
     });
-    expect(resolved).toMatchObject({ featured: true, rotationId: ACTIVE_ROTATION_ID });
+  });
+});
+
+describe("the progression bypass is EARNED, never asserted", () => {
+  it("grants it to a healthy challenge opened from a Mini-games surface", () => {
+    for (const origin of ["featured", "library"] as const) {
+      const resolved = resolveMiniGameDeepLink({ contentId: healthyId, origin, pools });
+      expect(resolved).toMatchObject({ origin, bypassProgressionLock: true });
+    }
   });
 
-  /** ⛔ The bypass must not be forgeable. `?featured=` is a client-supplied
-   *  string; if it were trusted, any lane id could skip its gate. It is only
-   *  honoured when the id is genuinely in that rotation. */
-  it("refuses the featured flag for an id that rotation does not feature", () => {
-    const notFeatured = "rook-rail-two-turns";
-    expect(getActiveRotation().items).not.toContain(notFeatured);
-    const resolved = resolveMiniGameDeepLink({
-      contentId: notFeatured,
-      rotationId: ACTIVE_ROTATION_ID,
-      pools,
-    });
-    expect(resolved).toMatchObject({ featured: false });
-    expect(resolved!.rotationId).toBeNull();
+  it("grants it to EVERY healthy challenge, which is what makes the Library safe", () => {
+    // The Library lists all 13. If the bypass only covered a curated few, the
+    // other ten would be listed and then refused — visibly orphaned content.
+    for (const entry of resolveChallengePool(pools)) {
+      const resolved = resolveMiniGameDeepLink({
+        contentId: entry.challengeId,
+        origin: "library",
+        pools,
+      });
+      expect(resolved?.bypassProgressionLock).toBe(true);
+    }
   });
 
-  it("refuses the featured flag for an unknown rotation id", () => {
-    const resolved = resolveMiniGameDeepLink({
-      contentId: featuredId,
-      rotationId: "no-such-rotation",
-      pools,
-    });
-    expect(resolved).toMatchObject({ featured: false, rotationId: null });
-  });
-
-  it("is not featured when no rotation is named — a bare deep link keeps its gate", () => {
-    const resolved = resolveMiniGameDeepLink({ contentId: featuredId, pools });
-    expect(resolved).toMatchObject({ featured: false, rotationId: null });
-  });
-
-  /** AC-9 as a routing guarantee: a coming-soon id can be reached by a hand-typed
-   *  URL (it is real content) but can never be FEATURED, because it cannot be in
-   *  a rotation. */
-  it("never marks a coming-soon challenge featured", () => {
+  /** ⛔ Not forgeable. `?from=` is client-supplied, so the STATUS decides. */
+  it("refuses it for a coming-soon engine even with ?from=featured", () => {
     const resolved = resolveMiniGameDeepLink({
       contentId: "knight-tour-1",
-      rotationId: ACTIVE_ROTATION_ID,
+      origin: "featured",
       pools,
     });
-    expect(resolved).toMatchObject({ featured: false });
+    expect(resolved).toMatchObject({ origin: "featured", bypassProgressionLock: false });
+  });
+
+  it("refuses it for a retired id by refusing the link outright", () => {
+    for (const id of ["bishop-lab-3", "knight-lab-1", "no-such-id"]) {
+      expect(
+        resolveMiniGameDeepLink({ contentId: id, origin: "featured", pools }),
+      ).toBeNull();
+    }
+  });
+
+  it("refuses it for a lane-1 exercise id, forged origin or not", () => {
+    expect(
+      resolveMiniGameDeepLink({
+        contentId: pools.exercises.rook[0].id,
+        origin: "library",
+        pools,
+      }),
+    ).toBeNull();
   });
 });

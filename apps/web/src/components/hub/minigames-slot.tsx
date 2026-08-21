@@ -10,11 +10,10 @@ import {
 import { PLAYABLE_PIECES } from "@/lib/game/exercises";
 import { getLabyrinthBestsMap } from "@/lib/game/labyrinth-progress";
 import {
+  challengeHref,
   deriveMiniGamesHubView,
-  featuredChallengeHref,
 } from "@/lib/minigames/hub-cards";
 import { baselineMiniGamePools } from "@/lib/minigames/pools";
-import { getActiveRotation } from "@/lib/minigames/rotation";
 import { track } from "@/lib/telemetry";
 
 /**
@@ -30,7 +29,6 @@ const OPEN_EVENT_KEY = "chesscito:minigames-open-fired";
 
 export function MiniGamesSlot() {
   const router = useRouter();
-  const rotation = useMemo(() => getActiveRotation(), []);
   const pools = useMemo(() => baselineMiniGamePools(), []);
 
   /* Bests live in localStorage, so they are read AFTER mount. Rendering before
@@ -49,11 +47,8 @@ export function MiniGamesSlot() {
   }, []);
 
   const view = useMemo(
-    () =>
-      bestsByPiece
-        ? deriveMiniGamesHubView({ rotation, pools, bestsByPiece })
-        : null,
-    [bestsByPiece, rotation, pools],
+    () => (bestsByPiece ? deriveMiniGamesHubView({ pools, bestsByPiece }) : null),
+    [bestsByPiece, pools],
   );
 
   /* `minigames_open` — the H1 denominator.
@@ -66,14 +61,16 @@ export function MiniGamesSlot() {
    * failure mode the "no event on render" rule exists to prevent, and this
    * event does not have it.
    *
-   * It is not redundant with `hub_view`: only this one carries `rotation_id`,
-   * which is what makes a usage change attributable to a rotation change. */
+   * ⚠️ `rotation_id` IS GONE (2026-08-21) — there is no rotation to attribute
+   * to. What replaces it is `completed`/`pool_size`: the player's own position
+   * in the pool, which is the thing a personal queue makes a usage read
+   * comparable across. Same event family, same volume, no new event. */
   const openFiredRef = useRef(false);
   useEffect(() => {
     if (!view || view.cards.length === 0) return;
     if (openFiredRef.current) return;
     openFiredRef.current = true;
-    const value = `${view.rotationId}`;
+    const value = `personal:${view.completedCount}`;
     try {
       if (window.sessionStorage.getItem(OPEN_EVENT_KEY) === value) return;
       window.sessionStorage.setItem(OPEN_EVENT_KEY, value);
@@ -81,7 +78,11 @@ export function MiniGamesSlot() {
       // Private-mode iframes throw on sessionStorage. Ship the event anyway —
       // the per-mount ref still bounds it — rather than lose the denominator.
     }
-    track("minigames_open", { rotation_id: view.rotationId });
+    track("minigames_open", {
+      completed: view.completedCount,
+      pool_size: view.poolSize,
+      exhausted: view.exhausted,
+    });
   }, [view]);
 
   if (!view || view.cards.length === 0) return null;
@@ -99,19 +100,20 @@ export function MiniGamesSlot() {
       challenge_id: intent.challengeId,
       game_id: intent.engineId,
       piece: intent.piece,
-      rotation_id: view.rotationId,
       entry: intent.entry,
     });
-    router.push(featuredChallengeHref(intent.challengeId, view.rotationId));
+    router.push(challengeHref(intent.challengeId, "featured"));
   };
 
   return (
     <MiniGamesSection
-      rotationId={view.rotationId}
       cards={view.cards}
       comingSoon={view.comingSoon}
-      rotationComplete={view.rotationComplete}
+      exhausted={view.exhausted}
+      completedCount={view.completedCount}
+      poolSize={view.poolSize}
       onPlay={handlePlay}
+      onViewAll={() => router.push("/minigames")}
     />
   );
 }

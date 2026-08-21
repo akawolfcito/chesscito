@@ -9,13 +9,14 @@
  *
  * Completion is read from the existing per-piece best map
  * (`chesscito:labyrinth-best:{piece}`), passed in rather than read, so this
- * stays pure and so a rotation change can never revoke a completion: the map is
- * keyed by challenge id and this module never writes it.
+ * stays pure and so nothing about which challenges are on screen can ever
+ * revoke a completion: the map is keyed by challenge id and this module never
+ * writes it.
  */
 
 import { engineChallenges } from "@/lib/minigames/catalog";
 import type { MiniGamePools } from "@/lib/minigames/pools";
-import type { FeaturedChallenge } from "@/lib/minigames/rotation";
+import type { FeaturedChallenge } from "@/lib/minigames/queue";
 
 export type FeaturedCardState =
   | "FEATURED_AVAILABLE"

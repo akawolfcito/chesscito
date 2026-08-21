@@ -63,12 +63,19 @@ const PINNED_TODAY = "2026-08-05";
 
 /** One card per state the Mini-games rail can show, so a regression in any of
  *  the three skins breaks a photo. `isNew` is set on exactly one so the corner
- *  flag is covered without the whole rail wearing it. */
+ *  flag is covered without the whole rail wearing it.
+ *
+ *  ⚠️ TITLES ARE FIXTURE STRINGS, NOT AUTHORED ONES, and the LONG one is the
+ *  point: the tile plate now carries a CHALLENGE title, and titles are content
+ *  that can be four words. "A Very Long Challenge Name" is what makes the
+ *  two-line clamp visible in the photo — a fixture of short titles would
+ *  photograph a rail that holds and ship one that does not. */
 const MINIGAME_CARDS: MiniGamesCard[] = [
   {
     challengeId: "vr-a",
     engineId: "rook-rail",
     piece: "rook",
+    title: "Two Roads",
     state: "FEATURED_AVAILABLE",
     isNew: true,
   },
@@ -76,6 +83,7 @@ const MINIGAME_CARDS: MiniGamesCard[] = [
     challengeId: "vr-b",
     engineId: "pivot-run",
     piece: "bishop",
+    title: "A Very Long Challenge Name",
     state: "FEATURED_IN_PROGRESS",
     isNew: false,
   },
@@ -83,6 +91,7 @@ const MINIGAME_CARDS: MiniGamesCard[] = [
     challengeId: "vr-c",
     engineId: "n-queens",
     piece: "queen",
+    title: "Quiet Room",
     state: "FEATURED_COMPLETED",
     isNew: false,
   },
@@ -299,11 +308,13 @@ export function LearnHubFixture({ variant }: { variant: LearnHubVariant }) {
          a content edit would turn four baselines red with no code behind it. */
       miniGamesSlot={
         <MiniGamesSection
-          rotationId="vr-fixture"
           cards={MINIGAME_CARDS}
           comingSoon={["knight-tour", "promotion-run"]}
-          rotationComplete={false}
+          exhausted={false}
+          completedCount={4}
+          poolSize={13}
           onPlay={noop}
+          onViewAll={noop}
         />
       }
       primaryFocus={{ onPress: noop, contentLoop: v.contentLoop, isHydrated: true }}

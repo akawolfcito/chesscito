@@ -20,15 +20,22 @@ export type TrainingContentRequestSource =
   | "direct"
   | "restore"
   | "automatic"
-  /** A curated Mini-games card or its deep link, vouched for by a shipped
-   *  rotation (`resolveMiniGameDeepLink`). The SCREEN lets this source skip the
-   *  lane's progression lock — featuring a mid-lane level is the whole point of
-   *  per-challenge rotation.
+  /* The two Mini-games surfaces. Both skip the lane's PROGRESSION lock —
+   * every mini-game is a mid-lane level to somebody, and the audience these
+   * surfaces exist to reach has never claimed the piece's badge.
    *
-   *  ⛔ It skips PROGRESSION only. The commercial check above runs for it
-   *  exactly as for every other source, and it may NOT open checkout: a card
-   *  tap on the hub is an explicit intent to PLAY, never to buy. */
-  | "featured";
+   * ⛔ They skip PROGRESSION only. The commercial check runs for them exactly
+   * as for every other source, and neither may open checkout: opening a
+   * mini-game is an explicit intent to PLAY, never to buy.
+   *
+   * ⚠️ THEY ARE TWO, NOT ONE, and the split is not cosmetic: it is what decides
+   * where a completion RETURNS to. Collapsing them would drop a Library player
+   * back into the Exercises path — the exact defect the personal-queue pass was
+   * built to close. The screen NEVER infers them from the URL; the route
+   * boundary grants them (`resolveMiniGameDeepLink`) and only for a healthy
+   * challenge, so a hand-typed `?from=` buys nothing. */
+  | "featured"
+  | "library";
 
 export type TrainingContentRequestResult =
   | { action: "start"; content: Exercise; attemptGrantId: string | null }

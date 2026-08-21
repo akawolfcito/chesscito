@@ -243,6 +243,12 @@ type Pools = {
   promotionRun?: Exercise[];
 };
 
+/* ⚠️ `showLanePathRows` is asked for EXPLICITLY. LEARN stopped drawing lane
+   rows on 2026-08-21 — mini-games live in the Library (`/minigames`) — but the
+   subject of this file is not the separation: it enters lane content through
+   the path because that is the shortest way to reach the code under test.
+   Asking for the rows keeps that entry available without weakening what LEARN
+   actually ships. */
 function renderScreen(pools: Pools = {}) {
   return renderWithAppProviders(
     <ContentCatalogProvider
@@ -263,7 +269,7 @@ function renderScreen(pools: Pools = {}) {
           : {}),
       }}
     >
-      <ExercisesScreen />
+      <ExercisesScreen showLanePathRows />
     </ContentCatalogProvider>,
   );
 }

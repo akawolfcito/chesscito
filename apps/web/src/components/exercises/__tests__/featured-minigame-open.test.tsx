@@ -129,7 +129,8 @@ function renderScreen(args: {
     >
       <ExercisesScreen
         initialContentId={args.contentId}
-        initialContentFeatured={args.featured}
+        initialContentOrigin={args.featured ? "featured" : "exercise_path"}
+        initialContentBypassLock={args.featured}
       />
     </ContentCatalogProvider>,
   );

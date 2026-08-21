@@ -2,6 +2,7 @@ import { StrictMode, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 
+import { writeLastTrainingContentId } from "@/lib/training/content-access";
 import { renderWithAppProviders } from "@/test-utils/render-with-app-providers";
 import { ContentCatalogProvider } from "@/lib/content/catalog-context";
 import { EXERCISES, LABYRINTHS } from "@/lib/game/exercises";
@@ -121,7 +122,18 @@ const FEATURED: Exercise = {
 
 /** The same tree under `<StrictMode>`, which double-invokes every effect —
  *  exactly what `next dev` does and what production does NOT. */
-function renderScreenStrict(args: { contentId?: string; featured: boolean }) {
+type RenderArgs = {
+  contentId?: string;
+  featured: boolean;
+  /** ⚠️ The exercise-path entry into lane content is the PATH DRAWER, and
+   *  LEARN stopped drawing lane rows on 2026-08-21 — mini-games live in the
+   *  Library. The three tests below are about EXERCISE-PATH origin semantics,
+   *  which still ship in PLAY, so they ask for the rows explicitly. Everything
+   *  else in this file runs on the LEARN default. */
+  showLanePathRows?: boolean;
+};
+
+function renderScreenStrict(args: RenderArgs) {
   return renderWithAppProviders(
     <StrictMode>
       <ContentCatalogProvider
@@ -134,14 +146,16 @@ function renderScreenStrict(args: { contentId?: string; featured: boolean }) {
         <ExercisesScreen
           initialPiece="rook"
           initialContentId={args.contentId}
-          initialContentFeatured={args.featured}
+          initialContentOrigin={args.featured ? "featured" : "exercise_path"}
+          initialContentBypassLock={args.featured}
+          showLanePathRows={args.showLanePathRows}
         />
       </ContentCatalogProvider>
     </StrictMode>,
   );
 }
 
-function renderScreen(args: { contentId?: string; featured: boolean }) {
+function renderScreen(args: RenderArgs) {
   return renderWithAppProviders(
     <ContentCatalogProvider
       value={{
@@ -153,7 +167,9 @@ function renderScreen(args: { contentId?: string; featured: boolean }) {
       <ExercisesScreen
         initialPiece="rook"
         initialContentId={args.contentId}
-        initialContentFeatured={args.featured}
+        initialContentOrigin={args.featured ? "featured" : "exercise_path"}
+        initialContentBypassLock={args.featured}
+        showLanePathRows={args.showLanePathRows}
       />
     </ContentCatalogProvider>,
   );
@@ -375,12 +391,20 @@ describe("featured completion boundary", () => {
   /* ── AC-6 ──────────────────────────────────────────────────────────────── */
   it("AC-6: an exercise-path entry keeps the existing continuation, byte for byte", async () => {
     seedRookProgress();
-    // ⛔ Entered through the PATH DRAWER, not a deep link. A non-featured
+    // ⛔ Entered through the CONTEXTUAL PIN, not a deep link. A non-featured
     // `?content=` with stored progress hits the pre-existing hydration race
     // documented in the audit (§1.3) and never mounts — testing the
-    // continuation through it would assert nothing. The drawer tap is also the
-    // real exercise-path entry.
-    renderScreen({ contentId: undefined, featured: false });
+    // continuation through it would assert nothing.
+    // ⚠️ It used to be the path drawer. Since the 2026-08-21 separation LEARN
+    // draws no lane rows, so the pin ("Enter Labyrinth", source `automatic`) is
+    // what an exercise-path entry into lane content now IS.
+    /* ⚠️ RESTORE, not a deep link and no longer the drawer. A non-featured
+       `?content=` with stored progress hits the pre-existing hydration race
+       (audit §1.3) and never mounts; the drawer tap stopped existing with the
+       2026-08-21 separation. `restore` is the remaining exercise-path entry,
+       and it records the SAME `exercise_path` origin the drawer tap did —
+       which is the only thing this test is about. */
+    renderScreen({ contentId: undefined, featured: false, showLanePathRows: true });
     await settled();
 
     fireEvent.click(screen.getByTestId("piece-chip-trigger"));
@@ -449,7 +473,7 @@ describe("featured completion boundary", () => {
 
   it("AC-12: an exercise-path completion is labelled EXERCISE", async () => {
     seedRookProgress();
-    renderScreen({ contentId: undefined, featured: false });
+    renderScreen({ contentId: undefined, featured: false, showLanePathRows: true });
     await settled();
 
     fireEvent.click(screen.getByTestId("piece-chip-trigger"));
@@ -517,7 +541,9 @@ describe("featured completion boundary", () => {
    * proxy and the test does not reach into internals. */
   it("SL-1: leaving lane content for an exercise drops the featured origin", async () => {
     seedRookProgress();
-    renderScreen({ contentId: FEATURED.id, featured: true });
+    // Rows shown: this chain walks OUT of the mini-game and back IN through
+    // the path, which is the PLAY-shaped entry the finding was traced on.
+    renderScreen({ contentId: FEATURED.id, featured: true, showLanePathRows: true });
     await settled();
     expect(screen.queryByTestId(BOARD_MOUNTED)).toBeInTheDocument();
 

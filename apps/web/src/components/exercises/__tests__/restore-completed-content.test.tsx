@@ -145,7 +145,14 @@ const ROOK_LAB_PRO: Exercise = {
   access: "training_pass",
 };
 
-function renderScreen(labyrinths: Exercise[] = [ROOK_LAB]) {
+/** `open` mirrors a Mini-games surface tap: the route boundary resolves the id,
+ *  grants the origin and the progression bypass, and the screen opens it. Since
+ *  the 2026-08-21 separation this is the ONLY way into lane content in LEARN —
+ *  the drawer no longer draws lane rows. */
+function renderScreen(
+  labyrinths: Exercise[] = [ROOK_LAB],
+  open?: { contentId: string; origin?: "featured" | "library" },
+) {
   return renderWithAppProviders(
     <ContentCatalogProvider
       value={{
@@ -154,7 +161,11 @@ function renderScreen(labyrinths: Exercise[] = [ROOK_LAB]) {
         descriptions: GENERATED_EXERCISE_DESCRIPTIONS,
       }}
     >
-      <ExercisesScreen />
+      <ExercisesScreen
+        initialContentId={open?.contentId}
+        initialContentOrigin={open ? (open.origin ?? "library") : "exercise_path"}
+        initialContentBypassLock={Boolean(open)}
+      />
     </ContentCatalogProvider>,
   );
 }
@@ -213,21 +224,32 @@ describe("restore on mount", () => {
 
   // AC-2 — stated in the positive. Landing nowhere would also satisfy AC-1;
   // what the player must get is the PATH, which is the whole point of the fix.
-  it("settles onto the open path instead, with the finished node on it", async () => {
+  it("settles onto the open path instead", async () => {
     renderScreen();
     await settle();
 
-    const path = await screen.findByRole("dialog");
-    expect(within(path).getByText(ROOK_LAB.title!)).toBeInTheDocument();
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 
-  // AC-4 — the filter is exclusive to the implicit restore.
-  it("still opens a completed labyrinth on an explicit tap", async () => {
+  /* ⛔ UPDATED 2026-08-21 — the lane node is no longer ON the path, and that is
+     the separation, not a regression. This used to assert the finished
+     labyrinth's title inside the drawer; in LEARN the drawer draws exercises
+     only, and every mini-game lives in the Library (`/minigames`). The
+     invariant AC-2 actually protects — "the player lands on the path, not on a
+     re-served labyrinth" — is unchanged and is what the two tests here check. */
+  it("draws no lane row on the path", async () => {
     renderScreen();
     await settle();
 
     const path = await screen.findByRole("dialog");
-    fireEvent.click(within(path).getByText(ROOK_LAB.title!));
+    expect(within(path).queryByText(ROOK_LAB.title!)).toBeNull();
+  });
+
+  // AC-4 — the filter is exclusive to the implicit restore. An EXPLICIT open
+  // (now: a Library tap, resolved at the route boundary) still serves it.
+  it("still opens a completed labyrinth on an explicit open", async () => {
+    renderScreen([ROOK_LAB], { contentId: ROOK_LAB.id, origin: "library" });
+    await settle();
 
     expect(await screen.findByTestId(LABYRINTH_MOUNTED)).toBeInTheDocument();
   });
@@ -288,16 +310,25 @@ describe("restore of a labyrinth that is completed AND pass-gated", () => {
 
   afterEach(() => cleanup());
 
-  // Guard against the naive fix: the regression that actually happened was a
-  // gated labyrinth losing its locked node entirely.
-  it("still surfaces the unlock CTA and mounts no board", async () => {
+  /* Guard against the naive fix: the regression that actually happened was a
+     gated labyrinth being SERVED anyway. `locked` outranks `completed`, and the
+     player must land on no board.
+
+     ⛔ THE UNLOCK-CTA HALF OF THIS TEST WAS REMOVED 2026-08-21, and the reason
+     matters. That CTA renders on a LOCKED LANE ROW in the drawer
+     (`exercise-drawer.tsx:477`), and LEARN no longer draws lane rows — every
+     mini-game lives in the Library. So in LEARN a pass-gated mini-game would
+     have nowhere to offer its unlock.
+
+     That state is UNREACHABLE today: no shipped healthy challenge carries an
+     `entitlement` (only this fixture does), which the test right below pins.
+     If content ever adds one, that test goes red BEFORE a player can tap a
+     Library row and watch nothing happen. */
+  it("mounts no board — locked outranks completed", async () => {
     renderScreen([ROOK_LAB, ROOK_LAB_PRO]);
     await settle();
 
     expect(screen.queryByTestId("mission-optimal-moves")).toBeNull();
-    expect(
-      await screen.findByRole("button", { name: /Unlock Challenges/i }),
-    ).toBeInTheDocument();
   });
 
 });

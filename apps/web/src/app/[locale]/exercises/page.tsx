@@ -28,11 +28,11 @@ type SearchParams = {
   /** Direct Special Training selection. Known ids are forwarded to the client
    *  gate; unknown ids are dropped at the route boundary. */
   content?: string | string[];
-  /** Rotation that vouches for `content`, sent by the Mini-games surface. Only
-   *  honoured when that rotation genuinely features the id — see
-   *  `resolveMiniGameDeepLink`. Anything else is dropped and the content keeps
-   *  its normal lane gate. */
-  featured?: string | string[];
+  /** Where the player came from: `featured` | `library`. Decides BOTH the
+   *  progression bypass and where a completion returns to. Anything else — a
+   *  typo, a forged value, absent — falls back to `exercise_path`, which keeps
+   *  the lane gate. Replaces `?featured=<rotationId>`; there is no rotation. */
+  from?: string | string[];
 };
 
 const SUPPORTED_SHEETS = new Set<ExercisesInitialSheet>([
@@ -127,7 +127,7 @@ export default async function ExercisesPage({
   // pool alone, so `?content=bishop-run-1` was dropped here in silence.
   const deepLink = resolveMiniGameDeepLink({
     contentId: firstParam(searchParams.content),
-    rotationId: firstParam(searchParams.featured),
+    origin: firstParam(searchParams.from),
     pools: miniGamePools(merged),
   });
   const contentPiece = deepLink?.piece;
@@ -145,7 +145,8 @@ export default async function ExercisesPage({
       initialSheet={initialSheet}
       slot={slot}
       initialContentId={deepLink?.contentId}
-      initialContentFeatured={deepLink?.featured ?? false}
+      initialContentOrigin={deepLink?.origin ?? "exercise_path"}
+      initialContentBypassLock={deepLink?.bypassProgressionLock ?? false}
     />
   );
 

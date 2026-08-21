@@ -146,6 +146,12 @@ function seedDay(count: number, opts: { quotaDate?: string } = {}) {
   );
 }
 
+/* ⚠️ `showLanePathRows` is asked for EXPLICITLY. LEARN stopped drawing lane
+   rows on 2026-08-21 — mini-games live in the Library (`/minigames`) — but the
+   subject of this file is not the separation: it enters lane content through
+   the path because that is the shortest way to reach the code under test.
+   Asking for the rows keeps that entry available without weakening what LEARN
+   actually ships. */
 function renderScreen(slot?: string, withLab = false) {
   return renderWithAppProviders(
     <ContentCatalogProvider
@@ -155,7 +161,7 @@ function renderScreen(slot?: string, withLab = false) {
         descriptions: GENERATED_EXERCISE_DESCRIPTIONS,
       }}
     >
-      <ExercisesScreen slot={slot} />
+      <ExercisesScreen slot={slot} showLanePathRows />
     </ContentCatalogProvider>,
   );
 }

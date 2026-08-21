@@ -14,15 +14,18 @@
  * would be inventing a promise the product has not made.
  *
  * WHERE A FUTURE POLICY PLUGS IN
- * The signature is `(rotation, player)` on purpose — the candidate models are
- * all rotation-scoped or period-scoped ("5 Peones per rotation", "5 Peones for
- * 7 days"), never per-game-forever. A future policy replaces the body of
- * `resolveMiniGamesAccess` and widens `MiniGamesPlayer`; no caller changes, and
- * the `allowed:false` branch already exists in the type so every consumer is
- * forced by the compiler to handle a denial the day one becomes possible.
+ * A future policy replaces the body of `resolveMiniGamesAccess` and widens
+ * `MiniGamesPlayer`; no caller changes, and the `allowed:false` branch already
+ * exists in the type so every consumer is forced by the compiler to handle a
+ * denial the day one becomes possible.
+ *
+ * ⚠️ THE `rotation` ARGUMENT IS GONE (2026-08-21). It was there because the
+ * candidate models were rotation-scoped ("5 Peones per rotation"), and the
+ * personal queue removed rotations entirely. It was never read. The ALLOWANCE
+ * question — how much free content — now lives in `resolveConsumptionPolicy`
+ * (`lib/minigames/queue.ts`); this stays the ALLOWED/DENIED gate. Two seams,
+ * two questions, neither guessing at the other.
  */
-
-import type { MiniGameRotation } from "@/lib/minigames/rotation";
 
 /** The only policy that exists today. Stable string: it ships on telemetry. */
 export const EARLY_ACCESS_POLICY = "early_access_free" as const;
@@ -48,8 +51,7 @@ export type MiniGamesAccess =
  * decision in docs/specs/2026-08-19-learn-ia-minigames-early-access-implementation.md.
  */
 export function resolveMiniGamesAccess(
-  _rotation: MiniGameRotation,
-  _player: MiniGamesPlayer,
+  _player: MiniGamesPlayer = {},
 ): MiniGamesAccess {
   return { allowed: true, policy: EARLY_ACCESS_POLICY };
 }

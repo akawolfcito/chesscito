@@ -37,9 +37,11 @@ export type MiniGamesCard = {
   challengeId: string;
   engineId: MiniGameEngineId;
   piece: PieceId;
+  /** The CHALLENGE's authored title — what the tile actually opens. */
+  title: string;
   state: FeaturedCardState;
-  /** False when the previous rotation also featured this challenge. Drives the
-   *  freshness flag, derived from the ordered rotation constant — no storage. */
+  /** True when this player has never completed it. No storage of its own: it
+   *  is the completion set, inverted. */
   isNew: boolean;
 };
 
@@ -54,12 +56,14 @@ export type MiniGameStartIntent = {
 };
 
 export type MiniGamesSectionProps = {
-  /** Ships on every event so a usage read is attributable to what was on screen. */
-  rotationId: string;
   cards: readonly MiniGamesCard[];
   comingSoon: readonly MiniGameEngineId[];
-  rotationComplete: boolean;
+  /** Every healthy challenge cleared. The cards are then replays, not new content. */
+  exhausted: boolean;
+  completedCount: number;
+  poolSize: number;
   onPlay: (intent: MiniGameStartIntent) => void;
+  onViewAll: () => void;
 };
 
 /**
@@ -93,10 +97,12 @@ function ctaKeyFor(state: FeaturedCardState): "play" | "continueLabel" | "playAg
 }
 
 export function MiniGamesSection({
-  rotationId,
   cards,
-  rotationComplete,
+  exhausted,
+  completedCount,
+  poolSize,
   onPlay,
+  onViewAll,
   /* ⛔ `comingSoon` is IN THE TYPE BUT NOT DESTRUCTURED, on purpose. The row
      that rendered it was removed on 2026-08-20; the prop stays so the
      container keeps deriving and passing the roster, and bringing the line
@@ -136,7 +142,7 @@ export function MiniGamesSection({
       />
       <div
         data-testid="minigames-section"
-        data-rotation-id={rotationId}
+        data-exhausted={String(exhausted)}
         className="hub-minigames-tiles"
         role="group"
         aria-label={t("sectionAriaLabel")}
@@ -155,15 +161,23 @@ export function MiniGamesSection({
               "data-engine": card.engineId,
             }}
             iconSlot={ENGINE_ICON_SLOT[card.engineId]}
-            label={t(`engines.${card.engineId}` as const)}
-            /* ⚠️ The CTA state ("Play" / "Continue" / "Play again") no longer
-               has a caption line to live on — a 50px tile has one plate and the
-               game's NAME has to win it. It moves into the accessible name, so
-               the state is still announced and is still reachable by a test
-               (`data-state` below), just not printed twice. */
-            ariaLabel={`${t(`engines.${card.engineId}` as const)} — ${t(
-              ctaKeyFor(card.state),
-            )}`}
+            /* ⛔ THE PLATE NAMES THE CHALLENGE, NOT THE ENGINE (2026-08-21).
+               It used to read "Rook Rail", which is the GAME FAMILY — and the
+               tile opens ONE level of it. A player who cleared "Two Roads" and
+               came back to a tile still labelled "Rook Rail" could not tell
+               whether it was the same thing. The engine survives as the
+               secondary term in the accessible name and as `data-engine`.
+               ⚠️ Titles are AUTHORED and vary in length ("Two Roads" vs "Turn
+               to the Star"), so the mini-games tiles clamp their label to two lines
+               with an ellipsis — the rail's approved 50px geometry is held by
+               the CSS, not by hoping content stays short. */
+            label={card.title}
+            /* The CTA state ("Play" / "Continue" / "Play again") has no caption
+               line on a 50px tile. It lives in the accessible name, alongside
+               the family, and stays assertable through `data-state`. */
+            ariaLabel={`${card.title} — ${t(
+              `engines.${card.engineId}` as const,
+            )} — ${t(ctaKeyFor(card.state))}`}
             badge={
               card.isNew ? (
                 <span className="hub-minigame-tile-flag" aria-hidden="true">
@@ -208,7 +222,30 @@ export function MiniGamesSection({
          and dropping it from the type would make bringing the line back a
          cross-file change. */}
 
-      {rotationComplete ? (
+      {/* Library entry. NOT a challenge card — it is the index that lets
+          Featured stay three and lets the Exercises path stop carrying lane-2.
+          Without it the other ten challenges have no home at all. */}
+      <button
+        type="button"
+        onClick={onViewAll}
+        data-testid="minigames-view-all"
+        className="hub-minigames-view-all"
+        aria-label={t("viewAllAria")}
+      >
+        <span>{t("viewAll")}</span>
+        {/* One concise progress signal, and only one (PART 11). It is derived
+            from the same completion set the queue reads — no new telemetry, no
+            second dashboard. */}
+        <span
+          className="hub-minigames-progress tabular-nums"
+          data-testid="minigames-progress"
+          aria-label={t("progressAria", { done: completedCount, total: poolSize })}
+        >
+          {t("progressFormat", { done: completedCount, total: poolSize })}
+        </span>
+      </button>
+
+      {exhausted ? (
         <p data-testid="minigames-all-clear" className="hub-minigames-all-clear">
           <strong>{t("allClearTitle")}</strong> {t("allClearBody")}
         </p>

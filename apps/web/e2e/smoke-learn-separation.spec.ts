@@ -151,10 +151,13 @@ test.describe("Learn / Mini-games separation", () => {
 
     await page.waitForURL(/\/exercises\?content=/, { timeout: 20_000 });
     const url = new URL(page.url());
-    // ⛔ `featured` must be EARNED: the route only sets it when the id is
-    // genuinely inside the shipped rotation. Its presence is what lets the
-    // screen skip the lane's progression lock AND what marks the origin.
-    expect(url.searchParams.get("featured")).toBeTruthy();
+    /* ⛔ The origin must be named, and it is what lets the screen skip the
+       lane's progression lock AND what marks where a completion returns to.
+       ⚠️ It used to be `?featured=<rotationId>`, earned by membership in a
+       curated rotation. There are no rotations any more (personal queue,
+       2026-08-21): the bypass is earned by the challenge being HEALTHY, and
+       `from` says which Mini-games surface asked. */
+    expect(url.searchParams.get("from")).toBe("featured");
     expect(challengeId).toContain(url.searchParams.get("content")!);
 
     /* ⛔ AND THE BOARD THAT MOUNTS MUST BE THAT CHALLENGE.
