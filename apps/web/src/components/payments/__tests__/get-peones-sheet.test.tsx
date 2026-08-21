@@ -53,12 +53,12 @@ function renderSheet(props: Partial<Parameters<typeof GetPeonesSheet>[0]> = {}) 
 }
 
 describe("GetPeonesSheet", () => {
-  it("renders the pack (50 Peones) and price ($0.50)", () => {
+  it("opens on the default amount (25 Peones) and its price ($0.25)", () => {
     mockedRail.mockReturnValue(railState());
     mockedSel.mockReturnValue(selState());
     renderSheet();
-    expect(screen.getByText("50 Peones")).toBeInTheDocument();
-    expect(screen.getAllByText("$0.50").length).toBeGreaterThan(0);
+    expect(screen.getByText("25 Peones")).toBeInTheDocument();
+    expect(screen.getAllByText("$0.25").length).toBeGreaterThan(0);
   });
 
   it("trigger shows the auto-selected token; opening reveals aria-selected options", () => {
@@ -67,7 +67,7 @@ describe("GetPeonesSheet", () => {
     renderSheet();
     // Collapsed: the trigger surfaces the selected token + the pay label.
     expect(screen.getByTestId("get-peones-token-trigger")).toHaveTextContent("USDT");
-    expect(screen.getByTestId("get-peones-pay")).toHaveTextContent("Pay $0.50");
+    expect(screen.getByTestId("get-peones-pay")).toHaveTextContent("Pay $0.25");
     // Options only exist once the dropdown is open.
     expect(screen.queryByTestId("get-peones-token-USDC")).not.toBeInTheDocument();
     fireEvent.click(screen.getByTestId("get-peones-token-trigger"));
@@ -185,7 +185,7 @@ describe("GetPeonesSheet", () => {
     mockedSel.mockReturnValue(selState());
     renderSheet({ onSuccess });
     expect(mockedRail).toHaveBeenCalledWith(
-      expect.objectContaining({ sku: "peones_pack_50", tokenSymbol: "USDT", onVerified: onSuccess }),
+      expect.objectContaining({ sku: "peones_pack_25", tokenSymbol: "USDT", onVerified: onSuccess }),
     );
   });
 
@@ -197,5 +197,89 @@ describe("GetPeonesSheet", () => {
     // the single-tx rail must still never expose an approve action.
     expect(screen.queryByText(/no approve/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();
+  });
+});
+
+describe("GetPeonesSheet — flexible amount stepper", () => {
+  const stepper = () => screen.getByTestId("get-peones-stepper");
+  const minus = () => screen.getByTestId("get-peones-decrease");
+  const plus = () => screen.getByTestId("get-peones-increase");
+
+  function open(props: Partial<Parameters<typeof GetPeonesSheet>[0]> = {}) {
+    mockedRail.mockReturnValue(railState());
+    mockedSel.mockReturnValue(selState());
+    return renderSheet(props);
+  }
+
+  it("labels the controls by what they change, not by their glyph", () => {
+    open();
+    expect(screen.getByLabelText("Decrease Peones")).toBe(minus());
+    expect(screen.getByLabelText("Increase Peones")).toBe(plus());
+  });
+
+  it("steps up and down by 5, moving reward and price together", () => {
+    open();
+    expect(stepper()).toHaveAttribute("data-amount", "25");
+    fireEvent.click(plus());
+    expect(stepper()).toHaveAttribute("data-amount", "30");
+    expect(screen.getByText("30 Peones")).toBeInTheDocument();
+    expect(screen.getByTestId("get-peones-price")).toHaveTextContent("$0.30");
+    fireEvent.click(minus());
+    fireEvent.click(minus());
+    expect(stepper()).toHaveAttribute("data-amount", "20");
+    expect(screen.getByText("20 Peones")).toBeInTheDocument();
+    expect(screen.getByTestId("get-peones-price")).toHaveTextContent("$0.20");
+  });
+
+  it("stops at 5 and at 100 instead of running off the ladder", () => {
+    open();
+    for (let i = 0; i < 10; i += 1) fireEvent.click(minus());
+    expect(stepper()).toHaveAttribute("data-amount", "5");
+    expect(minus()).toBeDisabled();
+    for (let i = 0; i < 30; i += 1) fireEvent.click(plus());
+    expect(stepper()).toHaveAttribute("data-amount", "100");
+    expect(plus()).toBeDisabled();
+    expect(screen.getByTestId("get-peones-price")).toHaveTextContent("$1.00");
+  });
+
+  it("buys the SKU that matches the amount on screen", () => {
+    open();
+    fireEvent.click(plus());
+    fireEvent.click(plus());
+    expect(mockedRail).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sku: "peones_pack_35" }),
+    );
+  });
+
+  it("honours initialAmount", () => {
+    open({ initialAmount: 60 });
+    expect(stepper()).toHaveAttribute("data-amount", "60");
+    expect(screen.getByText("60 Peones")).toBeInTheDocument();
+  });
+
+  it("snaps an off-ladder initialAmount rather than breaking the sheet", () => {
+    open({ initialAmount: 37 });
+    expect(stepper()).toHaveAttribute("data-amount", "35");
+  });
+
+  it("clamps an out-of-range initialAmount to the bounds", () => {
+    const { unmount } = open({ initialAmount: 5_000 });
+    expect(stepper()).toHaveAttribute("data-amount", "100");
+    unmount();
+    open({ initialAmount: -12 });
+    expect(stepper()).toHaveAttribute("data-amount", "5");
+  });
+
+  it("locks the amount while a transfer is in flight", () => {
+    // The signed transfer commits to a SKU. Letting the amount move after the
+    // wallet prompt would desync what the player sees from what they paid.
+    for (const phase of ["preparing", "awaiting_signature", "pending_tx", "verifying"] as const) {
+      mockedRail.mockReturnValue(railState({ phase }));
+      mockedSel.mockReturnValue(selState());
+      const { unmount } = renderSheet();
+      expect(minus()).toBeDisabled();
+      expect(plus()).toBeDisabled();
+      unmount();
+    }
   });
 });

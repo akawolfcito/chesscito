@@ -9,7 +9,16 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { formatUsd } from "@/lib/contracts/tokens";
-import { getPeonesPack } from "@/lib/payments/rail-config";
+import {
+  clampPeonesAmount,
+  getPeonesPack,
+  getPeonesPackSku,
+  PEONES_AMOUNT_STEP,
+  PEONES_DEFAULT_AMOUNT,
+  PEONES_MAX_AMOUNT,
+  PEONES_MIN_AMOUNT,
+  type PeonesAmount,
+} from "@/lib/payments/rail-config";
 import {
   usePaymentRail,
   type PaymentRailResult,
@@ -19,13 +28,16 @@ import {
   type PayableToken,
 } from "@/lib/payments/use-get-peones-token-selection";
 
-const SKU = "peones_pack_50" as const;
 const FALLBACK_TOKEN = "USDC";
 
 export type GetPeonesSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (result: PaymentRailResult) => void;
+  /** Opening amount for the stepper. Snapped onto the buyable ladder rather
+   *  than rejected, so a caller asking for "about 40" gets 40 and a caller
+   *  asking for nonsense gets the default instead of a broken sheet. */
+  initialAmount?: number;
   /** Scrim z-index for the portalled shell. Defaults to `z-[55]` (Account aux
    *  sheet: above the z-50 sheet, under the z-60 dock). Callers layered higher
    *  — e.g. the Peones chip's z-70 Chesito Card modal — pass a taller class so
@@ -79,14 +91,22 @@ export function GetPeonesSheet({
   onOpenChange,
   onSuccess,
   scrimZClassName = "z-[55]",
+  initialAmount,
 }: GetPeonesSheetProps) {
   const t = useTranslations("GET_PEONES_COPY");
-  const selection = useGetPeonesTokenSelection(SKU);
+  const [amount, setAmount] = useState<PeonesAmount>(() =>
+    initialAmount === undefined ? PEONES_DEFAULT_AMOUNT : clampPeonesAmount(initialAmount),
+  );
+  const sku = getPeonesPackSku(amount);
+  const selection = useGetPeonesTokenSelection(sku);
   const [pickerOpen, setPickerOpen] = useState(false);
   const tokenSymbol = selection.selectedSymbol ?? FALLBACK_TOKEN;
-  const rail = usePaymentRail({ sku: SKU, tokenSymbol, onVerified: onSuccess });
-  const pack = getPeonesPack(SKU);
-  const priceLabel = formatUsd(pack.priceUsd6); // "$0.50"
+  const rail = usePaymentRail({ sku, tokenSymbol, onVerified: onSuccess });
+  const pack = getPeonesPack(sku);
+  // Every number on this sheet — reward, price, and the amount the request
+  // carries — comes off this one pack. The client never carries a reward that
+  // the SKU does not imply.
+  const priceLabel = formatUsd(pack.priceUsd6);
 
   const payable = selection.selected?.payable ?? false;
   const busy =
@@ -203,9 +223,43 @@ export function GetPeonesSheet({
                     {t("reward", { count: pack.peonesReward })}
                   </p>
                 </div>
-                <span className="candy-stat-pill text-[0.92rem] font-extrabold">
-                  {priceLabel}
-                </span>
+                {/* Amount stepper. The price pill sits BETWEEN the two
+                 *  controls so the thing being changed and the thing being
+                 *  paid read as one object. Locked while a transfer is in
+                 *  flight: the SKU is what the signed transfer commits to,
+                 *  so changing it mid-payment would desync amount from money. */}
+                <div
+                  className="flex items-center justify-center gap-3"
+                  data-testid="get-peones-stepper"
+                  data-amount={amount}
+                >
+                  <button
+                    type="button"
+                    aria-label={t("decreaseAmount")}
+                    data-testid="get-peones-decrease"
+                    disabled={busy || amount <= PEONES_MIN_AMOUNT}
+                    onClick={() => setAmount((a) => clampPeonesAmount(a - PEONES_AMOUNT_STEP))}
+                    className="h-9 w-9 shrink-0 rounded-full border-2 border-amber-600/60 bg-amber-100 text-lg font-black leading-none text-amber-800 disabled:opacity-40"
+                  >
+                    &#8722;
+                  </button>
+                  <span
+                    className="candy-stat-pill min-w-[4.5rem] text-[0.92rem] font-extrabold"
+                    data-testid="get-peones-price"
+                  >
+                    {priceLabel}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={t("increaseAmount")}
+                    data-testid="get-peones-increase"
+                    disabled={busy || amount >= PEONES_MAX_AMOUNT}
+                    onClick={() => setAmount((a) => clampPeonesAmount(a + PEONES_AMOUNT_STEP))}
+                    className="h-9 w-9 shrink-0 rounded-full border-2 border-amber-600/60 bg-amber-100 text-lg font-black leading-none text-amber-800 disabled:opacity-40"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
               {!rail.available ? (

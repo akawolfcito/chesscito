@@ -3958,6 +3958,9 @@ export const GET_PEONES_COPY = {
   close: "Close",
   payWith: "Pay with",
   reward: "{count} Peones",
+  /** Stepper controls. Named for what they change, not for the glyph. */
+  decreaseAmount: "Decrease Peones",
+  increaseAmount: "Increase Peones",
   credited: "+{count} Peones credited",
   /** Post-purchase balance, read from the verified receipt. */
   newBalance: "New balance: {balance}",

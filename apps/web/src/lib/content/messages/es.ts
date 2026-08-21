@@ -1585,6 +1585,8 @@ const messages = {
     close: "Cerrar",
     payWith: "Pagar con",
     reward: "{count} Peones",
+    decreaseAmount: "Menos Peones",
+    increaseAmount: "Más Peones",
     credited: "+{count} Peones acreditados",
     newBalance: "Nuevo saldo: {balance}",
     usage: "Úsalos en Pistas, Escudos y Coach.",
