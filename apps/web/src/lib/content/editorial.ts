@@ -3581,10 +3581,22 @@ export const MINIGAMES_COPY = {
   playAgain: "Play again",
   newFlag: "New",
   comingSoonLabel: "Coming soon",
-  /** Shown once every featured challenge is cleared. States a possibility, not
-   *  a schedule. */
+  /** Shown once EVERY healthy challenge is cleared — the honest end of the
+   *  content, not the end of a rotation.
+   *  ⛔ No countdown, no "more tomorrow", no date: the product has not promised
+   *  one, and a promise the roadmap cannot keep is worse than an ending. */
   allClearTitle: "You cleared them all",
-  allClearBody: "Featured challenges change from time to time.",
+  allClearBody: "Replay any of them from the library.",
+  /** Library — the index that lets Featured stay three cards. */
+  viewAll: "View all",
+  viewAllAria: "View all mini-games",
+  libraryTitle: "Mini-games",
+  libraryBack: "Back",
+  libraryCompleted: "Completed",
+  /** One concise progress signal. NOT a dashboard: no stars, no per-engine
+   *  breakdown, no streak. */
+  progressFormat: "{done}/{total} completed",
+  progressAria: "{done} of {total} mini-games completed",
   engines: {
     "rook-rail": "Rook Rail",
     "pivot-run": "Pivot Run",
