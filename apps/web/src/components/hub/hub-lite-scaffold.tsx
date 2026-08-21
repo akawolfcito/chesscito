@@ -302,15 +302,15 @@ export function HubLiteScaffold({
             isHydrated={primaryFocus.isHydrated}
             onOpen={onOpenExercisePath}
           />
-          {/* Decorative: the groups it separates each carry their own
-              accessible name, so announcing a divider would add noise. */}
-          {miniGamesSlot ? (
-            <span
-              className="hub-lite-path-rail-divider"
-              aria-hidden="true"
-              data-testid="learn-rail-divider"
-            />
-          ) : null}
+          {/* ⛔ THE DIVIDER IS NOT DRAWN HERE, and that is the fix for red-team
+              EC-1. It used to be `{miniGamesSlot ? <divider/> : null}` — but the
+              container always passes `<MiniGamesSlot />`, and a React ELEMENT is
+              truthy even when the component returns `null`, which it does on
+              every first paint (bests hydrate in a mount effect) and forever if
+              a rotation resolves no cards. Measured: `divider=RENDERED
+              minigameTiles=0` — a separator with nothing to separate.
+              The mini-games group now brings its own leading divider, so the
+              line cannot outlive the thing it divides. */}
           {miniGamesSlot}
         </div>
       </section>

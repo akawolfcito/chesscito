@@ -121,6 +121,19 @@ export function MiniGamesSection({
        As siblings, the tile group is exactly as wide as its tiles, the divider
        sits against them, and the footnote centres on the rail. */
     <>
+      {/* ⛔ THE DIVIDER TRAVELS WITH THE GROUP. The rail used to own it and
+          decided it from the slot NODE, which is truthy even when this
+          component returns `null` — so it drew a separator over nothing on
+          every first paint (red-team EC-1). Owned here, it exists exactly when
+          there is something to divide, by construction rather than by a guard
+          somebody has to keep correct.
+          Decorative: both groups carry their own accessible name, so announcing
+          a divider would only add noise. */}
+      <span
+        className="hub-lite-path-rail-divider"
+        aria-hidden="true"
+        data-testid="learn-rail-divider"
+      />
       <div
         data-testid="minigames-section"
         data-rotation-id={rotationId}

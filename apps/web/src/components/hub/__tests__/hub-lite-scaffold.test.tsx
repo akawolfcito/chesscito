@@ -541,10 +541,18 @@ describe("<HubLiteScaffold>", () => {
 
        Exercises leads because it is the rail's primary (gold + ring, like
        PLAY's own primary tile); the mini-games group follows it. */
+    /* ⚠️ The slot must carry its OWN divider now — the scaffold no longer
+       renders one, precisely so a slot that draws nothing cannot leave a
+       separator behind. A bare stub therefore has to bring one. */
     const { container } = render(
       <HubLiteScaffold
         {...baseProps({
-          miniGamesSlot: <div data-testid="minigames-stub" />,
+          miniGamesSlot: (
+            <>
+              <span data-testid="learn-rail-divider" />
+              <div data-testid="minigames-stub" />
+            </>
+          ),
         })}
       />,
     );
@@ -563,6 +571,20 @@ describe("<HubLiteScaffold>", () => {
   it("Rail: no divider when there are no mini-games to separate from", () => {
     // A divider with nothing on its right is a line that means nothing.
     render(<HubLiteScaffold {...baseProps({ miniGamesSlot: undefined })} />);
+    expect(screen.queryByTestId("learn-rail-divider")).toBeNull();
+    expect(screen.getByTestId("learn-path-entry")).toBeInTheDocument();
+  });
+
+  /* ⛔ THE CASE THE TEST ABOVE DOES NOT COVER, and production is made of it.
+     `undefined` is a value the container never passes: it always passes
+     `<MiniGamesSlot />`, and that component returns `null` until its bests
+     hydrate — every first paint — and forever if a rotation resolves no cards.
+     A React ELEMENT is truthy either way, so a `{miniGamesSlot ? … }` guard in
+     the scaffold could never see the difference. Red-team EC-1, measured:
+     `divider=RENDERED minigameTiles=0`. */
+  it("Rail: no divider when the slot RENDERS nothing (the production case)", () => {
+    const NullSlot = () => null;
+    render(<HubLiteScaffold {...baseProps({ miniGamesSlot: <NullSlot /> })} />);
     expect(screen.queryByTestId("learn-rail-divider")).toBeNull();
     expect(screen.getByTestId("learn-path-entry")).toBeInTheDocument();
   });

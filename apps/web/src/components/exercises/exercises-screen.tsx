@@ -3528,6 +3528,20 @@ export function ExercisesScreen({
         setSelectedLabyrinthId(null);
         setTrainingAttemptGrantId(null);
         setExerciseDrawerOpen(true);
+        /* ⛔ AND THE ORIGIN GOES WITH IT. Settling to the path IS leaving lane
+           content, so the entry that brought the player here is over.
+           Red-team SL-1: this was the one exit that cleared
+           `selectedLabyrinthId` — which un-hides the contextual "next
+           challenge" pin — while leaving `completionOriginRef` stale. The pin
+           requests with `automatic`, and `automatic` PRESERVES the origin by
+           design (so a replay stays featured), so a stale `featured_minigame`
+           would ride into a node entered FROM THE PATH and route its Continue
+           to the Learn Home.
+           ⚠️ The other traced chain (leaving through `handleExerciseNavigate`)
+           turned out to be self-blocking: it does not clear
+           `selectedLabyrinthId`, so `effectiveLabyrinthMode` stays true and the
+           pin never renders. This exit was the only open door. */
+        completionOriginRef.current = null;
       };
 
       const node = trainingPathRef.current.find(

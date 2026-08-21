@@ -498,4 +498,55 @@ describe("featured completion boundary", () => {
       expect(band).not.toHaveTextContent(exercise.title!);
     }
   }, 20_000);
+
+  /* ── ⛔ SL-1: THE ORIGIN MUST NOT OUTLIVE THE LANE CONTENT ────────────────
+   * Red-team finding. `completionOriginRef` was cleared in exactly ONE place,
+   * `handleExitLabyrinth`. Neither `handleExerciseNavigate` nor `settleToPath`
+   * touched it — and `automatic` PRESERVES the origin by design, so that a
+   * replay stays featured.
+   *
+   * The chain: enter a featured challenge → open the PATH (the drawer is not
+   * gated on `labyrinthMode`) → tap an EXERCISE → the ref still says
+   * `featured_minigame`. Anything entered later through an `automatic` request
+   * — the contextual pin, the post-completion continuation — inherits it, and
+   * its Continue routes to Learn Home instead of walking the path. The mirror
+   * image of the bug the ref was introduced to fix.
+   *
+   * ⚠️ Asserted through the OVERLAY KICKER, not the ref: the surface label and
+   * the Continue destination read the same value, so the label is an honest
+   * proxy and the test does not reach into internals. */
+  it("SL-1: leaving lane content for an exercise drops the featured origin", async () => {
+    seedRookProgress();
+    renderScreen({ contentId: FEATURED.id, featured: true });
+    await settled();
+    expect(screen.queryByTestId(BOARD_MOUNTED)).toBeInTheDocument();
+
+    // Out of the mini-game, into the exercise path, through the PATH drawer.
+    fireEvent.click(screen.getByTestId("piece-chip-trigger"));
+    await new Promise((r) => setTimeout(r, 400));
+    fireEvent.click(screen.getByText(ROOK_POOL[0].title!).closest("button")!);
+    await new Promise((r) => setTimeout(r, 500));
+
+    // Now walk back into lane content the way the path does it.
+    fireEvent.click(screen.getByTestId("piece-chip-trigger"));
+    await new Promise((r) => setTimeout(r, 400));
+    fireEvent.click(screen.getByText(LANE_1.title!).closest("button")!);
+    await new Promise((r) => setTimeout(r, 500));
+
+    for (const [from, to] of [["b7", "b2"], ["b2", "g2"]] as const) {
+      fireEvent.click(cell(from)!);
+      fireEvent.click(cell(to)!);
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    await new Promise((r) => setTimeout(r, 400));
+
+    expect(completionOverlayPresent()).toBe(true);
+    expect(screen.getByTestId("labyrinth-complete-surface")).toHaveAttribute(
+      "data-surface",
+      "exercise_path",
+    );
+    fireEvent.click(primaryCta()!);
+    await new Promise((r) => setTimeout(r, 600));
+    expect(pushMock).not.toHaveBeenCalledWith("/");
+  }, 25_000);
 });
