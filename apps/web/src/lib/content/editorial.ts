@@ -3581,22 +3581,31 @@ export const MINIGAMES_COPY = {
   playAgain: "Play again",
   newFlag: "New",
   comingSoonLabel: "Coming soon",
-  /** Shown once EVERY healthy challenge is cleared — the honest end of the
-   *  content, not the end of a rotation.
-   *  ⛔ No countdown, no "more tomorrow", no date: the product has not promised
-   *  one, and a promise the roadmap cannot keep is worse than an ending. */
-  allClearTitle: "You cleared them all",
-  allClearBody: "Replay any of them from the library.",
   /** Library — the index that lets Featured stay three cards. */
   viewAll: "View all",
   viewAllAria: "View all mini-games",
   libraryTitle: "Mini-games",
   libraryBack: "Back",
   libraryCompleted: "Completed",
-  /** One concise progress signal. NOT a dashboard: no stars, no per-engine
-   *  breakdown, no streak. */
-  progressFormat: "{done}/{total} completed",
-  progressAria: "{done} of {total} mini-games completed",
+  /* ── The compact status row (Sally, 2026-08-21) ──────────────────────────
+   * ⛔ TODAY, never the catalogue. `{done}/{total} completed` over 13 described
+   * a library; it was heard as "nine more are available somewhere". What a
+   * player can act on is how much of TODAY is left.
+   * ⛔ No prose variants. The founder did not notice the explanatory sentence
+   * that used to sit under the rail, which is the evidence that a sentence
+   * there does no work. */
+  todayFormat: "{done}/{total} today",
+  /** ⚠️ Hours, never `18:42:13`. The precision the boundary actually has. */
+  refillFormat: "{hours}h",
+  refillAria: "New challenges in about {hours} hours",
+  /** Library section headings. Availability, not game family — what the player
+   *  is asking in the Library is "what can I play". */
+  libraryToday: "Available today",
+  libraryDone: "Completed",
+  /** ⛔ Low-noise, and NO count: naming a number here would re-introduce the
+   *  catalogue size the Home just stopped showing, and a wall of locked titles
+   *  is what this line exists to avoid. */
+  libraryUpcoming: "More challenges ahead",
   engines: {
     "rook-rail": "Rook Rail",
     "pivot-run": "Pivot Run",
