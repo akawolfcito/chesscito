@@ -26,7 +26,7 @@ export function WelcomePackageStamp() {
   }
 
   function handleModalDismiss() {
-    /* ⛔ THIS USED TO BE `if (claimPhase === "signing") return`, and that hard
+    /* ⛔ THIS USED TO RE-CHECK THE SIGNING PHASE AND BAIL OUT, and that hard
        return was the second half of the dead end reported from the MiniPay
        smoke: the modal offered no exit, and even when one was added here the
        owner refused it. A signature that neither resolves nor rejects left the

@@ -4746,7 +4746,12 @@ export function ExercisesScreen({
             phase={welcomeGiftClaim.claimPhase}
             onClaim={() => welcomeGiftClaim.handleClaim(claimWelcomePackageGift)}
             onDismiss={() => {
-              if (welcomeGiftClaim.claimPhase === "signing") return;
+              /* ⛔ NO RE-CHECK OF THE SIGNING PHASE HERE. The modal is the
+              gatekeeper: it renders no close affordance until the signature
+              has visibly stalled, so by the time this runs the dismiss is
+              already judged safe. An owner-side guard can only refuse it.
+              Three owners carried one and the dead end survived its first
+              fix — `signing-exit-invariant.test.ts` now scans for it. */
               welcomeGiftClaim.handleSuccess();
               setWelcomeGiftOpen(false);
             }}
