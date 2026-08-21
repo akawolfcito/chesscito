@@ -58,10 +58,20 @@ export type MiniGameStartIntent = {
 export type MiniGamesSectionProps = {
   cards: readonly MiniGamesCard[];
   comingSoon: readonly MiniGameEngineId[];
-  /** Every healthy challenge cleared. The cards are then replays, not new content. */
-  exhausted: boolean;
-  completedCount: number;
-  poolSize: number;
+  /** Assigned challenges already completed — the numerator of `n/3 today`. */
+  completedToday: number;
+  /** Assigned slots this window. Usually 3; smaller only near the pool's end. */
+  slotCount: number;
+  /**
+   * Whole hours until the next replenishment window, or null to show no timer.
+   *
+   * ⛔ NULL IS A PRODUCT STATE, NOT A LOADING STATE. It is null at `0/3` —
+   * nothing has been consumed, so nothing is charging, and a countdown there is
+   * the noise that trains people to stop reading this row — and null when the
+   * healthy pool is exhausted, because nothing will refill and promising hours
+   * for content that does not exist is the one way this row could lie.
+   */
+  hoursUntilNext: number | null;
   onPlay: (intent: MiniGameStartIntent) => void;
   onViewAll: () => void;
 };
@@ -98,9 +108,9 @@ function ctaKeyFor(state: FeaturedCardState): "play" | "continueLabel" | "playAg
 
 export function MiniGamesSection({
   cards,
-  exhausted,
-  completedCount,
-  poolSize,
+  completedToday,
+  slotCount,
+  hoursUntilNext,
   onPlay,
   onViewAll,
   /* ⛔ `comingSoon` is IN THE TYPE BUT NOT DESTRUCTURED, on purpose. The row
@@ -142,7 +152,7 @@ export function MiniGamesSection({
       />
       <div
         data-testid="minigames-section"
-        data-exhausted={String(exhausted)}
+        data-completed-today={String(completedToday)}
         className="hub-minigames-tiles"
         role="group"
         aria-label={t("sectionAriaLabel")}
@@ -222,34 +232,61 @@ export function MiniGamesSection({
          and dropping it from the type would make bringing the line back a
          cross-file change. */}
 
-      {/* Library entry. NOT a challenge card — it is the index that lets
-          Featured stay three and lets the Exercises path stop carrying lane-2.
-          Without it the other ten challenges have no home at all. */}
-      <button
-        type="button"
-        onClick={onViewAll}
-        data-testid="minigames-view-all"
-        className="hub-minigames-view-all"
-        aria-label={t("viewAllAria")}
-      >
-        <span>{t("viewAll")}</span>
-        {/* One concise progress signal, and only one (PART 11). It is derived
-            from the same completion set the queue reads — no new telemetry, no
-            second dashboard. */}
-        <span
-          className="hub-minigames-progress tabular-nums"
-          data-testid="minigames-progress"
-          aria-label={t("progressAria", { done: completedCount, total: poolSize })}
-        >
-          {t("progressFormat", { done: completedCount, total: poolSize })}
-        </span>
-      </button>
+      {/* ⛔ ONE ROW, TWO OBJECTS — separated by FORM, not by words (Sally,
+          2026-08-21). `VIEW ALL` stays a pill: bordered, filled, tappable, a
+          place to go. The status sits OUTSIDE it as plain text. It used to live
+          INSIDE the pill as `VIEW ALL  4/13`, and a number inside a button
+          reads as part of what the button does — which is exactly why `4/13`
+          was heard as "nine more are available somewhere".
 
-      {exhausted ? (
-        <p data-testid="minigames-all-clear" className="hub-minigames-all-clear">
-          <strong>{t("allClearTitle")}</strong> {t("allClearBody")}
-        </p>
-      ) : null}
+          ⛔ AND THE TOTAL IS GONE FROM THE HOME. `n/13` described a catalogue;
+          what a player can act on is `n/3 today`. The tiles themselves already
+          say what is playable, so this row carries the only thing they cannot:
+          where today ends, and when more arrives. */}
+      <div className="hub-minigames-footer">
+        <button
+          type="button"
+          onClick={onViewAll}
+          data-testid="minigames-view-all"
+          className="hub-minigames-view-all"
+          aria-label={t("viewAllAria")}
+        >
+          {t("viewAll")}
+        </button>
+        <span
+          className="hub-minigames-status"
+          data-testid="minigames-status"
+          data-hours={hoursUntilNext === null ? "none" : String(hoursUntilNext)}
+        >
+          <span className="tabular-nums" data-testid="minigames-today">
+            {t("todayFormat", { done: completedToday, total: slotCount })}
+          </span>
+          {hoursUntilNext !== null ? (
+            <>
+              <span aria-hidden="true" className="hub-minigames-status-dot">
+                ·
+              </span>
+              <span
+                className="hub-minigames-refill tabular-nums"
+                data-testid="minigames-refill"
+                aria-label={t("refillAria", { hours: hoursUntilNext })}
+              >
+                {t("refillFormat", { hours: hoursUntilNext })}
+              </span>
+            </>
+          ) : null}
+        </span>
+      </div>
+
+      {/* ⛔ THE ALL-CLEAR SENTENCE WAS DELETED (2026-08-21), not replaced.
+          It read "You cleared them all — Featured challenges change from time
+          to time", which is now false twice over: there is no global rotation,
+          and content does not change "from time to time" for everyone. The
+          founder never noticed it in smoke, which is the evidence that prose
+          under the rail does no work. The status row above carries the state.
+          ⚠️ A future Peones affordance does NOT go here either — Sally's
+          placement is the tile group's top-right corner, the slot the NEW flags
+          vacate at 3/3. Nothing renders it while monetization is disabled. */}
     </>
   );
 }

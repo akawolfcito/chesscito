@@ -11,7 +11,12 @@ vi.mock("@/lib/telemetry", () => ({ track: (...args: unknown[]) => trackMock(...
 
 import { MiniGamesLibrary } from "@/components/hub/minigames-library";
 import { labyrinthBestStorageKey } from "@/lib/lite-progress-storage";
+import type { PieceId } from "@/lib/game/types";
 import { defaultMiniGamePools } from "@/lib/minigames/catalog";
+import {
+  currentWindowId,
+  MINIGAME_WINDOW_STORAGE_KEY,
+} from "@/lib/minigames/daily-window";
 import { resolveChallengePool } from "@/lib/minigames/queue";
 
 const pool = resolveChallengePool(defaultMiniGamePools());
@@ -22,150 +27,184 @@ beforeEach(() => {
   trackMock.mockClear();
 });
 
-/** ⚠️ Nothing here pins an authored TITLE. The pool is read and the
- *  expectations are derived from it, so renaming a level in the builder cannot
- *  turn this suite red for a content reason. Ids are structural (they are what
- *  the deep link carries); titles are content. */
+/** Seed the window the way the Home writes it. */
+function assign(challengeIds: readonly string[]) {
+  localStorage.setItem(
+    MINIGAME_WINDOW_STORAGE_KEY,
+    JSON.stringify({ windowId: currentWindowId(), assigned: [...challengeIds] }),
+  );
+}
 
-describe("L-1 — every healthy challenge is reachable", () => {
-  it("lists all of them, exactly once", () => {
+/** Mark challenges completed the way the game does: a recorded best. */
+function complete(challengeIds: readonly string[]) {
+  const byPiece: Record<string, Record<string, number>> = {};
+  for (const id of challengeIds) {
+    const entry = pool.find((candidate) => candidate.challengeId === id)!;
+    byPiece[entry.piece] = { ...(byPiece[entry.piece] ?? {}), [id]: 6 };
+  }
+  for (const [piece, bests] of Object.entries(byPiece)) {
+    localStorage.setItem(
+      labyrinthBestStorageKey(piece as PieceId),
+      JSON.stringify(bests),
+    );
+  }
+}
+
+/* ⚠️ No authored title is pinned as an expected value. The pool is read and
+ * expectations are derived from it. */
+
+describe("L-1 — today's assigned challenges are playable", () => {
+  it("lists exactly what the window assigned", () => {
+    const today = pool.slice(0, 3).map((entry) => entry.challengeId);
+    assign(today);
     render(<MiniGamesLibrary />);
-    const rows = screen.getAllByTestId(/^library-challenge-/);
-    expect(rows).toHaveLength(pool.length);
-    const ids = rows.map((row) => row.getAttribute("data-testid"));
-    expect(new Set(ids).size).toBe(pool.length);
+
+    expect(screen.getByTestId("library-section-today")).toBeInTheDocument();
+    for (const id of today) {
+      expect(screen.getByTestId(`library-challenge-${id}`)).toBeInTheDocument();
+    }
   });
 
-  it("has a row for each id the queue knows about", () => {
+  it("routes them through the same boundary Featured uses", () => {
+    const target = pool[0]!.challengeId;
+    assign([target]);
     render(<MiniGamesLibrary />);
+
+    fireEvent.click(screen.getByTestId(`library-challenge-${target}`));
+    expect(pushMock).toHaveBeenCalledWith(`/exercises?content=${target}&from=library`);
+  });
+});
+
+describe("L-2 — completed challenges stay replayable", () => {
+  it("lists them under their own section, tappable", () => {
+    const done = pool[0]!.challengeId;
+    complete([done]);
+    assign([pool[1]!.challengeId]);
+    render(<MiniGamesLibrary />);
+
+    const row = screen.getByTestId(`library-challenge-${done}`);
+    expect(row).toHaveAttribute("data-completed", "true");
+    expect(row).not.toBeDisabled();
+    expect(screen.getByTestId("library-section-completed")).toContainElement(row);
+  });
+
+  it("tells a replay apart from a first start, without a new event", () => {
+    const done = pool[0]!.challengeId;
+    complete([done]);
+    render(<MiniGamesLibrary />);
+
+    fireEvent.click(screen.getByTestId(`library-challenge-${done}`));
+    expect(trackMock).toHaveBeenCalledWith(
+      "minigame_start",
+      expect.objectContaining({ challenge_id: done, entry: "library_replay" }),
+    );
+  });
+});
+
+describe("L-3 / D-9 — future unseen challenges are NOT playable", () => {
+  /** ⛔ THIS IS THE GATE. Before the daily allowance the Library listed all 13
+   *  as playable, so a player could walk straight past the window and burn the
+   *  catalogue from here instead of the Home. */
+  it("renders no row for a challenge that is neither assigned nor completed", () => {
+    const today = pool.slice(0, 2).map((entry) => entry.challengeId);
+    assign(today);
+    render(<MiniGamesLibrary />);
+
     for (const entry of pool) {
-      expect(
-        screen.getByTestId(`library-challenge-${entry.challengeId}`),
-      ).toBeInTheDocument();
+      const listed = screen.queryByTestId(`library-challenge-${entry.challengeId}`);
+      if (today.includes(entry.challengeId)) {
+        expect(listed).toBeInTheDocument();
+      } else {
+        expect(listed).toBeNull();
+      }
     }
   });
 
-  it("groups them by game, with no empty group", () => {
+  it("shows one quiet line instead of a wall of locks", () => {
+    assign(pool.slice(0, 3).map((entry) => entry.challengeId));
     render(<MiniGamesLibrary />);
-    const groups = screen.getAllByTestId(/^library-group-/);
-    expect(groups.length).toBeGreaterThan(0);
-    for (const group of groups) {
-      expect(group.querySelectorAll("[data-testid^='library-challenge-']").length)
-        .toBeGreaterThan(0);
-    }
+
+    const upcoming = screen.getByTestId("library-upcoming");
+    // ⛔ Not a button: there is nothing to do with it today, and a
+    // disabled-looking control invites taps that go nowhere.
+    expect(upcoming.tagName).toBe("P");
+    // ⛔ And no number: naming it re-introduces the catalogue size the Home
+    // just stopped showing.
+    expect(upcoming.textContent ?? "").not.toMatch(/\d/);
+  });
+
+  it("drops the upcoming line once nothing is left unseen", () => {
+    complete(pool.map((entry) => entry.challengeId));
+    render(<MiniGamesLibrary />);
+    expect(screen.queryByTestId("library-upcoming")).toBeNull();
   });
 });
 
-describe("L-2 — retired ids are absent", () => {
-  it("lists nothing the projection dropped", () => {
+describe("L-4 — a replenished challenge becomes playable", () => {
+  it("plays once the window assigns it, and not before", () => {
+    const future = pool[5]!.challengeId;
+
+    assign([pool[0]!.challengeId]);
+    const first = render(<MiniGamesLibrary />);
+    expect(screen.queryByTestId(`library-challenge-${future}`)).toBeNull();
+    first.unmount();
+
+    assign([pool[0]!.challengeId, future]);
     render(<MiniGamesLibrary />);
-    for (const retired of ["bishop-lab-3", "knight-lab-1", "queen-lab-1", "rook-lab-1"]) {
-      expect(screen.queryByTestId(`library-challenge-${retired}`)).toBeNull();
-    }
+    fireEvent.click(screen.getByTestId(`library-challenge-${future}`));
+    expect(pushMock).toHaveBeenCalledWith(`/exercises?content=${future}&from=library`);
   });
 });
 
-describe("L-3 — coming-soon engines are absent, never playable", () => {
-  /** ⛔ ABSENT, not greyed. A row that cannot be played is a dead end dressed
-   *  as content — the exact family of defect this whole pass is closing. */
-  it("renders no group for a coming-soon engine", () => {
+describe("L-5 — nothing is orphaned", () => {
+  it("every listed row belongs to the healthy pool", () => {
+    assign(pool.slice(0, 3).map((entry) => entry.challengeId));
+    complete([pool[7]!.challengeId]);
     render(<MiniGamesLibrary />);
-    expect(screen.queryByTestId("library-group-knight-tour")).toBeNull();
-    expect(screen.queryByTestId("library-group-promotion-run")).toBeNull();
+
+    const ids = new Set(pool.map((entry) => entry.challengeId));
+    for (const row of screen.getAllByTestId(/^library-challenge-/)) {
+      const id = (row.getAttribute("data-testid") ?? "").replace(
+        "library-challenge-",
+        "",
+      );
+      expect(ids.has(id)).toBe(true);
+    }
   });
 
-  it("renders no row for any of their challenges", () => {
+  it("lists no coming-soon or retired content, ever", () => {
+    assign(pool.slice(0, 3).map((entry) => entry.challengeId));
     render(<MiniGamesLibrary />);
-    for (const id of ["knight-tour-1", "pawn-promotion-2"]) {
+    for (const id of ["knight-tour-1", "pawn-promotion-2", "bishop-lab-3", "rook-lab-1"]) {
       expect(screen.queryByTestId(`library-challenge-${id}`)).toBeNull();
     }
   });
 });
 
-describe("L-4 — a tap routes to the canonical board", () => {
-  it("uses the SAME route boundary Featured uses, tagged as library", () => {
+describe("the Library reads the window but never writes it", () => {
+  /** ⛔ The Home's `MiniGamesSlot` is the single writer. Two writers would race
+   *  across a midnight boundary and hand the player two different assignments. */
+  it("leaves stored state untouched on a fresh device", () => {
     render(<MiniGamesLibrary />);
-    const target = pool[0]!;
-    fireEvent.click(screen.getByTestId(`library-challenge-${target.challengeId}`));
-    expect(pushMock).toHaveBeenCalledWith(
-      `/exercises?content=${target.challengeId}&from=library`,
-    );
+    expect(localStorage.getItem(MINIGAME_WINDOW_STORAGE_KEY)).toBeNull();
   });
 
-  it("routes every listed challenge, not just the first", () => {
+  it("does not rewrite an existing assignment", () => {
+    assign([pool[0]!.challengeId]);
+    const before = localStorage.getItem(MINIGAME_WINDOW_STORAGE_KEY);
     render(<MiniGamesLibrary />);
-    for (const entry of pool) {
-      pushMock.mockClear();
-      fireEvent.click(screen.getByTestId(`library-challenge-${entry.challengeId}`));
-      expect(pushMock).toHaveBeenCalledWith(
-        `/exercises?content=${entry.challengeId}&from=library`,
-      );
-    }
+    expect(localStorage.getItem(MINIGAME_WINDOW_STORAGE_KEY)).toBe(before);
   });
 
-  it("reuses the existing start event with entry=library — no new event family", () => {
-    render(<MiniGamesLibrary />);
-    const target = pool[0]!;
-    fireEvent.click(screen.getByTestId(`library-challenge-${target.challengeId}`));
-    expect(trackMock).toHaveBeenCalledWith(
-      "minigame_start",
-      expect.objectContaining({
-        challenge_id: target.challengeId,
-        game_id: target.engineId,
-        entry: "library",
-      }),
-    );
-  });
-});
-
-describe("R-8 — a completed challenge stays listed and stays tappable", () => {
-  function completeFirst() {
-    const target = pool[0]!;
-    localStorage.setItem(
-      labyrinthBestStorageKey(target.piece),
-      JSON.stringify({ [target.challengeId]: 7 }),
-    );
-    return target;
-  }
-
-  it("marks it completed without removing or disabling it", () => {
-    const target = completeFirst();
-    render(<MiniGamesLibrary />);
-    const row = screen.getByTestId(`library-challenge-${target.challengeId}`);
-    expect(row).toHaveAttribute("data-completed", "true");
-    // Replay is the point of the Library: a completed row is a live control.
-    expect(row).not.toBeDisabled();
-  });
-
-  it("still routes it, so a replay is one tap", () => {
-    const target = completeFirst();
-    render(<MiniGamesLibrary />);
-    fireEvent.click(screen.getByTestId(`library-challenge-${target.challengeId}`));
-    expect(pushMock).toHaveBeenCalledWith(
-      `/exercises?content=${target.challengeId}&from=library`,
-    );
-  });
-
-  it("counts it in the progress signal", () => {
-    completeFirst();
-    render(<MiniGamesLibrary />);
-    expect(screen.getByTestId("minigames-library-progress")).toHaveTextContent(
-      `1/${pool.length}`,
-    );
-  });
-
-  it("reports zero completed on a fresh device", () => {
-    render(<MiniGamesLibrary />);
-    expect(screen.getByTestId("minigames-library-progress")).toHaveTextContent(
-      `0/${pool.length}`,
-    );
-  });
-});
-
-describe("the Library is a destination, not a dead end", () => {
   it("offers a way back to the home", () => {
     render(<MiniGamesLibrary />);
     fireEvent.click(screen.getByTestId("minigames-library-back"));
     expect(pushMock).toHaveBeenCalledWith("/");
+  });
+
+  it("shows no catalogue count anywhere", () => {
+    assign(pool.slice(0, 3).map((entry) => entry.challengeId));
+    render(<MiniGamesLibrary />);
+    expect(screen.queryByTestId("minigames-library-progress")).toBeNull();
   });
 });

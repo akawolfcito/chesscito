@@ -6,13 +6,20 @@ import {
   deriveMiniGamesHubView,
 } from "@/lib/minigames/hub-cards";
 import { baselineMiniGamePools } from "@/lib/minigames/pools";
-import { FEATURED_LIMIT, resolveChallengePool } from "@/lib/minigames/queue";
+import { DAILY_NEW_SLOTS } from "@/lib/minigames/daily-window";
+import { resolveChallengePool } from "@/lib/minigames/queue";
 
 const pools = baselineMiniGamePools();
 const pool = resolveChallengePool(pools);
 
-function view(bestsByPiece: Record<string, Record<string, number>> = {}) {
-  return deriveMiniGamesHubView({ pools, bestsByPiece });
+const WINDOW = "2026-08-21";
+
+function view(
+  bestsByPiece: Record<string, Record<string, number>> = {},
+  stored: { windowId: string; assigned: string[] } | null = null,
+  windowId = WINDOW,
+) {
+  return deriveMiniGamesHubView({ pools, bestsByPiece, stored, windowId });
 }
 
 /** Mark a challenge completed the way the game does: a recorded best under its
@@ -29,7 +36,7 @@ function completing(challengeIds: readonly string[]) {
 
 describe("deriveMiniGamesHubView — personal, not global", () => {
   it("builds one card per featured slot", () => {
-    expect(view().cards).toHaveLength(FEATURED_LIMIT);
+    expect(view().cards).toHaveLength(DAILY_NEW_SLOTS);
   });
 
   it("carries the challenge title, which is what the tile now names", () => {
@@ -60,47 +67,70 @@ describe("deriveMiniGamesHubView — personal, not global", () => {
     for (const card of view().cards) expect(soon).not.toContain(card.engineId);
   });
 
-  it("reports the player's position in the pool", () => {
-    expect(view().poolSize).toBe(pool.length);
-    expect(view().completedCount).toBe(0);
-    const one = view(completing([pool[0]!.challengeId]));
-    expect(one.completedCount).toBe(1);
-    expect(one.poolSize).toBe(pool.length);
+  it("reports TODAY, never the catalogue", () => {
+    const fresh = view();
+    expect(fresh.completedToday).toBe(0);
+    expect(fresh.slotCount).toBe(DAILY_NEW_SLOTS);
+    // ⛔ There is no pool-size field to leak onto the Home any more.
+    expect("poolSize" in fresh).toBe(false);
+
+    const assigned = fresh.assignment;
+    const one = view(completing([assigned.assigned[0]!]), assigned);
+    expect(one.completedToday).toBe(1);
+    expect(one.slotCount).toBe(DAILY_NEW_SLOTS);
+  });
+
+  it("hands back the assignment to persist, and says when it changed", () => {
+    const fresh = view();
+    expect(fresh.assignmentChanged).toBe(true);
+    expect(fresh.assignment.windowId).toBe(WINDOW);
+    // Re-deriving the same window must not ask for a pointless write.
+    expect(view({}, fresh.assignment).assignmentChanged).toBe(false);
   });
 });
 
 describe("what the player has done decides what they see", () => {
-  it("two different histories produce two different sets", () => {
-    const fresh = view().cards.map((c) => c.challengeId);
-    const advanced = view(completing(fresh)).cards.map((c) => c.challengeId);
-    expect(advanced).not.toEqual(fresh);
+  /** ⛔ THE DAILY BOUNDARY, at the view level. Completing all three does NOT
+   *  change the set inside the same window — that is the entire pass. It
+   *  changes at the NEXT window. */
+  it("keeps the same set all window, then advances at the boundary", () => {
+    const day1 = view();
+    const ids = day1.cards.map((c) => c.challengeId);
+
+    const sameWindow = view(completing(ids), day1.assignment, WINDOW);
+    expect(sameWindow.cards.map((c) => c.challengeId)).toEqual(ids);
+    expect(sameWindow.completedToday).toBe(DAILY_NEW_SLOTS);
+
+    const nextWindow = view(completing(ids), day1.assignment, "2026-08-22");
+    expect(nextWindow.cards.map((c) => c.challengeId)).not.toEqual(ids);
+    expect(nextWindow.completedToday).toBe(0);
   });
 
   /** AC-6 / AC-11: an existing completion shows through immediately, and it is
    *  read from the SAME per-piece best map the drawer has always written. */
   it("shows a completion the moment its best exists", () => {
-    const target = pool[0]!;
-    // Complete EVERYTHING, so the exhausted set is drawn from completed
-    // challenges and this one is certainly on screen with its own history.
-    const result = view(completing(pool.map((entry) => entry.challengeId)));
-    const card = result.cards.find((c) => c.challengeId === target.challengeId);
+    const day1 = view();
+    const target = day1.cards[0]!.challengeId;
+    const result = view(completing([target]), day1.assignment);
+    const card = result.cards.find((c) => c.challengeId === target);
     expect(card?.state).toBe("FEATURED_COMPLETED");
   });
 
   it("flags an unplayed challenge NEW and a completed one not", () => {
-    expect(view().cards.every((card) => card.isNew)).toBe(true);
-    const all = pool.map((entry) => entry.challengeId);
-    expect(view(completing(all)).cards.every((card) => card.isNew)).toBe(false);
+    const day1 = view();
+    expect(day1.cards.every((card) => card.isNew)).toBe(true);
+    const done = view(completing(day1.cards.map((c) => c.challengeId)), day1.assignment);
+    expect(done.cards.every((card) => card.isNew)).toBe(false);
   });
 
-  it("reports exhausted only when every healthy challenge has a best", () => {
-    expect(view().exhausted).toBe(false);
+  it("reports the pool exhausted only when every healthy challenge has a best", () => {
+    expect(view().poolExhausted).toBe(false);
     const all = pool.map((entry) => entry.challengeId);
     const done = view(completing(all));
-    expect(done.exhausted).toBe(true);
+    expect(done.poolExhausted).toBe(true);
     // ⛔ Still renders cards: the section returns null on an empty list, so an
     // empty exhausted state would delete the whole group from the home.
-    expect(done.cards).toHaveLength(FEATURED_LIMIT);
+    expect(done.cards.length).toBeGreaterThan(0);
   });
 
   /** AC-11 — nothing about what is on screen can revoke a completion. */

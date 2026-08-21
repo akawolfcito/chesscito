@@ -10,6 +10,13 @@ import {
 import { PLAYABLE_PIECES } from "@/lib/game/exercises";
 import { getLabyrinthBestsMap } from "@/lib/game/labyrinth-progress";
 import {
+  currentWindowId,
+  hoursUntilNextWindow,
+  MINIGAME_WINDOW_STORAGE_KEY,
+  parseStoredAssignment,
+  type WindowAssignment,
+} from "@/lib/minigames/daily-window";
+import {
   challengeHref,
   deriveMiniGamesHubView,
 } from "@/lib/minigames/hub-cards";
@@ -40,16 +47,57 @@ export function MiniGamesSlot() {
     Record<string, number>
   > | null>(null);
 
+  /* ⛔ THE WINDOW IS READ ONCE, AT MOUNT, AND NOTHING TICKS. Queue correctness
+     must not depend on a React interval or on render time: `windowId` is a UTC
+     date the resolver reads, and the hours below are display only. A player who
+     leaves the tab open across midnight sees yesterday's window until they
+     navigate — which is correct, because a silent re-shuffle under an idle
+     screen is worse than a stale-by-one-visit number. */
+  const [stored, setStored] = useState<WindowAssignment | null>(null);
+  const [windowId, setWindowId] = useState<string | null>(null);
+  const [hoursLeft, setHoursLeft] = useState(0);
+
   useEffect(() => {
     const next: Record<string, Record<string, number>> = {};
     for (const piece of PLAYABLE_PIECES) next[piece] = getLabyrinthBestsMap(piece);
     setBestsByPiece(next);
+
+    let raw: string | null = null;
+    try {
+      raw = window.localStorage.getItem(MINIGAME_WINDOW_STORAGE_KEY);
+    } catch {
+      // Private-mode iframes throw. A fresh window is the safe degradation:
+      // the player gets three assigned challenges, they just do not persist.
+    }
+    setStored(parseStoredAssignment(raw));
+
+    const now = new Date();
+    setWindowId(currentWindowId(now));
+    setHoursLeft(hoursUntilNextWindow(now));
   }, []);
 
   const view = useMemo(
-    () => (bestsByPiece ? deriveMiniGamesHubView({ pools, bestsByPiece }) : null),
-    [bestsByPiece, pools],
+    () =>
+      bestsByPiece && windowId
+        ? deriveMiniGamesHubView({ pools, bestsByPiece, stored, windowId })
+        : null,
+    [bestsByPiece, pools, stored, windowId],
   );
+
+  /* Persist the assignment the moment it changes — a new window, a top-up, or
+     a ghost id dropped. Writing unconditionally would touch localStorage on
+     every mount for no reason. */
+  useEffect(() => {
+    if (!view || !view.assignmentChanged) return;
+    try {
+      window.localStorage.setItem(
+        MINIGAME_WINDOW_STORAGE_KEY,
+        JSON.stringify(view.assignment),
+      );
+    } catch {
+      // Same as the read: the session still works, it just will not survive.
+    }
+  }, [view]);
 
   /* `minigames_open` — the H1 denominator.
    *
@@ -70,7 +118,7 @@ export function MiniGamesSlot() {
     if (!view || view.cards.length === 0) return;
     if (openFiredRef.current) return;
     openFiredRef.current = true;
-    const value = `personal:${view.completedCount}`;
+    const value = `${view.assignment.windowId}:${view.completedToday}`;
     try {
       if (window.sessionStorage.getItem(OPEN_EVENT_KEY) === value) return;
       window.sessionStorage.setItem(OPEN_EVENT_KEY, value);
@@ -78,10 +126,15 @@ export function MiniGamesSlot() {
       // Private-mode iframes throw on sessionStorage. Ship the event anyway —
       // the per-mount ref still bounds it — rather than lose the denominator.
     }
+    /* ⚠️ WINDOW-SCOPED FIELDS. `completed_today` / `slots` are what make the
+       measurement question answerable — "did this account reach its cap, and
+       did it come back the same day?" — without a new event. The session latch
+       is keyed by window id, so crossing midnight re-arms it exactly once. */
     track("minigames_open", {
-      completed: view.completedCount,
-      pool_size: view.poolSize,
-      exhausted: view.exhausted,
+      window_id: view.assignment.windowId,
+      completed_today: view.completedToday,
+      slots: view.slotCount,
+      pool_exhausted: view.poolExhausted,
     });
   }, [view]);
 
@@ -109,9 +162,14 @@ export function MiniGamesSlot() {
     <MiniGamesSection
       cards={view.cards}
       comingSoon={view.comingSoon}
-      exhausted={view.exhausted}
-      completedCount={view.completedCount}
-      poolSize={view.poolSize}
+      completedToday={view.completedToday}
+      slotCount={view.slotCount}
+      /* ⛔ Null at 0/3 (nothing is charging) and null when the pool is
+         exhausted (nothing will refill). Both are product states — see the
+         prop's own note. */
+      hoursUntilNext={
+        view.completedToday > 0 && !view.poolExhausted ? hoursLeft : null
+      }
       onPlay={handlePlay}
       onViewAll={() => router.push("/minigames")}
     />

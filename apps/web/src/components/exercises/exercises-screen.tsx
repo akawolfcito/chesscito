@@ -4403,6 +4403,7 @@ export function ExercisesScreen({
               </div>
             ) : contextAction === null &&
               nextChallenge &&
+              showLanePathRows &&
               !effectiveLabyrinthMode ? (
               // Slice 3D — the next challenge comes to the player: when
               // the slot is otherwise idle and the path recommends an
@@ -4410,6 +4411,19 @@ export function ExercisesScreen({
               // Hidden while already inside a labyrinth. contextAction
               // === null also rules out every failure state (those
               // always resolve to retry/useShield).
+              //
+              // ⛔ HIDDEN IN LEARN (2026-08-21), on the same flag that hides
+              // the lane rows — and by then it was not a taxonomy question any
+              // more. It opens `nextChallenge` (the first unlocked, uncompleted
+              // lane node) with source `automatic`, which is NOT the daily
+              // assignment. A player who cleared their three could tap here and
+              // walk straight into a fourth, from inside Exercises, past the
+              // window. The daily allowance turned this pin from a
+              // cross-surface smell into a hole in the model.
+              //
+              // ⚠️ PLAY keeps it, and must: PLAY mounts no Mini-games surface
+              // and no Library, so this pin plus the path rows are the only way
+              // lane-2 is reachable there.
               <div className="animate-in fade-in zoom-in-95 duration-200">
                 <ActionPin
                   action="enterLabyrinth"

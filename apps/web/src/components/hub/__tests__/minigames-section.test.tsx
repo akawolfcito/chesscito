@@ -39,9 +39,9 @@ function renderSection(props: Partial<Parameters<typeof MiniGamesSection>[0]> = 
     <MiniGamesSection
       cards={CARDS}
       comingSoon={["knight-tour", "promotion-run"]}
-      exhausted={false}
-      completedCount={4}
-      poolSize={13}
+      completedToday={1}
+      slotCount={3}
+      hoursUntilNext={18}
       onPlay={vi.fn()}
       onViewAll={vi.fn()}
       {...props}
@@ -59,11 +59,11 @@ describe("MiniGamesSection — structure", () => {
     }
   });
 
-  it("carries the exhausted flag on the section so a screenshot can be attributed", () => {
+  it("carries today's count on the section so a screenshot can be attributed", () => {
     renderSection();
     expect(screen.getByTestId("minigames-section")).toHaveAttribute(
-      "data-exhausted",
-      "false",
+      "data-completed-today",
+      "1",
     );
   });
 
@@ -179,12 +179,11 @@ describe("MiniGamesSection — content freshness (SLICE B.2 / PART 8)", () => {
     );
   });
 
-  it("shows the all-cleared note only when every featured challenge is done", () => {
-    renderSection();
-    expect(screen.queryByTestId("minigames-all-clear")).not.toBeInTheDocument();
-    renderSection({ exhausted: true });
-    expect(screen.getByTestId("minigames-all-clear")).toBeInTheDocument();
-  });
+  /* ⛔ THE ALL-CLEAR NOTE'S TEST WENT WITH THE NOTE (2026-08-21). It asserted a
+     sentence that is now false twice over — there is no global rotation, and
+     content does not change "from time to time" for everyone — and that the
+     founder never saw in smoke. The state it described is now carried by the
+     compact status row, covered by the U-2/U-3/U-4 blocks below. */
 });
 
 /* ⛔ `describe("MiniGamesSection — Coming Soon (AC-9)")` IS GONE, block and all.
@@ -284,47 +283,127 @@ describe("MiniGamesSection — the tile names the CHALLENGE, not the game family
   });
 });
 
-describe("MiniGamesSection — Library entry", () => {
-  it("offers View all, which is what keeps the other ten reachable", () => {
+describe("U-5 / PART 8 — View All stays a tappable pill, alone", () => {
+  it("routes to the Library", () => {
     const onViewAll = vi.fn();
     renderSection({ onViewAll });
     fireEvent.click(screen.getByTestId("minigames-view-all"));
     expect(onViewAll).toHaveBeenCalledTimes(1);
   });
 
-  it("shows ONE progress signal and no dashboard", () => {
-    renderSection({ completedCount: 4, poolSize: 13 });
-    expect(screen.getByTestId("minigames-progress")).toHaveTextContent("4/13");
+  /** ⛔ The status must NOT live inside the button. `VIEW ALL 4/13` put a
+   *  number inside a control, and a number inside a control reads as part of
+   *  what the control does — which is how it got heard as "nine more are
+   *  available somewhere". */
+  it("carries no count inside the pill", () => {
+    renderSection();
+    const pill = screen.getByTestId("minigames-view-all");
+    expect(pill).not.toContainElement(screen.getByTestId("minigames-status"));
+    expect(pill.textContent ?? "").not.toMatch(/\d/);
+  });
+});
+
+describe("U-1 — the Hub never shows the catalogue size", () => {
+  it("names no total beyond today's slots", () => {
+    renderSection({ completedToday: 2, slotCount: 3, hoursUntilNext: 18 });
+    const row = screen.getByTestId("minigames-status").textContent ?? "";
+    expect(row).toContain("2/3");
+    // 13 is the healthy pool. It must not reach this surface in any form.
+    expect(row).not.toMatch(/13/);
+  });
+});
+
+describe("U-2 — the four daily states render correctly", () => {
+  it.each([0, 1, 2, 3])("renders %i/3 today", (done) => {
+    renderSection({ completedToday: done, slotCount: 3, hoursUntilNext: 18 });
+    expect(screen.getByTestId("minigames-today")).toHaveTextContent(`${done}/3 today`);
   });
 
-  it("names the progress for a screen reader", () => {
-    renderSection({ completedCount: 4, poolSize: 13 });
-    expect(screen.getByTestId("minigames-progress")).toHaveAttribute(
+  it("reports the true slot count when the catalogue is running out", () => {
+    renderSection({ completedToday: 1, slotCount: 2, hoursUntilNext: 18 });
+    expect(screen.getByTestId("minigames-today")).toHaveTextContent("1/2 today");
+  });
+});
+
+describe("U-3 — the refill hint follows consumption, not the clock", () => {
+  /** ⛔ Null at 0/3 is a PRODUCT state: nothing has been consumed, so nothing
+   *  is charging, and a countdown there is the noise that trains people to
+   *  stop reading this row — the same failure as the sentence it replaced. */
+  it("hides the timer at 0/3", () => {
+    renderSection({ completedToday: 0, hoursUntilNext: null });
+    expect(screen.queryByTestId("minigames-refill")).toBeNull();
+    expect(screen.getByTestId("minigames-status")).toHaveAttribute("data-hours", "none");
+  });
+
+  it("shows it once anything is consumed", () => {
+    renderSection({ completedToday: 1, hoursUntilNext: 18 });
+    expect(screen.getByTestId("minigames-refill")).toHaveTextContent("18h");
+  });
+
+  it("still shows it at 3/3 — complete and anticipatory, never blocked", () => {
+    renderSection({ completedToday: 3, slotCount: 3, hoursUntilNext: 6 });
+    expect(screen.getByTestId("minigames-today")).toHaveTextContent("3/3 today");
+    expect(screen.getByTestId("minigames-refill")).toHaveTextContent("6h");
+  });
+
+  /** ⛔ D-11 at the surface: an exhausted pool promises nothing. */
+  it("hides it when nothing will ever refill", () => {
+    renderSection({ completedToday: 3, slotCount: 3, hoursUntilNext: null });
+    expect(screen.queryByTestId("minigames-refill")).toBeNull();
+  });
+
+  it("names the hours for a screen reader without printing a sentence", () => {
+    renderSection({ completedToday: 1, hoursUntilNext: 18 });
+    expect(screen.getByTestId("minigames-refill")).toHaveAttribute(
       "aria-label",
-      "4 of 13 mini-games completed",
+      "New challenges in about 18 hours",
+    );
+  });
+
+  it("shows hours, never a second-by-second countdown", () => {
+    renderSection({ completedToday: 1, hoursUntilNext: 18 });
+    expect(screen.getByTestId("minigames-refill").textContent ?? "").not.toMatch(
+      /\d+:\d+/,
     );
   });
 });
 
-describe("MiniGamesSection — exhausted pool", () => {
-  /** ⛔ R-7. The section returns null on zero cards, so an exhausted pool that
-   *  produced an empty list would delete the whole group from the home —
-   *  "you cleared everything" reading exactly like "mini-games were removed". */
-  it("still renders its cards and adds the all-clear line", () => {
-    renderSection({ exhausted: true });
-    expect(screen.getByTestId("minigames-all-clear")).toBeInTheDocument();
-    expect(screen.getAllByTestId(/^minigame-card-/)).toHaveLength(CARDS.length);
+describe("U-4 / U-6 — no prose under the rail", () => {
+  /** The founder never noticed the explanatory sentence in smoke, which is the
+   *  evidence that a sentence there does no work. It was DELETED, not reworded. */
+  it("renders no all-clear sentence in any state", () => {
+    for (const done of [0, 1, 2, 3]) {
+      const { unmount } = renderSection({
+        completedToday: done,
+        hoursUntilNext: done > 0 ? 18 : null,
+      });
+      expect(screen.queryByTestId("minigames-all-clear")).toBeNull();
+      unmount();
+    }
   });
 
-  it("says nothing about when more content arrives", () => {
-    renderSection({ exhausted: true });
-    const text = screen.getByTestId("minigames-all-clear").textContent ?? "";
-    // ⛔ No countdown, no date, no "tomorrow": the product has not promised one.
-    expect(text).not.toMatch(/tomorrow|soon|days?|hours?|\d\s*(d|h|m)\b|next week/i);
+  it("says nothing about rotation, tomorrow, or content changing", () => {
+    renderSection({ completedToday: 3, hoursUntilNext: 18 });
+    const text = document.body.textContent ?? "";
+    expect(text).not.toMatch(/from time to time|tomorrow|come back|cleared them all/i);
   });
 
-  it("shows no all-clear line while anything is left", () => {
-    renderSection({ exhausted: false });
-    expect(screen.queryByTestId("minigames-all-clear")).toBeNull();
+  it("adds exactly ONE row under the tiles", () => {
+    renderSection();
+    const tiles = screen.getByTestId("minigames-section");
+    const siblings = Array.from(tiles.parentElement?.children ?? []);
+    // divider + tile group + footer row. Nothing else.
+    expect(siblings).toHaveLength(3);
+  });
+});
+
+describe("U-7 — no Peones affordance while monetization is disabled", () => {
+  /** ⛔ A price badge beside free content reads as if the free content costs
+   *  money. Nothing renders it until acceleration is actually enabled. */
+  it("renders no price, no Peones badge and no unlock CTA at 3/3", () => {
+    renderSection({ completedToday: 3, slotCount: 3, hoursUntilNext: 18 });
+    const text = document.body.textContent ?? "";
+    expect(text).not.toMatch(/pe(o|ó)n|unlock|\$|♙/i);
+    expect(screen.queryByTestId("minigames-unlock")).toBeNull();
   });
 });

@@ -190,27 +190,49 @@ describe("R-7 — an exhausted pool is an intentional state", () => {
   });
 });
 
-describe("R-8 — the Library holds everything, completed included", () => {
-  const library = resolveLibrary(pools);
-
-  it("lists every healthy challenge exactly once", () => {
-    const flat = library.groups.flatMap((group) => group.challenges);
-    expect(flat).toHaveLength(pool.length);
-    expect(new Set(flat.map((c) => c.challengeId)).size).toBe(pool.length);
+describe("R-8 — a completed challenge stays in the Library", () => {
+  it("is grouped by AVAILABILITY, which is what the daily allowance gates on", () => {
+    const library = resolveLibrary(pools);
+    // Nothing assigned, nothing completed: everything is upcoming and NOTHING
+    // is playable. That is the gate — the Library cannot outrun the window.
+    expect(library.today).toHaveLength(0);
+    expect(library.completed).toHaveLength(0);
+    expect(library.upcoming).toBe(pool.length);
+    expect(library.total).toBe(pool.length);
   });
 
-  it("keeps a completed challenge listed", () => {
+  it("keeps a completed challenge listed and out of upcoming", () => {
     const done = pool[0]!.challengeId;
     const after = resolveLibrary(pools, new Set([done]));
-    const flat = after.groups.flatMap((group) => group.challenges);
-    expect(flat.map((c) => c.challengeId)).toContain(done);
-    expect(flat.find((c) => c.challengeId === done)?.completed).toBe(true);
+    expect(after.completed.map((c) => c.challengeId)).toContain(done);
+    expect(after.completed[0]!.completed).toBe(true);
+    expect(after.upcoming).toBe(pool.length - 1);
   });
 
-  it("groups by engine and never emits an empty group", () => {
-    for (const group of library.groups) {
-      expect(group.challenges.length).toBeGreaterThan(0);
-    }
+  it("puts an assigned-but-unplayed challenge under today", () => {
+    const assigned = pool[1]!.challengeId;
+    const library = resolveLibrary(pools, new Set(), new Set([assigned]));
+    expect(library.today.map((c) => c.challengeId)).toEqual([assigned]);
+    expect(library.upcoming).toBe(pool.length - 1);
+  });
+
+  it("never counts one challenge twice — completed outranks assigned", () => {
+    const id = pool[0]!.challengeId;
+    const library = resolveLibrary(pools, new Set([id]), new Set([id]));
+    expect(library.today).toHaveLength(0);
+    expect(library.completed.map((c) => c.challengeId)).toEqual([id]);
+    expect(library.today.length + library.completed.length + library.upcoming).toBe(
+      pool.length,
+    );
+  });
+
+  it("always accounts for the whole pool", () => {
+    const done = new Set(pool.slice(0, 4).map((e) => e.challengeId));
+    const assigned = new Set(pool.slice(4, 6).map((e) => e.challengeId));
+    const library = resolveLibrary(pools, done, assigned);
+    expect(library.today.length + library.completed.length + library.upcoming).toBe(
+      pool.length,
+    );
   });
 });
 

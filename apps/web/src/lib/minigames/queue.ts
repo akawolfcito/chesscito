@@ -133,6 +133,43 @@ export function resolveConsumptionPolicy(
  * zero cards) — "you cleared everything" would look exactly like "mini-games
  * were removed". The surface pairs this with its all-clear line.
  */
+/**
+ * The picker, shared by the plain queue and by the daily window resolver.
+ *
+ * Two greedy passes over the pool in canonical order: one challenge per engine
+ * first, then fill. Pass 2 is what keeps variety a PREFERENCE rather than a cap
+ * — when only one engine has content left the set still fills instead of
+ * starving to a single card.
+ *
+ * `seen` is whatever the caller wants excluded: completed ids for the plain
+ * queue, completed PLUS already-assigned ids when a daily window is topping up
+ * its freed slots.
+ */
+export function pickUnseen(
+  pool: readonly FeaturedChallenge[],
+  seen: ReadonlySet<string>,
+  limit: number,
+): FeaturedChallenge[] {
+  const unseen = pool.filter((entry) => !seen.has(entry.challengeId));
+  const picked: FeaturedChallenge[] = [];
+  const usedEngines = new Set<MiniGameEngineId>();
+
+  for (const entry of unseen) {
+    if (picked.length >= limit) break;
+    if (usedEngines.has(entry.engineId)) continue;
+    usedEngines.add(entry.engineId);
+    picked.push(entry);
+  }
+
+  for (const entry of unseen) {
+    if (picked.length >= limit) break;
+    if (picked.includes(entry)) continue;
+    picked.push(entry);
+  }
+
+  return picked;
+}
+
 export function resolveFeaturedChallenges(args: {
   pool: readonly FeaturedChallenge[];
   completedChallengeIds: ReadonlySet<string>;
@@ -156,21 +193,7 @@ export function resolveFeaturedChallenges(args: {
     };
   }
 
-  const picked: FeaturedChallenge[] = [];
-  const usedEngines = new Set<MiniGameEngineId>();
-
-  for (const entry of unseen) {
-    if (picked.length >= limit) break;
-    if (usedEngines.has(entry.engineId)) continue;
-    usedEngines.add(entry.engineId);
-    picked.push(entry);
-  }
-
-  for (const entry of unseen) {
-    if (picked.length >= limit) break;
-    if (picked.includes(entry)) continue;
-    picked.push(entry);
-  }
+  const picked = pickUnseen(pool, completedChallengeIds, limit);
 
   return {
     items: picked.map((entry) => ({ ...entry, unseen: true })),
@@ -184,53 +207,55 @@ export function resolveFeaturedChallenges(args: {
 
 export type LibraryChallenge = FeaturedChallenge & { completed: boolean };
 
-export type LibraryGroup = {
-  engineId: MiniGameEngineId;
-  challenges: LibraryChallenge[];
-};
-
 export type MiniGamesLibrary = {
-  groups: LibraryGroup[];
+  /** Assigned this window and not yet cleared. Playable. */
+  today: LibraryChallenge[];
+  /** Cleared at some point. Playable — replay is the point of the Library. */
+  completed: LibraryChallenge[];
+  /** Healthy challenges that are neither assigned nor cleared. NOT playable,
+   *  and NOT enumerated: the surface shows one low-noise line, never a wall of
+   *  locked titles. */
+  upcoming: number;
   total: number;
-  completedCount: number;
 };
 
 /**
- * Every healthy challenge, grouped by engine — the index that lets Featured
- * stay three cards and lets the Exercises path stop carrying lane-2.
+ * The Library, grouped by AVAILABILITY rather than by game.
  *
- * ⛔ Built from `resolveChallengePool`, the SAME projection Featured reads, so
- * a challenge cannot be playable in one surface and missing from the other.
- * Coming-soon engines are absent by construction (`earlyAccessEngines`): there
- * is no "locked" row to tap, because a row that cannot be played is a dead end
- * dressed as content.
+ * ⛔ THE GROUPING IS THE GATE. Before the daily allowance this listed all 13 as
+ * playable, which would have let a player walk straight past the window and
+ * burn the catalogue from the Library instead of the Home. What a player asks
+ * here is "what can I play", so that is what the sections answer.
  *
- * An engine with no challenges emits no group — an empty accordion section
- * reads as a bug, not as an empty state.
+ * ⛔ `upcoming` is a COUNT and the surface does not even print it. Rendering
+ * ten locked rows would turn the Library into a wall of locks, and naming the
+ * number would re-introduce the catalogue size the Home just stopped showing.
+ * It exists so the surface can decide whether to show its one line at all.
+ *
+ * Coming-soon engines are absent by construction (`earlyAccessEngines`): a row
+ * that can never be played is a dead end dressed as content.
  */
 export function resolveLibrary(
   pools: MiniGamePools,
   completedChallengeIds: ReadonlySet<string> = new Set(),
+  assignedChallengeIds: ReadonlySet<string> = new Set(),
 ): MiniGamesLibrary {
   const pool = resolveChallengePool(pools);
-  const groups: LibraryGroup[] = [];
 
-  for (const engine of earlyAccessEngines()) {
-    const challenges = pool
-      .filter((entry) => entry.engineId === engine.id)
-      .map((entry) => ({
-        ...entry,
-        completed: completedChallengeIds.has(entry.challengeId),
-      }));
-    if (challenges.length === 0) continue;
-    groups.push({ engineId: engine.id, challenges });
+  const today: LibraryChallenge[] = [];
+  const completed: LibraryChallenge[] = [];
+  let upcoming = 0;
+
+  for (const entry of pool) {
+    const isDone = completedChallengeIds.has(entry.challengeId);
+    if (isDone) {
+      completed.push({ ...entry, completed: true });
+    } else if (assignedChallengeIds.has(entry.challengeId)) {
+      today.push({ ...entry, completed: false });
+    } else {
+      upcoming += 1;
+    }
   }
 
-  return {
-    groups,
-    total: pool.length,
-    completedCount: pool.filter((entry) =>
-      completedChallengeIds.has(entry.challengeId),
-    ).length,
-  };
+  return { today, completed, upcoming, total: pool.length };
 }

@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { appendTrainingRows, buildTrainingPath } from "@/lib/training/path";
 import { defaultMiniGamePools } from "@/lib/minigames/catalog";
+import {
+  DAILY_NEW_SLOTS,
+  resolveWindowAssignment,
+  type WindowAssignment,
+} from "@/lib/minigames/daily-window";
 import { resolveChallengePool, resolveLibrary } from "@/lib/minigames/queue";
 
 /**
@@ -103,23 +108,68 @@ describe("E-4 — exercise locking is unchanged", () => {
 });
 
 describe("E-5 — no healthy mini-game becomes unreachable", () => {
-  it("lists in the Library every challenge the queue knows", () => {
-    const listed = resolveLibrary(pools).groups.flatMap((group) =>
-      group.challenges.map((challenge) => challenge.challengeId),
+  /* ⛔ THE MEANING OF "REACHABLE" CHANGED WITH THE DAILY ALLOWANCE (2026-08-21).
+     It used to be "listed in the Library right now" — the Library showed all 13.
+     It is now "reachable OVER TIME", because listing everything as playable
+     would let a player walk past the daily window. So the property to prove is
+     that replenishment eventually hands out every challenge, and that nothing
+     falls outside the three Library buckets on the way. */
+
+  it("accounts for every challenge in exactly one Library bucket", () => {
+    const done = new Set(pool.slice(0, 3).map((entry) => entry.challengeId));
+    const assigned = new Set(pool.slice(3, 5).map((entry) => entry.challengeId));
+    const library = resolveLibrary(pools, done, assigned);
+    expect(library.today.length + library.completed.length + library.upcoming).toBe(
+      pool.length,
     );
-    expect(listed.slice().sort()).toEqual(
-      pool.map((entry) => entry.challengeId).sort(),
-    );
+    expect(library.total).toBe(pool.length);
   });
 
-  it("covers everything the path used to expose, for every playable piece", () => {
-    // The lane rows were the old index. Whatever they could reach, the Library
-    // must reach — otherwise the separation orphaned content instead of moving it.
-    const listed = new Set(
-      resolveLibrary(pools).groups.flatMap((group) =>
-        group.challenges.map((challenge) => challenge.challengeId),
-      ),
-    );
-    for (const entry of pool) expect(listed.has(entry.challengeId)).toBe(true);
+  it("hands out every healthy challenge across consecutive windows", () => {
+    let assignment: WindowAssignment | null = null;
+    const completed = new Set<string>();
+    const seen = new Set<string>();
+
+    // A maximally active player: clears everything assigned, every window.
+    for (let day = 1; day <= 30 && seen.size < pool.length; day += 1) {
+      const resolved = resolveWindowAssignment({
+        stored: assignment,
+        windowId: `2026-09-${String(day).padStart(2, "0")}`,
+        pool,
+        completedChallengeIds: completed,
+      });
+      assignment = resolved.assignment;
+      for (const id of assignment.assigned) {
+        seen.add(id);
+        completed.add(id);
+      }
+    }
+
+    expect(seen.size).toBe(pool.length);
+  });
+
+  it("takes at least as many windows as the cap implies — no burst", () => {
+    let assignment: WindowAssignment | null = null;
+    const completed = new Set<string>();
+    const seen = new Set<string>();
+    let windows = 0;
+
+    for (let day = 1; day <= 30 && seen.size < pool.length; day += 1) {
+      const resolved = resolveWindowAssignment({
+        stored: assignment,
+        windowId: `2026-09-${String(day).padStart(2, "0")}`,
+        pool,
+        completedChallengeIds: completed,
+      });
+      assignment = resolved.assignment;
+      for (const id of assignment.assigned) {
+        seen.add(id);
+        completed.add(id);
+      }
+      windows += 1;
+    }
+
+    // ⛔ The whole point of the pass: the catalogue cannot burn in one sitting.
+    expect(windows).toBeGreaterThanOrEqual(Math.ceil(pool.length / DAILY_NEW_SLOTS));
   });
 });

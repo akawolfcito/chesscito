@@ -9758,15 +9758,52 @@ button.hud-resource-chip:active:not(:disabled) {
   overflow-wrap: break-word;
 }
 
-/* Library entry — the index tile's row. Deliberately NOT a `.reward-tile`:
-   it opens a list, not a game, and giving it the challenge silhouette would
-   make it read as a fourth featured card. */
-.hub-minigames-view-all {
+/* ⛔ ONE ROW, TWO OBJECTS (Sally, 2026-08-21). The pill is navigation; the
+   status beside it is information. They used to be one string inside one
+   button — `VIEW ALL  4/13` — and a number inside a button reads as part of
+   what the button does, which is how `4/13` got heard as "nine more are
+   available somewhere". Separated by FORM costs zero vertical height. */
+.hub-minigames-footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   margin: 4px auto 0;
+}
+
+/* Status: deliberately NOT a pill and NOT bordered. Flat text is what says
+   "this is a readout, not a control". */
+.hub-minigames-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #f3e6c4;
+  opacity: 0.82;
+  text-shadow: 0 1px 3px rgba(6, 17, 7, 0.9);
+  white-space: nowrap;
+}
+
+.hub-minigames-status-dot {
+  opacity: 0.5;
+}
+
+/* The refill hint. Quieter than the count: the count is what you did, this is
+   what is coming — anticipatory, never a warning. */
+.hub-minigames-refill {
+  opacity: 0.78;
+}
+
+/* Library entry — deliberately NOT a `.reward-tile`: it opens a list, not a
+   game, and giving it the challenge silhouette would make it read as a fourth
+   featured card. */
+.hub-minigames-view-all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
   padding: 3px 10px;
   border: 1px solid rgba(243, 230, 196, 0.34);
   border-radius: 999px;
@@ -9777,13 +9814,6 @@ button.hud-resource-chip:active:not(:disabled) {
   text-transform: uppercase;
   color: #f3e6c4;
   text-shadow: 0 1px 3px rgba(6, 17, 7, 0.9);
-}
-
-.hub-minigames-progress {
-  opacity: 0.72;
-  font-weight: 700;
-  letter-spacing: 0;
-  text-transform: none;
 }
 
 /* ── Mini-games Library (`/minigames`) ────────────────────────────────────
@@ -9878,9 +9908,47 @@ button.hud-resource-chip:active:not(:disabled) {
   color: inherit;
 }
 
+.minigames-library-row-icon {
+  display: block;
+  width: 24px;
+  height: 26px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.minigames-library-row-text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+}
+
 .minigames-library-row-title {
   font-size: 0.78rem;
   font-weight: 800;
+}
+
+/* The game family, quiet and second — the hierarchy a 50px tile has no room
+   for. Together with the title above it, a row says "one challenge, from this
+   family" without a word of explanation. */
+.minigames-library-row-engine {
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.58;
+}
+
+/* ⛔ NOT a button and NOT a lock. There is nothing to do with it today, and a
+   disabled-looking control invites taps that go nowhere. */
+.minigames-library-upcoming {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #f3e6c4;
+  opacity: 0.5;
 }
 
 /* A completed row is still a live, tappable row — replay is the point. The
@@ -9892,14 +9960,6 @@ button.hud-resource-chip:active:not(:disabled) {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   opacity: 0.6;
-}
-
-.hub-minigames-all-clear {
-  margin: 2px 0 0;
-  text-align: center;
-  font-size: 0.5rem;
-  color: #f3e6c4;
-  text-shadow: 0 1px 3px rgba(6, 17, 7, 0.9);
 }
 
 /* Daily gift corner-icon (P1-B) — gift glyph + streak badge, opens daily sheet.

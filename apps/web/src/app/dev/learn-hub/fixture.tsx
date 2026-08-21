@@ -310,9 +310,12 @@ export function LearnHubFixture({ variant }: { variant: LearnHubVariant }) {
         <MiniGamesSection
           cards={MINIGAME_CARDS}
           comingSoon={["knight-tour", "promotion-run"]}
-          exhausted={false}
-          completedCount={4}
-          poolSize={13}
+          /* 1/3 today is the state that photographs BOTH halves of the row:
+             the count AND the refill hint, which only appears once something
+             has been consumed. */
+          completedToday={1}
+          slotCount={3}
+          hoursUntilNext={18}
           onPlay={noop}
           onViewAll={noop}
         />

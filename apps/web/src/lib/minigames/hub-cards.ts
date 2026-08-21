@@ -21,19 +21,27 @@ import { deriveFeaturedCardState } from "@/lib/minigames/card-state";
 import { resolveMiniGamesAccess } from "@/lib/minigames/access";
 import type { MiniGamePools } from "@/lib/minigames/pools";
 import {
-  resolveChallengePool,
-  resolveConsumptionPolicy,
-  resolveFeaturedChallenges,
-} from "@/lib/minigames/queue";
+  DAILY_NEW_SLOTS,
+  resolveWindowAssignment,
+  type WindowAssignment,
+} from "@/lib/minigames/daily-window";
+import { resolveChallengePool, resolveConsumptionPolicy } from "@/lib/minigames/queue";
 import type { MiniGamesCard } from "@/components/hub/minigames-section";
 
 export type MiniGamesHubView = {
   cards: MiniGamesCard[];
   comingSoon: MiniGameEngineId[];
-  /** Every healthy challenge completed at least once. */
-  exhausted: boolean;
-  completedCount: number;
-  poolSize: number;
+  /** Assigned challenges the player has already completed. The numerator of
+   *  `n/3 today` — and the ONLY count the Learn Home shows. */
+  completedToday: number;
+  /** Assigned slots this window. Normally `DAILY_NEW_SLOTS`; smaller only when
+   *  the catalogue is running out. */
+  slotCount: number;
+  /** Every healthy challenge completed at least once. Nothing will refill. */
+  poolExhausted: boolean;
+  /** The assignment to persist, and whether it actually changed. */
+  assignment: WindowAssignment;
+  assignmentChanged: boolean;
 };
 
 /**
@@ -65,52 +73,72 @@ export function deriveMiniGamesHubView(args: {
   pools: MiniGamePools;
   /** Existing per-piece best maps (`chesscito:labyrinth-best:{piece}`). */
   bestsByPiece: Record<string, Record<string, number> | undefined>;
+  /** Last persisted window assignment, or null on a fresh device. */
+  stored: WindowAssignment | null;
+  /** The UTC day this render belongs to, injected so nothing here reads a clock. */
+  windowId: string;
 }): MiniGamesHubView {
-  const { pools, bestsByPiece } = args;
+  const { pools, bestsByPiece, stored, windowId } = args;
 
   const comingSoon = MINIGAME_ENGINES.filter(
     (engine) => engine.status === "coming-soon",
   ).map((engine) => engine.id);
 
-  const empty = {
-    cards: [] as MiniGamesCard[],
+  const empty: MiniGamesHubView = {
+    cards: [],
     comingSoon,
-    exhausted: false,
-    completedCount: 0,
-    poolSize: 0,
+    completedToday: 0,
+    slotCount: 0,
+    poolExhausted: false,
+    assignment: { windowId, assigned: [] },
+    assignmentChanged: false,
   };
 
   // The seam. Free in Early Access; a future policy denies HERE and nowhere else.
   if (!resolveMiniGamesAccess({}).allowed) return empty;
 
-  const policy = resolveConsumptionPolicy({});
+  // The policy owns the ALLOWANCE. It reports `DAILY_NEW_SLOTS` today; a future
+  // paid batch widens it here and nowhere else.
+  resolveConsumptionPolicy({});
+
   const pool = resolveChallengePool(pools);
   const completed = completedChallengeIds(bestsByPiece);
-  const queue = resolveFeaturedChallenges({
+  const window = resolveWindowAssignment({
+    stored,
+    windowId,
     pool,
     completedChallengeIds: completed,
-    limit: policy.featuredLimit,
   });
 
+  const byId = new Map(pool.map((entry) => [entry.challengeId, entry]));
+  const assigned = window.assignment.assigned
+    .map((id) => byId.get(id))
+    .filter((entry): entry is NonNullable<typeof entry> => entry != null);
+
   return {
-    cards: queue.items.map((entry) => ({
+    cards: assigned.map((entry) => ({
       challengeId: entry.challengeId,
       engineId: entry.engineId,
       piece: entry.piece,
       title: entry.challenge.title ?? entry.challengeId,
       state: deriveFeaturedCardState({ featured: entry, pools, bestsByPiece }),
-      /* NEW means "you have never completed this". Under the rotation model it
-         meant "it was not in the PREVIOUS rotation", which said nothing about
-         this player — a returning player saw NEW on a level they had already
-         cleared. Still no storage: it is the completion set, inverted. */
-      isNew: entry.unseen,
+      /* NEW means "you have never completed this". Under the old global
+         rotation it meant "it was not in the PREVIOUS rotation", which said
+         nothing about this player. Still no storage: the completion set,
+         inverted. */
+      isNew: !completed.has(entry.challengeId),
     })),
     comingSoon,
-    exhausted: queue.exhausted,
-    completedCount: queue.completedCount,
-    poolSize: queue.poolSize,
+    completedToday: assigned.filter((entry) => completed.has(entry.challengeId)).length,
+    slotCount: assigned.length,
+    poolExhausted: window.poolExhausted,
+    assignment: window.assignment,
+    assignmentChanged: window.changed,
   };
 }
+
+/** Re-exported so a surface can talk about the cap without importing two modules. */
+export { DAILY_NEW_SLOTS };
 
 /** Where a mini-game card navigates. `from` decides the progression bypass AND
  *  the completion return, which used to be one overloaded flag. */
