@@ -1087,8 +1087,19 @@
         "src/components/hub/minigames-section.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
+        {
+          "file": "src/components/hub/minigames-library.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/components/hub/minigames-section.tsx",
           "occurrences": [],
@@ -1132,8 +1143,19 @@
         "src/components/hub/minigames-section.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
+        {
+          "file": "src/components/hub/minigames-library.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/components/hub/minigames-section.tsx",
           "occurrences": [],
@@ -1177,8 +1199,19 @@
         "src/components/hub/minigames-section.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
+        {
+          "file": "src/components/hub/minigames-library.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/components/hub/minigames-section.tsx",
           "occurrences": [],
@@ -1222,8 +1255,19 @@
         "src/components/hub/minigames-section.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
+        {
+          "file": "src/components/hub/minigames-library.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/components/hub/minigames-section.tsx",
           "occurrences": [],
@@ -1267,8 +1311,19 @@
         "src/components/hub/minigames-section.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
+        {
+          "file": "src/components/hub/minigames-library.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/components/hub/minigames-section.tsx",
           "occurrences": [],
@@ -1312,8 +1367,19 @@
         "src/components/hub/minigames-section.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
+        {
+          "file": "src/components/hub/minigames-library.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/components/hub/minigames-section.tsx",
           "occurrences": [],
