@@ -827,7 +827,30 @@ export function ExercisesScreen({
    *  click on the result overlay's scrim, X, and CTAs. We close the
    *  active dock tab whenever a result overlay appears so the result
    *  modal becomes the sole foreground and stays dismissable. */
+  /**
+   * Leaving a piece leaves its maze.
+   *
+   * ⛔ THE GUARD IS THE WHOLE POINT: this effect is written for "the player
+   * SWITCHED piece", but a bare `[selectedPiece]` effect also fires on MOUNT,
+   * where there is no maze to leave. That extra pass is the one React
+   * double-invokes under StrictMode (`next dev`), and it wiped the `?content=`
+   * deep link a moment after it resolved — so in development every mini-game
+   * tile opened the piece's FIRST lane-1 exercise instead of its challenge.
+   * The deep-link effect could not undo it: `implicitContentRequestRef` had
+   * already recorded the request, so it early-returned.
+   *
+   * ⚠️ Production never showed it (effects run once), which is exactly why it
+   * survived every earlier check — all of them ran a production build. It was
+   * never cosmetic: it made the Mini-games surface UNSMOKEABLE in dev, and
+   * "remember which build you are on" is not a guarantee anybody can keep.
+   *
+   * Comparing against the previous value fixes both: the mount pass is skipped,
+   * and a duplicated invocation with an unchanged piece is a no-op.
+   */
+  const previousPieceRef = useRef(selectedPiece);
   useEffect(() => {
+    if (previousPieceRef.current === selectedPiece) return;
+    previousPieceRef.current = selectedPiece;
     setLabyrinthMode(false);
     setSelectedLabyrinthId(null);
     setTrainingAttemptGrantId(null);

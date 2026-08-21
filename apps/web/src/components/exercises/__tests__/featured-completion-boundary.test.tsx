@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { StrictMode, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 
@@ -118,6 +118,28 @@ const FEATURED: Exercise = {
   targetPos: { file: 7, rank: 7 },
   optimalMoves: 12,
 };
+
+/** The same tree under `<StrictMode>`, which double-invokes every effect —
+ *  exactly what `next dev` does and what production does NOT. */
+function renderScreenStrict(args: { contentId?: string; featured: boolean }) {
+  return renderWithAppProviders(
+    <StrictMode>
+      <ContentCatalogProvider
+        value={{
+          exercises: { ...EXERCISES, rook: ROOK_POOL },
+          labyrinths: { ...LABYRINTHS, rook: [LANE_1, FEATURED] },
+          descriptions: GENERATED_EXERCISE_DESCRIPTIONS,
+        }}
+      >
+        <ExercisesScreen
+          initialPiece="rook"
+          initialContentId={args.contentId}
+          initialContentFeatured={args.featured}
+        />
+      </ContentCatalogProvider>
+    </StrictMode>,
+  );
+}
 
 function renderScreen(args: { contentId?: string; featured: boolean }) {
   return renderWithAppProviders(
@@ -446,5 +468,34 @@ describe("featured completion boundary", () => {
     const kicker = screen.getByTestId("labyrinth-complete-surface");
     expect(kicker).toHaveAttribute("data-surface", "exercise_path");
     expect(kicker).toHaveTextContent(LABYRINTH_COPY.surfaceExercise);
+  }, 20_000);
+
+  /* ── ⛔ A DEEP LINK MUST SURVIVE DOUBLE-INVOKED EFFECTS ───────────────────
+   * Reported from the founder's smoke: every mini-game tile opened the piece's
+   * FIRST lane-1 exercise instead of its challenge. Their console named the
+   * culprit — `react-dom.development.js`, i.e. StrictMode, which runs every
+   * effect twice.
+   *
+   * The screen's `[selectedPiece]` effect resets labyrinth mode. It is written
+   * for "the player switched piece, leave the maze", but it also fires on
+   * MOUNT, where there is nothing to leave — and that extra pass is the one
+   * StrictMode duplicates, wiping the deep link a moment after it resolved.
+   * The deep-link effect cannot undo it: `implicitContentRequestRef` already
+   * recorded the request, so it early-returns.
+   *
+   * ⚠️ Production is unaffected (effects run once), which is exactly why this
+   * survived every earlier check — all of them ran against a production build.
+   * It still matters: it makes the mini-games surface UNSMOKEABLE in dev, and
+   * "remember which build you are on" is not a guarantee. */
+  it("AC-13: a featured deep link still mounts its challenge under StrictMode", async () => {
+    seedRookProgress();
+    renderScreenStrict({ contentId: FEATURED.id, featured: true });
+    await settled();
+
+    const band = screen.getByTestId("mission-band");
+    expect(band).toHaveTextContent(FEATURED.title!);
+    for (const exercise of ROOK_POOL) {
+      expect(band).not.toHaveTextContent(exercise.title!);
+    }
   }, 20_000);
 });
