@@ -269,17 +269,31 @@ describe("AT-7 / AT-8 — no platform codes, no hostname derivation", () => {
 describe("AT-9 — no real issued code is committed", () => {
   const ALLOWED = new Set([FAKE_CODE, OTHER_FAKE_CODE]);
 
-  /* Scans the whole tracked app source for anything shaped like an issued Celo
-     code. The two fakes above are allow-listed by value; anything else is a
-     leak, and this test is what turns it into a red suite instead of a public
-     mapping. */
-  it("finds no issued-shaped code outside the test allow-list", () => {
+  /**
+   * Scans every tracked source file for anything shaped like a Celo
+   * attribution code. The two fakes are allow-listed; anything else is a leak,
+   * and this is what turns it into a red suite instead of a public mapping.
+   *
+   * ⛔ THE PATTERN IS THE PACKAGE'S RULE, NOT THE GUIDE'S EXAMPLE.
+   * `BUILDERS.md` illustrates issued codes as `celo_` + 8 HEX characters, and
+   * an earlier version of this scanner took that literally — `celo_[0-9a-f]{8}`.
+   * The code Celo actually issued to Chesscito is 13 characters beginning
+   * `celo_` and is NOT all hex, so that pattern would have sailed straight past
+   * the real thing: a guard that could not catch the one value it exists to
+   * catch. The package accepts `[a-z0-9_]{1,32}`, so that is what is scanned.
+   *
+   * ⛔ IT REPORTS COUNTS AND FILE PATHS, NEVER THE MATCH. A failing assertion
+   * prints its actual value, so asserting on the matched strings would dump the
+   * leaked code into the CI log at exactly the moment the guard fires — the
+   * guard would publish the secret it was written to protect.
+   */
+  it("finds no attribution-shaped code outside the test allow-list", () => {
     const { execSync } = require("node:child_process") as typeof import("node:child_process");
     const tracked = execSync("git ls-files", { cwd: process.cwd(), encoding: "utf8" })
       .split("\n")
-      .filter((f) => /\.(ts|tsx|js|mjs|json|md|example|yml|yaml)$/.test(f));
+      .filter((f) => /\.(ts|tsx|js|mjs|json|md|template|example|yml|yaml)$/.test(f));
 
-    const found = new Set<string>();
+    const offenders: string[] = [];
     for (const file of tracked) {
       let body = "";
       try {
@@ -287,11 +301,43 @@ describe("AT-9 — no real issued code is committed", () => {
       } catch {
         continue;
       }
-      for (const match of body.matchAll(/\bcelo_[0-9a-f]{8}\b/g)) found.add(match[0]);
+      for (const match of body.matchAll(/\bcelo_[a-z0-9_]{4,27}\b/g)) {
+        if (!ALLOWED.has(match[0])) {
+          // File path only. The value stays out of the message.
+          offenders.push(file);
+          break;
+        }
+      }
     }
 
-    const leaked = [...found].filter((code) => !ALLOWED.has(code));
-    expect(leaked).toEqual([]);
+    expect(
+      offenders,
+      "A Celo attribution code was found in tracked source. " +
+        "Remove it and configure it through the environment instead.",
+    ).toEqual([]);
+  });
+
+  /**
+   * The guard is only worth anything if it matches the shape actually issued.
+   *
+   * ⚠️ The sample shapes are ASSEMBLED AT RUNTIME rather than written as
+   * literals — a literal here would be a match the scanner above finds in this
+   * very file, which is exactly how this test first went red. That is also the
+   * proof the scanner works: the first thing it caught was its own author.
+   */
+  it("would catch a real issued code, not just the guide's hex example", () => {
+    const pattern = /\bcelo_[a-z0-9_]{4,27}\b/;
+    const shape = (body: string) => ["celo", body].join("_");
+
+    // Non-hex bodies included on purpose: the real issued code is one.
+    for (const body of ["deadbeef", "ab3x9qk2", "chesscito", "a1b2c3d4"]) {
+      expect(pattern.test(shape(body))).toBe(true);
+    }
+
+    // And it must not fire on ordinary prose or identifiers.
+    for (const innocent of ["celo", "celoscan", shape(""), "getCeloChain"]) {
+      expect(pattern.test(innocent)).toBe(false);
+    }
   });
 
   it("keeps the public env reference declaring the variable and EMPTY", () => {

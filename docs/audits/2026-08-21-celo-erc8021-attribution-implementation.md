@@ -25,7 +25,19 @@ ERC_8021_MARKER = "0x80218021802180218021802180218021"
 ```
 
 **Chosen API**: `toDataSuffix(<single issued code>)`, passed to viem/wagmi as
-`dataSuffix`. Issued format is `celo_` + 8 hex characters.
+`dataSuffix`.
+
+⛔ **THE GUIDE'S FORMAT EXAMPLE IS NARROWER THAN WHAT CELO ACTUALLY ISSUES.**
+`BUILDERS.md` illustrates an issued code as `celo_` + 8 **hex** characters. The
+code Celo issued to Chesscito is 13 characters beginning `celo_` and is **not
+all hex** — it matches the package's real rule, `[a-z0-9_]{1,32}`, and encodes
+to a 31-byte suffix that round-trips to exactly one code.
+
+⚠️ This was not academic. The first version of the leak scanner (AT-9) took the
+guide's example literally and searched for `celo_[0-9a-f]{8}` — a guard that
+**would have sailed straight past the one value it exists to catch**. Caught by
+building the app with the real tag configured and finding zero matches in the
+bundle where there should have been two. The scanner now uses the package's rule.
 
 ⛔ **`codeFromHostname` is not used.** Chesscito has an issued code. Deriving one
 from the hostname would produce a *different, unassigned* code, would make
@@ -249,7 +261,33 @@ Exit codes: `2` no marker, `3` tag not configured, `4` mismatch.
 
 ---
 
-## PART 15 · Founder smoke — PREPARED, NOT EXECUTED
+## PART 15 · Founder smoke — **EXECUTED AND PASSED** (2026-08-21)
+
+Real payment on Celo mainnet (42220), verified read-only afterwards. No wallet
+address and no attribution code appears here or in any tool output.
+
+| check | result |
+|---|---|
+| decodes as ERC-20 | yes, `transfer` |
+| recipient is the configured Chesscito treasury | **yes** |
+| amount | `50000` units = **$0.05** — the 5-Peones flexible top-up |
+| canonical calldata is an exact PREFIX of the on-chain input | **yes** |
+| trailing bytes beyond canonical | **31** — exactly the suffix length |
+| attribution suffix present | **yes**, 1 code |
+| `attribution:verify` | `Attribution marker: FOUND`, `Configured Chesscito tag: MATCH` |
+
+⚠️ **`MATCH` alone would not have proven the integration.** It says the
+transaction carries our code; it says nothing about where the transaction came
+from. What closes the loop is the row above it — a `transfer` of exactly $0.05
+to *our* treasury, with the canonical calldata intact as a prefix. That is a
+Chesscito Get Peones payment on the legacy rail, attributed, with ERC-20
+semantics provably unchanged **on real money**.
+
+**Bundle check**: after configuring the tag and rebuilding, the code is present
+in **2 client chunks** (4 files across `.next`) — confirming `NEXT_PUBLIC_*`
+inlining actually happened. Verified by a probe that reports counts only.
+
+### The original plan, for reference
 
 1. configure the real `NEXT_PUBLIC_CELO_ATTRIBUTION_TAG` in `.env.local`;
 2. **rebuild** — `NEXT_PUBLIC_*` is inlined at build time, so a running server
@@ -331,7 +369,10 @@ below on how that number was earned.
 **BUILD:** `next build` green; shared First Load JS **89.4 kB**, unchanged from
 the pre-attribution build. `pnpm bundle:guard` clean (76 chunks).
 
-**REAL ON-CHAIN SMOKE:** **NOT RUN**
+**REAL ON-CHAIN SMOKE:** **RUN AND PASSED** — one $0.05 / 5-Peones payment on
+Celo mainnet. `transfer` to the configured treasury, canonical calldata an exact
+prefix, 31 trailing bytes of suffix, `Attribution marker: FOUND` +
+`Configured Chesscito tag: MATCH`.
 
 ---
 
@@ -384,7 +425,10 @@ caught this**, which is the argument for having run single-fork at all.
 
 ## VERDICT
 
-**READY FOR CELO ATTRIBUTION SMOKE**
+**CELO ATTRIBUTION SHIPPED AND VERIFIED ON MAINNET**
+
+*(The pass opened at READY FOR CELO ATTRIBUTION SMOKE; the smoke was then run by
+the founder and confirmed, so the verdict is updated rather than left stale.)*
 
 Eight production write families are attributed through four shared boundaries;
 the one path that could not be attributed safely is excluded deliberately, with
@@ -393,8 +437,17 @@ proven unchanged by decoding real calldata, the real code is kept out of the
 repository by a scanner rather than by discipline, and the verification script
 reports verdicts without ever echoing an identifier.
 
-⚠️ Two things to carry into the smoke:
-- **rebuild after setting the variable** — `NEXT_PUBLIC_*` is inlined at build
-  time and a running server will not see it;
-- **confirm the canary is off**, so the 5-Peones payment exercises the
-  attributed legacy rail by design and not by luck.
+⚠️ Two things to carry into **deployment**, both already proven necessary here:
+- **rebuild after setting the variable.** `NEXT_PUBLIC_*` is inlined at build
+  time; a running server will not see it. Confirm it landed by counting
+  occurrences in `.next/static` — it should be non-zero — never by printing it.
+- **confirm the canary stays off** in whatever environment ships. With
+  `NEXT_PUBLIC_GET_PEONES_TREASURY_CANARY_ENABLED=true`, `peones_pack_50` moves
+  to the deliberately unattributed rail. Every other SKU is unaffected.
+
+⛔ And the lesson that cost the most here: **an official guide's example is not
+the contract.** The format `BUILDERS.md` illustrates is narrower than what Celo
+issues, and a guard written against the example was blind to the real value. It
+was caught only by building with the real tag and asking whether it was there.
+Assert against the package's rule, and verify the guard against the artefact —
+not against the documentation.
