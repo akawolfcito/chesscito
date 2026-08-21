@@ -8,6 +8,7 @@ import { chesscitoTreasuryAbi } from "@/lib/contracts/treasury";
 import {
   GET_PEONES_CANARY_AUTH_BINDING,
   GET_PEONES_CANARY_SKU,
+  isCanaryEligibleSku,
   GET_PEONES_PROVIDER_RESULT_KINDS,
   GET_PEONES_SUBMISSION_STAGES,
   getCanaryExpectedAmount,
@@ -118,7 +119,7 @@ export async function POST(req: Request) {
     log.warn("wrong_chain", { requested_chain: body.chainId as number });
     return error("wrong_chain", 400);
   }
-  if (!isAddress(wallet) || !isAddress(tokenAddress) || sku !== GET_PEONES_CANARY_SKU) {
+  if (!isAddress(wallet) || !isAddress(tokenAddress) || !isCanaryEligibleSku(sku)) {
     return error("invalid_input", 400);
   }
 

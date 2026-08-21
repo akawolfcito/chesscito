@@ -93,7 +93,29 @@ export const RAIL_OVERPAY_ACCEPTED = true;
  * (source `pack_purchase`, already reserved in the ledger). No on-chain
  * item — clean fit for the direct-transfer rail. */
 
-export type PeonesPackSku = "peones_pack_50";
+/* Flexible top-up. One Peon costs $0.01, so a pack's price is simply its
+ * reward times the unit price — there is no per-tier discount and no bonus.
+ * These four numbers are the ONLY authority for what the player may buy. */
+
+/** $0.01 per Peon, in USD6 (1_000_000 = $1.00). */
+export const PEONES_UNIT_PRICE_USD6 = 10_000n;
+export const PEONES_MIN_AMOUNT = 5;
+export const PEONES_MAX_AMOUNT = 100;
+export const PEONES_AMOUNT_STEP = 5;
+export const PEONES_DEFAULT_AMOUNT = 25;
+
+/* Written out as a literal tuple because `as const` is what gives us the
+ * per-amount SKU union below — a computed range would collapse to `number`
+ * and take the type safety with it. `supported-amounts` in the tests asserts
+ * this tuple against the range the four constants describe, so the two can
+ * never drift apart silently. */
+export const SUPPORTED_PEONES_AMOUNTS = [
+  5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100,
+] as const;
+
+export type PeonesAmount = (typeof SUPPORTED_PEONES_AMOUNTS)[number];
+
+export type PeonesPackSku = `peones_pack_${PeonesAmount}`;
 
 /** Ledger source/event for a pack purchase (matches the reserved source
  *  in the Peones ledger). */
@@ -108,18 +130,43 @@ export type PeonesPack = {
   source: typeof PACK_PURCHASE_SOURCE;
 };
 
-export const PEONES_PACKS: Record<PeonesPackSku, PeonesPack> = {
-  peones_pack_50: {
-    sku: "peones_pack_50",
-    priceUsd6: 500_000n, // $0.50
-    peonesReward: 50,
-    source: PACK_PURCHASE_SOURCE,
-  },
-};
+/** SKU for a supported amount. Type-level guarantee that every amount in the
+ *  tuple has a pack, and that no other amount can name one. */
+export function getPeonesPackSku(amount: PeonesAmount): PeonesPackSku {
+  return `peones_pack_${amount}`;
+}
+
+export const PEONES_PACKS: Record<PeonesPackSku, PeonesPack> = Object.fromEntries(
+  SUPPORTED_PEONES_AMOUNTS.map((amount) => [
+    getPeonesPackSku(amount),
+    {
+      sku: getPeonesPackSku(amount),
+      priceUsd6: BigInt(amount) * PEONES_UNIT_PRICE_USD6,
+      peonesReward: amount,
+      source: PACK_PURCHASE_SOURCE,
+    } satisfies PeonesPack,
+  ]),
+) as Record<PeonesPackSku, PeonesPack>;
 
 /** Lookup a pack by SKU. */
 export function getPeonesPack(sku: PeonesPackSku): PeonesPack {
   return PEONES_PACKS[sku];
+}
+
+/** Narrow an untrusted number to a buyable amount. The step matters as much as
+ *  the bounds: 37 is inside the range and still not for sale. */
+export function isSupportedPeonesAmount(amount: number): amount is PeonesAmount {
+  return (SUPPORTED_PEONES_AMOUNTS as readonly number[]).includes(amount);
+}
+
+/** Snap an arbitrary number onto the nearest buyable amount, bounds included.
+ *  Used by the stepper and by the `initialAmount` API, both of which take input
+ *  we do not control. NaN and friends fall back to the default. */
+export function clampPeonesAmount(amount: number): PeonesAmount {
+  if (!Number.isFinite(amount)) return PEONES_DEFAULT_AMOUNT;
+  const snapped = Math.round(amount / PEONES_AMOUNT_STEP) * PEONES_AMOUNT_STEP;
+  const bounded = Math.min(PEONES_MAX_AMOUNT, Math.max(PEONES_MIN_AMOUNT, snapped));
+  return (isSupportedPeonesAmount(bounded) ? bounded : PEONES_DEFAULT_AMOUNT) as PeonesAmount;
 }
 
 /* ── Lite Season Pass ────────────────────────────────────────────────

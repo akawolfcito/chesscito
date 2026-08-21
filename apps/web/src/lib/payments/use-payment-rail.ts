@@ -32,6 +32,7 @@ import {
   GET_PEONES_CANARY_SKU,
   classifyProviderSubmissionError,
   getProviderErrorDiagnostics,
+  isCanaryEligibleSku,
   isGetPeonesCanaryClientRequested,
   normalizeProviderTransactionHash,
   recoverProviderTransactionHashFromError,
@@ -120,7 +121,11 @@ export function usePaymentRail({
   const payInFlightRef = useRef(false);
   const retryBlockedRef = useRef(false);
 
-  const canaryRequested = isGetPeonesCanaryClientRequested() && sku === GET_PEONES_CANARY_SKU;
+  // Flexible top-up rides the legacy rail ONLY: production pins the canary to
+  // peones_pack_50 in a CHECK constraint AND hardcodes a 50-Peon reward inside
+  // the consume function, so a widened canary would under-credit real money.
+  // `isCanaryEligibleSku` is the single fence — see get-peones-canary.ts.
+  const canaryRequested = isGetPeonesCanaryClientRequested() && isCanaryEligibleSku(sku);
   const treasury = getTreasuryAddressClient();
   const tokenEntry =
     RAIL_ACCEPTED_STABLECOINS.find((t) => t.symbol === tokenSymbol) ?? null;

@@ -7,6 +7,20 @@ export const GET_PEONES_CANARY_REWARD = 50 as const;
 export const GET_PEONES_CANARY_INTENT_TTL_SECONDS = 10 * 60;
 
 /**
+ * The ONLY gate onto the treasury canary. Production pins this SKU three times
+ * over — a CHECK constraint on `treasury_payment_intents`, a `wrong_sku` raise
+ * inside `consume_get_peones_treasury_payment`, and a HARDCODED `50` in that
+ * function's ledger insert. That third one is the dangerous one: a widened
+ * canary would happily take $1.00 and credit 50 Peones. So flexible top-up
+ * rides the legacy rail, and every flexible SKU must fail here — at intent
+ * creation, before any transfer is requested, so the failure mode is "no
+ * intent" and never "paid, not credited".
+ */
+export function isCanaryEligibleSku(sku: unknown): sku is typeof GET_PEONES_CANARY_SKU {
+  return sku === GET_PEONES_CANARY_SKU;
+}
+
+/**
  * Current auth limitation: Get Peones has no SIWE/SIWC session. The intent
  * wallet is client-asserted, then cryptographically constrained by both the
  * canonical transaction sender and Transfer.from. This prevents redirecting

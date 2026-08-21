@@ -1,9 +1,15 @@
 /**
  * POST /api/verify-payment
  *
- * Stablecoin single-tx payment rail — slice E (2026-06-09). First case:
- * `peones_pack_50`. Verifies an on-chain ERC20 Transfer to the treasury
- * and credits Peones (source `pack_purchase`) idempotently.
+ * Stablecoin single-tx payment rail — slice E (2026-06-09). Verifies an
+ * on-chain ERC20 Transfer to the treasury and credits Peones (source
+ * `pack_purchase`) idempotently.
+ *
+ * This is the rail flexible top-up runs on (2026-08-21): every
+ * `peones_pack_<amount>` SKU lands here, because the treasury canary is
+ * pinned to `peones_pack_50` in production — CHECK constraint, `wrong_sku`
+ * raise, AND a hardcoded 50-Peon ledger insert. See
+ * docs/audits/2026-08-20-peones-flexible-topup-canary-proof.md.
  *
  * The backend trusts NOTHING from the client for economics — amount,
  * reward, treasury, price are all server-decided from config/SKU. The
