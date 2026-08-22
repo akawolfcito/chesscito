@@ -457,16 +457,24 @@ export const THEMES: Record<string, ThemeDefinition> = {
         default: "/art/minigames/n-queens",
         usedIn: ["Learn Hub — N-Queens mini-game tile · MiniGamesSection · route: /", "↳ components/hub/minigames-section.tsx"],
       },
+      /* ⛔ These three were the half of the mini-game row still pointing at
+         `/art/redesign/pieces/w-{king,knight,pawn}` when the note above was
+         written — and on 2026-08-22 an icon refresh overwrote all three,
+         repeating the incident verbatim. Whoever exports the art follows the
+         path the slot declares, so a shared path is an instruction to
+         overwrite. All six now live under `/art/minigames/`, and
+         `__tests__/minigame-icon-isolation.test.ts` fails if any of them ever
+         points at art a second slot can reach. */
       "hub.minigame.safe-path": {
-        default: "/art/redesign/pieces/w-king",
+        default: "/art/minigames/safe-path",
         usedIn: ["Learn Hub — Safe Path mini-game tile · MiniGamesSection · route: /", "↳ components/hub/minigames-section.tsx"],
       },
       "hub.minigame.knight-tour": {
-        default: "/art/redesign/pieces/w-knight",
+        default: "/art/minigames/knight-tour",
         usedIn: ["Learn Hub — Knight's Tour mini-game tile (coming soon) · MiniGamesSection · route: /", "↳ components/hub/minigames-section.tsx"],
       },
       "hub.minigame.promotion-run": {
-        default: "/art/redesign/pieces/w-pawn",
+        default: "/art/minigames/promotion-run",
         usedIn: ["Learn Hub — Promotion Run mini-game tile (coming soon) · MiniGamesSection · route: /", "↳ components/hub/minigames-section.tsx"],
       },
       "hub.shop-icon": {

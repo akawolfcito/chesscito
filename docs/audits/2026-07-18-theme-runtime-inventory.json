@@ -31,7 +31,7 @@
   "excludedSlots": 13,
   "exceptions": [],
   "literalDiff": {
-    "registeredBasenames": 218,
+    "registeredBasenames": 221,
     "discoveredBasenames": 15,
     "unregisteredExistingAssets": []
   },
@@ -1239,7 +1239,7 @@
       "root": "web",
       "default": {
         "mode": "asset",
-        "path": "/art/redesign/pieces/w-king"
+        "path": "/art/minigames/safe-path"
       },
       "pro": {
         "mode": "inherit"
@@ -1295,7 +1295,7 @@
       "root": "web",
       "default": {
         "mode": "asset",
-        "path": "/art/redesign/pieces/w-knight"
+        "path": "/art/minigames/knight-tour"
       },
       "pro": {
         "mode": "inherit"
@@ -1351,7 +1351,7 @@
       "root": "web",
       "default": {
         "mode": "asset",
-        "path": "/art/redesign/pieces/w-pawn"
+        "path": "/art/minigames/promotion-run"
       },
       "pro": {
         "mode": "inherit"
