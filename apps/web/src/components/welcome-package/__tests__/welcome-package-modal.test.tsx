@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { act } from "react";
 import { renderWithIntl as render, screen, fireEvent } from "@/test-utils/render-with-intl";
+import { WELCOME_PACKAGE_COPY } from "@/lib/content/editorial";
 import { WelcomePackageModal } from "../welcome-package-modal";
 
 describe("<WelcomePackageModal>", () => {
@@ -67,7 +68,12 @@ describe("<WelcomePackageModal> phase=signing", () => {
   it("shows signing title", () => {
     render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} phase="signing" />);
     expect(screen.getByTestId("wp-signing-title")).toBeInTheDocument();
-    expect(screen.getByText("Saving your gift...")).toBeInTheDocument();
+    // Read the copy, do not retype it: this line pinned the literal and broke
+    // when the ellipsis was unified to `…` (language brief §3.5). The test is
+    // about the signing phase rendering its title, not about the wording.
+    expect(
+      screen.getByText(WELCOME_PACKAGE_COPY.signingTitle),
+    ).toBeInTheDocument();
   });
 
   it("does not show claim or dismiss buttons while signing", () => {

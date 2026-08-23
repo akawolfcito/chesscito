@@ -42,9 +42,9 @@ export const CTA_LABELS = {
 } as const;
 
 export const FOOTER_CTA_COPY = {
-  submitScore: { label: "SAVE", compactLabel: "SAVE", loading: "Saving..." },
-  useShield: { label: "Use Shield", compactLabel: "Shield", loading: "Using Shield..." },
-  claimBadge: { label: "CLAIM", compactLabel: "CLAIM", loading: "Claiming..." },
+  submitScore: { label: "SAVE", compactLabel: "SAVE", loading: "Saving…" },
+  useShield: { label: "Use Shield", compactLabel: "Shield", loading: "Using Shield…" },
+  claimBadge: { label: "CLAIM", compactLabel: "CLAIM", loading: "Claiming…" },
   retry: { label: "RETRY", compactLabel: "RETRY", loading: null },
   connectWallet: { label: "Connect Wallet", compactLabel: "CONNECT", loading: null },
   switchNetwork: { label: "Switch Network", compactLabel: "Network", loading: null },
@@ -404,7 +404,7 @@ export const BADGE_SHEET_COPY = {
   subtitle: "Collection progress",
   owned: "Owned",
   claimBadge: "Claim Badge",
-  claiming: "Claiming...",
+  claiming: "Claiming…",
   locked: "Complete trials to unlock",
   notStarted: "Complete trials to unlock",
   viewTrophies: "See Trophies",
@@ -662,7 +662,7 @@ export const LEADERBOARD_SHEET_COPY = {
   description: "Climb the board. Rule the board.",
   columnPlayer: "Player",
   columnScore: "Score",
-  loading: "Loading board...",
+  loading: "Loading board…",
   empty: "No champions yet.",
   emptyArenaLink: "ARENA",
   error: "Could not load rankings",
@@ -718,8 +718,8 @@ export const PURCHASE_CONFIRM_COPY = {
   title: "Confirm purchase",
   description: "Review the details before you confirm.",
   confirmButton: "Confirm purchase",
-  approving: (token: string) => `Approving ${token}...`,
-  buying: "Buying...",
+  approving: (token: string) => `Approving ${token}…`,
+  buying: "Buying…",
   cancel: "Cancel",
   closeAriaLabel: "Cancel purchase",
   unknownNetwork: "Unknown network",
@@ -907,7 +907,7 @@ export const VICTORY_PAGE_COPY = {
   challengeLine: "Can you beat this?",
   acceptChallenge: "Accept Challenge",
   backToHub: "HUB",
-  loading: "Loading victory...",
+  loading: "Loading victory…",
   errorTitle: "Could not load victory",
   errorFallback: "Something went wrong loading this victory.",
   tryAgain: "Try again",
@@ -939,15 +939,15 @@ export const DIFFICULTY_LABELS: Record<number, string> = {
 } as const;
 
 export const VICTORY_CLAIM_COPY = {
-  progressTitle: "Saving...",
+  progressTitle: "Saving…",
   claimButton: "SAVE VICTORY",
   claimHelper: "Save this victory forever and unlock your share card",
   claimValueHint: (price: string) => price,
   teaserLabel: "Unlock when you save",
   teaserCheckmate: (moves: number) => `Checkmate in ${moves} moves`,
   teaserShare: "SHARE",
-  claimingInProgress: "Saving in progress...",
-  claiming: "Saving your victory...",
+  claimingInProgress: "Saving in progress…",
+  claiming: "Saving your victory…",
   claimProgress1: "Recording your result",
   claimProgress2: "Preparing your victory card",
   successTitle: "Victory Saved",
@@ -1048,7 +1048,7 @@ export const TROPHY_VITRINE_COPY = {
   hallOfFame: "Hall of Fame",
   movesLabel: "moves",
   shareLabel: "Share",
-  loadingText: "Loading trophies...",
+  loadingText: "Loading trophies…",
   copiedToast: "Link copied!",
   connectWallet: "Connect to view your trophies",
   connectWalletButton: "Connect Wallet",
@@ -1407,7 +1407,7 @@ export const DUEL_COPY = {
   setupLess: "Less time",
   setupMore: "More time",
   setupCreate: "Create and share",
-  setupCreating: "Creating...",
+  setupCreating: "Creating…",
   setupCancel: "Not now",
   /** Ribbon name for a human rival who never set one. */
   rivalFallbackName: "Your rival",
@@ -1433,7 +1433,7 @@ export const DUEL_COPY = {
   invitedTitleAnonymous: "You have been invited to play",
   invitedBody: "Take the free seat and the game starts right away.",
   invitedJoin: "Join the game",
-  invitedJoining: "Taking your seat...",
+  invitedJoining: "Taking your seat…",
 
   /** S4 and S5. */
   yourTurn: "Your move",
@@ -1570,7 +1570,7 @@ export const DIAGONAL_RUN_COPY = {
     "bishop-run-3": "The Long Run",
   },
   prompt: {
-    "bishop-run-1": "Tap a pivot square; the bishop turns there toward the star.",
+    "bishop-run-1": "Tap a pivot square. The bishop turns there toward the star.",
     "bishop-run-2": "Pick the pivot whose turn reaches the star.",
     "bishop-run-3": "Choose your pivots to run the bishop up to the star.",
   },
@@ -2007,7 +2007,7 @@ export const COACH_COPY = {
   /** JOURNAL (coach/history) PLAY shortcut. Was missing, so the button
    *  rendered the raw key "COACH_COPY.playCta" (2026-06-15 fix). */
   playCta: "PLAY",
-  loading: "Loading...",
+  loading: "Loading…",
   quickReviewTitle: "REVIEW",
   coachAnalysisTitle: "REVIEW",
   keyMoments: "KEY MOMENTS",
@@ -2046,7 +2046,7 @@ export const COACH_COPY = {
   reviewingMoves: "Reviewing your moves",
   canLeave: "You can leave. We'll keep your result ready",
   analysisReady: "Your analysis is ready",
-  analysisProcessing: "Your analysis is still processing...",
+  analysisProcessing: "Your analysis is still processing…",
   analysisFailed: "Analysis couldn't be completed. Your credit was not spent.",
   coachResting: "Coach is resting. Try again later.",
   cancel: "Cancel",
@@ -2629,7 +2629,7 @@ export const PRO_COPY = {
   statusCheckingLabel: "Checking PRO status…",
   statusUnavailableLabel: "PRO status unavailable",
   statusUnavailableMessage:
-    "We could not confirm your subscription. Try again shortly; nothing was changed.",
+    "We could not confirm your subscription. Try again shortly. Nothing was changed.",
   /** CTA label shown when the wallet is on the wrong chain (Celo). */
   switchNetworkLabel: "Switch Network",
   /** ARIA label for the close button inside <ProSheet>. */
@@ -4052,7 +4052,7 @@ export const WELCOME_PACKAGE_COPY = {
   trophiesClaimedLabel: "Focus Stamp: Day 1",
   trophiesClaimedDescription: "Saved on this device. Earned on your first Focus Day.",
   claimedConfirmation: "Focus Stamp: Day 1 saved on this device.",
-  signingTitle: "Saving your gift...",
+  signingTitle: "Saving your gift…",
   successTitle: "Welcome Gift Claimed",
   successBody: "Your first Chesscito reward is ready. Your passport has its first stamp.",
   successCta: "Continue",
