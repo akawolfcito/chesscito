@@ -8,6 +8,9 @@ import { ContextualActionSlot } from "@/components/exercises/contextual-action-s
 
 export type ExercisesPopupsVariant =
   | "piece-complete-final"
+  | "piece-complete-next"
+  | "piece-complete-badge-waiting"
+  | "piece-complete-keep-practicing"
   | "labyrinth-king-solved"
   | "labyrinth-consequence-worst-case"
   | "labyrinth-minigame-complete"
@@ -56,6 +59,66 @@ export function ExercisesPopupsFixture({
           nextPiece={null}
           hasClaimedBadge={true}
           totalStars={15}
+          maxPossibleStars={30}
+          onNextPiece={noop}
+          onArena={noop}
+          onPracticeAgain={noop}
+          onChoosePiece={noop}
+        />
+      )}
+
+      {/* ⛔ The three branches below are the SAME component as
+          `piece-complete-final`, reached by different props. They were missing
+          for months, so `PieceCompletePrompt` looked like a one-state overlay
+          in the catalog while shipping four — and a copy decision taken on the
+          final state alone silently rewrote the other three, since the title
+          is one shared string (founder, 2026-08-22).
+
+          The branch that picks the subtitle reads
+          `nextPiece && hasClaimedBadge → earned && !claimed → !claimed → final`,
+          so the props here are the minimum that lands on each. */}
+
+      {/* Finished a piece with another still ahead — the common case. */}
+      {variant === "piece-complete-next" && (
+        <PieceCompletePrompt
+          pieceType="rook"
+          nextPiece="bishop"
+          hasClaimedBadge={true}
+          hasEarnedBadge={true}
+          totalStars={12}
+          maxPossibleStars={30}
+          onNextPiece={noop}
+          onArena={noop}
+          onPracticeAgain={noop}
+        />
+      )}
+
+      {/* Past the 80% completion gate, badge NOT claimed yet. Before
+          2026-08-08 this fell into keep-practicing and told the player to push
+          on seconds after the milestone modal said the badge was ready. */}
+      {variant === "piece-complete-badge-waiting" && (
+        <PieceCompletePrompt
+          pieceType="rook"
+          nextPiece={null}
+          hasClaimedBadge={false}
+          hasEarnedBadge={true}
+          totalStars={24}
+          maxPossibleStars={30}
+          onNextPiece={noop}
+          onArena={noop}
+          onPracticeAgain={noop}
+          onChoosePiece={noop}
+        />
+      )}
+
+      {/* Exercises done, still short of the completion gate. */}
+      {variant === "piece-complete-keep-practicing" && (
+        <PieceCompletePrompt
+          pieceType="rook"
+          nextPiece={null}
+          hasClaimedBadge={false}
+          hasEarnedBadge={false}
+          totalStars={9}
           maxPossibleStars={30}
           onNextPiece={noop}
           onArena={noop}

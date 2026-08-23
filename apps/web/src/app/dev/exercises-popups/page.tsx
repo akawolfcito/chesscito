@@ -16,6 +16,9 @@ type SearchParams = { [key: string]: string | string[] | undefined };
  * only by opening the PNG. */
 const VARIANTS = new Set<ExercisesPopupsVariant>([
   "piece-complete-final",
+  "piece-complete-next",
+  "piece-complete-badge-waiting",
+  "piece-complete-keep-practicing",
   "labyrinth-king-solved",
   "labyrinth-consequence-worst-case",
   "labyrinth-minigame-complete",

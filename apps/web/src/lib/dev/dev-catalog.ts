@@ -96,6 +96,9 @@ export const DEV_SCREENS: readonly DevSurface[] = [
     param: "variant",
     options: [
       "piece-complete-final",
+      "piece-complete-next",
+      "piece-complete-badge-waiting",
+      "piece-complete-keep-practicing",
       "labyrinth-king-solved",
       "labyrinth-consequence-worst-case",
       "labyrinth-minigame-complete",
