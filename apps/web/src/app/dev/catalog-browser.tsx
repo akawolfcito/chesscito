@@ -85,8 +85,12 @@ export function DevCatalogBrowser() {
   const previewable = Boolean(active && !active.sideEffect && !active.fork);
 
   return (
-    <div className="flex min-h-screen flex-col bg-neutral-950 text-neutral-100 lg:flex-row">
-      <nav className="w-full shrink-0 overflow-y-auto border-neutral-800 border-b p-4 lg:h-screen lg:w-80 lg:border-r lg:border-b-0">
+    /* Three columns, each scrolling on its own — the preview must be visible
+       the moment a surface is picked, and it was not: title, blurb, variant
+       chips and the blast-radius panel stacked ABOVE it in one scrolling
+       column, so a 390x844 phone started below the fold (founder, 2026-08-22). */
+    <div className="flex h-screen flex-col overflow-hidden bg-neutral-950 text-neutral-100 lg:flex-row">
+      <nav className="w-full shrink-0 overflow-y-auto border-neutral-800 border-b p-4 lg:h-screen lg:w-72 lg:border-r lg:border-b-0">
         <header className="mb-4">
           <h1 className="font-semibold text-lg">/dev catalog</h1>
           <p className="text-neutral-400 text-xs">
@@ -180,27 +184,98 @@ export function DevCatalogBrowser() {
             ) : null}
 
             <BlastRadius surface={active} />
-
-            {previewable ? (
-              <iframe
-                className="rounded border border-neutral-700 bg-white"
-                height={PREVIEW_HEIGHT}
-                /* key on the href so switching variant remounts rather than
-                   leaving the old render up while the new one loads. */
-                key={href}
-                src={href}
-                title={`${active.title} preview`}
-                width={PREVIEW_WIDTH}
-              />
-            ) : (
-              <p className="text-neutral-500 text-xs">
-                No preview — open it in a tab deliberately.
-              </p>
-            )}
           </>
         ) : null}
       </main>
+
+      {active ? (
+        <aside className="flex shrink-0 flex-col border-neutral-800 lg:h-screen lg:border-l">
+          <PreviewPane
+            href={href}
+            previewable={previewable}
+            title={active.title}
+          />
+        </aside>
+      ) : null}
     </div>
+  );
+}
+
+/**
+ * The phone. Fixed at MiniPay's 390x844 so the layout is the real one, then
+ * scaled DOWN as a whole when the window is shorter — a scrollbar here would
+ * mean judging a centred overlay through a letterbox, which is what it did
+ * before. Never scales above 1: blowing a 390px design up misrepresents it.
+ */
+function PreviewPane({
+  href,
+  previewable,
+  title,
+}: {
+  href: string;
+  previewable: boolean;
+  title: string;
+}) {
+  const [scale, setScale] = useState(1);
+  const [frame, setFrame] = useState<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!frame) return;
+
+    const fit = () => {
+      const { height, width } = frame.getBoundingClientRect();
+      if (height === 0) return;
+      setScale(
+        Math.min(1, height / PREVIEW_HEIGHT, width / PREVIEW_WIDTH),
+      );
+    };
+
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, [frame]);
+
+  if (!previewable) {
+    return (
+      <p className="p-4 text-neutral-500 text-xs lg:w-[420px]">
+        No preview — open it in a tab deliberately.
+      </p>
+    );
+  }
+
+  return (
+    <>
+      <div
+        className="flex flex-1 items-center justify-center overflow-hidden p-3 lg:w-[420px]"
+        ref={setFrame}
+      >
+        <div
+          style={{
+            height: PREVIEW_HEIGHT * scale,
+            width: PREVIEW_WIDTH * scale,
+          }}
+        >
+          <iframe
+            className="rounded border border-neutral-700 bg-white"
+            height={PREVIEW_HEIGHT}
+            /* key on the href so switching variant remounts rather than
+               leaving the old render up while the new one loads. */
+            key={href}
+            src={href}
+            style={{
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
+            }}
+            title={`${title} preview`}
+            width={PREVIEW_WIDTH}
+          />
+        </div>
+      </div>
+      <p className="shrink-0 px-3 pb-3 text-[10px] text-neutral-600">
+        390 × 844 · {Math.round(scale * 100)}%
+      </p>
+    </>
   );
 }
 
