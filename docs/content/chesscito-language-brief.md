@@ -1,6 +1,6 @@
 # Chesscito — Language Brief (ES / EN)
 
-> **Status:** v1.0 — first formal editorial brief.
+> **Status:** v1.1 — §3 mide en PÍXELES, y §3.5 fija la puntuación.
 > **Audience:** product, design, engineering, agents.
 > **Companion doc:** `apps/web/src/lib/content/README.md` (technical architecture).
 
@@ -50,6 +50,57 @@ Es un juego corto, agradable y verificable.
 - Botones **nunca** contienen frases completas con sujeto + verbo + objeto.
 - Botones **nunca** mencionan blockchain / NFT / mint en el label visible.
 - El botón expresa el **resultado para el usuario**, no el mecanismo técnico.
+
+### ⛔ La cuenta de palabras NO predice el corte — medí píxeles
+
+**"Choose another piece" y "Pick a piece" son ambas tres palabras. Una se corta y la
+otra no.** La regla de arriba razona en palabras y el botón razona en píxeles, así que
+una frase puede cumplir la tabla y aun así llegar truncada al jugador. Pasó: el botón
+principal del overlay de pieza completa mostró **"Choose another…"** durante meses —
+el `…` no es parte del copy, es `text-overflow` comiéndose la última palabra.
+
+**Y el presupuesto no es el ancho del botón.** El corte ocurre un nivel más adentro, en
+`.principal-button-label`, que lleva `overflow:hidden` + `text-overflow:ellipsis` +
+`white-space:nowrap`. Medir el `<button>` da 168 px y dice `truncated: false` — mentira
+tranquilizadora. El label real da **155 px**.
+
+| Contenedor | Presupuesto | Fuente | ≈ caracteres |
+| --- | --- | --- | --- |
+| `.principal-button-label` (size medium) | **155 px** | 800 16.8px system-ui | **~16** |
+| Título `h1` del overlay | 250 px | 900 36px SF Pro Display | ~14 por línea (envuelve) |
+| Mensaje de overlay | 256 px | 400 14px SF Pro Display | ~2 líneas |
+
+Medido el 2026-08-23 en 390 px con el fixture real (`/dev/exercises-popups`). **Volvé a
+medirlo si cambia el tipo o el padding — no lo copies de acá para siempre.**
+
+> **Cómo medir:** abrí la superficie en `/dev`, y sobre el elemento del texto compará
+> `scrollWidth` contra `clientWidth`. Si el primero es mayor, se corta. Medí el elemento
+> que TIENE el `overflow:hidden`, no su contenedor.
+
+**Regla dura:** ningún label visible puede depender de `text-overflow` para caber. Si
+se corta, el copy está mal — no el contenedor.
+
+## 3.5. Puntuación
+
+Auditado sobre el copy user-facing de `lib/content/*.ts` el 2026-08-23.
+
+| Signo | Regla | Estado medido |
+| --- | --- | --- |
+| **Em-dash `—`** | ⛔ **Nunca** en copy de jugador. Dos frases cortas, o dos puntos. | **0 usos.** Ya se cumple; la regla es para que siga así. |
+| **Ellipsis** | Siempre `…` (U+2026), **nunca** `...`. Solo para estados en curso: "Saving…". | ⚠️ **Las dos formas conviven**: 28 con `…` y 17 con `...`, para los mismos estados. Unificado a `…` el 2026-08-23. |
+| **`!`** | Como máximo uno por pantalla, y solo en el momento de logro. | 33 usos, concentrados en títulos de celebración. |
+| **`?`** | Solo si el jugador realmente elige. Nunca retórico. | 27 usos. |
+| **`;`** | ⛔ Nunca. Si necesitás uno, son dos frases. | 0 en copy. |
+
+> **Por qué gana `…` y no `...`:** es la mayoría existente (28 contra 17), es **un**
+> carácter en vez de tres — más angosto, y en 390 px cada píxel de un label cuenta — y
+> el kerning lo resuelve la fuente en lugar de tres puntos sueltos. La inconsistencia
+> era invisible en review porque los dos se ven casi igual; sólo aparece midiendo.
+>
+> **Por qué el em-dash está prohibido y no solo desaconsejado:** el brief define la voz
+> como *clara*, y en 390 px un em-dash mete una subordinada donde el jugador esperaba
+> terminar de leer. Los `—` que hay en el repo viven en comentarios de código y en docs
+> como este, que no son copy de jugador — ahí son bienvenidos.
 
 ### Reglas blandas
 
