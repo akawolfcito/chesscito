@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { PIECE_COMPLETE_COPY } from "@/lib/content/editorial";
 import { act } from "@testing-library/react";
 
 vi.mock("@/lib/telemetry", () => ({
@@ -186,13 +187,13 @@ describe("PieceCompletePrompt — CTA hierarchy", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("primary = Choose another piece when no nextPiece + no labyrinth + onChoosePiece defined", () => {
+  it("primary = the choose-piece CTA when no nextPiece + no labyrinth + onChoosePiece defined", () => {
     const onChoosePiece = vi.fn();
     render(
       <PieceCompletePrompt {...baseProps} onChoosePiece={onChoosePiece} />,
     );
     expect(
-      screen.getByRole("button", { name: "Choose another piece" }),
+      screen.getByRole("button", { name: PIECE_COMPLETE_COPY.choosePiece }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "ARENA" }),

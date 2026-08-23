@@ -1413,9 +1413,9 @@ const messages = {
     },
   },
   PIECE_COMPLETE_COPY: {
-    title: "¡Todos los ejercicios completos!",
+    title: "¡Conquistaste {piece}!",
     subtitleWithNext: "¡Has dominado esta pieza! Te espera {next}.",
-    subtitleFinal: "¡Has conquistado cada pieza. Ahora demuéstralo en la Arena!",
+    subtitleFinal: "Sigue afilando tus habilidades.",
     subtitleKeepPracticing: "Sigue adelante. ¡Completar más ejercicios te gana la insignia!",
     subtitleBadgeWaiting: "Tu insignia está lista para reclamar.",
     tryArena: "ARENA",
@@ -1423,7 +1423,7 @@ const messages = {
     practiceAgain: "Practicar de nuevo",
     submitScore: "Guardar puntaje",
     coachHint: "Prueba el Coach en Arena",
-    choosePiece: "Elige otra pieza",
+    choosePiece: "Seguir entrenando",
     tryArenaSecondary: "Probar Arena",
   },
   BADGE_EARNED_COPY: {

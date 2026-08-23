@@ -172,6 +172,10 @@ m.RESULT_OVERLAY_COPY.badge.subtitle = "{piece} Ascendant is now yours to keep";
 m.RESULT_OVERLAY_COPY.shop.subtitle = "{item} acquired. Thank you for supporting Chesscito";
 m.BADGE_EARNED_COPY.title = "{piece} Ascendant Earned";
 m.PIECE_COMPLETE_COPY.subtitleWithNext = "You've mastered this piece! The {next} awaits.";
+// The title names the piece, so it is a template and needs this ICU mirror —
+// stripFunctions drops the helper from the bundle and next-intl would render
+// the raw key path into the UI.
+m.PIECE_COMPLETE_COPY.title = "{piece} conquered!";
 m.PIECE_COMPLETE_COPY.nextPiece = "Start {piece}";
 m.UNLOCK_COPY.title = "{piece} Unlocked!";
 m.UNLOCK_COPY.cta = "Start {piece}";

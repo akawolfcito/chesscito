@@ -341,11 +341,23 @@ export const RESULT_OVERLAY_COPY = {
 } as const;
 
 export const PIECE_COMPLETE_COPY = {
-  title: "All Exercises Complete!",
+  /** ⛔ NAMES THE PIECE, because ONE title serves FOUR states and the old one
+   *  lied in three of them. "All Exercises Complete!" sat above "Keep going.
+   *  Completing more exercises earns your badge!" at 9/30, and above "The
+   *  Bishop awaits" with four pieces still ahead — the player read a claim the
+   *  screen itself contradicted two lines below (founder, 2026-08-22).
+   *  Naming the piece is true in all four: you finished THAT piece's run.
+   *  Still a single field, so it keeps changing from one place.
+   *  ⚠️ ES is "¡Conquistaste {piece}!" and NOT "¡{piece} conquistada!" —
+   *  Torre/Reina are feminine, Alfil/Caballo/Peón/Rey are not, so an agreeing
+   *  adjective ships "¡Alfil conquistada!". The verb form agrees with nobody,
+   *  and matches `nextPiece: "Comenzar {piece}"`, already live. */
+  title: (piece: string) => `${piece} conquered!`,
   subtitleWithNext: (next: string) =>
     `You've mastered this piece! The ${next} awaits.`,
-  subtitleFinal:
-    "You've conquered every piece. Now prove it in the Arena!",
+  /** The piece is done and the badge is claimed — nothing is pending, so the
+   *  line closes calmly instead of pushing the player somewhere. */
+  subtitleFinal: "Keep sharpening your skills.",
   /** ⛔ STARS HAVE NEVER UNLOCKED THE BADGE. The gate is 80% COMPLETION
    *  (`badgeRequiredCount`); `BADGE_THRESHOLD` was removed when the founder
    *  decided the badge proves constancy, not skill. This line used to read
@@ -380,7 +392,12 @@ export const PIECE_COMPLETE_COPY = {
    *  AND the current piece has no labyrinth available (e.g. King in
    *  v0.1 — no labyrinths defined yet). Opens the PiecePickerSheet so
    *  the player can return to any piece they want to keep training. */
-  choosePiece: "Choose another piece",
+  /** ⛔ 2 WORDS, and that is a budget, not a preference: the label renders
+   *  inside `.principal-button-label`, which is 155px wide with
+   *  overflow:hidden + ellipsis. "Choose another piece" measured 186px and
+   *  shipped as "Choose another…" — the ellipsis was the CSS eating the last
+   *  word, not copy. "Keep training" is 107px. See language brief §3. */
+  choosePiece: "Keep training",
   /** Demoted text-link variant of tryArena. Used when the primary CTA
    *  is "Try Labyrinth" or "Choose another piece" but Arena is still a
    *  valid path the player may want to take. Sentence case (not the

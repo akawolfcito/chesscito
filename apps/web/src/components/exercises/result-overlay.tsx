@@ -829,34 +829,35 @@ export function PieceCompletePrompt({
   const showNextPieceSecondary = Boolean(onTryLabyrinth && nextPiece);
   const showCoachHint = nextPiece != null;
 
-  const starsLabel = `${totalStars}/${maxPossibleStars}`;
+  /* ⛔ The title names the piece now. It is ONE field for FOUR states, and the
+   * old fixed string ("All Exercises Complete!") was false in three of them —
+   * it sat above a 9/30 pill and above "The Bishop awaits". `totalStars` stays
+   * a prop because the telemetry above still reports it; it is no longer
+   * rendered (see the removed stars pill). */
+  const pieceTitle = tComplete("title", { piece: tPiece(pieceType) });
 
   return (
     <div className={exiting ? "modal-exiting" : undefined}>
       <VictoryPopupShell
         onClose={() => handleAction(handleDismiss)}
-        ariaLabel={tComplete("title")}
+        ariaLabel={pieceTitle}
         closeLabel={tComplete("practiceAgain")}
       >
         {/* TITLE — centered hero (victory-popup-hero-solo clamps the
             arena-result-title font down from 38-56px base to 26-36px so
             it fits inside the panel safely). */}
         <div className="victory-popup-hero-solo">
-          <h1 className="arena-result-title">{tComplete("title")}</h1>
+          <h1 className="arena-result-title">{pieceTitle}</h1>
         </div>
 
         {/* IMAGE — piece icon centered below the title. */}
         <ThemeAssetPicture slot={pieceThemeSlot("w", pieceType ?? "rook")} pictureClassName="mx-auto block h-24 w-24" alt="" aria-hidden="true" draggable={false} className="h-full w-full object-contain drop-shadow-md" />
 
-        {/* STARS — single ★ pill. */}
-        <div className="arena-result-stats-row arena-result-stats-row--missionpills">
-          <span className="candy-stat-pill">
-            <span className="candy-stat-pill-icon">
-              <CandyIcon name="star" className="h-4 w-4" />
-            </span>
-            {starsLabel}
-          </span>
-        </div>
+        {/* ⛔ NO STARS PILL. It communicated nothing the player could act on and
+            actively fought the title: "All Exercises Complete!" above a "9/30"
+            read as a contradiction. The badge gate is COMPLETION, not stars
+            (`badgeRequiredCount`), so the number here never named the thing it
+            looked like it was counting (founder, 2026-08-22). */}
 
         {/* MESSAGE — mastery narrative. */}
         <p
@@ -902,10 +903,12 @@ export function PieceCompletePrompt({
           )}
         </div>
 
-        {/* AVATAR — Sally placement: bottom-right "peek" inside the panel so
-            the celebration character is present without competing with the
-            primary CTA or the title. Transparent half-body crop. */}
-        <ThemeAssetPicture slot="shared.feedback-happy" pictureClassName="pointer-events-none absolute -right-2 bottom-12 h-24 w-24" alt="" aria-hidden="true" draggable={false} className="h-full w-full object-contain" />
+        {/* ⛔ NO AVATAR. Sally sat `absolute -right-2 bottom-12 h-24 w-24` inside
+            this panel and covered the last ~88px of any second line. The copy
+            was being written AROUND her — and it still lost: three of the four
+            states shipped clipped ("The Bish awaits", "ready to claim" cut,
+            "Completing more exerci"). Removing her fixes all three at the
+            source instead of shortening every future string to dodge her. */}
       </VictoryPopupShell>
     </div>
   );

@@ -297,7 +297,10 @@ function primaryCta(): HTMLElement | null {
  *  disarming the assertion. */
 function exercisesProgressionOverlayText(): string | null {
   const body = document.body.textContent ?? "";
-  if (body.includes(PIECE_COMPLETE_COPY.title)) return PIECE_COMPLETE_COPY.title;
+  // The title names the piece now, so match its invariant tail rather than the
+  // whole string — still read from the copy source, so an edit still moves it.
+  const titleTail = PIECE_COMPLETE_COPY.title("").trim();
+  if (body.includes(titleTail)) return titleTail;
   if (body.includes(BADGE_EARNED_COPY.headerLabel)) return BADGE_EARNED_COPY.headerLabel;
   return null;
 }

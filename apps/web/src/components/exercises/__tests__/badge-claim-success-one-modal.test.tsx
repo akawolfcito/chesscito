@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { PIECE_COMPLETE_COPY } from "@/lib/content/editorial";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, screen, within } from "@testing-library/react";
 
@@ -229,6 +230,12 @@ afterEach(() => {
   cleanup();
 });
 
+/** The piece-complete title, read from the copy source rather than retyped.
+ *  It names the piece now, so the assertions match its invariant tail. */
+function pieceCompleteTitle(): RegExp {
+  return new RegExp(`${PIECE_COMPLETE_COPY.title("").trim()}$`);
+}
+
 describe("a badge claim that CONFIRMS still leaves exactly one modal", () => {
   it("holds the piece-complete menu behind the badge result, then hands it over", async () => {
     seedCelebrated("first-reward", "first-labyrinth:rook", "special-training");
@@ -278,7 +285,7 @@ describe("a badge claim that CONFIRMS still leaves exactly one modal", () => {
     expect(modalCount()).toBe(1);
     expect(screen.getByText("Badge Earned!")).toBeInTheDocument();
     // The bug: this used to un-gate in the same commit as the result card.
-    expect(screen.queryByText("All Exercises Complete!")).not.toBeInTheDocument();
+    expect(screen.queryByText(pieceCompleteTitle())).not.toBeInTheDocument();
 
     // `ResultOverlay` plays a 250ms exit before it calls `onDismiss`, so the
     // card is still mounted for a beat after the tap. Even mid-exit the count
@@ -293,12 +300,12 @@ describe("a badge claim that CONFIRMS still leaves exactly one modal", () => {
     });
     expect(modalCount()).toBe(1);
     expect(screen.getByText("Bishop Unlocked!")).toBeInTheDocument();
-    expect(screen.queryByText("All Exercises Complete!")).not.toBeInTheDocument();
+    expect(screen.queryByText(pieceCompleteTitle())).not.toBeInTheDocument();
 
     const unlocked = screen.getByRole("dialog");
     fireEvent.click(within(unlocked).getByRole("button", { name: "Close" }));
 
     expect(modalCount()).toBe(1);
-    expect(screen.getByText("All Exercises Complete!")).toBeInTheDocument();
+    expect(screen.getByText(pieceCompleteTitle())).toBeInTheDocument();
   });
 });
