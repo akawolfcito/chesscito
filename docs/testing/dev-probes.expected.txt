@@ -1,11 +1,13 @@
 /api/dev/labyrinth
 /api/dev/promote
 /api/dev/publish
+/api/dev/theme-asset
 /dev/arena-end-state
 /dev/arena-rails
 /dev/arena-shields-chip
 /dev/board-procedural
 /dev/button-gallery
+/dev/challenge-card
 /dev/chesito-card
 /dev/coach-history
 /dev/coach-viewer
@@ -14,9 +16,13 @@
 /dev/exercises-popups
 /dev/knight-tour
 /dev/labyrinth-builder
+/dev/learn-hub
 /dev/minipay-no-approve-poc
+/dev/minipay-raw-send
+/dev/peones-chip
 /dev/permit-probe
 /dev/persist-overlay
+/dev/phase-flash
 /dev/play-hub
 /dev/pro-chip
 /dev/promotion-run
@@ -27,6 +33,7 @@
 /dev/safe-path
 /dev/season-pass-celebration
 /dev/sign-probe
+/dev/theme-builder
 /dev/tx-error-probe
 /dev/tx-progress
 /dev/victory-landing
