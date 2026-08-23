@@ -2554,7 +2554,7 @@
         "src/components/exercises/result-overlay.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 7,
+      "consumerCount": 6,
       "consumers": [
         {
           "file": "src/app/api/og/match/route.tsx",
@@ -2602,17 +2602,6 @@
         },
         {
           "file": "src/components/exercises/labyrinth-complete-overlay.tsx",
-          "occurrences": [],
-          "usesResolver": true,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": false,
-          "buildsPathDynamically": false
-        },
-        {
-          "file": "src/components/exercises/result-overlay.tsx",
           "occurrences": [],
           "usesResolver": true,
           "usesHardcodedPath": false,
