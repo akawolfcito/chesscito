@@ -21,11 +21,26 @@ import { NextResponse } from "next/server";
 
 import { isInboxMessageType, type InboxMessage } from "@/lib/inbox/types";
 import { normalizeWallet } from "@/lib/peones/ledger-service";
+
 import { enforceOrigin } from "@/lib/server/demo-signing";
 import { createLogger } from "@/lib/server/logger";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 const log = createLogger({ route: "/api/inbox" });
+/**
+ * ⛔ `normalizeWallet` THROWS on a malformed address, it does not return empty.
+ * Calling it bare turned "?wallet=nope" into a 500 — an input error reported as
+ * a server fault, which is both wrong and noisy in the logs. Caught by smoking
+ * the endpoint, not by any test.
+ */
+function safeWallet(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  try {
+    return normalizeWallet(raw);
+  } catch {
+    return null;
+  }
+}
 
 /** Never echo a Supabase message: it can quote the offending row, which on this
  *  table means a wallet. A fixed vocabulary is enough to read the logs. */
@@ -69,7 +84,7 @@ function toMessage(row: Row): InboxMessage | null {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const wallet = normalizeWallet(url.searchParams.get("wallet") ?? "");
+  const wallet = safeWallet(url.searchParams.get("wallet"));
   if (!wallet) {
     return NextResponse.json({ error: "invalid_wallet" }, { status: 400 });
   }
@@ -121,9 +136,7 @@ export async function PATCH(request: Request) {
     id?: unknown;
   };
 
-  const wallet = normalizeWallet(
-    typeof body.wallet === "string" ? body.wallet : "",
-  );
+  const wallet = safeWallet(body.wallet);
   if (!wallet) {
     return NextResponse.json({ error: "invalid_wallet" }, { status: 400 });
   }
