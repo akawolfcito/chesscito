@@ -18128,3 +18128,174 @@ button.web-access-link {
    it is removed anyway: the ring is the information, the pulse was only
    emphasis, and a permanent repaint loop is not worth keeping on suspicion
    alone. */
+
+/* ── Inbox V0 ────────────────────────────────────────────────────────────
+   Spec: docs/specs/2026-08-25-inbox-v0-review.md
+
+   Deliberately plain. V0 is an icon, a badge and one screen; the concept-art
+   treatment belongs to whatever the Inbox becomes, not to the version whose
+   job is to prove somebody reads a message. */
+
+.inbox-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px; /* Touch target, not the icon's size. */
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.inbox-chip-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.inbox-chip-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #e5484d;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  /* Capped at "9+" in badgeLabel, so this never has to grow past two glyphs. */
+}
+
+.inbox-screen {
+  /* ⛔ OWNS ITS BACKGROUND AND ITS TEXT COLOUR. Inheriting them left the title
+     and both section headers unreadable against the dark surface behind the
+     route — the cards were fine because they paint their own white. Caught by
+     looking at the screenshot, not by any assertion: every element was present
+     in the DOM and correctly placed. */
+  min-height: 100dvh;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  padding: 16px 14px 32px;
+  background: #f7f3e8;
+  color: #2b2118;
+}
+
+.inbox-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.inbox-back {
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.inbox-title {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.inbox-section-title {
+  margin: 18px 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.inbox-empty {
+  padding: 32px 8px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.inbox-card {
+  margin-bottom: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  overflow: hidden;
+}
+
+.inbox-card.is-unread {
+  border-color: rgba(229, 72, 77, 0.45);
+}
+
+.inbox-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.inbox-card-icon {
+  font-size: 20px;
+}
+
+.inbox-card-text {
+  display: flex;
+  flex: 1;
+  min-width: 0; /* Lets a long title ellipsis instead of pushing the flag out. */
+  flex-direction: column;
+}
+
+.inbox-card-title {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inbox-card-date {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.inbox-card-flag {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: #e5484d;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.inbox-card-check {
+  flex-shrink: 0;
+  opacity: 0.45;
+}
+
+.inbox-card-body {
+  padding: 0 12px 14px 42px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-line; /* The body is authored with real line breaks. */
+}
+
+.inbox-card-cta {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: #2f7d32;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}

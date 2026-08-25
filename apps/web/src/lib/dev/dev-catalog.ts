@@ -124,6 +124,14 @@ export const DEV_SCREENS: readonly DevSurface[] = [
     ],
   },
   {
+    id: "inbox",
+    title: "Inbox",
+    group: "hub",
+    blurb: "The Inbox with its three seed messages and no database behind it.",
+    mounts: ["inbox/inbox-screen"],
+    consumers: ["app/[locale]/inbox/inbox-client.tsx"],
+  },
+  {
     id: "rescue-modal",
     title: "Fail rescue modal",
     group: "exercises",
