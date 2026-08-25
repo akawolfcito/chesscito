@@ -35,6 +35,10 @@ export type FocusDaysSlice =
 export type ChallengeProgressView =
   | { state: "loading" }
   | { state: "offer" }
+  /** Sales are paused: the pass is not for sale right now, so the card
+   *  offers nothing. Distinct from "offer" (buyable) and from the active
+   *  states, which a paused sale must never touch. */
+  | { state: "unavailable" }
   | { state: "disabled"; window: FocusWindow; streak: number }
   | { state: "degraded"; window: FocusWindow; streak: number }
   | {

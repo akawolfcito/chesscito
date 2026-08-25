@@ -118,3 +118,23 @@ export function isAttemptLaneEnabled(): boolean {
 export function isWeeklyLeadersEnabled(): boolean {
   return process.env.NEXT_PUBLIC_WEEKLY_LEADERS_ENABLED === "true";
 }
+
+/**
+ * Season Pass sales — PAUSED by default since 2026-08-25.
+ *
+ * ⛔ THIS PAUSES THE OFFER, NOT ACCESS. Everyone who already paid keeps their
+ * entitlement, their Focus Days and their card: `buildChallengeProgressView`
+ * suppresses only the `offer` state, and only where there is no entitlement to
+ * protect. A paused sale must never read as a revocation.
+ *
+ * The evidence: 17 wallets bought the $0.99 pass, 10 of them never recorded a
+ * single Focus Day, and 0 of 18 eligible wallets finished the 21 days in 36
+ * days of possibility. Selling that is the sharpest reputational exposure the
+ * product has today.
+ *
+ * ⚠️ Opt-IN, unlike the other flags here: absence means paused. Re-enabling is
+ * one env var and a redeploy — no migration, no code change, nothing to undo.
+ */
+export function isSeasonPassSalesEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_SEASON_PASS_SALES_ENABLED === "true";
+}

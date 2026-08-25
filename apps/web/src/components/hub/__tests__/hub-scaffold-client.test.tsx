@@ -677,6 +677,12 @@ describe("HubScaffoldClient — Lite Mode", () => {
     vi.doMock("@/lib/feature-flags", () => ({
       CHESSCITO_MODE: "learn",
       CHESSCITO_LITE_MODE: true,
+      // Sales ON here on purpose: these cases are about Lite-mode navigation,
+      // telemetry and the challenge card's own rendering. The 2026-08-25 pause
+      // is covered by its own suite (`sales-paused.test.ts`); leaving it off
+      // here would hide the card and make these assertions vacuous rather than
+      // meaningful.
+      isSeasonPassSalesEnabled: () => true,
     }));
     // Re-apply all stubs after resetModules so the freshly-loaded component
     // finds them. vi.mock calls at the top of the file are hoisted into the

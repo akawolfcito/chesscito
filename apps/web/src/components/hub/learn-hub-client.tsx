@@ -54,7 +54,10 @@ import {
 import { track } from "@/lib/telemetry";
 import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
 import { MiniGamesSlot } from "@/components/hub/minigames-slot";
-import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import {
+  CHESSCITO_LITE_MODE,
+  isSeasonPassSalesEnabled,
+} from "@/lib/feature-flags";
 import { useHubData } from "@/components/hub/use-hub-data";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
 import { getAnonymousId } from "@/lib/analytics/identity";
@@ -243,8 +246,23 @@ export function LearnHubClient({
                 status: "active",
                 source: seasonPassStatus.source,
                 seasonPassExpiresAt: seasonPassStatus.seasonPassExpiresAt,
+                /* PRO expires too. Passing it is what stops the challenge from
+                   telling a PRO holder the 21 days are reachable when their
+                   subscription runs out first (see focusWindow). Stored as
+                   epoch ms upstream; the view speaks ISO like the pass does. */
+                /* ⛔ Number.isFinite, not `!== null`. `toISOString()` THROWS
+                   on a non-finite value, and this runs inside a useMemo during
+                   render — a corrupt timestamp took the whole Learn hub down
+                   with a RangeError instead of degrading to "no deadline".
+                   Caught by learn-hub-client-focus-day-recorder.test. */
+                proExpiresAt: Number.isFinite(seasonPassStatus.proExpiresAt)
+                  ? new Date(seasonPassStatus.proExpiresAt as number).toISOString()
+                  : null,
               }
             : { status: "none" },
+        // Suppresses only the OFFER. An entitlement someone already paid for
+        // is untouched — see isSeasonPassSalesEnabled.
+        salesPaused: !isSeasonPassSalesEnabled(),
         slice: focusDaysSlice.status === "idle" || focusDaysSlice.status === "loading"
           ? null
           : focusDaysSlice,

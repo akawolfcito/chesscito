@@ -196,6 +196,13 @@ export function ChallengeCard({
 }: ChallengeCardProps) {
   const t = useTranslations("CHALLENGE_CARD_COPY");
 
+  /* ⛔ SALES PAUSED → THE CARD RENDERS NOTHING. `unavailable` is produced only
+   * when there is NO entitlement and sales are off (2026-08-25), so nobody who
+   * paid can land here — an active pass or PRO still returns active/completed
+   * and renders exactly as before. Returning null rather than an empty shell
+   * keeps the Learn hub from reserving space for an offer that is not coming. */
+  if (progress.state === "unavailable") return null;
+
   const isActive = seasonPass.active;
   const isLoading =
     progress.state === "loading" ||
@@ -370,8 +377,16 @@ export function ChallengeCard({
                 The badge above already says "PRO Benefit included"; saying
                 "Included with PRO" again two lines down was the same sentence
                 twice, and it pushed the title into two lines to make room.
-                Nothing is lost: the badge only appears when `source === "pro"`,
-                which is the only case that produces an unbounded window. */}
+
+                ⚠️ 2026-08-25: that note assumed PRO was the only source of an
+                unbounded window. It no longer is — PRO expires, so it now
+                produces an `expiring` window like a pass does, and a PRO holder
+                DOES see a countdown here. That is not the redundancy the
+                original decision removed: "8 days left" is not "Included with
+                PRO", it is the number that decides whether the challenge is
+                still reachable at all. Hiding it is what let the card promise
+                an impossible finish. `unbounded` now means a grant with no
+                expiry whatsoever, and renders nothing as before. */}
             {window && window.kind !== "unbounded" ? (
               <span className="challenge-card-window" data-testid="challenge-window">
                 {t("windowDaysLeft", { days: window.daysRemaining })}
