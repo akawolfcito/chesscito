@@ -9,19 +9,25 @@ import {
 const NOW = Date.parse("2026-07-27T12:00:00.000Z");
 
 function activePass(expiresAt: string): ChallengeCardEntitlement {
-  return { status: "active", source: "season_pass", seasonPassExpiresAt: expiresAt };
+  return {
+    status: "active",
+    source: "season_pass",
+    seasonPassExpiresAt: expiresAt,
+    proExpiresAt: null,
+  };
 }
 
 const ACTIVE_PRO: ChallengeCardEntitlement = {
   status: "active",
   source: "pro",
   seasonPassExpiresAt: null,
+  proExpiresAt: null,
 };
 
 describe("focusWindow", () => {
   it("gives PRO no countdown at all", () => {
     expect(
-      focusWindow({ source: "pro", seasonPassExpiresAt: null, nowMs: NOW }),
+      focusWindow({ source: "pro", seasonPassExpiresAt: null, proExpiresAt: null, nowMs: NOW }),
     ).toEqual({ kind: "unbounded" });
   });
 
@@ -30,6 +36,7 @@ describe("focusWindow", () => {
       focusWindow({
         source: "season_pass",
         seasonPassExpiresAt: "2026-07-31T00:00:00.000Z",
+      proExpiresAt: null,
         nowMs: NOW,
       }),
     ).toEqual({ kind: "expiring", daysRemaining: 4 });
@@ -43,6 +50,7 @@ describe("focusWindow", () => {
       focusWindow({
         source: "season_pass",
         seasonPassExpiresAt: "2026-07-20T00:00:00.000Z",
+      proExpiresAt: null,
         nowMs: NOW,
       }),
     ).toEqual({ kind: "expiring", daysRemaining: 0 });
@@ -53,6 +61,7 @@ describe("focusWindow", () => {
       focusWindow({
         source: "season_pass",
         seasonPassExpiresAt: "not-a-date",
+      proExpiresAt: null,
         nowMs: NOW,
       }),
     ).toEqual({ kind: "expiring", daysRemaining: 0 });

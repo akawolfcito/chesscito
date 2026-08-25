@@ -19,25 +19,45 @@ export type ChallengeCardEntitlement =
       /** ISO string. The status payload rejects an active season pass without
        *  a valid one, so this is only ever null/invalid for PRO. */
       seasonPassExpiresAt: string | null;
+      /** ISO string. REQUIRED, not optional: PRO expires, and omitting it is
+       *  exactly how the challenge came to promise an impossible finish.
+       *  `null` means an entitlement with genuinely no expiry. */
+      proExpiresAt: string | null;
     };
 
-/** PRO has access with no window to count down; a season pass has a deadline.
+/** The deadline that actually governs the challenge, whichever entitlement
+ *  is paying for it.
  *
- *  `daysRemaining` returns null once the expiry is in the past. For a pass the
- *  resolver still calls active that means it lapsed while the page was open,
- *  so 0 is the accurate reading — not a missing window. */
+ *  ⛔ PRO USED TO RETURN `unbounded` HERE, AND THAT WAS THE BUG. PRO has an
+ *  `expires_at`; treating it as "no deadline" made `isUnreachable()`
+ *  short-circuit to false, so a PRO holder was told the 21 days were still
+ *  reachable with any number of days left. Measured 2026-08-25: the only user
+ *  at 10/21 needed 11 days and had 8 — the product was promising the one
+ *  committed player something arithmetically impossible.
+ *
+ *  `unbounded` now means what the word means: NO expiry at all. Pass a null
+ *  `proExpiresAt` only for an entitlement that genuinely never lapses.
+ *
+ *  `daysRemaining` returns null once the expiry is in the past. For an
+ *  entitlement the resolver still calls active, that means it lapsed while the
+ *  page was open, so 0 is the accurate reading — not a missing window. */
 export function focusWindow(input: {
   source: "pro" | "season_pass";
   seasonPassExpiresAt: string | null;
+  proExpiresAt: string | null;
   nowMs: number;
 }): FocusWindow {
-  if (input.source === "pro") return { kind: "unbounded" };
-  const expiresAtMs = input.seasonPassExpiresAt
-    ? Date.parse(input.seasonPassExpiresAt)
-    : null;
+  const iso =
+    input.source === "pro" ? input.proExpiresAt : input.seasonPassExpiresAt;
+
+  // No date to count down against — the only honest unbounded case.
+  if (iso === null) return { kind: "unbounded" };
+
+  const expiresAtMs = Date.parse(iso);
   return {
     kind: "expiring",
-    daysRemaining: daysRemaining(Number.isNaN(expiresAtMs) ? null : expiresAtMs, input.nowMs) ?? 0,
+    daysRemaining:
+      daysRemaining(Number.isNaN(expiresAtMs) ? null : expiresAtMs, input.nowMs) ?? 0,
   };
 }
 
@@ -55,11 +75,22 @@ export function buildChallengeProgressView(input: {
   slice: FocusDaysSlice | null;
   streak: number;
   nowMs: number;
+  /** Season Pass sales paused (2026-08-25). Suppresses the OFFER only — an
+   *  entitlement anyone already paid for renders exactly as before. Defaults
+   *  to false so forgetting the flag cannot silently hide the pass. */
+  salesPaused?: boolean;
 }): ChallengeProgressView {
-  const { entitlement, slice, streak, nowMs } = input;
+  const { entitlement, slice, streak, nowMs, salesPaused = false } = input;
 
   if (entitlement.status === "loading") return { state: "loading" };
-  if (entitlement.status === "none") return { state: "offer" };
+  if (entitlement.status === "none") {
+    /* ⛔ THE PAUSE STOPS AT THE OFFER. 17 wallets bought the pass, 10 never
+     * recorded a Focus Day and 0 of 18 finished the 21 days; selling it while
+     * that is true is the sharpest reputational exposure the product has. But
+     * the people who already paid keep everything — this branch is only
+     * reached when there is NO entitlement to protect. */
+    return salesPaused ? { state: "unavailable" } : { state: "offer" };
+  }
   if (slice === null) return { state: "loading" };
 
   return challengeProgressView({
@@ -67,6 +98,7 @@ export function buildChallengeProgressView(input: {
     window: focusWindow({
       source: entitlement.source,
       seasonPassExpiresAt: entitlement.seasonPassExpiresAt,
+      proExpiresAt: entitlement.proExpiresAt,
       nowMs,
     }),
     streak: Math.max(0, streak),

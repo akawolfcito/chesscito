@@ -150,7 +150,7 @@ describe("Focus Days — from the /status response to the card", () => {
     expect(screen.getByTestId("challenge-window")).toHaveTextContent(/day/);
   });
 
-  it("PRO renders unbounded access and NO countdown", async () => {
+  it("PRO counts down against its OWN expiry, not against nothing", async () => {
     serveStatus({
       active: true,
       source: "pro",
@@ -166,11 +166,14 @@ describe("Focus Days — from the /status response to the card", () => {
     const card = await screen.findByTestId("challenge-card");
     await waitFor(() => expect(card).toHaveAttribute("data-progress-state", "active"));
     expect(screen.getByTestId("challenge-progress-line")).toHaveTextContent("6 of 21 Focus Days");
-    // PRO reaches the challenge with no purchased window, so the countdown
-    // element is absent and the badge says why. The assertion that matters is
-    // still the one about `left`: a countdown for a subscriber who bought no
-    // window can only be wrong, and now it cannot render at all.
-    expect(screen.queryByTestId("challenge-window")).toBeNull();
+    /* ⛔ THIS ASSERTION USED TO BE `toBeNull()`, AND THAT WAS THE BUG.
+     * PRO produced an `unbounded` window, `isUnreachable()` short-circuits to
+     * false on unbounded, and the card therefore told every PRO holder the 21
+     * days were still reachable regardless of how little subscription they had
+     * left. Measured 2026-08-25: the only user at 10/21 needed 11 days and had
+     * 8. PRO now counts down against its own expiry like any other deadline.
+     * The badge still says "included" — that part was never the problem. */
+    expect(screen.getByTestId("challenge-window")).toHaveTextContent(/day/);
     expect(screen.getByTestId("challenge-active-badge")).toHaveTextContent(/included/i);
   });
 

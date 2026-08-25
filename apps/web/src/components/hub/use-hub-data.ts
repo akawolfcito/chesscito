@@ -279,6 +279,10 @@ export type HubLiteData = {
     loading: boolean;
     /** Needed to derive the Focus Days window (days left). */
     seasonPassExpiresAt: string | null;
+    /** Epoch ms. Surfaced because PRO expires and the 21-day challenge
+     *  has to count down against it — omitting it is what let the card
+     *  promise a finish PRO could not reach. */
+    proExpiresAt: number | null;
     refresh: () => void | Promise<void>;
   };
   /** Discriminated slice for <ChallengeCard> (active → day + shields). */
@@ -554,6 +558,7 @@ export function useHubData(): HubData {
         source: seasonPassStatus.source,
         loading: seasonPassStatus.loading,
         seasonPassExpiresAt: seasonPassStatus.seasonPassExpiresAt,
+        proExpiresAt: seasonPassStatus.proExpiresAt,
         refresh: seasonPassStatus.refresh,
       },
       challengeSeasonPass,
