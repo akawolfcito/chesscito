@@ -128,15 +128,36 @@ export function buildScoreSaveTelemetry(
       };
 
     case "error":
-    default:
+    default: {
+      const detail = (result as { reason?: string }).reason;
+
+      /* ⛔ `session_required` IS NOT A FAILURE, and reporting it as one made
+       * `score_save_failed` the third-noisiest event in the product with a
+       * phantom. Measured over 14 days: 2.845 of 2.974 events (96 %) were this
+       * one detail, and a SINGLE saveId produced 1.871 of them across 33
+       * consecutive hours — roughly one per minute.
+       *
+       * Nothing was looping. `exercises-screen.tsx:2573` states the rule:
+       * minting the write session would cost a prompt the player never asked
+       * for, so the save stays local and retries on the next completion. That
+       * is deliberate and stays untouched. What was wrong is that the same path
+       * called it a failure, which buried the 126 REAL failures
+       * (`signature_rejected`) under 20x their volume.
+       *
+       * Kept observable as its own event rather than dropped: how often a save
+       * is postponed is worth knowing — it just is not an error. */
+      if (detail === "session_required") {
+        return {
+          event: "score_save_deferred",
+          props: { ...base, reason: "session_required" },
+        };
+      }
+
       return {
         event: "score_save_failed",
-        props: {
-          ...base,
-          reason: "error",
-          detail: (result as { reason?: string }).reason,
-        },
+        props: { ...base, reason: "error", detail },
       };
+    }
   }
 }
 
