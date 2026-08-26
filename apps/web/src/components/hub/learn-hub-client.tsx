@@ -54,6 +54,7 @@ import {
 import { track } from "@/lib/telemetry";
 import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
 import { MiniGamesSlot } from "@/components/hub/minigames-slot";
+import { InboxChip } from "@/components/inbox/inbox-chip";
 import {
   CHESSCITO_LITE_MODE,
   isSeasonPassSalesEnabled,
@@ -690,6 +691,9 @@ export function LearnHubClient({
             isHydrated: isContentLoopHydrated,
           }}
           miniGamesSlot={<MiniGamesSlot />}
+          // The chip reads the wallet itself, so it is built here and handed
+          // down as a node: the scaffold stays hook-free.
+          inboxSlot={<InboxChip />}
           rewardTiles={rewardTiles}
           /* The ONE door to the exercise path. It lands on the player's primary
              piece through `startFocusExerciseDestination` — the SAME resolver

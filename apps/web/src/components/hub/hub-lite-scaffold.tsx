@@ -72,6 +72,10 @@ export type HubLiteScaffoldProps = {
    *  rotation, the player's bests and the telemetry, and this scaffold must
    *  stay mountable without any of them. Null renders no section at all. */
   miniGamesSlot?: ReactNode;
+  /** The Inbox chip, BUILT BY THE CONTAINER. A node for the same reason
+   *  `dailySlot` is one: it reads the wallet, and this scaffold must stay
+   *  mountable without a wagmi provider. Omitted renders no chip at all. */
+  inboxSlot?: ReactNode;
   // ── Exercise path (ONE entry; formerly the horizontal piece roster) ──
   /** Still the roster's array. `LearnPathEntry` reads it only to count how many
    *  pieces are mastered — the tiles' own `onTap` handlers are no longer wired
@@ -132,6 +136,7 @@ export function HubLiteScaffold({
   shields,
   primaryFocus,
   miniGamesSlot,
+  inboxSlot,
   rewardTiles,
   onOpenExercisePath,
   onReplayTour,
@@ -172,6 +177,16 @@ export function HubLiteScaffold({
             />
           ) : null}
           <LanguageChip />
+          {/* Inbox — its OWN chip, next to the status pills. The gift icon on
+              the right is the Welcome Package claim (7.101 rows in
+              peones_ledger) and is deliberately left alone.
+
+              ⛔ A SLOT, not the component. `InboxChip` calls `useAccount()`, and
+              mounting a wagmi hook in this tree is exactly what the note at the
+              top of this file forbids: it made every `/dev` probe and every
+              scaffold test throw `WagmiProviderNotFoundError`. Same shape as
+              `dailySlot` and `miniGamesSlot`, and for the same reason. */}
+          {inboxSlot}
         </div>
         <div className="hub-lite-hud-right hub-home-hud-right">
           {/* Account entry (circular avatar chip) is intentionally hidden on
