@@ -407,6 +407,7 @@ export const DEV_SCREENS: readonly DevSurface[] = [
       "components/exercises/exercises-screen.tsx",
       "components/exercises/labyrinth-complete-overlay.tsx",
       "components/exercises/mission-briefing.tsx",
+      "components/hub/daily-habit-card.tsx",
       "components/progression/unlock-overlay.tsx",
       "components/mini-arena/mini-arena-result-ceremony.tsx",
       "components/hub/language-chip.tsx",
