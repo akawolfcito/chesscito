@@ -18340,3 +18340,20 @@ button.web-access-link {
   opacity: 0.75;
   text-align: center;
 }
+
+/* ── Habit-only panel: the passport label becomes the heading ──────────────
+   With the 21-day challenge retired, `FOCUS PASSPORT` is the first thing read
+   in this panel. It was styled as a secondary label (0.52rem at 50% opacity)
+   because it used to hang off a bigger title that no longer renders, so it
+   read as a footnote sitting on top.
+
+   ⛔ SCOPED TO `unavailable`, deliberately. In every other state the challenge
+   title is still above it and the label IS secondary there — restyling it
+   globally would make the card shout the same thing twice, which is the
+   redundancy the 2026-07-27 note already removed once.
+
+   Copy is untouched: this is weight and contrast, not a new heading (Sally). */
+.challenge-card[data-progress-state="unavailable"] .challenge-card-passport-label {
+  font-size: 0.68rem;
+  color: rgba(120, 70, 20, 0.82);
+}
