@@ -82,7 +82,24 @@ export function buildChallengeProgressView(input: {
 }): ChallengeProgressView {
   const { entitlement, slice, streak, nowMs, salesPaused = false } = input;
 
-  if (entitlement.status === "loading") return { state: "loading" };
+  /* ⛔ THE PAUSE IS CHECKED BEFORE `loading`, and the order is the whole fix.
+   *
+   * Returning `loading` first meant the card fell through to its full offer
+   * while the entitlement resolved: for the second or two before the answer
+   * arrived, a paused product was on screen with its benefits row and its
+   * $0.99 banner, and then swapped to the habit panel. The founder saw it on
+   * every cold start (2026-08-26).
+   *
+   * With sales off there is nothing to wait FOR: no entitlement means the habit
+   * panel, and an entitlement means the card comes back a beat later. Choosing
+   * the habit while we do not know is the only option that cannot advertise
+   * something we decided to stop selling.
+   *
+   * ⚠️ Sales ON keeps its skeleton — the people who can actually buy still need
+   * a loading state. */
+  if (entitlement.status === "loading") {
+    return salesPaused ? { state: "unavailable" } : { state: "loading" };
+  }
   if (entitlement.status === "none") {
     /* ⛔ THE PAUSE STOPS AT THE OFFER. 17 wallets bought the pass, 10 never
      * recorded a Focus Day and 0 of 18 finished the 21 days; selling it while

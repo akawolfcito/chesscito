@@ -117,14 +117,37 @@ describe("season pass sales pause", () => {
     expect(view.state).toBe("offer");
   });
 
-  it("still reports loading before the entitlement answers, paused or not", () => {
+  it("⛔ NEVER flashes the paused offer while the entitlement loads", () => {
+    /* The founder saw the full 21-day card — benefits, banner, $0.99 — for the
+     * second or two before the entitlement resolved, and then watched it swap
+     * to the habit panel. `loading` was returned BEFORE `salesPaused` was even
+     * read, so the paused product was the default first paint.
+     *
+     * Loading is still loading when sales are ON: the skeleton has to exist for
+     * the people who can actually buy. */
+    const view = buildChallengeProgressView({
+      entitlement: { status: "loading" },
+      slice: null,
+      streak: 0,
+      nowMs: NOW,
+      salesPaused: true,
+    });
+
+    expect(view.state).not.toBe("offer");
+    expect(view.state).toBe("unavailable");
+  });
+
+  it("keeps the loading skeleton when sales are ON", () => {
+    // ⚠️ This used to assert loading "paused or not". That was the defect above:
+    // the people who can actually buy still need a skeleton, but the ones who
+    // cannot must never be shown the offer while we find out.
     expect(
       buildChallengeProgressView({
         entitlement: { status: "loading" },
         slice: null,
         streak: 0,
         nowMs: NOW,
-        salesPaused: true,
+        salesPaused: false,
       }).state,
     ).toBe("loading");
   });
