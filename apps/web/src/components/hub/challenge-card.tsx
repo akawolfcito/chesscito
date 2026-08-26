@@ -196,12 +196,24 @@ export function ChallengeCard({
 }: ChallengeCardProps) {
   const t = useTranslations("CHALLENGE_CARD_COPY");
 
-  /* ⛔ SALES PAUSED → THE CARD RENDERS NOTHING. `unavailable` is produced only
-   * when there is NO entitlement and sales are off (2026-08-25), so nobody who
-   * paid can land here — an active pass or PRO still returns active/completed
-   * and renders exactly as before. Returning null rather than an empty shell
-   * keeps the Learn hub from reserving space for an offer that is not coming. */
-  if (progress.state === "unavailable") return null;
+  /* ⛔ SALES PAUSED → THE PANEL STAYS, THE CHALLENGE GOES.
+   *
+   * This used to `return null`, which was wrong in a way nothing failed on: the
+   * card carried the paid 21-day challenge AND the free daily habit, so hiding
+   * the first deleted the second and left a hole where the Learn hub's most
+   * used surface had been (357 Daily starts in 7 days, against 167 exercise
+   * touches).
+   *
+   * `habitOnly` keeps the container, the Focus Passport with its weekday
+   * letters, the mini-tour `?` and the Start Focus CTA — and drops everything
+   * that belongs to the paused product: the 21-day icon, the challenge title,
+   * the "X of 21" counter, the window, the benefits row and the purchase
+   * banner. Re-enabling sales turns this off and the card is what it was.
+   *
+   * ⚠️ The structure is deliberately UNTOUCHED. The visual shape of this panel
+   * was worked out over time; rebuilding it beside itself is what the first
+   * attempt did, and it lost the weekday letters on the way. */
+  const habitOnly = progress.state === "unavailable";
 
   const isActive = seasonPass.active;
   const isLoading =
@@ -263,7 +275,11 @@ export function ChallengeCard({
   // paths are exactly how the label and the destination drift apart. The
   // passport still owns the flames; it no longer owns the CTA.
   const isCompleted = progress.state === "completed";
-  const ctaState: CtaState = !isActive ? "join" : "loop";
+  /* ⛔ `habitOnly` FORCES "loop". Without this the card would still offer the
+   * purchase: `!isActive` is true precisely when nobody bought the pass, which
+   * is the state the pause exists for. The CTA row keeps rendering — it is
+   * Start Focus, from the Content Loop — but never the banner. */
+  const ctaState: CtaState = !isActive && !habitOnly ? "join" : "loop";
 
   // A presentation that says "action" but has no handler wired (the `/dev`
   // probes mount this card without a router) must NOT render a button: that is
@@ -299,19 +315,30 @@ export function ChallengeCard({
       aria-busy={isLoading || undefined}
     >
       <div className="challenge-card-top">
-        {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-        <ThemeAssetPicture
-          slot="hub.21-day-icon"
-          pictureClassName="challenge-card-icon"
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-        />
+        {/* The 21-day calendar: literal to the paused product, so it goes with
+            it. Without an icon the passport row centres, which is the shape the
+            habit-only panel wants anyway. */}
+        {habitOnly ? null : (
+          // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
+          <ThemeAssetPicture
+            slot="hub.21-day-icon"
+            pictureClassName="challenge-card-icon"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+          />
+        )}
         <div className="challenge-card-top-main">
           <header className="challenge-card-head">
-            <h2 className="challenge-card-title">
-              {isActive ? t("joinedTitle") : t("notJoinedTitle")}
-            </h2>
+            {/* ⚠️ NO TITLE IN HABIT-ONLY MODE, pending Sally's call. Both
+                strings name the 21-day challenge, so neither can stay; and the
+                panel is a STATE, not an action, so it may not need a heading at
+                all — `passportLabel` already heads the row below. */}
+            {habitOnly ? null : (
+              <h2 className="challenge-card-title">
+                {isActive ? t("joinedTitle") : t("notJoinedTitle")}
+              </h2>
+            )}
             {isActive ? (
               /* The chip is where this card says WHAT STATE the player is in,
                  so finishing the challenge says it here too. It used to be
@@ -351,6 +378,11 @@ export function ChallengeCard({
               The old "Day N of 21" line is gone on purpose: it read as a
               calendar ordinal while its number came from the streak, so it
               went backward after a skipped day. */}
+          {/* ⛔ The "X of 21" counter and the window are the paused product's own
+              numbers. The streak is NOT — it is the daily run and it stays, but
+              it lives inside this same line, so habit-only mode drops the line
+              and the weekly row below carries the streak on its own. */}
+          {habitOnly ? null : (
           <p className="challenge-card-day-count">
             {ledger ? (
               <span
@@ -398,6 +430,7 @@ export function ChallengeCard({
               </span>
             ) : null}
           </p>
+          )}
           {unreachable ? (
             <div className="challenge-card-unreachable" data-testid="challenge-unreachable">
               <p className="challenge-card-unreachable-title">{t("unreachableTitle")}</p>
@@ -500,8 +533,14 @@ export function ChallengeCard({
       })()}
 
       {/* Honest benefits only: duration, the applicable Shield figure and
-          Special Training. Price lives exclusively on the CTA badge. */}
+          Special Training. Price lives exclusively on the CTA badge.
+
+          ⛔ In habit-only mode the benefits row is skipped entirely: "21 days",
+          "+3 Shields" and "Special Training" are TERMS OF A SALE that is
+          paused. The CTA row below is kept — that is Start Focus, not a
+          purchase — and the purchase banner inside it is gated separately. */}
       <div className="challenge-card-bottom">
+        {habitOnly ? null : (
         <div className="challenge-card-stats" data-testid="challenge-stats">
           {/* Duration is a TERM OF THE SALE, so it rides with the offer and
               retires on enrolment: inside the challenge the title and "Day N
@@ -551,6 +590,7 @@ export function ChallengeCard({
             {t("specialTrainingStat")}
           </span>
         </div>
+        )}
         {/* ── The single primary CTA ──────────────────────────────────────
             Exactly one, chosen by `ctaState`. `join` and `start` are real
             buttons; `tomorrow` and `complete` are STATUS text wearing the CTA

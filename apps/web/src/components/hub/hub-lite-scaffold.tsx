@@ -10,7 +10,6 @@ import { PeonesBalanceChipView } from "@/components/peones/peones-balance-chip";
 import type { PeonesBalanceState } from "@/lib/peones/use-peones-balance";
 import type { RewardTile } from "@/components/kingdom/reward-column";
 import { LearnPathEntry } from "@/components/hub/learn-path-entry";
-import { DailyHabitCard } from "@/components/hub/daily-habit-card";
 import {
   ChallengeCard,
   type ChallengeCardSeasonPass,
@@ -255,26 +254,6 @@ export function HubLiteScaffold({
           the card's CTA row. A spotlight over the whole panel covered four
           tappable things at once and singled out none of them. */}
       <div className="hub-lite-challenge-anchor">
-        {/* ⛔ MUTUALLY EXCLUSIVE, and that is the whole fix. `unavailable` means
-            Season Pass sales are paused and there is no entitlement — the state
-            in which `ChallengeCard` renders nothing. It used to leave a hole
-            where the daily habit had been, because that card carried BOTH the
-            paid challenge and the free habit. The habit now stands on its own
-            there; re-enabling sales brings the challenge card back and this
-            steps aside. */}
-        {progress.state === "unavailable" ? (
-          <DailyHabitCard
-            ctaSlot={
-              primaryFocus.isHydrated && primaryFocus.contentLoop
-                ? toCtaSlotPresentation(primaryFocus.contentLoop)
-                : null
-            }
-            focusPassport={focusPassport}
-            onFocusTap={primaryFocus.onPress}
-            onPassportTap={onPassportTap}
-            shields={shields}
-          />
-        ) : null}
         <ChallengeCard
           focusPassport={focusPassport}
           challenge={challenge}
