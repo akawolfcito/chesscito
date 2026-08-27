@@ -48,6 +48,10 @@ export type LearnHubTourContext = {
   dailyDone: boolean;
   streak: number;
   hasSeasonPass: boolean;
+  /** Season Pass sales paused. Drops the purchase step for anyone who does
+   *  not already own the pass. Defaults false so forgetting it cannot hide a
+   *  step by accident. */
+  salesPaused?: boolean;
   includeDaily?: boolean;
 };
 
@@ -78,16 +82,35 @@ export function buildLearnHubTourSteps({
   streak,
   hasSeasonPass,
   includeDaily = true,
+  salesPaused = false,
 }: LearnHubTourContext): HubTourStep[] {
+  /* ⛔ THE TOUR IS A FUNNEL, AND THE PAUSE HAS TO REACH IT TOO.
+   *
+   * Hiding the card's purchase banner left this step still saying "Join the
+   * 21-Day Challenge — $0.99, one-time payment" to every new player on step 2
+   * of 3. The pause had been applied to the surface and not to the thing
+   * pointing at it (founder, 2026-08-26).
+   *
+   * The step exists to sell, so with no sale there is nothing for it to say:
+   * the daily step already explains the streak, and the panel it targets is now
+   * the habit panel, which needs no pitch. Somebody who ALREADY owns the pass
+   * still gets their step — explaining what they bought is not a sale. */
+  const sellsThePass = !hasSeasonPass;
+  const skipChallengeStep = salesPaused && sellsThePass;
+
   return [
     ...(includeDaily ? [dailyStep({ dailyDone, streak })] : []),
-    {
-      id: "challenge" as const,
-      target: "challenge" as const,
-      bodyKey: hasSeasonPass
-        ? ("challengeEnrolled" as const)
-        : ("challengeJoin" as const),
-    },
+    ...(skipChallengeStep
+      ? []
+      : [
+          {
+            id: "challenge" as const,
+            target: "challenge" as const,
+            bodyKey: hasSeasonPass
+              ? ("challengeEnrolled" as const)
+              : ("challengeJoin" as const),
+          },
+        ]),
     { id: "rook", target: "rook", bodyKey: "rookStart" },
   ];
 }

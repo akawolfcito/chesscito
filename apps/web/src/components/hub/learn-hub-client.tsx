@@ -610,6 +610,8 @@ export function LearnHubClient({
         // A veteran mid-streak is invited to KEEP it, never to "start" one.
         streak: liteFocusPassport.streak,
         hasSeasonPass: seasonPassStatus.active,
+        // The pause has to reach the funnel, not just the card it points at.
+        salesPaused: !isSeasonPassSalesEnabled(),
         includeDaily: hubTour.includeDaily,
       }),
     [
