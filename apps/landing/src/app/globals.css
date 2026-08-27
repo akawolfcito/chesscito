@@ -792,3 +792,130 @@
   background: linear-gradient(180deg, #ffe9b0 0%, #f4c96f 100%);
   color: #4a2f08;
 }
+/* ── /pricing ─────────────────────────────────────────────────────────────
+   Sober on purpose. This page is read by people evaluating whether Chesscito
+   is a real business, not by players deciding what to buy — the game's own
+   voice lives in the app. */
+
+.pricing-page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 56px 20px 72px;
+  color: #1d1b16;
+}
+
+.pricing-head {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.pricing-title {
+  margin: 0 0 10px;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.pricing-subtitle {
+  margin: 0;
+  font-size: 1.05rem;
+  opacity: 0.75;
+}
+
+.pricing-grid {
+  display: grid;
+  gap: 18px;
+  /* One column on a phone, three where they fit. No media queries: the minmax
+     does the work and there is no breakpoint to keep in sync. */
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.pricing-card {
+  display: flex;
+  flex-direction: column;
+  padding: 26px 22px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.pricing-card.is-featured {
+  border-color: #2f7d32;
+  box-shadow: 0 6px 24px rgba(47, 125, 50, 0.14);
+}
+
+.pricing-card-name {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.pricing-card-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.pricing-card-amount {
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.pricing-card-cadence {
+  font-size: 0.9rem;
+  opacity: 0.6;
+}
+
+.pricing-card-summary {
+  margin: 0 0 18px;
+  font-size: 0.98rem;
+  opacity: 0.8;
+}
+
+.pricing-card-features {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pricing-card-features li {
+  position: relative;
+  margin-bottom: 9px;
+  padding-left: 22px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.pricing-card-features li::before {
+  position: absolute;
+  left: 0;
+  color: #2f7d32;
+  content: "✓";
+  font-weight: 700;
+}
+
+.pricing-foot {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.pricing-foot p {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+  opacity: 0.7;
+}
+
+.pricing-cta {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 13px 30px;
+  border-radius: 12px;
+  background: #2f7d32;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
