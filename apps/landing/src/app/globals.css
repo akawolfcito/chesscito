@@ -929,12 +929,14 @@
 /* ── Ribbon: the plan name on a banner ── */
 .pricing-ribbon {
   position: relative;
-  margin: 0 auto 14px;
-  padding: 7px 26px;
-  border-radius: 6px;
+  margin: 0 auto 12px;
+  /* Trimmed from 7px 26px / 1rem. The banner was the loudest thing on a card
+     whose job is to be read, and it only ever holds one short word. */
+  padding: 5px 22px;
+  border-radius: 4px;
   background: linear-gradient(180deg, #6fb733, #47821f);
   color: #fff;
-  font-size: 1rem;
+  font-size: 0.94rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-align: center;
@@ -951,25 +953,40 @@
    tails looked like a different colour: the body runs #6fb733 → #47821f top to
    bottom, so a flat #47821f tail matched only its darkest row and read as a
    separate, darker shape (founder). They are drawn as clipped BOXES now, which
-   can carry the same gradient the body does. */
+   can carry the same gradient the body does.
+
+   ⛔ THE TAIL IS WIDER THAN IT LOOKS, AND THAT IS THE POINT. 17px of box for
+   12px of visible tail: the extra 5px tuck UNDER the body. Butting them at the
+   body's edge left a pale wedge at each junction (founder) — the body's
+   border-radius carves its corners away, and with nothing behind them the
+   card's cream showed through the gap. Overlapping fills it, and the seam is
+   invisible because both halves run the identical gradient over the identical
+   height, so every row matches exactly.
+
+   ⚠️ Each polygon is traced in one direction and never crosses itself. The
+   version before this one listed its points out of order, which made a
+   self-intersecting path whose fill is up to the renderer — the second reason
+   those edges looked wrong. */
 .pricing-ribbon::before,
 .pricing-ribbon::after {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 13px;
+  width: 17px;
   background: linear-gradient(180deg, #6fb733, #47821f);
   content: "";
 }
 
+/* Outer edge at 0, notch biting inward to 7px (41% of 17). */
 .pricing-ribbon::before {
-  left: -13px;
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 100% 50%);
+  left: -12px;
+  clip-path: polygon(100% 0, 0 0, 41% 50%, 0 100%, 100% 100%);
 }
 
+/* Mirrored: outer edge at 100%, notch to 59%. */
 .pricing-ribbon::after {
-  right: -13px;
-  clip-path: polygon(0 0, 100% 0, 0 50%, 100% 100%, 0 100%);
+  right: -12px;
+  clip-path: polygon(0 0, 100% 0, 59% 50%, 100% 100%, 0 100%);
 }
 
 .pricing-card[data-tone="purple"] .pricing-ribbon::before,
