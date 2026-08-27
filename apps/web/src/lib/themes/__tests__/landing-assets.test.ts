@@ -171,6 +171,36 @@ describe("landing art coverage", () => {
     expect(unmirrored).toEqual([]);
   });
 
+  /**
+   * ⛔ /pricing composes its medallion path the same way CandyIcon does
+   * (`${MEDALLION_ART_DIR}/${asset}`), so the literal scanner sees only the
+   * directory and skips it. Without this case the three pieces would be
+   * invisible to every guard in this file — which is exactly how they first
+   * shipped as uncataloged copies under `/art/pricing/`.
+   */
+  it("mirrors the /pricing medallions, whose paths are composed too", () => {
+    const source = readFileSync(
+      path.join(LANDING_SRC, "lib/pricing/plans.ts"),
+      "utf8",
+    );
+
+    const union = source.slice(
+      source.indexOf("export type Medallion"),
+      source.indexOf(";", source.indexOf("export type Medallion")),
+    );
+    const pieces = [...union.matchAll(/"([a-z-]+)"/g)].map((m) => m[1]);
+
+    const dir = source.match(/MEDALLION_ART_DIR = "([^"]+)"/)?.[1];
+    // Guard the guard: a rename would otherwise empty this silently. The
+    // trailing slash is asserted too — dropping it makes the scanner above
+    // read the directory as a basename and report it as an orphan.
+    expect(dir).toBe("/art/redesign/pieces/");
+    expect(pieces).toHaveLength(3);
+
+    const shared = new Set<string>(SHARED_LANDING_ASSETS);
+    expect(pieces.filter((p) => !shared.has(`${dir}${p}`))).toEqual([]);
+  });
+
   it("keeps every shared asset resolvable from the web app it is copied from", () => {
     const missing = SHARED_LANDING_ASSETS.filter(
       (basename) => !hasAllFiles(WEB_PUBLIC, basename),

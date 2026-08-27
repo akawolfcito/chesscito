@@ -313,7 +313,11 @@ describe("theme-registry", () => {
       // landing.slide-web-* desktop slides. They had been kept cataloged so
       // the stale art stayed replaceable; the founder confirmed none is
       // coming back, so the 42 files were deleted and the slots with them.
-      landing: 19,
+      // +1 (2026-08-27): landing.pricing-bg, the /pricing background. The ONLY
+      // slot that page needed — its wordmark reuses landing.slide1-title and
+      // its three medallion pieces are mirrored from apps/web, because both
+      // had shipped as uncataloged copies no replace could ever reach.
+      landing: 20,
       // +1: shared.close-candy, the CandyIcon close art.
       // +1: board.blocker.stone, the exercise obstacle art (2026-07-23),
       // classified with the board.piece.* slots.

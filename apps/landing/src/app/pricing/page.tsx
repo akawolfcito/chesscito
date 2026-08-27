@@ -2,11 +2,17 @@ import type { Metadata } from "next";
 
 import { LEGAL_URL, PLAY_URL } from "@/lib/app-urls";
 import {
+  MEDALLION_ART_DIR,
   PAYMENT_NOTE,
   PLANS,
   RENEWAL_NOTE,
   type Medallion,
 } from "@/lib/pricing/plans";
+
+/** The wordmark, from the slot that already owns it. ⛔ NOT a copy under
+ *  /art/pricing/: `landing.slide1-title` is the one cataloged home of this
+ *  picture, and a second file would silently outlive any replacement. */
+const WORDMARK = "/art/landing-slides/title-chesscito";
 
 /**
  * The public pricing page.
@@ -38,14 +44,14 @@ export const metadata: Metadata = {
 function MedallionArt({ medallion }: { medallion: Medallion }) {
   return (
     <picture>
-      <source srcSet={`/art/pricing/${medallion.asset}.avif`} type="image/avif" />
-      <source srcSet={`/art/pricing/${medallion.asset}.webp`} type="image/webp" />
+      <source srcSet={`${MEDALLION_ART_DIR}${medallion.asset}.avif`} type="image/avif" />
+      <source srcSet={`${MEDALLION_ART_DIR}${medallion.asset}.webp`} type="image/webp" />
       <img
         alt=""
         aria-hidden="true"
         className="pricing-medallion-piece"
         draggable={false}
-        src={`/art/pricing/${medallion.asset}.png`}
+        src={`${MEDALLION_ART_DIR}${medallion.asset}.png`}
       />
     </picture>
   );
@@ -71,9 +77,9 @@ export default function PricingPage() {
               a listing that is the most expensive thing missing (Sally). */}
           <a aria-label="Chesscito home" className="pricing-brand" href="/">
             <picture>
-              <source srcSet="/art/pricing/title-chesscito.avif" type="image/avif" />
-              <source srcSet="/art/pricing/title-chesscito.webp" type="image/webp" />
-              <img alt="Chesscito" draggable={false} src="/art/pricing/title-chesscito.png" />
+              <source srcSet={`${WORDMARK}.avif`} type="image/avif" />
+              <source srcSet={`${WORDMARK}.webp`} type="image/webp" />
+              <img alt="Chesscito" draggable={false} src={`${WORDMARK}.png`} />
             </picture>
           </a>
 

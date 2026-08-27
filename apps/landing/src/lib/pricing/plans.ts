@@ -44,8 +44,28 @@ export const PRO_DURATION_DAYS = 30;
  * which renders as a typographic symbol — flat, differently shaped on every
  * platform, and visibly not the same family as the two real pieces beside it
  * (founder). The king is the piece the tier means anyway.
+ *
+ * ⛔ MIRRORED FROM apps/web, NOT COPIED INTO /art/pricing. These files land
+ * here via `pnpm art:sync-landing`, which reads `SHARED_LANDING_ASSETS` — so
+ * replacing a piece in the theme-builder reaches this page too. The first
+ * version duplicated them under `/art/pricing/`, where nothing cataloged them
+ * and no replace could ever find them.
  */
 export type Medallion = { asset: "w-rook" | "w-pawn" | "w-king" };
+
+/** Where the mirrored sprites live. Shared with the game, so the path is the
+ *  web app's, not a landing-local one.
+ *
+ *  ⚠️ THE TRAILING SLASH IS LOAD-BEARING. `landing-assets.test.ts` scans this
+ *  app for art-path literals; one ending in a slash is read as an interpolated
+ *  family and skipped, to be asserted by name instead. Without it this constant
+ *  looks like a lone basename and the audit reports the directory as an orphan.
+ *
+ *  ⚠️ And the scanner does not know a comment from code — it matches quoted
+ *  text anywhere in the file. Spelling a sample path here (even in backticks)
+ *  makes the audit report the SAMPLE as a missing asset, which is how this very
+ *  paragraph first turned the suite red. */
+export const MEDALLION_ART_DIR = "/art/redesign/pieces/";
 
 export type Plan = {
   readonly id: string;

@@ -50,5 +50,16 @@ export const SHARED_LANDING_ASSETS: readonly string[] = [
   "/art/focus-passport/flame-color",
   "/art/new-icons-chesscito/save",
   "/art/new-assets-chesscito/btns/ask-coach-icon",
+  // /pricing medallions. The page composes the path — `/art/redesign/pieces/
+  // ${asset}` — so no literal exists for the scanner to find, which is why
+  // `landing-assets.test.ts` asserts this family BY NAME off the Medallion
+  // union, the same way it does for CandyIcon.
+  //
+  // ⚠️ These were copies under /art/pricing/ until 2026-08-27. Byte-identical
+  // to the web originals and cataloged nowhere, so replacing a piece in the
+  // theme-builder updated the game and left /pricing showing the old one.
+  "/art/redesign/pieces/w-rook",
+  "/art/redesign/pieces/w-pawn",
+  "/art/redesign/pieces/w-king",
   ...CANDY_ICONS,
 ];

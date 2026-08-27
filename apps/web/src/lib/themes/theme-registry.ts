@@ -310,6 +310,7 @@ export type ThemeAssetKey =
   // Plan icons for the paid layer named on slides 2 and 3.
   | "landing.season-pass-icon"
   | "landing.pro-icon"
+  | "landing.pricing-bg"
   | "coach.play"
   | "account.account-icon"
   | "shared.panel-frame"
@@ -1077,6 +1078,13 @@ export const THEMES: Record<string, ThemeDefinition> = {
       // that no longer exists is worse than no slot at all.
       "landing.season-pass-icon": { root: "landing", default: "/art/landing-slides/season-pass-icon", usedIn: ["Landing — Season Pass plan icon", "↳ apps/landing · lib/onboarding/slides.ts (ICONS.seasonPass)", "↳ apps/web · hub/challenge-card.tsx — the Season Pass banner (the Hub's purchase CTA reuses the landing's icon on purpose: one pass, one picture of it)"] },
       "landing.pro-icon": { root: "landing", default: "/art/landing-slides/pro-suscription-icon", usedIn: ["Landing — PRO subscription plan icon", "↳ apps/landing · lib/onboarding/slides.ts (ICONS.pro)"] },
+      // The only art /pricing OWNS. Everything else on that page is borrowed
+      // on purpose: the wordmark is landing.slide1-title and the three
+      // medallion pieces are mirrored from apps/web. Both had been COPIED into
+      // /art/pricing/ first, which is the failure this slot exists to avoid —
+      // a copy is invisible to a replace, so the page would have kept the old
+      // wordmark forever after someone swapped it in the builder.
+      "landing.pricing-bg": { root: "landing", default: "/art/pricing/bg-pricing", usedIn: ["Landing — /pricing page background", "↳ apps/landing · src/app/pricing/page.tsx"] },
       // Brand icons — apps/landing/public, single files rather than triplets.
       // The two below are DERIVED from brand.favicon: replacing that slot
       // regenerates them and the upload API refuses a direct write, so they
@@ -1442,6 +1450,8 @@ export const LANDING_SLOT_KEYS = [
   // Plan icons for the paid layer named on slides 2 and 3.
   "landing.season-pass-icon",
   "landing.pro-icon",
+  // The public pricing page (2026-08-27).
+  "landing.pricing-bg",
   // Brand/social files owned by apps/landing. Their consumer is that app's
   // layout metadata, which is invisible from inside apps/web.
   "landing.og-image",
