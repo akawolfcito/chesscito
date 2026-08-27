@@ -31,6 +31,21 @@ export const PEONES_MAX_AMOUNT = 100;
 export const PRO_PRICE_USD6 = 1_990_000n;
 export const PRO_DURATION_DAYS = 30;
 
+/**
+ * The medallion's contents.
+ *
+ * ⛔ COMPOSED, NOT CROPPED. The mockup's medallions live inside 1 MB card PNGs;
+ * cutting them out would ship three more raster assets that blur on a desktop
+ * screen. A piece sprite (already a triplet in the app) inside a CSS ring stays
+ * sharp at any size and adds nothing to download — and it obeys the house rule
+ * about never upscaling art.
+ *
+ * `crown` draws no image: PRO's mark is a glyph, so it has no sprite to reuse.
+ */
+export type Medallion =
+  | { kind: "piece"; asset: "w-rook" | "w-pawn" }
+  | { kind: "crown" };
+
 export type Plan = {
   readonly id: string;
   readonly name: string;
@@ -38,6 +53,10 @@ export type Plan = {
   readonly cadence: string | null;
   readonly summary: string;
   readonly features: readonly string[];
+  readonly medallion: Medallion;
+  /** Drives the ribbon and price colour. Green for free play and currency,
+   *  purple for PRO — the same pairing the app uses. */
+  readonly tone: "green" | "purple";
   /** The one plan a first visit should read first. */
   readonly featured?: boolean;
 };
@@ -55,6 +74,8 @@ export const PLANS: readonly Plan[] = [
       "Mini-games and the Arena",
       "No account required to start",
     ],
+    medallion: { kind: "piece", asset: "w-rook" },
+    tone: "green",
   },
   {
     id: "peones",
@@ -68,6 +89,8 @@ export const PLANS: readonly Plan[] = [
       "Saves scores, shields and coach reviews",
       "Also earned by playing, never only bought",
     ],
+    medallion: { kind: "piece", asset: "w-pawn" },
+    tone: "green",
     featured: true,
   },
   {
@@ -82,6 +105,8 @@ export const PLANS: readonly Plan[] = [
       "Premium board and piece themes",
       "Everything in Play, included",
     ],
+    medallion: { kind: "crown" },
+    tone: "purple",
   },
 ];
 
@@ -89,3 +114,6 @@ export const PLANS: readonly Plan[] = [
  *  say how money moves, and this is not a card checkout. */
 export const PAYMENT_NOTE =
   "Prices in US dollars, paid in stablecoins on the Celo network.";
+
+export const RENEWAL_NOTE =
+  "PRO renews only when you choose to buy it again. There is no subscription to cancel and no stored payment method.";

@@ -793,129 +793,264 @@
   color: #4a2f08;
 }
 /* ── /pricing ─────────────────────────────────────────────────────────────
-   Sober on purpose. This page is read by people evaluating whether Chesscito
-   is a real business, not by players deciding what to buy — the game's own
-   voice lives in the app. */
+   Medallions and ribbons are COMPOSED here, not cropped from the mockup PNGs.
+   Cutting them out would ship three more raster assets that blur on a desktop
+   screen; a piece sprite inside a CSS ring stays sharp at any size and costs
+   nothing to download. It also obeys the house rule about never upscaling art. */
+
+.pricing-shell {
+  position: relative;
+  min-height: 100dvh;
+  isolation: isolate;
+}
+
+/* ⛔ FIXED, not absolute. Stretched over the whole scroll height the 1536x1024
+   artwork became almost entirely sky — the landscape only reappeared past the
+   third card. Pinned to the viewport it keeps its own proportions, and the
+   scenery sits behind the cards the way the mockup shows. */
+.pricing-bg,
+.pricing-bg img {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+}
 
 .pricing-page {
-  max-width: 1040px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 56px 20px 72px;
-  color: #1d1b16;
+  padding: 40px 16px 64px;
+  color: #2b2118;
 }
 
 .pricing-head {
-  margin-bottom: 40px;
+  margin-bottom: 34px;
   text-align: center;
 }
 
+/* ⚠️ LIGHT TEXT WITH A DARK OUTLINE, not dark text with a light one. The title
+   lands on the artwork's sky, which is a saturated blue: brown-on-cream washed
+   out completely there. This reads on sky AND on grass, which is what a page
+   whose background scrolls under it needs. */
 .pricing-title {
   margin: 0 0 10px;
-  font-size: clamp(2rem, 5vw, 2.75rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  color: #fff8e6;
+  font-size: clamp(2.2rem, 7vw, 3.2rem);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  text-shadow:
+    0 2px 0 rgba(60, 35, 10, 0.9),
+    0 4px 14px rgba(0, 0, 0, 0.45);
 }
 
 .pricing-subtitle {
-  margin: 0;
-  font-size: 1.05rem;
-  opacity: 0.75;
+  max-width: 30ch;
+  margin: 0 auto;
+  color: #fff8e6;
+  font-size: 1.02rem;
+  font-weight: 700;
+  text-shadow:
+    0 1px 0 rgba(60, 35, 10, 0.9),
+    0 2px 10px rgba(0, 0, 0, 0.4);
 }
 
 .pricing-grid {
   display: grid;
-  gap: 18px;
-  /* One column on a phone, three where they fit. No media queries: the minmax
-     does the work and there is no breakpoint to keep in sync. */
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 46px 18px; /* Row gap leaves room for the medallion overhang. */
+  grid-template-columns: 1fr;
+  padding-top: 34px;
+}
+
+@media (min-width: 860px) {
+  .pricing-grid {
+    grid-template-columns: repeat(3, 1fr);
+    align-items: start;
+  }
 }
 
 .pricing-card {
+  position: relative;
   display: flex;
   flex-direction: column;
-  padding: 26px 22px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 18px;
-  background: #fff;
+  padding: 46px 20px 22px; /* Top padding clears the medallion. */
+  border: 3px solid #d8b46a;
+  border-radius: 22px;
+  background: #f7ecd2;
+  box-shadow: 0 6px 0 rgba(140, 100, 40, 0.28), 0 12px 26px rgba(0, 0, 0, 0.16);
 }
 
 .pricing-card.is-featured {
-  border-color: #2f7d32;
-  box-shadow: 0 6px 24px rgba(47, 125, 50, 0.14);
+  border-color: #5aa02c;
+  box-shadow: 0 6px 0 rgba(60, 110, 30, 0.32), 0 12px 30px rgba(0, 0, 0, 0.2);
 }
 
-.pricing-card-name {
-  margin: 0 0 12px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+/* ── Medallion: a ring straddling the card's top edge ── */
+.pricing-medallion {
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  display: grid;
+  width: 74px;
+  height: 74px;
+  border: 4px solid #f2e2bd;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #fff6dd, #e3c684);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+  place-items: center;
+  transform: translateX(-50%);
+}
+
+.pricing-card[data-tone="green"] .pricing-medallion {
+  background: radial-gradient(circle at 50% 35%, #8fd35a, #4e8f26);
+}
+
+.pricing-card[data-tone="purple"] .pricing-medallion {
+  background: radial-gradient(circle at 50% 35%, #b98ce8, #6d3fa8);
+}
+
+.pricing-medallion-piece {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+}
+
+.pricing-medallion-glyph {
+  color: #ffd76a;
+  font-size: 38px;
+  line-height: 1;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Ribbon: the plan name on a banner ── */
+.pricing-ribbon {
+  position: relative;
+  margin: 0 auto 14px;
+  padding: 7px 26px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #6fb733, #47821f);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   text-transform: uppercase;
 }
 
+.pricing-card[data-tone="purple"] .pricing-ribbon {
+  background: linear-gradient(180deg, #9a63d8, #6a35a6);
+}
+
+/* The banner's folded tails, drawn rather than imported. */
+.pricing-ribbon::before,
+.pricing-ribbon::after {
+  position: absolute;
+  top: 50%;
+  width: 0;
+  height: 0;
+  border-top: 16px solid transparent;
+  border-bottom: 16px solid transparent;
+  content: "";
+  transform: translateY(-50%);
+}
+
+.pricing-ribbon::before {
+  left: -12px;
+  border-right: 12px solid #47821f;
+}
+
+.pricing-ribbon::after {
+  right: -12px;
+  border-left: 12px solid #47821f;
+}
+
+.pricing-card[data-tone="purple"] .pricing-ribbon::before {
+  border-right-color: #6a35a6;
+}
+
+.pricing-card[data-tone="purple"] .pricing-ribbon::after {
+  border-left-color: #6a35a6;
+}
+
+/* ── Price ── */
 .pricing-card-price {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
+  justify-content: center;
   gap: 8px;
-  margin: 0 0 14px;
+  margin: 0 0 6px;
 }
 
 .pricing-card-amount {
-  font-size: 2.1rem;
-  font-weight: 800;
+  color: #3d7a1a;
+  font-size: 2.5rem;
+  font-weight: 900;
   letter-spacing: -0.02em;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.7);
+}
+
+.pricing-card[data-tone="purple"] .pricing-card-amount {
+  color: #6a35a6;
 }
 
 .pricing-card-cadence {
+  color: #6b4a22;
   font-size: 0.9rem;
-  opacity: 0.6;
+  font-weight: 700;
 }
 
 .pricing-card-summary {
-  margin: 0 0 18px;
-  font-size: 0.98rem;
-  opacity: 0.8;
+  margin: 0 0 16px;
+  color: #4a3a24;
+  font-size: 0.95rem;
+  text-align: center;
 }
 
+/* ── Features ── */
 .pricing-card-features {
   margin: 0;
-  padding: 0;
+  padding: 16px 0 0;
+  border-top: 1px solid rgba(140, 100, 40, 0.24);
   list-style: none;
 }
 
 .pricing-card-features li {
-  position: relative;
-  margin-bottom: 9px;
-  padding-left: 22px;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 10px;
   font-size: 0.95rem;
   line-height: 1.45;
 }
 
-.pricing-card-features li::before {
-  position: absolute;
-  left: 0;
-  color: #2f7d32;
-  content: "✓";
-  font-weight: 700;
+.pricing-check {
+  flex-shrink: 0;
+  color: #3d7a1a;
+  font-weight: 800;
 }
 
+/* ── Footer ── */
 .pricing-foot {
-  margin-top: 40px;
+  margin-top: 38px;
   text-align: center;
 }
 
-.pricing-foot p {
-  margin: 0 0 10px;
-  font-size: 0.92rem;
-  opacity: 0.7;
+.pricing-note {
+  max-width: 46ch;
+  margin: 0 auto 10px;
+  padding: 9px 16px;
+  border-radius: 12px;
+  background: rgba(247, 236, 210, 0.9);
+  color: #4a3a24;
+  font-size: 0.9rem;
 }
 
 .pricing-cta {
-  display: inline-block;
-  margin-top: 16px;
-  padding: 13px 30px;
-  border-radius: 12px;
-  background: #2f7d32;
-  color: #fff;
-  font-weight: 700;
-  text-decoration: none;
+  margin-top: 18px;
 }

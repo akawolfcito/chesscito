@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 
-import { PAYMENT_NOTE, PLANS } from "@/lib/pricing/plans";
+import {
+  PAYMENT_NOTE,
+  PLANS,
+  RENEWAL_NOTE,
+  type Medallion,
+} from "@/lib/pricing/plans";
 
 /**
  * The public pricing page.
@@ -27,55 +32,100 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://www.chesscito.com/pricing" },
 };
 
+/** The piece inside the ring. A triplet, like every other image on this site:
+ *  AVIF first, WebP next, PNG last — the browser takes the first it can read. */
+function MedallionArt({ medallion }: { medallion: Medallion }) {
+  if (medallion.kind === "crown") {
+    return (
+      <span aria-hidden="true" className="pricing-medallion-glyph">
+        ♔
+      </span>
+    );
+  }
+
+  return (
+    <picture>
+      <source srcSet={`/art/pricing/${medallion.asset}.avif`} type="image/avif" />
+      <source srcSet={`/art/pricing/${medallion.asset}.webp`} type="image/webp" />
+      <img
+        alt=""
+        aria-hidden="true"
+        className="pricing-medallion-piece"
+        draggable={false}
+        src={`/art/pricing/${medallion.asset}.png`}
+      />
+    </picture>
+  );
+}
+
 export default function PricingPage() {
   return (
-    <main className="pricing-page">
-      <header className="pricing-head">
-        <h1 className="pricing-title">Pricing</h1>
-        <p className="pricing-subtitle">
-          Chesscito is free to play. You only pay for what you choose to add.
-        </p>
-      </header>
+    <div className="pricing-shell">
+      {/* The background, as a triplet. 1.9 MB as PNG, 63 KB as AVIF — on a page
+          a directory may score for performance, that gap is the whole reason
+          this is a <picture> and not a CSS background-image. */}
+      <picture className="pricing-bg">
+        <source srcSet="/art/pricing/bg-pricing.avif" type="image/avif" />
+        <source srcSet="/art/pricing/bg-pricing.webp" type="image/webp" />
+        <img alt="" aria-hidden="true" src="/art/pricing/bg-pricing.png" />
+      </picture>
 
-      <section aria-label="Plans" className="pricing-grid">
-        {PLANS.map((plan) => (
-          <article
-            className={`pricing-card${plan.featured ? " is-featured" : ""}`}
-            data-plan={plan.id}
-            key={plan.id}
+      <main className="pricing-page">
+        <header className="pricing-head">
+          <h1 className="pricing-title">Pricing</h1>
+          <p className="pricing-subtitle">
+            Chesscito is free to play. You only pay for what you choose to add.
+          </p>
+        </header>
+
+        <section aria-label="Plans" className="pricing-grid">
+          {PLANS.map((plan) => (
+            <article
+              className={`pricing-card${plan.featured ? " is-featured" : ""}`}
+              data-plan={plan.id}
+              data-tone={plan.tone}
+              key={plan.id}
+            >
+              <div className="pricing-medallion">
+                <MedallionArt medallion={plan.medallion} />
+              </div>
+
+              <h2 className="pricing-ribbon">{plan.name}</h2>
+
+              <p className="pricing-card-price">
+                <span className="pricing-card-amount">{plan.price}</span>
+                {plan.cadence ? (
+                  <span className="pricing-card-cadence">{plan.cadence}</span>
+                ) : null}
+              </p>
+
+              <p className="pricing-card-summary">{plan.summary}</p>
+
+              <ul className="pricing-card-features">
+                {plan.features.map((feature) => (
+                  <li key={feature}>
+                    <span aria-hidden="true" className="pricing-check">
+                      ✓
+                    </span>
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </section>
+
+        <footer className="pricing-foot">
+          <p className="pricing-note">{PAYMENT_NOTE}</p>
+          <p className="pricing-note">{RENEWAL_NOTE}</p>
+          <a
+            className="landing-green-cta landing-green-cta--medium pricing-cta"
+            href="https://play.chesscito.com"
           >
-            <h2 className="pricing-card-name">{plan.name}</h2>
-
-            <p className="pricing-card-price">
-              <span className="pricing-card-amount">{plan.price}</span>
-              {plan.cadence ? (
-                <span className="pricing-card-cadence">{plan.cadence}</span>
-              ) : null}
-            </p>
-
-            <p className="pricing-card-summary">{plan.summary}</p>
-
-            <ul className="pricing-card-features">
-              {plan.features.map((feature) => (
-                <li key={feature}>{feature}</li>
-              ))}
-            </ul>
-          </article>
-        ))}
-      </section>
-
-      <footer className="pricing-foot">
-        <p>{PAYMENT_NOTE}</p>
-        <p>
-          {/* Plain, and deliberately so: a pricing page that hides how to stop
-              paying is a pricing page nobody trusts. */}
-          PRO renews only when you choose to buy it again. There is no
-          subscription to cancel and no stored payment method.
-        </p>
-        <a className="pricing-cta" href="https://play.chesscito.com">
-          Start playing
-        </a>
-      </footer>
-    </main>
+            Start playing
+          </a>
+        </footer>
+      </main>
+    </div>
   );
 }
