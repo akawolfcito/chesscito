@@ -47,7 +47,7 @@ import {
   type SeasonPassSku,
 } from "@/lib/payments/rail-config";
 import { verifyStablecoinTransfer } from "@/lib/payments/verify-transfer";
-import { isLiteModeServer } from "@/lib/feature-flags";
+import { isLiteModeServer, isSeasonPassSalesEnabled } from "@/lib/feature-flags";
 import { normalizeWallet } from "@/lib/peones/ledger-service";
 import { buildAttestationHash } from "@/lib/peones/ledger-service-server";
 import { enforceOrigin, getRequestIp } from "@/lib/server/demo-signing";
@@ -157,6 +157,26 @@ export async function POST(req: Request) {
   if (isSeasonPass && !isLiteModeServer()) {
     log.warn("season_pass_unavailable_full_mode", { sku, chainId });
     return err("season_pass_unavailable", 404);
+  }
+
+  /* ⛔ SALES ARE PAUSED AND THIS STILL CREDITS. That is deliberate, and the
+   * order of operations is the whole reason: the player pays ON-CHAIN before
+   * this route ever runs. Rejecting here would take their money and hand back
+   * nothing — strictly worse than honouring a pass that works. A refusal only
+   * helps BEFORE the payment, and that gate already exists: the purchase sheet
+   * self-hides (`season-pass-sheet.tsx`), which is what actually stops sales.
+   *
+   * So this warns instead of blocking. Without it a purchase from a stale
+   * bundle — a tab left open across the deploy, a cached chunk — settles and
+   * returns `ok`, indistinguishable in the logs from a normal sale, and the
+   * "zero new Season Pass purchases" expectation stays an assumption nobody
+   * can check. Now it is measurable: if this fires, someone bought a paused
+   * product and we find out in a day instead of a quarter.
+   *
+   * ⚠️ NEVER turn this into a `return err(...)` without first moving the
+   * refusal ahead of the payment. */
+  if (isSeasonPass && !isSeasonPassSalesEnabled()) {
+    log.warn("season_pass_sold_while_sales_paused", { sku, chainId });
   }
 
   // PRO already includes effective Training Pass access. Reject before any

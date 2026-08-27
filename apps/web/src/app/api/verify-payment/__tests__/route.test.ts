@@ -39,8 +39,12 @@ vi.mock("@/lib/server/rate-limit", () => ({
   enforceReadRateLimit: vi.fn(),
 }));
 vi.mock("@/lib/supabase/server", () => ({ getSupabaseServer: vi.fn() }));
+/** ⚠️ HOISTED so the tests can READ what the route logged. The mock used to
+ *  build fresh `vi.fn()`s inline, which swallowed every call: nothing could
+ *  assert that a warning fired. */
+const mockLogWarn = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/server/logger", () => ({
-  createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  createLogger: () => ({ info: vi.fn(), warn: mockLogWarn, error: vi.fn() }),
 }));
 vi.mock("@/lib/pro/is-active", () => ({ isProActive: mockIsProActive }));
 
@@ -351,6 +355,74 @@ describe("season pass", () => {
       expect.any(String),
       expect.objectContaining({ px: expect.any(Number) }),
     );
+  });
+
+  /**
+   * ⛔ SALES ARE PAUSED AND THE PASS IS STILL ISSUED. Deliberate, and these two
+   * cases exist so nobody "fixes" it into a refusal by accident.
+   *
+   * The player pays ON-CHAIN before this route runs. Refusing here would take
+   * their money and return nothing — worse than honouring a pass that works.
+   * The gate that actually stops sales is the purchase sheet, which self-hides.
+   *
+   * What the pause DOES owe us is knowing when it leaks. A stale bundle (a tab
+   * open across the deploy) can still complete a purchase, and without the
+   * warning it settles indistinguishably from a normal sale.
+   */
+  describe("with sales paused", () => {
+    beforeEach(() => {
+      // The flag is opt-IN: absent means paused. Assert that, so this suite
+      // cannot pass by testing an enabled build.
+      delete process.env.NEXT_PUBLIC_SEASON_PASS_SALES_ENABLED;
+      mockLogWarn.mockClear();
+    });
+
+    it("still issues the pass — the buyer already paid on-chain", async () => {
+      mockGetReceipt.mockResolvedValue(
+        receiptWith([transferLog(USDC, WALLET, TREASURY, SP_PRICE, 0)]),
+      );
+      mockedSupabase.mockReturnValue(buildSeasonPassSupabaseMock().supabase);
+
+      const res = await POST(makeRequest(spBody()));
+      const json = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(json.ok).toBe(true);
+      expect(json.seasonId).toBe(SEASON_ID);
+      // Money in, entitlement out. A 4xx here would be money in, nothing out.
+      expect(json.expiresAt).toBeTruthy();
+    });
+
+    it("warns, so a leaked sale is measurable instead of invisible", async () => {
+      mockGetReceipt.mockResolvedValue(
+        receiptWith([transferLog(USDC, WALLET, TREASURY, SP_PRICE, 0)]),
+      );
+      mockedSupabase.mockReturnValue(buildSeasonPassSupabaseMock().supabase);
+
+      await POST(makeRequest(spBody()));
+
+      expect(mockLogWarn).toHaveBeenCalledWith(
+        "season_pass_sold_while_sales_paused",
+        expect.objectContaining({ sku: SP_SKU }),
+      );
+    });
+
+    it("stays quiet once sales are back on", async () => {
+      process.env.NEXT_PUBLIC_SEASON_PASS_SALES_ENABLED = "true";
+      mockGetReceipt.mockResolvedValue(
+        receiptWith([transferLog(USDC, WALLET, TREASURY, SP_PRICE, 0)]),
+      );
+      mockedSupabase.mockReturnValue(buildSeasonPassSupabaseMock().supabase);
+
+      await POST(makeRequest(spBody()));
+
+      // Otherwise re-enabling the sale would bury the signal in noise.
+      expect(mockLogWarn).not.toHaveBeenCalledWith(
+        "season_pass_sold_while_sales_paused",
+        expect.anything(),
+      );
+      delete process.env.NEXT_PUBLIC_SEASON_PASS_SALES_ENABLED;
+    });
   });
 
   it("active PRO → 409 included_with_pro before receipt or shield credit", async () => {
