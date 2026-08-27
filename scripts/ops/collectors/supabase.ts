@@ -81,6 +81,13 @@ export type SupabaseSnapshot = {
   }>;
   top_events_1h: Array<{ event: string; events: number }>;
   top_events_24h: Array<{ event: string; events: number }>;
+  /** Score-save outcomes over 24h, keyed by event name. Absent keys mean zero
+   *  rows — Postgres omits a group with no members, so a quiet event has no
+   *  entry rather than a `0`. Read the PAIR: `failed` falling alone is
+   *  ambiguous, `deferred` absorbing the volume is what disambiguates it. */
+  score_saves_24h: Partial<
+    Record<"score_save_failed" | "score_save_deferred", number>
+  >;
   /**
    * DIAGNOSTIC ONLY — a top-20 sample, never a distribution.
    *

@@ -87,6 +87,39 @@ function buildProjections(supabase: SupabaseResult): Projection[] {
   return out;
 }
 
+/**
+ * The score-save pair, read together.
+ *
+ * ⛔ NEVER REPORT `failed` ALONE. On its own, a collapse is ambiguous: either
+ * the 2026-08-25 split worked (`session_required` moved to `deferred`), or
+ * saves stopped being attempted at all. Only the second number separates a fix
+ * from an outage, so both are printed on one line even when one is zero.
+ *
+ * ⚠️ A MISSING KEY IS A REAL ZERO, NOT UNKNOWN. Postgres omits a group with no
+ * rows, so `score_save_deferred` is simply absent while nothing defers. It is
+ * rendered as `0`, and the empty case gets its own wording — printing "0 · 0"
+ * for a window with no data at all would read as a measured calm.
+ */
+export function formatScoreSaves(
+  saves: Partial<Record<"score_save_failed" | "score_save_deferred", number>>
+    | undefined,
+): string {
+  const failed = saves?.score_save_failed ?? 0;
+  const deferred = saves?.score_save_deferred ?? 0;
+
+  if (failed === 0 && deferred === 0) {
+    return "guardado de score 24h: sin eventos de fallo ni de aplazado";
+  }
+
+  // The ratio is what the 2026-08-25 change predicted would move: ~96% of the
+  // old `failed` volume was `session_required`, which is now `deferred`.
+  const share = Math.round((deferred / (failed + deferred)) * 100);
+  return (
+    `guardado de score 24h: fallo=${formatCount(failed)} · ` +
+    `aplazado=${formatCount(deferred)} (${share}% del total es aplazado, no fallo)`
+  );
+}
+
 function supabaseSection(supabase: SupabaseResult, projections: Projection[]) {
   if (supabase.status !== "observable") {
     return {
@@ -142,6 +175,7 @@ function supabaseSection(supabase: SupabaseResult, projections: Projection[]) {
   lines.push(`autovacuum: n_live ${formatCount(Number(supabase.table_stats?.n_live_tup ?? 0))} · n_dead ${formatCount(Number(supabase.table_stats?.n_dead_tup ?? 0))}`);
   lines.push(`conexiones: ${supabase.connections?.active ?? "—"} activas / ${supabase.connections?.idle ?? "—"} idle`);
   lines.push(`top eventos 24h: ${supabase.top_events_24h.slice(0, 3).map((e) => `${e.event}=${formatCount(e.events)}`).join(" · ")}`);
+  lines.push(formatScoreSaves(supabase.score_saves_24h));
   if (supabase.degraded_blocks.length > 0) {
     lines.push(`bloques no disponibles en este servidor: ${supabase.degraded_blocks.join(", ")}`);
   }

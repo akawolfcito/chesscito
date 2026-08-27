@@ -199,6 +199,30 @@ select json_build_object(
       group by 1 order by 2 desc limit 20
     ) t
   ),
+  -- Score-save outcomes, named explicitly rather than left to top_events.
+  --
+  -- ⛔ WHY top_events_24h DOES NOT COVER THIS: that block is a top-20, so an
+  -- event drops out of view exactly when it gets rarer — which is the direction
+  -- we are trying to observe. score_save_failed was the third noisiest event in
+  -- the product (2.332 events, 72,9 per install); the 2026-08-25 fix split it,
+  -- sending session_required to score_save_deferred. If the remainder falls out
+  -- of the top 20 and the new name never climbs into it, the whole migration is
+  -- invisible and reads as lost telemetry.
+  --
+  -- ⚠️ READ THE PAIR, NEVER ONE ALONE. A collapse in failed is ambiguous on its
+  -- own: either the fix worked, or saves stopped being attempted. deferred
+  -- picking up the volume is what tells those apart. Same 24h window for both,
+  -- so the sum is comparable to what failed used to be by itself.
+  'score_saves_24h', (
+    select coalesce(json_object_agg(t.event, t.events), '{}'::json)
+    from (
+      select event, count(*) as events
+      from public.analytics_events
+      where created_at > now() - interval '24 hours'
+        and event in ('score_save_failed', 'score_save_deferred')
+      group by 1
+    ) t
+  ),
   -- DIAGNOSTIC ONLY. This is a top-N sample: it is ordered by the very
   -- quantity one would want to percentile, so no percentile taken over it is
   -- the population's. Deriving the p95 from here reported "the second noisiest
