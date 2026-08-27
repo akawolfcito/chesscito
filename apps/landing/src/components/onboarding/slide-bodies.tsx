@@ -4,7 +4,7 @@ import { ProStrip } from '@/components/onboarding/pro-strip'
 import { SeasonPassBanner } from '@/components/onboarding/season-pass-banner'
 import { CandyIcon } from '@/components/redesign/candy-icon'
 import type { Locale } from '@/i18n/routing'
-import { SEASON_PASS_SALES_PAUSED } from '@/lib/onboarding/sales'
+import { isSeasonPassSalesEnabled } from '@/lib/onboarding/sales'
 import { SLIDE_VISUALS } from '@/lib/onboarding/slides'
 import type { SlideStep } from '@/lib/onboarding/types'
 
@@ -63,15 +63,16 @@ export function Slide2Body() {
       <Support>{t('support')}</Support>
       {/* ⛔ The pass is not for sale, so it is not priced here. The slide keeps
           its own promise — build your focus, one day at a time — which is the
-          free daily loop and needs no offer under it. Flipping
-          SEASON_PASS_SALES_PAUSED restores the banner untouched. */}
-      {SEASON_PASS_SALES_PAUSED ? null : (
+          free daily loop and needs no offer under it. The banner comes back
+          with the SAME env var that turns the sale back on in the app; see
+          lib/onboarding/sales.ts for why it must not be a local constant. */}
+      {isSeasonPassSalesEnabled() ? (
         <SeasonPassBanner
           title={t('passLabel')}
           benefits={t('passBenefits')}
           price={t('passPrice')}
         />
-      )}
+      ) : null}
     </>
   )
 }
