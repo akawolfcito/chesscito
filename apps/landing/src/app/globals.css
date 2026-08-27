@@ -1091,3 +1091,72 @@
     margin: 4px 0 0;
   }
 }
+
+/* ── /pricing: brand + legal ──────────────────────────────────────────────
+   The page used to have neither, which for a business listing was the most
+   expensive omission on it: an evaluator arriving from a directory could not
+   tell whose product this is, nor reach the rest of it (Sally, 2026-08-27). */
+
+.pricing-brand {
+  display: inline-block;
+  margin-bottom: 6px;
+  transition: opacity 0.15s;
+}
+
+.pricing-brand:hover {
+  opacity: 0.88;
+}
+
+.pricing-brand img {
+  width: clamp(132px, 20vw, 178px);
+  height: auto;
+  /* Lifts off the sky without a plate behind it. */
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.32));
+}
+
+.pricing-legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 8px;
+  margin-top: 14px;
+  font-size: 0.76rem;
+}
+
+.pricing-legal a {
+  color: #fff8e6;
+  font-weight: 600;
+  text-decoration: underline;
+  text-shadow: 0 1px 2px rgba(40, 25, 5, 0.75);
+  text-underline-offset: 2px;
+}
+
+.pricing-legal a:hover {
+  opacity: 0.82;
+}
+
+.pricing-legal span {
+  color: rgba(255, 248, 230, 0.55);
+}
+
+/* The wordmark and the legal row cost vertical space, and the page has to stay
+   inside one screen. Trimmed here rather than by shrinking the cards, which are
+   the thing an evaluator actually reads. */
+@media (min-width: 860px) {
+  .pricing-page {
+    padding-top: 14px;
+  }
+
+  .pricing-head {
+    margin-bottom: 14px;
+  }
+
+  .pricing-foot {
+    margin-top: 16px;
+  }
+
+  .pricing-legal {
+    margin-top: 10px;
+  }
+}

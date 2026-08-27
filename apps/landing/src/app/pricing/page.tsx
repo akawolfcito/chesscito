@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { LEGAL_URL, PLAY_URL } from "@/lib/app-urls";
 import {
   PAYMENT_NOTE,
   PLANS,
@@ -64,6 +65,18 @@ export default function PricingPage() {
 
       <main className="pricing-page">
         <header className="pricing-head">
+          {/* ⛔ THE WORDMARK, LINKED HOME. Without it this page was an orphan:
+              somebody arriving from a business directory saw three cards and no
+              way to tell whose product it is or where the rest of it lives. For
+              a listing that is the most expensive thing missing (Sally). */}
+          <a aria-label="Chesscito home" className="pricing-brand" href="/">
+            <picture>
+              <source srcSet="/art/pricing/title-chesscito.avif" type="image/avif" />
+              <source srcSet="/art/pricing/title-chesscito.webp" type="image/webp" />
+              <img alt="Chesscito" draggable={false} src="/art/pricing/title-chesscito.png" />
+            </picture>
+          </a>
+
           <h1 className="pricing-title">Pricing</h1>
           <p className="pricing-subtitle">
             Chesscito is free to play. You only pay for what you choose to add.
@@ -112,11 +125,23 @@ export default function PricingPage() {
           <p className="pricing-note">{RENEWAL_NOTE}</p>
           <a
             className="landing-green-cta landing-green-cta--medium pricing-cta"
-            href="https://play.chesscito.com"
+            href={PLAY_URL}
           >
             Start playing
           </a>
         </footer>
+
+        {/* The same four destinations the home already lists, and the same
+            LEGAL_URL behind them — a directory checks that these exist. */}
+        <nav aria-label="Legal" className="pricing-legal">
+          <a href={`${LEGAL_URL}/privacy`}>Privacy</a>
+          <span aria-hidden="true">·</span>
+          <a href={`${LEGAL_URL}/terms`}>Terms</a>
+          <span aria-hidden="true">·</span>
+          <a href={`${LEGAL_URL}/support`}>Support</a>
+          <span aria-hidden="true">·</span>
+          <a href={`${LEGAL_URL}/about`}>About</a>
+        </nav>
       </main>
     </div>
   );
