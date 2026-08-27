@@ -48,7 +48,7 @@ const messages: OnboardingMessages = {
       // El precio salió del título y subió al badge de la esquina; la duración
       // se queda, porque es un término del plan y no su precio.
       proTitle: "PRO · 30 días",
-      proBenefits: "Play completo · Coach ilimitado · Season Pass incluido",
+      proBenefits: "Play completo · Coach ilimitado · Temas premium",
       proPrice: "$1.99",
       cta: "SIGUIENTE",
     },

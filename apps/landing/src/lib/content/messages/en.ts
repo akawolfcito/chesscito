@@ -50,7 +50,11 @@ const messages = {
       // The price left the title for the corner badge — the same cue slide 2
       // uses. The DURATION stays: it is a term of the plan, not its price.
       proTitle: "PRO · 30 days",
-      proBenefits: "Full Play · Unlimited Coach · Season Pass included",
+      // ⛔ The third benefit USED to be "Season Pass included". The pass is
+      // paused, so naming it here promised the visitor something they cannot
+      // find. Premium themes is a benefit PRO actually delivers today, and it
+      // is the same one /pricing lists.
+      proBenefits: "Full Play · Unlimited Coach · Premium themes",
       proPrice: "$1.99",
       cta: "NEXT",
     },

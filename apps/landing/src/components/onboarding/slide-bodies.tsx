@@ -4,6 +4,7 @@ import { ProStrip } from '@/components/onboarding/pro-strip'
 import { SeasonPassBanner } from '@/components/onboarding/season-pass-banner'
 import { CandyIcon } from '@/components/redesign/candy-icon'
 import type { Locale } from '@/i18n/routing'
+import { SEASON_PASS_SALES_PAUSED } from '@/lib/onboarding/sales'
 import { SLIDE_VISUALS } from '@/lib/onboarding/slides'
 import type { SlideStep } from '@/lib/onboarding/types'
 
@@ -60,11 +61,17 @@ export function Slide2Body() {
       <SlideTitle step={2} alt={t('titleAlt')} />
       <Divider />
       <Support>{t('support')}</Support>
-      <SeasonPassBanner
-        title={t('passLabel')}
-        benefits={t('passBenefits')}
-        price={t('passPrice')}
-      />
+      {/* ⛔ The pass is not for sale, so it is not priced here. The slide keeps
+          its own promise — build your focus, one day at a time — which is the
+          free daily loop and needs no offer under it. Flipping
+          SEASON_PASS_SALES_PAUSED restores the banner untouched. */}
+      {SEASON_PASS_SALES_PAUSED ? null : (
+        <SeasonPassBanner
+          title={t('passLabel')}
+          benefits={t('passBenefits')}
+          price={t('passPrice')}
+        />
+      )}
     </>
   )
 }
