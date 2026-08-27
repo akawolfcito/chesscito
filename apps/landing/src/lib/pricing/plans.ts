@@ -40,11 +40,12 @@ export const PRO_DURATION_DAYS = 30;
  * sharp at any size and adds nothing to download — and it obeys the house rule
  * about never upscaling art.
  *
- * `crown` draws no image: PRO's mark is a glyph, so it has no sprite to reuse.
+ * ⚠️ PRO USES THE KING SPRITE, not a crown glyph. The first version drew `♔`,
+ * which renders as a typographic symbol — flat, differently shaped on every
+ * platform, and visibly not the same family as the two real pieces beside it
+ * (founder). The king is the piece the tier means anyway.
  */
-export type Medallion =
-  | { kind: "piece"; asset: "w-rook" | "w-pawn" }
-  | { kind: "crown" };
+export type Medallion = { asset: "w-rook" | "w-pawn" | "w-king" };
 
 export type Plan = {
   readonly id: string;
@@ -74,7 +75,7 @@ export const PLANS: readonly Plan[] = [
       "Mini-games and the Arena",
       "No account required to start",
     ],
-    medallion: { kind: "piece", asset: "w-rook" },
+    medallion: { asset: "w-rook" },
     tone: "green",
   },
   {
@@ -89,7 +90,7 @@ export const PLANS: readonly Plan[] = [
       "Saves scores, shields and coach reviews",
       "Also earned by playing, never only bought",
     ],
-    medallion: { kind: "piece", asset: "w-pawn" },
+    medallion: { asset: "w-pawn" },
     tone: "green",
     featured: true,
   },
@@ -105,7 +106,7 @@ export const PLANS: readonly Plan[] = [
       "Premium board and piece themes",
       "Everything in Play, included",
     ],
-    medallion: { kind: "crown" },
+    medallion: { asset: "w-king" },
     tone: "purple",
   },
 ];

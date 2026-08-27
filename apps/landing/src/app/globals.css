@@ -823,12 +823,12 @@
 .pricing-page {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 40px 16px 64px;
+  padding: 22px 16px 26px;
   color: #2b2118;
 }
 
 .pricing-head {
-  margin-bottom: 34px;
+  margin-bottom: 20px;
   text-align: center;
 }
 
@@ -839,7 +839,7 @@
 .pricing-title {
   margin: 0 0 10px;
   color: #fff8e6;
-  font-size: clamp(2.2rem, 7vw, 3.2rem);
+  font-size: clamp(1.9rem, 5vw, 2.5rem);
   font-weight: 900;
   letter-spacing: -0.01em;
   text-shadow:
@@ -860,9 +860,9 @@
 
 .pricing-grid {
   display: grid;
-  gap: 46px 18px; /* Row gap leaves room for the medallion overhang. */
+  gap: 42px 16px; /* Row gap leaves room for the medallion overhang. */
   grid-template-columns: 1fr;
-  padding-top: 34px;
+  padding-top: 30px;
 }
 
 @media (min-width: 860px) {
@@ -876,7 +876,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 46px 20px 22px; /* Top padding clears the medallion. */
+  padding: 40px 18px 18px; /* Top padding clears the medallion. */
   border: 3px solid #d8b46a;
   border-radius: 22px;
   background: #f7ecd2;
@@ -891,11 +891,11 @@
 /* ── Medallion: a ring straddling the card's top edge ── */
 .pricing-medallion {
   position: absolute;
-  top: -34px;
+  top: -30px;
   left: 50%;
   display: grid;
-  width: 74px;
-  height: 74px;
+  width: 66px;
+  height: 66px;
   border: 4px solid #f2e2bd;
   border-radius: 50%;
   background: radial-gradient(circle at 50% 35%, #fff6dd, #e3c684);
@@ -913,8 +913,8 @@
 }
 
 .pricing-medallion-piece {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
 }
@@ -946,35 +946,35 @@
   background: linear-gradient(180deg, #9a63d8, #6a35a6);
 }
 
-/* The banner's folded tails, drawn rather than imported. */
+/* The banner's folded tails.
+   ⚠️ A TRIANGLE CANNOT HOLD A GRADIENT, and that is why the first version's
+   tails looked like a different colour: the body runs #6fb733 → #47821f top to
+   bottom, so a flat #47821f tail matched only its darkest row and read as a
+   separate, darker shape (founder). They are drawn as clipped BOXES now, which
+   can carry the same gradient the body does. */
 .pricing-ribbon::before,
 .pricing-ribbon::after {
   position: absolute;
-  top: 50%;
-  width: 0;
-  height: 0;
-  border-top: 16px solid transparent;
-  border-bottom: 16px solid transparent;
+  top: 0;
+  bottom: 0;
+  width: 13px;
+  background: linear-gradient(180deg, #6fb733, #47821f);
   content: "";
-  transform: translateY(-50%);
 }
 
 .pricing-ribbon::before {
-  left: -12px;
-  border-right: 12px solid #47821f;
+  left: -13px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 100% 50%);
 }
 
 .pricing-ribbon::after {
-  right: -12px;
-  border-left: 12px solid #47821f;
+  right: -13px;
+  clip-path: polygon(0 0, 100% 0, 0 50%, 100% 100%, 0 100%);
 }
 
-.pricing-card[data-tone="purple"] .pricing-ribbon::before {
-  border-right-color: #6a35a6;
-}
-
+.pricing-card[data-tone="purple"] .pricing-ribbon::before,
 .pricing-card[data-tone="purple"] .pricing-ribbon::after {
-  border-left-color: #6a35a6;
+  background: linear-gradient(180deg, #9a63d8, #6a35a6);
 }
 
 /* ── Price ── */
@@ -989,7 +989,7 @@
 
 .pricing-card-amount {
   color: #3d7a1a;
-  font-size: 2.5rem;
+  font-size: 2.15rem;
   font-weight: 900;
   letter-spacing: -0.02em;
   text-shadow: 0 2px 0 rgba(255, 255, 255, 0.7);
@@ -1006,16 +1006,16 @@
 }
 
 .pricing-card-summary {
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   color: #4a3a24;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   text-align: center;
 }
 
 /* ── Features ── */
 .pricing-card-features {
   margin: 0;
-  padding: 16px 0 0;
+  padding: 12px 0 0;
   border-top: 1px solid rgba(140, 100, 40, 0.24);
   list-style: none;
 }
@@ -1024,9 +1024,9 @@
   display: flex;
   align-items: flex-start;
   gap: 9px;
-  margin-bottom: 10px;
-  font-size: 0.95rem;
-  line-height: 1.45;
+  margin-bottom: 7px;
+  font-size: 0.9rem;
+  line-height: 1.35;
 }
 
 .pricing-check {
@@ -1037,20 +1037,57 @@
 
 /* ── Footer ── */
 .pricing-foot {
-  margin-top: 38px;
+  margin-top: 22px;
   text-align: center;
 }
 
 .pricing-note {
   max-width: 46ch;
-  margin: 0 auto 10px;
-  padding: 9px 16px;
+  margin: 0 auto 7px;
+  padding: 7px 14px;
   border-radius: 12px;
   background: rgba(247, 236, 210, 0.9);
   color: #4a3a24;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
 }
 
 .pricing-cta {
-  margin-top: 18px;
+  margin-top: 12px;
+}
+
+/* ⛔ THE WHOLE PAGE IN ONE SCREEN (founder). On a desktop the two footer notes
+   stacked cost a full row and pushed the CTA below the fold. Side by side they
+   fit, and on a phone they fall back to stacking where vertical space is not
+   the constraint. */
+@media (min-width: 860px) {
+  /* ⚠️ GRID, not flex-wrap. With flex the CTA either stretched to the full
+     width (`flex-basis: 100%`) or sat beside the notes as a third column.
+     A two-column grid gives the notes one row and the button the next, and
+     `justify-items: center` keeps it its own size instead of the row's. */
+  .pricing-foot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    justify-items: center;
+    max-width: 780px;
+    margin-inline: auto;
+  }
+
+  .pricing-note {
+    max-width: 34ch;
+    /* Top-aligned: the two notes are different lengths, and centring them made
+       the shorter one float against the taller one's middle. */
+    align-self: stretch;
+    margin: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  /* ⚠️ `flex-basis: 100%` put the CTA on its own row AND stretched it into a
+     full-width green bar. Its own row is right; the stretch is not — a button
+     as wide as the page reads as a banner, not as something to press. */
+  .pricing-cta {
+    grid-column: 1 / -1;
+    margin: 4px 0 0;
+  }
 }

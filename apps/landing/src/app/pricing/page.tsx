@@ -35,14 +35,6 @@ export const metadata: Metadata = {
 /** The piece inside the ring. A triplet, like every other image on this site:
  *  AVIF first, WebP next, PNG last — the browser takes the first it can read. */
 function MedallionArt({ medallion }: { medallion: Medallion }) {
-  if (medallion.kind === "crown") {
-    return (
-      <span aria-hidden="true" className="pricing-medallion-glyph">
-        ♔
-      </span>
-    );
-  }
-
   return (
     <picture>
       <source srcSet={`/art/pricing/${medallion.asset}.avif`} type="image/avif" />
