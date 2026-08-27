@@ -60,6 +60,14 @@ export type Plan = {
   readonly tone: "green" | "purple";
   /** The one plan a first visit should read first. */
   readonly featured?: boolean;
+  /** Why it is featured, said out loud.
+   *
+   *  ⚠️ NOT "Most popular". Peones has 14 buyers against PRO's 12 — a margin
+   *  far too thin to claim in public, and impossible to defend if anyone asks.
+   *  "Most flexible" is true by construction: 5 to 100 units, bought one at a
+   *  time, with nothing recurring. A badge on a pricing page has to survive
+   *  being questioned. */
+  readonly badge?: string;
 };
 
 export const PLANS: readonly Plan[] = [
@@ -93,6 +101,7 @@ export const PLANS: readonly Plan[] = [
     medallion: { asset: "w-pawn" },
     tone: "green",
     featured: true,
+    badge: "Most flexible",
   },
   {
     id: "pro",

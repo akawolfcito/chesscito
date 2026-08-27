@@ -91,6 +91,10 @@ export default function PricingPage() {
               data-tone={plan.tone}
               key={plan.id}
             >
+              {plan.badge ? (
+                <span className="pricing-badge">{plan.badge}</span>
+              ) : null}
+
               <div className="pricing-medallion">
                 <MedallionArt medallion={plan.medallion} />
               </div>

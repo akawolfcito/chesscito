@@ -1160,3 +1160,28 @@
     margin-top: 10px;
   }
 }
+
+/* ── /pricing: the featured badge ─────────────────────────────────────────
+   The green border and heavier shadow marked one card as special without ever
+   saying why, so the highlight read as decoration (Sally, 2026-08-27). The
+   pattern an evaluator expects is a label, and now there is one. */
+
+.pricing-badge {
+  position: absolute;
+  top: -13px;
+  right: 14px;
+  padding: 4px 12px;
+  border: 2px solid #f2e2bd;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #6fb733, #47821f);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  text-transform: uppercase;
+  /* Above the card, below the medallion: the medallion is the card's identity
+     and must never be overlapped by a label. */
+  z-index: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+}
