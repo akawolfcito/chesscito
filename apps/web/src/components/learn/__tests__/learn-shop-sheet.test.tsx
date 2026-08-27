@@ -8,7 +8,13 @@ import { LearnShopSheet } from "../learn-shop-sheet";
 vi.mock("wagmi", () => ({
   useAccount: () => ({ address: "0xaaaabbbbccccddddeeeeffff0000111122223333" }),
 }));
-vi.mock("@/lib/feature-flags", () => ({ CHESSCITO_LITE_MODE: true }));
+// Sales ON: this file asserts the wrapper renders the pass CONTENT. The
+// 2026-08-26 pause has its own suite; off here the sheet is null by design and
+// every assertion would pass for the wrong reason.
+vi.mock("@/lib/feature-flags", () => ({
+  CHESSCITO_LITE_MODE: true,
+  isSeasonPassSalesEnabled: () => true,
+}));
 vi.mock("@/lib/payments/use-get-peones-token-selection", () => ({
   useStablecoinTokenSelection: () => ({
     selectedSymbol: "USDC",

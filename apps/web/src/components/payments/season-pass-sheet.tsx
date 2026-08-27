@@ -11,7 +11,7 @@ import { SeasonPassCelebration } from "@/components/payments/season-pass-celebra
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
-import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import { CHESSCITO_LITE_MODE, isSeasonPassSalesEnabled } from "@/lib/feature-flags";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { getSeasonPass } from "@/lib/payments/rail-config";
 import {
@@ -71,6 +71,19 @@ function ShieldIcon() {
 
 export function SeasonPassSheet({ open, onOpenChange, onSuccess }: SeasonPassSheetProps) {
   if (!CHESSCITO_LITE_MODE) return null;
+
+  /* ⛔ THE PAUSE IS ENFORCED HERE, IN THE GRANTOR — not in each caller.
+   *
+   * Hiding the card's banner and dropping the tour's step still left this sheet
+   * reachable from the dock's "shop" destination in `/exercises`
+   * (LearnShopSheet → here). Two doors closed and a third one open, which is
+   * exactly what patching callers one at a time produces: every future surface
+   * that mounts the sheet would have to remember the rule.
+   *
+   * It sits next to the LITE_MODE gate because it is the same kind of check:
+   * a condition under which this sheet must not exist at all. */
+  if (!isSeasonPassSalesEnabled()) return null;
+
   if (!open) return null;
 
   return <SeasonPassSheetInner onOpenChange={onOpenChange} onSuccess={onSuccess} />;

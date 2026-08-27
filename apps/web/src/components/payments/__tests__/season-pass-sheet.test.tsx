@@ -7,7 +7,13 @@ const railMock = vi.hoisted(() => vi.fn())
 const pushMock = vi.hoisted(() => vi.fn())
 const pathnameMock = vi.hoisted(() => vi.fn(() => '/hub'))
 
-vi.mock('@/lib/feature-flags', () => ({ CHESSCITO_LITE_MODE: true }))
+// Sales ON here on purpose: these cases are about what the sheet SHOWS. The
+// 2026-08-26 pause is covered by sheet-respects-the-pause.test.tsx; leaving it
+// off here would render null and make every assertion below vacuous.
+vi.mock('@/lib/feature-flags', () => ({
+  CHESSCITO_LITE_MODE: true,
+  isSeasonPassSalesEnabled: () => true,
+}))
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock }),
   usePathname: () => pathnameMock(),
