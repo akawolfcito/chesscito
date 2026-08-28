@@ -344,7 +344,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
           onClick={() => router.push("/arena?fresh=1")}
           className="coach-game-client__cta"
         >
-          {t("playAgain")}
+          {t("newDuel")}
         </button>
       </div>
     );

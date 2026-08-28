@@ -167,7 +167,7 @@ describe("CoachGameClient", () => {
       />,
     );
     expect(screen.getByText(/loadErrorTitle/i)).toBeInTheDocument();
-    const btn = screen.getByRole("button", { name: /playAgain/i });
+    const btn = screen.getByRole("button", { name: /newDuel/i });
     fireEvent.click(btn);
     expect(pushMock).toHaveBeenCalledWith("/arena?fresh=1");
   });

@@ -20,7 +20,12 @@ type Props = {
   elapsedMs: number;
   difficulty: string;
   isCheckmate?: boolean;
+  /** PRIMARY. Starts another match immediately — no selector in between. */
   onPlayAgain: () => void;
+  /** SECONDARY. Drops back to the DUEL selector to reconfigure. */
+  onChangeDifficulty?: () => void;
+  /** Id of the match just won, forwarded onto `play_again_tap`. */
+  previousGameId?: string;
   onBackToHub: () => void;
   /** Optional popup close handler. When provided, the X button + scrim
    *  tap dismiss without navigating (Sally retention-loop guidance).
@@ -61,6 +66,8 @@ export function VictoryCelebration({
   difficulty,
   isCheckmate = true,
   onPlayAgain,
+  onChangeDifficulty,
+  previousGameId,
   onBackToHub,
   onClose,
   onClaimVictory,
@@ -201,6 +208,50 @@ export function VictoryCelebration({
           </span>
         </div>
 
+        {/* PLAY AGAIN — PRIMARY. Promoted 2026-08-28 out of the tertiary
+            cream row (where it sat beside Share) to the dominant slot right
+            under the stats. The win path also had NO telemetry on this
+            button at all, so "how many people want another game after
+            winning" was simply unknown; `play_again_tap` now fires here with
+            context "endgame_win".
+            Save keeps its full section below — it is demoted in ORDER only.
+            Measured: saving/claiming is flat on continuation (45,5% vs
+            45,1%), the one post-game CTA with no relationship to playing
+            again. docs/audits/2026-08-28-core-loop-diagnostic.md §F. */}
+        <div className="arena-result-play-section">
+          <button
+            type="button"
+            onClick={() => {
+              track("monetization.play_again_tap", {
+                context: "endgame_win",
+                difficulty,
+                previous_game_id: previousGameId,
+              });
+              onPlayAgain();
+            }}
+            className="arena-result-primary-cta arena-result-primary-cta--play"
+          >
+            <span className="arena-result-primary-cta-label">
+              {tCelebration("playAgainShort")}
+            </span>
+          </button>
+          {onChangeDifficulty && (
+            <button
+              type="button"
+              onClick={() => {
+                track("arena_change_difficulty_tap", {
+                  context: "endgame_win",
+                  difficulty,
+                });
+                onChangeDifficulty();
+              }}
+              className="arena-result-change-difficulty"
+            >
+              {tArena("changeDifficulty")}
+            </button>
+          )}
+        </div>
+
         {/* SAVE — headline + body + treasure pill. Sally pass 14
             (2026-05-27): kicker "SAVE THIS WIN" dropped — el headline
             "Yours forever." ya carga la promesa sin necesidad de un
@@ -276,18 +327,10 @@ export function VictoryCelebration({
           </div>
         )}
 
-        {/* TERTIARY — Play again + Share cream pills (filled, claramente
-            tapeables pero más chicos que el primary). Reuses the same
-            .arena-result-secondary-action class as the loss popup so
-            both end-states share secondary vocabulary. */}
+        {/* TERTIARY — Share. Play again used to share this cream row; it is
+            now the green primary above (2026-08-28). Share keeps the same
+            .arena-result-secondary-action vocabulary as the loss popup. */}
         <div className="victory-popup-secondary-row">
-          <button
-            type="button"
-            onClick={onPlayAgain}
-            className="arena-result-secondary-action"
-          >
-            <span>{tCelebration("playAgainShort")}</span>
-          </button>
           <button
             type="button"
             onClick={() => setShareOpen(true)}

@@ -31,7 +31,7 @@ describe("GameActionsBar", () => {
     expect(screen.getByRole("button", { name: /saveVictory/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /askCoach/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /playAgain/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /newDuel/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /viewNft/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /viewOnCeloscan/ })).toBeNull();
   });
@@ -53,7 +53,7 @@ describe("GameActionsBar", () => {
     expect(screen.getByRole("button", { name: /shareTrophy/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /viewOnCeloscan/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^askCoach$/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^playAgain$/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^newDuel$/ })).toBeInTheDocument();
   });
 
   it("loss: no Mint/saveVictory, has Share, Ask Coach + Play Again", () => {
@@ -62,12 +62,12 @@ describe("GameActionsBar", () => {
     expect(screen.queryByRole("button", { name: /saveVictory/ })).toBeNull();
     expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /askCoach/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /playAgain/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /newDuel/ })).toBeInTheDocument();
   });
 
   it("loss: shows Play Again + Share + Ask Coach (no Save)", () => {
     render(<GameActionsBar {...baseProps} result="lose" />);
-    expect(screen.getByRole("button", { name: /playAgain/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /newDuel/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /askCoach/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /saveVictory/ })).toBeNull();
@@ -97,7 +97,7 @@ describe("GameActionsBar", () => {
     // The primary collapses to Play Again with a Back-to-Hub tertiary.
     render(<GameActionsBar {...baseProps} totalMoves={0} />);
     expect(screen.queryByRole("button", { name: /askCoach/ })).toBeNull();
-    expect(screen.getByRole("button", { name: /playAgain/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /newDuel/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /backToHub/ })).toBeInTheDocument();
   });
 
@@ -110,7 +110,7 @@ describe("GameActionsBar", () => {
   it("Play Again calls onPlayAgain", () => {
     const onPlayAgain = vi.fn();
     render(<GameActionsBar {...baseProps} onPlayAgain={onPlayAgain} />);
-    fireEvent.click(screen.getByRole("button", { name: /playAgain/ }));
+    fireEvent.click(screen.getByRole("button", { name: /newDuel/ }));
     expect(onPlayAgain).toHaveBeenCalledOnce();
   });
 

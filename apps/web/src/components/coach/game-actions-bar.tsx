@@ -136,9 +136,12 @@ export function GameActionsBar({
       ? t("askCoachAgain")
       : t("askCoach");
 
+  // "NEW DUEL", not "PLAY AGAIN": from the Reviewer this tap lands on the
+  // DUEL selector (`/arena?fresh=1`), so the label describes the selector,
+  // not a board. The label-must-match-the-next-screen rule (2026-08-28).
   const playAgainTile: Tile = {
     kind: "play-again",
-    label: t("playAgain"),
+    label: t("newDuel"),
     onClick: onPlayAgain,
   };
   const askCoachTile: Tile = {

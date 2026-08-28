@@ -46,7 +46,15 @@ export type PersistState = "idle" | "persisting" | "persisted" | "failed" | "dis
 type Props = {
   status: ArenaStatus;
   isPlayerWin: boolean;
+  /** PRIMARY. Starts another match immediately — no selector in between.
+   *  See arena/page.tsx `handlePlayAgain`. */
   onPlayAgain: () => void;
+  /** SECONDARY. Drops back to the DUEL selector to reconfigure. Optional so
+   *  legacy callers (e.g. /coach/history) keep working without the pill. */
+  onChangeDifficulty?: () => void;
+  /** Id of the match just finished, forwarded onto `play_again_tap` so a
+   *  replay chain can be reconstructed. */
+  previousGameId?: string;
   onBackToHub: () => void;
   claimPhase: ClaimPhase;
   /** One-shot from useMintVictory: the last claim was rejected in the wallet.
@@ -138,6 +146,8 @@ export function ArenaEndState({
   status,
   isPlayerWin,
   onPlayAgain,
+  onChangeDifficulty,
+  previousGameId,
   onBackToHub,
   claimPhase,
   claimStep,
@@ -271,6 +281,8 @@ export function ArenaEndState({
       difficulty,
       isCheckmate: status === "checkmate",
       onPlayAgain,
+      onChangeDifficulty,
+      previousGameId,
       onBackToHub,
       onClose,
     };
@@ -471,6 +483,53 @@ export function ArenaEndState({
             </div>
           </div>
 
+          {/* PLAY AGAIN — PRIMARY, and the first thing under the result.
+              2026-08-28 reversal of the M1 funnel ordering: this button was
+              demoted to a cream secondary pill when Coach Review took the
+              primary slot. Measured consequence over the audit window: only
+              4,2% of finishers went from a finished match straight into
+              another one, while the single most common post-game action was
+              the X (15,4%), which itself navigated into the Reviewer 93,3%
+              of the time. Coach keeps its full section directly below — it
+              is demoted in ORDER, not in prominence, because Coach use still
+              carries the strongest D0 retention signal of any mechanic
+              (2,25x). docs/audits/2026-08-28-core-loop-diagnostic.md §D/§C.
+              Green is the gameplay colour: `--cta-primary-green-*` via
+              `--play`. */}
+          <div className="arena-result-play-section">
+            <button
+              type="button"
+              onClick={() => {
+                track("monetization.play_again_tap", {
+                  context: endgameContext ?? undefined,
+                  difficulty,
+                  previous_game_id: previousGameId,
+                });
+                onPlayAgain();
+              }}
+              className="arena-result-primary-cta arena-result-primary-cta--play"
+            >
+              <span className="arena-result-primary-cta-label">
+                {tArena("playAgain")}
+              </span>
+            </button>
+            {onChangeDifficulty && (
+              <button
+                type="button"
+                onClick={() => {
+                  track("arena_change_difficulty_tap", {
+                    context: endgameContext ?? undefined,
+                    difficulty,
+                  });
+                  onChangeDifficulty();
+                }}
+                className="arena-result-change-difficulty"
+              >
+                {tArena("changeDifficulty")}
+              </button>
+            )}
+          </div>
+
           {/* coachPreview slot intentionally NOT rendered in the loss
               popup — the Coach Review section below replaces it with
               the canonical avatar + headline + CTA pattern. The prop
@@ -634,28 +693,6 @@ export function ArenaEndState({
             </div>
           )}
 
-          {/* PLAY button — M1 funnel (Commit 2 + Commit 4): demoted to
-              secondary cream when Coach Review owns the primary slot
-              (loss/resign + draw/stalemate). Wins use the dedicated
-              VictoryCelebration popup and never reach this branch. */}
-          <button
-            type="button"
-            onClick={() => {
-              if (isCoachPrimaryVariant && endgameContext) {
-                track("monetization.play_again_tap", { context: endgameContext });
-              }
-              onPlayAgain();
-            }}
-            className={
-              isCoachPrimaryVariant
-                ? "arena-result-secondary-action"
-                : "arena-result-primary-cta arena-result-primary-cta--amber arena-result-primary-cta--inset"
-            }
-          >
-            <span className="arena-result-primary-cta-label">
-              {isCoachPrimaryVariant ? tArena("lossPlayAgainCta") : tArena("playAgain")}
-            </span>
-          </button>
         </div>
       </div>
       {persistOverlay}

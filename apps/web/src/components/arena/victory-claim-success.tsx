@@ -229,7 +229,32 @@ export function VictoryClaimSuccess({
           </div>
         )}
 
-        {/* TERTIARY — Play again + Share + Save cream mini-pills. Share is
+        {/* PLAY AGAIN — PRIMARY (2026-08-28). Promoted out of the cream
+            tertiary row for the same reason as VictoryCelebration: this is
+            the post-save win screen, i.e. the player has already paid the
+            monetisation step and the only thing left to offer is another
+            match. Fires `play_again_tap` with context "endgame_win_saved"
+            so a replay after saving is separable from one before it. */}
+        <div className="arena-result-play-section">
+          <button
+            type="button"
+            onClick={() => {
+              track("monetization.play_again_tap", {
+                context: "endgame_win_saved",
+                difficulty,
+              });
+              onPlayAgain();
+            }}
+            className="arena-result-primary-cta arena-result-primary-cta--play"
+            aria-label={playAgainLabel}
+          >
+            <span className="arena-result-primary-cta-label">
+              {tCelebration("playAgainShort")}
+            </span>
+          </button>
+        </div>
+
+        {/* TERTIARY — Share + Save cream mini-pills. Share is
             always present: uses the on-chain victory card when ready, else
             falls back to a match card from game params so the user can
             always share regardless of mint status. Save Again re-invokes
@@ -237,14 +262,6 @@ export function VictoryClaimSuccess({
         <div
           className={`victory-popup-secondary-row${onSaveAgain ? " victory-popup-secondary-row--triple" : ""}`}
         >
-          <button
-            type="button"
-            onClick={onPlayAgain}
-            className="arena-result-secondary-action"
-            aria-label={playAgainLabel}
-          >
-            <span>{tCelebration("playAgainShort")}</span>
-          </button>
           <button
             type="button"
             onClick={() => setShareOpen(true)}

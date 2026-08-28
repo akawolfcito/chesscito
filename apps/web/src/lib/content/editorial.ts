@@ -1051,7 +1051,7 @@ export const VICTORY_CELEBRATION_COPY = {
    *  strings remain in editorial for now in case future surfaces still
    *  consume them. */
   winCoachReviewCta: "Why did you win?",
-  playAgainShort: "Play again",
+  playAgainShort: "PLAY AGAIN",
   shareShort: "Share",
   saveSectionKicker: "SAVE THIS WIN",
   saveSectionHeadline: "Yours forever.",
@@ -1225,7 +1225,9 @@ export const ROADMAP_COPY = {
 } as const;
 
 export const ARENA_COPY = {
-  title: "Arena",
+  /** DUEL is the mode; PLAY is the section. Renamed from "Arena"
+   *  2026-08-28 — user-visible only, routes and internals stay `/arena`. */
+  title: "DUEL",
   subtitle: "Choose your level. Rule the board.",
   difficulty: {
     easy: "Easy",
@@ -1292,12 +1294,18 @@ export const ARENA_COPY = {
     draw: "Draw",
     resigned: "You resigned",
   },
-  playAgain: "PLAY",
+  /** The end-state replay CTA. Renamed from "PLAY" 2026-08-28: the button
+   *  now STARTS a match instead of routing to the selector, and the label
+   *  must describe what happens on tap. "PLAY" as a generic navigation
+   *  label produced the chain PLAY → selector → PLAY. */
+  playAgain: "PLAY AGAIN",
+  /** Secondary reconfigure path out of the end-state → DUEL selector. */
+  changeDifficulty: "Change difficulty",
   /** M1 funnel — endgame loss/resign popup (Commit 2, 2026-06-01).
-   *  Reorders CTAs so Coach Review is primary and Play Again is secondary.
-   *  These two strings replace the `playAgain` label + reintroduce a
-   *  short emotional subtitle (Sally dropped the previous redundant
-   *  subtitle in 2026-05-26 — this one frames learning, not retry). */
+   *  ⚠️ UNUSED since 2026-08-28: the loss popup no longer demotes the
+   *  replay CTA, so it renders `playAgain` in every outcome. Kept because
+   *  the ES bundle guard pairs keys across bundles; delete from both at
+   *  once if it is ever cleaned up. */
   lossPlayAgainCta: "Try again.",
   lossSubtitle: "Each match teaches something.",
   /** F8 phase (b) — Save (on-chain collectible) on loss/draw/resign popups.
@@ -2316,7 +2324,12 @@ export const COACH_VIEWER_COPY = {
   mintSavedToast: "Saved on Celo · #{tokenId}",
   viewNft: "View collectible",
   share: "Share",
-  playAgain: "Play again",
+  /** Renamed from "Play again" 2026-08-28. From the Reviewer this tap lands
+   *  on the DUEL selector, not on a board — the label must describe what
+   *  happens immediately after the tap, so "PLAY AGAIN" would be a lie
+   *  here. Only the arena end-state, which starts a match on tap, says
+   *  PLAY AGAIN. */
+  newDuel: "NEW DUEL",
   title: "Match review",
   reconnectTitle: "Reconnect to view",
   reconnectSubtitle: "This match is tied to your wallet.",
