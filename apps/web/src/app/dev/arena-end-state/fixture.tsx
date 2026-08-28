@@ -68,6 +68,10 @@ export function ArenaEndStateFixture({ variant }: { variant: Variant }) {
         status={status}
         isPlayerWin={isWin}
         onPlayAgain={() => {}}
+        // Production always wires the reconfigure path, so the fixture must
+        // too — otherwise the VR baseline photographs an end-state with no
+        // "Change difficulty" pill, which is not a screen that ships.
+        onChangeDifficulty={() => {}}
         onBackToHub={() => {}}
         claimPhase={claimPhase}
         claimStep="confirming"

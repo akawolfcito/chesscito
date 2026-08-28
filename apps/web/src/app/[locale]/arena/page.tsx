@@ -84,7 +84,7 @@ const ENABLE_COACH = process.env.NEXT_PUBLIC_ENABLE_COACH !== "false";
 // so tests can import it directly without pulling in the full page tree, and
 // without violating Next.js App Router's page-export constraints (only the
 // default export + reserved Next.js names are allowed in page files).
-import { evaluateXClose } from "./end-state-close-policy";
+import { PLAY_HUB_HREF, evaluateXClose } from "./end-state-close-policy";
 import { DuelArenaRoute } from "@/components/duel/duel-arena-route";
 import { DuelSetupSheet } from "@/components/duel/duel-setup-sheet";
 import { DUEL_DISCOVERY_ENABLED } from "@/lib/duel/duel-flag";
@@ -348,6 +348,17 @@ function ArenaPageInner() {
   const persistAttemptedRef = useRef<string | null>(null);
   const pendingGameIdRef = useRef<string | null>(null);
   const persistTelemetryRef = useRef<Record<string, unknown>>({});
+  /** Id minted at START and reused by the terminal persist, so the two ends
+   *  of one match share an identity. Null for a game rehydrated from
+   *  localStorage on mount (it never passed through the start handler). */
+  const currentGameIdRef = useRef<string | null>(null);
+  /** One-shot latch per game for `first_move_made`. */
+  const firstMoveTrackedRef = useRef(false);
+  /** Set by handlePlayAgain, consumed when the replayed game actually
+   *  starts — so `play_again_game_started` measures ARRIVAL at a board,
+   *  not intent. The gap between the two is the metric this change exists
+   *  to close. */
+  const replayRef = useRef<{ previousGameId: string | null; difficulty: string } | null>(null);
   const gameRecordPersisted = persistState === "persisted" && persistedGameId !== null;
 
   const isEndState = ["checkmate", "stalemate", "draw", "resigned"].includes(game.status);
@@ -548,13 +559,21 @@ function ArenaPageInner() {
     handleOpenShopSheet();
   }, [coach.phase, coach, handleOpenShopSheet]);
 
-  const handlePlayAgain = () => {
+  // "Change difficulty" — the DELIBERATE reconfigure path. This is exactly
+  // what `handlePlayAgain` used to do: drop back to the DUEL selector so the
+  // player can pick another rival/difficulty, then tap PLAY.
+  //
+  // It is now a SECONDARY action. Play Again no longer routes here (see
+  // `handlePlayAgain` below): between 36% and 48% of the 1.885 measured
+  // `play_again_tap` never reached a game within 5 minutes, because the tap
+  // landed on this selector instead of on a board.
+  // docs/audits/2026-08-28-core-loop-diagnostic.md §C.5.
+  const handleChangeDifficulty = () => {
     resetArenaState();
     game.reset();
   };
 
-
-  const handleBackToHub = () => router.push("/");
+  const handleBackToHub = () => router.push(PLAY_HUB_HREF);
 
   // handleBack — leaving a match lands on the RIVAL SELECTOR, not the hub
   // (2026-07-13). "I'm done with this match" almost always means "give me a
@@ -599,9 +618,39 @@ function ArenaPageInner() {
     const timer = setTimeout(() => {
       game.startGame();
       setIsPreparing(false);
+      // Replay landed on a board. Fired HERE and not in the tap handler so
+      // the event proves arrival; `play_again_tap` already carries intent.
+      const replay = replayRef.current;
+      if (replay) {
+        replayRef.current = null;
+        track("play_again_game_started", {
+          context: "arena",
+          difficulty: replay.difficulty,
+          previous_game_id: replay.previousGameId ?? undefined,
+          new_game_id: currentGameIdRef.current ?? undefined,
+        });
+      }
     }, MATCHUP_TRANSITION_MS);
     return () => clearTimeout(timer);
   }, [isPreparing, game]);
+
+  // `first_move_made` — the cheapest possible separator between "tapped
+  // PLAY and left" and "actually played". Nothing fired between
+  // arena_game_start and arena_game_end before this, which is why the
+  // 1.752 who never finish a game could not be characterised at all
+  // (docs/audits/2026-08-28-core-loop-diagnostic.md §A.3). One-shot per
+  // game via the ref latch that handleStartWithLoading re-arms.
+  useEffect(() => {
+    if (game.status !== "playing") return;
+    if (game.moveCount < 1) return;
+    if (firstMoveTrackedRef.current) return;
+    firstMoveTrackedRef.current = true;
+    track("first_move_made", {
+      game_id: currentGameIdRef.current ?? undefined,
+      difficulty: game.difficulty,
+      player_color: game.playerColor,
+    });
+  }, [game.status, game.moveCount, game.difficulty, game.playerColor]);
 
   // Delay end overlay 800ms so user sees the final board position before results appear
   useEffect(() => {
@@ -645,7 +694,18 @@ function ArenaPageInner() {
       localStorage.setItem(LAST_DIFFICULTY_KEY, game.difficulty);
     } catch { /* storage full / disabled — harmless */ }
 
+    // One id per game, minted HERE and reused by the terminal persist below,
+    // so a start can finally be paired with its end. Until 2026-08-28 the
+    // UUID was minted only at persist time, which meant a game that never
+    // reached a terminal state left a start event that could be matched to
+    // nothing — the reason "48% never finish" could not be characterised.
+    // docs/audits/2026-08-28-core-loop-diagnostic.md §B.3.
+    const gameId = crypto.randomUUID();
+    currentGameIdRef.current = gameId;
+    firstMoveTrackedRef.current = false;
+
     track("arena_game_start", {
+      game_id: gameId,
       difficulty: game.difficulty,
       player_color: game.playerColor,
     });
@@ -655,6 +715,36 @@ function ArenaPageInner() {
     // Strict Mode's mount→unmount→remount cycle.
     setIsPreparing(true);
   }, [game]);
+
+  /**
+   * INSTANT REPLAY — "Play again" starts a game, it does not go shopping.
+   *
+   * Before: `resetArenaState(); game.reset()` → status "selecting" → the DUEL
+   * selector → another tap → 1.800 ms → board. Measured cost of that detour:
+   * only 51,8%–63,8% of `play_again_tap` reached a game inside 5 minutes, and
+   * 14,4%–28,3% never started another game at all (§C.5 of the audit).
+   *
+   * After: straight into `handleStartWithLoading`, which keeps the 1.800 ms
+   * ArenaMatchupTransition. The transition is deliberately NOT skipped — the
+   * intended feel is "one duel ended, another begins", not a teleport.
+   *
+   * Difficulty and player colour carry over for free: `startGame()` reads the
+   * hook's current `difficulty`/`playerColor`, and neither `reset()` nor this
+   * path clears them. The board itself is fully rebuilt by `startGame()`
+   * (new Chess(), cleared moves/history/timers/FEN), and leaving the terminal
+   * status makes the persist-reset effect drop `persistedGameId` +
+   * `persistState`, so the next match persists under a brand-new id.
+   */
+  const handlePlayAgain = useCallback(() => {
+    // Capture BEFORE the terminal-exit effect nulls it — this is the only
+    // moment the previous game's identity is still in state.
+    replayRef.current = {
+      previousGameId: persistedGameId ?? currentGameIdRef.current,
+      difficulty: game.difficulty,
+    };
+    resetArenaState();
+    handleStartWithLoading();
+  }, [persistedGameId, game.difficulty, resetArenaState, handleStartWithLoading]);
 
   // Cluster E — runPersist owns the foreground await against /api/games.
   // The toast (rendered inside <ArenaEndState>) masks the wait so the
@@ -763,7 +853,11 @@ function ArenaPageInner() {
     if (persistAttemptedRef.current === key) return;
     persistAttemptedRef.current = key;
     if (!address) return;
-    const gameId = crypto.randomUUID();
+    // Reuse the id minted at start so `arena_game_start`, `first_move_made`
+    // and the persisted GameRecord all share one identity. Falls back to a
+    // fresh UUID for a game rehydrated from localStorage on mount, which
+    // never passed through handleStartWithLoading.
+    const gameId = currentGameIdRef.current ?? crypto.randomUUID();
     pendingGameIdRef.current = gameId;
     void runPersist(gameId);
   }, [
@@ -796,15 +890,10 @@ function ArenaPageInner() {
   const pendingNavRef = useRef(false);
 
   const handleEndStateClose = useCallback(() => {
-    const eff = evaluateXClose({
-      persistState,
-      claimPhase: mint.phase,
-      walletAddress: address,
-      gameId: persistedGameId ?? undefined,
-      tooShort: game.moveHistory.length === 0,
-    });
-    // Bug 2 telemetry — surface every X-close decision so a stray push to
-    // /coach/[id] during a fresh-entry flow is traceable in Vercel logs.
+    const eff = evaluateXClose({ persistState, claimPhase: mint.phase });
+    // Bug 2 telemetry — surface every X-close decision. Kept after the
+    // 2026-08-28 simplification so the destination shift (Reviewer → hub)
+    // is visible in the funnel rather than inferred.
     track("arena_x_close_fired", {
       effect_type: eff.type,
       effect_href: eff.type === "push" ? eff.href : undefined,
@@ -818,33 +907,32 @@ function ArenaPageInner() {
       pendingNavRef.current = true;
     }
     setShowEndOverlay(false);
-  }, [persistState, mint.phase, address, persistedGameId, router, game.moveHistory.length]);
+  }, [persistState, mint.phase, persistedGameId, router]);
 
-  // T10 — pendingNavRef consumer: fires deferred navigation once persist
+  // T10 — pendingNavRef consumer: fires the deferred EXIT once persist
   // reaches a terminal state (persisted / failed / dismissed).
+  //
+  // 2026-08-28: the destination is now the PLAY hub in every resolved
+  // branch, matching evaluateXClose. The X means "close", and deferring it
+  // exists only so the in-flight /api/games POST is not aborted — it is not
+  // a second, hidden router. `dismissed` still resolves to "stay": the
+  // player explicitly dismissed the persist error, so the popup is theirs.
   useEffect(() => {
     if (!pendingNavRef.current) return;
-    if (persistState === "persisted" && persistedGameId && address) {
+    if (persistState === "persisted") {
       pendingNavRef.current = false;
-      // Review F6: a 0-move game routes to the Journal (with PLAY shortcut),
-      // never to an empty /coach/[gameId] board.
-      const tooShort = game.moveHistory.length === 0;
       track("arena_pending_nav_consumed", {
         resolved: "persisted",
-        target: tooShort ? "journal" : "coach",
+        target: "play_hub",
       });
-      router.push(
-        tooShort
-          ? `/coach/history?wallet=${address}`
-          : `/coach/${persistedGameId}?wallet=${address}`,
-      );
+      router.push(PLAY_HUB_HREF);
     } else if (persistState === "failed") {
       pendingNavRef.current = false;
       track("arena_pending_nav_consumed", {
         resolved: "failed",
-        target: "arena_fresh",
+        target: "play_hub",
       });
-      router.push("/arena?fresh=1");
+      router.push(PLAY_HUB_HREF);
       // failure toast already rendered by PersistOverlay component
     } else if (persistState === "dismissed") {
       pendingNavRef.current = false;
@@ -853,7 +941,7 @@ function ArenaPageInner() {
         target: "stay",
       });
     }
-  }, [persistState, persistedGameId, address, router, game.moveHistory.length]);
+  }, [persistState, router]);
 
   // #116 prefetch REMOVED 2026-06-13 (review F4). Prefetching
   // /coach/[gameId] while the popup is visible warmed the Router Cache with
@@ -1605,6 +1693,8 @@ function ArenaPageInner() {
             status={game.status}
             isPlayerWin={isPlayerWin}
             onPlayAgain={handlePlayAgain}
+            onChangeDifficulty={handleChangeDifficulty}
+            previousGameId={persistedGameId ?? undefined}
             onBackToHub={handleBackToHub}
             onClose={handleEndStateClose}
             claimPhase={mint.phase}
