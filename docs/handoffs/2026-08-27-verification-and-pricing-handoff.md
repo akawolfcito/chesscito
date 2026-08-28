@@ -1,6 +1,6 @@
 # Handoff — verificación, `/pricing`, la pausa cableada y qué ven los que pagaron
 
-**Fecha:** 2026-08-27 · **Rama:** `main` local, **41 commits sin pushear**
+**Fecha:** 2026-08-27 · **Rama:** `main` local, **44 commits sin pushear**
 **Deploy:** NO ejecutado. El push lo hace el founder.
 
 ---
@@ -10,7 +10,7 @@
 | Verificación | Resultado |
 | --- | --- |
 | Typecheck `apps/web` / `apps/landing` | limpio en las dos |
-| Vitest `apps/web` | **724 archivos · 9194 passed · 1 todo** (153 s) |
+| Vitest `apps/web` | **725 archivos · 9207 passed · 1 todo** (154 s) |
 | Vitest `apps/landing` | **27 archivos · 274 passed** |
 | Vitest `scripts/ops` | **16 archivos · 457 passed** |
 | VR (`--project=minipay --update-snapshots=none`) | **68/68**, baselines **82 antes y después** |
@@ -19,7 +19,7 @@
 | SQL nuevo de ops | ✅ corrido contra `postgres:16-alpine` real |
 | Migraciones | **ninguna** |
 
-⚠️ Los 724 archivos son mi medición en `main` limpio hoy. Es el número contra el que
+⚠️ Los 725 archivos son mi medición en `main` limpio hoy. Es el número contra el que
 comparar la próxima corrida: **si BAJA, la corrida no vale** (workers que no arrancan por
 máquina ocupada). La duración se mantuvo en ~150 s.
 
@@ -38,8 +38,30 @@ dato dice algo más útil todavía: **la exposición se termina sola el 2026-09-
 | **PRO activo** (sin pase vigente) | **5** | 2026-08-31 → 2026-09-13 | Card normal, y **ahora con contador** |
 | Todo vencido | 5 | ya vencieron | Panel de hábito, sin oferta |
 
+⚠️ **PRO son 7 personas, no 8.** Ese 8 eran *filas*: hay **1 renovación**, la única recompra
+de todo el producto. **El pase tuvo 0 renovaciones en 17 ventas.**
+
 ⚠️ Los 5 de PRO incluyen a quien nunca compró un pase; la consulta no los separa de quien
 lo tuvo y se le venció. No cambia la conclusión, pero el número no es "5 ex-compradores".
+
+### ⛔ Y la lectura de "10 nunca jugaron un día" era engañosa
+
+`docs/audits/2026-08-27-what-buyers-actually-did.md` mide qué hicieron, no sólo si hicieron
+el daily. **22 de los 24 compradores jugaron.** Sólo 2 compraron y no tocaron nada.
+
+**13 de 24 jugaron sin registrar jamás un Focus Day.** El problema nunca fue que no
+vinieran: fue que **lo que hicieron no era lo que contaba**. Y de los que hicieron la táctica
+diaria sin que se les registrara un día, **3 la hicieron con el pase activo y el ledger
+vivo** — debió contar y no contó.
+
+⚠️ Causa más probable (hipótesis, no medida): `use-focus-day-recorder.ts:92` exige
+`CHESSCITO_LITE_MODE`, así que **el Focus Day sólo se escribe en el deploy de LEARN**. Quien
+compró el pase y hace su daily en PLAY gana Peones, ve su racha, y su reto no avanza — sin
+que nada se lo diga. Confirmarlo exige cruzar `account_ref` (HMAC) con `analytics_events`.
+
+Eso **no cambia la decisión de pausar, cambia el motivo**: no se pausó porque los
+compradores fueran fantasmas, sino porque vendíamos un reto cuyo contador podía no moverse
+aunque el jugador viniera todos los días.
 
 ### Lo que cada grupo experimenta
 
@@ -47,10 +69,11 @@ lo tuvo y se le venció. No cambia la conclusión, pero el número no es "5 ex-c
 `salesPaused` sólo afecta a `loading` y a `none`. Un entitlement activo cae a la card de
 siempre. Nadie pierde lo que compró, que era la condición innegociable.
 
-⚠️ **Pero son exactamente el grupo del hallazgo #3 del review.** Mientras el entitlement
-resuelve, ahora ven el panel de hábito *sin su pase* y la card aparece un instante después.
-El parpadeo del invitado se arregló mudándoselo a ellos. Son 11 personas concretas, y son
-las que pagaron. No es urgente —el estado final es correcto— pero es la deuda con nombre.
+✅ **Y su parpadeo quedó arreglado** (`c6a1dae`). Era el hallazgo #3 del review: mientras el
+entitlement resolvía, la card afirmaba la ausencia y soltaba su contador y sus días, para
+traerlos de vuelta un instante después. Ahora `unavailable` distingue `pending` — los dos
+muestran el panel de hábito y ninguno la oferta, pero sólo el resuelto colapsa el layout.
+⛔ La caja reservada queda **vacía**: nada de "0 de 21" para alguien cuyo ledger no contestó.
 
 **Los 5 de PRO ven un cambio real y deseado.** Antes su ventana se reportaba `unbounded`
 (sin contador); ahora ven los días que les quedan. **El primero vence el 2026-08-31, en 4
@@ -66,10 +89,11 @@ recomprar; ahora no. Correcto: no queremos vender, y no perdieron nada que sigui
 sosteniendo un pase, y toda la superficie de "un comprador podría leer la pausa como una
 revocación" desaparece sin que haya que hacer nada.
 
-⚠️ Y confirma la decisión de pausar, con el detalle más incómodo: **de los 11 con pase
-activo, 5 nunca registraron un solo día**, y el promedio del grupo es **0,6 días** sobre 21.
-El máximo de toda la cohorte activa es **2 días**. En los vencidos, 5 de 6 tampoco
-registraron nunca un día. **10 de los 17 compradores nunca jugaron un día.**
+⚠️ El uso del reto fue mínimo: **de los 11 con pase activo, 5 nunca registraron un solo
+día**, el promedio del grupo es **0,6 días** sobre 21 y el máximo de toda la cohorte activa
+es **2 días**.
+⛔ **Pero "nunca registraron un día" NO significa "nunca jugaron"** — ver la sección de
+arriba: 22 de 24 sí jugaron. El contador es lo que no se movió, no la gente.
 
 ⚠️ Casi toda la compra fue reciente: **11 de 17 pases se compraron entre el 3 y el 14 de
 agosto**, poco antes de la pausa.
@@ -114,6 +138,7 @@ por accidente.
 | Una venta filtrada con la venta pausada ahora se ve | `eb9d0de` |
 | El carrusel obedece la MISMA perilla que la venta real | `5393183` |
 | `ops:health` mira el par de guardado de score | `9964ea7` |
+| La card deja de saltarle a los 11 que pagaron | `c6a1dae` |
 
 ### La revisión adversarial y lo que salió de ella
 
@@ -162,7 +187,10 @@ inbox hace que `unreadCount` pueda subcontar, y `formatUsd6` trunca en vez de re
 1. ⚠️ **El fixture del VR bypasea la lógica real** y dos baselines tienen nombres que
    mienten (`vr18-learn-hub-pro — unbounded window`). Debería construirse con
    `buildChallengeProgressView`.
-2. ⚠️ **El parpadeo que ahora ven los 11 compradores** (hallazgo #3 del review).
+2. ⛔ **Confirmar si el Focus Day debería contar en PLAY** — la pregunta que deja el audit de
+   comportamiento. Requiere cruzar `account_ref` con `analytics_events` para pasar de
+   hipótesis a medición, y es una **decisión de producto**, no un bug: el código lo restringe
+   a LEARN a propósito. Si el pase vuelve, hay que responderla antes.
 3. `/es/es/arena` — el link de duelo duplica el locale. Reproducible, diferido.
 4. `treasury_payment_intents`: 24 filas de julio con el canary OFF.
 5. `learn.chesscito.com` en 12,7 s en frío contra 3,3 s de `play`.
