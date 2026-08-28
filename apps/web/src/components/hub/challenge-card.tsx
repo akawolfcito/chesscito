@@ -214,6 +214,13 @@ export function ChallengeCard({
    * was worked out over time; rebuilding it beside itself is what the first
    * attempt did, and it lost the weekday letters on the way. */
   const habitOnly = progress.state === "unavailable";
+  /* ⛔ STILL RESOLVING — we do NOT yet know whether this player owns a pass.
+   * `habitOnly` alone treated that as "no challenge", which is right for a
+   * visitor and wrong for the 11 people who paid: their counter and deadline
+   * are seconds away, and dropping the slots makes the card visibly jump when
+   * the answer lands. While pending, the paused OFFER stays hidden (that part
+   * is never in question) but the layout is held. */
+  const habitPending = progress.state === "unavailable" && progress.pending === true;
 
   const isActive = seasonPass.active;
   const isLoading =
@@ -318,11 +325,14 @@ export function ChallengeCard({
         {/* The 21-day calendar: literal to the paused product, so it goes with
             it. Without an icon the passport row centres, which is the shape the
             habit-only panel wants anyway. */}
-        {habitOnly ? null : (
+        {habitOnly && !habitPending ? null : (
           // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
           <ThemeAssetPicture
             slot="hub.21-day-icon"
-            pictureClassName="challenge-card-icon"
+            /* While pending the icon holds its box but paints nothing: the
+               passport row keeps its offset instead of centring and then
+               shifting back once the entitlement resolves. */
+            pictureClassName={`challenge-card-icon${habitPending ? " is-placeholder" : ""}`}
             alt=""
             aria-hidden="true"
             draggable={false}
@@ -382,8 +392,12 @@ export function ChallengeCard({
               numbers. The streak is NOT — it is the daily run and it stays, but
               it lives inside this same line, so habit-only mode drops the line
               and the weekly row below carries the streak on its own. */}
-          {habitOnly ? null : (
-          <p className="challenge-card-day-count">
+          {/* ⚠️ Pending keeps this line as an EMPTY, reserved box — never a
+              number. Inventing "0 of 21" for a player whose ledger has not
+              answered would be a lie that looks like data; the space is held
+              so their real count lands without moving the card. */}
+          {habitOnly && !habitPending ? null : (
+          <p className={`challenge-card-day-count${habitPending ? " is-placeholder" : ""}`}>
             {ledger ? (
               <span
                 className="challenge-card-progress-line"

@@ -8671,6 +8671,22 @@ button.hud-resource-chip:active:not(:disabled) {
   height: auto;
 }
 
+/* Reserved-but-blank slots, used ONLY while the entitlement is still resolving
+   with sales paused. `visibility: hidden` keeps the box — `display: none` would
+   defeat the entire point, which is that the card must not change shape when
+   the answer arrives. Measured 2026-08-27: 11 people hold an active pass and
+   pass through this state on every cold load. */
+.challenge-card-icon.is-placeholder {
+  visibility: hidden;
+}
+
+.challenge-card-day-count.is-placeholder {
+  /* The line is deliberately EMPTY here — no invented "0 of 21" — so it needs
+     a height of its own or it collapses and the card jumps anyway. Matches the
+     rendered line: 0.88rem at the default line-height. */
+  min-height: 1.2em;
+}
+
 .challenge-card-top-main {
   flex: 1 1 auto;
   min-width: 0;

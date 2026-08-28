@@ -98,7 +98,11 @@ export function buildChallengeProgressView(input: {
    * ⚠️ Sales ON keeps its skeleton — the people who can actually buy still need
    * a loading state. */
   if (entitlement.status === "loading") {
-    return salesPaused ? { state: "unavailable" } : { state: "loading" };
+    // ⚠️ `pending` — see the union. The paused offer must not show while we
+    // wait, but neither may the card claim there is no challenge: for the 11
+    // people holding an active pass this branch runs on every cold load, and
+    // collapsing their counter and deadline makes the card jump a beat later.
+    return salesPaused ? { state: "unavailable", pending: true } : { state: "loading" };
   }
   if (entitlement.status === "none") {
     /* ⛔ THE PAUSE STOPS AT THE OFFER. 17 wallets bought the pass, 10 never

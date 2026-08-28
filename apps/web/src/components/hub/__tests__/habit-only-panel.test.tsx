@@ -114,4 +114,61 @@ describe("habit-only panel (sales paused)", () => {
     expect(screen.getByTestId("challenge-stats")).toBeInTheDocument();
     expect(screen.getByTestId("challenge-card")).toBeInTheDocument();
   });
+
+  /**
+   * ⛔ WHILE THE ENTITLEMENT IS STILL RESOLVING, THE CARD MAY NOT COLLAPSE.
+   *
+   * 11 wallets hold an active pass (measured in production 2026-08-27) and every
+   * cold load takes them through this state before their entitlement lands.
+   * Treating "not known yet" like "no challenge" dropped their counter and
+   * deadline slots, so the card visibly jumped a beat later — the one thing a
+   * paused sale owes someone who already paid.
+   */
+  describe("pending — resolving, sales paused", () => {
+    const PENDING: ChallengeProgressView = { state: "unavailable", pending: true };
+
+    it("RESERVES the counter line instead of removing it", () => {
+      const { container } = renderCard(PENDING);
+      const line = container.querySelector(".challenge-card-day-count");
+
+      expect(line).not.toBeNull();
+      expect(line?.className).toContain("is-placeholder");
+    });
+
+    it("RESERVES the icon box so the passport row does not re-centre", () => {
+      const { container } = renderCard(PENDING);
+      const icon = container.querySelector(".challenge-card-icon");
+
+      expect(icon).not.toBeNull();
+      expect(icon?.className).toContain("is-placeholder");
+    });
+
+    it("⛔ invents NO number while it waits", () => {
+      // A reserved box is honest; "0 of 21" for a player whose ledger has not
+      // answered is a lie shaped like data.
+      renderCard(PENDING);
+      const text = document.body.textContent ?? "";
+      expect(text).not.toMatch(/of 21|days left/i);
+    });
+
+    it("⛔ still shows no offer — pending is not an opening", () => {
+      renderCard(PENDING);
+      expect(screen.queryByTestId("challenge-stats")).toBeNull();
+      expect(screen.queryByTestId("challenge-cta-price")).toBeNull();
+    });
+
+    it("keeps the habit panel intact, exactly like the resolved case", () => {
+      renderCard(PENDING);
+      expect(screen.getAllByTestId("challenge-week-day").length).toBe(7);
+      expect(screen.getByTestId("challenge-cta")).toBeInTheDocument();
+    });
+
+    it("⛔ the RESOLVED case still collapses — a visitor gets no reserved space", () => {
+      // The distinction is the whole fix. If this goes red, pending stopped
+      // being distinguishable and every visitor pays for the buyers' layout.
+      const { container } = renderCard(HABIT_ONLY);
+      expect(container.querySelector(".challenge-card-day-count")).toBeNull();
+      expect(container.querySelector(".challenge-card-icon")).toBeNull();
+    });
+  });
 });

@@ -151,4 +151,57 @@ describe("season pass sales pause", () => {
       }).state,
     ).toBe("loading");
   });
+
+  /**
+   * ⛔ "NO CHALLENGE" AND "I DO NOT KNOW YET" ARE DIFFERENT FACTS.
+   *
+   * Both render the habit-only panel — the paused offer never shows either way
+   * — but only the resolved one may collapse the card's layout. Measured in
+   * production on 2026-08-27: 11 wallets hold an active pass, and every cold
+   * load sends them through the pending branch before their entitlement lands.
+   * Dropping their counter and deadline slots made the card jump a beat later,
+   * which is the one thing a paused sale owes a paying customer not to do.
+   */
+  describe("pending vs resolved, while paused", () => {
+    it("marks the still-resolving case as pending", () => {
+      const view = buildChallengeProgressView({
+        entitlement: { status: "loading" },
+        slice: null,
+        streak: 0,
+        nowMs: NOW,
+        salesPaused: true,
+      });
+
+      expect(view).toEqual({ state: "unavailable", pending: true });
+    });
+
+    it("does NOT mark a resolved absence as pending", () => {
+      // A visitor with no entitlement is a settled answer: the card may collapse
+      // to the habit panel and stay there.
+      const view = buildChallengeProgressView({
+        entitlement: NO_ENTITLEMENT,
+        slice: null,
+        streak: 0,
+        nowMs: NOW,
+        salesPaused: true,
+      });
+
+      expect(view.state).toBe("unavailable");
+      expect("pending" in view && view.pending).toBeFalsy();
+    });
+
+    it("never leaks the offer in either case", () => {
+      // The distinction above must not reopen what the pause closed.
+      for (const entitlement of [{ status: "loading" } as const, NO_ENTITLEMENT]) {
+        const view = buildChallengeProgressView({
+          entitlement,
+          slice: null,
+          streak: 0,
+          nowMs: NOW,
+          salesPaused: true,
+        });
+        expect(view.state).not.toBe("offer");
+      }
+    });
+  });
 });

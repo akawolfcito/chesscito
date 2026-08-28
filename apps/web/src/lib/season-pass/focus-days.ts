@@ -37,8 +37,15 @@ export type ChallengeProgressView =
   | { state: "offer" }
   /** Sales are paused: the pass is not for sale right now, so the card
    *  offers nothing. Distinct from "offer" (buyable) and from the active
-   *  states, which a paused sale must never touch. */
-  | { state: "unavailable" }
+   *  states, which a paused sale must never touch.
+   *
+   *  ⚠️ `pending` SEPARATES "there is no challenge" FROM "I do not know yet".
+   *  Both render the habit-only panel — never the paused offer — but only the
+   *  resolved one may collapse the card's layout. While pending, an entitled
+   *  player's counter and deadline are still on their way, and dropping their
+   *  slots makes the card jump when the answer lands. Measured 2026-08-27:
+   *  11 people hold an active pass and hit exactly this path on a cold load. */
+  | { state: "unavailable"; pending?: boolean }
   | { state: "disabled"; window: FocusWindow; streak: number }
   | { state: "degraded"; window: FocusWindow; streak: number }
   | {
