@@ -1,7 +1,9 @@
-# Handoff — verificación, `/pricing`, la pausa cableada y qué ven los que pagaron
+# Handoff — verificación, `/pricing`, la pausa cableada, y qué hace la gente
 
-**Fecha:** 2026-08-27 · **Rama:** `main` local, **44 commits sin pushear**
-**Deploy:** NO ejecutado. El push lo hace el founder.
+**Fecha:** 2026-08-27 · **Rama:** `main` local, **45 commits sin pushear**
+**Deploy:** NO ejecutado. **Congelado a pedido del founder**: la próxima sesión empieza con
+más preguntas sobre los datos, **antes** de cualquier push o cambio → ver
+[Dónde retomar](#-dónde-retomar--la-próxima-sesión-empieza-acá).
 
 ---
 
@@ -139,6 +141,8 @@ por accidente.
 | El carrusel obedece la MISMA perilla que la venta real | `5393183` |
 | `ops:health` mira el par de guardado de score | `9964ea7` |
 | La card deja de saltarle a los 11 que pagaron | `c6a1dae` |
+| Audit: qué hicieron los 24 compradores | `8e0466d` |
+| **Audit: qué hace realmente la gente en PLAY** | `d431a0d` |
 
 ### La revisión adversarial y lo que salió de ella
 
@@ -197,11 +201,62 @@ inbox hace que `unreadCount` pueda subcontar, y `formatUsd6` trunca en vez de re
 
 ## Del founder
 
-- **Push de los 41 commits.** ⚠️ `chesscito-landing` despliega **producción** al pushear a
+- **Push de los 45 commits.** ⚠️ `chesscito-landing` despliega **producción** al pushear a
   `main`, sin preview.
 - **Transferencia manual de $0.33** a la wallet en
   `private/2026-08-25-challenge-reward-ledger.md`.
 - **Declarar `NEXT_PUBLIC_SEASON_PASS_SALES_ENABLED`** en `apps/landing/.env.template`.
+
+---
+
+## ⛔ DÓNDE RETOMAR — la próxima sesión empieza acá
+
+**Decisión del founder al cerrar (2026-08-27): NO se pushea todavía.** La próxima sesión
+arranca **con más preguntas sobre los datos**, antes de cualquier push o cambio de código.
+
+**Estado congelado:** 45 commits en `main` local, **árbol limpio**, todo verde. No hay trabajo
+a medias, no hay archivos sin commitear, no hay nada que reconstruir.
+
+### Lo que se puede responder sin tocar nada
+
+Las tres auditorías de hoy son read-only y reproducibles. Las consultas usaron
+`pnpm ops:query <archivo.sql>` contra producción:
+
+| Documento | Responde |
+| --- | --- |
+| `docs/audits/2026-08-27-play-behavior-and-retention.md` | qué hace la gente en PLAY, qué se asocia con volver |
+| `docs/audits/2026-08-27-what-buyers-actually-did.md` | qué hicieron los 24 compradores |
+| `docs/reviews/2026-08-27-adversarial-review-pre-push.md` | los 11 hallazgos del review, 2 cerrados |
+
+⚠️ **`pnpm ops:query` rechaza cualquier `.sql` con un `;` dentro de un comentario.** Parte el
+script por `;` antes de quitar comentarios y el primer trozo queda vacío; el error dice
+`no statement found`, que no lo sugiere. Costó dos diagnósticos hoy.
+
+### Las preguntas que quedaron abiertas, en orden de cuánto cambian una decisión
+
+1. **¿Por qué el 48% de quienes inician una partida no termina ninguna?** 1.746 personas, la
+   mayor fuga de PLAY. ⛔ **No hay instrumentación para responderlo** — no existe evento de
+   abandono ni de duración de partida.
+2. **¿Por qué jugar exactamente 1 partida predice PEOR retorno que no entrar a la arena?**
+   (4,6% vs 8,1%).
+3. **¿Qué se hace con los 1.096 que no tienen un solo stablecoin?** Son el 59,6% de quienes
+   ven la hoja de PRO. Y la falta de fondos es **plana** entre quienes vuelven y quienes no,
+   así que no es lo que los expulsa.
+4. **¿Daily o Coach?** Los dos dan ~4× retorno pero alcanzan poblaciones distintas: el top por
+   partidas se caracteriza por Coach, el top por días por el daily.
+5. **¿Se puede empujar al 88% que toca una sola superficie a tocar la otra?** El 12% que cruza
+   retiene 5×.
+6. **¿El Focus Day debería contar en PLAY?** Decisión de producto, no bug. Hay que responderla
+   antes de que el pase vuelva.
+
+### El bloqueo que impide cerrar varias de esas preguntas
+
+⛔ **No hay puente entre `account_ref` (HMAC de la wallet) y `wallet`.** Sin él es imposible
+unir comportamiento con compras: qué hizo alguien antes de pagar, qué hizo después, si comprar
+cambia la profundidad de uso. Resolverlo es una decisión (¿se calcula el HMAC en una consulta
+puntual con el secreto?, ¿se instrumenta de otra forma?) y **no se tomó**.
+
+---
 
 ## Después del push — qué mirar
 
