@@ -25,6 +25,10 @@ type PlayHubScaffoldProps = {
   /** The client-owned Daily trigger. Composition keeps this scaffold free of
    *  wagmi/localStorage hooks and preserves the provider-less `/dev` fixture. */
   dailySlot: ReactNode;
+  /** Client-owned Inbox chip. Optional so the `/dev` fixture and every
+   *  existing caller keep working without one. Same slot pattern, same
+   *  reason: `InboxChip` calls `useAccount()`. */
+  inboxSlot?: ReactNode;
   onPeonesRefetch: () => void;
   onConnectTap: () => void;
   onTrophyTap: () => void;
@@ -38,7 +42,22 @@ type PlayHubScaffoldProps = {
 /** Temporary product switch. PLAY remains available in PLAY PATH below.
  *  Flip this single value to `true` to restore the standalone CTA without
  *  reconstructing its markup, handler, theme slot or styles. */
-const SHOW_STANDALONE_PLAY_CHESS_CTA = false;
+/**
+ * Standalone primary CTA on the PLAY hub.
+ *
+ * Turned OFF on 2026-07-26 (`b7840ab4`, "PLAY PATH now owns the Arena entry")
+ * without a measurement of the effect. Turned back ON on 2026-08-29 with one:
+ * of the 5.643 people who complete the hub tour, **35,4% never start a match**,
+ * and 2.321 of the 5.957 who reach this hub (39%) never start one either.
+ * With the CTA off, the heaviest object on the screen was the $1.99 PRO
+ * banner and the entry to the game was a 64px tile in the floor rail.
+ * docs/audits/2026-08-28-core-loop-diagnostic.md §D.
+ *
+ * ⚠️ This is a hardcoded constant, NOT a feature flag: no env, no config, no
+ * remote kill-switch. Flipping it needs a deploy. It is kept as a constant
+ * only so the disabled branch stays compile-checked.
+ */
+const SHOW_STANDALONE_PLAY_CHESS_CTA = true;
 
 /** Play Kingdom home. Mirrors the LEARN/LITE hub's visual system (unified
  *  vocabulary): floating HUD + Kingdom portal + mode switch + Kingdom hero
@@ -52,6 +71,7 @@ export function PlayHubScaffold({
   pro,
   peones,
   dailySlot,
+  inboxSlot,
   onPeonesRefetch,
   onConnectTap,
   onTrophyTap,
@@ -95,6 +115,16 @@ export function PlayHubScaffold({
               />
             ) : null}
             <LanguageChip />
+            {/* Inbox — 2026-08-29. PLAY never had one: `InboxChip` was mounted
+                only in the LEARN hub, so notifications simply did not reach
+                anyone in PLAY. The gift icon on the right is NOT the inbox —
+                it is the Daily Tactic (`dailySlot`, variant "corner-icon").
+
+                ⛔ A SLOT, not the component, for the same reason as
+                `dailySlot`: `InboxChip` calls `useAccount()`, and a wagmi hook
+                in this tree throws `WagmiProviderNotFoundError` in every /dev
+                probe and scaffold test. Mirrors hub-lite-scaffold.tsx. */}
+            {inboxSlot}
           </div>
           <div className="hub-scaffold-hud-right hub-home-hud-right">
             {/* Account entry intentionally omitted here (founder 2026-07-07):
@@ -181,7 +211,7 @@ export function PlayHubScaffold({
             tourTarget="play"
             iconSlot="hub.enter-arena"
             label={tPlay("playPathPlayLabel")}
-            ariaLabel={tPlay("arenaAriaLabel")}
+            ariaLabel={tPlay("playPathPlayAriaLabel")}
             onClick={() => {
               hapticTap();
               onArenaPress();

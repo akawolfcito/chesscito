@@ -98,7 +98,12 @@ import { COACH_COPY } from "@/lib/content/editorial";
 
 describe("/coach/history JOURNAL play CTA", () => {
   it("COACH_COPY.playCta resolves (regression: key was missing → raw key showed)", () => {
-    expect(COACH_COPY.playCta).toBe("PLAY");
+    // 2026-08-29 — was "PLAY". This CTA pushes `/arena?fresh=1`, i.e. the DUEL
+    // selector, so "PLAY" promised a board and delivered a settings screen.
+    // The label now names the next screen, like the end-state (PLAY AGAIN,
+    // which really does start a match) and the Match Reviewer (NEW DUEL).
+    expect(COACH_COPY.playCta).toBe("NEW DUEL");
+    expect(COACH_COPY.playCta).not.toBe("PLAY");
   });
 
   it("renders a horizontally-centered PLAY shortcut (not full-width)", () => {

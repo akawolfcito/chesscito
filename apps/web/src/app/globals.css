@@ -388,20 +388,45 @@
        carried by FORM, not hue: the replay is a full-width 72px pill, the
        Coach CTA is a small pill inside a card. Do not try to fix a
        hierarchy problem by inventing a new colour. */
-    --cta-primary-purple-grad: linear-gradient(180deg, #a06bf5, #6d28d9);
-    --cta-primary-purple-border: rgba(76, 29, 149, 0.85);
+    /* ── Derived, not picked (2026-08-29) ──────────────────────────────
+       The first version of this family was lifted from an AI-generated
+       mockup — hue 263°, nobody chose it. These values are measured.
+
+       Sampled 118.885 pixels of the real PLAY hub. Hue occupancy:
+         40–49°  dorado ....... 26,9%  (chips, marcos, escudo)
+         200–219° azul ........ 32,9%  (el cielo)
+         70–89°  verde ........ ~12%   (el paisaje)
+         270–279° morado ...... 3,8%   (el escudo + las espadas)
+
+       Purple is the only significant hue not already doing a job — and
+       the 3,8% it does occupy IS the brand crest, so the CTA ties to the
+       logo instead of competing with it. Blue was disqualified by
+       measurement, not taste: a third of the hub is sky, which is exactly
+       why the old blue CTA sank into the background.
+
+       The stops come from the crest itself (61.752 purple pixels, hue
+       276–277° at every lightness):
+         #9251c6  the brightest brand stop that still clears WCAG AA
+                  normal text against #fff8ed (4.72:1)
+         #5a2180  brand lightness-30 stop (10.13:1)
+         #40145d  brand L20 — border
+         #250737  brand L10 — bevel shadow
+       Both gradient ends pass AA, so the label is legible wherever it
+       lands on the bar. */
+    --cta-primary-purple-grad: linear-gradient(180deg, #9251c6, #5a2180);
+    --cta-primary-purple-border: rgba(64, 20, 93, 0.9);
     --cta-primary-purple-bevel:
-      inset 0 2px 0 rgba(255, 255, 255, 0.45),
-      inset 0 -3px 0 rgba(76, 29, 149, 0.55),
-      0 4px 0 rgba(70, 25, 140, 0.60),
-      0 6px 14px rgba(70, 25, 140, 0.35);
+      inset 0 2px 0 rgba(255, 255, 255, 0.42),
+      inset 0 -3px 0 rgba(37, 7, 55, 0.5),
+      0 4px 0 rgba(37, 7, 55, 0.62),
+      0 6px 14px rgba(37, 7, 55, 0.38);
     --cta-primary-purple-bevel-pressed:
-      inset 0 2px 0 rgba(255, 255, 255, 0.45),
-      inset 0 -3px 0 rgba(76, 29, 149, 0.55),
-      0 2px 0 rgba(70, 25, 140, 0.60),
-      0 4px 8px rgba(70, 25, 140, 0.30);
-    --cta-primary-purple-text-shadow: 0 2px 0 rgba(70, 25, 140, 0.65);
-    --cta-primary-purple-color: #f7f2ff;
+      inset 0 2px 0 rgba(255, 255, 255, 0.42),
+      inset 0 -3px 0 rgba(37, 7, 55, 0.5),
+      0 2px 0 rgba(37, 7, 55, 0.62),
+      0 4px 8px rgba(37, 7, 55, 0.32);
+    --cta-primary-purple-text-shadow: 0 2px 0 rgba(37, 7, 55, 0.7);
+    --cta-primary-purple-color: #fff8ed;
     --cta-secondary-cream-grad:
       linear-gradient(180deg, rgba(255, 248, 222, 0.95), rgba(247, 226, 175, 0.95));
     --cta-secondary-cream-border: rgba(180, 120, 35, 0.45);
@@ -10838,62 +10863,43 @@ button.hud-resource-chip:active:not(:disabled) {
    bevel), with the gold ramp swapped for the canonical blue and the
    crossed-swords icon retained on the left. Duplicated (not shared) so the
    LEARN button stays untouched; keep the two in sync by hand. ── */
+/* Primary hub CTA — the SAME object as the end-state replay button.
+   ⛔ This used to be BLUE (#45c4f4 → #075c9b with a cyan halo), which was a
+   fourth CTA colour with no meaning attached. Turning the flag back on
+   without this restyle would have re-shipped exactly the defect the brief
+   named: "el CTA principal cambia arbitrariamente entre verde, azul,
+   naranja y otros colores según pantalla".
+   Now it uses the interactive-purple family, the full pill radius and the
+   crossed-swords icon, so the button that opens a duel and the button that
+   replays one are recognisably the same thing on two screens. */
 .play-chess-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  width: auto;
-  min-height: 60px;
-  padding: 0 46px;
-  border: none;
-  border-radius: 13px;
-  background:
-    radial-gradient(ellipse at 30% 5%,
-      rgba(176, 236, 255, 0.52) 0%,
-      rgba(112, 207, 255, 0.2) 24%,
-      transparent 48%),
-    linear-gradient(180deg,
-      #45c4f4 0%,
-      #269fdf 42%,
-      #117cc5 76%,
-      #075c9b 100%);
-
-  box-shadow:
-    /* brillo fino interior superior */
-    inset 0 2px 0 rgba(255, 255, 255, 0.68),
-    /* sombreado inferior de la cara */
-    inset 0 -5px 0 rgba(4, 66, 116, 0.36),
-    /* línea azul exterior */
-    0 0 0 2px rgba(24, 132, 199, 0.95),
-    /* halo celeste */
-    0 0 8px 3px rgba(105, 211, 255, 0.7),
-    /* profundidad inferior */
-    0 3px 0 #06497d,
-    /* borde luminoso alrededor de la profundidad */
-    0 10px 0 -7px rgba(91, 197, 255, 0.74),
-    /* sombra ambiental */
-    0 14px 18px rgba(4, 55, 97, 0.34);
-  color: #fff;
-  font-size: 1.35rem;
-  font-weight: 800;
+  gap: 12px;
+  width: min(100%, 334px);
+  min-height: clamp(64px, 9.5dvh, 76px);
+  padding: 0 24px;
+  border: 2px solid var(--cta-primary-purple-border);
+  border-radius: 999px;
+  background: var(--cta-primary-purple-grad);
+  box-shadow: var(--cta-primary-purple-bevel);
+  color: var(--cta-primary-purple-color);
+  font-family: var(--font-game-action);
+  font-size: clamp(20px, 4.8dvw, 25px);
+  font-weight: 900;
+  line-height: 1;
   letter-spacing: 0.02em;
-  text-shadow:
-    -1px -1px 0 rgba(24, 132, 199, 0.3),
-    1px -1px 0 rgba(24, 132, 199, 0.3),
-    -1px 1px 0 rgba(24, 132, 199, 0.3),
-    1px 1px 0 rgba(24, 132, 199, 0.3),
-    0 2px 2px rgba(0, 0, 0, 0.5);
+  text-shadow: var(--cta-primary-purple-text-shadow);
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
   cursor: pointer;
 }
 
 .play-chess-cta:active {
-  transform: translateY(3px);
-  box-shadow:
-    inset 0 3px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -3px 0 rgba(8, 50, 90, 0.4),
-    0 3px 0 #0a568f,
-    0 5px 10px rgba(0, 0, 0, 0.3);
+  transform: translateY(2px) scale(0.995);
+  box-shadow: var(--cta-primary-purple-bevel-pressed);
 }
 
 .play-chess-cta-icon {

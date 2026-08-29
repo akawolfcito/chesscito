@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "@/i18n/navigation";
 import { PlayHubScaffold } from "@/components/hub/play-hub-scaffold";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
+import { InboxChip } from "@/components/inbox/inbox-chip";
 import { usePlayHubData } from "@/components/hub/use-play-hub-data";
 import type { HubInitialSheet } from "@/components/hub/hub-scaffold-client";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
@@ -108,6 +109,7 @@ export function PlayHubClient({
         pro={pro}
         peones={peones.state}
         dailySlot={<HubDailyTile variant="corner-icon" />}
+        inboxSlot={<InboxChip />}
         onPeonesRefetch={() => void peones.refetch()}
         onConnectTap={() => {
           track("play_hub_connect_tap");

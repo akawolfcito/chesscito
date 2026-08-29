@@ -2031,7 +2031,11 @@ export const COACH_COPY = {
   askCoach: "ASK",
   /** JOURNAL (coach/history) PLAY shortcut. Was missing, so the button
    *  rendered the raw key "COACH_COPY.playCta" (2026-06-15 fix). */
-  playCta: "PLAY",
+  /** ⚠️ NOT "PLAY". This button pushes `/arena?fresh=1`, which lands on the
+   *  DUEL selector — it does not start a match. Renamed 2026-08-29 under the
+   *  same rule as the end-state (PLAY AGAIN) and the Match Reviewer
+   *  (NEW DUEL): the label describes what happens immediately after the tap. */
+  playCta: "NEW DUEL",
   loading: "Loading…",
   quickReviewTitle: "REVIEW",
   coachAnalysisTitle: "REVIEW",
@@ -3802,9 +3806,17 @@ export const PLAY_HUB_COPY = {
   coachLabel: "Coach",
   shopLabel: "Shop",
   shopAriaLabel: "Open Play Shop",
-  playPathPlayLabel: "Play",
-  arenaLabel: "PLAY CHESS",
-  arenaAriaLabel: "Play Chess: full chess vs AI",
+  /** Floor-rail shortcut. Same destination as the primary CTA below, so it
+   *  needs its OWN accessible name — two buttons with an identical name on
+   *  one screen is a screen-reader defect, not a duplicate label. */
+  playPathPlayLabel: "Duel",
+  playPathPlayAriaLabel: "Duel: pick your rival",
+  /** PRIMARY hub CTA. "DUEL", not "PLAY": this opens the rival selector, it
+   *  does not start a match. The label must describe what happens on tap —
+   *  the same rule that turned the end-state button into PLAY AGAIN and the
+   *  Match Reviewer button into NEW DUEL (2026-08-28). */
+  arenaLabel: "DUEL",
+  arenaAriaLabel: "Duel: pick your rival and play a full match",
   // Play Kingdom panel. Arena remains free-to-all; PRO is an explanatory
   // secondary CTA, never a gate on the primary Play Chess action.
   kingdomPanelTitle: "Play Kingdom",

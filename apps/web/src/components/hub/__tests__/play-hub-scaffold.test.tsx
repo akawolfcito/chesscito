@@ -94,7 +94,7 @@ describe("PlayHubScaffold", () => {
     expect(screen.getByAltText("Chesscito")).toBeInTheDocument();
     expect(screen.getByTestId("kingdom-card")).toBeInTheDocument();
     expect(screen.getByText("PLAY PATH")).toBeInTheDocument();
-    expect(screen.getByText("Play")).toBeInTheDocument();
+    expect(screen.getByText("Duel")).toBeInTheDocument();
     expect(screen.getByTestId("play-daily")).toBeInTheDocument();
   });
 
@@ -152,24 +152,37 @@ describe("PlayHubScaffold", () => {
     expect(avatar.getAttribute("src")).toContain("avatar-pro");
   });
 
-  it("hides the standalone Play Chess CTA but keeps Arena first in PLAY PATH", async () => {
+  /**
+   * 2026-08-29 — this test used to assert the OPPOSITE: that the standalone
+   * CTA was absent and the floor rail owned the Arena entry. That state was
+   * introduced in `b7840ab4` (2026-07-26) with no measurement; the measured
+   * consequence was that 39% of the 5.957 people reaching this hub never
+   * started a match, including 35,4% of those who completed the whole tour.
+   *
+   * The two entries are deliberately kept BOTH — a dominant CTA in the body
+   * and a persistent shortcut in the floor rail — so this pins the thing
+   * that actually breaks when you have two buttons to one destination:
+   * they must not share an accessible name.
+   */
+  it("renders the standalone CTA AND the rail shortcut with distinct accessible names", async () => {
     const { container } = render(<PlayHubScaffold {...props} />);
 
-    expect(
-      screen.getAllByRole("button", { name: "Play Chess: full chess vs AI" }),
-    ).toHaveLength(1);
-    expect(
-      container.querySelector(".hub-scaffold-cta-row > .play-chess-cta"),
-    ).toBeNull();
-    expect(screen.queryByTestId("play-chess-cta")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Play Chess: full chess vs AI" }),
-    ).toHaveAttribute("data-icon-slot", "hub.enter-arena");
+    const cta = screen.getByTestId("play-chess-cta");
+    expect(container.querySelector(".hub-scaffold-cta-row > .play-chess-cta")).not.toBeNull();
+    expect(cta).toHaveAccessibleName("Duel: pick your rival and play a full match");
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Play Chess: full chess vs AI" }),
-    );
+    const railTile = screen.getByRole("button", { name: "Duel: pick your rival" });
+    expect(railTile).toHaveAttribute("data-icon-slot", "hub.enter-arena");
+
+    // The defect this guards: two buttons, one destination, same name.
+    expect(cta).not.toHaveAccessibleName("Duel: pick your rival");
+    expect(railTile).not.toBe(cta);
+
+    // Both reach the DUEL selector.
+    await userEvent.click(cta);
     expect(props.onArenaPress).toHaveBeenCalledTimes(1);
+    await userEvent.click(railTile);
+    expect(props.onArenaPress).toHaveBeenCalledTimes(2);
 
     expect(screen.queryByText(/Training Path/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Daily Focus/i)).not.toBeInTheDocument();
@@ -182,12 +195,12 @@ describe("PlayHubScaffold", () => {
     const path = screen.getByRole("region", { name: "PLAY PATH" });
     const actions = within(path).getAllByRole("button");
     expect(actions.map((button) => button.textContent)).toEqual([
-      "Play",
+      "Duel",
       "Warm-up",
       "Coach",
       "Shop",
     ]);
-    for (const label of ["Play", "Warm-up", "Coach", "Shop"]) {
+    for (const label of ["Duel", "Warm-up", "Coach", "Shop"]) {
       expect(screen.getByText(label)).not.toHaveClass("candy-tray-pill");
     }
   });
