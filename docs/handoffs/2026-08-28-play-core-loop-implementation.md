@@ -126,3 +126,73 @@ El experimento queda medible pero **no concluido**. Con la telemetría nueva, de
 | Terminó ≥2 partidas en D0 | 12,1% (lift 2,47×) | el hito de activación propuesto |
 
 ⚠️ Ninguna de esas comparaciones es un experimento controlado: no hay A/B, y la población de agosto llegó casi entera en una semana. Es un before/after, con todo lo que eso no prueba.
+
+---
+
+## 9. Pase visual — Fase 1 (Sally, commit `40b0a119`)
+
+### 9.1 ⛔ El contrato de color se INVIRTIÓ
+
+| | Antes (commit `ce62e065`) | Ahora |
+| --- | --- | --- |
+| Seguir jugando | **verde** | **morado** |
+| Analizar (Coach) | morado | morado |
+| Guardar / claim | dorado | dorado |
+| Terciario | crema | crema |
+| Verde | color de CTA | **el mundo** — marco, fondo, tablero |
+
+**Motivo:** el entorno de Chesscito es verde, así que un CTA verde no tiene de qué
+separarse. El morado es el complementario. El contrato viejo vivió un solo commit.
+
+⚠️ **El morado se usa DOS veces** (repetir + Coach) y no es ambiguo porque la jerarquía la
+carga la **forma**: barra full-width de 76px vs píldora chica dentro de una card. Si aparece
+un problema de jerarquía, se arregla la forma — no se inventa un cuarto color.
+
+### 9.2 Lo que cambió, medido
+
+| Defecto | Antes | Ahora |
+| --- | ---: | ---: |
+| Desborde del CTA del Coach (`scrollWidth − clientWidth`) | **20 px** | **0 px** |
+| Cinta de Peones encima del label (área de solape) | colisión visible | **0 px²** |
+| CTA primario: ancho / alto / radio | 200 px auto / 56 px / 14 px | **272 px full-col / 76 px / 999 px** |
+| Share en la fila terciaria | descolgado a la izquierda | centrado |
+
+⛔ **El `nowrap` no estaba en el botón sino en `.arena-result-primary-cta-label`.** Relajar
+el botón no alcanzaba. Por eso el primer intento midió 20 px de desborde igual.
+
+Medido con `getBoundingClientRect` sobre `/dev/arena-end-state` a 390×844 @2x, en las tres
+variantes (`win-celebration`, `resigned`, `loss-save`). **No** se juzgó por captura completa:
+a 390 px un solape de 20 px no se distingue a ojo.
+
+### 9.3 Copy de botón — presupuesto nuevo
+
+> **Máx. 3 palabras / ~18 caracteres. Sin punto final.**
+
+| Clave | Antes | Ahora |
+| --- | --- | --- |
+| `lossReviewCta` | `Let's see what happened.` (24) | **`What happened?`** (14) |
+| `drawReviewCta` | `How did this end?` (17) | **`How it ended`** (12) |
+| `winCoachReviewCta` | `Why did you win?` (16) | **`Why you won`** (11) |
+
+⚠️ **`pnpm content:audit` NO detecta esto.** Su umbral es de **32 caracteres** y es
+**warn-only (`exit 0` siempre)**, así que `"Let's see what happened."` pasaba. Hoy reporta
+151 hallazgos, 107 de longitud de botón — de los cuales **sólo 27 son botones reales**, el
+resto son `ariaLabel` (falso positivo conocido del heurístico). **El brief existe y no se
+aplica**: no hay nada que lo haga fallar.
+
+### 9.4 Fase 2 — NO hecho, y por qué
+
+| Pendiente | Razón |
+| --- | --- |
+| **La card del Coach** (fondo lila, lobo chico a la izquierda, chip PRO + botón a la derecha) | Hoy el lobo es enorme y "asoma" desde la derecha, dejando la columna de texto en **152 px**. Ése es el verdadero techo del CTA del Coach; la copy corta lo esquiva, no lo resuelve. |
+| Corona sobre el panel, subtítulo, hero del lobo, kicker `RESUMEN DE LA PARTIDA` | Composición nueva. |
+| Corona partida (derrota) | **El asset no existe.** |
+| Hero del lobo a ~290 px | `shared.feedback-happy/sad` están a **512×562**; a 2x eso pide ~580 px. Alcanza justo y **no da para más**. ⛔ No upscalear. |
+| Revisión de partida (mockup 3) | Proyecto aparte — el pedido original decía explícitamente no rehacer el Match Reviewer. |
+
+### 9.5 ⛔ VR sigue rojo, y sigue sin regrabarse
+
+Las baselines cambiaron dos veces (jerarquía + este pase visual). **No se regrabaron.** La
+regla del repo se mantiene: mirar el `-actual.png` antes de decidir, porque un
+`--update-snapshots` a ciegas hornea el error dentro de la foto. Con la fase 1 cerrada,
+ahora sí conviene un solo pase de regrabación.
