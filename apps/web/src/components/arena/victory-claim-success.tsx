@@ -248,6 +248,13 @@ export function VictoryClaimSuccess({
             className="arena-result-primary-cta arena-result-primary-cta--play"
             aria-label={playAgainLabel}
           >
+            <ThemeAssetPicture
+              slot="hub.enter-arena"
+              pictureClassName="arena-result-play-cta-icon"
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+            />
             <span className="arena-result-primary-cta-label">
               {tCelebration("playAgainShort")}
             </span>

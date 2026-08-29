@@ -378,6 +378,30 @@
       0 2px 0 rgba(10, 55, 90, 0.55),
       0 4px 8px rgba(10, 55, 90, 0.30);
     --cta-primary-blue-text-shadow: 0 2px 0 rgba(10, 55, 90, 0.65);
+    /* Purple — the INTERACTIVE accent (2026-08-28, Sally pass).
+       Chesscito's world is green: frame, background and board are all
+       green, so a green CTA has nothing to separate from. Purple is the
+       complement and reads as "tappable" without shouting. Green is the
+       environment, not a button colour.
+       ⚠️ Purple is used by BOTH the replay CTA and the Coach CTA. That is
+       intentional and it is not ambiguous, because hierarchy here is
+       carried by FORM, not hue: the replay is a full-width 72px pill, the
+       Coach CTA is a small pill inside a card. Do not try to fix a
+       hierarchy problem by inventing a new colour. */
+    --cta-primary-purple-grad: linear-gradient(180deg, #a06bf5, #6d28d9);
+    --cta-primary-purple-border: rgba(76, 29, 149, 0.85);
+    --cta-primary-purple-bevel:
+      inset 0 2px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -3px 0 rgba(76, 29, 149, 0.55),
+      0 4px 0 rgba(70, 25, 140, 0.60),
+      0 6px 14px rgba(70, 25, 140, 0.35);
+    --cta-primary-purple-bevel-pressed:
+      inset 0 2px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -3px 0 rgba(76, 29, 149, 0.55),
+      0 2px 0 rgba(70, 25, 140, 0.60),
+      0 4px 8px rgba(70, 25, 140, 0.30);
+    --cta-primary-purple-text-shadow: 0 2px 0 rgba(70, 25, 140, 0.65);
+    --cta-primary-purple-color: #f7f2ff;
     --cta-secondary-cream-grad:
       linear-gradient(180deg, rgba(255, 248, 222, 0.95), rgba(247, 226, 175, 0.95));
     --cta-secondary-cream-border: rgba(180, 120, 35, 0.45);
@@ -1358,6 +1382,34 @@
     white-space: nowrap;
   }
 
+  /* ⛔ THE overflow bug (2026-08-28). The Coach CTA lives inside a card
+     column, but its label inherited the `nowrap` above — so a 4-word
+     string like "Let's see what happened." could not break, the pill grew
+     to fit it, and the text ran past the rounded edge. Relaxing the
+     button alone was NOT enough: the label span is what refuses to wrap.
+     Scoped to the coach card so the short labels that genuinely want one
+     line (PLAY AGAIN, Save Victory) keep their nowrap. */
+  .arena-result-coach-text .arena-result-primary-cta-label {
+    white-space: normal;
+    text-align: center;
+  }
+
+  /* The Peones/PRO cost ribbon overhangs the CTA's top-right corner at
+     `top: -10px`. That clears a tall button, but the Coach pill is only
+     ~38px high, so the ribbon's lower half landed on top of the label —
+     visible as "10" sitting across "Why you won". Lift it fully clear
+     and give the pill the matching top margin, which also reproduces the
+     mockup's chip-above-the-button reading. Scoped to the coach card so
+     the Save Victory price ribbon keeps its own offset. */
+  .arena-result-coach-text .arena-result-primary-cta--amber {
+    margin-top: 16px;
+  }
+
+  .arena-result-coach-text .coach-cost-ribbon--cta {
+    top: -16px;
+    right: 6px;
+  }
+
   .arena-result-secondary-actions {
     display: grid;
     width: 100%;
@@ -1452,72 +1504,108 @@
     filter: none;
   }
 
-  /* ── Gameplay CTA — the ONE green (2026-08-28) ────────────────────────
-     Semantic colour contract for end-states:
-       green  = keep playing   (PLAY, PLAY AGAIN)
-       purple = analyse        (Coach / Review)
-       gold   = save / claim   (Save Victory, Save match)
-       cream  = tertiary       (Share, Change difficulty)
+  /* ── Colour contract for the end-states (2026-08-28, Sally pass) ──────
+       purple = interactive action  (PLAY AGAIN, Coach CTA, Change difficulty)
+       gold   = money / premium     (Save price ribbon, PRO chip)
+       cream  = surface + tertiary  (cards, Share)
+       green  = THE WORLD           (frame, background, board) — not a CTA
 
-     `--play` is the canonical name for the green. It is a same-token twin
-     of `--inset` (which stays for its existing call sites) rather than a
-     new visual: the tokens `--cta-primary-green-*` already backed the
-     /arena entry PLAY, so a replay button and a first-game button are now
-     literally the same object. The class it replaced at these call sites
-     was `.arena-result-secondary-action` — cream — which is why "play
-     again" read as an afterthought on both end-states.
+     ⛔ An earlier version of this block declared `green = keep playing`.
+     That was wrong for this art direction and it shipped for exactly one
+     commit. Chesscito's environment is green — frame, background and
+     board — so a green button has nothing to separate itself from; it
+     sank into the scene. Purple is the complement of green and is the
+     only hue here that reads as "tappable".
 
-     ⚠️ Note for whoever touches these next: `--amber` is a MISNOMER. It
-     renders green via the same tokens, and turns purple only when nested
-     inside `.arena-result-coach-text`. Not renamed here — it has call
-     sites outside this change and the rename is not worth the blast
-     radius — but do not read it as "amber". */
+     ⚠️ Purple is intentionally used TWICE (replay + Coach). That is not
+     an ambiguity as long as FORM carries the hierarchy: the replay is a
+     full-width ~72px pill, the Coach CTA is a small pill inside a card.
+     If a future hierarchy problem shows up, fix the form — do not invent
+     a fourth colour.
+
+     ⚠️ `--amber` is a MISNOMER: it renders GREEN via
+     `--cta-primary-green-*`, and turns purple only when nested inside
+     `.arena-result-coach-text`. Not renamed here — it has call sites
+     outside this change — but do not read it as "amber". */
+  /* ── The replay CTA (2026-08-28, Sally pass) ──────────────────────────
+     Deliberately inherits `width: min(100%, 334px)` and `border-radius:
+     999px` from `.arena-result-primary-cta` instead of overriding them.
+     The first version of this class overrode BOTH — `width: auto;
+     min-width: 200px; border-radius: 14px` — and that is what made the
+     button feel wrong: a pill that floats centred reads as "one more
+     option", while a bar that spans the panel reads as "this is the way
+     forward". It was also the only non-rounded shape on a screen made of
+     pills, chips and badges.
+
+     So this modifier now changes exactly three things: colour, height,
+     and room for the icon. Everything structural comes from the base. */
   .arena-result-primary-cta--play {
-    width: auto;
-    align-self: center;
-    margin-inline: auto;
-    min-height: 56px;
-    min-width: 200px;
-    padding: 12px 44px;
-    font-size: 1.2rem;
-    background: var(--cta-primary-green-grad);
-    border: 2px solid var(--cta-primary-green-border);
-    border-radius: 14px;
-    box-shadow: var(--cta-primary-green-bevel);
-    color: #fff8ed;
-    text-shadow: var(--cta-primary-green-text-shadow);
+    min-height: clamp(64px, 9.5dvh, 76px);
+    gap: 12px;
+    padding-inline: 20px;
+    background: var(--cta-primary-purple-grad);
+    border: 2px solid var(--cta-primary-purple-border);
+    box-shadow: var(--cta-primary-purple-bevel);
+    color: var(--cta-primary-purple-color);
+    text-shadow: var(--cta-primary-purple-text-shadow);
   }
 
   .arena-result-primary-cta--play:active {
-    transform: translateY(2px);
-    box-shadow: var(--cta-primary-green-bevel-pressed);
+    transform: translateY(2px) scale(0.995);
+    box-shadow: var(--cta-primary-purple-bevel-pressed);
     filter: none;
   }
 
-  /* Wrapper: primary green CTA stacked over the small reconfigure link. */
+  /* Crossed swords, anchored left. Without it a short label floats alone
+     in the middle of a wide bar; the icon gives the eye somewhere to land
+     and makes the button read as an object rather than a text field.
+     Reuses the canonical `hub.enter-arena` slot — no new art. */
+  .arena-result-play-cta-icon {
+    display: block;
+    width: clamp(34px, 9dvw, 42px);
+    height: auto;
+    flex-shrink: 0;
+  }
+
+  .arena-result-play-cta-icon img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  /* Wrapper: primary CTA stacked over the small reconfigure link. */
   .arena-result-play-section {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     width: 100%;
   }
 
-  /* "Change difficulty" — deliberately quiet. It must stay reachable (the
-     replay reuses the previous difficulty, so this is the only way to
-     change rival) without competing with the green. */
+  /* "Change difficulty" — quiet but unmistakably tappable. It is the ONLY
+     way to change rival now that the replay silently reuses the previous
+     difficulty, so it may not read as decoration. Purple ties it to the
+     interactive family; the chevron announces that a screen follows. */
   .arena-result-change-difficulty {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     border: 0;
     background: transparent;
-    padding: 6px 10px;
+    padding: 4px 10px;
     min-height: 44px;
     font-family: var(--font-game-action);
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: rgba(110, 65, 15, 0.78);
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #6d28d9;
     cursor: pointer;
+  }
+
+  .arena-result-change-difficulty-chevron {
+    font-size: 1.05em;
+    line-height: 1;
+    transform: translateY(-1px);
   }
 
   .arena-result-change-difficulty:active {
@@ -1549,9 +1637,19 @@
   .arena-result-coach-text .arena-result-primary-cta--amber {
     /* Strip the inherited amber + base CTA styling. */
     width: auto;
+    /* ⛔ Both of these are load-bearing (2026-08-28). The `--amber` parent
+       sets `min-width: 168px`, and this block used to inherit it while
+       ALSO setting `white-space: nowrap`. Result: the copy drew the
+       button instead of the button constraining the copy — a 4-word
+       label like "Let's see what happened." pushed the pill to the panel
+       edge, which is exactly how the founder first spotted this.
+       The label is allowed to wrap to two lines; the pill is not allowed
+       to grow past its card column. */
+    min-width: 0;
+    max-width: 100%;
     align-self: flex-start;
     min-height: 32px;
-    padding: 0.35rem 1.1rem;
+    padding: 0.4rem 1.1rem;
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.30) 0%, transparent 32%),
       linear-gradient(180deg, #a78bfa 0%, #7c3aed 100%);
@@ -1561,7 +1659,11 @@
     font-size: 0.82rem;
     font-weight: 800;
     letter-spacing: 0.01em;
-    white-space: nowrap;
+    /* Was `nowrap` — see the note above. Two lines is a fine outcome for a
+       CTA inside a card; a pill wider than its column never is. */
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
     text-shadow:
       0 1px 0 rgba(46, 16, 101, 0.65),
       0 0 6px rgba(46, 16, 101, 0.35);
@@ -1804,11 +1906,24 @@
   /* Secondary actions row — Play Again + Share / Ask Coach paired
      candy chips, same as the loss popup secondary-action style but
      laid out in a flex row. */
+  /* Two fixed columns were correct while this row held Play again + Share.
+     Play again left for the primary slot on 2026-08-28, and a hard
+     `repeat(2, 1fr)` then parked a lone Share in column 1, hugging the
+     left edge of a centred panel. `auto-fit` keeps the 2-up and 3-up
+     layouts identical while letting a single child centre itself. */
   .victory-popup-secondary-row {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    justify-items: center;
     gap: 10px;
     width: 100%;
+  }
+
+  /* One child = centre it at its natural width instead of stretching a
+     lone pill across the whole panel (which would read as a primary). */
+  .victory-popup-secondary-row:has(> :only-child) {
+    grid-template-columns: minmax(0, max-content);
+    justify-content: center;
   }
 
   .victory-popup-secondary-row>.arena-result-secondary-action {

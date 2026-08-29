@@ -1050,7 +1050,7 @@ export const VICTORY_CELEBRATION_COPY = {
    *  Replaces coachPillFree / coachPillPro at the call site. Both legacy
    *  strings remain in editorial for now in case future surfaces still
    *  consume them. */
-  winCoachReviewCta: "Why did you win?",
+  winCoachReviewCta: "Why you won",
   playAgainShort: "PLAY AGAIN",
   shareShort: "Share",
   saveSectionKicker: "SAVE THIS WIN",
@@ -2272,11 +2272,17 @@ export const COACH_ENTRY_COPY = {
   /** M1 funnel — Coach Review primary CTA label, used only in the
    *  loss/resign endgame popup. The shared `getCoachAnalysis` label
    *  still covers the win-secondary slot. */
-  lossReviewCta: "Let's see what happened.",
+  /* ⚠️ Button-copy budget (2026-08-28): these render inside the Coach
+   * card, whose text column is ~152px on a 390px screen. Measured, not
+   * guessed. Keep them to 3 words / ~18 chars and NEVER end them in a
+   * period — the brief's example CTA set has no full stops.
+   * "Let's see what happened." was 24 chars and overflowed its pill;
+   * `content:audit` missed it because its threshold is 32. */
+  lossReviewCta: "What happened?",
   /** M1 funnel (Commit 4) — Coach Review primary CTA label for the
    *  draw / stalemate endgame popup. Frame is curiosity, not regret —
    *  the player didn't lose, they tied. */
-  drawReviewCta: "How did this end?",
+  drawReviewCta: "How it ended",
 } as const;
 
 /* COACH_ONBOARDING_COPY removed by PLAY #8 (2026-07-13). It fed the "welcome"

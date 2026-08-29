@@ -52,13 +52,21 @@ type Props = {
  *
  * Sally redesign 2026-05-27 (pass 2): mirrors the resign popup vocabulary
  * for visual cohesion across end-states.
- *  hero (trophy lottie LEFT + headline RIGHT, 2-col, no avatar in hero)
+ *
+ * Order as of 2026-08-28 (Sally pass 3):
+ *  hero (headline solo over the sparkles backdrop)
  *  → stats (3 candy pills)
- *  → primary "Save Victory" pill with right-aligned amber price chip
+ *  → PRIMARY full-width purple "Play again" pill + crossed swords,
+ *    with the quiet "Change difficulty ›" link under it
+ *  → SAVE section: "Save Victory" gold pill with its price ribbon
  *  → COACH section: kicker + rules + purple Ask Coach pill LEFT + full
  *    avatar-feliz wolf RIGHT (reuses .arena-result-coach-section from
  *    loss popup)
- *  → tertiary outline mini-pills (Play again + Share, sentence case)
+ *  → tertiary cream Share pill
+ *
+ * ⚠️ Save sits ABOVE Coach here and BELOW it on the loss popup. That
+ * asymmetry is deliberate: after a win the impulse is to keep the thing,
+ * after a loss it is to understand it.
  */
 export function VictoryCelebration({
   moves,
@@ -231,6 +239,13 @@ export function VictoryCelebration({
             }}
             className="arena-result-primary-cta arena-result-primary-cta--play"
           >
+            <ThemeAssetPicture
+              slot="hub.enter-arena"
+              pictureClassName="arena-result-play-cta-icon"
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+            />
             <span className="arena-result-primary-cta-label">
               {tCelebration("playAgainShort")}
             </span>
@@ -248,6 +263,7 @@ export function VictoryCelebration({
               className="arena-result-change-difficulty"
             >
               {tArena("changeDifficulty")}
+              <span className="arena-result-change-difficulty-chevron" aria-hidden="true">›</span>
             </button>
           )}
         </div>
@@ -328,7 +344,7 @@ export function VictoryCelebration({
         )}
 
         {/* TERTIARY — Share. Play again used to share this cream row; it is
-            now the green primary above (2026-08-28). Share keeps the same
+            now the purple primary above (2026-08-28). Share keeps the same
             .arena-result-secondary-action vocabulary as the loss popup. */}
         <div className="victory-popup-secondary-row">
           <button

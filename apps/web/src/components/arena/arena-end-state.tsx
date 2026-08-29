@@ -483,7 +483,35 @@ export function ArenaEndState({
             </div>
           </div>
 
-          {/* PLAY AGAIN — PRIMARY, and the first thing under the result.
+          {/* Stats — .candy-stat-pill chips (same as MISSION popup
+              "1500 pts" / "1s" pills). Icon INSIDE the pill (no
+              overhang), cream-amber base, single-shape rounded pill.
+              Moved ABOVE the CTA on 2026-08-28: the result reads
+              headline → what happened → what to do next. Reading the
+              summary AFTER being offered the exit was backwards, and the
+              win popup already ordered it this way. */}
+          <div className="arena-result-stats-row arena-result-stats-row--missionpills">
+            <span className="candy-stat-pill">
+              <span className="candy-stat-pill-icon">
+                <CandyIcon name="star" className="h-4 w-4" />
+              </span>
+              {difficultyLabel}
+            </span>
+            <span className="candy-stat-pill">
+              <span className="candy-stat-pill-icon">
+                <ThemeAssetPicture slot="board.piece.white.pawn" alt="" aria-hidden="true" draggable={false} className="block h-full w-full object-contain" />
+              </span>
+              {String(moves)}
+            </span>
+            <span className="candy-stat-pill">
+              <span className="candy-stat-pill-icon">
+                <CandyIcon name="time" className="h-4 w-4" />
+              </span>
+              {time}
+            </span>
+          </div>
+
+          {/* PLAY AGAIN — PRIMARY, and the first thing after the summary.
               2026-08-28 reversal of the M1 funnel ordering: this button was
               demoted to a cream secondary pill when Coach Review took the
               primary slot. Measured consequence over the audit window: only
@@ -494,8 +522,8 @@ export function ArenaEndState({
               is demoted in ORDER, not in prominence, because Coach use still
               carries the strongest D0 retention signal of any mechanic
               (2,25x). docs/audits/2026-08-28-core-loop-diagnostic.md §D/§C.
-              Green is the gameplay colour: `--cta-primary-green-*` via
-              `--play`. */}
+              Purple is the interactive colour — see the contract note on
+              `--cta-primary-purple-*` in globals.css. */}
           <div className="arena-result-play-section">
             <button
               type="button"
@@ -509,6 +537,13 @@ export function ArenaEndState({
               }}
               className="arena-result-primary-cta arena-result-primary-cta--play"
             >
+              <ThemeAssetPicture
+                slot="hub.enter-arena"
+                pictureClassName="arena-result-play-cta-icon"
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+              />
               <span className="arena-result-primary-cta-label">
                 {tArena("playAgain")}
               </span>
@@ -526,6 +561,7 @@ export function ArenaEndState({
                 className="arena-result-change-difficulty"
               >
                 {tArena("changeDifficulty")}
+                <span className="arena-result-change-difficulty-chevron" aria-hidden="true">›</span>
               </button>
             )}
           </div>
@@ -583,30 +619,6 @@ export function ArenaEndState({
                 </div>
             </div>
           )}
-
-          {/* Stats — .candy-stat-pill chips (same as MISSION popup
-              "1500 pts" / "1s" pills). Icon INSIDE the pill (no
-              overhang), cream-amber base, single-shape rounded pill. */}
-          <div className="arena-result-stats-row arena-result-stats-row--missionpills">
-            <span className="candy-stat-pill">
-              <span className="candy-stat-pill-icon">
-                <CandyIcon name="star" className="h-4 w-4" />
-              </span>
-              {difficultyLabel}
-            </span>
-            <span className="candy-stat-pill">
-              <span className="candy-stat-pill-icon">
-                <ThemeAssetPicture slot="board.piece.white.pawn" alt="" aria-hidden="true" draggable={false} className="block h-full w-full object-contain" />
-              </span>
-              {String(moves)}
-            </span>
-            <span className="candy-stat-pill">
-              <span className="candy-stat-pill-icon">
-                <CandyIcon name="time" className="h-4 w-4" />
-              </span>
-              {time}
-            </span>
-          </div>
 
           {/* SAVE — F8 phase (b). Secondary affordance below Coach (which
               stays primary on a loss); lets the player keep ANY outcome as

@@ -4,7 +4,7 @@
  * These tests pin the SEMANTICS the audit asked for, not the pixels:
  *
  *  - PLAY AGAIN is present on every end-state (win / loss / draw / resign)
- *    and carries the green gameplay class, never the cream secondary one.
+ *    and carries the purple interactive class, never the cream secondary one.
  *  - "Change difficulty" is the only path back to the DUEL selector, and it
  *    is a distinct handler from PLAY AGAIN. Conflating them is the exact
  *    regression this change exists to prevent: before it, PLAY AGAIN went
@@ -80,7 +80,7 @@ beforeEach(() => trackMock.mockClear());
 
 describe("end-state replay CTA", () => {
   it.each(OUTCOMES)(
-    "$label — PLAY AGAIN is the green gameplay CTA, not a cream secondary",
+    "$label — PLAY AGAIN is the purple interactive CTA, not a cream secondary",
     ({ overrides }) => {
       renderEndState(overrides);
       const label = screen.getByText(

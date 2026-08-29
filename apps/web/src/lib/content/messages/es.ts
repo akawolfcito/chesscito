@@ -545,8 +545,8 @@ const messages = {
     reviewBodyReady: "El Coach revisa tu partida y muestra los momentos clave.",
     reviewHeadlineTooShort: "Sin jugadas para analizar",
     reviewBodyTooShort: "Haz al menos una jugada antes de pedir análisis al Coach.",
-    lossReviewCta: "Vamos a ver qué pasó.",
-    drawReviewCta: "¿Cómo terminó esto?",
+    lossReviewCta: "¿Qué pasó?",
+    drawReviewCta: "¿Cómo terminó?",
   },
   COACH_CTA_COPY: {
     ...en.COACH_CTA_COPY,
@@ -851,6 +851,8 @@ const messages = {
     coachPillFree: "Ver momentos clave",
     coachPillPro: "Abrir análisis del coach",
     winCoachReviewCta: "¿Por qué ganaste?",
+    // ⚠️ 17 chars — al límite del presupuesto de ~18 de la card del Coach.
+
     playAgainShort: "JUGAR OTRA",
     shareShort: "Compartir",
     saveSectionKicker: "GUARDA ESTA VICTORIA",
