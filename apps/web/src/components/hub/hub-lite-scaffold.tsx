@@ -89,6 +89,8 @@ export type HubLiteScaffoldProps = {
   /** Re-launches the intro mini-tour from the Focus Passport `?`. Optional so
    *  the scaffold still mounts in `/dev` probes that don't wire the tour. */
   onReplayTour?: () => void;
+  /** Strip mode for the Focus Passport — see `ChallengeCard.compact`. */
+  compactPassport?: boolean;
   /** UTC "YYYY-MM-DD" anchoring the weekly row. Forwarded to `ChallengeCard`,
    *  which defaults to `todayUtc()` when omitted — production omits it.
    *
@@ -140,6 +142,7 @@ export function HubLiteScaffold({
   rewardTiles,
   onOpenExercisePath,
   onReplayTour,
+  compactPassport = false,
   today,
 }: HubLiteScaffoldProps) {
   const t = useTranslations("HUB_LITE_COPY");
@@ -255,6 +258,7 @@ export function HubLiteScaffold({
           tappable things at once and singled out none of them. */}
       <div className="hub-lite-challenge-anchor">
         <ChallengeCard
+          compact={compactPassport}
           focusPassport={focusPassport}
           challenge={challenge}
           seasonPass={seasonPass}

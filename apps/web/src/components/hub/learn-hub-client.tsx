@@ -655,6 +655,7 @@ export function LearnHubClient({
           focusPassport={liteFocusPassport}
           challenge={lite.challenge}
           shields={liteShields}
+          compactPassport
           seasonPass={lite.challengeSeasonPass}
           progress={challengeProgress}
           dailySlot={

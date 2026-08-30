@@ -231,7 +231,7 @@ export const DEV_SCREENS: readonly DevSurface[] = [
     group: "hub",
     blurb: "The whole Learn hub, including the mini-games section.",
     param: "variant",
-    options: ["guest", "active", "pro", "completed"],
+    options: ["guest", "habit", "active", "pro", "completed"],
     mounts: [
       "hub/hub-lite-scaffold",
       "hub/challenge-card",
