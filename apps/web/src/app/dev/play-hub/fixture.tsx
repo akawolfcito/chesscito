@@ -40,7 +40,6 @@ export function PlayHubFixture({ variant }: { variant: PlayHubVariant }) {
 
   return (
     <PlayHubScaffold
-      mintedVictoryCount={variant === "guest" ? 0 : 3}
       isWalletConnected={connected}
       // PRO implies a connected wallet in production, so the fixture never
       // renders one without the other — a baseline of an unreachable state is a
@@ -65,7 +64,6 @@ export function PlayHubFixture({ variant }: { variant: PlayHubVariant }) {
       }
       onPeonesRefetch={noop}
       onConnectTap={noop}
-      onTrophyTap={noop}
       onProTap={noop}
       onCoachTap={noop}
       onShopTap={noop}

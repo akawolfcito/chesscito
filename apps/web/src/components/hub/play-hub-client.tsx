@@ -42,7 +42,7 @@ export function PlayHubClient({
   initialSheet?: HubInitialSheet;
 }) {
   const router = useRouter();
-  const { address, isConnected, mintedVictoryCount } = usePlayHubData();
+  const { address, isConnected } = usePlayHubData();
   const { connectWallet } = useConnectWallet();
   // The scaffold is presentational: every wallet read happens here, so the
   // scaffold stays mountable in a /dev probe (and photographable).
@@ -82,7 +82,6 @@ export function PlayHubClient({
   return (
     <>
       <PlayHubScaffold
-        mintedVictoryCount={mintedVictoryCount}
         isWalletConnected={isConnected}
         pro={pro}
         peones={peones.state}
@@ -92,13 +91,6 @@ export function PlayHubClient({
         onConnectTap={() => {
           track("play_hub_connect_tap");
           connectWallet();
-        }}
-        onTrophyTap={() => {
-          track("play_hub_victories_tap", {
-            count: mintedVictoryCount,
-            wallet_connected: isConnected,
-          });
-          router.push("/trophies");
         }}
         onProTap={() => {
           track("play_hub_pro_tap", { pro_active: pro.active });

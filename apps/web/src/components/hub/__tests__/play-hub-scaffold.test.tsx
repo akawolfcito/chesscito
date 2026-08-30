@@ -65,7 +65,6 @@ vi.mock("@/components/hub/hub-action-tile", () => ({
   ),
 }));
 const props = {
-  mintedVictoryCount: 0,
   isWalletConnected: true,
   pro: { active: false } as const,
   // The scaffold is told the balance; it no longer fetches it. A wagmi hook in
@@ -74,7 +73,6 @@ const props = {
   dailySlot: <button data-testid="play-daily">Daily</button>,
   onPeonesRefetch: vi.fn(),
   onConnectTap: vi.fn(),
-  onTrophyTap: vi.fn(),
   onProTap: vi.fn(),
   onCoachTap: vi.fn(),
   onShopTap: vi.fn(),
@@ -89,7 +87,10 @@ describe("PlayHubScaffold", () => {
   it("renders the unified surfaces: LEARN mascot, DUEL and PLAY PATH", () => {
     render(<PlayHubScaffold {...props} />);
 
-    expect(screen.getByLabelText("Minted victories: 0")).toHaveTextContent("0");
+    /* ⛔ The trophy pill is gone: a `0` scoreboard was the first thing a
+     *  newcomer read, and 434 of 443 wallets play a single day. */
+    expect(screen.queryByLabelText(/Minted victories/)).not.toBeInTheDocument();
+
     // Title + avatar reuse the exact LEARN/LITE mascot markup.
     expect(screen.getByAltText("Chesscito")).toBeInTheDocument();
     expect(screen.getByTestId("play-chess-cta")).toBeInTheDocument();

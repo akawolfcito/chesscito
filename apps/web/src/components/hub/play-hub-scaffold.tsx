@@ -13,7 +13,6 @@ import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import type { ProDisplayState } from "@/lib/pro/use-is-pro-active";
 
 type PlayHubScaffoldProps = {
-  mintedVictoryCount: number;
   isWalletConnected: boolean;
   pro: ProDisplayState;
   /** Peones balance, READ BY THE CALLER. The chip used to fetch it itself, which
@@ -29,7 +28,6 @@ type PlayHubScaffoldProps = {
   inboxSlot?: ReactNode;
   onPeonesRefetch: () => void;
   onConnectTap: () => void;
-  onTrophyTap: () => void;
   onProTap: () => void;
   onCoachTap: () => void;
   onShopTap: () => void;
@@ -60,7 +58,6 @@ const SHOW_STANDALONE_PLAY_CHESS_CTA = true;
  *  Pure presentational — caller owns navigation + on-chain state. That claim is
  *  now true: it used to render a Peones chip that read the wallet on its own. */
 export function PlayHubScaffold({
-  mintedVictoryCount,
   isWalletConnected,
   pro,
   peones,
@@ -68,7 +65,6 @@ export function PlayHubScaffold({
   inboxSlot,
   onPeonesRefetch,
   onConnectTap,
-  onTrophyTap,
   onProTap,
   onCoachTap,
   onShopTap,
@@ -85,17 +81,16 @@ export function PlayHubScaffold({
       <header className="hub-scaffold-hud">
         <div className="hub-scaffold-hud-top hub-home-hud">
           <div className="hub-scaffold-hud-left hub-home-hud-left">
-            <button
-              type="button"
-              onClick={onTrophyTap}
-              aria-label={tPlay("victoriesAriaLabel", {
-                count: mintedVictoryCount,
-              })}
-              className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
-            >
-              <CandyIcon name="trophy" className="candy-tray-pill-icon candy-tray-pill-icon--floating" />
-              <span>{mintedVictoryCount}</span>
-            </button>
+            {/* ⛔ The trophy pill used to open this row (2026-08-30, removed).
+                It is the FIRST thing a newcomer reads on the PLAY home, and for
+                almost everyone it read `0` — a scoreboard of nothing, shown
+                before the first match. 434 of 443 wallets play a single day, so
+                "0 victories" is not a rare state, it is the common one.
+
+                ⚠️ `/trophies` loses its only entry from this hub. The surviving
+                path is `TrophiesSheet` in the arena, which is where a trophy
+                belongs anyway: at the moment of the reward, not before earning
+                one. */}
             {/* Peones balance + recharge — same universal economy chip as the
                 LEARN header. The chip hides itself on a `guest` balance; the
                 wallet gate here keeps it out of the tree entirely. */}

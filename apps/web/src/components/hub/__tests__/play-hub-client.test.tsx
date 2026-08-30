@@ -48,7 +48,6 @@ vi.mock("@/components/hub/hub-daily-tile", () => ({
 }));
 vi.mock("@/components/hub/play-hub-scaffold", () => ({
   PlayHubScaffold: (props: {
-    mintedVictoryCount: number;
     pro: { active: boolean };
     dailySlot: React.ReactNode;
     onArenaPress: () => void;
@@ -56,7 +55,6 @@ vi.mock("@/components/hub/play-hub-scaffold", () => ({
     onShopTap: () => void;
   }) => (
     <div data-testid="play-hub" data-pro={props.pro.active}>
-      <span>victories:{props.mintedVictoryCount}</span>
       {props.dailySlot}
       <button onClick={props.onArenaPress}>arena</button>
       <button onClick={props.onCoachTap}>coach</button>
@@ -94,9 +92,12 @@ describe("PlayHubClient", () => {
     });
   });
 
-  it("passes the minted Victory NFT count to the Play scaffold", () => {
+  /* The victory count no longer reaches the scaffold: the trophy pill left the
+   *  header, because a `0` scoreboard was the first thing a newcomer read. The
+   *  Daily slot is the part of this wiring that survives. */
+  it("still hands the Daily slot to the Play scaffold", () => {
     render(<PlayHubClient />);
-    expect(screen.getByText("victories:3")).toBeInTheDocument();
+    expect(screen.queryByText(/^victories:/)).not.toBeInTheDocument();
     expect(screen.getByTestId("client-daily")).toBeInTheDocument();
   });
 
