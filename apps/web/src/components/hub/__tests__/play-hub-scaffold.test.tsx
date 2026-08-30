@@ -4,6 +4,12 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PlayHubScaffold } from "../play-hub-scaffold";
 import { ThemeVariantOverride } from "@/lib/themes/theme-variant-provider";
+/* ⚠️ The rail's heading is read from the copy module, never typed as a literal.
+ * It was "PLAY PATH" and became "EXPLORE" the day the rail stopped being a path
+ * — that rename broke EIGHT assertions here, all of them for the word rather
+ * than the behaviour. Referencing the source means the next rename costs a copy
+ * edit and nothing else. */
+import { PLAY_HUB_COPY } from "@/lib/content/editorial";
 
 vi.mock("@/components/kingdom/kingdom-card", () => ({
   KingdomCard: ({
@@ -94,7 +100,7 @@ describe("PlayHubScaffold", () => {
     // Title + avatar reuse the exact LEARN/LITE mascot markup.
     expect(screen.getByAltText("Chesscito")).toBeInTheDocument();
     expect(screen.getByTestId("play-chess-cta")).toBeInTheDocument();
-    expect(screen.getByText("PLAY PATH")).toBeInTheDocument();
+    expect(screen.getByText(PLAY_HUB_COPY.playPathLabel)).toBeInTheDocument();
     expect(screen.getByTestId("play-daily")).toBeInTheDocument();
   });
 
@@ -124,7 +130,7 @@ describe("PlayHubScaffold", () => {
     const mascot = screen.getByAltText("Chesscito");
     const modeSwitch = screen.getByTestId("mode-switch");
     const cta = screen.getByTestId("play-chess-cta");
-    const path = screen.getByText("PLAY PATH");
+    const path = screen.getByText(PLAY_HUB_COPY.playPathLabel);
     expect(mascot.compareDocumentPosition(modeSwitch) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(modeSwitch.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(cta.compareDocumentPosition(path) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -189,8 +195,8 @@ describe("PlayHubScaffold", () => {
   it("renders PLAY PATH in DOM order Coach → Shop", () => {
     render(<PlayHubScaffold {...props} />);
 
-    expect(screen.getByText("PLAY PATH")).toBeInTheDocument();
-    const path = screen.getByRole("region", { name: "PLAY PATH" });
+    expect(screen.getByText(PLAY_HUB_COPY.playPathLabel)).toBeInTheDocument();
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
     const actions = within(path).getAllByRole("button");
     expect(actions.map((button) => button.textContent)).toEqual([
       "Coach",
@@ -204,7 +210,7 @@ describe("PlayHubScaffold", () => {
   it("marks only Play as the primary PLAY PATH action", () => {
     render(<PlayHubScaffold {...props} />);
 
-    const path = screen.getByRole("region", { name: "PLAY PATH" });
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
     for (const action of within(path).getAllByRole("button")) {
       expect(action).not.toHaveClass("play-hub-path-tile--primary");
     }
@@ -218,7 +224,7 @@ describe("PlayHubScaffold", () => {
     const onArenaPress = vi.fn();
     render(<PlayHubScaffold {...props} onArenaPress={onArenaPress} />);
 
-    const path = screen.getByRole("region", { name: "PLAY PATH" });
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
     for (const tile of within(path).getAllByRole("button")) {
       await userEvent.click(tile);
     }
@@ -232,7 +238,7 @@ describe("PlayHubScaffold", () => {
   it("keeps the rail to the two destinations that earned a slot", () => {
     render(<PlayHubScaffold {...props} />);
 
-    const path = screen.getByRole("region", { name: "PLAY PATH" });
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
     expect(
       within(path)
         .getAllByRole("button")
@@ -249,7 +255,7 @@ describe("PlayHubScaffold", () => {
   it("shows no PRO tile to a player without an active subscription", () => {
     render(<PlayHubScaffold {...props} />);
 
-    const path = screen.getByRole("region", { name: "PLAY PATH" });
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
     expect(within(path).queryByText("PRO")).not.toBeInTheDocument();
   });
 
@@ -258,7 +264,7 @@ describe("PlayHubScaffold", () => {
       <PlayHubScaffold {...props} pro={{ active: true, daysRemaining: 12 }} />,
     );
 
-    const path = screen.getByRole("region", { name: "PLAY PATH" });
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
     const tile = within(path).getByRole("button", { name: /PRO/ });
     expect(tile).toHaveTextContent("12d");
     expect(tile).not.toHaveTextContent("$");

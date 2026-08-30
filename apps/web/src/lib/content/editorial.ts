@@ -3579,7 +3579,7 @@ export const HUB_LITE_COPY = {
    * calling it "Training Path" here and "Exercises" in four other strings is
    * how the two lanes started reading as three.
    */
-  /** The rail's heading. Mirrors PLAY's "PLAY PATH" so the two home screens
+  /** The rail's heading. Mirrors PLAY's rail heading so the two home screens
    *  read as the same product with two modes — the whole reason this rail
    *  adopted PLAY's tile form (founder, 2026-08-19). */
   pathRailLabel: "LEARN PATH",
@@ -3829,7 +3829,7 @@ export const PLAY_HUB_COPY = {
   quickMatchLabel: "Quick Match",
   coachReviewLabel: "Coach Review",
   rewardsLabel: "Rewards",
-  playPathLabel: "PLAY PATH",
+  playPathLabel: "EXPLORE",
   replayTourAriaLabel: "Replay Play Hub tour",
 } as const;
 

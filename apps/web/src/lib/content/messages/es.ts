@@ -2229,7 +2229,7 @@ const messages = {
     quickMatchLabel: "Partida rápida",
     coachReviewLabel: "Revisión Coach",
     rewardsLabel: "Recompensas",
-    playPathLabel: "RUTA DE JUEGO",
+    playPathLabel: "EXPLORAR",
     replayTourAriaLabel: "Repetir recorrido del Hub Play",
   },
   PLAY_TACTICS_COPY: {

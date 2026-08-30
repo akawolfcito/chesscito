@@ -10233,6 +10233,19 @@ button.hud-resource-chip:active:not(:disabled) {
   height: 100%;
 }
 
+/* PLAY only: the gift art drops to 36px to sit as a peer of the Inbox bell in
+   the ACCESS cluster (founder, 2026-08-30). Scoped to `.play-hub-daily-anchor`
+   because LEARN's header has a different neighbourhood and its baselines should
+   not move for a PLAY composition decision.
+
+   ⛔ The BUTTON stays 44 × 44. Only the art inside shrinks — the touch target is
+   an accessibility floor, not a visual one. */
+.play-hub-daily-anchor .hub-daily-corner-icon {
+  width: 36px;
+  height: 36px;
+  margin: auto;
+}
+
 .hub-daily-corner[data-state="completed"] .hub-daily-corner-icon {
   position: relative;
   z-index: 1;
@@ -10403,6 +10416,22 @@ button.hud-resource-chip:active:not(:disabled) {
 .play-hub-cta-row {
   margin-top: auto;
   margin-bottom: 40px;
+}
+
+/* VARIANTE C — la marca CRECE para ocupar el alto, en vez de que el contenido
+   se empuje hacia abajo. Probado antes con un segundo `margin-top: auto` sobre
+   la mascota: el sobrante no se repartió, se MUDÓ al tope, y el wordmark quedó
+   flotando con 150px de vacío encima. Peor: la identidad va cerca del borde
+   superior, no en el aire.
+
+   Escalado sólo en PLAY — LEARN comparte el componente y su cabecera tiene otra
+   vecindad. */
+.play-hub-scaffold .hub-lite-avatar {
+  width: clamp(140px, 42vw, 164px);
+}
+
+.play-hub-scaffold .hub-lite-title {
+  width: clamp(180px, 52vw, 210px);
 }
 
 .play-hub-path {
@@ -10816,8 +10845,8 @@ button.hud-resource-chip:active:not(:disabled) {
 .play-hub-path-grid {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 50px;
-  gap: 12px;
+  grid-auto-columns: 64px;
+  gap: 16px;
   justify-content: center;
 }
 
@@ -18400,16 +18429,17 @@ button.web-access-link {
    does nothing to a <picture>. Height, not width, because the source is taller
    than wide (954 × 1059) — sizing by width would overflow the touch target.
 
-   ⚠️ MATCHES the Daily gift at 44px, deliberately. It shipped at 30px on the
-   theory that the Daily is an everyday mechanic and the Inbox intermittent
-   news, so the size should carry that hierarchy. Overruled on the live screen
-   (founder 2026-08-30): side by side the bell just read as broken, not as
-   secondary. Two icons in one cluster are peers; hierarchy between them is the
-   badge's job, not the size's. */
+   ⚠️ 36px, MATCHING the Daily gift. It shipped at 30px (bell smaller than gift,
+   on a hierarchy theory) and then at 44px (peers, but both too heavy against
+   the header type). Judged on the live screen both times, by the founder.
+   36 keeps them peers and stops the pair from out-shouting the wordmark.
+
+   ⛔ The 44px TOUCH TARGET is unaffected — it lives on `.inbox-chip`, not here.
+   Shrinking the art must never shrink the tap area. */
 .inbox-chip-icon {
   display: block;
   width: auto;
-  height: 44px;
+  height: 36px;
 }
 
 .inbox-chip-icon img {
