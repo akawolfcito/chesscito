@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "@/i18n/navigation";
 import { PlayHubScaffold } from "@/components/hub/play-hub-scaffold";
@@ -17,17 +17,8 @@ import {
 import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
 import { usePeonesBalance } from "@/lib/peones/use-peones-balance";
 import { track } from "@/lib/telemetry";
-import { useHubTour } from "@/components/hub/use-hub-tour";
-import { buildPlayHubTourSteps } from "@/lib/hub/hub-tour";
 import { getDailyProgress, type DailyProgress } from "@/lib/daily/progress";
 import { subscribeToDailyProgressChanges } from "@/lib/daily/events";
-import { PRO_PRICE_USD6 } from "@/lib/contracts/shop-catalog";
-import { formatUsd } from "@/lib/contracts/tokens";
-
-const HubTour = dynamic(
-  () => import("@/components/hub/hub-tour").then((module) => module.HubTour),
-  { ssr: false },
-);
 
 const ProSheet = dynamic(
   () => import("@/components/pro/pro-sheet").then((module) => module.ProSheet),
@@ -70,19 +61,6 @@ export function PlayHubClient({
     refresh();
     return subscribeToDailyProgressChanges(refresh);
   }, []);
-
-  const hubTour = useHubTour({
-    mode: "play",
-    enabled: true,
-    ready: dailyProgress !== null && entitlement.status !== "loading",
-  });
-  const hubTourSteps = useMemo(
-    () =>
-      buildPlayHubTourSteps({
-        proStatus: pro.status ?? (pro.active ? "active" : "inactive"),
-      }),
-    [pro.active, pro.status],
-  );
 
   useEffect(() => {
     if (!initialSheet || initialSheetOpenedRef.current) return;
@@ -141,16 +119,7 @@ export function PlayHubClient({
           shopSheet.openSheet();
         }}
         onArenaPress={handleArenaPress}
-        onReplayTour={hubTour.replay}
       />
-      {hubTour.open ? (
-        <HubTour
-          mode="play"
-          steps={hubTourSteps}
-          pro={{ active: pro.active, price: formatUsd(PRO_PRICE_USD6) }}
-          onFinish={hubTour.finish}
-        />
-      ) : null}
       <ProSheet {...proSheet.sheetProps} />
       <ShopSheet {...shopSheet.sheetProps} />
       <PurchaseConfirmSheet {...shopSheet.confirmProps} />

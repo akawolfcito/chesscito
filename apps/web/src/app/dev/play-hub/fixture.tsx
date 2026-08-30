@@ -63,10 +63,6 @@ export function PlayHubFixture({ variant }: { variant: PlayHubVariant }) {
           onClick={noop}
         />
       }
-      // The Kingdom panel's help chip renders only when this is defined. Omitted,
-      // the probe photographed a panel with no chip while the shipped hub has one
-      // — so the baseline could not see the chip's art change at all.
-      onReplayTour={noop}
       onPeonesRefetch={noop}
       onConnectTap={noop}
       onTrophyTap={noop}

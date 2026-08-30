@@ -5,10 +5,8 @@ import { useTranslations } from "next-intl";
 import { AppModeSwitch } from "@/components/hub/app-mode-switch";
 import { HubActionTile } from "@/components/hub/hub-action-tile";
 import { LanguageChip } from "@/components/hub/language-chip";
-import { KingdomCard } from "@/components/kingdom/kingdom-card";
 import { PeonesBalanceChipView } from "@/components/peones/peones-balance-chip";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { PlayTacticsTile } from "@/components/tactics/play-tactics-tile";
 import { hapticTap } from "@/lib/haptics";
 import type { PeonesBalanceState } from "@/lib/peones/use-peones-balance";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
@@ -36,14 +34,10 @@ type PlayHubScaffoldProps = {
   onCoachTap: () => void;
   onShopTap: () => void;
   onArenaPress: () => void;
-  onReplayTour?: () => void;
 };
 
-/** Temporary product switch. PLAY remains available in PLAY PATH below.
- *  Flip this single value to `true` to restore the standalone CTA without
- *  reconstructing its markup, handler, theme slot or styles. */
 /**
- * Standalone primary CTA on the PLAY hub.
+ * Standalone primary CTA on the PLAY hub — now the ONLY way to start a match.
  *
  * Turned OFF on 2026-07-26 (`b7840ab4`, "PLAY PATH now owns the Arena entry")
  * without a measurement of the effect. Turned back ON on 2026-08-29 with one:
@@ -79,7 +73,6 @@ export function PlayHubScaffold({
   onCoachTap,
   onShopTap,
   onArenaPress,
-  onReplayTour,
 }: PlayHubScaffoldProps) {
   const tHud = useTranslations("HUD_COPY");
   const tPlay = useTranslations("PLAY_HUB_COPY");
@@ -127,10 +120,10 @@ export function PlayHubScaffold({
             {inboxSlot}
           </div>
           <div className="hub-scaffold-hud-right hub-home-hud-right">
-            {/* Account entry intentionally omitted here (founder 2026-07-07):
-                the PLAY hub keeps the same universal header grammar as LEARN:
-                trophy · Peones · language + Daily. PRO discovery/status moved
-                into KingdomCard, where its value can be explained. */}
+            {/* Account entry intentionally omitted here (founder 2026-07-07).
+                PRO is no longer here either: it lives in the floor rail as one
+                destination among three, reached on pull after a match rather
+                than met as a banner on arrival. */}
             {!isWalletConnected ? (
               <button
                 type="button"
@@ -164,13 +157,25 @@ export function PlayHubScaffold({
         <AppModeSwitch activeMode="play" />
       </div>
 
-      {/* Kingdom hero panel — the PRO chip is embedded in an explanatory,
-          full-width CTA. Every state opens the same discovery/manage sheet. */}
-      <KingdomCard
-        pro={pro}
-        onProDiscover={onProTap}
-        onReplayTour={onReplayTour}
-      />
+      {/* ⛔ The Kingdom card used to sit here and is deliberately gone
+          (2026-08-30). The approved direction specified `<KingdomAnchor>` as
+          "a diegetic world render — the home becomes a place". That render now
+          ships as the forest/castle background, but the explanatory card
+          written to stand in for it was never removed: `Quick Match`,
+          `Coach Review` and `Rewards` were LABELS, not controls, and the whole
+          panel was onboarding copy made permanent for a population where 434
+          of 443 wallets play a single day.
+
+          Removing it does not contradict the spec — it completes it. The two
+          things in it that were actually interactive both survive: PRO moved
+          to the floor rail, and the `?` went with the mini-tour.
+
+          ⚠️ Measured before touching anything: the card occupied 186 px at
+          top 279, and there was already a 171 px dead gap between the CTA and
+          the floor rail. Deleting the card WITHOUT moving the CTA down would
+          have grown that gap to ~387 px — the screen would read more
+          unfinished, not less. The CTA reposition below is not cosmetic; it is
+          the other half of this change. */}
 
       {SHOW_STANDALONE_PLAY_CHESS_CTA ? (
         /* Temporarily hidden: PLAY PATH now owns the Arena entry. Keeping this
@@ -199,28 +204,28 @@ export function PlayHubScaffold({
         </div>
       ) : null}
 
-      {/* PLAY PATH mirrors the LEARN Training Path: one compact, persistent
-          action rail pinned to the floor. DOM and visual order are identical
-          (Play → Warm-up → Coach → Shop), preserving keyboard/screen-reader
-          navigation while keeping the primary activity first in LTR locales. */}
+      {/* PLAY PATH — the floor rail, now strictly "other places".
+          ⛔ NO TILE HERE STARTS A MATCH, and that is the invariant this rail
+          exists to hold. It used to lead with a `Duel` tile that called the
+          SAME `onArenaPress` with the SAME `hub.enter-arena` art as the CTA
+          200 px above it: two identical doors a thumb apart. The CTA is the one
+          that starts a match; the rail is where you go when you want something
+          else.
+
+          ⛔ The `Warm-up` tile is gone too. It ran `getDailyTactic(today)` —
+          the very same puzzle as the Daily — but paid no Peones and fed no
+          streak, so 400 people solved it and received nothing, which teaches
+          that effort here does not pay. The Daily survives as the header gift,
+          where it does pay.
+
+          PRO takes the freed slot: one destination among three, reached on
+          pull after a match, instead of a permanent banner above the CTA. */}
       <section className="play-hub-path" aria-label={tPlay("playPathLabel")}>
         <h2 className="play-hub-path-label">{tPlay("playPathLabel")}</h2>
         <div className="play-hub-path-grid" aria-label={tPlay("actionsAriaLabel")}>
-          <HubActionTile
-            className="play-hub-path-tile play-hub-path-tile--primary"
-            tourTarget="play"
-            iconSlot="hub.enter-arena"
-            label={tPlay("playPathPlayLabel")}
-            ariaLabel={tPlay("playPathPlayAriaLabel")}
-            onClick={() => {
-              hapticTap();
-              onArenaPress();
-            }}
-          />
-          <PlayTacticsTile className="play-hub-path-tile" />
-          {/* No PRO badge: the tile no longer guards a paywall. It opens the
-              Journal, which any connected wallet can read. The badge would be
-              announcing a wall that isn't there. */}
+          {/* No PRO badge on Coach: the tile no longer guards a paywall. It
+              opens the Journal, which any connected wallet can read. The badge
+              would be announcing a wall that isn't there. */}
           <HubActionTile
             className="play-hub-path-tile"
             iconSlot="hub.training"
@@ -234,6 +239,32 @@ export function PlayHubScaffold({
             label={tPlay("shopLabel")}
             ariaLabel={tPlay("shopAriaLabel")}
             onClick={onShopTap}
+          />
+          {/* ⛔ No price here. `$1.99` used to float over the PRO banner, shown
+              to everyone on arrival — and 59,6% of the people who reach the PRO
+              sheet hold no stablecoin. A price belongs in the sheet, where the
+              player arrived on purpose. */}
+          <HubActionTile
+            className="play-hub-path-tile"
+            tourTarget="pro"
+            iconSlot="hub.pro-chip"
+            /* ⚠️ Pinned, not inherited. `hub.pro-chip` ships two sprites and a
+               paying subscriber must not be shown the purple upsell chip. */
+            iconVariant={pro.active ? "pro" : "default"}
+            label={tHud("proLabel")}
+            ariaLabel={
+              pro.active
+                ? tHud("proAriaLabel", { days: pro.daysRemaining })
+                : tHud("proInactiveAriaLabel")
+            }
+            onClick={onProTap}
+            badge={
+              pro.active ? (
+                <span className="play-hub-path-tile-badge" aria-hidden="true">
+                  {tHud("proRemainingFormat", { days: pro.daysRemaining })}
+                </span>
+              ) : undefined
+            }
           />
         </div>
       </section>

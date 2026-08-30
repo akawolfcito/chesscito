@@ -10385,14 +10385,28 @@ button.hud-resource-chip:active:not(:disabled) {
 /* CTA breathing room — mirrors LEARN's `.hub-lite-start-focus-wrap`
    (24px above / 16px below) so the dominant Play CTA is not cramped
    against the Kingdom panel now that the flex gap is a tight 6px. */
+/* ⛔ `margin-top: auto` lives HERE, not on the rail, and that is the whole
+   layout decision of the 2026-08-30 revision.
+
+   Measured before the change (390×844): the Kingdom card occupied 186px at
+   top 279, the CTA sat at 495, and there was ALREADY a 171px dead gap between
+   the CTA and the floor rail. The rail carried the `auto`, so deleting the
+   card would have handed all the reclaimed height to that same gap and grown
+   it to ~387px — the screen would have read MORE unfinished, not less.
+
+   Moving the `auto` above the CTA spends the reclaimed space in front of it
+   instead: the world render gets ~355px of uninterrupted kingdom (which is
+   what `<KingdomAnchor>` was specified to be), and the CTA drops into
+   one-handed thumb reach near the floor, which the mid-screen position never
+   was. The rail stays pinned underneath because the CTA's auto already
+   pushed the pair down. */
 .play-hub-cta-row {
-  margin: 24px 0 16px;
+  margin-top: auto;
+  margin-bottom: 40px;
 }
 
-/* PLAY PATH pinned to the floor — same mechanism as LEARN's Training Path
-   (`margin-top: auto` absorbs the leftover column height). */
 .play-hub-path {
-  margin-top: auto;
+  margin-top: 0;
 }
 
 .play-hub-portal {
@@ -10660,7 +10674,18 @@ button.hud-resource-chip:active:not(:disabled) {
      one signal stacked twice and competed for the same meaning. It already wore
      a gold border, so this finishes a move it had half-made. */
   background: var(--cta-primary-gold-grad);
-  box-shadow: var(--cta-primary-gold-bevel);
+  /* ⚠️ RECOLOURED, not re-tokenised. `var(--cta-primary-gold-bevel)` was the
+     obvious move and it is wrong here: its offsets are 2px/-3px/4px/6px while
+     this rule's are 1px/-2px/4px/8px. The green action banner in LEARN is a
+     FAITHFUL PORT of this rule — same geometry, different hue — and a test
+     compares the two shadow structures value for value. Swapping in the
+     generic token silently broke that pairing, which is exactly the kind of
+     drift that test exists to catch. Same offsets, gold hues. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -2px 0 rgba(120, 65, 5, 0.25),
+    0 4px 0 rgba(120, 65, 5, 0.55),
+    0 8px 14px rgba(120, 65, 5, 0.3);
   color: var(--cta-primary-gold-color);
   text-align: left;
   cursor: pointer;
@@ -10672,7 +10697,6 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .kingdom-card-pro-cta:active {
   transform: translateY(1px) scale(0.99);
-  box-shadow: var(--cta-primary-gold-bevel-pressed);
   filter: brightness(0.96);
 }
 

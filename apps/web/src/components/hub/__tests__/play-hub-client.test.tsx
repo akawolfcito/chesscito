@@ -54,7 +54,6 @@ vi.mock("@/components/hub/play-hub-scaffold", () => ({
     onArenaPress: () => void;
     onCoachTap: () => void;
     onShopTap: () => void;
-    onReplayTour?: () => void;
   }) => (
     <div data-testid="play-hub" data-pro={props.pro.active}>
       <span>victories:{props.mintedVictoryCount}</span>
@@ -62,9 +61,6 @@ vi.mock("@/components/hub/play-hub-scaffold", () => ({
       <button onClick={props.onArenaPress}>arena</button>
       <button onClick={props.onCoachTap}>coach</button>
       <button onClick={props.onShopTap}>shop</button>
-      {props.onReplayTour ? (
-        <button onClick={props.onReplayTour}>replay-tour</button>
-      ) : null}
     </div>
   ),
 }));
@@ -164,9 +160,15 @@ describe("PlayHubClient", () => {
     expect(openShopMock).toHaveBeenCalledTimes(1);
   });
 
-  it("wires the persistent question icon to replay the PLAY tour", async () => {
+  /* ⛔ The PLAY mini-tour was removed on 2026-08-30, and with it the question
+   *  icon that replayed it. This asserts the ABSENCE, because the failure mode
+   *  worth guarding is a tour quietly coming back: no modal may stand between
+   *  arrival and the primary control. */
+  it("never mounts a tour, and offers nothing to replay one", () => {
     render(<PlayHubClient />);
-    await userEvent.click(screen.getByText("replay-tour"));
-    expect(trackMock).toHaveBeenCalledWith("hub_tour_replay", { mode: "play" });
+    expect(screen.queryByText("replay-tour")).not.toBeInTheDocument();
+    expect(trackMock).not.toHaveBeenCalledWith("hub_tour_replay", {
+      mode: "play",
+    });
   });
 });
