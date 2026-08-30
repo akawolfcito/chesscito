@@ -120,6 +120,20 @@ export type ChallengeCardProps = {
    *  Omitted → no help chip renders. Replaying never touches progress,
    *  rewards or the "tour seen" flag. */
   onReplayTour?: () => void;
+  /** Strip mode (LEARN hub, 2026-08-30). Renders the label and the flame week
+   *  and NOTHING else — no stats row, no CTA row, no purchase banner.
+   *
+   *  ⚠️ Additive on purpose. The card's CTA state machine (`join` vs `loop`,
+   *  `habitOnly`, the purchase gate) is exercised by its own `/dev/challenge-card`
+   *  probe and photographed there; tearing it out to shrink one caller would
+   *  delete that coverage. This prop shrinks the caller instead.
+   *
+   *  Why LEARN needs it: measured on device the card was 266px for 44px of
+   *  actual payload — and the biggest single waste was a 78px gap between the
+   *  label and the flames, taller than the flames themselves. The CTA inside it
+   *  duplicated the Exercises entry AND was green, which the colour contract
+   *  reserves for the world, never a control. */
+  compact?: boolean;
   /** UTC "YYYY-MM-DD" that anchors the weekly row. Defaults to `todayUtc()` —
    *  the SAME clock the Daily uses, so the row and the daily never disagree
    *  about which day is today. Injected so tests can pin it. */
@@ -191,6 +205,7 @@ export function ChallengeCard({
   ctaSlot,
   onPassportTap,
   onReplayTour,
+  compact = false,
   today,
   shields,
 }: ChallengeCardProps) {
@@ -553,6 +568,7 @@ export function ChallengeCard({
           "+3 Shields" and "Special Training" are TERMS OF A SALE that is
           paused. The CTA row below is kept — that is Start Focus, not a
           purchase — and the purchase banner inside it is gated separately. */}
+      {compact ? null : (
       <div className="challenge-card-bottom">
         {habitOnly ? null : (
         <div className="challenge-card-stats" data-testid="challenge-stats">
@@ -762,6 +778,7 @@ export function ChallengeCard({
           )}
         </div>
       </div>
+      )}
     </section>
   );
 }

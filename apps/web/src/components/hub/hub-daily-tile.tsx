@@ -46,6 +46,7 @@ import { useWelcomePackage } from "@/lib/welcome-package/use-welcome-package";
 import { useLiteWelcomeGiftClaim } from "@/lib/welcome-package/use-lite-welcome-gift-claim";
 import { WelcomePackageModal } from "@/components/welcome-package/welcome-package-modal";
 import { FirstFocusDayOverlay } from "@/components/welcome-package/first-focus-day-overlay";
+import { track } from "@/lib/telemetry";
 
 const DEFAULT_PROGRESS: DailyProgress = {
   streak: 0,
@@ -128,6 +129,20 @@ export function HubDailyTile({
       setUncontrolledOpen(nextOpen);
     }
     onOpenChange?.(nextOpen);
+  }
+
+  /* ⛔ Emitted before the LEARN mini-tour is removed, and that ORDER is the
+   * point. The tour's surviving step was the one naming the Daily; taking it
+   * out is accepted on the reading that the screen explains itself, but that
+   * reading has to stay refutable. Without this event, "the Daily got harder to
+   * find" becomes an argument instead of a measurement.
+   *
+   * Same discipline as `app_mode_switch_tap`, added before the PLAY tour came
+   * out for exactly the same reason. Fires on the TAP, never on render:
+   * `peones_balance_viewed` sits at 26.979 events nobody asked for because it
+   * fired from an effect, and looking is not an action. */
+  function reportDailyEntryTap() {
+    track("daily_entry_tap", { variant, completed });
   }
 
   useEffect(() => {
@@ -314,7 +329,10 @@ export function HubDailyTile({
         iconSlot="hub.daily-icon"
         label={t("dailyLabel")}
         ariaLabel={ariaLabel}
-        onClick={() => requestOpenChange(true)}
+        onClick={() => {
+          reportDailyEntryTap();
+          requestOpenChange(true);
+        }}
         disabled={completed}
         completed={completed}
         badge={
