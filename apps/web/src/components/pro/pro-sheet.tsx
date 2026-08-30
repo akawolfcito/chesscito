@@ -13,6 +13,7 @@ import type {
   ProRemoteState,
   ProStatus,
 } from "@/lib/pro/use-pro-status";
+import { isSeasonPassSalesEnabled } from "@/lib/feature-flags";
 import { daysRemaining } from "@/lib/pro/days-remaining";
 import { track } from "@/lib/telemetry";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
@@ -111,6 +112,37 @@ function resolveCta({
   if (resolvedStatusState === "error" || resolvedStatusState === "unknown") {
     return {
       label: t("statusUnavailableLabel"),
+      loading: false,
+      disabled: true,
+      onClick: undefined,
+    };
+  }
+  /* ⛔ THE SALES PAUSE, HONOURED HERE — the last gate before a payment.
+   *
+   * `isSeasonPassSalesEnabled()` is opt-in and has been OFF since 2026-08-25.
+   * LEARN honoured it from day one (`season-pass-sheet.tsx` self-hides), but
+   * PLAY opens THIS sheet, which never consulted the flag. Every tap on PRO
+   * from the PLAY hub opened a live sales surface for a paused product, from
+   * 2026-08-25 until this commit.
+   *
+   * ⛔ The server cannot save us and says so. `verify-payment` only emits
+   * `log.warn("season_pass_sold_while_sales_paused")`, deliberately: refusing
+   * AFTER the payment keeps the money and grants nothing. Its comment names
+   * the real gate as the purchase sheet refusing to sell — and that gate had
+   * one implementation and two sheets.
+   *
+   * ⛔ It sits BEFORE both purchase branches, renewal included. The flag pauses
+   * the OFFER, and a renewal is a new purchase of the paused product. What it
+   * must NEVER touch is ACCESS: everyone who already paid keeps their
+   * entitlement, their perks and their Journal — only the CTA changes, and the
+   * active banner above it is untouched. A paused sale must never read as a
+   * revocation.
+   *
+   * Guarding the grantor, not each caller: a future third entry point into
+   * this sheet cannot reopen the hole by forgetting to check. */
+  if (!isSeasonPassSalesEnabled()) {
+    return {
+      label: t("salesPausedLabel"),
       loading: false,
       disabled: true,
       onClick: undefined,
@@ -447,6 +479,13 @@ export function ProSheet(props: ProSheetProps) {
                     >
                       {t("expiringMicroCopy")}
                     </span>
+                    {/* ⛔ THE SECOND DOOR. `resolveCta` gates the main CTA on
+                        the sales pause, and this link bypassed it completely —
+                        same `onPurchase`, different button, found only because
+                        a test asserted "no way to renew" instead of "the CTA
+                        is not a renew CTA". One guard per component is not a
+                        guard: count the callers of `onPurchase`. */}
+                    {isSeasonPassSalesEnabled() ? (
                     <button
                       type="button"
                       data-testid="pro-extend-link"
@@ -459,6 +498,7 @@ export function ProSheet(props: ProSheetProps) {
                     >
                       {t("ctaRenew")}
                     </button>
+                    ) : null}
                   </div>
                 </div>
               ) : unresolvedStatus ? (
