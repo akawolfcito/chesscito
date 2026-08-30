@@ -290,7 +290,6 @@ const messages = {
     verifyingLabel: "Verificando…",
     statusCheckingLabel: "Comprobando estado PRO…",
     statusUnavailableLabel: "Estado PRO no disponible",
-    salesPausedLabel: "No disponible por ahora",
     statusUnavailableMessage:
       "No pudimos confirmar tu suscripción. Inténtalo pronto; no se cambió nada.",
     switchNetworkLabel: "Cambiar red",

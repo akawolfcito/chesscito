@@ -1,4 +1,4 @@
-import { beforeEach, describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { renderWithIntl as render, screen, fireEvent } from "@/test-utils/render-with-intl";
 
@@ -46,53 +46,12 @@ function renderSheet(overrides: Partial<ProSheetProps> = {}) {
 }
 
 describe("ProSheet", () => {
-  /**
-   * ⛔ THE SALES PAUSE HAS TO REACH THIS SHEET.
-   *
-   * `isSeasonPassSalesEnabled()` is opt-in and has been OFF since 2026-08-25.
-   * LEARN honours it — `season-pass-sheet.tsx` self-hides. PLAY opens THIS
-   * sheet instead, and it never consulted the flag, so every tap on PRO from
-   * the PLAY hub opened a live sales surface for a paused product.
-   *
-   * The server deliberately does NOT block: `verify-payment` only warns,
-   * because refusing AFTER payment takes the money and grants nothing. Its own
-   * comment names the real gate as the sheet refusing to sell. That gate had
-   * one implementation and two sheets.
-   *
-   * ⛔ Renewal is gated too. The flag pauses the OFFER, and a renewal is a new
-   * purchase of the paused product — but access already bought stays intact,
-   * which is why only the CTA changes and nothing else in the sheet does.
-   */
-  describe("while Season Pass sales are paused", () => {
-    it("offers no way to buy", () => {
-      vi.stubEnv("NEXT_PUBLIC_SEASON_PASS_SALES_ENABLED", "");
-      const handlers = renderSheet();
-
-      expect(screen.queryByText(PRO_COPY.ctaBuy)).not.toBeInTheDocument();
-      expect(screen.getByText(PRO_COPY.salesPausedLabel)).toBeInTheDocument();
-
-      fireEvent.click(screen.getByText(PRO_COPY.salesPausedLabel));
-      expect(handlers.onPurchase).not.toHaveBeenCalled();
-    });
-
-    it("offers no way to renew either — a renewal buys the paused product", () => {
-      vi.stubEnv("NEXT_PUBLIC_SEASON_PASS_SALES_ENABLED", "");
-      const handlers = renderSheet({
-        status: { active: true, expiresAt: Date.parse("2026-12-01T00:00:00.000Z") },
-      });
-
-      expect(screen.queryByText(PRO_COPY.ctaRenew)).not.toBeInTheDocument();
-      expect(handlers.onPurchase).not.toHaveBeenCalled();
-    });
-
-    it("still sells when the flag is on, so the gate is the flag and not a regression", () => {
-      vi.stubEnv("NEXT_PUBLIC_SEASON_PASS_SALES_ENABLED", "true");
-      renderSheet();
-
-      expect(screen.getByText(PRO_COPY.ctaBuy)).toBeInTheDocument();
-      expect(screen.queryByText(PRO_COPY.salesPausedLabel)).not.toBeInTheDocument();
-    });
-  });
+  /* ⚠️ There is deliberately NO "sales are paused" block here. One existed for
+   * a few hours on 2026-08-30 and was reverted with the gate it tested: PRO
+   * buys `chesscito_pro_30` from `PRO_PACKS`, and `isSeasonPassSalesEnabled()`
+   * gates `SEASON_PASSES`. The pause never applied to this sheet. A test can
+   * pin a wrong belief just as firmly as a right one — these three did, and
+   * they made the mistake look verified. */
 
   it("renders the price label and active perks list when open", () => {
     renderSheet();
@@ -147,9 +106,6 @@ describe("ProSheet", () => {
   });
 
   it("shows Get PRO and routes click to onPurchase when connected and inactive", () => {
-    // Selling requires the sale to be ON. Since 2026-08-25 it is paused by
-    // default, so a test about the PURCHASE path has to say so explicitly.
-    vi.stubEnv("NEXT_PUBLIC_SEASON_PASS_SALES_ENABLED", "true");
     const handlers = renderSheet();
     const cta = screen.getByRole("button", { name: PRO_COPY.ctaBuy });
     fireEvent.click(cta);
@@ -312,7 +268,6 @@ describe("ProSheet", () => {
     });
 
     it("fires pro_cta_clicked with source=sheet_buy when tapping Get PRO", () => {
-      vi.stubEnv("NEXT_PUBLIC_SEASON_PASS_SALES_ENABLED", "true");
       renderSheet();
       trackMock.mockClear(); // drop the mount-time pro_card_viewed
       fireEvent.click(screen.getByRole("button", { name: PRO_COPY.ctaBuy }));
@@ -420,13 +375,6 @@ describe("ProSheet", () => {
 
     describe("extend/renew sub-line (always available while active)", () => {
       const EXPIRING_STATUS = { active: true, expiresAt: TWO_DAYS };
-
-      /* Renewing is BUYING, so every test in this block needs the sale switched
-       * on. It is paused by default since 2026-08-25, and this link was the
-       * second door into `onPurchase` that the pause did not close. */
-      beforeEach(() => {
-        vi.stubEnv("NEXT_PUBLIC_SEASON_PASS_SALES_ENABLED", "true");
-      });
 
       it("flips the badge to EXPIRING and renders the extend link when close to expiry", () => {
         renderSheet({ status: EXPIRING_STATUS });

@@ -2668,9 +2668,6 @@ export const PRO_COPY = {
   verifyingLabel: "Verifying…",
   statusCheckingLabel: "Checking PRO status…",
   statusUnavailableLabel: "PRO status unavailable",
-  /** Sales paused. Says the OFFER is closed, never that access is revoked:
-   *  everyone who already paid keeps their entitlement. */
-  salesPausedLabel: "Not available right now",
   statusUnavailableMessage:
     "We could not confirm your subscription. Try again shortly. Nothing was changed.",
   /** CTA label shown when the wallet is on the wrong chain (Celo). */

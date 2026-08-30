@@ -13,7 +13,6 @@ import type {
   ProRemoteState,
   ProStatus,
 } from "@/lib/pro/use-pro-status";
-import { isSeasonPassSalesEnabled } from "@/lib/feature-flags";
 import { daysRemaining } from "@/lib/pro/days-remaining";
 import { track } from "@/lib/telemetry";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
@@ -117,37 +116,25 @@ function resolveCta({
       onClick: undefined,
     };
   }
-  /* ⛔ THE SALES PAUSE, HONOURED HERE — the last gate before a payment.
+  /* ⚠️ NO SALES-PAUSE GATE HERE, and that is deliberate — it was added on
+   * 2026-08-30 and reverted the same day.
    *
-   * `isSeasonPassSalesEnabled()` is opt-in and has been OFF since 2026-08-25.
-   * LEARN honoured it from day one (`season-pass-sheet.tsx` self-hides), but
-   * PLAY opens THIS sheet, which never consulted the flag. Every tap on PRO
-   * from the PLAY hub opened a live sales surface for a paused product, from
-   * 2026-08-25 until this commit.
+   * The reasoning that put it here: `isSeasonPassSalesEnabled()` is off, LEARN's
+   * `season-pass-sheet.tsx` self-hides, this sheet did not, therefore PLAY was
+   * "selling a paused product". Every step of that is true except the
+   * conclusion, because PRO IS NOT THE SEASON PASS.
    *
-   * ⛔ The server cannot save us and says so. `verify-payment` only emits
-   * `log.warn("season_pass_sold_while_sales_paused")`, deliberately: refusing
-   * AFTER the payment keeps the money and grants nothing. Its comment names
-   * the real gate as the purchase sheet refusing to sell — and that gate had
-   * one implementation and two sheets.
+   * `verify-payment` splits three SKU families — `sku in SEASON_PASSES`,
+   * `sku in PEONES_PACKS`, `sku in PRO_PACKS` — and the flag gates only the
+   * first. This sheet buys `chesscito_pro_30`, which lives in `PRO_PACKS`. The
+   * flag never applied to it.
    *
-   * ⛔ It sits BEFORE both purchase branches, renewal included. The flag pauses
-   * the OFFER, and a renewal is a new purchase of the paused product. What it
-   * must NEVER touch is ACCESS: everyone who already paid keeps their
-   * entitlement, their perks and their Journal — only the CTA changes, and the
-   * active banner above it is untouched. A paused sale must never read as a
-   * revocation.
+   * ⛔ What was paused is the 21-day Season Pass, because 21 days is too long to
+   * convert (founder, 2026-08-30). PRO is alive and stays sellable. Gating it
+   * here switched off a live product.
    *
-   * Guarding the grantor, not each caller: a future third entry point into
-   * this sheet cannot reopen the hole by forgetting to check. */
-  if (!isSeasonPassSalesEnabled()) {
-    return {
-      label: t("salesPausedLabel"),
-      loading: false,
-      disabled: true,
-      onClick: undefined,
-    };
-  }
+   * The copy is what misled: PRO reads "Season Pass + unlimited Coach", so the
+   * bundle NAMES the paused thing. Read the SKU, never the marketing. */
   if (status?.active) {
     return {
       label: t("ctaRenew"),
@@ -479,13 +466,6 @@ export function ProSheet(props: ProSheetProps) {
                     >
                       {t("expiringMicroCopy")}
                     </span>
-                    {/* ⛔ THE SECOND DOOR. `resolveCta` gates the main CTA on
-                        the sales pause, and this link bypassed it completely —
-                        same `onPurchase`, different button, found only because
-                        a test asserted "no way to renew" instead of "the CTA
-                        is not a renew CTA". One guard per component is not a
-                        guard: count the callers of `onPurchase`. */}
-                    {isSeasonPassSalesEnabled() ? (
                     <button
                       type="button"
                       data-testid="pro-extend-link"
@@ -498,7 +478,6 @@ export function ProSheet(props: ProSheetProps) {
                     >
                       {t("ctaRenew")}
                     </button>
-                    ) : null}
                   </div>
                 </div>
               ) : unresolvedStatus ? (
