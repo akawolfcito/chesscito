@@ -10419,15 +10419,15 @@
           "file": "src/app/globals.css",
           "occurrences": [
             {
-              "line": 458,
+              "line": 483,
               "raw": "/art/chesscito-board.avif"
             },
             {
-              "line": 459,
+              "line": 484,
               "raw": "/art/chesscito-board.webp"
             },
             {
-              "line": 460,
+              "line": 485,
               "raw": "/art/chesscito-board.png"
             }
           ],
