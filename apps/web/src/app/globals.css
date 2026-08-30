@@ -10944,12 +10944,23 @@ button.hud-resource-chip:active:not(:disabled) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  width: min(100%, 334px);
-  min-height: clamp(64px, 9.5dvh, 76px);
-  padding: 0 24px;
+  gap: 14px;
+  /* ⚠️ COMPACT, not full-bleed (founder, 2026-08-30). It read as a bar spanning
+     the screen instead of as an OBJECT sitting in the kingdom. The FULL-mode
+     buttons ("TRAIN PIECES" / "ENTER ARENA") are the reference: a rounded rect
+     with real depth, icon left, label right — a thing you press, not a strip.
+
+     ⛔ Stays PURPLE, and that is measured rather than chosen. The hub is 26,9%
+     gold (wordmark, toggle, gift, bell, Peones pill) and 32,9% blue (the sky),
+     so a gold or blue CTA has nothing to contrast against — which is exactly
+     why the old blue one sank. Purple is 3,8% and it IS the crest. Gold would
+     also re-create the collision we just removed between money and action. */
+  width: min(86%, 268px);
+  min-height: clamp(60px, 8.5dvh, 70px);
+  padding: 0 20px;
   border: 2px solid var(--cta-primary-purple-border);
-  border-radius: 999px;
+  /* Rounded rect, not a pill: the FULL buttons' silhouette. */
+  border-radius: 22px;
   background: var(--cta-primary-purple-grad);
   box-shadow: var(--cta-primary-purple-bevel);
   color: var(--cta-primary-purple-color);
@@ -18463,7 +18474,9 @@ button.web-access-link {
   color: var(--cta-primary-purple-color, #fff8ed);
   font-family: var(--font-game-action);
   font-size: 1rem;
-  font-weight: 800;
+  /* ⚠️ NOT bold (founder, 2026-08-30). A language is a setting, and 800 made it
+     shout as loudly as the wordmark two rows down. */
+  font-weight: 600;
   letter-spacing: 0.02em;
   text-shadow: 0 2px 0 rgba(37, 7, 55, 0.55);
   cursor: pointer;
