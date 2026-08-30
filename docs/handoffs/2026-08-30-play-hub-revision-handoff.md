@@ -146,26 +146,35 @@ prueba.
 El founder miró la pantalla en vivo y preguntó: *"¿realmente merece estar ahí
 Trophies? ¿y PRO?"*. Tenía razón, y la causa era peor que la composición.
 
-### 7.1 ⛔ P0 — la pausa de la venta nunca había llegado a PLAY
+### 7.1 ⛔ RETRACTADO — el "P0" no existía, y lo peor fue el proceso
 
-`isSeasonPassSalesEnabled()` está apagado desde el 2026-08-25, pero la pausa se
-implementó **sólo en LEARN**.
+**Este apartado afirmaba un P0 que era falso. Se deja escrito, no borrado.**
 
-| Superficie | Hoja | ¿Consulta la pausa? |
-| --- | --- | --- |
-| LEARN | `season-pass-sheet.tsx` | ✅ se auto-oculta |
-| **PLAY** | `pro-sheet.tsx` | ⛔ **nunca la miraba** |
+Sostuve que PLAY seguía vendiendo el Season Pass pausado, y gateé la compra de
+PRO con `isSeasonPassSalesEnabled()`. **Apagué un producto vivo.**
 
-El servidor no salva: `verify-payment` **sólo advierte**, a propósito — rechazar
-después del pago se queda con la plata. Su propio comentario nombra el freno
-real: *"la hoja de compra se auto-oculta, que es lo que efectivamente detiene las
-ventas"*. Ese freno tenía **una implementación y dos hojas**.
+Cada paso del razonamiento era cierto salvo la conclusión: la perilla está
+apagada ✅, la hoja de LEARN se auto-oculta ✅, la de PLAY no lo hacía ✅ — pero
+**PRO no es el Season Pass**. `verify-payment` separa **tres** familias de SKU
+(`sku in SEASON_PASSES`, `in PEONES_PACKS`, `in PRO_PACKS`) y la perilla gatea
+sólo la primera. La hoja de PLAY compra `chesscito_pro_30`, de `PRO_PACKS`.
 
-⚠️ Y había una **segunda puerta** que el primer arreglo no cerraba:
-`pro-extend-link`, un "Renew your training" aparte del CTA, con el mismo
-`onPurchase`. Lo encontró un test que afirmaba *"no hay forma de renovar"* en vez
-de *"el CTA no es de renovación"*. **Una guarda por componente no es una guarda:
-hay que contar los llamadores de `onPurchase`.**
+| | |
+| --- | --- |
+| Pausado | **El Season Pass de 21 días** — 21 días resultó demasiado largo para convertir |
+| Vivo y vendible | **PRO** |
+
+⛔ **Lo que me llevó al error fue el COPY.** PRO se anuncia como *"Season Pass +
+Coach ilimitado"*, así que el bundle **nombra** la cosa pausada. Hay que leer el
+SKU, nunca el marketing.
+
+⛔ **Y el fallo de proceso, que es el que hay que recordar:** en la propuesta
+escribí *"no tracé el SKU exacto"* y **lo mandé igual, rotulado P0**. Una
+incertidumbre declarada no es una incertidumbre resuelta. Traceaba con dos greps.
+
+Revertido en `7b9fa12f`, junto con los tres tests que lo cubrían — **pineaban una
+creencia falsa con la misma firmeza que una verdadera, y hacían que el error
+pareciera verificado.**
 
 ### 7.2 El rail queda en `Coach · Shop`
 
@@ -195,7 +204,10 @@ registro durable es la enmienda en
 
 - **¿Cuándo vuelve PRO como oferta?** Necesita la ventana y evidencia sobre quién
   puede pagar (59,6% sin stablecoin). Decisión del founder, no del código.
-- **¿El bundle PRO debe caer con la pausa del Season Pass?** El flag pausa el
-  *Season Pass*; PRO es "Season Pass + Coach ilimitado". Que el bundle caiga con
-  él se asumió acá — **confirmalo o revertilo a propósito**.
+- ✅ **Resuelto (founder, 2026-08-30):** PRO **no** cae con la pausa. Está vivo.
+  Lo pausado es el Season Pass de 21 días, que se va a acortar a **3 o 7 días**.
+- ⚠️ **Pregunta abierta que el revert reabre:** PRO salió del rail en parte
+  porque "la venta está pausada", y eso era falso. Sigue en pie el otro motivo —
+  el principio 4 de la spec, y el 59,6% sin stablecoin — pero **la decisión
+  merece revisarse a propósito, no heredarse de un argumento retirado**.
 - Siguen abiertas las deudas 2 (`/trophies` por el arena) y 3 (360×640) del §4.
