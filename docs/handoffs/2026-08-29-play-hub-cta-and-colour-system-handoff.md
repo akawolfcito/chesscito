@@ -8,16 +8,24 @@
 
 ## 0. ⛔ Lo primero: nada de esto está vivo
 
-`main` está **54 commits adelante de `origin/main`**. Los 7 de estas dos sesiones son la punta;
-**47 ya estaban sin pushear antes de empezar** y no se auditaron. Mandar 54 commits juntos es un
-perfil de riesgo distinto a mandar 7 — conviene mirar qué son los otros 47 antes del push.
+`main` está **muy adelante de `origin/main`** — al cerrar esta sesión, **55 commits**.
+
+⚠️ **No confíes en ese número, medilo**: `git rev-list --count origin/main..main`. Envejece con
+cada commit, incluido el de este propio handoff (que fue exactamente el error: el doc nació
+diciendo 54 y el commit que lo guardó lo dejó en 55).
+
+De esos, **8 son de estas dos sesiones** (§1) y **47 ya estaban sin pushear antes de empezar**, sin
+auditar. Mandar todo junto es un perfil de riesgo distinto a mandar 8 — conviene mirar qué son los
+otros 47 antes del push.
 
 **Toda decisión de producto pendiente depende de la ventana de medición, y la ventana no
 arranca hasta el deploy.** Seguir construyendo encima es acumular apuestas sin cobrar ninguna.
 
 ---
 
-## 1. Los 7 commits, y qué hace cada uno
+## 1. Los commits de estas dos sesiones
+
+Siete de trabajo + el commit de este handoff (`1e00b3bd`) = **8**.
 
 | Commit | Qué |
 | --- | --- |
@@ -208,16 +216,29 @@ conocido del heurístico).
 
 ## 9. Números de referencia para medir después
 
-| Métrica | Línea base (2026-07-23 → 2026-08-28) |
-| --- | ---: |
-| Llegan al hub → inician partida | 5.957 → 3.636 (**61%**) |
-| Completan el tour → inician partida | 5.643 → **64,6%** |
-| Inician → terminan | 3.636 → 1.898 (**52%**) |
-| Terminan 1ª → juegan 2ª | **45,2%** (42,5% el mismo día) |
-| `play_again_tap` → partida ≤5 min | **51,8%–63,8%** |
-| Entradas al Reviewer vía X | **93,3%** de 2.064 → debería caer a ~0 |
-| Terminó ≥2 partidas en D0 (activación) | **12,1%** de alcance, lift **2,47×** |
-| Retorno baseline (cohorte ≥7 días) | **6,5%** |
+Ventana **2026-07-23 → 2026-08-28**. ⚠️ **Las fuentes son tres y NO tienen el mismo denominador** —
+citar la columna «fuente» al comparar, o los deltas van a mentir.
+
+| Métrica | Valor | Fuente |
+| --- | ---: | --- |
+| Llegan al hub → inician partida | 5.957 → 3.636 (**61%**) | audit **2026-08-27** §4 |
+| Inician → terminan | 3.636 → 1.898 (**52%**) | audit **2026-08-27** §4 |
+| Nunca terminan ninguna | **1.752** | audit 2026-08-28 §A |
+| Terminan 1ª → juegan 2ª | **45,2%** (42,5% mismo día) | audit 2026-08-28 §F |
+| `play_again_tap` → partida ≤5 min | **51,8%–63,8%** | audit 2026-08-28 §C.5 |
+| Entradas al Reviewer vía X | **93,3%** de 2.064 → debería caer a ~0 | audit 2026-08-28 §C.3 |
+| Terminó ≥2 partidas en D0 (activación) | **12,1%** alcance, lift **2,47×** | audit 2026-08-28 §D |
+| Retorno baseline (cohorte ≥7 días) | **6,5%** | audit 2026-08-28 §D |
+| Completan el tour → inician partida | 5.643 → **64,6%** | **consulta en vivo, sin doc** ⚠️ |
+
+⚠️ **Discrepancia conocida y sin resolver:** el audit del 2026-08-27 cuenta **3.636** personas que
+inician partida y el del 2026-08-28 cuenta **3.650**. Son filtros levemente distintos sobre el
+mismo hecho, no un error de uno de los dos. **No mezclar las dos cifras en un mismo cálculo.**
+
+⚠️ **La fila del tour no está documentada en ningún audit** — salió de una consulta ad-hoc de esta
+sesión. Para reproducirla: agrupar `session_id` de `surface='play'` desde 2026-07-23 por
+`bool_or(event='hub_tour_finish')` y medir `bool_or(event='arena_game_start')`. Resultado completo:
+terminó el tour 5.643 → 64,6% inicia; vio y no terminó 365 → 4,4%; nunca lo vio 169 → 21,9%.
 
 ⚠️ Ninguna comparación futura será un experimento controlado: no hay A/B y la población de agosto
 llegó casi entera en una semana. Es un before/after, con todo lo que eso no prueba.
