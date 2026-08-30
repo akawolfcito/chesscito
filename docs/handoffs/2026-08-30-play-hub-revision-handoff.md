@@ -56,7 +56,7 @@ lo suplía nunca se quitó. Borrarla no contradice el spec: lo completa.
 | Hueco muerto | **171px** | 0 — pasa a ser paisaje |
 | Reino visible | — | **355px** (265 → 620) |
 | PLAY PATH | top 742 | top 742 (sin cambios) |
-| Tiles del rail | 4 (Duel·Warm-up·Coach·Shop) | **3** (Coach·Shop·PRO) |
+| Tiles del rail | 4 (Duel·Warm-up·Coach·Shop) | **2** (Coach·Shop) — ver §7.2 |
 | Espadas cruzadas | 5 | **2** |
 | `scrollHeight` | 844 | 844 (sin scroll) |
 
@@ -95,7 +95,7 @@ Quedan escritas porque cada una costó tiempo y puede volver a pasar:
 | 2 | ⚠️ **`/trophies` perdió su única entrada desde el hub.** Sobrevive por `TrophiesSheet` en el arena | **Verificar abriéndolo** antes de dar la sesión por cerrada |
 | 3 | ⚠️ Falta verificar el layout en **`minipay-360`** (640px de alto, 204 menos) | La spec lo pide explícitamente; no se hizo |
 | 4 | ⚠️ Una corrida de Vitest dio **1 roja no identificada** que no reprodujo | Sospecha: el test de cobertura de temas ESCRIBE el JSON del inventario mientras otro test podría leerlo. Anotado, no resuelto |
-| 5 | El idioma quedó `🇺🇸 EN`, no `EN ˅` como el mockup | `LanguageChip` lo comparte LEARN; cambiarlo movería baselines de otra superficie |
+| 5 | ~~El idioma quedó `🇺🇸 EN`~~ | **Resuelto en §7**: `LanguageChip` ganó una variante `bare` para PLAY; LEARN y el FULL interno quedan intactos con la píldora |
 | 6 | `PrimaryPlayCta` sigue verde en 6 consumidores | Sin cambios respecto del handoff anterior |
 | 7 | Migración `inbox_v0` sin aplicar en prod | Degrada sin badge, **no rompe el hub** (verificado en código) |
 
