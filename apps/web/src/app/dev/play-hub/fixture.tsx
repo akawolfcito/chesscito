@@ -2,6 +2,7 @@
 
 import { PlayHubScaffold } from "@/components/hub/play-hub-scaffold";
 import { HubDailyTrigger } from "@/components/hub/hub-daily-trigger";
+import { InboxTrigger } from "@/components/inbox/inbox-trigger";
 import type { PeonesBalanceState } from "@/lib/peones/use-peones-balance";
 
 /** Fixture variants for the PLAY hub home.
@@ -46,6 +47,14 @@ export function PlayHubFixture({ variant }: { variant: PlayHubVariant }) {
       // baseline that lies.
       pro={variant === "pro" ? { active: true, daysRemaining: 12 } : { active: false }}
       peones={connected ? PEONES_SETTLED : { kind: "guest" }}
+      /* The envelope follows the wallet, exactly as `InboxChip` does in
+         production (`if (!address) return null`) — so the guest shot has no
+         Inbox and the other two do. The count is IDENTICAL in both so the only
+         thing moving between `connected` and `pro` stays PRO itself; a second
+         variable in the same pair of images is a baseline that cannot say which
+         change broke it. Before this, the fixture passed no `inboxSlot` at all
+         and the vr17 baselines froze a header with no envelope in it. */
+      inboxSlot={connected ? <InboxTrigger unread={2} onClick={noop} /> : undefined}
       dailySlot={
         <HubDailyTrigger
           variant="corner-icon"

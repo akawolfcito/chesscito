@@ -256,10 +256,15 @@ export const DEV_SCREENS: readonly DevSurface[] = [
     blurb: "The Play side of the mode switch.",
     param: "variant",
     options: ["guest", "connected", "pro"],
-    mounts: ["hub/play-hub-scaffold", "hub/hub-daily-trigger"],
+    mounts: [
+      "hub/play-hub-scaffold",
+      "hub/hub-daily-trigger",
+      "inbox/inbox-trigger",
+    ],
     consumers: [
       "components/hub/hub-daily-tile.tsx",
       "components/hub/play-hub-client.tsx",
+      "components/inbox/inbox-chip.tsx",
     ],
   },
   {
