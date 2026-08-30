@@ -10651,18 +10651,17 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 8px;
   margin-top: 5px;
   padding: 4px 9px 5px 5px;
-  border: 2px solid #f6c94f;
+  border: 2px solid var(--cta-primary-gold-border);
   border-radius: 14px;
-  background:
-    radial-gradient(circle at 20% 0%, rgba(255, 221, 112, 0.18), transparent 38%),
-    linear-gradient(110deg, rgba(255, 255, 255, 0.16), transparent 45%),
-    linear-gradient(180deg, #9a4ed0 0%, #7430a9 48%, #561d80 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.38),
-    inset 0 -2px 0 rgba(55, 12, 83, 0.25),
-    0 4px 0 #3f145f,
-    0 8px 14px rgba(72, 31, 92, 0.3);
-  color: #fff8d2;
+  /* GOLD, not purple — the colour contract, applied. Purple means "interactive
+     action" and belongs to the DUEL bar ~80px below; this row means MONEY. It
+     used to be `#9a4ed0 → #561d80`, a different purple from the CTA's
+     `#9251c6 → #5a2180` but the same hue family (~276–280°), so the two read as
+     one signal stacked twice and competed for the same meaning. It already wore
+     a gold border, so this finishes a move it had half-made. */
+  background: var(--cta-primary-gold-grad);
+  box-shadow: var(--cta-primary-gold-bevel);
+  color: var(--cta-primary-gold-color);
   text-align: left;
   cursor: pointer;
   transition:
@@ -10673,6 +10672,7 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .kingdom-card-pro-cta:active {
   transform: translateY(1px) scale(0.99);
+  box-shadow: var(--cta-primary-gold-bevel-pressed);
   filter: brightness(0.96);
 }
 
@@ -10719,8 +10719,10 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 0.82rem;
   font-weight: 800;
   line-height: 1.05;
-  color: #fff7c3;
-  text-shadow: 0 1px 2px rgba(33, 9, 48, 0.65);
+  /* Dark on gold. The cream `#fff7c3` here was legible on the old purple field
+     and is nearly invisible on the new one. */
+  color: var(--cta-primary-gold-color);
+  text-shadow: var(--cta-primary-gold-text-shadow);
 }
 
 .kingdom-card-pro-subtitle {
@@ -10728,7 +10730,9 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 0.62rem;
   font-weight: 650;
   line-height: 1.15;
-  color: rgba(255, 248, 220, 0.88);
+  /* Dark on gold, one step lighter than the title so the pair keeps its
+     hierarchy without dropping below AA. */
+  color: rgba(63, 34, 8, 0.78);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -10739,8 +10743,9 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 1.4rem;
   font-weight: 800;
   line-height: 1;
-  color: #ffd45a;
-  text-shadow: 0 1px 2px rgba(33, 9, 48, 0.7);
+  /* Was `#ffd45a` — gold on what is now a gold field, i.e. invisible. */
+  color: rgba(63, 34, 8, 0.72);
+  text-shadow: var(--cta-primary-gold-text-shadow);
 }
 
 .kingdom-card-pro-price {
