@@ -1,5 +1,6 @@
 "use client";
 
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import { badgeLabel } from "@/lib/inbox/types";
 
 export type InboxTriggerProps = {
@@ -39,9 +40,25 @@ export function InboxTrigger({ unread, onClick }: InboxTriggerProps) {
       onClick={onClick}
       type="button"
     >
-      <span aria-hidden="true" className="inbox-chip-icon">
-        ✉️
-      </span>
+      {/* A BELL, not an envelope (2026-08-30). The Inbox carries
+          `announcement · achievement · gift · milestone` — three of the four
+          are "something happened to you", which is notification semantics, not
+          correspondence. A bell also promises recurrence, which is what a
+          population where 434 of 443 wallets play a single day needs promised.
+
+          ⛔ The bell is NEWS; the gift beside it is a MECHANIC. They share an
+          art register (gold with purple bands) and sit adjacent, so the rule
+          has to be explicit: the 🎁 is the Daily and is tapped to claim, the
+          bell is read. An Inbox message of type `gift` announces a gift — it
+          never replaces the Daily. */}
+      <ThemeAssetPicture
+        slot="shared.inbox-bell"
+        pictureClassName="inbox-chip-icon"
+        alt=""
+        aria-hidden="true"
+        width={320}
+        height={355}
+      />
       {badge ? (
         <span className="inbox-chip-badge" data-testid="inbox-chip-badge">
           {badge}

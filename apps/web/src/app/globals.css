@@ -18386,9 +18386,50 @@ button.web-access-link {
   cursor: pointer;
 }
 
+/* The bell is ART now, not a glyph: `font-size` sized the old ✉️ emoji and
+   does nothing to a <picture>. Height, not width, because the source is taller
+   than wide (954 × 1059) — sizing by width would make it overflow the 44px
+   touch target vertically.
+
+   ⚠️ Deliberately a touch SHORTER than the 44px Daily gift beside it. The Daily
+   is an everyday mechanic; the Inbox is intermittent news, and the size
+   difference is the hierarchy, not an accident of the source aspect ratio. */
 .inbox-chip-icon {
-  font-size: 22px;
-  line-height: 1;
+  display: block;
+  width: auto;
+  height: 30px;
+}
+
+.inbox-chip-icon img {
+  display: block;
+  width: auto;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ACCESS cluster — hairline dividers between "things you can open", so the
+   right side of the header reads as one deliberate group. Only BETWEEN
+   members, never leading or trailing. */
+.play-hub-access-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.play-hub-access-cluster > * + * {
+  position: relative;
+  padding-left: 8px;
+}
+
+.play-hub-access-cluster > * + *::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 18px;
+  width: 1px;
+  transform: translateY(-50%);
+  background: rgba(255, 248, 237, 0.28);
 }
 
 .inbox-chip-badge {

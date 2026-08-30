@@ -1,9 +1,9 @@
 {
   "generatedAt": "2026-07-18",
   "source": "apps/web/src/lib/themes/theme-registry.ts#candy-forest",
-  "totalSlots": 193,
+  "totalSlots": 194,
   "categoryCounts": {
-    "A": 180,
+    "A": 181,
     "B": 0,
     "C": 0,
     "D": 0,
@@ -13,25 +13,25 @@
   },
   "initialCategoryCounts": {
     "A": 2,
-    "B": 97,
+    "B": 98,
     "C": 26,
     "D": 38,
     "E": 19,
     "F": 11,
     "G": 0
   },
-  "resolverSlots": 181,
-  "fullyConnectedSlots": 180,
+  "resolverSlots": 182,
+  "fullyConnectedSlots": 181,
   "mixedSlots": 1,
   "hardcodedSlots": 6,
   "slotsWithHardcodedConsumers": 7,
   "deprecatedSlots": 7,
   "noActiveConsumerSlots": 6,
-  "connectedSlots": 180,
+  "connectedSlots": 181,
   "excludedSlots": 13,
   "exceptions": [],
   "literalDiff": {
-    "registeredBasenames": 221,
+    "registeredBasenames": 222,
     "discoveredBasenames": 15,
     "unregisteredExistingAssets": []
   },
@@ -1956,7 +1956,7 @@
         "src/components/hub/hub-pro-badge.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
         {
           "file": "src/components/hub/hub-pro-badge.tsx",
@@ -1968,6 +1968,17 @@
           "usesCssBackground": false,
           "usesSharedMap": false,
           "buildsPathDynamically": true
+        },
+        {
+          "file": "src/components/hub/play-hub-scaffold.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
         }
       ],
       "patterns": [
@@ -2473,6 +2484,51 @@
       "usesPicture": false,
       "usesCssBackground": false,
       "usesSharedMap": true,
+      "buildsPathDynamically": false,
+      "noActiveConsumer": false
+    },
+    {
+      "slotId": "shared.inbox-bell",
+      "root": "web",
+      "default": {
+        "mode": "asset",
+        "path": "/art/shop/inbox-bell"
+      },
+      "pro": {
+        "mode": "inherit"
+      },
+      "usedIn": [
+        "Hub — Inbox entry",
+        "↳ components/inbox/inbox-trigger.tsx"
+      ],
+      "deprecated": null,
+      "initialCategory": "B",
+      "category": "A",
+      "documentedFiles": [
+        "src/components/inbox/inbox-trigger.tsx"
+      ],
+      "currentConsumerState": "resolver",
+      "consumerCount": 1,
+      "consumers": [
+        {
+          "file": "src/components/inbox/inbox-trigger.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        }
+      ],
+      "patterns": [],
+      "usesResolver": true,
+      "usesHardcodedPath": false,
+      "usesImg": false,
+      "usesPicture": false,
+      "usesCssBackground": false,
+      "usesSharedMap": false,
       "buildsPathDynamically": false,
       "noActiveConsumer": false
     },
@@ -7244,7 +7300,7 @@
         "src/components/arena/victory-claim-success.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 11,
+      "consumerCount": 10,
       "consumers": [
         {
           "file": "src/components/arena/arena-select-scaffold.tsx",
@@ -7292,17 +7348,6 @@
         },
         {
           "file": "src/components/hub/hub-scaffold.tsx",
-          "occurrences": [],
-          "usesResolver": false,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": true,
-          "buildsPathDynamically": false
-        },
-        {
-          "file": "src/components/hub/play-hub-scaffold.tsx",
           "occurrences": [],
           "usesResolver": false,
           "usesHardcodedPath": false,

@@ -102,19 +102,15 @@ export function PlayHubScaffold({
                 showRecharge
               />
             ) : null}
-            <LanguageChip />
-            {/* Inbox — 2026-08-29. PLAY never had one: `InboxChip` was mounted
-                only in the LEARN hub, so notifications simply did not reach
-                anyone in PLAY. The gift icon on the right is NOT the inbox —
-                it is the Daily Tactic (`dailySlot`, variant "corner-icon").
-
-                ⛔ A SLOT, not the component, for the same reason as
-                `dailySlot`: `InboxChip` calls `useAccount()`, and a wagmi hook
-                in this tree throws `WagmiProviderNotFoundError` in every /dev
-                probe and scaffold test. Mirrors hub-lite-scaffold.tsx. */}
-            {inboxSlot}
           </div>
-          <div className="hub-scaffold-hud-right hub-home-hud-right">
+          {/* ACCESS cluster (founder direction, 2026-08-30).
+              The header holds two semantic zones, and the split is SEMANTIC,
+              not mechanical — every element here is tappable, so interactivity
+              cannot be what separates them. What separates them is what they
+              SAY: the left zone says "this is what you have", this one says
+              "this is what you can open". Hairline dividers make the grouping
+              deliberate, so it reads as a system instead of as leftovers. */}
+          <div className="hub-scaffold-hud-right hub-home-hud-right play-hub-access-cluster">
             {/* Account entry intentionally omitted here (founder 2026-07-07).
                 PRO is no longer here either: it lives in the floor rail as one
                 destination among three, reached on pull after a match rather
@@ -130,6 +126,21 @@ export function PlayHubScaffold({
                 <span>{tHud("connectLabel")}</span>
               </button>
             ) : null}
+            <LanguageChip />
+            {/* Inbox — 2026-08-29. PLAY never had one: `InboxChip` was mounted
+                only in the LEARN hub, so notifications simply did not reach
+                anyone in PLAY.
+
+                ⛔ A SLOT, not the component, for the same reason as
+                `dailySlot`: `InboxChip` calls `useAccount()`, and a wagmi hook
+                in this tree throws `WagmiProviderNotFoundError` in every /dev
+                probe and scaffold test. Mirrors hub-lite-scaffold.tsx.
+
+                ⛔ The bell is NEWS; the gift beside it is a MECHANIC. They
+                share an art register and sit adjacent on purpose, but they are
+                not interchangeable: the gift is the Daily and is tapped to
+                claim, the bell is read. */}
+            {inboxSlot}
             <div className="play-hub-daily-anchor" data-tour-target="daily">
               {dailySlot}
             </div>
