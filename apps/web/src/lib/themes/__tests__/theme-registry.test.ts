@@ -325,7 +325,7 @@ describe("theme-registry", () => {
       // carved off brand.title. Shared, not per-surface: the modal is the same
       // on both deploys, only its wallpaper differs.
       // +1: shared.tour-help, the replay affordance used by both Hub modes.
-      shared: 78,
+      shared: 79,
       "full-legacy": 29,
       "dev-only": 0,
       unknown: 4,

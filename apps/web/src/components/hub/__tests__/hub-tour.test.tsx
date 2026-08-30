@@ -5,7 +5,7 @@ import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl"
 import { HubTour, TOUR_TITLE_KEYS } from "../hub-tour";
 import {
   buildLearnHubTourSteps,
-  buildPlayHubTourSteps,
+  type HubTourStep,
 } from "@/lib/hub/hub-tour";
 import { HUB_TOUR_COPY, PLAY_HUB_COPY } from "@/lib/content/editorial";
 import { PRO_DURATION_DAYS } from "@/lib/contracts/shop-catalog";
@@ -44,7 +44,15 @@ const LEARN_STEPS = buildLearnHubTourSteps({
   hasSeasonPass: false,
 });
 
-const PLAY_STEPS = buildPlayHubTourSteps({ proStatus: "inactive" });
+/* The PLAY itinerary builder was removed with the PLAY mini-tour (2026-08-30),
+ * but the `HubTour` COMPONENT still ships for LEARN. These steps stay as a
+ * literal so the component keeps its rendering, anchoring and keyboard
+ * coverage — the data is only a fixture here, never the thing under test. */
+const PLAY_STEPS: HubTourStep[] = [
+  { id: "kingdom", target: "kingdom", bodyKey: "kingdomBody" },
+  { id: "pro", target: "pro", bodyKey: "proJoin" },
+  { id: "play", target: "play", bodyKey: "playStart" },
+];
 
 beforeEach(() => {
   mountTargets(["daily", "challenge", "rook", "kingdom", "pro", "play"]);
@@ -342,8 +350,8 @@ describe("<HubTour>", () => {
     const steps = [
       ...buildLearnHubTourSteps({ dailyDone: false, streak: 0, hasSeasonPass: false }),
       ...buildLearnHubTourSteps({ dailyDone: true, streak: 9, hasSeasonPass: true }),
-      ...buildPlayHubTourSteps({ proStatus: "inactive" }),
-      ...buildPlayHubTourSteps({ proStatus: "active" }),
+      ...PLAY_STEPS,
+      { id: "pro", target: "pro", bodyKey: "proActive" } as HubTourStep,
     ];
     const copy = HUB_TOUR_COPY as Record<string, unknown>;
 

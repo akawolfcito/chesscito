@@ -65,7 +65,6 @@ vi.mock("@/components/hub/hub-action-tile", () => ({
   ),
 }));
 const props = {
-  mintedVictoryCount: 0,
   isWalletConnected: true,
   pro: { active: false } as const,
   // The scaffold is told the balance; it no longer fetches it. A wagmi hook in
@@ -74,7 +73,6 @@ const props = {
   dailySlot: <button data-testid="play-daily">Daily</button>,
   onPeonesRefetch: vi.fn(),
   onConnectTap: vi.fn(),
-  onTrophyTap: vi.fn(),
   onProTap: vi.fn(),
   onCoachTap: vi.fn(),
   onShopTap: vi.fn(),
@@ -86,15 +84,17 @@ describe("PlayHubScaffold", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the unified surfaces: LEARN mascot, Kingdom panel and PLAY PATH", () => {
+  it("renders the unified surfaces: LEARN mascot, DUEL and PLAY PATH", () => {
     render(<PlayHubScaffold {...props} />);
 
-    expect(screen.getByLabelText("Minted victories: 0")).toHaveTextContent("0");
+    /* ⛔ The trophy pill is gone: a `0` scoreboard was the first thing a
+     *  newcomer read, and 434 of 443 wallets play a single day. */
+    expect(screen.queryByLabelText(/Minted victories/)).not.toBeInTheDocument();
+
     // Title + avatar reuse the exact LEARN/LITE mascot markup.
     expect(screen.getByAltText("Chesscito")).toBeInTheDocument();
-    expect(screen.getByTestId("kingdom-card")).toBeInTheDocument();
+    expect(screen.getByTestId("play-chess-cta")).toBeInTheDocument();
     expect(screen.getByText("PLAY PATH")).toBeInTheDocument();
-    expect(screen.getByText("Duel")).toBeInTheDocument();
     expect(screen.getByTestId("play-daily")).toBeInTheDocument();
   });
 
@@ -119,15 +119,19 @@ describe("PlayHubScaffold", () => {
     );
   });
 
-  it("orders mascot → switch → Kingdom panel → PLAY PATH", () => {
+  it("orders mascot → switch → DUEL → PLAY PATH, with no panel between them", () => {
     render(<PlayHubScaffold {...props} />);
     const mascot = screen.getByAltText("Chesscito");
     const modeSwitch = screen.getByTestId("mode-switch");
-    const panel = screen.getByTestId("kingdom-card");
+    const cta = screen.getByTestId("play-chess-cta");
     const path = screen.getByText("PLAY PATH");
     expect(mascot.compareDocumentPosition(modeSwitch) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(modeSwitch.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(panel.compareDocumentPosition(path) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(modeSwitch.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(cta.compareDocumentPosition(path) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    /* The panel is gone for good: it was onboarding copy made permanent, and
+     *  the world render behind it is the `<KingdomAnchor>` it stood in for. */
+    expect(screen.queryByTestId("kingdom-card")).not.toBeInTheDocument();
   });
 
   it("renders the Peones chip when connected but NO account chip (hidden in PLAY)", () => {
@@ -159,48 +163,41 @@ describe("PlayHubScaffold", () => {
    * consequence was that 39% of the 5.957 people reaching this hub never
    * started a match, including 35,4% of those who completed the whole tour.
    *
-   * The two entries are deliberately kept BOTH — a dominant CTA in the body
-   * and a persistent shortcut in the floor rail — so this pins the thing
-   * that actually breaks when you have two buttons to one destination:
-   * they must not share an accessible name.
+   * 2026-08-30 — the rail shortcut is now gone as well. Keeping both was a
+   * deliberate intermediate step, and this test used to pin their accessible
+   * names apart. The duplication itself is what got removed: same handler,
+   * same art, 200 px apart. What survives is the rule the CTA was restored
+   * for — there IS a dominant entry to a match, and there is exactly one.
    */
-  it("renders the standalone CTA AND the rail shortcut with distinct accessible names", async () => {
+  it("gives the hub exactly one control that starts a match", async () => {
     const { container } = render(<PlayHubScaffold {...props} />);
 
     const cta = screen.getByTestId("play-chess-cta");
     expect(container.querySelector(".hub-scaffold-cta-row > .play-chess-cta")).not.toBeNull();
     expect(cta).toHaveAccessibleName("Duel: pick your rival and play a full match");
 
-    const railTile = screen.getByRole("button", { name: "Duel: pick your rival" });
-    expect(railTile).toHaveAttribute("data-icon-slot", "hub.enter-arena");
+    // The whole screen holds one Arena entry, not two.
+    expect(container.querySelectorAll('[data-icon-slot="hub.enter-arena"]')).toHaveLength(0);
 
-    // The defect this guards: two buttons, one destination, same name.
-    expect(cta).not.toHaveAccessibleName("Duel: pick your rival");
-    expect(railTile).not.toBe(cta);
-
-    // Both reach the DUEL selector.
     await userEvent.click(cta);
     expect(props.onArenaPress).toHaveBeenCalledTimes(1);
-    await userEvent.click(railTile);
-    expect(props.onArenaPress).toHaveBeenCalledTimes(2);
 
     expect(screen.queryByText(/Training Path/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Daily Focus/i)).not.toBeInTheDocument();
   });
 
-  it("renders PLAY PATH in DOM order Play → Warm-up → Coach → Shop", () => {
+  it("renders PLAY PATH in DOM order Coach → Shop → PRO", () => {
     render(<PlayHubScaffold {...props} />);
 
     expect(screen.getByText("PLAY PATH")).toBeInTheDocument();
     const path = screen.getByRole("region", { name: "PLAY PATH" });
     const actions = within(path).getAllByRole("button");
     expect(actions.map((button) => button.textContent)).toEqual([
-      "Duel",
-      "Warm-up",
       "Coach",
       "Shop",
+      "PRO",
     ]);
-    for (const label of ["Duel", "Warm-up", "Coach", "Shop"]) {
+    for (const label of ["Coach", "Shop", "PRO"]) {
       expect(screen.getByText(label)).not.toHaveClass("candy-tray-pill");
     }
   });
@@ -209,22 +206,46 @@ describe("PlayHubScaffold", () => {
     render(<PlayHubScaffold {...props} />);
 
     const path = screen.getByRole("region", { name: "PLAY PATH" });
-    const [play, ...secondaryActions] = within(path).getAllByRole("button");
-    expect(play).toHaveClass("play-hub-path-tile--primary");
-    expect(play).toHaveAttribute("data-tour-target", "play");
-    for (const action of secondaryActions) {
+    for (const action of within(path).getAllByRole("button")) {
       expect(action).not.toHaveClass("play-hub-path-tile--primary");
     }
   });
 
-  it("exposes stable Daily and replay targets for the PLAY mini-tour", async () => {
-    const onReplayTour = vi.fn();
-    const { container } = render(
-      <PlayHubScaffold {...props} onReplayTour={onReplayTour} />,
-    );
+  /* ⛔ THE invariant of this revision. The rail used to lead with a `Duel` tile
+   *  wired to the SAME `onArenaPress` as the CTA 200 px above it — two identical
+   *  doors a thumb apart. If a rail tile ever starts a match again, the primary
+   *  CTA stops being unambiguous and this whole layout loses its argument. */
+  it("gives the floor rail no way to start a match", async () => {
+    const onArenaPress = vi.fn();
+    render(<PlayHubScaffold {...props} onArenaPress={onArenaPress} />);
+
+    const path = screen.getByRole("region", { name: "PLAY PATH" });
+    for (const tile of within(path).getAllByRole("button")) {
+      await userEvent.click(tile);
+    }
+
+    expect(onArenaPress).not.toHaveBeenCalled();
+  });
+
+  it("keeps the rail to the three destinations, Warm-up and Duel gone", () => {
+    render(<PlayHubScaffold {...props} />);
+
+    const path = screen.getByRole("region", { name: "PLAY PATH" });
+    expect(within(path).getAllByRole("button")).toHaveLength(3);
+    expect(within(path).queryByText("Warm-up")).not.toBeInTheDocument();
+    expect(within(path).queryByText("Duel")).not.toBeInTheDocument();
+  });
+
+  it("still exposes the Daily target, which outlived the tour", () => {
+    const { container } = render(<PlayHubScaffold {...props} />);
     expect(container.querySelector('[data-tour-target="daily"]')).not.toBeNull();
-    await userEvent.click(screen.getByText("Replay Play Hub tour"));
-    expect(onReplayTour).toHaveBeenCalledTimes(1);
+  });
+
+  /* The panel is gone, so nothing on this screen replays a tour — and nothing
+   *  should offer to. */
+  it("offers no tour replay control", () => {
+    render(<PlayHubScaffold {...props} />);
+    expect(screen.queryByText("Replay Play Hub tour")).not.toBeInTheDocument();
   });
 
   // The tile no longer guards a paywall, so it must not wear one. A badge that

@@ -64,10 +64,14 @@ describe("theme runtime catalog coverage", () => {
     // seis hub.minigame.*. Un slot por destino, para que cambiar un icono sea
     // una edicion del builder y nunca del codigo. Conectados por
     // HubActionTile → ThemeAssetPicture: initial B 90 -> 97.
-    expect(report.totalSlots).toBe(193);
+    // 194 (2026-08-30): + shared.inbox-bell, el icono del Inbox en el header.
+    // Reemplaza el emoji ✉️ por arte del catalogo, asi que cambiarlo pasa a ser
+    // una edicion del builder. Conectado por ThemeAssetPicture desde
+    // inbox-trigger.tsx: initial B 97 -> 98.
+    expect(report.totalSlots).toBe(194);
     expect(report.initialCategoryCounts).toEqual({
       A: 2,
-      B: 97,
+      B: 98,
       C: 26,
       D: 38,
       E: 19,
@@ -79,7 +83,7 @@ describe("theme runtime catalog coverage", () => {
     // 180 (2026-08-19): + los siete del rail de LEARN. Los siete estan
     // CONECTADOS al resolver desde el dia uno — HubActionTile los pasa por
     // ThemeAssetPicture — asi que ninguno entra como literal hardcodeado.
-    expect(report.connectedSlots).toBe(180);
+    expect(report.connectedSlots).toBe(181);
     expect(report.excludedSlots).toBe(13);
     expect(
       report.slots.filter(

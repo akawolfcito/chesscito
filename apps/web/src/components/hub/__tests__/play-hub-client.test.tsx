@@ -48,23 +48,17 @@ vi.mock("@/components/hub/hub-daily-tile", () => ({
 }));
 vi.mock("@/components/hub/play-hub-scaffold", () => ({
   PlayHubScaffold: (props: {
-    mintedVictoryCount: number;
     pro: { active: boolean };
     dailySlot: React.ReactNode;
     onArenaPress: () => void;
     onCoachTap: () => void;
     onShopTap: () => void;
-    onReplayTour?: () => void;
   }) => (
     <div data-testid="play-hub" data-pro={props.pro.active}>
-      <span>victories:{props.mintedVictoryCount}</span>
       {props.dailySlot}
       <button onClick={props.onArenaPress}>arena</button>
       <button onClick={props.onCoachTap}>coach</button>
       <button onClick={props.onShopTap}>shop</button>
-      {props.onReplayTour ? (
-        <button onClick={props.onReplayTour}>replay-tour</button>
-      ) : null}
     </div>
   ),
 }));
@@ -98,9 +92,12 @@ describe("PlayHubClient", () => {
     });
   });
 
-  it("passes the minted Victory NFT count to the Play scaffold", () => {
+  /* The victory count no longer reaches the scaffold: the trophy pill left the
+   *  header, because a `0` scoreboard was the first thing a newcomer read. The
+   *  Daily slot is the part of this wiring that survives. */
+  it("still hands the Daily slot to the Play scaffold", () => {
     render(<PlayHubClient />);
-    expect(screen.getByText("victories:3")).toBeInTheDocument();
+    expect(screen.queryByText(/^victories:/)).not.toBeInTheDocument();
     expect(screen.getByTestId("client-daily")).toBeInTheDocument();
   });
 
@@ -164,9 +161,15 @@ describe("PlayHubClient", () => {
     expect(openShopMock).toHaveBeenCalledTimes(1);
   });
 
-  it("wires the persistent question icon to replay the PLAY tour", async () => {
+  /* ⛔ The PLAY mini-tour was removed on 2026-08-30, and with it the question
+   *  icon that replayed it. This asserts the ABSENCE, because the failure mode
+   *  worth guarding is a tour quietly coming back: no modal may stand between
+   *  arrival and the primary control. */
+  it("never mounts a tour, and offers nothing to replay one", () => {
     render(<PlayHubClient />);
-    await userEvent.click(screen.getByText("replay-tour"));
-    expect(trackMock).toHaveBeenCalledWith("hub_tour_replay", { mode: "play" });
+    expect(screen.queryByText("replay-tour")).not.toBeInTheDocument();
+    expect(trackMock).not.toHaveBeenCalledWith("hub_tour_replay", {
+      mode: "play",
+    });
   });
 });

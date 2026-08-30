@@ -553,12 +553,16 @@ if (CHECK_MODE) {
   // icono sea una edicion del builder y nunca del codigo; los seis de
   // minijuegos incluyen los dos motores coming-soon, para que un motor que
   // salga despues no necesite tocar el registry para tener icono.
-  const expectedInitial = { A: 2, B: 97, C: 26, D: 38, E: 19, F: 11, G: 0 };
+  // 2026-08-30: B 97 -> 98 por shared.inbox-bell, el icono del Inbox en el
+  // header. Antes era el emoji ✉️ escrito en el JSX, o sea arte que no se podia
+  // cambiar sin tocar codigo. Conectado por ThemeAssetPicture desde
+  // inbox-trigger.tsx.
+  const expectedInitial = { A: 2, B: 98, C: 26, D: 38, E: 19, F: 11, G: 0 };
   const initialCountsMatch = Object.entries(expectedInitial).every(
     ([category, count]) => initialCategoryCounts[category] === count,
   );
   if (
-    inventory.length !== 193 ||
+    inventory.length !== 194 ||
     !initialCountsMatch ||
     activeFailures.length > 0 ||
     unexpectedLiterals.length > 0 ||

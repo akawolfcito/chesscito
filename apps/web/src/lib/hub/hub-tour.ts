@@ -55,12 +55,6 @@ export type LearnHubTourContext = {
   includeDaily?: boolean;
 };
 
-/** PLAY no longer explains the Daily gift, so it needs nothing about the
- *  player's daily state — only whether the PRO strip is already active. */
-export type PlayHubTourContext = {
-  proStatus: "active" | "inactive" | "loading" | "error" | "unknown";
-};
-
 function dailyStep({
   dailyDone,
   streak,
@@ -118,26 +112,22 @@ export function buildLearnHubTourSteps({
 /** Historical export retained for local consumers while LEARN migrates. */
 export const buildHubTourSteps = buildLearnHubTourSteps;
 
-/** PLAY: Play Kingdom context → PRO discovery/status → the primary Play tile.
+/* ⛔ `buildPlayHubTourSteps` was removed on 2026-08-30 with the PLAY mini-tour.
  *
- * Three fixed steps, in that order on purpose: a first-visit player is told
- * WHERE THEY ARE before they are told what to buy. The offer never leads.
+ * Its three steps had each lost their subject: step 1 explained the Kingdom
+ * card (deleted — it was onboarding copy standing in for a world render that
+ * now ships), step 2 sold PRO at $1.99 to a population where 59,6% of the
+ * people reaching the PRO sheet hold no stablecoin, and step 3 pointed at a
+ * rail tile that is now a 60px-tall CTA in the middle of the screen.
  *
- * The PRO strip exists in every state, so the tour always explains it; only a
- * confirmed active entitlement switches the copy from discovery to status. */
-export function buildPlayHubTourSteps({
-  proStatus,
-}: PlayHubTourContext): HubTourStep[] {
-  return [
-    { id: "kingdom", target: "kingdom", bodyKey: "kingdomBody" },
-    {
-      id: "pro",
-      target: "pro",
-      bodyKey: proStatus === "active" ? "proActive" : "proJoin",
-    },
-    { id: "play", target: "play", bodyKey: "playStart" },
-  ];
-}
+ * Its measured "lift" did not survive inspection: 64,6% of tour-finishers
+ * start a match against 21,9% of those who never saw it, but the never-saw-it
+ * group is 169 people out of 6.177 — essentially those who left before it
+ * could render — and the cohort that saw it and quit converts at 4,4%. That is
+ * selection, not causation.
+ *
+ * LEARN keeps its tour: `buildLearnHubTourSteps` is untouched, and the
+ * first-activity experiment latches on the LEARN storage key, not this one. */
 
 export function hasSeenHubTour(mode: HubTourMode = "learn"): boolean {
   try {

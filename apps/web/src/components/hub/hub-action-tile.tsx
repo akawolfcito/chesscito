@@ -3,11 +3,22 @@
 import type { ReactNode } from "react";
 
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
-import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
+import type {
+  ThemeAssetKey,
+  ThemeAssetVariant,
+} from "@/lib/themes/theme-registry";
 
 type Props = {
   iconSrc?: string;
   iconSlot?: ThemeAssetKey;
+  /** Pins the icon's theme variant instead of inheriting the surface's.
+   *
+   *  ⚠️ Needed because a tile can represent STATE, not just a destination.
+   *  `hub.pro-chip` ships two sprites — purple for the upsell, all-gold once
+   *  the subscription is live — and without this the PRO tile would render the
+   *  inactive chip to a paying subscriber. Inheriting is still the default, so
+   *  every existing tile is unaffected. */
+  iconVariant?: ThemeAssetVariant;
   label: string;
   ariaLabel: string;
   onClick: () => void;
@@ -51,6 +62,7 @@ type Props = {
 export function HubActionTile({
   iconSrc,
   iconSlot,
+  iconVariant,
   label,
   ariaLabel,
   onClick,
@@ -85,6 +97,7 @@ export function HubActionTile({
       {iconSlot ? (
         <ThemeAssetPicture
           slot={iconSlot}
+          variant={iconVariant}
           pictureClassName="reward-tile-piece"
           alt=""
           aria-hidden="true"

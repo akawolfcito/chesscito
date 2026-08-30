@@ -4,7 +4,6 @@ import {
   HUB_TOUR_DAILY_STORAGE_KEY,
   HUB_TOUR_STORAGE_KEYS,
   buildLearnHubTourSteps,
-  buildPlayHubTourSteps,
   hasSeenDailyTour,
   hasSeenHubTour,
   isHubTourLaunchable,
@@ -40,51 +39,11 @@ describe("tour itineraries", () => {
     expect(veteran[1]?.bodyKey).toBe("challengeEnrolled");
   });
 
-  it("teaches PLAY as context → offer → action, never sale-first", () => {
-    expect(
-      buildPlayHubTourSteps({ proStatus: "inactive" }).map((step) => step.id),
-    ).toEqual(["kingdom", "pro", "play"]);
-  });
-
-  it("never puts the PRO offer before the Play Kingdom context", () => {
-    const ids = buildPlayHubTourSteps({ proStatus: "inactive" }).map(
-      (step) => step.id,
-    );
-    expect(ids.indexOf("kingdom")).toBeLessThan(ids.indexOf("pro"));
-    expect(ids.indexOf("pro")).toBeLessThan(ids.indexOf("play"));
-  });
-
-  it("keeps PLAY at three steps in every entitlement state", () => {
-    for (const proStatus of [
-      "active",
-      "inactive",
-      "loading",
-      "error",
-      "unknown",
-    ] as const) {
-      expect(buildPlayHubTourSteps({ proStatus })).toHaveLength(3);
-    }
-  });
-
-  it("no longer spends a PLAY step on the Daily gift — LEARN owns it", () => {
-    const ids = buildPlayHubTourSteps({ proStatus: "inactive" }).map(
-      (step) => step.id,
-    );
-    expect(ids).not.toContain("daily");
-  });
-
-  it("still narrates the visible PRO strip while entitlement is unknown", () => {
-    expect(
-      buildPlayHubTourSteps({ proStatus: "unknown" }).map((step) => step.id),
-    ).toEqual(["kingdom", "pro", "play"]);
-  });
-
-  it("never re-sells PRO to an active subscriber", () => {
-    const proStep = buildPlayHubTourSteps({ proStatus: "active" }).find(
-      (step) => step.id === "pro",
-    );
-    expect(proStep?.bodyKey).toBe("proActive");
-  });
+  /* The PLAY itinerary was removed on 2026-08-30 along with the mini-tour.
+   *  Its three steps had lost their subject: the Kingdom card is deleted, the
+   *  PRO step sold $1.99 to a population 59,6% of which holds no stablecoin,
+   *  and the "play" step pointed at a rail tile that is now the primary CTA.
+   *  LEARN keeps its itinerary, which is what the tests above cover. */
 });
 
 describe("shared tour persistence", () => {

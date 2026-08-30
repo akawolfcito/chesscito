@@ -10385,14 +10385,28 @@ button.hud-resource-chip:active:not(:disabled) {
 /* CTA breathing room — mirrors LEARN's `.hub-lite-start-focus-wrap`
    (24px above / 16px below) so the dominant Play CTA is not cramped
    against the Kingdom panel now that the flex gap is a tight 6px. */
+/* ⛔ `margin-top: auto` lives HERE, not on the rail, and that is the whole
+   layout decision of the 2026-08-30 revision.
+
+   Measured before the change (390×844): the Kingdom card occupied 186px at
+   top 279, the CTA sat at 495, and there was ALREADY a 171px dead gap between
+   the CTA and the floor rail. The rail carried the `auto`, so deleting the
+   card would have handed all the reclaimed height to that same gap and grown
+   it to ~387px — the screen would have read MORE unfinished, not less.
+
+   Moving the `auto` above the CTA spends the reclaimed space in front of it
+   instead: the world render gets ~355px of uninterrupted kingdom (which is
+   what `<KingdomAnchor>` was specified to be), and the CTA drops into
+   one-handed thumb reach near the floor, which the mid-screen position never
+   was. The rail stays pinned underneath because the CTA's auto already
+   pushed the pair down. */
 .play-hub-cta-row {
-  margin: 24px 0 16px;
+  margin-top: auto;
+  margin-bottom: 40px;
 }
 
-/* PLAY PATH pinned to the floor — same mechanism as LEARN's Training Path
-   (`margin-top: auto` absorbs the leftover column height). */
 .play-hub-path {
-  margin-top: auto;
+  margin-top: 0;
 }
 
 .play-hub-portal {
@@ -10651,18 +10665,28 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 8px;
   margin-top: 5px;
   padding: 4px 9px 5px 5px;
-  border: 2px solid #f6c94f;
+  border: 2px solid var(--cta-primary-gold-border);
   border-radius: 14px;
-  background:
-    radial-gradient(circle at 20% 0%, rgba(255, 221, 112, 0.18), transparent 38%),
-    linear-gradient(110deg, rgba(255, 255, 255, 0.16), transparent 45%),
-    linear-gradient(180deg, #9a4ed0 0%, #7430a9 48%, #561d80 100%);
+  /* GOLD, not purple — the colour contract, applied. Purple means "interactive
+     action" and belongs to the DUEL bar ~80px below; this row means MONEY. It
+     used to be `#9a4ed0 → #561d80`, a different purple from the CTA's
+     `#9251c6 → #5a2180` but the same hue family (~276–280°), so the two read as
+     one signal stacked twice and competed for the same meaning. It already wore
+     a gold border, so this finishes a move it had half-made. */
+  background: var(--cta-primary-gold-grad);
+  /* ⚠️ RECOLOURED, not re-tokenised. `var(--cta-primary-gold-bevel)` was the
+     obvious move and it is wrong here: its offsets are 2px/-3px/4px/6px while
+     this rule's are 1px/-2px/4px/8px. The green action banner in LEARN is a
+     FAITHFUL PORT of this rule — same geometry, different hue — and a test
+     compares the two shadow structures value for value. Swapping in the
+     generic token silently broke that pairing, which is exactly the kind of
+     drift that test exists to catch. Same offsets, gold hues. */
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.38),
-    inset 0 -2px 0 rgba(55, 12, 83, 0.25),
-    0 4px 0 #3f145f,
-    0 8px 14px rgba(72, 31, 92, 0.3);
-  color: #fff8d2;
+    inset 0 -2px 0 rgba(120, 65, 5, 0.25),
+    0 4px 0 rgba(120, 65, 5, 0.55),
+    0 8px 14px rgba(120, 65, 5, 0.3);
+  color: var(--cta-primary-gold-color);
   text-align: left;
   cursor: pointer;
   transition:
@@ -10719,8 +10743,10 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 0.82rem;
   font-weight: 800;
   line-height: 1.05;
-  color: #fff7c3;
-  text-shadow: 0 1px 2px rgba(33, 9, 48, 0.65);
+  /* Dark on gold. The cream `#fff7c3` here was legible on the old purple field
+     and is nearly invisible on the new one. */
+  color: var(--cta-primary-gold-color);
+  text-shadow: var(--cta-primary-gold-text-shadow);
 }
 
 .kingdom-card-pro-subtitle {
@@ -10728,7 +10754,9 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 0.62rem;
   font-weight: 650;
   line-height: 1.15;
-  color: rgba(255, 248, 220, 0.88);
+  /* Dark on gold, one step lighter than the title so the pair keeps its
+     hierarchy without dropping below AA. */
+  color: rgba(63, 34, 8, 0.78);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -10739,8 +10767,9 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 1.4rem;
   font-weight: 800;
   line-height: 1;
-  color: #ffd45a;
-  text-shadow: 0 1px 2px rgba(33, 9, 48, 0.7);
+  /* Was `#ffd45a` — gold on what is now a gold field, i.e. invisible. */
+  color: rgba(63, 34, 8, 0.72);
+  text-shadow: var(--cta-primary-gold-text-shadow);
 }
 
 .kingdom-card-pro-price {
@@ -18357,9 +18386,50 @@ button.web-access-link {
   cursor: pointer;
 }
 
+/* The bell is ART now, not a glyph: `font-size` sized the old ✉️ emoji and
+   does nothing to a <picture>. Height, not width, because the source is taller
+   than wide (954 × 1059) — sizing by width would make it overflow the 44px
+   touch target vertically.
+
+   ⚠️ Deliberately a touch SHORTER than the 44px Daily gift beside it. The Daily
+   is an everyday mechanic; the Inbox is intermittent news, and the size
+   difference is the hierarchy, not an accident of the source aspect ratio. */
 .inbox-chip-icon {
-  font-size: 22px;
-  line-height: 1;
+  display: block;
+  width: auto;
+  height: 30px;
+}
+
+.inbox-chip-icon img {
+  display: block;
+  width: auto;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ACCESS cluster — hairline dividers between "things you can open", so the
+   right side of the header reads as one deliberate group. Only BETWEEN
+   members, never leading or trailing. */
+.play-hub-access-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.play-hub-access-cluster > * + * {
+  position: relative;
+  padding-left: 8px;
+}
+
+.play-hub-access-cluster > * + *::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 18px;
+  width: 1px;
+  transform: translateY(-50%);
+  background: rgba(255, 248, 237, 0.28);
 }
 
 .inbox-chip-badge {

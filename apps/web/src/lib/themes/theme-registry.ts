@@ -149,6 +149,7 @@ export type ThemeAssetKey =
   | "shared.avatar-small-account"
   | "shared.lock"
   | "shared.welcome-gift"
+  | "shared.inbox-bell"
   | "shared.feedback-happy"
   | "shared.feedback-confident"
   | "shared.feedback-scared"
@@ -568,6 +569,10 @@ export const THEMES: Record<string, ThemeDefinition> = {
       "shared.lock": {
         default: "/art/redesign/icons/lock",
         usedIn: ["Locked tiles / gated surfaces", "↳ components/about/about-methodology.tsx", "↳ components/arena/arena-end-state.tsx", "↳ components/arena/arena-hud.tsx", "↳ components/arena/coach-preview-card.tsx", "↳ +161 more"],
+      },
+      "shared.inbox-bell": {
+        default: "/art/shop/inbox-bell",
+        usedIn: ["Hub — Inbox entry", "↳ components/inbox/inbox-trigger.tsx"],
       },
       "shared.welcome-gift": {
         default: "/art/shop/welcome-gift",
@@ -1317,6 +1322,7 @@ const SHARED_SLOT_KEYS: readonly ThemeAssetKey[] = [
   "shared.avatar-small-account",
   "shared.lock",
   "shared.welcome-gift",
+  "shared.inbox-bell",
   "shared.feedback-happy",
   "shared.feedback-confident",
   "shared.feedback-scared",
