@@ -87,10 +87,11 @@ export function PlayHubScaffold({
                 before the first match. 434 of 443 wallets play a single day, so
                 "0 victories" is not a rare state, it is the common one.
 
-                ⚠️ `/trophies` loses its only entry from this hub. The surviving
-                path is `TrophiesSheet` in the arena, which is where a trophy
-                belongs anyway: at the moment of the reward, not before earning
-                one. */}
+                ⚠️ It briefly moved to the floor rail and was removed from there
+                too (2026-08-30, sprint change proposal): a `0` says the same
+                thing 700px lower down. `/trophies` is reached from the arena's
+                TrophiesSheet — at the moment of the reward, which is the only
+                moment it has anything to show. */}
             {/* Peones balance + recharge — same universal economy chip as the
                 LEARN header. The chip hides itself on a `guest` balance; the
                 wallet gate here keeps it out of the tree entirely. */}
@@ -112,9 +113,8 @@ export function PlayHubScaffold({
               deliberate, so it reads as a system instead of as leftovers. */}
           <div className="hub-scaffold-hud-right hub-home-hud-right play-hub-access-cluster">
             {/* Account entry intentionally omitted here (founder 2026-07-07).
-                PRO is no longer here either: it lives in the floor rail as one
-                destination among three, reached on pull after a match rather
-                than met as a banner on arrival. */}
+                PRO is not here either — see the floor rail, where it appears
+                ONLY for an active subscriber. */}
             {!isWalletConnected ? (
               <button
                 type="button"
@@ -126,7 +126,7 @@ export function PlayHubScaffold({
                 <span>{tHud("connectLabel")}</span>
               </button>
             ) : null}
-            <LanguageChip />
+            <LanguageChip variant="bare" />
             {/* Inbox — 2026-08-29. PLAY never had one: `InboxChip` was mounted
                 only in the LEARN hub, so notifications simply did not reach
                 anyone in PLAY.
@@ -224,8 +224,24 @@ export function PlayHubScaffold({
           that effort here does not pay. The Daily survives as the header gift,
           where it does pay.
 
-          PRO takes the freed slot: one destination among three, reached on
-          pull after a match, instead of a permanent banner above the CTA. */}
+          ⛔ THE FREED SLOTS STAY FREE. They were briefly filled with PRO and
+          Trophies, and both were removed the same day by a sprint change
+          proposal, because neither had earned the slot — they were invented to
+          fill a `grid-template-columns: repeat(4, 50px)` that nobody had
+          questioned. The grid now sizes itself to the tiles. **A hole in a
+          layout is not a requirement.**
+
+          Trophies opened at `0` for almost everyone, which is exactly why it
+          left the header; moving that `0` 700px down changes nothing it says.
+          PRO as an offer violates this spec's own Experience Principle 4 —
+          "never sell before the player has played" — and the sale has been
+          paused since 2026-08-25 anyway.
+
+          ⚠️ PRO survives ONLY for an active subscriber, where the tile is
+          STATUS and not an offer: their days remaining, and the way back to the
+          Journal. Removing it outright would have stranded the people who paid,
+          and the flag's own contract is explicit that a paused sale must never
+          revoke access. */}
       <section className="play-hub-path" aria-label={tPlay("playPathLabel")}>
         <h2 className="play-hub-path-label">{tPlay("playPathLabel")}</h2>
         <div className="play-hub-path-grid" aria-label={tPlay("actionsAriaLabel")}>
@@ -246,32 +262,25 @@ export function PlayHubScaffold({
             ariaLabel={tPlay("shopAriaLabel")}
             onClick={onShopTap}
           />
-          {/* ⛔ No price here. `$1.99` used to float over the PRO banner, shown
-              to everyone on arrival — and 59,6% of the people who reach the PRO
-              sheet hold no stablecoin. A price belongs in the sheet, where the
-              player arrived on purpose. */}
-          <HubActionTile
-            className="play-hub-path-tile"
-            tourTarget="pro"
-            iconSlot="hub.pro-chip"
-            /* ⚠️ Pinned, not inherited. `hub.pro-chip` ships two sprites and a
-               paying subscriber must not be shown the purple upsell chip. */
-            iconVariant={pro.active ? "pro" : "default"}
-            label={tHud("proLabel")}
-            ariaLabel={
-              pro.active
-                ? tHud("proAriaLabel", { days: pro.daysRemaining })
-                : tHud("proInactiveAriaLabel")
-            }
-            onClick={onProTap}
-            badge={
-              pro.active ? (
+          {/* ⛔ ACTIVE SUBSCRIBERS ONLY — this is status, never an offer. No
+              price, no "Unlock" kicker: a player who cannot buy it never sees
+              it at all. */}
+          {pro.active ? (
+            <HubActionTile
+              className="play-hub-path-tile"
+              tourTarget="pro"
+              iconSlot="hub.pro-chip"
+              iconVariant="pro"
+              label={tHud("proLabel")}
+              ariaLabel={tHud("proAriaLabel", { days: pro.daysRemaining })}
+              onClick={onProTap}
+              badge={
                 <span className="play-hub-path-tile-badge" aria-hidden="true">
                   {tHud("proRemainingFormat", { days: pro.daysRemaining })}
                 </span>
-              ) : undefined
-            }
-          />
+              }
+            />
+          ) : null}
         </div>
       </section>
     </section>

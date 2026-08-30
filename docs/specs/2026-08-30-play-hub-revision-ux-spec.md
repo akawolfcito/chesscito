@@ -88,8 +88,25 @@ Both are served by the same answer: **one unmistakable way to start playing.**
 | D5 | **PRO moves into the floor rail** | One destination among three, in gold; no longer a permanent banner above the CTA |
 | D6 | **No-scroll is a hard constraint** | Project-wide rule: every screen fits 390 × 844 unless it is a list or long-form content |
 
-**Resulting floor rail:** `Coach · Shop · PRO` — three destinations, none of
-which starts a match.
+**Resulting floor rail:** `Coach · Shop` — two destinations, none of which
+starts a match.
+
+⚠️ **Amended the same day** (`sprint-change-proposal-2026-08-30.md`). This spec
+originally put PRO in the rail and the implementation then added Trophies on top
+of it. Both were removed:
+
+- **PRO as an offer violates this spec's own Experience Principle 4** — "never
+  sell before the player has played" — and the sale has been paused since
+  2026-08-25. It survives ONLY for an active subscriber, where the tile is
+  *status* (days remaining, the way back to the Journal), never a price.
+- **Trophies opened at `0`** for almost everyone, which is precisely why it left
+  the header. Moving that `0` to the floor does not change what it says.
+
+⛔ **Root cause, worth more than either decision:** `.play-hub-path-grid` was
+pinned at `grid-template-columns: repeat(4, 50px)`. The rail lost two tiles, the
+grid kept reserving four, the gap read as "something is missing", and two
+destinations were invented to fill it. **A hole in a layout is not a product
+requirement.** The grid now sizes itself to the tiles.
 
 ---
 

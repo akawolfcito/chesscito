@@ -10804,9 +10804,19 @@ button.hud-resource-chip:active:not(:disabled) {
   color: #f3e6c4;
 }
 
+/* ⛔ THE GRID SIZES ITSELF TO THE TILES — do not pin a column count here.
+   It was `repeat(4, 50px)`, and that pin is the root cause of a whole sprint
+   change proposal (2026-08-30): the rail lost two tiles, the layout kept
+   reserving four slots, the gap read as "something is missing", and two
+   destinations (PRO and Trophies) were invented to fill it. Neither had earned
+   the slot; both were removed the same day.
+
+   A hole in a layout is not a product requirement. `auto-fit` makes the rail
+   follow the product instead of the product following the CSS. */
 .play-hub-path-grid {
   display: grid;
-  grid-template-columns: repeat(4, 50px);
+  grid-auto-flow: column;
+  grid-auto-columns: 50px;
   gap: 12px;
   justify-content: center;
 }
@@ -18388,16 +18398,18 @@ button.web-access-link {
 
 /* The bell is ART now, not a glyph: `font-size` sized the old ✉️ emoji and
    does nothing to a <picture>. Height, not width, because the source is taller
-   than wide (954 × 1059) — sizing by width would make it overflow the 44px
-   touch target vertically.
+   than wide (954 × 1059) — sizing by width would overflow the touch target.
 
-   ⚠️ Deliberately a touch SHORTER than the 44px Daily gift beside it. The Daily
-   is an everyday mechanic; the Inbox is intermittent news, and the size
-   difference is the hierarchy, not an accident of the source aspect ratio. */
+   ⚠️ MATCHES the Daily gift at 44px, deliberately. It shipped at 30px on the
+   theory that the Daily is an everyday mechanic and the Inbox intermittent
+   news, so the size should carry that hierarchy. Overruled on the live screen
+   (founder 2026-08-30): side by side the bell just read as broken, not as
+   secondary. Two icons in one cluster are peers; hierarchy between them is the
+   badge's job, not the size's. */
 .inbox-chip-icon {
   display: block;
   width: auto;
-  height: 30px;
+  height: 44px;
 }
 
 .inbox-chip-icon img {
@@ -18405,6 +18417,32 @@ button.web-access-link {
   width: auto;
   height: 100%;
   object-fit: contain;
+}
+
+/* Locale in the ACCESS cluster: text + caret, no frame, no flag. A framed pill
+   here would read as WEALTH, which is the left zone's job — and the flag was
+   claiming a country when what the control selects is a language. */
+.hub-locale-bare {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 44px; /* Touch target, not the type's size. */
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--cta-primary-purple-color, #fff8ed);
+  font-family: var(--font-game-action);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 0 rgba(37, 7, 55, 0.55);
+  cursor: pointer;
+}
+
+.hub-locale-bare-caret {
+  font-size: 0.85rem;
+  line-height: 1;
+  opacity: 0.85;
 }
 
 /* ACCESS cluster — hairline dividers between "things you can open", so the

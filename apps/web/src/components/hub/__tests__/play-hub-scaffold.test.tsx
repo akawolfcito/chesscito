@@ -186,7 +186,7 @@ describe("PlayHubScaffold", () => {
     expect(screen.queryByText(/Daily Focus/i)).not.toBeInTheDocument();
   });
 
-  it("renders PLAY PATH in DOM order Coach → Shop → PRO", () => {
+  it("renders PLAY PATH in DOM order Coach → Shop", () => {
     render(<PlayHubScaffold {...props} />);
 
     expect(screen.getByText("PLAY PATH")).toBeInTheDocument();
@@ -195,9 +195,8 @@ describe("PlayHubScaffold", () => {
     expect(actions.map((button) => button.textContent)).toEqual([
       "Coach",
       "Shop",
-      "PRO",
     ]);
-    for (const label of ["Coach", "Shop", "PRO"]) {
+    for (const label of ["Coach", "Shop"]) {
       expect(screen.getByText(label)).not.toHaveClass("candy-tray-pill");
     }
   });
@@ -227,13 +226,45 @@ describe("PlayHubScaffold", () => {
     expect(onArenaPress).not.toHaveBeenCalled();
   });
 
-  it("keeps the rail to the three destinations, Warm-up and Duel gone", () => {
+  /* ⛔ The rail holds only what earned a slot. PRO and Trophies were briefly
+   *  added to fill a 4-column CSS grid and removed the same day: a hole in a
+   *  layout is not a product requirement. */
+  it("keeps the rail to the two destinations that earned a slot", () => {
     render(<PlayHubScaffold {...props} />);
 
     const path = screen.getByRole("region", { name: "PLAY PATH" });
-    expect(within(path).getAllByRole("button")).toHaveLength(3);
-    expect(within(path).queryByText("Warm-up")).not.toBeInTheDocument();
-    expect(within(path).queryByText("Duel")).not.toBeInTheDocument();
+    expect(
+      within(path)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["Coach", "Shop"]);
+    for (const gone of ["Warm-up", "Duel", "Trophies"]) {
+      expect(within(path).queryByText(gone)).not.toBeInTheDocument();
+    }
+  });
+
+  /* ⛔ PRO is STATUS here, never an offer. A player who cannot buy it — which
+   *  is 59,6% of the people who reach the PRO sheet, and everyone at all while
+   *  the sale is paused — must never meet it on this screen. */
+  it("shows no PRO tile to a player without an active subscription", () => {
+    render(<PlayHubScaffold {...props} />);
+
+    const path = screen.getByRole("region", { name: "PLAY PATH" });
+    expect(within(path).queryByText("PRO")).not.toBeInTheDocument();
+  });
+
+  it("shows PRO to an active subscriber, as days remaining and not a price", async () => {
+    render(
+      <PlayHubScaffold {...props} pro={{ active: true, daysRemaining: 12 }} />,
+    );
+
+    const path = screen.getByRole("region", { name: "PLAY PATH" });
+    const tile = within(path).getByRole("button", { name: /PRO/ });
+    expect(tile).toHaveTextContent("12d");
+    expect(tile).not.toHaveTextContent("$");
+
+    await userEvent.click(tile);
+    expect(props.onProTap).toHaveBeenCalledTimes(1);
   });
 
   it("still exposes the Daily target, which outlived the tour", () => {

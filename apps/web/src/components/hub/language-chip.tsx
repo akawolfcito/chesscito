@@ -27,7 +27,9 @@ const LOCALE_META: Record<LocaleKey, { flag: string; code: string }> = {
 
 const LOCALES: readonly LocaleKey[] = ["en", "es"];
 
-export function LanguageChip() {
+export type LanguageChipVariant = "pill" | "bare";
+
+export function LanguageChip({ variant = "pill" }: { variant?: LanguageChipVariant } = {}) {
   const t = useTranslations("LANGUAGE_CHIP_COPY");
   const locale = useLocale();
   const router = useRouter();
@@ -56,28 +58,49 @@ export function LanguageChip() {
 
   return (
     <>
-      {/* Flag + locale code chip (founder 2026-06-15): the bare-flag
-          treatment is retired so the language affordance reads as a peer
-          of the trophy / Peones chips. Same canonical HUD pill family
-          (candy-tray-pill + hub-hud-pill + anchored-left): flag in the
-          floating-icon slot, locale code in the value slot. The confirm
-          card still gates the switch. */}
-      <button
-        type="button"
-        onClick={openCard}
-        aria-label={t("ariaLabel")}
-        data-testid="language-chip"
-        className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
-      >
-        <span
-          aria-hidden="true"
-          className="candy-tray-pill-icon candy-tray-pill-icon--floating"
-          style={{ fontSize: "1.5rem", lineHeight: 1 }}
+      {/* Two presentations, one behaviour. The confirm card gates the switch
+          in both — only the trigger changes.
+
+          `pill` (default, LEARN + the internal FULL hub): flag + locale code in
+          the canonical HUD pill family, a peer of the Peones chip. Kept as the
+          default on purpose so those two surfaces are untouched by this prop.
+
+          `bare` (PLAY, founder 2026-08-30): text + chevron, no frame, no flag.
+          It belongs to the header's ACCESS cluster — "things you can open" —
+          and a framed pill there would read as WEALTH, which is the left zone's
+          job. A language is a setting, not something you own, and the flag was
+          also claiming country when what it selects is a language. */}
+      {variant === "bare" ? (
+        <button
+          type="button"
+          onClick={openCard}
+          aria-label={t("ariaLabel")}
+          data-testid="language-chip"
+          className="hub-locale-bare"
         >
-          {current.flag}
-        </span>
-        <span>{current.code}</span>
-      </button>
+          <span>{current.code}</span>
+          <span aria-hidden="true" className="hub-locale-bare-caret">
+            ⌄
+          </span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={openCard}
+          aria-label={t("ariaLabel")}
+          data-testid="language-chip"
+          className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
+        >
+          <span
+            aria-hidden="true"
+            className="candy-tray-pill-icon candy-tray-pill-icon--floating"
+            style={{ fontSize: "1.5rem", lineHeight: 1 }}
+          >
+            {current.flag}
+          </span>
+          <span>{current.code}</span>
+        </button>
+      )}
 
       {confirmOpen ? (
         <VictoryPopupShell
