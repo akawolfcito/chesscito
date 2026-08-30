@@ -138,3 +138,64 @@ sistema de color) se suman ahora la baja del panel, la del tour, el rail nuevo y
 header nuevo. **Todo cae en la misma ventana, sin A/B.** Si el retorno sube, no se
 va a saber cuál lo hizo. Sigue siendo un before/after, con todo lo que eso no
 prueba.
+
+---
+
+## 7. Course correction del mismo día — y un P0 que apareció auditándolo
+
+El founder miró la pantalla en vivo y preguntó: *"¿realmente merece estar ahí
+Trophies? ¿y PRO?"*. Tenía razón, y la causa era peor que la composición.
+
+### 7.1 ⛔ P0 — la pausa de la venta nunca había llegado a PLAY
+
+`isSeasonPassSalesEnabled()` está apagado desde el 2026-08-25, pero la pausa se
+implementó **sólo en LEARN**.
+
+| Superficie | Hoja | ¿Consulta la pausa? |
+| --- | --- | --- |
+| LEARN | `season-pass-sheet.tsx` | ✅ se auto-oculta |
+| **PLAY** | `pro-sheet.tsx` | ⛔ **nunca la miraba** |
+
+El servidor no salva: `verify-payment` **sólo advierte**, a propósito — rechazar
+después del pago se queda con la plata. Su propio comentario nombra el freno
+real: *"la hoja de compra se auto-oculta, que es lo que efectivamente detiene las
+ventas"*. Ese freno tenía **una implementación y dos hojas**.
+
+⚠️ Y había una **segunda puerta** que el primer arreglo no cerraba:
+`pro-extend-link`, un "Renew your training" aparte del CTA, con el mismo
+`onPurchase`. Lo encontró un test que afirmaba *"no hay forma de renovar"* en vez
+de *"el CTA no es de renovación"*. **Una guarda por componente no es una guarda:
+hay que contar los llamadores de `onPurchase`.**
+
+### 7.2 El rail queda en `Coach · Shop`
+
+⛔ **Causa raíz, que vale más que las dos decisiones:** `.play-hub-path-grid`
+estaba pineada en `repeat(4, 50px)`. El rail perdió tiles, la grilla siguió
+reservando cuatro, el hueco se leyó como "falta algo", y se inventaron dos
+destinos para llenarlo. **Un hueco en un layout no es un requerimiento de
+producto.** La grilla ahora se dimensiona sola.
+
+| Tile | Estado | Por qué |
+| --- | --- | --- |
+| Coach | ✅ queda | El único que apunta a la fuga medida (48% no termina) |
+| Shop | ✅ queda | Destino real con tráfico |
+| Trophies | ⛔ sale | Abría en `0` — el mismo defecto por el que salió del header |
+| PRO | ⚠️ **sólo si está activo** | Como oferta viola el principio 4 de la spec. Como **estado** (días restantes, vuelta al Journal) se queda, porque una venta pausada nunca revoca acceso |
+
+### 7.3 Estado de artefactos
+
+⚠️ La propuesta de sprint vive en `_bmad-output/`, que está **gitignoreado**. El
+registro durable es la enmienda en
+`docs/specs/2026-08-30-play-hub-revision-ux-spec.md`, commiteada.
+
+**Verificación final:** 729 archivos / 9.254 tests passed · typecheck limpio · VR
+**68/68 con `--update-snapshots=none`**, 82 baselines antes y después.
+
+### 7.4 Lo que queda abierto
+
+- **¿Cuándo vuelve PRO como oferta?** Necesita la ventana y evidencia sobre quién
+  puede pagar (59,6% sin stablecoin). Decisión del founder, no del código.
+- **¿El bundle PRO debe caer con la pausa del Season Pass?** El flag pausa el
+  *Season Pass*; PRO es "Season Pass + Coach ilimitado". Que el bundle caiga con
+  él se asumió acá — **confirmalo o revertilo a propósito**.
+- Siguen abiertas las deudas 2 (`/trophies` por el arena) y 3 (360×640) del §4.
