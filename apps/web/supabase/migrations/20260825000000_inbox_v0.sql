@@ -53,6 +53,21 @@ CREATE INDEX IF NOT EXISTS idx_inbox_wallet_created
 -- gate: `REVOKE FROM PUBLIC` alone is not enough on Supabase.
 ALTER TABLE inbox_messages ENABLE ROW LEVEL SECURITY;
 
+-- ⛔ DROP-THEN-CREATE, because `CREATE POLICY IF NOT EXISTS` DOES NOT EXIST in
+-- Postgres. Every other statement here is guarded, so this one line was the
+-- whole difference between a migration that can run twice and one that cannot —
+-- and it failed exactly that way (SQLSTATE 42710) against a database where the
+-- objects had been created but the migration was never recorded as applied.
+--
+-- ⚠️ The fix is idempotency, NOT `migration repair`. Marking it applied by hand
+-- would leave a file that still explodes on any fresh database — a new
+-- developer's local, a restore, a second environment. What is applied gets
+-- MEASURED, and a migration has to survive being measured wrong.
+--
+-- Safe by construction: the policy is deny-all, and the drop and the create are
+-- in the same transaction, so no window exists where the table is unprotected.
+DROP POLICY IF EXISTS "deny_all_direct_client_access" ON inbox_messages;
+
 CREATE POLICY "deny_all_direct_client_access"
   ON inbox_messages
   FOR ALL
