@@ -636,7 +636,6 @@ export function LearnHubClient({
     <>
       {CHESSCITO_LITE_MODE ? (
         <HubLiteScaffold
-          trophies={trophies}
           isWalletConnected={isConnected}
           peones={peones.state}
           onPeonesRefetch={() => void peones.refetch()}
@@ -648,13 +647,10 @@ export function LearnHubClient({
                   connectWallet();
                 }
           }
-          onTrophyTap={() => {
-            track("hub_trophy_tap", { count: trophies });
-            router.push("/trophies");
-          }}
           focusPassport={liteFocusPassport}
           challenge={lite.challenge}
           shields={liteShields}
+          compactPassport
           seasonPass={lite.challengeSeasonPass}
           progress={challengeProgress}
           dailySlot={

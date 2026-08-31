@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 type SearchParams = { [key: string]: string | string[] | undefined };
 
-const VARIANTS = new Set<LearnHubVariant>(["guest", "active", "pro", "completed"]);
+const VARIANTS = new Set<LearnHubVariant>(["guest", "habit", "active", "pro", "completed"]);
 
 export default function LearnHubDevPage({
   searchParams,

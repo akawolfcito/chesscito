@@ -2130,7 +2130,7 @@ const messages = {
     // "Ejercicios" — el MISMO nombre que usa el dock, `backToExercises` y el
     // kicker `surfaceExercise`. Una superficie, un nombre.
     // Espeja "RUTA DE JUEGO" de PLAY: mismo producto, dos modos.
-    pathRailLabel: "RUTA DE APRENDIZAJE",
+    pathRailLabel: "CAMPO DE PRUEBAS",
     pathRailAriaLabel: "Atajos de la ruta de aprendizaje",
     exercisesTileLabel: "Ejercicios",
     exercisesEntryLabel: "Ejercicios",

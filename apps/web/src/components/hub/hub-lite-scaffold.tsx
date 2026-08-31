@@ -22,10 +22,10 @@ import type {
   SeasonChallengeMeta,
 } from "@/components/hub/use-hub-data";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import { hapticTap } from "@/lib/haptics";
 
 export type HubLiteScaffoldProps = {
   // ── HUD ──
-  trophies: number;
   isWalletConnected: boolean;
   /** Peones balance, READ BY THE CONTAINER. The chip used to fetch it itself,
    *  which smuggled a wagmi hook into this "no hooks here" tree and made the
@@ -34,7 +34,6 @@ export type HubLiteScaffoldProps = {
   onPeonesRefetch: () => void;
   /** null when already connected (Connect chip hides). */
   onConnectTap: (() => void) | null;
-  onTrophyTap: () => void;
   // ── 21-Day Mind Challenge card ──
   focusPassport: HubFocusPassport;
   challenge: SeasonChallengeMeta;
@@ -89,6 +88,8 @@ export type HubLiteScaffoldProps = {
   /** Re-launches the intro mini-tour from the Focus Passport `?`. Optional so
    *  the scaffold still mounts in `/dev` probes that don't wire the tour. */
   onReplayTour?: () => void;
+  /** Strip mode for the Focus Passport — see `ChallengeCard.compact`. */
+  compactPassport?: boolean;
   /** UTC "YYYY-MM-DD" anchoring the weekly row. Forwarded to `ChallengeCard`,
    *  which defaults to `todayUtc()` when omitted — production omits it.
    *
@@ -120,12 +121,10 @@ export type HubLiteScaffoldProps = {
  *  ChallengeCard, LearnPathEntry) — no data/hooks here; the container hydrates
  *  and passes props. */
 export function HubLiteScaffold({
-  trophies,
   isWalletConnected,
   peones,
   onPeonesRefetch,
   onConnectTap,
-  onTrophyTap,
   focusPassport,
   challenge,
   seasonPass,
@@ -140,6 +139,7 @@ export function HubLiteScaffold({
   rewardTiles,
   onOpenExercisePath,
   onReplayTour,
+  compactPassport = false,
   today,
 }: HubLiteScaffoldProps) {
   const t = useTranslations("HUB_LITE_COPY");
@@ -152,22 +152,14 @@ export function HubLiteScaffold({
     >
       <header className="hub-lite-hud hub-home-hud">
         <div className="hub-lite-hud-left hub-home-hud-left">
-          <button
-            type="button"
-            onClick={onTrophyTap}
-            aria-label={tHud("trophiesAriaLabel", { count: trophies })}
-            className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
-          >
-            <CandyIcon
-              name="trophy"
-              className="candy-tray-pill-icon candy-tray-pill-icon--floating"
-            />
-            <span>{trophies}</span>
-          </button>
+          {/* ⛔ The trophy pill left this row (2026-08-30), exactly as it left
+              PLAY's: it is the FIRST thing a newcomer reads and for almost
+              everyone it said `0` — a scoreboard of nothing, before they have
+              done anything. 434 of 443 wallets play a single day, so `0` is not
+              a rare state, it is the common one. */}
           {/* Peones balance + recharge rail (self-contained: taps open the
               Chesito Card → Get Peones). The green "+" advertises recharge.
-              Left cluster = status pills (trophy · Peones · language), matching
-              the PLAY/FULL header grammar. Hidden for guests by the chip. */}
+              Hidden for guests by the chip. */}
           {isWalletConnected ? (
             <PeonesBalanceChipView
               state={peones}
@@ -176,19 +168,13 @@ export function HubLiteScaffold({
               showRecharge
             />
           ) : null}
-          <LanguageChip />
-          {/* Inbox — its OWN chip, next to the status pills. The gift icon on
-              the right is the Welcome Package claim (7.101 rows in
-              peones_ledger) and is deliberately left alone.
-
-              ⛔ A SLOT, not the component. `InboxChip` calls `useAccount()`, and
-              mounting a wagmi hook in this tree is exactly what the note at the
-              top of this file forbids: it made every `/dev` probe and every
-              scaffold test throw `WagmiProviderNotFoundError`. Same shape as
-              `dailySlot` and `miniGamesSlot`, and for the same reason. */}
-          {inboxSlot}
         </div>
-        <div className="hub-lite-hud-right hub-home-hud-right">
+        {/* ACCESS cluster — the SAME two-zone header PLAY landed on. The split
+            is semantic, not mechanical: everything here is tappable, so
+            interactivity cannot be what separates the zones. Left says "this is
+            what you have", right says "this is what you can open". Hairline
+            dividers make it read as one deliberate group. */}
+        <div className="hub-lite-hud-right hub-home-hud-right play-hub-access-cluster">
           {/* Account entry (circular avatar chip) is intentionally hidden on
               the Learn hub header — account access lives on /exercises.
               `onAccountTap`/`isPro` stay in the props API for the container
@@ -207,6 +193,13 @@ export function HubLiteScaffold({
               <span>{tHud("connectLabel")}</span>
             </button>
           ) : null}
+          <LanguageChip variant="bare" />
+          {/* Inbox — a SLOT, not the component. `InboxChip` calls `useAccount()`
+              and a wagmi hook in this tree throws in every `/dev` probe and
+              scaffold test.
+
+              ⛔ The bell is NEWS; the gift beside it is a MECHANIC. */}
+          {inboxSlot}
           {/* Daily gift = corner-icon trigger (P1-B); opens the same daily sheet.
               `data-tour-target` is what the Hub Tour measures its spotlight
               against — the wrapper, not the tile, so the ring survives the
@@ -255,6 +248,7 @@ export function HubLiteScaffold({
           tappable things at once and singled out none of them. */}
       <div className="hub-lite-challenge-anchor">
         <ChallengeCard
+          compact={compactPassport}
           focusPassport={focusPassport}
           challenge={challenge}
           seasonPass={seasonPass}
@@ -306,17 +300,48 @@ export function HubLiteScaffold({
           Removing either collapses the separation this whole pass exists to
           create — and it would collapse it invisibly, because the tiles would
           still all work. */}
+      {/* ⛔ THE ONE WAY TO START LEARNING — promoted out of the rail (2026-08-30).
+          It was the rail's first tile while a green `Start Focus` CTA sat inside
+          the Focus Passport, and BOTH called
+          `router.push(startFocusExerciseDestination(piece))`: the same resolver,
+          the same destination, one screen. That is the DUEL duplication PLAY
+          had, and it is resolved the same way — one dominant control, and the
+          rail keeps only what it alone can reach.
+
+          ⛔ Purple, matching PLAY's DUEL, and that is measured rather than
+          chosen: the hub is 26,9% gold and 32,9% blue (the sky), so a CTA in
+          either has nothing to contrast against. Green is the world, never a
+          control — which is exactly what the CTA this replaces got wrong. */}
+      <div className="hub-scaffold-cta-row play-hub-cta-row">
+        <button
+          type="button"
+          className="play-chess-cta"
+          data-testid="learn-exercises-cta"
+          data-tour-target="rook"
+          aria-label={t("exercisesEntryAriaLabel")}
+          onClick={() => {
+            hapticTap();
+            onOpenExercisePath();
+          }}
+        >
+          {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+          <ThemeAssetPicture
+            slot="hub.learn-entry"
+            pictureClassName="play-chess-cta-icon"
+            pictureProps={{ "aria-hidden": true }}
+            alt=""
+            draggable={false}
+          />
+          <span>{t("exercisesTileLabel")}</span>
+        </button>
+      </div>
+
       <section
         className="hub-lite-path-rail"
         aria-label={t("pathRailAriaLabel")}
       >
         <h2 className="hub-lite-path-rail-label">{t("pathRailLabel")}</h2>
         <div className="hub-lite-path-rail-grid">
-          <LearnPathEntry
-            tiles={rewardTiles}
-            isHydrated={primaryFocus.isHydrated}
-            onOpen={onOpenExercisePath}
-          />
           {/* ⛔ THE DIVIDER IS NOT DRAWN HERE, and that is the fix for red-team
               EC-1. It used to be `{miniGamesSlot ? <divider/> : null}` — but the
               container always passes `<MiniGamesSlot />`, and a React ELEMENT is

@@ -10233,14 +10233,15 @@ button.hud-resource-chip:active:not(:disabled) {
   height: 100%;
 }
 
-/* PLAY only: the gift art drops to 36px to sit as a peer of the Inbox bell in
-   the ACCESS cluster (founder, 2026-08-30). Scoped to `.play-hub-daily-anchor`
-   because LEARN's header has a different neighbourhood and its baselines should
-   not move for a PLAY composition decision.
+/* Both hubs: the gift art drops to 36px to sit as a peer of the Inbox bell in
+   the ACCESS cluster (founder, 2026-08-30). It started scoped to PLAY only, so
+   LEARN's baselines would not move for a PLAY decision — and then LEARN adopted
+   the same header on purpose, so the scoping became the inconsistency.
 
    ⛔ The BUTTON stays 44 × 44. Only the art inside shrinks — the touch target is
    an accessibility floor, not a visual one. */
-.play-hub-daily-anchor .hub-daily-corner-icon {
+.play-hub-daily-anchor .hub-daily-corner-icon,
+.hub-lite-daily-anchor .hub-daily-corner-icon {
   width: 36px;
   height: 36px;
   margin: auto;

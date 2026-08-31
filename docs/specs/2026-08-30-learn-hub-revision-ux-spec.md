@@ -24,22 +24,37 @@ author: "Wolfcito"
 
 ## Executive Summary
 
-### Key finding — the panel is six times its payload
+### Key finding — ⚠️ CORRECTED, twice
 
-Measured on device (`/dev/learn-hub?variant=active`, 390 × 844):
+**The first two versions of this section were measured against the wrong screen
+and are retracted.** They claimed a 266 px card with a 78 px empty gap and "six
+times its payload". Both numbers came from `/dev/learn-hub?variant=active`, which
+renders the **21-Day Challenge** — a state production has not shipped since
+2026-08-25, when the sale was paused.
 
-| Element | Height | |
-| --- | ---: | --- |
-| `FOCUS PASSPORT` + `?` | 25 px | the label |
-| **empty gap** | **78 px** | ⛔ taller than the content it precedes |
-| Flame row (M–S) | **44 px** | **the actual payload** |
-| Inner spacing | 39 px | |
-| `Start Focus` CTA | 54 px | leaving |
-| Padding | 26 px | |
-| **Total** | **266 px** | 31.5% of the viewport |
+⛔ **Root cause, and it repeated three times in one session:** the fixture did not
+simulate the shipped state. It has four variants and none of them reaches
+`progress.state === "unavailable"`, which is what `habitOnly` derives from. So the
+four `vr18-learn-hub-*` baselines were photographing a screen nobody sees. Same
+family as the Inbox slot the PLAY fixture omitted — but there a single element was
+missing, here it was the whole STATE. **Fixed first (`variant=habit`), measured
+after.**
 
-**The content that matters is 44 px. The panel is 266.** The single largest waste
-is not the CTA — it is a 78 px gap between the label and the flames.
+Measured on `/dev/learn-hub?variant=habit`, 390 × 844 — the state that ships:
+
+| Element | Height |
+| --- | ---: |
+| `Focus Passport` label | 29 px |
+| Flame week (M–S) | 52 px |
+| `Start Focus` CTA | 54 px |
+| Padding + gaps | ~32 px |
+| **Total** | **167 px** |
+
+**There is no internal waste to reclaim.** The gaps are 6 px and 4 px; the card is
+already tight. The only thing to remove is the duplicated CTA.
+
+**Result, verified on device: 167 px → 109 px (−35%)** — label plus flames, nothing
+else. The saving is the CTA, and only the CTA.
 
 ### Design Challenges
 
@@ -60,7 +75,7 @@ is not the CTA — it is a 78 px gap between the label and the flames.
 
 ### Design Opportunities
 
-1. **Compact, don't delete.** Passport 266 px → **~111 px**, freeing ~155 px
+1. **Compact, don't delete.** Passport **167 px → 109 px**, verified on device,
    without losing a single datum.
 2. **One way to start learning**, exactly as PLAY has one way to start a match.
 3. **Two hubs, one grammar.** After this, both are: header · brand · toggle ·
@@ -169,7 +184,7 @@ what this is — and the reason the word itself was unavailable is the table abo
 | --- | ---: | ---: |
 | Header | 6–50 | unchanged |
 | Brand + toggle | 56–265 | unchanged |
-| **Focus Passport** | **279–545 (266)** | **279–390 (~111)** |
+| **Focus Passport** | **279–446 (167)** | **279–388 (109)** ✅ done |
 | World render | — | **~390–620** |
 | **EXERCISES CTA** | — | **~620–690** (thumb zone) |
 | Rail | — | floor |

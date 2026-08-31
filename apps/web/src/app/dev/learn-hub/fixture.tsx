@@ -2,6 +2,7 @@
 
 import { HubLiteScaffold } from "@/components/hub/hub-lite-scaffold";
 import { HubDailyTrigger } from "@/components/hub/hub-daily-trigger";
+import { InboxTrigger } from "@/components/inbox/inbox-trigger";
 import {
   MiniGamesSection,
   type MiniGamesCard,
@@ -31,7 +32,7 @@ import type { ChallengeCardSeasonPass } from "@/components/hub/challenge-card";
  *  catalog, so a tile state — and the photo — would belong to the content
  *  authors. Every handler is a no-op: this probe photographs, it never
  *  navigates. */
-export type LearnHubVariant = "guest" | "active" | "pro" | "completed";
+export type LearnHubVariant = "guest" | "habit" | "active" | "pro" | "completed";
 
 const noop = () => {};
 
@@ -160,6 +161,38 @@ function loopAction(
 }
 
 const VARIANTS: Record<LearnHubVariant, VariantShape> = {
+  /* ⛔ WHAT PRODUCTION ACTUALLY RENDERS since 2026-08-25, and the variant this
+   * fixture was missing.
+   *
+   * Season Pass sales are paused, so `learn-hub-client` passes
+   * `salesPaused: !isSeasonPassSalesEnabled()` and the card collapses to habit
+   * mode: `FOCUS PASSPORT` + the flame week, with no challenge title and none
+   * of the sale's terms ("21 days", "+3 Shields", "Special Training").
+   *
+   * None of the other four variants reach `progress.state === "unavailable"`,
+   * which is what `habitOnly` is derived from — so the four `vr18-learn-hub-*`
+   * baselines have been photographing a screen that has not shipped in days.
+   * Same family as the Inbox slot the PLAY fixture omitted, but worse: there a
+   * single element was missing, here it is the whole STATE.
+   *
+   * ⚠️ A wallet is connected on purpose: the paused sale is what a returning
+   * player sees, and that player has a balance. */
+  habit: {
+    isWalletConnected: true,
+    trophies: 0,
+    peones: PEONES_SETTLED,
+    seasonPass: { active: false, isLoading: false },
+    progress: { state: "unavailable" },
+    passport: {
+      streak: 0,
+      totalCompleted: 0,
+      todayDone: false,
+      isLoading: false,
+      lastCompletedDate: null,
+    },
+    hasJoinCta: false,
+    contentLoop: loopAction("daily-pending", "/exercises?slot=daily"),
+  },
   // No wallet: the Peones chip is absent and the Connect chip takes its place.
   // The card falls back to `offer` — with nothing recorded, there is no number
   // to show.
@@ -274,14 +307,20 @@ export function LearnHubFixture({ variant }: { variant: LearnHubVariant }) {
 
   return (
     <HubLiteScaffold
-      trophies={v.trophies}
       isWalletConnected={v.isWalletConnected}
       peones={v.peones}
       onPeonesRefetch={noop}
       onConnectTap={v.isWalletConnected ? null : noop}
-      onTrophyTap={noop}
       focusPassport={v.passport}
       challenge={CHALLENGE}
+      compactPassport
+      /* Same omission the PLAY fixture had: without this the four vr18
+         baselines froze a header with no bell in it, while the shipped one has
+         one. Follows the wallet, exactly as `InboxChip` does in production
+         (`if (!address) return null`). */
+      inboxSlot={
+        v.isWalletConnected ? <InboxTrigger unread={2} onClick={noop} /> : undefined
+      }
       seasonPass={v.seasonPass}
       progress={v.progress}
       onJoinChallenge={v.hasJoinCta ? noop : null}

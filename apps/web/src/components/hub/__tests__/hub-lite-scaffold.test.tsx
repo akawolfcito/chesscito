@@ -49,13 +49,11 @@ function action(variant: ContentLoopVariant): ContentLoopAction {
 
 function baseProps(over: Partial<HubLiteScaffoldProps> = {}): HubLiteScaffoldProps {
   return {
-    trophies: 1,
     isWalletConnected: false,
     // Told, not fetched — the container owns the wallet read now.
     peones: { kind: "guest" },
     onPeonesRefetch: vi.fn(),
     onConnectTap: vi.fn(),
-    onTrophyTap: vi.fn(),
     focusPassport: { streak: 3, totalCompleted: 3, todayDone: true, isLoading: false },
     challenge: { challengeGoalDays: 21, accessDurationDays: 30, shieldBonus: 3, priceLabel: "$1.99" },
     seasonPass: { active: false, isLoading: false },
@@ -152,12 +150,14 @@ describe("<HubLiteScaffold>", () => {
     }
   });
 
-  it("HUD: trophy chip (count + tap), language chip, daily corner-icon, guest Connect", () => {
-    const onTrophyTap = vi.fn();
+  it("HUD: no trophy chip, language chip, daily corner-icon, guest Connect", () => {
     const onConnectTap = vi.fn();
-    render(<HubLiteScaffold {...baseProps({ onTrophyTap, onConnectTap })} />);
+    render(<HubLiteScaffold {...baseProps({ onConnectTap })} />);
 
-    expect(screen.getByText("1")).toBeInTheDocument();
+    /* ⛔ The trophy pill is gone, mirroring PLAY. It opened this row with a `0`
+     *  for almost everyone — a scoreboard of nothing, read before the player
+     *  has done anything. 434 of 443 wallets play a single day. */
+    expect(screen.queryByLabelText(/Trophies/i)).not.toBeInTheDocument();
     expect(screen.getByTestId("language-chip-stub")).toBeInTheDocument();
     // The daily is whatever the container handed over, mounted inside the
     // anchor the Hub Tour measures its spotlight against.
@@ -402,7 +402,7 @@ describe("<HubLiteScaffold>", () => {
       "status",
     );
 
-    const entry = screen.getByTestId("learn-path-entry");
+    const entry = screen.getByTestId("learn-exercises-cta");
     expect(entry).toBeEnabled();
     expect(entry.getAttribute("aria-disabled")).not.toBe("true");
   });
@@ -487,7 +487,11 @@ describe("<HubLiteScaffold>", () => {
 
   it("Exercise path: exactly ONE entry, and no piece roster", () => {
     const { container } = render(<HubLiteScaffold {...baseProps()} />);
-    expect(screen.getAllByTestId("learn-path-entry")).toHaveLength(1);
+    /* The entry left the rail and became the primary CTA (2026-08-30): it and the
+       green `Start Focus` both called the same resolver, which is the DUEL
+       duplication PLAY had. Still exactly one, just no longer a tile. */
+    expect(screen.getAllByTestId("learn-exercises-cta")).toHaveLength(1);
+    expect(screen.queryByTestId("learn-path-entry")).not.toBeInTheDocument();
 
     /* ⛔ The guard that matters. `rewardTiles` is still a prop (the entry counts
        mastery off it), so a future edit could re-render the roster from data
@@ -512,14 +516,14 @@ describe("<HubLiteScaffold>", () => {
     const { container } = render(<HubLiteScaffold {...baseProps()} />);
     const anchors = container.querySelectorAll('[data-tour-target="rook"]');
     expect(anchors).toHaveLength(1);
-    expect(anchors[0]).toBe(screen.getByTestId("learn-path-entry"));
+    expect(anchors[0]).toBe(screen.getByTestId("learn-exercises-cta"));
   });
 
   it("Exercise path: tapping the entry calls the container's handler", async () => {
     const user = userEvent.setup();
     const onOpenExercisePath = vi.fn();
     render(<HubLiteScaffold {...baseProps({ onOpenExercisePath })} />);
-    await user.click(screen.getByTestId("learn-path-entry"));
+    await user.click(screen.getByTestId("learn-exercises-cta"));
     expect(onOpenExercisePath).toHaveBeenCalledTimes(1);
   });
 
@@ -572,7 +576,7 @@ describe("<HubLiteScaffold>", () => {
     // A divider with nothing on its right is a line that means nothing.
     render(<HubLiteScaffold {...baseProps({ miniGamesSlot: undefined })} />);
     expect(screen.queryByTestId("learn-rail-divider")).toBeNull();
-    expect(screen.getByTestId("learn-path-entry")).toBeInTheDocument();
+    expect(screen.getByTestId("learn-exercises-cta")).toBeInTheDocument();
   });
 
   /* ⛔ THE CASE THE TEST ABOVE DOES NOT COVER, and production is made of it.
@@ -586,7 +590,7 @@ describe("<HubLiteScaffold>", () => {
     const NullSlot = () => null;
     render(<HubLiteScaffold {...baseProps({ miniGamesSlot: <NullSlot /> })} />);
     expect(screen.queryByTestId("learn-rail-divider")).toBeNull();
-    expect(screen.getByTestId("learn-path-entry")).toBeInTheDocument();
+    expect(screen.getByTestId("learn-exercises-cta")).toBeInTheDocument();
   });
 
   it("ES locale: the CTA and the weekly row are translated (i18n parity)", () => {

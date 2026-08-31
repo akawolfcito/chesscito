@@ -3579,7 +3579,7 @@ export const HUB_LITE_COPY = {
   /** The rail's heading. Mirrors PLAY's rail heading so the two home screens
    *  read as the same product with two modes — the whole reason this rail
    *  adopted PLAY's tile form (founder, 2026-08-19). */
-  pathRailLabel: "LEARN PATH",
+  pathRailLabel: "PROVING GROUNDS",
   pathRailAriaLabel: "Learn path shortcuts",
   /** Short tile caption. The plate under a 50px tile fits ~9 characters, so
    *  this is deliberately shorter than `exercisesEntryLabel`, which the old
