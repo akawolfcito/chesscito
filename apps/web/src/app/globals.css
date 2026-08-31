@@ -18552,8 +18552,17 @@ button.web-access-link {
   max-width: var(--app-max-width);
   margin: 0 auto;
   padding: 16px 14px 32px;
-  background: #f7f3e8;
-  color: #2b2118;
+  /* The world, not a cream sheet (founder, 2026-08-30). Same wallpaper the
+     LEARN hub paints, so opening the Inbox does not feel like leaving the game
+     for a settings page. The sky-blue underneath is the tile tone: it shows
+     while the image loads and wherever the art does not reach. */
+  background: #7cc5f0 var(--theme-bg-wallpaper-lite) center top / cover no-repeat;
+  background-attachment: fixed;
+  /* ⛔ NO COLOUR HERE. Setting the chrome's light colour on the ROOT was the
+     obvious move and it broke the messages: the cards paint their own light
+     background but inherited the light text, so every title went white on
+     white. Caught by rendering it, not by any assertion — the DOM was perfect.
+     The chrome carries its own colour below; the card owns its own. */
 }
 
 .inbox-header {
@@ -18572,6 +18581,23 @@ button.web-access-link {
   cursor: pointer;
 }
 
+/* Chrome only — the title, the section headers, the back arrow and the empty
+   state. Explicitly NOT inherited from the root, so a card can never be dragged
+   light-on-light again. */
+.inbox-title,
+.inbox-section-title,
+.inbox-empty {
+  color: #fff8ed;
+  text-shadow:
+    0 2px 0 rgba(37, 7, 55, 0.55),
+    0 0 12px rgba(37, 7, 55, 0.35);
+}
+
+.inbox-back {
+  color: #fff8ed;
+  text-shadow: 0 2px 0 rgba(37, 7, 55, 0.55);
+}
+
 .inbox-title {
   font-size: 20px;
   font-weight: 800;
@@ -18583,13 +18609,16 @@ button.web-access-link {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  opacity: 0.65;
+  /* Was 0.65, for dark text on cream. Against the wallpaper that reads as
+     washed out — the shadow now carries the legibility, so the opacity can
+     stop doing a job it was never good at. */
+  opacity: 0.92;
 }
 
 .inbox-empty {
   padding: 32px 8px;
   text-align: center;
-  opacity: 0.7;
+  opacity: 0.9;
 }
 
 .inbox-card {
@@ -18597,6 +18626,11 @@ button.web-access-link {
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.92);
+  /* ⛔ OWNS ITS TEXT COLOUR. It paints its own light surface, so it must never
+     depend on what the screen sets around it — the screen's chrome went light
+     for the wallpaper and dragged every message title to white-on-white for
+     exactly as long as this line was missing. */
+  color: #2b2118;
   overflow: hidden;
 }
 
