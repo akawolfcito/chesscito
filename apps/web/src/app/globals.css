@@ -9996,7 +9996,19 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin: 4px auto 0;
+  margin: 6px auto 0;
+  /* ⛔ ITS OWN LINE. The rail row is `flex-wrap: wrap` and this footnote is a
+     SIBLING of the tile group, not a child — so while both fitted in one line
+     they sat side by side, and the tiles could never reach the rail's centre:
+     `VIEW ALL` + the counter were eating the right half of the row.
+
+     It fitted for as long as it did because the Exercises tile was there to
+     make the row wide; promoting Exercises to the primary CTA (2026-08-30)
+     narrowed the row and exposed the layout, it did not cause it.
+
+     `flex-basis: 100%` forces the break, and `margin: auto` then centres the
+     footnote on the rail — which is what the sibling structure was for. */
+  flex-basis: 100%;
 }
 
 /* Status: deliberately NOT a pill and NOT bordered. Flat text is what says

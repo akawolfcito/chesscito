@@ -392,8 +392,11 @@ describe("U-4 / U-6 — no prose under the rail", () => {
     renderSection();
     const tiles = screen.getByTestId("minigames-section");
     const siblings = Array.from(tiles.parentElement?.children ?? []);
-    // divider + tile group + footer row. Nothing else.
-    expect(siblings).toHaveLength(3);
+    /* Tile group + footer row. Nothing else — the leading divider left with
+       the Exercises tile it used to separate from (2026-08-30). A divider at
+       the head of the rail divides nothing. */
+    expect(siblings).toHaveLength(2);
+    expect(screen.queryByTestId("learn-rail-divider")).not.toBeInTheDocument();
   });
 });
 

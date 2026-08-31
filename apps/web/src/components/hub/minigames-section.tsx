@@ -137,19 +137,17 @@ export function MiniGamesSection({
        As siblings, the tile group is exactly as wide as its tiles, the divider
        sits against them, and the footnote centres on the rail. */
     <>
-      {/* ⛔ THE DIVIDER TRAVELS WITH THE GROUP. The rail used to own it and
-          decided it from the slot NODE, which is truthy even when this
-          component returns `null` — so it drew a separator over nothing on
-          every first paint (red-team EC-1). Owned here, it exists exactly when
-          there is something to divide, by construction rather than by a guard
-          somebody has to keep correct.
-          Decorative: both groups carry their own accessible name, so announcing
-          a divider would only add noise. */}
-      <span
-        className="hub-lite-path-rail-divider"
-        aria-hidden="true"
-        data-testid="learn-rail-divider"
-      />
+      {/* ⛔ THE DIVIDER IS GONE (2026-08-30), and the comment it replaces is
+          worth keeping as history: it travelled with this group so it would
+          "exist exactly when there is something to divide, by construction".
+          That construction assumed something sat to its LEFT — the Exercises
+          tile. Exercises was promoted out of the rail and became the primary
+          CTA, so the divider led the rail and separated nothing: the very
+          defect (red-team EC-1) the ownership move existed to prevent,
+          re-created from the other side.
+
+          ⚠️ If anything is ever placed before this group again, the divider
+          comes back WITH that thing, not with this one. */}
       <div
         data-testid="minigames-section"
         data-completed-today={String(completedToday)}
