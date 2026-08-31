@@ -84,12 +84,6 @@ import {
 import { useFocusDayRecorder } from "@/lib/season-pass/use-focus-day-recorder";
 import { buildChallengeProgressView } from "@/lib/season-pass/challenge-card-view";
 import { HubLiteScaffold } from "@/components/hub/hub-lite-scaffold";
-import { useHubTour } from "@/components/hub/use-hub-tour";
-import { buildLearnHubTourSteps } from "@/lib/hub/hub-tour";
-const HubTour = dynamic(
-  () => import("@/components/hub/hub-tour").then((m) => m.HubTour),
-  { ssr: false },
-);
 const SeasonPassSheet = CHESSCITO_LITE_MODE
   ? dynamic(
       () => import("@/components/payments/season-pass-sheet").then((m) => m.SeasonPassSheet),
@@ -474,163 +468,47 @@ export function LearnHubClient({
   // resolved — the daily's todayDone and the season pass — because its copy is
   // the product decision: a player who already holds the pass is never sold it
   // again, and one who already solved today's daily is pointed at tomorrow.
-  /* ── Tour → first activity experiment (LEARN only, 2026-08-05) ───────────
-     Control keeps `tour → hub`, byte for byte. The variant opens the Daily
-     Focus sheet that this hub ALREADY owns (`dailyOpen`, wired for the Focus
-     Passport), so there is no parallel micro-experience, no new route, no
-     wallet, no payment and no extra state to keep in sync.
-
-     Idempotence comes for free: the tour writes its seen-flag before
-     `onFinished` runs and only completes once per install, so refresh, back
-     navigation and reentry cannot re-open the activity or re-award anything.
-     The Daily itself is latched by `recordDailyCompletion` exactly as it is
-     for control. */
-  const onboardingVariantRef = useRef<OnboardingVariant | null>(null);
-  const onboardingAutoOpenedRef = useRef(false);
-  const onboardingClosureFiredRef = useRef(false);
-
-  const handleTourFinished = useCallback(
-    ({
-      outcome,
-      replay,
-    }: {
-      outcome: "completed" | "skipped";
-      replay: boolean;
-    }) => {
-      const decision = decideFirstActivity({
-        installId: getAnonymousId(),
-        isLearnSurface: CHESSCITO_LITE_MODE,
-        isReplay: replay,
-        dailyAlreadyDone: liteFocusPassport.todayDone,
-      });
-      if (decision.variant === null) return; // not in the experiment at all
-      onboardingVariantRef.current = decision.variant;
-      emitOnboardingVariantAssigned({ variant: decision.variant, outcome });
-      if (!decision.start) {
-        if (decision.reason === "daily-already-done") {
-          // Assigned to the variant but with nothing to open. Reported as a
-          // failure-to-present plus an explicit fallback, never as a silent
-          // no-op — an arm that quietly does nothing looks like control.
-          emitOnboardingActivityFailed({
-            variant: decision.variant,
-            activity: "daily-focus",
-            reason: "already-done",
-          });
-          emitOnboardingFallbackToHub({
-            variant: decision.variant,
-            reason: "already-done",
-          });
-        }
-        return;
-      }
-
-      emitOnboardingActivityRequested({
-        variant: decision.variant,
-        activity: "daily-focus",
-      });
-
-      // Readiness is checked against the SAME source the tile renders from,
-      // so "ready" cannot be a guess. If today's puzzle does not resolve, the
-      // player simply stays on the hub — the fallback is doing nothing, which
-      // is the one fallback that cannot itself fail.
-      let ready = false;
-      try {
-        ready = Boolean(getDailyTactic(todayUtc()));
-      } catch {
-        ready = false;
-      }
-      if (!ready) {
-        emitOnboardingActivityFailed({
-          variant: decision.variant,
-          activity: "daily-focus",
-          reason: "no-puzzle",
-        });
-        emitOnboardingFallbackToHub({
-          variant: decision.variant,
-          reason: "no-puzzle",
-        });
-        return;
-      }
-
-      onboardingAutoOpenedRef.current = true;
-      setDailyOpen(true);
-      emitOnboardingActivityReady({
-        variant: decision.variant,
-        activity: "daily-focus",
-      });
-    },
-    [liteFocusPassport.todayDone],
-  );
-
-  const hubTour = useHubTour({
-    mode: "learn",
-    enabled: CHESSCITO_LITE_MODE,
-    ready: !liteFocusPassport.isLoading && !seasonPassStatus.loading,
-    onFinished: handleTourFinished,
-  });
-
-  /** The closure screen. Observed from the hub rather than from inside
-   *  `HubDailyTile` so the tile stays unaware of the experiment: the Daily
-   *  flipping to done WHILE the auto-opened sheet is up is exactly "the player
-   *  saw the reward and the streak". Deliberately NOT `daily_streak_updated`,
-   *  which fires from the same block as the completion and would just be the
-   *  completion under a second name. */
-  useEffect(() => {
-    if (!onboardingAutoOpenedRef.current) return;
-    if (onboardingClosureFiredRef.current) return;
-    if (!dailyOpen) return;
-    if (!liteFocusPassport.todayDone) return;
-    const variant = onboardingVariantRef.current;
-    if (!variant) return;
-    onboardingClosureFiredRef.current = true;
-    emitOnboardingClosureShown({
-      variant,
-      closure: liteFocusPassport.streak <= 1 ? "first-focus-day" : "streak",
-    });
-  }, [dailyOpen, liteFocusPassport.todayDone, liteFocusPassport.streak]);
-
-  /** Back on the hub after the activity — the end of the variant's path.
-   *  Separate from `hub_view`, which fires on arrival and is identical for
-   *  both arms. */
-  useEffect(() => {
-    if (!onboardingAutoOpenedRef.current) return;
-    if (dailyOpen) return;
-    const variant = onboardingVariantRef.current;
-    if (!variant) return;
-    onboardingAutoOpenedRef.current = false;
-    emitOnboardingHubReached({
-      variant,
-      completedActivity: liteFocusPassport.todayDone,
-    });
-  }, [dailyOpen, liteFocusPassport.todayDone]);
-  const hubTourSteps = useMemo(
-    () =>
-      buildLearnHubTourSteps({
-        dailyDone: liteFocusPassport.todayDone,
-        // A veteran mid-streak is invited to KEEP it, never to "start" one.
-        streak: liteFocusPassport.streak,
-        hasSeasonPass: seasonPassStatus.active,
-        // The pause has to reach the funnel, not just the card it points at.
-        salesPaused: !isSeasonPassSalesEnabled(),
-        includeDaily: hubTour.includeDaily,
-      }),
-    [
-      liteFocusPassport.todayDone,
-      liteFocusPassport.streak,
-      seasonPassStatus.active,
-      hubTour.includeDaily,
-    ],
-  );
-  // The pass's terms come from the same meta the ChallengeCard renders
-  // (rail-config.ts), so the tour cannot quote a price the card contradicts.
-  const hubTourChallenge = useMemo(
-    () => ({
-      days: lite.challenge.challengeGoalDays,
-      shields: lite.challenge.shieldBonus,
-      price: lite.challenge.priceLabel,
-    }),
-    [lite.challenge],
-  );
+  /* ⛔ The tour → first-activity experiment lived here and was removed with
+   * the tour that triggered it (2026-08-30). See the note above the return:
+   * its variant dropped a player into the Daily because the control landed on
+   * a grid of choices, and that grid no longer exists — the treatment became
+   * the control, so the arms stopped differing.
+   *
+   * `first-activity-experiment.ts` stays with its pure unit tests: the
+   * assignment function is still correct, it simply has no caller. Retire the
+   * module in its own pass, not inside a layout change. */
+  /* ⛔ THE LEARN MINI-TOUR IS REMOVED (2026-08-30), and with it the
+   * first-activity experiment it triggered.
+   *
+   * The tour arbitrated between three things competing for attention — the
+   * Daily, the Season Pass and Exercises. Its Season Pass step already skipped
+   * itself while sales are paused (`skipChallengeStep`), Exercises became the
+   * dominant purple CTA, and the flame strip explains itself. One step was
+   * left, and a one-step tour is not a tour.
+   *
+   * ⛔ The surviving step had nothing to add either: the header gift ALREADY
+   * pulses while the Daily is pending (`.hub-lite-daily-anchor.is-pending`).
+   * A permanent behavioural cue beats a one-time modal — it is there every day
+   * and costs nobody a tap to dismiss.
+   *
+   * ⛔ WHY THE EXPERIMENT GOES WITH IT, at a live 50% rollout. Its hypothesis
+   * was "a player who finishes the tour and lands on A GRID OF CHOICES leaves
+   * without doing anything", and its variant dropped them into the Daily
+   * instead. That grid no longer exists: the control now lands on one purple
+   * CTA. **The treatment became the control**, so the arms stopped differing
+   * and any further data would mix two populations with different controls.
+   * What it already collected stays valid; what it would collect from here
+   * does not.
+   *
+   * ⚠️ Nobody is stranded. The tour showed once per install and wrote its own
+   * key, so every install already assigned has already resolved. This stops
+   * recruitment, it does not revoke anyone.
+   *
+   * ⚠️ `NEXT_PUBLIC_ONBOARDING_FIRST_ACTIVITY_PCT` is still 50 in production —
+   * set it to 0 so the flag matches the code.
+   *
+   * `buildLearnHubTourSteps` and `HubTour` both stay: PLAY's tour is gone but
+   * the component ships, and the builder keeps its own unit tests. */
 
   return (
     <>
@@ -711,7 +589,6 @@ export function LearnHubClient({
             track("hub_account_chip_tap");
             router.push("/exercises?sheet=account");
           }}
-          onReplayTour={hubTour.replay}
         />
       ) : (
       <HubScaffold
@@ -836,14 +713,6 @@ export function LearnHubClient({
           }}
         />
       )}
-      {CHESSCITO_LITE_MODE && hubTour.open ? (
-        <HubTour
-          mode="learn"
-          steps={hubTourSteps}
-          challenge={hubTourChallenge}
-          onFinish={hubTour.finish}
-        />
-      ) : null}
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
         <SheetContent
