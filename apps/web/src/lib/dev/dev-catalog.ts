@@ -235,6 +235,7 @@ export const DEV_SCREENS: readonly DevSurface[] = [
     mounts: [
       "hub/hub-lite-scaffold",
       "hub/challenge-card",
+      "inbox/inbox-trigger",
       "hub/hub-daily-trigger",
       "hub/minigames-section",
       "kingdom/reward-column",
@@ -246,6 +247,7 @@ export const DEV_SCREENS: readonly DevSurface[] = [
       "components/hub/learn-hub-client.tsx",
       "components/hub/learn-path-entry.tsx",
       "components/hub/minigames-slot.tsx",
+      "components/inbox/inbox-chip.tsx",
       "components/payments/season-pass-celebration.tsx",
     ],
   },

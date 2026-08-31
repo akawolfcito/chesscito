@@ -2,6 +2,7 @@
 
 import { HubLiteScaffold } from "@/components/hub/hub-lite-scaffold";
 import { HubDailyTrigger } from "@/components/hub/hub-daily-trigger";
+import { InboxTrigger } from "@/components/inbox/inbox-trigger";
 import {
   MiniGamesSection,
   type MiniGamesCard,
@@ -306,15 +307,20 @@ export function LearnHubFixture({ variant }: { variant: LearnHubVariant }) {
 
   return (
     <HubLiteScaffold
-      trophies={v.trophies}
       isWalletConnected={v.isWalletConnected}
       peones={v.peones}
       onPeonesRefetch={noop}
       onConnectTap={v.isWalletConnected ? null : noop}
-      onTrophyTap={noop}
       focusPassport={v.passport}
       challenge={CHALLENGE}
       compactPassport
+      /* Same omission the PLAY fixture had: without this the four vr18
+         baselines froze a header with no bell in it, while the shipped one has
+         one. Follows the wallet, exactly as `InboxChip` does in production
+         (`if (!address) return null`). */
+      inboxSlot={
+        v.isWalletConnected ? <InboxTrigger unread={2} onClick={noop} /> : undefined
+      }
       seasonPass={v.seasonPass}
       progress={v.progress}
       onJoinChallenge={v.hasJoinCta ? noop : null}

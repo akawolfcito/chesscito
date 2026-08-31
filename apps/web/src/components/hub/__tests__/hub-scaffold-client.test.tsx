@@ -821,7 +821,11 @@ describe("HubScaffoldClient — Lite Mode", () => {
     expect(monEvents).toHaveLength(0);
   });
 
-  it("opens Daily from the passport while Trophies keeps its own destination", async () => {
+  /* ⛔ The trophy chip left the LEARN header on 2026-08-30, mirroring PLAY: it
+   *  opened the row with a `0` for almost everyone. What this test still has to
+   *  hold is the half that matters — the passport opens the Daily IN PLACE and
+   *  never navigates. */
+  it("opens Daily from the passport, in place, with no trophy chip left to tap", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClientLite />);
 
@@ -834,8 +838,8 @@ describe("HubScaffoldClient — Lite Mode", () => {
     await waitFor(() =>
       expect(screen.queryByTestId("daily-tactic-sheet")).not.toBeInTheDocument(),
     );
-    await user.click(screen.getByLabelText("Trophies: 0"));
-    expect(pushMock).toHaveBeenLastCalledWith("/trophies");
+    expect(screen.queryByLabelText(/Trophies/i)).not.toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalled();
   });
 
   // Lite layout (PR B): the standalone Focus Passport + NextStepCard are merged
