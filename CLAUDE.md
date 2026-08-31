@@ -59,13 +59,13 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 ## Convenciones
 - Commits: Conventional Commits (`feat:`, `fix:`, `style:`, `refactor:`)
 - Firma de commit: `Wolfcito 🐾 @akawolfcito`
-- Tests: Vitest + RTL (unit) + Playwright (E2E + VR); **7565 passing / 614 files**
-  (medido en `main` limpio el 2026-08-09, `38b9d6c`). ⚠️ Este número **envejece con cada
+- Tests: Vitest + RTL (unit) + Playwright (E2E + VR); **9235 passing / 728 files**
+  (medido en `main` limpio el 2026-08-31, tras el deploy de los dos hubs). ⚠️ Este número **envejece con cada
   commit**: medilo vos en `main` limpio ANTES de empezar y compará contra esa medición,
   no contra lo que dice acá. Lo que NO envejece es la regla: **si el conteo de archivos
   BAJA respecto de tu propia medición, la corrida no vale** (ver más abajo por qué).
-  ✅ **El VR está 67/67** — verde entero, **verificado con `--update-snapshots=none`**
-  el 2026-08-11 (`9b2f0bba`, 67 passed en 2.9m, baselines en 81 antes y después).
+  ✅ **El VR está 68/68** — verde entero, **verificado con `--update-snapshots=none`**
+  el 2026-08-31 (68 passed, baselines en 82 antes y después).
   ⛔ **Este número también envejece, y NO sólo por código: lo baja tu propio entorno.**
   El 2026-08-11 estaba en **59/67**, y las 8 rojas no tenían regresión ninguna —
   eran `hub-clean`, `hub-shop-sheet-open`, `hub-daily-tactic-open` y **cuatro
@@ -96,6 +96,14 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
   `hub-shop-sheet-open` y `hub-clean` se ponen rojas por el motivo de siempre y **parece**
   una regresión de código. Antes de correr el VR: **bajá tu dev server** y dejá que
   Playwright levante el suyo.
+  ⚠️ **Y el síntoma NO siempre es el banner ámbar.** El 2026-08-31 una corrida dio 21 rojas
+  en vez de 13, con las ocho sospechosas de siempre (`support`, `about`, `terms`, `privacy`,
+  `frame-tablet-600`, `hub-clean`, `hub-daily-tactic-open`, `hub-shop-sheet-open`). El
+  `-actual.png` de `privacy` no tenía banner: era **la pantalla de acceso entera**
+  ("Unlock your Chesscito journey"), porque el server reusado tenía el gate de Privy activo
+  y se tragaba todas las páginas. Con el 3002 libre volvieron a verde **sin tocar una línea**.
+  ⛔ **Chequear el puerto JUSTO ANTES de la corrida que vas a usar para regrabar**, no una
+  vez al empezar: en esa sesión estaba libre al arrancar y el proceso apareció después.
   ⛔ **Un `pnpm dev` (o un túnel) arriba INVALIDA la suite de Vitest, y no de forma honesta.**
   No la pone roja: hace que **algunos workers no arranquen** (`Failed to start forks worker`
   / `Timeout waiting for worker to respond`), y esos archivos **no corren**. El resumen dice
