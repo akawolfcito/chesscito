@@ -6,6 +6,7 @@ import { useCallback } from "react";
 
 import { DuelArena } from "@/components/duel/duel-arena";
 import { getAnonymousId } from "@/lib/analytics/identity";
+import { usePublicNickname } from "@/lib/identity/use-public-nickname";
 
 /**
  * Everything the duel needs from the framework, in one small file.
@@ -18,6 +19,11 @@ import { getAnonymousId } from "@/lib/analytics/identity";
 export function DuelArenaRoute({ duelId }: { duelId: string }) {
   const locale = useLocale();
   const router = useRouter();
+  // The name the RIVAL reads once this player takes the seat. Derived here and
+  // not inside `DuelArena` so that component stays free of wallet context and
+  // testable from props alone. Null until a wallet exists — the ribbon then
+  // falls back to "Your rival", which is what it did before this was wired.
+  const displayName = usePublicNickname();
 
   const onExit = useCallback(() => {
     // Back to the opponent picker, not to the duel we just left: the `?duel=`
@@ -34,6 +40,7 @@ export function DuelArenaRoute({ duelId }: { duelId: string }) {
       // rows in the table the `stats_*` RPCs read and inflate `events/session`
       // and the session counts on the public `/stats` page.
       sessionId={getAnonymousId()}
+      displayName={displayName}
       onExit={onExit}
     />
   );

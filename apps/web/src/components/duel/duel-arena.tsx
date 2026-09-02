@@ -39,12 +39,25 @@ type Props = {
   duelId: string;
   locale: string;
   sessionId?: string | null;
+  /**
+   * The name the RIVAL reads on the ribbon and the matchup screen.
+   *
+   * ⛔ A PROP, not a hook, and it must be the GENERATED nickname — the same one
+   * the leaderboard shows for this wallet. `useDisplayName()` resolves a custom
+   * override that lives only in this device's localStorage, so using it here
+   * would name the player something the person across the board cannot see.
+   * See `project_custom_name_never_leaves_the_device`.
+   *
+   * ⚠️ Null is a real case (no wallet yet): the seat stays anonymous and the
+   * copy falls back to `rivalFallbackName`, which is today's behaviour.
+   */
+  displayName?: string | null;
   onExit: () => void;
 };
 
 type PendingPromotion = { from: string; to: string };
 
-export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
+export function DuelArena({ duelId, locale, sessionId, displayName, onExit }: Props) {
   const t = useTranslations("DUEL_COPY");
   const tArena = useTranslations("ARENA_COPY");
   const { state, notice, busy, join, move, resign, refresh } = useDuel(duelId, {
@@ -288,7 +301,7 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
       {state.kind === "invited" ? (
         <footer className="duel-footer">
           <p className="duel-body">{t("invitedBody")}</p>
-          <PrimaryPlayCta surface="arena-entry" label={busy ? t("invitedJoining") : t("invitedJoin")} ariaLabel={t("invitedJoin")} loading={busy} onPress={() => void join()} />
+          <PrimaryPlayCta surface="arena-entry" label={busy ? t("invitedJoining") : t("invitedJoin")} ariaLabel={t("invitedJoin")} loading={busy} onPress={() => void join(displayName)} />
         </footer>
       ) : null}
 
@@ -301,6 +314,18 @@ export function DuelArena({ duelId, locale, sessionId, onExit }: Props) {
           >
             {t("resign")}
           </button>
+        </footer>
+      ) : null}
+
+      {state.kind === "watching" ? (
+        <footer className="duel-footer">
+          <p className="duel-body">{t("watchingBody")}</p>
+          <PrimaryPlayCta
+            surface="arena-entry"
+            label={t("backToPlay")}
+            ariaLabel={t("backToPlay")}
+            onPress={onExit}
+          />
         </footer>
       ) : null}
 

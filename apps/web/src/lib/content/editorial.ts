@@ -1464,6 +1464,9 @@ export const DUEL_COPY = {
   yourTurn: "Your move",
   theirTurn: "Waiting for your rival",
   watching: "You are watching this game",
+  /** ⛔ The spectator's only control. A forwarded link lands here holding no
+   *  seat, and without this the board is a room with no door. */
+  watchingBody: "Both seats are taken. You can follow the game from here.",
 
   /** Endings. */
   wonCheckmate: "Checkmate. You win.",

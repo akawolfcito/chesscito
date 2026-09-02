@@ -118,14 +118,71 @@ describe("the states a player actually sees", () => {
     expect(await screen.findByText("Waiting for your rival")).toBeInTheDocument();
   });
 
-  /** The forwarded link mid-game: the board, and nothing to press. */
-  it("lets a stranger watch without offering an action", async () => {
+  /**
+   * The forwarded link mid-game: the board, no game action — but a WAY OUT.
+   *
+   * ⛔ This test used to assert "nothing to press", which was the spec's intent
+   * for two coordinated people. Handing links to a group inverts the odds:
+   * three receive, one sits down, and the rest land HERE. Without an exit they
+   * are stranded on a read-only board whose only escape is closing the app.
+   * Resign and Join stay absent — a spectator holds no seat to give up or take.
+   */
+  it("lets a stranger watch, with no game action but a way out", async () => {
     serve(toPublic(game(), null));
     renderArena();
 
     expect(await screen.findByText("You are watching this game")).toBeInTheDocument();
     expect(screen.queryByText("Resign")).not.toBeInTheDocument();
     expect(screen.queryByText("Join the game")).not.toBeInTheDocument();
+    expect(screen.getByText("Back to Play")).toBeInTheDocument();
+  });
+
+  it("takes the spectator out when they press it", async () => {
+    const onExit = vi.fn();
+    serve(toPublic(game(), null));
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <DuelArena duelId={ID} locale="en" sessionId="s" onExit={onExit} />
+      </NextIntlClientProvider>,
+    );
+
+    const exit = await screen.findByText("Back to Play");
+    await act(async () => {
+      exit.click();
+    });
+
+    expect(onExit).toHaveBeenCalled();
+  });
+
+  /**
+   * ⛔ The name the RIVAL reads. It is the generated nickname, handed down as a
+   * prop — never `useDisplayName()`, whose custom override lives only in this
+   * device's localStorage and would name the player something the person on the
+   * other side of the board cannot see.
+   */
+  it("sends the name it was given when taking a seat", async () => {
+    serve(toPublic(invitation(), null));
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <DuelArena
+          duelId={ID}
+          locale="en"
+          sessionId="s"
+          displayName="Swift Rook"
+          onExit={vi.fn()}
+        />
+      </NextIntlClientProvider>,
+    );
+
+    const join = await screen.findByText("Join the game");
+    await act(async () => {
+      join.click();
+    });
+
+    const calls = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls;
+    const joinCall = calls.find(([url]) => String(url).endsWith("/join"));
+    expect(joinCall).toBeDefined();
+    expect(JSON.parse(String(joinCall![1].body)).displayName).toBe("Swift Rook");
   });
 
   /**

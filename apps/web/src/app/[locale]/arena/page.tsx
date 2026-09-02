@@ -89,6 +89,7 @@ import { DuelArenaRoute } from "@/components/duel/duel-arena-route";
 import { DuelSetupSheet } from "@/components/duel/duel-setup-sheet";
 import { DUEL_DISCOVERY_ENABLED } from "@/lib/duel/duel-flag";
 import { getAnonymousId } from "@/lib/analytics/identity";
+import { usePublicNickname } from "@/lib/identity/use-public-nickname";
 
 export default function ArenaPage() {
   // useSearchParams() requires a Suspense boundary for static prerender
@@ -172,6 +173,8 @@ function ArenaPageInner() {
   const game = useChessGame();
 
   const { address, isConnected } = useAccount();
+  /** The name a duel guest reads for this player. See `usePublicNickname`. */
+  const publicNickname = usePublicNickname();
   const { connectWallet } = useConnectWallet();
   const victoryConnectPrompt = useConnectPrompt("victory");
   // Same hook the /hub PRO chip uses — single source of truth across
@@ -1290,6 +1293,10 @@ function ArenaPageInner() {
           {duelSetupOpen ? (
             <DuelSetupSheet
               sessionId={getAnonymousId()}
+              // The name the GUEST reads on the invitation ("{name} wants to
+              // play") and on the matchup ribbon. Generated nickname, never the
+              // localStorage custom — see `usePublicNickname`.
+              displayName={publicNickname}
               onCancel={() => setDuelSetupOpen(false)}
               // ⛔ `replace`, not `push`: the duel takes over this same surface,
               // so a Back tap should leave the Arena rather than land the

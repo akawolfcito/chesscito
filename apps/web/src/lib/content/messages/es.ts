@@ -640,6 +640,7 @@ const messages = {
     yourTurn: "Tu turno",
     theirTurn: "Esperando a tu rival",
     watching: "Estás mirando esta partida",
+    watchingBody: "Los dos asientos están ocupados. Podés seguir la partida desde acá.",
 
     wonCheckmate: "Jaque mate. Ganaste.",
     lostCheckmate: "Jaque mate. Perdiste.",
