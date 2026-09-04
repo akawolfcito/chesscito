@@ -192,15 +192,18 @@ describe("PlayHubScaffold", () => {
     expect(screen.queryByText(/Daily Focus/i)).not.toBeInTheDocument();
   });
 
-  it("renders PLAY PATH in DOM order Coach → Shop", () => {
+  it("renders PLAY PATH in DOM order Coach → Shop → PRO", () => {
     render(<PlayHubScaffold {...props} />);
 
     expect(screen.getByText(PLAY_HUB_COPY.playPathLabel)).toBeInTheDocument();
     const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
     const actions = within(path).getAllByRole("button");
+    // ⚠️ PRO va ÚLTIMO, y no es casual: el orden lo pone después de los dos
+    // destinos gratuitos, así que la oferta se encuentra sin encabezar la fila.
     expect(actions.map((button) => button.textContent)).toEqual([
       "Coach",
       "Shop",
+      "PRO",
     ]);
     for (const label of ["Coach", "Shop"]) {
       expect(screen.getByText(label)).not.toHaveClass("candy-tray-pill");
@@ -232,10 +235,15 @@ describe("PlayHubScaffold", () => {
     expect(onArenaPress).not.toHaveBeenCalled();
   });
 
-  /* ⛔ The rail holds only what earned a slot. PRO and Trophies were briefly
-   *  added to fill a 4-column CSS grid and removed the same day: a hole in a
-   *  layout is not a product requirement. */
-  it("keeps the rail to the two destinations that earned a slot", () => {
+  /* ⛔ El rail sostiene sólo lo que se ganó un lugar. Un hueco en un layout no
+   *  es un requisito de producto, y por eso Trophies NO vuelve: abría en `0`
+   *  para casi todo el mundo y moverlo 700px hacia abajo no cambia lo que dice.
+   *
+   *  ⚠️ PRO sí vuelve (2026-09-04), y no para llenar la grilla: escondiéndolo,
+   *  `play_hub_pro_tap` se fue a CERO y con él la única evidencia medida de que
+   *  el precio está por encima de la billetera. Se ganó el lugar en la puerta
+   *  porque es la puerta. */
+  it("keeps the rail to the destinations that earned a slot", () => {
     render(<PlayHubScaffold {...props} />);
 
     const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
@@ -243,20 +251,51 @@ describe("PlayHubScaffold", () => {
       within(path)
         .getAllByRole("button")
         .map((button) => button.textContent),
-    ).toEqual(["Coach", "Shop"]);
+    ).toEqual(["Coach", "Shop", "PRO"]);
     for (const gone of ["Warm-up", "Duel", "Trophies"]) {
       expect(within(path).queryByText(gone)).not.toBeInTheDocument();
     }
   });
 
-  /* ⛔ PRO is STATUS here, never an offer. A player who cannot buy it — which
-   *  is 59,6% of the people who reach the PRO sheet, and everyone at all while
-   *  the sale is paused — must never meet it on this screen. */
-  it("shows no PRO tile to a player without an active subscription", () => {
+  /**
+   * ⛔ INTENCIÓN INVERTIDA A PROPÓSITO (2026-09-04). Este test exigía que un no
+   * suscriptor NO viera la baldosa, y esa regla se midió en producción:
+   *
+   *   - `play_hub_pro_tap` pasó de ~25 cuentas/día a **CERO** el 31-08, mientras
+   *     `play_hub_view` seguía plano (~80/día). El tap del hub era el ÚNICO
+   *     camino al sheet: `pro_card_viewed` es 100% `surface:"sheet"` y el chip
+   *     no dispara nunca.
+   *   - Con la oferta escondida también se apagó el INSTRUMENTO: las 517 cuentas
+   *     con `pro_purchase_failed` + `read_usdt:"under_price"` son la única
+   *     evidencia de que el precio está por encima de la billetera, y esa señal
+   *     la producía gente intentando y fallando.
+   *
+   * ⚠️ Y su justificación tenía una premisa FALSA: *"everyone at all while the
+   * sale is paused"*. **PRO no es el Season Pass.** `verify-payment` separa
+   * `SEASON_PASSES` de `PRO_PACKS`, el flag gatea sólo la primera familia, y
+   * este sheet compra `chesscito_pro_30`. `pro-sheet.tsx:119-137` documenta que
+   * ese mismo error se cometió el 30-08 y se revirtió el mismo día.
+   */
+  it("offers PRO to a player without a subscription, and without a price", () => {
     render(<PlayHubScaffold {...props} />);
 
     const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
-    expect(within(path).queryByText("PRO")).not.toBeInTheDocument();
+    const tile = within(path).getByRole("button", { name: /PRO/ });
+
+    expect(tile).toBeInTheDocument();
+    // ⛔ El precio vive en el sheet, donde el jugador llegó a propósito. Acá no.
+    expect(tile).not.toHaveTextContent("$");
+    // Y sin badge de días: no tiene ninguno que mostrar.
+    expect(tile).not.toHaveTextContent(/\dd/);
+  });
+
+  it("takes a non-subscriber to the sheet when they tap it", async () => {
+    render(<PlayHubScaffold {...props} />);
+
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
+    await userEvent.click(within(path).getByRole("button", { name: /PRO/ }));
+
+    expect(props.onProTap).toHaveBeenCalledTimes(1);
   });
 
   it("shows PRO to an active subscriber, as days remaining and not a price", async () => {

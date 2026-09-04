@@ -262,25 +262,50 @@ export function PlayHubScaffold({
             ariaLabel={tPlay("shopAriaLabel")}
             onClick={onShopTap}
           />
-          {/* ⛔ ACTIVE SUBSCRIBERS ONLY — this is status, never an offer. No
-              price, no "Unlock" kicker: a player who cannot buy it never sees
-              it at all. */}
-          {pro.active ? (
-            <HubActionTile
-              className="play-hub-path-tile"
-              tourTarget="pro"
-              iconSlot="hub.pro-chip"
-              iconVariant="pro"
-              label={tHud("proLabel")}
-              ariaLabel={tHud("proAriaLabel", { days: pro.daysRemaining })}
-              onClick={onProTap}
-              badge={
+          {/* ⛔ VISIBLE PARA TODOS, y para el no suscriptor es una OFERTA.
+              Restaurado el 2026-09-04 revirtiendo `95540ed9`, que lo dejó sólo
+              para `pro.active`. Lo que se midió después de ese cambio:
+
+                · `play_hub_pro_tap` cayó de ~25 cuentas/día a CERO el 31-08,
+                  con `play_hub_view` plano en ~80. Este tap es el ÚNICO camino
+                  al sheet — `pro_card_viewed` es 100% `surface:"sheet"` y el
+                  chip no dispara nunca. Esconder la baldosa cerró la puerta.
+                · Y apagó el instrumento: las 517 cuentas con
+                  `pro_purchase_failed` + `read_usdt:"under_price"` son la única
+                  evidencia de que el precio está sobre la billetera, y la
+                  producían personas intentando comprar.
+
+              ⚠️ Aquel commit se justificó en parte con "the sale has been paused
+              since 2026-08-25 anyway". Es FALSO: PRO no es el Season Pass. El
+              flag gatea `SEASON_PASSES`, este sheet compra `chesscito_pro_30`
+              de `PRO_PACKS`. Ver `pro-sheet.tsx:119-137`, que documenta el mismo
+              error cometido y revertido el 30-08.
+
+              ⛔ SIN PRECIO ACÁ. `$1.99` flotaba sobre el banner y se le mostraba
+              a todos al llegar; el precio vive en el sheet, donde el jugador
+              llegó a propósito. */}
+          <HubActionTile
+            className="play-hub-path-tile"
+            tourTarget="pro"
+            iconSlot="hub.pro-chip"
+            /* ⚠️ Pinned, not inherited. `hub.pro-chip` ships two sprites and a
+               paying subscriber must not be shown the purple upsell chip. */
+            iconVariant={pro.active ? "pro" : "default"}
+            label={tHud("proLabel")}
+            ariaLabel={
+              pro.active
+                ? tHud("proAriaLabel", { days: pro.daysRemaining })
+                : tHud("proInactiveAriaLabel")
+            }
+            onClick={onProTap}
+            badge={
+              pro.active ? (
                 <span className="play-hub-path-tile-badge" aria-hidden="true">
                   {tHud("proRemainingFormat", { days: pro.daysRemaining })}
                 </span>
-              }
-            />
-          ) : null}
+              ) : undefined
+            }
+          />
         </div>
       </section>
     </section>
