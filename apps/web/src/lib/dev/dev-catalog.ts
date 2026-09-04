@@ -379,6 +379,9 @@ export const DEV_SCREENS: readonly DevSurface[] = [
     consumers: [
       "components/kingdom/kingdom-card.tsx",
       "components/hub/hub-scaffold.tsx",
+      // 2026-09-04: PLAY monta el mismo chip en su ACCESS cluster, así que
+      // restilar desde /dev/pro-chip ahora mueve también el hub de PLAY.
+      "components/hub/play-hub-scaffold.tsx",
     ],
   },
   {
