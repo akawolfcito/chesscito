@@ -24,6 +24,7 @@
     "ops:health": "pnpm -C apps/web exec tsx ../../scripts/ops/launch-health-snapshot.ts",
     "ops:backup": "pnpm -C apps/web exec tsx ../../scripts/ops/backup.ts",
     "ops:backup:verify": "pnpm -C apps/web exec tsx ../../scripts/ops/backup.ts --verify",
+    "ops:backup:verified": "pnpm -C apps/web exec tsx ../../scripts/ops/verified-backup.ts",
     "ops:archive": "pnpm -C apps/web exec tsx ../../scripts/ops/archive.ts",
     "ops:no-token": "pnpm -C apps/web exec tsx ../../scripts/ops/no-token-observation.ts",
     "ops:query": "pnpm -C apps/web exec tsx ../../scripts/ops/read-only-query.ts",

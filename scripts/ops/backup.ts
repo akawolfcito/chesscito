@@ -205,19 +205,26 @@ function verifyRestore(dir: string): number {
   try {
     execFileSync("docker", [
       "run", "--rm", "-d", "--name", name,
+      // Postgres images declare a data VOLUME. A disposable restore must never
+      // materialize that as an anonymous Docker volume: use memory instead so
+      // a failed validation cannot slowly fill the host with orphaned volumes.
+      "--tmpfs", "/var/lib/postgresql/data:rw,noexec,nosuid,size=512m",
       "-e", "POSTGRES_PASSWORD=throwaway",
       "-e", "POSTGRES_DB=restore",
       PG_IMAGE,
     ], { encoding: "utf8", timeout: 120_000 });
 
+    let ready = false;
     for (let i = 0; i < 60; i++) {
       try {
         execFileSync("docker", ["exec", name, "pg_isready", "-U", "postgres"], { stdio: "ignore" });
+        ready = true;
         break;
       } catch {
         execFileSync("sh", ["-c", "sleep 1"]);
       }
     }
+    if (!ready) throw new Error("disposable restore database did not become ready within 60 seconds");
 
     // Drop the container's default `public` so the DUMP creates everything.
     // Otherwise its own `CREATE SCHEMA public` collides and the restore is only
@@ -359,5 +366,7 @@ function main(argv: readonly string[]): number {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  process.exit(main(process.argv.slice(2)));
+  // Give redacted diagnostics time to reach the terminal. `process.exit()` can
+  // truncate stdout/stderr when this command is called through pnpm.
+  process.exitCode = main(process.argv.slice(2));
 }

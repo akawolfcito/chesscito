@@ -31,7 +31,7 @@
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -278,6 +278,21 @@ export function redactSecrets(text: string, s: { password: string; ref: string }
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const ARCHIVE_DIR = path.join(REPO_ROOT, ARCHIVE_ROOT_SUFFIX);
+const PRIVATE_DIR = path.join(REPO_ROOT, "private");
+// Exporting straight into the live archive can leave a new manifest next to files
+// from an older retention window. Build and prove a complete release elsewhere,
+// then replace the directory only after it has passed its own offline check.
+const STAGING_DIR = path.join(PRIVATE_DIR, ".archive-next");
+const PREVIOUS_DIR = path.join(PRIVATE_DIR, ".archive-previous");
+
+function assertUnderPrivateRoot(target: string): string {
+  const normalized = path.normalize(target);
+  const relative = path.relative(PRIVATE_DIR, normalized);
+  if (relative === "" || relative.startsWith("..") || path.isAbsolute(relative)) {
+    throw new Error(`refusing to use a path outside private storage`);
+  }
+  return normalized;
+}
 
 function credentials() {
   const env = loadOpsEnv(REPO_ROOT);
@@ -288,7 +303,7 @@ function credentials() {
 }
 
 /** DuckDB WITH the read-only Postgres attachment. */
-function duckWithPg(sql: string, creds: { ref: string; password: string }): string {
+function duckWithPg(sql: string, creds: { ref: string; password: string }, archiveDir = ARCHIVE_DIR): string {
   assertNoWrites(sql);
   const attach =
     `INSTALL postgres; LOAD postgres;\n` +
@@ -300,7 +315,7 @@ function duckWithPg(sql: string, creds: { ref: string; password: string }): stri
       "run", "--rm",
       // ⛔ BY NAME, NEVER `NAME=value`. See the note on `childEnv` below.
       "-e", "PGPASSWORD",
-      "-v", `${ARCHIVE_DIR}:/out`,
+      "-v", `${assertUnderPrivateRoot(archiveDir)}:/out`,
       DUCKDB_IMAGE,
       "/duckdb", "-c", `${attach}${sql}`,
     ],
@@ -314,14 +329,14 @@ function duckWithPg(sql: string, creds: { ref: string; password: string }): stri
 }
 
 /** DuckDB with NO network at all — proves the archive stands on its own. */
-function duckOffline(sql: string): string {
+function duckOffline(sql: string, archiveDir = ARCHIVE_DIR): string {
   assertNoWrites(sql);
   return execFileSync(
     "docker",
     [
       "run", "--rm",
       "--network", "none",
-      "-v", `${ARCHIVE_DIR}:/out`,
+      "-v", `${assertUnderPrivateRoot(archiveDir)}:/out`,
       DUCKDB_IMAGE,
       "/duckdb", "-json", "-c", sql,
     ],
@@ -372,8 +387,8 @@ function listParquet(dir: string): string[] {
   return out.sort();
 }
 
-function observedFromArchive(): ObservedPartition[] {
-  const raw = duckOffline(buildVerifySql()).trim();
+function observedFromArchive(archiveDir = ARCHIVE_DIR): ObservedPartition[] {
+  const raw = duckOffline(buildVerifySql(), archiveDir).trim();
   if (!raw) return [];
   return (JSON.parse(raw) as ObservedPartition[]).map((r) => ({
     partition: String(r.partition),
@@ -399,9 +414,13 @@ export function partitionsFromFiles(files: readonly ArchiveFile[]): string[] {
   return [...new Set(files.map((f) => f.partition))];
 }
 
-function buildManifest(range: DateRange, source: readonly ObservedPartition[]): Manifest {
-  const files: ArchiveFile[] = listParquet(ARCHIVE_DIR).map((file) => {
-    const rel = path.relative(ARCHIVE_DIR, file);
+function buildManifest(
+  range: DateRange,
+  source: readonly ObservedPartition[],
+  archiveDir = ARCHIVE_DIR,
+): Manifest {
+  const files: ArchiveFile[] = listParquet(archiveDir).map((file) => {
+    const rel = path.relative(archiveDir, file);
     const table = rel.split("/")[0]!;
     return {
       table,
@@ -412,6 +431,48 @@ function buildManifest(range: DateRange, source: readonly ObservedPartition[]): 
     };
   });
   return { created_at: new Date().toISOString(), range, partitions: [...source], files };
+}
+
+function verifyArchive(manifest: Manifest, archiveDir = ARCHIVE_DIR): { ok: boolean; failures: string[] } {
+  const result = verifyManifest(manifest.partitions, observedFromArchive(archiveDir));
+  for (const entry of manifest.files) {
+    const file = path.join(archiveDir, entry.filename);
+    if (!existsSync(file)) {
+      result.failures.push(`${entry.filename}: missing from the archive`);
+    } else if (sha256(file) !== entry.sha256) {
+      result.failures.push(`${entry.filename}: sha256 changed`);
+    }
+  }
+  result.ok = result.failures.length === 0;
+  return result;
+}
+
+function prepareStaging(): void {
+  const staging = assertUnderPrivateRoot(STAGING_DIR);
+  rmSync(staging, { recursive: true, force: true });
+  // DuckDB creates partition directories itself, but not the explicit output
+  // directories used by the two lookup-table COPY statements.
+  mkdirSync(path.join(staging, "account_first_seen"), { recursive: true });
+  mkdirSync(path.join(staging, "session_first_seen"), { recursive: true });
+}
+
+/** Publish only a release that already passed its offline verification. */
+function publishStaging(): void {
+  const staging = assertUnderPrivateRoot(STAGING_DIR);
+  const previous = assertUnderPrivateRoot(PREVIOUS_DIR);
+  if (!existsSync(staging)) throw new Error("cannot publish a missing staged archive");
+
+  // A previous release is removed only after the replacement has been built and
+  // verified. `rename` stays on one filesystem, so consumers never see a mix
+  // of a new manifest with old Parquet files.
+  rmSync(previous, { recursive: true, force: true });
+  renameSync(ARCHIVE_DIR, previous);
+  try {
+    renameSync(staging, ARCHIVE_DIR);
+  } catch (err) {
+    renameSync(previous, ARCHIVE_DIR);
+    throw err;
+  }
 }
 
 function report(manifest: Manifest, result: { ok: boolean; failures: string[] }): void {
@@ -438,12 +499,7 @@ export function main(argv: readonly string[]): number {
     if (command.kind === "verify") {
       const manifestPath = assertUnderArchiveRoot(path.resolve(REPO_ROOT, command.manifestPath));
       const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Manifest;
-      const result = verifyManifest(manifest.partitions, observedFromArchive());
-      for (const entry of manifest.files) {
-        const file = path.join(ARCHIVE_DIR, entry.filename);
-        if (sha256(file) !== entry.sha256) result.failures.push(`${entry.filename}: sha256 changed`);
-      }
-      result.ok = result.failures.length === 0;
+      const result = verifyArchive(manifest);
       report(manifest, result);
       return result.ok ? 0 : 1;
     }
@@ -461,16 +517,19 @@ export function main(argv: readonly string[]): number {
       range = command.range;
     }
 
-    duckWithPg(buildExportSql(range), creds);
+    prepareStaging();
+    duckWithPg(buildExportSql(range), creds, STAGING_DIR);
     const source = sourcePartitions(range, creds);
-    const manifest = buildManifest(range, source);
-    const result = verifyManifest(manifest.partitions, observedFromArchive());
+    const manifest = buildManifest(range, source, STAGING_DIR);
+    const result = verifyArchive(manifest, STAGING_DIR);
+    report(manifest, result);
+    if (!result.ok) return 1;
     writeFileSync(
-      assertUnderArchiveRoot(path.join(ARCHIVE_DIR, "manifest.json")),
+      assertUnderPrivateRoot(path.join(STAGING_DIR, "manifest.json")),
       `${JSON.stringify(manifest, null, 2)}\n`,
     );
-    report(manifest, result);
-    return result.ok ? 0 : 1;
+    publishStaging();
+    return 0;
   } catch (err) {
     const e = err as { stdout?: string; stderr?: string; message?: string };
     const text = `${e.stdout ?? ""}${e.stderr ?? ""}${e.message ?? ""}`;
