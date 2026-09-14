@@ -81,7 +81,7 @@ export async function POST(
   }
 
   try {
-    await enforceRateLimit(getRequestIp(req), wallet);
+    await enforceRateLimit(getRequestIp(req), wallet, "/api/games/[id]/mint-receipt");
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

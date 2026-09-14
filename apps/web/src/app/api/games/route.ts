@@ -4,6 +4,7 @@ import { isAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { enforceGameCap, GAME_LIST_LPUSH_LUA, UUID_RE } from "@/lib/coach/game-persistence";
 import { createLogger, hashWallet } from "@/lib/server/logger";
+import { recordRedisUsage } from "@/lib/server/redis-observability";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import type { GameRecord } from "@/lib/coach/types";
 
@@ -15,7 +16,7 @@ const log = createLogger({ route: "/api/games" });
 export async function POST(req: Request) {
   try {
     enforceOrigin(req);
-    await enforceRateLimit(getRequestIp(req));
+    await enforceRateLimit(getRequestIp(req), undefined, "/api/games");
 
     const body = await req.json();
     const { walletAddress, game } = body as { walletAddress?: string; game?: GameRecord };
@@ -80,7 +81,7 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   try {
     enforceOrigin(req);
-    await enforceRateLimit(getRequestIp(req));
+    await enforceRateLimit(getRequestIp(req), undefined, "/api/games");
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -109,5 +110,14 @@ export async function GET(req: Request) {
     validIds.map((id) => redis.get<GameRecord>(REDIS_KEYS.game(wallet, id))),
   );
 
-  return NextResponse.json(games.filter(Boolean));
+  const returned = games.filter(Boolean);
+  recordRedisUsage(log, {
+    redis_feature: "games_list",
+    redis_logical_operation: "list_and_hydrate",
+    endpoint: "/api/games",
+    redis_estimated_commands: 1 + validIds.length,
+    items_requested: validIds.length,
+    items_returned: returned.length,
+  });
+  return NextResponse.json(returned);
 }

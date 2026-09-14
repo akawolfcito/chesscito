@@ -50,7 +50,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    await enforceEarlyAccessRateLimit(getRequestIp(req));
+    await enforceEarlyAccessRateLimit(getRequestIp(req), "/api/early-access/request");
   } catch {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }

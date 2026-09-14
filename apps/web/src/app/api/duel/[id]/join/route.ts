@@ -51,7 +51,7 @@ export async function POST(
     }
 
     try {
-      await enforceRateLimit(getRequestIp(request));
+      await enforceRateLimit(getRequestIp(request), undefined, "/api/duel/[id]/join");
     } catch {
       return jsonError(429, "rate_limited");
     }

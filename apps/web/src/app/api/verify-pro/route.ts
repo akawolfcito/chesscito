@@ -29,7 +29,7 @@ const client = SHOP_ADDRESS
 export async function POST(req: Request) {
   try {
     enforceOrigin(req);
-    await enforceRateLimit(getRequestIp(req));
+    await enforceRateLimit(getRequestIp(req), undefined, "/api/verify-pro");
 
     const body = await req.json();
     const { txHash, walletAddress } = body as { txHash?: string; walletAddress?: string };

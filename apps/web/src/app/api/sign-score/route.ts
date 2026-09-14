@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       timeMs?: number;
     };
     const player = parseAddress(body.player);
-    await enforceRateLimit(getRequestIp(request), player);
+    await enforceRateLimit(getRequestIp(request), player, "/api/sign-score");
 
     const levelId = parseInteger(body.levelId, "levelId", 1, 10_000);
     // Input validation, not anti-cheat, and deliberately generous: a tight

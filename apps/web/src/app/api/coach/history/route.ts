@@ -8,6 +8,7 @@ import { checkRateLimit } from "@/lib/server/rate-limit";
 import { getRedis } from "@/lib/server/redis";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { createLogger, hashWallet } from "@/lib/server/logger";
+import { recordRedisUsage } from "@/lib/server/redis-observability";
 import type { GameRecord } from "@/lib/coach/types";
 
 const redis = getRedis();
@@ -64,7 +65,18 @@ export async function GET(req: Request) {
     }),
   );
 
-  return NextResponse.json(entries.filter(Boolean));
+  const returned = entries.filter(Boolean);
+  recordRedisUsage(createLogger({ route: "/api/coach/history" }), {
+    redis_feature: "coach_history",
+    redis_logical_operation: "list_and_hydrate",
+    endpoint: "/api/coach/history",
+    // One LRANGE plus one game GET and one-or-two analysis GETs per item.
+    redis_estimated_commands: 1 + gameIds.length * (requestedLocale === "en" ? 3 : 2),
+    cache_result: returned.length > 0 ? "hit" : "miss",
+    items_requested: gameIds.length,
+    items_returned: returned.length,
+  });
+  return NextResponse.json(returned);
 }
 
 const NONCE_TTL_S = 300;
@@ -81,7 +93,7 @@ export async function DELETE(req: Request) {
 
   try {
     enforceOrigin(req);
-    await enforceRateLimit(getRequestIp(req));
+    await enforceRateLimit(getRequestIp(req), undefined, "/api/coach/history");
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

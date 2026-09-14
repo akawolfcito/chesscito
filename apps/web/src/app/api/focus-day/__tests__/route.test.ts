@@ -170,7 +170,7 @@ describe("rate limit", () => {
 
   it("limits per wallet, lowercased", async () => {
     await POST(makeRequest({ wallet: WALLET }));
-    expect(mockRateLimit).toHaveBeenCalledWith(LOWER);
+    expect(mockRateLimit).toHaveBeenCalledWith(LOWER, "/api/focus-day");
   });
 });
 

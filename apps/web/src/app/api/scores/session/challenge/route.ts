@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    await enforceScoreSaveRateLimit(getRequestIp(req));
+    await enforceScoreSaveRateLimit(getRequestIp(req), "/api/scores/session/challenge");
   } catch {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }

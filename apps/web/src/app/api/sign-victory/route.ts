@@ -85,7 +85,7 @@ export async function POST(request: Request) {
     };
 
     const player = parseAddress(body.player);
-    await enforceRateLimit(getRequestIp(request), player);
+    await enforceRateLimit(getRequestIp(request), player, "/api/sign-victory");
 
     const difficulty = parseInteger(body.difficulty, "difficulty", 1, 3);
     const timeMs = parseInteger(body.timeMs, "timeMs", 1, 3_600_000);

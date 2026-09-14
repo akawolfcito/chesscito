@@ -109,7 +109,7 @@ export async function POST(req: Request) {
     if (!isAddress(walletAddress)) return jsonError(400, "invalid_wallet");
 
     try {
-      await enforceRateLimit(getRequestIp(req), walletAddress);
+      await enforceRateLimit(getRequestIp(req), walletAddress, "/api/shields/spend");
     } catch {
       return jsonError(429, "rate_limited");
     }

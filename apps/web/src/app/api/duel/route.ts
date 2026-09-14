@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     try {
       // ⚠️ IP only: there is no server-verifiable identity to bucket by, and
       // the wallet a client could send is not one (see `invitedBy` below).
-      await enforceRateLimit(getRequestIp(request));
+      await enforceRateLimit(getRequestIp(request), undefined, "/api/duel");
     } catch {
       return jsonError(429, "rate_limited");
     }

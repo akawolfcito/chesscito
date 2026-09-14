@@ -76,6 +76,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 
 import { createLogger, hashIp } from "./logger";
 import { getRedis, isRedisTimeout } from "./redis";
+import { estimateSlidingWindowCommands, recordRedisUsage } from "./redis-observability";
 
 /**
  * Every read endpoint that takes the lenient limiter, as a closed union.
@@ -160,6 +161,25 @@ const GUARD_TIMEOUT_MS = 2_000;
 
 const log = createLogger({ route: "server/rate-limit" });
 
+const RATE_LIMIT_ENDPOINTS: Record<RateLimitRoute, string> = {
+  "access-capacity": "/api/access/capacity",
+  "admin-access-capacity": "/api/control-tower",
+  "pro-status": "/api/pro/status",
+  "peones-balance": "/api/peones/balance",
+  "peones-earn": "/api/peones/earn",
+  "peones-spend": "/api/peones/spend",
+  "welcome-pack-status": "/api/welcome-pack/status",
+  "founder-status": "/api/founder-status",
+  "shields-me": "/api/shields/me",
+  "coach-credits": "/api/coach/credits",
+  "coach-history": "/api/coach/history",
+  "games-detail": "/api/games/[id]",
+  "verify-payment": "/api/verify-payment",
+  "get-peones-canary": "/api/verify-payment/get-peones-canary",
+  "payment-intent-get-peones": "/api/payment-intents/get-peones",
+  "payment-intent-submission": "/api/payment-intents/get-peones",
+};
+
 type Bucket = { limiter: Ratelimit; cache: Map<string, number> };
 const buckets = new Map<RateLimitRoute, Bucket>();
 
@@ -240,15 +260,14 @@ function emitGuardLine(input: {
 }): void {
   if (input.outcome === "allowed" && Math.random() >= allowedSampleRate()) return;
 
-  // Deliberately absent: full IP, wallet, tokens, cookies, signatures. The
-  // identifier travels only as a salted 64-bit digest.
+  // Deliberately absent: identifiers (including hashes), IPs, wallets,
+  // tokens, cookies and signatures. Route-level aggregates need none of them.
   log.info("rate_limit_guard", {
     endpoint: input.route,
     outcome: input.outcome,
     duration_ms: input.durationMs,
     policy: input.policy,
     guard_status: input.allowed ? 200 : 429,
-    identifier_hash: hashIp(input.identifier),
     deployment: process.env.VERCEL_DEPLOYMENT_ID ?? "local",
     env: process.env.VERCEL_ENV ?? "development",
     mode: process.env.NEXT_PUBLIC_CHESSCITO_MODE ?? "unknown",
@@ -270,12 +289,18 @@ export async function checkRateLimit(input: {
   let outcome: GuardOutcome;
   let allowed: boolean;
   let resetAt: number | null = null;
+  let commandLimit: number | undefined;
+  let remaining: number | undefined;
+  let reason: string | undefined;
 
   try {
     // Hashed, never the raw address — see `rateLimitIdentifier`.
     const result = await bucketFor(route).limiter.limit(
       rateLimitIdentifier(identifier),
     );
+    commandLimit = result.limit;
+    remaining = result.remaining;
+    reason = result.reason;
 
     if (result.reason === "timeout") {
       // The SDK's own race won. It resolves `success: true` in this case —
@@ -304,6 +329,19 @@ export async function checkRateLimit(input: {
     durationMs: Date.now() - startedAt,
     policy,
     allowed,
+  });
+  recordRedisUsage(log, {
+    redis_feature: "rate_limit",
+    redis_logical_operation: "sliding_window",
+    endpoint: RATE_LIMIT_ENDPOINTS[route],
+    redis_estimated_commands: estimateSlidingWindowCommands({
+      outcome,
+      limit: commandLimit,
+      remaining,
+      reason,
+    }),
+    rate_limit_outcome: outcome,
+    scopes: "ip",
   });
 
   return { allowed, outcome, resetAt };

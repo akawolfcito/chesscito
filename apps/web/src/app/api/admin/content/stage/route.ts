@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   if (!tokenMatches(provided, expected)) return err(["forbidden"], 403);
 
   try {
-    await enforceRateLimit(getRequestIp(request));
+    await enforceRateLimit(getRequestIp(request), undefined, "/api/admin/content/stage");
   } catch {
     return err(["rate limit exceeded"], 429);
   }

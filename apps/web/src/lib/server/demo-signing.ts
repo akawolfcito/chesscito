@@ -3,7 +3,8 @@ import { ethers } from "ethers";
 import { classifyProOriginHost } from "@/lib/pro/pro-origin";
 import { decryptSignerKey } from "./crypto";
 import { createLogger } from "./logger";
-import { getRedis } from "./redis";
+import { getRedis, isRedisTimeout } from "./redis";
+import { estimateSlidingWindowCommands, recordRedisUsage } from "./redis-observability";
 
 const originLog = createLogger({ route: "demo-signing.enforceOrigin" });
 
@@ -73,15 +74,68 @@ const earlyAccessIpLimiter = new Ratelimit({
   prefix: "rl:early-access:ip",
 });
 
+type SlidingWindowResult = {
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reason?: string;
+};
+
+function observeSlidingWindow(input: {
+  endpoint: string;
+  scope: "ip" | "wallet";
+  result?: SlidingWindowResult;
+  error?: unknown;
+}): void {
+  const outcome = input.error
+    ? isRedisTimeout(input.error)
+      ? "redis_timeout"
+      : "redis_error"
+    : input.result?.reason === "timeout"
+      ? "redis_timeout"
+      : input.result?.success
+        ? "allowed"
+        : "limited";
+  recordRedisUsage(originLog, {
+    redis_feature: "rate_limit",
+    redis_logical_operation: "sliding_window",
+    endpoint: input.endpoint,
+    redis_estimated_commands: estimateSlidingWindowCommands({
+      outcome,
+      limit: input.result?.limit,
+      remaining: input.result?.remaining,
+      reason: input.result?.reason,
+    }),
+    rate_limit_outcome: outcome,
+    scopes: input.scope,
+  });
+}
+
 /** Throws "Rate limit exceeded" on overflow; the route maps it to 429. */
-export async function enforceEarlyAccessRateLimit(ip: string) {
-  const { success: ok } = await earlyAccessIpLimiter.limit(ip);
+export async function enforceEarlyAccessRateLimit(ip: string, endpoint: string) {
+  let result: SlidingWindowResult;
+  try {
+    result = await earlyAccessIpLimiter.limit(ip);
+  } catch (error) {
+    observeSlidingWindow({ endpoint, scope: "ip", error });
+    throw error;
+  }
+  observeSlidingWindow({ endpoint, scope: "ip", result });
+  const ok = result.success;
   if (!ok) throw new Error("Rate limit exceeded");
 }
 
 /** Throws "Rate limit exceeded" on overflow; the route maps it to 429. */
-export async function enforceFocusDayRateLimit(wallet: string) {
-  const { success: ok } = await focusDayWalletLimiter.limit(wallet);
+export async function enforceFocusDayRateLimit(wallet: string, endpoint: string) {
+  let result: SlidingWindowResult;
+  try {
+    result = await focusDayWalletLimiter.limit(wallet);
+  } catch (error) {
+    observeSlidingWindow({ endpoint, scope: "wallet", error });
+    throw error;
+  }
+  observeSlidingWindow({ endpoint, scope: "wallet", result });
+  const ok = result.success;
   if (!ok) throw new Error("Rate limit exceeded");
 }
 
@@ -120,12 +174,28 @@ export function getLabyrinthBadgesAddress() {
   return ethers.getAddress(requireEnv("NEXT_PUBLIC_LABYRINTH_BADGES_ADDRESS"));
 }
 
-export async function enforceRateLimit(ip: string, playerAddress?: string) {
-  const { success: ipOk } = await ipLimiter.limit(ip);
+export async function enforceRateLimit(ip: string, playerAddress: string | undefined, endpoint: string) {
+  let ipResult: SlidingWindowResult;
+  try {
+    ipResult = await ipLimiter.limit(ip);
+  } catch (error) {
+    observeSlidingWindow({ endpoint, scope: "ip", error });
+    throw error;
+  }
+  observeSlidingWindow({ endpoint, scope: "ip", result: ipResult });
+  const ipOk = ipResult.success;
   if (!ipOk) throw new Error("Rate limit exceeded");
 
   if (playerAddress) {
-    const { success: addrOk } = await addrLimiter.limit(playerAddress);
+    let addrResult: SlidingWindowResult;
+    try {
+      addrResult = await addrLimiter.limit(playerAddress);
+    } catch (error) {
+      observeSlidingWindow({ endpoint, scope: "wallet", error });
+      throw error;
+    }
+    observeSlidingWindow({ endpoint, scope: "wallet", result: addrResult });
+    const addrOk = addrResult.success;
     if (!addrOk) throw new Error("Rate limit exceeded");
   }
 }
@@ -134,8 +204,16 @@ export async function enforceRateLimit(ip: string, playerAddress?: string) {
  *  "Rate limit exceeded" on overflow; the route maps that to a 429
  *  `rate_limited` with a retry hint. Dedicated bucket — see
  *  `scoreSaveIpLimiter`. */
-export async function enforceScoreSaveRateLimit(ip: string) {
-  const { success: ok } = await scoreSaveIpLimiter.limit(ip);
+export async function enforceScoreSaveRateLimit(ip: string, endpoint: string) {
+  let result: SlidingWindowResult;
+  try {
+    result = await scoreSaveIpLimiter.limit(ip);
+  } catch (error) {
+    observeSlidingWindow({ endpoint, scope: "ip", error });
+    throw error;
+  }
+  observeSlidingWindow({ endpoint, scope: "ip", result });
+  const ok = result.success;
   if (!ok) throw new Error("Rate limit exceeded");
 }
 

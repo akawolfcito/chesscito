@@ -400,7 +400,7 @@ describe("instrumentation", () => {
     expect(line).toHaveProperty("deployment");
   });
 
-  it("never writes the raw identifier — only a salted digest", async () => {
+  it("never writes identifiers, including salted digests", async () => {
     rl.limit.mockImplementation(async () => denied());
     await checkRateLimit({
       identifier: "203.0.113.7",
@@ -412,7 +412,7 @@ describe("instrumentation", () => {
     const serialized = JSON.stringify(lines);
     expect(serialized).not.toContain("203.0.113.7");
     const line = lines.find((l) => l.msg === "rate_limit_guard");
-    expect(String(line?.identifier_hash)).toMatch(/^[0-9a-f]{16}$/);
+    expect(line).not.toHaveProperty("identifier_hash");
   });
 
   it("does not log the allowed case by default", async () => {
@@ -453,5 +453,47 @@ describe("instrumentation", () => {
       outcome: "redis_error",
       guard_status: 200,
     });
+  });
+
+  it("records one aggregate Redis observation for every healthy check at sample rate 1", async () => {
+    vi.stubEnv("REDIS_OBSERVABILITY_SAMPLE_RATE", "1");
+    await checkRateLimit({
+      identifier: "203.0.113.7",
+      route: "peones-balance",
+      policy: "fail-open",
+    });
+    __resetLoggerSink();
+
+    const usage = lines.filter((line) => line.msg === "redis_usage");
+    expect(usage).toHaveLength(1);
+    expect(usage[0]).toMatchObject({
+      endpoint: "/api/peones/balance",
+      rate_limit_outcome: "allowed",
+      redis_estimated_commands: 5,
+      scopes: "ip",
+      redis_observability_sample_rate: 1,
+    });
+  });
+
+  it.each([
+    ["limited", () => denied(), "limited"],
+    ["cached denial", () => ({ ...denied(), reason: "cacheBlock" as const }), "limited"],
+    ["timeout", () => ({ ...ok(), reason: "timeout" as const }), "redis_timeout"],
+    ["error", () => { throw new Error("upstash down"); }, "redis_error"],
+  ])("records one, and only one, observation for a %s outcome", async (_name, implementation, outcome) => {
+    rl.limit.mockImplementation(async () => implementation());
+    await checkRateLimit({
+      identifier: "203.0.113.7",
+      route: "peones-balance",
+      policy: "fail-open",
+    });
+    __resetLoggerSink();
+
+    const usage = lines.filter((line) => line.msg === "redis_usage");
+    expect(usage).toHaveLength(1);
+    expect(usage[0]).toMatchObject({ rate_limit_outcome: outcome });
+    if (_name === "cached denial") {
+      expect(usage[0]).toMatchObject({ redis_estimated_commands: 0 });
+    }
   });
 });

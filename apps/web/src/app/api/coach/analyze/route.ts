@@ -14,6 +14,7 @@ import { persistAnalysis } from "@/lib/coach/persistence";
 import { UUID_RE } from "@/lib/coach/game-persistence";
 import { ANALYSIS_LIST_LPUSH_LUA } from "@/lib/coach/analysis-list-write";
 import { createLogger, hashWallet } from "@/lib/server/logger";
+import { recordRedisUsage } from "@/lib/server/redis-observability";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import type { GameRecord, CoachAnalysisRecord, PlayerSummary, HistoryDigest } from "@/lib/coach/types";
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
   try {
     enforceOrigin(req);
     const ip = getRequestIp(req);
-    await enforceRateLimit(ip);
+    await enforceRateLimit(ip, undefined, "/api/coach/analyze");
 
     const body = await req.json();
     const {
@@ -111,6 +112,7 @@ export async function POST(req: Request) {
     }
 
     const wallet = walletAddress.toLowerCase();
+    const log = createLogger({ route: "/api/coach/analyze" });
 
     // --- Idempotency: existing result? ---
     // Cluster E §2.4.7 — flag the short-circuit so the client emits
@@ -126,6 +128,13 @@ export async function POST(req: Request) {
       ? null
       : await getCachedAnalysisWithFallback(redis, wallet, gameId, locale);
     if (existingAnalysis) {
+      recordRedisUsage(log, {
+        redis_feature: "coach_analyze",
+        redis_logical_operation: "idempotency_lookup",
+        endpoint: "/api/coach/analyze",
+        redis_estimated_commands: locale === "en" ? 2 : 1,
+        cache_result: "hit",
+      });
       return NextResponse.json({
         status: "ready",
         response: existingAnalysis.response,
@@ -162,8 +171,6 @@ export async function POST(req: Request) {
     // if PRO expires mid-LLM-call — paying customers always finish the
     // analysis they started. ---
     const proStatus = await isProActive(wallet);
-
-    const log = createLogger({ route: "/api/coach/analyze" });
 
     // PRO read path — backfill once, aggregate, augment prompt. Free
     // path skips this entirely; locked by the prompt-template free-path
@@ -359,6 +366,16 @@ export async function POST(req: Request) {
         redis.set(REDIS_KEYS.job(jobId), { status: "ready", response: normalized.data }, { ex: 30 * 24 * 60 * 60 }),
         redis.del(REDIS_KEYS.pendingJob(wallet)),
       ]);
+
+      recordRedisUsage(log, {
+        redis_feature: "coach_analyze",
+        redis_logical_operation: "generate_and_persist",
+        endpoint: "/api/coach/analyze",
+        // Aggregate of the Redis operations on the successful miss path; the
+        // rate-limit observation is emitted separately by its wrapper.
+        redis_estimated_commands: 18 + (locale === "en" ? 1 : 0) + (proStatus.active || peonesPaid ? 0 : 1),
+        cache_result: "miss",
+      });
 
       // PRO write-through. Fail-soft per §6.1 — never block the user-
       // visible analysis the user already paid for. Only triggers for

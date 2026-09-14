@@ -78,10 +78,14 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
       return () => clearInterval(dotInterval);
     }
 
+    let pollAttempt = 0;
     const pollInterval = setInterval(async () => {
       try {
         const params = wallet ? `?wallet=${wallet}` : "";
-        const res = await fetch(`/api/coach/job/${jobId}${params}`);
+        pollAttempt += 1;
+        const res = await fetch(`/api/coach/job/${jobId}${params}`, {
+          headers: { "x-chesscito-poll-attempt": String(pollAttempt) },
+        });
         if (!res.ok) return;
         const data = await res.json();
         if (data.status === "ready") {

@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as { player?: string; levelId?: number };
     const player = parseAddress(body.player);
-    await enforceRateLimit(getRequestIp(request), player);
+    await enforceRateLimit(getRequestIp(request), player, "/api/sign-badge");
     const levelId = parseInteger(body.levelId, "levelId", 1, 10_000);
     const nonce = createNonce();
     const deadline = createDeadline();

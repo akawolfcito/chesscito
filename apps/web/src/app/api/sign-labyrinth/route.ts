@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     };
 
     const player = parseAddress(body.player);
-    await enforceRateLimit(getRequestIp(request), player);
+    await enforceRateLimit(getRequestIp(request), player, "/api/sign-labyrinth");
 
     const exercise = findLabyrinth(body.labyrinthId);
     if (!exercise) {

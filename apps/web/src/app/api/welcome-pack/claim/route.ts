@@ -65,7 +65,7 @@ export async function POST(req: Request) {
     }
 
     try {
-      await enforceRateLimit(getRequestIp(req), body.address);
+      await enforceRateLimit(getRequestIp(req), body.address, "/api/welcome-pack/claim");
     } catch {
       return jsonError(429, "rate_limited");
     }

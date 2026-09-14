@@ -178,7 +178,7 @@ export async function POST(req: Request) {
 
   // 2. Soft IP limiter, before any DB work.
   try {
-    await enforceScoreSaveRateLimit(getRequestIp(req));
+    await enforceScoreSaveRateLimit(getRequestIp(req), "/api/scores/save");
   } catch {
     return json({ status: "rate_limited", retryAfterMs: RATE_LIMIT_WINDOW_MS }, 429);
   }

@@ -4,6 +4,7 @@ import { isProActive } from "@/lib/pro/is-active";
 import { enforceOrigin, getRequestIp } from "@/lib/server/demo-signing";
 import { checkRateLimit } from "@/lib/server/rate-limit";
 import { createLogger } from "@/lib/server/logger";
+import { recordRedisUsage } from "@/lib/server/redis-observability";
 
 const logger = createLogger({ route: "/api/pro/status" });
 
@@ -54,6 +55,13 @@ export async function GET(req: Request) {
 
   try {
     const status = await isProActive(wallet);
+    recordRedisUsage(logger, {
+      redis_feature: "entitlement",
+      redis_logical_operation: "pro_status_read",
+      endpoint: "/api/pro/status",
+      redis_estimated_commands: 1,
+      cache_result: status.active ? "hit" : "miss",
+    });
     return NextResponse.json(status);
   } catch (err) {
     logger.error("isProActive threw", {

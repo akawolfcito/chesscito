@@ -58,7 +58,7 @@ export async function POST(request: Request) {
 
   // 3. Rate limit (reuse the shared token-bucket limiter).
   try {
-    await enforceRateLimit(getRequestIp(request));
+    await enforceRateLimit(getRequestIp(request), undefined, "/api/admin/content");
   } catch {
     return err(["rate limit exceeded"], 429);
   }

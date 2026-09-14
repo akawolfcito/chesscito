@@ -93,7 +93,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    await enforceFocusDayRateLimit(wallet);
+    await enforceFocusDayRateLimit(wallet, "/api/focus-day");
   } catch {
     log.warn("focus_day_rate_limited", { wallet: walletHash });
     return fail("rate_limited", 429);
