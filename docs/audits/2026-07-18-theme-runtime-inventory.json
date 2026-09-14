@@ -1075,8 +1075,19 @@
         "src/components/hub/learn-path-entry.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 1,
+      "consumerCount": 2,
       "consumers": [
+        {
+          "file": "src/components/hub/hub-lite-scaffold.tsx",
+          "occurrences": [],
+          "usesResolver": true,
+          "usesHardcodedPath": false,
+          "usesImg": false,
+          "usesPicture": false,
+          "usesCssBackground": false,
+          "usesSharedMap": false,
+          "buildsPathDynamically": false
+        },
         {
           "file": "src/components/hub/learn-path-entry.tsx",
           "occurrences": [],
@@ -7300,7 +7311,7 @@
         "src/components/arena/victory-claim-success.tsx"
       ],
       "currentConsumerState": "resolver",
-      "consumerCount": 10,
+      "consumerCount": 9,
       "consumers": [
         {
           "file": "src/components/arena/arena-select-scaffold.tsx",
@@ -7326,17 +7337,6 @@
         },
         {
           "file": "src/components/exercises/trophies-sheet.tsx",
-          "occurrences": [],
-          "usesResolver": false,
-          "usesHardcodedPath": false,
-          "usesImg": false,
-          "usesPicture": false,
-          "usesCssBackground": false,
-          "usesSharedMap": true,
-          "buildsPathDynamically": false
-        },
-        {
-          "file": "src/components/hub/hub-lite-scaffold.tsx",
           "occurrences": [],
           "usesResolver": false,
           "usesHardcodedPath": false,
