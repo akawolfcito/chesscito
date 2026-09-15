@@ -23,7 +23,7 @@ vi.mock("../onchain", async () => {
   return { ...actual, fetchOnchainStats: () => fetchOnchainStats() };
 });
 
-import { getPublicStats, STATS_RPCS } from "../aggregator";
+import { getPublicStats, getSurfaceBreakdown, STATS_RPCS } from "../aggregator";
 import { EMPTY_ONCHAIN_STATS } from "../onchain";
 
 /** Row payloads shaped exactly like the migration's `returns table (...)`. */
@@ -136,6 +136,55 @@ describe("filter plumbing", () => {
     for (const call of calls) {
       expect(call.args).toEqual({ p_surface: "play", p_container: "browser" });
     }
+  });
+});
+
+describe("install-count reuse in the surface breakdown", () => {
+  it.each([
+    { surface: "all", container: "all", reused: "all" },
+    { surface: "all", container: "minipay", reused: "all" },
+    { surface: "all", container: "browser", reused: "all" },
+    { surface: "learn", container: "all", reused: "learn" },
+    { surface: "learn", container: "minipay", reused: "learn" },
+    { surface: "learn", container: "browser", reused: "learn" },
+    { surface: "play", container: "all", reused: "play" },
+    { surface: "play", container: "minipay", reused: "play" },
+    { surface: "play", container: "browser", reused: "play" },
+  ] as const)("reuses the main $surface result for $container", async ({ surface, container, reused }) => {
+    const { client, calls } = makeClient();
+    getSupabaseServer.mockReturnValue(client);
+    const filters = { surface, container };
+    const stats = await getPublicStats(filters);
+    const breakdown = await getSurfaceBreakdown(container, {
+      surface,
+      installs: stats.installs,
+    });
+
+    const installCalls = calls.filter((call) => call.name === "stats_install_counts");
+    expect(installCalls).toHaveLength(3);
+    expect(installCalls.map((call) => call.args)).toEqual(
+      expect.arrayContaining([
+        { p_surface: surface === "all" ? null : surface, p_container: container === "all" ? null : container },
+        ...(["learn", "play", "all"] as const)
+          .filter((candidate) => candidate !== reused)
+          .map((candidate) => ({
+            p_surface: candidate === "all" ? null : candidate,
+            p_container: container === "all" ? null : container,
+          })),
+      ]),
+    );
+    expect(breakdown[reused === "all" ? "total" : reused]).toBe(stats.installs);
+  });
+
+  it("keeps all three breakdown attempts when the main install RPC failed", async () => {
+    const { client, calls } = makeClient({
+      stats_install_counts: { error: { message: "temporary" } },
+    });
+    getSupabaseServer.mockReturnValue(client);
+    const stats = await getPublicStats({ surface: "all", container: "all" });
+    await getSurfaceBreakdown("all", { surface: "all", installs: stats.installs });
+
+    expect(calls.filter((call) => call.name === "stats_install_counts")).toHaveLength(4);
   });
 });
 

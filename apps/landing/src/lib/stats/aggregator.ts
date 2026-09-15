@@ -211,24 +211,35 @@ export type SurfaceBreakdown = {
  */
 export async function getSurfaceBreakdown(
   container: StatsFilters["container"] = "all",
+  main: Pick<StatsFilters, "surface"> & { installs: InstallCounts | null } = {
+    surface: "all",
+    installs: null,
+  },
 ): Promise<SurfaceBreakdown> {
   const supabase = getSupabaseServer();
   if (!supabase) return { learn: null, play: null, total: null };
 
   const client = supabase as unknown as RpcClient;
-  const read = (surface: StatsFilters["surface"]) =>
-    callRpc(client, "stats_install_counts", { surface, container });
+  const surfaces: StatsFilters["surface"][] = ["learn", "play", "all"];
+  const reusedSurface = main.installs ? main.surface : null;
+  const pending = surfaces.filter((surface) => surface !== reusedSurface);
+  const rows = new Map<StatsFilters["surface"], Record<string, unknown>[] | null>();
 
-  const [learn, play, total] = await Promise.all([
-    read("learn"),
-    read("play"),
-    read("all"),
-  ]);
+  const fetched = await Promise.all(
+    pending.map(async (surface) => [
+      surface,
+      await callRpc(client, "stats_install_counts", { surface, container }),
+    ] as const),
+  );
+  for (const [surface, result] of fetched) rows.set(surface, result);
 
   return {
-    learn: toInstallCounts(learn),
-    play: toInstallCounts(play),
-    total: toInstallCounts(total),
+    learn:
+      reusedSurface === "learn" ? main.installs : toInstallCounts(rows.get("learn") ?? null),
+    play:
+      reusedSurface === "play" ? main.installs : toInstallCounts(rows.get("play") ?? null),
+    total:
+      reusedSurface === "all" ? main.installs : toInstallCounts(rows.get("all") ?? null),
   };
 }
 

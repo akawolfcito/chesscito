@@ -15,6 +15,9 @@ import {
   CENSUS_KEY_PARTS,
   createCensusLoader,
   createSnapshotLoader,
+  coalesceInFlight,
+  isHealthyStatsSnapshot,
+  readWithLastKnownGood,
   snapshotKeyParts,
   STATS_CACHE_TAG,
   STATS_REVALIDATE_SECONDS,
@@ -175,6 +178,143 @@ describe("tag and TTL", () => {
     await createCensusLoader(cache.factory as never, async () => ({}) as never)();
     expect(cache.recorded[0].tags).toEqual(["public-stats"]);
     expect(cache.recorded[0].revalidate).toBe(900);
+  });
+});
+
+describe("expiry", () => {
+  it("runs the snapshot again after its 900-second TTL", async () => {
+    let now = 0;
+    let runs = 0;
+    const entries = new Map<string, { value: unknown; expiresAt: number }>();
+    const ttlCache = (<T,>(
+      read: (...args: never[]) => Promise<T>,
+      keyParts: string[],
+      options: { revalidate: number; tags: string[] },
+    ) => async () => {
+      const key = keyParts.join("::");
+      const cached = entries.get(key);
+      if (cached && cached.expiresAt > now) return cached.value as T;
+      const value = await (read as () => Promise<T>)();
+      entries.set(key, { value, expiresAt: now + options.revalidate * 1_000 });
+      return value;
+    }) as unknown as CacheFactory<never>;
+    const read = async () => {
+      runs += 1;
+      return { stats: { generatedAt: String(runs) }, breakdown: {} } as never;
+    };
+    const load = createSnapshotLoader(ttlCache as never, F("all", "all"), read);
+
+    await load();
+    now = STATS_REVALIDATE_SECONDS * 1_000 - 1;
+    await load();
+    expect(runs).toBe(1);
+
+    now += 1;
+    await load();
+    expect(runs).toBe(2);
+  });
+});
+
+describe("concurrent cache misses", () => {
+  it("shares one in-flight read for an identical key", async () => {
+    const registry = new Map<string, Promise<number>>();
+    let runs = 0;
+    let release!: (value: number) => void;
+    const load = () => {
+      runs += 1;
+      return new Promise<number>((resolve) => {
+        release = resolve;
+      });
+    };
+
+    const first = coalesceInFlight(registry, "public-stats::all::all", load);
+    const second = coalesceInFlight(registry, "public-stats::all::all", load);
+    expect(runs).toBe(1);
+    expect(second).toBe(first);
+
+    release(42);
+    await expect(first).resolves.toBe(42);
+    await Promise.resolve();
+    expect(registry).toHaveLength(0);
+  });
+
+  it("retries after an in-flight failure instead of retaining it", async () => {
+    const registry = new Map<string, Promise<number>>();
+    const failed = coalesceInFlight(registry, "key", async () => {
+      throw new Error("temporary");
+    });
+    await expect(failed).rejects.toThrow("temporary");
+    await Promise.resolve();
+
+    await expect(coalesceInFlight(registry, "key", async () => 7)).resolves.toBe(7);
+  });
+});
+
+describe("last-known-good snapshots", () => {
+  const healthy = (stamp: string) => ({
+    stats: { generatedAt: stamp, dataIntegrity: { failedRpcs: [] } },
+    breakdown: { learn: {}, play: {}, total: {} },
+  }) as never;
+  const degraded = (stamp: string) => ({
+    stats: { generatedAt: stamp, dataIntegrity: { failedRpcs: ["stats_install_counts"] } },
+    breakdown: { learn: null, play: {}, total: {} },
+  }) as never;
+
+  it("keeps a healthy snapshot when the next regeneration is partial", async () => {
+    const registry = new Map();
+    let now = 0;
+    const fresh = await readWithLastKnownGood(
+      registry,
+      "public-stats::all::all",
+      async () => healthy("healthy-at"),
+      isHealthyStatsSnapshot,
+      () => now,
+    );
+    now += 900_000;
+    const served = await readWithLastKnownGood(
+      registry,
+      "public-stats::all::all",
+      async () => degraded("failed-at"),
+      isHealthyStatsSnapshot,
+      () => now,
+    );
+
+    expect(served).toBe(fresh);
+    expect(served.stats.generatedAt).toBe("healthy-at");
+  });
+
+  it("returns the degraded fallback when no healthy snapshot exists", async () => {
+    const served = await readWithLastKnownGood(
+      new Map(),
+      "public-stats::all::all",
+      async () => degraded("failed-at"),
+      isHealthyStatsSnapshot,
+    );
+    expect(served.stats.generatedAt).toBe("failed-at");
+    expect(served.stats.dataIntegrity.failedRpcs).toEqual(["stats_install_counts"]);
+  });
+
+  it("keeps a healthy snapshot when regeneration throws", async () => {
+    const registry = new Map();
+    await readWithLastKnownGood(registry, "key", async () => healthy("healthy-at"), isHealthyStatsSnapshot);
+    const served = await readWithLastKnownGood(
+      registry,
+      "key",
+      async () => {
+        throw new Error("temporary");
+      },
+      isHealthyStatsSnapshot,
+    );
+    expect(served.stats.generatedAt).toBe("healthy-at");
+  });
+
+  it("stops serving stale data after bounded retention", async () => {
+    const registry = new Map();
+    let now = 0;
+    await readWithLastKnownGood(registry, "key", async () => healthy("healthy-at"), isHealthyStatsSnapshot, () => now, 10);
+    now = 10_000;
+    const served = await readWithLastKnownGood(registry, "key", async () => degraded("failed-at"), isHealthyStatsSnapshot, () => now, 10);
+    expect(served.stats.generatedAt).toBe("failed-at");
   });
 });
 
