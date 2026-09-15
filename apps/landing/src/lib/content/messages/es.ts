@@ -58,6 +58,8 @@ const messages: OnboardingMessages = {
       support: "Empieza con entrenamiento o salta a una partida.",
       learnLabel: "Entrenar",
       playLabel: "Jugar",
+      openingLearn: "Abriendo Entrenar…",
+      openingPlay: "Abriendo Jugar…",
       lastUsed: "Última vez",
       switchNote: "Puedes cambiar cuando quieras.",
     },

@@ -726,6 +726,44 @@
   transform: scale(0.97);
 }
 
+/* The landing leaves through a cross-origin document navigation. `:active`
+   ends when the thumb lifts, so pending is a separate, persistent state. */
+.hub-app-mode-switch[data-pending] .hub-app-mode-switch-pill {
+  cursor: wait;
+  opacity: 0.58;
+  pointer-events: none;
+}
+
+.hub-app-mode-switch[data-pending] .hub-app-mode-switch-pill[aria-disabled="true"] {
+  transform: none;
+}
+
+.onboarding-mode-switch-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 1.25rem;
+  margin: 0.45rem 0 0;
+  color: rgba(255, 248, 220, 0.96);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 2px rgba(30, 20, 9, 0.72);
+}
+
+.onboarding-mode-switch-spinner {
+  width: 0.78rem;
+  height: 0.78rem;
+  border: 2px solid rgba(255, 247, 205, 0.4);
+  border-top-color: #fff7c3;
+  border-radius: 9999px;
+  animation: onboarding-mode-switch-spin 700ms linear infinite;
+}
+
+@keyframes onboarding-mode-switch-spin {
+  to { transform: rotate(360deg); }
+}
+
 .hub-app-mode-switch-icon {
   display: block;
   width: 28px;

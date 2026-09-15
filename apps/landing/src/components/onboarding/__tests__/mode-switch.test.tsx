@@ -1,65 +1,141 @@
-import { describe, expect, it } from "vitest";
-import { renderWithIntl, screen } from "@/test-utils/render-with-intl";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, renderWithIntl, screen } from "@/test-utils/render-with-intl";
 import { ModeSwitch } from "@/components/onboarding/mode-switch";
 
-function linkFor(name: RegExp) {
-  return screen.getByRole("link", { name });
+type FrameCallback = FrameRequestCallback;
+
+function renderSwitch(lastUsedMode: "learn" | "play" | null = null) {
+  const callbacks: FrameCallback[] = [];
+  const requestAnimationFrame = vi
+    .spyOn(window, "requestAnimationFrame")
+    .mockImplementation((callback) => {
+      callbacks.push(callback);
+      return callbacks.length;
+    });
+
+  const view = renderWithIntl(<ModeSwitch lastUsedMode={lastUsedMode} />);
+  return { ...view, callbacks, requestAnimationFrame };
 }
 
-describe("ModeSwitch", () => {
-  it("offers both destinations as real links", () => {
-    renderWithIntl(<ModeSwitch lastUsedMode={null} />);
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
-    expect(linkFor(/training/i)).toHaveAttribute(
+describe("ModeSwitch navigation feedback", () => {
+  it("keeps the native destinations on both links", () => {
+    renderSwitch();
+
+    expect(screen.getByRole("link", { name: /training/i })).toHaveAttribute(
       "href",
       "/api/enter?mode=learn",
     );
-    expect(linkFor(/play/i)).toHaveAttribute("href", "/api/enter?mode=play");
+    expect(screen.getByRole("link", { name: /^play$/i })).toHaveAttribute(
+      "href",
+      "/api/enter?mode=play",
+    );
   });
 
-  // The gold half is a product recommendation ("start here"), not a reading of
-  // the visitor's history. It never moves, so it cannot be confused with the
-  // Last used label, which does move.
-  it("recommends LEARN regardless of what the visitor last chose", () => {
+  // The gold half is a product recommendation, not a reading of the
+  // visitor's history. Pending feedback must not change that contract.
+  it("recommends Learn regardless of what the visitor last chose", () => {
     for (const mode of [null, "learn", "play"] as const) {
-      const { unmount } = renderWithIntl(<ModeSwitch lastUsedMode={mode} />);
-      expect(linkFor(/training/i)).toHaveAttribute("data-recommended", "true");
-      expect(linkFor(/play/i)).not.toHaveAttribute("data-recommended");
+      const { unmount } = renderSwitch(mode);
+      expect(screen.getByRole("link", { name: /training/i })).toHaveAttribute(
+        "data-recommended",
+        "true",
+      );
+      expect(screen.getByRole("link", { name: /^play$/i })).not.toHaveAttribute(
+        "data-recommended",
+      );
       unmount();
     }
   });
 
-  // aria-pressed belongs to role=button. Styling a link with it would put an
-  // attribute in the DOM that no screen reader interprets, purely to paint.
-  it("never uses aria-pressed on a link", () => {
-    renderWithIntl(<ModeSwitch lastUsedMode="learn" />);
+  it("never uses aria-pressed on the links", () => {
+    renderSwitch();
     for (const link of screen.getAllByRole("link")) {
       expect(link).not.toHaveAttribute("aria-pressed");
     }
   });
 
-  it("shows no label for a first-time visitor", () => {
-    renderWithIntl(<ModeSwitch lastUsedMode={null} />);
-    expect(screen.queryByText(/last used/i)).not.toBeInTheDocument();
-  });
-
-  it("hangs the label off the half the visitor last used", () => {
+  it("keeps the Last used association accessible", () => {
     renderWithIntl(<ModeSwitch lastUsedMode="play" />);
+    const label = screen.getByText(/last used/i);
+    const play = screen.getByRole("link", { name: /^play$/i });
 
-    const labels = screen.getAllByText(/last used/i);
-    expect(labels).toHaveLength(1);
-
-    // The label must reach assistive tech, not just the eye: the link it
-    // describes has to point at it.
-    const described = linkFor(/play/i).getAttribute("aria-describedby");
-    expect(described).toBe(labels[0].id);
-    expect(linkFor(/training/i)).not.toHaveAttribute("aria-describedby");
+    expect(play).toHaveAttribute("aria-describedby", label.id);
+    expect(screen.getByRole("link", { name: /training/i })).not.toHaveAttribute(
+      "aria-describedby",
+    );
   });
 
-  it("translates both the labels and the Last used badge", () => {
+  it("translates labels and the Last used badge", () => {
     renderWithIntl(<ModeSwitch lastUsedMode="learn" />, { locale: "es" });
 
-    expect(linkFor(/entrenar/i)).toHaveAttribute("href", "/api/enter?mode=learn");
+    expect(screen.getByRole("link", { name: /entrenar/i })).toHaveAttribute(
+      "href",
+      "/api/enter?mode=learn",
+    );
     expect(screen.getByText("Última vez")).toBeInTheDocument();
+  });
+
+  it("starts Learn navigation, paints persistent feedback, and blocks both CTAs", () => {
+    const { callbacks, requestAnimationFrame } = renderSwitch();
+    const learn = screen.getByRole("link", { name: /training/i });
+    const play = screen.getByRole("link", { name: /^play$/i });
+    expect(fireEvent.click(learn)).toBe(false);
+    expect(screen.getByRole("status")).toHaveTextContent("Opening Learn…");
+    expect(screen.getByRole("group", { name: /choose your path/i })).toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
+    expect(learn).toHaveAttribute("aria-disabled", "true");
+    expect(play).toHaveAttribute("aria-disabled", "true");
+    expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
+    expect(callbacks).toHaveLength(1);
+  });
+
+  it("shows the Play-specific pending state", () => {
+    renderSwitch();
+
+    fireEvent.click(screen.getByRole("link", { name: /^play$/i }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Opening Play…");
+    expect(screen.getByRole("group", { name: /choose your path/i })).toHaveAttribute(
+      "data-pending",
+      "play",
+    );
+  });
+
+  it("does not schedule a second navigation after a repeated tap", () => {
+    const { callbacks, requestAnimationFrame } = renderSwitch();
+    const learn = screen.getByRole("link", { name: /training/i });
+    const play = screen.getByRole("link", { name: /^play$/i });
+
+    fireEvent.click(learn);
+    fireEvent.click(play);
+
+    expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
+    expect(callbacks).toHaveLength(1);
+    expect(screen.getByRole("status")).toHaveTextContent("Opening Learn…");
+  });
+
+  it("emits the tap and first-feedback timing events without identifier data", () => {
+    const { callbacks } = renderSwitch();
+    const tap = vi.fn();
+    const painted = vi.fn();
+    window.addEventListener("chesscito:selection_tap", tap);
+    window.addEventListener("chesscito:selection_feedback_painted", painted);
+
+    fireEvent.click(screen.getByRole("link", { name: /training/i }));
+    callbacks[0](performance.now());
+
+    expect(tap).toHaveBeenCalledTimes(1);
+    expect(painted).toHaveBeenCalledTimes(1);
+    expect(tap.mock.calls[0][0].detail).toMatchObject({ mode: "learn", elapsedMs: 0 });
+    expect(painted.mock.calls[0][0].detail).toMatchObject({ mode: "learn" });
+
+    window.removeEventListener("chesscito:selection_tap", tap);
+    window.removeEventListener("chesscito:selection_feedback_painted", painted);
   });
 });

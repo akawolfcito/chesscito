@@ -64,6 +64,8 @@ const messages = {
       // Matches the in-app switch, which says Training, not Learn.
       learnLabel: "Training",
       playLabel: "Play",
+      openingLearn: "Opening Learn…",
+      openingPlay: "Opening Play…",
       // States a fact rather than giving an order, so it survives the visitor
       // changing their mind without sounding like a contradiction.
       lastUsed: "Last used",

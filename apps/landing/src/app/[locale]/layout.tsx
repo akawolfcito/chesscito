@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
+import { preconnectProductOrigins } from "@/lib/connection-hints";
 
 /**
  * No <html>/<body> here — the root `app/layout.tsx` already renders those
@@ -26,6 +27,9 @@ export default async function LocaleLayout({
   }
   setRequestLocale(locale);
   const messages = await getMessages();
+  // This layout contains the Learn/Play selector. Warm exactly its two exits,
+  // not the unrelated classic, pricing, or stats routes under the landing.
+  preconnectProductOrigins();
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
