@@ -289,33 +289,12 @@ describe("PlayHubScaffold", () => {
     expect(tile).not.toHaveTextContent(/\dd/);
   });
 
-  /**
-   * ⛔ DOS PUERTAS A PROPÓSITO (founder, 2026-09-04): el chip coronado en el
-   * ACCESS cluster del header — la zona que dice "esto es lo que podés abrir" —
-   * y la baldosa del rail. No es redundancia por descuido: la puerta única
-   * estuvo escondida cinco días y se llevó puesta la medición del precio.
-   *
-   * ⚠️ Comparten nombre accesible porque hacen exactamente lo mismo. Por eso
-   * este test cuenta DOS, y los tests del rail siguen alcanzando la suya
-   * acotando por la región `playPathLabel`.
-   */
-  it("abre PRO desde el header Y desde el rail", () => {
-    render(<PlayHubScaffold {...props} />);
-
-    expect(screen.getAllByRole("button", { name: /PRO/i })).toHaveLength(2);
-  });
-
-  it("lleva al sheet desde el chip del header", async () => {
+  it("keeps PRO only in the lower Explore shortcut, never the PLAY header", () => {
     render(<PlayHubScaffold {...props} />);
 
     const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
-    const chip = screen
-      .getAllByRole("button", { name: /PRO/i })
-      .find((button) => !path.contains(button));
-
-    expect(chip).toBeDefined();
-    await userEvent.click(chip!);
-    expect(props.onProTap).toHaveBeenCalledTimes(1);
+    expect(screen.getAllByRole("button", { name: /PRO/i })).toHaveLength(1);
+    expect(within(path).getByRole("button", { name: /PRO/i })).toBeInTheDocument();
   });
 
   it("takes a non-subscriber to the sheet when they tap it", async () => {

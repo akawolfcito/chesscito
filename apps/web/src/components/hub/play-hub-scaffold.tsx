@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { AppModeSwitch } from "@/components/hub/app-mode-switch";
 import { HubActionTile } from "@/components/hub/hub-action-tile";
-import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { LanguageChip } from "@/components/hub/language-chip";
 import { PeonesBalanceChipView } from "@/components/peones/peones-balance-chip";
 import { CandyIcon } from "@/components/redesign/candy-icon";
@@ -73,9 +72,6 @@ export function PlayHubScaffold({
 }: PlayHubScaffoldProps) {
   const tHud = useTranslations("HUD_COPY");
   const tPlay = useTranslations("PLAY_HUB_COPY");
-  /** Sublíneas del chip de PRO. Mismo namespace que usan `HubScaffold` y
-   *  `KingdomCard`, para que las tres superficies digan lo mismo. */
-  const tRail = useTranslations("HUB_ACTION_RAIL_COPY");
 
   return (
     <section
@@ -117,36 +113,8 @@ export function PlayHubScaffold({
               deliberate, so it reads as a system instead of as leftovers. */}
           <div className="hub-scaffold-hud-right hub-home-hud-right play-hub-access-cluster">
             {/* Account entry intentionally omitted here (founder 2026-07-07).
-                ⚠️ PRO **sí** está acá desde el 2026-09-04: el mismo
-                `HubProBadge` coronado que monta `HubScaffold`, en la misma
-                esquina. Es la segunda puerta, deliberada — con una sola, y
-                escondida, `play_hub_pro_tap` estuvo cinco días en CERO y con él
-                se apagó la única señal que medía si el precio es alcanzable. */}
-            <HubProBadge
-              active={pro.active}
-              status={pro.status}
-              visualActive={
-                pro.active || ("staleVisualActive" in pro && pro.staleVisualActive)
-              }
-              daysRemaining={pro.active ? pro.daysRemaining : undefined}
-              daysLabel={
-                pro.active
-                  ? tHud("proRemainingFormat", { days: pro.daysRemaining })
-                  : undefined
-              }
-              sublineInactive={tRail("proDiscoverySubtitle")}
-              sublinePending={
-                pro.status === "loading"
-                  ? tRail("proCheckingSubtitle")
-                  : tRail("proUnavailableSubtitle")
-              }
-              ariaLabel={
-                pro.active
-                  ? tHud("proAriaLabel", { days: pro.daysRemaining })
-                  : tHud("proInactiveAriaLabel")
-              }
-              onClick={onProTap}
-            />
+                PRO intentionally stays in the lower Explore shortcut: PLAY has
+                one purchase/status doorway, not a duplicate header chip. */}
             {!isWalletConnected ? (
               <button
                 type="button"
