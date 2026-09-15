@@ -1,0 +1,29 @@
+name: Cron — public stats snapshot refresh
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: public-stats-snapshot-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Refresh the durable all/all snapshot
+        env:
+          STATS_REFRESH_URL: ${{ secrets.STATS_REFRESH_URL }}
+          STATS_REFRESH_SECRET: ${{ secrets.STATS_REFRESH_SECRET }}
+        run: |
+          if [ -z "$STATS_REFRESH_URL" ] || [ -z "$STATS_REFRESH_SECRET" ]; then
+            echo "::error::Missing STATS_REFRESH_URL or STATS_REFRESH_SECRET"
+            exit 1
+          fi
+          curl --fail --silent --show-error --max-time 120 \
+            -X POST \
+            -H "Authorization: Bearer ${STATS_REFRESH_SECRET}" \
+            "${STATS_REFRESH_URL%/}/api/internal/stats/refresh"

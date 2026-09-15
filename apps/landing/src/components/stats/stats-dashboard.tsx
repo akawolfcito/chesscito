@@ -178,15 +178,48 @@ export function StatsDashboard({
   census,
   locale,
   localeOverride,
+  filtersUnavailable = false,
+  snapshotUnavailable = false,
 }: {
   stats: PublicStats;
   breakdown: SurfaceBreakdown;
   census: PlayersCensus;
   locale: StatsLocale;
   localeOverride: StatsLocale | null;
+  filtersUnavailable?: boolean;
+  snapshotUnavailable?: boolean;
 }) {
   const c = statsCopy(locale);
   const f: StatsFilters = stats.filters;
+
+  if (snapshotUnavailable) {
+    return (
+      <main className="min-h-[100dvh] px-4 py-8 md:px-10" style={{ background: "var(--paper-bg)" }}>
+        <div className="mx-auto w-full max-w-[860px]">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1 text-sm font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
+            style={{ color: "rgba(110, 65, 15, 0.75)" }}
+          >
+            {c.back}
+          </Link>
+          <h1
+            className="fantasy-title mb-2 mt-6 text-2xl font-extrabold uppercase tracking-[0.14em] md:text-3xl"
+            style={{ color: "var(--landing-text)", textShadow: "var(--landing-text-shadow-soft)" }}
+          >
+            {c.title}
+          </h1>
+          <FilterChips filters={f} localeOverride={localeOverride} copy={c} disabled />
+          <div data-testid="stats-snapshot-unavailable">
+            <Callout tone="warn" title={c.snapshotUnavailableTitle}>
+              {c.snapshotUnavailableBody}
+            </Callout>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   const n = (v: number | null | undefined) => formatCount(v ?? null, locale);
 
   const activationMax = stats.activation?.[0]?.sessions ?? 0;
@@ -265,7 +298,12 @@ export function StatsDashboard({
           {c.intro}
         </p>
 
-        <FilterChips filters={f} localeOverride={localeOverride} copy={c} />
+        <FilterChips
+          filters={f}
+          localeOverride={localeOverride}
+          copy={c}
+          disabled={filtersUnavailable}
+        />
 
         {/* Integrity notice — only when something actually failed, and it names
             WHICH measurements, because a blanket disclaimer is unactionable.

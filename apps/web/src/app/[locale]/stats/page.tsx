@@ -1,88 +1,17 @@
-import { unstable_cache } from "next/cache";
-import { getTranslations } from "next-intl/server";
-import { StatsPage } from "@/components/stats/stats-page";
-import { getPublicStats } from "@/lib/stats/public-aggregator";
-import { loadPlayersCensus } from "@/lib/stats/players-census";
-import { parseStatsFilters, type StatsFilters } from "@/lib/stats/filters";
-import {
-  nicknameTokensFromTranslator,
-  type NicknameTranslator,
-} from "@/lib/identity/nickname-tokens";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Platform Stats — Chesscito",
-  description:
-    "Public activity metrics for Chesscito on Celo — sessions, " +
-    "focus training, progress saves, and MiniPay usage.",
-  // Reachable, not indexable. MiniPay's listing requirements (§8) ask for a
-  // stats page any reviewer can open without a wallet, so the route stays
-  // open — but the numbers on it describe the business, and search results
-  // are not where they belong. `follow: false` also stops the crawler from
-  // walking onward through the links on the page.
+  description: "Public activity metrics for Chesscito on Celo.",
   robots: { index: false, follow: false },
 };
 
-// Snapshot refreshed by Next.js every hour. Falls back to stale data
-// rather than blocking when the underlying queries are slow; downstream
-// aggregator returns null per-field for any query that fails, so the
-// page never 500s on partial Supabase outages.
-export const revalidate = 3600;
-
-// Per-filter-combination hourly cache. Reading searchParams makes the route
-// dynamic, but the Supabase aggregation still caches for an hour keyed by the
-// (surface, container) pair, so each querystring gets its own correct,
-// independently-revalidated snapshot instead of re-querying every request.
-function loadStats(filters: StatsFilters) {
-  return unstable_cache(
-    () => getPublicStats(filters),
-    ["public-stats", filters.surface, filters.container],
-    { revalidate: 3600, tags: ["public-stats"] },
-  )();
-}
-
 export default async function StatsRoute({
-  searchParams,
+  params,
 }: {
-  searchParams: { surface?: string; container?: string };
+  params: { locale: string };
 }) {
-  const filters = parseStatsFilters(searchParams);
-  // Two siblings, two caches. The page snapshot keys on (surface, container);
-  // the census keys on one global entry and takes no arguments at all, which is
-  // what keeps a filter from ever reaching it. Loaded together so a slow census
-  // does not serialize behind the dashboard, and independent so one going dark
-  // never blanks the other.
-  const [stats, census] = await Promise.all([
-    loadStats(filters),
-    loadPlayersCensus(),
-  ]);
-  // Build the locale-aware nickname tokens server-side (the aggregator is
-  // locale-agnostic + cached); StatsPage formats names from the row variants.
-  const tIdentity = await getTranslations("IDENTITY_COPY");
-  const nicknameTokens = nicknameTokensFromTranslator(
-    tIdentity as unknown as NicknameTranslator,
-  );
-
-  // Dropped LegalPageShell (locked to var(--app-max-width) = 390px) in
-  // favor of a landing-aligned full-width shell. /stats is a public
-  // platform dashboard, not an in-app sheet — it deserves to breathe
-  // on desktop and look like the landing footer / about page family
-  // rather than a player-profile card.
-  //
-  // `stats-page-scrim` overrides the default dark `secondary-page-scrim`
-  // with a cream/amber wash so the forest body bg stays visible (brand
-  // continuity) but stops competing with the dashboard content.
-  return (
-    <div
-      className="mission-shell stats-page-scrim min-h-[100dvh] w-full"
-      style={{ color: "var(--paper-text)" }}
-    >
-      <div className="mx-auto w-full max-w-[1200px] px-5 py-8 md:px-10 md:py-12">
-        <StatsPage
-          stats={stats}
-          census={census}
-          nicknameTokens={nicknameTokens}
-        />
-      </div>
-    </div>
-  );
+  // Containment: this app never computes public stats. Preserve locale only;
+  // landing owns the one durable all/all snapshot and marks filters unavailable.
+  return redirect(`https://www.chesscito.com/stats${params.locale === "es" ? "?locale=es" : ""}`);
 }

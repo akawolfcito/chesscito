@@ -34,11 +34,24 @@ function Chip({
   href,
   label,
   active,
+  disabled,
 }: {
   href: string;
   label: string;
   active: boolean;
+  disabled?: boolean;
 }) {
+  if (disabled) {
+    return (
+      <span
+        aria-disabled="true"
+        className="inline-flex min-h-[34px] items-center rounded-full border px-3 text-[0.7rem] font-extrabold uppercase tracking-[0.1em] opacity-60"
+        style={{ background: "var(--landing-card-bg)", borderColor: "var(--landing-card-border)", color: "var(--paper-text-muted)" }}
+      >
+        {label}
+      </span>
+    );
+  }
   return (
     <Link
       href={href}
@@ -61,10 +74,12 @@ export function FilterChips({
   filters,
   localeOverride,
   copy,
+  disabled = false,
 }: {
   filters: StatsFilters;
   localeOverride: StatsLocale | null;
   copy: StatsCopy;
+  disabled?: boolean;
 }) {
   const surfaces: Array<[StatsFilters["surface"], string]> = [
     ["all", copy.all],
@@ -78,7 +93,12 @@ export function FilterChips({
   ];
 
   return (
-    <div className="mb-8 flex flex-col gap-3">
+    <div className="mb-8 flex flex-col gap-3" aria-describedby={disabled ? "stats-filters-unavailable" : undefined}>
+      {disabled ? (
+        <p id="stats-filters-unavailable" className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
+          {copy.filtersUnavailable}
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-center gap-2">
         <span
           className="text-[0.65rem] font-extrabold uppercase tracking-[0.12em]"
@@ -92,6 +112,7 @@ export function FilterChips({
             label={label}
             active={filters.surface === value}
             href={buildStatsHref({ ...filters, surface: value }, localeOverride)}
+            disabled={disabled}
           />
         ))}
       </div>
@@ -108,6 +129,7 @@ export function FilterChips({
             label={label}
             active={filters.container === value}
             href={buildStatsHref({ ...filters, container: value }, localeOverride)}
+            disabled={disabled}
           />
         ))}
       </div>

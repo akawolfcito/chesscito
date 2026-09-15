@@ -2,6 +2,7 @@ import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { STATS_CACHE_TAG } from "@/lib/stats/snapshot";
+import { safeEqual } from "@/lib/security/safe-equal";
 
 /**
  * Refresh the `/stats` snapshot without a deploy.
@@ -24,18 +25,6 @@ import { STATS_CACHE_TAG } from "@/lib/stats/snapshot";
  * unconfigured secret must not become an open door.
  */
 export const dynamic = "force-dynamic";
-
-/** Constant-time compare over equal-length byte strings. Returns false on a
- *  length mismatch WITHOUT comparing, which leaks only the length — the same
- *  thing the HTTP framing leaks anyway. */
-function safeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i += 1) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return diff === 0;
-}
 
 /** Bare 401. No `WWW-Authenticate`, no reason, no hint about configuration. */
 function unauthorized(): NextResponse {

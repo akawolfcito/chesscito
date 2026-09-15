@@ -23,6 +23,9 @@ export type StatsCopy = {
   play: string;
   minipay: string;
   browser: string;
+  filtersUnavailable: string;
+  snapshotUnavailableTitle: string;
+  snapshotUnavailableBody: string;
   total: string;
 
   /** Editorial prefix for the launch context line. The DATE is not part of the
@@ -152,6 +155,9 @@ const EN: StatsCopy = {
   play: "Play",
   minipay: "MiniPay",
   browser: "Browser",
+  filtersUnavailable: "Filters are temporarily unavailable while this public snapshot is protected.",
+  snapshotUnavailableTitle: "Snapshot unavailable",
+  snapshotUnavailableBody: "Public stats are temporarily unavailable. No live database query was made.",
   total: "Total",
 
   launchPrefix: "Since MiniPay launch",
@@ -275,6 +281,9 @@ const ES: StatsCopy = {
   play: "Play",
   minipay: "MiniPay",
   browser: "Navegador",
+  filtersUnavailable: "Los filtros no están disponibles temporalmente mientras protegemos este snapshot público.",
+  snapshotUnavailableTitle: "Snapshot no disponible",
+  snapshotUnavailableBody: "Las estadísticas públicas no están disponibles temporalmente. No se hizo ninguna consulta en vivo a la base de datos.",
   total: "Total",
 
   launchPrefix: "Desde el lanzamiento en MiniPay",

@@ -2,14 +2,11 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 
 import { StatsDashboard } from "@/components/stats/stats-dashboard";
-import { parseStatsFilters } from "@/lib/stats/filters";
+import { DEFAULT_STATS_FILTERS } from "@/lib/stats/filters";
 import { resolveStatsLocale, STATS_LOCALES, type StatsLocale } from "@/lib/stats/locale";
 import { EMPTY_PLAYERS_CENSUS } from "@/lib/stats/players-census";
-import {
-  loadPlayersCensus,
-  loadStatsSnapshot,
-  STATS_REVALIDATE_SECONDS,
-} from "@/lib/stats/snapshot";
+import { readPersistedStatsSnapshot } from "@/lib/stats/persisted-snapshot";
+import { getStatsRedis } from "@/lib/stats/redis";
 import { EMPTY_PUBLIC_STATS } from "@/lib/stats/types";
 
 /**
@@ -38,15 +35,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * ⚠️ The page itself stays dynamic. The CACHE lives one layer down, on the
- * snapshot (`lib/stats/snapshot.ts`), keyed by `surface`/`container` and
- * tagged `"public-stats"`.
- *
- * That split is deliberate: the render depends on `Accept-Language`, and a
- * route-level `revalidate` would have to key on the header too — which would
- * store the same numbers once per language and let two readers hold different
- * snapshots of the same moment. Caching the DATA and re-rendering the HTML
- * costs a few milliseconds and keeps one photo behind both languages.
+ * Containment mode: a visit reads the one durable all/all Redis snapshot and
+ * NEVER touches Supabase. The protected cron endpoint is the only code path
+ * allowed to build it. Locale still remains presentation-only.
  */
 export const dynamic = "force-dynamic";
 
@@ -64,7 +55,9 @@ export default async function StatsPage({
   // ⚠️ `locale` is deliberately NOT part of the filters. It is presentation:
   // folding it into the read would fetch the same numbers once per language,
   // and Phase E's cache key inherits this separation. There is a test for it.
-  const filters = parseStatsFilters(searchParams);
+  // Filters are deliberately ignored in containment mode. Accepting a query
+  // string must never mint another snapshot or another heavy DB read.
+  const filters = DEFAULT_STATS_FILTERS;
 
   const rawLocale = Array.isArray(searchParams.locale)
     ? searchParams.locale[0]
@@ -79,26 +72,21 @@ export default async function StatsPage({
     headers().get("accept-language"),
   );
 
-  // `allSettled` so a thrown read cannot blank a public page. The aggregator
-  // already swallows its own failures; this is the belt for the census, which
-  // reaches a different relation.
-  // Two cache entries, two clocks: the snapshot is keyed by the filters, the
-  // census is global and stamps its own `asOf`. `allSettled` so a throw in
-  // either loader cannot blank a public page.
-  const [snapshotResult, censusResult] = await Promise.allSettled([
-    loadStatsSnapshot(filters),
-    loadPlayersCensus(),
-  ]);
-
-  const snapshot =
-    snapshotResult.status === "fulfilled"
-      ? snapshotResult.value
-      : {
-          stats: { ...EMPTY_PUBLIC_STATS, filters, generatedAt: new Date().toISOString() },
-          breakdown: { learn: null, play: null, total: null },
-        };
-  const census =
-    censusResult.status === "fulfilled" ? censusResult.value : EMPTY_PLAYERS_CENSUS;
+  const redis = getStatsRedis();
+  const persisted = redis ? await readPersistedStatsSnapshot(redis).catch(() => null) : null;
+  const snapshotUnavailable = !persisted;
+  const snapshot = persisted ?? {
+    // This is a typed render placeholder, never a healthy snapshot. The
+    // dashboard renders only the explicit unavailable state for this branch.
+    stats: {
+      ...EMPTY_PUBLIC_STATS,
+      filters,
+      generatedAt: new Date(0).toISOString(),
+      dataIntegrity: { failedRpcs: ["snapshot_unavailable"] },
+    },
+    breakdown: { learn: null, play: null, total: null },
+  };
+  const census = persisted?.census ?? EMPTY_PLAYERS_CENSUS;
 
   return (
     <StatsDashboard
@@ -107,6 +95,8 @@ export default async function StatsPage({
       census={census}
       locale={locale}
       localeOverride={localeOverride}
+      filtersUnavailable
+      snapshotUnavailable={snapshotUnavailable}
     />
   );
 }

@@ -140,6 +140,27 @@ describe("section order", () => {
   });
 });
 
+describe("unavailable snapshot", () => {
+  it("shows an explicit degraded state without a fabricated snapshot timestamp or metrics", () => {
+    const c = statsCopy("en");
+    const { container } = render(
+      <StatsDashboard
+        stats={{ ...EMPTY_PUBLIC_STATS, generatedAt: new Date(0).toISOString() }}
+        breakdown={{ learn: null, play: null, total: null }}
+        census={{ rows: [], total: null, rowsRead: "unavailable", asOf: new Date(0).toISOString() }}
+        locale="en"
+        localeOverride={null}
+        filtersUnavailable
+        snapshotUnavailable
+      />,
+    );
+    expect(screen.getByTestId("stats-snapshot-unavailable")).toHaveTextContent(c.snapshotUnavailableTitle);
+    expect(container.textContent).toContain(c.snapshotUnavailableBody);
+    expect(container.textContent).not.toContain(c.snapshotAt);
+    expect(container.querySelectorAll('[data-testid="stat-card"]')).toHaveLength(0);
+  });
+});
+
 describe("launch context", () => {
   it("names the launch date, in the reader's language", () => {
     renderDashboard();
