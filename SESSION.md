@@ -1,103 +1,96 @@
-# Session Handoff — 2026-08-21
+# Session Handoff — 2026-09-03
 
 ## Completed
 
-Todo mergeado y **pusheado** a `origin/main` (`37b8ba20`). Sin PRs abiertos.
+**Duelo P2P — dos commits en `feat/duel-preflight-p0`, NO mergeados a `main` a pedido del founder**
+- `f6d32edd` — los dos P0 del primer contacto del invitado: la pantalla en blanco permanente
+  cuando el primer GET falla (`shouldPoll` ahora incluye `loading`, y esa rama renderiza el
+  aviso), y el 429 que decía "Try again" sobre una ventana deslizante (aviso propio EN/ES que
+  dice cuánto esperar).
+- `ca30dab5` — instrumentación: `duel_finished` cuando cae la bandera adentro de un GET
+  (era la razón de 1 finished sobre 16 creados), `duel_expired` como denominador, y
+  `duel_share_tap` que no existía.
+- `882a7d44` (sesión previa, también sin pushear) — salida para el estado `watching` y el nick
+  generado en ambos asientos.
 
-- **Top-up flexible de Peones** — 5…100 de a 5 a $0,01/Peón, carril **legacy
-  únicamente**. `PEONES_PACKS` se genera desde cuatro constantes;
-  `peones_pack_50` se reproduce byte a byte. Hoja con stepper `[−] $0,25 [+]`,
-  trabado mientras hay transferencia en vuelo.
-  → `docs/audits/2026-08-20-flexible-peones-topup-implementation.md`
-- **Cola personal de mini-juegos + Biblioteca + separación final de Exercises**
-  — `rotation.ts` eliminado; `?featured=<rotationId>` → `?from=featured|library`;
-  `/minigames`; LEARN dejó de dibujar filas lane-2.
-  → `docs/audits/2026-08-21-minigames-personal-queue-library-separation.md`
-- **Cuota diaria personal (3 por ventana UTC) + fila de estado compacta** —
-  `[ VIEW ALL ] n/3 today · 18h`; el total del catálogo salió del Home; la
-  Biblioteca agrupa por disponibilidad y **no puede saltear la ventana**; el pin
-  "Enter Labyrinth" oculto en LEARN (abría un 4.º desafío esquivando la cuota).
-  → `docs/audits/2026-08-21-minigames-personal-daily-allowance.md`
-- **Atribución Celo ERC-8021** — `@celo/attribution-tags` vía `dataSuffix` en 8
-  familias de escritura / 4 fronteras compartidas. **Verificado on-chain** con tu
-  pago de $0,05. ⛔ El canary va **sin atribuir a propósito**.
-  → `docs/audits/2026-08-21-celo-erc8021-attribution-implementation.md`
-- **Review de herramientas de ops + fix** — la password viajaba en el argv de
-  `docker run` en **6** scripts que prometían lo contrario. Cerrado con
-  `scripts/ops/lib/child-env.ts` + guard.
-  → `docs/reviews/2026-08-21-ops-tooling-review.md`
+**Consejo de revisión del duelo** — 6 agentes read-only. Síntesis en
+`docs/audits/2026-09-02-duel-council-review.md`.
+
+**Auditorías de estado** — la telemetría NO está rota; el 93,4% de las cuentas juega un solo
+día; un experimento A/B de n=1.264 corrió y nadie leyó el resultado (duplicó la activación y
+NO movió la retención). Todo en `docs/audits/2026-09-02-*.md`.
+
+**Downgrade de Supabase Pro → Free** — hecho por el founder, verificado por acá.
+
+**Review de denscope** — `denscope/docs/audits/2026-09-03-indexer-resilience-review.md`
+(escrito, NO commiteado en ese repo).
 
 ## Current State
 
-- **Branch**: `main` (= `origin/main`, `37b8ba20`)
-- **Build**: passing — `tsc` limpio · suite **713 archivos / 9045 passed / 1 todo**
-  (161 s) · VR **68/68** con `--update-snapshots=none` (82 baselines, ninguna
-  tocada) · smoke dirigido **11/11** contra build de producción LEARN
-- **Uncommitted work**: no — árbol limpio
+- **Branch**: `feat/duel-preflight-p0` (3 commits por delante de `main`, **nada pusheado**)
+- **Build**: ✅ `tsc --noEmit` limpio · suite completa **9250 passing / 729 archivos**
+- **Uncommitted work**: sí — 10 docs de auditoría sin trackear en `docs/audits/`, más
+  `docs/audits/2026-07-18-theme-runtime-inventory.json` modificado (lo regenera la suite,
+  deriva preexistente, **no lo commitees sin mirar**)
+- **Producción**: 🟢 GREEN post-downgrade. `now()` en 3.605 ms, base 245 MB, 0 errores 5XX.
+- **Backup**: `private/backups/2026-09-03T16-54-21Z/` — verificado, 24/24 tablas, paridad exacta
 
 ## Next Tasks
 
-1. **Verificar los deploys visualmente** (LEARN, PLAY y LANDING). LANDING es un
-   rebuild no-op: se dispara por el `package.json` de la raíz, no por código
-   suyo. Es tuyo, no mío (CLAUDE.md).
-2. **Ventana de medición de 5 días** — es para lo que existe la cuota diaria.
-   Pregunta: *¿un jugador que agotó su cuota vuelve a buscar más el mismo día?*
-   La responde `minigames_library_open` (`window_id`, `completed_today`,
-   `slots`, `upcoming`); el resto sale de `minigame_start` /
-   `labyrinth_complete` filtrando `previous_best is null`.
-3. **Decidir el truncado de títulos en la baldosa de 50px.** La mayoría de los
-   títulos reales se cortan a ~10 caracteres ("Turn to the Star", "The Knight
-   Sees", "The Quiet Room"). Vino del cambio de nombre de baldosa aprobado sin
-   foto; la geometría está sana. Arreglarlo es títulos más cortos o baldosa más
-   alta: decisión de producto.
-4. **Expandir el pool de 13 → 18+.** Verificado el 2026-08-21: **no necesita
-   cambios de código** — ningún `13` del código de mini-juegos es un valor, son
-   todos comentarios; todo deriva de `resolveChallengePool(pools)`, y un jugador
-   con asignación guardada no necesita migración.
-   ⚠️ **Pero primero decidí la SECUENCIA**: a 3 por ventana, 13 desafíos duran
-   justo los ~5 días de la medición (tarea 2). Expandir antes cambia lo que se
-   está midiendo a mitad de vuelo, y después no se puede distinguir si el límite
-   era la cuota o era el contenido. **Recomendado: medir primero, expandir con
-   el dato.**
-   Dos caminos, con costos muy distintos:
-   - **(a) autorar niveles** para los 4 motores sanos → ⛔ medir ANTES si
-     `20260811150000_content_overlay_sweeps.sql` está aplicada en prod, o
-     **todo guardado del builder da 500**;
-   - **(b) graduar `knight-tour` / `promotion-run`** → ya tienen 3 desafíos cada
-     uno (16 ó 19 sin escribir nada), pero su `coming-soon` es un veredicto de
-     **grading**: knight-tour es `starless` (una carta completada no tendría
-     puntaje) y `optimalMoves` no gradúa promotion-run. Flipear el status sin
-     arreglar eso manda cartas que no pueden mostrar resultado.
-   Menores al expandir: `entitlement-free.test.ts` va a exigir que los nuevos
-   tampoco lleven `access` (a propósito), y la tabla de retención del header de
-   `catalog.ts` queda vieja. **El VR no se mueve** (el fixture usa cartas
-   literales).
-5. **Aceleración con Peones** — sólo diseñado, nada implementado.
-   `resolveConsumptionPolicy` ya es la costura; el badge (`[♙] 5`, esquina
-   superior derecha del grupo, sólo en 3/3) está especificado y **oculto**.
+1. **Decidir el destino de la rama `feat/duel-preflight-p0`.** El founder pidió que el trabajo
+   esté listo pero NO en producción. Está listo. ⚠️ En prod `NEXT_PUBLIC_ENABLE_DUEL` no
+   existe (sólo Preview), así que ni siquiera mergeando aparece la tarjeta para crear duelos —
+   pero un link ya repartido se juega igual, porque las rutas no leen el flag.
+2. **Sacar denscope de la organización de Supabase.** Ocupa ~152 MB de una cuota **compartida
+   y dura** de 500 MB (chesscito son 245 MB = 49% por sí solo; la pantalla marca 397/500
+   porque suma los proyectos). Crece cada minuto sin retención verificada y falla en silencio.
+3. **El playtest del duelo**: repartir ~20 links en MiniPay, desde `preview.chesscito.com`
+   (ahí el flag ya está prendido). ⚠️ TTL de invitación **60 minutos** — hay que coordinar, no
+   alcanza con mandar el link.
+4. **Bucket de rate limit dedicado para el duelo.** Hoy crear un duelo consume 1 de las 5
+   req/min del bucket `rl:ip` que comparte con la firma de scores. Todo otro write path del
+   repo tiene el suyo.
 
 ## Blockers
 
-- **Ninguno para el código.**
-- ⚠️ Máquina: `ANECompilerService.xpc` estuvo 3h46m al 99% de CPU y **tiró tres
-  corridas de suite** (705/709/708 archivos contra 712, con `Failed to start
-  forks worker`). Ya se calmó. Si vuelve: el conteo de ARCHIVOS es lo que lo
-  delata, no el de tests.
+- **Ninguno técnico.** El duelo está construido, probado y verde.
+- ⚠️ **Decisión de producto pendiente, no de código**: el duelo no crea razón de volver
+  (el spec lo prohíbe explícitamente: no toca Peones, ranking, insignias ni Season Pass) y un
+  experimento ya demostró que forzar actividad del día 1 **no mueve la retención**. Antes de
+  invertir más, decidir si el duelo se ataca como retención o sólo como desenlace.
 
 ## Notes
 
-- ⛔ **El canary de Get Peones no lleva atribución, y no es un olvido.**
-  `verifyCanaryTransaction` compara el calldata con igualdad estricta; un sufijo
-  lo haría rechazar **después** de que la plata se movió — pagado y no
-  acreditado. Es opt-in por env y cubre sólo `peones_pack_50`.
-- ⚠️ `NEXT_PUBLIC_*` se inlinea en **build time**: tras cambiar el tag hay que
-  rebuildear; un server levantado no lo ve.
-- ⚠️ El formato que ilustra `BUILDERS.md` (`celo_`+8 hex) es **más angosto** que
-  lo que Celo emite. El primer guard anti-fuga usó el ejemplo de la guía y era
-  ciego al código real.
-- ⚠️ `pnpm theme:coverage` **escribe** aunque le pases `--check` — el
-  `writeFileSync` no está detrás del flag.
-- ⚠️ Los tests de `scripts/ops/**` corren dentro de la suite de `apps/web` (el
-  `include` los trae desde la raíz): 15 archivos / 453 tests.
-- ⚠️ Antes de correr el VR: bajá tu dev server. `reuseExistingServer` adopta el
-  tuyo y no recibe los pines de `webServer.env`.
+### ⛔ Cadencia de backup — cambió con el downgrade
+
+**Free NO incluye backups automáticos ni PITR** ("Not included" en el pricing). El backup
+logical de este repo pasó de precaución a **única copia**.
+
+| Cuándo | Qué correr |
+|---|---|
+| **Antes de cualquier cosa riesgosa** (migración, cambio de esquema, cambio de plan, borrado masivo) | `pnpm ops:backup` — **no negociable** |
+| **Semanal**, como piso si es manual | `pnpm ops:backup` |
+| **Mensual** | `pnpm ops:backup:verify <dir>` — el dump solo es un archivo; restaurarlo es lo que lo hace backup |
+
+El dump tarda menos de un minuto y pesa 8,69 MB (24 tablas, 50.949 filas). El `--verify`
+necesita Docker, por eso va aparte y más espaciado.
+⚠️ El backup **excluye `analytics_events`** a propósito (se archiva a Parquet con
+`pnpm ops:archive`). **Nadie verificó que ese archivo esté al día** — pendiente.
+
+### Otras cosas que el próximo turno debería saber
+
+- ⛔ **El indexer de producción de denscope es la Edge Function, no `scripts/indexer.ts`.**
+  Su `CLAUDE.md` lo dice y esta sesión igual se equivocó de archivo. Leer el mapa primero.
+- ⚠️ **`app_opened` es inservible como métrica**: 12.425 eventos, 10 cuentas distintas. Se
+  emite antes de que exista `account_ref`. No usarlo en ningún análisis de activación.
+- ⚠️ **Ningún evento de duelo lleva `account_ref` ni dimensiones**, porque `recordDuelEvent`
+  inserta directo y saltea `/api/telemetry`. No se puede cruzar duelos con retención. **No se
+  tocó**: derivarlo exige wallet, y el duelo es deliberadamente wallet-free — es decisión de
+  producto.
+- ✅ **El Season Pass pausado NO es una fuga.** Se reportó como tal y es falso: es un fallback
+  documentado (el jugador paga on-chain antes de que corra la ruta). El gate real que corta
+  ventas es `season-pass-sheet.tsx:85`.
+- ⚠️ **`NEXT_PUBLIC_ONBOARDING_FIRST_ACTIVITY_PCT` sigue en 50 en producción** sin ningún
+  consumidor — el propio código pide ponerlo en 0.
+- ⚠️ **`NEXT_PUBLIC_I18N_ES_READY` está prendido en Production**, cosa que el código no puede
+  decir (default OFF). Verificado con `vercel env ls` y con un curl a `/es/arena` (200, 0 hops).
