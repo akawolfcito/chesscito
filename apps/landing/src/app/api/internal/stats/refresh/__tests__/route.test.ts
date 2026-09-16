@@ -11,7 +11,13 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/stats/redis", () => ({ getStatsRedis: mocks.redis }));
 vi.mock("@/lib/stats/aggregator", () => ({
   getPublicStats: mocks.stats,
-  getSurfaceBreakdown: mocks.breakdown,
+  STATS_RPCS: [
+    "stats_install_counts", "stats_activation_funnel", "stats_access_funnel", "stats_top_countries",
+    "stats_retention", "stats_account_lifecycle", "stats_habit_depth", "stats_activity_trend",
+  ],
+  EMERGENCY_STATS_RPCS: [
+    "stats_activation_funnel", "stats_access_funnel", "stats_retention", "stats_account_lifecycle", "stats_activity_trend",
+  ],
 }));
 vi.mock("@/lib/stats/players-census", () => ({
   EMPTY_PLAYERS_CENSUS: { rows: [], total: null, rowsRead: "unavailable", asOf: new Date(0).toISOString() },
@@ -50,7 +56,6 @@ describe("POST /api/internal/stats/refresh", () => {
   beforeEach(() => {
     process.env.STATS_REFRESH_SECRET = "test-secret";
     mocks.stats.mockReset();
-    mocks.breakdown.mockReset();
     mocks.census.mockReset();
     mocks.redis.mockReset();
   });
@@ -81,14 +86,17 @@ describe("POST /api/internal/stats/refresh", () => {
     const redis = fakeRedis();
     mocks.redis.mockReturnValue(redis);
     mocks.stats.mockResolvedValue(healthyStats());
-    mocks.breakdown.mockResolvedValue({ learn: {}, play: {}, total: {} });
-    mocks.census.mockResolvedValue({ rows: [], total: 1, rowsRead: "ok", asOf: new Date().toISOString() });
     const response = await POST(new NextRequest("https://www.chesscito.com/api/internal/stats/refresh", {
       method: "POST", headers: { authorization: "Bearer test-secret" },
     }));
     expect(response.status).toBe(200);
     expect(mocks.stats).toHaveBeenCalledTimes(1);
-    expect(mocks.stats).toHaveBeenCalledWith(expect.anything(), { includeOnchain: false, signal: expect.any(AbortSignal) });
+    expect(mocks.stats).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      includeOnchain: false,
+      signal: expect.any(AbortSignal),
+      rpcNames: ["stats_activation_funnel", "stats_access_funnel", "stats_retention", "stats_account_lifecycle", "stats_activity_trend"],
+      rpcTimeoutMs: 8_000,
+    }));
     expect(mocks.census).not.toHaveBeenCalled();
     expect(redis.set).toHaveBeenCalledTimes(3);
   });
@@ -97,8 +105,6 @@ describe("POST /api/internal/stats/refresh", () => {
     const redis = fakeRedis();
     mocks.redis.mockReturnValue(redis);
     mocks.stats.mockResolvedValue(healthyStats());
-    mocks.breakdown.mockResolvedValue({ learn: {}, play: {}, total: {} });
-    mocks.census.mockResolvedValue({ rows: [], total: 1, rowsRead: "ok", asOf: new Date().toISOString() });
     const request = new NextRequest("https://www.chesscito.com/api/internal/stats/refresh", {
       method: "POST", headers: { authorization: "Bearer test-secret" },
     });
@@ -115,7 +121,6 @@ describe("POST /api/internal/stats/refresh", () => {
     const redis = fakeRedis();
     mocks.redis.mockReturnValue(redis);
     mocks.stats.mockResolvedValue(healthyStats());
-    mocks.breakdown.mockResolvedValue({ learn: {}, play: {}, total: {} });
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
     await POST(new NextRequest("https://www.chesscito.com/api/internal/stats/refresh", {
       method: "POST", headers: { authorization: "Bearer test-secret" },

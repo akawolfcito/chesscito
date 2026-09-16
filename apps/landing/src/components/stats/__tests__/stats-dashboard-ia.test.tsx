@@ -177,6 +177,33 @@ describe("unavailable snapshot", () => {
     expect(screen.queryByText(c.celoUniquePlayers)).toBeNull();
     expect(screen.queryByText(c.playersTotal)).toBeNull();
   });
+
+  it("hides emergency-omitted metric blocks instead of rendering their zero-like fallbacks", () => {
+    const c = statsCopy("en");
+    render(
+      <StatsDashboard
+        stats={stats({
+          installs: null,
+          habitDepth: null,
+          topCountries: [],
+          dataIntegrity: { failedRpcs: ["stats_install_counts", "stats_habit_depth", "stats_top_countries"] },
+        })}
+        breakdown={{ learn: null, play: null, total: null }}
+        census={census(1)}
+        locale="en"
+        localeOverride={null}
+        breakdownUnavailable
+        rpcAvailability={{
+          stats_install_counts: "temporarily_unavailable",
+          stats_habit_depth: "temporarily_unavailable",
+          stats_top_countries: "temporarily_unavailable",
+        }}
+      />,
+    );
+    expect(screen.getAllByText(c.temporarilyUnavailable).length).toBeGreaterThanOrEqual(4);
+    expect(screen.queryByText(c.sessions7d)).toBeNull();
+    expect(screen.queryByText(c.sectionCountries)?.parentElement).not.toHaveTextContent("KE");
+  });
 });
 
 describe("launch context", () => {

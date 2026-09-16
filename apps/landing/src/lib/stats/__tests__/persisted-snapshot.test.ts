@@ -87,6 +87,38 @@ describe("durable public stats snapshot", () => {
     });
   });
 
+  it("accepts a coherent emergency snapshot with omitted RPC blocks explicitly unavailable", async () => {
+    const redis = fakeRedis();
+    const emergency = asPersistedSnapshot({
+      stats: {
+        ...EMPTY_PUBLIC_STATS,
+        generatedAt: "2026-09-15T00:00:00.000Z",
+        dataIntegrity: { failedRpcs: ["stats_install_counts", "stats_top_countries", "stats_habit_depth"] },
+      },
+      breakdown: { learn: null, play: null, total: null },
+      census: { rows: [], total: null, rowsRead: "unavailable", asOf: new Date(0).toISOString() },
+      availability: {
+        onchain: "temporarily_unavailable",
+        census: "temporarily_unavailable",
+        breakdown: "temporarily_unavailable",
+        rpcs: {
+          stats_install_counts: "temporarily_unavailable",
+          stats_activation_funnel: "available",
+          stats_access_funnel: "available",
+          stats_top_countries: "temporarily_unavailable",
+          stats_retention: "available",
+          stats_account_lifecycle: "available",
+          stats_habit_depth: "temporarily_unavailable",
+          stats_activity_trend: "available",
+        },
+      },
+    });
+    redis.values.set(STATS_SNAPSHOT_KEY, emergency);
+    await expect(readPersistedStatsSnapshot(redis)).resolves.toMatchObject({
+      availability: { breakdown: "temporarily_unavailable" },
+    });
+  });
+
   it("replaces only a complete successful snapshot", async () => {
     const redis = fakeRedis();
     const old = snapshot("2026-09-15T00:00:00.000Z");

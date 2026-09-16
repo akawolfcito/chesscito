@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getPublicStats, getSurfaceBreakdown } from "@/lib/stats/aggregator";
+import { EMERGENCY_STATS_RPCS, getPublicStats, STATS_RPCS, type StatsRpcMetric } from "@/lib/stats/aggregator";
 import { safeEqual } from "@/lib/security/safe-equal";
 import { DEFAULT_STATS_FILTERS } from "@/lib/stats/filters";
 import { EMPTY_PLAYERS_CENSUS } from "@/lib/stats/players-census";
 import {
   asPersistedSnapshot,
   RefreshPhaseTimeoutError,
-  STATS_BREAKDOWN_PHASE_BUDGET_MS,
-  STATS_REFRESH_COOLDOWN_SECONDS,
+  STATS_RPC_INDIVIDUAL_BUDGET_MS, STATS_REFRESH_COOLDOWN_SECONDS,
   STATS_RPC_PHASE_BUDGET_MS,
   refreshPersistedStatsSnapshot,
+  type StatsSnapshotAvailability,
   withinRefreshPhase,
 } from "@/lib/stats/persisted-snapshot";
 import { getStatsRedis } from "@/lib/stats/redis";
@@ -20,6 +20,10 @@ export const maxDuration = 60;
 
 function logMetric(metric: { phase: string; durationMs: number; outcome: string }) {
   console.info("[stats/refresh] phase", metric);
+}
+
+function logRpcMetric(metric: StatsRpcMetric) {
+  console.info("[stats/refresh] rpc", metric);
 }
 
 function authorized(request: NextRequest): boolean {
@@ -60,22 +64,27 @@ export async function POST(request: NextRequest) {
           phase: "stats_rpcs",
           budgetMs: STATS_RPC_PHASE_BUDGET_MS,
           onMetric: logMetric,
-          run: (signal) => getPublicStats(DEFAULT_STATS_FILTERS, { includeOnchain: false, signal }),
-        });
-        const breakdown = await withinRefreshPhase({
-          phase: "breakdown",
-          budgetMs: STATS_BREAKDOWN_PHASE_BUDGET_MS,
-          onMetric: logMetric,
-          run: (signal) => getSurfaceBreakdown("all", {
-            surface: "all",
-            installs: stats.installs,
-          }, signal),
+          run: (signal) => getPublicStats(DEFAULT_STATS_FILTERS, {
+            includeOnchain: false,
+            signal,
+            rpcNames: EMERGENCY_STATS_RPCS,
+            rpcTimeoutMs: STATS_RPC_INDIVIDUAL_BUDGET_MS,
+            onRpcMetric: logRpcMetric,
+          }),
         });
         return asPersistedSnapshot({
           stats,
-          breakdown,
+          breakdown: { learn: null, play: null, total: null },
           census: EMPTY_PLAYERS_CENSUS,
-          availability: { onchain: "temporarily_unavailable", census: "temporarily_unavailable" },
+          availability: {
+            onchain: "temporarily_unavailable",
+            census: "temporarily_unavailable",
+            breakdown: "temporarily_unavailable",
+            rpcs: Object.fromEntries(STATS_RPCS.map((rpc) => [
+              rpc,
+              stats.dataIntegrity.failedRpcs.includes(rpc) ? "temporarily_unavailable" : "available",
+            ])) as StatsSnapshotAvailability["rpcs"],
+          },
         });
       },
       onMetric: logMetric,

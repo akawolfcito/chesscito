@@ -56,6 +56,23 @@ export const STATS_RPCS = [
 
 export type StatsRpcName = (typeof STATS_RPCS)[number];
 
+/** Temporary emergency set. These three RPCs have documented high temporary
+ * I/O in production and are deliberately not dispatched by the refresh until
+ * they are diagnosed in isolation. */
+export const EMERGENCY_STATS_RPCS = [
+  "stats_activation_funnel",
+  "stats_access_funnel",
+  "stats_retention",
+  "stats_account_lifecycle",
+  "stats_activity_trend",
+] as const satisfies readonly StatsRpcName[];
+
+export type StatsRpcMetric = {
+  rpc: StatsRpcName;
+  durationMs: number;
+  outcome: "success" | "timeout" | "error";
+};
+
 type RpcClient = {
   rpc: (
     name: string,
@@ -81,6 +98,57 @@ async function callRpc(
     return data as Record<string, unknown>[];
   } catch {
     return null;
+  }
+}
+
+async function callRpcWithBudget(input: {
+  name: StatsRpcName;
+  filters: StatsFilters;
+  signal?: AbortSignal;
+  budgetMs?: number;
+  onMetric?: (metric: StatsRpcMetric) => void;
+}): Promise<Record<string, unknown>[] | null> {
+  const controller = new AbortController();
+  const startedAt = Date.now();
+  let timedOut = false;
+  const abortFromParent = () => controller.abort();
+  input.signal?.addEventListener("abort", abortFromParent, { once: true });
+
+  try {
+    const client = getSupabaseServer(controller.signal) as unknown as RpcClient | null;
+    if (!client) {
+      input.onMetric?.({ rpc: input.name, durationMs: Date.now() - startedAt, outcome: "error" });
+      return null;
+    }
+    if (!input.budgetMs) {
+      const rows = await callRpc(client, input.name, input.filters);
+      input.onMetric?.({
+        rpc: input.name,
+        durationMs: Date.now() - startedAt,
+        outcome: rows ? "success" : "error",
+      });
+      return rows;
+    }
+
+    const request = callRpc(client, input.name, input.filters);
+    let timeoutId!: ReturnType<typeof setTimeout>;
+    const deadline = new Promise<null>((resolve) => {
+      timeoutId = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+        resolve(null);
+      }, input.budgetMs);
+    });
+    const rows = await Promise.race([request, deadline]);
+    clearTimeout(timeoutId);
+    input.onMetric?.({
+      rpc: input.name,
+      durationMs: Date.now() - startedAt,
+      outcome: timedOut ? "timeout" : rows ? "success" : "error",
+    });
+    return rows;
+  } finally {
+    input.signal?.removeEventListener("abort", abortFromParent);
   }
 }
 
@@ -252,7 +320,13 @@ export async function getSurfaceBreakdown(
  */
 export async function getPublicStats(
   filters: StatsFilters = DEFAULT_STATS_FILTERS,
-  options: { includeOnchain?: boolean; signal?: AbortSignal } = {},
+  options: {
+    includeOnchain?: boolean;
+    signal?: AbortSignal;
+    rpcNames?: readonly StatsRpcName[];
+    rpcTimeoutMs?: number;
+    onRpcMetric?: (metric: StatsRpcMetric) => void;
+  } = {},
 ): Promise<PublicStats> {
   const generatedAt = new Date().toISOString();
   const supabase = getSupabaseServer(options.signal);
@@ -261,22 +335,29 @@ export async function getPublicStats(
     return { ...EMPTY_PUBLIC_STATS, filters, generatedAt };
   }
 
-  const client = supabase as unknown as RpcClient;
-
   // All eight in parallel: they are independent reads of the same snapshot and
   // serialising them would multiply the page's latency by eight for nothing.
-  const [
-    installsRows,
-    activationRows,
-    accessRows,
-    countriesRows,
-    retentionRows,
-    lifecycleRows,
-    habitRows,
-    trendRows,
-  ] = await Promise.all(
-    STATS_RPCS.map((name) => callRpc(client, name, filters)),
+  const selected = options.rpcNames ?? STATS_RPCS;
+  const results = new Map<StatsRpcName, Record<string, unknown>[] | null>();
+  await Promise.all(
+    selected.map(async (name) => {
+      results.set(name, await callRpcWithBudget({
+        name,
+        filters,
+        signal: options.signal,
+        budgetMs: options.rpcTimeoutMs,
+        onMetric: options.onRpcMetric,
+      }));
+    }),
   );
+  const installsRows = results.get("stats_install_counts") ?? null;
+  const activationRows = results.get("stats_activation_funnel") ?? null;
+  const accessRows = results.get("stats_access_funnel") ?? null;
+  const countriesRows = results.get("stats_top_countries") ?? null;
+  const retentionRows = results.get("stats_retention") ?? null;
+  const lifecycleRows = results.get("stats_account_lifecycle") ?? null;
+  const habitRows = results.get("stats_habit_depth") ?? null;
+  const trendRows = results.get("stats_activity_trend") ?? null;
 
   // The on-chain block owns its own queries and its own `allSettled`; it never
   // rejects, so worst case it is all-null em-dashes. Awaited separately because
@@ -285,19 +366,7 @@ export async function getPublicStats(
     ? EMPTY_ONCHAIN_STATS
     : await fetchOnchainStats(supabase as unknown as StatsDb).catch(() => EMPTY_ONCHAIN_STATS);
 
-  const failedRpcs = STATS_RPCS.filter(
-    (_, i) =>
-      [
-        installsRows,
-        activationRows,
-        accessRows,
-        countriesRows,
-        retentionRows,
-        lifecycleRows,
-        habitRows,
-        trendRows,
-      ][i] === null,
-  );
+  const failedRpcs = STATS_RPCS.filter((name) => results.get(name) === undefined || results.get(name) === null);
 
   const activation = toActivation(activationRows);
 

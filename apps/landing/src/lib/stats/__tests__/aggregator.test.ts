@@ -14,7 +14,7 @@ vi.mock("server-only", () => ({}));
 
 const getSupabaseServer = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({
-  getSupabaseServer: () => getSupabaseServer(),
+  getSupabaseServer: (signal?: AbortSignal) => getSupabaseServer(signal),
 }));
 
 const fetchOnchainStats = vi.fn();
@@ -134,6 +134,45 @@ describe("filter plumbing", () => {
 
     expect(calls).toHaveLength(8);
     expect(fetchOnchainStats).not.toHaveBeenCalled();
+  });
+
+  it("runs only the five emergency RPCs and does not dispatch the known heavy RPCs", async () => {
+    const { client, calls } = makeClient();
+    getSupabaseServer.mockReturnValue(client);
+    await getPublicStats({ surface: "all", container: "all" }, {
+      includeOnchain: false,
+      rpcNames: [
+        "stats_activation_funnel", "stats_access_funnel", "stats_retention",
+        "stats_account_lifecycle", "stats_activity_trend",
+      ],
+    });
+
+    expect(calls.map((call) => call.name).sort()).toEqual([
+      "stats_activation_funnel", "stats_access_funnel", "stats_retention",
+      "stats_account_lifecycle", "stats_activity_trend",
+    ].sort());
+    expect(calls).toHaveLength(5);
+  });
+
+  it("aborts an individual RPC at its own budget and reports only safe timing metadata", async () => {
+    let requestSignal: AbortSignal | undefined;
+    getSupabaseServer.mockImplementation((signal?: AbortSignal) => {
+      requestSignal = signal;
+      return { rpc: () => new Promise(() => {}) };
+    });
+    const metric = vi.fn();
+    const stats = await getPublicStats({ surface: "all", container: "all" }, {
+      includeOnchain: false,
+      rpcNames: ["stats_activation_funnel"],
+      rpcTimeoutMs: 1,
+      onRpcMetric: metric,
+    });
+
+    expect(requestSignal?.aborted).toBe(true);
+    expect(metric).toHaveBeenCalledWith(expect.objectContaining({
+      rpc: "stats_activation_funnel", outcome: "timeout", durationMs: expect.any(Number),
+    }));
+    expect(stats.dataIntegrity.failedRpcs).toContain("stats_activation_funnel");
   });
 
   it("passes a real filter to all eight, not just some", async () => {

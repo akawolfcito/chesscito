@@ -99,6 +99,8 @@ export default async function StatsPage({
       snapshotUnavailable={snapshotUnavailable}
       onchainUnavailable={persisted?.availability?.onchain === "temporarily_unavailable"}
       censusUnavailable={persisted?.availability?.census === "temporarily_unavailable"}
+      breakdownUnavailable={persisted?.availability?.breakdown === "temporarily_unavailable"}
+      rpcAvailability={persisted?.availability?.rpcs}
     />
   );
 }

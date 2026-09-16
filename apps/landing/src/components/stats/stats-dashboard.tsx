@@ -12,6 +12,7 @@ import {
 import type { StatsFilters } from "@/lib/stats/filters";
 import type { StatsLocale } from "@/lib/stats/locale";
 import type { SurfaceBreakdown } from "@/lib/stats/aggregator";
+import type { StatsRpcName } from "@/lib/stats/aggregator";
 import type { LeaderboardIdentityRow, PlayersCensus } from "@/lib/stats/players-census";
 import { stepLabel } from "@/lib/stats/step-labels";
 import type { ActivationFunnel, DailyBucket, PublicStats } from "@/lib/stats/types";
@@ -182,6 +183,8 @@ export function StatsDashboard({
   snapshotUnavailable = false,
   onchainUnavailable = false,
   censusUnavailable = false,
+  breakdownUnavailable = false,
+  rpcAvailability,
 }: {
   stats: PublicStats;
   breakdown: SurfaceBreakdown;
@@ -192,9 +195,12 @@ export function StatsDashboard({
   snapshotUnavailable?: boolean;
   onchainUnavailable?: boolean;
   censusUnavailable?: boolean;
+  breakdownUnavailable?: boolean;
+  rpcAvailability?: Partial<Record<StatsRpcName, "available" | "temporarily_unavailable">>;
 }) {
   const c = statsCopy(locale);
   const f: StatsFilters = stats.filters;
+  const rpcUnavailable = (rpc: StatsRpcName) => rpcAvailability?.[rpc] === "temporarily_unavailable";
 
   if (snapshotUnavailable) {
     return (
@@ -329,19 +335,22 @@ export function StatsDashboard({
             traffic, how many people, how much of the product got used, and
             whether anyone is coming back. ⛔ No new ratio is computed here. */}
         <Section title={c.sectionGlance} testId="stats-glance">
+          {rpcUnavailable("stats_install_counts") || rpcUnavailable("stats_account_lifecycle") || rpcUnavailable("stats_habit_depth") ? (
+            <div className="mb-3"><Callout>{c.temporarilyUnavailable}</Callout></div>
+          ) : null}
           <div className="grid grid-cols-2 gap-2 md:grid-cols-5 md:gap-3">
-            <StatCard
+            {!rpcUnavailable("stats_install_counts") ? <StatCard
               label={c.sessions7d}
               value={stats.installs?.sessions7d ?? null}
               locale={locale}
               emphasis
-            />
-            <StatCard
+            /> : null}
+            {!rpcUnavailable("stats_account_lifecycle") ? <StatCard
               label={c.glanceActivePeople7d}
               value={stats.accountLifecycle?.active7d ?? null}
               locale={locale}
               emphasis
-            />
+            /> : null}
             <StatCard
               label={c.glanceExercisesStarted}
               value={stepSessions(stats.activation, "exercise_started")}
@@ -354,17 +363,20 @@ export function StatsDashboard({
             />
             {/* The fifth is the best existing habit datum, labelled as EARLY on
                 the card itself — the 7/14/21-day windows are still maturing. */}
-            <StatCard
+            {!rpcUnavailable("stats_habit_depth") ? <StatCard
               label={c.glanceEarlyHabit}
               value={habitSignal}
               locale={locale}
               hint={c.glanceEarlyHabitNote}
-            />
+            /> : null}
           </div>
         </Section>
 
         {/* ── From first visit to habit ─────────────────────────────────── */}
         <Section title={c.sectionJourney} testId="stats-journey">
+          {rpcUnavailable("stats_activation_funnel") || rpcUnavailable("stats_habit_depth") ? (
+            <Callout>{c.temporarilyUnavailable}</Callout>
+          ) : null}
           {journeySteps.length > 0 ? (
             <ul className="flex flex-col gap-2 md:gap-3">
               {journeySteps.map((step) => (
@@ -391,7 +403,7 @@ export function StatsDashboard({
             How far into the product people get, and whether they return. */}
         <Section title={c.sectionEngagement}>
           <SubSection title={c.sectionActivation} note={c.activationNote}>
-            {stats.activation ? (
+            {rpcUnavailable("stats_activation_funnel") ? <Callout>{c.temporarilyUnavailable}</Callout> : stats.activation ? (
               <ul className="flex flex-col gap-2 md:gap-3">
                 {stats.activation.map((step) => (
                   <Bar
@@ -413,7 +425,7 @@ export function StatsDashboard({
               layout — `wallet_ready` can legitimately exceed `login_succeeded`
               and must not read as a rendering bug. */}
           <SubSection title={c.sectionAccess} note={c.accessNote}>
-            {stats.accessFunnel ? (
+            {rpcUnavailable("stats_access_funnel") ? <Callout>{c.temporarilyUnavailable}</Callout> : stats.accessFunnel ? (
               <>
                 <ul className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-3">
                   {stats.accessFunnel.steps.map((step) => (
@@ -447,15 +459,15 @@ export function StatsDashboard({
           </SubSection>
 
           <SubSection title={c.sectionRetention}>
-            <ul className="grid grid-cols-1 gap-2 md:grid-cols-3 md:gap-3">
+            {rpcUnavailable("stats_retention") ? <Callout>{c.temporarilyUnavailable}</Callout> : <ul className="grid grid-cols-1 gap-2 md:grid-cols-3 md:gap-3">
               <RetentionRow label={c.retentionD1} bucket={stats.retention?.d1 ?? null} copy={c} locale={locale} />
               <RetentionRow label={c.retentionD7} bucket={stats.retention?.d7 ?? null} copy={c} locale={locale} />
               <RetentionRow label={c.retentionWeek3} bucket={stats.retention?.week3 ?? null} copy={c} locale={locale} />
-            </ul>
+            </ul>}
           </SubSection>
 
           <SubSection title={c.sectionHabit}>
-            {stats.habitDepth ? (
+            {rpcUnavailable("stats_habit_depth") ? <Callout>{c.temporarilyUnavailable}</Callout> : stats.habitDepth ? (
               <>
                 <div className="mb-2 grid grid-cols-2 gap-2 md:mb-3 md:gap-3">
                   <StatCard label={c.habitCohort} value={stats.habitDepth.cohort} locale={locale} />
@@ -487,7 +499,7 @@ export function StatsDashboard({
             Who is on the other side: people, products, places, ranking. */}
         <Section title={c.sectionAudience}>
           <SubSection title={c.sectionLifecycle}>
-            <CardGrid>
+            {rpcUnavailable("stats_account_lifecycle") ? <Callout>{c.temporarilyUnavailable}</Callout> : <CardGrid>
               <StatCard label={c.known} value={stats.accountLifecycle?.known ?? null} locale={locale} emphasis />
               <StatCard label={c.active7d} value={stats.accountLifecycle?.active7d ?? null} locale={locale} />
               <StatCard label={c.dormant} value={stats.accountLifecycle?.dormant ?? null} locale={locale} />
@@ -499,11 +511,11 @@ export function StatsDashboard({
                 value={stats.accountLifecycle?.resurrected7d ?? null}
                 locale={locale}
               />
-            </CardGrid>
+            </CardGrid>}
           </SubSection>
 
           <SubSection title={c.sectionBreakdown}>
-            <ScrollBox>
+            {breakdownUnavailable ? <Callout>{c.temporarilyUnavailable}</Callout> : <><ScrollBox>
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr style={{ color: "var(--paper-text-muted)" }}>
@@ -543,11 +555,11 @@ export function StatsDashboard({
               {/* The explanation lives HERE, beside the three numbers it
                   reconciles — not on another screen, and never collapsed. */}
               <Callout>{c.surfaceNullNote}</Callout>
-            </div>
+            </div></>}
           </SubSection>
 
           <SubSection title={c.sectionCountries}>
-            {stats.topCountries.length > 0 ? (
+            {rpcUnavailable("stats_top_countries") ? <Callout>{c.temporarilyUnavailable}</Callout> : stats.topCountries.length > 0 ? (
               <ul className="flex flex-col gap-2 md:gap-3">
                 {stats.topCountries.map((row) => (
                   <Bar
@@ -627,7 +639,7 @@ export function StatsDashboard({
             totals live in the Celo block below. */}
         <Section title={c.sectionActivity}>
           <SubSection title={c.sectionTrend}>
-            {trend.length > 0 ? (
+            {rpcUnavailable("stats_activity_trend") ? <Callout>{c.temporarilyUnavailable}</Callout> : trend.length > 0 ? (
               <>
                 {/* The SHAPE first. Thirty rows of digits publish the numbers
                     without publishing the trend — the reader has to difference

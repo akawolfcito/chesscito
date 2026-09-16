@@ -1,4 +1,5 @@
 import type { SurfaceBreakdown } from "./aggregator";
+import type { StatsRpcName } from "./aggregator";
 import type { StatsSnapshot } from "./snapshot";
 import type { PlayersCensus } from "./players-census";
 
@@ -11,14 +12,29 @@ export const STATS_REFRESH_LOCK_TTL_SECONDS = 120;
 export const STATS_REFRESH_COOLDOWN_KEY = "stats:public:refresh-cooldown:v1";
 export const STATS_REFRESH_COOLDOWN_SECONDS = 6 * 60 * 60;
 export const STATS_LOCK_COOLDOWN_BUDGET_MS = 5_000;
-export const STATS_RPC_PHASE_BUDGET_MS = 35_000;
+export const STATS_RPC_PHASE_BUDGET_MS = 30_000;
+export const STATS_RPC_INDIVIDUAL_BUDGET_MS = 8_000;
 export const STATS_BREAKDOWN_PHASE_BUDGET_MS = 12_000;
 export const STATS_REDIS_WRITE_BUDGET_MS = 5_000;
 
 export type StatsSnapshotAvailability = {
   onchain: "available" | "temporarily_unavailable";
   census: "available" | "temporarily_unavailable";
+  breakdown: "available" | "temporarily_unavailable";
+  rpcs: Record<StatsRpcName, "available" | "temporarily_unavailable">;
 };
+
+const FULL_STATS_AVAILABILITY: StatsSnapshotAvailability = {
+  onchain: "available",
+  census: "available",
+  breakdown: "available",
+  rpcs: Object.fromEntries([
+    "stats_install_counts", "stats_activation_funnel", "stats_access_funnel", "stats_top_countries",
+    "stats_retention", "stats_account_lifecycle", "stats_habit_depth", "stats_activity_trend",
+  ].map((rpc) => [rpc, "available"])) as StatsSnapshotAvailability["rpcs"],
+};
+
+const ALL_STATS_RPCS = Object.keys(FULL_STATS_AVAILABILITY.rpcs) as StatsRpcName[];
 
 export type PersistedStatsSnapshot = StatsSnapshot & {
   census: PlayersCensus;
@@ -100,7 +116,14 @@ export function isCompleteSnapshot(snapshot: unknown): snapshot is PersistedStat
   const census = record(candidate.census);
   // Snapshots created before the temporary-minimum format had no availability
   // field. Their complete census/on-chain payload means both blocks are usable.
-  const availability = record(candidate.availability) ?? { onchain: "available", census: "available" };
+  const rawAvailability = record(candidate.availability);
+  const availability = rawAvailability
+    ? {
+      ...FULL_STATS_AVAILABILITY,
+      ...rawAvailability,
+      rpcs: { ...FULL_STATS_AVAILABILITY.rpcs, ...record(rawAvailability.rpcs) },
+    }
+    : FULL_STATS_AVAILABILITY;
   const censusAvailable = availability?.census === "available";
   const censusUnavailable = availability?.census === "temporarily_unavailable";
   return (
@@ -110,17 +133,19 @@ export function isCompleteSnapshot(snapshot: unknown): snapshot is PersistedStat
     filters.container === "all" &&
     typeof stats?.generatedAt === "string" &&
     Array.isArray(integrity?.failedRpcs) &&
-    integrity.failedRpcs.length === 0 &&
+    integrity.failedRpcs.every((rpc) => typeof rpc === "string") &&
     Array.isArray(stats?.topCountries) &&
     Array.isArray(stats?.activityTrend30d) &&
     methodTx !== null &&
-    (availability?.onchain === "available" || availability?.onchain === "temporarily_unavailable") &&
-    breakdown?.learn !== null &&
-    breakdown?.learn !== undefined &&
-    breakdown?.play !== null &&
-    breakdown?.play !== undefined &&
-    breakdown?.total !== null &&
-    breakdown?.total !== undefined &&
+    (availability.onchain === "available" || availability.onchain === "temporarily_unavailable") &&
+    (availability.breakdown === "available" || availability.breakdown === "temporarily_unavailable") &&
+    ALL_STATS_RPCS.every((rpc) =>
+      availability.rpcs[rpc] === "available" || availability.rpcs[rpc] === "temporarily_unavailable",
+    ) &&
+    (availability.breakdown === "temporarily_unavailable" ||
+      (breakdown?.learn !== null && breakdown?.learn !== undefined &&
+        breakdown?.play !== null && breakdown?.play !== undefined &&
+        breakdown?.total !== null && breakdown?.total !== undefined)) &&
     ((censusAvailable && census?.rowsRead === "ok" && Array.isArray(census.rows) && typeof census.total === "number") ||
       (censusUnavailable && census?.rowsRead === "unavailable" && census.total === null))
   );
@@ -133,7 +158,11 @@ export async function readPersistedStatsSnapshot(
   if (!snapshot || !isCompleteSnapshot(snapshot)) return null;
   return {
     ...snapshot,
-    availability: snapshot.availability ?? { onchain: "available", census: "available" },
+    availability: {
+      ...FULL_STATS_AVAILABILITY,
+      ...snapshot.availability,
+      rpcs: { ...FULL_STATS_AVAILABILITY.rpcs, ...snapshot.availability?.rpcs },
+    },
   };
 }
 
@@ -205,6 +234,10 @@ export function asPersistedSnapshot(input: {
     stats: input.stats,
     breakdown: input.breakdown,
     census: input.census,
-    availability: input.availability ?? { onchain: "available", census: "available" },
+    availability: {
+      ...FULL_STATS_AVAILABILITY,
+      ...input.availability,
+      rpcs: { ...FULL_STATS_AVAILABILITY.rpcs, ...input.availability?.rpcs },
+    },
   };
 }
