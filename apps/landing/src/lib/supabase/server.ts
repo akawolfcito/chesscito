@@ -43,7 +43,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 const noStoreFetch: typeof fetch = (input, init) =>
   fetch(input, { ...init, cache: "no-store" });
 
-export function getSupabaseServer(): SupabaseClient | null {
+export function getSupabaseServer(signal?: AbortSignal): SupabaseClient | null {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -52,7 +52,11 @@ export function getSupabaseServer(): SupabaseClient | null {
   }
 
   return createClient(url, key, {
-    global: { fetch: noStoreFetch },
+    global: {
+      fetch: signal
+        ? (input, init) => fetch(input, { ...init, cache: "no-store", signal })
+        : noStoreFetch,
+    },
     auth: {
       // A service-role client is stateless and request-scoped: there is no
       // user session to keep, refresh, or recover from a URL fragment. All

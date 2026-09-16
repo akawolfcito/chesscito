@@ -159,6 +159,24 @@ describe("unavailable snapshot", () => {
     expect(container.textContent).not.toContain(c.snapshotAt);
     expect(container.querySelectorAll('[data-testid="stat-card"]')).toHaveLength(0);
   });
+
+  it("labels omitted on-chain and player blocks as temporarily unavailable", () => {
+    const c = statsCopy("en");
+    render(
+      <StatsDashboard
+        stats={stats()}
+        breakdown={{ learn: null, play: null, total: null }}
+        census={{ rows: [], total: null, rowsRead: "unavailable", asOf: new Date(0).toISOString() }}
+        locale="en"
+        localeOverride={null}
+        onchainUnavailable
+        censusUnavailable
+      />,
+    );
+    expect(screen.getAllByText(c.temporarilyUnavailable)).toHaveLength(2);
+    expect(screen.queryByText(c.celoUniquePlayers)).toBeNull();
+    expect(screen.queryByText(c.playersTotal)).toBeNull();
+  });
 });
 
 describe("launch context", () => {

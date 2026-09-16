@@ -215,8 +215,9 @@ export async function getSurfaceBreakdown(
     surface: "all",
     installs: null,
   },
+  signal?: AbortSignal,
 ): Promise<SurfaceBreakdown> {
-  const supabase = getSupabaseServer();
+  const supabase = getSupabaseServer(signal);
   if (!supabase) return { learn: null, play: null, total: null };
 
   const client = supabase as unknown as RpcClient;
@@ -251,9 +252,10 @@ export async function getSurfaceBreakdown(
  */
 export async function getPublicStats(
   filters: StatsFilters = DEFAULT_STATS_FILTERS,
+  options: { includeOnchain?: boolean; signal?: AbortSignal } = {},
 ): Promise<PublicStats> {
   const generatedAt = new Date().toISOString();
-  const supabase = getSupabaseServer();
+  const supabase = getSupabaseServer(options.signal);
 
   if (!supabase) {
     return { ...EMPTY_PUBLIC_STATS, filters, generatedAt };
@@ -279,9 +281,9 @@ export async function getPublicStats(
   // The on-chain block owns its own queries and its own `allSettled`; it never
   // rejects, so worst case it is all-null em-dashes. Awaited separately because
   // it is not an RPC and does not take the filters — those numbers are global.
-  const onchain: OnchainStats = await fetchOnchainStats(
-    supabase as unknown as StatsDb,
-  ).catch(() => EMPTY_ONCHAIN_STATS);
+  const onchain: OnchainStats = options.includeOnchain === false
+    ? EMPTY_ONCHAIN_STATS
+    : await fetchOnchainStats(supabase as unknown as StatsDb).catch(() => EMPTY_ONCHAIN_STATS);
 
   const failedRpcs = STATS_RPCS.filter(
     (_, i) =>

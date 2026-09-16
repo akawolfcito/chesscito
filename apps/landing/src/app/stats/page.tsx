@@ -97,6 +97,8 @@ export default async function StatsPage({
       localeOverride={localeOverride}
       filtersUnavailable
       snapshotUnavailable={snapshotUnavailable}
+      onchainUnavailable={persisted?.availability?.onchain === "temporarily_unavailable"}
+      censusUnavailable={persisted?.availability?.census === "temporarily_unavailable"}
     />
   );
 }

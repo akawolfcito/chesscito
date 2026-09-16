@@ -127,6 +127,15 @@ describe("filter plumbing", () => {
     }
   });
 
+  it("runs only the eight stats RPCs when the temporary snapshot omits on-chain data", async () => {
+    const { client, calls } = makeClient();
+    getSupabaseServer.mockReturnValue(client);
+    await getPublicStats({ surface: "all", container: "all" }, { includeOnchain: false });
+
+    expect(calls).toHaveLength(8);
+    expect(fetchOnchainStats).not.toHaveBeenCalled();
+  });
+
   it("passes a real filter to all eight, not just some", async () => {
     const { client, calls } = makeClient();
     getSupabaseServer.mockReturnValue(client);
@@ -140,6 +149,15 @@ describe("filter plumbing", () => {
 });
 
 describe("install-count reuse in the surface breakdown", () => {
+  it("uses exactly ten stats RPCs for the minimal all/all snapshot", async () => {
+    const { client, calls } = makeClient();
+    getSupabaseServer.mockReturnValue(client);
+    const stats = await getPublicStats({ surface: "all", container: "all" }, { includeOnchain: false });
+    await getSurfaceBreakdown("all", { surface: "all", installs: stats.installs });
+
+    expect(calls).toHaveLength(10);
+  });
+
   it.each([
     { surface: "all", container: "all", reused: "all" },
     { surface: "all", container: "minipay", reused: "all" },

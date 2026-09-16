@@ -180,6 +180,8 @@ export function StatsDashboard({
   localeOverride,
   filtersUnavailable = false,
   snapshotUnavailable = false,
+  onchainUnavailable = false,
+  censusUnavailable = false,
 }: {
   stats: PublicStats;
   breakdown: SurfaceBreakdown;
@@ -188,6 +190,8 @@ export function StatsDashboard({
   localeOverride: StatsLocale | null;
   filtersUnavailable?: boolean;
   snapshotUnavailable?: boolean;
+  onchainUnavailable?: boolean;
+  censusUnavailable?: boolean;
 }) {
   const c = statsCopy(locale);
   const f: StatsFilters = stats.filters;
@@ -564,6 +568,9 @@ export function StatsDashboard({
               the rows read fails the total can still be alive, so the two are
               rendered independently and the census carries its OWN timestamp. */}
           <SubSection title={c.sectionPlayers}>
+            {censusUnavailable ? (
+              <Callout>{c.temporarilyUnavailable}</Callout>
+            ) : <>
             <div className="mb-2 grid grid-cols-1 gap-2 md:mb-3 md:grid-cols-2 md:gap-3">
               <StatCard label={c.playersTotal} value={census.total} locale={locale} emphasis />
               <div
@@ -610,6 +617,7 @@ export function StatsDashboard({
                 ) : null}
               </>
             ) : null}
+            </>}
           </SubSection>
         </Section>
 
@@ -644,7 +652,7 @@ export function StatsDashboard({
         {/* ── Saved on Celo ─────────────────────────────────────────────────
             Language brief: never "on-chain", never "NFT", never "mint". */}
         <Section title={c.sectionCelo}>
-          <CardGrid>
+          {onchainUnavailable ? <Callout>{c.temporarilyUnavailable}</Callout> : <CardGrid>
             <StatCard
               label={c.celoUniquePlayers}
               value={stats.onchain.uniqueOnchainUsersLifetime}
@@ -666,7 +674,7 @@ export function StatsDashboard({
               value={stats.onchain.methodTx.welcomePackClaims.lifetime}
               locale={locale}
             />
-          </CardGrid>
+          </CardGrid>}
         </Section>
 
         {/* ── Methodology, last ─────────────────────────────────────────────

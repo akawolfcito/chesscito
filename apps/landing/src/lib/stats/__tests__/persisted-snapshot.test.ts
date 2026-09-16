@@ -3,11 +3,13 @@ import { describe, expect, it } from "vitest";
 import {
   STATS_REFRESH_LOCK_KEY,
   STATS_REFRESH_LOCK_TTL_SECONDS,
+  STATS_RPC_PHASE_BUDGET_MS,
   STATS_REFRESH_COOLDOWN_KEY,
   STATS_SNAPSHOT_KEY,
   asPersistedSnapshot,
   readPersistedStatsSnapshot,
   refreshPersistedStatsSnapshot,
+  withinRefreshPhase,
   type PersistedStatsSnapshot,
   type StatsRedis,
 } from "../persisted-snapshot";
@@ -75,6 +77,16 @@ describe("durable public stats snapshot", () => {
     await expect(readPersistedStatsSnapshot(redis)).resolves.toBeNull();
   });
 
+  it("reads a complete pre-minimum snapshot as fully available", async () => {
+    const redis = fakeRedis();
+    const legacy = snapshot();
+    delete (legacy as Partial<PersistedStatsSnapshot>).availability;
+    redis.values.set(STATS_SNAPSHOT_KEY, legacy);
+    await expect(readPersistedStatsSnapshot(redis)).resolves.toMatchObject({
+      availability: { onchain: "available", census: "available" },
+    });
+  });
+
   it("replaces only a complete successful snapshot", async () => {
     const redis = fakeRedis();
     const old = snapshot("2026-09-15T00:00:00.000Z");
@@ -120,6 +132,27 @@ describe("durable public stats snapshot", () => {
     await redis.set(STATS_REFRESH_LOCK_KEY, "dead-worker", { nx: true, ex: STATS_REFRESH_LOCK_TTL_SECONDS });
     redis.now += (STATS_REFRESH_LOCK_TTL_SECONDS + 1) * 1000;
     await expect(refreshPersistedStatsSnapshot({ redis, build: async () => snapshot() })).resolves.toMatchObject({ status: "refreshed" });
+  });
+
+  it("keeps the lock lease above the deployed 60-second function limit", () => {
+    expect(STATS_REFRESH_LOCK_TTL_SECONDS).toBeGreaterThan(60);
+  });
+
+  it("preserves the previous snapshot and skips cooldown when a phase times out", async () => {
+    const redis = fakeRedis();
+    const old = snapshot();
+    redis.values.set(STATS_SNAPSHOT_KEY, old);
+    await expect(refreshPersistedStatsSnapshot({
+      redis,
+      build: () => withinRefreshPhase({
+        phase: "stats_rpcs",
+        budgetMs: 1,
+        run: async () => new Promise<PersistedStatsSnapshot>((resolve) => setTimeout(() => resolve(snapshot()), 20)),
+      }),
+    })).rejects.toThrow("stats_rpcs");
+    expect(redis.values.get(STATS_SNAPSHOT_KEY)).toBe(old);
+    expect(redis.values.get(STATS_REFRESH_COOLDOWN_KEY)).toBeUndefined();
+    expect(STATS_RPC_PHASE_BUDGET_MS).toBeLessThan(60_000);
   });
 
   it("does not build again during the successful refresh cooldown", async () => {

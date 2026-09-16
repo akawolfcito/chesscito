@@ -13,7 +13,10 @@ vi.mock("@/lib/stats/aggregator", () => ({
   getPublicStats: mocks.stats,
   getSurfaceBreakdown: mocks.breakdown,
 }));
-vi.mock("@/lib/stats/players-census", () => ({ readPlayersCensus: mocks.census }));
+vi.mock("@/lib/stats/players-census", () => ({
+  EMPTY_PLAYERS_CENSUS: { rows: [], total: null, rowsRead: "unavailable", asOf: new Date(0).toISOString() },
+  readPlayersCensus: mocks.census,
+}));
 
 import { POST } from "../route";
 import { EMPTY_PUBLIC_STATS } from "@/lib/stats/types";
@@ -85,6 +88,8 @@ describe("POST /api/internal/stats/refresh", () => {
     }));
     expect(response.status).toBe(200);
     expect(mocks.stats).toHaveBeenCalledTimes(1);
+    expect(mocks.stats).toHaveBeenCalledWith(expect.anything(), { includeOnchain: false, signal: expect.any(AbortSignal) });
+    expect(mocks.census).not.toHaveBeenCalled();
     expect(redis.set).toHaveBeenCalledTimes(3);
   });
 
@@ -104,5 +109,19 @@ describe("POST /api/internal/stats/refresh", () => {
     expect(cooldown.status).toBe(429);
     expect(cooldown.headers.get("Retry-After")).toBe("21600");
     expect(mocks.stats).toHaveBeenCalledTimes(1);
+  });
+
+  it("logs phase timings without the refresh secret", async () => {
+    const redis = fakeRedis();
+    mocks.redis.mockReturnValue(redis);
+    mocks.stats.mockResolvedValue(healthyStats());
+    mocks.breakdown.mockResolvedValue({ learn: {}, play: {}, total: {} });
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    await POST(new NextRequest("https://www.chesscito.com/api/internal/stats/refresh", {
+      method: "POST", headers: { authorization: "Bearer test-secret" },
+    }));
+    expect(info).toHaveBeenCalled();
+    expect(JSON.stringify(info.mock.calls)).not.toContain("test-secret");
+    info.mockRestore();
   });
 });

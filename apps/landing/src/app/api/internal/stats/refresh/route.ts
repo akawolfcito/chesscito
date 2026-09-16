@@ -3,16 +3,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPublicStats, getSurfaceBreakdown } from "@/lib/stats/aggregator";
 import { safeEqual } from "@/lib/security/safe-equal";
 import { DEFAULT_STATS_FILTERS } from "@/lib/stats/filters";
-import { readPlayersCensus } from "@/lib/stats/players-census";
+import { EMPTY_PLAYERS_CENSUS } from "@/lib/stats/players-census";
 import {
   asPersistedSnapshot,
+  RefreshPhaseTimeoutError,
+  STATS_BREAKDOWN_PHASE_BUDGET_MS,
   STATS_REFRESH_COOLDOWN_SECONDS,
+  STATS_RPC_PHASE_BUDGET_MS,
   refreshPersistedStatsSnapshot,
+  withinRefreshPhase,
 } from "@/lib/stats/persisted-snapshot";
 import { getStatsRedis } from "@/lib/stats/redis";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+function logMetric(metric: { phase: string; durationMs: number; outcome: string }) {
+  console.info("[stats/refresh] phase", metric);
+}
 
 function authorized(request: NextRequest): boolean {
   const secret = process.env.STATS_REFRESH_SECRET;
@@ -26,7 +34,15 @@ function authorized(request: NextRequest): boolean {
  * containment. Public `/stats` only reads Redis.
  */
 export async function POST(request: NextRequest) {
-  if (!authorized(request)) {
+  const totalStartedAt = Date.now();
+  const authStartedAt = Date.now();
+  const isAuthorized = authorized(request);
+  console.info("[stats/refresh] phase", {
+    phase: "auth",
+    durationMs: Date.now() - authStartedAt,
+    outcome: isAuthorized ? "ok" : "error",
+  });
+  if (!isAuthorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -40,14 +56,29 @@ export async function POST(request: NextRequest) {
     const result = await refreshPersistedStatsSnapshot({
       redis,
       build: async () => {
-        const stats = await getPublicStats(DEFAULT_STATS_FILTERS);
-        const breakdown = await getSurfaceBreakdown("all", {
-          surface: "all",
-          installs: stats.installs,
+        const stats = await withinRefreshPhase({
+          phase: "stats_rpcs",
+          budgetMs: STATS_RPC_PHASE_BUDGET_MS,
+          onMetric: logMetric,
+          run: (signal) => getPublicStats(DEFAULT_STATS_FILTERS, { includeOnchain: false, signal }),
         });
-        const census = await readPlayersCensus();
-        return asPersistedSnapshot({ stats, breakdown, census });
+        const breakdown = await withinRefreshPhase({
+          phase: "breakdown",
+          budgetMs: STATS_BREAKDOWN_PHASE_BUDGET_MS,
+          onMetric: logMetric,
+          run: (signal) => getSurfaceBreakdown("all", {
+            surface: "all",
+            installs: stats.installs,
+          }, signal),
+        });
+        return asPersistedSnapshot({
+          stats,
+          breakdown,
+          census: EMPTY_PLAYERS_CENSUS,
+          availability: { onchain: "temporarily_unavailable", census: "temporarily_unavailable" },
+        });
       },
+      onMetric: logMetric,
     });
 
     if (result.status === "locked") {
@@ -66,9 +97,19 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ refreshed: true, refreshedAt: result.snapshot.refreshedAt });
   } catch (error) {
+    if (error instanceof RefreshPhaseTimeoutError) {
+      console.error("[stats/refresh] phase timeout; previous snapshot preserved", { phase: error.phase });
+      return NextResponse.json({ refreshed: false, reason: "phase_timeout", phase: error.phase }, { status: 503 });
+    }
     console.error("[stats/refresh] failed; previous snapshot preserved", {
       name: error instanceof Error ? error.name : "unknown",
     });
     return NextResponse.json({ refreshed: false, reason: "refresh_failed" }, { status: 503 });
+  } finally {
+    console.info("[stats/refresh] phase", {
+      phase: "total",
+      durationMs: Date.now() - totalStartedAt,
+      outcome: "complete",
+    });
   }
 }
