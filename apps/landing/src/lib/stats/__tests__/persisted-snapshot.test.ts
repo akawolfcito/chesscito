@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   STATS_REFRESH_LOCK_KEY,
   STATS_REFRESH_LOCK_TTL_SECONDS,
   STATS_RPC_PHASE_BUDGET_MS,
   STATS_REFRESH_COOLDOWN_KEY,
+  STATS_REFRESH_COOLDOWN_SECONDS,
   STATS_SNAPSHOT_KEY,
   asPersistedSnapshot,
   readPersistedStatsSnapshot,
@@ -20,6 +21,12 @@ function snapshot(stamp = "2026-09-15T00:00:00.000Z"): PersistedStatsSnapshot {
     stats: {
       ...EMPTY_PUBLIC_STATS,
       generatedAt: stamp,
+      installs: { sessions7d: 0, sessions30d: 0, appOpensRows30d: 0, appOpenSessions30d: 0 },
+      activation: [],
+      accessFunnel: { steps: [], failedSessions: 0 },
+      retention: { d1: { returned: 0, cohort: 0 }, d7: { returned: 0, cohort: 0 }, week3: { returned: 0, cohort: 0 } },
+      accountLifecycle: { known: 0, newToday: 0, new7d: 0, active7d: 0, dormant: 0, inactive: 0, resurrected7d: 0 },
+      habitDepth: { buckets: [], cohort: 0, medianActiveDays: 0 },
       dataIntegrity: { failedRpcs: [] },
     },
     breakdown: { learn: {}, play: {}, total: {} } as never,
@@ -46,7 +53,11 @@ function fakeRedis(): StatsRedis & { values: Map<string, unknown>; now: number }
       return "OK";
     },
     async eval(_script: string, keys: string[], args: string[]) {
-      if (values.get(keys[0]) === args[0]) values.delete(keys[0]);
+      if (await redis.get(keys[0]) !== args[0]) return 0;
+      if (keys.length === 3) {
+        await redis.set(keys[1], JSON.parse(args[1]));
+        await redis.set(keys[2], args[2], { ex: Number(args[3]) });
+      } else values.delete(keys[0]);
       return 1;
     },
   };
@@ -126,7 +137,7 @@ describe("durable public stats snapshot", () => {
     redis.values.set(STATS_SNAPSHOT_KEY, old);
     const result = await refreshPersistedStatsSnapshot({ redis, build: async () => fresh });
     expect(result.status).toBe("refreshed");
-    expect(redis.values.get(STATS_SNAPSHOT_KEY)).toBe(fresh);
+    expect(redis.values.get(STATS_SNAPSHOT_KEY)).toEqual(fresh);
   });
 
   it("preserves the last healthy snapshot on an incomplete refresh", async () => {
@@ -141,7 +152,7 @@ describe("durable public stats snapshot", () => {
     expect(redis.values.get(STATS_SNAPSHOT_KEY)).toBe(old);
   });
 
-  it("allows only one concurrent regeneration", async () => {
+  it("allows only one regeneration across independent workers sharing Redis", async () => {
     const redis = fakeRedis();
     let builds = 0;
     let release!: () => void;
@@ -152,7 +163,9 @@ describe("durable public stats snapshot", () => {
     };
     const first = refreshPersistedStatsSnapshot({ redis, build });
     await Promise.resolve();
-    const second = await refreshPersistedStatsSnapshot({ redis, build });
+    vi.resetModules();
+    const otherWorker = await import("../persisted-snapshot");
+    const second = await otherWorker.refreshPersistedStatsSnapshot({ redis, build });
     expect(second.status).toBe("locked");
     expect(builds).toBe(1);
     release();
@@ -206,5 +219,91 @@ describe("durable public stats snapshot", () => {
     })).resolves.toMatchObject({ status: "cooldown" });
     expect(redis.values.get(STATS_REFRESH_COOLDOWN_KEY)).toBeDefined();
     expect(builds).toBe(1);
+  });
+
+  it("rejects a structurally valid partial refresh even when marked unavailable", async () => {
+    const redis = fakeRedis();
+    const old = snapshot();
+    redis.values.set(STATS_SNAPSHOT_KEY, old);
+    const partial = snapshot();
+    partial.stats.retention = null;
+    partial.stats.dataIntegrity.failedRpcs = ["stats_retention"];
+    partial.availability.rpcs.stats_retention = "temporarily_unavailable";
+    await expect(refreshPersistedStatsSnapshot({ redis, build: async () => partial })).resolves.toEqual({ status: "incomplete" });
+    expect(redis.values.get(STATS_SNAPSHOT_KEY)).toBe(old);
+    expect(redis.values.has(STATS_REFRESH_COOLDOWN_KEY)).toBe(false);
+  });
+
+  it("rejects null required results even if failedRpcs is incorrectly empty", async () => {
+    const redis = fakeRedis();
+    const partial = snapshot();
+    partial.stats.activation = null;
+    await expect(refreshPersistedStatsSnapshot({ redis, build: async () => partial })).resolves.toEqual({ status: "incomplete" });
+    expect(redis.values.has(STATS_SNAPSHOT_KEY)).toBe(false);
+  });
+
+  it("preserves a stale snapshot on rejection and allows a later retry", async () => {
+    const redis = fakeRedis();
+    const old = snapshot();
+    redis.values.set(STATS_SNAPSHOT_KEY, old);
+    await expect(refreshPersistedStatsSnapshot({ redis, build: async () => { throw new Error("test failure"); } })).rejects.toThrow("test failure");
+    expect(redis.values.has(STATS_REFRESH_LOCK_KEY)).toBe(false);
+    redis.now += 24 * 60 * 60 * 1000;
+    await expect(readPersistedStatsSnapshot(redis)).resolves.toEqual(old);
+    await expect(refreshPersistedStatsSnapshot({ redis, build: async () => snapshot() })).resolves.toHaveProperty("status", "refreshed");
+  });
+
+  it("serves the unchanged snapshot while another worker revalidates", async () => {
+    const redis = fakeRedis();
+    const old = snapshot();
+    redis.values.set(STATS_SNAPSHOT_KEY, old);
+    let release!: (value: PersistedStatsSnapshot) => void;
+    const pending = refreshPersistedStatsSnapshot({ redis, build: () => new Promise((resolve) => { release = resolve; }) });
+    // Lock acquisition and cooldown lookup are async even with this fake.
+    while (!release) await Promise.resolve();
+    await expect(readPersistedStatsSnapshot(redis)).resolves.toEqual(old);
+    release(snapshot("2026-09-15T00:15:00.000Z"));
+    await expect(pending).resolves.toHaveProperty("status", "refreshed");
+  });
+
+  it("recomputes only after the 900-second cooldown expires and keeps the same response shape", async () => {
+    const redis = fakeRedis();
+    const value = snapshot();
+    await refreshPersistedStatsSnapshot({ redis, build: async () => value });
+    redis.now = STATS_REFRESH_COOLDOWN_SECONDS * 1000 - 1;
+    await expect(refreshPersistedStatsSnapshot({ redis, build: async () => value })).resolves.toEqual({ status: "cooldown" });
+    redis.now += 1;
+    await expect(refreshPersistedStatsSnapshot({ redis, build: async () => value })).resolves.toHaveProperty("status", "refreshed");
+    await expect(readPersistedStatsSnapshot(redis)).resolves.toEqual(value);
+    expect(Object.keys((await readPersistedStatsSnapshot(redis))!.stats).sort()).toEqual(Object.keys(EMPTY_PUBLIC_STATS).sort());
+  });
+
+  it("an expired worker cannot publish or release its successor's lock", async () => {
+    const redis = fakeRedis();
+    const old = snapshot();
+    redis.values.set(STATS_SNAPSHOT_KEY, old);
+    const result = await refreshPersistedStatsSnapshot({ redis, build: async () => {
+      redis.now += STATS_REFRESH_LOCK_TTL_SECONDS * 1000;
+      await redis.set(STATS_REFRESH_LOCK_KEY, "successor", { nx: true, ex: STATS_REFRESH_LOCK_TTL_SECONDS });
+      return snapshot("2026-09-15T00:15:00.000Z");
+    } });
+    expect(result).toEqual({ status: "locked" });
+    expect(redis.values.get(STATS_REFRESH_LOCK_KEY)).toBe("successor");
+    expect(redis.values.get(STATS_SNAPSHOT_KEY)).toBe(old);
+    expect(redis.values.has(STATS_REFRESH_COOLDOWN_KEY)).toBe(false);
+  });
+
+  it("publication failure preserves the prior snapshot and leaves no success cooldown", async () => {
+    const redis = fakeRedis();
+    const old = snapshot();
+    redis.values.set(STATS_SNAPSHOT_KEY, old);
+    const evalRedis = redis.eval;
+    redis.eval = async (script, keys, args) => {
+      if (keys.length === 3) throw new Error("Redis unavailable");
+      return evalRedis(script, keys, args);
+    };
+    await expect(refreshPersistedStatsSnapshot({ redis, build: async () => snapshot() })).rejects.toThrow("Redis unavailable");
+    expect(redis.values.get(STATS_SNAPSHOT_KEY)).toBe(old);
+    expect(redis.values.has(STATS_REFRESH_COOLDOWN_KEY)).toBe(false);
   });
 });

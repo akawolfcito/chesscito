@@ -46,6 +46,61 @@ const MAX_DIM_LEN = 128;
 const MAX_PROP_STRING_LEN = 512;
 const MAX_PROP_KEY_LEN = 40;
 
+/**
+ * `ON CONFLICT DO NOTHING` preserves first-seen values, but it is still a
+ * database write attempt. Telemetry batches commonly contain one event (the
+ * idle flush), so batch-local Maps alone could still turn every account event
+ * into that conflict write. Keep only *confirmed* keys for the lifetime of a
+ * warm server instance. A restart merely causes one safe idempotent retry.
+ *
+ * This is intentionally bounded: cohort identity is durable in Postgres, not
+ * in this best-effort process cache. Eviction can cost another conflict write;
+ * it can never change a first-seen value.
+ */
+const FIRST_SEEN_REGISTRY_LIMIT = 10_000;
+const confirmedFirstSeenSessions = new Map<string, true>();
+const confirmedFirstSeenAccounts = new Map<string, true>();
+const inFlightFirstSeenSessions = new Map<string, Promise<void>>();
+const inFlightFirstSeenAccounts = new Map<string, Promise<void>>();
+
+type FirstSeenWrite = () => PromiseLike<{ error: unknown }>;
+
+function rememberFirstSeen(registry: Map<string, true>, key: string): void {
+  registry.set(key, true);
+  const oldest = registry.keys().next().value as string | undefined;
+  if (registry.size > FIRST_SEEN_REGISTRY_LIMIT && oldest) registry.delete(oldest);
+}
+
+async function recordFirstSeenOnce(input: {
+  key: string;
+  confirmed: Map<string, true>;
+  inFlight: Map<string, Promise<void>>;
+  write: FirstSeenWrite;
+}): Promise<void> {
+  if (input.confirmed.has(input.key)) return;
+  const existing = input.inFlight.get(input.key);
+  if (existing) return existing;
+
+  // Register before invoking the writer; synchronous throws follow the same
+  // retryable failure path as rejected promises.
+  const pending = Promise.resolve()
+    .then(input.write)
+    .then(({ error }) => {
+      // Never cache an error. The next telemetry event retries the idempotent
+      // insert, preserving the old delivery semantics during a transient DB
+      // failure without introducing a retry loop of its own.
+      if (error === null) rememberFirstSeen(input.confirmed, input.key);
+    })
+    .catch(() => {
+      /* telemetry remains best-effort; do not mark an unconfirmed key */
+    })
+    .finally(() => {
+      if (input.inFlight.get(input.key) === pending) input.inFlight.delete(input.key);
+    });
+  input.inFlight.set(input.key, pending);
+  return pending;
+}
+
 function byteLength(value: string): number {
   return Buffer.byteLength(value, "utf8");
 }
@@ -280,16 +335,21 @@ export async function POST(req: Request) {
           // Idempotent: on conflict the first visit's day-0 + first-touch
           // attribution stand.
           for (const [sessionId, dims] of firstSeenSessions) {
-            await supabase.from("session_first_seen").upsert(
-              {
-                session_id: sessionId,
-                first_surface: dims.surface,
-                first_container: dims.container,
-                first_country: dims.country,
-                first_source: dims.source,
-              },
-              { onConflict: "session_id", ignoreDuplicates: true },
-            );
+            await recordFirstSeenOnce({
+              key: sessionId,
+              confirmed: confirmedFirstSeenSessions,
+              inFlight: inFlightFirstSeenSessions,
+              write: () => supabase.from("session_first_seen").upsert(
+                {
+                  session_id: sessionId,
+                  first_surface: dims.surface,
+                  first_container: dims.container,
+                  first_country: dims.country,
+                  first_source: dims.source,
+                },
+                { onConflict: "session_id", ignoreDuplicates: true },
+              ),
+            });
           }
 
           // Account cohort. NOT gated on app_opened: the wallet only becomes
@@ -298,15 +358,20 @@ export async function POST(req: Request) {
           // written at all on the visit that created the account. Same
           // idempotence — first sight wins.
           for (const [accountRef, dims] of firstSeenAccounts) {
-            await supabase.from("account_first_seen").upsert(
-              {
-                account_ref: accountRef,
-                first_surface: dims.surface,
-                first_container: dims.container,
-                first_country: dims.country,
-              },
-              { onConflict: "account_ref", ignoreDuplicates: true },
-            );
+            await recordFirstSeenOnce({
+              key: accountRef,
+              confirmed: confirmedFirstSeenAccounts,
+              inFlight: inFlightFirstSeenAccounts,
+              write: () => supabase.from("account_first_seen").upsert(
+                {
+                  account_ref: accountRef,
+                  first_surface: dims.surface,
+                  first_container: dims.container,
+                  first_country: dims.country,
+                },
+                { onConflict: "account_ref", ignoreDuplicates: true },
+              ),
+            });
           }
         });
       }

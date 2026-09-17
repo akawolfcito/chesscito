@@ -8,9 +8,9 @@ export const STATS_SNAPSHOT_KEY = "stats:public:all-all:v1";
 /** Short lease: a failed function cannot leave the refresh permanently locked. */
 export const STATS_REFRESH_LOCK_KEY = "stats:public:refresh-lock:v1";
 export const STATS_REFRESH_LOCK_TTL_SECONDS = 120;
-/** Successful refreshes are deliberately limited to the cron cadence. */
+/** Successful refreshes are deliberately limited to the 15-minute cadence. */
 export const STATS_REFRESH_COOLDOWN_KEY = "stats:public:refresh-cooldown:v1";
-export const STATS_REFRESH_COOLDOWN_SECONDS = 6 * 60 * 60;
+export const STATS_REFRESH_COOLDOWN_SECONDS = 15 * 60;
 export const STATS_LOCK_COOLDOWN_BUDGET_MS = 5_000;
 export const STATS_RPC_PHASE_BUDGET_MS = 30_000;
 export const STATS_RPC_INDIVIDUAL_BUDGET_MS = 8_000;
@@ -35,6 +35,16 @@ const FULL_STATS_AVAILABILITY: StatsSnapshotAvailability = {
 };
 
 const ALL_STATS_RPCS = Object.keys(FULL_STATS_AVAILABILITY.rpcs) as StatsRpcName[];
+const RPC_FIELDS: Record<StatsRpcName, keyof StatsSnapshot["stats"]> = {
+  stats_install_counts: "installs",
+  stats_activation_funnel: "activation",
+  stats_access_funnel: "accessFunnel",
+  stats_top_countries: "topCountries",
+  stats_retention: "retention",
+  stats_account_lifecycle: "accountLifecycle",
+  stats_habit_depth: "habitDepth",
+  stats_activity_trend: "activityTrend30d",
+};
 
 export type PersistedStatsSnapshot = StatsSnapshot & {
   census: PlayersCensus;
@@ -136,6 +146,8 @@ export function isCompleteSnapshot(snapshot: unknown): snapshot is PersistedStat
     integrity.failedRpcs.every((rpc) => typeof rpc === "string") &&
     Array.isArray(stats?.topCountries) &&
     Array.isArray(stats?.activityTrend30d) &&
+    ALL_STATS_RPCS.every((rpc) => stats?.[RPC_FIELDS[rpc]] !== undefined) &&
+    breakdown !== null &&
     methodTx !== null &&
     (availability.onchain === "available" || availability.onchain === "temporarily_unavailable") &&
     (availability.breakdown === "available" || availability.breakdown === "temporarily_unavailable") &&
@@ -146,6 +158,7 @@ export function isCompleteSnapshot(snapshot: unknown): snapshot is PersistedStat
       (breakdown?.learn !== null && breakdown?.learn !== undefined &&
         breakdown?.play !== null && breakdown?.play !== undefined &&
         breakdown?.total !== null && breakdown?.total !== undefined)) &&
+    typeof census?.asOf === "string" &&
     ((censusAvailable && census?.rowsRead === "ok" && Array.isArray(census.rows) && typeof census.total === "number") ||
       (censusUnavailable && census?.rowsRead === "unavailable" && census.total === null))
   );
@@ -173,6 +186,15 @@ function lockToken(): string {
 const RELEASE_IF_OWNED =
   "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
 
+// Publish with the cooldown in one Redis operation, only while the lease is
+// still ours. A delayed/expired worker cannot overwrite a newer snapshot or
+// leave a published value without its recomputation gate after a crash.
+const PUBLISH_IF_OWNED = `
+if redis.call('get', KEYS[1]) ~= ARGV[1] then return 0 end
+redis.call('set', KEYS[2], ARGV[2])
+redis.call('set', KEYS[3], ARGV[3], 'EX', ARGV[4])
+return 1`;
+
 /**
  * Builds off-key and writes only a complete replacement. A failed/partial run
  * leaves the previous durable snapshot untouched.
@@ -180,6 +202,9 @@ const RELEASE_IF_OWNED =
 export async function refreshPersistedStatsSnapshot(input: {
   redis: StatsRedis;
   build: () => Promise<PersistedStatsSnapshot>;
+  /** Intentionally omitted RPCs may be unavailable; attempted RPCs must all
+   * succeed before replacing the previous snapshot. Defaults to the full set. */
+  requiredRpcs?: readonly StatsRpcName[];
   onMetric?: RefreshMetricSink;
 }): Promise<RefreshResult> {
   const token = lockToken();
@@ -204,17 +229,23 @@ export async function refreshPersistedStatsSnapshot(input: {
     }
     const candidate = await input.build();
     if (!isCompleteSnapshot(candidate)) return { status: "incomplete" };
-    await withinRefreshPhase({
+    const requiredRpcs = input.requiredRpcs ?? ALL_STATS_RPCS;
+    if (requiredRpcs.some((rpc) =>
+      candidate.stats.dataIntegrity.failedRpcs.includes(rpc) ||
+      candidate.availability?.rpcs?.[rpc] === "temporarily_unavailable" ||
+      candidate.stats[RPC_FIELDS[rpc]] === null,
+    )) return { status: "incomplete" };
+    const published = await withinRefreshPhase({
       phase: "redis_write",
       budgetMs: STATS_REDIS_WRITE_BUDGET_MS,
       onMetric: input.onMetric,
-      run: async () => {
-        await input.redis.set(STATS_SNAPSHOT_KEY, candidate);
-        await input.redis.set(STATS_REFRESH_COOLDOWN_KEY, candidate.refreshedAt, {
-          ex: STATS_REFRESH_COOLDOWN_SECONDS,
-        });
-      },
+      run: () => input.redis.eval(
+        PUBLISH_IF_OWNED,
+        [STATS_REFRESH_LOCK_KEY, STATS_SNAPSHOT_KEY, STATS_REFRESH_COOLDOWN_KEY],
+        [token, JSON.stringify(candidate), candidate.refreshedAt, String(STATS_REFRESH_COOLDOWN_SECONDS)],
+      ),
     });
+    if (published !== 1) return { status: "locked" };
     return { status: "refreshed", snapshot: candidate };
   } finally {
     await input.redis.eval(RELEASE_IF_OWNED, [STATS_REFRESH_LOCK_KEY], [token]).catch(() => {});

@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
   try {
     const result = await refreshPersistedStatsSnapshot({
       redis,
+      requiredRpcs: EMERGENCY_STATS_RPCS,
       build: async () => {
         const stats = await withinRefreshPhase({
           phase: "stats_rpcs",

@@ -14,6 +14,10 @@ type Captured = {
 };
 
 const captured: Captured = { inserts: [], upserts: [], calls: [] };
+const firstSeenWrite = vi.fn(
+  (_table: string, _row: Record<string, unknown>, _options: unknown) =>
+    Promise.resolve({ error: null as unknown }),
+);
 
 vi.mock("@/lib/supabase/server", () => ({
   getSupabaseServer: () => ({
@@ -29,14 +33,14 @@ vi.mock("@/lib/supabase/server", () => ({
         upsert: (row: Record<string, unknown>, options: unknown) => {
           captured.calls.push({ table, op: "upsert" });
           captured.upserts.push({ table, row, options });
-          return Promise.resolve({ error: null });
+          return firstSeenWrite(table, row, options);
         },
       };
     },
   }),
 }));
 
-import { POST } from "../route";
+let POST: typeof import("../route").POST;
 
 function makeReq(
   body: unknown,
@@ -49,14 +53,20 @@ function makeReq(
   });
 }
 
-beforeEach(() => {
+beforeEach(async () => {
+  // Each test models a fresh process; multiple requests inside a test share it.
+  vi.resetModules();
+  POST = (await import("../route")).POST;
   captured.inserts = [];
   captured.upserts = [];
   captured.calls = [];
+  firstSeenWrite.mockReset();
+  firstSeenWrite.mockResolvedValue({ error: null });
 });
 
 afterEach(() => {
   vi.clearAllMocks();
+  vi.unstubAllEnvs();
 });
 
 describe("POST /api/telemetry — dimension enrichment", () => {
@@ -239,6 +249,26 @@ describe("POST /api/telemetry — batch shape", () => {
     expect(captured.calls).toHaveLength(2);
   });
 
+  it("records repeated wallet analytics but only confirms account_first_seen once", async () => {
+    vi.stubEnv("TELEMETRY_ACCOUNT_SECRET", "test-secret");
+    const account = "0x5c4179a22b473ea2eb2b9b9b210458d0f60fc2dd";
+
+    await POST(makeReq({ session_id: "s-repeat", event: "hub_view", dims, account }));
+    await POST(makeReq({ session_id: "s-repeat", event: "exercise_started", dims, account }));
+
+    expect(captured.inserts.filter((entry) => entry.table === "analytics_events")).toHaveLength(2);
+    expect(captured.calls.filter((entry) => entry.table === "account_first_seen")).toHaveLength(1);
+  });
+
+  it("keeps session first-seen correct while avoiding repeated app_opened conflicts", async () => {
+    await POST(makeReq({ session_id: "s-open", event: "app_opened", dims }));
+    await POST(makeReq({ session_id: "s-open", event: "app_opened", dims: { ...dims, surface: "learn" } }));
+
+    const writes = captured.upserts.filter((entry) => entry.table === "session_first_seen");
+    expect(writes).toHaveLength(1);
+    expect(writes[0].row).toMatchObject({ session_id: "s-open", first_surface: "play" });
+  });
+
   it("never persists the raw wallet — only the keyed pseudonym", async () => {
     vi.stubEnv("TELEMETRY_ACCOUNT_SECRET", "test-secret");
     const wallet = "0xcc4179a22b473ea2eb2b9b9b210458d0f60fc2dd";
@@ -304,6 +334,117 @@ describe("POST /api/telemetry — batch shape", () => {
     );
     expect(res.status).toBe(204);
     expect(captured.calls).toHaveLength(0);
+  });
+});
+
+describe("POST /api/telemetry — first-seen safety", () => {
+  const dims = { surface: "play", container: "browser", source: "direct" };
+  const account = "0x0000000000000000000000000000000000000001";
+  const accountEvent = { session_id: "first-seen", event: "hub_view", dims, account };
+
+  beforeEach(() => vi.stubEnv("TELEMETRY_ACCOUNT_SECRET", "test-secret"));
+
+  it.each([
+    ["account", accountEvent, "account_first_seen"],
+    ["session", { session_id: "first-seen", event: "app_opened", dims }, "session_first_seen"],
+  ])("coalesces concurrent %s writes without dropping analytics", async (_kind, event, table) => {
+    let release!: (value: { error: unknown }) => void;
+    firstSeenWrite.mockImplementation(() => new Promise((resolve) => { release = resolve; }));
+    const first = POST(makeReq(event));
+    const second = POST(makeReq(event));
+    await vi.waitFor(() => expect(firstSeenWrite).toHaveBeenCalledTimes(1));
+    expect(captured.upserts[0].table).toBe(table);
+    expect(captured.inserts).toHaveLength(2);
+    release({ error: null });
+    expect((await Promise.all([first, second])).map((res) => res.status)).toEqual([204, 204]);
+    await POST(makeReq(event));
+    expect(firstSeenWrite).toHaveBeenCalledTimes(1);
+    expect(captured.inserts).toHaveLength(3);
+  });
+
+  it("an in-flight account does not block another request's account", async () => {
+    let release!: (value: { error: unknown }) => void;
+    firstSeenWrite.mockImplementationOnce(() => new Promise((resolve) => { release = resolve; }));
+    const pending = POST(makeReq(accountEvent));
+    await vi.waitFor(() => expect(firstSeenWrite).toHaveBeenCalledTimes(1));
+    const other = await POST(makeReq({ ...accountEvent, account: "0x0000000000000000000000000000000000000002" }));
+    expect(other.status).toBe(204);
+    expect(firstSeenWrite).toHaveBeenCalledTimes(2);
+    expect(captured.upserts[0].row.account_ref).not.toBe(captured.upserts[1].row.account_ref);
+    release({ error: null });
+    await pending;
+  });
+
+  it("a synchronous failure does not skip another account in the same batch", async () => {
+    firstSeenWrite.mockImplementationOnce(() => { throw new Error("test failure"); });
+    await POST(makeReq({ events: [accountEvent, {
+      ...accountEvent, account: "0x0000000000000000000000000000000000000002",
+    }] }));
+    expect(firstSeenWrite).toHaveBeenCalledTimes(2);
+    expect(captured.inserts).toHaveLength(2);
+    await POST(makeReq(accountEvent));
+    expect(firstSeenWrite).toHaveBeenCalledTimes(3);
+  });
+
+  it.each(["response error", "rejection", "synchronous throw", "unconfirmed response"])(
+    "does not cache a %s and retries on a later event", async (failure) => {
+      firstSeenWrite.mockImplementationOnce(() => {
+        if (failure === "synchronous throw") throw new Error("test failure");
+        if (failure === "rejection") return Promise.reject(new Error("test failure"));
+        return Promise.resolve({ error: failure === "response error" ? { message: "test failure" } : undefined });
+      });
+      expect((await POST(makeReq(accountEvent))).status).toBe(204);
+      await POST(makeReq(accountEvent));
+      await POST(makeReq(accountEvent));
+      expect(firstSeenWrite).toHaveBeenCalledTimes(2);
+      expect(captured.inserts).toHaveLength(3);
+    },
+  );
+
+  it("retries an app_opened cohort after failure, not on unrelated events", async () => {
+    firstSeenWrite.mockResolvedValueOnce({ error: { message: "test failure" } });
+    const event = { session_id: "failed-session", event: "app_opened", dims };
+    await POST(makeReq(event));
+    await POST(makeReq({ ...event, event: "hub_view" }));
+    expect(firstSeenWrite).toHaveBeenCalledTimes(1);
+    await POST(makeReq(event));
+    await POST(makeReq(event));
+    expect(firstSeenWrite).toHaveBeenCalledTimes(2);
+    expect(captured.inserts).toHaveLength(4);
+  });
+
+  it.each(["account", "session"])("evicts bounded %s entries and safely retries immutable first values", async (kind) => {
+    // Model the DB conflict contract, including an existing timestamp. This
+    // exercises actual route eviction rather than exporting a production reset.
+    const stored = new Map<string, Record<string, unknown>>();
+    firstSeenWrite.mockImplementation(async (_table, row, options) => {
+      expect(options).toMatchObject({ ignoreDuplicates: true });
+      const key = String(row.account_ref ?? row.session_id);
+      if (!stored.has(key)) stored.set(key, { ...row, first_seen: "original-timestamp" });
+      return { error: null };
+    });
+    const makeEvent = (index: number) => kind === "account"
+      ? { ...accountEvent, account: `0x${(index + 1).toString(16).padStart(40, "0")}` }
+      : { session_id: `bounded-${index}`, event: "app_opened", dims };
+    await POST(makeReq(makeEvent(0)));
+    const original: Record<string, unknown> = { ...captured.upserts[0].row, first_seen: "original-timestamp" };
+    const originalKey = String(original.account_ref ?? original.session_id);
+    for (let index = 1; index <= 10_000; index++) await POST(makeReq(makeEvent(index)));
+    await POST(makeReq({ ...makeEvent(0), dims: { ...dims, surface: "learn" } }));
+    expect(firstSeenWrite).toHaveBeenCalledTimes(10_002);
+    expect(stored.get(originalKey)).toEqual(original);
+    await POST(makeReq(makeEvent(10_000)));
+    expect(firstSeenWrite).toHaveBeenCalledTimes(10_002);
+  }, 15_000);
+
+  it("a cold process retries through ON CONFLICT DO NOTHING with the same identity", async () => {
+    await POST(makeReq(accountEvent));
+    vi.resetModules();
+    const coldPOST = (await import("../route")).POST;
+    await coldPOST(makeReq({ ...accountEvent, dims: { ...dims, surface: "learn" } }));
+    expect(captured.upserts).toHaveLength(2);
+    expect(captured.upserts[0].row.account_ref).toBe(captured.upserts[1].row.account_ref);
+    expect(captured.upserts.every((write) => (write.options as { ignoreDuplicates: boolean }).ignoreDuplicates)).toBe(true);
   });
 });
 
