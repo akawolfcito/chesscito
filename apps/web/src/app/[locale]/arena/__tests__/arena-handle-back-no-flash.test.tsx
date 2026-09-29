@@ -30,7 +30,7 @@
  */
 
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import React from "react";
 
 // ---------------------------------------------------------------------------
@@ -38,6 +38,7 @@ import React from "react";
 // pushMock is our controlled spy rather than next/navigation's useRouter.
 // ---------------------------------------------------------------------------
 const pushMock = vi.fn();
+const searchParamsMock = vi.hoisted(() => vi.fn(() => new URLSearchParams()));
 vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({
     push: pushMock,
@@ -119,7 +120,7 @@ vi.mock("next-intl", () => ({
 // next/navigation (used by useSearchParams inside ArenaPage Suspense wrapper)
 // ---------------------------------------------------------------------------
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => searchParamsMock(),
   usePathname: () => "/arena",
   useRouter: () => ({
     push: pushMock,
@@ -245,7 +246,16 @@ describe("arena/handleBack — leaving a match lands on the rival selector", () 
   beforeEach(() => {
     pushMock.mockReset();
     resetMock.mockReset();
+    searchParamsMock.mockReturnValue(new URLSearchParams());
     window.localStorage.clear();
+  });
+
+  it("still resets a rehydrated game on a fresh-entry URL", async () => {
+    searchParamsMock.mockReturnValue(new URLSearchParams("fresh=1"));
+
+    render(<ArenaPage />);
+
+    await waitFor(() => expect(resetMock).toHaveBeenCalledTimes(1));
   });
 
   // The HUD back chip is labelled by its ACTION ("leave match"), not by a

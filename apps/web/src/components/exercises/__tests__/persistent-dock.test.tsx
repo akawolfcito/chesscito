@@ -8,6 +8,7 @@ import {
   setDockSheet,
 } from "@/lib/ui/dock-sheet-store";
 import { setSaveOnChainPending } from "@/lib/ui/save-onchain-hint-store";
+import { track } from "@/lib/telemetry";
 
 const pathnameMock = vi.hoisted(() => vi.fn(() => "/exercises"));
 const pushMock = vi.hoisted(() => vi.fn());
@@ -135,6 +136,19 @@ describe("PersistentDock — cross-route URL fallback", () => {
     render(<PersistentDock />);
     await user.click(screen.getByRole("button", { name: /pieces/i }));
     expect(pushMock).toHaveBeenLastCalledWith("/exercises");
+  });
+
+  it("navigates without emitting low-signal dock telemetry", async () => {
+    pathnameMock.mockReturnValue("/");
+    pushMock.mockReset();
+    vi.mocked(track).mockClear();
+    const user = userEvent.setup();
+
+    render(<PersistentDock />);
+    await user.click(screen.getByRole("button", { name: /badges/i }));
+
+    expect(pushMock).toHaveBeenCalledWith("/?sheet=badges");
+    expect(track).not.toHaveBeenCalled();
   });
 });
 

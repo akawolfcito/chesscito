@@ -1024,46 +1024,11 @@ function ArenaPageInner() {
   // useChessGame may rehydrate a saved FEN on the same mount, leaving
   // game.status === "active" and the selector unreachable. Reset the
   // game here so the selector renders. Single-shot via ref.
-  // Bug 2 telemetry — single mount snapshot so a "fresh-entry that
-  // landed back in /coach" report can be aligned against the hook's
-  // post-hydrate state (status, saved game, persistedGameId). Empty
-  // deps guard against re-fires on render churn.
-  const arenaMountTrackedRef = useRef(false);
-  useEffect(() => {
-    if (arenaMountTrackedRef.current) return;
-    arenaMountTrackedRef.current = true;
-    let hadSavedGame = false;
-    try {
-      hadSavedGame = !!localStorage.getItem("chesscito:arena-game");
-    } catch { /* ignore */ }
-    track("arena_mount", {
-      fresh_param: searchParams?.get("fresh") === "1",
-      had_saved_game: hadSavedGame,
-      game_status_at_mount: game.status,
-      has_persisted_game_id: !!persistedGameId,
-      persist_state: persistState,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const freshResetRef = useRef(false);
   useEffect(() => {
     if (freshResetRef.current) return;
     if (searchParams?.get("fresh") !== "1") return;
     freshResetRef.current = true;
-    let hadSavedGame = false;
-    try {
-      hadSavedGame = !!localStorage.getItem("chesscito:arena-game");
-    } catch { /* ignore */ }
-    // Bug 2 telemetry — surface every fresh-reset entry with the pre-reset
-    // hook state. If a stale terminal-state survives this point we want to
-    // see it in the logs (status, save presence) and correlate with any
-    // unexpected `arena_x_close_fired` that follows.
-    track("arena_fresh_reset_fired", {
-      pre_reset_status: game.status,
-      had_saved_game: hadSavedGame,
-      will_call_reset: game.status !== "selecting",
-    });
     if (game.status !== "selecting") {
       game.reset();
     }

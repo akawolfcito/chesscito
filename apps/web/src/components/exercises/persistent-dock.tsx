@@ -3,7 +3,6 @@
 import { useTranslations } from "next-intl";
 import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { track } from "@/lib/telemetry";
 import {
   requestCloseDockSheet,
   requestOpenDockSheet,
@@ -89,7 +88,6 @@ type ModeDescriptor = {
   labelKey: DockLabelKey;
   icon: CandyIconName;
   iconSlot: ThemeAssetKey;
-  trackItem: string;
 };
 
 /** Per-route artwork + label + destination for the center slot. Keyed
@@ -102,14 +100,12 @@ const MODE_DESCRIPTORS: Record<"exercises" | "arena", ModeDescriptor> = {
     labelKey: "pieces",
     icon: "move",
     iconSlot: "hub.train-pieces",
-    trackItem: "pieces",
   },
   arena: {
     href: "/arena?fresh=1",
     labelKey: "arena",
     icon: "crosshair",
     iconSlot: "hub.enter-arena",
-    trackItem: "arena",
   },
 };
 
@@ -193,7 +189,6 @@ function SideItem({
         aria-current={isActive ? "page" : undefined}
         className={showSaveDot ? "relative" : undefined}
         onClick={() => {
-          track("dock_tap", { item: item.id });
           // Same-route taps on pages that mount the auxiliary sheets
           // dispatch through the store — no URL involvement, no race
           // with Radix's pointerdown-outside or with router.replace.
@@ -270,7 +265,6 @@ export function PersistentDock() {
           aria-current={isCenterActive ? "page" : undefined}
           onClick={() => {
             if (isOverlayOpen) {
-              track("dock_center_close", { sheet: openSheet });
               requestCloseDockSheet();
               return;
             }
@@ -278,7 +272,6 @@ export function PersistentDock() {
             // already on /arena has no "other side" to swap to and must not
             // fire a fresh-entry reset that would interrupt an active match.
             if (isPlayMode() && pathname.startsWith("/arena")) return;
-            track("dock_tap", { item: center.trackItem });
             router.push(center.href);
           }}
         >
