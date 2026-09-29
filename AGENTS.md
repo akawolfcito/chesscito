@@ -53,3 +53,4 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 - Firma de commit: `Wolfcito 🐾 @akawolfcito`
 - No hay tests automatizados por ahora
 - Idioma de UI: English (ver `lib/content/editorial.ts`)
+- Los resultados extensos de auditorías, análisis e investigaciones deben guardarse y entregarse también como archivo Markdown en el repositorio.
