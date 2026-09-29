@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { EMERGENCY_STATS_RPCS, getPublicStats, STATS_RPCS, type StatsRpcMetric } from "@/lib/stats/aggregator";
@@ -18,12 +19,23 @@ import { getStatsRedis } from "@/lib/stats/redis";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-function logMetric(metric: { phase: string; durationMs: number; outcome: string }) {
-  console.info("[stats/refresh] phase", metric);
+type PhaseMetric = { phase: string; durationMs: number; outcome: string };
+type FailedRpc = { name: (typeof EMERGENCY_STATS_RPCS)[number]; outcome: StatsRpcMetric["outcome"]; durationMs: number; code: string | null; sqlstate: string | null };
+
+function safeIdentifier(value: unknown, pattern: RegExp): string | null {
+  return typeof value === "string" && pattern.test(value) ? value : null;
 }
 
-function logRpcMetric(metric: StatsRpcMetric) {
-  console.info("[stats/refresh] rpc", metric);
+function safeError(error: unknown) {
+  const record = error && typeof error === "object" ? error as Record<string, unknown> : {};
+  const rawCode = safeIdentifier(record.code, /^[A-Za-z0-9_.-]{1,64}$/);
+  const code = rawCode && !/(authorization|bearer|secret|token|password|connection|string)/i.test(rawCode) ? rawCode : null;
+  const rawSqlstate = record.sqlstate ?? record.sqlState ?? (code && /^[0-9A-Z]{5}$/.test(code) ? code : null);
+  return {
+    name: safeIdentifier(error instanceof Error ? error.name : record.name, /^[A-Za-z][A-Za-z0-9_.-]{0,63}$/) ?? "unknown",
+    code,
+    sqlstate: safeIdentifier(rawSqlstate, /^[0-9A-Z]{5}$/),
+  };
 }
 
 function authorized(request: NextRequest): boolean {
@@ -33,27 +45,37 @@ function authorized(request: NextRequest): boolean {
   return Boolean(presented) && safeEqual(presented, secret);
 }
 
-/**
- * The only production path allowed to invoke the stats RPCs during
- * containment. Public `/stats` only reads Redis.
- */
+/** The only production path allowed to invoke stats RPCs during containment. */
 export async function POST(request: NextRequest) {
+  const requestId = randomUUID();
   const totalStartedAt = Date.now();
+  const phaseMetrics: PhaseMetric[] = [];
+  const rpcMetrics: StatsRpcMetric[] = [];
+  let failedRpcNames: string[] = [];
+  const logPhase = (metric: PhaseMetric) => { phaseMetrics.push(metric); };
+  const logRpc = (metric: StatsRpcMetric) => { rpcMetrics.push(metric); };
+  const logFailure = (event: string, details: Record<string, unknown> = {}) => {
+    console.error(`[stats/refresh] ${event}`, { requestId, ...details });
+  };
+
   const authStartedAt = Date.now();
   const isAuthorized = authorized(request);
-  console.info("[stats/refresh] phase", {
-    phase: "auth",
-    durationMs: Date.now() - authStartedAt,
-    outcome: isAuthorized ? "ok" : "error",
-  });
+  logPhase({ phase: "auth", durationMs: Date.now() - authStartedAt, outcome: isAuthorized ? "ok" : "error" });
   if (!isAuthorized) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    console.warn("[stats/refresh] unauthorized", { requestId });
+    return NextResponse.json({ error: "Unauthorized", requestId }, { status: 401 });
   }
 
-  const redis = getStatsRedis();
+  let redis: ReturnType<typeof getStatsRedis>;
+  try {
+    redis = getStatsRedis();
+  } catch (error) {
+    logFailure("storage_unavailable", { reason: "storage_unavailable", error: safeError(error) });
+    return NextResponse.json({ error: "Snapshot storage unavailable", refreshed: false, reason: "storage_unavailable", requestId }, { status: 503 });
+  }
   if (!redis) {
-    console.error("[stats/refresh] Redis is not configured");
-    return NextResponse.json({ error: "Snapshot storage unavailable" }, { status: 503 });
+    logFailure("storage_unavailable", { reason: "storage_unavailable" });
+    return NextResponse.json({ error: "Snapshot storage unavailable", refreshed: false, reason: "storage_unavailable", requestId }, { status: 503 });
   }
 
   try {
@@ -64,15 +86,16 @@ export async function POST(request: NextRequest) {
         const stats = await withinRefreshPhase({
           phase: "stats_rpcs",
           budgetMs: STATS_RPC_PHASE_BUDGET_MS,
-          onMetric: logMetric,
+          onMetric: logPhase,
           run: (signal) => getPublicStats(DEFAULT_STATS_FILTERS, {
             includeOnchain: false,
             signal,
             rpcNames: EMERGENCY_STATS_RPCS,
             rpcTimeoutMs: STATS_RPC_INDIVIDUAL_BUDGET_MS,
-            onRpcMetric: logRpcMetric,
+            onRpcMetric: logRpc,
           }),
         });
+        failedRpcNames = stats.dataIntegrity.failedRpcs;
         return asPersistedSnapshot({
           stats,
           breakdown: { learn: null, play: null, total: null },
@@ -88,7 +111,7 @@ export async function POST(request: NextRequest) {
           },
         });
       },
-      onMetric: logMetric,
+      onMetric: logPhase,
     });
 
     if (result.status === "locked") {
@@ -101,25 +124,46 @@ export async function POST(request: NextRequest) {
       );
     }
     if (result.status === "incomplete") {
-      console.error("[stats/refresh] incomplete snapshot; previous snapshot preserved");
-      return NextResponse.json({ refreshed: false, reason: "incomplete_snapshot" }, { status: 503 });
+      const measuredFailures = rpcMetrics.filter((metric) => metric.outcome !== "success").map((metric) => metric.rpc);
+      const knownFailed = new Set([...failedRpcNames, ...measuredFailures].filter((rpc): rpc is (typeof EMERGENCY_STATS_RPCS)[number] =>
+        EMERGENCY_STATS_RPCS.includes(rpc as (typeof EMERGENCY_STATS_RPCS)[number]),
+      ));
+      const failedRpcs: FailedRpc[] = EMERGENCY_STATS_RPCS
+        .filter((name) => knownFailed.has(name))
+        .map((name) => {
+          const metric = rpcMetrics.find((item) => item.rpc === name);
+          return {
+            name,
+            outcome: metric?.outcome === "success" || metric?.outcome === "timeout" || metric?.outcome === "invalid_result" || metric?.outcome === "error"
+              ? metric.outcome
+              : "invalid_result",
+            durationMs: metric?.durationMs ?? 0,
+            code: metric?.errorCode ?? (metric ? "INVALID_RESULT" : "RPC_RESULT_MISSING"),
+            sqlstate: metric?.sqlstate ?? null,
+          };
+        });
+      logFailure("incomplete_snapshot", { reason: "incomplete_snapshot", failedRpcs });
+      return NextResponse.json({
+        refreshed: false,
+        reason: "incomplete_snapshot",
+        requestId,
+        failedRpcs: failedRpcs.map(({ name, outcome, durationMs }) => ({ name, outcome, durationMs })),
+      }, { status: 503 });
     }
 
-    return NextResponse.json({ refreshed: true, refreshedAt: result.snapshot.refreshedAt });
+    console.info("[stats/refresh] refreshed", {
+      requestId,
+      refreshedAt: result.snapshot.refreshedAt,
+      totalDurationMs: Date.now() - totalStartedAt,
+    });
+    return NextResponse.json({ refreshed: true, refreshedAt: result.snapshot.refreshedAt, requestId });
   } catch (error) {
+    const safe = safeError(error);
     if (error instanceof RefreshPhaseTimeoutError) {
-      console.error("[stats/refresh] phase timeout; previous snapshot preserved", { phase: error.phase });
-      return NextResponse.json({ refreshed: false, reason: "phase_timeout", phase: error.phase }, { status: 503 });
+      logFailure("phase_timeout", { reason: "phase_timeout", phase: error.phase, error: safe, phaseMetrics });
+      return NextResponse.json({ refreshed: false, reason: "phase_timeout", phase: error.phase, requestId }, { status: 503 });
     }
-    console.error("[stats/refresh] failed; previous snapshot preserved", {
-      name: error instanceof Error ? error.name : "unknown",
-    });
-    return NextResponse.json({ refreshed: false, reason: "refresh_failed" }, { status: 503 });
-  } finally {
-    console.info("[stats/refresh] phase", {
-      phase: "total",
-      durationMs: Date.now() - totalStartedAt,
-      outcome: "complete",
-    });
+    logFailure("refresh_failed", { reason: "refresh_failed", error: safe, phaseMetrics });
+    return NextResponse.json({ refreshed: false, reason: "refresh_failed", requestId }, { status: 503 });
   }
 }

@@ -70,7 +70,16 @@ export const EMERGENCY_STATS_RPCS = [
 export type StatsRpcMetric = {
   rpc: StatsRpcName;
   durationMs: number;
-  outcome: "success" | "timeout" | "error";
+  outcome: "success" | "timeout" | "error" | "invalid_result";
+  errorCode: string | null;
+  sqlstate: string | null;
+};
+
+type RpcResult = {
+  rows: Record<string, unknown>[] | null;
+  outcome: StatsRpcMetric["outcome"];
+  errorCode: string | null;
+  sqlstate: string | null;
 };
 
 type RpcClient = {
@@ -80,13 +89,29 @@ type RpcClient = {
   ) => PromiseLike<{ data: unknown; error: unknown }>;
 };
 
-/** Rows from one RPC, or `null` if the call failed. Never throws: a rejected
- *  promise and an error payload collapse to the same `null`. */
-async function callRpc(
+function safeCode(value: unknown): string | null {
+  return typeof value === "string" && /^[A-Za-z0-9_.-]{1,64}$/.test(value) &&
+    !/(authorization|bearer|secret|token|password|connection|string)/i.test(value)
+    ? value
+    : null;
+}
+
+function rpcErrorMetadata(error: unknown): Pick<RpcResult, "errorCode" | "sqlstate"> {
+  const record = error && typeof error === "object"
+    ? error as Record<string, unknown>
+    : {};
+  const errorCode = safeCode(record.code);
+  const explicitSqlstate = safeCode(record.sqlstate ?? record.sqlState);
+  const sqlstate = explicitSqlstate ?? (errorCode && /^[0-9A-Z]{5}$/.test(errorCode) ? errorCode : null);
+  return { errorCode, sqlstate };
+}
+
+/** A bounded result record for one RPC. Messages and payloads never leave here. */
+async function callRpcResult(
   client: RpcClient,
   name: StatsRpcName,
   filters: StatsFilters,
-): Promise<Record<string, unknown>[] | null> {
+): Promise<RpcResult> {
   try {
     const { data, error } = await client.rpc(name, {
       // ⛔ `"all"` never reaches SQL — null is how the functions spell
@@ -94,11 +119,25 @@ async function callRpc(
       p_surface: toRpcArg(filters.surface),
       p_container: toRpcArg(filters.container),
     });
-    if (error || !Array.isArray(data)) return null;
-    return data as Record<string, unknown>[];
-  } catch {
-    return null;
+    if (error) {
+      return { rows: null, outcome: "error", ...rpcErrorMetadata(error) };
+    }
+    if (!Array.isArray(data)) {
+      return { rows: null, outcome: "invalid_result", errorCode: "INVALID_RESULT", sqlstate: null };
+    }
+    return { rows: data as Record<string, unknown>[], outcome: "success", errorCode: null, sqlstate: null };
+  } catch (error) {
+    return { rows: null, outcome: "error", ...rpcErrorMetadata(error) };
   }
+}
+
+/** Rows from one RPC, or `null` if the call failed. */
+async function callRpc(
+  client: RpcClient,
+  name: StatsRpcName,
+  filters: StatsFilters,
+): Promise<Record<string, unknown>[] | null> {
+  return (await callRpcResult(client, name, filters)).rows;
 }
 
 async function callRpcWithBudget(input: {
@@ -115,38 +154,61 @@ async function callRpcWithBudget(input: {
   input.signal?.addEventListener("abort", abortFromParent, { once: true });
 
   try {
-    const client = getSupabaseServer(controller.signal) as unknown as RpcClient | null;
-    if (!client) {
-      input.onMetric?.({ rpc: input.name, durationMs: Date.now() - startedAt, outcome: "error" });
-      return null;
-    }
-    if (!input.budgetMs) {
-      const rows = await callRpc(client, input.name, input.filters);
+    let client: RpcClient | null;
+    try {
+      client = getSupabaseServer(controller.signal) as unknown as RpcClient | null;
+    } catch (error) {
+      const metadata = rpcErrorMetadata(error);
       input.onMetric?.({
         rpc: input.name,
         durationMs: Date.now() - startedAt,
-        outcome: rows ? "success" : "error",
+        outcome: "error",
+        errorCode: metadata.errorCode,
+        sqlstate: metadata.sqlstate,
       });
-      return rows;
+      return null;
+    }
+    if (!client) {
+      input.onMetric?.({
+        rpc: input.name,
+        durationMs: Date.now() - startedAt,
+        outcome: "error",
+        errorCode: "SUPABASE_UNAVAILABLE",
+        sqlstate: null,
+      });
+      return null;
+    }
+    if (!input.budgetMs) {
+      const result = await callRpcResult(client, input.name, input.filters);
+      input.onMetric?.({
+        rpc: input.name,
+        durationMs: Date.now() - startedAt,
+        outcome: result.outcome,
+        errorCode: result.errorCode,
+        sqlstate: result.sqlstate,
+      });
+      return result.rows;
     }
 
-    const request = callRpc(client, input.name, input.filters);
+    const request = callRpcResult(client, input.name, input.filters);
     let timeoutId!: ReturnType<typeof setTimeout>;
-    const deadline = new Promise<null>((resolve) => {
+    const deadline = new Promise<RpcResult>((resolve) => {
       timeoutId = setTimeout(() => {
         timedOut = true;
         controller.abort();
-        resolve(null);
+        resolve({ rows: null, outcome: "timeout", errorCode: null, sqlstate: null });
       }, input.budgetMs);
     });
-    const rows = await Promise.race([request, deadline]);
+    const result = await Promise.race([request, deadline]);
     clearTimeout(timeoutId);
     input.onMetric?.({
       rpc: input.name,
       durationMs: Date.now() - startedAt,
-      outcome: timedOut ? "timeout" : rows ? "success" : "error",
+      outcome: timedOut ? "timeout" : result.outcome,
+      errorCode: result.errorCode,
+      sqlstate: result.sqlstate,
     });
-    return rows;
+    return result.rows;
   } finally {
     input.signal?.removeEventListener("abort", abortFromParent);
   }
@@ -332,6 +394,15 @@ export async function getPublicStats(
   const supabase = getSupabaseServer(options.signal);
 
   if (!supabase) {
+    for (const name of options.rpcNames ?? STATS_RPCS) {
+      options.onRpcMetric?.({
+        rpc: name,
+        durationMs: 0,
+        outcome: "error",
+        errorCode: "SUPABASE_UNAVAILABLE",
+        sqlstate: null,
+      });
+    }
     return { ...EMPTY_PUBLIC_STATS, filters, generatedAt };
   }
 

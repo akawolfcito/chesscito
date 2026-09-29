@@ -175,6 +175,36 @@ describe("filter plumbing", () => {
     expect(stats.dataIntegrity.failedRpcs).toContain("stats_activation_funnel");
   });
 
+  it("reports stable error codes and SQLSTATE without retaining error messages", async () => {
+    const { client } = makeClient({
+      stats_activation_funnel: { error: { name: "PostgrestError", code: "PGRST000", sqlstate: "08006", message: "Authorization: Bearer do-not-log" } },
+    });
+    getSupabaseServer.mockReturnValue(client);
+    const onRpcMetric = vi.fn();
+    const stats = await getPublicStats({ surface: "all", container: "all" }, {
+      includeOnchain: false,
+      rpcNames: ["stats_activation_funnel"],
+      onRpcMetric,
+    });
+    expect(onRpcMetric).toHaveBeenCalledWith(expect.objectContaining({
+      rpc: "stats_activation_funnel", outcome: "error", errorCode: "PGRST000", sqlstate: "08006",
+    }));
+    expect(stats.dataIntegrity.failedRpcs).toContain("stats_activation_funnel");
+    expect(JSON.stringify(onRpcMetric.mock.calls)).not.toMatch(/Authorization|Bearer|do-not-log/i);
+  });
+
+  it("labels malformed RPC data as invalid_result", async () => {
+    const { client } = makeClient({ stats_activation_funnel: { data: { unexpected: true } } });
+    getSupabaseServer.mockReturnValue(client);
+    const onRpcMetric = vi.fn();
+    await getPublicStats({ surface: "all", container: "all" }, {
+      includeOnchain: false, rpcNames: ["stats_activation_funnel"], onRpcMetric,
+    });
+    expect(onRpcMetric).toHaveBeenCalledWith(expect.objectContaining({
+      rpc: "stats_activation_funnel", outcome: "invalid_result", errorCode: "INVALID_RESULT", sqlstate: null,
+    }));
+  });
+
   it("passes a real filter to all eight, not just some", async () => {
     const { client, calls } = makeClient();
     getSupabaseServer.mockReturnValue(client);
