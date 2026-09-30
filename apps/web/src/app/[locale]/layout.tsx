@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import { Fredoka, Lilita_One, Rowdies } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
@@ -11,37 +10,7 @@ import { routing } from "@/i18n/routing"
 import { CHESSCITO_MODE } from "@/lib/feature-flags"
 import { ThemeCssVariables } from "@/components/themes/theme-css-variables"
 import { AnalyticsBoot } from "@/components/analytics/analytics-boot"
-
-const fredoka = Fredoka({
-  subsets: ['latin'],
-  // Load both regular + bold cuts. 400 is needed for the kingdom-anchor
-  // tagline lead — without it the browser falls back to the only loaded
-  // weight (700) and the lead reads as bold against the bold closer.
-  weight: ['400', '700'],
-  variable: '--font-fredoka',
-  display: 'swap',
-});
-
-// Display face for titles + button actions. Self-hosted by Next so we
-// avoid the `<link>`-to-googleapis hop and the FOUT it incurs. Three
-// weights cover label hierarchy (300 light, 400 default, 700 bold).
-const rowdies = Rowdies({
-  subsets: ['latin'],
-  weight: ['300', '400', '700'],
-  variable: '--font-rowdies',
-  display: 'swap',
-});
-
-// Celebration headlines only (the arched "Well Done!" on the success
-// overlays). Self-hosted by Next like the other two — the <link> to
-// fonts.googleapis.com the Google snippet suggests would add a third-party
-// hop and a FOUT this app already avoids. Lilita One ships one weight.
-const lilitaOne = Lilita_One({
-  subsets: ['latin'],
-  weight: ['400'],
-  variable: '--font-lilita',
-  display: 'swap',
-});
+import { fredoka, lilitaOne, rowdies } from "@/lib/fonts"
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.chesscito.com";
 const IS_LEARN_MODE = CHESSCITO_MODE === "learn";

@@ -1,6 +1,6 @@
-import { Fredoka, Rowdies } from "next/font/google";
 import { notFound } from "next/navigation";
 import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
+import { fredoka, rowdies } from "@/lib/fonts";
 
 import { SeasonPassCelebrationFixture, type CelebrationVariant } from "./fixture";
 
@@ -12,19 +12,6 @@ export const dynamic = "force-dynamic";
 // Scoped to this page rather than the /dev layout on purpose: the VR fixtures
 // share that layout and their baselines were captured font-less, so hoisting
 // this would churn every one of them. Mirrors [locale]/layout.tsx.
-const fredoka = Fredoka({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-fredoka",
-  display: "swap",
-});
-const rowdies = Rowdies({
-  subsets: ["latin"],
-  weight: ["300", "400", "700"],
-  variable: "--font-rowdies",
-  display: "swap",
-});
-
 type SearchParams = { [key: string]: string | string[] | undefined };
 
 const VARIANTS = new Set<CelebrationVariant>(["credited", "pending"]);
