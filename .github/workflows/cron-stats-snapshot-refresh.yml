@@ -40,17 +40,20 @@ jobs:
 
           if [[ ! "$http_status" =~ ^2[0-9]{2}$ ]]; then
             echo "::error::Stats refresh returned HTTP ${http_status} (curl exit ${curl_exit})"
-            safe_body="$(head -c 4096 "$response_file" | python3 -c 'import os, re, sys
-body = sys.stdin.read()
-secret = os.environ.get("STATS_REFRESH_SECRET", "")
-if secret:
-    body = body.replace(secret, "[REDACTED]")
-body = re.sub(r"(?i)Bearer\s+[^\s\"\\]+", "Bearer [REDACTED]", body)
-body = re.sub(r"(?i)(postgres(?:ql)?|redis|https?)://[^\s\"\\]+", "[REDACTED_URL]", body)
-if re.search(r"(?i)authorization|secret|token|password", body):
-    body = "[response omitted: sensitive marker detected]"
-body = body.replace("::", ": :").replace("\r", "\\r")
-sys.stdout.write(body[:4096])')"
+            safe_body="$(python3 - "$response_file" <<'PY'
+          import os, re, sys
+          body = open(sys.argv[1], "rb").read(4096).decode("utf-8", errors="replace")
+          secret = os.environ.get("STATS_REFRESH_SECRET", "")
+          if secret:
+              body = body.replace(secret, "[REDACTED]")
+          body = re.sub(r"(?i)Bearer\s+[^\s\"\\]+", "Bearer [REDACTED]", body)
+          body = re.sub(r"(?i)(postgres(?:ql)?|redis|https?)://[^\s\"\\]+", "[REDACTED_URL]", body)
+          if re.search(r"(?i)authorization|secret|token|password", body):
+              body = "[response omitted: sensitive marker detected]"
+          body = body.replace("::", ": :").replace("\r", "\\r")
+          sys.stdout.write(body[:4096])
+          PY
+            )"
             if [[ -n "$safe_body" ]]; then
               printf 'Response body (max 4 KB):\n%s\n' "$safe_body"
             fi
