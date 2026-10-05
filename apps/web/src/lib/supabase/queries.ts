@@ -69,14 +69,16 @@ export async function insertVictory(row: VictoryRow): Promise<void> {
  */
 export async function upsertScoreAuthoritative(row: ScoreRow): Promise<void> {
   const supabase = getSupabaseServer();
-  if (!supabase) return;
+  if (!supabase) throw new Error("Sync database unavailable");
 
-  await supabase
+  const { error } = await supabase
     .from("scores")
     .upsert(
       { ...row, player: row.player.toLowerCase() },
       { onConflict: "tx_hash" }
     );
+
+  if (error) throw new Error("Authoritative score upsert failed");
 }
 
 /**
@@ -87,14 +89,16 @@ export async function upsertVictoryAuthoritative(
   row: VictoryRow
 ): Promise<void> {
   const supabase = getSupabaseServer();
-  if (!supabase) return;
+  if (!supabase) throw new Error("Sync database unavailable");
 
-  await supabase
+  const { error } = await supabase
     .from("victories")
     .upsert(
       { ...row, player: row.player.toLowerCase() },
       { onConflict: "tx_hash" }
     );
+
+  if (error) throw new Error("Authoritative victory upsert failed");
 }
 
 // ---------------------------------------------------------------------------
@@ -408,14 +412,16 @@ export async function fetchPlayerVictories(
  * Get a single sync state value by key.
  */
 export async function getSyncState(key: string): Promise<string | null> {
-  const supabase = getSupabaseServer();
-  if (!supabase) return null;
+  const supabase = getSupabaseServer({ freshReads: true });
+  if (!supabase) throw new Error("Sync database unavailable");
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("sync_state")
     .select("value")
     .eq("key", key)
     .maybeSingle();
+
+  if (error) throw new Error("Sync cursor read failed");
 
   return (data as { value: string } | null)?.value ?? null;
 }
@@ -425,11 +431,13 @@ export async function getSyncState(key: string): Promise<string | null> {
  */
 export async function setSyncState(key: string, value: string): Promise<void> {
   const supabase = getSupabaseServer();
-  if (!supabase) return;
+  if (!supabase) throw new Error("Sync database unavailable");
 
-  await supabase
+  const { error } = await supabase
     .from("sync_state")
     .upsert({ key, value }, { onConflict: "key" });
+
+  if (error) throw new Error("Sync cursor update failed");
 }
 
 // ---------------------------------------------------------------------------
@@ -444,16 +452,18 @@ export async function upsertPassportCache(
   entries: { player: string; is_verified: boolean }[]
 ): Promise<void> {
   const supabase = getSupabaseServer();
-  if (!supabase) return;
+  if (!supabase) throw new Error("Sync database unavailable");
 
   const normalized = entries.map((e) => ({
     ...e,
     player: e.player.toLowerCase(),
   }));
 
-  await supabase
+  const { error } = await supabase
     .from("passport_cache")
     .upsert(normalized, { onConflict: "player" });
+
+  if (error) throw new Error("Passport cache upsert failed");
 }
 
 // ---------------------------------------------------------------------------
