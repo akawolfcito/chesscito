@@ -41,8 +41,28 @@ type EthersFilter = {
   toBlock: number;
 };
 
-async function getLogsPaginated(
-  provider: ethers.JsonRpcProvider,
+function isBlockRangeLimitError(error: unknown): boolean {
+  // Ethers wraps JSON-RPC errors under error/info.error; providers may use cause.
+  const pending: unknown[] = [error];
+  const visited = new Set<object>();
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (!current || typeof current !== "object" || visited.has(current)) continue;
+    visited.add(current);
+    const details = current as Record<string, unknown>;
+    if (details.code === -32062 || details.code === "-32062") return true;
+    for (const key of ["message", "shortMessage"]) {
+      const message = details[key];
+      if (typeof message === "string" &&
+        /block range.*(?:too (?:large|wide)|exceed|limit)|(?:maximum|max) block range|(?:limited to|maximum of) \d[\d,]* blocks/i.test(message)) return true;
+    }
+    pending.push(details.error, details.info, details.cause);
+  }
+  return false;
+}
+
+export async function getLogsPaginated(
+  provider: Pick<ethers.JsonRpcProvider, "getLogs">,
   filter: Omit<EthersFilter, "fromBlock" | "toBlock"> & {
     fromBlock: number;
     toBlock: number;
@@ -50,12 +70,22 @@ async function getLogsPaginated(
 ): Promise<ethers.Log[]> {
   const logs: ethers.Log[] = [];
   let from = filter.fromBlock;
+  let rangeSize = CHUNK_SIZE;
 
   while (from <= filter.toBlock) {
-    const to = Math.min(from + CHUNK_SIZE - 1, filter.toBlock);
-    const chunk = await provider.getLogs({ ...filter, fromBlock: from, toBlock: to });
-    logs.push(...chunk);
-    from = to + 1;
+    const to = Math.min(from + rangeSize - 1, filter.toBlock);
+    try {
+      const chunk = await provider.getLogs({ ...filter, fromBlock: from, toBlock: to });
+      logs.push(...chunk);
+      // Advance only after success; failed attempts contribute no logs or blocks.
+      from = to + 1;
+    } catch (error) {
+      const attemptedSize = to - from + 1;
+      if (!isBlockRangeLimitError(error) || attemptedSize <= 1) throw error;
+      // Retain the smaller limit for later chunks; retry the SAME starting block.
+      // A single-block rejection terminates rather than looping indefinitely.
+      rangeSize = Math.max(1, Math.floor(attemptedSize / 2));
+    }
   }
 
   return logs;
