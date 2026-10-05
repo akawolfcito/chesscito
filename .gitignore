@@ -164,3 +164,8 @@ apps/landing/.theme-builder-trash/
 
 # Operational snapshots — data with a cadence of minutes, not history.
 artifacts/ops/
+
+# Ignore every local dotenv variant; allow safe public examples/templates.
+.env*
+!.env.template
+!.env.example
