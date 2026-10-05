@@ -22,6 +22,10 @@ const VICTORY_NFT_ADDRESS = process.env.NEXT_PUBLIC_VICTORY_NFT_ADDRESS ?? "";
 
 const DEFAULT_FROM_BLOCK = 61_113_664; // scoreboard deploy block
 const CHUNK_SIZE = 50_000;
+// Bound each 60-second invocation to 1/25 of the old maximum RPC chunk.
+// This caps history scanned, not event density/RPC latency; measure production
+// batch duration before tuning. Adaptive pagination still handles smaller limits.
+export const MAX_BLOCKS_PER_SYNC = 2_000;
 
 const SCORE_SUBMITTED_TOPIC = ethers.id(
   "ScoreSubmitted(address,uint256,uint256,uint256,uint256,uint256)"
@@ -109,33 +113,30 @@ async function syncScores(
     toBlock,
   });
 
+  // Processing/write failures propagate; a partial batch must not commit its cursor.
   let count = 0;
   for (const log of logs) {
-    try {
-      const topic1 = log.topics[1];
-      const topic2 = log.topics[2];
-      if (!topic1 || !topic2) continue;
+    const topic1 = log.topics[1];
+    const topic2 = log.topics[2];
+    if (!topic1 || !topic2) continue;
 
-      const player = ethers.getAddress("0x" + topic1.slice(26));
-      const levelId = Number(ethers.toBigInt(topic2));
-      const score = Number(ethers.toBigInt(log.data.slice(0, 66)));
-      const timeMs =
-        log.data.length >= 130
-          ? Number(ethers.toBigInt("0x" + log.data.slice(66, 130)))
-          : 0;
+    const player = ethers.getAddress("0x" + topic1.slice(26));
+    const levelId = Number(ethers.toBigInt(topic2));
+    const score = Number(ethers.toBigInt(log.data.slice(0, 66)));
+    const timeMs =
+      log.data.length >= 130
+        ? Number(ethers.toBigInt("0x" + log.data.slice(66, 130)))
+        : 0;
 
-      await upsertScoreAuthoritative({
-        player,
-        level_id: levelId,
-        score,
-        time_ms: timeMs,
-        tx_hash: log.transactionHash,
-      });
+    await upsertScoreAuthoritative({
+      player,
+      level_id: levelId,
+      score,
+      time_ms: timeMs,
+      tx_hash: log.transactionHash,
+    });
 
-      count++;
-    } catch (err) {
-      console.error("[syncScores] failed to process log:", err);
-    }
+    count++;
   }
 
   return count;
@@ -159,36 +160,33 @@ async function syncVictories(
     toBlock,
   });
 
+  // Processing/write failures propagate; a partial batch must not commit its cursor.
   let count = 0;
   for (const log of logs) {
-    try {
-      const decoded = decodeEventLog({
-        abi: victoryAbi,
-        data: log.data as `0x${string}`,
-        topics: log.topics as [`0x${string}`, ...`0x${string}`[]],
-      });
+    const decoded = decodeEventLog({
+      abi: victoryAbi,
+      data: log.data as `0x${string}`,
+      topics: log.topics as [`0x${string}`, ...`0x${string}`[]],
+    });
 
-      const args = decoded.args as Record<string, unknown>;
+    const args = decoded.args as Record<string, unknown>;
 
-      const block = await provider.getBlock(log.blockNumber);
-      const mintedAt = block?.timestamp
-        ? new Date(Number(block.timestamp) * 1000).toISOString()
-        : new Date().toISOString();
+    const block = await provider.getBlock(log.blockNumber);
+    const mintedAt = block?.timestamp
+      ? new Date(Number(block.timestamp) * 1000).toISOString()
+      : new Date().toISOString();
 
-      await upsertVictoryAuthoritative({
-        token_id: Number(args["tokenId"] ?? args["token_id"] ?? 0),
-        player: String(args["player"] ?? args["to"] ?? ""),
-        difficulty: Number(args["difficulty"] ?? 0),
-        total_moves: Number(args["totalMoves"] ?? args["total_moves"] ?? 0),
-        time_ms: Number(args["timeMs"] ?? args["time_ms"] ?? 0),
-        tx_hash: log.transactionHash,
-        minted_at: mintedAt,
-      });
+    await upsertVictoryAuthoritative({
+      token_id: Number(args["tokenId"] ?? args["token_id"] ?? 0),
+      player: String(args["player"] ?? args["to"] ?? ""),
+      difficulty: Number(args["difficulty"] ?? 0),
+      total_moves: Number(args["totalMoves"] ?? args["total_moves"] ?? 0),
+      time_ms: Number(args["timeMs"] ?? args["time_ms"] ?? 0),
+      tx_hash: log.transactionHash,
+      minted_at: mintedAt,
+    });
 
-      count++;
-    } catch (err) {
-      console.error("[syncVictories] failed to process log:", err);
-    }
+    count++;
   }
 
   return count;
@@ -239,7 +237,7 @@ export async function runSync(): Promise<SyncResult> {
   const fromBlock = lastSyncedRaw
     ? Number(lastSyncedRaw) + 1
     : DEFAULT_FROM_BLOCK;
-  const toBlock = currentBlock;
+  const toBlock = Math.min(currentBlock, fromBlock + MAX_BLOCKS_PER_SYNC - 1);
 
   if (fromBlock > toBlock) {
     return {
@@ -256,7 +254,10 @@ export async function runSync(): Promise<SyncResult> {
     syncVictories(provider, fromBlock, toBlock),
   ]);
 
-  const passportChecked = await syncPassport();
+  // Passport reconciles the current leaderboard, not historical block state.
+  // Keep its existing cache during catch-up; refresh only on reaching the head
+  // captured at invocation start, after the authoritative scans complete.
+  const passportChecked = toBlock === currentBlock ? await syncPassport() : 0;
 
   await setSyncState("last_synced_block", String(toBlock));
 
