@@ -2,7 +2,7 @@
 
 ## Resultado
 
-Deploy CLI de Play `READY`, dominio productivo asignado y cron exitoso con HTTP 200 / `rows_deleted: 0`. La verificación funcional de Coach sigue pendiente: la revisión automática rechazó el control de Google Chrome. No se declara completada la publicación hasta validar una solicitud/recuperación real de análisis.
+**Publicación completada correctamente.** Deployment CLI de Play: **PASSED**; cron: **PASSED**; smoke funcional manual autenticado de Coach: **PASSED**, confirmado por el usuario en producción. El deployment está `READY`, con dominio productivo asignado; el cron respondió HTTP 200 / `rows_deleted: 0`, resultado válido.
 
 Las secciones de la primera tentativa conservan evidencia histórica. El bloqueo de la integración Git del proyecto anterior no fue un bloqueo del proyecto CLI actual.
 
@@ -79,9 +79,27 @@ vercel deploy /private/tmp/chesscito-coach-purge-release-5caad13e --project prj_
 
 ## Smoke test y documentación
 
-- No hay navegador disponible mediante la interfaz browser de Computer Use. Chrome existe como app nativa; `cua.getApp("com.google.Chrome")` fue rechazado por la revisión automática con mensaje literal `Computer Use was not approved to use Google Chrome`, sin motivo adicional.
-- Se solicita al operador verificar Coach Review y cargar/recuperar un análisis en su sesión. Esa confirmación funcional queda pendiente; HTTP de páginas por sí solo no se considera smoke de análisis completo.
+- En el intento automatizado previo no hubo navegador disponible mediante la interfaz browser de Computer Use. Chrome existía como app nativa; `cua.getApp("com.google.Chrome")` fue rechazado por la revisión automática con mensaje literal `Computer Use was not approved to use Google Chrome`, sin motivo adicional. Esta limitación quedó superada para el cierre mediante el smoke manual autenticado del usuario.
+- **Smoke funcional manual autenticado: PASSED.** El usuario confirmó en producción que abrió correctamente la revisión de una partida, Coach Review cargó y el análisis fue generado/recuperado. Se mostraron el resumen de la partida, los momentos clave y los aprendizajes, sin errores visibles, pantalla vacía ni loop de carga. Esta evidencia fue aportada por el usuario; no se presenta como una nueva ejecución automatizada.
 - Tras el deploy, `/` y `/coach/history` en Play responden HTTP 200; `/exercises` responde 307 a Learn, confirmando separación pública del modo Play. Son comprobaciones de acceso/routing, no una validación del análisis autenticado.
 - Guía canónica nueva: [deployment-topology.md](../ops/deployment-topology.md), con evidencia/lagunas y referencias al runbook Cloudflare existente en su rama. Se enlaza desde `AGENTS.md`, `CLAUDE.md` y README raíz.
 - Solo documentación cambia después del fix. No se modifican código, secretos, variables, teams, billing, migraciones ni Cloudflare; no se hace rollback.
 - Un push documental puede repetir los checks Git bloqueados de los proyectos antiguos. Eso no invalida el deployment CLI ya Ready ni el cron observado en el nuevo deployment.
+
+## Cierre
+
+**Publicación completada correctamente. Estado final: COMPLETADA.** No quedan gates operativos pendientes para este fix.
+
+| Verificación | Estado final | Trazabilidad |
+| --- | --- | --- |
+| Migración Supabase | PASSED | `20261006000000_coach_purge_batch.sql` aplicada y confirmada por el usuario; RPC `purge_expired_coach_analyses`, retorno `integer`, `prosecdef = false`, ejecución permitida a `service_role` y sin permisos para `anon` ni `authenticated` |
+| Deployment CLI de Play | PASSED | Proyecto `chesscito-play`, scope `play-chess`, deployment `dpl_FVnT2rEVCnnot2Cox98L7ENB5ndX`, `READY`, dominio `play.chesscito.com`, código `5caad13e569cb6f9dd2275a913285e4fb3c1fea9` |
+| Cron | PASSED | Run `37689331895`, success, HTTP 200, `coach_purge_complete`, `rows_deleted: 0`; sin HTTP 500 ni errores Redis, Supabase o RPC en esa ejecución |
+| Smoke funcional autenticado de Coach | PASSED | Confirmación manual del usuario en producción: revisión y análisis correctos, resumen, momentos clave y aprendizajes visibles, sin errores, pantalla vacía ni loop de carga |
+| Publicación | COMPLETADA | Deployment, cron y smoke funcional validados |
+
+El fix funcional permanece en `5caad13e569cb6f9dd2275a913285e4fb3c1fea9`. La topología y evidencia previa fueron publicadas en el commit documental `defa210157421da7581c7764b50ee037cd6cdf8a`; este cierre modifica únicamente esta auditoría. No requiere redeploy, migración, ejecución adicional del cron ni cambios de infraestructura.
+
+Los checks heredados `Vercel – chesscito`, `Vercel – lite-chesscito` y `Vercel – chesscito-landing` corresponden a proyectos antiguos. Su mensaje `Account is blocked`, observado nuevamente en el push documental anterior, no invalida el deployment CLI verificado de `chesscito-play` ni reabre gates de este fix si vuelve a aparecer.
+
+**Pendientes: Ninguno para este fix.**
