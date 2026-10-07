@@ -37,6 +37,8 @@ Chesscito ships as two focused apps built from the same repo, selected at build 
 `full` mode (everything on one host) exists for local development; it is not a shipped
 surface. Cross-mode links redirect to the right host automatically.
 
+Deployment ownership, CLI commands and the separate Cloudflare landing release are documented in the [canonical deployment topology guide](docs/ops/deployment-topology.md).
+
 ### Two ways in
 
 | Environment                       | How you get a wallet                                                            |

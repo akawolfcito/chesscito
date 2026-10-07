@@ -180,6 +180,8 @@ Antes de implementar cualquier feature con flujo interactivo, el spec DEBE enume
 
 ## Verificación de deploys — NO es mi tarea (founder, 2026-07-16)
 
+Antes de desplegar cualquier feature, consultar la [guía canónica de topología de deployment](docs/ops/deployment-topology.md).
+
 **NO verifiques deploys por tu cuenta. Solo si te lo piden explícitamente.**
 
 El founder lo verifica **visualmente**: le cuesta 0 tokens y menos de 1 segundo. Que yo

@@ -49,6 +49,7 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 - Supabase: `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` son server-only — jamás exponerlos al cliente
 
 ## Convenciones
+- Antes de desplegar cualquier feature, consultar la [guía canónica de topología de deployment](docs/ops/deployment-topology.md).
 - Commits: Conventional Commits (`feat:`, `fix:`, `style:`, `refactor:`)
 - Firma de commit: `Wolfcito 🐾 @akawolfcito`
 - No hay tests automatizados por ahora
