@@ -47,6 +47,19 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
         ],
       },
+      // Public media uses stable URLs (including Theme Builder replacements).
+      // Allow one day in the browser, without immutable; version the URL for
+      // updates that must appear sooner. Keep next dev previews uncached.
+      ...(process.env.NODE_ENV === 'production'
+        ? [
+            '/art/:path(.*\\.(?:png|jpg|jpeg|webp|avif|svg|gif|ico))',
+            '/fonts/:path(.*\\.(?:ttf|otf|woff|woff2))',
+            '/animations/:path(.*\\.(?:json|lottie))',
+          ].map((source) => ({
+            source,
+            headers: [{ key: 'Cache-Control', value: 'public, max-age=86400' }],
+          }))
+        : []),
     ];
   },
   webpack: (config, { isServer, dir }) => {
