@@ -7,7 +7,7 @@
  * matches the candy/board lexicon shared by the rest of the
  * polish-cluster targets. Same business behaviour as the
  * pre-polish version:
- *   - polls /api/coach/job/{id} every 3s while a jobId is present
+ *   - polls /api/coach/job/{id} 3s after each completed request
  *   - swaps the headline copy at fixed message ticks
  *   - resolves to onReady / onFailed
  *
@@ -19,8 +19,8 @@
  * from forest-green to candy-sky so Coach reads as cool/premium and
  * stops fighting the warm-amber HUD.
  *
+ * Polling is serialized, pauses in hidden tabs, and stops at a 60s deadline.
  * NO change to:
- *   - polling cadence / timeout (3s tick, 60s timeout)
  *   - copy keys (coachThinking / analyzing / slowThinking /
  *     keepScreenOpen) — only the typography host moved
  *   - prop shape (jobId, wallet, onReady, onFailed)
@@ -79,34 +79,59 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
     }
 
     let pollAttempt = 0;
-    const pollInterval = setInterval(async () => {
-      try {
-        const params = wallet ? `?wallet=${wallet}` : "";
-        pollAttempt += 1;
-        const res = await fetch(`/api/coach/job/${jobId}${params}`, {
-          headers: { "x-chesscito-poll-attempt": String(pollAttempt) },
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.status === "ready") {
-          clearInterval(pollInterval);
-          onReadyRef.current(data.response);
-        } else if (data.status === "failed") {
-          clearInterval(pollInterval);
-          onFailedRef.current(data.reason ?? "Unknown error");
-        }
-      } catch { /* retry on next poll */ }
-    }, 3000);
+    let stopped = false;
+    let pollTimer: ReturnType<typeof setTimeout>;
+    const controller = new AbortController();
+
+    const stop = () => {
+      stopped = true;
+      clearTimeout(pollTimer);
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+
+    const poll = async () => {
+      if (stopped) return;
+      // A background MiniPay WebView need not keep invoking the job route.
+      // The original 60s deadline still bounds the whole loading session.
+      if (!document.hidden) {
+        try {
+          const params = wallet ? `?wallet=${encodeURIComponent(wallet)}` : "";
+          pollAttempt += 1;
+          const res = await fetch(`/api/coach/job/${jobId}${params}`, {
+            headers: { "x-chesscito-poll-attempt": String(pollAttempt) },
+            signal: controller.signal,
+          });
+          if (res.ok) {
+            const data = await res.json();
+            // Fetch or JSON parsing may settle after cleanup or the deadline.
+            if (stopped) return;
+            if (data.status === "ready") {
+              stop();
+              onReadyRef.current(data.response);
+              return;
+            }
+            if (data.status === "failed") {
+              stop();
+              onFailedRef.current(data.reason ?? "Unknown error");
+              return;
+            }
+          }
+        } catch { /* retry on next poll, within the original deadline */ }
+      }
+      // Schedule only AFTER settling: slow requests cannot overlap.
+      if (!stopped) pollTimer = setTimeout(poll, 3000);
+    };
 
     const timeoutId = setTimeout(() => {
-      clearInterval(pollInterval);
+      stop();
       onFailedRef.current("Timed out waiting for coach response");
     }, TIMEOUT_MS);
+    pollTimer = setTimeout(poll, 3000);
 
     return () => {
       clearInterval(dotInterval);
-      clearInterval(pollInterval);
-      clearTimeout(timeoutId);
+      stop();
     };
   }, [jobId, wallet, hasJob]);
 

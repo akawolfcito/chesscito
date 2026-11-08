@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  next@14.2.35:
+    hash: oweyixuwzrcf3drv3epmedcbjy
+    path: patches/next@14.2.35.patch
+
 importers:
 
   .:
@@ -129,7 +134,7 @@ importers:
         version: 1.37.0
       next:
         specifier: 14.2.35
-        version: 14.2.35(@playwright/test@1.58.2)(react-dom@18.3.1)(react@18.3.1)
+        version: 14.2.35(patch_hash=oweyixuwzrcf3drv3epmedcbjy)(@playwright/test@1.58.2)(react-dom@18.3.1)(react@18.3.1)
       next-intl:
         specifier: 4.12.0
         version: 4.12.0(next@14.2.35)(react@18.3.1)(typescript@5.9.3)
@@ -281,7 +286,7 @@ importers:
         version: 0.383.0(react@18.3.1)
       next:
         specifier: 14.2.35
-        version: 14.2.35(@playwright/test@1.58.2)(react-dom@18.3.1)(react@18.3.1)
+        version: 14.2.35(patch_hash=oweyixuwzrcf3drv3epmedcbjy)(@playwright/test@1.58.2)(react-dom@18.3.1)(react@18.3.1)
       next-intl:
         specifier: 4.12.0
         version: 4.12.0(next@14.2.35)(react@18.3.1)(typescript@5.9.3)
@@ -14025,7 +14030,7 @@ packages:
       '@swc/core': 1.15.40
       icu-minify: 4.12.0
       negotiator: 1.0.0
-      next: 14.2.35(@playwright/test@1.58.2)(react-dom@18.3.1)(react@18.3.1)
+      next: 14.2.35(patch_hash=oweyixuwzrcf3drv3epmedcbjy)(@playwright/test@1.58.2)(react-dom@18.3.1)(react@18.3.1)
       next-intl-swc-plugin-extractor: 4.12.0
       po-parser: 2.1.1
       react: 18.3.1
@@ -14035,7 +14040,7 @@ packages:
       - '@swc/helpers'
     dev: false
 
-  /next@14.2.35(@playwright/test@1.58.2)(react-dom@18.3.1)(react@18.3.1):
+  /next@14.2.35(patch_hash=oweyixuwzrcf3drv3epmedcbjy)(@playwright/test@1.58.2)(react-dom@18.3.1)(react@18.3.1):
     resolution: {integrity: sha512-KhYd2Hjt/O1/1aZVX3dCwGXM1QmOV4eNM2UTacK5gipDdPN/oHHK/4oVGy7X8GMfPMsUTUEmGlsy0EY1YGAkig==}
     engines: {node: '>=18.17.0'}
     hasBin: true
@@ -14077,6 +14082,7 @@ packages:
       - '@babel/core'
       - babel-plugin-macros
     dev: false
+    patched: true
 
   /node-addon-api@2.0.2:
     resolution: {integrity: sha512-Ntyt4AIXyaLIuMHF6IOoTakB3K+RWxwtsHNRxllEoA6vPwP9o4866g6YWDLUdnucilZhmkxiHwHr11gAENw+QA==}
