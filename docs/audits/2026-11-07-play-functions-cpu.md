@@ -2,6 +2,16 @@
 
 Fecha: 2026-11-07, America/Bogota. Base: `origin/main` en `b7f5457b1c5616e1235bab71a9e4706336c90c19`. Rama: `codex/play-functions-audit`.
 
+## Actualización de acceso y destino durante preparación de release
+
+Tras completar el operador `vercel login`, se recuperó acceso CLI de lectura al proyecto actual: `caos19/chesscito-play`, `prj_DHUy3urmBKEPluBmO8KJII1MpWNx`. Se confirmó el dominio verificado `play.chesscito.com`, raíz `apps/web`, Next.js y Node 24. La identidad `play-chess` empleada en la primera parte de esta auditoría procedía de la guía de octubre y ya no identifica el Play actual. Los 403 originales son correctos para los intentos descritos, pero no prueban falta de acceso al nuevo proyecto después del login. Se actualizó la guía canónica. El resto del informe conserva la evidencia obtenida y sus límites; no hay todavía comparación de CPU antes/después ni despliegue de esta corrección.
+
+### Nueva evidencia operacional tras el login
+
+La consulta de metadatos de variables (`GET /v10/projects/<Play>/env`) devolvió 34 entradas, sin paginación ni variables de producción ocultas (`hiddenProductionEnvCount = 0`). No aparecen `SUPABASE_URL` ni `UPSTASH_REDIS_REST_URL` en ningún target. Sí aparecen las credenciales asociadas en Production. No se imprimieron ni copiaron valores. El código necesita esas URLs para construir los clientes: `getSupabaseServer()` devuelve null sin URL, y el cliente Redis necesita su endpoint. Es un bloqueo de configuración previo a la publicación, no algo que corrija el cambio de polling. Se pidió al operador añadir los valores correctos directamente en el dashboard; no se alteraron variables.
+
+Una consulta acotada de registros de solicitudes, filtro HTTP >=500, producción, ventana relativa de 1h, devolvió 15 registros de error: 11 de `/api/pro/status` (500) y 4 de `/api/coach/history` (500). Son conteos de la muestra disponible, sin denominador de todas las invocaciones y sin afirmar equivalencia con el 20,6 % histórico. Ambos endpoints usan Redis; la ausencia del endpoint Redis es una causa compatible que requiere confirmar el error interno o recuperación al corregir la configuración. No se publicaron parámetros, wallets, request IDs ni mensajes sin filtrar.
+
 ## Resultado y límites
 
 Se confirmó una regresión reproducible en el polling de Coach y se corrigió en una rama aislada. También se confirmó HTTP 503 en tres ejecuciones consecutivas del cron de limpieza. **No está demostrada la causa del 20,6 % ni su relación con la CPU acumulada.** No se modificó producción, infraestructura, variables, permisos, cron, base de datos, progreso ni pagos.

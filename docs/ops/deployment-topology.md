@@ -2,6 +2,20 @@
 
 Canonical cross-surface deployment guide. Recheck project/domain ownership before a release; local `.vercel` links and historical Git integration checks can refer to retired deployments. Evidence captured on 2026-10-07 while releasing `coach-purge` from `5caad13e569cb6f9dd2275a913285e4fb3c1fea9`.
 
+## Play target reverified on 2026-11-07
+
+The current Play target is **`caos19/chesscito-play`**, project `prj_DHUy3urmBKEPluBmO8KJII1MpWNx`, team `team_1efDQcHa59J6jEFOw0lW0JiF`. Authenticated read-only CLI API calls after operator login confirmed that `play.chesscito.com` is a verified domain of this project, `framework = nextjs`, `rootDirectory = apps/web`, and Node `24.x`. Remote build/output overrides are unset; `apps/web/vercel.json` supplies the prepared build command and `.next` output. The current production target was `dpl_FPcnynfBFJguUnKfnZe5RhagbQq7` (`READY`) when queried; this is the pre-release state, not a deployment of the changes prepared here.
+
+Use the explicit current project/scope for Play. **The October `play-chess` project and its release commands below are historical evidence and must not select this release.** Root and app-local `.vercel` links still refer to other projects and were left untouched. Learn and Landing ownership is not reverified by the Play read.
+
+Prepared Play command, only after the exact source and release checks are complete:
+
+```sh
+vercel deploy <reviewed-repository-export> --project prj_DHUy3urmBKEPluBmO8KJII1MpWNx --scope caos19 --prod --yes
+```
+
+Do not infer the build mode or server credentials from a setting's name. No environment values or remote configuration were changed during preparation. See `docs/ops/play-deploy-ready.md` for the reviewed source, checks and launch procedure.
+
 ## Architecture and evidence
 
 | Surface | Production domain | Code / build root | Platform | Project / Worker | Deployment method |
