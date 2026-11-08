@@ -1,0 +1,65 @@
+diff --git a/dist/compiled/@next/font/dist/google/find-font-files-in-css.d.ts b/dist/compiled/@next/font/dist/google/find-font-files-in-css.d.ts
+index eeb07218e802b002649619f59e3e19966f34035d..d8c3e627615eb00127e17ee282e85ebd5df0f4a7 100644
+--- a/dist/compiled/@next/font/dist/google/find-font-files-in-css.d.ts
++++ b/dist/compiled/@next/font/dist/google/find-font-files-in-css.d.ts
+@@ -5,5 +5,6 @@
+  */
+ export declare function findFontFilesInCss(css: string, subsetsToPreload?: string[]): {
+     googleFontFileUrl: string;
++    ext: string;
+     preloadFontFile: boolean;
+ }[];
+diff --git a/dist/compiled/@next/font/dist/google/find-font-files-in-css.js b/dist/compiled/@next/font/dist/google/find-font-files-in-css.js
+index af6c24d51f9292f12075a5ebf0f52d6e695805e5..b1b776b60661809743b3efd22b3bdfb9013155b6 100644
+--- a/dist/compiled/@next/font/dist/google/find-font-files-in-css.js
++++ b/dist/compiled/@next/font/dist/google/find-font-files-in-css.js
+@@ -1,6 +1,13 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.findFontFilesInCss = void 0;
++const formatToExtension = new Map([
++    ["woff", "woff"],
++    ["woff2", "woff2"],
++    ["truetype", "ttf"],
++    ["opentype", "otf"],
++    ["embedded-opentype", "eot"],
++]);
+ /**
+  * Find all font files in the CSS response and determine which files should be preloaded.
+  * In Google Fonts responses, the @font-face's subset is above it in a comment.
+@@ -23,7 +30,14 @@ function findFontFilesInCss(css, subsetsToPreload) {
+             if (googleFontFileUrl &&
+                 !fontFiles.some((foundFile) => foundFile.googleFontFileUrl === googleFontFileUrl)) {
+                 // Found the font file in the @font-face declaration.
++                // Google can return extensionless /l/font?kit=... URLs.
++                // Prefer the pathname extension, then the CSS format hint.
++                // The Chrome user agent requests WOFF2 by default.
++                const pathname = googleFontFileUrl.split(/[?#]/, 1)[0];
++                const format = /format\(['"](.+?)['"]\)/.exec(line)?.[1];
++                const ext = /\.(woff|woff2|eot|ttf|otf)$/.exec(pathname)?.[1] ?? formatToExtension.get(format ?? "") ?? "woff2";
+                 fontFiles.push({
++                    ext,
+                     googleFontFileUrl,
+                     preloadFontFile: !!(subsetsToPreload === null || subsetsToPreload === void 0 ? void 0 : subsetsToPreload.includes(currentSubset)),
+                 });
+diff --git a/dist/compiled/@next/font/dist/google/loader.js b/dist/compiled/@next/font/dist/google/loader.js
+index 3e5ee51589338d6b7dd387f79638ad6296c8102d..84b3b407c243420d65415d04f030f4112eca5c1e 100644
+--- a/dist/compiled/@next/font/dist/google/loader.js
++++ b/dist/compiled/@next/font/dist/google/loader.js
+@@ -91,7 +91,7 @@ const nextFontGoogleFontLoader = async ({ functionName, data, emitFontFile, isDe
+         // Find font files to download, provide the array of subsets we want to preload if preloading is enabled
+         const fontFiles = (0, find_font_files_in_css_1.findFontFilesInCss)(fontFaceDeclarations, preload ? subsets : undefined);
+         // Download the font files extracted from the CSS
+-        const downloadedFiles = await Promise.all(fontFiles.map(async ({ googleFontFileUrl, preloadFontFile }) => {
++        const downloadedFiles = await Promise.all(fontFiles.map(async ({ googleFontFileUrl, preloadFontFile, ext }) => {
+             const hasCachedFont = fontCache.has(googleFontFileUrl);
+             // Download the font file or get it from cache
+             const fontFileBuffer = hasCachedFont
+@@ -109,7 +109,6 @@ const nextFontGoogleFontLoader = async ({ functionName, data, emitFontFile, isDe
+             if (fontFileBuffer == null) {
+                 (0, next_font_error_1.nextFontError)(`Failed to fetch \`${fontFamily}\` from Google Fonts.`);
+             }
+-            const ext = /\.(woff|woff2|eot|ttf|otf)$/.exec(googleFontFileUrl)[1];
+             // Emit font file to .next/static/media
+             const selfHostedFileUrl = emitFontFile(fontFileBuffer, ext, preloadFontFile, !!adjustFontFallbackMetrics);
+             return {
