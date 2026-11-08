@@ -78,3 +78,9 @@ Pruebas nuevas fijan normalización de cuenta, timestamp en milisegundos, iguald
 La revisión de repositorio también encontró los scripts privilegiados `apps/web/scripts/grant-pro.ts` y `reset-wallet.ts`, y un helper Redis de estadísticas en Landing. Su alcance debe revisarse antes del corte final: no se ejecutaron scripts ni se verificó la actividad de ese helper en el Worker de producción.
 
 El siguiente PR debe diseñar la operación SQL de compra PRO (concesión y deduplicación en una sola transacción), el inventario/migración de expiraciones existentes y las pruebas de carrera, antes de sustituir el adaptador de lectura. La aplicación en producción requiere revisar ese esquema y el backfill concreto.
+
+## Resultado de la revisión de vigencias PRO
+
+La revisión de solo lectura encontró 2 vigencias activas y 1 vencida en Redis; cuatro recorridos completos coincidieron. Supabase contiene 9 filas de suscripción sin expiraciones futuras y 9 consumos de pago PRO. Por tanto, no se cumple el supuesto de cero vigencias activas y el siguiente diseño debe preservar las 2 expiraciones existentes junto con las garantías contra replay. No se atribuyeron las vigencias a compras o grants, ni se modificaron datos.
+
+Evidencia, método y límites: `docs/audits/2026-11-07-pro-active-readonly-review.md`.
