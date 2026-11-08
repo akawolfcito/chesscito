@@ -12,6 +12,8 @@ La consulta de metadatos de variables (`GET /v10/projects/<Play>/env`) devolvió
 
 Una consulta acotada de registros de solicitudes, filtro HTTP >=500, producción, ventana relativa de 1h, devolvió 15 registros de error: 11 de `/api/pro/status` (500) y 4 de `/api/coach/history` (500). Son conteos de la muestra disponible, sin denominador de todas las invocaciones y sin afirmar equivalencia con el 20,6 % histórico. Ambos endpoints usan Redis; la ausencia del endpoint Redis es una causa compatible que requiere confirmar el error interno o recuperación al corregir la configuración. No se publicaron parámetros, wallets, request IDs ni mensajes sin filtrar.
 
+El operador confirmó después que añadió las dos URLs en Production. Una segunda consulta verificó su presencia y la de las credenciales asociadas, `CRON_SECRET` y modo público, sin leer valores. Queda resuelto el bloqueo por ausencia de variables; faltan validar correspondencia/conectividad y recuperación mediante el nuevo deployment. El agente no modificó la configuración remota.
+
 ## Resultado y límites
 
 Se confirmó una regresión reproducible en el polling de Coach y se corrigió en una rama aislada. También se confirmó HTTP 503 en tres ejecuciones consecutivas del cron de limpieza. **No está demostrada la causa del 20,6 % ni su relación con la CPU acumulada.** No se modificó producción, infraestructura, variables, permisos, cron, base de datos, progreso ni pagos.

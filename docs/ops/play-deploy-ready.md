@@ -19,6 +19,8 @@ La prueba del loader ahora se ejecuta también en CI; antes el runner Vitest no 
 
 La consulta de metadatos posterior al login no encontró `SUPABASE_URL` ni `UPSTASH_REDIS_REST_URL` en ningún entorno; no hay entradas ocultas ni paginación. Las claves asociadas sí están presentes en Production. **Añadir las URLs correctas directamente en Vercel, al proyecto anterior, target Production, antes de lanzar el deployment.** No copiarlas al repositorio ni compartir valores en el chat. Los clientes necesitan tanto URL como credencial del mismo servicio. Esta preparación no cambia configuración remota.
 
+**Actualización después de la intervención del operador:** el usuario confirmó que añadió ambas URLs en Production. Una nueva lectura de metadatos verificó la presencia de las seis variables requeridas (`SUPABASE_URL`, su clave de servicio, endpoint y credencial REST de Redis, `CRON_SECRET` y modo público). La preparación no leyó ni imprimió valores. La presencia no certifica que URLs y credenciales correspondan al mismo servicio; la conectividad y recuperación funcional se comprobarán tras el deployment. Este cambio de configuración lo realizó el operador, no el agente.
+
 `NEXT_PUBLIC_CHESSCITO_MODE` está presente en Production, pero su mera presencia no demuestra su valor; debe ser `play`. El build local usa el modo explícito. No desactivar servicios ni suplir un fallo con respuestas falsas de progreso, derechos o pagos.
 
 ## Validación de la versión integrada
