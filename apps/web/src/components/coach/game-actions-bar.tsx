@@ -229,6 +229,8 @@ export function GameActionsBar({
     );
   }
 
+  if (!COACH_AI_ENABLED) tiles = tiles.filter((tile) => tile.kind !== "ask-coach");
+
   return (
     <div
       className="coach-viewer__actions"

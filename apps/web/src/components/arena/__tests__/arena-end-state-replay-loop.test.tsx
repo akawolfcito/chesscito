@@ -1,3 +1,4 @@
+vi.mock("@/lib/coach/availability", () => ({ COACH_AI_ENABLED: true }));
 /**
  * Post-game momentum loop — end-state CTA contract (2026-08-28).
  *

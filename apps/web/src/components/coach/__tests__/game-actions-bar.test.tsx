@@ -1,4 +1,5 @@
-vi.mock("@/lib/coach/availability", () => ({ COACH_AI_ENABLED: true }));
+const availability = vi.hoisted(() => ({ COACH_AI_ENABLED: true }));
+vi.mock("@/lib/coach/availability", () => availability);
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 
@@ -24,17 +25,17 @@ const baseProps = {
 };
 
 describe("GameActionsBar", () => {
-  it("win + unminted: shows Save Victory, Share, Ask Coach + Play Again (4-tile row)", () => {
-    // 2026-06-13 (feat/coach-analysis-value): win always shows all 4 tiles.
-    // Before minting, Share label is the "share" key (not "shareTrophy").
-    // No View on Celoscan tertiary until minted.
+  it("paused Coach: keeps Save Victory, Share and Play Again without Ask Coach", () => {
+    availability.COACH_AI_ENABLED = false;
+    // Keep replay, mint and share available while the Coach action is hidden.
     render(<GameActionsBar {...baseProps} claimPrice="$0.005" />);
     expect(screen.getByRole("button", { name: /saveVictory/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /askCoach/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /askCoach/ })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /newDuel/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /viewNft/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /viewOnCeloscan/ })).toBeNull();
+    availability.COACH_AI_ENABLED = true;
   });
 
   it("win + minted: Save Victory STILL present (unlimited re-save), Share trophy, View on Celoscan tertiary", () => {

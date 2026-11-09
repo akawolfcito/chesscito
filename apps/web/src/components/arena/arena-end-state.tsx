@@ -1,5 +1,6 @@
 "use client";
 
+import { COACH_AI_ENABLED } from "@/lib/coach/availability";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
@@ -574,7 +575,7 @@ export function ArenaEndState({
 
           {/* Coach Review — its own kicker divider replaces the
               section rule above (visual band is enough separation). */}
-          {onAskCoach && (
+          {COACH_AI_ENABLED && onAskCoach && (
             <div className="arena-result-coach-section" aria-labelledby="arena-coach-review-headline">
                 <div className="arena-result-coach-kicker-row">
                   <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
@@ -759,6 +760,7 @@ export function CoachAnalysisCta({
   proActive?: boolean;
 }) {
   const t = useTranslations("COACH_ENTRY_COPY");
+  if (!COACH_AI_ENABLED) return null;
   const label = labelOverride ?? t("getCoachAnalysis");
   const tooltip = tooShort ? t("matchTooShort") : undefined;
 

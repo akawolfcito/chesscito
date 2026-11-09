@@ -1,3 +1,4 @@
+vi.mock("@/lib/coach/availability", () => ({ COACH_AI_ENABLED: true }));
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   renderWithIntl as render,

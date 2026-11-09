@@ -1,5 +1,6 @@
 "use client";
 
+import { COACH_AI_ENABLED } from "@/lib/coach/availability";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
@@ -102,7 +103,7 @@ export function VictoryCelebration({
   // signal we want is "did availability of these CTAs change?", which
   // these booleans answer exactly.
   const canClaim = Boolean(onClaimVictory);
-  const coachCtaVisible = Boolean(onAskCoach);
+  const coachCtaVisible = COACH_AI_ENABLED && Boolean(onAskCoach);
   useEffect(() => {
     track("modal_open", {
       id: "victory-celebration",
@@ -301,7 +302,7 @@ export function VictoryCelebration({
         {/* COACH — kicker + body (purple Ask Coach pill LEFT, wolf RIGHT).
             Reuses the resign popup's coach-section vocabulary verbatim
             for visual cohesion across end-states. */}
-        {onAskCoach && (
+        {COACH_AI_ENABLED && onAskCoach && (
           <div
             className="arena-result-coach-section"
             aria-labelledby="victory-coach-review-headline"

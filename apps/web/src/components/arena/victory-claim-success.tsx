@@ -1,5 +1,6 @@
 "use client";
 
+import { COACH_AI_ENABLED } from "@/lib/coach/availability";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
@@ -184,7 +185,7 @@ export function VictoryClaimSuccess({
         {/* COACH — kicker + body (amber Ask Coach pill LEFT, wolf RIGHT).
             Mirrors VictoryCelebration vocabulary so pre-mint and post-mint
             share the same coach-section silhouette (#115). */}
-        {onAskCoach && (
+        {COACH_AI_ENABLED && onAskCoach && (
           <div
             className="arena-result-coach-section"
             aria-labelledby="victory-claim-coach-headline"

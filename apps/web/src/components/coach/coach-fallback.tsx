@@ -73,7 +73,6 @@ export function CoachFallback({
         {diffLabel} - {totalMoves} moves - {result}
       </p>
 
-      {!COACH_AI_ENABLED && <p className="text-xs" role="status">{t("quickReviewFree")}</p>}
       <div className="candy-tray">
         <p className="text-sm" style={{ color: warmText, textShadow: cream }}>{response.summary}</p>
       </div>

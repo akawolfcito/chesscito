@@ -1,3 +1,4 @@
+vi.mock("@/lib/coach/availability", () => ({ COACH_AI_ENABLED: true }));
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 

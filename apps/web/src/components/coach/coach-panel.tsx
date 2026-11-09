@@ -1,5 +1,6 @@
 "use client";
 
+import { COACH_AI_ENABLED } from "@/lib/coach/availability";
 import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -228,7 +229,7 @@ export function CoachPanel({
        *  users don't skip past a button labeled "Reanalyze" without
        *  context. Rendered above the primary CTAs so the choice
        *  "regenerate vs move on" is clear at the moment of decision. */}
-      {onReanalyze && (
+      {COACH_AI_ENABLED && onReanalyze && (
         <section
           data-testid="coach-reanalyze-panel"
           className="candy-tray flex flex-col gap-2"
@@ -315,7 +316,7 @@ export function CoachPanel({
        *  reusing that component) because its rose-tinted styling is
        *  reserved for destructive actions; reanalyze just spends a
        *  credit and regenerates. */}
-      {onReanalyze && (
+      {COACH_AI_ENABLED && onReanalyze && (
         <Sheet
           open={confirmReanalyzeOpen}
           onOpenChange={(o) => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { isProSalesEnabled } from "@/lib/pro/sales-policy";
 import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
@@ -360,7 +361,7 @@ export function ShopSheet({
               deriving Founder ownership for users who already bought
               it. PRO keeps the featured ribbon as the sole hero SKU. */}
           {(() => {
-            const heroItems = items.filter((it) => it.itemId === PRO_ITEM_ID);
+            const heroItems = items.filter((it) => isProSalesEnabled() && it.itemId === PRO_ITEM_ID);
             return heroItems.map((item, index) => {
               const copyKey = copyKeyForItem(item.itemId);
               return (
