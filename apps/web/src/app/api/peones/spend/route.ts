@@ -23,6 +23,7 @@
  *   500 → { error: "ledger_unavailable" | "ledger_write_failed" }
  */
 
+import { COACH_AI_ENABLED } from "@/lib/coach/availability";
 import { NextResponse } from "next/server";
 
 import { normalizeWallet } from "@/lib/peones/ledger-service";
@@ -164,6 +165,9 @@ export async function POST(req: Request) {
   }
 
   // 3-8. Validation + sanitisation pipeline.
+  if (!COACH_AI_ENABLED && isPlainObject(body) && body.target === "coach") {
+    return NextResponse.json({ error: "coach_paused" }, { status: 503 });
+  }
   const parsed = parseAndValidate(body);
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });

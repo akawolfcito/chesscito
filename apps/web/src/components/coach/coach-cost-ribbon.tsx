@@ -1,5 +1,6 @@
 "use client";
 
+import { COACH_AI_ENABLED } from "@/lib/coach/availability";
 import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
 import {
   SPEND_COST_BY_TARGET,
@@ -41,6 +42,7 @@ export function CoachCostRibbon({
   variant = "cta",
   target = "coach",
 }: Props) {
+  if (target === "coach" && !COACH_AI_ENABLED) return null;
   return (
     <span
       className={[

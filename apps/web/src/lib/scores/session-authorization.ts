@@ -71,20 +71,14 @@ export type ScoreSessionValidation =
 // Server-side policy (centralised on purpose)
 // ─────────────────────────────────────────────────────────────────
 
-export const SCORE_SESSION_MESSAGE_VERSION = "v1";
+export const SCORE_SESSION_MESSAGE_VERSION = "v2";
 
-const MESSAGE_HEADER = `Chesscito Score Session ${SCORE_SESSION_MESSAGE_VERSION}`;
+const MESSAGE_HEADER = `Chesscito Game Session ${SCORE_SESSION_MESSAGE_VERSION}`;
+const PURPOSE = "Save games and scores; request Coach reviews with the credits or Peones shown in the app.";
+const NO_TRANSACTIONS = "No blockchain transactions or payments authorized.";
 
-/**
- * How long a session stays usable. 2 hours.
- *
- * Sized against the actual play session, not against a security ideal. The
- * daily quota is 10 exercises (`SESSION_EXERCISE_LIMIT`), which a player
- * finishes well inside two hours; anything shorter would re-prompt mid-session,
- * which is the exact failure this slice exists to remove. Anything much longer
- * turns the token into a de-facto standing credential on a shared device.
- */
-export const SCORE_SESSION_TTL_SECONDS = 2 * 60 * 60;
+/** One daily wallet session; revoked sessions stop working immediately. */
+export const SCORE_SESSION_TTL_SECONDS = 24 * 60 * 60;
 
 /**
  * How many saves one signature authorizes. 100.
@@ -145,6 +139,8 @@ export function isScoreSessionId(v: unknown): v is string {
 export function buildScoreSessionMessage(c: ScoreSessionChallenge): string {
   return [
     MESSAGE_HEADER,
+    PURPOSE,
+    NO_TRANSACTIONS,
     `chainId: ${c.chainId}`,
     `wallet: ${c.wallet.toLowerCase()}`,
     `surface: ${c.surface}`,
@@ -157,7 +153,9 @@ export function buildScoreSessionMessage(c: ScoreSessionChallenge): string {
 
 const MESSAGE_RE = new RegExp(
   "^" +
-    `Chesscito Score Session ${SCORE_SESSION_MESSAGE_VERSION}` +
+    "(?:Chesscito Score Session v1|" +
+    [MESSAGE_HEADER, PURPOSE, NO_TRANSACTIONS].map((line) => line.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("\\n") +
+    ")" +
     "\\nchainId: (\\d{1,12})" +
     "\\nwallet: (0x[0-9a-fA-F]{40})" +
     "\\nsurface: ([a-z]{1,16})" +

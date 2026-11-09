@@ -6,7 +6,7 @@ import { enforceOrigin } from "@/lib/server/demo-signing";
 import type { JobStatus } from "@/lib/coach/types";
 import { createLogger } from "@/lib/server/logger";
 import { recordRedisUsage } from "@/lib/server/redis-observability";
-import { authorizeCoachRequest } from "@/lib/server/coach-request-authorization";
+import { UUID_RE } from "@/lib/coach/game-persistence";
 
 const redis = getRedis();
 const log = createLogger({ route: "/api/coach/job/[id]" });
@@ -32,10 +32,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     return NextResponse.json({ error: "Missing or invalid wallet" }, { status: 400 });
   }
 
-  const authorization = await authorizeCoachRequest(req, wallet);
-  if (!authorization) {
-    return NextResponse.json({ error: "Coach authorization required" }, { status: 401, headers: { "Cache-Control": "no-store" } });
-  }
   const job = await redis.get<JobStatus & { wallet?: string; gameId?: string }>(REDIS_KEYS.job(jobId));
   if (!job) {
     recordRedisUsage(log, {
@@ -51,8 +47,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     return NextResponse.json({ error: "Job not found" }, { status: 404 });
   }
 
-  // Legacy or malformed records without an explicit owner are not public.
-  if (typeof job.wallet !== "string" || job.wallet.toLowerCase() !== wallet || job.gameId !== authorization.gameId) {
+  // Match the public wallet/game index; never expose malformed internal jobs.
+  if (typeof job.wallet !== "string" || job.wallet.toLowerCase() !== wallet || typeof job.gameId !== "string" || !UUID_RE.test(job.gameId)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

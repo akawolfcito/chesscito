@@ -2,6 +2,12 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
+vi.mock("@/lib/scores/session-client", () => ({
+  ensureScoreSession: async ({ signMessage }: { signMessage: (args: { message: string }) => Promise<unknown> }) => {
+    try { await signMessage({ message: "Test game session" }); return { ok: true, session: { token: "a".repeat(64) } }; }
+    catch { return { ok: false }; }
+  },
+}));
 const wallet = vi.hoisted(() => ({ address: undefined as `0x${string}` | undefined, chainId: 42220 }));
 const sign = vi.hoisted(() => vi.fn());
 vi.mock("wagmi", () => ({
@@ -51,10 +57,9 @@ describe("Coach wallet identity lifecycle", () => {
     await act(async () => { finish(); await rejected; });
     expect(fetchMock).not.toHaveBeenCalled();
   });
-  it("withholds polling proof after wallet disconnection or chain change", async () => {
-    const { result, rerender } = renderHook(() => ({ request: useCoachRequestAccess(), headers: useCoachJobAccess(account.address) }));
-    await act(async () => { await result.current.request("/api/coach/analyze", init()); });
-    wallet.address = undefined; rerender(); expect(result.current.headers(jobId)).toBeNull();
-    wallet.address = account.address; wallet.chainId = 1; rerender(); expect(result.current.headers(jobId)).toBeNull();
+  it("reads public polling status without a signature", () => {
+    const { result } = renderHook(() => useCoachJobAccess(account.address));
+    expect(result.current(jobId)).toEqual({});
+    expect(sign).not.toHaveBeenCalled();
   });
 });

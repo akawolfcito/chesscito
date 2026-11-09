@@ -50,6 +50,8 @@ type PlayHubScaffoldProps = {
  * only so the disabled branch stays compile-checked.
  */
 const SHOW_STANDALONE_PLAY_CHESS_CTA = true;
+// Keep commerce components available for a future product review.
+const SHOW_SHOP_AND_PRO_SHORTCUTS = false;
 
 /** Play Kingdom home. Mirrors the LEARN/LITE hub's visual system (unified
  *  vocabulary): floating HUD + Kingdom portal + mode switch + Kingdom hero
@@ -210,38 +212,7 @@ export function PlayHubScaffold({
         </div>
       ) : null}
 
-      {/* PLAY PATH — the floor rail, now strictly "other places".
-          ⛔ NO TILE HERE STARTS A MATCH, and that is the invariant this rail
-          exists to hold. It used to lead with a `Duel` tile that called the
-          SAME `onArenaPress` with the SAME `hub.enter-arena` art as the CTA
-          200 px above it: two identical doors a thumb apart. The CTA is the one
-          that starts a match; the rail is where you go when you want something
-          else.
-
-          ⛔ The `Warm-up` tile is gone too. It ran `getDailyTactic(today)` —
-          the very same puzzle as the Daily — but paid no Peones and fed no
-          streak, so 400 people solved it and received nothing, which teaches
-          that effort here does not pay. The Daily survives as the header gift,
-          where it does pay.
-
-          ⛔ THE FREED SLOTS STAY FREE. They were briefly filled with PRO and
-          Trophies, and both were removed the same day by a sprint change
-          proposal, because neither had earned the slot — they were invented to
-          fill a `grid-template-columns: repeat(4, 50px)` that nobody had
-          questioned. The grid now sizes itself to the tiles. **A hole in a
-          layout is not a requirement.**
-
-          Trophies opened at `0` for almost everyone, which is exactly why it
-          left the header; moving that `0` 700px down changes nothing it says.
-          PRO as an offer violates this spec's own Experience Principle 4 —
-          "never sell before the player has played" — and the sale has been
-          paused since 2026-08-25 anyway.
-
-          ⚠️ PRO survives ONLY for an active subscriber, where the tile is
-          STATUS and not an offer: their days remaining, and the way back to the
-          Journal. Removing it outright would have stranded the people who paid,
-          and the flag's own contract is explicit that a paused sale must never
-          revoke access. */}
+      {/* Secondary destinations; commerce shortcuts stay available for reactivation. */}
       <section className="play-hub-path" aria-label={tPlay("playPathLabel")}>
         <h2 className="play-hub-path-label">{tPlay("playPathLabel")}</h2>
         <div className="play-hub-path-grid" aria-label={tPlay("actionsAriaLabel")}>
@@ -255,57 +226,39 @@ export function PlayHubScaffold({
             ariaLabel={tHud("coachAriaLabel")}
             onClick={onCoachTap}
           />
-          <HubActionTile
-            className="play-hub-path-tile"
-            iconSlot="hub.shop-icon"
-            label={tPlay("shopLabel")}
-            ariaLabel={tPlay("shopAriaLabel")}
-            onClick={onShopTap}
-          />
-          {/* ⛔ VISIBLE PARA TODOS, y para el no suscriptor es una OFERTA.
-              Restaurado el 2026-09-04 revirtiendo `95540ed9`, que lo dejó sólo
-              para `pro.active`. Lo que se midió después de ese cambio:
-
-                · `play_hub_pro_tap` cayó de ~25 cuentas/día a CERO el 31-08,
-                  con `play_hub_view` plano en ~80. Este tap es el ÚNICO camino
-                  al sheet — `pro_card_viewed` es 100% `surface:"sheet"` y el
-                  chip no dispara nunca. Esconder la baldosa cerró la puerta.
-                · Y apagó el instrumento: las 517 cuentas con
-                  `pro_purchase_failed` + `read_usdt:"under_price"` son la única
-                  evidencia de que el precio está sobre la billetera, y la
-                  producían personas intentando comprar.
-
-              ⚠️ Aquel commit se justificó en parte con "the sale has been paused
-              since 2026-08-25 anyway". Es FALSO: PRO no es el Season Pass. El
-              flag gatea `SEASON_PASSES`, este sheet compra `chesscito_pro_30`
-              de `PRO_PACKS`. Ver `pro-sheet.tsx:119-137`, que documenta el mismo
-              error cometido y revertido el 30-08.
-
-              ⛔ SIN PRECIO ACÁ. `$1.99` flotaba sobre el banner y se le mostraba
-              a todos al llegar; el precio vive en el sheet, donde el jugador
-              llegó a propósito. */}
-          <HubActionTile
-            className="play-hub-path-tile"
-            tourTarget="pro"
-            iconSlot="hub.pro-chip"
-            /* ⚠️ Pinned, not inherited. `hub.pro-chip` ships two sprites and a
-               paying subscriber must not be shown the purple upsell chip. */
-            iconVariant={pro.active ? "pro" : "default"}
-            label={tHud("proLabel")}
-            ariaLabel={
-              pro.active
-                ? tHud("proAriaLabel", { days: pro.daysRemaining })
-                : tHud("proInactiveAriaLabel")
-            }
-            onClick={onProTap}
-            badge={
-              pro.active ? (
-                <span className="play-hub-path-tile-badge" aria-hidden="true">
-                  {tHud("proRemainingFormat", { days: pro.daysRemaining })}
-                </span>
-              ) : undefined
-            }
-          />
+          {SHOW_SHOP_AND_PRO_SHORTCUTS ? (
+            <>
+              <HubActionTile
+                className="play-hub-path-tile"
+                iconSlot="hub.shop-icon"
+                label={tPlay("shopLabel")}
+                ariaLabel={tPlay("shopAriaLabel")}
+                onClick={onShopTap}
+              />
+              <HubActionTile
+                className="play-hub-path-tile"
+                tourTarget="pro"
+                iconSlot="hub.pro-chip"
+                /* ⚠️ Pinned, not inherited. `hub.pro-chip` ships two sprites and a
+                   paying subscriber must not be shown the purple upsell chip. */
+                iconVariant={pro.active ? "pro" : "default"}
+                label={tHud("proLabel")}
+                ariaLabel={
+                  pro.active
+                    ? tHud("proAriaLabel", { days: pro.daysRemaining })
+                    : tHud("proInactiveAriaLabel")
+                }
+                onClick={onProTap}
+                badge={
+                  pro.active ? (
+                    <span className="play-hub-path-tile-badge" aria-hidden="true">
+                      {tHud("proRemainingFormat", { days: pro.daysRemaining })}
+                    </span>
+                  ) : undefined
+                }
+              />
+            </>
+          ) : null}
         </div>
       </section>
     </section>

@@ -18,7 +18,8 @@ import {
 import { decodeEventLog } from "viem";
 import type { TransactionReceipt } from "viem";
 import { useTranslations } from "next-intl";
-import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
+import { getConfiguredChainId, getVictoryNFTAddress, getMiniPayFeeCurrency } from "@/lib/contracts/chains";
+import { isMiniPayEnv } from "@/lib/minipay";
 import { VICTORY_CLAIM_COPY } from "@/lib/content/editorial";
 import { classifyClaimError, describeClaimError } from "@/lib/coach/claim-telemetry";
 import { victoryAbi } from "@/lib/contracts/victory";
@@ -364,6 +365,9 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
       signTypedDataAsync: signPermitAsync,
     } = liveRef.current;
 
+    const miniPay = isMiniPayEnv();
+    const feeCurrency = miniPay ? getMiniPayFeeCurrency(cid) : undefined;
+
     /* ⛔ ATTRIBUTION WRAPS THE WRITER, NOT THE THREE CALL SITES. This flow
        issues up to three writes — `approve`, `mintSignedWithPermit`,
        `mintSigned` — down two mutually exclusive branches. Tagging each one
@@ -374,7 +378,10 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
        byte-for-byte, so a trailing suffix is inert. */
     const writeAsync = ((request: Parameters<typeof rawWriteAsync>[0]) =>
       rawWriteAsync(
-        withChesscitoAttribution(request) as Parameters<typeof rawWriteAsync>[0],
+        withChesscitoAttribution({
+          ...request,
+          ...(feeCurrency ? { feeCurrency } : {}),
+        }) as Parameters<typeof rawWriteAsync>[0],
       )) as typeof rawWriteAsync;
 
     // Guard: injected tests bypass normal canClaim; real path requires a
@@ -451,7 +458,8 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
       let permitResult: { v: number; r: `0x${string}`; s: `0x${string}` } | null = null;
       let permitDeadlineUsed = 0n;
 
-      if (isVictoryPermitMintEnabled()) {
+      // Use the approval transaction path in MiniPay without an extra permit prompt.
+      if (!miniPay && isVictoryPermitMintEnabled()) {
         try {
           const permitDeadlineCandidate = BigInt(Math.floor(Date.now() / 1000) + 600);
           const tokenMeta = ACCEPTED_TOKENS.find(

@@ -2041,6 +2041,7 @@ export const COACH_COPY = {
   playCta: "NEW DUEL",
   loading: "Loading…",
   quickReviewTitle: "REVIEW",
+  quickReviewFree: "Free quick review · AI analysis is paused",
   coachAnalysisTitle: "REVIEW",
   keyMoments: "KEY MOMENTS",
   whatYouDidWell: "WHAT YOU DID WELL",
@@ -2501,7 +2502,7 @@ export const PRIVACY_COACH_COPY = {
     "You can request deletion of saved Coach analyses from the history page by confirming the owning wallet. The request targets stored analyses and their history index. Saved game records, cached job responses, usage analytics, payment records, any backups and public blockchain data are separate. If a storage service fails during deletion, some targeted data may remain.",
   para3Title: "What Coach stores:",
   para3:
-    "Saved game records include the move list, game ID, timestamps and game metadata associated with your wallet. Coach stores generated feedback; persisted history records associate analyses with a wallet and include game metadata and derived weakness tags. Games and analyses can therefore be linked to the same wallet.",
+    "Saved game records include the move list, game ID, timestamps and game metadata associated with your wallet. Coach stores generated feedback; persisted history records associate analyses with a wallet and include game metadata and derived weakness tags. Games and analyses can therefore be linked to the same wallet. Saved games and Coach reviews are publicly readable by wallet address, without a wallet signature. Do not include private information in this public game history.",
   para4Title: "Other requests and lost wallet access:",
   para4:
     "Use Support if you lose wallet access or need help with an access, correction or deletion request. We may need evidence that you control the relevant wallet or account. Chesscito cannot erase public blockchain records.",

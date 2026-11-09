@@ -1,3 +1,4 @@
+import { authorizeGameplaySession } from "./gameplay-session";
 import { isAddress, verifyMessage } from "viem";
 import { UUID_RE } from "@/lib/coach/game-persistence";
 import {
@@ -13,6 +14,7 @@ export async function authorizeGameWrite(
       new TextEncoder().encode(body).byteLength > GAME_WRITE_MAX_BYTES) return false;
   const url = new URL(req.url);
   if (url.pathname !== "/api/games" && url.pathname !== `/api/games/${gameId}/mint-receipt`) return false;
+  if (await authorizeGameplaySession(req, wallet)) return true;
   const issued = req.headers.get(GAME_WRITE_ISSUED_HEADER);
   const signature = req.headers.get(GAME_WRITE_SIGNATURE_HEADER);
   if (!issued || !/^\d{13}$/.test(issued) || !signature || !/^0x[0-9a-fA-F]{130}$/.test(signature)) return false;

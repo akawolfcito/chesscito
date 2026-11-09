@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { postSignedGameWrite, type GameWriteArgs } from "../signed-game-write";
-import { authorizeGameWrite } from "@/lib/server/game-write-authorization";
-import { GAME_WRITE_TTL_MS } from "../game-write-message";
-
+vi.mock("@/lib/scores/session-client", () => ({ ensureScoreSession: async ({ signMessage }: { signMessage: (args: { message: string }) => Promise<unknown> }) => {
+  try { await signMessage({ message: "Test game session" }); return { ok: true, session: { token: "a".repeat(64) } }; }
+  catch { return { ok: false }; }
+} }));
 const owner = privateKeyToAccount(generatePrivateKey());
 const origin = "https://play.example.test";
 const gameId = "550e8400-e29b-41d4-a716-446655440000";
@@ -12,11 +13,12 @@ const sign = vi.fn(async ({ message }: { message: string }) => owner.signMessage
 describe("signed game transport", () => {
   beforeEach(() => { vi.clearAllMocks(); vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 200 }))); });
   afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
-  it("posts exactly the signed bytes and produces a proof accepted by the server", async () => {
+  it("posts the game using the issued wallet session", async () => {
     await postSignedGameWrite(args, { origin, signMessage: sign, isCurrent: () => true });
     const [path, init] = vi.mocked(fetch).mock.calls[0];
     const req = new Request(`${origin}${path}`, init);
-    expect(await authorizeGameWrite(req, owner.address, gameId, String(init?.body))).toBe(true);
+    expect(req.headers.get("authorization")).toBe(`Bearer ${"a".repeat(64)}`);
+    expect(JSON.parse(String(init?.body))).toEqual(args.payload);
     expect(init?.cache).toBe("no-store");
     expect(sign).toHaveBeenCalledTimes(1);
     expect(localStorage.length).toBe(0);
@@ -33,15 +35,10 @@ describe("signed game transport", () => {
     } })).rejects.toThrow("game_write_cancelled");
     expect(fetch).not.toHaveBeenCalled();
   });
-  it("never posts after cancellation or a signature that took too long", async () => {
+  it("never posts after cancellation", async () => {
     const controller = new AbortController();
     controller.abort();
     await expect(postSignedGameWrite({ ...args, signal: controller.signal }, { origin, signMessage: sign, isCurrent: () => true })).rejects.toThrow("game_write_cancelled");
     expect(sign).not.toHaveBeenCalled();
-    vi.useFakeTimers();
-    await expect(postSignedGameWrite(args, { origin, isCurrent: () => true, signMessage: async () => {
-      vi.advanceTimersByTime(GAME_WRITE_TTL_MS); return owner.signMessage({ message: "fixture" });
-    } })).rejects.toThrow("game_write_cancelled");
-    expect(fetch).not.toHaveBeenCalled();
   });
 });

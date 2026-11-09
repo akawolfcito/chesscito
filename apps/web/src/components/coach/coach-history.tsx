@@ -1,7 +1,6 @@
 "use client";
 
-import { useHistoryReadAccess } from "@/lib/coach/use-history-read-access";
-import { HistoryReadPrompt } from "./history-read-prompt";
+import { COACH_AI_ENABLED } from "@/lib/coach/availability";
 import { Link } from "@/i18n/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
@@ -303,8 +302,6 @@ export function CoachHistory({
   onSelectEntry,
   onAnalyzeUnanalyzed,
 }: Props) {
-  const access = useHistoryReadAccess(walletAddress);
-  const { headers, invalidate } = access;
   const [loadedFor, setLoadedFor] = useState("");
   const tCoach = useTranslations("COACH_COPY");
   const activeLocale = useLocale() as "en" | "es";
@@ -317,18 +314,18 @@ export function CoachHistory({
     setAnalyzed([]);
     setUnanalyzed([]);
     setLoading(true);
-    if (!headers) return;
+
     // Thread the active locale through so the server's per-locale
     // fallback chain picks the ES record for ES users (instead of
     // defaulting to EN, where ES-only analyses go missing). The server
     // already accepts this param; this caller closes the loop. See
     // `getCachedAnalysisWithFallback()` for the read order.
     Promise.all([
-      fetch(`/api/coach/history?wallet=${walletAddress}&locale=${activeLocale}`, { headers, cache: "no-store" })
-        .then((r) => { if (r.status === 401) invalidate(); if (!r.ok) throw new Error("History unavailable"); return r.json(); })
+      fetch(`/api/coach/history?wallet=${walletAddress}&locale=${activeLocale}`, { cache: "no-store" })
+        .then((r) => { if (!r.ok) throw new Error("History unavailable"); return r.json(); })
         .catch(() => []),
-      fetch(`/api/games?wallet=${walletAddress}`, { headers, cache: "no-store" })
-        .then((r) => { if (r.status === 401) invalidate(); if (!r.ok) throw new Error("History unavailable"); return r.json(); })
+      fetch(`/api/games?wallet=${walletAddress}`, { cache: "no-store" })
+        .then((r) => { if (!r.ok) throw new Error("History unavailable"); return r.json(); })
         .catch(() => []),
     ])
       .then(([historyData, gamesData]) => {
@@ -351,7 +348,7 @@ export function CoachHistory({
     return () => {
       cancelled = true;
     };
-  }, [walletAddress, activeLocale, headers, invalidate]);
+  }, [walletAddress, activeLocale]);
 
   // Telemetry — fire exactly once per mount with the unanalyzed bucket
   // size. Spec §2.4.10: `coach_history_unanalyzed_view{count}`. The ref
@@ -359,10 +356,10 @@ export function CoachHistory({
   // wallet-switch cycle re-firing the event.
   const viewEmittedRef = useRef(false);
   useEffect(() => {
-    if (!headers || loading || viewEmittedRef.current) return;
+    if (loading || viewEmittedRef.current) return;
     viewEmittedRef.current = true;
     track("coach_history_unanalyzed_view", { count: unanalyzed.length });
-  }, [loading, unanalyzed.length, headers]);
+  }, [loading, unanalyzed.length]);
 
   // Mixed chronological — newest first by game.timestamp. No Analyzed /
   // Pending section split per spec §2.4.9.
@@ -417,7 +414,6 @@ export function CoachHistory({
   // navigable group. Previously the head-analyzed branch rendered
   // LatestReviewCard ABOVE the role="list" and excluded it from the
   // list's count announcement.
-  if (!headers) return <HistoryReadPrompt access={access} />;
 
   if (loading || loadedFor !== `${walletAddress.toLowerCase()}:${activeLocale}`) {
     return (
@@ -438,7 +434,7 @@ export function CoachHistory({
 
   return (
     <section aria-label={tCoach("historyAriaLabel")} className="flex flex-col gap-4">
-      {credits > 0 && (
+      {COACH_AI_ENABLED && credits > 0 && (
         <div className="flex justify-end">
           <CandyChip variant="warm" tone="subtle">
             {credits} credits

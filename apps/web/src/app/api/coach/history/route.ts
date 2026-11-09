@@ -1,4 +1,3 @@
-import { authorizeHistoryRead } from "@/lib/server/history-read-authorization";
 import { NextResponse } from "next/server";
 import { isAddress, recoverMessageAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
@@ -39,12 +38,6 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const wallet = url.searchParams.get("wallet")?.toLowerCase();
   if (!wallet || !isAddress(wallet)) return NextResponse.json({ error: "Invalid wallet" }, { status: 400 });
-
-  if (!(await authorizeHistoryRead(req, wallet))) {
-    return NextResponse.json({ error: "History authorization required" }, {
-      status: 401, headers: { "Cache-Control": "private, no-store" },
-    });
-  }
 
   // Locale preference for the per-game read. Defaults to "en" so callers
   // that don't pass it (legacy clients) keep their previous behavior of

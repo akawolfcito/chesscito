@@ -1,3 +1,6 @@
+import { authorizeGameplaySession } from "./gameplay-session";
+import { readSpendBearerToken } from "@/lib/scores/spend-session-guard";
+import { hashSessionToken } from "@/lib/server/score-session-store";
 import { isAddress, keccak256, toBytes, verifyMessage } from "viem";
 import { UUID_RE } from "@/lib/coach/game-persistence";
 import {
@@ -5,12 +8,22 @@ import {
   COACH_REQUEST_TTL_MS, COACH_REQUEST_MAX_BYTES,
 } from "@/lib/coach/coach-request-message";
 
-/** No datastore access. A read proof never authorizes an analysis or spending. */
+/** Writes accept a current wallet session or the legacy request proof. */
 export async function authorizeCoachRequest(req: Request, wallet: string, body?: string, now = Date.now()) {
   const url = new URL(req.url);
   const post = req.method === "POST" && url.pathname === "/api/coach/analyze";
   const poll = req.method === "GET" && /^\/api\/coach\/job\/[^/]+$/.test(url.pathname);
   if ((!post && !poll) || !isAddress(wallet)) return null;
+  if (post && typeof body === "string" && new TextEncoder().encode(body).byteLength <= COACH_REQUEST_MAX_BYTES) {
+    const nonce = req.headers.get(H.nonce);
+    let gameId: unknown;
+    try { gameId = JSON.parse(body).gameId; } catch { return null; }
+    if (typeof gameId === "string" && UUID_RE.test(gameId) && nonce && UUID_RE.test(nonce) &&
+        await authorizeGameplaySession(req, wallet)) {
+      const token = readSpendBearerToken(req)!;
+      return { gameId, replayKey: `coach:request:session:${hashSessionToken(token)}:${nonce}`, ttlSeconds: Math.ceil(COACH_REQUEST_TTL_MS / 1000) };
+    }
+  }
   const gameId = req.headers.get(H.game);
   const nonce = req.headers.get(H.nonce);
   const payloadHash = req.headers.get(H.payload);

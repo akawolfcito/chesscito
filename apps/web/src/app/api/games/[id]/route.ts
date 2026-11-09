@@ -1,4 +1,3 @@
-import { authorizeHistoryRead } from "@/lib/server/history-read-authorization";
 import { NextResponse } from "next/server";
 import { isAddress } from "viem";
 import { UUID_RE, getGameRecord } from "@/lib/coach/game-persistence";
@@ -43,12 +42,6 @@ export async function GET(
   }
   if (!UUID_RE.test(gameId)) {
     return NextResponse.json({ error: "Invalid gameId" }, { status: 400 });
-  }
-
-  if (!(await authorizeHistoryRead(req, wallet))) {
-    return NextResponse.json({ error: "History authorization required" }, {
-      status: 401, headers: { "Cache-Control": "private, no-store" },
-    });
   }
 
   try {

@@ -6,7 +6,7 @@ import { buildGameWriteMessage } from "../game-write-message";
 import {
   buildCoachRequestMessage, coachPayloadHash, COACH_REQUEST_HEADERS as H, COACH_REQUEST_TTL_MS,
 } from "../coach-request-message";
-import { clearCoachJobAccess, coachJobHeaders, postAuthorizedCoachAnalyze } from "../coach-request-access";
+import { clearCoachJobAccess, postAuthorizedCoachAnalyze } from "../coach-request-access";
 
 // Ephemeral signing identities only; no key or signature is logged or saved.
 const account = privateKeyToAccount(generatePrivateKey());
@@ -69,54 +69,13 @@ describe("Coach proof isolation and payload integrity", () => {
   });
 });
 
-describe("signed analyze transport and in-memory polling access", () => {
-  const init = () => ({ method: "POST", body, headers: { "content-type": "application/json" } });
-  const signMessage = vi.fn(async ({ message }: { account: `0x${string}`; message: string }) => account.signMessage({ message }));
-  it("sends only the approved payload and retains its poll proof without another signature", async () => {
-    signMessage.mockClear();
-    const fetchImpl = vi.fn<typeof fetch>(async (_url, options) => {
-      const serverRequest = new Request(`${origin}/api/coach/analyze`, options);
-      expect(await authorizeCoachRequest(serverRequest, account.address, body)).not.toBeNull();
-      return Response.json({ jobId });
-    });
-    const response = await postAuthorizedCoachAnalyze("/api/coach/analyze", init(), { origin, wallet: account.address, signMessage, isCurrent: () => true, fetchImpl });
-    expect(await response.json()).toEqual({ jobId });
-    const headers = coachJobHeaders(jobId, account.address, origin);
-    expect(headers).not.toBeNull();
-    expect(await authorizeCoachRequest(new Request(`${origin}/api/coach/job/${jobId}`, { headers: headers! }), account.address)).not.toBeNull();
-    expect(signMessage).toHaveBeenCalledTimes(1);
-    expect(fetchImpl.mock.calls[0][1]?.cache).toBe("no-store");
-    expect(coachJobHeaders(jobId, other.address, origin)).toBeNull();
-  });
-  it("does not send after signer rejection, identity change, expiry or abort", async () => {
+describe("session analyze transport", () => {
+  it("does not issue an analysis for invalid payloads", async () => {
     const fetchImpl = vi.fn<typeof fetch>();
-    for (const mode of ["reject", "change", "expire", "abort", "session_reset"]) {
-      const controller = new AbortController();
-      let active = true;
-      const now = Date.now();
-      const delayedSigner = async () => {
-        if (mode === "reject") throw new Error("QA rejected");
-        if (mode === "change") active = false;
-        if (mode === "expire") vi.spyOn(Date, "now").mockReturnValue(now + COACH_REQUEST_TTL_MS);
-        if (mode === "abort") controller.abort();
-        if (mode === "session_reset") clearCoachJobAccess();
-        return `0x${"1".repeat(130)}` as `0x${string}`;
-      };
-      await expect(postAuthorizedCoachAnalyze("/api/coach/analyze", { ...init(), signal: controller.signal }, {
-        origin, wallet: account.address, signMessage: delayedSigner, isCurrent: () => active, fetchImpl,
-      })).rejects.toThrow();
-      vi.restoreAllMocks();
-    }
-    expect(fetchImpl).not.toHaveBeenCalled();
-  });
-  it("invalidates retained poll access on session reset and expiry", async () => {
-    const fetchImpl = vi.fn<typeof fetch>(async () => Response.json({ jobId }));
-    const deps = { origin, wallet: account.address, signMessage, isCurrent: () => true, fetchImpl };
-    await postAuthorizedCoachAnalyze("/api/coach/analyze", init(), deps);
-    clearCoachJobAccess();
-    expect(coachJobHeaders(jobId, account.address, origin)).toBeNull();
-    await postAuthorizedCoachAnalyze("/api/coach/analyze", init(), deps);
-    vi.spyOn(Date, "now").mockReturnValue(Date.now() + COACH_REQUEST_TTL_MS);
-    expect(coachJobHeaders(jobId, account.address, origin)).toBeNull();
+    const signMessage = vi.fn();
+    await expect(postAuthorizedCoachAnalyze("/api/coach/analyze", { method: "POST", body: "{}" }, {
+      origin, wallet: account.address, signMessage, isCurrent: () => true, fetchImpl,
+    })).rejects.toThrow("coach_request_invalid");
+    expect(fetchImpl).not.toHaveBeenCalled(); expect(signMessage).not.toHaveBeenCalled();
   });
 });

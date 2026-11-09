@@ -49,12 +49,19 @@ describe("build / parse", () => {
     expect(parseScoreSessionMessage(buildScoreSessionMessage(c))).toEqual(c);
   });
 
+  it("accepts an unexpired legacy challenge during a manual rollout", () => {
+    const old = buildScoreSessionMessage(challenge({ expiresAt: NOW + 7200 })).split("\n");
+    const message = ["Chesscito Score Session v1", ...old.slice(3)].join("\n");
+    expect(parseScoreSessionMessage(message)).toEqual(challenge({ expiresAt: NOW + 7200 }));
+  });
+
   it("names every term the player is agreeing to", () => {
     // The prompt is the consent UI. A term missing here is a capability
     // granted blind.
     const message = buildScoreSessionMessage(challenge());
     for (const fragment of [
-      "Chesscito Score Session v1",
+      "Chesscito Game Session v2",
+      "No blockchain transactions or payments authorized.",
       "chainId: 42220",
       `wallet: ${WALLET}`,
       "surface: learn",
@@ -82,7 +89,7 @@ describe("build / parse", () => {
 
   it("rejects a different version header", () => {
     expect(
-      parseScoreSessionMessage(buildScoreSessionMessage(challenge()).replace("v1", "v2")),
+      parseScoreSessionMessage(buildScoreSessionMessage(challenge()).replace("v2", "v99")),
     ).toBeNull();
   });
 
@@ -234,8 +241,8 @@ describe("policy constants", () => {
     ).toMatchObject({ ok: true });
   });
 
-  it("lasts long enough to cover a play session but not a day", () => {
-    expect(SCORE_SESSION_TTL_SECONDS).toBe(2 * 60 * 60);
-    expect(SCORE_SESSION_TTL_SECONDS).toBeLessThan(24 * 60 * 60);
+  it("lasts one day", () => {
+    expect(SCORE_SESSION_TTL_SECONDS).toBe(24 * 60 * 60);
+
   });
 });

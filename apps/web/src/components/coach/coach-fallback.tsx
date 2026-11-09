@@ -1,5 +1,6 @@
 "use client";
 
+import { COACH_AI_ENABLED } from "@/lib/coach/availability";
 import { useTranslations } from "next-intl";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
@@ -51,7 +52,7 @@ export function CoachFallback({
   const warmMuted = "rgba(110, 65, 15, 0.75)";
   const cream = "0 1px 0 rgba(255, 245, 215, 0.55)";
 
-  const showRetry = Boolean(onRetry);
+  const showRetry = COACH_AI_ENABLED && Boolean(onRetry);
   const retryReview = t("retryReview");
   const unlockFullAnalysis = t("unlockFullAnalysis");
 
@@ -72,6 +73,7 @@ export function CoachFallback({
         {diffLabel} - {totalMoves} moves - {result}
       </p>
 
+      {!COACH_AI_ENABLED && <p className="text-xs" role="status">{t("quickReviewFree")}</p>}
       <div className="candy-tray">
         <p className="text-sm" style={{ color: warmText, textShadow: cream }}>{response.summary}</p>
       </div>
@@ -140,19 +142,21 @@ export function CoachFallback({
 
             {/* Secondary: Unlock Full Analysis — duplicates host's
                 Ask Coach when embedded, so hidden there too. */}
-            <Button
-              type="button"
-              variant="game-ghost"
-              size="game-sm"
-              onClick={onGetFullAnalysis!}
-              aria-label={unlockFullAnalysis}
-              style={{
-                borderColor: "rgba(110, 65, 15, 0.25)",
-                color: warmMuted,
-              }}
-            >
-              {unlockFullAnalysis}
-            </Button>
+            {COACH_AI_ENABLED && onGetFullAnalysis && (
+              <Button
+                type="button"
+                variant="game-ghost"
+                size="game-sm"
+                onClick={onGetFullAnalysis!}
+                aria-label={unlockFullAnalysis}
+                style={{
+                  borderColor: "rgba(110, 65, 15, 0.25)",
+                  color: warmMuted,
+                }}
+              >
+                {unlockFullAnalysis}
+              </Button>
+            )}
           </>
         )
       )}

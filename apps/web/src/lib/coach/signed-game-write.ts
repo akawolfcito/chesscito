@@ -1,6 +1,7 @@
+import { clearScoreSession, ensureScoreSession } from "@/lib/scores/session-client";
+import { resolveDeploymentSurface } from "@/lib/scores/deployment-surface";
 import {
-  buildGameWriteMessage, GAME_WRITE_ISSUED_HEADER, GAME_WRITE_SIGNATURE_HEADER,
-  GAME_WRITE_TTL_MS, GAME_WRITE_MAX_BYTES,
+  GAME_WRITE_MAX_BYTES,
 } from "./game-write-message";
 
 export type GameWriteArgs = {
@@ -8,7 +9,7 @@ export type GameWriteArgs = {
 };
 export type SignedGameWrite = (args: GameWriteArgs) => Promise<Response>;
 
-/** One personal_sign, one exact POST. Never log/persist the proof or signer errors. */
+/** Wallet-scoped session authorization; never log its token or signer errors. */
 export async function postSignedGameWrite(args: GameWriteArgs, deps: {
   origin: string;
   signMessage: (args: { account: `0x${string}`; message: string }) => Promise<`0x${string}`>;
@@ -20,25 +21,17 @@ export async function postSignedGameWrite(args: GameWriteArgs, deps: {
   const body = JSON.stringify(args.payload);
   if (typeof body !== "string") throw new Error("game_write_invalid_payload");
   if (new TextEncoder().encode(body).byteLength > GAME_WRITE_MAX_BYTES) throw new Error("game_write_too_large");
-  const issuedAt = Date.now();
   if (!deps.isCurrent() || args.signal?.aborted) throw new Error("game_write_cancelled");
-  let signature: `0x${string}`;
-  try {
-    signature = await deps.signMessage({ account: args.wallet, message: buildGameWriteMessage({
-      origin: deps.origin, path: args.path, wallet: args.wallet, gameId: args.gameId, body, issuedAt,
-    }) });
-  } catch {
-    throw new Error("game_write_confirmation_failed");
-  }
-  if (!deps.isCurrent() || args.signal?.aborted || Date.now() >= issuedAt + GAME_WRITE_TTL_MS) {
-    throw new Error("game_write_cancelled");
-  }
-  return fetch(args.path, {
-    method: "POST", signal: args.signal, cache: "no-store", body,
-    headers: {
-      "Content-Type": "application/json",
-      [GAME_WRITE_ISSUED_HEADER]: String(issuedAt),
-      [GAME_WRITE_SIGNATURE_HEADER]: signature,
-    },
+  const access = await ensureScoreSession({
+    wallet: args.wallet, surface: resolveDeploymentSurface(), promptPolicy: "allow",
+    signMessage: ({ message }) => deps.signMessage({ account: args.wallet, message }),
   });
+  if (!access.ok) throw new Error("game_write_confirmation_failed");
+  if (!deps.isCurrent() || args.signal?.aborted) throw new Error("game_write_cancelled");
+  const response = await fetch(args.path, {
+    method: "POST", signal: args.signal, cache: "no-store", body,
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${access.session.token}` },
+  });
+  if (response.status === 401 && deps.isCurrent()) clearScoreSession();
+  return response;
 }

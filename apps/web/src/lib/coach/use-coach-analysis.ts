@@ -1,5 +1,6 @@
 "use client";
 
+import { COACH_AI_ENABLED } from "@/lib/coach/availability";
 import { useCallback, useRef, useState } from "react";
 import { useAccount, useChainId, useSignMessage } from "wagmi";
 import { useLocale } from "next-intl";
@@ -372,7 +373,7 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
     analyzeSourceRef.current = source as AnalyzeSource;
 
     // No wallet → free quick review
-    if (!isConnected || !address) {
+    if (!COACH_AI_ENABLED || !isConnected || !address) {
       const quick = generateQuickReview({
         result: input.result ?? "lose",
         difficulty: input.difficulty ?? "easy",
@@ -400,6 +401,7 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
   // --- analyzeFromHistory ---
   // Mirrors arena/page.tsx handleAnalyzeFromHistory.
   const analyzeFromHistory = useCallback(async (gameId: string) => {
+    if (!COACH_AI_ENABLED) return;
     if (!address) return;
     analyzeSourceRef.current = "history";
     setPhaseState("loading");
@@ -448,6 +450,7 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
   // --- reanalyze ---
   // Mirrors arena/page.tsx handleReanalyze.
   const reanalyze = useCallback(async () => {
+    if (!COACH_AI_ENABLED) return;
     if (!address || !coachReanalyzeGameId) return;
     setIsReanalyzing(true);
     try {

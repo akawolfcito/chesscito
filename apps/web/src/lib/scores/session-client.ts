@@ -28,7 +28,7 @@
  * que aparece seguido es un prompt que el jugador aprende a descartar sin leer,
  * y esa es justo la costumbre de la que depende el carril on-chain.
  *
- * Lo que NO cambia: el alcance del token (una wallet, una superficie, 2h, 25
+ * Lo que NO cambia: el alcance del token (una wallet, una superficie, hasta 24h, 100
  * saves, revocable server-side) y toda la lógica de invalidación. Solo cambia
  * DÓNDE vive entre aperturas.
  *

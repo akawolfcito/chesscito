@@ -76,10 +76,10 @@ describe("GET /api/coach/job/[id]", () => {
     const res = await GET(makeRequest(VALID_WALLET), { params: { id: JOB_ID } });
     expect(res.status).toEqual(403);
   });
-  it("checks proof before reading any job", async () => {
+  it("reads public job status without proof", async () => {
     authorizeMock.mockResolvedValue(null);
     const res = await GET(makeRequest(VALID_WALLET), { params: { id: JOB_ID } });
-    expect(res.status).toBe(401); expect(redisMock.get).not.toHaveBeenCalled();
+    expect(res.status).toBe(404); expect(redisMock.get).toHaveBeenCalled();
   });
   it("rejects a job for another game even with the same wallet", async () => {
     redisMock.get.mockResolvedValue({ status: "pending", wallet: VALID_WALLET, gameId: "different" });

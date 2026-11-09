@@ -64,26 +64,24 @@ const routes = [
   { path: "/api/games", read: games },
   { path: `/api/games/${gameId}`, read: (req: Request) => game(req, { params: Promise.resolve({ id: gameId }) }) },
 ];
-describe.each(routes)("ownership gate $path", ({ path, read }) => {
+describe.each(routes)("public history $path", ({ path, read }) => {
   beforeEach(() => {
     vi.clearAllMocks();
     storage.lrange.mockResolvedValue([]);
     storage.get.mockResolvedValue({ gameId, moves: [], analysis: { response: { summary: "fixture" } } });
     vi.stubGlobal("fetch", vi.fn(() => { throw new Error("Network disabled in ownership tests"); }));
   });
-  it("denies missing proof before reading private data, even without Origin", async () => {
+  it("reads saved records without a proof, including without Origin", async () => {
     const response = await read(new Request(`${origin}${path}?wallet=${owner.address}`));
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toContain("no-store");
-    expect(storage.get).not.toHaveBeenCalled();
-    expect(storage.lrange).not.toHaveBeenCalled();
+    expect(storage.get.mock.calls.length + storage.lrange.mock.calls.length).toBeGreaterThan(0);
   });
-  it("denies an owner proof reused for a different wallet before storage", async () => {
+  it("uses the public query wallet independently of obsolete proof headers", async () => {
     const proof = await signed();
     const response = await read(new Request(`${origin}${path}?wallet=${other.address}`, { headers: proof.headers }));
-    expect(response.status).toBe(401);
-    expect(storage.get).not.toHaveBeenCalled();
-    expect(storage.lrange).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(storage.get.mock.calls.length + storage.lrange.mock.calls.length).toBeGreaterThan(0);
   });
   it("allows owner reads and disables response caching", async () => {
     const issuedAt = Date.now();

@@ -2,6 +2,12 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useSignedGameWrite } from "../use-signed-game-write";
 
+vi.mock("@/lib/scores/session-client", () => ({
+  ensureScoreSession: async ({ signMessage }: { signMessage: (args: { message: string }) => Promise<unknown> }) => {
+    try { await signMessage({ message: "Test game session" }); return { ok: true, session: { token: "a".repeat(64) } }; }
+    catch { return { ok: false }; }
+  },
+}));
 const state = vi.hoisted(() => ({ address: `0x${"1".repeat(40)}`, chainId: 42220, sign: vi.fn() }));
 vi.mock("wagmi", () => ({
   useAccount: () => ({ address: state.address }),

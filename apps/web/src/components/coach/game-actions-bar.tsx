@@ -1,5 +1,6 @@
 "use client";
 
+import { COACH_AI_ENABLED } from "@/lib/coach/availability";
 import { useTranslations } from "next-intl";
 
 import { CoachCostRibbon } from "@/components/coach/coach-cost-ribbon";
@@ -121,8 +122,8 @@ export function GameActionsBar({
   // suppresses the hint so the paywall stays the primary signal.
   const askCoachReachable =
     !isTooShort && !hasPartialReplayError && !askCoachPending;
-  const showProHint = askCoachReachable && !!proActive;
-  const showCreditsHint =
+  const showProHint = COACH_AI_ENABLED && askCoachReachable && !!proActive;
+  const showCreditsHint = COACH_AI_ENABLED &&
     askCoachReachable &&
     !proActive &&
     typeof coachCredits === "number" &&

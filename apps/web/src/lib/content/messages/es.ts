@@ -133,7 +133,7 @@ const messages = {
       "Puedes solicitar la eliminación de los análisis guardados desde la página de historial, confirmando la wallet propietaria. La solicitud abarca los análisis almacenados y su índice de historial. Los registros de partidas, las respuestas en caché de tareas de análisis, la analítica de uso, los registros de pagos, las copias de seguridad que existan y los datos públicos de blockchain son independientes. Si un servicio de almacenamiento falla durante la eliminación, parte de los datos solicitados puede permanecer.",
     para3Title: "Qué almacena el Coach:",
     para3:
-      "Los registros de partidas guardadas incluyen la lista de movimientos, el ID de la partida, las marcas de tiempo y los metadatos asociados a tu wallet. El Coach almacena los comentarios generados; el historial persistente asocia los análisis a una wallet e incluye metadatos de partida y etiquetas de debilidades derivadas. Por eso, las partidas y los análisis pueden vincularse a la misma wallet.",
+      "Los registros de partidas guardadas incluyen la lista de movimientos, el ID de la partida, las marcas de tiempo y los metadatos asociados a tu wallet. El Coach almacena los comentarios generados; el historial persistente asocia los análisis a una wallet e incluye metadatos de partida y etiquetas de debilidades derivadas. Por eso, las partidas y los análisis pueden vincularse a la misma wallet. Las partidas guardadas y los análisis del Coach son de lectura pública por dirección de wallet, sin firmar un mensaje. No incluyas información privada en este historial público.",
     para4Title: "Otras solicitudes y pérdida de acceso a la wallet:",
     para4:
       "Usa Soporte si pierdes acceso a tu wallet o necesitas ayuda con una solicitud de acceso, corrección o eliminación. Podemos necesitar evidencia de que controlas la wallet o cuenta correspondiente. Chesscito no puede borrar los registros públicos de blockchain.",
@@ -385,6 +385,7 @@ const messages = {
     playCta: "NUEVO DUELO",
     loading: "Cargando…",
     quickReviewTitle: "ANÁLISIS",
+    quickReviewFree: "Revisión breve gratis · Análisis de IA en pausa",
     coachAnalysisTitle: "ANÁLISIS",
     keyMoments: "MOMENTOS CLAVE",
     whatYouDidWell: "LO QUE HICISTE BIEN",

@@ -1,3 +1,4 @@
+vi.mock("@/lib/coach/availability", () => ({ COACH_AI_ENABLED: true }));
 /**
  * Tests for POST /api/peones/spend — Sprint 4 commit C.
  *

@@ -1,3 +1,4 @@
+import { COACH_AI_ENABLED } from "@/lib/coach/availability";
 import { NextResponse } from "next/server";
 import { authorizeCoachRequest } from "@/lib/server/coach-request-authorization";
 import { COACH_REQUEST_MAX_BYTES } from "@/lib/coach/coach-request-message";
@@ -69,6 +70,7 @@ const llm = process.env.COACH_LLM_API_KEY
   : null;
 
 export async function POST(req: Request) {
+  if (!COACH_AI_ENABLED) return NextResponse.json({ error: "coach_paused" }, { status: 503, headers: { "Cache-Control": "no-store" } });
   try {
     enforceOrigin(req);
     const ip = getRequestIp(req);

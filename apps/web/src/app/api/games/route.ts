@@ -1,6 +1,5 @@
 import { authorizeGameWrite } from "@/lib/server/game-write-authorization";
 import { GAME_WRITE_MAX_BYTES } from "@/lib/coach/game-write-message";
-import { authorizeHistoryRead } from "@/lib/server/history-read-authorization";
 import { NextResponse } from "next/server";
 import { getRedis } from "@/lib/server/redis";
 import { isAddress } from "viem";
@@ -110,12 +109,6 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const wallet = url.searchParams.get("wallet")?.toLowerCase();
   if (!wallet || !isAddress(wallet)) return NextResponse.json({ error: "Invalid wallet" }, { status: 400 });
-
-  if (!(await authorizeHistoryRead(req, wallet))) {
-    return NextResponse.json({ error: "History authorization required" }, {
-      status: 401, headers: { "Cache-Control": "private, no-store" },
-    });
-  }
 
   // Cluster E defer #4: defense-in-depth UUID filter. POST already
   // rejects non-UUID gameIds at write time, but legacy entries or

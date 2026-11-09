@@ -1,5 +1,6 @@
 "use client";
 
+import { COACH_AI_ENABLED } from "@/lib/coach/availability";
 import { useRouter } from "@/i18n/navigation";
 import { useAccount } from "wagmi";
 import { useTranslations } from "next-intl";
@@ -56,7 +57,7 @@ export default function CoachHistoryPage() {
   const router = useRouter();
   const { credits } = useCoachCredits();
   const isPro = useIsProActive();
-  const showAskLuzBanner = !!address && !isPro && credits === 0;
+  const showAskLuzBanner = COACH_AI_ENABLED && !!address && !isPro && credits === 0;
 
   if (!address) {
     return (

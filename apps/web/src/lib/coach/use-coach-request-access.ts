@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useAccount, useSignMessage } from "wagmi";
-import { coachJobHeaders, postAuthorizedCoachAnalyze } from "./coach-request-access";
+import { postAuthorizedCoachAnalyze } from "./coach-request-access";
 
 export function useCoachRequestAccess() {
   const { address, chainId } = useAccount();
@@ -27,14 +27,7 @@ export function useCoachRequestAccess() {
   }, []);
 }
 
-/** Polling reuses the user-approved analysis proof; it never prompts a signer. */
+/** Saved analysis status is public; polling never prompts a signer. */
 export function useCoachJobAccess(wallet?: string) {
-  const { address, chainId } = useAccount();
-  const current = useRef({ address, chainId, wallet });
-  current.current = { address, chainId, wallet };
-  return useCallback((jobId: string) => {
-    const active = current.current;
-    if (!active.wallet || active.chainId !== 42220 || active.address?.toLowerCase() !== active.wallet.toLowerCase()) return null;
-    return coachJobHeaders(jobId, active.wallet, window.location.origin);
-  }, []);
+  return useCallback((_jobId: string) => wallet ? {} : null, [wallet]);
 }

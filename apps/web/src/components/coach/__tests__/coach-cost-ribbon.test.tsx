@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+vi.mock("@/lib/coach/availability", () => ({ COACH_AI_ENABLED: true }));
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { CoachCostRibbon } from "../coach-cost-ribbon";
 

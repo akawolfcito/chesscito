@@ -1,4 +1,3 @@
-import { useHistoryReadAccess } from "./use-history-read-access";
 import { useCallback, useEffect, useState } from "react";
 
 /**
@@ -19,21 +18,20 @@ export function useCoachHistoryCount(walletAddress: string | undefined): {
   isLoading: boolean;
   refetch: () => void;
 } {
-  const { headers, invalidate } = useHistoryReadAccess(walletAddress);
   const [rowCount, setRowCount] = useState<number | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(walletAddress !== undefined);
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    if (!walletAddress || !headers) {
+    if (!walletAddress) {
       setRowCount(undefined);
       setIsLoading(false);
       return;
     }
     let cancelled = false;
     setIsLoading(true);
-    fetch(`/api/coach/history?wallet=${walletAddress}`, { headers, cache: "no-store" })
-      .then((r) => { if (r.status === 401) invalidate(); if (!r.ok) throw new Error("History unavailable"); return r.json(); })
+    fetch(`/api/coach/history?wallet=${walletAddress}`, { cache: "no-store" })
+      .then((r) => { if (!r.ok) throw new Error("History unavailable"); return r.json(); })
       .then((data: unknown) => {
         if (cancelled) return;
         setRowCount(Array.isArray(data) ? data.length : 0);
@@ -48,9 +46,9 @@ export function useCoachHistoryCount(walletAddress: string | undefined): {
     return () => {
       cancelled = true;
     };
-  }, [walletAddress, tick, headers, invalidate]);
+  }, [walletAddress, tick]);
 
   const refetch = useCallback(() => setTick((t) => t + 1), []);
 
-  return { rowCount: headers ? rowCount : undefined, isLoading: headers ? isLoading : false, refetch };
+  return { rowCount, isLoading, refetch };
 }

@@ -1,3 +1,5 @@
+const availability = vi.hoisted(() => ({ COACH_AI_ENABLED: true }));
+vi.mock("@/lib/coach/availability", () => availability);
 vi.mock("../use-coach-request-access", () => ({ useCoachRequestAccess: () => fetch }));
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
@@ -576,5 +578,18 @@ describe("useCoachAnalysis — Peones fallback (Sprint 4 commit F)", () => {
     expect(analyzeCalled).toBe(false);
 
     vi.unstubAllGlobals();
+  });
+});
+
+describe("paused AI reviews", () => {
+  it("returns a free quick review without network calls, spending or signatures", async () => {
+    availability.COACH_AI_ENABLED = false;
+    const network = vi.spyOn(globalThis, "fetch");
+    const { result } = renderHook(() => useCoachAnalysis({ surface: "arena_endgame", isConnected: true, walletAddress: `0x${"1".repeat(40)}`, moves: ["e4", "e5"], result: "win" }));
+    act(() => result.current.askCoach());
+    expect(result.current.phase).toBe("fallback");
+    expect(result.current.fallbackResponse?.kind).toBe("quick");
+    expect(network).not.toHaveBeenCalled();
+    availability.COACH_AI_ENABLED = true;
   });
 });
