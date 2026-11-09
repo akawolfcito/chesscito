@@ -1,0 +1,52 @@
+{
+  "name": "chesscito",
+  "version": "0.1.0",
+  "description": "A new Celo blockchain project",
+  "private": true,
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "clean": "turbo clean",
+    "type-check": "turbo type-check",
+    "content:audit": "pnpm --filter web exec tsx ../../scripts/audit-content-messages.ts",
+    "contracts:compile": "turbo run compile --filter=hardhat",
+    "contracts:test": "turbo run test --filter=hardhat",
+    "contracts:deploy": "turbo run deploy --filter=hardhat",
+    "contracts:deploy:alfajores": "turbo run deploy:alfajores --filter=hardhat",
+    "contracts:deploy:celo-sepolia": "turbo run deploy:celo-sepolia --filter=hardhat",
+    "contracts:deploy:celo": "turbo run deploy:celo --filter=hardhat",
+    "contracts:verify:alfajores": "turbo run verify:alfajores --filter=hardhat",
+    "contracts:verify:celo-sepolia": "turbo run verify:celo-sepolia --filter=hardhat",
+    "contracts:verify:celo": "turbo run verify:celo --filter=hardhat",
+    "admin": "pnpm --filter admin run admin --",
+    "ops:health": "pnpm -C apps/web exec tsx ../../scripts/ops/launch-health-snapshot.ts",
+    "ops:backup": "pnpm -C apps/web exec tsx ../../scripts/ops/backup.ts",
+    "ops:backup:verify": "pnpm -C apps/web exec tsx ../../scripts/ops/backup.ts --verify",
+    "ops:backup:verified": "pnpm -C apps/web exec tsx ../../scripts/ops/verified-backup.ts",
+    "ops:archive": "pnpm -C apps/web exec tsx ../../scripts/ops/archive.ts",
+    "ops:no-token": "pnpm -C apps/web exec tsx ../../scripts/ops/no-token-observation.ts",
+    "ops:query": "pnpm -C apps/web exec tsx ../../scripts/ops/read-only-query.ts",
+    "ops:health:preview": "pnpm -C apps/web exec tsx ../../scripts/ops/launch-health-snapshot.ts --target preview"
+  },
+  "comments": {
+    "versions": "Team convention — exact pins (no ^ or ~) for every dependency to harden against malicious version-range hijacks. See feedback_exact_version_pins memory."
+  },
+  "devDependencies": {
+    "@types/node": "20.19.35",
+    "playwright": "1.58.2",
+    "turbo": "1.13.4",
+    "typescript": "5.9.3"
+  },
+  "packageManager": "pnpm@8.10.0",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "next@14.2.35": "patches/next@14.2.35.patch"
+    }
+  }
+}

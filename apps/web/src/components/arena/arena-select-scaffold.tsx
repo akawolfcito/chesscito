@@ -1,0 +1,312 @@
+'use client'
+
+import type { ReactNode } from 'react'
+import { useTranslations } from 'next-intl'
+
+import { ContextualHeader } from '@/components/ui/contextual-header'
+import { CandyIcon } from '@/components/redesign/candy-icon'
+import { PrimitiveBoundary } from '@/components/error/primitive-boundary'
+import { PrimaryPlayCta } from '@/components/kingdom/primary-play-cta'
+import { MissionRibbon } from '@/components/pro-mission/mission-ribbon'
+import { SoftGateSheet } from '@/components/arena/soft-gate-sheet'
+import type { ArenaDifficulty } from '@/lib/game/types'
+import type { PlayerColor } from '@/lib/game/use-chess-game'
+import { rivalFor, eloRangeLabel } from '@/lib/game/rivals'
+import { ThemeAssetPicture } from '@/components/themes/theme-asset-picture'
+import { pieceThemeSlot } from '@/lib/themes/piece-theme-assets'
+
+/* Green check pill — clones the PRO sheet perk badge styling
+   (pro-sheet.tsx:389-399) so selection feedback across PRO and the
+   arena selector reads as the same visual vocabulary. */
+function SelectedCheck() {
+  return (
+    <span
+      aria-hidden="true"
+      className="arena-scaffold-selected-badge flex items-center justify-center rounded-full text-sm font-bold text-white"
+      style={{
+        background: 'linear-gradient(180deg, #22c55e 0%, #15803d 100%)',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.22)',
+        border: '2px solid rgba(255, 255, 255, 0.9)',
+      }}
+    >
+      ✓
+    </span>
+  )
+}
+
+const DIFFICULTY_ORDER: ArenaDifficulty[] = ['easy', 'medium', 'hard']
+const COLOR_ORDER: PlayerColor[] = ['w', 'b']
+const SURFACE = 'arena-select'
+const ATMOSPHERE = 'adventure'
+
+type SoftGate = {
+  onLearn: () => void
+  onDismiss: () => void
+}
+
+/** Account entry (top-right of the HUD). Mirrors the LEARN /exercises header
+ *  account pill (`candy-tray-pill hub-hud-pill` — avatar + "Account" label +
+ *  PRO days) for one unified visual language. Caller only passes this when a
+ *  wallet is connected — the scaffold renders nothing otherwise. */
+type ArenaAccountEntry = {
+  isPro: boolean
+  /** Days left on the active PRO pass; `null` hides the "PRO · Nd" suffix. */
+  daysRemaining: number | null
+  onTap: () => void
+}
+
+type Props = {
+  difficulty: ArenaDifficulty
+  playerColor: PlayerColor
+  onSelectDifficulty: (d: ArenaDifficulty) => void
+  onSelectColor: (c: PlayerColor) => void
+  onStart: () => void
+  /** Opens the duel clock picker. Absent means the fourth card is not shown. */
+  onSelectFriend?: () => void
+  onBack?: () => void
+  softGate?: SoftGate
+  account?: ArenaAccountEntry
+  errorMessage?: string | null
+  onError?: (
+    context: import('@/components/error/primitive-boundary').PrimitiveBoundaryErrorContext,
+  ) => void
+}
+
+/** Arena selecting-state scaffold — applies the kingdom-anchored 3-zone
+ *  pattern (HUD / body / footer) to the difficulty + color picker.
+ *  Mirror of `<HubScaffold>`: pure presentational, caller owns telemetry,
+ *  navigation, and on-chain side effects. Each primitive is wrapped in
+ *  `<PrimitiveBoundary>` so a single child crash does not blank the
+ *  whole surface. */
+export function ArenaSelectScaffold({
+  difficulty,
+  playerColor,
+  onSelectDifficulty,
+  onSelectColor,
+  onStart,
+  onSelectFriend,
+  onBack,
+  softGate,
+  account,
+  errorMessage,
+  onError,
+}: Props) {
+  const t = useTranslations('ARENA_COPY')
+  const tStatus = useTranslations("GLOBAL_STATUS_BAR_COPY")
+  const tDuel = useTranslations("DUEL_COPY")
+  const arenaTitle = t('title')
+  const colorLabels: Record<PlayerColor, string> = {
+    w: t('playAsWhite'),
+    b: t('playAsBlack'),
+  }
+  const colorNames: Record<PlayerColor, string> = {
+    w: t('playAsWhiteName'),
+    b: t('playAsBlackName'),
+  }
+  const wrap = (primitiveName: string, children: ReactNode) => (
+    <PrimitiveBoundary
+      primitiveName={primitiveName}
+      surface={SURFACE}
+      atmosphere={ATMOSPHERE}
+      onError={onError}
+    >
+      {children}
+    </PrimitiveBoundary>
+  )
+
+  return (
+    <section
+      className="arena-scaffold"
+      aria-label={t('scaffoldPageAriaFormat', { title: arenaTitle })}
+    >
+      {/* Divider DROPPED on purpose (Sally pass 8, 2026-05-20):
+       *  /arena selection is the entrance ramp to gameplay — diegetic,
+       *  not navigation. Per the canonical rule, divider presence
+       *  signals "meta" and absence signals "you're playing". */}
+      <header className="arena-scaffold-hud">
+        {onBack ? (
+          <ContextualHeader
+            variant="back-control"
+            title={arenaTitle}
+            back={{ onClick: onBack, label: t('backToHubAria') }}
+          />
+        ) : (
+          <ContextualHeader variant="title" title={arenaTitle} />
+        )}
+        {account ? (
+          <button
+            type="button"
+            onClick={account.onTap}
+            aria-label={
+              account.isPro
+                ? tStatus('proManageLabel')
+                : tStatus('accountLabel')
+            }
+            data-testid="arena-account-chip"
+            className={`candy-tray-pill hub-hud-pill arena-scaffold-account${
+              account.isPro ? ' hub-hud-pill--pro-text' : ''
+            }`}
+          >
+            {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+            <ThemeAssetPicture slot="shared.avatar-small-account" pictureClassName="candy-tray-pill-icon candy-tray-pill-icon--floating" alt="" aria-hidden="true" draggable={false} />
+            <span>{tStatus('accountChipLabel')}</span>
+            {account.isPro && account.daysRemaining != null ? (
+              <span className="hub-hud-pill-pro-days">
+                PRO · {account.daysRemaining}d
+              </span>
+            ) : null}
+          </button>
+        ) : null}
+      </header>
+
+      <section className="arena-scaffold-body">
+        <SoftGateSheet softGate={softGate} />
+
+        <div
+          role="group"
+          aria-label={t('colorPickerAriaLabel')}
+          className="arena-scaffold-color-toggle"
+        >
+          {COLOR_ORDER.map((c) => (
+            <button
+              key={c}
+              type="button"
+              aria-pressed={playerColor === c}
+              aria-label={colorLabels[c]}
+              onClick={() => onSelectColor(c)}
+              className="arena-scaffold-color-pill"
+            >
+              {playerColor === c ? <SelectedCheck /> : null}
+              <ThemeAssetPicture
+                slot={pieceThemeSlot(c, "pawn")}
+                pictureClassName="arena-scaffold-color-piece"
+                alt=""
+              />
+              <span className="arena-scaffold-color-copy">
+                <span>{t('playAsPrefix')}</span>
+                <span>{colorNames[c]}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <p className="arena-scaffold-rival-header" aria-hidden="true">
+          <span className="arena-scaffold-rival-header-icon">⚔️</span>
+          {t('chooseRivalHeader')}
+        </p>
+
+        <ul className="arena-scaffold-difficulty">
+          {DIFFICULTY_ORDER.map((key) => {
+            const rival = rivalFor(key)
+            return (
+              <li key={key}>
+                <button
+                  type="button"
+                  aria-pressed={difficulty === key}
+                  aria-label={`${rival.name}. ${t(`difficulty.${key}`)}. ${eloRangeLabel(key)}`}
+                  onClick={() => onSelectDifficulty(key)}
+                  className="arena-scaffold-difficulty-pill"
+                >
+                  {difficulty === key ? <SelectedCheck /> : null}
+                  <span className="arena-scaffold-difficulty-piece">
+                    <ThemeAssetPicture
+                      slot={rival.avatarSlot}
+                      pictureClassName="arena-scaffold-difficulty-avatar"
+                      alt=""
+                    />
+                    <ThemeAssetPicture
+                      slot={rival.frameSlot}
+                      pictureClassName="arena-scaffold-difficulty-frame"
+                      alt=""
+                    />
+                  </span>
+                  <span className="arena-scaffold-difficulty-text">
+                    <span className="arena-scaffold-rival-name">
+                      {rival.name}
+                    </span>
+                    <span className="arena-scaffold-difficulty-desc">
+                      {t(`difficultyDesc.${key}`)}
+                    </span>
+                    <span className="arena-scaffold-difficulty-score">
+                      <CandyIcon
+                        name="trophy"
+                        className="arena-scaffold-difficulty-trophy"
+                        aria-hidden="true"
+                      />
+                      {eloRangeLabel(key)}
+                    </span>
+                  </span>
+                  <span
+                    className="arena-scaffold-difficulty-badge"
+                    aria-hidden="true"
+                  >
+                    {t(`difficulty.${key}`)}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+
+          {/*
+            The fourth option, and deliberately NOT a fourth difficulty.
+
+            ⛔ No `aria-pressed`: the three above are a toggle (which AI you
+            will face), this one is an ACTION (open the clock picker and create
+            a duel). Giving it the pressed state would tell a screen reader it
+            is a selectable rival, and it would stay "unpressed" forever.
+
+            It sits in the same list because that is where the player is already
+            choosing an opponent, and a human friend IS an opponent.
+          */}
+          {onSelectFriend ? (
+            <li>
+              <button
+                type="button"
+                aria-label={`${tDuel('opponentCardTitle')}. ${tDuel('opponentCardHint')}`}
+                onClick={onSelectFriend}
+                className="arena-scaffold-difficulty-pill arena-scaffold-friend-pill"
+                data-testid="arena-play-a-friend"
+              >
+                <span className="arena-scaffold-friend-icon" aria-hidden="true">
+                  👥
+                </span>
+                <span className="arena-scaffold-difficulty-text">
+                  <span className="arena-scaffold-rival-name">
+                    {tDuel('opponentCardTitle')}
+                  </span>
+                  <span className="arena-scaffold-difficulty-desc">
+                    {tDuel('opponentCardHint')}
+                  </span>
+                </span>
+              </button>
+            </li>
+          ) : null}
+        </ul>
+
+        {errorMessage ? (
+          <p role="alert" className="arena-scaffold-error">
+            {errorMessage}
+          </p>
+        ) : null}
+      </section>
+
+      <footer className="arena-scaffold-footer">
+        {wrap(
+          'PrimaryPlayCta',
+          <PrimaryPlayCta
+            surface="arena-entry"
+            label={t('startMatch')}
+            ariaLabel={t('startMatch')}
+            onPress={onStart}
+          />,
+        )}
+        {wrap(
+          'MissionRibbon',
+          <div className="pt-2 flex justify-center">
+            <MissionRibbon surface="arena" />
+          </div>,
+        )}
+      </footer>
+    </section>
+  )
+}

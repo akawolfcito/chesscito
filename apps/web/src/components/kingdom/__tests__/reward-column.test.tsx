@@ -1,0 +1,232 @@
+import { describe, it, expect, vi } from "vitest";
+import { renderWithIntl as render } from "@/test-utils/render-with-intl";
+import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+
+import { RewardColumn } from "../reward-column";
+import { REWARD_COPY, REWARD_PROGRESS_COPY } from "@/lib/content/editorial";
+
+describe("RewardColumn", () => {
+  it("renders a claimable tile with full-opacity gold gradient and a pulsing notif badge", () => {
+    render(
+      <RewardColumn
+        tiles={[{ id: "rook", state: "claimable" }]}
+      />,
+    );
+    const tile = screen.getByRole("button", {
+      name: REWARD_COPY.rook.ariaLabel("claimable"),
+    });
+    expect(tile.className).toMatch(/reward-tile\b/);
+    expect(tile.className).toMatch(/is-claimable\b/);
+    // Pure-CSS dot (2026-06-11): styled span, no PNG request.
+    const badge = within(tile).getByTestId("reward-tile-notif");
+    expect(badge).toBeInTheDocument();
+    expect(badge.tagName).toBe("SPAN");
+    expect(badge.className).toMatch(/action-pin-notif\b/);
+    expect(tile.textContent).toContain("Rook");
+    expect(tile.textContent).not.toContain("mastery");
+  });
+
+  it("renders a claimed tile with a check status marker", () => {
+    render(
+      <RewardColumn
+        tiles={[{ id: "rook", state: "claimed" }]}
+      />,
+    );
+    const tile = screen.getByRole("button", {
+      name: REWARD_COPY.rook.ariaLabel("progress"),
+    });
+    expect(tile.className).toMatch(/is-claimed\b/);
+    const status = tile.querySelector(".reward-tile-status--claimed");
+    expect(status).not.toBeNull();
+    expect(status?.textContent).toBe("✓");
+  });
+
+  it("renders a locked tile with the locked modifier and a lock icon", () => {
+    const { container } = render(
+      <RewardColumn
+        tiles={[{ id: "queen", state: "locked" }]}
+      />,
+    );
+    const tile = screen.getByRole("button", {
+      name: REWARD_COPY.queen.ariaLabel("locked"),
+    });
+    expect(tile.className).toMatch(/is-locked\b/);
+    const lockSources = container.querySelectorAll(
+      "source[srcset='/art/redesign/icons/lock.avif']",
+    );
+    expect(lockSources.length).toBeGreaterThan(0);
+    expect(within(tile).queryByTestId("reward-tile-notif")).toBeNull();
+  });
+
+  it("renders a progress tile without a notif badge or lock icon", () => {
+    const { container } = render(
+      <RewardColumn
+        tiles={[{ id: "bishop", state: "progress" }]}
+      />,
+    );
+    const tile = screen.getByRole("button", {
+      name: REWARD_COPY.bishop.ariaLabel("progress"),
+    });
+    expect(tile.className).toMatch(/is-progress\b/);
+    expect(within(tile).queryByTestId("reward-tile-notif")).toBeNull();
+    const lockSources = container.querySelectorAll(
+      "source[srcset='/art/redesign/icons/lock.avif']",
+    );
+    expect(lockSources.length).toBe(0);
+  });
+
+  it("renders all piece tiles in the order it receives them", () => {
+    render(
+      <RewardColumn
+        tiles={[
+          { id: "rook", state: "claimable" },
+          { id: "bishop", state: "progress" },
+          { id: "queen", state: "locked" },
+          { id: "knight", state: "locked" },
+          { id: "king", state: "locked" },
+        ]}
+      />,
+    );
+    const buttons = screen.getAllByRole("button");
+    expect(buttons).toHaveLength(5);
+    expect(buttons.map((button) => button.textContent)).toEqual([
+      "Rook",
+      "Bishop",
+      "Queen",
+      "Knight",
+      "King",
+    ]);
+    expect(screen.queryByTestId("reward-column-overflow")).toBeNull();
+  });
+
+  it("returns null when given an empty tiles array", () => {
+    const { container } = render(<RewardColumn tiles={[]} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("fires onTap when a claimable tile is clicked", async () => {
+    const onTap = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <RewardColumn
+        tiles={[{ id: "rook", state: "claimable", onTap }]}
+      />,
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: REWARD_COPY.rook.ariaLabel("claimable"),
+      }),
+    );
+    expect(onTap).toHaveBeenCalledTimes(1);
+  });
+
+  it("fires onTap when a locked tile is clicked (parent decides the unlock-hint sheet)", async () => {
+    const onTap = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <RewardColumn
+        tiles={[{ id: "queen", state: "locked", onTap }]}
+      />,
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: REWARD_COPY.queen.ariaLabel("locked"),
+      }),
+    );
+    expect(onTap).toHaveBeenCalledTimes(1);
+  });
+
+  it("marks only the requested tile as a tour target", () => {
+    render(
+      <RewardColumn
+        tourTargetId="rook"
+        tiles={[
+          { id: "rook", state: "progress" },
+          { id: "bishop", state: "locked" },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Rook").closest("button")).toHaveAttribute(
+      "data-tour-target",
+      "rook",
+    );
+    expect(screen.getByText("Bishop").closest("button")).not.toHaveAttribute(
+      "data-tour-target",
+    );
+  });
+
+  it("uses the editorial.ts REWARD_COPY[id].ariaLabel(state) for each tile aria-label", () => {
+    render(
+      <RewardColumn
+        tiles={[
+          { id: "victory", state: "claimable" },
+          { id: "pawn", state: "progress" },
+          { id: "king", state: "locked" },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByRole("button", {
+        name: REWARD_COPY.victory.ariaLabel("claimable"),
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: REWARD_COPY.pawn.ariaLabel("progress"),
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: REWARD_COPY.king.ariaLabel("locked"),
+      }),
+    ).toBeInTheDocument();
+  });
+
+  // Paso 2 — docs/specs/2026-08-09-hub-tile-progress-counter.md
+  describe("progress counter", () => {
+    it("renders the chip and moves the count into the aria-label", () => {
+      render(
+        <RewardColumn
+          tiles={[
+            {
+              id: "rook",
+              state: "progress",
+              progress: { completed: 3, required: 4 },
+            },
+          ]}
+        />,
+      );
+
+      const tile = screen.getByRole("button", {
+        name: REWARD_PROGRESS_COPY.ariaLabel("Rook", 3, 4),
+      });
+      const chip = within(tile).getByTestId("reward-tile-progress");
+      expect(chip.textContent).toBe("3/4");
+      // Hidden from the a11y tree: the count already travels in the label,
+      // and a loose node would be announced twice.
+      expect(chip).toHaveAttribute("aria-hidden", "true");
+    });
+
+    it("keeps the plain aria-label when the tile carries no counter", () => {
+      render(<RewardColumn tiles={[{ id: "rook", state: "progress" }]} />);
+
+      const tile = screen.getByRole("button", {
+        name: REWARD_COPY.rook.ariaLabel("progress"),
+      });
+      expect(within(tile).queryByTestId("reward-tile-progress")).toBeNull();
+    });
+  });
+
+  it("merges a custom className alongside the base classes on the column wrapper", () => {
+    const { container } = render(
+      <RewardColumn
+        tiles={[{ id: "rook", state: "claimable" }]}
+        className="custom-extra-class"
+      />,
+    );
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.className).toMatch(/reward-column\b/);
+    expect(wrapper.className).toMatch(/custom-extra-class/);
+  });
+});

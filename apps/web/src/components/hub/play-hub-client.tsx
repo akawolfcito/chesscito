@@ -1,0 +1,120 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useRouter } from "@/i18n/navigation";
+import { PlayHubScaffold } from "@/components/hub/play-hub-scaffold";
+import { HubDailyTile } from "@/components/hub/hub-daily-tile";
+import { InboxChip } from "@/components/inbox/inbox-chip";
+import { usePlayHubData } from "@/components/hub/use-play-hub-data";
+import type { HubInitialSheet } from "@/components/hub/hub-scaffold-client";
+import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
+import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
+import {
+  proDisplayState,
+  useProEntitlement,
+} from "@/lib/pro/use-is-pro-active";
+import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
+import { usePeonesBalance } from "@/lib/peones/use-peones-balance";
+import { track } from "@/lib/telemetry";
+import { getDailyProgress, type DailyProgress } from "@/lib/daily/progress";
+import { subscribeToDailyProgressChanges } from "@/lib/daily/events";
+
+const ProSheet = dynamic(
+  () => import("@/components/pro/pro-sheet").then((module) => module.ProSheet),
+  { ssr: false },
+);
+const ShopSheet = dynamic(
+  () => import("@/components/exercises/shop-sheet").then((module) => module.ShopSheet),
+  { ssr: false },
+);
+const PurchaseConfirmSheet = dynamic(
+  () =>
+    import("@/components/exercises/purchase-confirm-sheet").then(
+      (module) => module.PurchaseConfirmSheet,
+    ),
+  { ssr: false },
+);
+
+export function PlayHubClient({
+  initialSheet,
+}: {
+  initialSheet?: HubInitialSheet;
+}) {
+  const router = useRouter();
+  const { address, isConnected } = usePlayHubData();
+  const { connectWallet } = useConnectWallet();
+  // The scaffold is presentational: every wallet read happens here, so the
+  // scaffold stays mountable in a /dev probe (and photographable).
+  const peones = usePeonesBalance();
+  const proSheet = useProSheetState();
+  const entitlement = useProEntitlement();
+  const shopSheet = useShopSheetState({
+    onSelectProItem: proSheet.openSheet,
+  });
+  const initialSheetOpenedRef = useRef(false);
+  const pro = proDisplayState(entitlement);
+  const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(null);
+
+  useEffect(() => {
+    const refresh = () => setDailyProgress(getDailyProgress());
+    refresh();
+    return subscribeToDailyProgressChanges(refresh);
+  }, []);
+
+  useEffect(() => {
+    if (!initialSheet || initialSheetOpenedRef.current) return;
+    initialSheetOpenedRef.current = true;
+    if (initialSheet === "pro") proSheet.openSheet();
+    if (initialSheet === "shop") shopSheet.openSheet();
+    if (initialSheet === "trophies") router.push("/trophies");
+  }, [initialSheet, proSheet, router, shopSheet]);
+
+  useEffect(() => {
+    track("play_hub_view", { wallet_connected: isConnected });
+  }, [isConnected]);
+
+  const handleArenaPress = useCallback(() => {
+    track("play_hub_arena_tap");
+    router.push("/arena?fresh=1");
+  }, [router]);
+
+  return (
+    <>
+      <PlayHubScaffold
+        isWalletConnected={isConnected}
+        pro={pro}
+        peones={peones.state}
+        dailySlot={<HubDailyTile variant="corner-icon" />}
+        inboxSlot={<InboxChip />}
+        onPeonesRefetch={() => void peones.refetch()}
+        onConnectTap={() => {
+          track("play_hub_connect_tap");
+          connectWallet();
+        }}
+        onProTap={() => {
+          track("play_hub_pro_tap", { pro_active: pro.active });
+          proSheet.openSheet();
+        }}
+        onCoachTap={() => {
+          // The Coach opens the room instead of selling the door. The journal
+          // was never PRO-gated — /coach/history renders for any connected
+          // wallet — so the paywall here only guaranteed that a player who
+          // never bought PRO never learned the analysis existed. The sale now
+          // lives inside, behind the player's own matches. `pro_active` stays
+          // on the event: it is how we count free players entering.
+          track("play_hub_coach_tap", { pro_active: pro.active });
+          router.push("/coach/history");
+        }}
+        onShopTap={() => {
+          track("play_hub_shop_tap", { wallet_connected: Boolean(address) });
+          shopSheet.openSheet();
+        }}
+        onArenaPress={handleArenaPress}
+      />
+      <ProSheet {...proSheet.sheetProps} />
+      <ShopSheet {...shopSheet.sheetProps} />
+      <PurchaseConfirmSheet {...shopSheet.confirmProps} />
+    </>
+  );
+}

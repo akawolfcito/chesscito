@@ -1,0 +1,5 @@
+-- Baseline migration — captured retrospectively.
+-- Schema was applied directly to remote on 2026-04-06 before the CLI
+-- was adopted. This empty file exists so the local migration history
+-- matches the remote migration tracking table. To inspect the actual
+-- schema run `supabase db pull` to regenerate, or query directly.

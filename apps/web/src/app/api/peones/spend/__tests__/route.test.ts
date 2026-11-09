@@ -1,0 +1,685 @@
+/**
+ * Tests for POST /api/peones/spend — Sprint 4 commit C.
+ *
+ * Pure server-side; no UI, no localStorage, no telemetry. The
+ * contracts pinned here:
+ *   - validation surface (wallet/target/amount/idempotency/metadata)
+ *   - RPC call shape (correct args; p_apply_pro_bypass = false always)
+ *   - duplicate hit → 200 duplicate:true
+ *   - insufficient_balance → 409
+ *   - infra failures → 500
+ */
+
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/server/demo-signing", () => ({
+  enforceOrigin: vi.fn(),
+  getRequestIp: vi.fn(() => "127.0.0.1"),
+}));
+// FAIL-CLOSED route — keeps the throwing guard, now from its own module.
+vi.mock("@/lib/server/rate-limit", () => ({
+  enforceReadRateLimit: vi.fn(),
+}));
+
+vi.mock("@/lib/supabase/server", () => ({
+  getSupabaseServer: vi.fn(),
+}));
+
+vi.mock("@/lib/server/logger", () => ({
+  createLogger: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  }),
+}));
+
+// Sprint 4 commit G — PRO bypass resolver mock. Default: free user
+// (apply=false, reason=not_pro) so every legacy test from commit C
+// keeps its bit-identical behaviour.
+vi.mock("@/lib/peones/pro-bypass", () => ({
+  resolveProBypass: vi.fn(async () => ({
+    apply: false,
+    proActive: false,
+    reason: "not_pro",
+  })),
+}));
+
+import { POST } from "../route";
+import { getSupabaseServer } from "@/lib/supabase/server";
+import { resolveProBypass } from "@/lib/peones/pro-bypass";
+
+const mockedSupabase = vi.mocked(getSupabaseServer);
+const mockedResolveBypass = vi.mocked(resolveProBypass);
+
+const W = "0xabcdef0123456789abcdef0123456789abcdef01";
+
+function makeRequest(
+  body: unknown | string,
+  extraHeaders: Record<string, string> = {},
+): Request {
+  return new Request("http://localhost/api/peones/spend", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...extraHeaders },
+    body: typeof body === "string" ? body : JSON.stringify(body),
+  });
+}
+
+function baseBody(over: Partial<Record<string, unknown>> = {}) {
+  return {
+    wallet: W,
+    amount: 2,
+    target: "hint",
+    targetId: "rook:r-1:3",
+    idempotencyKey: `spend:hint:${W}:rook:r-1:3`,
+    ...over,
+  };
+}
+
+type RpcArgs = Record<string, unknown>;
+
+function buildSupabaseMock(opts: {
+  rpcResult?: {
+    data:
+      | Array<{
+          ledger_id: number | null;
+          debited: number;
+          new_balance: number;
+          duplicate: boolean;
+          pro_bypass_applied: boolean;
+        }>
+      | null;
+    error: { code?: string; message?: string } | null;
+  };
+}) {
+  const captured: RpcArgs[] = [];
+  const rpc = vi.fn().mockImplementation((_fn: string, args: RpcArgs) => {
+    captured.push(args);
+    return Promise.resolve(
+      opts.rpcResult ?? {
+        data: [
+          {
+            ledger_id: 42,
+            debited: 1,
+            new_balance: 9,
+            duplicate: false,
+            pro_bypass_applied: false,
+          },
+        ],
+        error: null,
+      },
+    );
+  });
+  const client = { rpc } as unknown as ReturnType<typeof getSupabaseServer>;
+  return { client, captured, rpc };
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe("POST /api/peones/spend — validation", () => {
+  it("400 invalid_input when body is not JSON", async () => {
+    const res = await POST(makeRequest("not-json"));
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "invalid_input" });
+  });
+
+  it("400 invalid_wallet when wallet is malformed", async () => {
+    const res = await POST(makeRequest(baseBody({ wallet: "0xnotvalid" })));
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "invalid_wallet" });
+  });
+
+  it("400 unknown_target when target is not in the allow-list", async () => {
+    const res = await POST(
+      makeRequest(baseBody({ target: "labyrinth_key" })),
+    );
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "unknown_target" });
+  });
+
+  // Economy V1 retired both sinks. Retry and basic save are FREE
+  // actions in the product, so accepting these targets meant the
+  // endpoint would happily burn a balance for something nobody bought.
+  // A well-formed request — right price, right key prefix — must still
+  // be refused; the rejection has to come from the allow-list, not from
+  // a price or prefix mismatch that a client could fix.
+  it("400 unknown_target for retry, even with a well-formed body", async () => {
+    const { client, captured } = buildSupabaseMock({});
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(
+        baseBody({
+          amount: 2,
+          target: "retry",
+          targetId: "queen:q-2:7",
+          idempotencyKey: `spend:retry:${W}:queen:q-2:7`,
+        }),
+      ),
+    );
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "unknown_target" });
+    // No debit was even attempted.
+    expect(captured.length).toBe(0);
+  });
+
+  it("400 unknown_target for save_game, even with a well-formed body", async () => {
+    const { client, captured } = buildSupabaseMock({});
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(
+        baseBody({
+          amount: 1,
+          target: "save_game",
+          targetId: "g-99",
+          idempotencyKey: `spend:save_game:${W}:g-99`,
+        }),
+      ),
+    );
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "unknown_target" });
+    expect(captured.length).toBe(0);
+  });
+
+  // The server is the sole source of truth for price. A client that
+  // remembers yesterday's cheaper prices must be refused rather than
+  // charged the old amount.
+  it.each([
+    { target: "hint", stale: 1, key: `spend:hint:${W}:rook:r-1:3`, id: "rook:r-1:3" },
+    { target: "coach", stale: 1, key: `spend:coach:${W}:g-1`, id: "g-1" },
+    { target: "shield", stale: 2, key: `spend:shield:${W}:7`, id: "7" },
+  ])(
+    "400 invalid_amount when $target is requested at its pre-V1 price of $stale",
+    async ({ target, stale, key, id }) => {
+      const { client, captured } = buildSupabaseMock({});
+      mockedSupabase.mockReturnValue(client);
+
+      const res = await POST(
+        makeRequest(
+          baseBody({ target, amount: stale, targetId: id, idempotencyKey: key }),
+        ),
+      );
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: "invalid_amount" });
+      expect(captured.length).toBe(0);
+    },
+  );
+
+  it("400 invalid_amount when client sends amount != server cost", async () => {
+    const res = await POST(makeRequest(baseBody({ amount: 99 })));
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "invalid_amount" });
+  });
+
+  it("400 invalid_idempotency_key when prefix does not match target", async () => {
+    const res = await POST(
+      makeRequest(
+        baseBody({
+          target: "hint",
+          idempotencyKey: `spend:coach:${W}:rook:r-1:3`,
+        }),
+      ),
+    );
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "invalid_idempotency_key" });
+  });
+});
+
+describe("POST /api/peones/spend — infra", () => {
+  it("500 ledger_unavailable when supabase client cannot be constructed", async () => {
+    mockedSupabase.mockReturnValue(null);
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "ledger_unavailable" });
+  });
+});
+
+describe("POST /api/peones/spend — happy paths", () => {
+  it("hint: calls RPC with amount=2 (Economy V1 price) and p_apply_pro_bypass=false", async () => {
+    const { client, captured } = buildSupabaseMock({});
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(200);
+
+    expect(captured.length).toBe(1);
+    expect(captured[0]).toMatchObject({
+      p_wallet: W,
+      p_amount: 2,
+      p_target: "hint",
+      p_target_id: "rook:r-1:3",
+      p_apply_pro_bypass: false,
+    });
+
+    const body = await res.json();
+    expect(body).toMatchObject({
+      wallet: W,
+      target: "hint",
+      targetId: "rook:r-1:3",
+      requested: 2,
+      debited: 1,
+      newBalance: 9,
+      ledgerId: 42,
+      duplicate: false,
+      proBypassApplied: false,
+    });
+    expect(body.attestationHash).toMatch(/^sha256:[0-9a-f]{64}$/);
+  });
+
+  it("shield: calls RPC with amount=5", async () => {
+    const { client, captured } = buildSupabaseMock({
+      rpcResult: {
+        data: [
+          {
+            ledger_id: 51,
+            debited: 5,
+            new_balance: 8,
+            duplicate: false,
+            pro_bypass_applied: false,
+          },
+        ],
+        error: null,
+      },
+    });
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(
+        baseBody({
+          amount: 5,
+          target: "shield",
+          targetId: "7",
+          idempotencyKey: `spend:shield:${W}:7`,
+        }),
+      ),
+    );
+    expect(res.status).toBe(200);
+    expect(captured[0]?.p_amount).toBe(5);
+    expect(captured[0]?.p_target).toBe("shield");
+    expect(captured[0]?.p_apply_pro_bypass).toBe(false);
+  });
+
+  it("coach: calls RPC with amount=10", async () => {
+    const { client, captured } = buildSupabaseMock({
+      rpcResult: {
+        data: [
+          {
+            ledger_id: 52,
+            debited: 10,
+            new_balance: 3,
+            duplicate: false,
+            pro_bypass_applied: false,
+          },
+        ],
+        error: null,
+      },
+    });
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(
+        baseBody({
+          amount: 10,
+          target: "coach",
+          targetId: "game-1",
+          idempotencyKey: `spend:coach:${W}:game-1`,
+        }),
+      ),
+    );
+    expect(res.status).toBe(200);
+    expect(captured[0]?.p_amount).toBe(10);
+    expect(captured[0]?.p_target).toBe("coach");
+  });
+
+  it("metadata whitelist: drops unknown keys before reaching RPC", async () => {
+    const { client, captured } = buildSupabaseMock({});
+    mockedSupabase.mockReturnValue(client);
+
+    await POST(
+      makeRequest(
+        baseBody({
+          metadata: {
+            gameId: "g-1",
+            secret: "do-not-store",
+            password: "x",
+            attemptSeq: 3,
+          },
+        }),
+      ),
+    );
+
+    expect(captured[0]?.p_metadata).toEqual({
+      gameId: "g-1",
+      attemptSeq: 3,
+    });
+  });
+});
+
+describe("POST /api/peones/spend — RPC error mapping", () => {
+  it("200 duplicate:true when RPC returns duplicate=true", async () => {
+    const { client } = buildSupabaseMock({
+      rpcResult: {
+        data: [
+          {
+            ledger_id: 7,
+            debited: 1,
+            new_balance: 12,
+            duplicate: true,
+            pro_bypass_applied: false,
+          },
+        ],
+        error: null,
+      },
+    });
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.duplicate).toBe(true);
+    expect(body.ledgerId).toBe(7);
+    expect(body.newBalance).toBe(12);
+  });
+
+  it("409 insufficient_balance when RPC raises P0001", async () => {
+    const { client } = buildSupabaseMock({
+      rpcResult: {
+        data: null,
+        error: { code: "P0001", message: "insufficient_balance" },
+      },
+    });
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ error: "insufficient_balance" });
+  });
+
+  it("409 insufficient_balance when only message identifies the cause", async () => {
+    const { client } = buildSupabaseMock({
+      rpcResult: {
+        data: null,
+        error: { code: undefined, message: "insufficient_balance" },
+      },
+    });
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(409);
+  });
+
+  it("500 ledger_write_failed on generic RPC error", async () => {
+    const { client } = buildSupabaseMock({
+      rpcResult: {
+        data: null,
+        error: { code: "XX000", message: "boom" },
+      },
+    });
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "ledger_write_failed" });
+  });
+
+  it("500 ledger_write_failed when RPC returns no row", async () => {
+    const { client } = buildSupabaseMock({
+      rpcResult: { data: [], error: null },
+    });
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "ledger_write_failed" });
+  });
+});
+
+describe("POST /api/peones/spend — PRO bypass (Sprint 4 commit G)", () => {
+  it("free user (default mock): p_apply_pro_bypass=false, no quota in response", async () => {
+    const { client, captured } = buildSupabaseMock({});
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(200);
+    expect(captured[0]?.p_apply_pro_bypass).toBe(false);
+    const body = await res.json();
+    expect(body.quotaUsed).toBeNull();
+    expect(body.quotaLimit).toBeNull();
+  });
+
+  it("PRO under quota: p_apply_pro_bypass=true, quotaUsed=before+1, quotaLimit forwarded", async () => {
+    mockedResolveBypass.mockResolvedValueOnce({
+      apply: true,
+      proActive: true,
+      quotaLimit: 20,
+      quotaUsedBefore: 4,
+      quotaRemainingBefore: 16,
+    });
+    const { client, captured } = buildSupabaseMock({
+      rpcResult: {
+        data: [
+          {
+            ledger_id: 77,
+            debited: 0,
+            new_balance: 5,
+            duplicate: false,
+            pro_bypass_applied: true,
+          },
+        ],
+        error: null,
+      },
+    });
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(200);
+    expect(captured[0]?.p_apply_pro_bypass).toBe(true);
+
+    const body = await res.json();
+    expect(body.proBypassApplied).toBe(true);
+    expect(body.debited).toBe(0);
+    expect(body.quotaUsed).toBe(5);
+    expect(body.quotaLimit).toBe(20);
+  });
+
+  it("PRO quota exhausted: p_apply_pro_bypass=false, quotaUsed=before, quotaLimit forwarded", async () => {
+    mockedResolveBypass.mockResolvedValueOnce({
+      apply: false,
+      proActive: true,
+      reason: "quota_exhausted",
+      quotaLimit: 5,
+      quotaUsedBefore: 5,
+    });
+    const { client, captured } = buildSupabaseMock({});
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(200);
+    expect(captured[0]?.p_apply_pro_bypass).toBe(false);
+
+    const body = await res.json();
+    expect(body.proBypassApplied).toBe(false);
+    expect(body.quotaUsed).toBe(5);
+    expect(body.quotaLimit).toBe(5);
+  });
+
+  it("PRO unlimited quota: p_apply_pro_bypass=true, quotaLimit=null in response", async () => {
+    mockedResolveBypass.mockResolvedValueOnce({
+      apply: true,
+      proActive: true,
+      quotaLimit: Number.POSITIVE_INFINITY,
+      quotaUsedBefore: 0,
+      quotaRemainingBefore: Number.POSITIVE_INFINITY,
+    });
+    const { client, captured } = buildSupabaseMock({
+      rpcResult: {
+        data: [
+          {
+            ledger_id: 80,
+            debited: 0,
+            new_balance: 5,
+            duplicate: false,
+            pro_bypass_applied: true,
+          },
+        ],
+        error: null,
+      },
+    });
+    mockedSupabase.mockReturnValue(client);
+
+    // No shipped target carries an unlimited quota today, so this
+    // exercises the response mapping (Infinity → null) via the resolver
+    // mock rather than via a specific target.
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(200);
+    expect(captured[0]?.p_apply_pro_bypass).toBe(true);
+
+    const body = await res.json();
+    // Infinity is JSON-non-encodable; the route turns it into null so
+    // dashboards don't choke.
+    expect(body.quotaLimit).toBeNull();
+  });
+
+  it("client CANNOT force bypass: body field is ignored, resolver decides", async () => {
+    // The default mock keeps the user as free. Even if the body
+    // carried an "applyProBypass:true" attempt, the server does NOT
+    // read it.
+    const { client, captured } = buildSupabaseMock({});
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(baseBody({ applyProBypass: true } as never)),
+    );
+    expect(res.status).toBe(200);
+    expect(captured[0]?.p_apply_pro_bypass).toBe(false);
+  });
+});
+
+// P0 (2026-08-10): caller authorization. With PEONES_SPEND_REQUIRE_SESSION on,
+// the debited wallet must be proven by a score write-session bearer token; the
+// body wallet is no longer trusted on its own. Flag OFF (every test above) keeps
+// the legacy behaviour byte-for-byte — those tests are the regression guard that
+// the default path is unchanged.
+describe("POST /api/peones/spend — caller authorization (flag ON)", () => {
+  const TOKEN = "b".repeat(64);
+  const prev = process.env.PEONES_SPEND_REQUIRE_SESSION;
+
+  beforeEach(() => {
+    process.env.PEONES_SPEND_REQUIRE_SESSION = "true";
+  });
+  afterEach(() => {
+    if (prev === undefined) delete process.env.PEONES_SPEND_REQUIRE_SESSION;
+    else process.env.PEONES_SPEND_REQUIRE_SESSION = prev;
+  });
+
+  /** Supabase stub answering BOTH the session read (`.from`) and the spend
+   *  (`.rpc`). `sessionRow` null models "no matching session". */
+  function buildSupabaseWithSession(sessionRow: Record<string, unknown> | null) {
+    const captured: RpcArgs[] = [];
+    const rpc = vi.fn().mockImplementation((_fn: string, args: RpcArgs) => {
+      captured.push(args);
+      return Promise.resolve({
+        data: [
+          {
+            ledger_id: 42,
+            debited: 1,
+            new_balance: 9,
+            duplicate: false,
+            pro_bypass_applied: false,
+          },
+        ],
+        error: null,
+      });
+    });
+    const maybeSingle = vi.fn(async () => ({ data: sessionRow, error: null }));
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ select }));
+    const client = { rpc, from } as unknown as ReturnType<
+      typeof getSupabaseServer
+    >;
+    return { client, captured };
+  }
+
+  const activeSession = {
+    wallet: W,
+    surface: "learn",
+    authorized_at: "2026-08-10T00:00:00.000Z",
+    revoked_at: null,
+    expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+  };
+
+  it("200 and debits when a valid token proves the SAME wallet", async () => {
+    const { client, captured } = buildSupabaseWithSession(activeSession);
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(baseBody(), { authorization: `Bearer ${TOKEN}` }),
+    );
+    expect(res.status).toBe(200);
+    expect(captured.length).toBe(1);
+    expect(captured[0]?.p_wallet).toBe(W);
+  });
+
+  it("401 and NO debit when the Authorization token is absent", async () => {
+    const { client, captured } = buildSupabaseWithSession(activeSession);
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorized" });
+    expect(captured.length).toBe(0); // debit never attempted
+  });
+
+  it("401 and NO debit when the token proves a DIFFERENT wallet than the body", async () => {
+    // Attacker holds a session for their own wallet, tries to debit a victim's.
+    const attackerSession = {
+      ...activeSession,
+      wallet: "0x1111111111111111111111111111111111111111",
+    };
+    const { client, captured } = buildSupabaseWithSession(attackerSession);
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(baseBody(), { authorization: `Bearer ${TOKEN}` }),
+    );
+    expect(res.status).toBe(401);
+    expect(captured.length).toBe(0);
+  });
+
+  it("401 when the token matches no session row", async () => {
+    const { client, captured } = buildSupabaseWithSession(null);
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(baseBody(), { authorization: `Bearer ${TOKEN}` }),
+    );
+    expect(res.status).toBe(401);
+    expect(captured.length).toBe(0);
+  });
+
+  it("503 (fail-closed) when the session store read errors", async () => {
+    const rpc = vi.fn();
+    const maybeSingle = vi.fn(async () => ({
+      data: null,
+      error: { code: "08006" },
+    }));
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ select }));
+    mockedSupabase.mockReturnValue({ rpc, from } as unknown as ReturnType<
+      typeof getSupabaseServer
+    >);
+
+    const res = await POST(
+      makeRequest(baseBody(), { authorization: `Bearer ${TOKEN}` }),
+    );
+    expect(res.status).toBe(503);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+});

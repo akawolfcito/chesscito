@@ -1,0 +1,29 @@
+{
+  "name": "admin",
+  "version": "0.1.0",
+  "description": "Chesscito admin operations CLI — encode + simulate + send admin txs (setItem, setAcceptedToken, pause, etc.) with an append-only audit log. Signing is delegated to foundry's cast keystore so the private key never enters the Node runtime.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "chesscito-admin": "./src/index.ts"
+  },
+  "scripts": {
+    "admin": "tsx src/index.ts",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "comments": {
+    "versions": "Team convention — exact pins (no ^ or ~) for every dependency to harden against malicious version-range hijacks. Bump only via deliberate, reviewed update."
+  },
+  "dependencies": {
+    "citty": "0.1.6",
+    "dotenv": "16.6.1",
+    "viem": "2.46.3"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.35",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "vitest": "4.1.4"
+  }
+}

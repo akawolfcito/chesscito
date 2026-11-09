@@ -1,0 +1,24 @@
+#!/bin/sh
+
+EXPECTED_NAME="Luis Fernando"
+EXPECTED_EMAIL="791301+wolfcito@users.noreply.github.com"
+
+CURRENT_NAME="$(git config user.name)"
+CURRENT_EMAIL="$(git config user.email)"
+
+if [ "$CURRENT_NAME" != "$EXPECTED_NAME" ] || [ "$CURRENT_EMAIL" != "$EXPECTED_EMAIL" ]; then
+  echo "Blocked commit: git identity does not match the repo policy." >&2
+  echo "Expected: $EXPECTED_NAME <$EXPECTED_EMAIL>" >&2
+  echo "Current:  ${CURRENT_NAME:-<unset>} <${CURRENT_EMAIL:-<unset>}>" >&2
+  echo "Fix with:" >&2
+  echo "  git config user.name \"$EXPECTED_NAME\"" >&2
+  echo "  git config user.email \"$EXPECTED_EMAIL\"" >&2
+  exit 1
+fi
+
+# Block commits that contain a non-empty DRAGON value in .env* files
+if git diff --cached --diff-filter=ACM -- '*.env*' '.env*' | grep -q 'DRAGON=.'; then
+  echo "ERROR: DRAGON must never be committed with a value" >&2
+  echo "Remove the value from your .env file before committing." >&2
+  exit 1
+fi

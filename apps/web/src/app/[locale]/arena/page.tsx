@@ -1,0 +1,1764 @@
+"use client";
+
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
+import {
+  useAccount,
+  useChainId,
+} from "wagmi";
+import { AccountSheet } from "@/components/account/account-sheet";
+import { daysRemaining } from "@/lib/pro/days-remaining";
+import { useCoachCredits } from "@/lib/coach/use-coach-credits";
+import { truncateClaimError } from "@/lib/coach/claim-telemetry";
+import { formatWalletShort } from "@/lib/wallet/format";
+import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
+import { useWalletSignOut } from "@/lib/wallet/wallet-session";
+import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
+import { useConnectPrompt } from "@/lib/connect-prompt/use-connect-prompt";
+import { useChessGame } from "@/lib/game/use-chess-game";
+import { rivalFor, randomEloForDifficulty } from "@/lib/game/rivals";
+import { clearArenaGame } from "@/lib/game/arena-persistence";
+import { ArenaBoard } from "@/components/arena/arena-board";
+import { ArenaEntryPanel } from "@/components/arena/arena-entry-panel";
+import { ArenaSelectScaffold } from "@/components/arena/arena-select-scaffold";
+import { CoachPreviewCard } from "@/components/arena/coach-preview-card";
+import { PersistentDock } from "@/components/exercises/persistent-dock";
+import { BadgeSheet } from "@/components/exercises/badge-sheet";
+import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
+import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
+import { ShopSheet } from "@/components/exercises/shop-sheet";
+import { TrophiesSheet } from "@/components/exercises/trophies-sheet";
+import { PlayBadgesSheet } from "@/components/play/play-badges-sheet";
+import { PlayLeadersSheet } from "@/components/play/play-leaders-sheet";
+import { isPlayMode } from "@/lib/feature-flags";
+import { ArenaHud } from "@/components/arena/arena-hud";
+import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
+import { ArenaPlayerRail } from "@/components/arena/arena-player-rail";
+import { ArenaActionBar } from "@/components/arena/arena-action-bar";
+import { PromotionOverlay } from "@/components/arena/promotion-overlay";
+import { ArenaEndState, type PersistState } from "@/components/arena/arena-end-state";
+import { useTranslations } from "next-intl";
+import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
+import { GemButton } from "@/components/scene-rooted/gem";
+import { Button } from "@/components/ui/button";
+import { formatTime } from "@/lib/game/arena-utils";
+import { mapArenaResult } from "@/lib/coach/game-result";
+import { ArenaMatchupTransition } from "@/components/arena/arena-matchup-transition";
+import { useDisplayName } from "@/hooks/use-display-name";
+import { useProStatus } from "@/lib/pro/use-pro-status";
+import { useIsProActive } from "@/lib/pro/use-is-pro-active";
+import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
+import { ProSheet } from "@/components/pro/pro-sheet";
+import { CoachLoading } from "@/components/coach/coach-loading";
+import { CoachPanel } from "@/components/coach/coach-panel";
+import { CoachFallback } from "@/components/coach/coach-fallback";
+import { routeCoachPreviewCta } from "@/lib/coach/coach-preview-route";
+import { shouldRedirectToCoachViewer } from "@/lib/coach/coach-redirect";
+import { CoachHistory } from "@/components/coach/coach-history";
+import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
+import { track } from "@/lib/telemetry";
+import type { GameRecord } from "@/lib/coach/types";
+import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
+import { hapticImpact } from "@/lib/haptics";
+import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
+import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
+import {
+  registerDockSheetCloser,
+  registerDockSheetOpener,
+  setDockSheet,
+} from "@/lib/ui/dock-sheet-store";
+import {
+  DIFFICULTY_TO_CHAIN,
+  VICTORY_PRICES,
+  formatUsd,
+} from "@/lib/contracts/tokens";
+import { useCoachAnalysis } from "@/lib/coach/use-coach-analysis";
+import { useMintVictory } from "@/lib/coach/use-mint-victory";
+import { useSignedGameWrite } from "@/lib/coach/use-signed-game-write";
+import { postMintReceipt } from "@/lib/coach/post-mint-receipt";
+
+const ENABLE_COACH = process.env.NEXT_PUBLIC_ENABLE_COACH !== "false";
+
+// Import the pure X-close state machine. Logic lives in end-state-close-policy.ts
+// so tests can import it directly without pulling in the full page tree, and
+// without violating Next.js App Router's page-export constraints (only the
+// default export + reserved Next.js names are allowed in page files).
+import { PLAY_HUB_HREF, evaluateXClose } from "./end-state-close-policy";
+import { DuelArenaRoute } from "@/components/duel/duel-arena-route";
+import { DuelSetupSheet } from "@/components/duel/duel-setup-sheet";
+import { DUEL_DISCOVERY_ENABLED } from "@/lib/duel/duel-flag";
+import { getAnonymousId } from "@/lib/analytics/identity";
+import { usePublicNickname } from "@/lib/identity/use-public-nickname";
+
+export default function ArenaPage() {
+  // useSearchParams() requires a Suspense boundary for static prerender
+  // (Next 14 App Router). Wrap the entire client tree so the read inside
+  // ArenaSurface is safe under both SSR and hydration.
+  return (
+    <Suspense fallback={null}>
+      <ArenaSurface />
+    </Suspense>
+  );
+}
+
+/**
+ * Which game this surface is showing.
+ *
+ * ⛔ The branch lives HERE, above `ArenaPageInner`, and not inside it. That
+ * component is the AI match: 1600+ lines with hooks spread through all of them,
+ * so an early return in the middle would break the rules of hooks. Branching
+ * above means the AI tree never mounts for a duel at all.
+ *
+ * ⚠️ And the URL stays `/[locale]/arena?duel=<id>` — that exact shape is what
+ * the only P0 of the red-team was measured against, with Privy's full-page
+ * redirect on a real phone. Moving the duel to its own route would invalidate
+ * the measurement, not just the link.
+ */
+function ArenaSurface() {
+  const params = useSearchParams();
+  const duelId = params?.get("duel");
+
+  if (duelId) return <DuelArenaRoute duelId={duelId} />;
+  return <ArenaPageInner />;
+}
+
+/** Hold time for the matchup transition between PLAY and the board.
+ *  Long enough for the staged ribbon reveal; also used by "Play again". */
+const MATCHUP_TRANSITION_MS = 1800;
+
+function ArenaPageInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tArena = useTranslations("ARENA_COPY");
+  const tCoach = useTranslations("COACH_COPY");
+  const difficultyLabel = (key: string): string => {
+    const k = key as "easy" | "medium" | "hard";
+    return ["easy", "medium", "hard"].includes(k) ? tArena(`difficulty.${k}`) : key;
+  };
+  // Legacy state — kept alive for the sheets (badge/shop/trophies/
+  // leaderboard) that still mount as siblings to the dock. SPEC 1 D7
+  // removes those entries from the dock itself (no user-facing trigger
+  // remains on /arena), but the state setters are referenced by hooks
+  // below until those sheets are torn out in a follow-up.
+  const [duelSetupOpen, setDuelSetupOpen] = useState(false);
+  const [activeDockTab, setActiveDockTab] = useState<
+    "badge" | "shop" | "trophies" | "leaderboard" | null
+  >(null);
+  const badgeSheet = useBadgeSheetState();
+  const handleOpenBadgeSheet = useCallback(() => {
+    setActiveDockTab("badge");
+    badgeSheet.openSheet();
+  }, [badgeSheet]);
+  const handleBadgeSheetOpenChange = useCallback(
+    (open: boolean) => {
+      badgeSheet.sheetProps.onOpenChange(open);
+      // Guarded — Radix fires onOpenChange(false) when the user taps
+      // outside (e.g. on the dock to swap to a sibling sheet). Without
+      // this guard, that "false" would clobber the new sheet's slug
+      // set milliseconds earlier by the dock's deep-link push.
+      if (open) setActiveDockTab("badge");
+      else setActiveDockTab((prev) => (prev === "badge" ? null : prev));
+    },
+    [badgeSheet],
+  );
+  // Arena scaffold is the new default (2026-05-07): the hub-anchored
+  // selector matches what users see when they navigate from /hub → Play.
+  // The prize-pool surface (legacy ArenaEntryPanel teaser + new scaffold
+  // pill) was removed in M1 funnel work (2026-06-01) — the on-chain
+  // 20% fee split keeps accumulating, but UI no longer communicates it
+  // as a promise to users until distribution is implemented. Opt-out
+  // for the legacy panel remains via `?arena=legacy`.
+  const arenaScaffoldEnabled = searchParams?.get("arena") !== "legacy";
+  const game = useChessGame();
+
+  const { address, isConnected } = useAccount();
+  const signedGameWrite = useSignedGameWrite();
+  /** The name a duel guest reads for this player. See `usePublicNickname`. */
+  const publicNickname = usePublicNickname();
+  const { connectWallet } = useConnectWallet();
+  const victoryConnectPrompt = useConnectPrompt("victory");
+  // Same hook the /hub PRO chip uses — single source of truth across
+  // the app so the chip and the Coach gate never disagree.
+  const { status: proStatusFromHook } = useProStatus(address?.toLowerCase());
+  const proActiveCached = proStatusFromHook?.active === true;
+  // Owns the wallet read for BOTH player rails (they used to call this hook
+  // themselves, which made them unmountable without a WagmiProvider — and so
+  // unphotographable by the /dev VR fixtures). One call, passed down as a prop.
+  const isProActive = useIsProActive();
+  const proSheet = useProSheetState();
+  // Account sheet (extracted 2026-07-07) — arena mounts the SAME sheet as
+  // learn/exercises so the account entry opens in-mode (play `/exercises` is
+  // cross-mode-redirected, so a route-based open would leave the surface).
+  // `chainId` already declared below (shared useChainId()).
+  // Branch-aware: wagmi disconnect on the injected tree, Privy `logout()` on
+  // the web tree. Ending only the wagmi connection would leave a Privy session
+  // (and its `.chesscito.com` cookie) alive — see `lib/wallet/wallet-session`.
+  const signOut = useWalletSignOut();
+  const { credits: coachCredits } = useCoachCredits();
+  const [accountSheetOpen, setAccountSheetOpen] = useState(false);
+  // Declared after proSheet (not next to badgeSheet above) so PRO
+  // taps inside the Shop can redirect to it — see onSelectProItem.
+  const shopSheet = useShopSheetState({
+    onSelectProItem: () => proSheet.openSheet(),
+  });
+  const handleOpenShopSheet = useCallback(() => {
+    setActiveDockTab("shop");
+    shopSheet.openSheet();
+  }, [shopSheet]);
+  const handleShopSheetOpenChange = useCallback(
+    (open: boolean) => {
+      shopSheet.sheetProps.onOpenChange(open);
+      if (open) setActiveDockTab("shop");
+      else setActiveDockTab((prev) => (prev === "shop" ? null : prev));
+    },
+    [shopSheet],
+  );
+  const arenaCoachSignalViewedRef = useRef(false);
+  const coachPreviewViewedRef = useRef<string | null>(null);
+
+  // ⛔ `arena_select_view` was REMOVED here on 2026-08-18. It fired on exactly
+  // the same transition as `arena_coach_signal_viewed` below — measured over
+  // 24 h, the two were identical on every axis: 255 rows, 68 sessions, 3.8 per
+  // session, p50 2, p95 13, max 33. It carried NO props and had NO consumer:
+  // not one of the nine `stats_*` RPCs, and nothing in the repo outside this
+  // file. It was 255 write-only events a day whose count another, richer event
+  // already provides.
+  //
+  // ⚠️ If a picker-view count is ever needed again, count
+  // `arena_coach_signal_viewed` — it fires on the same transition and carries
+  // the coach payload too.
+
+  // Publish the dock-driven sheet state to the shared store so the
+  // <PersistentDock>'s center button can detect "overlay is open" —
+  // dock-driven (badge/shop/trophies/leaderboard) OR non-dock
+  // (ProSheet). The `"overlay"` sentinel keeps the dock in close mode
+  // without lighting any side-item glow.
+  useEffect(() => {
+    if (activeDockTab) {
+      setDockSheet(activeDockTab);
+    } else if (proSheet.open) {
+      setDockSheet("overlay");
+    } else {
+      setDockSheet(null);
+    }
+    return () => setDockSheet(null);
+  }, [activeDockTab, proSheet.open]);
+
+  // Register dock store handlers — opener for same-route dock taps,
+  // closer for the center button. badgeSheet/shopSheet own internal
+  // open state, so the opener must close the previous sibling before
+  // opening the new one (activeDockTab alone doesn't drive them).
+  useEffect(() => {
+    const unregisterOpener = registerDockSheetOpener((slug) => {
+      // Close any sibling sheet first so two Radix Dialogs never stack.
+      badgeSheet.closeSheet();
+      shopSheet.closeSheet();
+      if (slug === "shop") {
+        setActiveDockTab("shop");
+        shopSheet.openSheet();
+      } else if (slug === "badge") {
+        setActiveDockTab("badge");
+        if (!isPlayMode()) badgeSheet.openSheet();
+      } else if (slug === "trophies" || slug === "leaderboard") {
+        setActiveDockTab(slug);
+      }
+      // "arena" / "overlay" slugs aren't openable side-items here.
+    });
+    const unregisterCloser = registerDockSheetCloser(() => {
+      // Close the dock-driven tab first, then non-dock overlays. Each
+      // close is a no-op if the matching sheet isn't open, so order
+      // is safe even if state desyncs across renders.
+      if (activeDockTab === "shop") handleShopSheetOpenChange(false);
+      else if (activeDockTab === "badge") {
+        if (isPlayMode()) setActiveDockTab(null);
+        else handleBadgeSheetOpenChange(false);
+      }
+      else setActiveDockTab(null);
+      if (proSheet.open) proSheet.closeSheet();
+    });
+    return () => {
+      unregisterOpener();
+      unregisterCloser();
+    };
+  }, [activeDockTab, badgeSheet, shopSheet, handleShopSheetOpenChange, handleBadgeSheetOpenChange, proSheet]);
+
+  // One-shot deep-link consumption: applies the URL `?sheet=` param
+  // exactly once on mount, then history.replaceState's it away so the
+  // URL reflects the visible state. Subsequent dock taps go through
+  // the store action and never touch the URL — no race with Radix's
+  // onPointerDownOutside, no router.replace fighting router.push.
+  const arenaSheetDeepLinkRef = useRef(false);
+  useEffect(() => {
+    if (arenaSheetDeepLinkRef.current) return;
+    arenaSheetDeepLinkRef.current = true;
+    const sheet = searchParams?.get("sheet");
+    if (!sheet) return;
+    if (sheet === "shop") {
+      setActiveDockTab("shop");
+      shopSheet.openSheet();
+    } else if (sheet === "pro") {
+      proSheet.openSheet();
+    } else if (sheet === "badges") {
+      setActiveDockTab("badge");
+      if (!isPlayMode()) badgeSheet.openSheet();
+    } else if (sheet === "trophies") {
+      setActiveDockTab("trophies");
+    } else if (sheet === "leaderboard") {
+      setActiveDockTab("leaderboard");
+    }
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      sp.delete("sheet");
+      const qs = sp.toString();
+      const path = window.location.pathname;
+      window.history.replaceState(window.history.state, "", qs ? `${path}?${qs}` : path);
+    }
+  }, [searchParams, shopSheet, proSheet, badgeSheet]);
+
+  const chainId = useChainId();
+
+  /** Soft-gate visibility — rendered above the difficulty picker only
+   *  when the player has no recorded piece-path progress. Starts false
+   *  to avoid SSR/hydration flashing; the effect flips it client-side
+   *  after reading localStorage. */
+  const [softGateOpen, setSoftGateOpen] = useState(false);
+  useEffect(() => {
+    // WarmUp modal hidden (founder 2026-07-07): once it collapsed to a single
+    // "ARENA" CTA it added no decision value. The SoftGateSheet component +
+    // wiring stay intact (not deleted) so it can be re-enabled by restoring
+    // `setSoftGateOpen(!hasAnyPieceProgress())` here.
+    setSoftGateOpen(false);
+  }, []);
+
+  // Preparing state (loading between difficulty selection and game start)
+  const [isPreparing, setIsPreparing] = useState(false);
+  // Auto-launch on mount using the last difficulty the player used.
+  // Skips the Difficulty Selector for returning users — a pill near the
+  // HUD lets them change it without leaving the match.
+  const LAST_DIFFICULTY_KEY = "chesscito:arena-last-difficulty";
+  const autoStartAttemptedRef = useRef(false);
+
+  // Delayed end overlay: gives the user 800ms to see the final board state
+  const [showEndOverlay, setShowEndOverlay] = useState(false);
+  const endOverlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cluster E — unconditional GameRecord persistence (§0.1).
+  // Foreground-await /api/games POST on every terminal transition,
+  // independent of Coach intent. CTA gating + retry toast live in
+  // <ArenaEndState> via the persistState prop.
+  const [persistState, setPersistState] = useState<PersistState>("idle");
+  const [persistedGameId, setPersistedGameId] = useState<string | null>(null);
+  const persistAttemptedRef = useRef<string | null>(null);
+  const pendingGameIdRef = useRef<string | null>(null);
+  const persistTelemetryRef = useRef<Record<string, unknown>>({});
+  /** Id minted at START and reused by the terminal persist, so the two ends
+   *  of one match share an identity. Null for a game rehydrated from
+   *  localStorage on mount (it never passed through the start handler). */
+  const currentGameIdRef = useRef<string | null>(null);
+  /** One-shot latch per game for `first_move_made`. */
+  const firstMoveTrackedRef = useRef(false);
+  /** Set by handlePlayAgain, consumed when the replayed game actually
+   *  starts — so `play_again_game_started` measures ARRIVAL at a board,
+   *  not intent. The gap between the two is the metric this change exists
+   *  to close. */
+  const replayRef = useRef<{ previousGameId: string | null; difficulty: string } | null>(null);
+  const gameRecordPersisted = persistState === "persisted" && persistedGameId !== null;
+
+  const isEndState = ["checkmate", "stalemate", "draw", "resigned"].includes(game.status);
+  // Player wins on checkmate when it's the OPPONENT's turn to move
+  // (i.e. the opponent is the one who got mated).
+  const opponentColor = game.playerColor === "w" ? "b" : "w";
+  const isPlayerWin = game.status === "checkmate" && game.fen.includes(` ${opponentColor} `);
+
+  // Rival identity for the gameplay HUD (2026-06-15). The ELO is picked
+  // once per match — keyed on gameStartedAt so it stays stable for the
+  // whole game and refreshes when a new match begins.
+  const rival = rivalFor(game.difficulty);
+  const rivalElo = useMemo(
+    () => randomEloForDifficulty(game.difficulty),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [game.difficulty, game.gameStartedAt], // gameStartedAt forces re-roll on new match
+  );
+  // No piece-color labels (2026-07-13): ArenaBoard flips for a black player
+  // (`flipped = playerColor === "b"`), so the player's pieces are ALWAYS at
+  // the bottom and the rival's always at the top. With the identity rails
+  // sitting on their own side of the board, position encodes the color and a
+  // "White"/"Black" tag is pure redundancy.
+
+  // Matchup transition identity. `name` already resolves custom name →
+  // Identity Lite nickname → visitor fallback; we suppress the visitor
+  // fallback so an unconnected player just reads "You" with no second line.
+  const { name: playerDisplayName, isVisitor: playerIsVisitor } =
+    useDisplayName(address as `0x${string}` | undefined);
+  const playerNickname = playerIsVisitor ? undefined : playerDisplayName;
+  // Same art the board HUD gives the "you" slot (PlayerAvatar variant="you"),
+  // so the player does not change face between the transition and the board.
+  const matchupProps = {
+    rivalName: rival.name,
+    rivalAvatarSrc: `/art/rivals/${rival.avatar}-avatar.png`,
+    rivalAvatarSlot: rival.avatarSlot,
+    rivalFrame: rival.frame,
+    playerLabel: tArena("you"),
+    playerNickname,
+    playerAvatarSrc: "",
+    playerAvatarSlot: "arena.player-you" as const,
+    getReadyLabel: tArena("getReady"),
+  };
+
+  // T13: extracted hooks — now the sole source of truth.
+  // Hooks read all live values from liveRef internally; pass current game
+  // context so it's always up-to-date when the user fires an action.
+  const coach = useCoachAnalysis({
+    surface: "arena_endgame",
+    gameId: persistedGameId ?? undefined,
+    result: mapArenaResult(game.status, isPlayerWin),
+    difficulty: game.difficulty,
+    moves: game.moveHistory,
+    elapsedMs: game.elapsedMs,
+    isConnected,
+  });
+
+  const mint = useMintVictory({
+    gameId: persistedGameId ?? undefined,
+    difficulty: game.difficulty,
+    // F8 phase (b): any terminal outcome is saveable, so feed the real
+    // mapped result (win/lose/draw/resigned), not the win-only literal.
+    // `undefined` while still selecting/playing — mint never starts there.
+    result: isEndState ? mapArenaResult(game.status, isPlayerWin) : undefined,
+    totalMoves: game.moveHistory.length,
+    elapsedMs: game.elapsedMs,
+    moveHistory: game.moveHistory,
+    playerColor: game.playerColor,
+    isConnected,
+    onClaimTelemetry: (event) => {
+      track("victory_claim_tx", {
+        stage: event.stage,
+        difficulty: game.difficulty,
+        moves: game.moveCount,
+        elapsed_ms: game.elapsedMs,
+        has_token_id: event.has_token_id,
+        error_kind: event.error_kind,
+        // Without the raw message an "unknown" kind is unactionable — it says
+        // only that no classifier matched, not what the provider said.
+        error: truncateClaimError(event.error),
+      });
+    },
+  });
+
+  // Persist mint outcome to gameRecord for cold-load viewers (fire-and-forget).
+  // mint.data.tokenId is bigint | null — convert to string before posting.
+  useEffect(() => {
+    if (mint.phase !== "success") return;
+    const { tokenId, claimTxHash, shareCardUrl, shareLinkUrl } = mint.data;
+    if (!tokenId || !claimTxHash || !shareCardUrl || !shareLinkUrl) return;
+    if (!persistedGameId || !address) return;
+    void postMintReceipt({
+      gameId: persistedGameId,
+      walletAddress: address as `0x${string}`,
+      tokenId: String(tokenId),
+      claimTxHash: claimTxHash as `0x${string}`,
+      shareCardUrl,
+      shareLinkUrl,
+      surface: "arena_endgame",
+    }, signedGameWrite);
+  }, [mint.phase, mint.data, persistedGameId, address, signedGameWrite]);
+
+  // Phase 2 nudge: first arena victory while disconnected triggers the
+  // one-shot "Connect to save / mint" prompt. The hook is idempotent, so
+  // re-renders at terminal state are safe — show() no-ops after the flag
+  // is set. Depend on `.show` (memoized) rather than the whole hook
+  // object, otherwise the dep array would change every render and
+  // re-running this effect each commit thrashed the neighbouring
+  // isPreparing-timer effect (regression: PLAY never reached the board).
+  const showVictoryPrompt = victoryConnectPrompt.show;
+  useEffect(() => {
+    if (isPlayerWin && !isConnected) {
+      showVictoryPrompt();
+    }
+  }, [isPlayerWin, isConnected, showVictoryPrompt]);
+
+  const moveCountBucket = useCallback((moves: number) => {
+    if (moves <= 10) return "0-10";
+    if (moves <= 20) return "11-20";
+    if (moves <= 40) return "21-40";
+    return "41+";
+  }, []);
+
+  const currentArenaResult = useCallback(
+    () => mapArenaResult(game.status, isPlayerWin),
+    [game.status, isPlayerWin],
+  );
+
+  const arenaCoachTelemetry = useCallback(
+    (cta?: "open_pro_sheet" | "training_journal" | "review_match" | "use_credit") => ({
+      surface: game.status === "selecting" ? "arena_setup" : "arena_endgame",
+      pro_active: proActiveCached,
+      wallet_connected: isConnected,
+      difficulty: game.difficulty,
+      result: game.status === "selecting" ? undefined : currentArenaResult(),
+      move_count: game.status === "selecting" ? undefined : moveCountBucket(game.moveHistory.length),
+      cta,
+    }),
+    [
+      currentArenaResult,
+      game.difficulty,
+      game.moveHistory.length,
+      game.status,
+      isConnected,
+      moveCountBucket,
+      proActiveCached,
+    ],
+  );
+
+  useEffect(() => {
+    if (!arenaScaffoldEnabled || game.status !== "selecting") {
+      arenaCoachSignalViewedRef.current = false;
+      return;
+    }
+    if (arenaCoachSignalViewedRef.current) return;
+    arenaCoachSignalViewedRef.current = true;
+    track("arena_coach_signal_viewed", arenaCoachTelemetry());
+  }, [arenaCoachTelemetry, arenaScaffoldEnabled, game.status]);
+
+  const configuredChainId = useMemo(() => getConfiguredChainId(), []);
+  const isCorrectChain = configuredChainId != null && chainId === configuredChainId;
+  const victoryNFTAddress = useMemo(() => getVictoryNFTAddress(chainId), [chainId]);
+
+  const chainDifficulty = DIFFICULTY_TO_CHAIN[game.difficulty];
+  const mintPriceUsd6 = VICTORY_PRICES[chainDifficulty] ?? 0n;
+  const claimPriceLabel = formatUsd(mintPriceUsd6);
+
+  // F8 phase (b): Save is no longer win-only. Any terminal match with at
+  // least one move can mint (the contract reverts on totalMoves==0, and the
+  // UI also hides Save then). Dropped the `isPlayerWin` requirement; added
+  // the 0-move guard so an instant resign never offers a revert-bound Save.
+  const canClaim =
+    isConnected && isCorrectChain && victoryNFTAddress != null && game.moveCount > 0;
+
+  // Reset all arena state — delegates to extracted hooks (T13).
+  // coach.abort() cancels any in-flight analysis but does NOT reset the
+  // phase machine — without coach.setPhase("idle") the result-phase
+  // early return at line ~1095 keeps rendering CoachPanel after the
+  // user taps "Play Again", trapping them in a visual loop that only
+  // the X (handleBackToHub) escapes. mint.reset() clears sessionStorage
+  // + resets all claim state atomically.
+  const resetArenaState = useCallback(() => {
+    coach.abort();
+    coach.setPhase("idle");
+    mint.reset();
+  }, [coach, mint]);
+
+  // UX audit #94 — the standalone coach-credits paywall is retired. The
+  // SHOP already sells the same coach packs (catalog itemId 3/4), so any
+  // path that reaches the "paywall" phase (the explicit "Get full
+  // analysis" tap on the quick review, or a 402 from the coach API when
+  // credits run out mid-analysis) funnels to the SHOP instead. We reset
+  // the coach phase first so the end-state renders cleanly behind the
+  // shop sheet. Guarded on `coach.phase` so the prepare-timer render gap
+  // is never touched (see arena-play-timer-fragility memory).
+  useEffect(() => {
+    if (coach.phase !== "paywall") return;
+    coach.setPhase("idle");
+    handleOpenShopSheet();
+  }, [coach.phase, coach, handleOpenShopSheet]);
+
+  // "Change difficulty" — the DELIBERATE reconfigure path. This is exactly
+  // what `handlePlayAgain` used to do: drop back to the DUEL selector so the
+  // player can pick another rival/difficulty, then tap PLAY.
+  //
+  // It is now a SECONDARY action. Play Again no longer routes here (see
+  // `handlePlayAgain` below): between 36% and 48% of the 1.885 measured
+  // `play_again_tap` never reached a game within 5 minutes, because the tap
+  // landed on this selector instead of on a board.
+  // docs/audits/2026-08-28-core-loop-diagnostic.md §C.5.
+  const handleChangeDifficulty = () => {
+    resetArenaState();
+    game.reset();
+  };
+
+  const handleBackToHub = () => router.push(PLAY_HUB_HREF);
+
+  // handleBack — leaving a match lands on the RIVAL SELECTOR, not the hub
+  // (2026-07-13). "I'm done with this match" almost always means "give me a
+  // different one"; the hub stays one tap away via the selector's own back
+  // chip. Leaving terminates the match like a resign, so the persisted save is
+  // dropped and it cannot resume.
+  //
+  // Everything here must be explicit — two things that used to do this work
+  // for us no longer run:
+  //
+  //   1. NO UNMOUNT. `/arena` → `/arena?fresh=1` is a same-route navigation,
+  //      so the page re-renders instead of remounting and the unmount cleanup
+  //      the 2026-05-27 fix leaned on never fires. Hence resetArenaState().
+  //
+  //   2. THE `?fresh=1` EFFECT IS SPENT. `freshResetRef` is single-shot per
+  //      mount, so a player who ENTERED via `/arena?fresh=1` has already burned
+  //      it — pushing the same URL would change nothing and leave them stranded
+  //      in the finished match. Hence the explicit game.reset().
+  //
+  // game.reset() flipping status to "selecting" was the "selector flash" the
+  // 2026-05-27 fix removed — but that was when the destination was the hub.
+  // The selector is now the destination, so it is an arrival, not a flash.
+  const handleBack = () => {
+    clearArenaGame();
+    resetArenaState();
+    game.reset();
+    router.push("/arena?fresh=1");
+  };
+
+  // Preparing timer — scheduled inside a useEffect tied to isPreparing so
+  // React Strict Mode's mount→cleanup→remount cycle re-establishes the
+  // timer after cleanup clears it. Previously the timer lived inside
+  // handleStartWithLoading and a separate unmount cleanup; under Strict
+  // Mode the cleanup ran on the simulated-unmount and the auto-launch
+  // ref-guard blocked re-scheduling, so the user got stuck on "Preparing
+  // AI..." forever.
+  //
+  // 1800ms is the matchup transition's staged reveal (ribbons in, then
+  // "Get ready!"), not a loader — the engine is ready long before this.
+  useEffect(() => {
+    if (!isPreparing) return;
+    const timer = setTimeout(() => {
+      game.startGame();
+      setIsPreparing(false);
+      // Replay landed on a board. Fired HERE and not in the tap handler so
+      // the event proves arrival; `play_again_tap` already carries intent.
+      const replay = replayRef.current;
+      if (replay) {
+        replayRef.current = null;
+        track("play_again_game_started", {
+          context: "arena",
+          difficulty: replay.difficulty,
+          previous_game_id: replay.previousGameId ?? undefined,
+          new_game_id: currentGameIdRef.current ?? undefined,
+        });
+      }
+    }, MATCHUP_TRANSITION_MS);
+    return () => clearTimeout(timer);
+  }, [isPreparing, game]);
+
+  // `first_move_made` — the cheapest possible separator between "tapped
+  // PLAY and left" and "actually played". Nothing fired between
+  // arena_game_start and arena_game_end before this, which is why the
+  // 1.752 who never finish a game could not be characterised at all
+  // (docs/audits/2026-08-28-core-loop-diagnostic.md §A.3). One-shot per
+  // game via the ref latch that handleStartWithLoading re-arms.
+  useEffect(() => {
+    if (game.status !== "playing") return;
+    if (game.moveCount < 1) return;
+    if (firstMoveTrackedRef.current) return;
+    firstMoveTrackedRef.current = true;
+    track("first_move_made", {
+      game_id: currentGameIdRef.current ?? undefined,
+      difficulty: game.difficulty,
+      player_color: game.playerColor,
+    });
+  }, [game.status, game.moveCount, game.difficulty, game.playerColor]);
+
+  // Delay end overlay 800ms so user sees the final board position before results appear
+  useEffect(() => {
+    if (isEndState) {
+      hapticImpact();
+      setShowEndOverlay(false);
+      endOverlayTimer.current = setTimeout(() => {
+        endOverlayTimer.current = null;
+        setShowEndOverlay(true);
+      }, 800);
+    } else {
+      if (endOverlayTimer.current) {
+        clearTimeout(endOverlayTimer.current);
+        endOverlayTimer.current = null;
+      }
+      setShowEndOverlay(false);
+    }
+    return () => {
+      if (endOverlayTimer.current) {
+        clearTimeout(endOverlayTimer.current);
+        endOverlayTimer.current = null;
+      }
+    };
+  }, [isEndState]);
+
+  // T10 — visibilitychange guard: if the WebView is backgrounded during the
+  // 800ms endOverlayTimer gap the timeout may stall; re-show the popup when
+  // the tab becomes visible again so the user never sees a blank end-state.
+  useEffect(() => {
+    if (!isEndState || showEndOverlay) return;
+    const onVisible = () => {
+      if (document.visibilityState === "visible") setShowEndOverlay(true);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [isEndState, showEndOverlay]);
+
+  const handleStartWithLoading = useCallback(() => {
+    // Remember for next visit — so returning users skip the selector.
+    try {
+      localStorage.setItem(LAST_DIFFICULTY_KEY, game.difficulty);
+    } catch { /* storage full / disabled — harmless */ }
+
+    // One id per game, minted HERE and reused by the terminal persist below,
+    // so a start can finally be paired with its end. Until 2026-08-28 the
+    // UUID was minted only at persist time, which meant a game that never
+    // reached a terminal state left a start event that could be matched to
+    // nothing — the reason "48% never finish" could not be characterised.
+    // docs/audits/2026-08-28-core-loop-diagnostic.md §B.3.
+    const gameId = crypto.randomUUID();
+    currentGameIdRef.current = gameId;
+    firstMoveTrackedRef.current = false;
+
+    track("arena_game_start", {
+      game_id: gameId,
+      difficulty: game.difficulty,
+      player_color: game.playerColor,
+    });
+
+    // The actual delay + startGame transition lives in the isPreparing
+    // useEffect above — keeps the timer lifecycle compatible with
+    // Strict Mode's mount→unmount→remount cycle.
+    setIsPreparing(true);
+  }, [game]);
+
+  /**
+   * INSTANT REPLAY — "Play again" starts a game, it does not go shopping.
+   *
+   * Before: `resetArenaState(); game.reset()` → status "selecting" → the DUEL
+   * selector → another tap → 1.800 ms → board. Measured cost of that detour:
+   * only 51,8%–63,8% of `play_again_tap` reached a game inside 5 minutes, and
+   * 14,4%–28,3% never started another game at all (§C.5 of the audit).
+   *
+   * After: straight into `handleStartWithLoading`, which keeps the 1.800 ms
+   * ArenaMatchupTransition. The transition is deliberately NOT skipped — the
+   * intended feel is "one duel ended, another begins", not a teleport.
+   *
+   * Difficulty and player colour carry over for free: `startGame()` reads the
+   * hook's current `difficulty`/`playerColor`, and neither `reset()` nor this
+   * path clears them. The board itself is fully rebuilt by `startGame()`
+   * (new Chess(), cleared moves/history/timers/FEN), and leaving the terminal
+   * status makes the persist-reset effect drop `persistedGameId` +
+   * `persistState`, so the next match persists under a brand-new id.
+   */
+  const handlePlayAgain = useCallback(() => {
+    // Capture BEFORE the terminal-exit effect nulls it — this is the only
+    // moment the previous game's identity is still in state.
+    replayRef.current = {
+      previousGameId: persistedGameId ?? currentGameIdRef.current,
+      difficulty: game.difficulty,
+    };
+    resetArenaState();
+    handleStartWithLoading();
+  }, [persistedGameId, game.difficulty, resetArenaState, handleStartWithLoading]);
+
+  // Cluster E — runPersist owns the foreground await against /api/games.
+  // The toast (rendered inside <ArenaEndState>) masks the wait so the
+  // delay reads as an intentional "Saving match…" step instead of a hang.
+  // AbortController guards against unmount / status-reset races so a
+  // stale resolve cannot overwrite the state of a fresh session.
+  const persistAbortRef = useRef<AbortController | null>(null);
+  const runPersist = useCallback(
+    async (gameId: string) => {
+      if (!address) return;
+      const gameResult = mapArenaResult(game.status, isPlayerWin);
+      const telemetryProps = {
+        game_id: gameId,
+        result: gameResult,
+        difficulty: game.difficulty,
+        moves: game.moveCount,
+        elapsed_ms: game.elapsedMs,
+      };
+      persistTelemetryRef.current = telemetryProps;
+      persistAbortRef.current?.abort();
+      const controller = new AbortController();
+      persistAbortRef.current = controller;
+      setPersistState("persisting");
+      track("game_persist_attempt", telemetryProps);
+      try {
+        const res = await signedGameWrite({
+          path: "/api/games", wallet: address, gameId,
+          signal: controller.signal,
+          payload: {
+            walletAddress: address,
+            game: {
+              gameId,
+              moves: game.moveHistory,
+              result: gameResult,
+              difficulty: game.difficulty,
+              totalMoves: game.moveHistory.length,
+              elapsedMs: game.elapsedMs,
+              timestamp: Date.now(),
+              playerColor: game.playerColor,
+              ...(game.startingFen !== undefined && { startingFen: game.startingFen }),
+            } satisfies GameRecord,
+          },
+        });
+        if (controller.signal.aborted) return;
+        if (!res.ok) throw new Error(`persist_status_${res.status}`);
+        setPersistedGameId(gameId);
+        setPersistState("persisted");
+        track("game_persist_outcome", { ...telemetryProps, result: "success" });
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        setPersistState("failed");
+        track("game_persist_outcome", {
+          ...telemetryProps,
+          result: "failed",
+          error: err instanceof Error ? err.message : "unknown",
+        });
+      }
+    },
+    [
+      address,
+      signedGameWrite,
+      game.difficulty,
+      game.elapsedMs,
+      game.moveCount,
+      game.moveHistory,
+      game.playerColor,
+      game.startingFen,
+      game.status,
+      isPlayerWin,
+    ],
+  );
+
+  // Unconditional persistence — fires once per terminal transition,
+  // independent of Coach intent. Spec I/O Matrix line 64: 0-move games
+  // STILL post (only the CTA tooltip changes). Non-wallet players skip
+  // the persist; their CTA pathway is the existing guest free-quick-
+  // review branch in handleAskCoach.
+  //
+  // The wasTerminalRef gate stops the reset branch from churning every
+  // non-terminal render — it only fires when we leave a terminal state
+  // we had previously entered.
+  const wasTerminalRef = useRef(false);
+  useEffect(() => {
+    const terminal = ["checkmate", "stalemate", "draw", "resigned"];
+    const isTerminal = terminal.includes(game.status);
+    if (!isTerminal) {
+      if (wasTerminalRef.current) {
+        persistAbortRef.current?.abort();
+        persistAttemptedRef.current = null;
+        pendingGameIdRef.current = null;
+        setPersistState("idle");
+        setPersistedGameId(null);
+        wasTerminalRef.current = false;
+      }
+      return;
+    }
+    wasTerminalRef.current = true;
+    // Dedupe key intentionally OMITS game.elapsedMs — the live tick keeps
+    // incrementing after the terminal transition, so including it in the
+    // key produced one extra persist per tick (two POSTs with different
+    // UUIDs, observed in telemetry 2026-05-28). gameStartedAt is the
+    // per-game nonce that disambiguates back-to-back games with identical
+    // terminal stats (e.g., two 4-move Fool's Mates) so the second one
+    // still persists (Edge case hunter #1).
+    const key = `${game.gameStartedAt}:${game.status}:${game.moveCount}`;
+    if (persistAttemptedRef.current === key) return;
+    persistAttemptedRef.current = key;
+    if (!address) return;
+    // Reuse the id minted at start so `arena_game_start`, `first_move_made`
+    // and the persisted GameRecord all share one identity. Falls back to a
+    // fresh UUID for a game rehydrated from localStorage on mount, which
+    // never passed through handleStartWithLoading.
+    const gameId = currentGameIdRef.current ?? crypto.randomUUID();
+    pendingGameIdRef.current = gameId;
+    void runPersist(gameId);
+  }, [
+    address,
+    game.gameStartedAt,
+    game.status,
+    game.moveCount,
+    game.elapsedMs,
+    runPersist,
+  ]);
+
+  const handleRetryPersist = useCallback(() => {
+    const gameId = pendingGameIdRef.current;
+    if (!gameId) return;
+    void runPersist(gameId);
+  }, [runPersist]);
+
+  const handleDismissPersistError = useCallback(() => {
+    setPersistState("dismissed");
+    track("game_persist_outcome", {
+      ...persistTelemetryRef.current,
+      result: "user-dismissed",
+    });
+  }, []);
+
+  // T10 — X-close state machine (pendingNavRef + handleEndStateClose).
+  // When the user taps X during an in-flight persist we set the ref and
+  // let the terminal-transition consumer below fire the navigation once
+  // the persist settles, rather than navigating mid-request.
+  const pendingNavRef = useRef(false);
+
+  const handleEndStateClose = useCallback(() => {
+    const eff = evaluateXClose({ persistState, claimPhase: mint.phase });
+    // Bug 2 telemetry — surface every X-close decision. Kept after the
+    // 2026-08-28 simplification so the destination shift (Reviewer → hub)
+    // is visible in the funnel rather than inferred.
+    track("arena_x_close_fired", {
+      effect_type: eff.type,
+      effect_href: eff.type === "push" ? eff.href : undefined,
+      persist_state: persistState,
+      claim_phase: mint.phase,
+      has_persisted_game_id: !!persistedGameId,
+    });
+    if (eff.type === "push") {
+      router.push(eff.href);
+    } else if (eff.type === "set-pending") {
+      pendingNavRef.current = true;
+    }
+    setShowEndOverlay(false);
+  }, [persistState, mint.phase, persistedGameId, router]);
+
+  // T10 — pendingNavRef consumer: fires the deferred EXIT once persist
+  // reaches a terminal state (persisted / failed / dismissed).
+  //
+  // 2026-08-28: the destination is now the PLAY hub in every resolved
+  // branch, matching evaluateXClose. The X means "close", and deferring it
+  // exists only so the in-flight /api/games POST is not aborted — it is not
+  // a second, hidden router. `dismissed` still resolves to "stay": the
+  // player explicitly dismissed the persist error, so the popup is theirs.
+  useEffect(() => {
+    if (!pendingNavRef.current) return;
+    if (persistState === "persisted") {
+      pendingNavRef.current = false;
+      track("arena_pending_nav_consumed", {
+        resolved: "persisted",
+        target: "play_hub",
+      });
+      router.push(PLAY_HUB_HREF);
+    } else if (persistState === "failed") {
+      pendingNavRef.current = false;
+      track("arena_pending_nav_consumed", {
+        resolved: "failed",
+        target: "play_hub",
+      });
+      router.push(PLAY_HUB_HREF);
+      // failure toast already rendered by PersistOverlay component
+    } else if (persistState === "dismissed") {
+      pendingNavRef.current = false;
+      track("arena_pending_nav_consumed", {
+        resolved: "dismissed",
+        target: "stay",
+      });
+    }
+  }, [persistState, router]);
+
+  // #116 prefetch REMOVED 2026-06-13 (review F4). Prefetching
+  // /coach/[gameId] while the popup is visible warmed the Router Cache with
+  // a PRE-analysis RSC snapshot (gameRecord.analysis === null). The
+  // analysis-redirect path (Ask Coach → result → push) then reused that
+  // stale entry, so the viewer cold-loaded with no analysis until the user
+  // exited and re-entered. Dropping the prefetch makes every push fetch the
+  // route fresh (Redis read), so the just-persisted analysis renders on the
+  // first land. The X-close transition loses its warm cache but stays
+  // correct (a fast wallet-scoped Redis read).
+
+  /* Phase 2 — single coach surface (2026-06-05).
+   *
+   * The /arena inline analysis ("REVIEW" with CandyGlassShell title)
+   * was a duplicate of the persisted /coach/[gameId] page ("MATCH
+   * REVIEW") that this very arena flow ends up at when the user enters
+   * via /coach/history. Two surfaces, same data, different vocabulary
+   * — and the inline path was unreachable by URL, so refreshing or
+   * sharing the analysis lost it entirely.
+   *
+   * Plan 2 (Render-A, 2026-06-13): redirect ONLY on a persisted `full`
+   * result (phase "result"). `/api/coach/analyze` persists the analysis
+   * key before returning `status:"ready"`, so the destination viewer cold-
+   * loads the same content via `getGameRecord()`. The client-only quick
+   * review (phase "fallback") is NEVER persisted — redirecting on it landed
+   * the user on an empty Match Review (founder bug). Fallback now renders
+   * inline in the arena popup below; only `result` navigates. The inline
+   * blocks also cover persistence failure and guest play (no wallet). */
+  const arenaCoachRedirectFiredRef = useRef(false);
+  useEffect(() => {
+    if (!ENABLE_COACH) return;
+    if (arenaCoachRedirectFiredRef.current) return;
+    if (!address || !persistedGameId) return;
+    if (!shouldRedirectToCoachViewer(coach.phase, coach.response)) return;
+    arenaCoachRedirectFiredRef.current = true;
+    track("arena_coach_redirect", { phase: coach.phase, gameId: persistedGameId });
+    router.push(`/coach/${persistedGameId}?wallet=${address}`);
+  }, [
+    coach.phase,
+    coach.response,
+    address,
+    persistedGameId,
+    router,
+  ]);
+
+
+  // arena_game_end — fires once per transition into a terminal state.
+  // Dedupe key OMITS game.elapsedMs for the same reason the persist
+  // effect above does: the live tick keeps incrementing after the
+  // terminal transition and would otherwise produce duplicate fires
+  // (two arena_game_end events with different elapsed_ms, observed in
+  // telemetry 2026-05-28). The track call still reads the closure
+  // value, so the captured elapsed_ms reflects the moment the terminal
+  // transition was first observed — exactly what we want.
+  const endTrackedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const terminal = ["checkmate", "stalemate", "draw", "resigned"];
+    if (!terminal.includes(game.status)) {
+      endTrackedRef.current = null;
+      return;
+    }
+    const key = `${game.status}:${game.moveCount}`;
+    if (endTrackedRef.current === key) return;
+    endTrackedRef.current = key;
+    track("arena_game_end", {
+      status: game.status,
+      is_player_win: isPlayerWin,
+      difficulty: game.difficulty,
+      player_color: game.playerColor,
+      moves: game.moveCount,
+      elapsed_ms: game.elapsedMs,
+    });
+  }, [game.status, game.moveCount, game.elapsedMs, game.difficulty, game.playerColor, isPlayerWin]);
+
+  // Fresh-entry override — when the dock or hub Play pushes
+  // `/arena?fresh=1` the user's intent is "show me the selector".
+  // useChessGame may rehydrate a saved FEN on the same mount, leaving
+  // game.status === "active" and the selector unreachable. Reset the
+  // game here so the selector renders. Single-shot via ref.
+  const freshResetRef = useRef(false);
+  useEffect(() => {
+    if (freshResetRef.current) return;
+    if (searchParams?.get("fresh") !== "1") return;
+    freshResetRef.current = true;
+    if (game.status !== "selecting") {
+      game.reset();
+    }
+  }, [searchParams, game]);
+
+  // Auto-launch on mount. Priority order:
+  //   0. `?fresh=1` query param — caller (hub Play) explicitly wants
+  //      the selector; skip the shortcut and render it.
+  //   1. localStorage LAST_DIFFICULTY_KEY — returning user, reuse
+  //      their last tier (Option B, reduces friction).
+  //   2. No auto-start — show inline ArenaEntryPanel.
+  // Guarded by a ref so it runs exactly once per mount.
+  useEffect(() => {
+    if (autoStartAttemptedRef.current) return;
+    if (game.status !== "selecting") return;
+
+    // Honor any in-flight FEN restore (useChessGame rehydrates from
+    // localStorage on the same mount). If a saved game exists we must
+    // not start a fresh match — it would overwrite the restored FEN via
+    // startGame() (R2 from the red-team review).
+    let hasSavedGame = false;
+    try {
+      hasSavedGame = Boolean(localStorage.getItem("chesscito:arena-game"));
+    } catch { /* ignore */ }
+    if (hasSavedGame) return;
+
+    autoStartAttemptedRef.current = true;
+
+    // Priority 0: fresh-entry intent from hub Play CTA. Render the
+    // selector even if a last-difficulty is cached.
+    if (searchParams?.get("fresh") === "1") {
+      return;
+    }
+
+    // Priority 1: returning user's last-used difficulty.
+    let last: string | null = null;
+    try {
+      last = localStorage.getItem(LAST_DIFFICULTY_KEY);
+    } catch { /* ignore */ }
+
+    if (last === "easy" || last === "medium" || last === "hard") {
+      game.setDifficulty(last);
+      handleStartWithLoading();
+    }
+  }, [game, handleStartWithLoading, searchParams]);
+
+  // The "change difficulty" pill is gone (2026-07-13). It was a <button>
+  // wired straight to game.reset() with NO confirmation, so a tap on what
+  // read as an informational chip destroyed the in-progress match in
+  // silence — while the back chip, which is honestly destructive, DID ask.
+  // Difficulty is now changed via back → confirm → rival selector.
+
+  const leaderboardOpen = activeDockTab === "leaderboard";
+  const setLeaderboardOpen = useCallback(
+    (open: boolean) => {
+      // Guarded — see note on handleBadgeSheetOpenChange.
+      if (open) setActiveDockTab("leaderboard");
+      else setActiveDockTab((prev) => (prev === "leaderboard" ? null : prev));
+    },
+    [],
+  );
+  const trophiesOpen = activeDockTab === "trophies";
+  const setTrophiesOpen = useCallback(
+    (open: boolean) => {
+      if (open) setActiveDockTab("trophies");
+      else setActiveDockTab((prev) => (prev === "trophies" ? null : prev));
+    },
+    [],
+  );
+
+  const handleCoachPreviewCta = useCallback(() => {
+    const action = routeCoachPreviewCta({
+      proActive: proActiveCached,
+      credits: coach.credits,
+    });
+    if (action === "ask") {
+      const ctaTag = proActiveCached ? "review_match" : "use_credit";
+      track("coach_preview_cta_tap", arenaCoachTelemetry(ctaTag));
+      if (proActiveCached) {
+        track("coach_review_opened", arenaCoachTelemetry("review_match"));
+      }
+      coach.askCoach("immediate");
+      return;
+    }
+    // action === "paywall" — free user, no credits left.
+    track("coach_preview_cta_tap", arenaCoachTelemetry("open_pro_sheet"));
+    proSheet.openSheet();
+  }, [arenaCoachTelemetry, coach, proActiveCached, proSheet]);
+
+  useEffect(() => {
+    if (!isEndState || !showEndOverlay || coach.phase !== "idle") {
+      coachPreviewViewedRef.current = null;
+      return;
+    }
+    const key = `${game.status}:${game.moveHistory.length}:${game.elapsedMs}:${proActiveCached}`;
+    if (coachPreviewViewedRef.current === key) return;
+    coachPreviewViewedRef.current = key;
+    track("coach_preview_viewed", arenaCoachTelemetry());
+  }, [
+    arenaCoachTelemetry,
+    coach.phase,
+    game.elapsedMs,
+    game.moveHistory.length,
+    game.status,
+    isEndState,
+    proActiveCached,
+    showEndOverlay,
+  ]);
+
+  const coachPreview = ENABLE_COACH ? (
+    game.moveHistory.length === 0 ? (
+      <section
+        className="coach-preview-card is-compact"
+        aria-label={tArena("coachPreview.emptyTitle")}
+      >
+        <div className="coach-preview-card-copy">
+          <span className="coach-preview-card-kicker">Coach Review</span>
+          <h3 className="coach-preview-card-title">{tArena("coachPreview.emptyTitle")}</h3>
+          <p className="coach-preview-card-body">{tArena("coachPreview.emptyBody")}</p>
+        </div>
+      </section>
+    ) : (
+      <CoachPreviewCard
+        proActive={proActiveCached}
+        credits={coach.credits}
+        onPrimaryCta={handleCoachPreviewCta}
+        isCompact
+      />
+    )
+  ) : null;
+
+  // Difficulty selection
+  // The matchup transition owns the whole screen. It returns before the
+  // selector branches on purpose: the play dock is a *sibling* of the
+  // selector, so rendering the transition inside those branches left the
+  // dock on screen (and, once the transition went out of flow, floated it
+  // to the top of a now-empty <main>).
+  if (isPreparing) {
+    return <ArenaMatchupTransition {...matchupProps} />;
+  }
+
+  if (game.status === "selecting") {
+    const navIcon = (
+      src: string,
+      label: string,
+      onClick: () => void,
+    ) => (
+      <button
+        type="button"
+        aria-label={label}
+        className="relative flex shrink-0 items-center justify-center"
+        onClick={onClick}
+      >
+        <img
+          src={src}
+          alt=""
+          aria-hidden="true"
+          className="h-full w-full object-contain"
+        />
+      </button>
+    );
+
+    // Scaffold variant — `?arena=new`. Mirrors the kingdom-anchored
+    // pattern shipped on /hub. Legacy block (ArenaEntryPanel) stays
+    // intact below as the default until the flag flips.
+    if (arenaScaffoldEnabled) {
+      return (
+        <div
+          className="arena-select-route flex h-[100dvh] min-h-0 flex-col items-center overflow-hidden arena-bg"
+          data-testid="arena-difficulty-selector"
+        >
+          <ArenaSelectScaffold
+              difficulty={game.difficulty}
+              playerColor={game.playerColor}
+              onSelectDifficulty={(level) => {
+                track("arena_difficulty_tap", { level });
+                game.setDifficulty(level);
+              }}
+              onSelectColor={(color) => {
+                track("arena_color_tap", { color });
+                game.setPlayerColor(color);
+              }}
+              onStart={() => {
+                track("arena_start_tap", {
+                  surface: "scaffold",
+                  level: game.difficulty,
+                  color: game.playerColor,
+                  wallet_connected: isConnected,
+                });
+                handleStartWithLoading();
+              }}
+              onSelectFriend={DUEL_DISCOVERY_ENABLED ? () => {
+                track("duel_setup_open", { surface: "arena-select" });
+                setDuelSetupOpen(true);
+              } : undefined}
+              onBack={() => {
+                track("arena_back_tap");
+                handleBackToHub();
+              }}
+              softGate={
+                softGateOpen
+                  ? {
+                    onLearn: () => router.push("/exercises"),
+                    onDismiss: () => setSoftGateOpen(false),
+                  }
+                  : undefined
+              }
+              account={
+                isConnected
+                  ? {
+                    isPro: proActiveCached,
+                    daysRemaining: daysRemaining(
+                      proStatusFromHook?.expiresAt ?? null,
+                      Date.now(),
+                    ),
+                    onTap: () => {
+                      track("arena_account_tap", {
+                        pro_active: proActiveCached,
+                      });
+                      setAccountSheetOpen(true);
+                    },
+                  }
+                  : undefined
+              }
+              errorMessage={game.errorMessage}
+            />
+          {duelSetupOpen ? (
+            <DuelSetupSheet
+              sessionId={getAnonymousId()}
+              // The name the GUEST reads on the invitation ("{name} wants to
+              // play") and on the matchup ribbon. Generated nickname, never the
+              // localStorage custom — see `usePublicNickname`.
+              displayName={publicNickname}
+              onCancel={() => setDuelSetupOpen(false)}
+              // ⛔ `replace`, not `push`: the duel takes over this same surface,
+              // so a Back tap should leave the Arena rather than land the
+              // player on an opponent picker for a duel they already created.
+              onCreated={(id) => {
+                setDuelSetupOpen(false);
+                router.replace(`${window.location.pathname}?duel=${id}`);
+              }}
+            />
+          ) : null}
+          <div
+            className="arena-select-dock-shell shrink-0 relative z-[60] pointer-events-auto"
+            style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+          >
+            <PersistentDock />
+            {isPlayMode() ? (
+              <PlayBadgesSheet
+                open={activeDockTab === "badge"}
+                onOpenChange={(v) => setActiveDockTab(v ? "badge" : null)}
+              />
+            ) : (
+              <BadgeSheet
+                {...badgeSheet.sheetProps}
+                onOpenChange={handleBadgeSheetOpenChange}
+                showTrigger={false}
+              />
+            )}
+            <ShopSheet
+              {...shopSheet.sheetProps}
+              onOpenChange={handleShopSheetOpenChange}
+              showTrigger={false}
+            />
+            <TrophiesSheet
+              open={activeDockTab === "trophies"}
+              onOpenChange={setTrophiesOpen}
+              showTrigger={false}
+            />
+            {isPlayMode() ? (
+              <PlayLeadersSheet
+                open={activeDockTab === "leaderboard"}
+                onOpenChange={setLeaderboardOpen}
+              />
+            ) : (
+              <LeaderboardSheet
+                open={activeDockTab === "leaderboard"}
+                onOpenChange={setLeaderboardOpen}
+                showTrigger={false}
+              />
+            )}
+            <PurchaseConfirmSheet {...shopSheet.confirmProps} />
+            <ProSheet {...proSheet.sheetProps} />
+            {address ? (
+              <AccountSheet
+                open={accountSheetOpen}
+                onOpenChange={setAccountSheetOpen}
+                walletAddress={address}
+                walletShort={formatWalletShort(address)}
+                chainId={chainId}
+                proActive={proActiveCached}
+                proExpiresAt={proStatusFromHook?.expiresAt ?? null}
+                coachCredits={coachCredits}
+                onManagePro={() => {
+                  setAccountSheetOpen(false);
+                  proSheet.openSheet();
+                }}
+                onOpenCoach={() => {
+                  setAccountSheetOpen(false);
+                  router.push("/coach/history");
+                }}
+                onOpenShieldsHelp={() => setAccountSheetOpen(false)}
+                onOpenShop={() => {
+                  setAccountSheetOpen(false);
+                  shopSheet.openSheet();
+                }}
+                onDisconnect={() => {
+                  setAccountSheetOpen(false);
+                  signOut();
+                }}
+              />
+            ) : null}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex min-h-[100dvh] flex-col arena-bg" data-testid="arena-difficulty-selector">
+        <div className="flex flex-1 flex-col items-center justify-center">
+          {(
+            <ArenaEntryPanel
+              difficulty={game.difficulty}
+              playerColor={game.playerColor}
+              onSelectDifficulty={game.setDifficulty}
+              onSelectColor={game.setPlayerColor}
+              onStart={handleStartWithLoading}
+              onBack={handleBackToHub}
+              softGate={
+                softGateOpen
+                  ? {
+                    onLearn: () => router.push("/exercises"),
+                    onDismiss: () => setSoftGateOpen(false),
+                  }
+                  : undefined
+              }
+            />
+          )}
+          {game.errorMessage && (
+            <div
+              className="mx-6 mt-2 rounded-2xl px-4 py-2.5 text-center text-sm font-semibold"
+              style={{
+                background: "rgba(255, 255, 255, 0.18)",
+                border: "1px solid rgba(190, 18, 60, 0.35)",
+                color: "rgba(159, 18, 57, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                backdropFilter: "blur(6px)",
+              }}
+            >
+              {game.errorMessage}
+            </div>
+          )}
+        </div>
+        <div
+          className="shrink-0 relative z-[60] pointer-events-auto"
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          <PersistentDock />
+          {isPlayMode() ? (
+            <PlayBadgesSheet
+              open={activeDockTab === "badge"}
+              onOpenChange={(v) => setActiveDockTab(v ? "badge" : null)}
+            />
+          ) : (
+            <BadgeSheet
+              {...badgeSheet.sheetProps}
+              onOpenChange={handleBadgeSheetOpenChange}
+              showTrigger={false}
+            />
+          )}
+          <ShopSheet
+            {...shopSheet.sheetProps}
+            onOpenChange={handleShopSheetOpenChange}
+            showTrigger={false}
+          />
+          <TrophiesSheet
+            open={activeDockTab === "trophies"}
+            onOpenChange={(v) => setActiveDockTab(v ? "trophies" : null)}
+            showTrigger={false}
+          />
+          {isPlayMode() ? (
+            <PlayLeadersSheet
+              open={activeDockTab === "leaderboard"}
+              onOpenChange={(v) => setActiveDockTab(v ? "leaderboard" : null)}
+            />
+          ) : (
+            <LeaderboardSheet
+              open={activeDockTab === "leaderboard"}
+              onOpenChange={(v) => setActiveDockTab(v ? "leaderboard" : null)}
+              showTrigger={false}
+            />
+          )}
+          <PurchaseConfirmSheet {...shopSheet.confirmProps} />
+          <ProSheet {...proSheet.sheetProps} />
+        </div>
+      </div>
+    );
+  }
+
+  /* When persistedGameId + address are present, the Phase 2 redirect
+   * useEffect above pushes the user to /coach/[gameId] instead. The
+   * inline block stays as a degraded fallback for sessions without a
+   * persisted record (persistence failed) or without a connected wallet
+   * (guest play), where the route push has nowhere to land. */
+  const willRedirectToCoachRoute = ENABLE_COACH && !!address && !!persistedGameId;
+  if (
+    ENABLE_COACH &&
+    coach.phase === "result" &&
+    coach.response &&
+    coach.response.kind === "full" &&
+    !willRedirectToCoachRoute
+  ) {
+    return (
+      <div className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
+        <div className="mx-auto min-h-full w-full max-w-[var(--app-max-width,390px)]">
+          <CandyGlassShell
+            title={tCoach("coachAnalysisTitle")}
+            onClose={handleBackToHub}
+            closeLabel={tArena("backToHubAria")}
+            presentation="screen"
+            className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
+          >
+            <CoachPanel
+              response={coach.response}
+              difficulty={game.difficulty}
+              totalMoves={game.moveCount}
+              elapsedMs={game.elapsedMs}
+              credits={coach.credits}
+              onPlayAgain={handlePlayAgain}
+              onBackToHub={handleBackToHub}
+              onViewHistory={address ? () => coach.setPhase("history") : undefined}
+              proActive={proActiveCached}
+              analysisLocale={coach.analysisLocale}
+              historyMeta={coach.historyMeta}
+              onReanalyze={
+                address && coach.reanalyzeGameId ? coach.reanalyze : undefined
+              }
+              isReanalyzing={coach.isReanalyzing}
+              moves={game.moveHistory}
+            />
+          </CandyGlassShell>
+        </div>
+      </div>
+    );
+  }
+
+  if (
+    ENABLE_COACH &&
+    coach.phase === "fallback" &&
+    coach.fallbackResponse &&
+    !willRedirectToCoachRoute
+  ) {
+    return (
+      <div className="arena-bg min-h-[100dvh] overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
+        <div className="mx-auto w-full max-w-[var(--app-max-width,390px)]">
+          <CandyGlassShell
+            title={coach.serverError ? tCoach("reviewRetryTitle") : tCoach("quickReviewTitle")}
+            onClose={handleBackToHub}
+            closeLabel={tArena("backToHubAria")}
+            presentation="screen"
+            className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
+          >
+            <CoachFallback
+              response={coach.fallbackResponse}
+              difficulty={game.difficulty}
+              totalMoves={game.moveCount}
+              elapsedMs={game.elapsedMs}
+              result={mapArenaResult(game.status, isPlayerWin)}
+              onGetFullAnalysis={() => coach.setPhase("paywall")}
+              onPlayAgain={handlePlayAgain}
+              onBackToHub={handleBackToHub}
+              onRetry={address ? () => { coach.askCoach("immediate"); } : undefined}
+              retryLabel={proActiveCached ? tCoach("retryReview") : tCoach("retry")}
+              errorTitle={coach.serverError ? tCoach("analysisIncomplete") : undefined}
+              errorBody={coach.serverError ? tCoach("analysisIncompleteBody") : undefined}
+            />
+          </CandyGlassShell>
+        </div>
+      </div>
+    );
+  }
+
+  if (ENABLE_COACH && coach.phase === "history" && address) {
+    return (
+      <div className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
+        <div className="mx-auto min-h-full w-full max-w-[var(--app-max-width,390px)]">
+          <CandyGlassShell
+            title={tCoach("yourSessions")}
+            onClose={() => coach.setPhase(coach.response ? "result" : "idle")}
+            closeLabel={tArena("backToHubAria")}
+            presentation="screen"
+            className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
+          >
+            <CoachHistory
+              walletAddress={address.toLowerCase()}
+              credits={coach.credits}
+              onSelectEntry={(entry) => {
+                if (entry.response.kind === "full") {
+                  coach.setPhase("result");
+                }
+              }}
+              onAnalyzeUnanalyzed={(gameId) => void coach.analyzeFromHistory(gameId)}
+            />
+          </CandyGlassShell>
+        </div>
+      </div>
+    );
+  }
+
+  // Playing + end states
+  return (
+    <div className="flex h-[100dvh] flex-col items-center arena-bg">
+      <div className="flex w-full max-w-[var(--app-max-width,390px)] flex-1 flex-col min-h-0">
+        <ArenaHud
+          onBack={handleBack}
+          isEndState={isEndState}
+          elapsedMs={game.elapsedMs}
+          showCoachHint={ENABLE_COACH}
+          // Mounted here, not inside ArenaHud: this page sits under the
+          // WagmiProvider, and the HUD stays wallet-free so its tests and
+          // probes keep rendering without one (2026-07-22).
+          balanceChip={<PeonesBalanceChip surface="arena" />}
+        />
+
+        {/* Board group — the rails and the board are ONE unit, centred
+         *  together. Each rail hugs the board edge on the side where that
+         *  player's own pieces are (ArenaBoard flips for a black player), and
+         *  that adjacency is the whole argument: position encodes the piece
+         *  colour, which is why no White/Black label is rendered anywhere.
+         *
+         *  The rails must live INSIDE this centring wrapper. Rendered outside
+         *  it, the leftover vertical space opens up between rail and board and
+         *  they drift apart into three loose elements.
+         *
+         *  Turn emphasis: it is the player's move whenever the rival is not
+         *  thinking — which correctly stays true while a promotion overlay is
+         *  open (the board is locked, but the move is still theirs). Nobody is
+         *  to move once the match is over, so neither rail is active then. */}
+        <div className="relative w-full flex-1 min-h-0 flex flex-col justify-center gap-1.5">
+          <ArenaPlayerRail
+            side="rival"
+            name={rival.name}
+            meta={`${difficultyLabel(game.difficulty)} · ${rivalElo} ELO`}
+            avatarSrc={`/art/rivals/${rival.avatar}-avatar.png`}
+            avatarSlot={rival.avatarSlot}
+            isThinking={game.isThinking && !isEndState}
+            isActive={game.isThinking && !isEndState}
+            pro={isProActive}
+          />
+
+          <div className="w-full px-2">
+            <ArenaBoard
+              pieces={game.pieces}
+              selectedSquare={game.selectedSquare}
+              legalMoves={game.legalMoves}
+              lastMove={game.lastMove}
+              checkSquare={game.checkSquare}
+              rejectingSquare={game.rejectingSquare}
+              captureFlashSquare={game.captureFlashSquare}
+              isLocked={game.isThinking || isEndState || !!game.pendingPromotion}
+              isThinking={game.isThinking}
+              onSquareClick={game.selectSquare}
+              isCheckmatePause={isEndState && !showEndOverlay}
+              playerColor={game.playerColor}
+            />
+          </div>
+
+          <ArenaPlayerRail
+            side="you"
+            name={tArena("youLabel")}
+            meta={playerNickname}
+            isActive={!game.isThinking && !isEndState}
+            pro={isProActive}
+          />
+
+          {game.pendingPromotion && (
+            <PromotionOverlay onSelect={game.promoteWith} onCancel={game.cancelPromotion} />
+          )}
+        </div>
+
+        <ArenaActionBar
+          onResign={game.resign}
+          onUndo={undefined}
+          canUndo={false}
+          isEndState={isEndState}
+        />
+
+        {/* Error banner */}
+        {game.errorMessage && (
+          <div
+            className="mx-3 mt-2 flex items-center justify-center gap-3 rounded-2xl px-4 py-2.5"
+            style={{
+              background: "rgba(255, 255, 255, 0.18)",
+              border: "1px solid rgba(190, 18, 60, 0.35)",
+              backdropFilter: "blur(6px)",
+              boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+            }}
+          >
+            <span
+              className="text-sm font-semibold"
+              style={{
+                color: "rgba(159, 18, 57, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+              }}
+            >
+              {game.errorMessage}
+            </span>
+            <button
+              type="button"
+              onClick={game.reset}
+              className="shrink-0 min-h-[44px] rounded-xl px-3 text-xs font-semibold transition-all active:scale-[0.97]"
+              style={{
+                background: "rgba(190, 18, 60, 0.15)",
+                color: "rgba(159, 18, 57, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+              }}
+            >
+              {tArena("restartMatch")}
+            </button>
+          </div>
+        )}
+
+      </div>
+
+      {isEndState && showEndOverlay && (
+        <div
+          className={`transition-opacity duration-300 ${coach.phase !== "idle"
+              ? "opacity-0 pointer-events-none"
+              : "opacity-100 pointer-events-auto"
+            }`}
+        >
+          <ArenaEndState
+            status={game.status}
+            isPlayerWin={isPlayerWin}
+            onPlayAgain={handlePlayAgain}
+            onChangeDifficulty={handleChangeDifficulty}
+            previousGameId={persistedGameId ?? undefined}
+            onBackToHub={handleBackToHub}
+            onClose={handleEndStateClose}
+            claimPhase={mint.phase}
+            justCancelled={mint.justCancelled}
+            claimStep={mint.step}
+            shareStatus={mint.shareStatus}
+            claimData={mint.data}
+            onClaimVictory={canClaim ? () => void mint.start() : undefined}
+            claimPrice={claimPriceLabel}
+            claimError={
+              mint.phase === "error" && !isConnected
+                ? "Wallet disconnected — reconnect to try again"
+                : mint.error
+            }
+            claimErrorKind={mint.errorKind}
+            moves={game.moveCount}
+            elapsedMs={game.elapsedMs}
+            difficulty={game.difficulty}
+            fen={game.fen}
+            playerColor={game.playerColor}
+            coachPreview={coach.phase === "idle" ? coachPreview : null}
+            onAskCoach={ENABLE_COACH ? () => coach.askCoach("immediate") : undefined}
+            onAskCoachFromVictory={
+              ENABLE_COACH ? () => coach.askCoach("victory-mint") : undefined
+            }
+            persistState={persistState}
+            // Guests (no wallet) skip persistence entirely; their Coach
+            // CTA pathway is the free quick-review branch in
+            // coach.askCoach. Treat them as "ready" so the CTA mounts
+            // tappable rather than permanently aria-busy.
+            gameRecordPersisted={isConnected ? gameRecordPersisted : true}
+            onRetryPersist={handleRetryPersist}
+            onDismissPersistError={handleDismissPersistError}
+            proActive={proActiveCached}
+          />
+          {victoryConnectPrompt.isVisible && (
+            <div className="pointer-events-auto fixed inset-x-0 bottom-24 z-[55] mx-auto w-full max-w-[var(--app-max-width,390px)] px-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <ConnectPromptToast
+                milestone="victory"
+                onConnect={() => {
+                  victoryConnectPrompt.dismiss();
+                  connectWallet();
+                }}
+                onDismiss={victoryConnectPrompt.dismiss}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Coach phases (behind NEXT_PUBLIC_ENABLE_COACH flag) */}
+      {ENABLE_COACH && (
+        <>
+          {coach.phase === "loading" && (
+            // Founder feedback 2026-06-13: the loading state now wears the
+            // same forest-cream panel-bg1 shell (green border) as the rest of
+            // the arena end-state popups — drops the odd cream CandyGlassShell
+            // frame. Content (the sky CoachLoading card) is unchanged. No X /
+            // backdrop close: the state is transient and resolves itself.
+            <VictoryPopupShell ariaLabel="Coach" role="dialog" ariaLive="polite">
+              <CoachLoading
+                jobId={coach.jobId ?? undefined}
+                wallet={address?.toLowerCase()}
+                onReady={(response) => {
+                  // Polling completes mid-job — the hook sets response
+                  // and transitions phase to "result" internally once
+                  // we call setPhase. Pass the polled response back.
+                  coach.setPhase("result");
+                  void response; // hook-internal; kept for API compat
+                }}
+                onFailed={() => {
+                  coach.setPhase("fallback");
+                }}
+              />
+            </VictoryPopupShell>
+          )}
+          {/* UX audit #94 — the coach-credits paywall is retired; the
+              "paywall" phase funnels to the SHOP via the effect above.
+              The shop sheet (+ its purchase-confirm step) mounts here so
+              the end-state render branch can surface it, same as the
+              active-game branches. */}
+          <ShopSheet
+            {...shopSheet.sheetProps}
+            onOpenChange={handleShopSheetOpenChange}
+            showTrigger={false}
+          />
+          <PurchaseConfirmSheet {...shopSheet.confirmProps} />
+          <ProSheet {...proSheet.sheetProps} />
+        </>
+      )}
+    </div>
+  );
+}

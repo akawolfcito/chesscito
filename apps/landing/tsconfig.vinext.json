@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["next-env.d.ts", "vinext-env.d.ts", "src/**/*.ts", "src/**/*.tsx", "*.config.ts", "vitest.setup.ts"],
+  "exclude": ["node_modules", ".next", "dist", ".vinext", ".cloudflare"]
+}

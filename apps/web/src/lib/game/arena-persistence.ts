@@ -1,0 +1,112 @@
+import { Chess } from "chess.js";
+import type { ArenaDifficulty } from "./types";
+import type { PlayerColor } from "./use-chess-game";
+
+export const ARENA_GAME_KEY = "chesscito:arena-game";
+
+/** Saves older than this are dropped on restore (user likely forgot). */
+const ARENA_GAME_TTL_MS = 24 * 60 * 60 * 1000;
+
+export type ArenaGameSave = {
+  fen: string;
+  moveHistory: string[];
+  moveCount: number;
+  elapsedMs: number;
+  difficulty: ArenaDifficulty;
+  playerColor: PlayerColor;
+  savedAt: number;
+  /** Origin FEN for the move-history replay. Undefined ⇒ standard startpos
+   *  (fresh game). On resume from localStorage we capture the resumed FEN
+   *  here so the post-game viewer can replay `moveHistory` from a consistent
+   *  origin instead of failing as illegal SAN from startpos. */
+  startingFen?: string;
+};
+
+function isArenaDifficulty(value: unknown): value is ArenaDifficulty {
+  return value === "easy" || value === "medium" || value === "hard";
+}
+
+function isPlayerColor(value: unknown): value is PlayerColor {
+  return value === "w" || value === "b";
+}
+
+/** Parse + validate a localStorage payload. Returns null if corrupt,
+ *  stale (>24h), or references an invalid FEN. */
+export function loadArenaGame(): ArenaGameSave | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(ARENA_GAME_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<ArenaGameSave>;
+    if (
+      typeof parsed.fen !== "string" ||
+      !Array.isArray(parsed.moveHistory) ||
+      typeof parsed.moveCount !== "number" ||
+      typeof parsed.elapsedMs !== "number" ||
+      typeof parsed.savedAt !== "number" ||
+      !isArenaDifficulty(parsed.difficulty)
+    ) {
+      clearArenaGame();
+      return null;
+    }
+
+    if (Date.now() - parsed.savedAt > ARENA_GAME_TTL_MS) {
+      clearArenaGame();
+      return null;
+    }
+
+    // Chess throws on invalid FEN; we'd rather discard than rehydrate garbage.
+    try {
+      new Chess(parsed.fen);
+    } catch {
+      clearArenaGame();
+      return null;
+    }
+
+    // playerColor was added after the initial release. If a pre-feature
+    // save is found, default to white so the user doesn't lose their
+    // in-progress game (RB5 from the play-as-black red-team review).
+    const playerColor: PlayerColor = isPlayerColor(parsed.playerColor)
+      ? parsed.playerColor
+      : "w";
+
+    // startingFen is optional and forward-compatible: a non-string value
+    // (legacy save, or someone hand-edited the key) is dropped rather
+    // than discarded. The consumer falls back to saved.fen as the origin.
+    const startingFen = typeof parsed.startingFen === "string" ? parsed.startingFen : undefined;
+
+    return {
+      fen: parsed.fen,
+      moveHistory: parsed.moveHistory.filter((m): m is string => typeof m === "string"),
+      moveCount: parsed.moveCount,
+      elapsedMs: parsed.elapsedMs,
+      difficulty: parsed.difficulty,
+      playerColor,
+      savedAt: parsed.savedAt,
+      startingFen,
+    };
+  } catch {
+    clearArenaGame();
+    return null;
+  }
+}
+
+export function saveArenaGame(save: Omit<ArenaGameSave, "savedAt">): void {
+  if (typeof window === "undefined") return;
+  try {
+    const payload: ArenaGameSave = { ...save, savedAt: Date.now() };
+    window.localStorage.setItem(ARENA_GAME_KEY, JSON.stringify(payload));
+  } catch {
+    // storage full / unavailable — nothing useful we can do here
+  }
+}
+
+export function clearArenaGame(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(ARENA_GAME_KEY);
+  } catch {
+    // ignore
+  }
+}

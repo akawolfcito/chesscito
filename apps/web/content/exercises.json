@@ -1,0 +1,1259 @@
+[
+  {
+    "title": "Move along the rank",
+    "playerPrompt": "Reach the star without leaving the rank.",
+    "id": "rook-1",
+    "piece": "rook",
+    "fen": "8/8/8/8/1R6/8/8/8 w - - 0 1",
+    "target": "h4",
+    "mover": "b4",
+    "tier": "easy",
+    "tags": [
+      "straight-line"
+    ],
+    "principle": "rank-movement",
+    "learningObjective": "The player recognises the rook's horizontal movement along a rank.",
+    "order": 0
+  },
+  {
+    "title": "Sweep the file",
+    "playerPrompt": "Collect every star. Plan the order — some routes are shorter.",
+    "id": "rook-2",
+    "piece": "rook",
+    "fen": "8/8/8/8/8/8/4R3/8 w - - 0 1",
+    "target": "e8",
+    "mover": "e2",
+    "tier": "easy",
+    "tags": [
+      "straight-line",
+      "sweep",
+      "route-order"
+    ],
+    "principle": "file-movement",
+    "learningObjective": "The player recognises the rook's vertical movement along a file, and that the ORDER of the goals changes how many moves the route costs.",
+    "order": 1,
+    "targets": [
+      "e8",
+      "b8",
+      "b4"
+    ],
+    "starFloor": 1
+  },
+  {
+    "title": "Every distance counts",
+    "playerPrompt": "One square or seven — both cost one move. Find the short route.",
+    "id": "rook-distance-1",
+    "piece": "rook",
+    "fen": "8/8/1R6/8/8/8/8/8 w - - 0 1",
+    "target": "b3",
+    "mover": "b6",
+    "tier": "easy",
+    "tags": [
+      "variable-distance",
+      "sweep",
+      "route-order"
+    ],
+    "principle": "variable-distance",
+    "learningObjective": "The player learns the rook chooses its distance: one square is as legal as seven, and a well-ordered tour costs no more than the longest leg.",
+    "order": 2,
+    "targets": [
+      "b3",
+      "g3",
+      "g7",
+      "b7"
+    ]
+  },
+  {
+    "id": "rook-4",
+    "piece": "rook",
+    "fen": "8/3N2R1/8/8/1N6/8/4N3/8",
+    "target": "b2",
+    "mover": "g7",
+    "tier": "easy",
+    "tags": [
+      "corner-turn",
+      "blocked-file",
+      "sweep",
+      "route-order"
+    ],
+    "order": 7,
+    "principle": "direction-change",
+    "title": "Turn around the walls",
+    "playerPrompt": "Three stars, and no straight line reaches any of them.",
+    "learningObjective": "The player combines direction changes with blocked files: the cheap order is no longer the obvious one once walls decide which turns are available.",
+    "targets": [
+      "b2",
+      "b7",
+      "g2"
+    ]
+  },
+  {
+    "id": "rook-no-diagonal-1",
+    "piece": "rook",
+    "fen": "8/8/8/8/3R4/8/8/8 w - - 0 1",
+    "target": "e5",
+    "mover": "d4",
+    "tier": "easy",
+    "tags": [
+      "no-diagonal",
+      "sweep",
+      "route-order"
+    ],
+    "order": 3,
+    "principle": "no-diagonal",
+    "title": "Not a bishop",
+    "playerPrompt": "Both stars sit on a diagonal. Each one costs you two moves.",
+    "learningObjective": "The player learns the rook cannot travel a diagonal: a star one square diagonally away is two moves, not one, and a line of them multiplies that cost.",
+    "targets": [
+      "e5",
+      "f6"
+    ]
+  },
+  {
+    "title": "The long way round",
+    "playerPrompt": "Three stars in a maze. The order you pick decides the cost.",
+    "id": "rook-6",
+    "piece": "rook",
+    "fen": "N6N/1RN2N2/1NN2NN1/3N4/4N3/1NN2NN1/2N2N2/N6N w - - 0 1",
+    "target": "g2",
+    "mover": "b7",
+    "tier": "medium",
+    "tags": [
+      "detour",
+      "sweep",
+      "route-order"
+    ],
+    "principle": "route-planning",
+    "learningObjective": "The player plans a multi-goal route through a dense board, where the nearest star first is not the cheapest route overall.",
+    "order": 8,
+    "targets": [
+      "g2",
+      "d6",
+      "h5"
+    ]
+  },
+  {
+    "title": "Plan the whole tour",
+    "playerPrompt": "Every star is far. Plan all three before you move.",
+    "id": "rook-7",
+    "piece": "rook",
+    "fen": "3R4/2NNN3/3N2NN/NN3NN1/1NN3N1/1N2N3/3NNN2/8 w - - 0 1",
+    "target": "e1",
+    "mover": "d8",
+    "tier": "medium",
+    "tags": [
+      "long-route",
+      "sweep",
+      "route-order"
+    ],
+    "principle": "route-planning-advanced",
+    "learningObjective": "The player commits to a full route before the first move, on the board where improvising costs the most.",
+    "order": 9,
+    "targets": [
+      "e1",
+      "f6",
+      "h4"
+    ]
+  },
+  {
+    "title": "The boxed star",
+    "playerPrompt": "One diagonal step away, and four moves of work. Box it out.",
+    "id": "rook-8",
+    "piece": "rook",
+    "fen": "8/1N1N1N2/1RN2NN1/2N1N3/2N1N1NN/1N6/2N2NN1/5N2 w - - 0 1",
+    "target": "h3",
+    "mover": "b6",
+    "targets": [
+      "h3",
+      "g7",
+      "c7"
+    ],
+    "tier": "medium",
+    "tags": [
+      "detour",
+      "boxed-target"
+    ],
+    "principle": "no-diagonal-advanced",
+    "learningObjective": "The advanced form of no-diagonal: with the two adjacent squares blocked, the one-step diagonal costs four moves. Follows rook-no-diagonal-1, which teaches the clean case in two.",
+    "order": 6
+  },
+  {
+    "title": "Your own piece blocks the way",
+    "playerPrompt": "You cannot jump over your own piece. Go around it.",
+    "id": "rook-9",
+    "piece": "rook",
+    "fen": "5N2/1N6/7N/8/8/N7/6N1/R1N5 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "targets": [
+      "h8",
+      "h1"
+    ],
+    "tier": "medium",
+    "tags": [
+      "friendly-blocker",
+      "detour"
+    ],
+    "principle": "friendly-blocker",
+    "learningObjective": "The player learns a friendly piece stops the rook's ray and cannot be captured.",
+    "order": 5
+  },
+  {
+    "title": "The file is closed",
+    "playerPrompt": "The file is shut. Step out, climb, and come back.",
+    "id": "rook-10",
+    "piece": "rook",
+    "fen": "8/3N2N1/2N5/1N1NR3/4N1N1/5N2/1N2N3/8 w - - 0 1",
+    "target": "d4",
+    "mover": "e5",
+    "tier": "medium",
+    "tags": [
+      "detour",
+      "blocked-file",
+      "rook-lift"
+    ],
+    "principle": "blocked-file",
+    "learningObjective": "The player learns to leave a blocked file, travel on a free one, and re-enter above the blocker.",
+    "order": 4
+  },
+  {
+    "id": "bishop-1",
+    "piece": "bishop",
+    "fen": "8/8/8/8/8/8/8/B7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "tier": "easy",
+    "tags": [
+      "long-diagonal"
+    ],
+    "title": "The diagonal move",
+    "principle": "diagonal-movement",
+    "learningObjective": "The player recognises the bishop moves along a diagonal, never in a straight rank or file.",
+    "playerPrompt": "The bishop moves diagonally. Slide it to the star.",
+    "order": 0
+  },
+  {
+    "title": "All on light squares",
+    "playerPrompt": "Collect every star. They all sit on light squares, and so does this bishop.",
+    "starFloor": 1,
+    "id": "bishop-2",
+    "piece": "bishop",
+    "fen": "B7/8/8/8/8/8/8/8 w - - 0 1",
+    "target": "h1",
+    "mover": "a8",
+    "targets": [
+      "h1",
+      "g8"
+    ],
+    "tier": "easy",
+    "tags": [
+      "long-diagonal",
+      "same-color",
+      "sweep",
+      "route-order"
+    ],
+    "principle": "both-diagonals",
+    "learningObjective": "The bishop uses both diagonal directions and never leaves its colour: every star sits on a light square, and the ORDER of the goals changes how many moves the route costs.",
+    "order": 1
+  },
+  {
+    "title": "Choose the turn",
+    "playerPrompt": "Collect every star. Each one needs a turn, and the order decides how many turns you spend.",
+    "id": "bishop-5",
+    "piece": "bishop",
+    "fen": "8/8/8/8/8/8/6B1/8 w - - 0 1",
+    "target": "b3",
+    "mover": "g2",
+    "targets": [
+      "b3",
+      "c8",
+      "h7"
+    ],
+    "tier": "easy",
+    "tags": [
+      "pivot",
+      "sweep",
+      "route-order"
+    ],
+    "principle": "pivot-choice",
+    "learningObjective": "Two different squares let the bishop turn toward a star, so the turning point is a choice; with three stars the player also chooses the order that keeps the route short.",
+    "order": 2
+  },
+  {
+    "title": "The bishop is not a rook",
+    "playerPrompt": "One star sits on this row and the bishop cannot slide along it. Turn on a diagonal, then collect the rest.",
+    "id": "bishop-4",
+    "piece": "bishop",
+    "fen": "5B2/8/8/8/8/8/8/8 w - - 0 1",
+    "target": "g1",
+    "mover": "f8",
+    "targets": [
+      "g1",
+      "a1",
+      "b8"
+    ],
+    "tier": "easy",
+    "tags": [
+      "pivot",
+      "no-straight-line",
+      "sweep",
+      "route-order"
+    ],
+    "principle": "no-straight-line",
+    "learningObjective": "The bishop can never move along a rank or file: to reach a square on its own row it must turn on a diagonal. With three stars, which one it visits first decides how long the tour is.",
+    "order": 3
+  },
+  {
+    "title": "Your own piece blocks the turn",
+    "playerPrompt": "Your own knight blocks the turn. You cannot jump it, so find the way around.",
+    "id": "bishop-6",
+    "piece": "bishop",
+    "fen": "8/8/8/8/3N4/8/8/B7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "targets": [
+      "h8",
+      "g1"
+    ],
+    "tier": "medium",
+    "tags": [
+      "friendly-blocker",
+      "detour"
+    ],
+    "principle": "friendly-blocker",
+    "learningObjective": "A friendly piece on the natural turning square stops the bishop; it cannot jump over or capture its own piece, so it routes around.",
+    "order": 5
+  },
+  {
+    "title": "Both turns blocked",
+    "playerPrompt": "Both turning squares are blocked. Plan a longer route to the star.",
+    "id": "bishop-7",
+    "piece": "bishop",
+    "fen": "1B6/4N3/N3N2N/N3N2N/N1N4N/2N2N2/2N2N2/5N2 w - - 0 1",
+    "target": "g3",
+    "mover": "b8",
+    "tier": "medium",
+    "tags": [
+      "friendly-blocker",
+      "detour"
+    ],
+    "principle": "friendly-blocker-advanced",
+    "learningObjective": "With both natural turning squares blocked, the player has to find the longer third route.",
+    "order": 4
+  },
+  {
+    "title": "Blocked on the long diagonal",
+    "playerPrompt": "Knights sit on your diagonal. Neither star is close, and the order you take them decides how far you walk.",
+    "id": "bishop-8",
+    "piece": "bishop",
+    "fen": "8/3N4/2N2N2/2N2N2/2N2N2/2N2N2/4N3/B7 w - - 0 1",
+    "target": "g1",
+    "mover": "a1",
+    "tier": "medium",
+    "tags": [
+      "blocked-diagonal",
+      "detour",
+      "long-diagonal",
+      "sweep",
+      "route-order"
+    ],
+    "principle": "blocked-diagonal",
+    "learningObjective": "A piece sitting on the bishop's diagonal stops the ray, so the player leaves the diagonal and rejoins it beyond the blocker. Both stars sit past a blocker, so the route has to be planned before the first move rather than found on the way.",
+    "order": 7,
+    "targets": [
+      "g1",
+      "g7"
+    ]
+  },
+  {
+    "title": "Three diagonals shut",
+    "playerPrompt": "Knights close three of the four diagonals. The one that is left has to carry the whole route.",
+    "id": "bishop-3",
+    "piece": "bishop",
+    "fen": "8/4N3/5N2/4N3/3B4/2N1N3/8/8 w - - 0 1",
+    "target": "h8",
+    "mover": "d4",
+    "targets": [
+      "h8",
+      "a7",
+      "g1"
+    ],
+    "tier": "medium",
+    "tags": [
+      "ray-choice",
+      "blocked-diagonal",
+      "detour",
+      "sweep",
+      "route-order"
+    ],
+    "principle": "diagonal-choice",
+    "learningObjective": "From the centre four diagonals open up, but friendly knights shut three of them. The player reads which ray survives and plans a two star route through it.",
+    "order": 8
+  },
+  {
+    "title": "The fence",
+    "playerPrompt": "A line of knights splits the board. Find the one square where you can cross, and plan the whole tour before you move.",
+    "id": "bishop-fence-1",
+    "piece": "bishop",
+    "fen": "8/8/2N5/8/2N5/8/2N5/1B6 w - - 0 1",
+    "target": "h7",
+    "mover": "b1",
+    "tier": "medium",
+    "tags": [
+      "detour",
+      "route-planning",
+      "sweep",
+      "route-order"
+    ],
+    "principle": "crossing-point",
+    "learningObjective": "A line of friendly pieces cuts the bishop's colour in two, and only one square is left to cross on. The player finds that crossing and orders the three stars around it instead of walking back and forth.",
+    "order": 9,
+    "targets": [
+      "h7",
+      "a4",
+      "e8",
+      "d1"
+    ]
+  },
+  {
+    "title": "The long way around",
+    "playerPrompt": "Plan the whole route around the knight before you move.",
+    "id": "bishop-10",
+    "piece": "bishop",
+    "fen": "8/2N1N1N1/1NNNNN2/8/8/2NNNNN1/1N1N1NB1/8 w - - 0 1",
+    "target": "b7",
+    "mover": "g2",
+    "tier": "medium",
+    "tags": [
+      "blocked-diagonal",
+      "detour",
+      "long-diagonal",
+      "route-planning"
+    ],
+    "principle": "route-planning",
+    "learningObjective": "The full-board detour: the player plans the whole multi-leg route around a blocker on the long diagonal before moving.",
+    "order": 6
+  },
+  {
+    "id": "knight-1",
+    "piece": "knight",
+    "fen": "8/8/8/8/3N4/8/8/8 w - - 0 1",
+    "target": "e6",
+    "mover": "d4",
+    "tier": "easy",
+    "tags": [
+      "knight-l-shape",
+      "center-control"
+    ],
+    "order": 0,
+    "principle": "l-shape-move",
+    "title": "The knight's leap",
+    "playerPrompt": "The knight jumps in an L. Land it on the star.",
+    "learningObjective": "The player can recognise the knight's L-shaped jump — two squares one way, one across."
+  },
+  {
+    "title": "Out of the corner",
+    "playerPrompt": "In the corner the knight has just two jumps. Pick the one to the star.",
+    "id": "knight-2",
+    "piece": "knight",
+    "fen": "8/8/7N/8/8/8/8/8 w - - 0 1",
+    "target": "f5",
+    "mover": "h6",
+    "targets": [
+      "f5",
+      "a1"
+    ],
+    "tier": "easy",
+    "tags": [
+      "knight-l-shape",
+      "corner-escape"
+    ],
+    "principle": "corner-reach",
+    "learningObjective": "The player understands the knight's reach depends on where it stands, and shrinks near an edge.",
+    "order": 1
+  },
+  {
+    "title": "The other corner jump",
+    "playerPrompt": "Same corner, the knight's other jump. Take it.",
+    "id": "knight-3",
+    "piece": "knight",
+    "fen": "1N6/8/8/8/8/8/8/8 w - - 0 1",
+    "target": "f6",
+    "mover": "b8",
+    "targets": [
+      "f6",
+      "b7",
+      "d1"
+    ],
+    "tier": "easy",
+    "tags": [
+      "knight-l-shape",
+      "corner-escape"
+    ],
+    "principle": "corner-both-jumps",
+    "learningObjective": "The player learns to see all of a knight's jumps from a square, not just the first one.",
+    "order": 2
+  },
+  {
+    "title": "Two hops out",
+    "playerPrompt": "No single jump reaches it. Chain two.",
+    "id": "knight-4",
+    "piece": "knight",
+    "fen": "3N4/8/8/8/8/8/8/8 w - - 0 1",
+    "target": "d2",
+    "mover": "d8",
+    "targets": [
+      "d2",
+      "h7",
+      "a7"
+    ],
+    "tier": "easy",
+    "tags": [
+      "knight-l-shape"
+    ],
+    "principle": "two-hop",
+    "learningObjective": "The player learns to build a knight route out of more than one hop.",
+    "order": 3
+  },
+  {
+    "title": "Into the center",
+    "playerPrompt": "Head out of the corner toward the middle, hop by hop.",
+    "id": "knight-5",
+    "piece": "knight",
+    "fen": "N7/8/8/8/8/8/8/8 w - - 0 1",
+    "target": "g3",
+    "mover": "a8",
+    "targets": [
+      "g3",
+      "a7",
+      "h3",
+      "a2"
+    ],
+    "tier": "medium",
+    "tags": [
+      "corner-escape",
+      "center-control",
+      "knight-l-shape"
+    ],
+    "principle": "reach-the-center",
+    "learningObjective": "The player learns to steer the knight toward the center, where it has the most jumps.",
+    "order": 4
+  },
+  {
+    "title": "The long way by leaps",
+    "playerPrompt": "The star is far. Link the jumps to reach it.",
+    "id": "knight-6",
+    "piece": "knight",
+    "fen": "8/8/4N1N1/3N3N/8/3N3N/4N1N1/6N1 w - - 0 1",
+    "target": "a6",
+    "mover": "g1",
+    "targets": [
+      "a6",
+      "d1"
+    ],
+    "tier": "medium",
+    "tags": [
+      "knight-l-shape",
+      "long-route"
+    ],
+    "principle": "long-route",
+    "learningObjective": "The player learns to cover distance by chaining several knight hops.",
+    "order": 5
+  },
+  {
+    "title": "Plan your jumps",
+    "playerPrompt": "Think a few jumps ahead before you leap.",
+    "id": "knight-7",
+    "piece": "knight",
+    "fen": "5N2/4N3/8/4N3/5N1N/2N5/3N4/1N6 w - - 0 1",
+    "target": "g6",
+    "mover": "b1",
+    "targets": [
+      "g6",
+      "d1"
+    ],
+    "tier": "medium",
+    "tags": [
+      "knight-l-shape",
+      "long-route"
+    ],
+    "principle": "plan-the-hops",
+    "learningObjective": "The player learns to look ahead and plan a knight route instead of hopping one move at a time.",
+    "order": 6
+  },
+  {
+    "title": "The knight jumps over",
+    "playerPrompt": "Other pieces get blocked — the knight doesn't. Leap right over them.",
+    "id": "knight-8",
+    "piece": "knight",
+    "fen": "8/3N4/NNNNN3/3N4/5NN1/5NN1/5N2/8 w - - 0 1",
+    "target": "c7",
+    "mover": "g3",
+    "targets": [
+      "c7",
+      "h8",
+      "a1"
+    ],
+    "tier": "medium",
+    "tags": [
+      "jump-over",
+      "center-control"
+    ],
+    "principle": "jump-over",
+    "learningObjective": "The player learns the knight's signature power: it is the only piece that jumps over others, so blockers never stop it.",
+    "order": 7
+  },
+  {
+    "title": "Across the board",
+    "playerPrompt": "From the corner, reach deep into the far side. Chain the hops.",
+    "id": "knight-9",
+    "piece": "knight",
+    "fen": "2N5/3N4/8/3N4/N1NN1N2/4N3/8/4N3 w - - 0 1",
+    "target": "b6",
+    "mover": "d4",
+    "targets": [
+      "b6",
+      "g2"
+    ],
+    "tier": "medium",
+    "tags": [
+      "long-route"
+    ],
+    "principle": "long-route-advanced",
+    "learningObjective": "The player gains confidence planning a long knight journey across open space.",
+    "order": 8
+  },
+  {
+    "title": "Across from the corner",
+    "playerPrompt": "Leave the top corner and hop across to the star.",
+    "id": "knight-10",
+    "piece": "knight",
+    "fen": "NNN2N2/NN1N2NN/4N1N1/3N2NN/4N3/3N2NN/NN4N1/1NN1N1NN w - - 0 1",
+    "target": "h6",
+    "mover": "a8",
+    "targets": [
+      "h6",
+      "h2",
+      "a1",
+      "c6"
+    ],
+    "tier": "medium",
+    "tags": [
+      "knight-l-shape",
+      "long-route",
+      "corner-escape"
+    ],
+    "principle": "corner-departure",
+    "learningObjective": "The player learns to launch the knight out of a corner toward a far target, choosing an efficient chain of hops.",
+    "order": 9
+  },
+  {
+    "id": "pawn-1",
+    "piece": "pawn",
+    "fen": "8/8/8/8/8/8/4P3/8 w - - 0 1",
+    "target": "e3",
+    "mover": "e2",
+    "tier": "easy",
+    "tags": [
+      "forward-move"
+    ],
+    "order": 0,
+    "principle": "forward-step",
+    "title": "The pawn steps forward",
+    "playerPrompt": "The pawn walks straight ahead, one square. Take the step.",
+    "learningObjective": "The player learns the pawn advances straight forward, never sideways or back."
+  },
+  {
+    "title": "One rank at a time",
+    "playerPrompt": "Keep marching straight up the file to the star.",
+    "id": "pawn-2",
+    "piece": "pawn",
+    "fen": "8/8/8/8/8/8/3P4/8 w - - 0 1",
+    "target": "d4",
+    "mover": "d2",
+    "tier": "easy",
+    "tags": [
+      "forward-move",
+      "slow-advance"
+    ],
+    "principle": "slow-advance",
+    "learningObjective": "The player learns the pawn only moves forward, climbing the board push by push.",
+    "order": 1
+  },
+  {
+    "title": "Capture on the diagonal",
+    "playerPrompt": "The pawn steps diagonally only to capture. Take the piece on the star.",
+    "id": "pawn-3",
+    "piece": "pawn",
+    "fen": "8/8/8/8/8/8/4P3/8 w - - 0 1",
+    "target": "e5",
+    "mover": "e2",
+    "tier": "easy",
+    "tags": [
+      "diagonal-capture"
+    ],
+    "principle": "diagonal-capture",
+    "learningObjective": "The player learns the pawn captures diagonally — a different move from its straight advance.",
+    "order": 2
+  },
+  {
+    "title": "Take to the side",
+    "playerPrompt": "An enemy waits one diagonal step away. Capture it.",
+    "id": "pawn-4",
+    "piece": "pawn",
+    "fen": "8/5p2/4P3/8/8/8/8/8 w - - 0 1",
+    "target": "f7",
+    "mover": "e6",
+    "tier": "easy",
+    "tags": [
+      "diagonal-capture",
+      "directional-move"
+    ],
+    "principle": "capture-side",
+    "learningObjective": "The player learns a pawn only leaves its file by capturing diagonally, to either side.",
+    "order": 3
+  },
+  {
+    "id": "pawn-5",
+    "piece": "pawn",
+    "fen": "8/8/4p3/8/8/8/3P4/8 w - - 0 1",
+    "target": "e6",
+    "mover": "d2",
+    "tier": "medium",
+    "tags": [
+      "slow-advance",
+      "diagonal-capture",
+      "capture-route"
+    ],
+    "order": 4,
+    "principle": "capture-route",
+    "title": "March, then capture",
+    "playerPrompt": "Walk up the file, then capture across to reach the star.",
+    "learningObjective": "The player combines forward pushes with a diagonal capture to change files."
+  },
+  {
+    "id": "pawn-6",
+    "piece": "pawn",
+    "fen": "8/8/8/8/8/8/P7/8 w - - 0 1",
+    "target": "a8",
+    "mover": "a2",
+    "tier": "medium",
+    "tags": [
+      "forward-move",
+      "slow-advance",
+      "promotion-path"
+    ],
+    "order": 5,
+    "principle": "promotion",
+    "title": "March to promote",
+    "playerPrompt": "Push all the way to the last rank, where the pawn transforms.",
+    "learningObjective": "The player learns a pawn that reaches the far rank promotes into a stronger piece."
+  },
+  {
+    "id": "pawn-7",
+    "piece": "pawn",
+    "fen": "8/8/8/8/8/4Np2/4P3/8 w - - 0 1",
+    "target": "f5",
+    "mover": "e2",
+    "tier": "medium",
+    "tags": [
+      "blocked-forward",
+      "diagonal-capture",
+      "capture-route"
+    ],
+    "order": 6,
+    "principle": "blocked-forward",
+    "title": "Blocked ahead — capture around",
+    "playerPrompt": "The square straight ahead is blocked. Capture diagonally to get moving.",
+    "learningObjective": "The player learns that when the forward square is shut, a diagonal capture is the way past."
+  },
+  {
+    "id": "pawn-8",
+    "piece": "pawn",
+    "fen": "8/8/8/8/4p3/3p4/2P5/8 w - - 0 1",
+    "target": "f5",
+    "mover": "c2",
+    "tier": "medium",
+    "tags": [
+      "capture-route",
+      "diagonal-capture",
+      "directional-move"
+    ],
+    "order": 7,
+    "principle": "capture-chain",
+    "title": "A path of captures",
+    "playerPrompt": "Enemies stand in the way. Capture your way through to the star.",
+    "learningObjective": "The player strings diagonal captures together to carve a route forward."
+  },
+  {
+    "id": "pawn-9",
+    "piece": "pawn",
+    "fen": "8/8/8/4p3/8/8/3P4/8 w - - 0 1",
+    "target": "e5",
+    "mover": "d2",
+    "tier": "medium",
+    "tags": [
+      "slow-advance",
+      "diagonal-capture",
+      "directional-move"
+    ],
+    "order": 8,
+    "principle": "advance-then-take",
+    "title": "Take the star",
+    "playerPrompt": "Advance up the file, then capture the piece sitting on the star.",
+    "learningObjective": "The player recognises when the goal must be reached by a capture, not a push."
+  },
+  {
+    "id": "pawn-10",
+    "piece": "pawn",
+    "fen": "8/4Np2/4P3/8/8/8/8/8 w - - 0 1",
+    "target": "f8",
+    "mover": "e6",
+    "tier": "medium",
+    "tags": [
+      "promotion-path",
+      "blocked-forward",
+      "diagonal-capture"
+    ],
+    "order": 9,
+    "principle": "promotion-by-capture",
+    "title": "Capture into promotion",
+    "playerPrompt": "The square ahead is blocked. Capture diagonally, then step onto the last rank.",
+    "learningObjective": "The player learns a pawn can capture past a blocker and still reach promotion."
+  },
+  {
+    "id": "queen-1",
+    "piece": "queen",
+    "fen": "8/8/8/8/8/8/8/Q7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "tier": "easy",
+    "tags": [
+      "straight-line",
+      "diagonal-line"
+    ],
+    "order": 0,
+    "principle": "any-direction",
+    "title": "The queen goes anywhere",
+    "playerPrompt": "The queen slides in any straight line. Take the long diagonal to the star.",
+    "learningObjective": "The player learns the queen moves like a rook and a bishop combined, in any straight direction."
+  },
+  {
+    "title": "Straight up the file",
+    "playerPrompt": "Like a rook, the queen races up the file. Go.",
+    "id": "queen-2",
+    "piece": "queen",
+    "fen": "8/8/8/8/8/8/8/6Q1 w - - 0 1",
+    "target": "a8",
+    "mover": "g1",
+    "targets": [
+      "a8",
+      "h3"
+    ],
+    "tier": "easy",
+    "tags": [
+      "straight-line"
+    ],
+    "principle": "rook-lines",
+    "learningObjective": "The player learns the queen moves along ranks and files, just like a rook.",
+    "order": 1
+  },
+  {
+    "title": "And along the diagonal",
+    "playerPrompt": "Like a bishop, the queen steps along the diagonal. Take it.",
+    "id": "queen-3",
+    "piece": "queen",
+    "fen": "8/8/8/8/3Q4/8/8/8 w - - 0 1",
+    "target": "e5",
+    "mover": "d4",
+    "targets": [
+      "e5",
+      "b3",
+      "g2"
+    ],
+    "tier": "easy",
+    "tags": [
+      "diagonal-line"
+    ],
+    "principle": "bishop-lines",
+    "learningObjective": "The player learns the queen also moves along diagonals, just like a bishop.",
+    "order": 2
+  },
+  {
+    "title": "Across the rank",
+    "playerPrompt": "Slide straight along the rank to the star.",
+    "id": "queen-4",
+    "piece": "queen",
+    "fen": "2Q5/8/8/8/8/8/8/8 w - - 0 1",
+    "target": "h7",
+    "mover": "c8",
+    "targets": [
+      "h7",
+      "d2",
+      "f1",
+      "a5",
+      "b3"
+    ],
+    "tier": "easy",
+    "tags": [
+      "straight-line"
+    ],
+    "principle": "rank-line",
+    "learningObjective": "The player reinforces that the queen sweeps a whole rank in a single move.",
+    "order": 3
+  },
+  {
+    "title": "Turn once to arrive",
+    "playerPrompt": "One straight line won't reach it. Turn once to get there.",
+    "id": "queen-5",
+    "piece": "queen",
+    "fen": "2N5/1NN5/8/8/4Q3/8/5NN1/5N2 w - - 0 1",
+    "target": "b8",
+    "mover": "e4",
+    "targets": [
+      "b8",
+      "g1"
+    ],
+    "tier": "easy",
+    "tags": [
+      "rook-bishop-combo",
+      "pivot"
+    ],
+    "principle": "turn-combo",
+    "learningObjective": "The player learns to reach a square by turning between two of the queen's straight moves.",
+    "order": 4
+  },
+  {
+    "title": "Your own piece blocks the line",
+    "playerPrompt": "A friendly piece shuts the rank. Go around it to the star.",
+    "id": "queen-6",
+    "piece": "queen",
+    "fen": "2N5/2N5/8/2NN4/8/8/1N2N3/QN2N3 w - - 0 1",
+    "target": "c1",
+    "mover": "a1",
+    "targets": [
+      "c1",
+      "c6"
+    ],
+    "tier": "medium",
+    "tags": [
+      "rook-bishop-combo",
+      "detour",
+      "blocked-line"
+    ],
+    "principle": "around-the-blocker",
+    "learningObjective": "The player learns a friendly piece stops the queen's line and cannot be passed or captured.",
+    "order": 5
+  },
+  {
+    "title": "Boxed in on the rank",
+    "playerPrompt": "The straight path to the star is walled off. Find the way around.",
+    "id": "queen-7",
+    "piece": "queen",
+    "fen": "8/2NNNN2/N6N/2N1N1N1/1NNQN3/1N1NN3/8/8 w - - 0 1",
+    "target": "f4",
+    "mover": "d4",
+    "targets": [
+      "f4",
+      "b5",
+      "e8"
+    ],
+    "tier": "medium",
+    "tags": [
+      "straight-line",
+      "detour",
+      "blocked-line"
+    ],
+    "principle": "boxed-detour",
+    "learningObjective": "The player plans a detour when the direct queen line is blocked.",
+    "order": 6
+  },
+  {
+    "title": "The long way to the center",
+    "playerPrompt": "The diagonal is blocked partway. Route around to reach the star.",
+    "id": "queen-8",
+    "piece": "queen",
+    "fen": "5N2/NN5N/5N2/5N2/3NN3/2N5/1N4N1/N2Q2N1 w - - 0 1",
+    "target": "e5",
+    "mover": "d1",
+    "targets": [
+      "e5",
+      "a8",
+      "h1"
+    ],
+    "tier": "medium",
+    "tags": [
+      "rook-bishop-combo",
+      "long-range",
+      "detour"
+    ],
+    "principle": "long-detour",
+    "learningObjective": "The player combines the queen's lines to route around a blocker over long range.",
+    "order": 7
+  },
+  {
+    "title": "Leave and re-enter the rank",
+    "playerPrompt": "The rank is shut just ahead. Step off, go around, and come back.",
+    "id": "queen-9",
+    "piece": "queen",
+    "fen": "7Q/8/2N1N3/N1N1NNN1/NNN1N2N/2N1NNN1/1NN1N3/8 w - - 0 1",
+    "target": "b3",
+    "mover": "h8",
+    "targets": [
+      "b3",
+      "b5",
+      "f4",
+      "f2"
+    ],
+    "tier": "medium",
+    "tags": [
+      "straight-line",
+      "detour",
+      "blocked-line"
+    ],
+    "principle": "reopen-the-line",
+    "learningObjective": "The player learns to leave a blocked line and rejoin it beyond the blocker.",
+    "order": 8
+  },
+  {
+    "title": "Around your own piece",
+    "playerPrompt": "Your own piece blocks the rank. Loop around it to the star.",
+    "id": "queen-10",
+    "piece": "queen",
+    "fen": "2NNNN2/1N4N1/1NNNNNN1/2N1N3/N1N1N1N1/NN3NN1/N1NNN1N1/N2N2NQ w - - 0 1",
+    "target": "b5",
+    "mover": "h1",
+    "targets": [
+      "b5",
+      "e1",
+      "a8",
+      "f7"
+    ],
+    "tier": "medium",
+    "tags": [
+      "friendly-blocker",
+      "detour",
+      "blocked-line"
+    ],
+    "principle": "friendly-blocker",
+    "learningObjective": "The player confirms the queen must route around a friendly piece it cannot pass through.",
+    "order": 9
+  },
+  {
+    "id": "king-1",
+    "piece": "king",
+    "fen": "8/8/8/8/8/8/8/4K3 w - - 0 1",
+    "target": "e2",
+    "mover": "e1",
+    "tier": "easy",
+    "tags": [
+      "one-step",
+      "orthogonal-step"
+    ],
+    "order": 0,
+    "principle": "one-step",
+    "title": "The king's single step",
+    "playerPrompt": "The king moves just one square. Step up to the star.",
+    "learningObjective": "The player learns the king moves one square at a time, in any direction."
+  },
+  {
+    "title": "A step on the diagonal",
+    "playerPrompt": "The king also steps diagonally. Take the one-square hop.",
+    "id": "king-2",
+    "piece": "king",
+    "fen": "8/8/8/8/3K4/8/8/8 w - - 0 1",
+    "target": "e5",
+    "mover": "d4",
+    "targets": [
+      "e5",
+      "a2"
+    ],
+    "tier": "easy",
+    "tags": [
+      "one-step",
+      "diagonal-step"
+    ],
+    "principle": "diagonal-step",
+    "learningObjective": "The player learns the king's single step works on diagonals too, not only straight.",
+    "order": 1
+  },
+  {
+    "title": "Step by step",
+    "playerPrompt": "The star is a few squares away. Walk there, one step at a time.",
+    "id": "king-3",
+    "piece": "king",
+    "fen": "8/8/8/8/3K4/8/8/8 w - - 0 1",
+    "target": "b6",
+    "mover": "d4",
+    "targets": [
+      "b6",
+      "f6",
+      "b2"
+    ],
+    "tier": "easy",
+    "tags": [
+      "one-step",
+      "short-route"
+    ],
+    "principle": "chain-steps",
+    "learningObjective": "The player learns to cover ground with the king by chaining single steps.",
+    "order": 2
+  },
+  {
+    "title": "The other diagonal step",
+    "playerPrompt": "Step diagonally the other way to the star.",
+    "id": "king-4",
+    "piece": "king",
+    "fen": "8/6K1/8/8/8/8/8/8 w - - 0 1",
+    "target": "d4",
+    "mover": "g7",
+    "targets": [
+      "d4",
+      "c6",
+      "e2",
+      "g3"
+    ],
+    "tier": "easy",
+    "tags": [
+      "one-step",
+      "diagonal-step"
+    ],
+    "principle": "free-choice-step",
+    "learningObjective": "The player reinforces that the king chooses freely among all its surrounding squares.",
+    "order": 3
+  },
+  {
+    "title": "Walk to the corner",
+    "playerPrompt": "Head toward the corner, one step per move.",
+    "id": "king-5",
+    "piece": "king",
+    "fen": "7N/1N6/8/3NK1N1/8/4N3/N7/2N5 w - - 0 1",
+    "target": "a8",
+    "mover": "e5",
+    "targets": [
+      "a8",
+      "h6"
+    ],
+    "tier": "medium",
+    "tags": [
+      "diagonal-step",
+      "short-route",
+      "edge-control"
+    ],
+    "principle": "walk-to-edge",
+    "learningObjective": "The player routes the king across several squares toward an edge.",
+    "order": 4
+  },
+  {
+    "title": "The long walk",
+    "playerPrompt": "Cross the whole board, one step at a time, to the far corner.",
+    "id": "king-6",
+    "piece": "king",
+    "fen": "7K/NNN2NNN/8/8/1NNN1NN1/N2N1N2/3N1NN1/8 w - - 0 1",
+    "target": "a1",
+    "mover": "h8",
+    "targets": [
+      "a1",
+      "g3"
+    ],
+    "tier": "hard",
+    "tags": [
+      "diagonal-step",
+      "edge-control"
+    ],
+    "principle": "long-walk",
+    "learningObjective": "The player plans a long king journey and feels how slowly the king travels.",
+    "order": 5
+  },
+  {
+    "title": "Step around your piece",
+    "playerPrompt": "Your own piece blocks the way up. Step around it.",
+    "id": "king-7",
+    "piece": "king",
+    "fen": "8/3NNN2/4N3/3N1N2/2N1K1N1/3N1N2/1N2N3/1N6 w - - 0 1",
+    "target": "e8",
+    "mover": "e4",
+    "targets": [
+      "e8",
+      "a1"
+    ],
+    "tier": "medium",
+    "tags": [
+      "orthogonal-step",
+      "detour",
+      "blocked-square"
+    ],
+    "principle": "around-the-blocker",
+    "learningObjective": "The player learns to route the king around a square it cannot enter.",
+    "order": 6
+  },
+  {
+    "title": "Corner to corner",
+    "playerPrompt": "Walk the king from this corner all the way to the opposite one.",
+    "id": "king-9",
+    "piece": "king",
+    "fen": "K3N3/8/2N2N2/N7/7N/2N2N2/8/3N4 w - - 0 1",
+    "target": "h1",
+    "mover": "a8",
+    "targets": [
+      "h1",
+      "a1",
+      "f8"
+    ],
+    "tier": "hard",
+    "tags": [
+      "diagonal-step",
+      "edge-control"
+    ],
+    "principle": "long-walk-advanced",
+    "learningObjective": "The player executes the king's longest journey, corner to corner.",
+    "order": 7
+  },
+  {
+    "title": "Around the wall",
+    "playerPrompt": "A wall of your pieces blocks the way down. Step around to reach the star.",
+    "id": "king-10",
+    "piece": "king",
+    "fen": "8/1K2N3/2NNNN2/2N2N2/2NN1N2/1N2N3/1NNNNNN1/8 w - - 0 1",
+    "target": "e1",
+    "mover": "b7",
+    "targets": [
+      "e1",
+      "d5",
+      "f7"
+    ],
+    "tier": "medium",
+    "tags": [
+      "orthogonal-step",
+      "detour",
+      "blocked-square"
+    ],
+    "principle": "boxed-detour",
+    "learningObjective": "The player plans a detour around a cluster of blockers with the king.",
+    "order": 8
+  },
+  {
+    "title": "The blocked diagonal",
+    "playerPrompt": "The diagonal square is taken by your own piece. Find another way.",
+    "id": "king-8",
+    "piece": "king",
+    "fen": "8/1NNN1NNN/1N1N1N2/NN6/1NNNNNN1/3N1N2/NNN1N1N1/K2N4 w - - 0 1",
+    "target": "a4",
+    "mover": "a1",
+    "targets": [
+      "a4",
+      "c6",
+      "h1",
+      "a6"
+    ],
+    "tier": "medium",
+    "tags": [
+      "diagonal-step",
+      "detour",
+      "blocked-square"
+    ],
+    "principle": "blocked-diagonal-step",
+    "learningObjective": "The player detours the king when its direct diagonal step is blocked.",
+    "order": 9
+  }
+]

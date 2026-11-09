@@ -1,0 +1,1254 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --paper-bg: #f6e6b8;
+    --paper-bg-inner-tray: #eed59a;
+    --paper-text: rgba(63, 34, 8, 0.95);
+    --paper-text-muted: rgba(110, 65, 15, 0.70);
+    --paper-text-subtle: rgba(110, 65, 15, 0.45);
+    --paper-divider: rgba(110, 65, 15, 0.20);
+    --paper-accent: rgba(251, 191, 36, 0.95);
+    --shadow-warm-wood: rgba(63, 34, 8, 0.25);
+
+    --landing-accent: rgba(217, 130, 30, 0.85);
+    --landing-accent-bg: rgba(245, 158, 11, 0.10);
+    --landing-accent-bg-strong: rgba(245, 158, 11, 0.16);
+    --landing-accent-border: rgba(217, 130, 30, 0.30);
+    --landing-accent-border-strong: rgba(217, 130, 30, 0.42);
+    --landing-card-bg: rgba(255, 248, 230, 0.62);
+    --landing-card-border: rgba(110, 65, 15, 0.16);
+    --landing-card-shadow-inner: rgba(255, 245, 215, 0.45);
+    --landing-text: rgba(63, 34, 8, 0.92);
+    --landing-text-soft: rgba(63, 34, 8, 0.72);
+    --landing-text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+    --landing-text-shadow-soft: 0 1px 0 rgba(255, 245, 215, 0.45);
+    --landing-title-glow: 0 1px 0 rgba(255, 245, 215, 0.85),
+      0 2px 6px rgba(245, 158, 11, 0.12);
+    --landing-cta-green: #21a957;
+    --landing-cta-green-hover: #188c45;
+    --landing-cta-green-dark: #0f6f35;
+    --landing-cta-green-ring: rgba(33, 169, 87, 0.28);
+
+    /* Ported from apps/web globals.css — Hub CTA + HUD pill tokens, reused
+       verbatim so the onboarding buttons/pills match the in-app look. */
+    --gold-leaf-shadow: #8a6818;
+    --duration-snap: 120ms;
+    --font-game-action: var(--font-rowdies), "Rowdies", system-ui, sans-serif;
+    --cta-primary-blue-grad: linear-gradient(180deg, #2bb5f0, #0e5a99);
+    --cta-primary-blue-border: rgba(10, 60, 110, 0.85);
+    --cta-primary-blue-bevel:
+      inset 0 2px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -3px 0 rgba(10, 60, 100, 0.55),
+      0 4px 0 rgba(10, 55, 90, 0.55),
+      0 6px 14px rgba(10, 55, 90, 0.35);
+    --cta-primary-blue-bevel-pressed:
+      inset 0 2px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -3px 0 rgba(10, 60, 100, 0.55),
+      0 2px 0 rgba(10, 55, 90, 0.55),
+      0 4px 8px rgba(10, 55, 90, 0.30);
+    --cta-primary-blue-text-shadow: 0 2px 0 rgba(10, 55, 90, 0.65);
+
+    --cta-primary-green-grad: linear-gradient(180deg, #87db28, #4aaa16);
+    --cta-primary-green-border: rgba(70, 130, 30, 0.85);
+    --cta-primary-green-bevel:
+      inset 0 2px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -3px 0 rgba(50, 100, 25, 0.55),
+      0 4px 0 rgba(40, 90, 20, 0.55),
+      0 6px 14px rgba(40, 90, 20, 0.35);
+    --cta-primary-green-bevel-pressed:
+      inset 0 2px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -3px 0 rgba(50, 100, 25, 0.55),
+      0 2px 0 rgba(40, 90, 20, 0.55),
+      0 4px 8px rgba(40, 90, 20, 0.30);
+    --cta-primary-green-text-shadow: 0 2px 0 rgba(40, 90, 20, 0.65);
+
+    --font-game-display: var(--font-fredoka), "Fredoka One", sans-serif;
+    --font-game-action: var(--font-rowdies), "Rowdies", system-ui, sans-serif;
+  }
+
+  html {
+    font-family: "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
+    overflow-x: hidden;
+    background-color: var(--paper-bg);
+  }
+
+  body {
+    background-color: var(--paper-bg);
+    color: var(--paper-text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+    /* Ported from apps/web globals.css — disable text selection, iOS
+       long-press callout (Save Image / Copy), and the tap highlight, plus
+       `manipulation` to kill double-tap-to-zoom. Without this, an errant
+       double-tap on the onboarding frame zooms the page, and long-pressing
+       any image/text shows the native selection box or share/save menu.
+       Inputs + `[data-allow-select]` opt back in below. */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  img {
+    -webkit-user-drag: none;
+    user-drag: none;
+    -webkit-touch-callout: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable="true"],
+  [data-allow-select="true"],
+  [data-allow-select="true"] * {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
+}
+
+@layer components {
+  .fantasy-title {
+    font-family: var(--font-game-action);
+    letter-spacing: 0.01em;
+  }
+
+  .paper-tray {
+    border-radius: 0.875rem;
+    background: var(--paper-bg-inner-tray);
+    border: 1px solid var(--paper-divider);
+    padding: 0.5rem 0.75rem;
+    box-shadow: inset 0 1px 2px rgba(120, 65, 5, 0.08);
+  }
+
+  .landing-green-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    border: 2px solid var(--cta-primary-green-border);
+    border-radius: 14px;
+    background: var(--cta-primary-green-grad);
+    box-shadow: var(--cta-primary-green-bevel);
+    color: #fff8ed;
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    text-shadow: var(--cta-primary-green-text-shadow);
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      transform 120ms ease,
+      box-shadow 120ms ease;
+  }
+
+  .landing-green-cta:hover {
+    filter: brightness(1.04);
+  }
+
+  .landing-green-cta:active {
+    transform: translateY(2px);
+    box-shadow: var(--cta-primary-green-bevel-pressed);
+    filter: none;
+  }
+
+  .landing-green-cta:focus-visible {
+    outline: 3px solid var(--landing-cta-green-ring);
+    outline-offset: 3px;
+  }
+
+  .landing-green-cta--medium {
+    height: 42px;
+    min-height: 42px;
+    min-width: 150px;
+    padding: 0 18px;
+    font-size: 0.9rem;
+  }
+
+  .landing-green-cta--large {
+    height: 56px;
+    min-height: 56px;
+    min-width: 260px;
+    padding: 0 32px;
+    border-radius: 14px;
+    font-size: 1.1rem;
+  }
+}
+
+/* Ported from apps/web globals.css — same gold gradient divider used on
+   the Peones card, reused here for the onboarding slide cards. */
+.chesito-card-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chesito-card-divider::before,
+.chesito-card-divider::after {
+  content: "";
+  height: 2px;
+  flex: 1 1 auto;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(216, 178, 74, 0.7), transparent);
+}
+
+.chesito-card-spark {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: 0 0 auto;
+}
+
+/* Ported from apps/web globals.css — Hub primary CTA button family
+   (.primary-play-cta base + playhub sizing + the gold "Train Pieces" /
+   blue "Enter Arena" surface treatments), reused for the onboarding
+   START/NEXT and Slide 4 CTAs so they match the in-app Hub 1:1. */
+.primary-play-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 24px;
+  border: none;
+  background: transparent;
+  border-radius: 18px;
+  color: rgba(255, 245, 215, 0.98);
+  font-family: var(--font-game-action);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow:
+    0 2px 0 rgba(63, 34, 8, 0.65),
+    0 0 12px rgba(232, 193, 96, 0.55);
+  cursor: pointer;
+  filter: drop-shadow(0 6px 0 var(--gold-leaf-shadow));
+  transition: transform var(--duration-snap), filter var(--duration-snap);
+}
+
+.primary-play-cta-label {
+  position: relative;
+  z-index: 1;
+  font-family: inherit;
+}
+
+.primary-play-cta:active:not(:disabled) {
+  transform: translateY(4px);
+  filter: drop-shadow(0 2px 0 var(--gold-leaf-shadow));
+}
+
+.primary-play-cta--playhub {
+  min-height: 0;
+  /* Symmetric padding (was 12px/28px/18px, borrowed from a Hub context
+     with a PNG bottom lip that doesn't apply here) so the button hugs
+     its label evenly instead of leaving extra space below the text. */
+  padding: 14px 28px;
+  border-radius: 24px;
+  font-size: 0.95rem;
+  letter-spacing: 0;
+}
+
+/* .slide4-jump-link removed 2026-07-29: slide 4's escape hatch was a text link
+   under a single gold CTA. Both destinations are now halves of the mode
+   switch, so there is nothing left to escape from. Recover from git if a
+   secondary text action ever returns to that slide. */
+
+.primary-play-cta-piece-icon {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 22px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+}
+
+.hub-scaffold-practice-cta {
+  min-height: 50px;
+  font-size: 1.05rem;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 239, 100, 0.9), transparent 28%),
+    radial-gradient(circle at 75% 75%, rgba(180, 105, 0, 0.35), transparent 35%),
+    linear-gradient(145deg, #fbe04b 0%, #fcc00a 28%, #f3aa04 55%, #d38804 100%);
+  border: none;
+  /* border-radius: 22px; */
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -5px 0 rgba(142, 78, 0, 0.35),
+    /* 0 6px 0 #9a5a00, */
+    0 0 0 2px rgba(255, 216, 74, 0.7),
+    /* 0 6px 0 2px rgba(255, 216, 74, 0.7), */
+    0 0 6px 2px rgba(255, 200, 40, 0.75);
+  text-shadow:
+    -1px -1px 0 #6b3a06,
+    1px -1px 0 #6b3a06,
+    -1px 1px 0 #6b3a06,
+    1px 1px 0 #6b3a06,
+    0 2px 2px rgba(0, 0, 0, 0.5);
+  filter: none;
+  color: #ffffff;
+}
+
+.hub-scaffold-practice-cta:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -3px 0 rgba(142, 78, 0, 0.4),
+    0 3px 0 #9a5a00,
+    0 5px 10px rgba(0, 0, 0, 0.3);
+  filter: none;
+}
+
+.hub-scaffold-arena-cta {
+  min-height: 50px;
+  background: var(--cta-primary-blue-grad);
+  border: 2px solid var(--cta-primary-blue-border);
+  border-radius: 22px;
+  box-shadow: var(--cta-primary-blue-bevel);
+  text-shadow: var(--cta-primary-blue-text-shadow);
+  filter: none;
+  color: #f4f8ff;
+}
+
+.hub-scaffold-arena-cta:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: var(--cta-primary-blue-bevel-pressed);
+  filter: none;
+}
+
+/* Ported from apps/web globals.css — HUD chip family, reused for the
+   Learn/Play/Season Pass/etc. pills. */
+.candy-tray-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
+  background: linear-gradient(180deg, rgba(255, 248, 222, 0.95) 0%, rgba(247, 226, 175, 0.95) 100%);
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1px 0 rgba(150, 90, 20, 0.18),
+    0 1px 2px rgba(110, 65, 15, 0.18);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.candy-tray-pill:active {
+  transform: scale(0.97);
+}
+
+.candy-tray-pill-icon--floating {
+  width: 1.8rem;
+  height: 1.8rem;
+  margin: -0.4rem 0;
+  filter: drop-shadow(0 2px 3px rgba(120, 65, 5, 0.35));
+}
+
+.candy-tray-pill-icon--floating > img,
+.candy-tray-pill-icon--floating > picture img,
+.candy-tray-pill-icon--floating picture {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hub-hud-pill {
+  width: auto;
+  cursor: pointer;
+  position: relative;
+  overflow: visible;
+  padding-left: 0.6rem;
+  padding-right: 0.9rem;
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+  min-height: 2.25rem;
+  min-width: 3.25rem;
+}
+
+.hub-hud-pill .candy-tray-pill-icon--floating {
+  position: static;
+  left: auto;
+  top: auto;
+  width: 1.8rem;
+  height: 1.8rem;
+  margin: -0.15rem 0;
+  filter:
+    drop-shadow(0 3px 4px rgba(0, 0, 0, 0.32)) drop-shadow(0 1px 0 rgba(110, 65, 15, 0.45));
+}
+
+/* .onboarding-price removed 2026-07-29: the price used to be a bare line under
+   the slide's evidence pill. It now lives inside the Season Pass chip and the
+   PRO strip, next to what it buys, so there is no free-standing price left to
+   style. Recover from git if one returns. */
+
+/* ── Slide redesign, 2026-07-29 ──────────────────────────────────────────────
+   The copy now sits on the illustration itself, not inside a cream frame, so
+   every text style below carries its own contrast: cream fill plus a hard dark
+   outline, the same treatment the in-game overlays use over busy art. */
+
+.onboarding-welcome-to {
+  font-family: var(--font-game-display), system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff6dc;
+  text-shadow:
+    0 2px 0 rgba(28, 16, 2, 0.55),
+    0 0 10px rgba(21, 46, 120, 0.65);
+}
+
+.onboarding-support {
+  max-width: 22ch;
+  margin-inline: auto;
+  /* The copy holds a real newline; the art is composed around that break. */
+  white-space: pre-line;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #fdf6e4;
+  text-shadow:
+    0 2px 3px rgba(14, 30, 78, 0.75),
+    0 0 12px rgba(14, 30, 78, 0.5);
+}
+
+.onboarding-progress-pill {
+  display: inline-flex;
+  align-items: center;
+  /* Symmetric padding: the left inset used to be tighter to seat a star that
+     no longer renders, which left the text sitting off-centre in the pill. */
+  padding: 5px 16px;
+  border: 1.5px solid rgba(158, 197, 255, 0.65);
+  border-radius: 9999px;
+  background: rgba(19, 45, 122, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+/* The advance button hugs its label. `.primary-play-cta` is `width: 100%`
+   because in the Hub it anchors a column of equally wide actions; here it is
+   the only control on the slide, and stretching it edge to edge over the
+   illustration reads as a banner laid across the art rather than as a button
+   sitting on it (founder, 2026-07-29). The row centres it. */
+.onboarding-advance-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.onboarding-advance-cta {
+  width: auto;
+  min-width: 10rem;
+}
+
+.onboarding-nav-arrow {
+  display: flex;
+  width: 2.75rem;
+  height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgba(19, 45, 122, 0.72);
+  border: 1.5px solid rgba(158, 197, 255, 0.5);
+}
+
+/* Invisible, not dimmed — but still `disabled`, so it never takes focus. */
+.onboarding-nav-arrow:disabled {
+  opacity: 0;
+}
+
+/* ── Slide 3: the PRO strip ────────────────────────────────────────────────
+   Ported from apps/web `.kingdom-card-pro-cta`, minus its badge subtree (theme
+   art this app has no access to) and minus the pointer affordances: on the
+   landing this states that a paid tier exists, it does not sell one. */
+/* ── The Season Pass banner (slide 2) ──────────────────────────────────────
+   TWIN of apps/web `.season-pass-banner` (globals.css, next to
+   `.challenge-card-cta`). Same class names, same measures — the visitor meets
+   this exact surface again as the purchase CTA in the Learn Hub, and the recall
+   is the entire reason the banner exists. If one side changes, change both:
+   nothing observable breaks when they drift, they simply stop being the same
+   thing (the same trap slide 3's ProStrip documents in its own comment).
+
+   Measures are OWNED by apps/web and copied here. They are the PRO row's
+   (`.kingdom-card-pro-cta` in-app, `.onboarding-pro-strip` on this slide's
+   neighbour) to the pixel, because the two are the product's only paid banners:
+     · min-height 54px      · radius 14px       · gold hairline 2px
+     · gap 8px              · padding 4px 9px 5px 5px
+   Two intentional differences, both structural rather than visual:
+     · no :active / :disabled — on the landing this is not a control;
+     · a `-copy` column, because here the banner carries a benefits line (the
+       Hub's card already explains the pass three lines above its CTA), so the
+       flex slack lives on that column instead of on the title. */
+.season-pass-banner {
+  position: relative;
+  width: 100%;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 9px 5px 5px;
+  border: 2px solid #f6c94f;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 12% 50%, rgba(255, 236, 160, 0.55), transparent 46%),
+    linear-gradient(96deg, #f5b731 0%, #f8cf5e 34%, #fbe6a6 66%, #fdf3d2 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 0 rgba(158, 106, 18, 0.2),
+    0 3px 0 rgba(190, 133, 26, 0.55),
+    0 6px 14px rgba(180, 128, 24, 0.28);
+  color: #4a2c07;
+  text-align: left;
+}
+
+/* Sized by HEIGHT, not width. The ticket art is portrait (240x329), so a width
+   of 46px made it 63px tall and IT, not the copy, was what stretched the
+   banner past the PRO strip. */
+.season-pass-banner-icon {
+  width: 34px;
+  min-width: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(120, 78, 8, 0.35));
+}
+
+.season-pass-banner-icon img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 46px;
+  object-fit: contain;
+}
+
+/* Two lines of copy where the Hub has one: there the card header already
+   explains the pass, here this is the only place it is explained. */
+.season-pass-banner-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* The PRO strip's title size, in the body face for the same reason that strip
+   documents below: the game-action face thickens on digits, and this string
+   opens with "21-". */
+.season-pass-banner-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.05;
+  color: #4a2c07;
+  text-shadow: 0 1px 0 rgba(255, 249, 219, 0.55);
+}
+
+/* Deliberately NOT nowrap+ellipsis: the Spanish line is longer than the
+   English one, and truncating it cuts the argument, not the decoration. */
+.season-pass-banner-benefits {
+  font-size: 0.62rem;
+  font-weight: 650;
+  line-height: 1.15;
+  color: rgba(74, 44, 7, 0.82);
+}
+
+/* ── The price badge ───────────────────────────────────────────────────────
+   The house cue for "this costs money": a gold pill floating on the top-right
+   corner of whatever it prices, never a word inside the sentence. Ported from
+   apps/web (`.challenge-card-cta-badge` / `.season-pass-banner-badge` /
+   `.kingdom-card-pro-price`), which is where the geometry is owned.
+
+   Deliberately MORE saturated than the surfaces it lands on — on the gold
+   banner a pill in the same tone would disappear. */
+.season-pass-banner-badge,
+.onboarding-pro-strip-badge {
+  position: absolute;
+  z-index: 2;
+  top: -9px;
+  right: 13px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 11px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fde68a 0%, #f0a91b 100%);
+  border: 1.5px solid rgba(120, 53, 15, 0.85);
+  color: #3f2208;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(255, 240, 175, 0.7);
+}
+
+.season-pass-banner-chevron {
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: 0.8rem;
+  height: 0.8rem;
+  color: rgba(120, 74, 10, 0.9);
+}
+
+.onboarding-pro-strip {
+  position: relative;
+  width: 100%;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 7px 6px;
+  border: 2px solid #f6c94f;
+  border-radius: 14px;
+  /* The purple of the in-app PRO strip, kept verbatim rather than tinted to
+     the slide. The visitor meets this exact surface again in the Play Hub, and
+     a green landing version would train them on a colour that never reappears.
+     It was green for one revision; the founder caught it (2026-07-29). */
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 221, 112, 0.18), transparent 38%),
+    linear-gradient(110deg, rgba(255, 255, 255, 0.16), transparent 45%),
+    linear-gradient(180deg, #9a4ed0 0%, #7430a9 48%, #561d80 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -2px 0 rgba(55, 12, 83, 0.25),
+    0 4px 0 #3f145f,
+    0 8px 14px rgba(72, 31, 92, 0.3);
+  color: #fff8d2;
+  text-align: left;
+}
+
+.onboarding-pro-strip-icon {
+  width: 46px;
+  min-width: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(24, 8, 35, 0.42));
+}
+
+.onboarding-pro-strip-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* Body face, not the game-action display face, and no longer bold. That face
+   is drawn for short uppercase labels; "PRO · $1.99 / 30 días" is mostly
+   digits and punctuation, and at weight 800 the glyphs thickened into each
+   other until the price was the hardest thing on the slide to read. The line
+   still outweighs the benefits under it, so the hierarchy survives the
+   lighter weight (founder, 2026-07-29). */
+.onboarding-pro-strip-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.15;
+  color: #fff7c3;
+}
+
+/* Deliberately NOT nowrap+ellipsis like its source rule. This is the only
+   place the paid tier is explained, and the Spanish line is longer than the
+   English one: truncating it cuts the argument, not the decoration. */
+.onboarding-pro-strip-benefits {
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: rgba(255, 248, 220, 0.9);
+}
+
+/* ── Slide 4: the mode switch ──────────────────────────────────────────────
+   Face ported from apps/web `.hub-app-mode-switch`. Two differences: the
+   halves are links, so the gold is driven by `data-recommended` rather than
+   `aria-pressed` (which belongs to role=button and would be ARIA no reader
+   interprets), and LEARN wears it permanently as a product recommendation
+   rather than as a reading of app state. */
+.onboarding-mode-switch-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding-top: 0.75rem;
+}
+
+.hub-app-mode-switch {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: min(100%, 260px);
+  min-height: 46px;
+  padding: 3px;
+  border: 0.5px solid rgba(171, 104, 15, 0.82);
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fff8df 0%, #f5e2b6 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 3px 7px rgba(48, 29, 8, 0.3);
+}
+
+.hub-app-mode-switch-pill {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  color: #5d3515;
+  font-family: var(--font-game-action), system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: transform 120ms ease, background 140ms ease;
+}
+
+.hub-app-mode-switch-pill[data-recommended="true"] {
+  background: linear-gradient(180deg, #ffe26d 0%, #f9ce89 60%, #ffb555 100%);
+}
+
+.hub-app-mode-switch-pill:active {
+  transform: scale(0.97);
+}
+
+/* The landing leaves through a cross-origin document navigation. `:active`
+   ends when the thumb lifts, so pending is a separate, persistent state. */
+.hub-app-mode-switch[data-pending] .hub-app-mode-switch-pill {
+  cursor: wait;
+  opacity: 0.58;
+  pointer-events: none;
+}
+
+.hub-app-mode-switch[data-pending] .hub-app-mode-switch-pill[aria-disabled="true"] {
+  transform: none;
+}
+
+.onboarding-mode-switch-status {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 1.5rem;
+  margin: 0;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid rgba(255, 248, 220, 0.72);
+  border-radius: 9999px;
+  background: rgba(73, 43, 13, 0.92);
+  box-shadow: 0 2px 7px rgba(30, 16, 4, 0.48);
+  color: rgba(255, 248, 220, 0.96);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 2px rgba(30, 20, 9, 0.72);
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.onboarding-mode-switch-spinner {
+  width: 0.78rem;
+  height: 0.78rem;
+  border: 2px solid rgba(255, 247, 205, 0.4);
+  border-top-color: #fff7c3;
+  border-radius: 9999px;
+  animation: onboarding-mode-switch-spin 700ms linear infinite;
+}
+
+@keyframes onboarding-mode-switch-spin {
+  to { transform: rotate(360deg); }
+}
+
+.hub-app-mode-switch-icon {
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 2px 1px rgba(61, 37, 7, 0.3));
+}
+
+/* Floats over the OUTER edge of the half it belongs to, so the eye reads it
+   as attached to that button rather than hovering between the two. */
+.onboarding-last-used {
+  position: absolute;
+  top: 0;
+  padding: 2px 9px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #46d17a 0%, #2fae5c 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 2px 5px rgba(10, 48, 26, 0.4);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.onboarding-last-used[data-side="left"] {
+  left: max(0px, calc(50% - 130px));
+}
+
+.onboarding-last-used[data-side="right"] {
+  right: max(0px, calc(50% - 130px));
+}
+
+.onboarding-switch-note {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fdf6e4;
+  text-shadow: 0 1px 3px rgba(14, 30, 78, 0.8);
+}
+
+/* ── Footer: language ─────────────────────────────────────────────────────── */
+.onboarding-locale-switch {
+  display: inline-grid;
+  grid-auto-flow: column;
+  gap: 2px;
+  margin-left: 4px;
+  padding: 2px;
+  border-radius: 9999px;
+  background: rgba(19, 45, 122, 0.6);
+  border: 1px solid rgba(158, 197, 255, 0.45);
+}
+
+.onboarding-locale-switch-option {
+  padding: 1px 7px;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.72);
+  text-shadow: none;
+}
+
+.onboarding-locale-switch-option[data-active="true"] {
+  background: linear-gradient(180deg, #ffe9b0 0%, #f4c96f 100%);
+  color: #4a2f08;
+}
+/* ── /pricing ─────────────────────────────────────────────────────────────
+   Medallions and ribbons are COMPOSED here, not cropped from the mockup PNGs.
+   Cutting them out would ship three more raster assets that blur on a desktop
+   screen; a piece sprite inside a CSS ring stays sharp at any size and costs
+   nothing to download. It also obeys the house rule about never upscaling art. */
+
+.pricing-shell {
+  position: relative;
+  min-height: 100dvh;
+  isolation: isolate;
+}
+
+/* ⛔ FIXED, not absolute. Stretched over the whole scroll height the 1536x1024
+   artwork became almost entirely sky — the landscape only reappeared past the
+   third card. Pinned to the viewport it keeps its own proportions, and the
+   scenery sits behind the cards the way the mockup shows. */
+.pricing-bg,
+.pricing-bg img {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+}
+
+.pricing-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 22px 16px 26px;
+  color: #2b2118;
+}
+
+.pricing-head {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* ⚠️ LIGHT TEXT WITH A DARK OUTLINE, not dark text with a light one. The title
+   lands on the artwork's sky, which is a saturated blue: brown-on-cream washed
+   out completely there. This reads on sky AND on grass, which is what a page
+   whose background scrolls under it needs. */
+.pricing-title {
+  margin: 0 0 10px;
+  color: #fff8e6;
+  font-size: clamp(1.9rem, 5vw, 2.5rem);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  text-shadow:
+    0 2px 0 rgba(60, 35, 10, 0.9),
+    0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+.pricing-subtitle {
+  max-width: 30ch;
+  margin: 0 auto;
+  color: #fff8e6;
+  font-size: 1.02rem;
+  font-weight: 700;
+  text-shadow:
+    0 1px 0 rgba(60, 35, 10, 0.9),
+    0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.pricing-grid {
+  display: grid;
+  gap: 42px 16px; /* Row gap leaves room for the medallion overhang. */
+  grid-template-columns: 1fr;
+  padding-top: 30px;
+}
+
+@media (min-width: 860px) {
+  .pricing-grid {
+    grid-template-columns: repeat(3, 1fr);
+    align-items: start;
+  }
+}
+
+.pricing-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 18px 18px; /* Top padding clears the medallion. */
+  border: 3px solid #d8b46a;
+  border-radius: 22px;
+  background: #f7ecd2;
+  box-shadow: 0 6px 0 rgba(140, 100, 40, 0.28), 0 12px 26px rgba(0, 0, 0, 0.16);
+}
+
+.pricing-card.is-featured {
+  border-color: #5aa02c;
+  box-shadow: 0 6px 0 rgba(60, 110, 30, 0.32), 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Medallion: a ring straddling the card's top edge ── */
+.pricing-medallion {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  display: grid;
+  width: 66px;
+  height: 66px;
+  border: 4px solid #f2e2bd;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #fff6dd, #e3c684);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+  place-items: center;
+  transform: translateX(-50%);
+}
+
+.pricing-card[data-tone="green"] .pricing-medallion {
+  background: radial-gradient(circle at 50% 35%, #8fd35a, #4e8f26);
+}
+
+.pricing-card[data-tone="purple"] .pricing-medallion {
+  background: radial-gradient(circle at 50% 35%, #b98ce8, #6d3fa8);
+}
+
+.pricing-medallion-piece {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+}
+
+.pricing-medallion-glyph {
+  color: #ffd76a;
+  font-size: 38px;
+  line-height: 1;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Ribbon: the plan name on a banner ── */
+.pricing-ribbon {
+  position: relative;
+  margin: 0 auto 12px;
+  /* Trimmed from 7px 26px / 1rem. The banner was the loudest thing on a card
+     whose job is to be read, and it only ever holds one short word. */
+  padding: 5px 22px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #6fb733, #47821f);
+  color: #fff;
+  font-size: 0.94rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  text-transform: uppercase;
+}
+
+.pricing-card[data-tone="purple"] .pricing-ribbon {
+  background: linear-gradient(180deg, #9a63d8, #6a35a6);
+}
+
+/* The banner's folded tails.
+   ⚠️ A TRIANGLE CANNOT HOLD A GRADIENT, and that is why the first version's
+   tails looked like a different colour: the body runs #6fb733 → #47821f top to
+   bottom, so a flat #47821f tail matched only its darkest row and read as a
+   separate, darker shape (founder). They are drawn as clipped BOXES now, which
+   can carry the same gradient the body does.
+
+   ⛔ THE TAIL IS WIDER THAN IT LOOKS, AND THAT IS THE POINT. 17px of box for
+   12px of visible tail: the extra 5px tuck UNDER the body. Butting them at the
+   body's edge left a pale wedge at each junction (founder) — the body's
+   border-radius carves its corners away, and with nothing behind them the
+   card's cream showed through the gap. Overlapping fills it, and the seam is
+   invisible because both halves run the identical gradient over the identical
+   height, so every row matches exactly.
+
+   ⚠️ Each polygon is traced in one direction and never crosses itself. The
+   version before this one listed its points out of order, which made a
+   self-intersecting path whose fill is up to the renderer — the second reason
+   those edges looked wrong. */
+.pricing-ribbon::before,
+.pricing-ribbon::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 17px;
+  background: linear-gradient(180deg, #6fb733, #47821f);
+  content: "";
+}
+
+/* Outer edge at 0, notch biting inward to 7px (41% of 17). */
+.pricing-ribbon::before {
+  left: -12px;
+  clip-path: polygon(100% 0, 0 0, 41% 50%, 0 100%, 100% 100%);
+}
+
+/* Mirrored: outer edge at 100%, notch to 59%. */
+.pricing-ribbon::after {
+  right: -12px;
+  clip-path: polygon(0 0, 100% 0, 59% 50%, 100% 100%, 0 100%);
+}
+
+.pricing-card[data-tone="purple"] .pricing-ribbon::before,
+.pricing-card[data-tone="purple"] .pricing-ribbon::after {
+  background: linear-gradient(180deg, #9a63d8, #6a35a6);
+}
+
+/* ── Price ── */
+.pricing-card-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 6px;
+}
+
+.pricing-card-amount {
+  color: #3d7a1a;
+  font-size: 2.15rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.7);
+}
+
+.pricing-card[data-tone="purple"] .pricing-card-amount {
+  color: #6a35a6;
+}
+
+.pricing-card-cadence {
+  color: #6b4a22;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.pricing-card-summary {
+  margin: 0 0 12px;
+  color: #4a3a24;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* ── Features ── */
+.pricing-card-features {
+  margin: 0;
+  padding: 12px 0 0;
+  border-top: 1px solid rgba(140, 100, 40, 0.24);
+  list-style: none;
+}
+
+.pricing-card-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 7px;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.pricing-check {
+  flex-shrink: 0;
+  color: #3d7a1a;
+  font-weight: 800;
+}
+
+/* ── Footer ── */
+.pricing-foot {
+  margin-top: 22px;
+  text-align: center;
+}
+
+.pricing-note {
+  max-width: 46ch;
+  margin: 0 auto 7px;
+  padding: 7px 14px;
+  border-radius: 12px;
+  background: rgba(247, 236, 210, 0.9);
+  color: #4a3a24;
+  font-size: 0.84rem;
+}
+
+.pricing-cta {
+  margin-top: 12px;
+}
+
+/* ⛔ THE WHOLE PAGE IN ONE SCREEN (founder). On a desktop the two footer notes
+   stacked cost a full row and pushed the CTA below the fold. Side by side they
+   fit, and on a phone they fall back to stacking where vertical space is not
+   the constraint. */
+@media (min-width: 860px) {
+  /* ⚠️ GRID, not flex-wrap. With flex the CTA either stretched to the full
+     width (`flex-basis: 100%`) or sat beside the notes as a third column.
+     A two-column grid gives the notes one row and the button the next, and
+     `justify-items: center` keeps it its own size instead of the row's. */
+  .pricing-foot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    justify-items: center;
+    max-width: 780px;
+    margin-inline: auto;
+  }
+
+  .pricing-note {
+    max-width: 34ch;
+    /* Top-aligned: the two notes are different lengths, and centring them made
+       the shorter one float against the taller one's middle. */
+    align-self: stretch;
+    margin: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  /* ⚠️ `flex-basis: 100%` put the CTA on its own row AND stretched it into a
+     full-width green bar. Its own row is right; the stretch is not — a button
+     as wide as the page reads as a banner, not as something to press. */
+  .pricing-cta {
+    grid-column: 1 / -1;
+    margin: 4px 0 0;
+  }
+}
+
+/* ── /pricing: brand + legal ──────────────────────────────────────────────
+   The page used to have neither, which for a business listing was the most
+   expensive omission on it: an evaluator arriving from a directory could not
+   tell whose product this is, nor reach the rest of it (Sally, 2026-08-27). */
+
+.pricing-brand {
+  display: inline-block;
+  margin-bottom: 6px;
+  transition: opacity 0.15s;
+}
+
+.pricing-brand:hover {
+  opacity: 0.88;
+}
+
+.pricing-brand img {
+  width: clamp(132px, 20vw, 178px);
+  height: auto;
+  /* Lifts off the sky without a plate behind it. */
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.32));
+}
+
+.pricing-legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 8px;
+  margin-top: 14px;
+  font-size: 0.76rem;
+}
+
+.pricing-legal a {
+  color: #fff8e6;
+  font-weight: 600;
+  text-decoration: underline;
+  text-shadow: 0 1px 2px rgba(40, 25, 5, 0.75);
+  text-underline-offset: 2px;
+}
+
+.pricing-legal a:hover {
+  opacity: 0.82;
+}
+
+.pricing-legal span {
+  color: rgba(255, 248, 230, 0.55);
+}
+
+/* The wordmark and the legal row cost vertical space, and the page has to stay
+   inside one screen. Trimmed here rather than by shrinking the cards, which are
+   the thing an evaluator actually reads. */
+@media (min-width: 860px) {
+  .pricing-page {
+    padding-top: 14px;
+  }
+
+  .pricing-head {
+    margin-bottom: 14px;
+  }
+
+  .pricing-foot {
+    margin-top: 16px;
+  }
+
+  .pricing-legal {
+    margin-top: 10px;
+  }
+}
+
+/* ── /pricing: the featured badge ─────────────────────────────────────────
+   The green border and heavier shadow marked one card as special without ever
+   saying why, so the highlight read as decoration (Sally, 2026-08-27). The
+   pattern an evaluator expects is a label, and now there is one. */
+
+.pricing-badge {
+  position: absolute;
+  top: -13px;
+  right: 14px;
+  padding: 4px 12px;
+  border: 2px solid #f2e2bd;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #6fb733, #47821f);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  text-transform: uppercase;
+  /* Above the card, below the medallion: the medallion is the card's identity
+     and must never be overlapped by a label. */
+  z-index: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+}

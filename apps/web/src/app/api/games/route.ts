@@ -1,0 +1,150 @@
+import { authorizeGameWrite } from "@/lib/server/game-write-authorization";
+import { GAME_WRITE_MAX_BYTES } from "@/lib/coach/game-write-message";
+import { authorizeHistoryRead } from "@/lib/server/history-read-authorization";
+import { NextResponse } from "next/server";
+import { getRedis } from "@/lib/server/redis";
+import { isAddress } from "viem";
+import { REDIS_KEYS } from "@/lib/coach/redis-keys";
+import { enforceGameCap, GAME_LIST_LPUSH_LUA, UUID_RE } from "@/lib/coach/game-persistence";
+import { createLogger, hashWallet } from "@/lib/server/logger";
+import { recordRedisUsage } from "@/lib/server/redis-observability";
+import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import type { GameRecord } from "@/lib/coach/types";
+
+const MAX_MOVES = 500;
+
+export const dynamic = "force-dynamic";
+
+const redis = getRedis();
+const log = createLogger({ route: "/api/games" });
+
+export async function POST(req: Request) {
+  try {
+    enforceOrigin(req);
+    await enforceRateLimit(getRequestIp(req), undefined, "/api/games");
+
+    const rawBody = await req.text();
+    if (new TextEncoder().encode(rawBody).byteLength > GAME_WRITE_MAX_BYTES) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
+    let body;
+    try { body = JSON.parse(rawBody); } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+    const { walletAddress, game } = body as { walletAddress?: string; game?: GameRecord };
+
+    if (typeof walletAddress !== "string" || !walletAddress || !game?.gameId) {
+      return NextResponse.json({ error: "Missing walletAddress or game" }, { status: 400 });
+    }
+    if (!isAddress(walletAddress)) {
+      return NextResponse.json({ error: "Invalid wallet address" }, { status: 400 });
+    }
+    if (!UUID_RE.test(game.gameId)) {
+      return NextResponse.json({ error: "Invalid gameId format" }, { status: 400 });
+    }
+    if (!Array.isArray(game.moves) || game.moves.length > MAX_MOVES ||
+        game.moves.some((m: unknown) => typeof m !== "string" || m.length > 10)) {
+      return NextResponse.json({ error: "Invalid moves" }, { status: 400 });
+    }
+    if (game.playerColor !== undefined && game.playerColor !== "w" && game.playerColor !== "b") {
+      return NextResponse.json({ error: "Invalid playerColor" }, { status: 400 });
+    }
+
+    if (!(await authorizeGameWrite(req, walletAddress, game.gameId, rawBody))) {
+      return NextResponse.json({ error: "Game write authorization required" }, {
+        status: 401, headers: { "Cache-Control": "private, no-store" },
+      });
+    }
+
+    const wallet = walletAddress.toLowerCase();
+    const record: GameRecord = {
+      ...game,
+      totalMoves: game.moves.length,
+      receivedAt: Date.now(),
+    };
+
+    // Cluster E (§0.1): replaced the legacy `ltrim(0, 99)` with
+    // `enforceGameCap`, which raises the per-wallet cap to 200 and skips
+    // analyzed entries during FIFO eviction so a player's coached games
+    // are never silently dropped to make room for a fresh match.
+    await redis.set(REDIS_KEYS.game(wallet, game.gameId), record, { ex: 90 * 24 * 60 * 60 });
+    // Cluster E defer #1: atomic LPOS+LPUSH via Lua eval closes the TOCTOU
+    // race where two concurrent POSTs with the same gameId both observe
+    // LPOS=nil and both LPUSH, producing duplicate head entries. Redis Lua
+    // scripts run single-threaded; no other command interleaves.
+    await redis.eval(
+      GAME_LIST_LPUSH_LUA,
+      [REDIS_KEYS.gameList(wallet)],
+      [game.gameId],
+    );
+    await enforceGameCap(redis, wallet, {
+      onOverflow: (info) => {
+        log.warn("game_persist_cap_overflow", {
+          wallet_hash: hashWallet(info.wallet),
+          list_length: info.listLength,
+          analyzed_in_tail: info.analyzedInTail,
+        });
+      },
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    log.error("game_persist_error", {
+      error: err instanceof Error ? err.message : "unknown",
+    });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function GET(req: Request) {
+  try {
+    enforceOrigin(req);
+    await enforceRateLimit(getRequestIp(req), undefined, "/api/games");
+  } catch {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const url = new URL(req.url);
+  const wallet = url.searchParams.get("wallet")?.toLowerCase();
+  if (!wallet || !isAddress(wallet)) return NextResponse.json({ error: "Invalid wallet" }, { status: 400 });
+
+  if (!(await authorizeHistoryRead(req, wallet))) {
+    return NextResponse.json({ error: "History authorization required" }, {
+      status: 401, headers: { "Cache-Control": "private, no-store" },
+    });
+  }
+
+  // Cluster E defer #4: defense-in-depth UUID filter. POST already
+  // rejects non-UUID gameIds at write time, but legacy entries or
+  // Redis-level corruption could leak into the list. Filtering here
+  // (a) keeps `coach-history.tsx` from propagating bad ids to the
+  // Analyze endpoint, and (b) skips an unnecessary `redis.get`
+  // round-trip per corrupt entry. A `warn` log fires on any drop so
+  // corruption is observable, not silent.
+  const rawIds = await redis.lrange<string>(REDIS_KEYS.gameList(wallet), 0, 19);
+  const validIds = rawIds.filter((id) => typeof id === "string" && UUID_RE.test(id));
+  if (validIds.length < rawIds.length) {
+    log.warn("game_list_invalid_id_filtered", {
+      wallet_hash: hashWallet(wallet),
+      dropped: rawIds.length - validIds.length,
+      total: rawIds.length,
+    });
+  }
+  const games = await Promise.all(
+    validIds.map((id) => redis.get<GameRecord>(REDIS_KEYS.game(wallet, id))),
+  );
+
+  const returned = games.filter(Boolean);
+  recordRedisUsage(log, {
+    redis_feature: "games_list",
+    redis_logical_operation: "list_and_hydrate",
+    endpoint: "/api/games",
+    redis_estimated_commands: 1 + validIds.length,
+    items_requested: validIds.length,
+    items_returned: returned.length,
+  });
+  return NextResponse.json(returned, { headers: { "Cache-Control": "private, no-store" } });
+}

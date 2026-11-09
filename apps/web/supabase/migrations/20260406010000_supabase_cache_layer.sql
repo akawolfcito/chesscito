@@ -1,0 +1,5 @@
+-- Baseline migration — captured retrospectively.
+-- Supabase cache layer tables (practice_runs, practice_move_logs,
+-- coach_summaries, progress_snapshots, hall_of_fame_index).
+-- Already applied on 2026-04-06; this placeholder keeps local tracking
+-- consistent with remote.

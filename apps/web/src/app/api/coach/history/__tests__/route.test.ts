@@ -1,0 +1,396 @@
+vi.mock("@/lib/server/history-read-authorization", () => ({ authorizeHistoryRead: vi.fn(async () => true) }));
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+const redisMock = vi.hoisted(() => ({
+  lrange: vi.fn(),
+  get: vi.fn(),
+  set: vi.fn(),
+  del: vi.fn(),
+}));
+vi.mock("@upstash/redis", () => ({
+  Redis: { fromEnv: () => redisMock },
+}));
+
+vi.mock("@/lib/server/demo-signing", () => ({
+  enforceOrigin: vi.fn(),
+  enforceRateLimit: vi.fn(),
+  getRequestIp: vi.fn(() => "127.0.0.1"),
+}));
+
+vi.mock("@/lib/server/rate-limit", () => ({
+  checkRateLimit: vi.fn(),
+}));
+
+vi.mock("@/lib/supabase/server", () => ({
+  getSupabaseServer: vi.fn(),
+}));
+
+import { GET } from "../route";
+import { enforceOrigin, enforceRateLimit } from "@/lib/server/demo-signing";
+import { checkRateLimit } from "@/lib/server/rate-limit";
+
+const mockedOrigin = vi.mocked(enforceOrigin);
+const mockedRate = vi.mocked(enforceRateLimit);
+const mockedReadRate = vi.mocked(checkRateLimit);
+const ALLOWED = { allowed: true, outcome: "allowed", resetAt: null } as const;
+
+const VALID_WALLET = "0xcc4179a22b473ea2eb2b9b9b210458d0f60fc2dd";
+
+function makeRequest(wallet: string | null) {
+  const suffix = wallet === null ? "" : `?wallet=${wallet}`;
+  return new Request(`http://localhost/api/coach/history${suffix}`, { method: "GET" });
+}
+
+function makeAnalysis(gameId: string) {
+  return {
+    gameId,
+    provider: "server",
+    model: "gpt-4o-mini",
+    analysisVersion: "1.0.0",
+    createdAt: 1_700_000_000_000,
+    response: { summary: `analysis for ${gameId}` },
+  };
+}
+
+function makeGame(gameId: string) {
+  return {
+    gameId,
+    moves: ["e4", "e5"],
+    result: "win",
+    difficulty: "easy",
+    totalMoves: 2,
+    receivedAt: 1_700_000_000_000,
+  };
+}
+
+describe("GET /api/coach/history", () => {
+  beforeEach(() => {
+    mockedOrigin.mockReset();
+    mockedRate.mockReset();
+    mockedReadRate.mockReset();
+    redisMock.lrange.mockReset();
+    redisMock.get.mockReset();
+
+    mockedOrigin.mockImplementation(() => {});
+    mockedRate.mockResolvedValue(undefined);
+    mockedReadRate.mockResolvedValue(ALLOWED);
+  });
+
+  it("returns paired analysis+game records (status 200)", async () => {
+    redisMock.lrange.mockResolvedValue(["g1", "g2"]);
+    // Per-locale migration (2026-05-24): analysis keys now include a
+    // trailing `:en` / `:es` segment, so the gameId is the segment at
+    // index 3 (`coach:analysis:<wallet>:<gameId>[:<locale>]`).
+    const extractGameId = (key: string): string => key.split(":")[3] ?? "";
+    redisMock.get.mockImplementation((key: string) => {
+      if (key.startsWith("coach:analysis:"))
+        return Promise.resolve(makeAnalysis(extractGameId(key)));
+      if (key.startsWith("coach:game:"))
+        return Promise.resolve(makeGame(extractGameId(key)));
+      return Promise.resolve(null);
+    });
+
+    const res = await GET(makeRequest(VALID_WALLET));
+    expect(res.status).toEqual(200);
+    const body = (await res.json()) as Array<{ gameId: string }>;
+    expect(body).toHaveLength(2);
+    expect(body.map((e) => e.gameId)).toEqual(["g1", "g2"]);
+  });
+
+  it("drops entries when either analysis or game is missing", async () => {
+    redisMock.lrange.mockResolvedValue(["g1", "g2"]);
+    redisMock.get.mockImplementation((key: string) => {
+      if (key === `coach:analysis:${VALID_WALLET}:g1`) return Promise.resolve(makeAnalysis("g1"));
+      if (key === `coach:game:${VALID_WALLET}:g1`) return Promise.resolve(makeGame("g1"));
+      // g2: analysis missing
+      return Promise.resolve(null);
+    });
+
+    const res = await GET(makeRequest(VALID_WALLET));
+    const body = (await res.json()) as Array<{ gameId: string }>;
+    expect(body).toHaveLength(1);
+    expect(body[0].gameId).toEqual("g1");
+  });
+
+  it("returns an empty list when the analysisList is empty", async () => {
+    redisMock.lrange.mockResolvedValue([]);
+    const res = await GET(makeRequest(VALID_WALLET));
+    expect(res.status).toEqual(200);
+    expect(await res.json()).toEqual([]);
+  });
+
+  it("reads 50 from analysisList then dedups to 20 (per-locale migration)", async () => {
+    // Per-locale migration (2026-05-24): the list LPUSHes on every
+    // analyze write, so EN+ES for the same game both land in the list.
+    // Read a wider window then dedup to 20 unique gameIds so duplicates
+    // don't eat the visible history.
+    redisMock.lrange.mockResolvedValue([]);
+    await GET(makeRequest(VALID_WALLET));
+    expect(redisMock.lrange).toHaveBeenCalledWith(`coach:analyses:${VALID_WALLET}`, 0, 49);
+  });
+
+  it("dedups duplicate gameIds when EN+ES analyses both LPUSH'd the same id", async () => {
+    // Simulate: g1 analyzed in both locales (2 LPUSHes), g2 once.
+    redisMock.lrange.mockResolvedValue(["g1", "g2", "g1"]);
+    const extractGameId = (key: string): string => key.split(":")[3] ?? "";
+    redisMock.get.mockImplementation((key: string) => {
+      if (key.startsWith("coach:analysis:"))
+        return Promise.resolve({ gameId: extractGameId(key), summary: "x" });
+      if (key.startsWith("coach:game:"))
+        return Promise.resolve({ gameId: extractGameId(key), moves: [] });
+      return Promise.resolve(null);
+    });
+
+    const res = await GET(makeRequest(VALID_WALLET));
+    const body = (await res.json()) as Array<{ gameId: string }>;
+    expect(body.map((e) => e.gameId)).toEqual(["g1", "g2"]);
+  });
+
+  it("returns 403 when enforceOrigin rejects", async () => {
+    mockedOrigin.mockImplementation(() => { throw new Error("Forbidden"); });
+    const res = await GET(makeRequest(VALID_WALLET));
+    expect(res.status).toEqual(403);
+  });
+
+  it("returns 403 when read rate limit is exceeded", async () => {
+    // GET handler now uses the lenient enforceReadRateLimit (matches
+    // /api/pro/status). Strict enforceRateLimit was the old gate that
+    // tripped during hub ↔ /coach/history navigation in dev (real
+    // incident 2026-05-07).
+    mockedReadRate.mockResolvedValue({
+      allowed: false,
+      outcome: "limited",
+      resetAt: null,
+    });
+    const res = await GET(makeRequest(VALID_WALLET));
+    expect(res.status).toEqual(403);
+  });
+
+  it("returns 400 when the wallet query param is missing", async () => {
+    const res = await GET(makeRequest(null));
+    expect(res.status).toEqual(400);
+  });
+
+  it("returns 400 when the wallet address is malformed", async () => {
+    const res = await GET(makeRequest("0xnope"));
+    expect(res.status).toEqual(400);
+  });
+});
+
+// recoverMessageAddress is mocked at the viem layer so tests don't have
+// to compute real signatures. The DELETE handler is the only consumer of
+// this API surface in this file, so a partial mock is safe.
+vi.mock("viem", async (importActual) => {
+  const actual = await importActual<typeof import("viem")>();
+  return {
+    ...actual,
+    recoverMessageAddress: vi.fn(),
+  };
+});
+
+import { DELETE } from "../route";
+import { recoverMessageAddress } from "viem";
+
+const mockedRecover = vi.mocked(recoverMessageAddress);
+
+const DELETE_WALLET = "0x1234567890abcdef1234567890abcdef12345678";
+const VALID_NONCE = "deadbeefcafef00d1234567890abcdef";
+const VALID_SIG = "0x" + "11".repeat(65);
+
+function makeDeleteRequest(body: unknown) {
+  return new Request("http://localhost/api/coach/history", {
+    method: "DELETE",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+function freshIso() {
+  return new Date().toISOString();
+}
+
+describe("DELETE /api/coach/history", () => {
+  beforeEach(() => {
+    mockedOrigin.mockReset();
+    mockedRate.mockReset();
+    mockedReadRate.mockReset();
+    redisMock.set.mockReset();
+    redisMock.get.mockReset();
+    redisMock.del.mockReset();
+    redisMock.lrange.mockReset();
+    mockedRecover.mockReset();
+    vi.stubEnv("LOG_SALT", "test-salt");
+
+    mockedOrigin.mockImplementation(() => {});
+    mockedRate.mockResolvedValue(undefined);
+    redisMock.set.mockResolvedValue("OK");
+    redisMock.del.mockResolvedValue(1);
+    redisMock.lrange.mockResolvedValue([]);
+  });
+
+  it("400 — invalid wallet shape", async () => {
+    const res = await DELETE(makeDeleteRequest({
+      walletAddress: "0xnotanaddress",
+      signature: VALID_SIG,
+      nonce: VALID_NONCE,
+      issuedIso: freshIso(),
+    }));
+    expect(res.status).toBe(400);
+  });
+
+  it("400 — invalid nonce shape (not 32 hex chars)", async () => {
+    const res = await DELETE(makeDeleteRequest({
+      walletAddress: DELETE_WALLET,
+      signature: VALID_SIG,
+      nonce: "tooshort",
+      issuedIso: freshIso(),
+    }));
+    expect(res.status).toBe(400);
+  });
+
+  it("410 — message older than 5 minutes", async () => {
+    const stale = new Date(Date.now() - 6 * 60 * 1000).toISOString();
+    const res = await DELETE(makeDeleteRequest({
+      walletAddress: DELETE_WALLET,
+      signature: VALID_SIG,
+      nonce: VALID_NONCE,
+      issuedIso: stale,
+    }));
+    expect(res.status).toBe(410);
+  });
+
+  it("410 — message issued more than 30s in the future (clock skew rejected)", async () => {
+    const future = new Date(Date.now() + 60 * 1000).toISOString(); // 60s ahead, beyond 30s skew
+    const res = await DELETE(makeDeleteRequest({
+      walletAddress: DELETE_WALLET,
+      signature: VALID_SIG,
+      nonce: VALID_NONCE,
+      issuedIso: future,
+    }));
+    expect(res.status).toBe(410);
+  });
+
+  it("409 — nonce already claimed (replay)", async () => {
+    redisMock.set.mockResolvedValue(null);
+    const res = await DELETE(makeDeleteRequest({
+      walletAddress: DELETE_WALLET,
+      signature: VALID_SIG,
+      nonce: VALID_NONCE,
+      issuedIso: freshIso(),
+    }));
+    expect(res.status).toBe(409);
+  });
+
+  it("401 — signature recovery throws", async () => {
+    mockedRecover.mockRejectedValue(new Error("bad signature bytes"));
+    const res = await DELETE(makeDeleteRequest({
+      walletAddress: DELETE_WALLET,
+      signature: VALID_SIG,
+      nonce: VALID_NONCE,
+      issuedIso: freshIso(),
+    }));
+    expect(res.status).toBe(401);
+  });
+
+  it("403 — recovered address ≠ body walletAddress", async () => {
+    mockedRecover.mockResolvedValue("0xabababababababababababababababababababab");
+    const res = await DELETE(makeDeleteRequest({
+      walletAddress: DELETE_WALLET,
+      signature: VALID_SIG,
+      nonce: VALID_NONCE,
+      issuedIso: freshIso(),
+    }));
+    expect(res.status).toBe(403);
+  });
+
+  it("503 — Supabase unavailable", async () => {
+    mockedRecover.mockResolvedValue(DELETE_WALLET);
+    const { getSupabaseServer } = await import("@/lib/supabase/server");
+    vi.mocked(getSupabaseServer).mockReturnValue(null);
+
+    const res = await DELETE(makeDeleteRequest({
+      walletAddress: DELETE_WALLET,
+      signature: VALID_SIG,
+      nonce: VALID_NONCE,
+      issuedIso: freshIso(),
+    }));
+    expect(res.status).toBe(503);
+  });
+
+  it("200 happy path — deletes Supabase rows + Redis keys", async () => {
+    mockedRecover.mockResolvedValue(DELETE_WALLET);
+
+    const supabaseEq = vi.fn().mockResolvedValue({ count: 7, error: null });
+    const supabaseDeleteWrap = vi.fn().mockReturnValue({ eq: supabaseEq });
+    const supabaseFrom = vi.fn().mockReturnValue({ delete: supabaseDeleteWrap });
+    const { getSupabaseServer } = await import("@/lib/supabase/server");
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: supabaseFrom } as never);
+
+    redisMock.lrange.mockResolvedValue(["g1", "g2"]);
+    redisMock.del.mockResolvedValue(3);
+
+    const res = await DELETE(makeDeleteRequest({
+      walletAddress: DELETE_WALLET,
+      signature: VALID_SIG,
+      nonce: VALID_NONCE,
+      issuedIso: freshIso(),
+    }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ deleted: true, supabase_rows: 7 });
+    expect(supabaseFrom).toHaveBeenCalledWith("coach_analyses");
+    expect(supabaseEq).toHaveBeenCalledWith("wallet", DELETE_WALLET);
+    expect(redisMock.del).toHaveBeenCalledWith(
+      `coach:analyses:${DELETE_WALLET}`,
+      `coach:analysis:${DELETE_WALLET}:g1`,
+      `coach:analysis:${DELETE_WALLET}:g1:en`,
+      `coach:analysis:${DELETE_WALLET}:g1:es`,
+      `coach:analysis:${DELETE_WALLET}:g2`,
+      `coach:analysis:${DELETE_WALLET}:g2:en`,
+      `coach:analysis:${DELETE_WALLET}:g2:es`,
+    );
+  });
+
+  it("returns 200 with partial_failure='supabase' when only Supabase write errors", async () => {
+    mockedRecover.mockResolvedValue(DELETE_WALLET);
+    // Supabase delete returns an error (eq() resolves to PostgREST result)
+    const supabaseEq = vi.fn().mockResolvedValue({ count: null, error: { message: "rls denied" } });
+    const supabaseDeleteWrap = vi.fn().mockReturnValue({ eq: supabaseEq });
+    const supabaseFrom = vi.fn().mockReturnValue({ delete: supabaseDeleteWrap });
+    const { getSupabaseServer } = await import("@/lib/supabase/server");
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: supabaseFrom } as never);
+
+    redisMock.lrange.mockResolvedValue([]);
+    redisMock.del.mockResolvedValue(0);
+
+    const res = await DELETE(makeDeleteRequest({
+      walletAddress: DELETE_WALLET,
+      signature: VALID_SIG,
+      nonce: VALID_NONCE,
+      issuedIso: freshIso(),
+    }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ deleted: true, supabase_rows: 0, partial_failure: "supabase" });
+  });
+
+  it("returns 500 when both Supabase and Redis fail", async () => {
+    mockedRecover.mockResolvedValue(DELETE_WALLET);
+    // Supabase rejects (network throw, not error field)
+    const supabaseEq = vi.fn().mockRejectedValue(new Error("supabase down"));
+    const supabaseDeleteWrap = vi.fn().mockReturnValue({ eq: supabaseEq });
+    const supabaseFrom = vi.fn().mockReturnValue({ delete: supabaseDeleteWrap });
+    const { getSupabaseServer } = await import("@/lib/supabase/server");
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: supabaseFrom } as never);
+
+    redisMock.lrange.mockRejectedValue(new Error("redis down"));
+
+    const res = await DELETE(makeDeleteRequest({
+      walletAddress: DELETE_WALLET,
+      signature: VALID_SIG,
+      nonce: VALID_NONCE,
+      issuedIso: freshIso(),
+    }));
+    expect(res.status).toBe(500);
+  });
+});

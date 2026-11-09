@@ -1,0 +1,40 @@
+import { notFound } from "next/navigation";
+import { isDevSurfaceEnabled } from "@/lib/dev/dev-surface";
+
+import { ArenaEndStateFixture } from "./fixture";
+
+export const dynamic = "force-dynamic";
+
+type SearchParams = { [key: string]: string | string[] | undefined };
+
+const VARIANTS = new Set([
+  "resigned",
+  "checkmate",
+  "stalemate",
+  "draw",
+  "coach-cta-enabled",
+  "coach-cta-disabled-short",
+  "coach-cta-disabled-persisting",
+  "win-celebration",
+  "win-claiming",
+  "win-success",
+  "win-error",
+  "win-timeout",
+  "loss-save",
+  "loss-save-claiming",
+  "loss-save-success",
+  "loss-save-error",
+]);
+
+export default function ArenaEndStateDevPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  if (!isDevSurfaceEnabled()) notFound();
+
+  const raw = typeof searchParams.variant === "string" ? searchParams.variant : "resigned";
+  const variant = VARIANTS.has(raw) ? raw : "resigned";
+
+  return <ArenaEndStateFixture variant={variant as never} />;
+}

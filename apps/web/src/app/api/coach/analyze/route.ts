@@ -1,0 +1,458 @@
+import { NextResponse } from "next/server";
+import { authorizeCoachRequest } from "@/lib/server/coach-request-authorization";
+import { COACH_REQUEST_MAX_BYTES } from "@/lib/coach/coach-request-message";
+import { getRedis } from "@/lib/server/redis";
+import OpenAI from "openai";
+import { isAddress } from "viem";
+import { validateGameRecord } from "@/lib/coach/validate-game";
+import { normalizeCoachResponse } from "@/lib/coach/normalize";
+import { buildCoachPrompt, type CoachLocale } from "@/lib/coach/prompt-template";
+import { REDIS_KEYS } from "@/lib/coach/redis-keys";
+import { getCachedAnalysisWithFallback } from "@/lib/coach/cache-fallback";
+import { isProActive } from "@/lib/pro/is-active";
+import { aggregateHistory } from "@/lib/coach/history-digest";
+import { backfillRedisToSupabase } from "@/lib/coach/backfill";
+import { persistAnalysis } from "@/lib/coach/persistence";
+import { UUID_RE } from "@/lib/coach/game-persistence";
+import { ANALYSIS_LIST_LPUSH_LUA } from "@/lib/coach/analysis-list-write";
+import { createLogger, hashWallet } from "@/lib/server/logger";
+import { recordRedisUsage } from "@/lib/server/redis-observability";
+import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { getSupabaseServer } from "@/lib/supabase/server";
+import type { GameRecord, CoachAnalysisRecord, PlayerSummary, HistoryDigest } from "@/lib/coach/types";
+
+/**
+ * Sprint 4 commit F — Peones fallback verification. When the client
+ * forwards a `peonesIdempotencyKey` it claims to have paid 1 Peón
+ * for this gameId. We verify by reading the ledger row server-side:
+ * the row must exist, belong to this wallet, target Coach, and point
+ * at this gameId. If verification passes the credit check is skipped
+ * AND the credit decrement is skipped (the Peón already paid).
+ *
+ * Fail-closed: any Supabase failure / shape mismatch returns false so
+ * a forged client cannot bypass the Redis credit gate. Telemetry
+ * logged at the call site.
+ */
+async function verifyPeonesCoachPayment(
+  peonesIdempotencyKey: string,
+  wallet: string,
+  gameId: string,
+): Promise<boolean> {
+  const expected = `spend:coach:${wallet}:${gameId}`;
+  if (peonesIdempotencyKey !== expected) return false;
+  const supabase = getSupabaseServer();
+  if (!supabase) return false;
+  const { data, error } = await supabase
+    .from("peones_ledger")
+    .select("wallet, event_type, source, source_id")
+    .eq("idempotency_key", peonesIdempotencyKey)
+    .maybeSingle();
+  if (error || !data) return false;
+  return (
+    data.wallet === wallet &&
+    data.event_type === "spend" &&
+    data.source === "coach" &&
+    data.source_id === gameId
+  );
+}
+
+const redis = getRedis();
+
+const MODEL = process.env.COACH_LLM_MODEL ?? "gpt-4o-mini";
+const BASE_URL = process.env.COACH_LLM_BASE_URL ?? "https://api.openai.com/v1";
+const MAX_OUTPUT_TOKENS = 1500;
+const LLM_TIMEOUT_MS = 45_000;
+const ANALYSIS_VERSION = "1.0.0";
+
+const llm = process.env.COACH_LLM_API_KEY
+  ? new OpenAI({ apiKey: process.env.COACH_LLM_API_KEY, baseURL: BASE_URL })
+  : null;
+
+export async function POST(req: Request) {
+  try {
+    enforceOrigin(req);
+    const ip = getRequestIp(req);
+    await enforceRateLimit(ip, undefined, "/api/coach/analyze");
+
+    const rawBody = await req.text();
+    if (new TextEncoder().encode(rawBody).byteLength > COACH_REQUEST_MAX_BYTES) {
+      return NextResponse.json({ error: "Request too large" }, { status: 413 });
+    }
+    const body = JSON.parse(rawBody);
+    const {
+      gameId,
+      walletAddress,
+      locale: rawLocale,
+      forceLocale: rawForceLocale,
+      peonesIdempotencyKey: rawPeonesIdempotencyKey,
+    } = body as {
+      gameId?: string;
+      walletAddress?: string;
+      locale?: string;
+      forceLocale?: unknown;
+      /** Sprint 4 commit F — Peones fallback receipt. When present and
+       *  verifiable against the ledger, the Redis credit check + the
+       *  credit decrement are both skipped (the Peón already paid). */
+      peonesIdempotencyKey?: string;
+    };
+    // H-4: locale param drives the LLM prompt language. Optional + defaults
+    // to "en" so legacy MiniPay clients (deployed before this change) keep
+    // working with bit-identical EN behavior. Whitelist guards against
+    // arbitrary strings being injected into the prompt template.
+    const locale: CoachLocale =
+      rawLocale === "es" ? "es" : "en";
+    // Reanalyze opt-in (2026-05-24). When true, skip the cache lookup so
+    // the user can regenerate an analysis in the current locale even if a
+    // cached version exists. Strict boolean coercion — anything other
+    // than literal `true` falls back to the normal idempotent read.
+    const forceLocale = rawForceLocale === true;
+
+    if (!gameId || !walletAddress) {
+      return NextResponse.json({ error: "Missing gameId or walletAddress" }, { status: 400 });
+    }
+    if (!isAddress(walletAddress)) {
+      return NextResponse.json({ error: "Invalid wallet address" }, { status: 400 });
+    }
+    if (!UUID_RE.test(gameId)) {
+      return NextResponse.json({ error: "Invalid gameId format" }, { status: 400 });
+    }
+
+    const wallet = walletAddress.toLowerCase();
+    const authorization = await authorizeCoachRequest(req, wallet, rawBody);
+    if (!authorization || authorization.gameId !== gameId) {
+      return NextResponse.json({ error: "Coach authorization required" }, { status: 401, headers: { "Cache-Control": "no-store" } });
+    }
+    // One signed request cannot regenerate/charge repeatedly via forceLocale.
+    const claimed = await redis.set(authorization.replayKey, "1", { nx: true, ex: authorization.ttlSeconds });
+    if (claimed !== "OK") {
+      return NextResponse.json({ error: "Coach request already used" }, { status: 409 });
+    }
+    const log = createLogger({ route: "/api/coach/analyze" });
+
+    // --- Idempotency: existing result? ---
+    // Cluster E §2.4.7 — flag the short-circuit so the client emits
+    // `coach_analyze_idempotent_hit{source}` instead of charging a
+    // credit. Server-side behavior is unchanged: same `ready` payload,
+    // same response shape; only the `idempotent` discriminator is new.
+    //
+    // `forceLocale=true` (reanalyze flow) bypasses this read so the
+    // user can intentionally regenerate the analysis in the active
+    // locale even when a cached version exists — at the cost of 1
+    // credit per regeneration (same as a first analysis).
+    const existingAnalysis = forceLocale
+      ? null
+      : await getCachedAnalysisWithFallback(redis, wallet, gameId, locale);
+    if (existingAnalysis) {
+      recordRedisUsage(log, {
+        redis_feature: "coach_analyze",
+        redis_logical_operation: "idempotency_lookup",
+        endpoint: "/api/coach/analyze",
+        redis_estimated_commands: locale === "en" ? 2 : 1,
+        cache_result: "hit",
+      });
+      return NextResponse.json({
+        status: "ready",
+        response: existingAnalysis.response,
+        locale: existingAnalysis.locale ?? locale,
+        idempotent: true,
+      }, { headers: { "Cache-Control": "no-store" } });
+    }
+
+    // --- Idempotency: pending job? ---
+    const existingJobId = await redis.get<string>(REDIS_KEYS.jobByGame(wallet, gameId));
+    if (existingJobId) {
+      return NextResponse.json({ jobId: existingJobId }, { headers: { "Cache-Control": "no-store" } });
+    }
+
+    // --- Rate limit: 1 pending job per wallet ---
+    const pendingJobId = await redis.get<string>(REDIS_KEYS.pendingJob(wallet));
+    if (pendingJobId) {
+      return NextResponse.json({ error: "An analysis is already in progress" }, { status: 429 });
+    }
+
+    // --- Free tier: seed 3 credits on first use (atomic Lua script — no race window) ---
+    const FREE_CREDITS = 3;
+    await redis.eval(
+      `local s = redis.call("SETNX", KEYS[1], "1")
+       if s == 1 then redis.call("SETNX", KEYS[2], ARGV[1]) end
+       return s`,
+      [`coach:seeded:${wallet}`, REDIS_KEYS.credits(wallet)],
+      [FREE_CREDITS],
+    );
+
+    // --- Chesscito PRO bypass: capture-once at the top of the request.
+    // If PRO is active we skip the credit read and the credit decrement
+    // entirely. The decision is honored to the end of the request even
+    // if PRO expires mid-LLM-call — paying customers always finish the
+    // analysis they started. ---
+    const proStatus = await isProActive(wallet);
+
+    // PRO read path — backfill once, aggregate, augment prompt. Free
+    // path skips this entirely; locked by the prompt-template free-path
+    // inline snapshot.
+    let history: HistoryDigest | null = null;
+    if (proStatus.active) {
+      try {
+        await backfillRedisToSupabase(wallet, log);
+        history = await aggregateHistory(wallet);
+        log.info("coach_history_aggregated", {
+          wallet_hash: hashWallet(wallet),
+          pro_active: true,
+          depth: history?.gamesPlayed ?? 0,
+          top_tags_count: history?.topWeaknessTags.length ?? 0,
+        });
+      } catch (err) {
+        // Fail-soft per §6.5 — degraded analysis (no augmentation) is
+        // better than 500. The free-tier prompt is bit-identical to the
+        // path the LLM has been receiving since launch.
+        history = null;
+        log.warn("coach_history_read_failed", {
+          wallet_hash: hashWallet(wallet),
+          err: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    // --- Sprint 4 commit F: Peones fallback verification ---
+    // If the client claims a Peones payment, verify it against the
+    // ledger. Valid receipt → skip both the credit check below AND
+    // the credit decrement at insert time. Invalid receipt → fall
+    // through to the normal credit gate (fail-closed).
+    let peonesPaid = false;
+    if (rawPeonesIdempotencyKey && typeof rawPeonesIdempotencyKey === "string") {
+      try {
+        peonesPaid = await verifyPeonesCoachPayment(
+          rawPeonesIdempotencyKey,
+          wallet,
+          gameId,
+        );
+        log.info("coach_peones_fallback", {
+          wallet_hash: hashWallet(wallet),
+          verified: peonesPaid,
+        });
+      } catch (err) {
+        // Fail-closed — any verification error counts as no receipt.
+        log.warn("coach_peones_fallback_error", {
+          wallet_hash: hashWallet(wallet),
+          err: err instanceof Error ? err.message : String(err),
+        });
+        peonesPaid = false;
+      }
+    }
+
+    // --- Credit check (skipped for PRO and for verified Peones payment) ---
+    if (!proStatus.active && !peonesPaid) {
+      const credits = (await redis.get<number>(REDIS_KEYS.credits(wallet))) ?? 0;
+      if (credits <= 0) {
+        // Diagnostic for the 2026-05-07 PRO mismatch report: log the
+        // exact decision so we can confirm via Vercel logs whether a
+        // wallet that the /hub chip thinks is PRO is actually being
+        // seen as inactive here.
+        log.warn("coach_analyze_no_credits", {
+          wallet_hash: hashWallet(wallet),
+          pro_active: false,
+          pro_expires_at: proStatus.expiresAt,
+          credits,
+        });
+        return NextResponse.json({ error: "No credits available" }, { status: 402 });
+      }
+    } else if (proStatus.active) {
+      // Server-side telemetry — Vercel logs only for now. No PII: we
+      // emit the expiresAt timestamp (already client-visible) and skip
+      // the wallet entirely. TODO: replace with a real
+      // lib/server/telemetry helper that batches into analytics_events
+      // once we have one (see commit 8 brief).
+      console.info("[pro-bypass] coach analyze short-circuited", {
+        event: "coach_pro_bypass_used",
+        pro_expires_at: proStatus.expiresAt,
+      });
+    }
+
+    // --- Fetch game record ---
+    const gameRecord = await redis.get<GameRecord>(REDIS_KEYS.game(wallet, gameId));
+    if (!gameRecord) {
+      return NextResponse.json({ error: "Game record not found" }, { status: 404 });
+    }
+
+    // --- Validate game ---
+    const validation = validateGameRecord({
+      moves: gameRecord.moves,
+      result: gameRecord.result,
+      difficulty: gameRecord.difficulty,
+    });
+    if (!validation.valid) {
+      return NextResponse.json({ error: `Invalid game: ${validation.error}` }, { status: 400 });
+    }
+
+    // --- Check LLM availability ---
+    if (!llm) {
+      return NextResponse.json({ error: "Coach is not configured" }, { status: 503 });
+    }
+
+    // --- Create job ---
+    const jobId = crypto.randomUUID();
+    await redis.set(REDIS_KEYS.job(jobId), { status: "pending", wallet, gameId }, { ex: 60 });
+    await redis.set(REDIS_KEYS.jobByGame(wallet, gameId), jobId, { ex: 60 });
+    await redis.set(REDIS_KEYS.pendingJob(wallet), jobId, { ex: 60 });
+
+    // --- Build prompt ---
+    const playerSummary = await redis.get<PlayerSummary>(`coach:summary:${wallet}`);
+    const prompt = buildCoachPrompt(
+      gameRecord.moves,
+      validation.computedResult,
+      gameRecord.difficulty,
+      playerSummary,
+      history,
+      locale,
+    );
+
+    // --- Call LLM ---
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
+
+      const completion = await llm.chat.completions.create(
+        {
+          model: MODEL,
+          max_tokens: MAX_OUTPUT_TOKENS,
+          messages: [{ role: "user", content: prompt }],
+        },
+        { signal: controller.signal },
+      );
+
+      clearTimeout(timeout);
+
+      const text = completion.choices[0]?.message?.content ?? "";
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("No JSON found in LLM response");
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      const normalized = normalizeCoachResponse(parsed);
+
+      if (!normalized.success) {
+        throw new Error(`Normalization failed: ${normalized.error}`);
+      }
+
+      // --- Success: store result, decrement credit ---
+      const analysisRecord: CoachAnalysisRecord = {
+        gameId,
+        provider: "server",
+        model: MODEL,
+        analysisVersion: ANALYSIS_VERSION,
+        createdAt: Date.now(),
+        response: normalized.data,
+        // H-4: stored for telemetry / debugging only. Cache key stays
+        // (wallet, gameId) so a re-ask in a different locale returns
+        // the originally-generated analysis (idempotency, no double
+        // credit charge). Historical messages keep their generation
+        // language by design.
+        locale,
+      };
+      // Best-effort cleanup of the legacy locale-agnostic key so the
+      // read-fallback chain doesn't surface it any more. Only relevant
+      // when we just generated an EN analysis on top of a legacy record;
+      // safe to attempt on every write (DEL is a noop if absent).
+      if (locale === "en") {
+        await redis.del(REDIS_KEYS.analysisLegacy(wallet, gameId)).catch(() => {});
+      }
+
+      await Promise.all([
+        redis.set(
+          REDIS_KEYS.analysis(wallet, gameId, locale),
+          analysisRecord,
+          { ex: 30 * 24 * 60 * 60 },
+        ),
+        // 2026-05-24: atomic LPOS-then-LPUSH so an EN-then-ES analyze
+        // cycle on the same gameId no longer duplicates the entry on
+        // `coach:analyses:<wallet>`. Closes deferred #1 from the
+        // per-locale cache migration handoff.
+        redis.eval(
+          ANALYSIS_LIST_LPUSH_LUA,
+          [REDIS_KEYS.analysisList(wallet)],
+          [gameId],
+        ),
+        // Sprint 4 commit F — skip Redis credit decrement when the
+        // Peón already paid for this analysis (peonesPaid=true).
+        ...(proStatus.active || peonesPaid
+          ? []
+          : [redis.decr(REDIS_KEYS.credits(wallet))]),
+        redis.set(REDIS_KEYS.job(jobId), { status: "ready", wallet, gameId, response: normalized.data }, { ex: 30 * 24 * 60 * 60 }),
+        redis.del(REDIS_KEYS.pendingJob(wallet)),
+      ]);
+
+      recordRedisUsage(log, {
+        redis_feature: "coach_analyze",
+        redis_logical_operation: "generate_and_persist",
+        endpoint: "/api/coach/analyze",
+        // Aggregate of the Redis operations on the successful miss path; the
+        // rate-limit observation is emitted separately by its wrapper.
+        redis_estimated_commands: 18 + (locale === "en" ? 1 : 0) + (proStatus.active || peonesPaid ? 0 : 1),
+        cache_result: "miss",
+      });
+
+      // PRO write-through. Fail-soft per §6.1 — never block the user-
+      // visible analysis the user already paid for. Only triggers for
+      // kind='full' since v1 doesn't store BasicCoachResponse rows.
+      if (proStatus.active && normalized.data.kind === "full") {
+        try {
+          const { tagError } = await persistAnalysis(wallet, {
+            gameId,
+            difficulty: gameRecord.difficulty,
+            result: validation.computedResult,
+            totalMoves: validation.totalMoves,
+            response: normalized.data,
+          });
+          if (tagError) {
+            log.warn("coach_tag_extraction_failed", {
+              wallet_hash: hashWallet(wallet),
+              phase: "live",
+              err: tagError.message,
+            });
+          }
+        } catch (err) {
+          log.warn("coach_persist_failed", {
+            wallet_hash: hashWallet(wallet),
+            game_id: gameId,
+            err: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+
+      return NextResponse.json({
+        status: "ready",
+        response: normalized.data,
+        ...(proStatus.active
+          ? {
+              proActive: true,
+              historyMeta: { gamesPlayed: history?.gamesPlayed ?? 0 },
+            }
+          : {}),
+      }, { headers: { "Cache-Control": "no-store" } });
+    } catch (err) {
+      const internal = err instanceof Error ? err.message : "Unknown error";
+      const reason = "Analysis failed, please retry";
+
+      // Structured log so the failure mode is visible in Vercel logs
+      // alongside the wallet hash. Useful for triage when a class of
+      // wallets stops getting analyses (key rotation, model change, etc.)
+      log.error("coach_llm_failed", {
+        wallet_hash: hashWallet(wallet),
+        internal,
+        model: MODEL,
+        base_url: BASE_URL,
+      });
+
+      await Promise.all([
+        redis.set(REDIS_KEYS.job(jobId), { status: "failed", wallet, gameId, reason }, { ex: 24 * 60 * 60 }),
+        redis.del(REDIS_KEYS.pendingJob(wallet)),
+        redis.del(REDIS_KEYS.jobByGame(wallet, gameId)),
+      ]);
+
+      return NextResponse.json({ status: "failed", reason }, { status: 502 });
+    }
+  } catch {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

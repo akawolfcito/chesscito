@@ -1,0 +1,107 @@
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+
+import { StatsDashboard } from "@/components/stats/stats-dashboard";
+import { DEFAULT_STATS_FILTERS } from "@/lib/stats/filters";
+import { resolveStatsLocale, STATS_LOCALES, type StatsLocale } from "@/lib/stats/locale";
+import { EMPTY_PLAYERS_CENSUS } from "@/lib/stats/players-census";
+import { readPersistedStatsSnapshot } from "@/lib/stats/persisted-snapshot";
+import { getStatsRedis } from "@/lib/stats/redis";
+import { EMPTY_PUBLIC_STATS } from "@/lib/stats/types";
+
+/**
+ * The consolidated public `/stats` dashboard.
+ *
+ * ⛔ **Reachable is not the same as indexable.** This page is a deliverable of
+ * the MiniPay listing (§8) — it must be public, with no wallet and no auth — and
+ * it must also stay out of search results. `noindex, nofollow` plus absence
+ * from the sitemap is what reconciles those two, and gating it would break the
+ * listing. See `docs/specs/2026-07-30-stats-paid-export-x402.md` §0.
+ *
+ * `follow: false` is load-bearing: the landing IS indexed and links here, so a
+ * crawler arrives through that link. Without it, it would then follow the
+ * outbound links onward.
+ *
+ * ⛔ **One URL.** `/stats` stays outside the next-intl middleware matcher, so
+ * there is no `/en/stats` and no `/es/stats`: two indexable URLs for the same
+ * content is one more than the listing can declare. Language comes from
+ * `Accept-Language`, overridable with `?locale=en|es`.
+ */
+export const metadata: Metadata = {
+  title: "Stats — Chesscito",
+  description: "Activity and progress stats for Chesscito Learn and Chesscito Play.",
+  alternates: { canonical: "https://www.chesscito.com/stats" },
+  robots: { index: false, follow: false },
+};
+
+/**
+ * Containment mode: a visit reads the one durable all/all Redis snapshot and
+ * NEVER touches Supabase. The protected cron endpoint is the only code path
+ * allowed to build it. Locale still remains presentation-only.
+ */
+export const dynamic = "force-dynamic";
+
+type SearchParams = {
+  surface?: string | string[];
+  container?: string | string[];
+  locale?: string | string[];
+};
+
+export default async function StatsPage({
+  searchParams = Promise.resolve({}),
+}: {
+  searchParams?: Promise<SearchParams>;
+}) {
+  // ⚠️ `locale` is deliberately NOT part of the filters. It is presentation:
+  // folding it into the read would fetch the same numbers once per language,
+  // and Phase E's cache key inherits this separation. There is a test for it.
+  // Filters are deliberately ignored in containment mode. Accepting a query
+  // string must never mint another snapshot or another heavy DB read.
+  const query = await searchParams;
+  const filters = DEFAULT_STATS_FILTERS;
+
+  const rawLocale = Array.isArray(query.locale)
+    ? query.locale[0]
+    : query.locale;
+  const localeOverride: StatsLocale | null =
+    rawLocale && (STATS_LOCALES as readonly string[]).includes(rawLocale.toLowerCase())
+      ? (rawLocale.toLowerCase() as StatsLocale)
+      : null;
+
+  const locale = resolveStatsLocale(
+    query.locale,
+    (await headers()).get("accept-language"),
+  );
+
+  const redis = getStatsRedis();
+  const persisted = redis ? await readPersistedStatsSnapshot(redis).catch(() => null) : null;
+  const snapshotUnavailable = !persisted;
+  const snapshot = persisted ?? {
+    // This is a typed render placeholder, never a healthy snapshot. The
+    // dashboard renders only the explicit unavailable state for this branch.
+    stats: {
+      ...EMPTY_PUBLIC_STATS,
+      filters,
+      generatedAt: new Date(0).toISOString(),
+      dataIntegrity: { failedRpcs: ["snapshot_unavailable"] },
+    },
+    breakdown: { learn: null, play: null, total: null },
+  };
+  const census = persisted?.census ?? EMPTY_PLAYERS_CENSUS;
+
+  return (
+    <StatsDashboard
+      stats={snapshot.stats}
+      breakdown={snapshot.breakdown}
+      census={census}
+      locale={locale}
+      localeOverride={localeOverride}
+      filtersUnavailable
+      snapshotUnavailable={snapshotUnavailable}
+      onchainUnavailable={persisted?.availability?.onchain === "temporarily_unavailable"}
+      censusUnavailable={persisted?.availability?.census === "temporarily_unavailable"}
+      breakdownUnavailable={persisted?.availability?.breakdown === "temporarily_unavailable"}
+      rpcAvailability={persisted?.availability?.rpcs}
+    />
+  );
+}

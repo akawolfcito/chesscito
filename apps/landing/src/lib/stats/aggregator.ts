@@ -1,0 +1,460 @@
+import { getSupabaseServer } from "@/lib/supabase/server";
+
+
+import { DEFAULT_STATS_FILTERS, toRpcArg, type StatsFilters } from "./filters";
+import {
+  EMPTY_ONCHAIN_STATS,
+  fetchOnchainStats,
+  type OnchainStats,
+  type StatsDb,
+} from "./onchain";
+import {
+  EMPTY_PUBLIC_STATS,
+  type AccessFunnel,
+  type AccountLifecycle,
+  type ActivationFunnel,
+  type CountryCount,
+  type DailyBucket,
+  type HabitDepth,
+  type InstallCounts,
+  type PublicStats,
+  type Retention,
+} from "./types";
+
+/**
+ * The public `/stats` aggregator, fed by the eight `stats_*` RPCs.
+ *
+ * ⛔ **There is no `new Set()` over telemetry rows here, and there must never
+ * be one again.** The page this replaces counted distinct sessions in JS over
+ * rows PostgREST had already capped at 1,000, so "last 30 days" silently became
+ * "last 15 minutes" and it published 46 sessions against a real 3,928. Every
+ * count below is computed in PostgreSQL. There is a source guard that fails the
+ * build if a ranged read or a `Set` reappears over the three telemetry tables —
+ * see `__tests__/aggregator-source-guard.test.ts`.
+ *
+ * Each RPC runs in isolation: a failure nulls **its own** field and names
+ * itself in `dataIntegrity.failedRpcs`, so the rest of the page survives and
+ * the reader can tell which number went dark. `null` is "not measured" and
+ * renders as an em-dash — NEVER zero.
+ *
+ * Contracts, invariants and the reference SQL:
+ * `docs/audits/2026-08-04-public-stats-accuracy-audit.md` §13 and §22.
+ */
+
+/** The eight, in the order they are dispatched. Exported so the guard test can
+ *  assert the aggregator calls all of them and nothing else. */
+export const STATS_RPCS = [
+  "stats_install_counts",
+  "stats_activation_funnel",
+  "stats_access_funnel",
+  "stats_top_countries",
+  "stats_retention",
+  "stats_account_lifecycle",
+  "stats_habit_depth",
+  "stats_activity_trend",
+] as const;
+
+export type StatsRpcName = (typeof STATS_RPCS)[number];
+
+/** Temporary emergency set. These three RPCs have documented high temporary
+ * I/O in production and are deliberately not dispatched by the refresh until
+ * they are diagnosed in isolation. */
+export const EMERGENCY_STATS_RPCS = [
+  "stats_activation_funnel",
+  "stats_access_funnel",
+  "stats_retention",
+  "stats_account_lifecycle",
+  "stats_activity_trend",
+] as const satisfies readonly StatsRpcName[];
+
+export type StatsRpcMetric = {
+  rpc: StatsRpcName;
+  durationMs: number;
+  outcome: "success" | "timeout" | "error" | "invalid_result";
+  errorCode: string | null;
+  sqlstate: string | null;
+};
+
+type RpcResult = {
+  rows: Record<string, unknown>[] | null;
+  outcome: StatsRpcMetric["outcome"];
+  errorCode: string | null;
+  sqlstate: string | null;
+};
+
+type RpcClient = {
+  rpc: (
+    name: string,
+    args: Record<string, string | null>,
+  ) => PromiseLike<{ data: unknown; error: unknown }>;
+};
+
+function safeCode(value: unknown): string | null {
+  return typeof value === "string" && /^[A-Za-z0-9_.-]{1,64}$/.test(value) &&
+    !/(authorization|bearer|secret|token|password|connection|string)/i.test(value)
+    ? value
+    : null;
+}
+
+function rpcErrorMetadata(error: unknown): Pick<RpcResult, "errorCode" | "sqlstate"> {
+  const record = error && typeof error === "object"
+    ? error as Record<string, unknown>
+    : {};
+  const errorCode = safeCode(record.code);
+  const explicitSqlstate = safeCode(record.sqlstate ?? record.sqlState);
+  const sqlstate = explicitSqlstate ?? (errorCode && /^[0-9A-Z]{5}$/.test(errorCode) ? errorCode : null);
+  return { errorCode, sqlstate };
+}
+
+/** A bounded result record for one RPC. Messages and payloads never leave here. */
+async function callRpcResult(
+  client: RpcClient,
+  name: StatsRpcName,
+  filters: StatsFilters,
+): Promise<RpcResult> {
+  try {
+    const { data, error } = await client.rpc(name, {
+      // ⛔ `"all"` never reaches SQL — null is how the functions spell
+      // "no filter". A literal 'all' would match zero rows.
+      p_surface: toRpcArg(filters.surface),
+      p_container: toRpcArg(filters.container),
+    });
+    if (error) {
+      return { rows: null, outcome: "error", ...rpcErrorMetadata(error) };
+    }
+    if (!Array.isArray(data)) {
+      return { rows: null, outcome: "invalid_result", errorCode: "INVALID_RESULT", sqlstate: null };
+    }
+    return { rows: data as Record<string, unknown>[], outcome: "success", errorCode: null, sqlstate: null };
+  } catch (error) {
+    return { rows: null, outcome: "error", ...rpcErrorMetadata(error) };
+  }
+}
+
+/** Rows from one RPC, or `null` if the call failed. */
+async function callRpc(
+  client: RpcClient,
+  name: StatsRpcName,
+  filters: StatsFilters,
+): Promise<Record<string, unknown>[] | null> {
+  return (await callRpcResult(client, name, filters)).rows;
+}
+
+async function callRpcWithBudget(input: {
+  name: StatsRpcName;
+  filters: StatsFilters;
+  signal?: AbortSignal;
+  budgetMs?: number;
+  onMetric?: (metric: StatsRpcMetric) => void;
+}): Promise<Record<string, unknown>[] | null> {
+  const controller = new AbortController();
+  const startedAt = Date.now();
+  let timedOut = false;
+  const abortFromParent = () => controller.abort();
+  input.signal?.addEventListener("abort", abortFromParent, { once: true });
+
+  try {
+    let client: RpcClient | null;
+    try {
+      client = getSupabaseServer(controller.signal) as unknown as RpcClient | null;
+    } catch (error) {
+      const metadata = rpcErrorMetadata(error);
+      input.onMetric?.({
+        rpc: input.name,
+        durationMs: Date.now() - startedAt,
+        outcome: "error",
+        errorCode: metadata.errorCode,
+        sqlstate: metadata.sqlstate,
+      });
+      return null;
+    }
+    if (!client) {
+      input.onMetric?.({
+        rpc: input.name,
+        durationMs: Date.now() - startedAt,
+        outcome: "error",
+        errorCode: "SUPABASE_UNAVAILABLE",
+        sqlstate: null,
+      });
+      return null;
+    }
+    if (!input.budgetMs) {
+      const result = await callRpcResult(client, input.name, input.filters);
+      input.onMetric?.({
+        rpc: input.name,
+        durationMs: Date.now() - startedAt,
+        outcome: result.outcome,
+        errorCode: result.errorCode,
+        sqlstate: result.sqlstate,
+      });
+      return result.rows;
+    }
+
+    const request = callRpcResult(client, input.name, input.filters);
+    let timeoutId!: ReturnType<typeof setTimeout>;
+    const deadline = new Promise<RpcResult>((resolve) => {
+      timeoutId = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+        resolve({ rows: null, outcome: "timeout", errorCode: null, sqlstate: null });
+      }, input.budgetMs);
+    });
+    const result = await Promise.race([request, deadline]);
+    clearTimeout(timeoutId);
+    input.onMetric?.({
+      rpc: input.name,
+      durationMs: Date.now() - startedAt,
+      outcome: timedOut ? "timeout" : result.outcome,
+      errorCode: result.errorCode,
+      sqlstate: result.sqlstate,
+    });
+    return result.rows;
+  } finally {
+    input.signal?.removeEventListener("abort", abortFromParent);
+  }
+}
+
+const num = (v: unknown): number => (typeof v === "number" ? v : Number(v ?? 0));
+const str = (v: unknown): string => (typeof v === "string" ? v : String(v ?? ""));
+
+/** Scalar-returning RPCs come back as a one-row table. */
+function firstRow(
+  rows: Record<string, unknown>[] | null,
+): Record<string, unknown> | null {
+  return rows && rows.length > 0 ? rows[0] : null;
+}
+
+function toInstallCounts(rows: Record<string, unknown>[] | null): InstallCounts | null {
+  const r = firstRow(rows);
+  if (!r) return null;
+  return {
+    sessions7d: num(r.sessions_7d),
+    sessions30d: num(r.sessions_30d),
+    appOpensRows30d: num(r.app_opens_rows_30d),
+    appOpenSessions30d: num(r.app_open_sessions_30d),
+  };
+}
+
+function toActivation(rows: Record<string, unknown>[] | null): ActivationFunnel | null {
+  if (!rows) return null;
+  return rows.map((r) => ({ step: str(r.step), sessions: num(r.sessions) }));
+}
+
+/** `failed_sessions` is a funnel-level scalar the SQL repeats on all five rows;
+ *  reading it off the first is correct, not a shortcut. */
+function toAccessFunnel(rows: Record<string, unknown>[] | null): AccessFunnel | null {
+  if (!rows) return null;
+  return {
+    steps: rows.map((r) => ({ step: str(r.step), sessions: num(r.sessions) })),
+    failedSessions: num(firstRow(rows)?.failed_sessions),
+  };
+}
+
+function toTopCountries(rows: Record<string, unknown>[] | null): CountryCount[] {
+  if (!rows) return [];
+  // NOT re-sorted: the order is a TOTAL order fixed in SQL
+  // (`sessions desc, country asc`). A second sort here could disagree with it.
+  return rows.map((r) => ({ country: str(r.country), sessions: num(r.sessions) }));
+}
+
+/** The three buckets always come back — `LEFT JOIN` in the SQL guarantees a row
+ *  even for an empty cohort. A missing bucket therefore means a broken
+ *  contract, not an empty one, so it nulls the whole block. */
+function toRetention(rows: Record<string, unknown>[] | null): Retention | null {
+  if (!rows) return null;
+  const byBucket = new Map(rows.map((r) => [str(r.bucket), r]));
+  const pick = (key: string) => {
+    const r = byBucket.get(key);
+    return r ? { returned: num(r.returned), cohort: num(r.cohort) } : null;
+  };
+  const d1 = pick("d1");
+  const d7 = pick("d7");
+  const week3 = pick("week3");
+  if (!d1 || !d7 || !week3) return null;
+  return { d1, d7, week3 };
+}
+
+function toAccountLifecycle(
+  rows: Record<string, unknown>[] | null,
+): AccountLifecycle | null {
+  const r = firstRow(rows);
+  if (!r) return null;
+  return {
+    known: num(r.known),
+    newToday: num(r.new_today),
+    new7d: num(r.new_7d),
+    active7d: num(r.active_7d),
+    dormant: num(r.dormant),
+    inactive: num(r.inactive),
+    resurrected7d: num(r.resurrected_7d),
+  };
+}
+
+/** `cohort` and `median_active_days` are repeated on every bucket row by the
+ *  SQL; both are read off the first. */
+function toHabitDepth(rows: Record<string, unknown>[] | null): HabitDepth | null {
+  if (!rows) return null;
+  const head = firstRow(rows);
+  return {
+    buckets: rows.map((r) => ({
+      minDays: num(r.min_days),
+      installs: num(r.installs),
+    })),
+    cohort: num(head?.cohort),
+    medianActiveDays: num(head?.median_active_days),
+  };
+}
+
+/** Exactly 30 dense rows, oldest first, straight from `generate_series`. No
+ *  bucket-filling here: the density is the SQL's guarantee, and re-deriving it
+ *  in JS would hide a broken one. */
+function toActivityTrend(rows: Record<string, unknown>[] | null): DailyBucket[] {
+  if (!rows) return [];
+  return rows.map((r) => ({
+    date: str(r.day).slice(0, 10),
+    sessions: num(r.sessions),
+    newInstalls: num(r.new_installs),
+    returningInstalls: num(r.returning_installs),
+  }));
+}
+
+/** Learn vs Play vs Total, for the installs cards. */
+export type SurfaceBreakdown = {
+  learn: InstallCounts | null;
+  play: InstallCounts | null;
+  total: InstallCounts | null;
+};
+
+/**
+ * The Learn / Play / Total row.
+ *
+ * ⚠️ **`learn + play` can be LESS than `total`, and that is not a bug.** 15.5 %
+ * of the event rows carry no `surface`, and a non-null filter excludes them, so
+ * the two named products cannot add up to the unfiltered figure. The surface
+ * that prints this row MUST say so beside it — an unauditable number reads as a
+ * lie, and the reader has no other way to reconcile the three.
+ *
+ * Three calls to ONE rpc (not three full aggregations): the breakdown only
+ * needs install counts, and the page already pays for eight elsewhere.
+ * `container` is carried through so the row answers the same question the rest
+ * of the page is filtered to.
+ */
+export async function getSurfaceBreakdown(
+  container: StatsFilters["container"] = "all",
+  main: Pick<StatsFilters, "surface"> & { installs: InstallCounts | null } = {
+    surface: "all",
+    installs: null,
+  },
+  signal?: AbortSignal,
+): Promise<SurfaceBreakdown> {
+  const supabase = getSupabaseServer(signal);
+  if (!supabase) return { learn: null, play: null, total: null };
+
+  const client = supabase as unknown as RpcClient;
+  const surfaces: StatsFilters["surface"][] = ["learn", "play", "all"];
+  const reusedSurface = main.installs ? main.surface : null;
+  const pending = surfaces.filter((surface) => surface !== reusedSurface);
+  const rows = new Map<StatsFilters["surface"], Record<string, unknown>[] | null>();
+
+  const fetched = await Promise.all(
+    pending.map(async (surface) => [
+      surface,
+      await callRpc(client, "stats_install_counts", { surface, container }),
+    ] as const),
+  );
+  for (const [surface, result] of fetched) rows.set(surface, result);
+
+  return {
+    learn:
+      reusedSurface === "learn" ? main.installs : toInstallCounts(rows.get("learn") ?? null),
+    play:
+      reusedSurface === "play" ? main.installs : toInstallCounts(rows.get("play") ?? null),
+    total:
+      reusedSurface === "all" ? main.installs : toInstallCounts(rows.get("all") ?? null),
+  };
+}
+
+/**
+ * Read every block for the given filters.
+ *
+ * Returns `EMPTY_PUBLIC_STATS` (all em-dashes) when Supabase is unconfigured,
+ * and **never throws** — the page must render even with the credentials gone.
+ */
+export async function getPublicStats(
+  filters: StatsFilters = DEFAULT_STATS_FILTERS,
+  options: {
+    includeOnchain?: boolean;
+    signal?: AbortSignal;
+    rpcNames?: readonly StatsRpcName[];
+    rpcTimeoutMs?: number;
+    onRpcMetric?: (metric: StatsRpcMetric) => void;
+  } = {},
+): Promise<PublicStats> {
+  const generatedAt = new Date().toISOString();
+  const supabase = getSupabaseServer(options.signal);
+
+  if (!supabase) {
+    for (const name of options.rpcNames ?? STATS_RPCS) {
+      options.onRpcMetric?.({
+        rpc: name,
+        durationMs: 0,
+        outcome: "error",
+        errorCode: "SUPABASE_UNAVAILABLE",
+        sqlstate: null,
+      });
+    }
+    return { ...EMPTY_PUBLIC_STATS, filters, generatedAt };
+  }
+
+  // All eight in parallel: they are independent reads of the same snapshot and
+  // serialising them would multiply the page's latency by eight for nothing.
+  const selected = options.rpcNames ?? STATS_RPCS;
+  const results = new Map<StatsRpcName, Record<string, unknown>[] | null>();
+  await Promise.all(
+    selected.map(async (name) => {
+      results.set(name, await callRpcWithBudget({
+        name,
+        filters,
+        signal: options.signal,
+        budgetMs: options.rpcTimeoutMs,
+        onMetric: options.onRpcMetric,
+      }));
+    }),
+  );
+  const installsRows = results.get("stats_install_counts") ?? null;
+  const activationRows = results.get("stats_activation_funnel") ?? null;
+  const accessRows = results.get("stats_access_funnel") ?? null;
+  const countriesRows = results.get("stats_top_countries") ?? null;
+  const retentionRows = results.get("stats_retention") ?? null;
+  const lifecycleRows = results.get("stats_account_lifecycle") ?? null;
+  const habitRows = results.get("stats_habit_depth") ?? null;
+  const trendRows = results.get("stats_activity_trend") ?? null;
+
+  // The on-chain block owns its own queries and its own `allSettled`; it never
+  // rejects, so worst case it is all-null em-dashes. Awaited separately because
+  // it is not an RPC and does not take the filters — those numbers are global.
+  const onchain: OnchainStats = options.includeOnchain === false
+    ? EMPTY_ONCHAIN_STATS
+    : await fetchOnchainStats(supabase as unknown as StatsDb).catch(() => EMPTY_ONCHAIN_STATS);
+
+  const failedRpcs = STATS_RPCS.filter((name) => results.get(name) === undefined || results.get(name) === null);
+
+  const activation = toActivation(activationRows);
+
+  return {
+    filters,
+    generatedAt,
+    installs: toInstallCounts(installsRows),
+    activation,
+    appOpens30d:
+      activation?.find((s) => s.step === "app_opened")?.sessions ?? null,
+    accessFunnel: toAccessFunnel(accessRows),
+    topCountries: toTopCountries(countriesRows),
+    retention: toRetention(retentionRows),
+    accountLifecycle: toAccountLifecycle(lifecycleRows),
+    habitDepth: toHabitDepth(habitRows),
+    activityTrend30d: toActivityTrend(trendRows),
+    onchain,
+    dataIntegrity: { failedRpcs: [...failedRpcs] },
+  };
+}

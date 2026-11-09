@@ -1,0 +1,30 @@
+name: Cron — Supabase cache sync
+
+on:
+  schedule:
+    # Every 15 min. GitHub Actions may delay scheduled runs during
+    # platform load — drift is acceptable since this reconciler catches
+    # events that the optimistic write-through missed (closed tabs,
+    # cold starts, transient network failures in MiniPay WebView).
+    - cron: '*/15 * * * *'
+  workflow_dispatch:  # manual trigger for testing / on-demand re-sync
+
+jobs:
+  sync:
+    name: Trigger /api/cron/sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Call sync endpoint
+        env:
+          CRON_URL: ${{ secrets.CRON_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::Missing CRON_URL or CRON_SECRET repo secret"
+            exit 1
+          fi
+          curl --fail --silent --show-error \
+            --max-time 90 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${CRON_URL%/}/api/cron/sync"

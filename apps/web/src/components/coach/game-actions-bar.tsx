@@ -1,0 +1,300 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
+import { CoachCostRibbon } from "@/components/coach/coach-cost-ribbon";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import type { ThemeAssetKey } from "@/lib/themes/theme-registry";
+import { saveCtaLabelKey } from "@/lib/coach/save-cta-label";
+
+type Props = {
+  gameId: string;
+  result: "win" | "lose" | "draw" | "resigned";
+  totalMoves: number;
+  hasAnalysis: boolean;
+  hasPartialReplayError: boolean;
+  mintedTokenId: string | null;
+  onAskCoach: () => void;
+  onMint: () => void;
+  onShare: () => void;
+  onPlayAgain: () => void;
+  onViewNft: () => void;
+  /** 2026-05-29 (Cluster C, commit 3a): tertiary link target for the
+   *  loss / draw / resigned / too-short / replay-errored states. The
+   *  visor's success branch routes back to /hub via a clean push
+   *  (avoids router.back loops on cold-load entries). */
+  onBackToHub: () => void;
+  /** 2026-05-29 (Cluster C, commit 3b): formatted price ribbon for the
+   *  Save Victory primary CTA (win + !claimed state). Optional —
+   *  unknown difficulty hides the ribbon but keeps the tile reachable. */
+  claimPrice?: string | null;
+  /** 2026-05-30 (Bug #2 fix): the coach hook is currently running an
+   *  analysis. The Ask Coach tile renders a spinner overlay, swaps to
+   *  a "Analyzing…" label, and becomes disabled so repeated taps don't
+   *  re-trigger requestCoachAnalyze. Other tiles stay reachable. */
+  askCoachPending?: boolean;
+  /** 2026-05-30 (Phase 2 shop oscuridad): remaining paid coach credits
+   *  in the wallet. When > 0, the bar renders a tertiary "Uses 1 credit
+   *  · {count} left" hint under the Ask Coach tile so users can track
+   *  spend at the point of action. Suppressed at 0 (paywall takes over)
+   *  or while the analysis is pending (hint would compete with spinner). */
+  coachCredits?: number;
+  /** 2026-05-30 (Phase 2 shop oscuridad): PRO active variant. Takes
+   *  precedence over the paid-credits hint so PRO subscribers see a
+   *  clear "no cost" signal at the point of action, regardless of
+   *  any leftover paid credits in the wallet. */
+  proActive?: boolean;
+};
+
+type TileKind = "play-again" | "save-victory" | "ask-coach" | "share";
+
+type Tile = {
+  kind: TileKind;
+  label: string;
+  ariaLabel?: string;
+  onClick: () => void;
+  disabled?: boolean;
+  /** Optional price ribbon on the tile's top-right corner. Reserved
+   *  for the Save Victory tile in the win + !claimed state. */
+  priceRibbon?: string;
+  /** Plan 3 — render the coach cost ribbon (crown "PRO" / "♟ 1") above
+   *  the icon. Reserved for the Ask Coach tile when it is reachable. */
+  costRibbon?: boolean;
+  /** 2026-05-30 (Bug #2 fix): render a spinner overlay on the tile icon.
+   *  Drives `data-loading="true"` on the button — the CSS handles the
+   *  spinning ring + dimming. Only the Ask Coach tile uses it today. */
+  pending?: boolean;
+};
+
+const TILE_ICON: Record<TileKind, ThemeAssetKey> = {
+  "play-again": "coach.play-again",
+  "save-victory": "arena.save",
+  "ask-coach": "coach.ask-icon",
+  share: "coach.share-trophy",
+};
+
+/**
+ * State-driven CTA tiles for the coach viewer (Cluster C, M3).
+ *
+ * Replaces the previous primary-secondary-tertiary stack with a flat
+ * row of 1–4 equal-width tiles (icon canvas + label below). Save
+ * Victory keeps its corner price ribbon so the cost signal survives
+ * the visual flatten. Tertiaries (Back to Hub, View on Celoscan) stay
+ * as text links underneath the row.
+ *
+ * Per-state slate:
+ *   - too-short          → [Play Again]                 + Back to Hub
+ *   - win (any)          → [Play Again, Save Victory($), Share, Ask Coach]
+ *                          + View on Celoscan (only when minted)
+ *                          (a win with a replay error keeps these 4 tiles,
+ *                           with Ask Coach disabled)
+ *   - loss/draw/resigned → [Play Again, Share, Ask Coach] + Back to Hub
+ *     (non-win replay-errored also lands here, Ask Coach disabled)
+ */
+export function GameActionsBar({
+  result,
+  totalMoves,
+  hasAnalysis,
+  hasPartialReplayError,
+  mintedTokenId,
+  onAskCoach,
+  onMint,
+  onShare,
+  onPlayAgain,
+  onViewNft,
+  onBackToHub,
+  claimPrice,
+  askCoachPending,
+  coachCredits,
+  proActive,
+}: Props) {
+  const t = useTranslations("COACH_VIEWER_COPY");
+  const isWin = result === "win";
+  const isMinted = mintedTokenId != null;
+  const isTooShort = totalMoves === 0;
+  const askCoachDisabled = hasPartialReplayError || isTooShort || !!askCoachPending;
+  // Point-of-use hint under the Ask Coach tile. Two variants:
+  //   • PRO active → "Unlimited · PRO active" (takes precedence)
+  //   • coachCredits > 0 → "Uses 1 credit · {N} left"
+  // Both gated by Ask Coach being reachable (not too-short, not
+  // replay-errored, not currently analyzing). Zero credits + non-PRO
+  // suppresses the hint so the paywall stays the primary signal.
+  const askCoachReachable =
+    !isTooShort && !hasPartialReplayError && !askCoachPending;
+  const showProHint = askCoachReachable && !!proActive;
+  const showCreditsHint =
+    askCoachReachable &&
+    !proActive &&
+    typeof coachCredits === "number" &&
+    coachCredits > 0;
+  // Viewer keeps the neutral "Ask Coach" label (founder feedback 2026-06-13:
+  // the outcome-specific question read worse in Match Review than the plain
+  // action). Outcome-specific copy stays on the arena end-state popups only.
+  const askCoachLabel = askCoachPending
+    ? t("analysisPendingTile")
+    : hasAnalysis
+      ? t("askCoachAgain")
+      : t("askCoach");
+
+  // "NEW DUEL", not "PLAY AGAIN": from the Reviewer this tap lands on the
+  // DUEL selector (`/arena?fresh=1`), so the label describes the selector,
+  // not a board. The label-must-match-the-next-screen rule (2026-08-28).
+  const playAgainTile: Tile = {
+    kind: "play-again",
+    label: t("newDuel"),
+    onClick: onPlayAgain,
+  };
+  const askCoachTile: Tile = {
+    kind: "ask-coach",
+    label: askCoachLabel,
+    onClick: onAskCoach,
+    disabled: askCoachDisabled,
+    pending: !!askCoachPending,
+    // Cost cue mirrors the Save Victory price ribbon — shown whenever the
+    // tile is tappable (a re-ask also costs a Peón unless PRO).
+    costRibbon: askCoachReachable,
+  };
+
+  // F8 — Save is available on every outcome. Label comes from the single
+  // saveCtaLabelKey helper (win → "Save Victory", else → "Save match"); win
+  // keeps its richer aria copy unchanged. Same price ribbon for all.
+  const saveLabel = t(saveCtaLabelKey(result));
+  const saveTile: Tile = {
+    kind: "save-victory",
+    label: saveLabel,
+    ariaLabel: claimPrice
+      ? isWin
+        ? t("saveVictoryAriaLabel", { price: claimPrice })
+        : `${saveLabel} · ${claimPrice}`
+      : saveLabel,
+    onClick: onMint,
+    priceRibbon: claimPrice ?? undefined,
+  };
+
+  let tiles: Tile[];
+  let tertiary: React.ReactNode = null;
+
+  if (isTooShort) {
+    tiles = [playAgainTile];
+    tertiary = (
+      <button
+        type="button"
+        onClick={onBackToHub}
+        className="coach-viewer__actions-tertiary"
+      >
+        {t("backToHub")}
+      </button>
+    );
+  } else if (isWin) {
+    tiles = [
+      playAgainTile,
+      saveTile,
+      {
+        kind: "share",
+        label: isMinted ? t("shareTrophy") : t("share"),
+        onClick: onShare,
+      },
+      askCoachTile,
+    ];
+    if (isMinted) {
+      tertiary = (
+        <button
+          type="button"
+          onClick={onViewNft}
+          className="coach-viewer__actions-tertiary"
+          aria-label={t("viewOnCeloscan")}
+        >
+          {t("viewOnCeloscan")}
+        </button>
+      );
+    }
+  } else {
+    // loss / draw / resigned / replay-errored — F8: Save is now present here
+    // too (neutral "Save match" label), matching the win 4-tile row.
+    tiles = [
+      playAgainTile,
+      saveTile,
+      { kind: "share", label: t("share"), onClick: onShare },
+      askCoachTile,
+    ];
+    tertiary = (
+      <button
+        type="button"
+        onClick={onBackToHub}
+        className="coach-viewer__actions-tertiary"
+      >
+        {t("backToHub")}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="coach-viewer__actions"
+      role="group"
+      aria-label={t("actionsAriaLabel")}
+    >
+      <div
+        className="coach-viewer__tiles-row"
+        data-count={tiles.length}
+      >
+        {tiles.map((tile) => {
+          const icon = TILE_ICON[tile.kind];
+          return (
+            <button
+              key={tile.kind}
+              type="button"
+              onClick={tile.onClick}
+              disabled={tile.disabled}
+              aria-label={tile.ariaLabel ?? tile.label}
+              aria-busy={tile.pending || undefined}
+              className="coach-viewer__tile"
+              data-kind={tile.kind}
+              data-loading={tile.pending || undefined}
+            >
+              {tile.priceRibbon && (
+                <span
+                  className="coach-viewer__tile-price-ribbon"
+                  aria-hidden="true"
+                >
+                  {tile.priceRibbon}
+                </span>
+              )}
+              {tile.costRibbon && (
+                <CoachCostRibbon variant="tile" proActive={!!proActive} />
+              )}
+              <ThemeAssetPicture slot={icon} pictureClassName="coach-viewer__tile-icon" alt="" draggable={false} />
+              {tile.pending && (
+                <span
+                  className="coach-viewer__tile-spinner"
+                  aria-hidden="true"
+                />
+              )}
+              <span className="coach-viewer__tile-label">{tile.label}</span>
+            </button>
+          );
+        })}
+      </div>
+      {showProHint && (
+        <p
+          className="coach-viewer__credits-hint coach-viewer__credits-hint--pro"
+          role="status"
+          aria-live="off"
+          data-variant="pro"
+        >
+          {t("creditsHintPro")}
+        </p>
+      )}
+      {showCreditsHint && (
+        <p
+          className="coach-viewer__credits-hint"
+          role="status"
+          aria-live="off"
+        >
+          {t("creditsHint", { count: coachCredits as number })}
+        </p>
+      )}
+      {tertiary}
+    </div>
+  );
+}

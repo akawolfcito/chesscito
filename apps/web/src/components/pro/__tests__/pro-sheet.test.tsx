@@ -1,0 +1,449 @@
+import { describe, it, expect, vi, afterEach } from "vitest";
+
+const salesEnabled = vi.hoisted(() => vi.fn(() => true));
+vi.mock("@/lib/pro/sales-policy", () => ({ isProSalesEnabled: salesEnabled }));
+import { cleanup } from "@testing-library/react";
+import { renderWithIntl as render, screen, fireEvent } from "@/test-utils/render-with-intl";
+
+const trackMock = vi.hoisted(() => vi.fn());
+const pushMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/telemetry", () => ({ track: trackMock }));
+const pathnameMock = vi.hoisted(() => vi.fn(() => "/"));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: pushMock }),
+  usePathname: pathnameMock,
+}));
+
+import { ProSheet, type ProSheetProps } from "../pro-sheet";
+import { PRO_COPY } from "@/lib/content/editorial";
+
+afterEach(() => {
+  salesEnabled.mockReturnValue(true);
+  cleanup();
+  trackMock.mockReset();
+  pushMock.mockReset();
+  vi.unstubAllEnvs();
+});
+
+function renderSheet(overrides: Partial<ProSheetProps> = {}) {
+  const handlers = {
+    onOpenChange: vi.fn(),
+    onConnectWallet: vi.fn(),
+    onSwitchNetwork: vi.fn(),
+    onPurchase: vi.fn(),
+  };
+
+  const props: ProSheetProps = {
+    open: true,
+    status: { active: false, expiresAt: null },
+    isConnected: true,
+    isCorrectChain: true,
+    isPurchasing: false,
+    isVerifying: false,
+    errorMessage: null,
+    ...handlers,
+    ...overrides,
+  };
+
+  render(<ProSheet {...props} />);
+  return handlers;
+}
+
+describe("ProSheet", () => {
+
+
+  it("renders the price label and active perks list when open", () => {
+    renderSheet();
+    expect(screen.getByText(PRO_COPY.priceLabel)).toBeInTheDocument();
+    expect(screen.getByText(PRO_COPY.perksActive[0])).toBeInTheDocument();
+  });
+
+  // The per-day line was clutter AND a hand-written derivative of $1.99/30.
+  // The day PRO's price moves, a baked string like that lies without turning a
+  // single test red — the exact trap the Hub Tour walked into. The price is
+  // already stated, in full, right above it.
+  it("never hand-writes a per-day price derived from the real one", () => {
+    renderSheet();
+    expect(screen.queryByText(/cents a day/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/centavos al día/i)).not.toBeInTheDocument();
+  });
+
+  // The line that earns its place stays: it says something the price cannot.
+  it("keeps the no-auto-billing promise", () => {
+    renderSheet();
+    expect(screen.getByText(/no auto-billing/i)).toBeInTheDocument();
+  });
+
+  // AC-3.8 — addendum §3.6 / §6.1 commit #4 — kicker now renders as
+  // the uppercase "TRAINING PASS" pill in the candy-panel redesign,
+  // sourced from PRO_COPY.trainingPassLabel.
+  it("renders the kicker pill above the title", () => {
+    renderSheet();
+    const kicker = screen.getByText(PRO_COPY.trainingPassLabel);
+    const title = screen.getByRole("heading", { name: PRO_COPY.label });
+    expect(kicker).toBeInTheDocument();
+    expect(
+      kicker.compareDocumentPosition(title) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows the Connect Wallet CTA when wallet is not connected", () => {
+    const handlers = renderSheet({ isConnected: false });
+    const cta = screen.getByRole("button", { name: PRO_COPY.ctaConnectWallet });
+    fireEvent.click(cta);
+    expect(handlers.onConnectWallet).toHaveBeenCalledTimes(1);
+    expect(handlers.onPurchase).not.toHaveBeenCalled();
+  });
+
+  it("shows Switch Network when wallet is connected on the wrong chain", () => {
+    const handlers = renderSheet({ isCorrectChain: false });
+    const cta = screen.getByRole("button", { name: /switch network/i });
+    fireEvent.click(cta);
+    expect(handlers.onSwitchNetwork).toHaveBeenCalledTimes(1);
+    expect(handlers.onPurchase).not.toHaveBeenCalled();
+  });
+
+  it("shows Get PRO and routes click to onPurchase when connected and inactive", () => {
+    const handlers = renderSheet();
+    const cta = screen.getByRole("button", { name: PRO_COPY.ctaBuy });
+    fireEvent.click(cta);
+    expect(handlers.onPurchase).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["error", "unknown"] as const)(
+    "does not show a false purchase state when PRO status is %s",
+    (statusState) => {
+      const handlers = renderSheet({
+        status: null,
+        statusState,
+        staleStatus: null,
+      });
+
+      expect(screen.queryByText(PRO_COPY.priceLabel)).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: PRO_COPY.ctaBuy })).not.toBeInTheDocument();
+      expect(screen.getByTestId("pro-status-unavailable")).toHaveTextContent(
+        PRO_COPY.statusUnavailableLabel,
+      );
+      const unavailable = screen.getByRole("button", {
+        name: PRO_COPY.statusUnavailableLabel,
+      });
+      expect(unavailable).toBeDisabled();
+      fireEvent.click(unavailable);
+      expect(handlers.onPurchase).not.toHaveBeenCalled();
+    },
+  );
+
+  it("keeps an already-mounted active panel while a refresh errors", () => {
+    const expiresAt = Date.now() + 86_400_000;
+    const handlers = renderSheet({
+      status: null,
+      statusState: "error",
+      staleStatus: { active: true, expiresAt },
+    });
+
+    expect(screen.getByTestId("pro-active-banner")).toBeInTheDocument();
+    expect(screen.getByTestId("pro-status-unavailable")).toHaveTextContent(
+      PRO_COPY.statusUnavailableLabel,
+    );
+    expect(handlers.onPurchase).not.toHaveBeenCalled();
+  });
+
+  it("treats a missing status without an explicit state as unknown", () => {
+    const handlers = renderSheet({ status: null });
+
+    expect(screen.getByTestId("pro-status-unavailable")).toHaveTextContent(
+      PRO_COPY.statusUnavailableLabel,
+    );
+    expect(screen.queryByRole("button", { name: PRO_COPY.ctaBuy })).not.toBeInTheDocument();
+    expect(handlers.onPurchase).not.toHaveBeenCalled();
+  });
+
+  it("shows a checking state instead of inactive purchase while loading", () => {
+    renderSheet({ status: null, statusState: "loading" });
+
+    expect(screen.queryByText(PRO_COPY.priceLabel)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: PRO_COPY.ctaBuy })).not.toBeInTheDocument();
+    expect(screen.getByTestId("pro-status-unavailable")).toHaveTextContent(
+      PRO_COPY.statusCheckingLabel,
+    );
+  });
+
+  // The bottom Renew CTA was removed when PRO is active (the principal
+  // button is gated on !showActiveBanner). The active state now renders
+  // 3 contextual actions: pro-open-journal (primary), pro-active-cta
+  // (secondary "Play in Arena"), and pro-extend-link (only when
+  // expiring ≤ 3 days). The legacy "Renew CTA when active" test was
+  // removed; the active-state behavior is covered by the dedicated
+  // describe block below.
+
+  it("disables the CTA while purchasing", () => {
+    renderSheet({ isPurchasing: true });
+    const cta = screen.getByRole("button", { name: /processing/i });
+    expect(cta).toBeDisabled();
+  });
+
+  it("disables the CTA while verifying", () => {
+    renderSheet({ isVerifying: true });
+    const cta = screen.getByRole("button", { name: /verifying/i });
+    expect(cta).toBeDisabled();
+  });
+
+  it("renders an error region when errorMessage is set", () => {
+    renderSheet({ errorMessage: PRO_COPY.errors.purchaseFailed });
+    expect(screen.getByTestId("pro-error")).toHaveTextContent(PRO_COPY.errors.purchaseFailed);
+  });
+
+  it("does NOT render the retry CTA on a generic (non-verify-failed) error", () => {
+    renderSheet({ errorMessage: PRO_COPY.errors.purchaseFailed });
+    expect(screen.queryByTestId("pro-error-retry")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("pro-error-reassurance")).not.toBeInTheDocument();
+  });
+
+  it("renders the retry CTA + reassurance copy when verifyFailedTxHash is set and onRetryVerify is provided", () => {
+    const onRetryVerify = vi.fn();
+    renderSheet({
+      errorMessage: PRO_COPY.errors.verifyFailedTitle,
+      verifyFailedTxHash: "0x" + "a".repeat(64),
+      onRetryVerify,
+    });
+    expect(screen.getByTestId("pro-error-reassurance")).toHaveTextContent(
+      PRO_COPY.errors.verifyFailedReassurance,
+    );
+    const retry = screen.getByTestId("pro-error-retry");
+    expect(retry).toHaveTextContent(PRO_COPY.errors.retryVerifyCta);
+    fireEvent.click(retry);
+    expect(onRetryVerify).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables the retry button + swaps the label while isRetryingVerify is true", () => {
+    const onRetryVerify = vi.fn();
+    renderSheet({
+      errorMessage: PRO_COPY.errors.verifyFailedTitle,
+      verifyFailedTxHash: "0x" + "a".repeat(64),
+      isRetryingVerify: true,
+      onRetryVerify,
+    });
+    const retry = screen.getByTestId("pro-error-retry");
+    expect(retry).toBeDisabled();
+    expect(retry).toHaveTextContent(PRO_COPY.errors.retryingVerify);
+    fireEvent.click(retry);
+    expect(onRetryVerify).not.toHaveBeenCalled();
+  });
+
+  describe("telemetry", () => {
+    it("fires pro_card_viewed (surface=sheet) once per open", () => {
+      renderSheet({ open: true });
+      expect(trackMock).toHaveBeenCalledWith("pro_card_viewed", {
+        surface: "sheet",
+        active: false,
+      });
+      // M1 funnel (Commit 5) — pro_card_viewed ships exactly once, but
+      // mount also fires the monetization.pro_sheet_view companion. Filter
+      // to the legacy event so this assertion stays focused.
+      const proCardCalls = trackMock.mock.calls.filter(
+        ([name]) => name === "pro_card_viewed",
+      );
+      expect(proCardCalls).toHaveLength(1);
+    });
+
+    it("fires monetization.pro_sheet_view on open (M1 funnel)", () => {
+      renderSheet({ open: true });
+      expect(trackMock).toHaveBeenCalledWith("monetization.pro_sheet_view", {
+        active: false,
+      });
+      const m1Calls = trackMock.mock.calls.filter(
+        ([name]) => name === "monetization.pro_sheet_view",
+      );
+      expect(m1Calls).toHaveLength(1);
+    });
+
+    it("does not fire pro_card_viewed when open is false", () => {
+      renderSheet({ open: false });
+      expect(trackMock).not.toHaveBeenCalledWith(
+        "pro_card_viewed",
+        expect.anything(),
+      );
+    });
+
+    it("fires pro_cta_clicked with source=sheet_buy when tapping Get PRO", () => {
+      renderSheet();
+      trackMock.mockClear(); // drop the mount-time pro_card_viewed
+      fireEvent.click(screen.getByRole("button", { name: PRO_COPY.ctaBuy }));
+
+      expect(trackMock).toHaveBeenCalledWith("pro_cta_clicked", {
+        source: "sheet_buy",
+      });
+    });
+
+    // pro_cta_clicked source=sheet_renew was emitted by the bottom
+    // Renew button when PRO was active. That CTA no longer renders;
+    // the renew flow now goes through pro-extend-link (only when
+    // expiring) which emits pro_extend_tap instead. The dedicated
+    // expiring-sub-line block below covers pro_extend_tap.
+
+    it("does not fire pro_cta_clicked for Connect Wallet (not commercial intent)", () => {
+      renderSheet({ isConnected: false });
+      trackMock.mockClear();
+      fireEvent.click(screen.getByRole("button", { name: PRO_COPY.ctaConnectWallet }));
+
+      expect(trackMock).not.toHaveBeenCalledWith(
+        "pro_cta_clicked",
+        expect.anything(),
+      );
+    });
+
+    it("does not fire pro_cta_clicked for Switch Network", () => {
+      renderSheet({ isCorrectChain: false });
+      trackMock.mockClear();
+      fireEvent.click(screen.getByRole("button", { name: /switch network/i }));
+
+      expect(trackMock).not.toHaveBeenCalledWith(
+        "pro_cta_clicked",
+        expect.anything(),
+      );
+    });
+  });
+
+  describe("active-state — badge + surface-aware CTA + expiring sub-line", () => {
+    const NOW = Date.now();
+    const TEN_DAYS = NOW + 10 * 24 * 60 * 60 * 1000;
+    const TWO_DAYS = NOW + 2 * 24 * 60 * 60 * 1000;
+    const ACTIVE_STATUS = { active: true, expiresAt: TEN_DAYS };
+
+    it("renders the ProActiveBadge inside pro-active-banner when active", () => {
+      renderSheet({ status: ACTIVE_STATUS });
+      expect(screen.getByTestId("pro-active-banner")).toBeInTheDocument();
+      expect(screen.getByTestId("pro-active-badge-pill")).toHaveTextContent(
+        PRO_COPY.statusBadgeActive,
+      );
+    });
+
+    it("renders ProActiveCTA navigational variant when source is not /arena", () => {
+      renderSheet({ status: ACTIVE_STATUS });
+      const button = screen.getByTestId("pro-active-cta-button");
+      expect(button).toHaveTextContent(PRO_COPY.activeCtaPlay);
+      fireEvent.click(button);
+      expect(pushMock).toHaveBeenCalledWith("/arena?fresh=1");
+    });
+
+    it("prioritizes Training Journal as the first active PRO action", () => {
+      // Post-redesign: the active sheet renders 2 ordered actions —
+      // pro-open-journal (primary) then pro-active-cta (secondary
+      // "Play in Arena"). The bottom Renew CTA was retired; renew now
+      // goes through pro-extend-link, only when expiring ≤ 3 days.
+      const handlers = renderSheet({ status: ACTIVE_STATUS });
+      const journal = screen.getByTestId("pro-open-journal");
+      const play = screen.getByTestId("pro-active-cta-button");
+
+      expect(journal).toHaveTextContent(PRO_COPY.activeActions.journal);
+      expect(
+        journal.compareDocumentPosition(play) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+
+      fireEvent.click(journal);
+      expect(handlers.onOpenChange).toHaveBeenCalledWith(false);
+      expect(pushMock).toHaveBeenCalledWith("/coach/history");
+    });
+
+    it("tracks Training Journal taps from the active PRO sheet", () => {
+      renderSheet({ status: ACTIVE_STATUS });
+      trackMock.mockClear();
+
+      fireEvent.click(screen.getByTestId("pro-open-journal"));
+
+      expect(trackMock).toHaveBeenCalledWith("pro_training_card_cta_tap", {
+        surface: "pro_sheet",
+        pro_active: true,
+        wallet_connected: true,
+        cta: "training_journal",
+      });
+    });
+
+    it("does NOT render the active-state surfaces when status is inactive", () => {
+      renderSheet({ status: { active: false, expiresAt: null } });
+      expect(screen.queryByTestId("pro-active-banner")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("pro-active-actions")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("pro-active-cta")).not.toBeInTheDocument();
+    });
+
+    // The "Renew CTA behavior" guard is obsolete — the bottom Renew
+    // button was removed when PRO is active (see comment in
+    // resolveCta() at pro-sheet.tsx). Renew flow now goes through
+    // pro-extend-link, covered by the expiring-sub-line block.
+
+    describe("extend/renew sub-line (always available while active)", () => {
+      const EXPIRING_STATUS = { active: true, expiresAt: TWO_DAYS };
+
+      it("flips the badge to EXPIRING and renders the extend link when close to expiry", () => {
+        renderSheet({ status: EXPIRING_STATUS });
+        expect(screen.getByTestId("pro-active-badge-pill")).toHaveTextContent(
+          PRO_COPY.statusBadgeExpiring,
+        );
+        expect(screen.getByTestId("pro-expiring-subline")).toHaveTextContent(
+          PRO_COPY.expiringMicroCopy,
+        );
+        expect(screen.getByTestId("pro-extend-link")).toHaveTextContent(
+          PRO_COPY.ctaRenew,
+        );
+      });
+
+      // Regression guard 2026-07-02: the Shop's old approve+buyItem PRO
+      // tile let a user re-buy/extend at ANY remaining balance, no gate.
+      // Retiring that tile in favor of redirecting to this sheet
+      // (docs/product/chesscito-treasury-unification-plan-2026-07-01.md
+      // step 2) silently lost that flexibility, since this link used to
+      // be gated to daysLeft ≤ 7 — a real user with ~30 fresh days had no
+      // way to top up. The copy itself (PRO_COPY.expiringMicroCopy:
+      // "Renew anytime to keep training") was always written calm/non-
+      // urgent (Canon §11 Journey 3: no FOMO framing), so removing the
+      // days gate matches the copy's own intent, not just a workaround.
+      it("still renders the extend link with plenty of days left (daysLeft > 7)", () => {
+        renderSheet({ status: ACTIVE_STATUS });
+        expect(screen.getByTestId("pro-active-badge-pill")).toHaveTextContent(
+          PRO_COPY.statusBadgeActive,
+        );
+        expect(screen.getByTestId("pro-expiring-subline")).toHaveTextContent(
+          PRO_COPY.expiringMicroCopy,
+        );
+        expect(screen.getByTestId("pro-extend-link")).toHaveTextContent(
+          PRO_COPY.ctaRenew,
+        );
+      });
+
+      it("the extend link reuses the same purchase flow as the bottom Renew CTA", () => {
+        const handlers = renderSheet({ status: EXPIRING_STATUS });
+        fireEvent.click(screen.getByTestId("pro-extend-link"));
+        expect(handlers.onPurchase).toHaveBeenCalledTimes(1);
+      });
+
+      it("the extend link emits pro_extend_tap telemetry", () => {
+        renderSheet({ status: EXPIRING_STATUS });
+        trackMock.mockClear();
+        fireEvent.click(screen.getByTestId("pro-extend-link"));
+        expect(trackMock).toHaveBeenCalledWith("pro_extend_tap", {
+          source: expect.any(String),
+        });
+      });
+    });
+  });
+});
+
+it("disables new purchases while preserving an active entitlement", () => {
+  salesEnabled.mockReturnValue(false);
+  const handlers = renderSheet({ status: { active: true, expiresAt: Date.now() + 86_400_000 }, statusState: "active" });
+  const renew = screen.getByTestId("pro-extend-link");
+  expect(renew).toBeDisabled();
+  fireEvent.click(renew);
+  expect(handlers.onPurchase).not.toHaveBeenCalled();
+  expect(screen.getByText(PRO_COPY.salesPausedLabel)).toBeInTheDocument();
+});
+
+it("shows a disabled purchase CTA when sales are paused", () => {
+  salesEnabled.mockReturnValue(false);
+  const handlers = renderSheet();
+  const button = screen.getByRole("button", { name: PRO_COPY.salesPausedLabel });
+  expect(button).toBeDisabled();
+  fireEvent.click(button);
+  expect(handlers.onPurchase).not.toHaveBeenCalled();
+});

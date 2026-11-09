@@ -1,0 +1,62 @@
+{
+  "name": "landing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Public landing page for Chesscito — www.chesscito.com",
+  "scripts": {
+    "build": "node scripts/build-next.mjs",
+    "dev": "next dev",
+    "lint": "eslint src --ext .ts,.tsx",
+    "start": "next start",
+    "type-check": "tsc --noEmit -p tsconfig.vinext.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev:vinext": "vite dev --port 3001",
+    "build:vinext": "node scripts/build-vinext.mjs",
+    "start:vinext": "vite preview",
+    "deploy:vinext": "node scripts/deploy-vinext.mjs",
+    "verify:vinext": "node scripts/verify-vinext.mjs",
+    "scan:vinext": "node scripts/scan-public-output.mjs",
+    "smoke:vinext": "node scripts/smoke-vinext.mjs"
+  },
+  "comments": {
+    "versions": "Team convention — exact pins (no ^ or ~) for every dependency to harden against malicious version-range hijacks. See feedback_exact_version_pins memory."
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.100.1",
+    "@upstash/redis": "1.37.0",
+    "next": "16.3.8",
+    "next-intl": "4.12.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "0.0.1",
+    "sharp": "0.34.5",
+    "vinext": "1.0.1",
+    "react-server-dom-webpack": "19.3.0",
+    "@vinext/cloudflare": "1.0.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@types/node": "20.19.35",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.0.1",
+    "autoprefixer": "10.4.27",
+    "eslint": "8.57.1",
+    "eslint-config-next": "14.2.35",
+    "jsdom": "29.0.2",
+    "postcss": "8.5.8",
+    "tailwindcss": "3.4.19",
+    "typescript": "5.9.3",
+    "vitest": "4.1.4",
+    "vite": "8.3.0",
+    "@vitejs/plugin-rsc": "0.5.35",
+    "@cloudflare/vite-plugin": "2.0.0-beta.sha-52b0dc0e9",
+    "cf": "1.0.0-beta.12"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

@@ -1,0 +1,383 @@
+[
+  {
+    "title": "Two Turns",
+    "id": "rook-rail-two-turns",
+    "piece": "rook",
+    "fen": "N4NNN/2N5/1NR3N1/2NNNN2/6N1/N2NN3/7N/1NN2NN1 w - - 0 1",
+    "target": "e1",
+    "mover": "c6",
+    "targets": [
+      "e1",
+      "b7"
+    ],
+    "principle": "chaining-turns",
+    "order": 0
+  },
+  {
+    "title": "Dead End",
+    "id": "rook-rail-dead-end",
+    "piece": "rook",
+    "fen": "1N6/3N3N/1NNNNN2/3N4/R2N2N1/N2NNNN1/N7/NNNNNNNN w - - 0 1",
+    "target": "e4",
+    "mover": "a4",
+    "targets": [
+      "e4",
+      "h8"
+    ],
+    "principle": "anticipating-dead-ends",
+    "order": 1
+  },
+  {
+    "title": "Rook Run",
+    "id": "rook-rail-rook-run",
+    "piece": "rook",
+    "fen": "7N/1N1NRN2/1NNNNNN1/1N3N2/1N1NN2N/1N3N1N/2NN3N/N5NN w - - 0 1",
+    "target": "e5",
+    "mover": "e7",
+    "targets": [
+      "e5",
+      "b2",
+      "c7",
+      "f4"
+    ],
+    "principle": "route-mastery",
+    "order": 3
+  },
+  {
+    "title": "Two Roads",
+    "id": "rook-rail-two-roads",
+    "piece": "rook",
+    "fen": "NN1NNNNN/N2N3N/N4N1N/2N5/NNN1NNN1/N5N1/2NNN3/N5RN w - - 0 1",
+    "target": "b7",
+    "mover": "g1",
+    "targets": [
+      "b7",
+      "f7",
+      "a2"
+    ],
+    "principle": "comparing-routes",
+    "order": 2
+  },
+  {
+    "id": "bishop-lab-3",
+    "piece": "bishop",
+    "fen": "1B6/1NN5/4NN2/5N2/2N5/2NN4/5NN1/N5N1 w - - 0 1",
+    "target": "h8",
+    "mover": "b8",
+    "targets": [
+      "h8",
+      "b2"
+    ],
+    "order": 0
+  },
+  {
+    "id": "bishop-lab-4",
+    "piece": "bishop",
+    "fen": "NB2N3/2NN1N1N/N1N2N2/2N2N1N/N1N2N2/2N2N1N/N1N1NN2/3N3N w - - 0 1",
+    "target": "h8",
+    "mover": "b8",
+    "targets": [
+      "h8",
+      "a1",
+      "d8"
+    ],
+    "order": 1
+  },
+  {
+    "kind": "diagonal-run",
+    "title": "First Pivot",
+    "playerPrompt": "Tap a pivot square; the bishop turns there toward the star.",
+    "id": "bishop-run-1",
+    "piece": "bishop",
+    "fen": "8/2B5/2N1N3/3N4/2N1N3/8/8/8 w - - 0 1",
+    "target": "g1",
+    "mover": "c7",
+    "principle": "pivot-intro",
+    "order": 0
+  },
+  {
+    "kind": "diagonal-run",
+    "title": "Turn to the Star",
+    "playerPrompt": "Pick the pivot whose turn reaches the star.",
+    "id": "bishop-run-2",
+    "piece": "bishop",
+    "fen": "N4N1N/8/2N1N3/N1NNNN2/7N/2NNNN2/4N3/N1N4B w - - 0 1",
+    "target": "b1",
+    "mover": "h1",
+    "principle": "pivot-choice",
+    "order": 1
+  },
+  {
+    "kind": "diagonal-run",
+    "title": "The Long Run",
+    "playerPrompt": "Choose your pivots to run the bishop up to the star.",
+    "id": "bishop-run-3",
+    "piece": "bishop",
+    "fen": "8/2N1N3/2N1NN2/8/8/2NN1N2/3N1N2/1B6 w - - 0 1",
+    "target": "c8",
+    "mover": "b1",
+    "principle": "pivot-route",
+    "order": 2
+  },
+  {
+    "id": "knight-lab-1",
+    "piece": "knight",
+    "fen": "8/8/8/8/3N4/8/2N5/7N w - - 0 1",
+    "target": "c4",
+    "mover": "h1",
+    "order": 0
+  },
+  {
+    "id": "knight-lab-2",
+    "piece": "knight",
+    "fen": "8/8/2N5/8/8/1N1N4/8/N7 w - - 0 1",
+    "target": "e5",
+    "mover": "a1",
+    "order": 1
+  },
+  {
+    "id": "knight-lab-3",
+    "piece": "knight",
+    "fen": "8/5N2/4N3/3N4/8/1N6/8/7N w - - 0 1",
+    "target": "a8",
+    "mover": "h1",
+    "order": 2
+  },
+  {
+    "id": "knight-lab-4",
+    "piece": "knight",
+    "fen": "8/8/4N3/5N2/1N6/2N5/3N4/N7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "order": 3
+  },
+  {
+    "id": "knight-lab-5",
+    "piece": "knight",
+    "fen": "8/8/3NN3/2N2N2/1N4N1/2N2N2/3NN3/1N6 w - - 0 1",
+    "target": "g7",
+    "mover": "b1",
+    "order": 4
+  },
+  {
+    "kind": "knight-tour",
+    "title": "The Short Tour",
+    "playerPrompt": "Every square you leave is closed behind you. Cover as much as you can.",
+    "id": "knight-tour-1",
+    "piece": "knight",
+    "access": "base",
+    "fen": "8/5N2/NNNNNNNN/2N5/5N2/NNNNNNNN/1N4N1/8 w - - 0 1",
+    "mover": "g2",
+    "tier": "easy",
+    "principle": "tour-intro",
+    "order": 5
+  },
+  {
+    "kind": "knight-tour",
+    "title": "Wider Ground",
+    "playerPrompt": "More room, same rule. Do not strand yourself in a corner.",
+    "id": "knight-tour-2",
+    "piece": "knight",
+    "access": "training_pass",
+    "fen": "8/1N1N1N1N/NNNNNNNN/8/7N/NNNNNNNN/N1N1N1N1/8 w - - 0 1",
+    "mover": "h4",
+    "tier": "medium",
+    "principle": "tour-planning",
+    "order": 6
+  },
+  {
+    "kind": "knight-tour",
+    "title": "The Long Tour",
+    "playerPrompt": "Save the hard squares for early. The edges run out of exits first.",
+    "id": "knight-tour-3",
+    "piece": "knight",
+    "access": "training_pass",
+    "fen": "NNNNNNNN/N6N/N1NNNN1N/N1N2N1N/N1N1NN1N/N1N4N/N1NNNNNN/N7 w - - 0 1",
+    "mover": "a1",
+    "tier": "hard",
+    "principle": "tour-route",
+    "order": 7
+  },
+  {
+    "id": "pawn-lab-1",
+    "piece": "pawn",
+    "fen": "8/8/8/8/3N4/3Np3/3P4/8 w - - 0 1",
+    "target": "e5",
+    "mover": "d2",
+    "order": 0
+  },
+  {
+    "id": "pawn-lab-3",
+    "piece": "pawn",
+    "fen": "8/8/8/3p4/N1p5/Np6/P7/8 w - - 0 1",
+    "target": "d7",
+    "mover": "a2",
+    "order": 1
+  },
+  {
+    "id": "pawn-lab-4",
+    "piece": "pawn",
+    "fen": "8/8/8/8/2p5/Np6/P7/8 w - - 0 1",
+    "target": "c6",
+    "mover": "a2",
+    "order": 2
+  },
+  {
+    "id": "pawn-lab-5",
+    "piece": "pawn",
+    "fen": "8/8/2p5/3p4/4p3/5pN1/6P1/8 w - - 0 1",
+    "target": "c7",
+    "mover": "g2",
+    "order": 3
+  },
+  {
+    "id": "queen-lab-1",
+    "piece": "queen",
+    "fen": "8/8/8/7N/N7/8/6N1/7Q w - - 0 1",
+    "target": "a8",
+    "mover": "h1",
+    "order": 0
+  },
+  {
+    "id": "queen-lab-2",
+    "piece": "queen",
+    "fen": "8/8/8/8/N6N/3N4/4N3/Q2N4 w - - 0 1",
+    "target": "h1",
+    "mover": "a1",
+    "order": 1
+  },
+  {
+    "id": "queen-lab-3",
+    "piece": "queen",
+    "fen": "7N/N2N2N1/1N1N1N2/2NNN3/2NNN3/1N1Q1N2/N2N2N1/3N3N w - - 0 1",
+    "target": "d8",
+    "mover": "d3",
+    "order": 2
+  },
+  {
+    "kind": "queens",
+    "title": "The Quiet Room",
+    "playerPrompt": "No queen may see another. Fill the room.",
+    "id": "queens-1",
+    "piece": "queen",
+    "fen": "NNNN1NNN/N6N/N1N2N1N/7N/N2Q4/N1N2N1N/N6N/NNN1NNNN w - - 0 1",
+    "mover": "d4",
+    "tier": "easy",
+    "principle": "queens-intro",
+    "order": 3
+  },
+  {
+    "kind": "queens",
+    "title": "Wider Court",
+    "playerPrompt": "More room, same rule. Every queen you place closes lines for the next.",
+    "id": "queens-2",
+    "piece": "queen",
+    "fen": "2N5/2N4N/1NN3N1/5N2/3NN3/2N3N1/QN4N1/N5N1 w - - 0 1",
+    "mover": "a2",
+    "tier": "medium",
+    "principle": "queens-planning",
+    "order": 4
+  },
+  {
+    "kind": "queens",
+    "title": "Nine on Eight",
+    "playerPrompt": "A block cuts a queen's line. Two of them fit a ninth queen on a board that holds eight.",
+    "id": "queens-3",
+    "piece": "queen",
+    "fen": "2N2N2/8/N6N/8/8/N6N/8/Q1N2N2 w - - 0 1",
+    "mover": "a1",
+    "tier": "hard",
+    "principle": "queens-blocks",
+    "order": 5
+  },
+  {
+    "id": "king-lab-1",
+    "piece": "king",
+    "fen": "4N2N/2N2N1N/2N1N2N/N1N2N1N/N1N1N3/N1N2N2/N1NNN3/2N1K3 w - - 0 1",
+    "target": "a1",
+    "mover": "e1",
+    "targets": [
+      "a1",
+      "g8"
+    ],
+    "order": 0
+  },
+  {
+    "kind": "safe-path",
+    "title": "The Knight Sees",
+    "playerPrompt": "The knight is not in your way. The squares it watches are.",
+    "id": "king-safe-1",
+    "piece": "king",
+    "fen": "8/8/2n5/8/8/8/8/K7 w - - 0 1",
+    "target": "d7",
+    "mover": "a1",
+    "principle": "reading-a-threat",
+    "learningObjective": "The player learns that a piece controls squares far from itself, and that the short route is not always the safe one.",
+    "order": 0
+  },
+  {
+    "id": "king-safe-2",
+    "piece": "king",
+    "kind": "safe-path",
+    "fen": "8/8/2n5/8/8/5n2/8/K7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "title": "Two Watchers",
+    "principle": "overlapping-threats",
+    "playerPrompt": "Two knights, two zones. Find the gap between them.",
+    "learningObjective": "The player learns to read more than one threat at a time and to find the seam between two controlled zones.",
+    "order": 1
+  },
+  {
+    "kind": "safe-path",
+    "title": "The Long Eye",
+    "playerPrompt": "The bishop watches a whole diagonal, not a square.",
+    "id": "king-safe-3",
+    "piece": "king",
+    "fen": "8/8/2n4p/8/8/8/5nb1/K7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "principle": "rays-reach-far",
+    "learningObjective": "The player learns that a sliding piece controls a line all the way across the board, unlike the knight's fixed jumps.",
+    "order": 2
+  },
+  {
+    "id": "pawn-promotion-1",
+    "piece": "pawn",
+    "kind": "promotion-run",
+    "fen": "8/8/8/8/1rN5/8/2P5/8 w - - 0 1",
+    "mover": "c2",
+    "promoteTo": "queen",
+    "title": "No Way Around",
+    "principle": "capture-to-change-file",
+    "playerPrompt": "The wall blocks your file. The rook is not in your way — it is the way.",
+    "learningObjective": "The player learns that a pawn cannot change file without capturing, so a blocked file is not something to walk around: the enemy on the diagonal is the only door.",
+    "order": 0
+  },
+  {
+    "id": "pawn-promotion-2",
+    "piece": "pawn",
+    "kind": "promotion-run",
+    "fen": "8/8/1Nr5/8/1rN5/8/2P5/8 w - - 0 1",
+    "mover": "c2",
+    "promoteTo": "queen",
+    "title": "Pay for Every File",
+    "principle": "each-file-costs-a-capture",
+    "playerPrompt": "Two walls, two rooks. You will change file twice, and each one has a price.",
+    "learningObjective": "The player learns to read a whole run before starting it: every file the pawn needs must be paid for with a capture, and the captures must exist in the right order.",
+    "order": 1
+  },
+  {
+    "id": "pawn-promotion-3",
+    "piece": "pawn",
+    "kind": "promotion-run",
+    "fen": "8/8/n7/8/1rNr4/8/2P5/8 w - - 0 1",
+    "mover": "c2",
+    "promoteTo": "knight",
+    "title": "Not Every Meal Is Free",
+    "principle": "a-capture-can-be-bait",
+    "playerPrompt": "Two rooks to eat, and only one of them is dinner. The knight is watching.",
+    "learningObjective": "The player learns that a capture is a square you must then stand on, so the right question is not what can I take, but what is watching the square I would land on.",
+    "order": 2
+  }
+]

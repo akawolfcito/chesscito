@@ -1,0 +1,344 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithIntl as render } from "@/test-utils/render-with-intl";
+import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { PlayHubScaffold } from "../play-hub-scaffold";
+import { ThemeVariantOverride } from "@/lib/themes/theme-variant-provider";
+/* ⚠️ The rail's heading is read from the copy module, never typed as a literal.
+ * It was "PLAY PATH" and became "EXPLORE" the day the rail stopped being a path
+ * — that rename broke EIGHT assertions here, all of them for the word rather
+ * than the behaviour. Referencing the source means the next rename costs a copy
+ * edit and nothing else. */
+import { PLAY_HUB_COPY } from "@/lib/content/editorial";
+
+vi.mock("@/components/kingdom/kingdom-card", () => ({
+  KingdomCard: ({
+    pro,
+    onReplayTour,
+  }: {
+    pro: { active: boolean };
+    onReplayTour?: () => void;
+  }) => (
+    <div data-testid="kingdom-card" data-pro={pro.active}>
+      {onReplayTour ? <button onClick={onReplayTour}>Replay Play Hub tour</button> : null}
+    </div>
+  ),
+}));
+vi.mock("@/components/hub/app-mode-switch", () => ({
+  AppModeSwitch: ({ activeMode }: { activeMode: string }) => (
+    <div data-testid="mode-switch">Training | {activeMode}</div>
+  ),
+}));
+vi.mock("@/components/hub/language-chip", () => ({ LanguageChip: () => null }));
+vi.mock("@/components/peones/peones-balance-chip", () => ({
+  PeonesBalanceChipView: () => <div data-testid="peones-chip" />,
+}));
+vi.mock("@/components/tactics/play-tactics-tile", () => ({
+  PlayTacticsTile: ({ className }: { className?: string }) => (
+    <button className={className} aria-label="Open Arena warm-up">Warm-up</button>
+  ),
+}));
+// The mock MUST render `badge` — otherwise a test asserting the Coach tile
+// carries no PRO badge would pass while the real tile still wears one.
+vi.mock("@/components/hub/hub-action-tile", () => ({
+  HubActionTile: ({
+    label,
+    ariaLabel,
+    className,
+    badge,
+    iconSlot,
+    onClick,
+    tourTarget,
+  }: {
+    label: string;
+    ariaLabel: string;
+    className?: string;
+    badge?: React.ReactNode;
+    iconSlot?: string;
+    onClick?: () => void;
+    tourTarget?: string;
+  }) => (
+    <button
+      aria-label={ariaLabel}
+      className={className}
+      data-icon-slot={iconSlot}
+      onClick={onClick}
+      data-tour-target={tourTarget}
+    >
+      {label}
+      {badge}
+    </button>
+  ),
+}));
+const props = {
+  isWalletConnected: true,
+  pro: { active: false } as const,
+  // The scaffold is told the balance; it no longer fetches it. A wagmi hook in
+  // this tree is what kept the PLAY hub out of every VR baseline.
+  peones: { kind: "success", balance: 12, dailyEarnedCapped: 0, dailyCap: 10, lastEventAt: null } as const,
+  dailySlot: <button data-testid="play-daily">Daily</button>,
+  onPeonesRefetch: vi.fn(),
+  onConnectTap: vi.fn(),
+  onProTap: vi.fn(),
+  onCoachTap: vi.fn(),
+  onShopTap: vi.fn(),
+  onArenaPress: vi.fn(),
+};
+
+describe("PlayHubScaffold", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders the unified surfaces: LEARN mascot, DUEL and PLAY PATH", () => {
+    render(<PlayHubScaffold {...props} />);
+
+    /* ⛔ The trophy pill is gone: a `0` scoreboard was the first thing a
+     *  newcomer read, and 434 of 443 wallets play a single day. */
+    expect(screen.queryByLabelText(/Minted victories/)).not.toBeInTheDocument();
+
+    // Title + avatar reuse the exact LEARN/LITE mascot markup.
+    expect(screen.getByAltText("Chesscito")).toBeInTheDocument();
+    expect(screen.getByTestId("play-chess-cta")).toBeInTheDocument();
+    expect(screen.getByText(PLAY_HUB_COPY.playPathLabel)).toBeInTheDocument();
+    expect(screen.getByTestId("play-daily")).toBeInTheDocument();
+  });
+
+  it("opts into the canonical LEARN home/header geometry", () => {
+    const { container } = render(<PlayHubScaffold {...props} />);
+
+        // ⚠️ `region`, no `main`: el landmark `<main>` del documento es el del
+    // layout. Estos scaffolds pasaron a `<section aria-label>` para que haya UN
+    // solo `<main>` por documento, conservando su nombre accesible.
+    // El nombre es obligatorio: el documento tiene más de una `region`.
+    expect(
+      screen.getByRole("region", { name: "Chesscito Play Hub" }),
+    ).toHaveClass("hub-home-scaffold");
+    expect(container.querySelector(".hub-scaffold-hud-top")).toHaveClass(
+      "hub-home-hud",
+    );
+    expect(container.querySelector(".hub-scaffold-hud-left")).toHaveClass(
+      "hub-home-hud-left",
+    );
+    expect(container.querySelector(".hub-scaffold-hud-right")).toHaveClass(
+      "hub-home-hud-right",
+    );
+  });
+
+  it("orders mascot → switch → DUEL → PLAY PATH, with no panel between them", () => {
+    render(<PlayHubScaffold {...props} />);
+    const mascot = screen.getByAltText("Chesscito");
+    const modeSwitch = screen.getByTestId("mode-switch");
+    const cta = screen.getByTestId("play-chess-cta");
+    const path = screen.getByText(PLAY_HUB_COPY.playPathLabel);
+    expect(mascot.compareDocumentPosition(modeSwitch) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(modeSwitch.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(cta.compareDocumentPosition(path) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    /* The panel is gone for good: it was onboarding copy made permanent, and
+     *  the world render behind it is the `<KingdomAnchor>` it stood in for. */
+    expect(screen.queryByTestId("kingdom-card")).not.toBeInTheDocument();
+  });
+
+  it("renders the Peones chip when connected but NO account chip (hidden in PLAY)", () => {
+    render(<PlayHubScaffold {...props} />);
+    expect(screen.getByTestId("peones-chip")).toBeInTheDocument();
+    expect(screen.queryByTestId("play-hub-account-chip")).toBeNull();
+  });
+
+  it("hides the Peones chip for guests", () => {
+    render(<PlayHubScaffold {...props} isWalletConnected={false} />);
+    expect(screen.queryByTestId("peones-chip")).toBeNull();
+  });
+
+  it("swaps to the PRO avatar when pro is active", () => {
+    render(
+      <ThemeVariantOverride variant="pro">
+        <PlayHubScaffold {...props} pro={{ active: true, daysRemaining: 200 }} />
+      </ThemeVariantOverride>,
+    );
+    expect(screen.getByAltText("Chesscito")).toBeInTheDocument();
+    const avatar = document.querySelector(".hub-lite-avatar img") as HTMLImageElement;
+    expect(avatar.getAttribute("src")).toContain("avatar-pro");
+  });
+
+  /**
+   * 2026-08-29 — this test used to assert the OPPOSITE: that the standalone
+   * CTA was absent and the floor rail owned the Arena entry. That state was
+   * introduced in `b7840ab4` (2026-07-26) with no measurement; the measured
+   * consequence was that 39% of the 5.957 people reaching this hub never
+   * started a match, including 35,4% of those who completed the whole tour.
+   *
+   * 2026-08-30 — the rail shortcut is now gone as well. Keeping both was a
+   * deliberate intermediate step, and this test used to pin their accessible
+   * names apart. The duplication itself is what got removed: same handler,
+   * same art, 200 px apart. What survives is the rule the CTA was restored
+   * for — there IS a dominant entry to a match, and there is exactly one.
+   */
+  it("gives the hub exactly one control that starts a match", async () => {
+    const { container } = render(<PlayHubScaffold {...props} />);
+
+    const cta = screen.getByTestId("play-chess-cta");
+    expect(container.querySelector(".hub-scaffold-cta-row > .play-chess-cta")).not.toBeNull();
+    expect(cta).toHaveAccessibleName("Duel: pick your rival and play a full match");
+
+    // The whole screen holds one Arena entry, not two.
+    expect(container.querySelectorAll('[data-icon-slot="hub.enter-arena"]')).toHaveLength(0);
+
+    await userEvent.click(cta);
+    expect(props.onArenaPress).toHaveBeenCalledTimes(1);
+
+    expect(screen.queryByText(/Training Path/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Daily Focus/i)).not.toBeInTheDocument();
+  });
+
+  it("renders PLAY PATH in DOM order Coach → Shop → PRO", () => {
+    render(<PlayHubScaffold {...props} />);
+
+    expect(screen.getByText(PLAY_HUB_COPY.playPathLabel)).toBeInTheDocument();
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
+    const actions = within(path).getAllByRole("button");
+    // ⚠️ PRO va ÚLTIMO, y no es casual: el orden lo pone después de los dos
+    // destinos gratuitos, así que la oferta se encuentra sin encabezar la fila.
+    expect(actions.map((button) => button.textContent)).toEqual([
+      "Coach",
+      "Shop",
+      "PRO",
+    ]);
+    for (const label of ["Coach", "Shop"]) {
+      expect(screen.getByText(label)).not.toHaveClass("candy-tray-pill");
+    }
+  });
+
+  it("marks only Play as the primary PLAY PATH action", () => {
+    render(<PlayHubScaffold {...props} />);
+
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
+    for (const action of within(path).getAllByRole("button")) {
+      expect(action).not.toHaveClass("play-hub-path-tile--primary");
+    }
+  });
+
+  /* ⛔ THE invariant of this revision. The rail used to lead with a `Duel` tile
+   *  wired to the SAME `onArenaPress` as the CTA 200 px above it — two identical
+   *  doors a thumb apart. If a rail tile ever starts a match again, the primary
+   *  CTA stops being unambiguous and this whole layout loses its argument. */
+  it("gives the floor rail no way to start a match", async () => {
+    const onArenaPress = vi.fn();
+    render(<PlayHubScaffold {...props} onArenaPress={onArenaPress} />);
+
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
+    for (const tile of within(path).getAllByRole("button")) {
+      await userEvent.click(tile);
+    }
+
+    expect(onArenaPress).not.toHaveBeenCalled();
+  });
+
+  /* ⛔ El rail sostiene sólo lo que se ganó un lugar. Un hueco en un layout no
+   *  es un requisito de producto, y por eso Trophies NO vuelve: abría en `0`
+   *  para casi todo el mundo y moverlo 700px hacia abajo no cambia lo que dice.
+   *
+   *  ⚠️ PRO sí vuelve (2026-09-04), y no para llenar la grilla: escondiéndolo,
+   *  `play_hub_pro_tap` se fue a CERO y con él la única evidencia medida de que
+   *  el precio está por encima de la billetera. Se ganó el lugar en la puerta
+   *  porque es la puerta. */
+  it("keeps the rail to the destinations that earned a slot", () => {
+    render(<PlayHubScaffold {...props} />);
+
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
+    expect(
+      within(path)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["Coach", "Shop", "PRO"]);
+    for (const gone of ["Warm-up", "Duel", "Trophies"]) {
+      expect(within(path).queryByText(gone)).not.toBeInTheDocument();
+    }
+  });
+
+  /**
+   * ⛔ INTENCIÓN INVERTIDA A PROPÓSITO (2026-09-04). Este test exigía que un no
+   * suscriptor NO viera la baldosa, y esa regla se midió en producción:
+   *
+   *   - `play_hub_pro_tap` pasó de ~25 cuentas/día a **CERO** el 31-08, mientras
+   *     `play_hub_view` seguía plano (~80/día). El tap del hub era el ÚNICO
+   *     camino al sheet: `pro_card_viewed` es 100% `surface:"sheet"` y el chip
+   *     no dispara nunca.
+   *   - Con la oferta escondida también se apagó el INSTRUMENTO: las 517 cuentas
+   *     con `pro_purchase_failed` + `read_usdt:"under_price"` son la única
+   *     evidencia de que el precio está por encima de la billetera, y esa señal
+   *     la producía gente intentando y fallando.
+   *
+   * ⚠️ Y su justificación tenía una premisa FALSA: *"everyone at all while the
+   * sale is paused"*. **PRO no es el Season Pass.** `verify-payment` separa
+   * `SEASON_PASSES` de `PRO_PACKS`, el flag gatea sólo la primera familia, y
+   * este sheet compra `chesscito_pro_30`. `pro-sheet.tsx:119-137` documenta que
+   * ese mismo error se cometió el 30-08 y se revirtió el mismo día.
+   */
+  it("offers PRO to a player without a subscription, and without a price", () => {
+    render(<PlayHubScaffold {...props} />);
+
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
+    const tile = within(path).getByRole("button", { name: /PRO/ });
+
+    expect(tile).toBeInTheDocument();
+    // ⛔ El precio vive en el sheet, donde el jugador llegó a propósito. Acá no.
+    expect(tile).not.toHaveTextContent("$");
+    // Y sin badge de días: no tiene ninguno que mostrar.
+    expect(tile).not.toHaveTextContent(/\dd/);
+  });
+
+  it("keeps PRO only in the lower Explore shortcut, never the PLAY header", () => {
+    render(<PlayHubScaffold {...props} />);
+
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
+    expect(screen.getAllByRole("button", { name: /PRO/i })).toHaveLength(1);
+    expect(within(path).getByRole("button", { name: /PRO/i })).toBeInTheDocument();
+  });
+
+  it("takes a non-subscriber to the sheet when they tap it", async () => {
+    render(<PlayHubScaffold {...props} />);
+
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
+    await userEvent.click(within(path).getByRole("button", { name: /PRO/ }));
+
+    expect(props.onProTap).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows PRO to an active subscriber, as days remaining and not a price", async () => {
+    render(
+      <PlayHubScaffold {...props} pro={{ active: true, daysRemaining: 12 }} />,
+    );
+
+    const path = screen.getByRole("region", { name: PLAY_HUB_COPY.playPathLabel });
+    const tile = within(path).getByRole("button", { name: /PRO/ });
+    expect(tile).toHaveTextContent("12d");
+    expect(tile).not.toHaveTextContent("$");
+
+    await userEvent.click(tile);
+    expect(props.onProTap).toHaveBeenCalledTimes(1);
+  });
+
+  it("still exposes the Daily target, which outlived the tour", () => {
+    const { container } = render(<PlayHubScaffold {...props} />);
+    expect(container.querySelector('[data-tour-target="daily"]')).not.toBeNull();
+  });
+
+  /* The panel is gone, so nothing on this screen replays a tour — and nothing
+   *  should offer to. */
+  it("offers no tour replay control", () => {
+    render(<PlayHubScaffold {...props} />);
+    expect(screen.queryByText("Replay Play Hub tour")).not.toBeInTheDocument();
+  });
+
+  // The tile no longer guards a paywall, so it must not wear one. A badge that
+  // announces a wall where none exists is a lie the player pays for by never
+  // opening the door.
+  it("does not brand the Coach tile as PRO-locked", () => {
+    render(<PlayHubScaffold {...props} />);
+
+    const coachTile = screen.getByText("Coach").closest("button") as HTMLElement;
+    expect(within(coachTile).queryByText("PRO")).not.toBeInTheDocument();
+  });
+});

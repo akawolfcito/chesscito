@@ -1,0 +1,173 @@
+import { describe, expect, it } from "vitest";
+import {
+  deriveEarnedMilestones,
+  type MilestoneInput,
+} from "@/lib/progression/milestones";
+
+function input(overrides: Partial<MilestoneInput> = {}): MilestoneInput {
+  return {
+    piece: "rook",
+    lifetimeStars: 0,
+    completedExercises: 0,
+    pieceStars: 0,
+    pieceCompletedExercises: 0,
+    pieceRequiredExercises: 8, // rook: 80% of a 10-exercise pool
+    rookStars: 0,
+    dailyStars: 0,
+    sessionQuotaExhausted: false,
+    badgeClaimed: false,
+    allLabyrinthsComplete: false,
+    hadGreatSessionBefore: false,
+    ...overrides,
+  };
+}
+
+function ids(result: ReturnType<typeof deriveEarnedMilestones>): string[] {
+  return result.map((event) => event.id);
+}
+
+describe("first-reward", () => {
+  it("does not fire on a single perfect solve — the exercise floor is not met", () => {
+    const earned = deriveEarnedMilestones(
+      input({ lifetimeStars: 3, completedExercises: 1 }),
+    );
+    expect(ids(earned)).not.toContain("first-reward");
+  });
+
+  it("fires at 4 stars across 2 exercises", () => {
+    const earned = deriveEarnedMilestones(
+      input({ lifetimeStars: 4, completedExercises: 2 }),
+    );
+    expect(ids(earned)).toContain("first-reward");
+  });
+
+  it("fires for a struggling player at 1 star across 4 exercises", () => {
+    const earned = deriveEarnedMilestones(
+      input({ lifetimeStars: 4, completedExercises: 4 }),
+    );
+    expect(ids(earned)).toContain("first-reward");
+  });
+});
+
+describe("first-labyrinth", () => {
+  it("does not fire at 6 piece stars across only 2 exercises", () => {
+    const earned = deriveEarnedMilestones(
+      input({ pieceStars: 6, pieceCompletedExercises: 2 }),
+    );
+    expect(ids(earned)).not.toContain("first-labyrinth");
+  });
+
+  it("fires at 6 piece stars across 3 exercises", () => {
+    const earned = deriveEarnedMilestones(
+      input({ pieceStars: 6, pieceCompletedExercises: 3 }),
+    );
+    expect(ids(earned)).toContain("first-labyrinth");
+  });
+});
+
+describe("piece badge", () => {
+  it("is eligible once 80% of exercises are completed but not claimed", () => {
+    const earned = deriveEarnedMilestones(input({ pieceCompletedExercises: 8 }));
+    expect(ids(earned)).toContain("piece-badge-eligible");
+    expect(ids(earned)).not.toContain("piece-badge-claimed");
+  });
+
+  it("is NOT eligible one completion short of the gate", () => {
+    const earned = deriveEarnedMilestones(input({ pieceCompletedExercises: 7 }));
+    expect(ids(earned)).not.toContain("piece-badge-eligible");
+  });
+
+  it("is eligible on constancy alone — eight 1★ solves, low stars", () => {
+    const earned = deriveEarnedMilestones(
+      input({ pieceCompletedExercises: 8, pieceStars: 8 }),
+    );
+    expect(ids(earned)).toContain("piece-badge-eligible");
+  });
+
+  it("is claimed once the transaction confirms", () => {
+    const earned = deriveEarnedMilestones(
+      input({ pieceCompletedExercises: 8, badgeClaimed: true }),
+    );
+    expect(ids(earned)).toContain("piece-badge-claimed");
+  });
+
+  /** The RIGHT to claim does not survive the claim. Found on device: an
+   *  already-minted piece kept deriving `piece-badge-eligible`, and because
+   *  the celebration queue drains EVERY pending event regardless of the piece
+   *  on screen, that stuck event re-opened "Badge Ready to Claim" on every
+   *  solve of every other piece — over a board showing 9 stars. Its CTA then
+   *  hit `handleClaimBadge`, which no-ops on an owned badge, so the event was
+   *  never celebrated and the loop fed itself. */
+  it("is NOT eligible any more once the badge is on chain", () => {
+    const earned = deriveEarnedMilestones(
+      input({ pieceCompletedExercises: 8, badgeClaimed: true }),
+    );
+    expect(ids(earned)).not.toContain("piece-badge-eligible");
+  });
+});
+
+describe("mastery", () => {
+  it("stays locked when every labyrinth is done but the badge was never claimed", () => {
+    const earned = deriveEarnedMilestones(
+      input({ pieceCompletedExercises: 8, allLabyrinthsComplete: true, badgeClaimed: false }),
+    );
+    expect(ids(earned)).not.toContain("mastery");
+  });
+
+  it("fires when the badge is claimed and every labyrinth is done", () => {
+    const earned = deriveEarnedMilestones(
+      input({ pieceCompletedExercises: 8, allLabyrinthsComplete: true, badgeClaimed: true }),
+    );
+    expect(ids(earned)).toContain("mastery");
+  });
+});
+
+describe("special-training", () => {
+  it("fires at 12 rook stars", () => {
+    expect(ids(deriveEarnedMilestones(input({ rookStars: 12 })))).toContain(
+      "special-training",
+    );
+  });
+
+  it("does not fire at 11 rook stars", () => {
+    expect(ids(deriveEarnedMilestones(input({ rookStars: 11 })))).not.toContain(
+      "special-training",
+    );
+  });
+});
+
+describe("great-focus-session", () => {
+  it("fires at 8 daily stars", () => {
+    expect(ids(deriveEarnedMilestones(input({ dailyStars: 8 })))).toContain(
+      "great-focus-session",
+    );
+  });
+
+  it("fires on an exhausted quota even at 7 daily stars — the wall never beats the praise", () => {
+    const earned = deriveEarnedMilestones(
+      input({ dailyStars: 7, sessionQuotaExhausted: true }),
+    );
+    expect(ids(earned)).toContain("great-focus-session");
+  });
+
+  it("grants first-great-session only the first time", () => {
+    const first = deriveEarnedMilestones(input({ dailyStars: 8 }));
+    expect(ids(first)).toContain("first-great-session");
+
+    const later = deriveEarnedMilestones(
+      input({ dailyStars: 8, hadGreatSessionBefore: true }),
+    );
+    expect(ids(later)).toContain("great-focus-session");
+    expect(ids(later)).not.toContain("first-great-session");
+  });
+});
+
+describe("per-piece scoping", () => {
+  it("scopes piece milestones to the piece under play", () => {
+    const earned = deriveEarnedMilestones(
+      input({ piece: "bishop", pieceCompletedExercises: 8 }),
+    );
+    const badge = earned.find((event) => event.id === "piece-badge-eligible");
+    expect(badge?.piece).toBe("bishop");
+  });
+});

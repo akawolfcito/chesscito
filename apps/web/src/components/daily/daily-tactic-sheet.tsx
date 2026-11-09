@@ -1,0 +1,392 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Board } from "@/components/board";
+import { CandyIcon } from "@/components/redesign/candy-icon";
+import { MissionHeaderCandy } from "@/components/exercises/mission-header-candy";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
+import { ThemeAssetPicture } from "@/components/themes/theme-asset-picture";
+import {
+  CELEBRATION_ACCENT,
+  CELEBRATION_STROKE,
+} from "@/components/ui/arched-headline";
+import { CelebrationStack } from "@/components/ui/celebration-stack";
+import { ShareModal } from "@/components/share/share-modal";
+import {
+  hapticImpact,
+  hapticReject,
+  hapticSuccess,
+  hapticTap,
+} from "@/lib/haptics";
+import { DAILY_SOLVE_COPY, DAILY_SHARE_COPY } from "@/lib/content/editorial";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import type { DailyTacticData } from "@/lib/daily/daily-puzzles";
+import type { BoardPosition } from "@/lib/game/types";
+
+type Status = "solving" | "solved" | "resetting";
+
+type StreakType = "first" | "extended" | "reset";
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  puzzleData: DailyTacticData;
+  /** Fires once when the user reaches targetPos with the move count
+   *  used. Sprint 2 commit D (Training Economy Alpha 2026-06-06) —
+   *  signature extended from `() => void` so the consumer can attach
+   *  it to telemetry without re-deriving the count from board state. */
+  onSolve: (movesUsed: number) => void;
+  /** Optional wrong-move signal. Play uses it for isolated failure telemetry;
+   * Daily Focus callers can omit it and retain existing behavior. */
+  onFail?: (movesUsed: number) => void;
+  /** Presentation/effects boundary. `play` reuses the puzzle board without
+   * Daily Focus streak, Peones or Lite celebration UI. */
+  experience?: "daily" | "play";
+  /** Gates the reward block branch (connected vs guest). Sprint 3
+   *  commit E — when true, the sheet renders state from `reward`
+   *  below; when false, only the guest CTA appears. Default `false`
+   *  keeps every legacy consumer on the guest branch. */
+  isConnected?: boolean;
+  /** Sprint 3 commit E — state of the `/api/peones/earn` POST the
+   *  mount component fires after a Daily Tactic solve. Sheet renders
+   *  one of FOUR states from this; if undefined the sheet renders
+   *  the connected branch as if `pending` (a stale value would be
+   *  worse than "saving"). Ignored entirely when isConnected=false. */
+  reward?: import("@/lib/daily/peones-earn").DailyTacticRewardState;
+  streakAfterSolve?: number;
+  streakType?: StreakType;
+  shareUrl?: string;
+  shareSolvedUrl?: string;
+  /**
+   * Canonical `/share/daily?...` URL handed to social-platform share
+   * intents. The crawler fetches this HTML page and reads its OG meta
+   * to render the rich preview. Without it, crawlers fall back to the
+   * generic site card.
+   */
+  shareLinkUrl?: string;
+  shareSolvedLinkUrl?: string;
+};
+
+const SOLVE_AUTO_CLOSE_MS = 3200;
+const RESET_AFTER_MS = 360;
+
+export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, onFail, experience = "daily", streakAfterSolve, streakType, shareUrl, shareSolvedUrl, shareLinkUrl, shareSolvedLinkUrl, isConnected = false, reward }: Props) {
+  const tPlay = useTranslations("PLAY_TACTICS_COPY");
+  /** Same namespace the exercises PhaseFlash reads, so both celebrations say
+   *  the same thing in every locale. */
+  const tFlash = useTranslations("PHASE_FLASH_COPY");
+  const [status, setStatus] = useState<Status>("solving");
+  const [showHint, setShowHint] = useState(false);
+  const [boardKey, setBoardKey] = useState(0);
+  const [shareOpen, setShareOpen] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isPlayExperience = experience === "play";
+  const sheetTitle = isPlayExperience ? tPlay("sheetTitle") : "Daily Tactic";
+
+  useEffect(() => {
+    if (!open) return;
+    setStatus("solving");
+    setShowHint(false);
+    setBoardKey((k) => k + 1);
+  }, [open, puzzleData.id]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+  }, []);
+
+  const isLabyrinth =
+    (puzzleData.exercise.obstacles && puzzleData.exercise.obstacles.length > 0) ||
+    (puzzleData.exercise.captureTargets && puzzleData.exercise.captureTargets.length > 0);
+
+  function handleShareOpen() {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setShareOpen(true);
+  }
+
+  function isShareUrlValid(url: string | undefined): url is string {
+    return typeof url === "string" && url.length > 0;
+  }
+
+  function handleMove(position: BoardPosition, movesCount: number) {
+    if (status !== "solving") return;
+    const reached =
+      position.file === puzzleData.exercise.targetPos.file &&
+      position.rank === puzzleData.exercise.targetPos.rank;
+    if (!reached) {
+      if (movesCount >= puzzleData.exercise.optimalMoves) {
+        hapticReject();
+        onFail?.(movesCount);
+        setStatus("resetting");
+        if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = setTimeout(() => {
+          setBoardKey((k) => k + 1);
+          setShowHint(true);
+          setStatus("solving");
+        }, RESET_AFTER_MS);
+      }
+      return;
+    }
+    hapticSuccess();
+    hapticImpact();
+    setStatus("solved");
+    onSolve(movesCount);
+    closeTimerRef.current = setTimeout(() => {
+      onOpenChange(false);
+    }, SOLVE_AUTO_CLOSE_MS);
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        hideClose
+        title={sheetTitle}
+        description={puzzleData.name}
+        data-testid="daily-tactic-sheet"
+        className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
+      >
+        <MissionHeaderCandy
+          title={sheetTitle}
+          subtitle={puzzleData.name}
+          iconSlot={<TileIconSlot slot="hub.daily-icon" />}
+          objective={
+            isPlayExperience
+              ? tPlay("objective", { piece: puzzleData.piece })
+              : `Move the ${puzzleData.piece} to the target square.`
+          }
+          onClose={() => onOpenChange(false)}
+        />
+
+        <div className="flex flex-1 flex-col items-center justify-center px-2 py-4">
+          <div className="w-full max-w-[360px]">
+            <Board
+              key={boardKey}
+              pieceType={puzzleData.piece}
+              startPosition={puzzleData.exercise.startPos}
+              mode={isLabyrinth ? "labyrinth" : "practice"}
+              targetPosition={puzzleData.exercise.targetPos}
+              obstacles={puzzleData.exercise.obstacles}
+              captureTargets={puzzleData.exercise.captureTargets}
+              isCapture={puzzleData.exercise.isCapture ?? false}
+              isLocked={status !== "solving"}
+              onMove={handleMove}
+            />
+          </div>
+        </div>
+
+        <div
+          className="shrink-0 px-5 pb-4 pt-2 text-center"
+          style={{ color: "rgba(63, 34, 8, 0.95)" }}
+        >
+          {status === "solved" ? (
+            <div
+              className="flex flex-col items-center gap-1.5 py-1"
+              style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
+            >
+              <div className="flex items-center gap-2">
+                <CandyIcon name="star" className="h-5 w-5" />
+                <span className="text-base font-extrabold uppercase tracking-tight" data-testid="daily-status-solved">
+                  {isPlayExperience ? tPlay("solved") : DAILY_SOLVE_COPY.solved}
+                </span>
+              </div>
+              <span className="text-xs font-bold opacity-60">{puzzleData.name}</span>
+              {/* Lite: streak/focus info lives in the overlay pills — bottom stays minimal. */}
+              {!isPlayExperience && !CHESSCITO_LITE_MODE && (
+                <>
+                  {streakAfterSolve != null && streakAfterSolve > 0 && (
+                    <span className="text-sm font-extrabold">{DAILY_SOLVE_COPY.streakLabel(streakAfterSolve)}</span>
+                  )}
+                  {streakType === "first" && (
+                    <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.firstStreak}</span>
+                  )}
+                  {streakType === "extended" && (
+                    <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.extendedStreak}</span>
+                  )}
+                  {streakType === "reset" && (
+                    <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.newStreak}</span>
+                  )}
+                </>
+              )}
+              {/* Lite: no Peones block. Full: connected/guest reward. */}
+              {!isPlayExperience && !CHESSCITO_LITE_MODE && (
+                <>
+                  {/* Sprint 3 commit E — REAL reward block (Full mode only).
+                   *  /api/peones/earn passes state via `reward`. Four states:
+                   *  pending / success / cap_exhausted / error. */}
+                  {isConnected ? (
+                    <div
+                      className="mt-1 flex flex-col items-center gap-0.5"
+                      data-testid="daily-reward-connected"
+                      data-state={reward?.kind ?? "pending"}
+                    >
+                      {(() => {
+                        const state = reward ?? { kind: "pending" as const };
+                        if (state.kind === "pending") {
+                          return (
+                            <span className="text-xs font-bold opacity-70">
+                              {DAILY_SOLVE_COPY.rewardSaving}
+                            </span>
+                          );
+                        }
+                        if (state.kind === "error") {
+                          return (
+                            <span className="text-xs font-bold opacity-70">
+                              {DAILY_SOLVE_COPY.rewardSaveFailed}
+                            </span>
+                          );
+                        }
+                        if (state.kind === "cap_exhausted") {
+                          return (
+                            <span className="text-xs font-bold opacity-70">
+                              {DAILY_SOLVE_COPY.rewardCapExhausted}
+                            </span>
+                          );
+                        }
+                        return state.capReached ? (
+                          <span className="text-sm font-extrabold tabular-nums">
+                            {DAILY_SOLVE_COPY.rewardCapPartialFormat(state.credited)}
+                          </span>
+                        ) : (
+                          <span className="text-sm font-extrabold tabular-nums">
+                            {DAILY_SOLVE_COPY.rewardEarnedFormat(state.credited)}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  ) : (
+                    <span
+                      className="mt-1 text-xs font-bold opacity-70"
+                      data-testid="daily-reward-guest"
+                    >
+                      {DAILY_SOLVE_COPY.rewardGuestCta}
+                    </span>
+                  )}
+                </>
+              )}
+              {isShareUrlValid(shareSolvedUrl) && (
+                <button
+                  type="button"
+                  onClick={handleShareOpen}
+                  className="mt-1 text-xs font-bold underline underline-offset-2"
+                  style={{ color: "rgba(110, 65, 15, 0.70)" }}
+                >
+                  {DAILY_SHARE_COPY.shareResult}
+                </button>
+              )}
+            </div>
+          ) : showHint ? (
+            <div className="rounded-xl border border-[rgba(110,65,15,0.20)] bg-[rgba(110,65,15,0.05)] p-3 text-xs leading-tight shadow-inner">
+              <span className="font-extrabold uppercase opacity-60 block mb-1">Hint</span>
+              {puzzleData.hint}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-xs font-bold opacity-60 uppercase tracking-widest">
+                {isPlayExperience ? tPlay("prompt") : "Find the move"}
+              </p>
+              {isShareUrlValid(shareUrl) && (
+                <button
+                  type="button"
+                  onClick={handleShareOpen}
+                  className="text-xs font-semibold underline underline-offset-2"
+                  style={{ color: "rgba(110, 65, 15, 0.50)" }}
+                >
+                  {DAILY_SHARE_COPY.shareChallenge}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Lite mode: PhaseFlash-style celebration overlay — mirrors
+         *  mission-panel-candy's PhaseFlash(success), headline included. The
+         *  headline is LIVE text (ArchedHeadline) reading the same
+         *  PHASE_FLASH_COPY.success as the exercises overlay, so it translates;
+         *  the baked-in welldone art it replaced could only ever say English.
+         *  Sheet auto-closes at SOLVE_AUTO_CLOSE_MS so no separate dismiss
+         *  timer is needed here. */}
+        {!isPlayExperience && CHESSCITO_LITE_MODE && status === "solved" && (
+          <div
+            className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center candy-modal-scrim"
+            aria-hidden="true"
+          >
+            <div className="flex flex-col items-center gap-3 px-4">
+              {/* Geometry comes from CelebrationStack, shared with the
+                  exercises PhaseFlash. This used to be a copy of that block
+                  and it went stale: it kept the negative headline margin and
+                  the oversized wolf the founder had already corrected away
+                  from on 2026-07-29, and never mounted the lesson line, so it
+                  did not reserve the box the headline is positioned against.
+                  The Daily carries no lesson title, so `lesson` is omitted —
+                  the box is reserved either way, which is the whole reason it
+                  is unconditional.
+
+                  Do not spell the retired class names out here: a source
+                  guard in celebration-stack.test.tsx reads this file to make
+                  sure the measurements live in exactly one place, and prose
+                  counts. */}
+              <CelebrationStack
+                text={tFlash("success")}
+                stroke={CELEBRATION_STROKE}
+                accent={CELEBRATION_ACCENT}
+                avatarSlot="exercises.avatar-fun"
+              />
+              {/* Rewards — same pattern as PhaseFlash(success): the prize is
+                  the icon, the words are a caption at its foot. */}
+              <div className="overlay-reward-row">
+                {streakAfterSolve != null && streakAfterSolve >= 1 && (
+                  <span className="overlay-reward">
+                    <ThemeAssetPicture
+                      slot="shared.flame-color"
+                      alt=""
+                      aria-hidden="true"
+                    />
+                    <span className="overlay-reward-label">
+                      ×{streakAfterSolve} Streak
+                    </span>
+                  </span>
+                )}
+                <span className="overlay-reward">
+                  <ThemeAssetPicture slot="shared.star" alt="" aria-hidden="true" />
+                  <span className="overlay-reward-label">Focus</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </SheetContent>
+
+      {shareOpen && (
+        <ShareModal
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          cardUrl={status === "solved" && isShareUrlValid(shareSolvedUrl) ? shareSolvedUrl : (shareUrl ?? null)}
+          url={
+            status === "solved" && isShareUrlValid(shareSolvedLinkUrl)
+              ? shareSolvedLinkUrl
+              : shareLinkUrl
+          }
+          text={
+            status === "solved"
+              ? DAILY_SHARE_COPY.ctaSolved(streakAfterSolve)
+              : DAILY_SHARE_COPY.ctaChallenge
+          }
+          title={DAILY_SHARE_COPY.shareChallenge}
+        />
+      )}
+    </Sheet>
+  );
+}

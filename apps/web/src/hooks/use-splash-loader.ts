@@ -1,0 +1,106 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { isMiniPayEnv } from "@/lib/minipay";
+import { useCurrentThemeAssets } from "@/lib/themes/use-current-theme-asset";
+
+const ONBOARDED_KEY = "chesscito:onboarded";
+
+/** Critical images to preload before revealing the game. Uses AVIF since
+ *  that's what the modern-browser image-set() picks up; PNG fallback is
+ *  only ever served to legacy browsers and would waste bandwidth here. */
+const PRELOAD_SLOTS = ["board.thumbnail", "exercises.wallpaper"] as const;
+
+/** Max time (ms) to wait before revealing anyway. */
+const WALLET_TIMEOUT = 5_000;
+const ASSET_TIMEOUT = 3_000;
+
+function readOnboarded(): boolean {
+  try {
+    return localStorage.getItem(ONBOARDED_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function writeOnboarded(): void {
+  try {
+    localStorage.setItem(ONBOARDED_KEY, "true");
+  } catch {
+    // localStorage unavailable — silent
+  }
+}
+
+function preloadImage(src: string): Promise<void> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve();
+    img.onerror = () => resolve(); // don't block on failures
+    img.src = src;
+    // Timeout per image
+    setTimeout(resolve, ASSET_TIMEOUT);
+  });
+}
+
+type SplashState = {
+  /** True while splash is visible (loading assets/wallet) */
+  showSplash: boolean;
+  /** True if this is the user's first visit (show briefing after splash) */
+  showBriefing: boolean;
+  /** Call when briefing is dismissed (or splash finishes for returning users) */
+  markOnboarded: () => void;
+};
+
+export function useSplashLoader(): SplashState {
+  const themeAssets = useCurrentThemeAssets(PRELOAD_SLOTS);
+  const boardThumbnail = themeAssets["board.thumbnail"];
+  const exercisesWallpaper = themeAssets["exercises.wallpaper"];
+  const { isConnected } = useAccount();
+  const [isFirstVisit, setIsFirstVisit] = useState(() => !readOnboarded());
+  const [assetsReady, setAssetsReady] = useState(false);
+  const [walletReady, setWalletReady] = useState(false);
+
+  // Preload critical images
+  useEffect(() => {
+    const assets = [boardThumbnail, exercisesWallpaper].filter(Boolean);
+    Promise.all(assets.map((asset) => preloadImage(`${asset}.avif`))).then(() => {
+      setAssetsReady(true);
+    });
+  }, [boardThumbnail, exercisesWallpaper]);
+
+  // Track wallet readiness
+  useEffect(() => {
+    if (isConnected) {
+      setWalletReady(true);
+      return;
+    }
+
+    // In MiniPay, wait for wallet with timeout
+    // Outside MiniPay, don't block on wallet
+    if (!isMiniPayEnv()) {
+      setWalletReady(true);
+      return;
+    }
+
+    const timer = setTimeout(() => setWalletReady(true), WALLET_TIMEOUT);
+    return () => clearTimeout(timer);
+  }, [isConnected]);
+
+  const loaded = assetsReady && walletReady;
+
+  // Always show splash while loading assets/wallet
+  // Briefing only on first visit (after splash finishes)
+  const showSplash = !loaded;
+  const showBriefing = isFirstVisit && loaded;
+
+  function markOnboarded() {
+    writeOnboarded();
+    // Flip the in-memory flag too so showBriefing turns false and the
+    // parent unmounts <MissionBriefing>. Without this the scrim lingers
+    // in the DOM at opacity 0 until the next full page load.
+    setIsFirstVisit(false);
+  }
+
+  return { showSplash, showBriefing, markOnboarded };
+}
