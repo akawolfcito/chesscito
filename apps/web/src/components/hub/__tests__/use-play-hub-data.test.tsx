@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { usePlayHubData } from "../use-play-hub-data";
 
 const useAccountMock = vi.hoisted(() => vi.fn());
@@ -26,34 +26,19 @@ describe("usePlayHubData", () => {
     const { result } = renderHook(() => usePlayHubData());
 
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(result.current.mintedVictoryCount).toBe(0);
-    expect(result.current.isLoadingVictories).toBe(false);
+    expect(result.current).toEqual({ address: undefined, isConnected: false });
   });
 
-  it("uses the number of returned Victory NFT rows", async () => {
+  it("keeps connected hub mounts and wallet changes free of history requests", () => {
     useAccountMock.mockReturnValue({ address: ADDRESS, isConnected: true });
-    fetchMock.mockResolvedValue({
-      ok: true,
-      json: async () => [{ tokenId: "1" }, { tokenId: "2" }],
-    });
-
-    const { result } = renderHook(() => usePlayHubData());
-
-    await waitFor(() => expect(result.current.mintedVictoryCount).toBe(2));
-    expect(fetchMock).toHaveBeenCalledWith(
-      `/api/my-victories?player=${ADDRESS}`,
-      expect.objectContaining({ signal: expect.any(AbortSignal) }),
-    );
-  });
-
-  it("keeps zero as the real count for an empty response", async () => {
+    const view = renderHook(() => usePlayHubData());
+    expect(view.result.current).toEqual({ address: ADDRESS, isConnected: true });
+    useAccountMock.mockReturnValue({ address: undefined, isConnected: false });
+    view.rerender();
+    expect(view.result.current.isConnected).toBe(false);
+    view.unmount();
     useAccountMock.mockReturnValue({ address: ADDRESS, isConnected: true });
-    fetchMock.mockResolvedValue({ ok: true, json: async () => [] });
-
-    const { result } = renderHook(() => usePlayHubData());
-
-    await waitFor(() => expect(result.current.isLoadingVictories).toBe(false));
-    expect(result.current.mintedVictoryCount).toBe(0);
-    expect(result.current.victoriesError).toBe(false);
+    renderHook(() => usePlayHubData());
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
